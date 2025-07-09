@@ -4,27 +4,23 @@ Sistema sofisticado de atendimento ao cliente multi-agente desenvolvido com o fr
 
 ## 🚀 Início Rápido
 
-### Método 1: Interface Web Moderna (Recomendado)
+```bash
+uv sync
+```
 
 ```bash
-# 1. Inicie o backend do sistema PagBank
 uv run python playground.py
+```
 
-# 2. Em outro terminal, inicie a interface web
+**Interface web opcional (em outro terminal):**
+```bash
 cd agent-ui
 pnpm install
 pnpm dev
 ```
 
-A interface web estará disponível em: http://localhost:3000  
-O backend estará disponível em: http://localhost:7777
-
-### Método 2: Playground Básico do Agno
-
-```bash
-# Execute apenas o demo do Agno Playground (interface básica)
-uv run python playground.py
-```
+O sistema estará disponível em: http://localhost:7777  
+Interface web (opcional): http://localhost:3000
 
 ## 📋 Visão Geral do Sistema
 
@@ -45,13 +41,6 @@ O Sistema Multi-Agente PagBank utiliza orquestração avançada de IA para forne
 - 📚 Filtragem de conhecimento específico por time
 - ⚡ Otimização de tempo de resposta <2s
 
-### Interface Web Moderna
-- 💬 **Interface de Chat Moderna**: Design limpo com suporte a streaming em tempo real
-- 🧩 **Suporte a Chamadas de Ferramentas**: Visualiza chamadas de ferramentas do agente e seus resultados
-- 🧠 **Etapas de Raciocínio**: Exibe o processo de raciocínio do agente (quando disponível)
-- 📚 **Suporte a Referências**: Mostra fontes utilizadas pelo agente
-- 🖼️ **Suporte Multimodal**: Lida com vários tipos de conteúdo, incluindo imagens, vídeo e áudio
-- 🎨 **UI Personalizável**: Construída com Tailwind CSS para facilitar estilização
 
 ## 🏗️ Arquitetura
 
@@ -59,8 +48,7 @@ O Sistema Multi-Agente PagBank utiliza orquestração avançada de IA para forne
 
 ```mermaid
 graph TB
-    UI[🌐 Interface Web<br/>Next.js + TypeScript] --> API[🔄 API Playground<br/>FastAPI]
-    API --> ORCH[🎯 Orquestrador Principal<br/>Modo Route]
+    CLIENT[👤 Cliente] --> ORCH[🎯 Orquestrador Principal<br/>Agno Framework]
     
     ORCH --> PREP[📝 Pré-processamento]
     PREP --> NORM[🔧 Normalização de Texto]
@@ -85,7 +73,6 @@ graph TB
     TEAMS --> KB[📚 Base de Conhecimento<br/>CSV + Filtros]
     KB --> VECTOR[(🎯 Embeddings<br/>Similaridade Vetorial)]
     
-    style UI fill:#e1f5fe
     style ORCH fill:#fff3e0
     style TEAMS fill:#f3e5f5
     style ESC fill:#ffebee
@@ -97,15 +84,13 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant U as 👤 Cliente
-    participant UI as 🌐 Interface Web
     participant O as 🎯 Orquestrador
     participant P as 📝 Pré-processamento
     participant T as 👥 Time Especialista
     participant M as 🧠 Memória
     participant E as ⚠️ Escalação
     
-    U->>UI: Mensagem do cliente
-    UI->>O: Requisição HTTP
+    U->>O: Mensagem do cliente
     O->>P: Processa mensagem
     P->>P: Normaliza texto
     P->>P: Detecta frustração
@@ -113,7 +98,7 @@ sequenceDiagram
     
     alt Frustração alta
         P->>E: Escala para humano
-        E->>UI: Resposta de escalação
+        E->>U: Resposta de escalação
     else Roteamento normal
         O->>T: Direciona para time
         T->>M: Consulta contexto
@@ -123,13 +108,11 @@ sequenceDiagram
     end
     
     O->>M: Atualiza memória
-    O->>UI: Resposta final
-    UI->>U: Exibe resposta
+    O->>U: Resposta final
 ```
 
 ## 🛠️ Stack Técnico
 
-### Backend
 - **Framework**: Agno (Orquestração Multi-Agente)
 - **LLM**: Claude Sonnet 4 (claude-sonnet-4-20250514)
 - **Base de Conhecimento**: CSV com embeddings PgVector
@@ -137,32 +120,10 @@ sequenceDiagram
 - **Linguagem**: Python 3.12+
 - **Armazenamento**: SQLite para sessões e memória
 
-### Frontend (Interface Web)
-- **Framework**: Next.js 15 com App Router
-- **Linguagem**: TypeScript
-- **Estilização**: Tailwind CSS
-- **Componentes**: shadcn/ui + Radix UI
-- **Animações**: Framer Motion
-- **Gerenciamento Estado**: Zustand
-- **Renderização Markdown**: react-markdown
-
 ## 📁 Estrutura do Projeto
 
 ```
 pagbank/
-├── agent-ui/             # Interface web moderna (Next.js + TypeScript)
-│   ├── src/
-│   │   ├── app/                   # Páginas da aplicação Next.js
-│   │   ├── components/            # Componentes React
-│   │   │   ├── playground/        # Interface do playground
-│   │   │   │   ├── ChatArea/      # Área de chat
-│   │   │   │   └── Sidebar/       # Barra lateral
-│   │   │   └── ui/                # Componentes UI reutilizáveis
-│   │   ├── hooks/                 # Hooks React customizados
-│   │   ├── lib/                   # Utilitários e configurações
-│   │   └── types/                 # Definições TypeScript
-│   ├── package.json              # Dependências Node.js
-│   └── tailwind.config.ts        # Configuração Tailwind CSS
 ├── orchestrator/          # Roteamento e orquestração principal
 │   ├── main_orchestrator.py       # Orquestrador principal
 │   ├── routing_logic.py           # Lógica de roteamento
@@ -198,10 +159,9 @@ pagbank/
 ├── utils/                # Utilitários e formatadores
 ├── data/                 # Dados de sessão e memória
 ├── tests/                # Testes unitários e integração
-├── playground.py         # Demo do Agno Playground
+├── playground.py         # Sistema principal (Agno Playground)
 └── docs/                 # Documentação
     ├── DEMO_SCRIPT.md            # Scripts de demonstração completos
-    ├── DEMO_INSTRUCTIONS.md      # Instruções de demo
     └── DEVELOPMENT_GUIDELINES.md # Diretrizes de desenvolvimento
 ```
 

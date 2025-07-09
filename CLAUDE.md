@@ -1,179 +1,169 @@
 # CLAUDE.md
 
-<system_context>
-You are Genie, an AI assistant working with the Genie Framework for parallel task execution and the Automagik UI platform. Your goal is high-quality code development through intelligent task orchestration.
-</system_context>
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-<critical_rules>
-- ONLY create .md files in `genie/` folder
-- NEVER create files proactively
-- ALWAYS include co-author in commits: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
-</critical_rules>
+## Project Overview
 
-## Genie Framework - Parallel Task Architecture
+PagBank Multi-Agent System - A sophisticated Brazilian customer service multi-agent system built with the Agno framework. The system routes customer queries to specialized teams for cartões (cards), conta digital (digital account), investimentos (investments), crédito (credit), and seguros (insurance).
 
-<documentation_rules>
-<context>The Genie Framework enables 70% faster development through parallel task decomposition and execution.</context>
+## Development Commands
 
-<instructions>
-1. Create .md files ONLY in `genie/` folder - your designated workspace
-2. Keep `genie/` organized with clear naming: `epic-[name].md`, `task-[component].md`
-3. Create files only when explicitly requested or decomposing epics
-</instructions>
-</documentation_rules>
+### Python Operations (Required: Use UV)
 
-<parallel_architecture>
-### Task File Structure
-```markdown
-# Task: [Specific Task Name]
-
-## Objective
-[Single, clear purpose]
-
-## Instructions
-[Precise, numbered steps - no ambiguity]
-
-## Completion Criteria
-[Clear definition of done]
-
-## Dependencies
-[Required files, APIs, prior tasks]
-```
-
-### Workflow Example
+**Install dependencies:**
 ```bash
-# 1. Epic Planning
-genie/epic-user-authentication.md
-
-# 2. Task Decomposition
-genie/task-auth-components.md
-genie/task-auth-api.md
-genie/task-auth-database.md
-
-# 3. Parallel Execution
-Agent 1: @task-auth-components.md
-Agent 2: @task-auth-api.md
-Agent 3: @task-auth-database.md
-
-# 4. Integration
-genie/task-auth-integration.md
+uv sync
 ```
-</parallel_architecture>
 
-## Advanced Tool Patterns
-
-<todo_coordination>
-```javascript
-// Complex task coordination
-TodoWrite([
-  {
-    id: "architecture_design",
-    content: "Design system architecture",
-    status: "pending",
-    priority: "high"
-  },
-  {
-    id: "frontend_development",
-    content: "Develop React components",
-    status: "pending",
-    priority: "medium"
-  }
-]);
-```
-</todo_coordination>
-
-<memory_integration>
-```javascript
-// Parallel agents with shared memory
-Task("System Architect", "Design architecture and store in Memory key 'auth_architecture'");
-Task("Frontend Team", "Build UI using Memory key 'auth_architecture'");
-Task("Backend Team", "Implement APIs using Memory key 'auth_architecture'");
-```
-</memory_integration>
-
-<batch_operations>
-```javascript
-// Batch file reading
-Read([
-  "/path/to/config.ts",
-  "/path/to/types.ts"
-]);
-
-// Batch editing
-MultiEdit("/path/to/file.ts", [
-  { old_string: "oldPattern1", new_string: "newPattern1" },
-  { old_string: "oldPattern2", new_string: "newPattern2" }
-]);
-```
-</batch_operations>
-
-## MCP Tools Strategy
-
-<tool_priority>
-| Tool | Purpose | Priority | Token Cost | Usage |
-|------|---------|----------|------------|-------|
-| **search-repo-docs** | Code examples | Tier 1 | Medium | Implementation patterns |
-| **ask-repo-agent** | Architecture Q&A | Tier 2 | Medium | Best practices |
-</tool_priority>
-
-
-<repository_mapping>
-### Ask-Repo-Agent (Architecture)
-- `agno-agi/agno` - agno docs
-
-### Search-Repo-Docs (Examples)
-- `context7/agno`
-</repository_mapping>
-
-
-<workflow_notes>
-- **TodoWrite** for complex coordination
-- **Task** for parallel agent execution
-- **Batch operations** for multiple files
-</workflow_notes>
-
-## CRITICAL: Parallel Task Execution
-
-When deploying multiple agents or tasks in parallel, NEVER combine them into a single Task tool call. Instead, make multiple Task tool calls in a single message:
-
-**✅ CORRECT - Multiple Task calls in one message:**
-Each agent gets its own Task invocation but all are called together.
-
-**❌ WRONG - Single Task with multiple agents:**
-Combining "Agent A do this... Agent B do that..." in one Task prompt.
-
-This ensures true parallel execution and proper context isolation for each agent.
-
-## CRITICAL: Python Package Management
-
-**ALWAYS use UV for ALL Python operations. NEVER use pip or python directly.**
-
-**✅ CORRECT UV Usage:**
+**Start backend system:**
 ```bash
-# Install packages
-uv add package_name
-
-# Run Python scripts
-uv run python script.py
-
-# Run Python modules
-uv run -m pytest
-
-# Install from requirements
-uv pip install -r requirements.txt
-
-# Create virtual environment
-uv venv
+uv run python playground.py
 ```
 
-**❌ WRONG - Never use these:**
-```bash
-# NEVER use these commands:
-pip install package_name
-python script.py
-python -m pytest
-pip install -r requirements.txt
-```
 
-**IMPORTANT**: Every Python-related command MUST be prefixed with `uv run` or use `uv add` for package installation. This applies to ALL agents and tasks without exception.
+## Architecture Overview
+
+### Core Components
+- **Main Orchestrator** (`orchestrator/main_orchestrator.py`): Central routing system using Agno Team framework
+- **Specialist Teams** (`teams/`): Five specialized agents for different banking domains
+- **Memory System** (`memory/`): Persistent context and pattern detection using Agno Memory v2
+- **Knowledge Base** (`knowledge/`): CSV-based knowledge with PgVector embeddings
+- **Escalation Systems** (`escalation_systems/`): Human and technical escalation handling
+
+### Key Architecture Patterns
+- **Team-based Routing**: Main orchestrator routes queries to appropriate specialist teams
+- **Shared State Management**: Teams coordinate through state synchronization
+- **Memory Integration**: All interactions stored in SQLite with Agno Memory v2
+- **Knowledge Filtering**: Team-specific knowledge base filtering
+- **Escalation Flow**: Frustration detection triggers human escalation
+
+### Request Flow
+1. User message → Main Orchestrator
+2. Text normalization and frustration detection
+3. Team routing based on query classification
+4. Specialist team processing with knowledge lookup
+5. Memory update and response generation
+6. Escalation handling if needed
+
+## Development Configuration
+
+### Environment Setup
+- Python 3.12+ required
+- SQLite databases in `data/` directory
+- PgVector for embeddings (configurable)
+- Agno framework for multi-agent orchestration
+
+### Key Settings (`config/settings.py`)
+- Session timeout: 30 minutes
+- Max conversation turns: 20
+- Team routing timeout: 30 seconds
+- Frustration threshold: Level 3
+
+### Database Structure
+- `data/memory/pagbank_memory_dev.db`: Agno Memory v2 storage
+- `data/memory/pagbank_sessions.db`: Session management
+- `data/escalation_patterns.db`: Escalation pattern learning
+
+## Testing Strategy
+
+### Test Structure
+- `tests/unit/`: Unit tests for individual components
+- `tests/integration/`: Cross-team integration tests
+- `tests/test_*.py`: Component-specific test files
+- `conftest.py`: Shared test fixtures and configuration
+
+### Key Test Areas
+- Team routing accuracy
+- Memory persistence
+- Knowledge base filtering
+- Escalation detection
+- Cross-team coordination
+
+## Specialist Teams
+
+### Team Implementations
+- **Cards Team** (`teams/cards_team.py`): Credit/debit cards, limits, billing
+- **Digital Account Team** (`teams/digital_account_team.py`): PIX, transfers, balance
+- **Investments Team** (`teams/investments_team.py`): CDB, investment products, compliance
+- **Credit Team** (`teams/credit_team.py`): Loans, FGTS, fraud protection
+- **Insurance Team** (`teams/insurance_team.py`): Insurance products, claims
+
+### Team Framework
+- All teams inherit from `BaseTeam` in `teams/base_team.py`
+- Shared tools in `teams/team_tools.py`
+- Team-specific prompts in `teams/team_prompts.py`
+
+
+## Memory System
+
+### Agno Memory v2 Integration
+- Persistent user context across sessions
+- Pattern detection for recurring issues
+- Team coordination through shared memory
+- Automatic memory cleanup and retention
+
+### Memory Components
+- `memory/memory_manager.py`: Main memory interface
+- `memory/pattern_detector.py`: Pattern recognition
+- `memory/session_manager.py`: Session lifecycle
+
+## Knowledge Base
+
+### CSV Knowledge Structure
+- `knowledge/pagbank_knowledge.csv`: Main knowledge data
+- Team-specific filtering through `agentic_filters.py`
+- Embedding-based similarity search
+- Category-based knowledge organization
+
+## Escalation Systems
+
+### Human Escalation Flow
+- Frustration detection triggers escalation
+- Ticket system integration
+- Feedback collection and analysis
+- Mock human agent for testing
+
+### Technical Escalation
+- Complex query routing
+- Specialist consultation
+- Knowledge gap identification
+
+## Deployment
+
+### Demo Setup
+1. `uv sync` - Install dependencies
+2. `uv run python playground.py` - Start backend (port 7777)
+3. Database initialization automatic on startup
+
+### Demo Environment
+- Complete demo scripts in `docs/DEMO_SCRIPT.md`
+- 6 distinct test scenarios
+- Portuguese language support
+- Frustration simulation cases
+
+## Project-Specific Guidelines
+
+### Code Style
+- Follow Black formatting (88 char line length)
+- Use isort for import organization
+- Type hints required (mypy strict mode)
+- Portuguese comments for domain-specific logic
+
+### Team Development
+- Each team is independent but uses shared tools
+- Memory coordination through state synchronizer
+- Knowledge base filtering by team scope
+- Escalation patterns learned automatically
+
+### Genie Framework Integration
+- Create .md files ONLY in `genie/` folder
+- Use TodoWrite for complex task coordination
+- Parallel task execution with multiple Task calls
+- Always include co-author: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
+
+### Critical Requirements
+- ALWAYS use UV for Python operations (never pip/python directly)
+- All database operations use SQLite with Agno Memory v2
+- Portuguese language support throughout
+- Fraud detection and compliance warnings required
 
