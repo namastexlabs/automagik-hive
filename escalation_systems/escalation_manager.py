@@ -26,7 +26,7 @@ from .ticket_system import (
     Ticket,
     TicketPriority,
     TicketStatus,
-    TicketSystem,
+    TicketManager,
     TicketType,
 )
 
@@ -56,7 +56,7 @@ class EscalationManager:
     """
     
     def __init__(self, 
-                 ticket_system: Optional[TicketSystem] = None,
+                 ticket_system: Optional[TicketManager] = None,
                  technical_agent: Optional[TechnicalEscalationAgent] = None,
                  memory: Optional[Memory] = None,
                  pattern_learner: Optional['EscalationPatternLearner'] = None):
@@ -566,7 +566,7 @@ Se for uma emergência, ligue para: 0800-123-4567
         self.specialist_teams[name] = handler
 
 
-def create_escalation_manager(ticket_system: Optional[TicketSystem] = None,
+def create_escalation_manager(ticket_system: Optional[TicketManager] = None,
                              technical_agent: Optional[TechnicalEscalationAgent] = None,
                              memory: Optional[Memory] = None,
                              pattern_learner: Optional['EscalationPatternLearner'] = None) -> EscalationManager:

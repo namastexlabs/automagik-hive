@@ -13,7 +13,7 @@ from agno.models.anthropic import Claude
 from agno.tools import tool
 
 # Import ticket system
-from .ticket_system import Ticket, TicketPriority, TicketSystem, TicketType
+from .ticket_system import Ticket, TicketPriority, TicketManager, TicketType
 
 
 class TechnicalIssueCategory(Enum):
@@ -36,7 +36,7 @@ class TechnicalEscalationAgent:
     Provides technical support, bug triage, and escalation protocols
     """
     
-    def __init__(self, ticket_system: Optional[TicketSystem] = None, 
+    def __init__(self, ticket_system: Optional[TicketManager] = None, 
                  memory: Optional[Memory] = None):
         """
         Initialize Technical Escalation Agent
@@ -45,7 +45,7 @@ class TechnicalEscalationAgent:
             ticket_system: Ticket management system
             memory: Memory system for pattern tracking
         """
-        self.ticket_system = ticket_system or TicketSystem()
+        self.ticket_system = ticket_system or TicketManager()
         self.memory = memory
         
         # Knowledge base of common issues and solutions
@@ -464,7 +464,7 @@ class TechnicalEscalationAgent:
         }
 
 
-def create_technical_escalation_agent(ticket_system: Optional[TicketSystem] = None,
+def create_technical_escalation_agent(ticket_system: Optional[TicketManager] = None,
                                      memory: Optional[Memory] = None) -> TechnicalEscalationAgent:
     """
     Create and return technical escalation agent instance

@@ -4,7 +4,7 @@ Tools for agents to modify team_session_state for coordination
 """
 
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from agno.agent import Agent
 from agno.team import Team
@@ -52,23 +52,31 @@ def set_escalation_flag(agent: Agent, flag_type: str, details: str) -> str:
 
 
 @tool
-def add_customer_insight(agent: Agent, insight: str, confidence: float) -> str:
+def add_customer_insight(agent: Union[Agent, Team], insight: str, confidence: float) -> str:
     """Add customer insight to shared analysis
     
     Args:
-        agent: Agent adding the insight
+        agent: Agent or Team adding the insight
         insight: Customer insight discovered
         confidence: Confidence level (0-1)
     """
-    if "customer_analysis" not in agent.team_session_state:
-        agent.team_session_state["customer_analysis"] = {}
+    # Handle both Agent and Team contexts
+    if isinstance(agent, Team):
+        session_state = agent.team_session_state
+        name = agent.name
+    else:
+        session_state = agent.team_session_state
+        name = agent.name
     
-    agent.team_session_state["customer_analysis"][agent.name] = {
+    if "customer_analysis" not in session_state:
+        session_state["customer_analysis"] = {}
+    
+    session_state["customer_analysis"][name] = {
         "insight": insight,
         "confidence": confidence,
         "timestamp": datetime.now().isoformat()
     }
-    return f"Customer insight added by {agent.name} (confidence: {confidence:.2f}): {insight}"
+    return f"Customer insight added by {name} (confidence: {confidence:.2f}): {insight}"
 
 
 @tool
@@ -144,6 +152,10 @@ def get_team_context(team: Team) -> str:
         team: Team to get context for
     """
     state = team.team_session_state
+    
+    # Handle None state gracefully
+    if state is None:
+        state = {}
     
     research_count = len(state.get('research_findings', []))
     decisions_count = len(state.get('team_decisions', []))

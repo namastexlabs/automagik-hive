@@ -4,6 +4,7 @@ Manages ticket creation, routing, and tracking
 """
 
 import json
+import sqlite3
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -100,38 +101,33 @@ class Ticket:
             self.status = TicketStatus.IN_PROGRESS
         elif action == "waiting_customer":
             self.status = TicketStatus.WAITING_CUSTOMER
-    
-    def escalate(self, to_team: str, reason: str):
-        """Escalate ticket to another team"""
-        self.add_update(
-            author="system",
-            action="escalated",
-            message=f"Escalonado para {to_team}: {reason}",
-            metadata={'escalated_to': to_team, 'reason': reason}
-        )
-        self.assigned_to = to_team
+        elif action == "closed":
+            self.status = TicketStatus.CLOSED
+        elif action == "reopened":
+            self.status = TicketStatus.OPEN
+            self.resolved_at = None
+            self.resolution = None
 
 
-class TicketSystem:
-    """
-    Manages support tickets for the PagBank system
-    Handles creation, routing, prioritization, and tracking
-    """
+class TicketManager:
+    """Manages support tickets for PagBank system"""
     
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None):
         """
         Initialize ticket system
         
         Args:
-            storage_path: Path to store ticket data
+            db_path: Path to SQLite database
         """
-        self.storage_path = storage_path or "data/tickets.json"
+        self.db_path = db_path or "data/pagbank.db"
+        self.conn = None
         self.tickets: Dict[str, Ticket] = {}
         self.routing_rules = self._initialize_routing_rules()
         self.priority_rules = self._initialize_priority_rules()
         self.sla_times = self._initialize_sla_times()
         
-        # Load existing tickets if available
+        # Initialize database and load existing tickets
+        self._initialize_database()
         self._load_tickets()
     
     def _initialize_routing_rules(self) -> Dict[TicketType, List[str]]:
@@ -148,67 +144,154 @@ class TicketSystem:
         }
     
     def _initialize_priority_rules(self) -> Dict[str, TicketPriority]:
-        """Initialize priority classification rules"""
+        """Initialize priority detection rules"""
         return {
-            # Keywords that trigger priority levels
-            'critical_keywords': ['fraude', 'roubo', 'invasão', 'urgente', 'bloqueado totalmente'],
-            'high_keywords': ['não consigo', 'travado', 'erro crítico', 'perdi acesso'],
-            'medium_keywords': ['problema', 'erro', 'dificuldade', 'demora'],
-            'low_keywords': ['sugestão', 'melhoria', 'dúvida', 'informação']
+            # Keywords that indicate priority level
+            "urgente": TicketPriority.CRITICAL,
+            "emergência": TicketPriority.CRITICAL,
+            "fraude": TicketPriority.CRITICAL,
+            "roubo": TicketPriority.CRITICAL,
+            "bloqueio": TicketPriority.HIGH,
+            "sem acesso": TicketPriority.HIGH,
+            "erro": TicketPriority.MEDIUM,
+            "problema": TicketPriority.MEDIUM,
+            "dúvida": TicketPriority.LOW,
+            "informação": TicketPriority.LOW
         }
     
-    def _initialize_sla_times(self) -> Dict[TicketPriority, Dict[str, int]]:
-        """Initialize SLA times in hours"""
+    def _initialize_sla_times(self) -> Dict[TicketPriority, int]:
+        """Initialize SLA times in minutes"""
         return {
-            TicketPriority.CRITICAL: {'first_response': 1, 'resolution': 4},
-            TicketPriority.HIGH: {'first_response': 2, 'resolution': 24},
-            TicketPriority.MEDIUM: {'first_response': 8, 'resolution': 48},
-            TicketPriority.LOW: {'first_response': 24, 'resolution': 120}
+            TicketPriority.CRITICAL: 30,     # 30 minutes
+            TicketPriority.HIGH: 120,        # 2 hours
+            TicketPriority.MEDIUM: 480,      # 8 hours
+            TicketPriority.LOW: 1440         # 24 hours
         }
+    
+    def _initialize_database(self):
+        """Initialize SQLite database for ticket storage"""
+        self.conn = sqlite3.connect(self.db_path)
+        cursor = self.conn.cursor()
+        
+        # Create tickets table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tickets (
+                ticket_id TEXT PRIMARY KEY,
+                customer_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                priority TEXT NOT NULL,
+                status TEXT NOT NULL,
+                ticket_type TEXT NOT NULL,
+                issue_description TEXT NOT NULL,
+                assigned_to TEXT,
+                resolved_at TEXT,
+                resolution TEXT,
+                protocol TEXT,
+                metadata TEXT,
+                updates TEXT
+            )
+        ''')
+        
+        self.conn.commit()
     
     def _load_tickets(self):
-        """Load tickets from storage"""
+        """Load tickets from database"""
         try:
-            with open(self.storage_path, 'r') as f:
-                data = json.load(f)
-                for ticket_data in data:
-                    # Reconstruct ticket from data
-                    ticket = self._ticket_from_dict(ticket_data)
-                    self.tickets[ticket.ticket_id] = ticket
-        except FileNotFoundError:
-            # No existing tickets
-            pass
+            cursor = self.conn.cursor()
+            cursor.execute('SELECT * FROM tickets')
+            
+            for row in cursor.fetchall():
+                ticket_data = {
+                    'ticket_id': row[0],
+                    'customer_id': row[1],
+                    'created_at': row[2],
+                    'priority': row[3],
+                    'status': row[4],
+                    'ticket_type': row[5],
+                    'issue_description': row[6],
+                    'assigned_to': row[7],
+                    'resolved_at': row[8],
+                    'resolution': row[9],
+                    'protocol': row[10],
+                    'metadata': json.loads(row[11]) if row[11] else {},
+                    'updates': json.loads(row[12]) if row[12] else []
+                }
+                ticket = self._ticket_from_dict(ticket_data)
+                self.tickets[ticket.ticket_id] = ticket
         except Exception as e:
             print(f"Error loading tickets: {e}")
     
-    def _save_tickets(self):
-        """Save tickets to storage"""
+    def _save_ticket(self, ticket: Ticket):
+        """Save a single ticket to database"""
         try:
-            data = [ticket.to_dict() for ticket in self.tickets.values()]
-            with open(self.storage_path, 'w') as f:
-                json.dump(data, f, indent=2)
+            cursor = self.conn.cursor()
+            
+            # Convert updates to JSON
+            updates_json = json.dumps([asdict(update) for update in ticket.updates])
+            metadata_json = json.dumps(ticket.metadata)
+            
+            cursor.execute('''
+                INSERT OR REPLACE INTO tickets 
+                (ticket_id, customer_id, created_at, priority, status, 
+                 ticket_type, issue_description, assigned_to, resolved_at, 
+                 resolution, protocol, metadata, updates)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                ticket.ticket_id,
+                ticket.customer_id,
+                ticket.created_at,
+                ticket.priority.value,
+                ticket.status.value,
+                ticket.ticket_type.value,
+                ticket.issue_description,
+                ticket.assigned_to,
+                ticket.resolved_at,
+                ticket.resolution,
+                ticket.protocol,
+                metadata_json,
+                updates_json
+            ))
+            
+            self.conn.commit()
         except Exception as e:
-            print(f"Error saving tickets: {e}")
+            print(f"Error saving ticket: {e}")
     
     def _ticket_from_dict(self, data: Dict[str, Any]) -> Ticket:
         """Reconstruct ticket from dictionary"""
         # Convert string enums back to enum types
-        data['priority'] = TicketPriority(data['priority'])
-        data['status'] = TicketStatus(data['status'])
-        data['ticket_type'] = TicketType(data['ticket_type'])
+        priority = TicketPriority(data['priority'])
+        status = TicketStatus(data['status'])
+        ticket_type = TicketType(data['ticket_type'])
         
-        # Convert updates
+        # Reconstruct updates
         updates = []
         for update_data in data.get('updates', []):
-            updates.append(TicketUpdate(**update_data))
-        data['updates'] = updates
+            update = TicketUpdate(**update_data)
+            updates.append(update)
         
-        return Ticket(**data)
+        # Create ticket
+        ticket = Ticket(
+            ticket_id=data['ticket_id'],
+            customer_id=data['customer_id'],
+            created_at=data['created_at'],
+            priority=priority,
+            status=status,
+            ticket_type=ticket_type,
+            issue_description=data['issue_description'],
+            assigned_to=data.get('assigned_to'),
+            resolved_at=data.get('resolved_at'),
+            resolution=data.get('resolution'),
+            updates=updates,
+            metadata=data.get('metadata', {}),
+            protocol=data.get('protocol')
+        )
+        
+        return ticket
     
-    def create_ticket(self, customer_id: str,
+    def create_ticket(self, customer_id: str, 
                      issue_description: str,
-                     priority: Optional[TicketPriority] = None,
                      ticket_type: Optional[TicketType] = None,
+                     priority: Optional[TicketPriority] = None,
                      metadata: Optional[Dict[str, Any]] = None) -> Ticket:
         """
         Create a new support ticket
@@ -216,23 +299,24 @@ class TicketSystem:
         Args:
             customer_id: Customer identifier
             issue_description: Description of the issue
-            priority: Ticket priority (auto-classified if not provided)
-            ticket_type: Type of ticket (auto-classified if not provided)
+            ticket_type: Type of ticket (auto-detected if not provided)
+            priority: Priority level (auto-detected if not provided)
             metadata: Additional metadata
             
         Returns:
             Created ticket
         """
-        # Generate unique ticket ID
+        # Generate ticket ID and protocol
         ticket_id = self._generate_ticket_id()
+        protocol = self._generate_protocol()
         
-        # Auto-classify priority if not provided
-        if priority is None:
-            priority = self._classify_priority(issue_description)
+        # Auto-detect ticket type if not provided
+        if not ticket_type:
+            ticket_type = self._detect_ticket_type(issue_description)
         
-        # Auto-classify type if not provided
-        if ticket_type is None:
-            ticket_type = self._classify_type(issue_description)
+        # Auto-detect priority if not provided
+        if not priority:
+            priority = self._detect_priority(issue_description)
         
         # Create ticket
         ticket = Ticket(
@@ -243,23 +327,24 @@ class TicketSystem:
             status=TicketStatus.OPEN,
             ticket_type=ticket_type,
             issue_description=issue_description,
-            metadata=metadata or {}
+            metadata=metadata or {},
+            protocol=protocol
         )
         
-        # Generate protocol
-        ticket.protocol = self._generate_protocol(ticket)
+        # Route ticket to appropriate team
+        routing_teams = self.routing_rules.get(ticket_type, ["general_support"])
+        assigned_team = routing_teams[0]  # Primary team
+        ticket.assigned_to = assigned_team
         
         # Add creation update
         ticket.add_update(
             author="system",
             action="created",
-            message=f"Ticket criado - Protocolo: {ticket.protocol}"
+            message=f"Ticket criado com protocolo {protocol}"
         )
         
-        # Auto-route ticket
-        assigned_team = self._route_ticket(ticket)
+        # Add routing update
         if assigned_team:
-            ticket.assigned_to = assigned_team
             ticket.add_update(
                 author="system",
                 action="routed",
@@ -268,7 +353,7 @@ class TicketSystem:
         
         # Store ticket
         self.tickets[ticket_id] = ticket
-        self._save_tickets()
+        self._save_ticket(ticket)
         
         return ticket
     
@@ -278,71 +363,80 @@ class TicketSystem:
         unique_id = str(uuid.uuid4())[:8].upper()
         return f"TKT-{timestamp}-{unique_id}"
     
-    def _generate_protocol(self, ticket: Ticket) -> str:
-        """Generate customer-friendly protocol number"""
-        # Format: YYYYMMDD-XXXXX
-        date_str = datetime.now().strftime("%Y%m%d")
-        sequential = str(len(self.tickets) + 1).zfill(5)
-        return f"{date_str}-{sequential}"
+    def _generate_protocol(self) -> str:
+        """Generate protocol number"""
+        timestamp = datetime.now().strftime("%Y%m%d%H%M")
+        random_digits = str(uuid.uuid4().int)[:4]
+        return f"PB{timestamp}{random_digits}"
     
-    def _classify_priority(self, description: str) -> TicketPriority:
-        """Auto-classify ticket priority based on description"""
-        description_lower = description.lower()
+    def _detect_ticket_type(self, description: str) -> TicketType:
+        """Auto-detect ticket type from description"""
+        desc_lower = description.lower()
         
-        # Check for critical keywords
-        critical_keywords = self.priority_rules['critical_keywords']
-        if any(keyword in description_lower for keyword in critical_keywords):
-            return TicketPriority.CRITICAL
-        
-        # Check for high priority keywords
-        high_keywords = self.priority_rules['high_keywords']
-        if any(keyword in description_lower for keyword in high_keywords):
-            return TicketPriority.HIGH
-        
-        # Check for low priority keywords
-        low_keywords = self.priority_rules['low_keywords']
-        if any(keyword in description_lower for keyword in low_keywords):
-            return TicketPriority.LOW
-        
-        # Default to medium
-        return TicketPriority.MEDIUM
-    
-    def _classify_type(self, description: str) -> TicketType:
-        """Auto-classify ticket type based on description"""
-        description_lower = description.lower()
-        
-        # Type classification keywords
+        # Define keywords for each type
         type_keywords = {
-            TicketType.TECHNICAL: ['app', 'erro', 'bug', 'trava', 'técnico', 'sistema'],
-            TicketType.ACCOUNT: ['conta', 'cadastro', 'dados', 'atualizar', 'perfil'],
-            TicketType.TRANSACTION: ['pix', 'transferência', 'pagamento', 'transação', 'ted'],
-            TicketType.CARD: ['cartão', 'débito', 'crédito', 'chip', 'senha do cartão'],
-            TicketType.SECURITY: ['fraude', 'segurança', 'invasão', 'suspeito', 'bloqueio', 'clonado', 'hackeado'],
-            TicketType.FEEDBACK: ['sugestão', 'melhoria', 'feedback', 'opinião'],
-            TicketType.COMPLAINT: ['reclamação', 'insatisfeito', 'péssimo', 'horrível']
+            TicketType.TECHNICAL: ["erro", "bug", "travando", "app", "sistema"],
+            TicketType.ACCOUNT: ["conta", "cadastro", "senha", "acesso"],
+            TicketType.TRANSACTION: ["pix", "transferência", "pagamento", "transação"],
+            TicketType.CARD: ["cartão", "limite", "fatura", "bloqueio"],
+            TicketType.SECURITY: ["fraude", "roubo", "suspeito", "invasão"],
+            TicketType.FEEDBACK: ["sugestão", "melhoria", "feedback"],
+            TicketType.COMPLAINT: ["reclamação", "insatisfeito", "péssimo"]
         }
         
-        # Find best match
+        # Check for keywords
         for ticket_type, keywords in type_keywords.items():
-            if any(keyword in description_lower for keyword in keywords):
+            if any(keyword in desc_lower for keyword in keywords):
                 return ticket_type
         
         return TicketType.GENERAL
     
-    def _route_ticket(self, ticket: Ticket) -> Optional[str]:
-        """Route ticket to appropriate team"""
-        routing_options = self.routing_rules.get(ticket.ticket_type, ["general_support"])
+    def _detect_priority(self, description: str) -> TicketPriority:
+        """Auto-detect priority from description"""
+        desc_lower = description.lower()
         
-        # For critical tickets, always route to first option (specialist team)
-        if ticket.priority == TicketPriority.CRITICAL:
-            return routing_options[0]
+        # Check priority keywords
+        for keyword, priority in self.priority_rules.items():
+            if keyword in desc_lower:
+                return priority
         
-        # For security issues, always route to security team
-        if ticket.ticket_type == TicketType.SECURITY:
-            return "security_team"
+        return TicketPriority.MEDIUM
+    
+    def update_ticket(self, ticket_id: str, 
+                     author: str,
+                     action: str,
+                     message: Optional[str] = None,
+                     resolution: Optional[str] = None,
+                     metadata: Optional[Dict[str, Any]] = None) -> Optional[Ticket]:
+        """
+        Update an existing ticket
         
-        # Default routing
-        return routing_options[0]
+        Args:
+            ticket_id: ID of the ticket
+            author: Who is making the update
+            action: Action being taken
+            message: Update message
+            resolution: Resolution description (for resolved tickets)
+            metadata: Additional metadata
+            
+        Returns:
+            Updated ticket or None if not found
+        """
+        ticket = self.tickets.get(ticket_id)
+        if not ticket:
+            return None
+        
+        # Add update
+        ticket.add_update(author, action, message, metadata)
+        
+        # Handle resolution
+        if resolution:
+            ticket.resolution = resolution
+        
+        # Save to database
+        self._save_ticket(ticket)
+        
+        return ticket
     
     def get_ticket(self, ticket_id: str) -> Optional[Ticket]:
         """Get ticket by ID"""
@@ -350,224 +444,237 @@ class TicketSystem:
     
     def get_customer_tickets(self, customer_id: str,
                            status_filter: Optional[List[TicketStatus]] = None) -> List[Ticket]:
-        """Get all tickets for a customer"""
-        customer_tickets = [
-            ticket for ticket in self.tickets.values()
-            if ticket.customer_id == customer_id
-        ]
+        """
+        Get all tickets for a customer
         
-        if status_filter:
-            customer_tickets = [
-                ticket for ticket in customer_tickets
-                if ticket.status in status_filter
-            ]
+        Args:
+            customer_id: Customer identifier
+            status_filter: Optional list of statuses to filter by
+            
+        Returns:
+            List of customer tickets
+        """
+        customer_tickets = []
+        
+        for ticket in self.tickets.values():
+            if ticket.customer_id == customer_id:
+                if status_filter:
+                    if ticket.status in status_filter:
+                        customer_tickets.append(ticket)
+                else:
+                    customer_tickets.append(ticket)
         
         # Sort by creation date (newest first)
         customer_tickets.sort(key=lambda t: t.created_at, reverse=True)
         
         return customer_tickets
     
-    def update_ticket(self, ticket_id: str, 
-                     status: Optional[TicketStatus] = None,
-                     assigned_to: Optional[str] = None,
-                     resolution: Optional[str] = None,
-                     update_message: Optional[str] = None) -> bool:
-        """Update ticket information"""
-        ticket = self.get_ticket(ticket_id)
-        if not ticket:
-            return False
-        
-        # Update status
-        if status:
-            old_status = ticket.status
-            ticket.status = status
-            ticket.add_update(
-                author="system",
-                action="status_changed",
-                message=f"Status alterado de {old_status.value} para {status.value}"
-            )
-            
-            # Mark resolution time if resolved
-            if status == TicketStatus.RESOLVED:
-                ticket.resolved_at = datetime.now().isoformat()
-                if resolution:
-                    ticket.resolution = resolution
-        
-        # Update assignment
-        if assigned_to:
-            old_assigned = ticket.assigned_to
-            ticket.assigned_to = assigned_to
-            ticket.add_update(
-                author="system",
-                action="reassigned",
-                message=f"Reatribuído de {old_assigned} para {assigned_to}"
-            )
-        
-        # Add custom update message
-        if update_message:
-            ticket.add_update(
-                author="agent",
-                action="updated",
-                message=update_message
-            )
-        
-        # Save changes
-        self._save_tickets()
-        
-        return True
+    def get_tickets_by_status(self, status: TicketStatus) -> List[Ticket]:
+        """Get all tickets with specific status"""
+        return [t for t in self.tickets.values() if t.status == status]
     
-    def check_sla_violations(self) -> List[Dict[str, Any]]:
-        """Check for SLA violations"""
-        violations = []
-        current_time = datetime.now()
+    def get_tickets_by_team(self, team: str) -> List[Ticket]:
+        """Get all tickets assigned to a team"""
+        return [t for t in self.tickets.values() if t.assigned_to == team]
+    
+    def get_overdue_tickets(self) -> List[Dict[str, Any]]:
+        """
+        Get tickets that have exceeded their SLA
+        
+        Returns:
+            List of overdue tickets with details
+        """
+        overdue = []
+        now = datetime.now()
         
         for ticket in self.tickets.values():
-            if ticket.status in [TicketStatus.CLOSED, TicketStatus.CANCELLED]:
+            if ticket.status in [TicketStatus.RESOLVED, TicketStatus.CLOSED]:
                 continue
             
-            # Get SLA times for priority
-            sla = self.sla_times.get(ticket.priority, self.sla_times[TicketPriority.MEDIUM])
-            
             # Calculate time since creation
-            created_time = datetime.fromisoformat(ticket.created_at)
-            hours_since_creation = (current_time - created_time).total_seconds() / 3600
+            created = datetime.fromisoformat(ticket.created_at)
+            elapsed_minutes = (now - created).total_seconds() / 60
             
-            # Check first response SLA
-            if (not any(u.action == "responded" for u in ticket.updates) and
-                hours_since_creation > sla['first_response']):
-                violations.append({
-                    'ticket_id': ticket.ticket_id,
-                    'type': 'first_response',
-                    'priority': ticket.priority.value,
-                    'hours_overdue': hours_since_creation - sla['first_response']
-                })
+            # Get SLA time for priority
+            sla_minutes = self.sla_times.get(ticket.priority, 1440)
             
-            # Check resolution SLA
-            if (ticket.status != TicketStatus.RESOLVED and
-                hours_since_creation > sla['resolution']):
-                violations.append({
-                    'ticket_id': ticket.ticket_id,
-                    'type': 'resolution', 
-                    'priority': ticket.priority.value,
-                    'hours_overdue': hours_since_creation - sla['resolution']
+            if elapsed_minutes > sla_minutes:
+                overdue.append({
+                    'ticket': ticket,
+                    'elapsed_minutes': int(elapsed_minutes),
+                    'sla_minutes': sla_minutes,
+                    'overdue_minutes': int(elapsed_minutes - sla_minutes)
                 })
         
-        return violations
+        # Sort by most overdue
+        overdue.sort(key=lambda x: x['overdue_minutes'], reverse=True)
+        
+        return overdue
     
     def get_statistics(self) -> Dict[str, Any]:
         """Get ticket system statistics"""
-        total_tickets = len(self.tickets)
+        stats = {
+            'total_tickets': len(self.tickets),
+            'by_status': {},
+            'by_type': {},
+            'by_priority': {},
+            'by_team': {},
+            'resolution_times': [],
+            'overdue_count': len(self.get_overdue_tickets())
+        }
         
-        # Status breakdown
-        status_counts = {}
+        # Count by status
         for status in TicketStatus:
-            count = sum(1 for t in self.tickets.values() if t.status == status)
-            status_counts[status.value] = count
+            count = len([t for t in self.tickets.values() if t.status == status])
+            stats['by_status'][status.value] = count
         
-        # Priority breakdown
-        priority_counts = {}
-        for priority in TicketPriority:
-            count = sum(1 for t in self.tickets.values() if t.priority == priority)
-            priority_counts[priority.value] = count
-        
-        # Type breakdown
-        type_counts = {}
+        # Count by type
         for ticket_type in TicketType:
-            count = sum(1 for t in self.tickets.values() if t.ticket_type == ticket_type)
-            type_counts[ticket_type.value] = count
+            count = len([t for t in self.tickets.values() if t.ticket_type == ticket_type])
+            stats['by_type'][ticket_type.value] = count
         
-        # Calculate average resolution time
-        resolved_tickets = [t for t in self.tickets.values() if t.resolved_at]
-        avg_resolution_time = 0
-        if resolved_tickets:
-            total_time = 0
-            for ticket in resolved_tickets:
+        # Count by priority
+        for priority in TicketPriority:
+            count = len([t for t in self.tickets.values() if t.priority == priority])
+            stats['by_priority'][priority.value] = count
+        
+        # Count by team
+        team_counts = {}
+        for ticket in self.tickets.values():
+            if ticket.assigned_to:
+                team_counts[ticket.assigned_to] = team_counts.get(ticket.assigned_to, 0) + 1
+        stats['by_team'] = team_counts
+        
+        # Calculate resolution times
+        for ticket in self.tickets.values():
+            if ticket.resolved_at:
                 created = datetime.fromisoformat(ticket.created_at)
                 resolved = datetime.fromisoformat(ticket.resolved_at)
-                total_time += (resolved - created).total_seconds()
-            avg_resolution_time = total_time / len(resolved_tickets) / 3600  # in hours
+                resolution_minutes = (resolved - created).total_seconds() / 60
+                stats['resolution_times'].append({
+                    'ticket_id': ticket.ticket_id,
+                    'priority': ticket.priority.value,
+                    'minutes': int(resolution_minutes)
+                })
         
-        return {
-            'total_tickets': total_tickets,
-            'status_breakdown': status_counts,
-            'priority_breakdown': priority_counts,
-            'type_breakdown': type_counts,
-            'open_tickets': status_counts.get('open', 0) + status_counts.get('in_progress', 0),
-            'resolved_tickets': status_counts.get('resolved', 0),
-            'average_resolution_hours': round(avg_resolution_time, 2),
-            'sla_violations': len(self.check_sla_violations())
-        }
+        # Average resolution time
+        if stats['resolution_times']:
+            avg_resolution = sum(r['minutes'] for r in stats['resolution_times']) / len(stats['resolution_times'])
+            stats['avg_resolution_minutes'] = int(avg_resolution)
+        else:
+            stats['avg_resolution_minutes'] = 0
+        
+        return stats
+    
+    def close_resolved_tickets(self, days_old: int = 7):
+        """
+        Close tickets that have been resolved for specified days
+        
+        Args:
+            days_old: Number of days ticket must be resolved before closing
+        """
+        now = datetime.now()
+        closed_count = 0
+        
+        for ticket in self.tickets.values():
+            if ticket.status == TicketStatus.RESOLVED and ticket.resolved_at:
+                resolved_date = datetime.fromisoformat(ticket.resolved_at)
+                days_resolved = (now - resolved_date).days
+                
+                if days_resolved >= days_old:
+                    ticket.add_update(
+                        author="system",
+                        action="closed",
+                        message=f"Fechado automaticamente após {days_resolved} dias resolvido"
+                    )
+                    self._save_ticket(ticket)
+                    closed_count += 1
+        
+        return closed_count
+
+
+def create_ticket_manager(db_path: Optional[str] = None) -> TicketManager:
+    """
+    Create and return ticket manager instance
+    
+    Args:
+        db_path: Path to SQLite database
+        
+    Returns:
+        Configured ticket manager
+    """
+    return TicketManager(db_path)
 
 
 if __name__ == '__main__':
     # Test the ticket system
     print("=== PagBank Ticket System Test ===")
     
-    ticket_system = TicketSystem()
+    # Create ticket manager
+    manager = create_ticket_manager("data/pagbank.db")
     
-    # Test ticket creation
-    test_issues = [
+    # Create test tickets
+    test_cases = [
         {
             'customer_id': 'CUST001',
-            'issue': 'Meu cartão foi clonado! Preciso bloquear urgente!',
+            'issue': 'Não consigo fazer PIX, aparece erro E1234',
+            'expected_type': TicketType.TRANSACTION,
+            'expected_priority': TicketPriority.MEDIUM
         },
         {
             'customer_id': 'CUST002',
-            'issue': 'O app está muito lento quando tento ver o extrato',
+            'issue': 'URGENTE! Meu cartão foi roubado e preciso bloquear!',
+            'expected_type': TicketType.SECURITY,
+            'expected_priority': TicketPriority.CRITICAL
         },
         {
             'customer_id': 'CUST003',
-            'issue': 'Sugestão: seria bom ter modo escuro no aplicativo',
-        },
-        {
-            'customer_id': 'CUST001',
-            'issue': 'Não consigo fazer PIX, aparece erro toda vez',
+            'issue': 'Tenho uma dúvida sobre o limite do meu cartão',
+            'expected_type': TicketType.CARD,
+            'expected_priority': TicketPriority.LOW
         }
     ]
     
     created_tickets = []
-    for issue in test_issues:
-        ticket = ticket_system.create_ticket(
-            customer_id=issue['customer_id'],
-            issue_description=issue['issue']
+    for test in test_cases:
+        ticket = manager.create_ticket(
+            customer_id=test['customer_id'],
+            issue_description=test['issue']
         )
         created_tickets.append(ticket)
         
         print(f"\nTicket criado:")
         print(f"  ID: {ticket.ticket_id}")
         print(f"  Protocolo: {ticket.protocol}")
-        print(f"  Prioridade: {ticket.priority.value}")
-        print(f"  Tipo: {ticket.ticket_type.value}")
-        print(f"  Atribuído a: {ticket.assigned_to}")
+        print(f"  Tipo: {ticket.ticket_type.value} (esperado: {test['expected_type'].value})")
+        print(f"  Prioridade: {ticket.priority.value} (esperado: {test['expected_priority'].value})")
+        print(f"  Roteado para: {ticket.assigned_to}")
     
-    # Test ticket update
+    # Update a ticket
     if created_tickets:
         first_ticket = created_tickets[0]
-        ticket_system.update_ticket(
-            first_ticket.ticket_id,
-            status=TicketStatus.IN_PROGRESS,
-            update_message="Iniciando investigação do caso de fraude"
+        updated = manager.update_ticket(
+            ticket_id=first_ticket.ticket_id,
+            author="agent_support",
+            action="in_progress",
+            message="Analisando o erro E1234 reportado"
         )
-        print(f"\nTicket {first_ticket.ticket_id} atualizado")
+        
+        print(f"\n{'='*40}")
+        print(f"Ticket {first_ticket.ticket_id} atualizado")
+        print(f"Status: {updated.status.value}")
+        print(f"Atualizações: {len(updated.updates)}")
     
-    # Test customer tickets
-    customer_tickets = ticket_system.get_customer_tickets('CUST001')
-    print(f"\nTickets do cliente CUST001: {len(customer_tickets)}")
+    # Get customer tickets
+    customer_tickets = manager.get_customer_tickets('CUST001')
+    print(f"\n{'='*40}")
+    print(f"Tickets do cliente CUST001: {len(customer_tickets)}")
     
     # Show statistics
-    stats = ticket_system.get_statistics()
+    stats = manager.get_statistics()
     print(f"\n{'='*40}")
     print("Estatísticas do Sistema:")
     print(f"Total de tickets: {stats['total_tickets']}")
-    print(f"Tickets abertos: {stats['open_tickets']}")
-    print(f"Tickets resolvidos: {stats['resolved_tickets']}")
-    print(f"Violações de SLA: {stats['sla_violations']}")
-    
-    print("\nDistribuição por prioridade:")
-    for priority, count in stats['priority_breakdown'].items():
-        print(f"  {priority}: {count}")
-    
-    print("\nDistribuição por tipo:")
-    for ticket_type, count in stats['type_breakdown'].items():
-        if count > 0:
-            print(f"  {ticket_type}: {count}")
+    print(f"Por status: {stats['by_status']}")
+    print(f"Por tipo: {stats['by_type']}")
+    print(f"Por prioridade: {stats['by_priority']}")

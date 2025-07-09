@@ -13,11 +13,11 @@ import { toast } from 'sonner'
 import { useQueryState } from 'nuqs'
 import { truncateText } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { NamastexLogo } from '@/components/ui/NamastexLogo'
 const ENDPOINT_PLACEHOLDER = 'NO ENDPOINT ADDED'
 const SidebarHeader = () => (
-  <div className="flex items-center gap-2">
-    <Icon type="agno" size="xs" />
-    <span className="text-xs font-medium uppercase text-white">Agent UI</span>
+  <div className="flex items-center justify-center">
+    <NamastexLogo size="md" className="automagik-logo-shadow" />
   </div>
 )
 
@@ -32,9 +32,9 @@ const NewChatButton = ({
     onClick={onClick}
     disabled={disabled}
     size="lg"
-    className="h-9 w-full rounded-xl bg-primary text-xs font-medium text-background hover:bg-primary/80"
+    className="h-9 w-full rounded-xl automagik-button-gradient text-xs font-medium"
   >
-    <Icon type="plus-icon" size="xs" className="text-background" />
+    <Icon type="plus-icon" size="xs" className="text-white" />
     <span className="uppercase">New Chat</span>
   </Button>
 )

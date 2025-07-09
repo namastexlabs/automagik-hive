@@ -44,7 +44,10 @@ tests/test_credit_team.py
 tests/test_digital_account_team.py
 tests/test_insurance_team.py
 tests/test_investments_team.py
+tests/test_memory_manager.py
 tests/test_orchestrator.py
+tests/test_pattern_detector.py
+tests/test_session_manager.py
 tests/test_team_framework.py
 utils/__init__.py
 utils/formatters.py

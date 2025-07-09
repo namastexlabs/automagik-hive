@@ -1,102 +1,96 @@
-#!/usr/bin/env python3
-"""
-PagBank Multi-Agent System - Agno Playground Deployment
-Phase 5 - Web Interface for Live Demo Presentation
-
-Demo Instructions:
-Use these manual test cases during the live demo:
-1. New customer onboarding flow
-2. Card problem with escalation scenario  
-3. Investment consultation with compliance
-4. Credit application with fraud detection
-5. Insurance claim process
-6. Multi-service customer journey
-"""
-
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.playground import Playground
 from agno.storage.sqlite import SqliteStorage
+from agno.team import Team
+import os
 
 # Import main orchestrator
 from orchestrator.main_orchestrator import create_main_orchestrator
 
+# Import knowledge and memory for team creation
+from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+from memory.memory_manager import create_memory_manager
 
-def create_pagbank_playground():
-    """Create PagBank Multi-Agent System Playground"""
-    
-    # Initialize main orchestrator with all specialist teams
+# Import specialist teams
+from teams.cards_team import create_cards_team
+from teams.digital_account_team import create_digital_account_team
+from teams.investments_team import create_investments_team
+from teams.credit_team import create_credit_team
+from teams.insurance_team import create_insurance_team
+
+# Initialize at module level - only print on first load
+if not os.environ.get('UVICORN_RELOADER_PROCESS'):
     print("🚀 Initializing PagBank Multi-Agent System...")
-    orchestrator = create_main_orchestrator()
     
-    # Configure demo storage  
-    storage = SqliteStorage(
-        table_name="pagbank_demo_sessions", 
-        db_file="data/pagbank.db",
-        auto_upgrade_schema=True
-    )
-    
+# Create knowledge base and memory manager
+knowledge_base = create_pagbank_knowledge_base()
+memory_manager = create_memory_manager()
+
+# Create specialist teams
+specialist_teams = {
+    "cards_team": create_cards_team(knowledge_base, memory_manager),
+    "digital_account_team": create_digital_account_team(knowledge_base, memory_manager),
+    "investments_team": create_investments_team(knowledge_base, memory_manager),
+    "credit_team": create_credit_team(knowledge_base, memory_manager),
+    "insurance_team": create_insurance_team(knowledge_base, memory_manager)
+}
+
+# Create the main orchestrator (this creates the real routing team)
+orchestrator = create_main_orchestrator()
+
+# Configure unified storage for all teams - SINGLE INSTANCE
+storage = SqliteStorage(
+    table_name="pagbank_sessions", 
+    db_file="data/pagbank.db",
+    auto_upgrade_schema=True
+)
+
+# Configure storage for the orchestrator's routing team
+orchestrator.routing_team.storage = storage
+
+# Extract the actual Agno Teams from specialist teams for additional playground display
+agno_teams = []
+for team_name, team_instance in specialist_teams.items():
+    if hasattr(team_instance, 'team') and isinstance(team_instance.team, Team):
+        # Use the SAME storage instance for all teams
+        team_instance.team.storage = storage
+        agno_teams.append(team_instance.team)
+
+# Use the actual orchestrator's routing team (which has all the preprocessing features)
+routing_team = orchestrator.routing_team
+
+# Create Playground app with routing team + specialist teams
+playground_app = Playground(
+    teams=[routing_team] + agno_teams,
+    app_id="pagbank-multi-agent-system",
+    name="PagBank Multi-Agent System",
+    storage=storage  # Use the same storage instance for playground
+)
+
+# Get the FastAPI app for ASGI
+app = playground_app.get_app()
+
+if not os.environ.get('UVICORN_RELOADER_PROCESS'):
     print("📦 Configured demo session storage...")
-    
-    # Create wrapper Agent that delegates to the orchestrator
-    pagbank_agent = Agent(
-        name="PagBank Multi-Agent System",
-        model=Claude(id="claude-sonnet-4-20250514"),
-        description="Sistema de atendimento multiagente do PagBank - Central de atendimento inteligente com 5 times especializados",
-        instructions=[
-            "Você é o sistema central do PagBank que coordena 5 times especialistas:",
-            "• Time de Cartões - cartões, limites, faturas, bloqueios",
-            "• Time de Conta Digital - PIX, transferências, saldo, extratos", 
-            "• Time de Investimentos - aplicações, CDB, rendimentos",
-            "• Time de Crédito - empréstimos, financiamentos, FGTS",
-            "• Time de Seguros - proteção, sinistros, coberturas",
-            "Analise a mensagem do cliente e direcione para o time apropriado.",
-            "Detecte frustração e seja empático. Responda em português brasileiro."
-        ],
-        storage=storage,
-        add_datetime_to_instructions=True,
-        add_history_to_messages=True,
-        num_history_responses=3,
-        markdown=True,
-        debug_mode=False
-    )
-    
-    # Override the run method to use the orchestrator
-    def orchestrator_run(message, **kwargs):
-        """Delegate to the main orchestrator"""
-        result = orchestrator.process_message(
-            message=str(message),
-            user_id=kwargs.get('user_id', 'demo_user'),
-            session_id=kwargs.get('session_id', 'demo_session')
-        )
-        # Return the response content
-        return result.get('response', str(message))
-    
-    # Replace the agent's run method
-    pagbank_agent.run = orchestrator_run
-    
-    # Create Playground app with wrapper agent
-    playground_app = Playground(agents=[pagbank_agent])
-    
-    print("🎯 PagBank Playground ready for demo!")
-    print("📝 Use the manual demo scripts from the original plan")
+    print(f"🎯 Using actual orchestrator routing team: {routing_team.name}")
+    print(f"🎯 Added {len(agno_teams)} specialist teams to playground")
+    print("🎯 PagBank Playground ready with REAL orchestrator (includes preprocessing, frustration detection, etc.)")
+    print("✅ All features enabled: show_tool_calls, show_members_responses, stream_intermediate_steps")
     print("🌐 Playground will serve at: http://localhost:7777")
-    
-    return playground_app
+    print("\n📋 Available Teams:")
+    print(f"  • {routing_team.name} (mode={routing_team.mode}, REAL orchestrator with preprocessing)")
+    for team in agno_teams:
+        print(f"  • {team.name} (mode={team.mode}, coordinates internal agents)")
 
 def main():
     """Main entry point for PagBank Playground"""
     try:
-        # Create playground
-        playground_app = create_pagbank_playground()
-        
-        # Get FastAPI app
-        app = playground_app.get_app()
-        
         print("\n" + "="*50)
         print("🏦 PAGBANK MULTI-AGENT SYSTEM DEMO")
         print("="*50)
         print("✅ System: 100% Complete")
+        print("✅ Routing team with proper Agno members: Active")
         print("✅ All 5 specialist teams loaded")
         print("✅ Knowledge base: 571 entries")
         print("✅ Memory system: Active")
@@ -106,7 +100,7 @@ def main():
         print("\n🎬 Starting demo server...")
         
         # Serve the playground
-        playground_app.serve("playground:app", reload=True)
+        playground_app.serve("playground:app", reload=False)
         
     except Exception as e:
         print(f"❌ Error starting playground: {e}")

@@ -62,7 +62,7 @@ class DigitalAccountTeam(SpecialistTeam):
     def _create_team_members(self) -> List[Agent]:
         """Create specialized agents for digital account team"""
         members = []
-        model = Claude(id="claude-sonnet-4-20250514")
+        model = Claude(id="claude-sonnet-4-20250514", max_tokens=500)
         
         # PIX Specialist
         pix_specialist = Agent(
@@ -71,13 +71,10 @@ class DigitalAccountTeam(SpecialistTeam):
             model=model,
             instructions=[
                 TeamPrompts.BASE_INSTRUCTIONS,
-                "Você é especialista em PIX do PagBank",
-                "Processe cadastros de chaves PIX e resolva problemas",
-                "Oriente sobre limites: R$ 20.000 dia / R$ 40.000 mês",
-                "PIX é GRATUITO e ILIMITADO no PagBank",
-                "Explique QR Code estático e dinâmico",
-                "Para erros de PIX, verifique chave e limites",
-                "Sempre confirme dados do destinatário antes de transferir"
+                "Especialista em PIX - busque sempre limites atualizados no knowledge base",
+                "PIX bloqueado? Verifique: limite diário (R$ 20k), chave válida, dados destinatário",
+                "Destaque: PIX é GRATUITO e ILIMITADO no PagBank",
+                "Para QR Code: explique diferença entre estático e dinâmico se perguntado"
             ],
             add_datetime_to_instructions=True
         )
@@ -90,16 +87,10 @@ class DigitalAccountTeam(SpecialistTeam):
             model=model,
             instructions=[
                 TeamPrompts.BASE_INSTRUCTIONS,
-                "Você gerencia operações de conta digital PagBank",
-                "Destaque: conta rende 100% CDI automaticamente",
-                "Explique portabilidade de salário e benefícios",
-                "Oriente sobre extratos, comprovantes e saldo",
-                "Conta é GRATUITA, sem tarifas de manutenção",
-                "Para pagamentos, confirme saldo disponível",
-                "Recargas de celular têm cashback",
-                "ANTECIPAÇÃO: Lojistas podem antecipar vendas do crédito",
-                "Suporta multiadquirente: Cielo, Rede, Stone, Getnet, SafraPay",
-                "Limite: 1 antecipação/dia, valor disponível em 1-2h"
+                "Gerente de conta digital - sempre destaque: rende 100% CDI automaticamente",
+                "Conta GRATUITA, sem tarifas de manutenção",
+                "Para lojistas: antecipação de vendas 1x/dia (Cielo, Rede, Stone, Getnet, SafraPay)",
+                "Busque no knowledge: portabilidade, cashback em recargas"
             ]
         )
         members.append(account_manager)
@@ -111,13 +102,10 @@ class DigitalAccountTeam(SpecialistTeam):
             model=model,
             instructions=[
                 TeamPrompts.BASE_INSTRUCTIONS,
-                "Você é especialista em pagamentos PagBank",
-                "Processe pagamentos de contas e boletos",
-                "Configure agendamentos e pagamentos recorrentes",
-                "Oriente sobre QR Code para pagamentos",
-                "Explique cashback em recargas e pagamentos",
-                "Valide códigos de barras antes de processar",
-                "Sempre informe sobre horários de compensação"
+                "Especialista em pagamentos - valide sempre códigos de barras",
+                "Horários: TED até 17h30, boletos até 22h",
+                "Busque cashback atual para recargas no knowledge base",
+                "Para agendamentos: explique configuração se solicitado"
             ]
         )
         members.append(payment_expert)

@@ -1,0 +1,55 @@
+{
+  "mcpServers": {
+    "sqlite": {
+      "command": "npx",
+      "args": [
+          "-y",
+          "mcp-sqlite",
+          "data/automagik.db"
+      ]
+    },
+    "agent-brain": {
+      "type": "sse",
+      "url": "http://192.168.112.152:8765/mcp/openmemory/sse/genie-ui"
+    },
+    "ask-repo-agent": {
+      "type": "sse",
+      "url": "https://mcp.deepwiki.com/sse"
+    },
+    "search-repo-docs": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "user-browser": {
+      "command": "npx",
+      "args": ["@agentdeskai/browser-tools-mcp@1.2.0"],
+      "enabled": true
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    },
+    "wait": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@latest",
+        "tool",
+        "wait"
+      ],
+      "env": {
+        "WAIT_MAX_DURATION": "3600",
+        "WAIT_DEFAULT_PROGRESS_INTERVAL": "1.0"
+      }
+    },
+    "stagehand": {
+      "command": "node",
+      "args": ["/home/namastex/workspace/mcp-server-browserbase/stagehand/dist/index.js"],
+      "env": {
+        "OPENAI_API_KEY": "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",
+        "LOCAL_CDP_URL": "http://localhost:9222"
+      }
+    }
+  }
+}

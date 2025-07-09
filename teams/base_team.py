@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from agno.agent import Agent
 from agno.models.anthropic import Claude
+import time
 from agno.team import Team
 from config.settings import settings
 from knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
@@ -28,6 +29,8 @@ from .shared_state_tools import (
     update_interaction_flow,
     update_research_findings,
 )
+
+from functools import partial
 
 # Import our configurations and utilities
 
@@ -85,8 +88,13 @@ class BaseTeam:
         # Initialize team session state
         self.initial_team_session_state = self._get_initial_team_session_state()
         
-        # Claude Sonnet 4 model as per requirements
-        self.model = Claude(id="claude-sonnet-4-20250514")
+        # Claude Sonnet 4 model with token limits
+        # Add small delay to prevent API overload when multiple teams are created
+        time.sleep(0.1)
+        self.model = Claude(
+            id="claude-sonnet-4-20250514",
+            max_tokens=500  # Limit response length
+        )
         
         # Initialize team members
         self.members = self._create_team_members()
@@ -99,21 +107,27 @@ class BaseTeam:
             members=self.members,
             description=team_description,
             instructions=self._get_team_instructions(),
-            success_criteria=f"Fornecer resposta completa e precisa sobre {self.team_role} do PagBank",
+            success_criteria=f"Responder a pergunta do cliente sobre {self.team_role} em NO MÁXIMO 3-4 frases. Pare após fornecer uma resposta direta e concisa.",
             enable_agentic_context=True,
             share_member_interactions=True,
             memory=self.memory_manager.get_team_memory(self.team_name) if self.memory_manager else None,
             enable_user_memories=True,
             team_session_state=self.initial_team_session_state,
-            tools=[get_team_context, get_escalation_status],
-            response_model=TeamResponse,
+            tools=self._get_shared_state_tools(),  # Add shared state tools
+            # response_model=TeamResponse,  # Disable response model to avoid JSON parsing issues
             markdown=True,
-            show_tool_calls=settings.debug,
-            debug_mode=settings.debug
+            show_tool_calls=True,  # Show tool calls in UI for PagBank demo
+            debug_mode=settings.debug,
+            # Storage will be set by playground.py
+            storage=None
         )
         
         # Attach memory to team
         self._configure_team_memory()
+        
+        # Add custom tools after team creation
+        if hasattr(self.team, 'tools') and self.team.tools is None:
+            self.team.tools = []
         
         self.logger.info(f"Initialized {team_name} with {len(self.members)} agents")
     
@@ -179,15 +193,12 @@ class BaseTeam:
             name=f"{self.team_name}_Researcher",
             role=f"Especialista em pesquisa de informações sobre {self.team_role}",
             model=self.model,
-            description=f"Especialista em pesquisa de informações do PagBank - {self.team_role}",
             instructions=[
                 f"Você é um especialista em {self.team_role} do PagBank",
-                "ANTES de pesquisar: Avalie se a pergunta do cliente é específica o suficiente",
-                "Se a pergunta for vaga (ex: 'tenho problema', 'não funciona'), sugira ao coordenador pedir esclarecimentos",
-                "Quando pesquisar: Use os filtros apropriados para encontrar informações relevantes",
-                "Pesquise informações precisas na base de conhecimento",
-                "Sempre cite as fontes das informações",
-                "Se não encontrar informações suficientes, informe que são necessários mais detalhes"
+                "REGRA: Responda em NO MÁXIMO 2-3 frases.",
+                "SEMPRE use search_knowledge_base() primeiro para buscar informações",
+                "Foque apenas no que foi perguntado",
+                "Retorne fatos específicos encontrados no knowledge base"
             ],
             memory=self.memory_manager.get_team_memory(f"{self.team_name}_research") if self.memory_manager else None,
             enable_user_memories=True,
@@ -197,9 +208,13 @@ class BaseTeam:
             knowledge=self.knowledge_base,
             search_knowledge=True,
             knowledge_filters=self._get_team_knowledge_filters(),  # Manual team-specific filters
-            tools=self._get_shared_state_tools(),
             markdown=True,
-            add_datetime_to_instructions=True
+            show_tool_calls=True,  # Show tool calls in UI for PagBank demo
+            add_datetime_to_instructions=True,
+            # Retry configuration for API overload
+            retries=3,
+            delay_between_retries=2,
+            exponential_backoff=True
         )
         members.append(research_agent)
         
@@ -222,10 +237,6 @@ class BaseTeam:
             enable_agentic_memory=True,
             add_history_to_messages=True,
             num_history_runs=3,
-            knowledge=self.knowledge_base,
-            search_knowledge=True,
-            knowledge_filters=self._get_team_knowledge_filters(),  # Manual team-specific filters
-            tools=self._get_shared_state_tools(),
             markdown=True,
             add_datetime_to_instructions=True
         )
@@ -238,26 +249,17 @@ class BaseTeam:
             model=self.model,
             description=f"Especialista em comunicação do PagBank - {self.team_role}",
             instructions=[
-                "Você é responsável por formatar respostas claras e profissionais",
-                "Se o Analyst indicar que faltam informações, formule perguntas de esclarecimento empáticas",
-                "Exemplos de pedidos de esclarecimento:",
-                "- 'Para te ajudar melhor, você poderia me contar mais sobre...'",
-                "- 'Preciso entender melhor: você está se referindo a...'",
-                "- 'Para dar a resposta mais precisa, você poderia especificar...'",
-                "Use linguagem apropriada para o contexto brasileiro",
-                "Mantenha um tom amigável mas profissional",
-                "Estruture as respostas de forma clara e organizada",
-                "Se for uma pergunta de esclarecimento, seja conciso e direto"
+                "Você formata a resposta final ao cliente",
+                "LIMITE RÍGIDO: 3-4 frases no MÁXIMO",
+                "Linguagem simples, sem jargões bancários",
+                "Se precisar clarificar: 1 pergunta direta",
+                "Exemplo: 'Para resolver o PIX bloqueado, verifique seu limite diário no app.'"
             ],
             memory=self.memory_manager.get_team_memory(f"{self.team_name}_response") if self.memory_manager else None,
             enable_user_memories=True,
             enable_agentic_memory=True,
             add_history_to_messages=True,
             num_history_runs=3,
-            knowledge=self.knowledge_base,
-            search_knowledge=True,
-            knowledge_filters=self._get_team_knowledge_filters(),  # Manual team-specific filters
-            tools=self._get_shared_state_tools(),
             markdown=True,
             add_datetime_to_instructions=True
         )
@@ -272,28 +274,26 @@ class BaseTeam:
         """
         return [
             f"Você é o coordenador do time de {self.team_role} do PagBank",
-            "Coordene os agentes para fornecer respostas completas e precisas",
-            
-            "PROTOCOLO DE CLARIFICAÇÃO:",
-            "1. Se a pergunta do cliente for ambígua ou incompleta, SEMPRE peça esclarecimentos antes de prosseguir",
-            "2. Faça perguntas específicas e diretas para entender melhor a necessidade",
-            "3. Exemplos de situações que requerem clarificação:",
-            "   - 'Tenho um problema' (que tipo de problema?)",
-            "   - 'Não funciona' (o que especificamente não funciona?)",
-            "   - 'Preciso de ajuda' (com qual produto ou serviço?)",
-            "4. Limite-se a 1-2 perguntas de esclarecimento por vez",
-            "5. Seja empático: 'Para te ajudar melhor, preciso entender...'",
-            
-            "FLUXO DE TRABALHO:",
-            "1. PRIMEIRO: Avalie se a pergunta é clara o suficiente",
-            "2. SE AMBÍGUA: Peça esclarecimentos ao cliente",
-            "3. SE CLARA: Peça ao Researcher para buscar informações relevantes",
-            "4. Depois, peça ao Analyst para analisar as necessidades do cliente",
-            "5. Por fim, peça ao Responder para formatar a resposta final",
-            
-            "Sempre mantenha o foco na satisfação e segurança do cliente",
-            "Use os filtros de conhecimento específicos do time quando apropriado",
-            f"Filtros disponíveis: {', '.join(self.knowledge_filters)}"
+            "",
+            "REGRA ABSOLUTA: Resposta final em NO MÁXIMO 3-4 frases totais.",
+            "",
+            "FLUXO DE TRABALHO ESTRITO:",
+            "1. Se vago → Faça 1 pergunta clarificadora e PARE",
+            "2. Se claro → Delegue APENAS 1 VEZ para cada especialista relevante",
+            "3. Compile as respostas e forneça a solução final",
+            "",
+            "PREVENÇÃO DE LOOPS:",
+            "- NÃO re-delegue tarefas se a resposta não for perfeita",
+            "- ACEITE respostas dos membros como definitivas",
+            "- PARE após receber respostas de todos os membros necessários",
+            "- Se um membro não puder ajudar, siga em frente",
+            "",
+            "FORMATO CONCISO:",
+            "- Evite listas longas ou múltiplos passos",
+            "- Sem formatação excessiva",
+            "- Direto ao ponto",
+            "",
+            f"Knowledge filters: {', '.join(self.knowledge_filters)}"
         ]
     
     def _configure_team_memory(self) -> None:
@@ -366,18 +366,17 @@ class BaseTeam:
                 )
             
             # Return structured response
-            if isinstance(response, TeamResponse):
-                return response
-            else:
-                # Convert to TeamResponse if needed
-                return TeamResponse(
-                    content=str(response),
-                    team_name=self.team_name,
-                    confidence=0.8,
-                    references=self._extract_references(knowledge_results),
-                    suggested_actions=[],
-                    language=language
-                )
+            # Since we disabled response_model, we need to handle the response differently
+            response_content = str(response.content) if hasattr(response, 'content') else str(response)
+            
+            return TeamResponse(
+                content=response_content,
+                team_name=self.team_name,
+                confidence=0.8,
+                references=self._extract_references(knowledge_results),
+                suggested_actions=[],
+                language=language
+            )
                 
         except Exception as e:
             self.logger.error(f"Error processing query: {str(e)}", exc_info=True)

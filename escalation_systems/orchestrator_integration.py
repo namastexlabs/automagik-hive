@@ -12,7 +12,7 @@ from .escalation_manager import create_escalation_manager
 from .escalation_types import EscalationTrigger
 from .pattern_learner import create_pattern_learner
 from .technical_escalation_agent import create_technical_escalation_agent
-from .ticket_system import TicketSystem
+from .ticket_system import TicketManager
 
 
 class EscalationOrchestrationIntegration:
@@ -29,7 +29,7 @@ class EscalationOrchestrationIntegration:
             memory: Memory system for pattern tracking
         """
         # Initialize escalation components
-        self.ticket_system = TicketSystem()
+        self.ticket_system = TicketManager()
         self.pattern_learner = create_pattern_learner()
         self.technical_agent = create_technical_escalation_agent(
             self.ticket_system, 

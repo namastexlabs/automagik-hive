@@ -8,7 +8,8 @@ from typing import Any, Dict, Optional
 
 from agno.agent import Agent
 from agno.models.anthropic import Claude
-from agno.team.team import Team
+from agno.models.openai import OpenAIChat
+from agno.team import Team
 from config.settings import settings
 
 # Import memory system
@@ -30,7 +31,6 @@ from .clarification_handler import clarification_handler
 
 # Import orchestrator modules
 from .frustration_detector import frustration_detector
-from .response_models import RouterResponse
 from .routing_logic import routing_engine
 from .state_synchronizer import TeamStateSynchronizer
 from .text_normalizer import text_normalizer
@@ -115,20 +115,33 @@ class PagBankMainOrchestrator:
         from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
         knowledge_base = create_pagbank_knowledge_base()
         
-        # Create all specialist teams
-        teams["Time de Especialistas em Cartões"] = create_cards_team(knowledge_base, self.memory_manager)
-        teams["Time de Conta Digital"] = create_digital_account_team(knowledge_base, self.memory_manager)
-        teams["Time de Assessoria de Investimentos"] = create_investments_team(knowledge_base, self.memory_manager)
-        teams["Time de Crédito e Financiamento"] = create_credit_team(knowledge_base, self.memory_manager)
-        teams["Time de Seguros e Saúde"] = create_insurance_team(knowledge_base, self.memory_manager)
+        # Add delays between team creation to prevent API overload
+        import time
         
-        # Create escalation agents
-        teams["Agente de Escalonamento Técnico"] = create_technical_escalation_agent()
-        teams["Agente Coletor de Feedback"] = create_feedback_collector()
+        # Create all specialist teams - extract actual Agno Teams from wrappers
+        cards_team_wrapper = create_cards_team(knowledge_base, self.memory_manager)
+        if hasattr(cards_team_wrapper, 'team') and isinstance(cards_team_wrapper.team, Team):
+            teams["Time de Especialistas em Cartões"] = cards_team_wrapper.team
+        time.sleep(0.2)  # Small delay to prevent API overload
         
-        # Note: Human agent mock is typically created on-demand during escalation
-        # but we can include it here for demo purposes
-        teams["Atendente Humano"] = create_human_agent()
+        digital_account_wrapper = create_digital_account_team(knowledge_base, self.memory_manager)
+        if hasattr(digital_account_wrapper, 'team') and isinstance(digital_account_wrapper.team, Team):
+            teams["Time de Conta Digital"] = digital_account_wrapper.team
+        time.sleep(0.2)
+        
+        investments_wrapper = create_investments_team(knowledge_base, self.memory_manager)
+        if hasattr(investments_wrapper, 'team') and isinstance(investments_wrapper.team, Team):
+            teams["Time de Assessoria de Investimentos"] = investments_wrapper.team
+        time.sleep(0.2)
+        
+        credit_wrapper = create_credit_team(knowledge_base, self.memory_manager)
+        if hasattr(credit_wrapper, 'team') and isinstance(credit_wrapper.team, Team):
+            teams["Time de Crédito e Financiamento"] = credit_wrapper.team
+        time.sleep(0.2)
+        
+        insurance_wrapper = create_insurance_team(knowledge_base, self.memory_manager)
+        if hasattr(insurance_wrapper, 'team') and isinstance(insurance_wrapper.team, Team):
+            teams["Time de Seguros e Saúde"] = insurance_wrapper.team
         
         return teams
     
@@ -187,21 +200,23 @@ class PagBankMainOrchestrator:
         # Create routing prompt
         routing_prompt = self._create_routing_prompt()
         
-        # Create the routing team
+        # Create the routing team following Agno documentation patterns
         team = Team(
             name="PagBank Customer Service Orchestrator",
             mode="route",
-            model=Claude(id="claude-sonnet-4-20250514"),
+            model=Claude(id="claude-sonnet-4-20250514", max_tokens=500),
             members=list(self.specialist_teams.values()),
             instructions=[routing_prompt],
+            description="Sistema de roteamento inteligente do PagBank que analisa consultas e direciona para times especializados",
             success_criteria="Cliente direcionado ao especialista correto ou escalado apropriadamente",
             enable_agentic_context=True,
             share_member_interactions=True,
-            memory=self.memory_manager.get_team_memory("orchestrator") if self.memory_manager else None,
-            team_session_state=self.orchestrator_session_state,
-            response_model=RouterResponse,
             markdown=True,
-            debug_mode=settings.debug
+            show_tool_calls=True,  # Show tool calls in UI for PagBank demo
+            show_members_responses=True,
+            add_datetime_to_instructions=True,
+            # Storage will be set by playground.py
+            storage=None
         )
         
         return team
@@ -221,49 +236,25 @@ class PagBankMainOrchestrator:
     def _create_routing_prompt(self) -> str:
         """Create the main routing prompt"""
         return """
-        Você é o Gerente de Atendimento Virtual do PagBank, responsável por direcionar clientes ao especialista correto.
+        Você é o Gerente de Atendimento Virtual do PagBank.
         
-        PROCESSO DE ANÁLISE E ROTEAMENTO:
+        REGRA CRÍTICA: Responda em NO MÁXIMO 2 frases antes de direcionar ao especialista.
         
-        1. ANÁLISE DA MENSAGEM:
-           - Identifique erros comuns de português (cartao→cartão, nao→não, pra→para)
-           - Detecte sinais de frustração (palavrões, CAPS LOCK, múltiplas exclamações)
-           - Avalie se a mensagem é clara ou precisa de esclarecimento
+        ANÁLISE RÁPIDA:
+        1. Normalize mentalmente erros de português (cartao→cartão, pra→para)
+        2. Detecte frustração (palavrões, CAPS, "quero humano")
+        3. Se vago: 1 pergunta simples ("Problema com cartão ou PIX?")
         
-        2. DETECÇÃO DE FRUSTRAÇÃO:
-           - Palavras de alta frustração: droga, merda, porra, lixo, incompetente
-           - Pedidos explícitos: "quero falar com humano", "quero atendente"
-           - Desistência: "desisto", "vou embora", "cancela minha conta"
-           - Se detectar alta frustração: Transfira IMEDIATAMENTE para atendimento humano
+        ROTEAMENTO DIRETO:
+        - Cartões → Time de Especialistas em Cartões
+        - PIX/Conta → Time de Conta Digital
+        - Investimentos → Time de Assessoria de Investimentos  
+        - Empréstimos → Time de Crédito e Financiamento
+        - Seguros → Time de Seguros e Saúde
         
-        3. CLARIFICAÇÃO (se necessário):
-           - Mensagens muito curtas: "ajuda", "problema", "não funciona"
-           - Múltiplas interpretações possíveis
-           - Faça NO MÁXIMO 1-2 perguntas simples e diretas
-           - Exemplo: "Você está com problema no cartão ou no aplicativo?"
+        FRUSTRAÇÃO ALTA = Escalone para humano IMEDIATAMENTE
         
-        4. ROTEAMENTO PARA ESPECIALISTAS:
-           - Time de Especialistas em Cartões: cartões, limite, fatura, bloqueio, senha do cartão
-           - Time de Conta Digital: PIX, transferências, saldo, extrato, conta
-           - Time de Assessoria de Investimentos: investimentos, CDB, rendimentos, aplicações
-           - Time de Crédito e Financiamento: empréstimos, crédito, financiamento, FGTS
-           - Time de Seguros e Saúde: seguros, proteção, sinistros, cobertura
-           - Agente de Escalonamento Técnico: erros, bugs, problemas técnicos, app não funciona
-           - Agente Coletor de Feedback: sugestões, reclamações, feedback, melhorias
-        
-        REGRAS DE ESCALONAMENTO HUMANO:
-        - Cliente pediu explicitamente = escalone imediatamente
-        - Nível de frustração muito alto = escalone imediatamente
-        - Mais de 3 interações sem resolução = escalone
-        - Cliente ameaçando cancelar = escalone com urgência
-        
-        LINGUAGEM:
-        - Use português brasileiro informal mas respeitoso
-        - Seja empático: "Entendo sua frustração..."
-        - Evite jargões técnicos
-        - Seja claro e direto
-        
-        IMPORTANTE: Analise cuidadosamente a mensagem antes de rotear. Em caso de dúvida, pergunte antes de direcionar incorretamente.
+        Seja empático mas BREVE: "Entendo sua frustração com PIX. Vou direcionar para nosso especialista."
         """
     
     def detect_frustration(self, message: str) -> Dict[str, Any]:

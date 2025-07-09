@@ -24,7 +24,7 @@ from escalation_systems.technical_escalation_agent import (
 from escalation_systems.ticket_system import (
     TicketPriority,
     TicketStatus,
-    TicketSystem,
+    TicketManager,
     TicketType,
 )
 
@@ -34,13 +34,13 @@ class TestTicketSystem(unittest.TestCase):
     
     def setUp(self):
         """Set up test environment"""
-        self.test_file = "test_tickets.json"
-        self.ticket_system = TicketSystem(self.test_file)
+        self.test_db = "test_pagbank.db"
+        self.ticket_system = TicketManager(self.test_db)
     
     def tearDown(self):
         """Clean up test files"""
-        if os.path.exists(self.test_file):
-            os.remove(self.test_file)
+        if os.path.exists(self.test_db):
+            os.remove(self.test_db)
     
     def test_ticket_creation(self):
         """Test creating tickets"""
@@ -393,7 +393,7 @@ class TestPatternLearner(unittest.TestCase):
     
     def setUp(self):
         """Set up test environment"""
-        self.test_db = "test_patterns.db"
+        self.test_db = "test_pagbank_patterns.db"
         self.learner = create_pattern_learner(self.test_db)
     
     def tearDown(self):
@@ -497,8 +497,8 @@ class TestIntegration(unittest.TestCase):
     
     def setUp(self):
         """Set up integrated test environment"""
-        self.ticket_system = TicketSystem("test_integration_tickets.json")
-        self.pattern_learner = create_pattern_learner("test_integration_patterns.db")
+        self.ticket_system = TicketManager("test_integration_pagbank.db")
+        self.pattern_learner = create_pattern_learner("test_integration_pagbank.db")
         self.technical_agent = create_technical_escalation_agent(self.ticket_system)
         self.manager = create_escalation_manager(
             ticket_system=self.ticket_system,
@@ -508,9 +508,8 @@ class TestIntegration(unittest.TestCase):
     
     def tearDown(self):
         """Clean up test files"""
-        for file in ["test_integration_tickets.json", "test_integration_patterns.db"]:
-            if os.path.exists(file):
-                os.remove(file)
+        if os.path.exists("test_integration_pagbank.db"):
+            os.remove("test_integration_pagbank.db")
     
     @patch('agno.agent.Agent.run')
     def test_full_escalation_flow(self, mock_run):

@@ -18,7 +18,7 @@ from .ticket_system import (
     Ticket,
     TicketPriority,
     TicketStatus,
-    TicketSystem,
+    TicketManager,
     TicketType,
 )
 
@@ -28,7 +28,7 @@ __all__ = [
     'create_escalation_manager',
     
     # Ticket System
-    'TicketSystem',
+    'TicketManager',
     'Ticket',
     'TicketPriority',
     'TicketStatus',

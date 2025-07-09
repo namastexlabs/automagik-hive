@@ -66,7 +66,7 @@ class EscalationPatternLearner:
         Args:
             db_path: Path to SQLite database for pattern storage
         """
-        self.db_path = db_path or "data/escalation_patterns.db"
+        self.db_path = db_path or "data/pagbank.db"
         self.conn = None
         self._initialize_database()
         

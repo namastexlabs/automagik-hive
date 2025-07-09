@@ -2,14 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force dark mode */
+html {
+  color-scheme: dark;
+}
+
 @layer base {
   :root {
     --color-border-default: 255, 255, 255, 0.2;
     --scrollbar-width: 0.1rem;
+    
+    /* Automagik theme colors in HSL format for Tailwind v3 */
+    --border: 240 5% 20%;
+    --input: 240 5% 15%;
+    --ring: 180 100% 50%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --primary: 300 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primaryAccent: 240 5% 15%;
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --muted: 240 5% 25%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 240 5% 15%;
+    --accent-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
+    
+    /* Automagik brand colors */
+    --color-automagik-pink: #FF00FF;
+    --color-automagik-cyan: #00FFFF;
+    
+    /* Service colors */
+    --color-service-automagik: #14B8A6;
+    --color-service-workflows: #22C55E;
+    --color-service-omni: #A855F7;
+    --color-service-spark: #F59E0B;
+    --color-service-tools: #6B7280;
+    --color-service-integrations: #3B82F6;
+    
+    /* Font definitions */
+    --font-dmmono: 'DM Mono', monospace;
+    --font-geist: 'Geist', sans-serif;
   }
 
   body {
-    @apply bg-background/80 text-secondary;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -28,4 +72,32 @@
 ::-webkit-scrollbar-track {
   background-color: transparent;
   border-radius: 9999px;
+}
+
+@layer utilities {
+  /* Custom font utilities */
+  .font-primary {
+    font-family: var(--font-primary);
+  }
+  
+  .automagik-text-gradient {
+    background: linear-gradient(to right, var(--color-automagik-pink), var(--color-automagik-cyan));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  
+  .automagik-button-gradient {
+    background: linear-gradient(to right, var(--color-automagik-pink), var(--color-automagik-cyan));
+    color: white;
+    transition: opacity 0.2s ease;
+  }
+  
+  .automagik-button-gradient:hover {
+    opacity: 0.9;
+  }
+  
+  .automagik-logo-shadow {
+    filter: drop-shadow(0 0 3px rgba(255, 0, 255, 0.15)) drop-shadow(0 0 3px rgba(0, 255, 255, 0.15));
+  }
 }

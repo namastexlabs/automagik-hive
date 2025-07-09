@@ -86,42 +86,24 @@ class MemoryConfig:
 DEFAULT_MEMORY_CONFIG = MemoryConfig()
 
 
-# Memory configuration for different environments
-def get_memory_config(environment: str = "development") -> MemoryConfig:
-    """Get memory configuration for specific environment"""
+# Unified memory configuration
+def get_memory_config(environment: str = "production") -> MemoryConfig:
+    """Get unified memory configuration"""
     
-    configs = {
-        "development": MemoryConfig(
-            db_file="data/pagbank.db",
-            table_name="pagbank_memories_dev",
-            async_processing=False,  # Sync for easier debugging
-            pattern_update_frequency=5,  # More frequent updates for testing
-        ),
-        
-        "testing": MemoryConfig(
-            db_file="data/pagbank.db",
-            table_name="pagbank_memories_test",
-            enable_user_memories=True,
-            enable_session_summaries=False,  # Simplified for testing
-            async_processing=False,
-            max_user_memories=10,  # Smaller limits for testing
-            max_session_memories=5,
-        ),
-        
-        "production": MemoryConfig(
-            db_file="data/pagbank.db",
-            table_name="pagbank_memories",
-            enable_user_memories=True,
-            enable_session_summaries=True,
-            enable_agentic_memory=True,
-            async_processing=True,
-            max_user_memories=1000,
-            max_session_memories=500,
-            memory_cleanup_interval=10000,
-        )
-    }
-    
-    return configs.get(environment, DEFAULT_MEMORY_CONFIG)
+    # Single unified configuration for POC
+    return MemoryConfig(
+        db_file="data/pagbank.db",
+        table_name="pagbank_memories",
+        enable_user_memories=True,
+        enable_session_summaries=True,
+        enable_agentic_memory=True,
+        async_processing=False,  # Sync for POC stability
+        max_user_memories=1000,
+        max_session_memories=500,
+        memory_cleanup_interval=10000,
+        pattern_update_frequency=10,
+        session_timeout_minutes=120
+    )
 
 
 def validate_memory_config(config: MemoryConfig) -> Dict[str, Any]:
