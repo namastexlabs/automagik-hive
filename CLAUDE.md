@@ -25,25 +25,25 @@ uv run python playground.py
 
 ### Core Components
 - **Main Orchestrator** (`orchestrator/main_orchestrator.py`): Central routing system using Agno Team framework
-- **Specialist Teams** (`teams/`): Five specialized agents for different banking domains
+- **Specialist Agents** (`agents/specialists/`): Six specialized agents including human handoff
 - **Memory System** (`memory/`): Persistent context and pattern detection using Agno Memory v2
 - **Knowledge Base** (`knowledge/`): CSV-based knowledge with PgVector embeddings
 - **Escalation Systems** (`escalation_systems/`): Human and technical escalation handling
 
 ### Key Architecture Patterns
-- **Team-based Routing**: Main orchestrator routes queries to appropriate specialist teams
-- **Shared State Management**: Teams coordinate through state synchronization
+- **Agent-based Routing**: Main orchestrator routes queries to single specialist agents
+- **Shared State Management**: Agents access shared state via team_session_state
 - **Memory Integration**: All interactions stored in SQLite with Agno Memory v2
-- **Knowledge Filtering**: Team-specific knowledge base filtering
-- **Escalation Flow**: Frustration detection triggers human escalation
+- **Knowledge Filtering**: Agent-specific knowledge base filtering
+- **Human Handoff**: Immediate transfer with WhatsApp notification
 
 ### Request Flow
 1. User message → Main Orchestrator
-2. Text normalization and frustration detection
-3. Team routing based on query classification
-4. Specialist team processing with knowledge lookup
+2. Human handoff detection (immediate if triggered)
+3. Routing based on query classification
+4. Specialist agent processing with knowledge lookup
 5. Memory update and response generation
-6. Escalation handling if needed
+6. WhatsApp notification if human handoff
 
 ## Development Configuration
 
@@ -81,17 +81,18 @@ uv run python playground.py
 
 ## Specialist Teams
 
-### Team Implementations
-- **Cards Team** (`teams/cards_team.py`): Credit/debit cards, limits, billing
-- **Digital Account Team** (`teams/digital_account_team.py`): PIX, transfers, balance
-- **Investments Team** (`teams/investments_team.py`): CDB, investment products, compliance
-- **Credit Team** (`teams/credit_team.py`): Loans, FGTS, fraud protection
-- **Insurance Team** (`teams/insurance_team.py`): Insurance products, claims
+### Agent Implementations
+- **Cards Agent** (`agents/specialists/cards_agent.py`): Credit/debit cards, limits, billing
+- **Digital Account Agent** (`agents/specialists/digital_account_agent.py`): PIX, transfers, balance
+- **Investments Agent** (`agents/specialists/investments_agent.py`): CDB, investment products, compliance
+- **Credit Agent** (`agents/specialists/credit_agent.py`): Loans, FGTS, fraud protection
+- **Insurance Agent** (`agents/specialists/insurance_agent.py`): Insurance products, claims
+- **Human Handoff Agent** (`agents/specialists/human_handoff_agent.py`): WhatsApp notifications
 
-### Team Framework
-- All teams inherit from `BaseTeam` in `teams/base_team.py`
-- Shared tools in `teams/team_tools.py`
-- Team-specific prompts in `teams/team_prompts.py`
+### Agent Framework
+- All agents inherit from `BaseSpecialistAgent` in `agents/specialists/base_agent.py`
+- Shared tools in `agents/tools/agent_tools.py`
+- Agent-specific prompts in `agents/prompts/specialist_prompts.py`
 
 
 ## Memory System

@@ -24,76 +24,112 @@ Interface web (opcional): http://localhost:3000
 
 ## 📋 Visão Geral do Sistema
 
-O Sistema Multi-Agente PagBank utiliza orquestração avançada de IA para fornecer atendimento ao cliente inteligente em cinco domínios especializados:
+O Sistema Multi-Agente PagBank utiliza arquitetura simplificada com agentes únicos (não mais teams coordenados) para fornecer atendimento ao cliente inteligente em cinco domínios especializados. O sistema usa Agno Team em modo "route" para direcionar consultas aos agentes especialistas apropriados:
 
-### Times Especialistas
-- **Time de Cartões** 💳 - Problemas com cartões de crédito/débito, limites, faturas
-- **Time de Conta Digital** 🏦 - PIX, transferências, saldo, extratos
-- **Time de Investimentos** 💰 - CDB, produtos de investimento, compliance
-- **Time de Crédito** 💸 - Empréstimos, FGTS, proteção contra fraudes
-- **Time de Seguros** 🛡️ - Produtos de seguro, sinistros, coberturas
+### Agentes Especialistas
+- **Agente de Cartões** 💳 - Problemas com cartões de crédito/débito, limites, faturas
+- **Agente de Conta Digital** 🏦 - PIX, transferências, saldo, extratos
+- **Agente de Investimentos** 💰 - CDB, produtos de investimento, compliance
+- **Agente de Crédito** 💸 - Empréstimos, FGTS, proteção contra fraudes
+- **Agente de Seguros** 🛡️ - Produtos de seguro, sinistros, coberturas
 
 ### Recursos Principais
-- 🇧🇷 Suporte nativo ao português brasileiro com correção de erros de digitação
+- 🇧🇷 Suporte nativo ao português brasileiro
+- 📱 Notificação WhatsApp instantânea para transferências humanas
+- 🗣️ Transferência imediata quando solicitado ("quero humano")
 - 🚨 Detecção avançada de fraudes e prevenção de golpes
-- 😤 Detecção de frustração e escalação para atendimento humano
 - 🧠 Memória persistente e reconhecimento de padrões
-- 📚 Filtragem de conhecimento específico por time
+- 📚 Filtragem de conhecimento específico por agente
+- 🤔 Capacidade de "thinking" para melhor raciocínio
+- 🔄 Compartilhamento de contexto entre agentes
 - ⚡ Otimização de tempo de resposta <2s
 
 
 ## 🏗️ Arquitetura
 
-### Visão Geral do Sistema
+### Visão Geral do Sistema (Arquitetura Simplificada)
 
 ```mermaid
 graph TB
-    CLIENT[👤 Cliente] --> ORCH[🎯 Orquestrador Principal<br/>main_orchestrator.py]
+    CLIENT[👤 Cliente] --> ORCH[🎯 Orquestrador Principal<br/>Team mode=route<br/>main_orchestrator.py]
     
     ORCH --> PREP[📝 Pré-processamento]
     PREP --> NORM[🔧 Normalização de Texto<br/>text_normalizer.py]
     PREP --> FRUST[😤 Detecção de Frustração<br/>frustration_detector.py]
     PREP --> ROUT[🎯 Lógica de Roteamento<br/>routing_logic.py]
-    PREP --> SYNC[🔄 Sincronização de Estado<br/>state_synchronizer.py]
     
-    ORCH --> MEM[🧠 Gerenciamento de Memória<br/>Agno Memory v2]
+    ORCH --> STATE[📊 Estado Compartilhado<br/>team_session_state]
+    STATE --> SYNC[🔄 Sincronização<br/>state_synchronizer.py]
+    
+    ORCH --> MEM[🧠 Sistema de Memória<br/>Agno Memory v2]
     MEM --> SQLITE[(🗄️ SQLite<br/>pagbank_memory_dev.db<br/>pagbank_sessions.db)]
     MEM --> PATTERNS[🔍 Detector de Padrões<br/>pattern_detector.py]
     
-    ORCH --> TEAMS[👥 Times Especialistas]
-    TEAMS --> CARDS[💳 Time de Cartões<br/>cards_team.py]
-    TEAMS --> ACCOUNT[🏦 Time de Conta Digital<br/>digital_account_team.py]
-    TEAMS --> INVEST[💰 Time de Investimentos<br/>investments_team.py]
-    TEAMS --> CREDIT[💸 Time de Crédito<br/>credit_team.py]
-    TEAMS --> INSUR[🛡️ Time de Seguros<br/>insurance_team.py]
+    ORCH --> AGENTS[🤖 Agentes Especialistas<br/>(Single Agents, not Teams)]
+    AGENTS --> CARDS[💳 Agente de Cartões<br/>cards_agent.py]
+    AGENTS --> ACCOUNT[🏦 Agente Conta Digital<br/>digital_account_agent.py]
+    AGENTS --> INVEST[💰 Agente Investimentos<br/>investments_agent.py]
+    AGENTS --> CREDIT[💸 Agente de Crédito<br/>credit_agent.py]
+    AGENTS --> INSUR[🛡️ Agente de Seguros<br/>insurance_agent.py]
     
-    TEAMS --> TOOLS[🛠️ Ferramentas Compartilhadas<br/>team_tools.py]
-    TEAMS --> CONFIG[⚙️ Configuração dos Times<br/>team_config.py]
+    AGENTS --> TOOLS[🛠️ Ferramentas<br/>agent_tools.py]
+    AGENTS --> PROMPTS[📝 Prompts<br/>specialist_prompts.py]
     
     ORCH --> ESC[⚠️ Sistemas de Escalação<br/>escalation_manager.py]
     ESC --> HUMAN[👤 Escalação Humana<br/>human_agent_mock.py]
     ESC --> TECH[🔧 Escalação Técnica<br/>technical_escalation_agent.py]
     ESC --> TICK[🎫 Sistema de Tickets<br/>ticket_system.py]
-    ESC --> LEARN[📊 Aprendizado de Padrões<br/>pattern_learner.py]
     
-    TEAMS --> KB[📚 Base de Conhecimento<br/>pagbank_knowledge.csv]
-    KB --> FILTERS[🔍 Filtros Agênticos<br/>agentic_filters.py]
-    KB --> VECTOR[(🎯 Embeddings<br/>Similaridade Vetorial)]
+    AGENTS --> KB[📚 Base de Conhecimento<br/>pagbank_knowledge.csv]
+    KB --> FILTERS[🔍 Filtros por Agente<br/>knowledge_filters]
+    KB --> VECTOR[(🎯 PgVector<br/>Embeddings OpenAI)]
     
     style ORCH fill:#fff3e0
-    style TEAMS fill:#f3e5f5
+    style AGENTS fill:#e1f5fe
     style ESC fill:#ffebee
     style KB fill:#e8f5e8
     style MEM fill:#e3f2fd
+    style STATE fill:#f3e5f5
+```
+
+### Fluxo de Dados
+
+```
+1. Cliente envia mensagem
+    ↓
+2. Orquestrador processa:
+   - Normaliza texto (erros PT-BR)
+   - Detecta frustração (0-3)
+   - Analisa intenção
+    ↓
+3. Roteamento (Team mode="route"):
+   - Seleciona agente especialista
+   - Compartilha estado via team_session_state
+   - Habilita contexto agêntico
+    ↓
+4. Agente Especialista:
+   - Ativa "thinking" para raciocínio
+   - Busca conhecimento filtrado
+   - Acessa memórias do usuário
+   - Gera resposta (max 3-4 frases)
+    ↓
+5. Pós-processamento:
+   - Atualiza estado compartilhado
+   - Salva na memória
+   - Detecta necessidade de escalação
+    ↓
+6. Resposta ao cliente
 ```
 
 
 ## 🛠️ Stack Técnico
 
 - **Framework**: Agno (Orquestração Multi-Agente)
-- **LLM**: Claude Sonnet 4 (claude-sonnet-4-20250514)
+- **LLM**: Claude Sonnet 4 (claude-sonnet-4-20250514) com thinking habilitado
+- **Arquitetura**: Team (route mode) → Single Agents (não mais teams)
 - **Base de Conhecimento**: CSV com embeddings PgVector
 - **Memória**: Agno Memory v2 com SqliteMemoryDb
+- **Estado Compartilhado**: team_session_state com propagação automática
 - **Linguagem**: Python 3.12+
 - **Armazenamento**: SQLite para sessões e memória
 
@@ -101,45 +137,44 @@ graph TB
 
 ```
 pagbank/
-├── orchestrator/          # Roteamento e orquestração principal
-│   ├── main_orchestrator.py       # Orquestrador principal
-│   ├── routing_logic.py           # Lógica de roteamento
-│   ├── frustration_detector.py    # Detector de frustração
-│   ├── text_normalizer.py         # Normalizador de texto
-│   ├── clarification_handler.py   # Manipulador de esclarecimentos
-│   └── state_synchronizer.py      # Sincronizador de estado
-├── teams/                 # Implementações dos times especialistas
-│   ├── base_team.py              # Classe base dos times
-│   ├── cards_team.py             # Time de cartões
-│   ├── digital_account_team.py   # Time de conta digital
-│   ├── investments_team.py       # Time de investimentos
-│   ├── credit_team.py            # Time de crédito
-│   ├── insurance_team.py         # Time de seguros
-│   └── team_tools.py             # Ferramentas compartilhadas
-├── knowledge/            # Base de conhecimento e filtragem
-│   ├── csv_knowledge_base.py     # Base de conhecimento CSV
-│   ├── agentic_filters.py        # Filtros agênticos
-│   └── pagbank_knowledge.csv     # Dados de conhecimento
-├── memory/               # Memória e detecção de padrões
-│   ├── memory_manager.py         # Gerenciador de memória
-│   ├── pattern_detector.py       # Detector de padrões
-│   └── session_manager.py        # Gerenciador de sessões
-├── escalation_systems/   # Escalação humana e técnica
-│   ├── escalation_manager.py     # Gerenciador de escalação
-│   ├── technical_escalation_agent.py  # Agente escalação técnica
-│   ├── ticket_system.py          # Sistema de tickets
-│   └── feedback_human_systems/   # Sistemas de feedback humano
-├── config/               # Configuração e definições
-│   ├── settings.py               # Configurações principais
-│   ├── models.py                 # Modelos de dados
-│   └── database.py               # Configuração do banco
-├── utils/                # Utilitários e formatadores
-├── data/                 # Dados de sessão e memória
-├── tests/                # Testes unitários e integração
-├── playground.py         # Sistema principal (Agno Playground)
+├── agents/               # Nova estrutura de agentes únicos
+│   ├── orchestrator/             # Orquestrador principal
+│   │   ├── __init__.py
+│   │   └── main_orchestrator.py  # Team mode="route"
+│   ├── specialists/              # Agentes especialistas (não times!)
+│   │   ├── __init__.py
+│   │   ├── base_agent.py        # Classe base para agentes
+│   │   ├── cards_agent.py       # Agente de cartões
+│   │   ├── digital_account_agent.py  # Agente conta digital
+│   │   ├── investments_agent.py # Agente investimentos
+│   │   ├── credit_agent.py      # Agente de crédito
+│   │   └── insurance_agent.py   # Agente de seguros
+│   ├── prompts/                  # Prompts centralizados
+│   │   ├── __init__.py
+│   │   └── specialist_prompts.py # Todos os prompts
+│   └── tools/                    # Ferramentas compartilhadas
+│       ├── __init__.py
+│       └── agent_tools.py        # Ferramentas dos agentes
+├── orchestrator/         # Módulos de suporte (mantidos)
+│   ├── routing_logic.py          # Lógica de roteamento
+│   ├── frustration_detector.py   # Detector de frustração
+│   ├── text_normalizer.py        # Normalizador de texto
+│   ├── clarification_handler.py  # Esclarecimentos
+│   └── state_synchronizer.py     # Sincronizador de estado
+├── teams/                # LEGADO - será removido
+├── knowledge/            # Base de conhecimento
+│   ├── csv_knowledge_base.py     # Base CSV
+│   ├── agentic_filters.py        # Filtros por agente
+│   └── pagbank_knowledge.csv     # 571 entradas
+├── memory/               # Sistema de memória
+│   ├── memory_manager.py         # Agno Memory v2
+│   ├── pattern_detector.py       # Detecção de padrões
+│   └── session_manager.py        # Sessões
+├── escalation_systems/   # Escalação
+├── config/               # Configurações
+├── data/                 # Bancos SQLite
+├── playground.py         # Entry point principal
 └── docs/                 # Documentação
-    ├── DEMO_SCRIPT.md            # Scripts de demonstração completos
-    └── DEVELOPMENT_GUIDELINES.md # Diretrizes de desenvolvimento
 ```
 
 ## 🔧 Configuração
@@ -163,15 +198,32 @@ Configurações principais em `config/settings.py`:
 - **Memória Persistente**: Contexto do usuário mantido entre sessões
 - **Detecção de Padrões**: Reconhecimento de comportamentos recorrentes
 - **Insights Contextuais**: Análise de histórico de interações
-- **Sincronização de Estado**: Coordenação entre times especialistas
+- **Estado Compartilhado**: team_session_state sincronizado entre agentes
+- **Contexto Agêntico**: Propagação automática com enable_agentic_context=True
 
 ## 🎯 Recursos Avançados
 
+### Capacidades dos Agentes
+- **Thinking Habilitado**: Raciocínio aprofundado com budget de 1024 tokens
+- **Busca Agêntica**: search_knowledge=True com filtros específicos
+- **Estado Compartilhado**: Acesso via agent.team_session_state
+- **Interações Compartilhadas**: share_member_interactions=True
+
+### Ferramentas Disponíveis
+- **search_knowledge**: Busca na base com filtros
+- **create_support_ticket**: Criação de tickets
+- **normalize_text**: Normalização PT-BR  
+- **check_user_history**: Acesso ao histórico
+- **pagbank_validator**: Validação CPF/CNPJ/PIX
+- **security_checker**: Detecção de fraudes
+- **financial_calculator**: Cálculos financeiros
+
+### Recursos do Sistema
 - **Normalização de Texto**: Correção automática de erros de português
-- **Detecção de Frustração**: Identificação de sinais de insatisfação
-- **Esclarecimentos Inteligentes**: Perguntas contextuais para consultas ambíguas
-- **Escalação Automática**: Transferência para atendimento humano quando necessário
-- **Filtragem de Conhecimento**: Acesso específico por domínio de especialização
+- **Detecção de Frustração**: Escala 0-3 com keywords e padrões
+- **Esclarecimentos Inteligentes**: Máximo 1 pergunta por vez
+- **Escalação Automática**: Frustração ≥3 ou palavras-chave
+- **Filtragem de Conhecimento**: Por área/departamento
 
 ## 👥 Equipe
 

@@ -33,7 +33,7 @@ from .clarification_handler import clarification_handler
 from .frustration_detector import frustration_detector
 from .routing_logic import routing_engine
 from .state_synchronizer import TeamStateSynchronizer
-from .text_normalizer import text_normalizer
+# Text normalizer removed - models understand Portuguese variations
 
 
 class PagBankMainOrchestrator:
@@ -209,12 +209,14 @@ class PagBankMainOrchestrator:
             instructions=[routing_prompt],
             description="Sistema de roteamento inteligente do PagBank que analisa consultas e direciona para times especializados",
             success_criteria="Cliente direcionado ao especialista correto ou escalado apropriadamente",
-            enable_agentic_context=True,
-            share_member_interactions=True,
+            enable_agentic_context=False,  # Disabled to prevent context explosion
+            share_member_interactions=False,  # Disabled to prevent context explosion
             markdown=True,
             show_tool_calls=True,  # Show tool calls in UI for PagBank demo
             show_members_responses=True,
             add_datetime_to_instructions=True,
+            add_member_tools_to_system_message=False,  # Prevent context explosion
+            team_session_state=self.initial_session_state,  # Initialize session state
             # Storage will be set by playground.py
             storage=None
         )
@@ -417,7 +419,7 @@ class PagBankMainOrchestrator:
         user_context = self.memory_manager.get_user_context(user_id)
         
         # Update team session state with user context
-        if hasattr(self.routing_team, 'team_session_state'):
+        if hasattr(self.routing_team, 'team_session_state') and self.routing_team.team_session_state is not None:
             self.routing_team.team_session_state['customer_id'] = user_id
             self.routing_team.team_session_state['memory_context'] = user_context
         

@@ -108,8 +108,8 @@ class BaseTeam:
             description=team_description,
             instructions=self._get_team_instructions(),
             success_criteria=f"Responder a pergunta do cliente sobre {self.team_role} em NO MÁXIMO 3-4 frases. Pare após fornecer uma resposta direta e concisa.",
-            enable_agentic_context=True,
-            share_member_interactions=True,
+            enable_agentic_context=False,  # Disabled to prevent context explosion
+            share_member_interactions=False,  # Disabled to prevent context explosion
             memory=self.memory_manager.get_team_memory(self.team_name) if self.memory_manager else None,
             enable_user_memories=True,
             team_session_state=self.initial_team_session_state,
@@ -118,6 +118,7 @@ class BaseTeam:
             markdown=True,
             show_tool_calls=True,  # Show tool calls in UI for PagBank demo
             debug_mode=settings.debug,
+            add_member_tools_to_system_message=False,  # Prevent context explosion
             # Storage will be set by playground.py
             storage=None
         )
