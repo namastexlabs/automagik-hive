@@ -1,0 +1,1 @@
+"""Integration tests for PagBank multi-agent system."""

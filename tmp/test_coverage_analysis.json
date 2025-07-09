@@ -1,0 +1,537 @@
+{
+  "timestamp": "2025-07-08T23:43:41.964845",
+  "test_files": {
+    "test_playground.py": {
+      "module": "playground",
+      "path": "test_playground.py"
+    },
+    "test_db_connection.py": {
+      "module": "db_connection",
+      "path": "test_db_connection.py"
+    },
+    "escalation_systems/feedback_human_systems/tests/test_feedback_human.py": {
+      "module": "feedback_human",
+      "path": "escalation_systems/feedback_human_systems/tests/test_feedback_human.py"
+    },
+    "escalation_systems/tests/test_escalation.py": {
+      "module": "escalation",
+      "path": "escalation_systems/tests/test_escalation.py"
+    },
+    "tests/test_digital_account_team.py": {
+      "module": "digital_account_team",
+      "path": "tests/test_digital_account_team.py"
+    },
+    "tests/test_investments_team.py": {
+      "module": "investments_team",
+      "path": "tests/test_investments_team.py"
+    },
+    "tests/test_orchestrator.py": {
+      "module": "orchestrator",
+      "path": "tests/test_orchestrator.py"
+    },
+    "tests/test_cards_team.py": {
+      "module": "cards_team",
+      "path": "tests/test_cards_team.py"
+    },
+    "tests/test_insurance_team.py": {
+      "module": "insurance_team",
+      "path": "tests/test_insurance_team.py"
+    },
+    "tests/test_team_framework.py": {
+      "module": "team_framework",
+      "path": "tests/test_team_framework.py"
+    },
+    "tests/test_credit_team.py": {
+      "module": "credit_team",
+      "path": "tests/test_credit_team.py"
+    },
+    "tests/integration/test_infrastructure.py": {
+      "module": "infrastructure",
+      "path": "tests/integration/test_infrastructure.py"
+    },
+    "tests/integration/test_multi_routing.py": {
+      "module": "multi_routing",
+      "path": "tests/integration/test_multi_routing.py"
+    },
+    "tests/integration/test_cross_team.py": {
+      "module": "cross_team",
+      "path": "tests/integration/test_cross_team.py"
+    },
+    "demo/test_escalation_system.py": {
+      "module": "escalation_system",
+      "path": "demo/test_escalation_system.py"
+    },
+    "demo/test_orchestrator.py": {
+      "module": "orchestrator",
+      "path": "demo/test_orchestrator.py"
+    },
+    "demo/test_insurance_team.py": {
+      "module": "insurance_team",
+      "path": "demo/test_insurance_team.py"
+    },
+    "demo/test_escalation_integration.py": {
+      "module": "escalation_integration",
+      "path": "demo/test_escalation_integration.py"
+    },
+    "apps/test_specialist_teams.py": {
+      "module": "specialist_teams",
+      "path": "apps/test_specialist_teams.py"
+    }
+  },
+  "source_coverage": {
+    "main.py": {
+      "module": "main",
+      "covered": false,
+      "critical": false
+    },
+    "verify_model_consistency.py": {
+      "module": "verify_model_consistency",
+      "covered": false,
+      "critical": false
+    },
+    "verify_import_cleanup.py": {
+      "module": "verify_import_cleanup",
+      "covered": false,
+      "critical": false
+    },
+    "__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "validate_memory_system.py": {
+      "module": "validate_memory_system",
+      "covered": false,
+      "critical": false
+    },
+    "analyze_imports.py": {
+      "module": "analyze_imports",
+      "covered": false,
+      "critical": false
+    },
+    "validate_team_coordination.py": {
+      "module": "validate_team_coordination",
+      "covered": false,
+      "critical": false
+    },
+    "validate_team_framework.py": {
+      "module": "validate_team_framework",
+      "covered": false,
+      "critical": false
+    },
+    "validate_infrastructure.py": {
+      "module": "validate_infrastructure",
+      "covered": false,
+      "critical": false
+    },
+    "playground.py": {
+      "module": "playground",
+      "covered": true,
+      "critical": false
+    },
+    "cleanup_dead_code.py": {
+      "module": "cleanup_dead_code",
+      "covered": false,
+      "critical": false
+    },
+    "audit_claude_models.py": {
+      "module": "audit_claude_models",
+      "covered": false,
+      "critical": false
+    },
+    "orchestrator/main_orchestrator.py": {
+      "module": "main_orchestrator",
+      "covered": false,
+      "critical": true
+    },
+    "orchestrator/state_synchronizer.py": {
+      "module": "state_synchronizer",
+      "covered": false,
+      "critical": false
+    },
+    "orchestrator/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "orchestrator/text_normalizer.py": {
+      "module": "text_normalizer",
+      "covered": false,
+      "critical": false
+    },
+    "orchestrator/clarification_handler.py": {
+      "module": "clarification_handler",
+      "covered": false,
+      "critical": true
+    },
+    "orchestrator/response_models.py": {
+      "module": "response_models",
+      "covered": false,
+      "critical": false
+    },
+    "orchestrator/integration_patterns.py": {
+      "module": "integration_patterns",
+      "covered": false,
+      "critical": false
+    },
+    "orchestrator/frustration_detector.py": {
+      "module": "frustration_detector",
+      "covered": false,
+      "critical": true
+    },
+    "orchestrator/routing_logic.py": {
+      "module": "routing_logic",
+      "covered": false,
+      "critical": true
+    },
+    "agents/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/ticket_system.py": {
+      "module": "ticket_system",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/escalation_types.py": {
+      "module": "escalation_types",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/escalation_manager.py": {
+      "module": "escalation_manager",
+      "covered": false,
+      "critical": true
+    },
+    "escalation_systems/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/pattern_learner.py": {
+      "module": "pattern_learner",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/technical_escalation_agent.py": {
+      "module": "technical_escalation_agent",
+      "covered": false,
+      "critical": true
+    },
+    "escalation_systems/orchestrator_integration.py": {
+      "module": "orchestrator_integration",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/feedback_human_systems/conversation_manager.py": {
+      "module": "conversation_manager",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/feedback_human_systems/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/feedback_human_systems/human_agent_mock.py": {
+      "module": "human_agent_mock",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/feedback_human_systems/feedback_analyzer.py": {
+      "module": "feedback_analyzer",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/feedback_human_systems/feedback_collector.py": {
+      "module": "feedback_collector",
+      "covered": false,
+      "critical": false
+    },
+    "escalation_systems/feedback_human_systems/demo.py": {
+      "module": "demo",
+      "covered": false,
+      "critical": false
+    },
+    "config/models.py": {
+      "module": "models",
+      "covered": false,
+      "critical": false
+    },
+    "config/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "config/settings.py": {
+      "module": "settings",
+      "covered": false,
+      "critical": false
+    },
+    "config/database.py": {
+      "module": "database",
+      "covered": false,
+      "critical": false
+    },
+    "knowledge/agentic_filters.py": {
+      "module": "agentic_filters",
+      "covered": false,
+      "critical": false
+    },
+    "knowledge/csv_knowledge_base.py": {
+      "module": "csv_knowledge_base",
+      "covered": false,
+      "critical": true
+    },
+    "knowledge/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "knowledge/knowledge_parser.py": {
+      "module": "knowledge_parser",
+      "covered": false,
+      "critical": false
+    },
+    "memory/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "memory/memory_manager.py": {
+      "module": "memory_manager",
+      "covered": false,
+      "critical": true
+    },
+    "memory/memory_config.py": {
+      "module": "memory_config",
+      "covered": false,
+      "critical": false
+    },
+    "memory/pattern_detector.py": {
+      "module": "pattern_detector",
+      "covered": false,
+      "critical": true
+    },
+    "memory/session_manager.py": {
+      "module": "session_manager",
+      "covered": false,
+      "critical": false
+    },
+    "utils/team_utils.py": {
+      "module": "team_utils",
+      "covered": false,
+      "critical": false
+    },
+    "utils/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "utils/team_utils_original.py": {
+      "module": "team_utils_original",
+      "covered": false,
+      "critical": false
+    },
+    "utils/formatters.py": {
+      "module": "formatters",
+      "covered": false,
+      "critical": false
+    },
+    "demo/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "teams/team_config.py": {
+      "module": "team_config",
+      "covered": false,
+      "critical": false
+    },
+    "teams/base_team.py": {
+      "module": "base_team",
+      "covered": false,
+      "critical": true
+    },
+    "teams/insurance_team.py": {
+      "module": "insurance_team",
+      "covered": true,
+      "critical": false
+    },
+    "teams/credit_team.py": {
+      "module": "credit_team",
+      "covered": true,
+      "critical": false
+    },
+    "teams/__init__.py": {
+      "module": "__init__",
+      "covered": false,
+      "critical": false
+    },
+    "teams/team_tools.py": {
+      "module": "team_tools",
+      "covered": false,
+      "critical": false
+    },
+    "teams/investments_team.py": {
+      "module": "investments_team",
+      "covered": true,
+      "critical": false
+    },
+    "teams/digital_account_team.py": {
+      "module": "digital_account_team",
+      "covered": true,
+      "critical": false
+    },
+    "teams/shared_state_tools.py": {
+      "module": "shared_state_tools",
+      "covered": false,
+      "critical": false
+    },
+    "teams/cards_team.py": {
+      "module": "cards_team",
+      "covered": true,
+      "critical": false
+    },
+    "teams/team_prompts.py": {
+      "module": "team_prompts",
+      "covered": false,
+      "critical": false
+    },
+    "apps/playground/simple_teams_demo.py": {
+      "module": "simple_teams_demo",
+      "covered": false,
+      "critical": false
+    },
+    "apps/playground/demo_specialist_teams.py": {
+      "module": "demo_specialist_teams",
+      "covered": false,
+      "critical": false
+    }
+  },
+  "critical_paths": {
+    "orchestration": {
+      "description": "Customer query routing and team selection",
+      "components": [
+        "main_orchestrator",
+        "routing_logic",
+        "clarification_handler"
+      ],
+      "coverage": 0.0,
+      "priority": "CRITICAL",
+      "covered_components": 0,
+      "total_components": 3
+    },
+    "knowledge_retrieval": {
+      "description": "Knowledge base search and filtering",
+      "components": [
+        "csv_knowledge_base",
+        "knowledge_parser",
+        "agentic_filters"
+      ],
+      "coverage": 0.0,
+      "priority": "HIGH",
+      "covered_components": 0,
+      "total_components": 3
+    },
+    "memory_system": {
+      "description": "User memory and pattern detection",
+      "components": [
+        "memory_manager",
+        "pattern_detector",
+        "session_manager"
+      ],
+      "coverage": 0.0,
+      "priority": "HIGH",
+      "covered_components": 0,
+      "total_components": 3
+    },
+    "team_coordination": {
+      "description": "Multi-agent team collaboration",
+      "components": [
+        "base_team",
+        "team_tools",
+        "shared_state_tools"
+      ],
+      "coverage": 0.0,
+      "priority": "HIGH",
+      "covered_components": 0,
+      "total_components": 3
+    },
+    "fraud_detection": {
+      "description": "Fraud and scam detection in teams",
+      "components": [
+        "credit_team",
+        "cards_team"
+      ],
+      "coverage": 100.0,
+      "priority": "CRITICAL",
+      "covered_components": 2,
+      "total_components": 2
+    },
+    "escalation": {
+      "description": "Human handoff and technical escalation",
+      "components": [
+        "escalation_manager",
+        "technical_escalation_agent",
+        "ticket_system"
+      ],
+      "coverage": 0.0,
+      "priority": "MEDIUM",
+      "covered_components": 0,
+      "total_components": 3
+    }
+  },
+  "recommendations": [
+    {
+      "priority": 1,
+      "category": "Critical Modules",
+      "action": "Create unit tests for critical untested modules",
+      "modules": [
+        "main_orchestrator",
+        "clarification_handler",
+        "frustration_detector",
+        "routing_logic",
+        "escalation_manager"
+      ],
+      "impact": "Essential for system reliability"
+    },
+    {
+      "priority": 2,
+      "category": "Integration Tests",
+      "action": "Create integration tests for key workflows",
+      "tests": [
+        "test_orchestrator_to_team_routing",
+        "test_knowledge_filtering_per_team",
+        "test_memory_persistence_across_sessions",
+        "test_escalation_workflow_complete"
+      ],
+      "impact": "Validates system component interactions"
+    },
+    {
+      "priority": 3,
+      "category": "Language Tests",
+      "action": "Add Portuguese language edge case tests",
+      "tests": [
+        "test_portuguese_text_normalization",
+        "test_accent_handling",
+        "test_informal_language_detection",
+        "test_typo_correction"
+      ],
+      "impact": "Critical for Brazilian market"
+    },
+    {
+      "priority": 4,
+      "category": "Performance Tests",
+      "action": "Create performance benchmarks",
+      "tests": [
+        "test_response_time_under_2s",
+        "test_knowledge_search_performance",
+        "test_concurrent_user_handling",
+        "test_memory_retrieval_speed"
+      ],
+      "impact": "Ensures demo readiness"
+    }
+  ]
+}

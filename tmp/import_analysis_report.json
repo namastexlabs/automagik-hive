@@ -1,0 +1,1003 @@
+{
+  "summary": {
+    "files_analyzed": 90,
+    "total_imports": 847,
+    "total_unused": 196,
+    "files_with_unused_count": 60
+  },
+  "files_with_unused": [
+    {
+      "file": "escalation_systems/__init__.py",
+      "unused_count": 14,
+      "unused_imports": [
+        {
+          "module": "escalation_manager",
+          "name": "EscalationManager",
+          "alias": null,
+          "line": 6
+        },
+        {
+          "module": "escalation_manager",
+          "name": "create_escalation_manager",
+          "alias": null,
+          "line": 6
+        },
+        {
+          "module": "ticket_system",
+          "name": "TicketSystem",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "ticket_system",
+          "name": "Ticket",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "ticket_system",
+          "name": "TicketPriority",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "ticket_system",
+          "name": "TicketStatus",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "ticket_system",
+          "name": "TicketType",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "technical_escalation_agent",
+          "name": "TechnicalEscalationAgent",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "technical_escalation_agent",
+          "name": "create_technical_escalation_agent",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "pattern_learner",
+          "name": "EscalationPatternLearner",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "pattern_learner",
+          "name": "create_pattern_learner",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "escalation_types",
+          "name": "EscalationTrigger",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "orchestrator_integration",
+          "name": "EscalationOrchestrationIntegration",
+          "alias": null,
+          "line": 11
+        },
+        {
+          "module": "orchestrator_integration",
+          "name": "create_escalation_integration",
+          "alias": null,
+          "line": 11
+        }
+      ]
+    },
+    {
+      "file": "teams/__init__.py",
+      "unused_count": 14,
+      "unused_imports": [
+        {
+          "module": "teams.base_team",
+          "name": "BaseTeam",
+          "alias": null,
+          "line": 3
+        },
+        {
+          "module": "teams.base_team",
+          "name": "SpecialistTeam",
+          "alias": null,
+          "line": 3
+        },
+        {
+          "module": "teams.base_team",
+          "name": "TeamResponse",
+          "alias": null,
+          "line": 3
+        },
+        {
+          "module": "teams.insurance_team",
+          "name": "InsuranceTeam",
+          "alias": null,
+          "line": 4
+        },
+        {
+          "module": "teams.insurance_team",
+          "name": "create_insurance_team",
+          "alias": null,
+          "line": 4
+        },
+        {
+          "module": "teams.team_config",
+          "name": "TeamConfigManager",
+          "alias": null,
+          "line": 5
+        },
+        {
+          "module": "teams.team_config",
+          "name": "TeamConfig",
+          "alias": null,
+          "line": 5
+        },
+        {
+          "module": "teams.team_prompts",
+          "name": "TeamPrompts",
+          "alias": null,
+          "line": 6
+        },
+        {
+          "module": "teams.team_prompts",
+          "name": "team_prompts",
+          "alias": null,
+          "line": 6
+        },
+        {
+          "module": "teams.team_tools",
+          "name": "pagbank_validator",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "teams.team_tools",
+          "name": "security_checker",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "teams.team_tools",
+          "name": "financial_calculator",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "teams.team_tools",
+          "name": "get_team_tools",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "teams.team_tools",
+          "name": "TEAM_TOOLS",
+          "alias": null,
+          "line": 7
+        }
+      ]
+    },
+    {
+      "file": "orchestrator/__init__.py",
+      "unused_count": 13,
+      "unused_imports": [
+        {
+          "module": "main_orchestrator",
+          "name": "PagBankMainOrchestrator",
+          "alias": null,
+          "line": 6
+        },
+        {
+          "module": "main_orchestrator",
+          "name": "create_main_orchestrator",
+          "alias": null,
+          "line": 6
+        },
+        {
+          "module": "frustration_detector",
+          "name": "FrustrationDetector",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "frustration_detector",
+          "name": "frustration_detector",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "text_normalizer",
+          "name": "PortugueseTextNormalizer",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "text_normalizer",
+          "name": "text_normalizer",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "routing_logic",
+          "name": "RoutingEngine",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "routing_logic",
+          "name": "routing_engine",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "routing_logic",
+          "name": "TeamType",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "routing_logic",
+          "name": "RoutingDecision",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "clarification_handler",
+          "name": "ClarificationHandler",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "clarification_handler",
+          "name": "clarification_handler",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "clarification_handler",
+          "name": "ClarificationType",
+          "alias": null,
+          "line": 10
+        }
+      ]
+    },
+    {
+      "file": "__init__.py",
+      "unused_count": 12,
+      "unused_imports": [
+        {
+          "module": "config",
+          "name": "settings",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "config",
+          "name": "model_config",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "config",
+          "name": "db_config",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "config.database",
+          "name": "init_database",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "config.database",
+          "name": "get_db_session",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "config.database",
+          "name": "health_check",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "config.models",
+          "name": "get_claude_client",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "config.models",
+          "name": "get_model_params",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "config.models",
+          "name": "validate_models",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "config.settings",
+          "name": "get_setting",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "config.settings",
+          "name": "get_team_names",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "config.settings",
+          "name": "PROJECT_ROOT",
+          "alias": null,
+          "line": 10
+        }
+      ]
+    },
+    {
+      "file": "teams/credit_team.py",
+      "unused_count": 10,
+      "unused_imports": [
+        {
+          "module": "re",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "datetime",
+          "name": "datetime",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "decimal",
+          "name": "Decimal",
+          "alias": null,
+          "line": 11
+        },
+        {
+          "module": "agno.team",
+          "name": "Team",
+          "alias": null,
+          "line": 13
+        },
+        {
+          "module": "agno.models.anthropic",
+          "name": "Claude",
+          "alias": null,
+          "line": 15
+        },
+        {
+          "module": "pydantic",
+          "name": "BaseModel",
+          "alias": null,
+          "line": 16
+        },
+        {
+          "module": "pydantic",
+          "name": "Field",
+          "alias": null,
+          "line": 16
+        },
+        {
+          "module": "teams.team_prompts",
+          "name": "TeamPrompts",
+          "alias": null,
+          "line": 21
+        },
+        {
+          "module": "teams.team_tools",
+          "name": "security_checker",
+          "alias": null,
+          "line": 22
+        },
+        {
+          "module": "utils.formatters",
+          "name": "format_response_markdown",
+          "alias": null,
+          "line": 26
+        }
+      ]
+    },
+    {
+      "file": "teams/investments_team.py",
+      "unused_count": 9,
+      "unused_imports": [
+        {
+          "module": "datetime",
+          "name": "datetime",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "decimal",
+          "name": "Decimal",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "agno.team",
+          "name": "Team",
+          "alias": null,
+          "line": 12
+        },
+        {
+          "module": "agno.models.anthropic",
+          "name": "Claude",
+          "alias": null,
+          "line": 14
+        },
+        {
+          "module": "pydantic",
+          "name": "BaseModel",
+          "alias": null,
+          "line": 15
+        },
+        {
+          "module": "pydantic",
+          "name": "Field",
+          "alias": null,
+          "line": 15
+        },
+        {
+          "module": "teams.team_prompts",
+          "name": "TeamPrompts",
+          "alias": null,
+          "line": 20
+        },
+        {
+          "module": "teams.team_tools",
+          "name": "security_checker",
+          "alias": null,
+          "line": 21
+        },
+        {
+          "module": "utils.formatters",
+          "name": "format_response_markdown",
+          "alias": null,
+          "line": 25
+        }
+      ]
+    },
+    {
+      "file": "escalation_systems/tests/test_escalation.py",
+      "unused_count": 7,
+      "unused_imports": [
+        {
+          "module": "json",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "unittest.mock",
+          "name": "Mock",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "escalation_systems.technical_escalation_agent",
+          "name": "TechnicalEscalationAgent",
+          "alias": null,
+          "line": 14
+        },
+        {
+          "module": "escalation_systems.ticket_system",
+          "name": "Ticket",
+          "alias": null,
+          "line": 17
+        },
+        {
+          "module": "escalation_systems.escalation_manager",
+          "name": "EscalationManager",
+          "alias": null,
+          "line": 20
+        },
+        {
+          "module": "escalation_systems.pattern_learner",
+          "name": "EscalationPatternLearner",
+          "alias": null,
+          "line": 24
+        },
+        {
+          "module": "escalation_systems.pattern_learner",
+          "name": "PatternType",
+          "alias": null,
+          "line": 24
+        }
+      ]
+    },
+    {
+      "file": "config/__init__.py",
+      "unused_count": 7,
+      "unused_imports": [
+        {
+          "module": "database",
+          "name": "db_config",
+          "alias": null,
+          "line": 3
+        },
+        {
+          "module": "database",
+          "name": "health_check",
+          "alias": null,
+          "line": 3
+        },
+        {
+          "module": "database",
+          "name": "init_database",
+          "alias": null,
+          "line": 3
+        },
+        {
+          "module": "models",
+          "name": "model_config",
+          "alias": null,
+          "line": 4
+        },
+        {
+          "module": "models",
+          "name": "validate_models",
+          "alias": null,
+          "line": 4
+        },
+        {
+          "module": "settings",
+          "name": "settings",
+          "alias": null,
+          "line": 5
+        },
+        {
+          "module": "settings",
+          "name": "validate_environment",
+          "alias": null,
+          "line": 5
+        }
+      ]
+    },
+    {
+      "file": "teams/team_tools.py",
+      "unused_count": 7,
+      "unused_imports": [
+        {
+          "module": "json",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "logging",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "typing",
+          "name": "Optional",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "typing",
+          "name": "Tuple",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "datetime",
+          "name": "timedelta",
+          "alias": null,
+          "line": 11
+        },
+        {
+          "module": "agno.tools",
+          "name": "tool",
+          "alias": null,
+          "line": 14
+        },
+        {
+          "module": "config.settings",
+          "name": "settings",
+          "alias": null,
+          "line": 19
+        }
+      ]
+    },
+    {
+      "file": "escalation_systems/feedback_human_systems/tests/test_feedback_human.py",
+      "unused_count": 6,
+      "unused_imports": [
+        {
+          "module": "sys",
+          "alias": null,
+          "line": 12
+        },
+        {
+          "module": "os",
+          "alias": null,
+          "line": 13
+        },
+        {
+          "module": "typing",
+          "name": "List",
+          "alias": null,
+          "line": 11
+        },
+        {
+          "module": "typing",
+          "name": "Dict",
+          "alias": null,
+          "line": 11
+        },
+        {
+          "module": "feedback_analyzer",
+          "name": "CustomerSegment",
+          "alias": null,
+          "line": 25
+        },
+        {
+          "module": "feedback_analyzer",
+          "name": "ImprovementOpportunity",
+          "alias": null,
+          "line": 25
+        }
+      ]
+    },
+    {
+      "file": "tests/test_team_framework.py",
+      "unused_count": 5,
+      "unused_imports": [
+        {
+          "module": "unittest.mock",
+          "name": "patch",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "unittest.mock",
+          "name": "MagicMock",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "datetime",
+          "name": "datetime",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "teams.base_team",
+          "name": "SpecialistTeam",
+          "alias": null,
+          "line": 12
+        },
+        {
+          "module": "teams.team_prompts",
+          "name": "team_prompts",
+          "alias": null,
+          "line": 13
+        }
+      ]
+    },
+    {
+      "file": "escalation_systems/feedback_human_systems/__init__.py",
+      "unused_count": 4,
+      "unused_imports": [
+        {
+          "module": "feedback_collector",
+          "name": "FeedbackCollector",
+          "alias": null,
+          "line": 11
+        },
+        {
+          "module": "human_agent_mock",
+          "name": "HumanAgentMock",
+          "alias": null,
+          "line": 12
+        },
+        {
+          "module": "conversation_manager",
+          "name": "ConversationManager",
+          "alias": null,
+          "line": 13
+        },
+        {
+          "module": "feedback_analyzer",
+          "name": "FeedbackAnalyzer",
+          "alias": null,
+          "line": 14
+        }
+      ]
+    },
+    {
+      "file": "tests/integration/test_cross_team.py",
+      "unused_count": 4,
+      "unused_imports": [
+        {
+          "module": "unittest.mock",
+          "name": "MagicMock",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "typing",
+          "name": "Dict",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "typing",
+          "name": "Any",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "teams.insurance_team",
+          "name": "InsuranceTeam",
+          "alias": null,
+          "line": 12
+        }
+      ]
+    },
+    {
+      "file": "validate_memory_system.py",
+      "unused_count": 3,
+      "unused_imports": [
+        {
+          "module": "asyncio",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "typing",
+          "name": "List",
+          "alias": null,
+          "line": 10
+        },
+        {
+          "module": "memory.memory_manager",
+          "name": "MemoryManager",
+          "alias": null,
+          "line": 19
+        }
+      ]
+    },
+    {
+      "file": "validate_infrastructure.py",
+      "unused_count": 3,
+      "unused_imports": [
+        {
+          "module": "os",
+          "alias": null,
+          "line": 5
+        },
+        {
+          "module": "pagbank.config.models",
+          "name": "model_config",
+          "alias": null,
+          "line": 23
+        },
+        {
+          "module": "pagbank.config.settings",
+          "name": "settings",
+          "alias": null,
+          "line": 24
+        }
+      ]
+    },
+    {
+      "file": "cleanup_dead_code.py",
+      "unused_count": 3,
+      "unused_imports": [
+        {
+          "module": "os",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "re",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "pathlib",
+          "name": "Path",
+          "alias": null,
+          "line": 9
+        }
+      ]
+    },
+    {
+      "file": "escalation_systems/ticket_system.py",
+      "unused_count": 3,
+      "unused_imports": [
+        {
+          "module": "sys",
+          "alias": null,
+          "line": 6
+        },
+        {
+          "module": "pathlib",
+          "name": "Path",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "datetime",
+          "name": "timedelta",
+          "alias": null,
+          "line": 9
+        }
+      ]
+    },
+    {
+      "file": "knowledge/validation_tests.py",
+      "unused_count": 3,
+      "unused_imports": [
+        {
+          "module": "typing",
+          "name": "Dict",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "typing",
+          "name": "List",
+          "alias": null,
+          "line": 9
+        },
+        {
+          "module": "typing",
+          "name": "Any",
+          "alias": null,
+          "line": 9
+        }
+      ]
+    },
+    {
+      "file": "tests/test_digital_account_team.py",
+      "unused_count": 3,
+      "unused_imports": [
+        {
+          "module": "unittest.mock",
+          "name": "MagicMock",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "datetime",
+          "name": "datetime",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "teams.digital_account_team",
+          "name": "DigitalAccountTeam",
+          "alias": null,
+          "line": 11
+        }
+      ]
+    },
+    {
+      "file": "tests/test_cards_team.py",
+      "unused_count": 3,
+      "unused_imports": [
+        {
+          "module": "unittest.mock",
+          "name": "MagicMock",
+          "alias": null,
+          "line": 7
+        },
+        {
+          "module": "datetime",
+          "name": "datetime",
+          "alias": null,
+          "line": 8
+        },
+        {
+          "module": "teams.cards_team",
+          "name": "CardsTeam",
+          "alias": null,
+          "line": 11
+        }
+      ]
+    }
+  ],
+  "import_patterns": {
+    "json": 15,
+    "datetime": 49,
+    "pathlib": 23,
+    "config": 24,
+    "time": 5,
+    "asyncio": 7,
+    "typing": 181,
+    "agno": 63,
+    "memory": 21,
+    "teams": 81,
+    "knowledge": 17,
+    "ast": 2,
+    "collections": 7,
+    "traceback": 4,
+    "orchestrator": 12,
+    "playground": 1,
+    "utils": 7,
+    "sys": 4,
+    "os": 12,
+    "rich": 10,
+    "pagbank": 18,
+    "sqlalchemy": 6,
+    "psycopg2": 2,
+    "re": 15,
+    "frustration_detector": 3,
+    "text_normalizer": 3,
+    "routing_logic": 5,
+    "clarification_handler": 4,
+    "response_models": 1,
+    "state_synchronizer": 1,
+    "logging": 11,
+    "main_orchestrator": 2,
+    "unicodedata": 1,
+    "dataclasses": 16,
+    "enum": 7,
+    "pydantic": 18,
+    "inspect": 1,
+    "uuid": 6,
+    "escalation_manager": 4,
+    "ticket_system": 11,
+    "technical_escalation_agent": 3,
+    "pattern_learner": 3,
+    "escalation_types": 3,
+    "orchestrator_integration": 2,
+    "sqlite3": 2,
+    "textwrap": 6,
+    "feedback_collector": 6,
+    "human_agent_mock": 5,
+    "conversation_manager": 5,
+    "feedback_analyzer": 7,
+    "random": 3,
+    "statistics": 2,
+    "pytest": 11,
+    "unittest": 28,
+    "escalation_systems": 24,
+    "anthropic": 1,
+    "dotenv": 4,
+    "database": 3,
+    "models": 2,
+    "settings": 2,
+    "pandas": 1,
+    "csv": 1,
+    "csv_knowledge_base": 1,
+    "agentic_filters": 1,
+    "decimal": 8,
+    "asyncpg": 1,
+    "threading": 1,
+    "psutil": 1,
+    "gc": 1,
+    "memory_config": 2,
+    "pattern_detector": 2,
+    "session_manager": 2,
+    "shared_state_tools": 9,
+    "base_team": 4,
+    "team_prompts": 2,
+    "team_tools": 6,
+    "team_config": 2
+  },
+  "recommendations": [
+    {
+      "priority": "high",
+      "action": "Remove unused imports",
+      "details": "Found 196 unused imports across 60 files"
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+"""General settings for PagBank Multi-Agent System."""
+
+import os
+from pathlib import Path
+from typing import Any, Dict, List
+
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+class Settings:
+    """General application settings."""
+    
+    def __init__(self):
+        # Project paths
+        self.project_root = Path(__file__).parent.parent
+        self.data_dir = self.project_root / "data"
+        self.logs_dir = self.project_root / "logs"
+        self.knowledge_dir = self.project_root / "knowledge"
+        self.tests_dir = self.project_root / "tests"
+        
+        # Create directories if they don't exist
+        self.data_dir.mkdir(exist_ok=True)
+        self.logs_dir.mkdir(exist_ok=True)
+        
+        # Application settings
+        self.app_name = "PagBank Multi-Agent System"
+        self.version = "0.1.0"
+        self.environment = os.getenv("ENVIRONMENT", "development")
+        self.debug = os.getenv("DEBUG", "false").lower() == "true"
+        
+        # API settings
+        self.api_host = os.getenv("API_HOST", "localhost")
+        self.api_port = int(os.getenv("API_PORT", "8000"))
+        self.api_workers = int(os.getenv("API_WORKERS", "1"))
+        
+        # Logging settings
+        self.log_level = os.getenv("LOG_LEVEL", "INFO")
+        self.log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        self.log_file = self.logs_dir / "pagbank.log"
+        
+        # Agent settings
+        self.max_conversation_turns = int(os.getenv("MAX_CONVERSATION_TURNS", "20"))
+        self.session_timeout = int(os.getenv("SESSION_TIMEOUT", "1800"))  # 30 minutes
+        self.max_concurrent_users = int(os.getenv("MAX_CONCURRENT_USERS", "100"))
+        
+        # Memory settings
+        self.memory_retention_days = int(os.getenv("MEMORY_RETENTION_DAYS", "30"))
+        self.max_memory_entries = int(os.getenv("MAX_MEMORY_ENTRIES", "1000"))
+        
+        # Knowledge base settings
+        self.knowledge_file = self.knowledge_dir / "knowledge.csv"
+        self.knowledge_update_interval = int(os.getenv("KNOWLEDGE_UPDATE_INTERVAL", "3600"))  # 1 hour
+        self.max_knowledge_results = int(os.getenv("MAX_KNOWLEDGE_RESULTS", "10"))
+        
+        # Security settings
+        self.max_request_size = int(os.getenv("MAX_REQUEST_SIZE", "10485760"))  # 10MB
+        self.rate_limit_requests = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
+        self.rate_limit_period = int(os.getenv("RATE_LIMIT_PERIOD", "60"))  # 1 minute
+        
+        # Team routing settings
+        self.team_routing_timeout = int(os.getenv("TEAM_ROUTING_TIMEOUT", "30"))
+        self.max_team_switches = int(os.getenv("MAX_TEAM_SWITCHES", "3"))
+        
+        # Escalation settings
+        self.escalation_triggers = {
+            "frustration_threshold": int(os.getenv("FRUSTRATION_THRESHOLD", "3")),
+            "complex_query_threshold": int(os.getenv("COMPLEX_QUERY_THRESHOLD", "5")),
+            "unresolved_time_threshold": int(os.getenv("UNRESOLVED_TIME_THRESHOLD", "600"))  # 10 minutes
+        }
+        
+        # Supported languages
+        self.supported_languages = ["pt-BR", "en-US"]
+        self.default_language = "pt-BR"
+        
+        # Team configurations
+        self.team_configs = {
+            "cards": {
+                "name": "Cards Team",
+                "description": "Especialistas em cartões de crédito e débito",
+                "max_agents": 3,
+                "knowledge_filters": ["cartao", "credito", "debito", "fatura", "limite"]
+            },
+            "digital_account": {
+                "name": "Digital Account Team", 
+                "description": "Especialistas em conta digital e PIX",
+                "max_agents": 3,
+                "knowledge_filters": ["conta", "pix", "transferencia", "saldo", "extrato"]
+            },
+            "investments": {
+                "name": "Investments Team",
+                "description": "Especialistas em investimentos",
+                "max_agents": 2,
+                "knowledge_filters": ["investimento", "cdb", "tesouro", "renda", "aplicacao"]
+            },
+            "credit": {
+                "name": "Credit Team",
+                "description": "Especialistas em crédito e empréstimos",
+                "max_agents": 2,
+                "knowledge_filters": ["credito", "emprestimo", "financiamento", "juros", "parcela"]
+            },
+            "insurance": {
+                "name": "Insurance Team",
+                "description": "Especialistas em seguros",
+                "max_agents": 2,
+                "knowledge_filters": ["seguro", "proteção", "cobertura", "sinistro", "apolice"]
+            }
+        }
+        
+        # Demo settings
+        self.demo_scenarios = [
+            "Consulta de Saldo e Extrato",
+            "Problemas com Cartão de Crédito",
+            "Configuração de PIX",
+            "Dúvidas sobre Investimentos",
+            "Solicitação de Crédito",
+            "Informações sobre Seguros"
+        ]
+        
+        # Performance monitoring
+        self.enable_metrics = os.getenv("ENABLE_METRICS", "true").lower() == "true"
+        self.metrics_interval = int(os.getenv("METRICS_INTERVAL", "60"))  # 1 minute
+        
+        # Cache settings
+        self.cache_ttl = int(os.getenv("CACHE_TTL", "300"))  # 5 minutes
+        self.cache_max_size = int(os.getenv("CACHE_MAX_SIZE", "1000"))
+    
+    def get_team_config(self, team_name: str) -> Dict[str, Any]:
+        """Get configuration for specific team."""
+        return self.team_configs.get(team_name, {})
+    
+    def get_all_knowledge_filters(self) -> List[str]:
+        """Get all knowledge filters from all teams."""
+        filters = []
+        for team_config in self.team_configs.values():
+            filters.extend(team_config.get("knowledge_filters", []))
+        return list(set(filters))
+    
+    def is_production(self) -> bool:
+        """Check if running in production environment."""
+        return self.environment.lower() == "production"
+    
+    def get_logging_config(self) -> Dict[str, Any]:
+        """Get logging configuration."""
+        return {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "standard": {
+                    "format": self.log_format
+                },
+                "detailed": {
+                    "format": "%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(message)s"
+                }
+            },
+            "handlers": {
+                "default": {
+                    "level": self.log_level,
+                    "formatter": "standard",
+                    "class": "logging.StreamHandler",
+                    "stream": "ext://sys.stdout"
+                },
+                "file": {
+                    "level": self.log_level,
+                    "formatter": "detailed",
+                    "class": "logging.FileHandler",
+                    "filename": str(self.log_file),
+                    "mode": "a"
+                }
+            },
+            "loggers": {
+                "": {
+                    "handlers": ["default", "file"],
+                    "level": self.log_level,
+                    "propagate": False
+                }
+            }
+        }
+    
+    def validate_settings(self) -> Dict[str, bool]:
+        """Validate all settings."""
+        validations = {}
+        
+        # Check required directories
+        validations["data_dir"] = self.data_dir.exists()
+        validations["logs_dir"] = self.logs_dir.exists()
+        validations["knowledge_dir"] = self.knowledge_dir.exists()
+        
+        # Check environment variables
+        validations["anthropic_api_key"] = bool(os.getenv("ANTHROPIC_API_KEY"))
+        
+        # Check numeric settings
+        validations["valid_port"] = 1 <= self.api_port <= 65535
+        validations["valid_workers"] = self.api_workers > 0
+        validations["valid_timeout"] = self.session_timeout > 0
+        
+        return validations
+
+# Global settings instance
+settings = Settings()
+
+# Common settings utilities
+def get_setting(key: str, default: Any = None) -> Any:
+    """Get a setting value."""
+    return getattr(settings, key, default)
+
+def get_team_names() -> List[str]:
+    """Get all team names."""
+    return list(settings.team_configs.keys())
+
+def get_project_root() -> Path:
+    """Get project root directory."""
+    return settings.project_root
+
+def validate_environment() -> Dict[str, bool]:
+    """Validate environment setup."""
+    return settings.validate_settings()
+
+# Export key settings for easy access
+PROJECT_ROOT = settings.project_root
+DATA_DIR = settings.data_dir
+LOGS_DIR = settings.logs_dir
+KNOWLEDGE_DIR = settings.knowledge_dir
+TESTS_DIR = settings.tests_dir

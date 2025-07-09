@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-07-08T23:35:01.772229",
+  "compliance": {
+    "sqlite_memory_db": true,
+    "memory_object_init": true,
+    "user_memory_persistence": false,
+    "session_summary_generation": false,
+    "pattern_detection": false,
+    "team_memory_integration": false,
+    "agent_memory_configuration": false
+  },
+  "performance": {
+    "memory_retrieval_ms": 1.69,
+    "pattern_detection_ms": 1.25,
+    "session_persistence_ms": 0.28,
+    "cleanup_efficiency_ms": 0,
+    "target_met": false
+  },
+  "isolation": false,
+  "workflows": {
+    "user_memory_across_sessions": false,
+    "pattern_detection_triggers": false,
+    "session_summary_generation": false,
+    "memory_cleanup_archival": false
+  },
+  "overall_score": 27.1,
+  "recommendations": [
+    "Optimize memory retrieval performance",
+    "Fix cross-team memory isolation",
+    "Address Agno v2 compliance issues"
+  ]
+}
