@@ -14,6 +14,18 @@ from config.settings import settings
 # Import memory system
 from memory.memory_manager import create_memory_manager
 
+# Import actual specialist teams
+from teams.cards_team import create_cards_team
+from teams.credit_team import create_credit_team
+from teams.digital_account_team import create_digital_account_team
+from teams.insurance_team import create_insurance_team
+from teams.investments_team import create_investments_team
+
+# Import escalation agents
+from escalation_systems.technical_escalation_agent import create_technical_escalation_agent
+from escalation_systems.feedback_human_systems.feedback_collector import create_feedback_collector
+from escalation_systems.feedback_human_systems.human_agent_mock import create_human_agent
+
 from .clarification_handler import clarification_handler
 
 # Import orchestrator modules
@@ -80,9 +92,9 @@ class PagBankMainOrchestrator:
             }
         }
         
-        # Create placeholder teams if not provided
+        # Create actual specialist teams if not provided
         if specialist_teams is None:
-            specialist_teams = self._create_placeholder_teams()
+            specialist_teams = self._create_specialist_teams()
         
         self.specialist_teams = specialist_teams
         
@@ -94,6 +106,31 @@ class PagBankMainOrchestrator:
         
         # Initialize state synchronizer
         self.state_synchronizer = TeamStateSynchronizer(self)
+    
+    def _create_specialist_teams(self) -> Dict[str, Agent]:
+        """Create actual specialist teams and escalation agents"""
+        teams = {}
+        
+        # Create knowledge base and memory manager for teams
+        from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+        knowledge_base = create_pagbank_knowledge_base()
+        
+        # Create all specialist teams
+        teams["Time de Especialistas em Cartões"] = create_cards_team(knowledge_base, self.memory_manager)
+        teams["Time de Conta Digital"] = create_digital_account_team(knowledge_base, self.memory_manager)
+        teams["Time de Assessoria de Investimentos"] = create_investments_team(knowledge_base, self.memory_manager)
+        teams["Time de Crédito e Financiamento"] = create_credit_team(knowledge_base, self.memory_manager)
+        teams["Time de Seguros e Saúde"] = create_insurance_team(knowledge_base, self.memory_manager)
+        
+        # Create escalation agents
+        teams["Agente de Escalonamento Técnico"] = create_technical_escalation_agent()
+        teams["Agente Coletor de Feedback"] = create_feedback_collector()
+        
+        # Note: Human agent mock is typically created on-demand during escalation
+        # but we can include it here for demo purposes
+        teams["Atendente Humano"] = create_human_agent()
+        
+        return teams
     
     def _create_placeholder_teams(self) -> Dict[str, Agent]:
         """Create placeholder teams for testing"""

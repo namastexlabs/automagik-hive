@@ -13,8 +13,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 
 from agno.agent import Agent
-from agno.memory.memory import Memory
-from agno.memory.sqlite import SqliteMemoryDb
+from agno.memory.v2.memory import Memory
+from agno.memory.v2.db.sqlite import SqliteMemoryDb
 from agno.models.openai import OpenAIChat
 
 
@@ -96,7 +96,7 @@ class FeedbackAnalyzer:
     def __init__(
         self,
         model_id: str = "claude-sonnet-4-20250514",
-        db_path: str = "tmp/feedback_analyzer.db"
+        db_path: str = "data/pagbank.db"
     ):
         """
         Initialize the Feedback Analyzer.
@@ -107,7 +107,10 @@ class FeedbackAnalyzer:
         """
         # Initialize memory
         self.memory = Memory(
-            db=SqliteMemoryDb(db_path=f"{db_path}.memory")
+            db=SqliteMemoryDb(
+                table_name="feedback_analysis_memories",
+                db_file=f"{db_path}.memory"
+            )
         )
         
         # Initialize the analyzer agent

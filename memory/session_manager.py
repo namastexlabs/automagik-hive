@@ -46,7 +46,7 @@ class SessionManager:
     Handles session persistence, state tracking, and cleanup
     """
     
-    def __init__(self, db_file: str = "tmp/pagbank_sessions.db", 
+    def __init__(self, db_file: str = "data/pagbank.db", 
                  session_timeout_minutes: int = 120):
         self.db_file = Path(db_file)
         self.session_timeout_minutes = session_timeout_minutes
@@ -395,7 +395,7 @@ class SessionManager:
         return json.dumps(export_data, indent=2)
 
 
-def create_session_manager(db_file: str = "tmp/pagbank_sessions.db",
+def create_session_manager(db_file: str = "data/pagbank.db",
                           session_timeout_minutes: int = 120) -> SessionManager:
     """Create and return a session manager instance"""
     return SessionManager(db_file, session_timeout_minutes)

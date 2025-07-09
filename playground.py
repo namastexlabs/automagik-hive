@@ -32,7 +32,7 @@ def create_pagbank_playground():
     # Configure demo storage  
     storage = SqliteStorage(
         table_name="pagbank_demo_sessions", 
-        db_file="tmp/pagbank_demo.db",
+        db_file="data/pagbank.db",
         auto_upgrade_schema=True
     )
     

@@ -5,6 +5,7 @@ Agent C: Memory System Foundation
 
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from agno.memory.v2.db.sqlite import SqliteMemoryDb
@@ -44,7 +45,7 @@ class MemoryManager:
         )
         
         self.session_manager = create_session_manager(
-            str(self.config.get_db_path().parent / "pagbank_sessions.db"),
+            "data/pagbank.db",
             self.config.session_timeout_minutes
         )
         

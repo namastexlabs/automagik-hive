@@ -534,7 +534,7 @@ if __name__ == '__main__':
     # Test the pattern learner
     print("=== PagBank Escalation Pattern Learner Test ===")
     
-    learner = create_pattern_learner("test_patterns.db")
+    learner = create_pattern_learner("data/pagbank.db")
     
     # Simulate some escalations
     test_escalations = [

@@ -111,40 +111,59 @@ A demonstração consiste em 6 casos distintos, cada um em um chat separado, mos
 - Várias perguntas em sequência
 
 **Amanda:**
-> "Oi! Preciso de 3 coisas: 1) maquininha com taxa competitiva 2) conta PJ com API para integração 3) cartão corporativo pros funcionários"
+> "Oi! Preciso de informações sobre maquininha de cartão com taxa competitiva para meu e-commerce"
 
 **Sistema (Time Principal):**
-> *[Detecta: múltiplas necessidades, perfil empresarial]*
+> *[Detecta: necessidade empresarial, maquininha = conta digital]*
 > 
-> "Olá Amanda! Vi que você tem necessidades empresariais específicas. Como são três áreas diferentes, vou conectar você com especialistas para cada uma. Começando pela maquininha - vou direcioná-la ao time comercial."
+> "Olá Amanda! Vou direcioná-la para nosso time de Conta Digital que cuida de soluções para empresas, incluindo maquininhas."
 
-**Sistema (Time Comercial - não especificado anteriormente mas mencionado aqui):**
+**Sistema (Time de Conta Digital):**
+> *[Busca Knowledge Base: "maquininha", "taxa", "e-commerce"]*
+> 
 > "Amanda, para seu e-commerce temos condições especiais:
 > - Taxa zero para novos clientes nos primeiros 3 meses
 > - Depois, taxas a partir de 0,99% no débito e 2,39% no crédito
 > - Link de pagamento e QR Code inclusos
+> - Antecipação de recebíveis disponível
 > 
-> Agora sobre a conta PJ..."
+> Você pode pedir sua maquininha pelo app ou site!"
+
+**Amanda:**
+> "Ótimo! E vocês têm conta PJ com API para integração com meu sistema?"
 
 **Sistema (Time de Conta Digital):**
-> *[Busca: publico_alvo="pessoa_juridica", tipo_informacao="beneficios"]*
+> *[Mantém contexto: cliente e-commerce, já falou sobre maquininha]*
 > 
-> "Para sua conta PJ:
-> - API completa para integração com seu e-commerce
-> - Webhooks para notificações de pagamento
-> - Conciliação automática
-> - Split de pagamento disponível
+> "Sim! Nossa conta PJ é perfeita para e-commerce:
+> - API completa com documentação detalhada
+> - Webhooks para notificações em tempo real
+> - Conciliação automática de vendas
+> - Split de pagamento para marketplace
+> - TEDs e Pix ilimitados sem taxa
 > 
-> E sobre os cartões corporativos..."
+> A integração é simples e temos suporte técnico especializado."
+
+**Amanda:**
+> "Excelente! E sobre cartões corporativos para meus funcionários?"
+
+**Sistema (Time Principal):**
+> *[Detecta: mudança de assunto para cartões, mantém contexto empresarial]*
+> 
+> "Vou transferir você para nosso time de Cartões para explicar as opções corporativas."
 
 **Sistema (Time de Cartões):**
-> "Oferecemos cartões corporativos pré-pagos:
-> - Emissão: R$ 12,90 por cartão
-> - Controle total de gastos por funcionário
-> - Recarga instantânea pelo app
-> - Relatórios detalhados de despesas
+> *[Recebe contexto: cliente PJ, e-commerce, já tem maquininha e conta]*
 > 
-> Posso ajudar a calcular uma proposta completa?"
+> "Amanda, complementando sua estrutura empresarial, oferecemos:
+> - Cartões corporativos pré-pagos
+> - Emissão: R$ 12,90 por cartão  
+> - Controle individual de gastos por funcionário
+> - Recarga instantânea pelo app
+> - Relatórios detalhados para controle de despesas
+> - Integração com sua conta PJ
+> 
+> Como você já terá conta PJ conosco, a gestão fica centralizada!"
 
 ---
 

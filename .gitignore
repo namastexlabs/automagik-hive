@@ -242,10 +242,10 @@ Thumbs.db
 *.tmp
 *.temp
 
-# Memory and session files
-data/memory/*.db
-data/temp/*.db
+# Database files
 data/*.db
+data/*.sqlite
+data/*.sqlite3
 tmp/
 
 # Logs

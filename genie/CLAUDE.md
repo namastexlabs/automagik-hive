@@ -1,17 +1,33 @@
-# Genie Workspace - PagBank Multi-Agent System
+# Genie Workspace Framework (KISS)
 
-This folder contains all development documentation and reports for the PagBank Multi-Agent System.
+Simple workspace for development tasks. Keep it clean.
 
 ## 📁 Structure
 
-- `TODO.md` - Current task list and priorities
-- `implementation-journal.md` - Critical implementation notes and context
-- `archive/` - Historical project files and plans
-- `completed/` - Implementation completion reports
-- `phases/` - Phase completion documentation
-- `reports/` - Analysis reports and fixes applied
-- `todos/` - Individual todo files (if any)
+```
+genie/
+├── active/          # Current work (MAX 5 files)
+├── completed/       # Done work (date-prefixed)
+└── reference/       # Important docs to keep
+```
 
-## 🎯 Current Status
+## 📝 Rules
 
-See `TODO.md` for current tasks and `implementation-journal.md` for critical context.
+1. **Active work** → `active/` folder
+2. **Done work** → `completed/` with date (YYYY-MM-DD-filename.md)
+3. **Keep forever** → `reference/` folder
+
+## 🏷️ File Names
+
+- Tasks: `task-[what].md`
+- Analysis: `analysis-[what].md` 
+- Plans: `plan-[what].md`
+
+## ✅ Workflow
+
+1. Create in `active/`
+2. Work on it
+3. Move to `completed/` when done
+4. Keep `active/` under 5 files
+
+That's it. Simple.

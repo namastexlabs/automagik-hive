@@ -51,7 +51,11 @@ class RoutingEngine:
                     'bloqueio', 'desbloqueio', 'senha', 'chip',
                     'aproximação', 'contactless', 'virtual',
                     'adicional', 'bandeira', 'mastercard', 'visa',
-                    'cvv', 'validade', 'plástico', 'segunda via'
+                    'cvv', 'validade', 'plástico', 'segunda via',
+                    'iof', 'internacional', 'exterior', 'viagem',
+                    'vai de visa', 'mastercard surpreenda', 'surpreenda',
+                    'pré-pago', 'pre-pago', 'prepago', 'recarga',
+                    'cashback', 'benefícios', 'beneficios', 'programa'
                 ],
                 'patterns': [
                     r'perd[ie] (meu|o) cart[aã]o',
@@ -72,7 +76,12 @@ class RoutingEngine:
                     'depósito', 'deposito', 'saque', 'caixinha', 'cofrinho',
                     'agência', 'agencia', 'número da conta', 'numero da conta',
                     'comprovante', 'recibo', 'pagamento', 'boleto',
-                    'código de barras', 'codigo de barras', 'dinheiro'
+                    'código de barras', 'codigo de barras', 'dinheiro',
+                    'antecipação', 'antecipacao', 'antecipar', 'antecipações',
+                    'multiadquirente', 'multi-adquirente', 'cielo', 'rede', 
+                    'stone', 'getnet', 'safrapay', 'maquininha', 'vendas',
+                    'transação', 'transacao', 'segurança', 'seguranca',
+                    'bloqueio', 'bloqueado', 'não autorizada', 'nao autorizada'
                 ],
                 'patterns': [
                     r'fazer (um|uma) (pix|transfer[eê]ncia)',
@@ -81,7 +90,13 @@ class RoutingEngine:
                     r'cadastrar chave pix',
                     r'pix n[aã]o ca[ií]u',
                     r'transfer[eê]ncia n[aã]o chegou',
-                    r'erro (no|ao fazer) pix'
+                    r'erro (no|ao fazer) pix',
+                    r'antecipar (vendas|receb[íi]veis|valores)',
+                    r'antecipa[çc][ãa]o de vendas',
+                    r'antecipa[çc][ãa]o (da|de) (cielo|rede|stone|getnet)',
+                    r'antecipa[çc][ãa]o multiadquirente',
+                    r'transa[çc][ãa]o.*(seguran[çc]a|bloqueada)',
+                    r'n[ãa]o autorizada.*seguran[çc]a'
                 ],
                 'intents': ['pix_transfer', 'balance_check', 'statement', 'payment']
             },
@@ -111,8 +126,8 @@ class RoutingEngine:
                 'keywords': [
                     'empréstimo', 'emprestimo', 'crédito', 'credito',
                     'financiamento', 'parcela', 'juros', 'taxa',
-                    'consignado', 'pessoal', 'fgts', 'antecipação',
-                    'antecipacao', 'simulação', 'simulacao', 'contratar',
+                    'consignado', 'pessoal', 'fgts',
+                    'simulação', 'simulacao', 'contratar',
                     'renegociar', 'quitar', 'amortizar', 'carência',
                     'carencia', 'score', 'análise', 'analise'
                 ],
@@ -153,14 +168,22 @@ class RoutingEngine:
                     'não funciona', 'nao funciona', 'aplicativo',
                     'app', 'site', 'sistema', 'falha', 'técnico',
                     'tecnico', 'suporte', 'não consigo', 'nao consigo',
-                    'tela branca', 'erro 404', 'timeout', 'lento'
+                    'tela branca', 'erro 404', 'timeout', 'lento',
+                    'atualizar', 'atualização', 'atualizacao', 'versão',
+                    'versao', 'download pendente', 'play store', 'app store',
+                    'instalar', 'desinstalar', 'cache', 'android', 'ios'
                 ],
                 'patterns': [
                     r'(app|aplicativo|site) (travou|n[aã]o funciona)',
                     r'erro (no|ao) (fazer|acessar|entrar)',
                     r'n[aã]o consigo (entrar|acessar|fazer)',
                     r'problema t[eé]cnico',
-                    r'preciso de suporte'
+                    r'preciso de suporte',
+                    r'(app|aplicativo) n[aã]o atualiza',
+                    r'download pendente',
+                    r'vers[aã]o do (app|aplicativo)',
+                    r'limpar cache',
+                    r'erro (na|de) atualiza[çc][ãa]o'
                 ],
                 'intents': ['technical_error', 'access_problem', 'app_issue']
             },

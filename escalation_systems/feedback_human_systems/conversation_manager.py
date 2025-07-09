@@ -14,8 +14,8 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 from agno.agent import Agent
-from agno.memory.memory import Memory
-from agno.memory.sqlite import SqliteMemoryDb
+from agno.memory.v2.memory import Memory
+from agno.memory.v2.db.sqlite import SqliteMemoryDb
 from agno.models.openai import OpenAIChat
 from agno.storage.sqlite import SqliteStorage
 
@@ -80,7 +80,7 @@ class ConversationManager:
     def __init__(
         self,
         model_id: str = "claude-sonnet-4-20250514",
-        db_path: str = "tmp/conversation_manager.db"
+        db_path: str = "data/pagbank.db"
     ):
         """
         Initialize the Conversation Manager.
@@ -91,11 +91,15 @@ class ConversationManager:
         """
         # Initialize memory and storage
         self.memory = Memory(
-            db=SqliteMemoryDb(db_path=f"{db_path}.memory")
+            db=SqliteMemoryDb(
+                table_name="conversation_memories",
+                db_file=f"{db_path}.memory"
+            )
         )
         
         self.storage = SqliteStorage(
-            db_path=f"{db_path}.storage"
+            table_name="conversation_storage",
+            db_file=f"{db_path}.storage"
         )
         
         # Initialize the conversation analysis agent

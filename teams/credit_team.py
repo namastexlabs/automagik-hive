@@ -485,3 +485,20 @@ class CreditTeam(SpecialistTeam):
         }
         status["fraud_keywords_monitored"] = len(CreditFraudDetector.PAYMENT_ADVANCE_SCAM_KEYWORDS)
         return status
+
+
+def create_credit_team(
+    knowledge_base: PagBankCSVKnowledgeBase = None,
+    memory_manager: MemoryManager = None
+) -> CreditTeam:
+    """Factory function to create Credit team"""
+    # Create default instances if not provided
+    if knowledge_base is None:
+        from knowledge.csv_knowledge_base import create_knowledge_base
+        knowledge_base = create_knowledge_base()
+    
+    if memory_manager is None:
+        from memory.memory_manager import create_memory_manager
+        memory_manager = create_memory_manager()
+    
+    return CreditTeam(knowledge_base, memory_manager)

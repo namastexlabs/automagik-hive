@@ -19,6 +19,8 @@ Requires-Dist: aiofiles>=24.1.0
 Requires-Dist: openai>=1.93.2
 Requires-Dist: cohere>=5.15.0
 Requires-Dist: psycopg[binary]>=3.2.9
+Requires-Dist: fastapi>=0.116.0
+Requires-Dist: uvicorn>=0.35.0
 Provides-Extra: dev
 Requires-Dist: pytest>=8.4.1; extra == "dev"
 Requires-Dist: pytest-asyncio>=1.0.0; extra == "dev"
@@ -31,113 +33,185 @@ Requires-Dist: pre-commit>=3.4.0; extra == "dev"
 Requires-Dist: pyflakes>=3.4.0; extra == "dev"
 Requires-Dist: isort>=5.12.0; extra == "dev"
 
-# PagBank Multi-Agent System
+# Sistema Multi-Agente PagBank
 
-A sophisticated multi-agent customer service system built with the Agno framework, designed specifically for PagBank's Brazilian market needs.
+Sistema sofisticado de atendimento ao cliente multi-agente desenvolvido com o framework Agno, projetado especificamente para as necessidades do mercado brasileiro do PagBank.
 
-## 🚀 Quick Start
+## 🚀 Início Rápido
 
 ```bash
-# Run the Agno Playground demo
+uv sync
+```
+
+```bash
 uv run python playground.py
 ```
 
-## 📋 System Overview
-
-The PagBank Multi-Agent System uses advanced AI orchestration to provide intelligent customer service across five specialized domains:
-
-### Teams
-- **Cards Team** 💳 - Credit/debit card issues, limits, invoices
-- **Digital Account Team** 🏦 - PIX, transfers, balance, statements  
-- **Investments Team** 💰 - CDB, investment products, compliance
-- **Credit Team** 💸 - Loans, FGTS, fraud protection
-- **Insurance Team** 🛡️ - Insurance products, claims, coverage
-
-### Key Features
-- 🇧🇷 Native Portuguese language support with typo correction
-- 🚨 Advanced fraud detection and scam prevention
-- 😤 Frustration detection and human escalation
-- 🧠 Persistent memory and pattern recognition
-- 📚 Team-specific knowledge filtering
-- ⚡ <2s response time optimization
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────┐
-│   Main Orchestrator     │ (Route Mode)
-│  - Query Analysis       │
-│  - Team Selection       │
-│  - Frustration Monitor  │
-└───────────┬─────────────┘
-            │
-    ┌───────┴───────┐
-    │               │
-┌───▼────┐    ┌────▼────┐
-│ Teams   │    │Escalation│
-│(Coordinate)  │ Systems  │
-└─────────┘    └─────────┘
+**Interface web opcional (em outro terminal):**
+```bash
+cd agent-ui
+pnpm install
+pnpm dev
 ```
 
-## 🛠️ Technical Stack
+O sistema estará disponível em: http://localhost:7777  
+Interface web (opcional): http://localhost:3000
 
-- **Framework**: Agno (Multi-Agent Orchestration)
+## 📋 Visão Geral do Sistema
+
+O Sistema Multi-Agente PagBank utiliza orquestração avançada de IA para fornecer atendimento ao cliente inteligente em cinco domínios especializados:
+
+### Times Especialistas
+- **Time de Cartões** 💳 - Problemas com cartões de crédito/débito, limites, faturas
+- **Time de Conta Digital** 🏦 - PIX, transferências, saldo, extratos
+- **Time de Investimentos** 💰 - CDB, produtos de investimento, compliance
+- **Time de Crédito** 💸 - Empréstimos, FGTS, proteção contra fraudes
+- **Time de Seguros** 🛡️ - Produtos de seguro, sinistros, coberturas
+
+### Recursos Principais
+- 🇧🇷 Suporte nativo ao português brasileiro com correção de erros de digitação
+- 🚨 Detecção avançada de fraudes e prevenção de golpes
+- 😤 Detecção de frustração e escalação para atendimento humano
+- 🧠 Memória persistente e reconhecimento de padrões
+- 📚 Filtragem de conhecimento específico por time
+- ⚡ Otimização de tempo de resposta <2s
+
+
+## 🏗️ Arquitetura
+
+### Visão Geral do Sistema
+
+```mermaid
+graph TB
+    CLIENT[👤 Cliente] --> ORCH[🎯 Orquestrador Principal<br/>main_orchestrator.py]
+    
+    ORCH --> PREP[📝 Pré-processamento]
+    PREP --> NORM[🔧 Normalização de Texto<br/>text_normalizer.py]
+    PREP --> FRUST[😤 Detecção de Frustração<br/>frustration_detector.py]
+    PREP --> ROUT[🎯 Lógica de Roteamento<br/>routing_logic.py]
+    PREP --> SYNC[🔄 Sincronização de Estado<br/>state_synchronizer.py]
+    
+    ORCH --> MEM[🧠 Gerenciamento de Memória<br/>Agno Memory v2]
+    MEM --> SQLITE[(🗄️ SQLite<br/>pagbank_memory_dev.db<br/>pagbank_sessions.db)]
+    MEM --> PATTERNS[🔍 Detector de Padrões<br/>pattern_detector.py]
+    
+    ORCH --> TEAMS[👥 Times Especialistas]
+    TEAMS --> CARDS[💳 Time de Cartões<br/>cards_team.py]
+    TEAMS --> ACCOUNT[🏦 Time de Conta Digital<br/>digital_account_team.py]
+    TEAMS --> INVEST[💰 Time de Investimentos<br/>investments_team.py]
+    TEAMS --> CREDIT[💸 Time de Crédito<br/>credit_team.py]
+    TEAMS --> INSUR[🛡️ Time de Seguros<br/>insurance_team.py]
+    
+    TEAMS --> TOOLS[🛠️ Ferramentas Compartilhadas<br/>team_tools.py]
+    TEAMS --> CONFIG[⚙️ Configuração dos Times<br/>team_config.py]
+    
+    ORCH --> ESC[⚠️ Sistemas de Escalação<br/>escalation_manager.py]
+    ESC --> HUMAN[👤 Escalação Humana<br/>human_agent_mock.py]
+    ESC --> TECH[🔧 Escalação Técnica<br/>technical_escalation_agent.py]
+    ESC --> TICK[🎫 Sistema de Tickets<br/>ticket_system.py]
+    ESC --> LEARN[📊 Aprendizado de Padrões<br/>pattern_learner.py]
+    
+    TEAMS --> KB[📚 Base de Conhecimento<br/>pagbank_knowledge.csv]
+    KB --> FILTERS[🔍 Filtros Agênticos<br/>agentic_filters.py]
+    KB --> VECTOR[(🎯 Embeddings<br/>Similaridade Vetorial)]
+    
+    style ORCH fill:#fff3e0
+    style TEAMS fill:#f3e5f5
+    style ESC fill:#ffebee
+    style KB fill:#e8f5e8
+    style MEM fill:#e3f2fd
+```
+
+
+## 🛠️ Stack Técnico
+
+- **Framework**: Agno (Orquestração Multi-Agente)
 - **LLM**: Claude Sonnet 4 (claude-sonnet-4-20250514)
-- **Knowledge Base**: CSV with PgVector embeddings
-- **Memory**: Agno Memory v2 with SqliteMemoryDb
-- **Language**: Python 3.11+
+- **Base de Conhecimento**: CSV com embeddings PgVector
+- **Memória**: Agno Memory v2 com SqliteMemoryDb
+- **Linguagem**: Python 3.12+
+- **Armazenamento**: SQLite para sessões e memória
 
-## 📁 Project Structure
+## 📁 Estrutura do Projeto
 
 ```
 pagbank/
-├── orchestrator/          # Main routing and orchestration
-├── teams/                 # Specialist team implementations
-├── knowledge/            # Knowledge base and filtering
-├── memory/               # Memory and pattern detection
-├── escalation_systems/   # Human handoff and technical escalation
-├── config/               # Configuration and settings
-├── playground.py         # Agno Playground demo
-└── docs/                 # Documentation
+├── orchestrator/          # Roteamento e orquestração principal
+│   ├── main_orchestrator.py       # Orquestrador principal
+│   ├── routing_logic.py           # Lógica de roteamento
+│   ├── frustration_detector.py    # Detector de frustração
+│   ├── text_normalizer.py         # Normalizador de texto
+│   ├── clarification_handler.py   # Manipulador de esclarecimentos
+│   └── state_synchronizer.py      # Sincronizador de estado
+├── teams/                 # Implementações dos times especialistas
+│   ├── base_team.py              # Classe base dos times
+│   ├── cards_team.py             # Time de cartões
+│   ├── digital_account_team.py   # Time de conta digital
+│   ├── investments_team.py       # Time de investimentos
+│   ├── credit_team.py            # Time de crédito
+│   ├── insurance_team.py         # Time de seguros
+│   └── team_tools.py             # Ferramentas compartilhadas
+├── knowledge/            # Base de conhecimento e filtragem
+│   ├── csv_knowledge_base.py     # Base de conhecimento CSV
+│   ├── agentic_filters.py        # Filtros agênticos
+│   └── pagbank_knowledge.csv     # Dados de conhecimento
+├── memory/               # Memória e detecção de padrões
+│   ├── memory_manager.py         # Gerenciador de memória
+│   ├── pattern_detector.py       # Detector de padrões
+│   └── session_manager.py        # Gerenciador de sessões
+├── escalation_systems/   # Escalação humana e técnica
+│   ├── escalation_manager.py     # Gerenciador de escalação
+│   ├── technical_escalation_agent.py  # Agente escalação técnica
+│   ├── ticket_system.py          # Sistema de tickets
+│   └── feedback_human_systems/   # Sistemas de feedback humano
+├── config/               # Configuração e definições
+│   ├── settings.py               # Configurações principais
+│   ├── models.py                 # Modelos de dados
+│   └── database.py               # Configuração do banco
+├── utils/                # Utilitários e formatadores
+├── data/                 # Dados de sessão e memória
+├── tests/                # Testes unitários e integração
+├── playground.py         # Sistema principal (Agno Playground)
+└── docs/                 # Documentação
+    ├── DEMO_SCRIPT.md            # Scripts de demonstração completos
+    └── DEVELOPMENT_GUIDELINES.md # Diretrizes de desenvolvimento
 ```
 
-## 🎮 Demo Scenarios
+## 🔧 Configuração
 
-The playground includes pre-configured scenarios:
-1. New customer onboarding
-2. Card problems with escalation
-3. Investment consultation  
-4. Credit fraud detection
-5. Insurance claims
-6. Multi-service journey
+Configurações principais em `config/settings.py`:
+- Timeout de roteamento de time: 30s
+- Máximo de turnos de conversa: 20
+- Limite de frustração: Nível 3
+- Timeout de sessão: 30 minutos
 
-## 🔧 Configuration
+## 🔒 Recursos de Segurança
 
-Key settings in `config/settings.py`:
-- Team routing timeout: 30s
-- Max conversation turns: 20
-- Frustration threshold: Level 3
-- Session timeout: 30 minutes
+- Detecção de golpes de antecipação de pagamentos
+- Proteção de clientes vulneráveis
+- Reconhecimento de padrões de fraude
+- Avisos de compliance para investimentos
+- Manuseio seguro de credenciais
 
-## 📊 Performance
+## 🧠 Sistema de Memória
 
-- Response time: <2 seconds
-- Concurrent users: 100+
-- Memory efficiency: Optimized with HNSW indexing
-- Knowledge search: Vector-based similarity
+- **Memória Persistente**: Contexto do usuário mantido entre sessões
+- **Detecção de Padrões**: Reconhecimento de comportamentos recorrentes
+- **Insights Contextuais**: Análise de histórico de interações
+- **Sincronização de Estado**: Coordenação entre times especialistas
 
-## 🔒 Security Features
+## 🎯 Recursos Avançados
 
-- Payment advance scam detection
-- Vulnerable customer protection
-- Fraud pattern recognition
-- Compliance warnings for investments
-- Secure credential handling
+- **Normalização de Texto**: Correção automática de erros de português
+- **Detecção de Frustração**: Identificação de sinais de insatisfação
+- **Esclarecimentos Inteligentes**: Perguntas contextuais para consultas ambíguas
+- **Escalação Automática**: Transferência para atendimento humano quando necessário
+- **Filtragem de Conhecimento**: Acesso específico por domínio de especialização
 
-## 👥 Team
+## 👥 Equipe
 
-Built with Agno Framework by the PagBank AI Team
+Desenvolvido com o Framework Agno pelas equipes **Namastex Labs** e **Yaitech**
 
-## 📝 License
+## 📝 Licença
 
-Proprietary - PagBank 2024
+Proprietário - PagBank 2025

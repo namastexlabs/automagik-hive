@@ -20,6 +20,8 @@ dependencies = [
     "openai>=1.93.2",
     "cohere>=5.15.0",
     "psycopg[binary]>=3.2.9",
+    "fastapi>=0.116.0",
+    "uvicorn>=0.35.0",
 ]
 
 [project.optional-dependencies]
@@ -61,7 +63,7 @@ module = ["agno.*", "anthropic.*", "sentence_transformers.*", "pgvector.*"]
 ignore_missing_imports = true
 
 [tool.setuptools]
-packages = ["agents", "config", "demo", "knowledge", "memory", "orchestrator", "teams", "utils"]
+packages = ["agents", "config", "knowledge", "memory", "orchestrator", "teams", "utils"]
 
 [tool.isort]
 profile = "black"

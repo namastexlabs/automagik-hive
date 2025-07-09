@@ -39,7 +39,9 @@ class TeamConfigManager:
             team_name="Time de Especialistas em Cartões",
             team_role="Especialistas em cartões de crédito e débito",
             team_description="Time especializado em todos os aspectos relacionados a cartões PagBank",
-            knowledge_filters=["cartao", "credito", "debito", "fatura", "limite", "anuidade", "cashback"],
+            knowledge_filters=["cartao", "credito", "debito", "fatura", "limite", "anuidade", "cashback",
+                             "iof", "internacional", "viagem", "exterior", "visa", "mastercard",
+                             "vai de visa", "surpreenda", "pre-pago", "pré-pago", "recarga"],
             max_agents=3,
             escalation_threshold=0.7,
             compliance_rules=["pci_compliance", "fraud_detection"],
@@ -53,7 +55,9 @@ class TeamConfigManager:
                 "cartão", "cartao", "crédito", "credito", "débito", "debito",
                 "fatura", "limite", "anuidade", "bloqueio", "desbloqueio",
                 "segunda via", "cashback", "senha", "chip", "contactless",
-                "virtual", "adicional", "contestação", "chargeback"
+                "virtual", "adicional", "contestação", "chargeback",
+                "iof", "internacional", "viagem", "vai de visa", "mastercard surpreenda",
+                "pré-pago", "pre-pago", "recarga", "benefícios", "programa"
             ],
             priority_topics=["bloqueio_urgente", "fraude", "contestacao"]
         ),
@@ -63,7 +67,9 @@ class TeamConfigManager:
             team_name="Time de Conta Digital",
             team_role="Especialistas em conta digital e PIX",
             team_description="Time especializado em conta digital, transferências e PIX",
-            knowledge_filters=["conta", "pix", "transferencia", "saldo", "extrato", "ted", "doc"],
+            knowledge_filters=["conta", "pix", "transferencia", "saldo", "extrato", "ted", "doc",
+                             "antecipacao", "antecipação", "antecipar", "multiadquirente",
+                             "cielo", "rede", "stone", "getnet", "safrapay", "maquininha"],
             max_agents=3,
             escalation_threshold=0.7,
             compliance_rules=["kyc_compliance", "anti_money_laundering"],
@@ -77,7 +83,9 @@ class TeamConfigManager:
                 "conta", "pix", "transferência", "transferencia", "saldo",
                 "extrato", "ted", "doc", "pagamento", "boleto", "qr code",
                 "chave pix", "agendamento", "comprovante", "tarifa",
-                "portabilidade", "salário", "recarga"
+                "portabilidade", "salário", "recarga",
+                "antecipação", "antecipacao", "antecipar", "vendas",
+                "multiadquirente", "cielo", "rede", "stone", "getnet"
             ],
             priority_topics=["pix_erro", "transferencia_nao_recebida", "conta_bloqueada"]
         ),

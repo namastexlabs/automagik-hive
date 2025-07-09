@@ -5,7 +5,6 @@ config/__init__.py
 config/database.py
 config/models.py
 config/settings.py
-demo/__init__.py
 knowledge/__init__.py
 knowledge/agentic_filters.py
 knowledge/csv_knowledge_base.py

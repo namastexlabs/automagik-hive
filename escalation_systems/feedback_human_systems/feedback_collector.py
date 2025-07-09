@@ -11,14 +11,14 @@ This module implements a sophisticated feedback collection system that:
 
 from datetime import datetime
 from textwrap import dedent
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
 from agno.agent import Agent
-from agno.memory.memory import Memory
-from agno.memory.sqlite import SqliteMemoryDb
+from agno.memory.v2.memory import Memory
+from agno.memory.v2.db.sqlite import SqliteMemoryDb
 from agno.models.openai import OpenAIChat
 from agno.storage.sqlite import SqliteStorage
 
@@ -56,7 +56,7 @@ class FeedbackReport(BaseModel):
     category_distribution: Dict[str, int]
     sentiment_distribution: Dict[str, int]
     priority_distribution: Dict[str, int]
-    top_issues: List[Dict[str, any]]
+    top_issues: List[Dict[str, Any]]
     improvement_patterns: List[str]
     action_recommendations: List[str]
     customer_satisfaction_score: float = Field(..., ge=0, le=10)
@@ -82,7 +82,7 @@ class FeedbackCollector:
     def __init__(
         self,
         model_id: str = "claude-sonnet-4-20250514",
-        db_path: str = "tmp/feedback_collector.db",
+        db_path: str = "data/pagbank.db",
         session_id: Optional[str] = None
     ):
         """
@@ -97,11 +97,15 @@ class FeedbackCollector:
         
         # Initialize memory and storage
         self.memory = Memory(
-            db=SqliteMemoryDb(db_path=f"{db_path}.memory")
+            db=SqliteMemoryDb(
+                table_name="feedback_memories",
+                db_file=f"{db_path}.memory"
+            )
         )
         
         self.storage = SqliteStorage(
-            db_path=f"{db_path}.storage"
+            table_name="feedback_storage",
+            db_file=f"{db_path}.storage"
         )
         
         # Initialize the feedback collector agent
@@ -478,3 +482,8 @@ class FeedbackCollector:
             ]
         
         return results
+
+
+def create_feedback_collector() -> FeedbackCollector:
+    """Factory function to create feedback collector instance"""
+    return FeedbackCollector()

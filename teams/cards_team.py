@@ -111,7 +111,11 @@ class CardsTeam(SpecialistTeam):
                 "Oriente sobre carteiras digitais (Apple Pay, Google Pay)",
                 "Informe sobre anuidade zero e condições",
                 "Destaque vantagens exclusivas PagBank",
-                "Para cartão pré-pago, explique taxa de R$ 12,90"
+                "Para cartão pré-pago, explique taxa de R$ 12,90",
+                "PROGRAMAS DE FIDELIDADE:",
+                "- Vai de Visa: exclusivo para cartões Visa",
+                "- Mastercard Surpreenda: exclusivo para Mastercard",
+                "IOF internacional: 3,38% + PTAX+5% na conversão"
             ]
         )
         members.append(benefits_advisor)
@@ -129,7 +133,11 @@ class CardsTeam(SpecialistTeam):
             "Para solicitações de limite, sempre mencione aumento via CDB",
             "Cartões são GRATUITOS (exceto pré-pago: R$ 12,90)",
             "Sempre confirme tipo de cartão: crédito, débito, pré-pago ou virtual",
-            "Use linguagem clara adaptada ao nível do cliente"
+            "Use linguagem clara adaptada ao nível do cliente",
+            "IOF INTERNACIONAL: 3,38% + conversão PTAX+5%",
+            "PROGRAMAS: Vai de Visa (só Visa) e Mastercard Surpreenda (só MC)",
+            "Limites pré-pago: R$5k pessoal, R$25k vendedor",
+            "Sempre diferencie programas por bandeira"
         ]
     
     def process_query(

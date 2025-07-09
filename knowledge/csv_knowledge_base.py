@@ -276,7 +276,7 @@ class PagBankCSVKnowledgeBase:
 def create_pagbank_knowledge_base() -> PagBankCSVKnowledgeBase:
     """Create and initialize PagBank knowledge base"""
     # Configuration
-    csv_path = "/home/namastex/workspace/pags/agno/cookbook/pagbank/knowledge/pagbank_knowledge.csv"
+    csv_path = str(Path(__file__).parent / "pagbank_knowledge.csv")
     db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
     table_name = "pagbank_knowledge"
     

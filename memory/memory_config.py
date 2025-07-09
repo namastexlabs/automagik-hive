@@ -17,7 +17,7 @@ class MemoryConfig:
     """Configuration for PagBank Memory System"""
     
     # Database configuration
-    db_file: str = "data/memory/pagbank_memory.db"
+    db_file: str = "data/pagbank.db"
     table_name: str = "pagbank_memories"
     
     # Memory settings
@@ -50,7 +50,7 @@ class MemoryConfig:
     def from_database_config(cls, db_config) -> 'MemoryConfig':
         """Create memory config from database config"""
         return cls(
-            db_file=db_config.url.replace("postgresql+psycopg2://", "tmp/pagbank_memory.db"),
+            db_file=db_config.url.replace("postgresql+psycopg2://", "data/pagbank.db"),
             table_name="pagbank_memories"
         )
     
@@ -92,14 +92,14 @@ def get_memory_config(environment: str = "development") -> MemoryConfig:
     
     configs = {
         "development": MemoryConfig(
-            db_file="tmp/pagbank_memory_dev.db",
+            db_file="data/pagbank.db",
             table_name="pagbank_memories_dev",
             async_processing=False,  # Sync for easier debugging
             pattern_update_frequency=5,  # More frequent updates for testing
         ),
         
         "testing": MemoryConfig(
-            db_file="tmp/pagbank_memory_test.db",
+            db_file="data/pagbank.db",
             table_name="pagbank_memories_test",
             enable_user_memories=True,
             enable_session_summaries=False,  # Simplified for testing
@@ -109,7 +109,7 @@ def get_memory_config(environment: str = "development") -> MemoryConfig:
         ),
         
         "production": MemoryConfig(
-            db_file="data/pagbank_memory.db",
+            db_file="data/pagbank.db",
             table_name="pagbank_memories",
             enable_user_memories=True,
             enable_session_summaries=True,

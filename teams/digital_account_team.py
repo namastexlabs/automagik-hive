@@ -96,7 +96,10 @@ class DigitalAccountTeam(SpecialistTeam):
                 "Oriente sobre extratos, comprovantes e saldo",
                 "Conta é GRATUITA, sem tarifas de manutenção",
                 "Para pagamentos, confirme saldo disponível",
-                "Recargas de celular têm cashback"
+                "Recargas de celular têm cashback",
+                "ANTECIPAÇÃO: Lojistas podem antecipar vendas do crédito",
+                "Suporta multiadquirente: Cielo, Rede, Stone, Getnet, SafraPay",
+                "Limite: 1 antecipação/dia, valor disponível em 1-2h"
             ]
         )
         members.append(account_manager)
@@ -133,7 +136,11 @@ class DigitalAccountTeam(SpecialistTeam):
             "PIX é gratuito e ilimitado - sempre mencione isso",
             "Para portabilidade, explique benefícios completos",
             "Use linguagem simples para operações complexas",
-            "Sempre confirme horários para TED/DOC"
+            "Sempre confirme horários para TED/DOC",
+            "ANTECIPAÇÃO: Lojistas podem antecipar vendas do crédito",
+            "Antecipação multiadquirente: Cielo, Rede, Stone, Getnet, SafraPay",
+            "Limite: 1 antecipação por dia, valor em 1-2 horas",
+            "Explique FIDC/Oliveira Trust se questionado sobre comprometimento"
         ]
     
     def process_query(

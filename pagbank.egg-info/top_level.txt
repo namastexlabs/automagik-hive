@@ -1,6 +1,5 @@
 agents
 config
-demo
 knowledge
 memory
 orchestrator

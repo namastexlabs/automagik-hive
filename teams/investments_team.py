@@ -388,3 +388,20 @@ class InvestmentsTeam(SpecialistTeam):
             "risk_disclosure": True
         }
         return status
+
+
+def create_investments_team(
+    knowledge_base: PagBankCSVKnowledgeBase = None,
+    memory_manager: MemoryManager = None
+) -> InvestmentsTeam:
+    """Factory function to create Investments team"""
+    # Create default instances if not provided
+    if knowledge_base is None:
+        from knowledge.csv_knowledge_base import create_knowledge_base
+        knowledge_base = create_knowledge_base()
+    
+    if memory_manager is None:
+        from memory.memory_manager import create_memory_manager
+        memory_manager = create_memory_manager()
+    
+    return InvestmentsTeam(knowledge_base, memory_manager)

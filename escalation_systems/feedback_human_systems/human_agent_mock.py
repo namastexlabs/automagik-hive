@@ -15,8 +15,8 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 from agno.agent import Agent
-from agno.memory.memory import Memory
-from agno.memory.sqlite import SqliteMemoryDb
+from agno.memory.v2.memory import Memory
+from agno.memory.v2.db.sqlite import SqliteMemoryDb
 from agno.models.openai import OpenAIChat
 from agno.storage.sqlite import SqliteStorage
 
@@ -69,7 +69,7 @@ class HumanAgentMock:
     def __init__(
         self,
         model_id: str = "claude-sonnet-4-20250514",
-        db_path: str = "tmp/human_agent_mock.db",
+        db_path: str = "data/pagbank.db",
         session_id: Optional[str] = None
     ):
         """
@@ -84,11 +84,15 @@ class HumanAgentMock:
         
         # Initialize memory and storage
         self.memory = Memory(
-            db=SqliteMemoryDb(db_path=f"{db_path}.memory")
+            db=SqliteMemoryDb(
+                table_name="human_agent_memories",
+                db_file=f"{db_path}.memory"
+            )
         )
         
         self.storage = SqliteStorage(
-            db_path=f"{db_path}.storage"
+            table_name="human_agent_storage",
+            db_file=f"{db_path}.storage"
         )
         
         # Define human agent profiles
@@ -570,3 +574,8 @@ class HumanAgentMock:
             }
             for memory in memories
         ]
+
+
+def create_human_agent() -> HumanAgentMock:
+    """Factory function to create human agent mock instance"""
+    return HumanAgentMock()

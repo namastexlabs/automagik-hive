@@ -395,14 +395,14 @@ class PagBankKnowledgeParser:
 
 if __name__ == '__main__':
     # Initialize parser
-    knowledge_file = Path('/home/namastex/workspace/pags/agno/cookbook/pagbank/knowledge.md')
+    knowledge_file = Path(__file__).parent.parent / 'knowledge.md'
     parser = PagBankKnowledgeParser(knowledge_file)
     
     # Parse knowledge
     entries = parser.parse_knowledge()
     
     # Save to CSV
-    output_path = Path('/home/namastex/workspace/pags/agno/cookbook/pagbank/knowledge/pagbank_knowledge.csv')
+    output_path = Path(__file__).parent / 'pagbank_knowledge.csv'
     parser.save_to_csv(output_path)
     
     # Generate statistics
