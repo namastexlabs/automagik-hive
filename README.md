@@ -48,68 +48,45 @@ O Sistema Multi-Agente PagBank utiliza orquestração avançada de IA para forne
 
 ```mermaid
 graph TB
-    CLIENT[👤 Cliente] --> ORCH[🎯 Orquestrador Principal<br/>Agno Framework]
+    CLIENT[👤 Cliente] --> ORCH[🎯 Orquestrador Principal<br/>main_orchestrator.py]
     
     ORCH --> PREP[📝 Pré-processamento]
-    PREP --> NORM[🔧 Normalização de Texto]
-    PREP --> FRUST[😤 Detecção de Frustração]
-    PREP --> ROUT[🎯 Lógica de Roteamento]
+    PREP --> NORM[🔧 Normalização de Texto<br/>text_normalizer.py]
+    PREP --> FRUST[😤 Detecção de Frustração<br/>frustration_detector.py]
+    PREP --> ROUT[🎯 Lógica de Roteamento<br/>routing_logic.py]
+    PREP --> SYNC[🔄 Sincronização de Estado<br/>state_synchronizer.py]
     
-    ORCH --> MEM[🧠 Gerenciamento de Memória]
-    MEM --> SQLITE[(🗄️ SQLite<br/>Sessões & Padrões)]
+    ORCH --> MEM[🧠 Gerenciamento de Memória<br/>Agno Memory v2]
+    MEM --> SQLITE[(🗄️ SQLite<br/>pagbank_memory_dev.db<br/>pagbank_sessions.db)]
+    MEM --> PATTERNS[🔍 Detector de Padrões<br/>pattern_detector.py]
     
     ORCH --> TEAMS[👥 Times Especialistas]
-    TEAMS --> CARDS[💳 Time de Cartões]
-    TEAMS --> ACCOUNT[🏦 Time de Conta Digital]
-    TEAMS --> INVEST[💰 Time de Investimentos]
-    TEAMS --> CREDIT[💸 Time de Crédito]
-    TEAMS --> INSUR[🛡️ Time de Seguros]
+    TEAMS --> CARDS[💳 Time de Cartões<br/>cards_team.py]
+    TEAMS --> ACCOUNT[🏦 Time de Conta Digital<br/>digital_account_team.py]
+    TEAMS --> INVEST[💰 Time de Investimentos<br/>investments_team.py]
+    TEAMS --> CREDIT[💸 Time de Crédito<br/>credit_team.py]
+    TEAMS --> INSUR[🛡️ Time de Seguros<br/>insurance_team.py]
     
-    ORCH --> ESC[⚠️ Sistemas de Escalação]
-    ESC --> HUMAN[👤 Escalação Humana]
-    ESC --> TECH[🔧 Escalação Técnica]
-    ESC --> TICK[🎫 Sistema de Tickets]
+    TEAMS --> TOOLS[🛠️ Ferramentas Compartilhadas<br/>team_tools.py]
+    TEAMS --> CONFIG[⚙️ Configuração dos Times<br/>team_config.py]
     
-    TEAMS --> KB[📚 Base de Conhecimento<br/>CSV + Filtros]
+    ORCH --> ESC[⚠️ Sistemas de Escalação<br/>escalation_manager.py]
+    ESC --> HUMAN[👤 Escalação Humana<br/>human_agent_mock.py]
+    ESC --> TECH[🔧 Escalação Técnica<br/>technical_escalation_agent.py]
+    ESC --> TICK[🎫 Sistema de Tickets<br/>ticket_system.py]
+    ESC --> LEARN[📊 Aprendizado de Padrões<br/>pattern_learner.py]
+    
+    TEAMS --> KB[📚 Base de Conhecimento<br/>pagbank_knowledge.csv]
+    KB --> FILTERS[🔍 Filtros Agênticos<br/>agentic_filters.py]
     KB --> VECTOR[(🎯 Embeddings<br/>Similaridade Vetorial)]
     
     style ORCH fill:#fff3e0
     style TEAMS fill:#f3e5f5
     style ESC fill:#ffebee
     style KB fill:#e8f5e8
+    style MEM fill:#e3f2fd
 ```
 
-### Fluxo de Processamento de Mensagens
-
-```mermaid
-sequenceDiagram
-    participant U as 👤 Cliente
-    participant O as 🎯 Orquestrador
-    participant P as 📝 Pré-processamento
-    participant T as 👥 Time Especialista
-    participant M as 🧠 Memória
-    participant E as ⚠️ Escalação
-    
-    U->>O: Mensagem do cliente
-    O->>P: Processa mensagem
-    P->>P: Normaliza texto
-    P->>P: Detecta frustração
-    P->>P: Determina roteamento
-    
-    alt Frustração alta
-        P->>E: Escala para humano
-        E->>U: Resposta de escalação
-    else Roteamento normal
-        O->>T: Direciona para time
-        T->>M: Consulta contexto
-        M-->>T: Retorna histórico
-        T->>T: Processa com conhecimento
-        T->>O: Resposta especializada
-    end
-    
-    O->>M: Atualiza memória
-    O->>U: Resposta final
-```
 
 ## 🛠️ Stack Técnico
 
