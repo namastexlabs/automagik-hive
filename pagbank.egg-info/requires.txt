@@ -17,6 +17,7 @@ fastapi>=0.116.0
 uvicorn>=0.35.0
 mcp>=1.10.1
 httpx>=0.28.1
+watchdog>=6.0.0
 
 [dev]
 pytest>=8.4.1

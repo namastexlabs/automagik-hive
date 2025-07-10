@@ -1,0 +1,17 @@
+{
+  "action": "add",
+  "entries": [
+    {
+      "content": "CDB Liquidez Diária: Novo produto de investimento CDB com liquidez diária e rendimento de 100% do CDI.",
+      "area": "investimentos",
+      "tipo_produto": "cdb",
+      "tipo_informacao": "beneficios",
+      "nivel_complexidade": "intermediario",
+      "publico_alvo": "pessoa_fisica",
+      "palavras_chave": "cdb liquidez diaria rendimento 100 cdi investimento novo produto",
+      "atualizado_em": "2025-07"
+    }
+  ],
+  "created_at": "2025-07-10T14:45:24.967976",
+  "description": "Adding 1 new knowledge entries"
+}

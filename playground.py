@@ -4,9 +4,13 @@ from agno.playground import Playground
 from agno.storage.sqlite import SqliteStorage
 from agno.team import Team
 import os
+import threading
 
 # Import main orchestrator
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
+
+# Import CSV hot reload manager
+from knowledge.csv_hot_reload import CSVHotReloadManager
 
 # Initialize at module level - only print on first load
 if not os.environ.get('UVICORN_RELOADER_PROCESS'):
@@ -41,6 +45,11 @@ for agent_name, agent_instance in orchestrator.specialist_agents.items():
 # Use the actual orchestrator's routing team (which has all the preprocessing features)
 routing_team = orchestrator.routing_team
 
+# Start CSV hot reload manager in background thread
+csv_manager = CSVHotReloadManager(check_interval=60)  # Check every minute
+csv_thread = threading.Thread(target=csv_manager.start_watching, daemon=True)
+csv_thread.start()
+
 # Create Playground app with routing team (no individual agents shown to avoid confusion)
 playground_app = Playground(
     teams=[routing_team],
@@ -57,6 +66,7 @@ if not os.environ.get('UVICORN_RELOADER_PROCESS'):
     print(f"🎯 Routing to {len(agno_agents)} specialist agents")
     print("🎯 PagBank Playground ready with simplified single-agent architecture")
     print(f"✅ Ana persona configured: show_tool_calls={routing_team.show_tool_calls}, show_members_responses={routing_team.show_members_responses}, stream_intermediate_steps={routing_team.stream_intermediate_steps}")
+    print("📄 CSV hot reload manager: ACTIVE (checks every 60 seconds)")
     print("🌐 Playground will serve at: http://localhost:7777")
     print("\n📋 Architecture:")
     print(f"  • {routing_team.name} (mode={routing_team.mode}, routes to specialist agents)")

@@ -4,13 +4,20 @@ CSVKnowledgeBase implementation for PagBank multi-agent system
 Agent B: Knowledge Base Development - Claude Sonnet 4 with OpenAI embeddings
 """
 
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
 from agno.embedder.openai import OpenAIEmbedder
 from agno.knowledge.csv import CSVKnowledgeBase
 from agno.vectordb.pgvector import HNSW, PgVector, SearchType
+
+from knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
+
+# Load environment variables
+load_dotenv()
 
 
 class PagBankCSVKnowledgeBase:
@@ -65,15 +72,16 @@ class PagBankCSVKnowledgeBase:
             distance="cosine"
         )
         
-        # Initialize CSVKnowledgeBase
+        # Initialize CSVKnowledgeBase with Enhanced CSV Reader for proper metadata extraction
         self.knowledge_base = CSVKnowledgeBase(
             path=self.csv_path,
             vector_db=self.vector_db,
+            reader=create_enhanced_csv_reader_for_pagbank(),  # Use enhanced reader for metadata
             num_documents=10  # Return top 10 most relevant documents
         )
         
-        # Add valid_metadata_filters attribute to the CSVKnowledgeBase instance for Agno compatibility
-        self.knowledge_base.valid_metadata_filters = {"area", "tipo_produto", "tipo_informacao", "nivel_complexidade", "publico_alvo"}
+        # Add valid_metadata_filters attribute for Agno agentic filtering (only useful columns)
+        self.knowledge_base.valid_metadata_filters = {"area", "tipo_produto", "publico_alvo"}
         
         print(f"Initialized PagBank CSV Knowledge Base with {self.csv_path}")
     
@@ -141,11 +149,11 @@ class PagBankCSVKnowledgeBase:
         formatted_results = []
         
         for result in results:
-            # Extract metadata and content
-            if hasattr(result, 'content') and hasattr(result, 'metadata'):
+            # Extract metadata and content (note: Agno uses meta_data, not metadata)
+            if hasattr(result, 'content') and hasattr(result, 'meta_data'):
                 formatted_result = {
                     'content': result.content,
-                    'metadata': result.metadata,
+                    'metadata': result.meta_data,  # Use meta_data attribute
                     'relevance_score': getattr(result, 'score', 0.0)
                 }
                 formatted_results.append(formatted_result)

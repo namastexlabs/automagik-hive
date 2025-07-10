@@ -8,6 +8,7 @@ config/settings.py
 knowledge/__init__.py
 knowledge/agentic_filters.py
 knowledge/csv_knowledge_base.py
+knowledge/hot_reload_manager.py
 knowledge/knowledge_parser.py
 memory/__init__.py
 memory/memory_config.py

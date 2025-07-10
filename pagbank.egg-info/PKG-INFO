@@ -23,6 +23,7 @@ Requires-Dist: fastapi>=0.116.0
 Requires-Dist: uvicorn>=0.35.0
 Requires-Dist: mcp>=1.10.1
 Requires-Dist: httpx>=0.28.1
+Requires-Dist: watchdog>=6.0.0
 Provides-Extra: dev
 Requires-Dist: pytest>=8.4.1; extra == "dev"
 Requires-Dist: pytest-asyncio>=1.0.0; extra == "dev"

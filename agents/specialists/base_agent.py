@@ -99,6 +99,7 @@ class BaseSpecialistAgent:
             num_history_runs=5,  # More history for single agent
             knowledge=self.knowledge_base.knowledge_base if hasattr(self.knowledge_base, 'knowledge_base') else self.knowledge_base,
             search_knowledge=True,
+            enable_agentic_knowledge_filters=True,  # Enable automatic filter extraction from queries
             knowledge_filters=self.knowledge_filter,
             tools=self.tools,
             markdown=True,
