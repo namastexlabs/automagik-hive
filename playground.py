@@ -8,38 +8,34 @@ import os
 # Import main orchestrator
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
 
-# Import knowledge and memory for agent creation
-from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
-from memory.memory_manager import create_memory_manager
-
 # Initialize at module level - only print on first load
 if not os.environ.get('UVICORN_RELOADER_PROCESS'):
     print("🚀 Initializing PagBank Multi-Agent System...")
     
-# Create knowledge base and memory manager
-knowledge_base = create_pagbank_knowledge_base()
-memory_manager = create_memory_manager()
-
 # Create the main orchestrator (this creates the routing team with specialist agents)
 orchestrator = create_main_orchestrator()
 
-# Configure unified storage for all teams - SINGLE INSTANCE
-storage = SqliteStorage(
-    table_name="pagbank_sessions", 
+# Configure storage for the orchestrator's routing team
+team_storage = SqliteStorage(
+    table_name="team_sessions", 
+    db_file="data/pagbank.db",
+    auto_upgrade_schema=True
+)
+orchestrator.routing_team.storage = team_storage
+
+# Create shared storage for individual agents
+agent_storage = SqliteStorage(
+    table_name="agent_sessions", 
     db_file="data/pagbank.db",
     auto_upgrade_schema=True
 )
 
-# Configure storage for the orchestrator's routing team
-orchestrator.routing_team.storage = storage
-
-# Extract the actual Agno Agents from specialist agents for additional playground display
+# Extract the actual Agno Agents from specialist agents and configure storage
 agno_agents = []
 for agent_name, agent_instance in orchestrator.specialist_agents.items():
     if isinstance(agent_instance, Agent):
-        # Use the SAME storage instance for all agents
-        if hasattr(agent_instance, 'storage'):
-            agent_instance.storage = storage
+        # Assign shared agent storage for conversation history
+        agent_instance.storage = agent_storage
         agno_agents.append(agent_instance)
 
 # Use the actual orchestrator's routing team (which has all the preprocessing features)
@@ -60,7 +56,7 @@ if not os.environ.get('UVICORN_RELOADER_PROCESS'):
     print(f"🎯 Using actual orchestrator routing team: {routing_team.name}")
     print(f"🎯 Routing to {len(agno_agents)} specialist agents")
     print("🎯 PagBank Playground ready with simplified single-agent architecture")
-    print("✅ All features enabled: show_tool_calls, show_members_responses, stream_intermediate_steps")
+    print(f"✅ Ana persona configured: show_tool_calls={routing_team.show_tool_calls}, show_members_responses={routing_team.show_members_responses}, stream_intermediate_steps={routing_team.stream_intermediate_steps}")
     print("🌐 Playground will serve at: http://localhost:7777")
     print("\n📋 Architecture:")
     print(f"  • {routing_team.name} (mode={routing_team.mode}, routes to specialist agents)")

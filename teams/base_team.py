@@ -206,7 +206,7 @@ class BaseTeam:
             enable_agentic_memory=True,
             add_history_to_messages=True,
             num_history_runs=3,
-            knowledge=self.knowledge_base,
+            knowledge=self.knowledge_base.knowledge_base if hasattr(self.knowledge_base, 'knowledge_base') else self.knowledge_base,
             search_knowledge=True,
             knowledge_filters=self._get_team_knowledge_filters(),  # Manual team-specific filters
             markdown=True,

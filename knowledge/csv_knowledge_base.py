@@ -72,6 +72,9 @@ class PagBankCSVKnowledgeBase:
             num_documents=10  # Return top 10 most relevant documents
         )
         
+        # Add valid_metadata_filters attribute to the CSVKnowledgeBase instance for Agno compatibility
+        self.knowledge_base.valid_metadata_filters = {"area", "tipo_produto", "tipo_informacao", "nivel_complexidade", "publico_alvo"}
+        
         print(f"Initialized PagBank CSV Knowledge Base with {self.csv_path}")
     
     def load_knowledge_base(self, recreate: bool = False) -> None:

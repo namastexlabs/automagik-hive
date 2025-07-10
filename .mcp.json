@@ -7,6 +7,20 @@
     "search-repo-docs": {
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "evolution-api": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@0.7.2",
+        "tool",
+        "evolution-api"
+      ],
+      "env": {
+        "EVOLUTION_API_BASE_URL": "http://192.168.112.142:8080",
+        "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
+        "EVOLUTION_API_INSTANCE": "SofIA",
+        "EVOLUTION_API_FIXED_RECIPIENT": "5511986780008@s.whatsapp.net"
+      }
     }
   }
 }

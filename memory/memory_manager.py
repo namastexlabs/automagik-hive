@@ -202,7 +202,7 @@ class MemoryManager:
             'user_id': user_id,
             'memories': {
                 'count': len(memories) if memories else 0,
-                'recent': [m.content for m in memories[:3]] if memories else []
+                'recent': [m.memory for m in memories[:3]] if memories else []
             },
             'patterns': {
                 'count': len(patterns),

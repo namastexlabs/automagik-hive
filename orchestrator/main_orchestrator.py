@@ -253,8 +253,9 @@ class PagBankMainOrchestrator:
         - Investimentos → Time de Assessoria de Investimentos  
         - Empréstimos → Time de Crédito e Financiamento
         - Seguros → Time de Seguros e Saúde
+        - "Quero humano"/"transferir pra humano" → Especialista em Transferência Humana
         
-        FRUSTRAÇÃO ALTA = Escalone para humano IMEDIATAMENTE
+        FRUSTRAÇÃO ALTA ou PEDIDO DIRETO = Route para Especialista em Transferência Humana IMEDIATAMENTE
         
         Seja empático mas BREVE: "Entendo sua frustração com PIX. Vou direcionar para nosso especialista."
         """

@@ -6,6 +6,7 @@ from .credit_agent import CreditAgent
 from .digital_account_agent import DigitalAccountAgent
 from .insurance_agent import InsuranceAgent
 from .investments_agent import InvestmentsAgent
+from .human_handoff_agent import HumanHandoffAgent
 
 __all__ = [
     "BaseSpecialistAgent",
@@ -14,5 +15,6 @@ __all__ = [
     "CreditAgent",
     "DigitalAccountAgent",
     "InsuranceAgent",
-    "InvestmentsAgent"
+    "InvestmentsAgent",
+    "HumanHandoffAgent"
 ]

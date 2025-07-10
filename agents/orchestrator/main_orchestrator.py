@@ -160,26 +160,41 @@ class PagBankMainOrchestrator:
         # Create routing prompt
         routing_prompt = self._create_routing_prompt()
         
-        # Create the routing team following Agno documentation patterns
+        # Initialize Ana's memory system for user context
+        from agno.memory.v2.db.sqlite import SqliteMemoryDb
+        from agno.memory.v2.memory import Memory
+        
+        ana_memory = Memory(
+            model=Claude(id="claude-sonnet-4-20250514"),
+            db=SqliteMemoryDb(table_name="ana_user_memories", db_file="data/ana_memory.db"),
+        )
+        
+        # Create Ana as the unified customer service persona 
         team = Team(
-            name="PagBank Customer Service Orchestrator",
+            name="Ana - PagBank Assistant",
             mode="route",
             model=Claude(
                 id="claude-sonnet-4-20250514",
-                max_tokens=500,
+                max_tokens=1500,  # Must be greater than thinking budget
                 thinking={"type": "enabled", "budget_tokens": 1024}  # Enable thinking for better routing decisions
             ),
             members=list(self.specialist_agents.values()),
             instructions=[routing_prompt],
-            description="Sistema de roteamento inteligente do PagBank que analisa consultas e direciona para especialistas",
-            success_criteria="Cliente direcionado ao especialista correto ou escalado apropriadamente",
+            description="Ana, assistente virtual empática do PagBank que ajuda com carinho e usa especialistas internamente",
+            success_criteria="Cliente atendido pela Ana com excelência, usando conhecimento especializado quando necessário",
             enable_agentic_context=True,  # Enable context sharing between agents
-            share_member_interactions=True,  # Enable agent collaboration
+            share_member_interactions=False,  # Hide specialist interactions from customer
             markdown=True,
-            show_tool_calls=True,  # Show tool calls in UI for PagBank demo
-            show_members_responses=True,
+            show_tool_calls=False,  # Hide tool calls to maintain Ana persona
+            show_members_responses=False,  # Hide specialist responses - Ana presents unified response
+            stream_intermediate_steps=False,  # CRITICAL: Hide "Behind the scenes" information
             add_datetime_to_instructions=True,
             add_member_tools_to_system_message=False,  # Prevent context explosion
+            memory=ana_memory,  # Enable Ana to remember user information
+            enable_agentic_memory=True,  # Allow Ana to manage user memories
+            enable_user_memories=True,  # Always run memory manager after each user message
+            add_history_to_messages=True,  # Include chat history in messages
+            num_history_runs=5,  # Number of past interactions to include
             team_session_state=self.initial_session_state,  # Initialize session state
             # Storage will be set by playground.py
             storage=None
@@ -211,7 +226,7 @@ class PagBankMainOrchestrator:
         
         # Update session state if handoff is needed
         if handoff_result['needs_handoff']:
-            session_state = self.routing_team.team_session_state if hasattr(self, 'routing_team') else self.initial_session_state
+            session_state = self.routing_team.team_session_state if hasattr(self, 'routing_team') and self.routing_team.team_session_state else self.initial_session_state
             session_state['awaiting_human'] = True
             session_state['handoff_reason'] = handoff_result['reason']
             session_state['human_handoff_count'] = session_state.get('human_handoff_count', 0) + 1
@@ -221,7 +236,7 @@ class PagBankMainOrchestrator:
     def generate_clarification(self, query: str, routing_hints: Optional[Dict] = None) -> Dict[str, Any]:
         """Generate clarification questions for ambiguous queries"""
         # Analyze query for clarification needs
-        session_state = self.routing_team.team_session_state if hasattr(self, 'routing_team') else self.initial_session_state
+        session_state = self.routing_team.team_session_state if hasattr(self, 'routing_team') and self.routing_team.team_session_state else self.initial_session_state
         clarification = clarification_handler.analyze_query(
             query=query,
             routing_decision=routing_hints,
@@ -246,7 +261,7 @@ class PagBankMainOrchestrator:
     
     def update_session(self, updates: Dict[str, Any]) -> Dict[str, Any]:
         """Update team session state"""
-        session_state = self.routing_team.team_session_state if hasattr(self, 'routing_team') else self.initial_session_state
+        session_state = self.routing_team.team_session_state if hasattr(self, 'routing_team') and self.routing_team.team_session_state else self.initial_session_state
         
         # Update allowed fields
         allowed_updates = {
@@ -350,8 +365,12 @@ class PagBankMainOrchestrator:
         else:
             enhanced_message = preprocessing['normalized']
         
-        # Process through routing team
-        response = self.routing_team.run(enhanced_message)
+        # Process through routing team with session context
+        response = self.routing_team.run(
+            enhanced_message,
+            user_id=user_id,
+            session_id=memory_result['session_id']
+        )
         
         return {
             'response': response,

@@ -75,7 +75,7 @@ class BaseSpecialistAgent:
         # Claude Sonnet 4 model with thinking capability
         self.model = Claude(
             id="claude-sonnet-4-20250514",
-            max_tokens=500,  # Limit response length
+            max_tokens=1500,  # Must be greater than thinking budget
             thinking={"type": "enabled", "budget_tokens": 1024}  # Enable thinking for better reasoning
         )
         
@@ -97,7 +97,7 @@ class BaseSpecialistAgent:
             enable_agentic_memory=True,
             add_history_to_messages=True,
             num_history_runs=5,  # More history for single agent
-            knowledge=self.knowledge_base,
+            knowledge=self.knowledge_base.knowledge_base if hasattr(self.knowledge_base, 'knowledge_base') else self.knowledge_base,
             search_knowledge=True,
             knowledge_filters=self.knowledge_filter,
             tools=self.tools,

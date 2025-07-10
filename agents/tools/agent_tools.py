@@ -4,6 +4,9 @@ Adapted from team_tools.py for single agent architecture
 """
 
 import re
+import os
+import json
+import httpx
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Callable, Dict, List
@@ -542,6 +545,72 @@ def _calculate_insurance_premium(params: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def send_whatsapp_message(message: str) -> Dict[str, Any]:
+    """Send WhatsApp message via Evolution API
+    
+    Args:
+        message: Message content to send
+        
+    Returns:
+        Dict with send status and details
+    """
+    # Get Evolution API configuration from environment
+    base_url = os.getenv("EVOLUTION_API_BASE_URL", "http://192.168.112.142:8080")
+    api_key = os.getenv("EVOLUTION_API_API_KEY", "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF")
+    instance = os.getenv("EVOLUTION_API_INSTANCE", "SofIA")
+    recipient = os.getenv("EVOLUTION_API_FIXED_RECIPIENT", "5511986780008@s.whatsapp.net")
+    
+    try:
+        # Evolution API endpoint for sending messages
+        url = f"{base_url}/message/sendText/{instance}"
+        
+        # Prepare request
+        headers = {
+            "apikey": api_key,
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "number": recipient,
+            "text": message,
+            "options": {
+                "delay": 1200,
+                "presence": "composing",
+                "linkPreview": False
+            }
+        }
+        
+        # Send message
+        with httpx.Client() as client:
+            response = client.post(url, json=payload, headers=headers, timeout=10.0)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            return {
+                "success": True,
+                "message_id": result.get("key", {}).get("id"),
+                "recipient": recipient,
+                "instance": instance,
+                "response": result
+            }
+            
+    except httpx.HTTPError as e:
+        return {
+            "success": False,
+            "error": f"HTTP error: {str(e)}",
+            "recipient": recipient,
+            "instance": instance
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Unexpected error: {str(e)}",
+            "recipient": recipient,
+            "instance": instance
+        }
+
+
 def check_security_alert(alert_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """Check for security alerts in agent operations
     
@@ -617,7 +686,8 @@ AGENT_TOOLS = {
     "validation": pagbank_validator,
     "security": security_checker,
     "calculator": financial_calculator,
-    "alert": check_security_alert
+    "alert": check_security_alert,
+    "whatsapp": send_whatsapp_message
 }
 
 
@@ -637,8 +707,7 @@ def get_agent_tools(agent_name: str) -> List[Callable]:
         tools.append(AGENT_TOOLS["calculator"])  # For premium calculations
     
     if agent_name == "human_handoff":
-        # Human handoff agent doesn't need extra tools
-        # WhatsApp tool is added directly in the agent
-        pass
+        # Add WhatsApp tool for human handoff
+        tools.append(AGENT_TOOLS["whatsapp"])
     
     return tools
