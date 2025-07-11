@@ -1,6 +1,6 @@
 # PagBank Multi-Agent Customer Service System
 
-A sophisticated Brazilian customer service multi-agent system built with the Agno framework. The system routes customer queries to specialized agents for cartões (cards), conta digital (digital account), investimentos (investments), crédito (credit), and seguros (insurance).
+A sophisticated Brazilian customer service multi-agent system built with the Agno framework. The system routes customer queries to specialized single agents for cartões (cards), conta digital (digital account), investimentos (investments), crédito (credit), and seguros (insurance).
 
 ## 🏗️ Architecture Overview
 
@@ -20,7 +20,7 @@ graph TB
     %% Human Handoff Detection
     Orchestrator --> HumanCheck{😤 Frustration<br/>Detection?}
     HumanCheck -->|Level 3+| HumanAgent[👨‍💼 Human Handoff Agent<br/>WhatsApp Integration]
-    HumanAgent --> WhatsApp[📱 WhatsApp MCP Tool<br/>Instant Notification]
+    HumanAgent --> WhatsApp[📱 WhatsApp Evolution API<br/>Direct HTTP Integration]
     
     %% Specialist Agents
     Routing -->|Cards Query| CardsAgent[💳 Cards Agent<br/>Credit/Debit Cards<br/>Limits & Billing]
@@ -31,7 +31,7 @@ graph TB
     
     %% Knowledge Base System
     subgraph Knowledge["📚 Knowledge Base System"]
-        CSV[📄 CSV Knowledge<br/>651 Documents<br/>3 Metadata Columns]
+        CSV[📄 CSV Knowledge<br/>651 Documents<br/>Top 3 Results per Query]
         PgVector[(🔍 PgVector Database<br/>OpenAI Embeddings<br/>HNSW Indexing)]
         CSV --> PgVector
     end
@@ -143,7 +143,7 @@ Filters Applied:
 - tipo_produto: "limite_credito" (from "limite")
 - publico_alvo: "pessoa_juridica" (from "empresa")
 ↓ Result ↓
-32 precise documents instead of 651 total
+Top 3 most relevant documents from filtered results
 ```
 
 ### Knowledge Base Structure
@@ -176,11 +176,11 @@ Filters Applied:
 - **Level 3 Trigger**: Immediate escalation to human agent
 - **Context Preservation**: Full conversation history transferred
 
-### WhatsApp MCP Integration
+### WhatsApp Evolution API Integration
 ```
-Frustration Detected → Human Handoff Agent → WhatsApp MCP Tool
+Frustration Detected → Human Handoff Agent → Evolution API
                                           ↓
-                        Instant notification to human support team
+                        Direct HTTP call to WhatsApp service
                         with complete conversation context
 ```
 
@@ -197,10 +197,10 @@ Frustration Detected → Human Handoff Agent → WhatsApp MCP Tool
 
 ```
 pagbank/
-├── agents/                    # Agent system
+├── agents/                    # Single-agent system
 │   ├── orchestrator/
 │   │   └── main_orchestrator.py    # Main routing orchestrator
-│   ├── specialists/               # Specialist agents
+│   ├── specialists/               # Individual specialist agents
 │   │   ├── base_agent.py         # Base agent class
 │   │   ├── cards_agent.py        # Cards specialist
 │   │   ├── digital_account_agent.py # Digital account specialist
@@ -209,7 +209,13 @@ pagbank/
 │   │   ├── insurance_agent.py    # Insurance specialist
 │   │   └── human_handoff_agent.py # Human escalation
 │   ├── prompts/                   # Agent prompts
-│   └── tools/                     # Shared tools
+│   └── tools/                     # Shared agent tools
+├── orchestrator/              # Shared orchestration utilities
+│   ├── clarification_handler.py   # Query clarification
+│   ├── human_handoff_detector.py  # Frustration detection
+│   ├── routing_logic.py           # Routing algorithms
+│   ├── state_synchronizer.py     # State management
+│   └── utils.py                   # Utility functions
 ├── knowledge/                 # Knowledge base system
 │   ├── csv_knowledge_base.py      # CSV knowledge integration
 │   ├── enhanced_csv_reader.py     # Metadata extraction
@@ -225,6 +231,9 @@ pagbank/
 │   └── ticket_system.py           # Support ticket system
 ├── config/                    # System configuration
 ├── data/                      # SQLite databases
+├── scripts/                   # Utility scripts
+│   ├── set_evolution_env.py       # WhatsApp environment setup
+│   └── start_with_whatsapp.py     # Start with WhatsApp enabled
 └── playground.py              # System entry point
 ```
 
@@ -238,14 +247,14 @@ pagbank/
 
 ### Human Integration
 - **👥 Seamless Escalation**: Automatic frustration detection with WhatsApp notifications
-- **📱 MCP Integration**: Real-time communication with human support team
+- **📱 Evolution API**: Direct HTTP integration with WhatsApp service
 - **📊 Context Transfer**: Complete conversation history preserved during handoffs
 - **🎫 Ticket System**: Structured case management and tracking
 
 ### Knowledge Management
 - **📚 Intelligent Search**: Natural language queries automatically filtered
 - **🔄 Hot Reload**: Real-time knowledge updates without system restart
-- **🎯 Domain Expertise**: Agent-specific knowledge with 97% precision improvement
+- **🎯 Domain Expertise**: Single-agent specialization with top-3 result precision
 - **📈 Learning System**: Continuous improvement through pattern detection
 
 ## 🔐 Security & Compliance
@@ -265,8 +274,8 @@ pagbank/
 - **Response Time**: < 2 seconds average with highly relevant, contextual answers
 
 ### Scalability Metrics
-- **Agent Independence**: No coordination overhead between specialist agents
-- **Knowledge Isolation**: Team-specific knowledge bases with shared infrastructure
+- **Agent Independence**: Single-agent specialization with no coordination overhead
+- **Knowledge Efficiency**: Top-3 result filtering reduces processing overhead
 - **Memory Scalability**: Efficient cross-session storage and retrieval
 - **Load Distribution**: Automatic routing balances system load effectively
 
@@ -284,7 +293,7 @@ pagbank/
 - **Context Preservation**: Conversation continuity across sessions and agent handoffs
 - **Personalization**: Adaptive responses based on customer type and history
 
-This architecture provides a sophisticated, scalable, and intelligent customer service solution specifically optimized for Brazilian banking scenarios with seamless human integration capabilities.
+This single-agent architecture provides a sophisticated, scalable, and intelligent customer service solution specifically optimized for Brazilian banking scenarios with seamless human integration via WhatsApp Evolution API.
 
 ---
 
