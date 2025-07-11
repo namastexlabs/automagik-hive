@@ -8,50 +8,50 @@ O sistema utiliza uma arquitetura de orquestração inteligente onde o Orquestra
 
 ```mermaid
 graph TB
-    %% Customer Entry Point
-    Customer[👤 Customer Query<br/>Portuguese Language] --> Orchestrator
+    %% Ponto de Entrada do Cliente
+    Customer[👤 Consulta do Cliente<br/>Linguagem Portuguesa] --> Orchestrator
 
-    %% Main Orchestrator
-    Orchestrator[🎯 Main Orchestrator<br/>Claude Sonnet 4<br/>Query Analysis & Routing]
+    %% Orquestrador Principal
+    Orchestrator[🎯 Orquestrador Principal<br/>Claude Sonnet 4<br/>Análise e Roteamento]
     
-    %% Routing Decision
-    Orchestrator --> Routing{🔀 Business Unit Routing}
+    %% Decisão de Roteamento
+    Orchestrator --> Routing{🔀 Roteamento por<br/>Unidade de Negócio}
     
-    %% Human Handoff Detection
-    Orchestrator --> HumanCheck{😤 Frustration<br/>Detection?}
-    HumanCheck -->|Level 3+| HumanAgent[👨‍💼 Human Handoff Agent<br/>WhatsApp Integration]
-    HumanAgent --> WhatsApp[📱 WhatsApp Evolution API<br/>Direct HTTP Integration]
+    %% Detecção de Escalação Humana
+    Orchestrator --> HumanCheck{😤 Detecção de<br/>Frustração?}
+    HumanCheck -->|Nível 3+| HumanAgent[👨‍💼 Agente de Escalação<br/>Integração WhatsApp]
+    HumanAgent --> WhatsApp[📱 WhatsApp Evolution API<br/>Integração HTTP Direta]
     
-    %% Business Unit Agents
-    Routing -->|Merchant Services| AdquirenciaAgent[🏪 Adquirência Agent<br/>Sales Advance<br/>Multi-acquirer Services]
-    Routing -->|Card Products| EmissaoAgent[💳 Emissão Agent<br/>Credit/Debit Cards<br/>Card Management]
-    Routing -->|Digital Banking| PagBankAgent[💻 PagBank Agent<br/>PIX, Transfers<br/>Digital Account Services]
+    %% Agentes por Unidade de Negócio
+    Routing -->|Serviços Lojista| AdquirenciaAgent[🏪 Agente Adquirência<br/>Antecipação de Vendas<br/>Multiadquirência]
+    Routing -->|Produtos Cartão| EmissaoAgent[💳 Agente Emissão<br/>Cartões Crédito/Débito<br/>Gestão de Cartões]
+    Routing -->|Banco Digital| PagBankAgent[💻 Agente PagBank<br/>PIX, Transferências<br/>Conta Digital]
     
-    %% Knowledge Base System
-    subgraph Knowledge["📚 Knowledge Base System"]
-        CSV[📄 CSV Knowledge<br/>622 Documents<br/>Business Unit Filtered]
-        Vector[(🔍 Vector Database<br/>OpenAI Embeddings<br/>Semantic Search)]
+    %% Sistema Base de Conhecimento
+    subgraph Knowledge["📚 Sistema Base de Conhecimento"]
+        CSV[📄 Conhecimento CSV<br/>622 Documentos<br/>Filtrado por Unidade]
+        Vector[(🔍 Banco Vetorial<br/>Embeddings OpenAI<br/>Busca Semântica)]
         CSV --> Vector
     end
     
-    %% Business Unit Filtering
-    AdquirenciaAgent --> Filter1[🎯 Business Filter<br/>unit: adquirencia<br/>Merchant-focused]
-    EmissaoAgent --> Filter2[🎯 Business Filter<br/>unit: emissao<br/>Card-focused]
-    PagBankAgent --> Filter3[🎯 Business Filter<br/>unit: pagbank<br/>Banking-focused]
+    %% Filtragem por Unidade
+    AdquirenciaAgent --> Filter1[🎯 Filtro Negócio<br/>unidade: adquirencia<br/>Foco Lojista]
+    EmissaoAgent --> Filter2[🎯 Filtro Negócio<br/>unidade: emissao<br/>Foco Cartões]
+    PagBankAgent --> Filter3[🎯 Filtro Negócio<br/>unidade: pagbank<br/>Foco Bancário]
     
-    %% Knowledge Queries
+    %% Consultas de Conhecimento
     Filter1 --> Vector
     Filter2 --> Vector
     Filter3 --> Vector
     
-    %% Memory System
-    subgraph Memory["🧠 Memory System"]
-        AgnoMemory[(🗃️ Agno Memory v2<br/>SQLite Storage<br/>Cross-Session Context)]
-        PatternDetect[🔍 Pattern Detection<br/>Learning System]
-        SessionMgmt[⏱️ Session Management<br/>30min Timeout<br/>20 Turn Limit]
+    %% Sistema de Memória
+    subgraph Memory["🧠 Sistema de Memória"]
+        AgnoMemory[(🗃️ Agno Memory v2<br/>Armazenamento SQLite<br/>Contexto Entre Sessões)]
+        PatternDetect[🔍 Detecção de Padrões<br/>Sistema de Aprendizado]
+        SessionMgmt[⏱️ Gestão de Sessões<br/>Timeout 30min<br/>Limite 20 Turnos]
     end
     
-    %% Memory Integration
+    %% Integração de Memória
     AdquirenciaAgent --> AgnoMemory
     EmissaoAgent --> AgnoMemory
     PagBankAgent --> AgnoMemory
@@ -61,18 +61,18 @@ graph TB
     AgnoMemory --> PatternDetect
     AgnoMemory --> SessionMgmt
     
-    %% Response Flow
-    AdquirenciaAgent --> Response[📝 Agent Response<br/>Business Unit Specialized]
+    %% Fluxo de Resposta
+    AdquirenciaAgent --> Response[📝 Resposta do Agente<br/>Especializada por Unidade]
     EmissaoAgent --> Response
     PagBankAgent --> Response
     
-    Response --> MemoryUpdate[💾 Memory Update<br/>Context Preservation]
-    MemoryUpdate --> FinalResponse[✅ Final Response<br/>to Customer]
+    Response --> MemoryUpdate[💾 Atualização Memória<br/>Preservação Contexto]
+    MemoryUpdate --> FinalResponse[✅ Resposta Final<br/>para Cliente]
     
-    %% Escalation System
-    Response --> EscalationCheck{🚨 Escalation<br/>Needed?}
-    EscalationCheck -->|Technical Issues| TechnicalEsc[🔧 Technical Escalation<br/>App Crashes, API Errors, Bugs]
-    EscalationCheck -->|No| FinalResponse
+    %% Sistema de Escalação
+    Response --> EscalationCheck{🚨 Escalação<br/>Necessária?}
+    EscalationCheck -->|Problemas Técnicos| TechnicalEsc[🔧 Escalação Técnica<br/>Crashes App, Erros API, Bugs]
+    EscalationCheck -->|Não| FinalResponse
     
     %% Styling
     classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
