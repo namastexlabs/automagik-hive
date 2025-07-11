@@ -20,7 +20,7 @@ graph TB
     %% Detecção de Escalação Humana
     Orchestrator --> HumanCheck{😤 Detecção de<br/>Frustração?}
     HumanCheck -->|Nível 3+| HumanAgent[👨‍💼 Agente de Escalação<br/>Transferência Humana]
-    HumanAgent --> McpTool[🔧 Automagik MCP Tools<br/>Evolution API Integration]
+    HumanAgent --> McpTool[🔧 MCP: automagik-tools<br/>mcp_evolution-api_send_message]
     McpTool --> WhatsApp[📱 WhatsApp<br/>Notificação Stakeholders]
     
     %% Agentes por Unidade de Negócio
