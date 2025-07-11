@@ -77,7 +77,7 @@ class PagBankCSVKnowledgeBase:
             path=self.csv_path,
             vector_db=self.vector_db,
             reader=create_enhanced_csv_reader_for_pagbank(),  # Use enhanced reader for metadata
-            num_documents=10  # Return top 10 most relevant documents
+            num_documents=3  # Return top 3 most relevant documents
         )
         
         # Add valid_metadata_filters attribute for Agno agentic filtering (only useful columns)
