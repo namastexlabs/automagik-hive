@@ -71,15 +71,15 @@ graph TB
     
     %% Escalation System
     Response --> EscalationCheck{🚨 Escalation<br/>Needed?}
-    EscalationCheck -->|Complex Case| TechnicalEsc[🔧 Technical Escalation<br/>Cross-Unit Support]
+    EscalationCheck -->|Technical Issues| TechnicalEsc[🔧 Technical Escalation<br/>App Crashes, API Errors, Bugs]
     EscalationCheck -->|No| FinalResponse
     
     %% Styling
-    classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
-    classDef knowledge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef memory fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
-    classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
+    classDef knowledge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+    classDef memory fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+    classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+    classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
     
     class AdquirenciaAgent,EmissaoAgent,PagBankAgent,HumanAgent agent
     class CSV,Vector,Filter1,Filter2,Filter3 knowledge
