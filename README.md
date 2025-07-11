@@ -19,8 +19,9 @@ graph TB
     
     %% Detecção de Escalação Humana
     Orchestrator --> HumanCheck{😤 Detecção de<br/>Frustração?}
-    HumanCheck -->|Nível 3+| HumanAgent[👨‍💼 Agente de Escalação<br/>Integração WhatsApp]
-    HumanAgent --> WhatsApp[📱 WhatsApp Evolution API<br/>Integração HTTP Direta]
+    HumanCheck -->|Nível 3+| HumanAgent[👨‍💼 Agente de Escalação<br/>Transferência Humana]
+    HumanAgent --> McpTool[🔧 Automagik MCP Tools<br/>Evolution API Integration]
+    McpTool --> WhatsApp[📱 WhatsApp<br/>Notificação Stakeholders]
     
     %% Agentes por Unidade de Negócio
     Routing -->|Serviços Lojista| AdquirenciaAgent[🏪 Agente Adquirência<br/>Antecipação de Vendas<br/>Multiadquirência]
@@ -85,7 +86,7 @@ graph TB
     class CSV,Vector,Filter1,Filter2,Filter3 knowledge
     class AgnoMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
     class Routing,HumanCheck,EscalationCheck decision
-    class WhatsApp,Customer external
+    class WhatsApp,Customer,McpTool external
 ```
 
 ## 🚀 Início Rápido
