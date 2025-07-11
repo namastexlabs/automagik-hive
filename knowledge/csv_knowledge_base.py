@@ -27,32 +27,19 @@ class PagBankCSVKnowledgeBase:
     Uses OpenAI embeddings with Claude Sonnet 4 for LLM operations
     """
     
-    # Team filter configurations
-    TEAM_FILTERS = {
-        'cartoes': {
-            'area': 'cartoes',
-            'tipo_produto': ['cartao_credito', 'cartao_debito', 'cartao_prepago', 'cartao_virtual', 'limite_credito'],
-            'keywords': ['cartão', 'limite', 'crédito', 'débito', 'prepago', 'anuidade', 'fatura']
+    # Business unit filter configurations
+    BUSINESS_UNIT_FILTERS = {
+        'adquirencia': {
+            'business_unit': ['Adquirência Web', 'Adquirência Web / Adquirência Presencial'],
+            'keywords': ['antecipação', 'vendas', 'adquirência', 'máquina', 'antecipação agendada', 'comprometimento', 'multiadquirência']
         },
-        'conta_digital': {
-            'area': 'conta_digital', 
-            'tipo_produto': ['conta_rendeira', 'pix', 'ted', 'doc', 'pagamento_contas', 'recarga_celular', 'recarga_servicos', 'portabilidade'],
-            'keywords': ['pix', 'transferência', 'pagamento', 'recarga', 'portabilidade', 'saldo', 'conta']
+        'emissao': {
+            'business_unit': ['Emissão'],
+            'keywords': ['cartão', 'limite', 'crédito', 'débito', 'pré-pago', 'anuidade', 'fatura', 'mastercard', 'visa', 'múltiplo', 'internacional']
         },
-        'investimentos': {
-            'area': 'investimentos',
-            'tipo_produto': ['cdb', 'lci', 'lca', 'renda_variavel', 'tesouro_direto', 'cofrinho', 'fundos'],
-            'keywords': ['investir', 'cdb', 'lci', 'lca', 'render', 'cdi', 'cofrinho', 'fundos', 'aplicação']
-        },
-        'credito': {
-            'area': 'credito',
-            'tipo_produto': ['fgts', 'consignado_inss', 'consignado_publico', 'emprestimo_pessoal'],
-            'keywords': ['fgts', 'consignado', 'empréstimo', 'crédito', 'antecipação', 'saque', 'taxa']
-        },
-        'seguros': {
-            'area': 'seguros',
-            'tipo_produto': ['seguro_vida', 'seguro_residencia', 'seguro_conta', 'saude', 'seguro_cartao'],
-            'keywords': ['seguro', 'vida', 'residência', 'saúde', 'proteção', 'cobertura', 'assistência']
+        'pagbank': {
+            'business_unit': ['PagBank'],
+            'keywords': ['pix', 'transferência', 'pagamento', 'recarga', 'portabilidade', 'saldo', 'conta', 'ted', 'folha de pagamento', 'aplicativo', 'tarifa']
         }
     }
     
@@ -80,8 +67,8 @@ class PagBankCSVKnowledgeBase:
             num_documents=3  # Return top 3 most relevant documents
         )
         
-        # Add valid_metadata_filters attribute for Agno agentic filtering (only useful columns)
-        self.knowledge_base.valid_metadata_filters = {"area", "tipo_produto", "publico_alvo"}
+        # Add valid_metadata_filters attribute for Agno agentic filtering
+        self.knowledge_base.valid_metadata_filters = {"business_unit", "solution", "typification"}
         
         print(f"Initialized PagBank CSV Knowledge Base with {self.csv_path}")
     
@@ -105,7 +92,7 @@ class PagBankCSVKnowledgeBase:
         
         Args:
             query: Search query
-            team: Team name for filtering (cartoes, conta_digital, investimentos, credito, seguros)
+            team: Team name for filtering (adquirencia, emissao, pagbank)
             filters: Additional filters
             max_results: Maximum number of results
             
@@ -115,16 +102,15 @@ class PagBankCSVKnowledgeBase:
         # Build filter criteria
         search_filters = {}
         
-        # Apply team-specific filters
-        if team and team in self.TEAM_FILTERS:
-            team_config = self.TEAM_FILTERS[team]
-            # Use the correct column name from CSV (area, not categoria)
-            search_filters.update({
-                'area': team_config['area']
-            })
-            # Add product type filter if needed
-            if len(team_config['tipo_produto']) == 1:
-                search_filters['tipo_produto'] = team_config['tipo_produto'][0]
+        # Apply business unit filters
+        if team and team in self.BUSINESS_UNIT_FILTERS:
+            team_config = self.BUSINESS_UNIT_FILTERS[team]
+            # Use business_unit filter
+            if 'business_unit' in team_config:
+                # For multiple business units, we need to handle OR logic
+                # Agno filters expect single values, so we'll use the first one
+                # and rely on semantic search to find related content
+                search_filters['business_unit'] = team_config['business_unit'][0]
         
         # Apply additional filters
         if filters:
@@ -175,17 +161,12 @@ class PagBankCSVKnowledgeBase:
         Returns:
             List of team-specific knowledge entries
         """
-        if team not in self.TEAM_FILTERS:
+        if team not in self.BUSINESS_UNIT_FILTERS:
             return []
         
         # Build filters
-        filters = {'area': self.TEAM_FILTERS[team]['area']}
-        
-        if info_type:
-            filters['tipo_informacao'] = info_type
-        
-        if complexity:
-            filters['nivel_complexidade'] = complexity
+        team_config = self.BUSINESS_UNIT_FILTERS[team]
+        filters = {'business_unit': team_config['business_unit'][0]}
         
         # Use generic query for team knowledge
         query = f"{team} informações gerais"
@@ -215,11 +196,11 @@ class PagBankCSVKnowledgeBase:
                 'status': 'success' if search_time < 2.0 else 'slow'
             }
             
-            # Test team-specific searches with simple queries
-            for team in self.TEAM_FILTERS:
+            # Test business unit searches with simple queries
+            for team in self.BUSINESS_UNIT_FILTERS:
                 start_time = datetime.now()
                 # Use basic search for team testing
-                team_search_query = self.TEAM_FILTERS[team]['keywords'][0]
+                team_search_query = self.BUSINESS_UNIT_FILTERS[team]['keywords'][0]
                 team_results = self.knowledge_base.search(team_search_query, num_documents=5)
                 team_search_time = (datetime.now() - start_time).total_seconds()
                 
@@ -248,11 +229,8 @@ class PagBankCSVKnowledgeBase:
             
             stats = {
                 'total_entries': len(df),
-                'by_area': df['area'].value_counts().to_dict(),
-                'by_product_type': df['tipo_produto'].value_counts().to_dict(),
-                'by_info_type': df['tipo_informacao'].value_counts().to_dict(),
-                'by_complexity': df['nivel_complexidade'].value_counts().to_dict(),
-                'by_target_audience': df['publico_alvo'].value_counts().to_dict()
+                'by_business_unit': df['business_unit'].value_counts().to_dict() if 'business_unit' in df.columns else {},
+                'columns': list(df.columns)
             }
             
             return stats
@@ -265,13 +243,12 @@ class PagBankCSVKnowledgeBase:
         """Create agentic filter configurations for all teams"""
         agentic_filters = {}
         
-        for team_name, team_config in self.TEAM_FILTERS.items():
+        for team_name, team_config in self.BUSINESS_UNIT_FILTERS.items():
             agentic_filters[team_name] = {
                 'name': team_name,
-                'description': f"Filtros de conhecimento para o time {team_name}",
+                'description': f"Filtros de conhecimento para a unidade de negócio {team_name}",
                 'filters': {
-                    'area': team_config['area'],
-                    'tipo_produto': team_config['tipo_produto'],
+                    'business_unit': team_config['business_unit'],
                     'keywords': team_config['keywords']
                 },
                 'search_config': {
@@ -287,7 +264,7 @@ class PagBankCSVKnowledgeBase:
 def create_pagbank_knowledge_base() -> PagBankCSVKnowledgeBase:
     """Create and initialize PagBank knowledge base"""
     # Configuration
-    csv_path = str(Path(__file__).parent / "pagbank_knowledge.csv")
+    csv_path = str(Path(__file__).parent / "knowledge_rag.csv")
     db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
     table_name = "pagbank_knowledge"
     
@@ -314,7 +291,7 @@ if __name__ == '__main__':
     
     # Test team searches
     print("\n--- Testing Team Searches ---")
-    for team in ['cartoes', 'credito', 'investimentos']:
+    for team in ['adquirencia', 'emissao', 'pagbank']:
         results = kb.get_team_knowledge(team, max_results=3)
         print(f"{team}: {len(results)} results")
         
@@ -323,7 +300,7 @@ if __name__ == '__main__':
     
     # Test search with filters
     print("\n--- Testing Filtered Search ---")
-    results = kb.search_with_filters("como solicitar cartão", team="cartoes", max_results=2)
+    results = kb.search_with_filters("como solicitar cartão", team="emissao", max_results=2)
     print(f"Filtered search: {len(results)} results")
     
     # Create agentic filters

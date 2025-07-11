@@ -46,7 +46,7 @@ for agent_name, agent_instance in orchestrator.specialist_agents.items():
 routing_team = orchestrator.routing_team
 
 # Start CSV hot reload manager in background thread
-csv_manager = CSVHotReloadManager(check_interval=60)  # Check every minute
+csv_manager = CSVHotReloadManager(csv_path="knowledge/knowledge_rag.csv", check_interval=60)  # Check every minute
 csv_thread = threading.Thread(target=csv_manager.start_watching, daemon=True)
 csv_thread.start()
 
@@ -82,8 +82,8 @@ def main():
         print("="*50)
         print("✅ System: 100% Complete")
         print("✅ Routing team with specialist agents: Active")
-        print("✅ All 5 specialist agents loaded (simplified architecture)")
-        print("✅ Knowledge base: 571 entries")
+        print("✅ All 4 specialist agents loaded (3 business units + human handoff)")
+        print("✅ Knowledge base: 622 entries")
         print("✅ Memory system: Active")
         print("✅ Portuguese support: Full")
         print("✅ Demo ready: YES")

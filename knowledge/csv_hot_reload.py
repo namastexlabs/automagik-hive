@@ -25,7 +25,7 @@ class CSVHotReloadManager:
     4. Zero downtime - agents get updated knowledge immediately
     """
     
-    def __init__(self, csv_path: str = "knowledge/pagbank_knowledge.csv", check_interval: int = 30):
+    def __init__(self, csv_path: str = "knowledge/knowledge_rag.csv", check_interval: int = 30):
         self.csv_path = Path(csv_path)
         self.check_interval = check_interval  # seconds
         self.last_modified = 0
@@ -208,7 +208,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="CSV Hot Reload Manager for PagBank Knowledge Base")
-    parser.add_argument("--csv", default="knowledge/pagbank_knowledge.csv", help="Path to CSV file")
+    parser.add_argument("--csv", default="knowledge/knowledge_rag.csv", help="Path to CSV file")
     parser.add_argument("--interval", type=int, default=30, help="Check interval in seconds")
     parser.add_argument("--status", action="store_true", help="Show status and exit")
     parser.add_argument("--force-reload", action="store_true", help="Force reload and exit")

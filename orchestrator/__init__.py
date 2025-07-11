@@ -9,7 +9,7 @@ from .clarification_handler import (
     clarification_handler,
 )
 from .human_handoff_detector import HumanHandoffDetector, human_handoff_detector
-from .routing_logic import RoutingDecision, RoutingEngine, TeamType, routing_engine
+from .routing_logic import RoutingDecision, RoutingEngine, routing_engine
 
 __all__ = [
     # Human handoff detection
@@ -19,7 +19,6 @@ __all__ = [
     # Routing logic
     'RoutingEngine',
     'routing_engine',
-    'TeamType',
     'RoutingDecision',
     
     # Clarification handling

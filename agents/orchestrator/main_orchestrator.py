@@ -15,12 +15,10 @@ from config.settings import settings
 # Import memory system
 from memory.memory_manager import create_memory_manager
 
-# Import actual specialist agents
-from agents.specialists.cards_agent import CardsAgent
-from agents.specialists.credit_agent import CreditAgent
-from agents.specialists.digital_account_agent import DigitalAccountAgent
-from agents.specialists.insurance_agent import InsuranceAgent
-from agents.specialists.investments_agent import InvestmentsAgent
+# Import business unit agents
+from agents.specialists.adquirencia_agent import AdquirenciaAgent
+from agents.specialists.emissao_agent import EmissaoAgent
+from agents.specialists.pagbank_agent import PagBankAgent
 from agents.specialists.human_handoff_agent import HumanHandoffAgent
 
 # Import escalation agents
@@ -118,25 +116,17 @@ class PagBankMainOrchestrator:
         # Add delays between agent creation to prevent API overload
         import time
         
-        # Create all specialist agents and get their Agno Agent instances
-        cards_agent = CardsAgent(knowledge_base, self.memory_manager)
-        agents["Especialista em Cartões"] = cards_agent.agent
+        # Create business unit agents and get their Agno Agent instances
+        adquirencia_agent = AdquirenciaAgent(knowledge_base, self.memory_manager)
+        agents["Especialista em Adquirência"] = adquirencia_agent.agent
         time.sleep(0.2)
         
-        digital_account_agent = DigitalAccountAgent(knowledge_base, self.memory_manager)
-        agents["Especialista em Conta Digital"] = digital_account_agent.agent
+        emissao_agent = EmissaoAgent(knowledge_base, self.memory_manager)
+        agents["Especialista em Emissão"] = emissao_agent.agent
         time.sleep(0.2)
         
-        investments_agent = InvestmentsAgent(knowledge_base, self.memory_manager)
-        agents["Especialista em Investimentos"] = investments_agent.agent
-        time.sleep(0.2)
-        
-        credit_agent = CreditAgent(knowledge_base, self.memory_manager)
-        agents["Especialista em Crédito"] = credit_agent.agent
-        time.sleep(0.2)
-        
-        insurance_agent = InsuranceAgent(knowledge_base, self.memory_manager)
-        agents["Especialista em Seguros"] = insurance_agent.agent
+        pagbank_agent = PagBankAgent(knowledge_base, self.memory_manager)
+        agents["Especialista em Conta PagBank"] = pagbank_agent.agent
         time.sleep(0.2)
         
         human_handoff_agent = HumanHandoffAgent(knowledge_base, self.memory_manager)
@@ -144,11 +134,9 @@ class PagBankMainOrchestrator:
         
         # Store agent wrappers for later access
         self.agent_wrappers = {
-            "cards": cards_agent,
-            "digital_account": digital_account_agent,
-            "investments": investments_agent,
-            "credit": credit_agent,
-            "insurance": insurance_agent,
+            "adquirencia": adquirencia_agent,
+            "emissao": emissao_agent,
+            "pagbank": pagbank_agent,
             "human_handoff": human_handoff_agent
         }
         

@@ -12,11 +12,9 @@ from .base.response_templates import RESPONSE_TEMPLATES
 from .base.error_prompts import ERROR_PROMPTS
 from .orchestrator.routing_prompts import ROUTING_PROMPTS
 from .orchestrator.clarification_prompts import CLARIFICATION_PROMPTS
-from .specialists.cards_prompts import CARDS_PROMPTS
-from .specialists.credit_prompts import CREDIT_PROMPTS
-from .specialists.digital_account_prompts import DIGITAL_ACCOUNT_PROMPTS
-from .specialists.investments_prompts import INVESTMENTS_PROMPTS
-from .specialists.insurance_prompts import INSURANCE_PROMPTS
+from .specialists.adquirencia_prompts import ADQUIRENCIA_PROMPTS
+from .specialists.emissao_prompts import EMISSAO_PROMPTS
+from .specialists.pagbank_prompts import PAGBANK_PROMPTS
 from .specialists.human_handoff_prompts import HUMAN_HANDOFF_PROMPTS
 from .escalation.human_escalation_prompts import HUMAN_ESCALATION_PROMPTS
 from .escalation.technical_escalation_prompts import TECHNICAL_ESCALATION_PROMPTS
@@ -48,11 +46,9 @@ class PromptManager:
                 "clarification": CLARIFICATION_PROMPTS
             },
             "specialists": {
-                "cards": CARDS_PROMPTS,
-                "credit": CREDIT_PROMPTS,
-                "digital_account": DIGITAL_ACCOUNT_PROMPTS,
-                "investments": INVESTMENTS_PROMPTS,
-                "insurance": INSURANCE_PROMPTS,
+                "adquirencia": ADQUIRENCIA_PROMPTS,
+                "emissao": EMISSAO_PROMPTS,
+                "pagbank": PAGBANK_PROMPTS,
                 "human_handoff": HUMAN_HANDOFF_PROMPTS
             },
             "escalation": {

@@ -1,20 +1,18 @@
-"""Specialist agents for different banking departments."""
+"""
+PagBank specialist agents - Business unit based agents
+"""
 
 from .base_agent import BaseSpecialistAgent, AgentResponse
-from .cards_agent import CardsAgent
-from .credit_agent import CreditAgent
-from .digital_account_agent import DigitalAccountAgent
-from .insurance_agent import InsuranceAgent
-from .investments_agent import InvestmentsAgent
+from .adquirencia_agent import AdquirenciaAgent
+from .emissao_agent import EmissaoAgent
+from .pagbank_agent import PagBankAgent
 from .human_handoff_agent import HumanHandoffAgent
 
 __all__ = [
     "BaseSpecialistAgent",
-    "AgentResponse",
-    "CardsAgent",
-    "CreditAgent",
-    "DigitalAccountAgent",
-    "InsuranceAgent",
-    "InvestmentsAgent",
+    "AgentResponse", 
+    "AdquirenciaAgent",
+    "EmissaoAgent",
+    "PagBankAgent",
     "HumanHandoffAgent"
 ]

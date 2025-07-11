@@ -25,7 +25,7 @@ class EnhancedCSVReader(CSVReader):
     
     def __init__(
         self,
-        content_column: str = "conteudo",
+        content_column: str = "problem",
         metadata_columns: Optional[List[str]] = None,
         exclude_columns: Optional[List[str]] = None,
         encoding: str = "utf-8",
@@ -156,27 +156,23 @@ def create_enhanced_csv_reader_for_pagbank() -> EnhancedCSVReader:
     """
     Create Enhanced CSV Reader specifically configured for PagBank knowledge base
     
-    Only extracts metadata columns that are actually useful for agentic filtering:
-    - area: Team routing (cartoes, conta_digital, etc.)  
-    - tipo_produto: Product-specific filtering (cartao_credito, pix, etc.)
-    - publico_alvo: Customer type filtering (pessoa_fisica, pessoa_juridica, etc.)
+    Configured for new 4-column CSV format:
+    - problem: The customer problem/question (used as content)
+    - solution: The solution/answer
+    - typification: Service classification details
+    - business_unit: Business unit for routing (Adquirência Web, Emissão, PagBank)
     
     Returns:
-        Configured EnhancedCSVReader for PagBank CSV structure
+        Configured EnhancedCSVReader for new PagBank CSV structure
     """
     return EnhancedCSVReader(
-        content_column="conteudo",
+        content_column="problem",  # Use problem as searchable content
         metadata_columns=[
-            "area",         # Essential: Team routing for specialist agents
-            "tipo_produto", # Useful: Product-specific filtering within teams  
-            "publico_alvo"  # Useful: Customer type filtering (PF vs PJ, etc.)
+            "business_unit",  # Essential: Business unit routing for agents
+            "solution",       # Include solution in metadata for completeness
+            "typification"   # Include typification for additional context
         ],
-        exclude_columns=[
-            "tipo_informacao",    # Bloat: Not used by agents
-            "nivel_complexidade", # Useless: As user noted, not valuable
-            "palavras_chave",     # Bloat: Too granular for filtering
-            "atualizado_em"       # Bloat: Not relevant for queries
-        ],
+        exclude_columns=[],  # No columns to exclude in new format
         encoding="utf-8"
     )
 
@@ -185,7 +181,7 @@ if __name__ == "__main__":
     # Test the enhanced CSV reader
     from pathlib import Path
     
-    csv_path = Path("pagbank_knowledge.csv")
+    csv_path = Path("knowledge_rag.csv")
     reader = create_enhanced_csv_reader_for_pagbank()
     
     print("🔍 Testing Enhanced CSV Reader")
