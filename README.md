@@ -1,10 +1,10 @@
-# PagBank Multi-Agent Customer Service System
+# Sistema Multi-Agente de Atendimento PagBank
 
-A sophisticated Brazilian customer service multi-agent system built with the Agno framework. The system routes customer queries to specialized single agents for cartões (cards), conta digital (digital account), investimentos (investments), crédito (credit), and seguros (insurance).
+Sistema sofisticado de atendimento ao cliente multi-agente construído com o framework Agno. O sistema roteia consultas de clientes para agentes especializados por unidade de negócio: Adquirência, Emissão, PagBank e Escalação Humana.
 
-## 🏗️ Architecture Overview
+## 🏗️ Visão Geral da Arquitetura
 
-The system uses an intelligent orchestration architecture where the Main Orchestrator routes customer queries to specialist agents. Each agent has dedicated knowledge base access with intelligent filtering for precise, contextual responses.
+O sistema utiliza uma arquitetura de orquestração inteligente onde o Orquestrador Principal roteia consultas de clientes para agentes especializados. Cada agente possui acesso dedicado à base de conhecimento com filtragem inteligente para respostas precisas e contextuais.
 
 ```mermaid
 graph TB
@@ -15,40 +15,34 @@ graph TB
     Orchestrator[🎯 Main Orchestrator<br/>Claude Sonnet 4<br/>Query Analysis & Routing]
     
     %% Routing Decision
-    Orchestrator --> Routing{🔀 Intelligent Routing}
+    Orchestrator --> Routing{🔀 Business Unit Routing}
     
     %% Human Handoff Detection
     Orchestrator --> HumanCheck{😤 Frustration<br/>Detection?}
     HumanCheck -->|Level 3+| HumanAgent[👨‍💼 Human Handoff Agent<br/>WhatsApp Integration]
     HumanAgent --> WhatsApp[📱 WhatsApp Evolution API<br/>Direct HTTP Integration]
     
-    %% Specialist Agents
-    Routing -->|Cards Query| CardsAgent[💳 Cards Agent<br/>Credit/Debit Cards<br/>Limits & Billing]
-    Routing -->|Digital Banking| DigitalAgent[💻 Digital Account Agent<br/>PIX, Transfers<br/>Digital Services]
-    Routing -->|Investment Query| InvestAgent[📈 Investments Agent<br/>CDB, Funds<br/>Returns & Risk]
-    Routing -->|Credit Query| CreditAgent[💰 Credit Agent<br/>Loans, FGTS<br/>Credit Products]
-    Routing -->|Insurance Query| InsuranceAgent[🛡️ Insurance Agent<br/>Life, Health<br/>Coverage & Claims]
+    %% Business Unit Agents
+    Routing -->|Merchant Services| AdquirenciaAgent[🏪 Adquirência Agent<br/>Sales Advance<br/>Multi-acquirer Services]
+    Routing -->|Card Products| EmissaoAgent[💳 Emissão Agent<br/>Credit/Debit Cards<br/>Card Management]
+    Routing -->|Digital Banking| PagBankAgent[💻 PagBank Agent<br/>PIX, Transfers<br/>Digital Account Services]
     
     %% Knowledge Base System
     subgraph Knowledge["📚 Knowledge Base System"]
-        CSV[📄 CSV Knowledge<br/>651 Documents<br/>Top 3 Results per Query]
-        PgVector[(🔍 PgVector Database<br/>OpenAI Embeddings<br/>HNSW Indexing)]
-        CSV --> PgVector
+        CSV[📄 CSV Knowledge<br/>622 Documents<br/>Business Unit Filtered]
+        Vector[(🔍 Vector Database<br/>OpenAI Embeddings<br/>Semantic Search)]
+        CSV --> Vector
     end
     
-    %% Agentic Filtering
-    CardsAgent --> Filter1[🎯 Agentic Filter<br/>area: cartoes<br/>tipo_produto: auto-detect<br/>publico_alvo: auto-detect]
-    DigitalAgent --> Filter2[🎯 Agentic Filter<br/>area: conta_digital<br/>tipo_produto: auto-detect<br/>publico_alvo: auto-detect]
-    InvestAgent --> Filter3[🎯 Agentic Filter<br/>area: investimentos<br/>tipo_produto: auto-detect<br/>publico_alvo: auto-detect]
-    CreditAgent --> Filter4[🎯 Agentic Filter<br/>area: credito<br/>tipo_produto: auto-detect<br/>publico_alvo: auto-detect]
-    InsuranceAgent --> Filter5[🎯 Agentic Filter<br/>area: seguros<br/>tipo_produto: auto-detect<br/>publico_alvo: auto-detect]
+    %% Business Unit Filtering
+    AdquirenciaAgent --> Filter1[🎯 Business Filter<br/>unit: adquirencia<br/>Merchant-focused]
+    EmissaoAgent --> Filter2[🎯 Business Filter<br/>unit: emissao<br/>Card-focused]
+    PagBankAgent --> Filter3[🎯 Business Filter<br/>unit: pagbank<br/>Banking-focused]
     
     %% Knowledge Queries
-    Filter1 --> PgVector
-    Filter2 --> PgVector
-    Filter3 --> PgVector
-    Filter4 --> PgVector
-    Filter5 --> PgVector
+    Filter1 --> Vector
+    Filter2 --> Vector
+    Filter3 --> Vector
     
     %% Memory System
     subgraph Memory["🧠 Memory System"]
@@ -58,11 +52,9 @@ graph TB
     end
     
     %% Memory Integration
-    CardsAgent --> AgnoMemory
-    DigitalAgent --> AgnoMemory
-    InvestAgent --> AgnoMemory
-    CreditAgent --> AgnoMemory
-    InsuranceAgent --> AgnoMemory
+    AdquirenciaAgent --> AgnoMemory
+    EmissaoAgent --> AgnoMemory
+    PagBankAgent --> AgnoMemory
     HumanAgent --> AgnoMemory
     Orchestrator --> AgnoMemory
     
@@ -70,18 +62,16 @@ graph TB
     AgnoMemory --> SessionMgmt
     
     %% Response Flow
-    CardsAgent --> Response[📝 Agent Response<br/>Contextual & Precise]
-    DigitalAgent --> Response
-    InvestAgent --> Response
-    CreditAgent --> Response
-    InsuranceAgent --> Response
+    AdquirenciaAgent --> Response[📝 Agent Response<br/>Business Unit Specialized]
+    EmissaoAgent --> Response
+    PagBankAgent --> Response
     
     Response --> MemoryUpdate[💾 Memory Update<br/>Context Preservation]
     MemoryUpdate --> FinalResponse[✅ Final Response<br/>to Customer]
     
     %% Escalation System
     Response --> EscalationCheck{🚨 Escalation<br/>Needed?}
-    EscalationCheck -->|Complex Case| TechnicalEsc[🔧 Technical Escalation<br/>Advanced Problem Solving]
+    EscalationCheck -->|Complex Case| TechnicalEsc[🔧 Technical Escalation<br/>Cross-Unit Support]
     EscalationCheck -->|No| FinalResponse
     
     %% Styling
@@ -91,211 +81,194 @@ graph TB
     classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px
     
-    class CardsAgent,DigitalAgent,InvestAgent,CreditAgent,InsuranceAgent,HumanAgent agent
-    class CSV,PgVector,Filter1,Filter2,Filter3,Filter4,Filter5 knowledge
+    class AdquirenciaAgent,EmissaoAgent,PagBankAgent,HumanAgent agent
+    class CSV,Vector,Filter1,Filter2,Filter3 knowledge
     class AgnoMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
     class Routing,HumanCheck,EscalationCheck decision
     class WhatsApp,Customer external
 ```
 
-## 🚀 Quick Start
+## 🚀 Início Rápido
 
-### Development Setup
+### Configuração de Desenvolvimento
 
 ```bash
-# Install dependencies
+# Instalar dependências
 uv sync
 
-# Start the system
+# Iniciar o sistema
 uv run python playground.py
 ```
 
-The system will be available at: http://localhost:7777
+O sistema estará disponível em: http://localhost:7777
 
-## 🤖 Specialist Agents
+## 🤖 Agentes por Unidade de Negócio
 
-### Agent Architecture
-Each specialist agent operates independently with:
+### Arquitetura dos Agentes
+Cada agente de unidade de negócio opera independentemente com:
 
-- **Claude Sonnet 4**: Advanced reasoning with thinking capability
-- **Agentic Knowledge Filtering**: Automatic query-to-filter extraction
-- **Memory Integration**: Persistent context across conversations
-- **Domain Expertise**: Specialized knowledge for each service area
+- **Claude Sonnet 4**: Raciocínio avançado com capacidade de thinking
+- **Filtragem por Unidade**: Filtragem especializada da base de conhecimento
+- **Integração de Memória**: Contexto persistente entre conversas
+- **Expertise de Domínio**: Conhecimento profundo para cada unidade de negócio
 
-### Specialist Areas
+### Unidades de Negócio
 
-1. **💳 Cartões (Cards)**: Credit cards, debit cards, limits, billing, international usage
-2. **💻 Conta Digital (Digital Account)**: PIX transfers, account management, digital services
-3. **📈 Investimentos (Investments)**: CDB, LCI/LCA, investment funds, risk assessment
-4. **💰 Crédito (Credit)**: Personal loans, FGTS, payroll loans, credit analysis
-5. **🛡️ Seguros (Insurance)**: Life insurance, health coverage, claims processing
+1. **🏪 Adquirência**: Antecipação de vendas, multiadquirência, soluções para lojistas, processamento de pagamentos
+2. **💳 Emissão**: Cartões de crédito/débito, gestão de cartões, limites, benefícios, uso internacional
+3. **💻 PagBank**: Transferências PIX, conta digital, folha de pagamento, recarga celular, segurança da conta
+4. **👨‍💼 Escalação Humana**: Gestão de escalações, integração WhatsApp, roteamento de casos complexos
 
-## 🎯 Intelligent Knowledge Filtering
+## 🎯 Filtragem Inteligente de Conhecimento
 
-### Agentic Filter System
-The system automatically extracts precise filters from Portuguese queries:
+### Sistema de Filtros por Unidade de Negócio
+O sistema automaticamente aplica filtros precisos baseados nas unidades de negócio:
 
 ```
-Query: "Limite do cartão de crédito para empresa"
-↓ Automatic Analysis ↓
-Filters Applied:
-- area: "cartoes" (from agent context)
-- tipo_produto: "limite_credito" (from "limite")
-- publico_alvo: "pessoa_juridica" (from "empresa")
-↓ Result ↓
-Top 3 most relevant documents from filtered results
+Consulta: "Como solicitar antecipação de vendas?"
+↓ Análise Automática ↓
+Filtros Aplicados:
+- business_unit: "adquirencia" (contexto do agente)
+- typification: auto-detectado da consulta
+↓ Resultado ↓
+Documentos mais relevantes da unidade de negócio
 ```
 
-### Knowledge Base Structure
-- **📄 651 Documents**: Comprehensive service knowledge
-- **🎯 3 Metadata Columns**: 
-  - `area`: Agent routing (cartoes, conta_digital, investimentos, credito, seguros)
-  - `tipo_produto`: Product filtering (cartao_credito, pix, cdb, fgts, seguro_vida, etc.)
-  - `publico_alvo`: Customer type (pessoa_fisica, pessoa_juridica, aposentado, etc.)
-- **🔍 PgVector Embeddings**: Fast semantic search with OpenAI embeddings
-- **🔄 Hot Reload**: CSV updates without system downtime
+### Estrutura da Base de Conhecimento
+- **📄 622 Documentos**: Conhecimento abrangente dos serviços
+- **🎯 4 Colunas Principais**: 
+  - `problem`: Descrição do problema/consulta
+  - `solution`: Solução detalhada
+  - `typification`: Classificação do tipo de atendimento
+  - `business_unit`: Unidade de negócio responsável
+- **🔍 Embeddings OpenAI**: Busca semântica rápida
+- **🔄 Hot Reload**: Atualizações do CSV sem parada do sistema
 
-## 🧠 Memory & Context Management
+## 🧠 Gestão de Memória e Contexto
 
-### Agno Memory v2 Integration
-- **Cross-Session Persistence**: Customer context retained between conversations
-- **Pattern Detection**: System learns from recurring issues and behaviors
-- **Shared State**: Seamless handoffs between agents
-- **Conversation Limits**: 30-minute sessions with 20-turn maximum
+### Integração Agno Memory v2
+- **Persistência Entre Sessões**: Contexto do cliente mantido entre conversas
+- **Detecção de Padrões**: Sistema aprende com problemas e comportamentos recorrentes
+- **Estado Compartilhado**: Transferências perfeitas entre agentes
+- **Limites de Conversa**: Sessões de 30 minutos com máximo de 20 turnos
 
-### Memory Features
-- **User Context**: Previous interactions and preferences
-- **Issue Tracking**: Problem resolution history
-- **Learning System**: Adaptive improvement from patterns
-- **Audit Trail**: Complete interaction logging for compliance
+### Funcionalidades de Memória
+- **Contexto do Usuário**: Interações anteriores e preferências
+- **Rastreamento de Problemas**: Histórico de resolução de problemas
+- **Sistema de Aprendizado**: Melhoria adaptativa através de padrões
+- **Trilha de Auditoria**: Log completo de interações para compliance
 
-## 📱 Human Escalation & WhatsApp Integration
+## 📱 Escalação Humana & Integração WhatsApp
 
-### Frustration Detection
-- **Automatic Monitoring**: Real-time frustration level tracking
-- **Level 3 Trigger**: Immediate escalation to human agent
-- **Context Preservation**: Full conversation history transferred
+### Detecção de Frustração
+- **Monitoramento Automático**: Rastreamento em tempo real do nível de frustração
+- **Trigger Nível 3**: Escalação imediata para agente humano
+- **Preservação de Contexto**: Histórico completo da conversa transferido
 
-### WhatsApp Evolution API Integration
+### Integração WhatsApp Evolution API
 ```
-Frustration Detected → Human Handoff Agent → Evolution API
+Frustração Detectada → Agente de Escalação → Evolution API
                                           ↓
-                        Direct HTTP call to WhatsApp service
-                        with complete conversation context
+                        Chamada HTTP direta para serviço WhatsApp
+                        com contexto completo da conversa
 ```
 
-## 🛠️ Technical Stack
+## 🛠️ Stack Técnico
 
-- **🤖 AI Framework**: Agno Multi-Agent System
-- **🧠 LLM**: Claude Sonnet 4 with thinking capability
-- **💾 Memory**: SQLite with Agno Memory v2
-- **🔍 Vector Store**: PgVector with HNSW indexing
+- **🤖 Framework IA**: Sistema Multi-Agente Agno
+- **🧠 LLM**: Claude Sonnet 4 com capacidade de thinking
+- **💾 Memória**: SQLite com Agno Memory v2
+- **🔍 Vector Store**: Banco vetorial com indexação
 - **📄 Embeddings**: OpenAI text-embedding-3-small
-- **🔧 Language**: Python 3.12+ with UV package management
+- **🔧 Linguagem**: Python 3.12+ com gerenciamento UV
 
-## 📁 Project Structure
+## 📁 Estrutura do Projeto
 
 ```
-pagbank/
-├── agents/                    # Single-agent system
+pagbank-multiagents/
+├── agents/                    # Sistema de agentes por unidade de negócio
 │   ├── orchestrator/
-│   │   └── main_orchestrator.py    # Main routing orchestrator
-│   ├── specialists/               # Individual specialist agents
-│   │   ├── base_agent.py         # Base agent class
-│   │   ├── cards_agent.py        # Cards specialist
-│   │   ├── digital_account_agent.py # Digital account specialist
-│   │   ├── investments_agent.py  # Investments specialist
-│   │   ├── credit_agent.py       # Credit specialist
-│   │   ├── insurance_agent.py    # Insurance specialist
-│   │   └── human_handoff_agent.py # Human escalation
-│   ├── prompts/                   # Agent prompts
-│   └── tools/                     # Shared agent tools
-├── orchestrator/              # Shared orchestration utilities
-│   ├── clarification_handler.py   # Query clarification
-│   ├── human_handoff_detector.py  # Frustration detection
-│   ├── routing_logic.py           # Routing algorithms
-│   ├── state_synchronizer.py     # State management
-│   └── utils.py                   # Utility functions
-├── knowledge/                 # Knowledge base system
-│   ├── csv_knowledge_base.py      # CSV knowledge integration
-│   ├── enhanced_csv_reader.py     # Metadata extraction
-│   ├── agentic_filters.py         # Intelligent filtering
-│   └── pagbank_knowledge.csv      # 651 knowledge entries
-├── memory/                    # Memory system
+│   │   └── main_orchestrator.py    # Orquestrador principal de roteamento
+│   ├── specialists/               # Agentes especializados por unidade
+│   │   ├── base_agent.py         # Classe base dos agentes
+│   │   ├── adquirencia_agent.py  # Agente de Adquirência
+│   │   ├── emissao_agent.py      # Agente de Emissão
+│   │   ├── pagbank_agent.py      # Agente PagBank
+│   │   └── human_handoff_agent.py # Escalação humana
+│   ├── prompts/                   # Prompts dos agentes
+│   │   └── specialists/           # Prompts especializados por unidade
+│   └── tools/                     # Ferramentas compartilhadas
+├── orchestrator/              # Utilitários de orquestração
+│   ├── clarification_handler.py   # Tratamento de esclarecimentos
+│   ├── human_handoff_detector.py  # Detecção de frustração
+│   ├── routing_logic.py           # Algoritmos de roteamento
+│   └── state_synchronizer.py     # Gestão de estado
+├── knowledge/                 # Sistema de base de conhecimento
+│   ├── csv_knowledge_base.py      # Integração CSV
+│   ├── enhanced_csv_reader.py     # Extração de metadados
+│   ├── agentic_filters.py         # Filtragem inteligente
+│   └── knowledge_rag.csv          # 622 entradas de conhecimento
+├── memory/                    # Sistema de memória
 │   ├── memory_manager.py          # Agno Memory v2
-│   ├── pattern_detector.py        # Pattern recognition
-│   └── session_manager.py         # Session management
-├── escalation_systems/        # Escalation handling
-│   ├── escalation_manager.py      # Escalation coordination
-│   ├── human_agent_mock.py        # Human agent integration
-│   └── ticket_system.py           # Support ticket system
-├── config/                    # System configuration
-├── data/                      # SQLite databases
-├── scripts/                   # Utility scripts
-│   ├── set_evolution_env.py       # WhatsApp environment setup
-│   └── start_with_whatsapp.py     # Start with WhatsApp enabled
-└── playground.py              # System entry point
+│   ├── pattern_detector.py        # Reconhecimento de padrões
+│   └── session_manager.py         # Gestão de sessões
+├── escalation_systems/        # Sistemas de escalação
+│   ├── escalation_manager.py      # Coordenação de escalações
+│   ├── feedback_human_systems/    # Sistema de feedback humano
+│   └── ticket_system.py           # Sistema de tickets
+├── config/                    # Configuração do sistema
+├── data/                      # Bancos de dados SQLite
+├── tests/                     # Testes automatizados
+│   ├── unit/                      # Testes unitários
+│   ├── integration/               # Testes de integração
+│   └── performance/               # Testes de performance
+├── scripts/                   # Scripts utilitários
+└── playground.py              # Ponto de entrada do sistema
 ```
 
-## 🎯 Core Features
+## 🎯 Funcionalidades Principais
 
-### Intelligence & Automation
-- **🎯 Precision Filtering**: Agentic filters deliver 97% more relevant responses
-- **🧠 Context Awareness**: Memory-powered conversations with learning capabilities
-- **⚡ Performance**: Sub-2-second response times with intelligent query routing
-- **🔄 Scalability**: Independent agents with shared knowledge infrastructure
+### Inteligência & Automação
+- **🎯 Filtragem de Precisão**: Filtros por unidade de negócio entregam respostas mais relevantes
+- **🧠 Consciência de Contexto**: Conversas alimentadas por memória com capacidades de aprendizado
+- **⚡ Performance**: Tempos de resposta sub-2-segundos com roteamento inteligente
+- **🔄 Escalabilidade**: Agentes independentes com infraestrutura de conhecimento compartilhada
 
-### Human Integration
-- **👥 Seamless Escalation**: Automatic frustration detection with WhatsApp notifications
-- **📱 Evolution API**: Direct HTTP integration with WhatsApp service
-- **📊 Context Transfer**: Complete conversation history preserved during handoffs
-- **🎫 Ticket System**: Structured case management and tracking
+### Integração Humana
+- **👥 Escalação Perfeita**: Detecção automática de frustração com notificações WhatsApp
+- **📱 Evolution API**: Integração HTTP direta com serviço WhatsApp
+- **📊 Transferência de Contexto**: Histórico completo de conversa preservado durante transferências
+- **🎫 Sistema de Tickets**: Gestão estruturada e rastreamento de casos
 
-### Knowledge Management
-- **📚 Intelligent Search**: Natural language queries automatically filtered
-- **🔄 Hot Reload**: Real-time knowledge updates without system restart
-- **🎯 Domain Expertise**: Single-agent specialization with top-3 result precision
-- **📈 Learning System**: Continuous improvement through pattern detection
+### Gestão de Conhecimento
+- **📚 Busca Inteligente**: Consultas em linguagem natural automaticamente filtradas
+- **🔄 Hot Reload**: Atualizações de conhecimento em tempo real sem reinicialização
+- **🎯 Expertise de Domínio**: Especialização por unidade de negócio
+- **📈 Sistema de Aprendizado**: Melhoria contínua através de detecção de padrões
 
-## 🔐 Security & Compliance
+## 🔐 Segurança & Compliance
 
-- **🔒 Data Privacy**: Customer information protection with comprehensive audit trails
-- **🏛️ Banking Compliance**: Full adherence to Brazilian financial regulations
-- **📊 Quality Assurance**: Response validation and accuracy monitoring
-- **🛡️ Fraud Detection**: Advanced pattern recognition for security threats
-- **🔑 Access Control**: Role-based permissions and secure API integration
+- **🔒 Privacidade de Dados**: Proteção de informações do cliente com trilhas de auditoria abrangentes
+- **🏛️ Compliance Bancário**: Aderência total às regulamentações financeiras
+- **📊 Garantia de Qualidade**: Validação de respostas e monitoramento de precisão
+- **🛡️ Detecção de Fraude**: Reconhecimento avançado de padrões para ameaças de segurança
+- **🔑 Controle de Acesso**: Permissões baseadas em função e integração segura de API
 
-## 📊 System Performance
+## 📊 Performance do Sistema
 
-### Response Optimization
-- **Intelligent Routing**: Context-aware query distribution across specialized agents
-- **Precision Filtering**: 97% reduction in knowledge search space through agentic filtering
-- **Memory Efficiency**: Persistent context management without redundancy
-- **Response Time**: < 2 seconds average with highly relevant, contextual answers
+### Otimização de Resposta
+- **Roteamento Inteligente**: Distribuição de consultas consciente de contexto entre agentes especializados
+- **Filtragem de Precisão**: Redução significativa no espaço de busca através de filtragem por unidade
+- **Eficiência de Memória**: Gestão de contexto persistente sem redundância
+- **Tempo de Resposta**: < 2 segundos em média com respostas altamente relevantes e contextuais
 
-### Scalability Metrics
-- **Agent Independence**: Single-agent specialization with no coordination overhead
-- **Knowledge Efficiency**: Top-3 result filtering reduces processing overhead
-- **Memory Scalability**: Efficient cross-session storage and retrieval
-- **Load Distribution**: Automatic routing balances system load effectively
-
-## 🇧🇷 Brazilian Market Optimization
-
-### Language & Culture
-- **Portuguese Native**: Built specifically for Brazilian Portuguese interactions
-- **Cultural Context**: Understanding of Brazilian banking culture and expectations
-- **Regulatory Compliance**: Adherence to Brazilian financial service regulations
-- **Local Products**: Specialized knowledge of Brazilian financial products (PIX, FGTS, etc.)
-
-### Customer Experience
-- **Instant Response**: Real-time query processing optimized for Brazilian customers
-- **Human Escalation**: Seamless transfer to human agents with WhatsApp integration
-- **Context Preservation**: Conversation continuity across sessions and agent handoffs
-- **Personalization**: Adaptive responses based on customer type and history
-
-This single-agent architecture provides a sophisticated, scalable, and intelligent customer service solution specifically optimized for Brazilian banking scenarios with seamless human integration via WhatsApp Evolution API.
+### Métricas de Escalabilidade
+- **Independência de Agentes**: Especialização por unidade sem overhead de coordenação
+- **Eficiência de Conhecimento**: Filtragem reduz overhead de processamento
+- **Escalabilidade de Memória**: Armazenamento e recuperação eficientes entre sessões
+- **Distribuição de Carga**: Roteamento automático balanceia carga do sistema efetivamente
 
 ---
 
-**Developed by Namastex Labs & Yaitech using the Agno Framework**  
+**Desenvolvido pela Namastex Labs & Yaitech usando o Framework Agno**  
 **© PagBank 2025**
