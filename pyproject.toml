@@ -20,6 +20,7 @@ dependencies = [
     "openai>=1.93.2",
     "cohere>=5.15.0",
     "psycopg[binary]>=3.2.9",
+    "sqlalchemy>=2.0.0",
     "fastapi>=0.116.0",
     "uvicorn>=0.35.0",
     "mcp>=1.10.1",

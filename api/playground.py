@@ -6,7 +6,7 @@ import os
 import threading
 
 # Import storage configuration
-from context.storage.postgres_storage import get_postgres_config
+from config.postgres_config import get_postgres_storage
 
 # Import main orchestrator
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
@@ -21,21 +21,20 @@ if not os.environ.get('UVICORN_RELOADER_PROCESS'):
 # Create the main orchestrator (this creates the routing team with specialist agents)
 orchestrator = create_main_orchestrator()
 
-# Get PostgreSQL storage configuration
-postgres_config = get_postgres_config()
+# Get PostgreSQL storage if available (Agno handles everything)
+postgres_storage = get_postgres_storage(mode="team")
 
 # Configure storage for the orchestrator's routing team
-orchestrator.routing_team.storage = postgres_config.get_team_storage()
+if postgres_storage:
+    orchestrator.routing_team.storage = postgres_storage
+    storage_type = "PostgreSQL"
+else:
+    storage_type = "SQLite (default)"
 
-# Create shared storage for individual agents
-agent_storage = postgres_config.get_agent_storage()
-
-# Extract the actual Agno Agents from specialist agents and configure storage
+# Extract the actual Agno Agents from specialist agents
 agno_agents = []
 for agent_name, agent_instance in orchestrator.specialist_agents.items():
     if isinstance(agent_instance, Agent):
-        # Assign shared agent storage for conversation history
-        agent_instance.storage = agent_storage
         agno_agents.append(agent_instance)
 
 # Use the actual orchestrator's routing team (which has all the preprocessing features)
@@ -57,7 +56,7 @@ playground_app = Playground(
 app = playground_app.get_app()
 
 if not os.environ.get('UVICORN_RELOADER_PROCESS'):
-    print("📦 Configured demo session storage...")
+    print(f"📦 Configured storage: {storage_type}")
     print(f"🎯 Using actual orchestrator routing team: {routing_team.name}")
     print(f"🎯 Routing to {len(agno_agents)} specialist agents")
     print("🎯 PagBank Playground ready with simplified single-agent architecture")

@@ -225,17 +225,22 @@ uv run python tests/integration/test_end_to_end_flow.py
 
 <database_configuration>
 ### Database Configuration
+
+**PostgreSQL (Preferred)**
 ```bash
-# PostgreSQL (Preferred - set DATABASE_URL in .env)
-postgresql+psycopg://ai:ai@localhost:5532/ai
+# Set DATABASE_URL in .env file:
+DATABASE_URL=postgresql://ai:ai@localhost:5532/ai
 
-# SQLite (Fallback - automatic if DATABASE_URL not set)
-data/pagbank.db     # Team/agent sessions
-data/ana_memory.db  # Ana's user memories
-
-# Escalation Learning
-data/escalation_patterns.db
+# Agno automatically handles:
+- Table creation and schema management
+- Connection pooling and retries
+- Session storage with auto-upgrade
 ```
+
+**SQLite (Default fallback)**
+- Automatic if DATABASE_URL not set
+- Zero configuration required
+- Uses Agno's built-in SQLite storage
 </database_configuration>
 
 ## Quality Standards & Compliance
