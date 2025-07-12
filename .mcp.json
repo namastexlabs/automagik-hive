@@ -19,7 +19,7 @@
     "send_whatsapp_message": {
       "command": "uvx",
       "args": [
-        "automagik-tools@0.7.2",
+        "automagik-tools@0.7.7",
         "tool",
         "evolution-api"
       ],
@@ -28,6 +28,18 @@
         "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
         "EVOLUTION_API_INSTANCE": "SofIA",
         "EVOLUTION_API_FIXED_RECIPIENT": "5511986780008@s.whatsapp.net"
+      }
+    },
+    "zen": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/BeehiveInnovations/zen-mcp-server.git",
+        "zen-mcp-server"
+      ],
+      "env": {
+        "GEMINI_API_KEY": "AIzaSyD9qAfT9oOPws3IjmYD2V_avoc2tgcibAg",
+        "DEFAULT_MODEL": "auto"
       }
     }
   }

@@ -89,6 +89,38 @@ docs = mcp__search-repo-docs__get-library-docs(
 For detailed epic-based Kanban workflow and task orchestration, see `genie/CLAUDE.md`.
 </multi_agent_coordination>
 
+## Multi-Agent Workflows & Context Injection
+
+<multi_agent_workflows>
+### Automatic Context Injection for Sub-Agents
+When using the Task tool to spawn sub-agents, core project context is automatically injected via hooks:
+- **Primary Context**: `CLAUDE.md` (this file)
+- **Project Structure**: `genie/ai-context/project-structure.md` - Complete tech stack and file tree
+- **Development Standards**: `genie/ai-context/development-standards.md` - Universal coding standards
+- **System Integration**: `genie/ai-context/system-integration.md` - Integration patterns
+
+This ensures all sub-agents have immediate access to essential project documentation without manual specification.
+
+### Context Search Integration
+```python
+# Repository documentation consultation
+question_response = mcp__ask-repo-agent__ask_question(
+    repoName="agno-agi/agno",
+    question="How do I implement custom team routing logic?"
+)
+
+# Read repository wiki structure
+wiki_structure = mcp__ask-repo-agent__read_wiki_structure(
+    repoName="agno-agi/agno"
+)
+
+# Get full repository documentation
+wiki_contents = mcp__ask-repo-agent__read_wiki_contents(
+    repoName="agno-agi/agno"
+)
+```
+</multi_agent_workflows>
+
 ## Architecture & Development Patterns
 
 <codebase_structure>
@@ -150,6 +182,64 @@ def get_agent():
     )
 ```
 </agent_integration_patterns>
+
+## MCP Server Integrations
+
+<mcp_integrations>
+### Repository Documentation Server (search-repo-docs)
+**When to use:**
+- Working with external libraries/frameworks (React, FastAPI, Next.js, Agno, etc.)
+- Need current documentation beyond training cutoff
+- Implementing new integrations or features with third-party tools
+- Troubleshooting library-specific issues
+
+**Usage patterns:**
+```python
+# Resolve library name to Context7 ID
+library_id = mcp__search_repo_docs__resolve_library_id(
+    libraryName="agno"
+)
+
+# Fetch focused documentation
+docs = mcp__search_repo_docs__get_library_docs(
+    context7CompatibleLibraryID="/agno-agi/agno",
+    topic="teams",  # Focus on specific topics
+    tokens=8000     # Control documentation scope
+)
+```
+
+### Repository Agent Server (ask-repo-agent)
+**When to use:**
+- Deep analysis of specific repositories
+- Understanding implementation patterns in external codebases
+- Getting contextual answers about repository structure and patterns
+
+**Usage patterns:**
+```python
+# Ask specific questions about repositories
+answer = mcp__ask_repo_agent__ask_question(
+    repoName="agno-agi/agno",
+    question="How should I configure team routing for Brazilian financial services?"
+)
+
+# Explore repository documentation structure
+structure = mcp__ask_repo_agent__read_wiki_structure(
+    repoName="agno-agi/agno"
+)
+
+# Read complete repository documentation
+content = mcp__ask_repo_agent__read_wiki_contents(
+    repoName="agno-agi/agno"
+)
+```
+
+### Integration Best Practices
+- **Always resolve library IDs first** before fetching documentation
+- **Use topic filtering** to get focused, relevant documentation
+- **Combine both servers** for comprehensive external research
+- **Cache results** when possible to avoid redundant API calls
+- **Focus queries** on specific implementation needs rather than general exploration
+</mcp_integrations>
 
 ## Development Configuration
 
@@ -231,6 +321,118 @@ uv run pytest --cov=agents --cov=context
 ```
 </testing_standards>
 
+## Post-Task Completion Protocol
+
+<post_task_completion>
+After completing any coding task, follow this comprehensive checklist to ensure quality and maintainability:
+
+### 1. Type Safety & Quality Checks
+Run the appropriate commands based on what was modified:
+
+**Python Type Checking (Required for all Python changes):**
+```bash
+# Run mypy type checking on modified modules
+uv run mypy agents/ context/ api/ --strict
+
+# Check specific files for targeted validation
+uv run mypy path/to/modified_file.py
+```
+
+**Code Quality Validation:**
+```bash
+# Run ruff linting and formatting
+uv run ruff check .
+uv run ruff format .
+
+# Validate import organization
+uv run ruff check --select I .
+```
+
+### 2. Testing Verification
+**Unit Tests (Required for agent changes):**
+```bash
+# Run tests for modified components
+uv run pytest tests/unit/test_[modified_component].py -v
+
+# Run full unit test suite
+uv run pytest tests/unit/ --cov=agents --cov=context
+```
+
+**Integration Tests (Required for routing/workflow changes):**
+```bash
+# Test agent coordination and routing
+uv run pytest tests/integration/test_end_to_end_flow.py -v
+uv run pytest tests/integration/test_hybrid_unit_routing.py
+```
+
+**Brazilian Portuguese Language Validation (Required for customer-facing changes):**
+```bash
+# Test Portuguese language responses
+uv run pytest tests/unit/test_portuguese_responses.py -v
+```
+
+### 3. System Integration Verification
+**Database Integrity (Required for data model changes):**
+```bash
+# Verify database migrations
+uv run alembic check
+
+# Test database connectivity
+uv run python -c "from config.database import get_db; next(get_db())"
+```
+
+**Knowledge Base Validation (Required for CSV knowledge changes):**
+```bash
+# Validate knowledge base consistency
+uv run python scripts/preprocessing/validate_knowledge.py
+
+# Regenerate RAG CSV if needed
+uv run python scripts/preprocessing/generate_rag_csv.py
+```
+
+### 4. Financial Compliance Checks
+**Fraud Detection (Required for financial transaction changes):**
+- Verify fraud keywords are properly integrated in routing logic
+- Test escalation paths for suspicious activities
+- Validate compliance warnings are triggered appropriately
+
+**Data Security (Required for all data handling changes):**
+- Ensure no sensitive financial data appears in logs
+- Verify PII encryption in memory storage
+- Test audit trail generation for transactions
+
+### 5. Multi-Agent Coordination Verification
+**Agent Communication (Required for agent modifications):**
+```bash
+# Test agent registry and loading
+uv run python -c "from agents.registry import get_agent; print(get_agent('pagbank-specialist-v27'))"
+
+# Verify team routing configuration
+uv run python tests/integration/test_ana_team_routing.py -v
+```
+
+**Frustration Detection (Required for conversation flow changes):**
+```bash
+# Test human handoff scenarios
+uv run pytest tests/unit/test_human_handoff_detector.py -v
+```
+
+### Completion Checklist
+Before marking any task as complete, ensure:
+- [ ] All type checks pass without errors
+- [ ] Unit tests pass for modified components
+- [ ] Integration tests pass for affected workflows
+- [ ] Portuguese language responses validated
+- [ ] No sensitive data exposed in logs
+- [ ] Fraud detection patterns updated if applicable
+- [ ] Knowledge base validation passes
+- [ ] Agent registry loads modified agents successfully
+- [ ] Routing logic handles new scenarios correctly
+- [ ] Documentation updated in relevant `genie/` files
+
+**If ANY check fails, the task is NOT complete. Fix issues before proceeding.**
+</post_task_completion>
+
 ## Development Best Practices
 
 <workflow_summary>
@@ -276,9 +478,10 @@ uv run pytest --cov=agents --cov=context
 
 <critical_reminders>
 ### Always Remember
+✅ Read `genie/ai-context/` foundation files before starting any development
 ✅ Check patterns in `@genie/reference/` first
 ✅ Test routing with Portuguese queries
-✅ Validate compliance requirements
+✅ Validate compliance requirements using post-task completion protocol
 ✅ Update knowledge CSV when adding features
 ✅ Test frustration escalation paths
 ✅ Commit with Genie co-authorship
@@ -286,9 +489,11 @@ uv run pytest --cov=agents --cov=context
 ✅ Use branch-friendly filenames (task-fix-pix-validation)
 ✅ Archive obsolete work to `genie/archive/` when no longer relevant
 ✅ Document patterns for reuse
-✅ Check project-status.md before starting work
+✅ Check epic status before starting work
 ✅ Wait for task dependencies with mcp__wait__wait_minutes
-✅ Use context search tools for Agno documentation
+✅ Use MCP server integrations for external documentation (search-repo-docs, ask-repo-agent)
+✅ Run type checks and quality validation before task completion
+✅ Follow development standards in `genie/ai-context/development-standards.md`
 
 ❌ Never modify Agno framework code
 ❌ Never skip compliance validations
@@ -299,10 +504,48 @@ uv run pytest --cov=agents --cov=context
 ❌ Never ignore Portuguese language requirements
 ❌ Never work on tasks marked as [🔄] by another agent
 ❌ Never skip dependency checks
+❌ Never mark tasks complete without running the post-task completion protocol
+❌ Never ignore type checking failures
+❌ Never skip the ai-context foundation files when joining the project
 </critical_reminders>
 
-## Advanced Patterns & Reference
+## Development Standards & Reference
 
-For detailed Agno framework patterns, context search tools, and development reference materials, see `@genie/reference/` directory.
+<development_standards>
+### AI Context Foundation Files
+**Essential reading for all AI agents working on this codebase:**
+
+- **Project Structure**: `genie/ai-context/project-structure.md`
+  - Complete technology stack and file tree structure
+  - Multi-agent architecture patterns
+  - Testing and configuration management strategies
+
+- **Development Standards**: `genie/ai-context/development-standards.md`
+  - Universal coding standards for all development
+  - Type safety requirements and naming conventions
+  - Testing standards and git commit protocols
+  - Agno framework integration patterns
+
+- **System Integration**: `genie/ai-context/system-integration.md`
+  - Integration patterns for external services
+  - Database and storage integration guidelines
+  - API design and security standards
+
+- **Documentation Overview**: `genie/ai-context/docs-overview.md`
+  - Complete documentation structure and guidelines
+  - Knowledge management and pattern storage protocols
+
+### CCDK Integration
+The project includes the Claude Code Development Kit for enhanced development workflows:
+- **Commands**: `genie/Claude-Code-Development-Kit/commands/` - Specialized development commands
+- **Hooks**: `genie/Claude-Code-Development-Kit/hooks/` - Git hooks and automation
+- **Documentation**: `genie/Claude-Code-Development-Kit/docs/` - CCDK reference materials
+
+### Pattern Library
+For detailed Agno framework patterns, context search tools, and development reference materials, see:
+- **Reusable Patterns**: `@genie/reference/` - Proven implementation patterns
+- **Active Development**: `genie/active/` - Current work in progress (MAX 5 files)
+- **Archive**: `genie/archive/` - Completed development tasks and lessons learned
+</development_standards>
 
 
