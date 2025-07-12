@@ -158,17 +158,17 @@ def wait_for_dependencies(task_name):
 Each task card references additional context documents:
 
 ### Pattern References
-- `genie/reference/agno-patterns.md` - Core Agno patterns
-- `genie/reference/database-schema.md` - V2 database design
-- `genie/reference/context-search-tools.md` - MCP tools for Agno
+- `@genie/reference/agno-patterns.md` - Core Agno patterns
+- `@genie/reference/database-schema.md` - V2 database design
+- `@genie/reference/context-search-tools.md` - MCP tools for Agno
 
 ### Example Usage
 ```python
 # In task card, you see:
-# "Reference: genie/reference/agno-patterns.md#team-routing"
+# "Reference: @genie/reference/agno-patterns.md#team-routing"
 
 # Read the reference:
-patterns = read("genie/reference/agno-patterns.md")
+patterns = read("@genie/reference/agno-patterns.md")
 # Find the team-routing section for examples
 ```
 

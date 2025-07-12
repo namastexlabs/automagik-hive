@@ -135,11 +135,11 @@ genie/
 ├── active/
 │   ├── project-status.md          # THIS FILE - Central status
 │   └── agent-coordination.md      # Multi-agent rules
-├── completed/
+├── archive/         # (gitignored)
 │   └── 2025-01-12-platform-strategy.md
 ├── reference/
 │   ├── agno-patterns.md          # Agno framework patterns
-│   ├── agno-parameter-patterns.md # Complete parameter reference
+│   ├── agno-patterns-index.md # Organized parameter reference - see agno-patterns-index.md
 │   ├── database-schema.md        # V2 database design
 │   ├── yaml-configuration.md     # YAML-first approach
 │   └── context-search-tools.md  # MCP tools for Agno docs
