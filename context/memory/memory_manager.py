@@ -17,7 +17,6 @@ from agno.models.anthropic import Claude
 from .memory_config import MemoryConfig, get_memory_config
 from .pattern_detector import create_pattern_detector
 from .session_manager import create_session_manager
-from .postgres_session_manager import create_postgres_session_manager
 
 
 class MemoryManager:
@@ -59,18 +58,12 @@ class MemoryManager:
         )
         
         # Initialize session manager
-        if db_url:
-            # Use PostgreSQL session manager
-            self.session_manager = create_postgres_session_manager(
-                db_url,
-                self.config.session_timeout_minutes
-            )
-        else:
-            # Fall back to SQLite session manager
-            self.session_manager = create_session_manager(
-                "data/pagbank.db",
-                self.config.session_timeout_minutes
-            )
+        # For now, always use SQLite session manager
+        # (Agno's PostgresStorage handles team/agent sessions separately)
+        self.session_manager = create_session_manager(
+            "data/pagbank.db",
+            self.config.session_timeout_minutes
+        )
         
         # Memory statistics
         self.interaction_count = 0

@@ -88,6 +88,16 @@ graph TB
 
 ### Configuração de Desenvolvimento
 
+#### Configuração de Ambiente
+```bash
+# Copiar arquivo de exemplo
+cp .env.example .env
+
+# Editar .env com suas configurações
+# PAGBANK_HOST=localhost  # Usar localhost para acesso local
+# PAGBANK_PORT=8008       # Porta customizável
+```
+
 #### Opção 1: PostgreSQL (Recomendado)
 ```bash
 # Iniciar PostgreSQL com Docker
@@ -98,9 +108,6 @@ docker run -d \
   -p 5532:5432 \
   --name pgvector \
   agno/pgvector:16
-
-# Configurar banco de dados
-uv run python scripts/setup_postgres.py
 
 # Instalar dependências
 uv sync
@@ -122,7 +129,7 @@ uv run python api/serve.py       # Produção
 
 Endpoints disponíveis:
 - Desenvolvimento: http://localhost:7777 (Playground com UI)
-- Produção: http://localhost:8880 (API REST com docs em /docs)
+- Produção: http://localhost:8008 (API REST com docs em /docs) - configurável via PAGBANK_HOST e PAGBANK_PORT
 
 ## 🤖 Agentes por Unidade de Negócio
 

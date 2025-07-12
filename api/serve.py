@@ -3,6 +3,8 @@ FastAPI server for PagBank Multi-Agent System
 Production-ready API endpoint for the orchestrator
 """
 
+import os
+from dotenv import load_dotenv
 from agno.app.fastapi.app import FastAPIApp
 
 # Import storage configuration
@@ -10,6 +12,9 @@ from config.postgres_config import get_postgres_storage
 
 # Import main orchestrator
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
+
+# Load environment variables
+load_dotenv()
 
 
 def create_pagbank_api():
@@ -50,10 +55,16 @@ app = fastapi_app.get_app()
 
 
 if __name__ == "__main__":
+    # Get host and port from environment variables
+    host = os.getenv("PAGBANK_HOST", "localhost")
+    port = int(os.getenv("PAGBANK_PORT", "8008"))
+    
+    print(f"🌐 Starting PagBank API on {host}:{port}")
+    
     # Serve the app
     fastapi_app.serve(
         app="serve:app",
-        host="0.0.0.0",
-        port=8880,
+        host=host,
+        port=port,
         reload=True
     )
