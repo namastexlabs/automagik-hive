@@ -6,8 +6,8 @@ Handles digital account, PIX, transfers, and banking services
 import logging
 from typing import Any, Dict, List, Optional
 
-from knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
-from memory.memory_manager import MemoryManager
+from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+from context.memory.memory_manager import MemoryManager
 
 from .base_agent import BaseSpecialistAgent, AgentResponse
 from agents.tools.agent_tools import get_agent_tools

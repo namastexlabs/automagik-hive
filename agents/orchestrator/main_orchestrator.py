@@ -13,7 +13,7 @@ from agno.team import Team
 from config.settings import settings
 
 # Import memory system
-from memory.memory_manager import create_memory_manager
+from context.memory.memory_manager import create_memory_manager
 
 # Import business unit agents
 from agents.specialists.adquirencia_agent import AdquirenciaAgent
@@ -23,10 +23,10 @@ from agents.specialists.human_handoff_agent import HumanHandoffAgent
 
 
 # Import orchestrator modules
-from orchestrator.clarification_handler import clarification_handler
-from orchestrator.human_handoff_detector import human_handoff_detector
-from orchestrator.routing_logic import routing_engine
-from orchestrator.state_synchronizer import TeamStateSynchronizer
+from agents.orchestrator.clarification_handler import clarification_handler
+from agents.orchestrator.human_handoff_detector import human_handoff_detector
+from agents.orchestrator.routing_logic import routing_engine
+from agents.orchestrator.state_synchronizer import TeamStateSynchronizer
 from agents.prompts import get_prompt_manager
 
 
@@ -106,7 +106,7 @@ class PagBankMainOrchestrator:
         agents = {}
         
         # Create knowledge base for agents
-        from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+        from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
         knowledge_base = create_pagbank_knowledge_base()
         
         # Add delays between agent creation to prevent API overload

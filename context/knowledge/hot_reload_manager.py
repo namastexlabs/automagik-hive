@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 
 
 class KnowledgeHotReloadManager:

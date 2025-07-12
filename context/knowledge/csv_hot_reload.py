@@ -10,8 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
-from knowledge.smart_incremental_loader import SmartIncrementalLoader
+from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+from context.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
 
 class CSVHotReloadManager:
@@ -25,7 +25,7 @@ class CSVHotReloadManager:
     4. Zero downtime - agents get updated knowledge immediately
     """
     
-    def __init__(self, csv_path: str = "knowledge/knowledge_rag.csv", check_interval: int = 30):
+    def __init__(self, csv_path: str = "context/knowledge/knowledge_rag.csv", check_interval: int = 30):
         self.csv_path = Path(csv_path)
         self.check_interval = check_interval  # seconds
         self.last_modified = 0

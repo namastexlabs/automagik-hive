@@ -12,8 +12,8 @@ from pydantic import BaseModel, Field
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from config.settings import settings
-from knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
-from memory.memory_manager import MemoryManager
+from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+from context.memory.memory_manager import MemoryManager
 from agents.prompts import get_prompt_manager
 
 

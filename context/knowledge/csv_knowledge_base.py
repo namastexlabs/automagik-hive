@@ -14,7 +14,7 @@ from agno.embedder.openai import OpenAIEmbedder
 from agno.knowledge.csv import CSVKnowledgeBase
 from agno.vectordb.pgvector import HNSW, PgVector, SearchType
 
-from knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
+from context.knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
 
 # Load environment variables
 load_dotenv()

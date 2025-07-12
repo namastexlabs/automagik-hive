@@ -66,7 +66,7 @@ module = ["agno.*", "anthropic.*", "sentence_transformers.*", "pgvector.*"]
 ignore_missing_imports = true
 
 [tool.setuptools]
-packages = ["agents", "config", "knowledge", "memory", "orchestrator", "teams", "utils"]
+packages = ["agents", "api", "config", "context", "utils"]
 
 [tool.isort]
 profile = "black"
@@ -76,7 +76,7 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
-known_first_party = ["agno", "pagbank", "agents", "config", "demo", "knowledge", "memory", "orchestrator", "teams", "utils"]
+known_first_party = ["agno", "pagbank", "agents", "api", "config", "context", "utils"]
 known_third_party = ["anthropic", "pydantic", "sqlalchemy", "fastapi", "uvicorn", "httpx", "aiohttp", "pandas", "numpy", "sentence_transformers", "pgvector", "rich", "typer", "pytest", "openai", "cohere"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 

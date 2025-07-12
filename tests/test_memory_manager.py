@@ -12,8 +12,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from memory.memory_config import MemoryConfig
-from memory.memory_manager import MemoryManager, create_memory_manager
+from context.memory.memory_config import MemoryConfig
+from context.memory.memory_manager import MemoryManager, create_memory_manager
 
 
 class TestMemoryManager:

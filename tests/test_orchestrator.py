@@ -6,11 +6,11 @@ Tests routing, frustration detection, text normalization, and clarification
 
 import pytest
 
-from orchestrator.clarification_handler import clarification_handler
-from orchestrator.frustration_detector import frustration_detector
-from orchestrator.main_orchestrator import create_main_orchestrator
-from orchestrator.routing_logic import TeamType, routing_engine
-from orchestrator.text_normalizer import text_normalizer
+from agents.orchestrator.clarification_handler import clarification_handler
+from agents.orchestrator.frustration_detector import frustration_detector
+from agents.orchestrator.main_orchestrator import create_main_orchestrator
+from agents.orchestrator.routing_logic import TeamType, routing_engine
+from agents.orchestrator.text_normalizer import text_normalizer
 
 
 class TestFrustrationDetector:

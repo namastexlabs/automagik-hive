@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from memory.session_manager import SessionManager, create_session_manager
+from context.memory.session_manager import SessionManager, create_session_manager
 
 
 class TestSessionManager:

@@ -14,16 +14,16 @@ Validates the structure of knowledge files in `docs/knowledge_examples/`:
 Generates the knowledge base CSV from validated files:
 - Parses documents from markdown files
 - Extracts business units from typification
-- Creates `knowledge/knowledge_rag.csv`
+- Creates `context/knowledge/knowledge_rag.csv`
 
 ## Usage
 
 ```bash
 # First validate the knowledge files
-python preprocessing/validate_knowledge.py
+python scripts/preprocessing/validate_knowledge.py
 
 # Then generate the CSV
-python preprocessing/generate_rag_csv.py
+python scripts/preprocessing/generate_rag_csv.py
 ```
 
 ## Business Units Found
@@ -36,7 +36,7 @@ From the 64 documents analyzed:
 
 ## Output
 
-The script generates `knowledge/knowledge_rag.csv` with columns:
+The script generates `context/knowledge/knowledge_rag.csv` with columns:
 - `problem` - The customer problem/question
 - `solution` - The solution/answer
 - `typification` - Service classification details

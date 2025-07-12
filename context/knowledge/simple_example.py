@@ -3,7 +3,7 @@
 Simple example of how to use the Knowledge Hot Reload Manager
 """
 
-from knowledge.hot_reload_manager import KnowledgeHotReloadManager, create_quick_entry
+from context.knowledge.hot_reload_manager import KnowledgeHotReloadManager, create_quick_entry
 
 def demo_knowledge_management():
     """Demonstrate simple knowledge management"""

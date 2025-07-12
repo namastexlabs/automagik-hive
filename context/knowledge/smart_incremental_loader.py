@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Any
 
-from knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 
 
 class SmartIncrementalLoader:

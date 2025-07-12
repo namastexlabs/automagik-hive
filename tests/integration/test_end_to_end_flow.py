@@ -9,8 +9,8 @@ from unittest.mock import patch, MagicMock, AsyncMock
 import sys
 sys.path.append('.')
 
-from orchestrator.routing_logic import RoutingEngine, BusinessUnit
-from knowledge.agentic_filters import extract_filters_from_query
+from agents.orchestrator.routing_logic import RoutingEngine, BusinessUnit
+from context.knowledge.agentic_filters import extract_filters_from_query
 
 
 class TestEndToEndQueryFlow(unittest.TestCase):
@@ -243,7 +243,7 @@ class TestKnowledgeIntegration(unittest.TestCase):
     
     def test_knowledge_filtering_alignment(self):
         """Test that routing aligns with knowledge base filtering"""
-        from knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+        from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
         
         # Test routing decisions match knowledge base filters
         test_cases = [

@@ -10,7 +10,7 @@ from enum import Enum
 import sys
 sys.path.append('.')
 
-from orchestrator.routing_logic import BusinessUnit, RoutingDecision, RoutingEngine
+from agents.orchestrator.routing_logic import BusinessUnit, RoutingDecision, RoutingEngine
 
 
 class TestBusinessUnit(unittest.TestCase):

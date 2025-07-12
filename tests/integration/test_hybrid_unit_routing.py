@@ -10,9 +10,9 @@ from unittest.mock import patch, MagicMock
 import sys
 sys.path.append('.')
 
-from orchestrator.routing_logic import RoutingEngine, BusinessUnit
-from knowledge.agentic_filters import extract_filters_from_query
-from knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+from agents.orchestrator.routing_logic import RoutingEngine, BusinessUnit
+from context.knowledge.agentic_filters import extract_filters_from_query
+from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
 
 
 class TestHybridUnitRouting(unittest.TestCase):
@@ -227,7 +227,7 @@ class TestHybridUnitRouting(unittest.TestCase):
     
     def test_hybrid_unit_integration_with_main_system(self):
         """Test hybrid unit integration with main orchestration system"""
-        from knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+        from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
         
         # Test that main system can handle hybrid unit
         filters = PagBankCSVKnowledgeBase.BUSINESS_UNIT_FILTERS

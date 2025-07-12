@@ -12,8 +12,8 @@ from statistics import mean, median
 import sys
 sys.path.append('.')
 
-from orchestrator.routing_logic import RoutingEngine
-from knowledge.agentic_filters import extract_filters_from_query
+from agents.orchestrator.routing_logic import RoutingEngine
+from context.knowledge.agentic_filters import extract_filters_from_query
 
 
 class TestBaselineMetrics(unittest.TestCase):
@@ -276,7 +276,7 @@ class TestPerformanceComparison(unittest.TestCase):
         old_teams = ['cards', 'digital_account', 'investments', 'credit', 'insurance', 'human_handoff']
         
         # New business unit routing (4 units)  
-        from orchestrator.routing_logic import BusinessUnit
+        from agents.orchestrator.routing_logic import BusinessUnit
         new_units = list(BusinessUnit)
         
         routing_engine = RoutingEngine()
