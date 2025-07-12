@@ -1,10 +1,12 @@
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.playground import Playground
-from agno.storage.sqlite import SqliteStorage
 from agno.team import Team
 import os
 import threading
+
+# Import storage configuration
+from context.storage.postgres_storage import get_postgres_config
 
 # Import main orchestrator
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
@@ -19,20 +21,14 @@ if not os.environ.get('UVICORN_RELOADER_PROCESS'):
 # Create the main orchestrator (this creates the routing team with specialist agents)
 orchestrator = create_main_orchestrator()
 
+# Get PostgreSQL storage configuration
+postgres_config = get_postgres_config()
+
 # Configure storage for the orchestrator's routing team
-team_storage = SqliteStorage(
-    table_name="team_sessions", 
-    db_file="data/pagbank.db",
-    auto_upgrade_schema=True
-)
-orchestrator.routing_team.storage = team_storage
+orchestrator.routing_team.storage = postgres_config.get_team_storage()
 
 # Create shared storage for individual agents
-agent_storage = SqliteStorage(
-    table_name="agent_sessions", 
-    db_file="data/pagbank.db",
-    auto_upgrade_schema=True
-)
+agent_storage = postgres_config.get_agent_storage()
 
 # Extract the actual Agno Agents from specialist agents and configure storage
 agno_agents = []

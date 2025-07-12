@@ -224,13 +224,14 @@ uv run python tests/integration/test_end_to_end_flow.py
 </environment_setup>
 
 <database_configuration>
-### SQLite Databases
+### Database Configuration
 ```bash
-# Session Management
-data/memory/pagbank_sessions.db
+# PostgreSQL (Preferred - set DATABASE_URL in .env)
+postgresql+psycopg://ai:ai@localhost:5532/ai
 
-# Memory Patterns
-data/memory/pagbank_memory_dev.db
+# SQLite (Fallback - automatic if DATABASE_URL not set)
+data/pagbank.db     # Team/agent sessions
+data/ana_memory.db  # Ana's user memories
 
 # Escalation Learning
 data/escalation_patterns.db

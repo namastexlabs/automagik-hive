@@ -145,12 +145,21 @@ class PagBankMainOrchestrator:
         routing_prompt = self._create_routing_prompt()
         
         # Initialize Ana's memory system for user context
-        from agno.memory.v2.db.sqlite import SqliteMemoryDb
         from agno.memory.v2.memory import Memory
+        import os
+        
+        # Use PostgreSQL if available, otherwise SQLite
+        db_url = os.getenv("DATABASE_URL")
+        if db_url:
+            from agno.memory.v2.db.postgres import PostgresMemoryDb
+            ana_memory_db = PostgresMemoryDb(table_name="ana_user_memories", db_url=db_url)
+        else:
+            from agno.memory.v2.db.sqlite import SqliteMemoryDb
+            ana_memory_db = SqliteMemoryDb(table_name="ana_user_memories", db_file="data/ana_memory.db")
         
         ana_memory = Memory(
             model=Claude(id="claude-sonnet-4-20250514"),
-            db=SqliteMemoryDb(table_name="ana_user_memories", db_file="data/ana_memory.db"),
+            db=ana_memory_db,
         )
         
         # Create Ana as the unified customer service persona 

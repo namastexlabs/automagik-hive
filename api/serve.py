@@ -5,6 +5,9 @@ Production-ready API endpoint for the orchestrator
 
 from agno.app.fastapi.app import FastAPIApp
 
+# Import storage configuration
+from context.storage.postgres_storage import get_postgres_config
+
 # Import main orchestrator
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
 
@@ -14,6 +17,10 @@ def create_pagbank_api():
     
     # Create the main orchestrator
     orchestrator = create_main_orchestrator()
+    
+    # Configure PostgreSQL storage
+    postgres_config = get_postgres_config()
+    orchestrator.routing_team.storage = postgres_config.get_team_storage()
     
     # Extract the routing team which is the main entry point
     routing_team = orchestrator.routing_team

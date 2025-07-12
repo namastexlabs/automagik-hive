@@ -4,17 +4,20 @@ Agent C: Memory System Foundation
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from agno.memory.v2.db.sqlite import SqliteMemoryDb
+from agno.memory.v2.db.postgres import PostgresMemoryDb
 from agno.memory.v2.memory import Memory
 from agno.models.anthropic import Claude
 
 from .memory_config import MemoryConfig, get_memory_config
 from .pattern_detector import create_pattern_detector
 from .session_manager import create_session_manager
+from .postgres_session_manager import create_postgres_session_manager
 
 
 class MemoryManager:
@@ -27,11 +30,22 @@ class MemoryManager:
         """Initialize memory manager with configuration"""
         self.config = config or get_memory_config()
         
-        # Initialize components
-        self.memory_db = SqliteMemoryDb(
-            table_name=self.config.table_name,
-            db_file=str(self.config.get_db_path())
-        )
+        # Check if we should use PostgreSQL
+        db_url = os.getenv("DATABASE_URL")
+        
+        # Initialize memory database
+        if db_url:
+            # Use PostgreSQL
+            self.memory_db = PostgresMemoryDb(
+                table_name=self.config.table_name,
+                db_url=db_url
+            )
+        else:
+            # Fall back to SQLite
+            self.memory_db = SqliteMemoryDb(
+                table_name=self.config.table_name,
+                db_file=str(self.config.get_db_path())
+            )
         
         self.memory = Memory(
             model=Claude(id=self.config.memory_model),
@@ -44,10 +58,19 @@ class MemoryManager:
             self.config.pattern_similarity_threshold
         )
         
-        self.session_manager = create_session_manager(
-            "data/pagbank.db",
-            self.config.session_timeout_minutes
-        )
+        # Initialize session manager
+        if db_url:
+            # Use PostgreSQL session manager
+            self.session_manager = create_postgres_session_manager(
+                db_url,
+                self.config.session_timeout_minutes
+            )
+        else:
+            # Fall back to SQLite session manager
+            self.session_manager = create_session_manager(
+                "data/pagbank.db",
+                self.config.session_timeout_minutes
+            )
         
         # Memory statistics
         self.interaction_count = 0
