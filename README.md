@@ -88,15 +88,36 @@ graph TB
 
 ### Configuração de Desenvolvimento
 
+#### Opção 1: PostgreSQL (Recomendado)
+```bash
+# Iniciar PostgreSQL com Docker
+docker run -d \
+  -e POSTGRES_DB=ai \
+  -e POSTGRES_USER=ai \
+  -e POSTGRES_PASSWORD=ai \
+  -p 5532:5432 \
+  --name pgvector \
+  agno/pgvector:16
+
+# Configurar banco de dados
+uv run python scripts/setup_postgres.py
+
+# Instalar dependências
+uv sync
+
+# Iniciar sistema
+uv run python api/playground.py  # Desenvolvimento
+uv run python api/serve.py       # Produção
+```
+
+#### Opção 2: SQLite (Desenvolvimento Local)
 ```bash
 # Instalar dependências
 uv sync
 
-# Desenvolvimento (com UI interativa)
-uv run python api/playground.py
-
-# Produção (API REST)
-uv run python api/serve.py
+# Iniciar sistema (SQLite será usado automaticamente)
+uv run python api/playground.py  # Desenvolvimento
+uv run python api/serve.py       # Produção
 ```
 
 Endpoints disponíveis:
