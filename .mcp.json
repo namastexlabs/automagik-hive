@@ -8,7 +8,15 @@
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
     },
-    "evolution-api": {
+    "wait": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@0.7.2",
+        "tool",
+        "wait"
+      ]
+    },
+    "send_whatsapp_message": {
       "command": "uvx",
       "args": [
         "automagik-tools@0.7.2",

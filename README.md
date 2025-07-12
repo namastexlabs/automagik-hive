@@ -129,7 +129,7 @@ uv run python api/serve.py       # Produção
 
 Endpoints disponíveis:
 - Desenvolvimento: http://localhost:7777 (Playground com UI)
-- Produção: http://localhost:8008 (API REST com docs em /docs) - configurável via PB_AGENTS_HOST e PB_AGENTS_PORT
+- Produção: Usa portas padrão do Agno (configurável via PB_AGENTS_HOST e PB_AGENTS_PORT)
 
 ## 🤖 Agentes por Unidade de Negócio
 

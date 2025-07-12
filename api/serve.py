@@ -36,6 +36,11 @@ def create_pagbank_api():
     # Extract the routing team which is the main entry point
     routing_team = orchestrator.routing_team
     
+    # Debug: Print team information
+    print(f"📋 Team Name: {routing_team.name}")
+    print(f"🆔 Team ID: {routing_team.team_id}")
+    print("💡 Use this team_id in API calls: /runs?team_id=" + routing_team.team_id)
+    
     # Create FastAPI app with the team
     fastapi_app = FastAPIApp(
         teams=[routing_team],
@@ -56,15 +61,23 @@ app = fastapi_app.get_app()
 
 if __name__ == "__main__":
     # Get host and port from environment variables
-    host = os.getenv("PB_AGENTS_HOST", "localhost")
-    port = int(os.getenv("PB_AGENTS_PORT", "8008"))
+    host = os.getenv("PB_AGENTS_HOST")
+    port = os.getenv("PB_AGENTS_PORT")
     
-    print(f"🌐 Starting PagBank API on {host}:{port}")
+    # Build kwargs for serve() - only include if env vars are set
+    serve_kwargs = {
+        "app": "serve:app",
+        "reload": True
+    }
     
-    # Serve the app
-    fastapi_app.serve(
-        app="serve:app",
-        host=host,
-        port=port,
-        reload=True
-    )
+    if host:
+        serve_kwargs["host"] = host
+        print(f"🌐 Using custom host: {host}")
+    
+    if port:
+        serve_kwargs["port"] = int(port)
+        print(f"🔧 Using custom port: {port}")
+    
+    # Serve the app with Agno's defaults unless overridden
+    print("🚀 Starting PagBank API...")
+    fastapi_app.serve(**serve_kwargs)

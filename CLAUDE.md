@@ -19,184 +19,136 @@ You are working with the PagBank Multi-Agent System - a sophisticated Brazilian 
 - NEVER exceed 5 active files in `genie/active/`
 </critical_rules>
 
-## Genie Orchestration System - Multi-Agent Development
+## Genie Framework
 
-<genie_architecture>
-### Core Capabilities
-The Genie system enables intelligent development for multi-agent orchestration:
-- **Agent Decomposition**: Break features across specialist agents (Adquirência, Emissão, PagBank, Human)
-- **Pattern Persistence**: Store successful routing patterns in `genie/reference/`
-- **Parallel Development**: Coordinate changes across multiple agents simultaneously
-- **Context Awareness**: Maintain business unit context throughout development
+<genie_note>
+The Genie Framework is a multi-agent task orchestration system for coordinated development. For detailed Genie documentation, see `genie/CLAUDE.md` which automatically loads when navigating to the genie/ folder.
 
-### Multi-Agent Workflow Orchestration
-When implementing features like "Add new payment method support":
-1. Analyze which business units are affected (usually PagBank + Emissão)
-2. Check `genie/reference/` for existing payment integration patterns
-3. Create task files in `genie/active/` for each affected agent
-4. Implement changes in parallel across agents
-5. Test routing logic with various query variations
-6. Store successful patterns back to `genie/reference/`
+**Quick Reference:**
+- Use `genie/active/` for current work (MAX 5 files)
+- Check `genie/reference/` for patterns before implementing
+- Follow naming conventions: `task-[agent]-[feature].md`
+- Complete work moves to `genie/completed/` with date prefix
+</genie_note>
 
-Each workflow maintains Portuguese language consistency and compliance requirements.
-</genie_architecture>
+## Multi-Agent Coordination for V2 Development
 
-<pattern_based_development>
-### Pattern Storage Protocol (PagBank Specific)
+<multi_agent_coordination>
+### Parallel Agent Execution Protocol
 
-**Before implementing ANY feature:**
+**Central Status Tracking**
 ```bash
-# 1. Check existing patterns
-ls genie/reference/*routing*.md
-ls genie/reference/*integration*.md
-grep -r "payment" genie/reference/
+# Every agent MUST check status first
+cat genie/active/project-status.md
 
-# 2. Document new patterns immediately
-echo "## Pattern: [Feature Name]" > genie/active/pattern-[feature].md
+# Update status when claiming task
+# Change [ ] to [🔄] when starting
+# Change to [✅] when complete
 ```
 
-**Pattern Integration Example:**
+**Dependency Management**
 ```python
-# From genie/reference/routing-patterns.md
-ROUTING_PATTERNS = {
-    "pix_keywords": ["pix", "transferência instantânea", "qr code"],
-    "card_keywords": ["cartão", "limite", "fatura", "senha"],
-    "merchant_keywords": ["máquina", "vendas", "antecipação"]
-}
+# Wait for dependencies using wait tool
+while task_blocked():
+    mcp__wait__wait_minutes(duration=30)
+    status = read("genie/active/project-status.md")
+    if dependencies_complete():
+        break
 ```
-</pattern_based_development>
 
-## Development Workflow
+**Context Search Tools for Agno**
+```python
+# When needing Agno framework information
+library_id = mcp__search-repo-docs__resolve-library-id(
+    libraryName="agno"
+)
+docs = mcp__search-repo-docs__get-library-docs(
+    context7CompatibleLibraryID=library_id,
+    topic="teams"  # or agents, workflows, etc
+)
+```
 
-## Genie Framework - Multi-Agent Task Architecture
-
-<documentation_rules>
-<context>The Genie Framework enables coordinated development across multiple specialized agents, maintaining consistency and context.</context>
-
-<instructions>
-1. Create .md files ONLY in `genie/` folder structure
-2. Use `active/` for current work (MAX 5 files)
-3. Move completed work to `completed/` with date prefix
-4. Store reusable patterns in `reference/`
-5. Create agent-specific tasks when modifying specialists
-</instructions>
-</documentation_rules>
-
-<folder_structure>
+### V2 Development Structure
 ```
 genie/
-├── active/          # Current work (MAX 5 files)
-├── completed/       # Done work (YYYY-MM-DD-filename.md)
-└── reference/       # Patterns, examples, best practices
-    ├── routing-patterns.md
-    ├── integration-examples.md
-    └── compliance-rules.md
+├── active/
+│   ├── project-status.md      # Central checkpoint file
+│   └── agent-coordination.md  # Coordination protocol
+├── task-cards/                # Detailed implementation tasks
+│   ├── phase1/               # Foundation (can run parallel)
+│   ├── phase2/               # Platform core
+│   └── phase3/               # Production features
+└── reference/                 # Patterns and examples
 ```
 
-**Naming Conventions:**
-- Agent tasks: `task-[agent]-[feature].md`
-- Patterns: `pattern-[type].md`
-- Analysis: `analysis-[topic].md`
-- Integration: `integration-[systems].md`
-</folder_structure>
-
-<parallel_architecture>
-### Multi-Agent Task File Structure
-```markdown
-# Task: [Agent] - [Feature Name]
-
-## Business Unit
-[Adquirência | Emissão | PagBank | Human Handoff]
-
-## Objective
-[Clear purpose aligned with business unit]
-
-## Context Requirements
-- Knowledge base entries needed
-- Routing keywords to add
-- Compliance validations
-
-## Implementation Steps
-[Numbered, specific to agent]
-
-## Testing Scenarios
-[Portuguese test queries]
-
-## Integration Points
-[Other agents affected]
-```
-
-### Workflow Example - Adding PIX Scheduling
-```bash
-# 1. Analysis Phase
-genie/active/analysis-pix-scheduling.md
-
-# 2. Agent Decomposition
-genie/active/task-pagbank-pix-schedule.md
-genie/active/task-emissao-limit-validation.md
-genie/active/task-routing-keywords.md
-
-# 3. Pattern Documentation
-genie/active/pattern-scheduled-transactions.md
-
-# 4. Completion
-→ Move all to genie/completed/2025-01-12-*.md
-→ Keep pattern in genie/reference/
-```
-</parallel_architecture>
+### Critical Multi-Agent Rules
+- **ALWAYS** read project-status.md before starting any work
+- **ALWAYS** wait for dependencies using mcp__wait__wait_minutes
+- **ALWAYS** update status checkboxes when claiming/completing tasks
+- **ALWAYS** use context search tools for Agno questions
+- **NEVER** work on blocked tasks without waiting for dependencies
+- **NEVER** modify files another agent is working on (check [🔄])
+</multi_agent_coordination>
 
 ## Architecture & Development Patterns
 
 <codebase_structure>
 ```
-pagbank-multiagents/
-├── agents/
-│   ├── orchestrator/    # Main routing logic
-│   │   ├── main_orchestrator.py
-│   │   ├── routing_logic.py
-│   │   └── human_handoff_detector.py
-│   ├── specialists/     # Business unit agents
-│   │   ├── base_agent.py
-│   │   ├── adquirencia_agent.py
-│   │   ├── emissao_agent.py
-│   │   ├── pagbank_agent.py
-│   │   └── human_handoff_agent.py
-│   └── tools/          # Shared agent tools
+pagbank-multiagents/ (V2 Structure)
+├── agents/             # Individual agent definitions
+│   ├── registry.py     # Agent registry and loader
+│   └── [agent-id]/     # Each agent in its own folder
+│       ├── agent.py
+│       └── config.yaml
+├── teams/              # Team definitions
+│   ├── registry.py     # Team registry
+│   └── ana/            # Ana team (no orchestrator!)
+│       ├── team.py     # Simple Team with mode=config["team"]["mode"]
+│       └── config.yaml # Routing logic in instructions
+├── workflows/          # Sequential workflows
+│   └── typification/   # 5-level categorization
 ├── context/
 │   ├── knowledge/      # CSV knowledge base
 │   └── memory/         # Session & patterns
 ├── api/
-│   └── playground.py   # Agno Playground
-├── config/             # System configuration
+│   └── main.py         # FastAPI with playground
+├── db/                 # Database layer
+│   ├── migrations/     # Alembic migrations
+│   └── tables/         # SQLAlchemy models
 ├── tests/              # Comprehensive test suite
 └── genie/              # Development workspace
 ```
 </codebase_structure>
 
 <agent_integration_patterns>
-### Agent Communication Flow
+### V2 Agent Communication Flow
 ```python
-# Main Orchestrator routes to specialists
-routing_logic.py → BusinessUnit.PAGBANK → pagbank_agent.py
+# Ana Team handles ALL routing via mode=config["team"]["mode"]
+ana_team = Team(
+    name="Ana - PagBank Assistant",
+    mode=config["team"]["mode"],  # From YAML
+    members=[specialists...]
+)
 
-# Frustration detection triggers escalation
-human_handoff_detector.py → frustration >= 3 → human_handoff_agent.py
-
-# Knowledge filtering by business unit
-csv_knowledge_base.py → agentic_filters.py → agent-specific context
+# Routing logic lives in Ana's config.yaml instructions:
+# "Route queries about PIX, transfers to pagbank-specialist-v27"
+# "Route card issues to emissao-specialist-v27"
+# "Route merchant queries to adquirencia-specialist-v27"
+# "Route frustrated users to human-handoff-v27"
 ```
 
-### Extension Pattern (NEVER modify base)
+### V2 Agent Definition Pattern
 ```python
-# CORRECT: Extend BaseSpecialistAgent
-class PagBankAgent(BaseSpecialistAgent):
-    def __init__(self):
-        super().__init__(
-            name="PagBank Digital Banking",
-            business_unit=BusinessUnit.PAGBANK
-        )
+# agents/pagbank-specialist-v27/agent.py
+from agno import Agent, ModelConfig
 
-# WRONG: Never modify base_agent.py directly
+def get_agent():
+    return Agent(
+        agent_id="pagbank-specialist-v27",
+        name="PagBank Digital Banking",
+        model=config["model"]  # From YAML,
+        system_prompt="""You are a PagBank specialist..."""
+    )
 ```
 </agent_integration_patterns>
 
@@ -333,6 +285,9 @@ uv run pytest --cov=agents --cov=context
 ✅ Commit with Genie co-authorship
 ✅ Keep `genie/active/` under 5 files
 ✅ Document patterns for reuse
+✅ Check project-status.md before starting work
+✅ Wait for task dependencies with mcp__wait__wait_minutes
+✅ Use context search tools for Agno documentation
 
 ❌ Never modify Agno framework code
 ❌ Never skip compliance validations
@@ -341,4 +296,6 @@ uv run pytest --cov=agents --cov=context
 ❌ Never use pip (always use uv)
 ❌ Never work directly with production data
 ❌ Never ignore Portuguese language requirements
+❌ Never work on tasks marked as [🔄] by another agent
+❌ Never skip dependency checks
 </critical_reminders>
