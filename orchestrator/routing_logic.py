@@ -14,8 +14,6 @@ class BusinessUnit(Enum):
     ADQUIRENCIA = "adquirencia"
     EMISSAO = "emissao"
     PAGBANK = "pagbank"
-    TECHNICAL_ESCALATION = "technical_escalation"
-    FEEDBACK_COLLECTOR = "feedback_collector"
     HUMAN_AGENT = "human_agent"
     UNKNOWN = "unknown"
 
@@ -134,38 +132,6 @@ class RoutingEngine:
                 'intents': ['pix_transfer', 'balance_check', 'statement', 'payment', 'app_issue', 'payroll']
             },
             
-            BusinessUnit.TECHNICAL_ESCALATION: {
-                'keywords': [
-                    'erro crítico', 'erro critico', 'bug grave', 'problema técnico',
-                    'sistema fora', 'manutenção', 'manutencao', 'indisponível',
-                    'indisponivel', 'falha geral', 'múltiplos erros', 'multiplos erros'
-                ],
-                'patterns': [
-                    r'erro cr[ií]tico',
-                    r'sistema (fora|indispon[ií]vel)',
-                    r'falha (geral|generalizada)',
-                    r'm[úu]ltiplos problemas'
-                ],
-                'intents': ['critical_error', 'system_down', 'multiple_failures']
-            },
-            
-            BusinessUnit.FEEDBACK_COLLECTOR: {
-                'keywords': [
-                    'sugestão', 'sugestao', 'sugerir', 'melhoria',
-                    'reclamação', 'reclamacao', 'reclamar', 'feedback',
-                    'opinião', 'opiniao', 'avaliar', 'avaliação',
-                    'avaliacao', 'crítica', 'critica', 'elogio',
-                    'parabenizar', 'melhorar', 'ideia', 'proposta'
-                ],
-                'patterns': [
-                    r'(tenho|quero fazer) uma sugest[aã]o',
-                    r'(gostaria de|quero) reclamar',
-                    r'deixar (um|meu) feedback',
-                    r'(tenho|quero dar) uma cr[ií]tica',
-                    r'(quero|gostaria de) elogiar'
-                ],
-                'intents': ['give_suggestion', 'make_complaint', 'provide_feedback']
-            },
             
             BusinessUnit.HUMAN_AGENT: {
                 'keywords': [
@@ -189,7 +155,7 @@ class RoutingEngine:
             'taxa': [BusinessUnit.ADQUIRENCIA, BusinessUnit.EMISSAO, BusinessUnit.PAGBANK],
             'bloqueio': [BusinessUnit.EMISSAO, BusinessUnit.PAGBANK],
             'não funciona': [BusinessUnit.EMISSAO, BusinessUnit.PAGBANK],
-            'erro': [BusinessUnit.PAGBANK, BusinessUnit.TECHNICAL_ESCALATION],
+            'erro': [BusinessUnit.PAGBANK],
             'problema': [BusinessUnit.ADQUIRENCIA, BusinessUnit.EMISSAO, BusinessUnit.PAGBANK]
         }
     

@@ -54,18 +54,6 @@ class ModelConfig:
                 "temperature": 0.2,
                 "top_p": 0.8,
             },
-            "escalation_agent": {
-                "model": self.default_model,
-                "max_tokens": 6144,
-                "temperature": 0.4,
-                "top_p": 0.9,
-            },
-            "feedback_collector": {
-                "model": self.fast_model,
-                "max_tokens": 2048,
-                "temperature": 0.3,
-                "top_p": 0.8,
-            }
         }
     
     def get_anthropic_client(self) -> Anthropic:

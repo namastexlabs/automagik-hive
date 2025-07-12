@@ -21,10 +21,6 @@ from agents.specialists.emissao_agent import EmissaoAgent
 from agents.specialists.pagbank_agent import PagBankAgent
 from agents.specialists.human_handoff_agent import HumanHandoffAgent
 
-# Import escalation agents
-from escalation_systems.technical_escalation_agent import create_technical_escalation_agent
-from escalation_systems.feedback_human_systems.feedback_collector import create_feedback_collector
-from escalation_systems.feedback_human_systems.human_agent_mock import create_human_agent
 
 # Import orchestrator modules
 from orchestrator.clarification_handler import clarification_handler

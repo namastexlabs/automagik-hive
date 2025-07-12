@@ -17,7 +17,6 @@ from .specialists.emissao_prompts import EMISSAO_PROMPTS
 from .specialists.pagbank_prompts import PAGBANK_PROMPTS
 from .specialists.human_handoff_prompts import HUMAN_HANDOFF_PROMPTS
 from .escalation.human_escalation_prompts import HUMAN_ESCALATION_PROMPTS
-from .escalation.technical_escalation_prompts import TECHNICAL_ESCALATION_PROMPTS
 
 
 class PromptManager:
@@ -53,7 +52,6 @@ class PromptManager:
             },
             "escalation": {
                 "human": HUMAN_ESCALATION_PROMPTS,
-                "technical": TECHNICAL_ESCALATION_PROMPTS
             }
         }
     

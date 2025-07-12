@@ -70,11 +70,6 @@ graph TB
     Response --> MemoryUpdate[💾 Atualização Memória<br/>Preservação Contexto]
     MemoryUpdate --> FinalResponse[✅ Resposta Final<br/>para Cliente]
     
-    %% Sistema de Escalação
-    Response --> EscalationCheck{🚨 Escalação<br/>Necessária?}
-    EscalationCheck -->|Problemas Técnicos| TechnicalEsc[🔧 Escalação Técnica<br/>Crashes App, Erros API, Bugs]
-    EscalationCheck -->|Não| FinalResponse
-    
     %% Styling
     classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
     classDef knowledge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
@@ -85,7 +80,7 @@ graph TB
     class AdquirenciaAgent,EmissaoAgent,PagBankAgent,HumanAgent agent
     class CSV,Vector,Filter1,Filter2,Filter3 knowledge
     class AgnoMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
-    class Routing,HumanCheck,EscalationCheck decision
+    class Routing,HumanCheck decision
     class WhatsApp,Customer,McpTool external
 ```
 
@@ -207,15 +202,11 @@ pagbank-multiagents/
 │   ├── csv_knowledge_base.py      # Integração CSV
 │   ├── enhanced_csv_reader.py     # Extração de metadados
 │   ├── agentic_filters.py         # Filtragem inteligente
-│   └── knowledge_rag.csv          # 622 entradas de conhecimento
+│   └── knowledge_rag.csv          # 622 documentos
 ├── memory/                    # Sistema de memória
 │   ├── memory_manager.py          # Agno Memory v2
 │   ├── pattern_detector.py        # Reconhecimento de padrões
 │   └── session_manager.py         # Gestão de sessões
-├── escalation_systems/        # Sistemas de escalação
-│   ├── escalation_manager.py      # Coordenação de escalações
-│   ├── feedback_human_systems/    # Sistema de feedback humano
-│   └── ticket_system.py           # Sistema de tickets
 ├── config/                    # Configuração do sistema
 ├── data/                      # Bancos de dados SQLite
 ├── tests/                     # Testes automatizados
