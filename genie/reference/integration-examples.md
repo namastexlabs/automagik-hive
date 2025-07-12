@@ -32,19 +32,18 @@ async def store_interaction(memory_manager, session_id, query, response):
     )
 ```
 
-### 3. Frustration Detection Integration
+### 3. Human Handoff Detection Integration
 ```python
-# Pattern: Checking frustration before response
-async def check_frustration(detector, session_state):
-    frustration_level = detector.analyze(
-        message=session_state['last_message'],
-        history=session_state.get('history', [])
-    )
+# Pattern: Ana naturally detects when to escalate
+async def check_human_handoff(message):
+    from agents.orchestrator.human_handoff_detector import human_handoff_detector
     
-    if frustration_level >= 3:
-        return BusinessUnit.HUMAN_HANDOFF
+    result = human_handoff_detector.needs_human_handoff(message)
     
-    return None  # Continue with normal routing
+    if result['needs_handoff']:
+        return BusinessUnit.HUMAN_HANDOFF, result['reason']
+    
+    return None, None  # Continue with normal routing
 ```
 
 ### 4. State Synchronization

@@ -7,61 +7,41 @@ Tests routing, frustration detection, text normalization, and clarification
 import pytest
 
 from agents.orchestrator.clarification_handler import clarification_handler
-from agents.orchestrator.frustration_detector import frustration_detector
+# Removed frustration_detector - Ana handles this naturally
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
 from agents.orchestrator.routing_logic import TeamType, routing_engine
 from agents.orchestrator.text_normalizer import text_normalizer
 
 
-class TestFrustrationDetector:
-    """Test frustration detection functionality"""
+class TestHumanHandoffDetection:
+    """Test human handoff detection - Ana naturally detects when to escalate"""
     
-    def test_no_frustration(self):
-        """Test normal message without frustration"""
-        result = frustration_detector.detect_frustration("Quero ver meu saldo")
-        assert result['frustration_level'] == 0
-        assert result['explicit_escalation'] is False
-        assert result['giving_up'] is False
+    def test_explicit_human_request(self):
+        """Test when customer explicitly asks for human"""
+        from agents.orchestrator.human_handoff_detector import human_handoff_detector
+        result = human_handoff_detector.needs_human_handoff("Quero falar com um atendente humano")
+        assert result['needs_handoff'] is True
+        assert result['reason'] == 'explicit_request'
     
-    def test_low_frustration(self):
-        """Test message with low frustration"""
-        result = frustration_detector.detect_frustration("Está difícil fazer isso")
-        assert result['frustration_level'] == 1
-        assert result['recommended_action'] == 'acknowledge_concern'
+    def test_frustration_language(self):
+        """Test when customer uses frustrated language"""
+        from agents.orchestrator.human_handoff_detector import human_handoff_detector
+        result = human_handoff_detector.needs_human_handoff("Que merda! Esse app é um lixo!")
+        assert result['needs_handoff'] is True
+        assert result['reason'] == 'frustration_language'
     
-    def test_medium_frustration(self):
-        """Test message with medium frustration"""
-        result = frustration_detector.detect_frustration("Não aguento mais esse problema")
-        assert result['frustration_level'] >= 2
-        assert result['recommended_action'] in ['empathetic_response', 'escalate_human']
+    def test_caps_lock_yelling(self):
+        """Test when customer is yelling in caps"""
+        from agents.orchestrator.human_handoff_detector import human_handoff_detector
+        result = human_handoff_detector.needs_human_handoff("NÃO FUNCIONA!!!!!!")
+        assert result['needs_handoff'] is True
+        assert result['reason'] == 'caps_lock_yelling'
     
-    def test_high_frustration(self):
-        """Test message with high frustration"""
-        result = frustration_detector.detect_frustration("Que merda! Esse app é um lixo!")
-        assert result['frustration_level'] == 3
-        assert result['recommended_action'] == 'escalate_human'
-        assert 'merda' in result['detected_keywords']
-        assert 'lixo' in result['detected_keywords']
-    
-    def test_explicit_escalation(self):
-        """Test explicit human request"""
-        result = frustration_detector.detect_frustration("Quero falar com um atendente humano")
-        assert result['explicit_escalation'] is True
-        assert result['frustration_level'] == 3
-        assert result['recommended_action'] == 'escalate_human'
-    
-    def test_giving_up(self):
-        """Test giving up phrases"""
-        result = frustration_detector.detect_frustration("Desisto, vou procurar outro banco")
-        assert result['giving_up'] is True
-        assert result['frustration_level'] == 3
-        assert result['recommended_action'] == 'urgent_intervention'
-    
-    def test_emotional_indicators(self):
-        """Test emotional indicators detection"""
-        result = frustration_detector.detect_frustration("NÃO FUNCIONA!!!!!!")
-        assert 'excessive_caps' in result['emotional_indicators']
-        assert 'repeated_punctuation' in result['emotional_indicators']
+    def test_normal_conversation(self):
+        """Test normal conversation doesn't trigger handoff"""
+        from agents.orchestrator.human_handoff_detector import human_handoff_detector
+        result = human_handoff_detector.needs_human_handoff("Quero ver meu saldo")
+        assert result['needs_handoff'] is False
 
 
 class TestTextNormalizer:
@@ -219,22 +199,24 @@ class TestMainOrchestrator:
         assert 'session_id' in result
         assert 'team_session_state' in result
     
-    def test_frustration_handling(self, orchestrator):
-        """Test frustration detection and handling"""
-        # First message with frustration
+    def test_natural_escalation_flow(self, orchestrator):
+        """Test Ana naturally detects when to escalate to human"""
+        # Customer expresses frustration
         result1 = orchestrator.process_message(
             message="Que droga, meu cartão não funciona!",
             user_id="test_user_2"
         )
-        assert result1['team_session_state']['frustration_level'] >= 2
+        # Ana should handle this empathetically
+        assert result1 is not None
         
-        # Second message with more frustration
+        # Customer explicitly asks for human
         result2 = orchestrator.process_message(
             message="CANSEI DISSO! QUERO FALAR COM HUMANO!",
             user_id="test_user_2",
             session_id=result1['session_id']
         )
-        assert result2['team_session_state']['frustration_level'] == 3
+        # Should route to human handoff
+        assert result2['team_session_state']['awaiting_human'] is True
         assert result2['team_session_state']['interaction_count'] == 2
     
     def test_text_normalization_flow(self, orchestrator):
@@ -275,22 +257,21 @@ class TestMainOrchestrator:
         
         metrics = orchestrator.get_routing_metrics()
         assert metrics['total_interactions'] >= 3
-        assert metrics['frustration_incidents'] >= 1
-        assert 'average_frustration' in metrics
-        assert 'escalation_rate' in metrics
+        assert metrics['human_handoff_requests'] >= 1
 
 
 if __name__ == '__main__':
     # Run specific test
     print("Running orchestrator tests...")
     
-    # Test frustration detection
-    print("\n=== Frustration Detection Tests ===")
-    fd_tests = TestFrustrationDetector()
-    fd_tests.test_no_frustration()
-    fd_tests.test_high_frustration()
-    fd_tests.test_explicit_escalation()
-    print("✓ Frustration detection tests passed")
+    # Test human handoff detection
+    print("\n=== Human Handoff Detection Tests ===")
+    hh_tests = TestHumanHandoffDetection()
+    hh_tests.test_explicit_human_request()
+    hh_tests.test_frustration_language()
+    hh_tests.test_caps_lock_yelling()
+    hh_tests.test_normal_conversation()
+    print("✓ Human handoff detection tests passed")
     
     # Test text normalization
     print("\n=== Text Normalization Tests ===")

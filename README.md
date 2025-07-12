@@ -92,11 +92,16 @@ graph TB
 # Instalar dependências
 uv sync
 
-# Iniciar o sistema
+# Desenvolvimento (com UI interativa)
 uv run python playground.py
+
+# Produção (API REST)
+uv run python serve.py
 ```
 
-O sistema estará disponível em: http://localhost:7777
+Endpoints disponíveis:
+- Desenvolvimento: http://localhost:7777 (Playground com UI)
+- Produção: http://localhost:8880 (API REST com docs em /docs)
 
 ## 🤖 Agentes por Unidade de Negócio
 

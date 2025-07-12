@@ -108,4 +108,6 @@ def calculate_routing_scores(query: str, business_units: List[BusinessUnit]) -> 
 
 ### Direct Human Handoff
 - "Quero falar com um atendente" → Human Handoff (1.0)
-- "Isso não está funcionando!" → Check frustration level first
+- "Isso não está funcionando!" → Ana detects frustration and may escalate
+- "Que merda!" → Frustration language triggers human handoff
+- "NÃO AGUENTO MAIS!" → Caps lock yelling triggers escalation

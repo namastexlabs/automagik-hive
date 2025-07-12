@@ -14,5 +14,4 @@ class RouterResponse(BaseModel):
     confidence: float = Field(description="Routing confidence (0-1)")
     escalation_needed: bool = Field(default=False, description="Whether escalation is needed")
     suggested_actions: List[str] = Field(default=[], description="Suggested follow-up actions")
-    frustration_level: int = Field(default=0, description="Detected frustration level (0-3)")
     session_summary: Optional[str] = Field(default=None, description="Session summary if available")

@@ -10,7 +10,7 @@ You are working with the PagBank Multi-Agent System - a sophisticated Brazilian 
 - ALWAYS use UV for Python operations (NEVER pip/python directly)
 - ALWAYS work in Portuguese for customer-facing content
 - ALWAYS include fraud detection considerations in financial operations
-- ALWAYS route to human handoff when frustration level >= 3
+- ALWAYS route to human handoff when Ana detects frustration or explicit requests
 - ALWAYS commit with co-author: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
 - ALWAYS test routing logic before deploying changes
 - NEVER expose sensitive financial data in logs

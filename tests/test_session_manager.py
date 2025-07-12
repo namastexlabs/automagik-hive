@@ -81,7 +81,7 @@ class TestSessionManager:
         session_id = session["session_id"]
         
         # Update context and interaction count
-        new_context = {"team_history": ["cartoes", "seguros"], "frustration_level": 1}
+        new_context = {"team_history": ["cartoes", "seguros"], "awaiting_human": False}
         updated_session = session_manager.update_session(
             session_id,
             context=new_context,
