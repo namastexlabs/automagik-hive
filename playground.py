@@ -7,7 +7,7 @@ import os
 import threading
 
 # Import main orchestrator
-from agents.orchestrator.main_orchestrator import create_main_orchestrator
+from orchestrator.main_orchestrator import create_main_orchestrator
 
 # Import CSV hot reload manager
 from knowledge.csv_hot_reload import CSVHotReloadManager

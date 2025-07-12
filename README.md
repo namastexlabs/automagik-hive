@@ -188,8 +188,6 @@ Frustração Detectada → Agente de Escalação → Evolution API
 ```
 pagbank-multiagents/
 ├── agents/                    # Sistema de agentes por unidade de negócio
-│   ├── orchestrator/
-│   │   └── main_orchestrator.py    # Orquestrador principal de roteamento
 │   ├── specialists/               # Agentes especializados por unidade
 │   │   ├── base_agent.py         # Classe base dos agentes
 │   │   ├── adquirencia_agent.py  # Agente de Adquirência
@@ -199,7 +197,8 @@ pagbank-multiagents/
 │   ├── prompts/                   # Prompts dos agentes
 │   │   └── specialists/           # Prompts especializados por unidade
 │   └── tools/                     # Ferramentas compartilhadas
-├── orchestrator/              # Utilitários de orquestração
+├── orchestrator/              # Sistema de orquestração
+│   ├── main_orchestrator.py       # Orquestrador principal
 │   ├── clarification_handler.py   # Tratamento de esclarecimentos
 │   ├── human_handoff_detector.py  # Detecção de frustração
 │   ├── routing_logic.py           # Algoritmos de roteamento
