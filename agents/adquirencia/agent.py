@@ -4,8 +4,9 @@
 from typing import Optional
 import yaml
 from pathlib import Path
-from agno import Agent, ModelConfig
-from agno.storage.postgresql import PostgresStorage
+from agno.agent import Agent
+from agno.models.anthropic import Claude
+from agno.storage.postgres import PostgresStorage
 
 
 def get_adquirencia_agent(
@@ -37,16 +38,19 @@ def get_adquirencia_agent(
         # config = load_agent_version("adquirencia-specialist", version)
         pass
     
-    # Create model configuration
+    # Create model instance
     model_config = config["model"]
-    if "id" in model_config:
-        model_config["name"] = model_config.pop("id")  # Agno uses 'name' not 'id'
+    model = Claude(
+        id=model_config["id"],
+        temperature=model_config.get("temperature", 0.7),
+        max_tokens=model_config.get("max_tokens", 2000)
+    )
     
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
         instructions=config["instructions"],
-        model=ModelConfig(**model_config),
+        model=model,
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url or config["storage"].get("db_url"),

@@ -1,0 +1,106 @@
+# Human Handoff Agent Configuration
+# Extracted from existing agents/specialists/human_handoff_agent.py
+
+agent:
+  agent_id: "human-handoff-specialist"
+  version: 27
+  name: "Especialista em Transferência Humana"
+  role: "Especialista em Transferência Humana"
+  description: "Especialista em escalação para atendimento humano e gestão de frustrações"
+
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 0.8
+  max_tokens: 1500
+
+# Portuguese instructions for escalation management
+instructions: |
+  Você é especialista em transferência para atendimento humano do PagBank.
+  
+  Sua função é:
+  - Detectar quando clientes precisam de atendimento humano
+  - Gerenciar transferências de forma empática e profissional
+  - Coletar contexto essencial antes da transferência
+  - Preparar resumo completo para o atendente humano
+  
+  Critérios para transferência:
+  - Solicitação explícita: "quero falar com atendente", "quero humano"
+  - Frustração detectada: xingamentos, caps lock excessivo
+  - Problemas complexos que exigem análise humana
+  - Questões que envolvem grandes valores (>R$ 10.000)
+  - Suspeita de fraude ou segurança
+  
+  Quando transferir:
+  1. Valide a necessidade de transferência
+  2. Colete informações essenciais (nome, CPF, problema)
+  3. Explique o processo de transferência
+  4. Gere protocolo de atendimento
+  5. Prepare resumo para o atendente
+  
+  Sempre responda em português brasileiro com empatia.
+  Priorize a experiência do cliente durante a transferência.
+
+# Knowledge base filtering
+knowledge_filter:
+  business_unit: "Human Handoff"
+
+# Tools available to this agent
+tools:
+  - "generate_protocol"
+  - "collect_customer_info"
+  - "escalate_to_human"
+
+# Storage configuration
+storage:
+  type: "postgres"
+  table_name: "human_handoff_specialist"
+  auto_upgrade_schema: true
+
+# Memory and history settings
+memory:
+  add_history_to_messages: true
+  num_history_runs: 10  # More history for better context
+
+# Display settings
+markdown: false
+show_tool_calls: true
+
+# Escalation criteria (from human_handoff_detector.py)
+escalation_triggers:
+  frustration_indicators:
+    - "droga"
+    - "merda" 
+    - "porra"
+    - "caralho"
+    - "desgraça"
+    - "bosta"
+    - "inferno"
+    - "puta"
+    - "cacete"
+    - "foda"
+  explicit_requests:
+    - "quero falar com humano"
+    - "quero atendente"
+    - "falar com pessoa"
+    - "atendimento humano"
+    - "me transfere"
+    - "pessoa real"
+    - "não quero robô"
+    - "chega de robô"
+  caps_threshold: 0.7  # 70% caps = yelling
+  
+# Protocol generation
+protocol_fields:
+  - "customer_name"
+  - "customer_cpf"
+  - "issue_description"
+  - "previous_attempts"
+  - "urgency_level"
+  - "customer_emotion"
+  - "recommended_action"
+
+# WhatsApp integration (future)
+whatsapp:
+  enabled: false
+  instance: "pagbank_support"

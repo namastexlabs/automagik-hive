@@ -1,4 +1,4 @@
-# PagBank Digital Banking Agent Factory
+# Human Handoff Agent Factory
 # Based on agno-demo-app patterns for dynamic agent creation
 
 from typing import Optional
@@ -9,14 +9,14 @@ from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 
 
-def get_pagbank_agent(
+def get_human_handoff_agent(
     version: Optional[int] = None,        # API parameter - specific version
     session_id: Optional[str] = None,     # API parameter - session management  
     debug_mode: bool = False,             # API parameter - debugging
     db_url: Optional[str] = None          # API parameter - database connection
 ) -> Agent:
     """
-    Factory function for PagBank digital banking specialist agent.
+    Factory function for Human Handoff specialist agent.
     
     Args:
         version: Specific agent version to load (defaults to latest)
@@ -25,7 +25,7 @@ def get_pagbank_agent(
         db_url: Database URL for storage (defaults to environment)
         
     Returns:
-        Configured PagBank Agent instance
+        Configured Human Handoff Agent instance
     """
     # Load configuration (in V2 this will come from database)
     config_path = Path(__file__).parent / "config.yaml"
@@ -35,7 +35,7 @@ def get_pagbank_agent(
     # Apply version if specified (future: load from database)
     if version:
         # TODO: Load specific version from database
-        # config = load_agent_version("pagbank-specialist", version)
+        # config = load_agent_version("human-handoff-specialist", version)
         pass
     
     # Create model instance
@@ -67,11 +67,11 @@ def get_pagbank_agent(
 
 
 # Convenience functions for different use cases
-def get_pagbank_agent_latest(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
-    """Get latest version of PagBank agent"""
-    return get_pagbank_agent(session_id=session_id, debug_mode=debug_mode)
+def get_human_handoff_agent_latest(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
+    """Get latest version of Human Handoff agent"""
+    return get_human_handoff_agent(session_id=session_id, debug_mode=debug_mode)
 
 
-def get_pagbank_agent_v27(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
-    """Get specific v27 of PagBank agent for testing/rollback"""
-    return get_pagbank_agent(version=27, session_id=session_id, debug_mode=debug_mode)
+def get_human_handoff_agent_v27(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
+    """Get specific v27 of Human Handoff agent for testing/rollback"""
+    return get_human_handoff_agent(version=27, session_id=session_id, debug_mode=debug_mode)
