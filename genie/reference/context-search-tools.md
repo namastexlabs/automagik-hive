@@ -1,8 +1,24 @@
 # Context Search Tools for Agno Development
 
-**Navigation**: [← YAML Configuration](./yaml-configuration.md) | [THIS FILE] | [Task Cards →](../task-cards/00-task-overview.md)
+**Navigation**: [← YAML Configuration](@genie/reference/yaml-configuration.md) | [THIS FILE] | [Task Cards →](../task-cards/00-task-overview.md)
 
 ## Available MCP Tools
+
+### Important: Two Agno Repositories Available
+
+1. **`/context7/agno`** (2552 code snippets)
+   - Primary Agno framework documentation
+   - Use with `mcp__search-repo-docs__get-library-docs`
+   
+2. **`/agno-agi/agno-docs`** (3634 code snippets, trust score 9.5)
+   - More comprehensive documentation
+   - Higher trust score and more examples
+   - Use with `mcp__search-repo-docs__get-library-docs`
+
+3. **`agno-agi/agno`** (Repository name, NOT library ID)
+   - Use with `mcp__ask-repo-agent__ask_question`
+   - Use with `mcp__ask-repo-agent__read_wiki_structure`
+   - Different from library IDs above!
 
 ### 1. Resolve Library ID
 ```python
@@ -22,20 +38,21 @@ library_info = mcp__search-repo-docs__resolve-library-id(
 ```python
 # Second step - retrieve specific docs
 docs = mcp__search-repo-docs__get-library-docs(
-    context7CompatibleLibraryID="/agnolabs/agno",  # From step 1
+    context7CompatibleLibraryID="/context7/agno",  # From step 1
     topic="teams",      # Optional: focus area
     tokens=10000        # Optional: max tokens (default 10000)
 )
 
-# Topics available:
+# Topics available (verified):
 # - "agents" - Agent creation and configuration
-# - "teams" - Team composition and routing
+# - "teams" - Team composition and routing (mode='route', 'coordinate', 'collaborate')
 # - "workflows" - Sequential/parallel workflows
 # - "memory" - Session and storage management
 # - "tools" - Tool creation and integration
 # - "models" - Model configuration
 # - "streaming" - Streaming responses
 # - "playground" - Agno playground setup
+# Note: Topics filter the results but all topics may not have content
 ```
 
 ### 3. Ask Specific Questions
@@ -82,7 +99,7 @@ workflow_answer = mcp__ask-repo-agent__ask_question(
 
 # Follow up with specific docs
 workflow_docs = mcp__search-repo-docs__get-library-docs(
-    context7CompatibleLibraryID="/agnolabs/agno",
+    context7CompatibleLibraryID="/context7/agno",
     topic="workflows"
 )
 ```
@@ -97,7 +114,7 @@ storage_question = mcp__ask-repo-agent__ask_question(
 
 # Get memory management details
 memory_docs = mcp__search-repo-docs__get-library-docs(
-    context7CompatibleLibraryID="/agnolabs/agno",
+    context7CompatibleLibraryID="/context7/agno",
     topic="memory"
 )
 ```
@@ -110,7 +127,7 @@ memory_docs = mcp__search-repo-docs__get-library-docs(
 def implement_ana_team():
     # 1. Get Agno team patterns
     team_examples = mcp__search-repo-docs__get-library-docs(
-        context7CompatibleLibraryID="/agnolabs/agno",
+        context7CompatibleLibraryID="/context7/agno",
         topic="teams"
     )
     
@@ -137,16 +154,30 @@ debug_answer = mcp__ask-repo-agent__ask_question(
 
 ## Best Practices
 
-### 1. Start with Library ID
+### 1. Choose the Right Library ID
+```python
+# For comprehensive documentation with more examples:
+library_id = mcp__search-repo-docs__resolve-library-id(
+    libraryName="agno"
+)
+# Returns both options - choose based on needs:
+# - /context7/agno - Primary docs (2552 snippets)
+# - /agno-agi/agno-docs - Comprehensive docs (3634 snippets, trust 9.5)
+
+# Recommendation: Use /agno-agi/agno-docs for more examples
+```
+
+### 2. Start with Library ID
 ```python
 # Always resolve ID first (unless you know it)
 library_id = mcp__search-repo-docs__resolve-library-id(
     libraryName="agno"
 )
-# Usually returns: "/agnolabs/agno"
+# Returns both: "/context7/agno" and "/agno-agi/agno-docs"
+# Choose based on your needs (agno-agi has more examples)
 ```
 
-### 2. Use Topics for Focused Search
+### 3. Use Topics for Focused Search
 ```python
 # Don't retrieve everything - use topics
 AGNO_TOPICS = [
@@ -161,11 +192,11 @@ AGNO_TOPICS = [
 ]
 ```
 
-### 3. Combine Tools Effectively
+### 4. Combine Tools Effectively
 ```python
 # 1. Get overview with docs
 overview = mcp__search-repo-docs__get-library-docs(
-    context7CompatibleLibraryID="/agnolabs/agno",
+    context7CompatibleLibraryID="/context7/agno",
     topic="teams"
 )
 
@@ -190,6 +221,7 @@ q3 = "How do I add custom tools to an Agent?"
 q1 = "How does Team mode='route' decide which agent to use?"
 q2 = "Can I customize the routing logic in Team?"
 q3 = "How to handle routing failures?"
+q4 = "What are the differences between mode='route', 'coordinate', and 'collaborate'?"
 ```
 
 ### Workflow Steps
@@ -243,13 +275,18 @@ Each agent working on task cards should:
 1. **Check if Agno knowledge needed**:
    ```python
    if "Team" in task_title or "Agent" in task_title:
-       docs = get_agno_documentation()
+       # Use the comprehensive docs for more examples
+       docs = mcp__search-repo-docs__get-library-docs(
+           context7CompatibleLibraryID="/agno-agi/agno-docs",
+           topic="teams",
+           tokens=10000
+       )
    ```
 
 2. **Cache responses locally**:
    ```python
    # Save to reference for other agents
-   with open("genie/reference/agno-team-examples.md", "w") as f:
+   with open("@genie/reference/agno-team-examples.md", "w") as f:
        f.write(docs)
    ```
 
@@ -259,8 +296,9 @@ Each agent working on task cards should:
    pattern_found = {
        "feature": "Team routing",
        "pattern": "mode='route'",
-       "example": code_snippet
+       "example": code_snippet,
+       "source": "agno-agi/agno-docs"
    }
    ```
 
-**Navigation**: [← YAML Configuration](./yaml-configuration.md) | [THIS FILE] | [Task Cards →](../task-cards/00-task-overview.md)
+**Navigation**: [← YAML Configuration](@genie/reference/yaml-configuration.md) | [THIS FILE] | [Task Cards →](../task-cards/00-task-overview.md)

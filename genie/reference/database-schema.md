@@ -1,6 +1,6 @@
 # V2 Database Schema Reference
 
-**Navigation**: [← Agno Patterns](./agno-patterns.md) | [THIS FILE] | [YAML Configuration →](./yaml-configuration.md)
+**Navigation**: [← Agno Patterns](@genie/reference/agno-patterns.md) | [THIS FILE] | [YAML Configuration →](@genie/reference/yaml-configuration.md)
 
 ## Core Tables Overview
 
@@ -368,4 +368,4 @@ def read_agent(agent_id: str, db: Session = Depends(get_db)):
     return agent
 ```
 
-**Navigation**: [← Agno Patterns](./agno-patterns.md) | [THIS FILE] | [YAML Configuration →](./yaml-configuration.md)
+**Navigation**: [← Agno Patterns](@genie/reference/agno-patterns.md) | [THIS FILE] | [YAML Configuration →](@genie/reference/yaml-configuration.md)

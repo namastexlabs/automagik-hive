@@ -146,6 +146,6 @@ mv genie/active/pagbank-v2/phase1-refactor-ana-team.md genie/archive/
 ---
 
 **Navigation**: 
-- Task Cards: `genie/todo/epic-pagbank-v2-*.md` and `genie/active/epic-pagbank-v2-*.md`
+- Task Cards: `genie/todo/${CURRENT_EPIC}_*.md` and `genie/active/${CURRENT_EPIC}_*.md`
 - Patterns: `genie/reference/`
-- Central Status: `genie/active/epic-pagbank-v2-project-status.md`
+- Central Status: `genie/active/epic-status.md`

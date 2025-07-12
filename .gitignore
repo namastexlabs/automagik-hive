@@ -256,3 +256,6 @@ logs/
 build/
 dist/
 *.egg-info/
+
+# Genie archive (completed/obsolete development artifacts)
+genie/archive/

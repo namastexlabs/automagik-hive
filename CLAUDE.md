@@ -1,11 +1,17 @@
 # CLAUDE.md
 
+<state_configuration>
+<!-- UPDATE WHEN SWITCHING EPICS -->
+CURRENT_EPIC: "pagbank-v2"
+<!-- epic-status.md is always the current epic status file -->
+</state_configuration>
+
 <system_context>
 You are working with the PagBank Multi-Agent System - a sophisticated Brazilian financial services customer support system built with the Agno framework. This system orchestrates specialized AI agents to handle customer queries across four business units: Adquirência (merchant services), Emissão (card issuance), PagBank (digital banking), and Human Handoff. The system emphasizes intelligent routing, context persistence, and seamless escalation to human agents when needed.
 </system_context>
 
 <critical_rules>
-- ALWAYS check existing patterns in `genie/reference/` before implementing
+- ALWAYS check existing patterns in `@genie/reference/` before implementing
 - ALWAYS create documentation in `genie/active/` before starting work
 - ALWAYS use UV for Python operations (NEVER pip/python directly)
 - ALWAYS work in Portuguese for customer-facing content
@@ -26,9 +32,9 @@ The Genie Framework is a multi-agent task orchestration system for coordinated d
 
 **Quick Reference:**
 - Use `genie/active/` for current work (MAX 5 files)
-- Check `genie/reference/` for patterns before implementing
-- Follow naming conventions: `task-[agent]-[feature].md`
-- Complete work moves to `genie/completed/` with date prefix
+- Check `@genie/reference/` for patterns before implementing
+- Use branch-friendly naming: `task-[agent]-[feature]` (no .md needed for branch names)
+- Archive completed/obsolete work to `genie/archive/` (.gitignored)
 </genie_note>
 
 ## Multi-Agent Coordination for V2 Development
@@ -38,12 +44,16 @@ The Genie Framework is a multi-agent task orchestration system for coordinated d
 
 **Central Status Tracking**
 ```bash
-# Every agent MUST check status first
-cat genie/active/project-status.md
+# Every agent MUST check epic overview first
+# (Uses CURRENT_EPIC from state configuration above)
+cat genie/active/${CURRENT_EPIC}.md
+
+# Then check detailed epic status (always epic-status.md)
+cat genie/active/epic-status.md
 
 # Update status when claiming task
-# Change [ ] to [🔄] when starting
-# Change to [✅] when complete
+# Change [ ] 📋 to [🔄] 🔄 when starting
+# Change [🔄] 🔄 to [✅] ✅ when complete
 ```
 
 **Dependency Management**
@@ -51,7 +61,7 @@ cat genie/active/project-status.md
 # Wait for dependencies using wait tool
 while task_blocked():
     mcp__wait__wait_minutes(duration=30)
-    status = read("genie/active/project-status.md")
+    status = read("genie/active/epic-status.md")
     if dependencies_complete():
         break
 ```
@@ -68,26 +78,15 @@ docs = mcp__search-repo-docs__get-library-docs(
 )
 ```
 
-### V2 Development Structure
-```
-genie/
-├── active/
-│   ├── project-status.md      # Central checkpoint file
-│   └── agent-coordination.md  # Coordination protocol
-├── task-cards/                # Detailed implementation tasks
-│   ├── phase1/               # Foundation (can run parallel)
-│   ├── phase2/               # Platform core
-│   └── phase3/               # Production features
-└── reference/                 # Patterns and examples
-```
-
 ### Critical Multi-Agent Rules
-- **ALWAYS** read project-status.md before starting any work
+- **ALWAYS** read current epic status (genie/active/${CURRENT_EPIC}.md and genie/active/epic-status.md) before starting any work
 - **ALWAYS** wait for dependencies using mcp__wait__wait_minutes
 - **ALWAYS** update status checkboxes when claiming/completing tasks
 - **ALWAYS** use context search tools for Agno questions
 - **NEVER** work on blocked tasks without waiting for dependencies
 - **NEVER** modify files another agent is working on (check [🔄])
+
+For detailed epic-based Kanban workflow and task orchestration, see `genie/CLAUDE.md`.
 </multi_agent_coordination>
 
 ## Architecture & Development Patterns
@@ -237,7 +236,7 @@ uv run pytest --cov=agents --cov=context
 <workflow_summary>
 ### Optimal Multi-Agent Development Flow
 
-1. **Pattern Check** → Review `genie/reference/` for existing patterns
+1. **Pattern Check** → Review `@genie/reference/` for existing patterns
 2. **Impact Analysis** → Identify affected business units
 3. **Task Creation** → Create tasks in `genie/active/` per agent
 4. **Parallel Implementation** → Develop across agents simultaneously
@@ -277,13 +276,15 @@ uv run pytest --cov=agents --cov=context
 
 <critical_reminders>
 ### Always Remember
-✅ Check patterns in `genie/reference/` first
+✅ Check patterns in `@genie/reference/` first
 ✅ Test routing with Portuguese queries
 ✅ Validate compliance requirements
 ✅ Update knowledge CSV when adding features
 ✅ Test frustration escalation paths
 ✅ Commit with Genie co-authorship
-✅ Keep `genie/active/` under 5 files
+✅ Keep `genie/active/` under 5 files (Kanban WIP limit)
+✅ Use branch-friendly filenames (task-fix-pix-validation)
+✅ Archive obsolete work to `genie/archive/` when no longer relevant
 ✅ Document patterns for reuse
 ✅ Check project-status.md before starting work
 ✅ Wait for task dependencies with mcp__wait__wait_minutes
@@ -299,3 +300,9 @@ uv run pytest --cov=agents --cov=context
 ❌ Never work on tasks marked as [🔄] by another agent
 ❌ Never skip dependency checks
 </critical_reminders>
+
+## Advanced Patterns & Reference
+
+For detailed Agno framework patterns, context search tools, and development reference materials, see `@genie/reference/` directory.
+
+

@@ -1,6 +1,6 @@
 # CSV Typification Analysis - PagBank Knowledge Base
 
-**Navigation**: [← YAML Configuration](./yaml-configuration.md) | [THIS FILE] | [Context Search Tools →](./context-search-tools.md)
+**Navigation**: [← YAML Configuration](@genie/reference/yaml-configuration.md) | [THIS FILE] | [Context Search Tools →](@genie/reference/context-search-tools.md)
 
 ## Overview
 

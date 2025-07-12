@@ -1,6 +1,8 @@
-# Agno Framework Patterns Reference
+# Agno Framework Implementation Patterns
 
-**Navigation**: [THIS FILE] | [Agno Parameters →](./agno-parameter-patterns.md)
+**Purpose**: Code examples and best practices for implementing Agno components  
+**Complement**: For parameter documentation, see [Agno Parameters](@genie/reference/agno-patterns-index.md)  
+**Navigation**: [THIS FILE] | [Parameter Reference →](@genie/reference/agno-patterns-index.md)
 
 ## Team Routing Pattern
 

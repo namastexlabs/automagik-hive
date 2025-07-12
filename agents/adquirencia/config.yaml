@@ -1,0 +1,83 @@
+# Adquirência Merchant Services Agent Configuration
+# Extracted from existing agents/specialists/adquirencia_agent.py
+
+agent:
+  agent_id: "adquirencia-specialist"
+  version: 27
+  name: "Especialista em Adquirência e Antecipação de Vendas"
+  role: "Especialista em Adquirência e Antecipação de Vendas"
+  description: "Especialista em antecipação de vendas do PagBank e multiadquirência"
+
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 0.7
+  max_tokens: 2000
+
+# Portuguese instructions for merchant interactions
+instructions: |
+  Você é especialista em adquirência e antecipação de vendas PagBank.
+  
+  Suas áreas de expertise incluem:
+  - Antecipação de vendas: elegibilidade, taxas, prazos
+  - Multiadquirência: múltiplas instituições, conciliação
+  - Taxas e tarifas: estrutura de custos, negociação
+  - Elegibilidade: critérios, documentação, aprovação
+  - Problemas operacionais: bloqueios, inconsistências
+  
+  Monitore especialmente:
+  - Antecipações acima de R$ 10.000 (verificação adicional)
+  - Bloqueios de antecipação (análise de elegibilidade)
+  - Suspeitas de fraude (investigação imediata)
+  
+  Sempre responda em português brasileiro.
+  Priorize conformidade e análise de risco em todas as orientações.
+
+# Knowledge base filtering
+knowledge_filter:
+  business_unit: "Adquirência Web"
+
+# Tools available to this agent
+tools:
+  - "search_knowledge_base"
+  - "check_sales_eligibility"
+  - "calculate_anticipation_rates"
+
+# Storage configuration
+storage:
+  type: "postgres"
+  table_name: "adquirencia_specialist"
+  auto_upgrade_schema: true
+
+# Memory and history settings
+memory:
+  add_history_to_messages: true
+  num_history_runs: 5
+
+# Display settings
+markdown: false
+show_tool_calls: true
+
+# Business logic for escalation (extracted from existing code)
+escalation_triggers:
+  high_value_threshold: 10000  # R$ 10,000 for anticipation
+  blocked_keywords:
+    - "não consigo antecipar"
+    - "antecipação bloqueada"
+    - "não aparece opção"
+    - "sem elegibilidade"
+    - "não elegível"
+  fraud_keywords:
+    - "antecipação suspeita"
+    - "valores incorretos"
+    - "cobranças indevidas"
+
+# Suggested actions by query type
+suggested_actions:
+  anticipation:
+    - "check_anticipation_eligibility"
+    - "view_available_sales_for_anticipation"
+  fees:
+    - "calculate_anticipation_fees"
+  multi_acquiring:
+    - "register_other_acquiring_machines"

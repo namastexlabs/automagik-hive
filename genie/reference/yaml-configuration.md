@@ -1,6 +1,6 @@
 # YAML Configuration Reference
 
-**Navigation**: [← Database Schema](./database-schema.md) | [THIS FILE] | [CSV Typification →](./csv_typification_analysis.md)
+**Navigation**: [← Database Schema](@genie/reference/database-schema.md) | [THIS FILE] | [CSV Typification →](@genie/reference/csv_typification_analysis.md)
 
 ## Core Principle: Everything in YAML
 
@@ -8,7 +8,7 @@ In V2, ALL Agno settings must be in YAML files. No hardcoding in Python!
 
 **Important**: YAML is the kickstarter to initialize agents/teams in the database. Once in DB, settings can be updated via API while maintaining the same structure.
 
-**For complete parameter reference**: See [Agno Parameter Patterns](./agno-parameter-patterns.md)
+**For complete parameter reference**: See [Agno Parameter Patterns](@genie/reference/agno-patterns-index.md)
 
 ## Team Configuration
 
@@ -120,4 +120,4 @@ team = Team(
 )
 ```
 
-**Navigation**: [← Database Schema](./database-schema.md) | [THIS FILE] | [CSV Typification →](./csv_typification_analysis.md)
+**Navigation**: [← Database Schema](@genie/reference/database-schema.md) | [THIS FILE] | [CSV Typification →](@genie/reference/csv_typification_analysis.md)

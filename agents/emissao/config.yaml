@@ -1,0 +1,99 @@
+# Emissão Card Services Agent Configuration
+# Based on existing card services logic and PagBank business rules
+
+agent:
+  agent_id: "emissao-specialist"
+  version: 27
+  name: "Especialista em Cartões e Emissão"
+  role: "Especialista em Cartões e Emissão"
+  description: "Especialista em cartões de crédito e débito, limites, faturas e serviços de emissão"
+
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 0.7
+  max_tokens: 2000
+
+# Portuguese instructions for card services
+instructions: |
+  Você é especialista em cartões e serviços de emissão PagBank.
+  
+  Suas áreas de expertise incluem:
+  - Cartões de crédito: limites, faturas, parcelamentos
+  - Cartões de débito: configurações, limites, bloqueios
+  - Senhas e desbloqueios: alteração de senhas, desbloqueio de cartões
+  - Uso internacional: habilitação, tarifas, problemas no exterior
+  - Faturas: consulta, negociação, parcelamento
+  - Problemas operacionais: transações negadas, erros de processamento
+  
+  Monitore especialmente:
+  - Limites de crédito altos (verificação de renda)
+  - Transações internacionais bloqueadas (análise de segurança)
+  - Múltiplas tentativas de desbloqueio (possível fraude)
+  - Contestações de transações (investigação necessária)
+  
+  Sempre responda em português brasileiro.
+  Priorize segurança e conformidade com regulações financeiras.
+
+# Knowledge base filtering
+knowledge_filter:
+  business_unit: "Emissão"
+
+# Tools available to this agent
+tools:
+  - "search_knowledge_base"
+  - "check_card_status"
+  - "verify_credit_limits"
+  - "process_bill_inquiries"
+
+# Storage configuration
+storage:
+  type: "postgres"
+  table_name: "emissao_specialist"
+  auto_upgrade_schema: true
+
+# Memory and history settings
+memory:
+  add_history_to_messages: true
+  num_history_runs: 5
+
+# Display settings
+markdown: false
+show_tool_calls: true
+
+# Business logic for escalation
+escalation_triggers:
+  high_limit_threshold: 15000  # R$ 15,000 for credit limits
+  security_keywords:
+    - "cartão clonado"
+    - "transação não reconhecida"
+    - "uso indevido"
+    - "fraude no cartão"
+    - "compras não autorizadas"
+  international_keywords:
+    - "bloqueado no exterior"
+    - "não funciona fora do país"
+    - "recusado internacionalmente"
+  multiple_unlock_attempts:
+    - "não consigo desbloquear"
+    - "tentei várias vezes"
+    - "sistema não aceita"
+
+# Suggested actions by query type
+suggested_actions:
+  credit_card:
+    - "check_credit_limit"
+    - "view_current_bill"
+    - "request_limit_increase"
+  debit_card:
+    - "check_card_status"
+    - "view_transaction_limits"
+  password:
+    - "change_card_password"
+    - "unlock_card"
+  international:
+    - "enable_international_usage"
+    - "check_international_fees"
+  bill:
+    - "view_bill_details"
+    - "negotiate_payment_terms"
