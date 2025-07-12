@@ -93,10 +93,10 @@ graph TB
 uv sync
 
 # Desenvolvimento (com UI interativa)
-uv run python playground.py
+uv run python api/playground.py
 
 # Produção (API REST)
-uv run python serve.py
+uv run python api/serve.py
 ```
 
 Endpoints disponíveis:

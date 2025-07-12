@@ -4,8 +4,8 @@ Production-ready API endpoint for the orchestrator
 """
 
 from agno.app.fastapi.app import FastAPIApp
-from agno.models.anthropic import Claude
 
+# Import main orchestrator
 from agents.orchestrator.main_orchestrator import create_main_orchestrator
 
 
