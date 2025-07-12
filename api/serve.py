@@ -56,8 +56,8 @@ app = fastapi_app.get_app()
 
 if __name__ == "__main__":
     # Get host and port from environment variables
-    host = os.getenv("PAGBANK_HOST", "localhost")
-    port = int(os.getenv("PAGBANK_PORT", "8008"))
+    host = os.getenv("PB_AGENTS_HOST", "localhost")
+    port = int(os.getenv("PB_AGENTS_PORT", "8008"))
     
     print(f"🌐 Starting PagBank API on {host}:{port}")
     

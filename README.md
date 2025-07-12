@@ -94,8 +94,8 @@ graph TB
 cp .env.example .env
 
 # Editar .env com suas configurações
-# PAGBANK_HOST=localhost  # Usar localhost para acesso local
-# PAGBANK_PORT=8008       # Porta customizável
+# PB_AGENTS_HOST=localhost  # Usar localhost para acesso local
+# PB_AGENTS_PORT=8008       # Porta customizável
 ```
 
 #### Opção 1: PostgreSQL (Recomendado)
@@ -129,7 +129,7 @@ uv run python api/serve.py       # Produção
 
 Endpoints disponíveis:
 - Desenvolvimento: http://localhost:7777 (Playground com UI)
-- Produção: http://localhost:8008 (API REST com docs em /docs) - configurável via PAGBANK_HOST e PAGBANK_PORT
+- Produção: http://localhost:8008 (API REST com docs em /docs) - configurável via PB_AGENTS_HOST e PB_AGENTS_PORT
 
 ## 🤖 Agentes por Unidade de Negócio
 
