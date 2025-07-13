@@ -1,3 +1,25 @@
+# /prompt
+
+---
+allowed-tools: Task(*), Read(*), Write(*), Glob(*), Grep(*), Bash(git *), Bash(find *), Bash(wc *), Bash(head *), Bash(tail *), mcp__zen__chat(*), mcp__search-repo-docs__*, mcp__ask-repo-agent__*
+description: Advanced prompt engineering with intelligent templates and optimization
+---
+
+*Advanced prompt engineering with intelligent template optimization.*
+
+## Live Prompt Analysis Context
+
+- Existing prompts: !`find . -name "*.md" -exec grep -l "prompt\|instruction" {} \; | wc -l` prompt files
+- Template patterns: !`grep -r "{{.*}}" --include="*.md" . | wc -l` template variables
+- AI context files: !`find . -name "*ai-context*" -o -name "*prompt*" | wc -l` AI-specific files  
+- Documentation scope: !`find . -name "*.md" | wc -l` total documentation
+- Command patterns: !`ls .claude/commands/ | wc -l` existing commands
+- Project complexity: !`find . -name "*.py" | wc -l` Python files for context understanding
+- Recent prompt changes: !`git log --oneline --since="1 week ago" --grep="prompt\|template" | wc -l` prompt evolution
+- Configuration templates: !`find . -name "*.yaml" -o -name "*.json" | grep -i template | wc -l` config templates
+
+User provided context: "$ARGUMENTS"
+
 ## Prompt Creation Assistant System
 
 ```xml

@@ -1,6 +1,38 @@
 # /code-review
 
+---
+allowed-tools: Task(*), Read(*), Glob(*), Grep(*), Bash(git *), Bash(find *), Bash(wc *), Bash(head *), Bash(tail *), Bash(sort *), Bash(uniq *), Bash(cat *), mcp__zen__codereview(*), mcp__search-repo-docs__*, mcp__ask-repo-agent__*
+description: Focused multi-agent code review surfacing critical, high-impact findings
+---
+
 *Performs focused multi-agent code review that surfaces only critical, high-impact findings for solo developers using AI tools.*
+
+## Live Repository Intelligence
+
+- Files changed: !`git diff --name-only HEAD~1 | wc -l` modified, !`git diff --cached --name-only | wc -l` staged
+- Recent activity: !`git log --oneline -5`
+- Code complexity: !`find . -name "*.py" -exec wc -l {} + | sort -nr | head -10`
+- Security patterns: !`grep -r "password\|token\|secret\|auth\|login" --include="*.py" . | wc -l` security items
+- Error handling: !`grep -r "try:\|except\|raise\|Error" --include="*.py" . | wc -l` exception patterns
+- Test coverage: !`find . -name "test_*.py" -o -name "*_test.py" | wc -l` tests vs !`find . -name "*.py" | grep -v test | wc -l` source
+- Performance patterns: !`grep -r "async\|await\|time\|performance" --include="*.py" . | wc -l` perf indicators
+- TODO debt: !`grep -r "TODO\|FIXME\|XXX\|HACK" --include="*.py" . | wc -l` technical debt items
+
+## Usage Examples
+
+```bash
+# Review recent changes
+/code-review "Review the latest commit for security and performance issues"
+
+# Review specific files
+/code-review "Analyze @agents/routing/handler.py and @config/agent_config.yaml for quality issues"
+
+# Review feature implementation
+/code-review "Comprehensive review of the new authentication system implementation"
+
+# Review with specific focus
+/code-review "Security audit of API endpoints in @api/ directory"
+```
 
 ## Core Philosophy
 
@@ -19,13 +51,6 @@ Changes that unlock new capabilities, remove significant constraints, or improve
 
 ### ❌ Excluded from Reports
 Minor style issues, micro-optimizations (<10%), theoretical best practices, edge cases affecting <1% of users.
-
-
-## Auto-Loaded Project Context:
-@/CLAUDE.md
-@/docs/ai-context/project-structure.md
-@/docs/ai-context/docs-overview.md
-
 
 ## Command Execution
 
@@ -166,8 +191,8 @@ For each dynamically generated agent:
   1. Review auto-loaded project context (CLAUDE.md, project-structure.md, docs-overview.md)
   2. Analyze your assigned coverage areas with deep focus
   3. For complex issues, use:
-     - mcp__gemini__consult_gemini for architectural analysis
-     - mcp__context7__get-library-docs for framework best practices
+     - mcp__zen__codereview for comprehensive code analysis
+     - mcp__search-repo-docs__get-library-docs for framework best practices
   4. Cross-reference with other coverage areas for systemic issues
   5. Document ONLY high-impact findings:
 

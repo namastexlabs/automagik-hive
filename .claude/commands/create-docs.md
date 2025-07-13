@@ -1,9 +1,38 @@
+# /create-docs
+
+---
+allowed-tools: Task(*), Read(*), Write(*), Glob(*), Grep(*), Bash(git *), Bash(find *), Bash(wc *), Bash(head *), Bash(tail *), Bash(sort *), Bash(uniq *), Bash(cat *), mcp__zen__docgen(*), mcp__search-repo-docs__*, mcp__ask-repo-agent__*
+description: Create or regenerate AI-optimized documentation with comprehensive analysis
+---
+
 You are working on the PagBank Multi-Agent System project. The user has requested to create or regenerate documentation with the arguments: "$ARGUMENTS"
 
-## Auto-Loaded Project Context:
-@/CLAUDE.md
-@/docs/ai-context/project-structure.md
-@/docs/ai-context/docs-overview.md
+## Live Documentation Intelligence
+
+- Code files: !`find . -name "*.py" | wc -l` Python files, !`find . -name "*.md" | wc -l` docs
+- Documentation gaps: !`find . -name "*.py" -exec grep -L '"""' {} \; | wc -l` undocumented files
+- Recent changes: !`git log --oneline --since="1 week ago" --name-only | grep "\.py$" | sort | uniq | wc -l` files changed
+- API coverage: !`grep -r "def " --include="*.py" . | wc -l` functions vs !`grep -r '"""' --include="*.py" . | wc -l` docstrings
+- Module structure: !`find . -name "*.py" -exec dirname {} \; | sort | uniq -c | sort -nr | head -10`
+- Complex files: !`find . -name "*.py" -exec wc -l {} + | sort -nr | head -10`
+- Test documentation: !`find . -name "test_*.py" -exec grep -l "def test" {} \; | wc -l` tested modules
+- Configuration docs: !`find . -name "*.yaml" -o -name "*.json" -o -name "*.toml" | wc -l` config files
+
+## Usage Examples
+
+```bash
+# Generate documentation for specific component
+/create-docs "Create comprehensive docs for the agent routing system"
+
+# Document specific files with @ references
+/create-docs "Document @agents/routing/handler.py and related integration patterns"
+
+# Generate API documentation
+/create-docs "Create API documentation for @api/ endpoints with examples"
+
+# Update existing documentation
+/create-docs "Regenerate docs for @context/knowledge/ based on recent changes"
+```
 
 ## CRITICAL: AI-Optimized Documentation Principles
 All documentation must be optimized for AI consumption and future-proofing:
@@ -12,7 +41,6 @@ All documentation must be optimized for AI consumption and future-proofing:
 - **Pattern-Oriented**: Make architectural patterns, conventions, and data flow explicit.
 - **Modular & Scalable**: Structure for partial updates and project growth.
 - **Cross-references**: Link related concepts with file paths, function names, and stable identifiers
-
 
 ---
 
@@ -34,7 +62,7 @@ Using the auto-loaded project context, analyze the user's request and determine 
 - **Existing Documentation**: Presence and state of any CLAUDE.md files in the area
 
 ### 1.2. Select Strategy
-Think deeply about this documentation generation task and strategy based on the auto-loaded project context. Based on the assessment, select and announce the strategy.
+**Think deeply** about this documentation generation task and strategy based on the auto-loaded project context. Based on the assessment, select and announce the strategy.
 
 **Strategy Logic:**
 - **Direct Creation**: Simple targets (< 15 files, single tech, standard patterns)
@@ -84,7 +112,7 @@ Return a comprehensive summary of your findings for this role."
 
 ## Step 3: Documentation Generation
 
-Think deeply about synthesizing findings and generating comprehensive documentation. Using gathered information, intelligently synthesize and generate the documentation content.
+**Think harder** about synthesizing findings and generating comprehensive documentation. Using gathered information, intelligently synthesize and generate the documentation content.
 
 ### 3.1. Content Synthesis & Generation
 
@@ -248,7 +276,7 @@ Think deeply about synthesizing findings and generating comprehensive documentat
 
 ## Step 5: Generate Summary
 
-Provide a comprehensive summary including:
+**Ultrathink** before providing a comprehensive summary including:
 
 ### Documentation Creation Results
 - **Documentation type and location** (Tier 2 or Tier 3)
