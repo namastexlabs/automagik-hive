@@ -4,7 +4,7 @@ Enforces strict hierarchical validation based on extracted CSV data
 """
 
 import json
-from typing import Dict, List, Literal, Optional, Set
+from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, Field, validator
 from enum import Enum
 import logging

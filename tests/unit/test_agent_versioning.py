@@ -6,14 +6,13 @@ for the agent versioning functionality.
 """
 
 import pytest
-import json
 from unittest.mock import Mock, patch
 from datetime import datetime
 from sqlalchemy.orm import Session
 
 from db.services.agent_version_service import AgentVersionService
-from db.tables.agent_versions import AgentVersion, AgentVersionHistory, AgentVersionMetrics
-from agents.version_factory import AgentVersionFactory, create_versioned_agent
+from db.tables.agent_versions import AgentVersion
+from agents.version_factory import AgentVersionFactory
 
 
 class TestAgentVersionService:

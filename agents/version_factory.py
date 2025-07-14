@@ -8,7 +8,6 @@ Replaces file-based configuration with dynamic database loading.
 from typing import Optional, Dict, Any
 from pathlib import Path
 import yaml
-import json
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
@@ -225,7 +224,7 @@ class AgentVersionFactory:
                 version=version,
                 config=config,
                 created_by=created_by,
-                description=description or f"Migrated from file configuration",
+                description=description or "Migrated from file configuration",
                 is_active=True  # Make it active since it's the first version
             )
             

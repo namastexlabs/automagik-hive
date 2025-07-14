@@ -9,7 +9,7 @@ import json
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Any
+from typing import Dict, Any
 
 from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 
@@ -142,7 +142,7 @@ class SmartIncrementalLoader:
         if "error" in analysis:
             return analysis
         
-        print(f"📊 Change Analysis:")
+        print("📊 Change Analysis:")
         print(f"   📄 Total rows: {analysis['total_rows']}")
         print(f"   🆕 New entries: {analysis['new_entries']}")
         print(f"   🔄 Changed entries: {analysis['changed_entries']}")  
@@ -273,7 +273,7 @@ class SmartIncrementalLoader:
                     del self.content_cache[deleted_key]
             
             self._save_content_cache()
-            print(f"📝 Cache updated incrementally")
+            print("📝 Cache updated incrementally")
             
         except Exception as e:
             print(f"⚠️  Failed to update cache: {e}")
@@ -297,24 +297,24 @@ def main():
     
     # Show cache stats
     cache_stats = loader.get_cache_stats()
-    print(f"📊 Cache Stats:")
+    print("📊 Cache Stats:")
     for key, value in cache_stats.items():
         print(f"   {key}: {value}")
     
     # Analyze changes
-    print(f"\n🔍 Analyzing changes...")
+    print("\n🔍 Analyzing changes...")
     analysis = loader.analyze_changes()
     if "error" not in analysis:
-        print(f"📊 Analysis Results:")
+        print("📊 Analysis Results:")
         for key, value in analysis.items():
             if not key.endswith('_details') and not key.endswith('_keys'):
                 print(f"   {key}: {value}")
     
     # Smart load
-    print(f"\n🚀 Starting smart load...")
+    print("\n🚀 Starting smart load...")
     result = loader.smart_load()
     
-    print(f"\n📋 Load Results:")
+    print("\n📋 Load Results:")
     for key, value in result.items():
         if key != 'error':
             print(f"   {key}: {value}")

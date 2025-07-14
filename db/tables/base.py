@@ -14,4 +14,3 @@ class Base(DeclarativeBase):
 
 
 # Import all table definitions to ensure they are registered
-from .agent_versions import AgentVersion, AgentVersionHistory, AgentVersionMetrics

@@ -5,7 +5,7 @@ Provides real-time monitoring, analytics, and alerting endpoints
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from fastapi.responses import JSONResponse, HTMLResponse
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from datetime import datetime
 import logging
 from pathlib import Path

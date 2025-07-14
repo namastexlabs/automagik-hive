@@ -6,7 +6,6 @@ Tests that all 64 documents can be properly retrieved and filtered
 
 import unittest
 import csv
-from unittest.mock import patch, MagicMock
 from collections import Counter
 import sys
 sys.path.append('.')

@@ -4,7 +4,7 @@ Agentic Knowledge Filters for PagBank Business Units
 Detects business unit filters from user queries
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 
 
 def extract_filters_from_query(query: str) -> Dict[str, Any]:

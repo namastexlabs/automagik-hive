@@ -5,11 +5,10 @@ Simple file-based knowledge management that works while application is running
 """
 
 import json
-import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -45,9 +44,9 @@ class KnowledgeHotReloadManager:
             recursive=False
         )
         
-        print(f"📁 Knowledge hot reload manager initialized")
+        print("📁 Knowledge hot reload manager initialized")
         print(f"   Updates folder: {self.updates_dir}")
-        print(f"   Drop JSON files here for automatic processing")
+        print("   Drop JSON files here for automatic processing")
     
     def start_watching(self):
         """Start watching for update files"""

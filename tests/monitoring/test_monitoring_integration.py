@@ -3,10 +3,7 @@ Integration tests for the monitoring system
 Tests the complete monitoring workflow
 """
 
-import pytest
 import asyncio
-from datetime import datetime
-from unittest.mock import Mock, patch
 
 from api.monitoring.metrics_collector import MetricsCollector
 from api.monitoring.system_monitor import SystemMonitor

@@ -5,10 +5,10 @@ Tracks agent interactions, response times, and success rates
 
 import time
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
-from collections import defaultdict, deque
+from collections import deque
 import json
 import logging
 from pathlib import Path

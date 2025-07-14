@@ -6,8 +6,6 @@ Sequential Agno workflow for hierarchical conversation typification.
 Validates each level against the extracted CSV hierarchy.
 """
 
-import json
-import logging
 from textwrap import dedent
 from typing import Dict, Iterator, Optional, Union
 from datetime import datetime
@@ -27,13 +25,11 @@ from .models import (
     HierarchicalTypification,
     ConversationTypification,
     TicketCreationResult,
-    ValidationResult,
     get_valid_products,
     get_valid_motives,
     get_valid_submotives,
     validate_typification_path,
-    load_hierarchy,
-    HIERARCHY
+    load_hierarchy
 )
 
 class ConversationTypificationWorkflow(Workflow):

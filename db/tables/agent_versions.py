@@ -7,8 +7,7 @@ supporting configuration changes, A/B testing, and rollback capabilities.
 
 from sqlalchemy import Column, String, Integer, Boolean, Text, DateTime, JSON, Index
 from sqlalchemy.sql import func
-from typing import Dict, Any, Optional
-from datetime import datetime
+from typing import Dict, Any
 
 from .base import Base
 

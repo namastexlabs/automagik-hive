@@ -410,7 +410,7 @@ class AgentVersionService:
             query = query.filter(AgentVersionMetrics.version == version)
         
         # Filter by date range
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         start_date = datetime.now() - timedelta(days=days)
         query = query.filter(AgentVersionMetrics.metric_date >= start_date)
         

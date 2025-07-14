@@ -4,7 +4,7 @@ Contains settings for metrics collection, alerting, and analytics
 """
 
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 

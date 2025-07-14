@@ -1,12 +1,11 @@
 # Human Handoff Workflow
 # Triggered when Ana Team routes to human escalation
 
-from typing import Iterator, Optional, Dict, Any
+from typing import Iterator, Optional
 from agno.workflow import Workflow, RunResponse
 from agno.agent import Agent
 from agno.models.anthropic import AnthropicChat
 from agno.utils.log import logger
-import json
 
 
 class HumanHandoffWorkflow(Workflow):

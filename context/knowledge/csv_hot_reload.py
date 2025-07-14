@@ -8,7 +8,6 @@ Management can edit CSV in Excel, save to cloud, and changes apply automatically
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 from context.knowledge.smart_incremental_loader import SmartIncrementalLoader
@@ -33,7 +32,7 @@ class CSVHotReloadManager:
         self.smart_loader = None
         self.is_running = False
         
-        print(f"📄 CSV Hot Reload Manager initialized")
+        print("📄 CSV Hot Reload Manager initialized")
         print(f"   Watching: {self.csv_path}")
         print(f"   Check interval: {check_interval} seconds")
         
@@ -78,8 +77,8 @@ class CSVHotReloadManager:
             return
             
         self.is_running = True
-        print(f"👀 Started watching CSV file for changes...")
-        print(f"💡 Management can now edit the CSV file and changes will be applied automatically")
+        print("👀 Started watching CSV file for changes...")
+        print("💡 Management can now edit the CSV file and changes will be applied automatically")
         print("   Press Ctrl+C to stop")
         
         try:
@@ -137,7 +136,7 @@ class CSVHotReloadManager:
             # Get updated stats
             stats = self.kb.get_knowledge_statistics()
             
-            print(f"✅ Knowledge base reloaded successfully!")
+            print("✅ Knowledge base reloaded successfully!")
             print(f"   📊 Strategy: {result.get('strategy', 'unknown')}")
             print(f"   📊 Entries: {stats.get('total_entries', 'unknown')}")
             print(f"   ⏱️  Reload time: {reload_time:.2f} seconds")

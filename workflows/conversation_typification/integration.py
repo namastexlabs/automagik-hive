@@ -5,11 +5,8 @@ Handles post-conversation typification and agent routing based on results
 
 import logging
 from typing import Dict, Optional, Any
-from datetime import datetime
 
-from teams.ana.team import AnaTeam
 from .workflow import get_conversation_typification_workflow, ConversationTypificationWorkflow
-from .models import ConversationTypification, HierarchicalTypification, TicketCreationResult
 
 logger = logging.getLogger(__name__)
 

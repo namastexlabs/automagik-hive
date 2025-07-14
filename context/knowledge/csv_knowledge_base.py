@@ -4,7 +4,6 @@ CSVKnowledgeBase implementation for PagBank multi-agent system
 Agent B: Knowledge Base Development - Claude Sonnet 4 with OpenAI embeddings
 """
 
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional

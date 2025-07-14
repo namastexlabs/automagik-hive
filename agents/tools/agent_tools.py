@@ -5,7 +5,6 @@ Adapted from team_tools.py for single agent architecture
 
 import re
 import os
-import json
 import httpx
 from datetime import datetime
 from decimal import Decimal

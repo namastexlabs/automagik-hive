@@ -6,7 +6,7 @@ Properly extracts CSV columns as document metadata for filtering
 
 import csv
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Iterator
+from typing import List, Dict, Any, Optional
 
 from agno.document import Document
 from agno.document.reader.csv_reader import CSVReader
@@ -189,17 +189,17 @@ if __name__ == "__main__":
     
     # Get metadata info
     info = reader.get_metadata_info(csv_path)
-    print(f"📊 CSV Analysis:")
+    print("📊 CSV Analysis:")
     for key, value in info.items():
         print(f"   {key}: {value}")
     
     if csv_path.exists():
-        print(f"\n📚 Reading documents...")
+        print("\n📚 Reading documents...")
         documents = list(reader.read(csv_path))
         print(f"   Created {len(documents)} documents")
         
         if documents:
-            print(f"\n🔍 Sample Document:")
+            print("\n🔍 Sample Document:")
             doc = documents[0]
             print(f"   Content: {doc.content[:100]}...")
             print(f"   Metadata: {doc.meta_data}")

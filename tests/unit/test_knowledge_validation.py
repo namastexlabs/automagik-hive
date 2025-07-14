@@ -106,12 +106,12 @@ def test_knowledge_base_performance():
     overall_avg = statistics.mean(all_times)
     overall_status = 'PASS' if overall_avg < 2.0 else 'SLOW'
     
-    print(f"\n=== Overall Performance ===")
+    print("\n=== Overall Performance ===")
     print(f"Average search time: {overall_avg:.3f}s")
     print(f"Performance status: {overall_status}")
     
     # Test agentic filters performance
-    print(f"\n=== Agentic Filters Performance ===")
+    print("\n=== Agentic Filters Performance ===")
     
     filter_times = []
     for team, queries in test_queries.items():
@@ -131,7 +131,7 @@ def test_knowledge_base_performance():
     
     # Knowledge base statistics
     stats = kb.get_knowledge_statistics()
-    print(f"\n=== Knowledge Base Statistics ===")
+    print("\n=== Knowledge Base Statistics ===")
     print(f"Total entries: {stats['total_entries']}")
     print(f"Areas: {stats['by_area']}")
     print(f"Product types: {len(stats['by_product_type'])}")
@@ -143,7 +143,7 @@ def test_knowledge_base_performance():
         stats['total_entries'] > 500
     )
     
-    print(f"\n=== Final Validation ===")
+    print("\n=== Final Validation ===")
     print(f"Search performance: {'PASS' if overall_avg < 2.0 else 'FAIL'}")
     print(f"Filter performance: {'PASS' if avg_filter_time < 0.1 else 'FAIL'}")
     print(f"Knowledge coverage: {'PASS' if stats['total_entries'] > 500 else 'FAIL'}")
@@ -225,16 +225,16 @@ def test_team_specific_filters():
                 if enhanced_filter.get('nivel_complexidade') == context['complexity_preference']:
                     print(f"  ✓ Complexity applied: {enhanced_filter.get('nivel_complexidade')}")
                 else:
-                    print(f"  ✗ Complexity not applied correctly")
+                    print("  ✗ Complexity not applied correctly")
             
             if 'user_type' in context:
                 if enhanced_filter.get('publico_alvo') == context['user_type']:
                     print(f"  ✓ User type applied: {enhanced_filter.get('publico_alvo')}")
                 else:
-                    print(f"  ✗ User type not applied correctly")
+                    print("  ✗ User type not applied correctly")
     
     accuracy = passed_tests / total_tests
-    print(f"\n=== Filter Accuracy Results ===")
+    print("\n=== Filter Accuracy Results ===")
     print(f"Passed: {passed_tests}/{total_tests}")
     print(f"Accuracy: {accuracy:.2%}")
     
@@ -249,7 +249,7 @@ if __name__ == '__main__':
     accuracy_passed = test_team_specific_filters()
     
     # Final report
-    print(f"\n=== AGENT B VALIDATION REPORT ===")
+    print("\n=== AGENT B VALIDATION REPORT ===")
     print(f"Performance test: {'PASS' if performance_passed else 'FAIL'}")
     print(f"Accuracy test: {'PASS' if accuracy_passed else 'FAIL'}")
     

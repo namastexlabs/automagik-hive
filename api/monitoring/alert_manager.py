@@ -3,7 +3,6 @@ Alert management system for monitoring notifications
 Handles alert configuration, routing, and delivery
 """
 
-import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Callable
@@ -443,7 +442,7 @@ class AlertManager:
             # Import WhatsApp MCP tools
             from mcp__send_whatsapp_message__send_text_message import send_text_message
             
-            message = f"🚨 *PagBank System Alert*\n\n"
+            message = "🚨 *PagBank System Alert*\n\n"
             message += f"*Severity:* {alert.severity.value.upper()}\n"
             message += f"*Rule:* {alert.rule_name}\n"
             message += f"*Message:* {alert.message}\n"

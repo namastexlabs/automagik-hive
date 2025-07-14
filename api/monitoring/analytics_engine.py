@@ -3,17 +3,12 @@ Analytics engine for monitoring dashboard
 Provides advanced analytics for agent performance and system insights
 """
 
-import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List
 from dataclasses import dataclass
 from collections import defaultdict
-import json
-import statistics
 from pathlib import Path
-import pandas as pd
-import numpy as np
 
 logger = logging.getLogger(__name__)
 

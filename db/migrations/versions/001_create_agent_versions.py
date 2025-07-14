@@ -13,7 +13,6 @@ Create Date: 2025-01-14
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = '001'
