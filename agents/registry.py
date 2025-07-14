@@ -4,6 +4,7 @@
 from typing import Dict, Optional
 from agno.agent import Agent
 import os
+from .version_factory import create_versioned_agent
 
 # Dynamic import system for agent discovery
 _agent_modules = {
@@ -67,7 +68,7 @@ class AgentRegistry:
         db_url: Optional[str] = None
     ) -> Agent:
         """
-        Get agent instance by ID - Generic factory pattern.
+        Get agent instance by ID - Generic factory pattern with versioning support.
         
         Args:
             agent_id: Agent identifier (e.g., 'pagbank', 'adquirencia')
@@ -82,24 +83,35 @@ class AgentRegistry:
         Raises:
             KeyError: If agent_id not found
         """
-        available_factories = cls._get_available_agents()
-        
-        if agent_id not in available_factories:
-            available_agents = list(available_factories.keys())
-            raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
-        
-        factory = available_factories[agent_id]
-        
-        # Use environment database URL if not provided
-        if db_url is None:
-            db_url = os.getenv("DATABASE_URL")
-        
-        return factory(
-            version=version,
-            session_id=session_id,
-            debug_mode=debug_mode,
-            db_url=db_url
-        )
+        # Try database-driven versioning first
+        try:
+            return create_versioned_agent(
+                agent_id=f"{agent_id}-specialist" if not agent_id.endswith("-specialist") else agent_id,
+                version=version,
+                session_id=session_id,
+                debug_mode=debug_mode,
+                db_url=db_url
+            )
+        except ValueError:
+            # Fall back to old system if versioning fails
+            available_factories = cls._get_available_agents()
+            
+            if agent_id not in available_factories:
+                available_agents = list(available_factories.keys())
+                raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
+            
+            factory = available_factories[agent_id]
+            
+            # Use environment database URL if not provided
+            if db_url is None:
+                db_url = os.getenv("DATABASE_URL")
+            
+            return factory(
+                version=version,
+                session_id=session_id,
+                debug_mode=debug_mode,
+                db_url=db_url
+            )
     
     @classmethod
     def get_all_agents(

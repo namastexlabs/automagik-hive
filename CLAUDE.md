@@ -43,13 +43,12 @@ You are working with **Genie-Agents** - a semi-autonomous AI development framewo
 - `/chat` - Collaborative thinking (`model="o3|grok|gemini"`)
 - `/thinkdeep` - Deep investigation (`model="o3|grok|gemini"`)
 
-### Documentation Commands (2)
+### Documentation Commands (4)
 - `/docs` - Create/update documentation
 - `/full-context` - Comprehensive analysis
+- `/search-docs` - Search Context7 documentation (agno framework)
+- `/ask-repo` - Ask questions to GitHub repositories (agno-agi/agno)
 
-### Context Tools (2)
-- `/search-docs` - Search library documentation via Context7
-- `/ask-repo` - Interactive Q&A with GitHub repositories
 
 **Example**: `/analyze "Review auth system" model="o3"`
 **Agno Docs**: `/ask-repo "agno-agi/agno" "How do I create an agent?"`

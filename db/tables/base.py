@@ -11,3 +11,7 @@ class Base(DeclarativeBase):
     """
 
     metadata = MetaData(schema="public")
+
+
+# Import all table definitions to ensure they are registered
+from .agent_versions import AgentVersion, AgentVersionHistory, AgentVersionMetrics

@@ -326,52 +326,93 @@ class PagBankMainOrchestrator:
         Returns:
             Processing result with routing decision
         """
-        # Process through memory system
-        memory_result = self.memory_manager.process_interaction(
-            user_id=user_id,
-            message=message,
-            team_id="orchestrator",
-            session_id=session_id,
-            metadata=context
-        )
+        # Start monitoring the interaction
+        try:
+            from api.monitoring.metrics_collector import metrics_collector
+            interaction_id = metrics_collector.start_interaction(
+                agent_name="orchestrator",
+                user_id=user_id,
+                session_id=session_id or "default",
+                message=message,
+                metadata=context
+            )
+        except Exception as e:
+            logger.error(f"Error starting interaction monitoring: {e}")
+            interaction_id = None
         
-        # Get user context from memory
-        user_context = self.memory_manager.get_user_context(user_id)
-        
-        # Update team session state with user context
-        if hasattr(self.routing_team, 'team_session_state') and self.routing_team.team_session_state is not None:
-            self.routing_team.team_session_state['customer_id'] = user_id
-            self.routing_team.team_session_state['memory_context'] = user_context
-        
-        # Preprocess the message
-        preprocessing = self.preprocess_message(message)
-        
-        # Check if immediate human handoff is needed
-        if preprocessing['needs_human_handoff']:
-            # Add context for human handoff agent
-            self.routing_team.team_session_state['handoff_context'] = {
-                'customer_name': self.routing_team.team_session_state.get('customer_name', 'Cliente'),
-                'handoff_reason': preprocessing['handoff_check']['reason'],
-                'message_history': self.routing_team.team_session_state.get('message_history', [])[-10:]
+        try:
+            # Process through memory system
+            memory_result = self.memory_manager.process_interaction(
+                user_id=user_id,
+                message=message,
+                team_id="orchestrator",
+                session_id=session_id,
+                metadata=context
+            )
+            
+            # Get user context from memory
+            user_context = self.memory_manager.get_user_context(user_id)
+            
+            # Update team session state with user context
+            if hasattr(self.routing_team, 'team_session_state') and self.routing_team.team_session_state is not None:
+                self.routing_team.team_session_state['customer_id'] = user_id
+                self.routing_team.team_session_state['memory_context'] = user_context
+            
+            # Preprocess the message
+            preprocessing = self.preprocess_message(message)
+            
+            # Check if immediate human handoff is needed
+            if preprocessing['needs_human_handoff']:
+                # Add context for human handoff agent
+                self.routing_team.team_session_state['handoff_context'] = {
+                    'customer_name': self.routing_team.team_session_state.get('customer_name', 'Cliente'),
+                    'handoff_reason': preprocessing['handoff_check']['reason'],
+                    'message_history': self.routing_team.team_session_state.get('message_history', [])[-10:]
+                }
+                enhanced_message = f"[TRANSFERÊNCIA HUMANA SOLICITADA]\n{preprocessing['original']}"
+            else:
+                enhanced_message = preprocessing['normalized']
+            
+            # Process through routing team with session context
+            response = self.routing_team.run(
+                enhanced_message,
+                user_id=user_id,
+                session_id=memory_result['session_id']
+            )
+            
+            # End monitoring with success
+            if interaction_id:
+                try:
+                    metrics_collector.end_interaction(
+                        interaction_id=interaction_id,
+                        success=True,
+                        response=str(response)
+                    )
+                except Exception as e:
+                    logger.error(f"Error ending interaction monitoring: {e}")
+            
+            return {
+                'response': response,
+                'session_id': memory_result['session_id'],
+                'insights': memory_result['insights'],
+                'preprocessing': preprocessing,
+                'team_session_state': self.routing_team.team_session_state
             }
-            enhanced_message = f"[TRANSFERÊNCIA HUMANA SOLICITADA]\n{preprocessing['original']}"
-        else:
-            enhanced_message = preprocessing['normalized']
-        
-        # Process through routing team with session context
-        response = self.routing_team.run(
-            enhanced_message,
-            user_id=user_id,
-            session_id=memory_result['session_id']
-        )
-        
-        return {
-            'response': response,
-            'session_id': memory_result['session_id'],
-            'insights': memory_result['insights'],
-            'preprocessing': preprocessing,
-            'team_session_state': self.routing_team.team_session_state
-        }
+            
+        except Exception as e:
+            # End monitoring with failure
+            if interaction_id:
+                try:
+                    metrics_collector.end_interaction(
+                        interaction_id=interaction_id,
+                        success=False,
+                        error=str(e)
+                    )
+                except Exception as me:
+                    logger.error(f"Error ending interaction monitoring: {me}")
+            
+            # Re-raise the original exception
+            raise e
     
     def get_routing_metrics(self) -> Dict[str, Any]:
         """Get routing performance metrics"""
