@@ -5,71 +5,55 @@ from agno.team import Team
 import os
 import threading
 
-# Import storage configuration
-from config.postgres_config import get_postgres_storage
-
-# Import main orchestrator
-from agents.orchestrator.main_orchestrator import create_main_orchestrator
+# Import V2 Ana team and agent registry
+from teams.ana.team import get_ana_team
+from agents.registry import AgentRegistry
 
 # Import CSV hot reload manager
 from context.knowledge.csv_hot_reload import CSVHotReloadManager
 
 # Initialize at module level - only print on first load
 if not os.environ.get('UVICORN_RELOADER_PROCESS'):
-    print("🚀 Initializing PagBank Multi-Agent System...")
+    print("🚀 Initializing PagBank Multi-Agent System V2...")
     
-# Create the main orchestrator (this creates the routing team with specialist agents)
-orchestrator = create_main_orchestrator()
+# Create the Ana team (V2 architecture)
+ana_team = get_ana_team(
+    debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true")
+)
 
-# Get PostgreSQL storage if available (Agno handles everything)
-postgres_storage = get_postgres_storage(mode="team")
-
-# Configure storage for the orchestrator's routing team
-if postgres_storage:
-    orchestrator.routing_team.storage = postgres_storage
-    storage_type = "PostgreSQL"
-else:
-    storage_type = "SQLite (default)"
-
-# Extract the actual Agno Agents from specialist agents
-agno_agents = []
-for agent_name, agent_instance in orchestrator.specialist_agents.items():
-    if isinstance(agent_instance, Agent):
-        agno_agents.append(agent_instance)
-
-# Use the actual orchestrator's routing team (which has all the preprocessing features)
-routing_team = orchestrator.routing_team
+# Get all agents for reference
+agent_registry = AgentRegistry()
+available_agents = agent_registry.get_all_agents(
+    debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true")
+)
 
 # Start CSV hot reload manager in background thread
 csv_manager = CSVHotReloadManager(csv_path="knowledge/knowledge_rag.csv", check_interval=60)  # Check every minute
 csv_thread = threading.Thread(target=csv_manager.start_watching, daemon=True)
 csv_thread.start()
 
-# Create Playground app with routing team (no individual agents shown to avoid confusion)
+# Create Playground app with Ana team (V2 architecture)
 playground_app = Playground(
-    teams=[routing_team],
+    teams=[ana_team],
+    agents=list(available_agents.values()),  # Include individual agents for testing
     app_id="pagbank-multi-agent-system",
-    name="PagBank Multi-Agent System"
+    name="PagBank Multi-Agent System V2"
 )
 
 # Get the FastAPI app for ASGI  
 app = playground_app.get_app()
 
-# COMPATIBILITY: Also make modernized API available via new main.py
-from api.main import app as modern_app
-
 if not os.environ.get('UVICORN_RELOADER_PROCESS'):
-    print(f"📦 Configured storage: {storage_type}")
-    print(f"🎯 Using actual orchestrator routing team: {routing_team.name}")
-    print(f"🎯 Routing to {len(agno_agents)} specialist agents")
-    print("🎯 PagBank Playground ready with simplified single-agent architecture")
-    print(f"✅ Ana persona configured: show_tool_calls={routing_team.show_tool_calls}, show_members_responses={routing_team.show_members_responses}, stream_intermediate_steps={routing_team.stream_intermediate_steps}")
+    print("📦 Using V2 Architecture with PostgreSQL storage")
+    print(f"🎯 Ana Team: {ana_team.name} (mode={ana_team.mode})")
+    print(f"🎯 Available Agents: {len(available_agents)} specialists")
+    print("✅ V2 Ana Team configured with Agno routing")
     print("📄 CSV hot reload manager: ACTIVE (checks every 60 seconds)")
     print("🌐 Playground will serve at: http://localhost:7777")
-    print("\n📋 Architecture:")
-    print(f"  • {routing_team.name} (mode={routing_team.mode}, routes to specialist agents)")
+    print("\n📋 V2 Architecture:")
+    print(f"  • {ana_team.name} (mode={ana_team.mode}, routes to specialist agents)")
     print("\n📋 Specialist Agents:")
-    for agent_name, agent in orchestrator.specialist_agents.items():
+    for agent_name, agent in available_agents.items():
         print(f"  • {agent_name} ({agent.name})")
 
 def main():

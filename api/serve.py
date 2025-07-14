@@ -1,49 +1,37 @@
 """
 FastAPI server for PagBank Multi-Agent System
-Production-ready API endpoint for the orchestrator
+Production-ready API endpoint using V2 Ana Team architecture
 """
 
 import os
 from dotenv import load_dotenv
 from agno.app.fastapi.app import FastAPIApp
 
-# Import storage configuration
-from config.postgres_config import get_postgres_storage
-
-# Import main orchestrator
-from agents.orchestrator.main_orchestrator import create_main_orchestrator
+# Import V2 Ana team (replaces orchestrator)
+from teams.ana.team import get_ana_team
 
 # Load environment variables
 load_dotenv()
 
 
 def create_pagbank_api():
-    """Create FastAPI app for PagBank orchestrator"""
+    """Create FastAPI app using V2 Ana team architecture"""
     
-    # Create the main orchestrator
-    orchestrator = create_main_orchestrator()
-    
-    # Get PostgreSQL storage if available (Agno handles everything)
-    postgres_storage = get_postgres_storage(mode="team")
-    
-    # Configure storage for the orchestrator's routing team
-    if postgres_storage:
-        orchestrator.routing_team.storage = postgres_storage
-        print("✅ Using PostgreSQL storage")
-    else:
-        print("ℹ️  Using default SQLite storage (set DATABASE_URL for PostgreSQL)")
-    
-    # Extract the routing team which is the main entry point
-    routing_team = orchestrator.routing_team
+    # Create the Ana routing team (V2 architecture)
+    ana_team = get_ana_team(
+        debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true"),
+        session_id=None  # Will be set per request
+    )
     
     # Debug: Print team information
-    print(f"📋 Team Name: {routing_team.name}")
-    print(f"🆔 Team ID: {routing_team.team_id}")
-    print("💡 Use this team_id in API calls: /runs?team_id=" + routing_team.team_id)
+    print(f"📋 Team Name: {ana_team.name}")
+    print(f"🆔 Team ID: {ana_team.team_id}")
+    print("💡 Use this team_id in API calls: /runs?team_id=" + ana_team.team_id)
+    print("✅ Using V2 Ana Team architecture with Agno routing")
     
-    # Create FastAPI app with the team
+    # Create FastAPI app with the Ana team
     fastapi_app = FastAPIApp(
-        teams=[routing_team],
+        teams=[ana_team],
         name="PagBank Multi-Agent System",
         app_id="pagbank_multiagent",
         description="Sistema multi-agente de atendimento ao cliente PagBank com Ana como assistente unificada",
