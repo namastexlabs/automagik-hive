@@ -7,6 +7,8 @@ import os
 from typing import Optional
 from pydantic_settings import BaseSettings
 
+from utils.log import logger
+
 
 class DbSettings(BaseSettings):
     """
@@ -52,14 +54,13 @@ class DbSettings(BaseSettings):
             if "None" not in db_url:
                 return db_url
         
-        # Fallback to default PostgreSQL (agno-demo-app pattern)
-        default_postgres = "postgresql+psycopg://ai:ai@localhost:5532/ai"
+        # Fallback to workspace PostgreSQL (agno-demo-app pattern)
         try:
-            # Test if default PostgreSQL is available
-            from sqlalchemy import create_engine
-            test_engine = create_engine(default_postgres)
-            with test_engine.connect():
-                return default_postgres
+            from workspace.dev_resources import dev_db
+            logger.debug("Using workspace dev database connection")
+            local_db_url = dev_db.get_db_connection_local()
+            if local_db_url:
+                return local_db_url
         except Exception:
             pass
         

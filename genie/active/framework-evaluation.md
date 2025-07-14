@@ -8,10 +8,11 @@
 Conduct comprehensive real-world testing of the Genie framework to evaluate performance, identify bottlenecks, and document improvements. This is our TRACK 4 objective to test command system, memory patterns, multi-agent coordination, and hook integration.
 
 ## Acceptance Criteria
-- [ ] Test all 14 consolidated commands with model parameters
+- [ ] Test all 16 consolidated commands with model parameters (updated from 14)
 - [ ] Evaluate memory pattern effectiveness (PATTERN, TASK, FOUND)
 - [ ] Monitor multi-agent coordination capabilities
 - [ ] Validate hook system (task-context-injector.sh)
+- [ ] Test context tools integration (/search-docs, /ask-repo) ✅ COMPLETED
 - [ ] Document performance metrics and bottlenecks
 - [ ] Create actionable improvement recommendations
 - [ ] Measure framework readiness for production use
@@ -19,12 +20,18 @@ Conduct comprehensive real-world testing of the Genie framework to evaluate perf
 ## Evaluation Targets
 
 ### 1. Command Performance Testing
-**Commands to Test**: /analyze, /debug, /review, /chat, /thinkdeep, /test, /refactor
+**Commands to Test**: 
+- Core (5): /wish, /planner, /epic, /spawn-tasks, /context
+- Development (7): /analyze, /debug, /review, /chat, /thinkdeep, /test, /refactor  
+- Documentation (2): /docs, /full-context
+- Context Tools (2): /search-docs, /ask-repo ✅ VERIFIED
+
 **Metrics**: Response quality, speed, model parameter effectiveness
 **Test Scenarios**: 
 - Code analysis tasks with different models (o3, grok, gemini)
 - Complex debugging scenarios
 - Multi-step review workflows
+- Context tool integration with Agno framework ✅ COMPLETED
 
 ### 2. Memory System Effectiveness  
 **Patterns to Test**: PATTERN, TASK, FOUND prefixes
@@ -64,10 +71,10 @@ Conduct comprehensive real-world testing of the Genie framework to evaluate perf
 - Framework usability score
 
 ### Test Sequence
-1. Command system evaluation (5 core + 7 development + 2 docs)
+1. Command system evaluation (5 core + 7 development + 2 docs + 2 context) ✅ Context tools done
 2. Memory pattern testing across multiple scenarios
 3. Multi-agent coordination simulation
-4. Hook system validation
+4. Hook system validation ✅ MCP security scanning verified
 5. Integration testing with real development tasks
 
 ## Real-World Test Scenarios

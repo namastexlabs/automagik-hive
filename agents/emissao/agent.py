@@ -46,6 +46,11 @@ def get_emissao_agent(
         max_tokens=model_config.get("max_tokens", 2000)
     )
     
+    # Ensure we have a database URL
+    if db_url is None:
+        from db.session import db_url as default_db_url
+        db_url = default_db_url
+    
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
@@ -53,7 +58,7 @@ def get_emissao_agent(
         model=model,
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
-            db_url=db_url or config["storage"].get("db_url"),
+            db_url=db_url,
             auto_upgrade_schema=config["storage"].get("auto_upgrade_schema", True)
         ),
         session_id=session_id,
