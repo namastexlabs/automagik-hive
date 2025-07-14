@@ -1,7 +1,7 @@
 # Development Standards & AI Instructions
 
 ## Overview
-This document contains universal development standards for the PagBank Multi-Agent System. These standards apply to all code development regardless of business domain and should be followed by any AI agent working on the codebase.
+This document contains universal development standards for the Automagik Multi-Agent Framework. These standards apply to all code development regardless of domain and should be followed by any AI agent working on the codebase.
 
 ## Core Development Rules
 

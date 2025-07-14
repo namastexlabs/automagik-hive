@@ -2,195 +2,203 @@
 
 ---
 allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(*), Bash(*), LS(*), NotebookRead(*), NotebookEdit(*), WebFetch(*), TodoWrite(*), WebSearch(*), ListMcpResourcesTool(*), ReadMcpResourceTool(*), mcp__zen__chat(*), mcp__zen__thinkdeep(*), mcp__zen__planner(*), mcp__zen__consensus(*), mcp__zen__codereview(*), mcp__zen__precommit(*), mcp__zen__debug(*), mcp__zen__secaudit(*), mcp__zen__docgen(*), mcp__zen__analyze(*), mcp__zen__refactor(*), mcp__zen__tracer(*), mcp__zen__testgen(*), mcp__zen__challenge(*), mcp__zen__listmodels(*), mcp__zen__version(*), mcp__search-repo-docs__*, mcp__ask-repo-agent__*, mcp__wait__*, mcp__send_whatsapp_message__*
-description: Dynamic context gathering and epic structuring for the Genie Framework
+description: Internal command for structuring epics from gathered context (used by Claude, not users)
 ---
 
 🚧 **DEVELOPMENT MODE** 🚧
-Testing the epic creation workflow end-to-end with the user.
-
-Intelligently gather context and structure epics through dynamic questioning and analysis.
+Internal command used by Claude to structure epics after context gathering.
 
 ## Purpose
 
-The `/epic` command is triggered after `/wish` identifies that a new epic is needed. It conducts an intelligent dialogue to gather all necessary context before creating a structured epic file.
+The `/epic` command is used internally by Claude after `/wish` has gathered all necessary context. It structures the information into a comprehensive epic document ready for task generation.
 
-## Context Gathering Strategy
+## Internal Workflow
 
-### Dynamic Question Selection
-
-The system selects questions based on:
-1. **Wish Analysis**: What type of work was requested
-2. **Existing Context**: What's already known from the wish
-3. **Project State**: Current epics, available patterns
-4. **Complexity Assessment**: How much detail is needed
-
-### Question Categories & Triggers
-
-```yaml
-epic_questions:
-  scope_definition:
-    trigger: "When boundaries are unclear"
-    questions:
-      - "What specific components or systems will this affect?"
-      - "What's explicitly OUT of scope for this epic?"
-      - "Are there any existing epics this relates to?"
-  
-  technical_context:
-    trigger: "When implementation details needed"
-    questions:
-      - "Which files should I review first? (@file references)"
-      - "Are there patterns in @genie/reference/ I should consider?"
-      - "What technical constraints should I be aware of?"
-  
-  success_criteria:
-    trigger: "Always ask"
-    questions:
-      - "How will we know this epic is successful?"
-      - "What are the measurable outcomes?"
-      - "What quality standards apply?"
-  
-  dependencies:
-    trigger: "When multiple components mentioned"
-    questions:
-      - "What needs to be in place before we start?"
-      - "Are there any blocking dependencies?"
-      - "What's the ideal task sequence?"
-  
-  business_context:
-    trigger: "When user-facing changes detected"
-    questions:
-      - "Who are the end users affected?"
-      - "What's the business value?"
-      - "Are there compliance requirements?"
+```mermaid
+graph TD
+    A[Context from /wish] --> B[Synthesize Information]
+    B --> C[Identify Tasks & Dependencies]
+    C --> D[Define Success Criteria]
+    D --> E[Generate Epic Structure]
+    E --> F[Write to genie/staging/]
+    F --> G[Ready for /spawn-tasks]
 ```
 
-## Intelligent Dialogue Flow
+## Input Context Structure
 
-### Phase 1: Initial Assessment
-```
-Genie: "I understand you want to create a bulletproof framework for automatic context flow. 
-        Let me gather some context to create a comprehensive epic plan.
-        
-        First, what specific components need modification? 
-        (e.g., @.claude/commands/*, hooks system, reference resolver)"
-```
+When called internally, `/epic` expects:
 
-### Phase 2: Deep Dive
-```
-User: "The reference resolver, hooks system, and all slash commands"
-
-Genie: "I see this touches core infrastructure. Let me understand better:
-        
-        1. For the reference resolver - should it handle #epic:, #task:, #dep: syntax?
-        2. Which hooks are priority? (context injection, security, notifications?)
-        3. Should existing commands be modified or wrapped?
-        
-        Also, are there any files I should review? (@genie/reference/* patterns?)"
-```
-
-### Phase 3: Validation
-```
-Genie: "Based on our discussion, here's my understanding:
-        
-        - Goal: Automatic context flow to all agents
-        - Scope: Reference resolver, hooks, command integration  
-        - Key Features: #epic/#task references, auto-injection
-        - Success: Zero manual context loading
-        
-        Is this accurate? What am I missing?"
+```python
+epic_context = {
+    "wish": "Original user wish",
+    "type": "epic|feature|bug|refactor",
+    "analysis": {
+        "scope": "What's included",
+        "complexity": "simple|medium|complex",
+        "domain": "framework|agents|infrastructure"
+    },
+    "consultation": {
+        "gemini_insights": "Architecture recommendations if consulted",
+        "pattern_matches": ["relevant patterns from reference/"],
+        "doc_references": ["relevant documentation"]
+    },
+    "user_responses": {
+        "architecture": "User's technical preferences",
+        "scope": "In/out of scope clarifications",
+        "success": "How they define success"
+    },
+    "technical_context": {
+        "affected_files": ["list of files"],
+        "current_state": "What exists now",
+        "desired_state": "What should exist"
+    }
+}
 ```
 
 ## Epic Generation Process
 
-After context gathering, the system:
+### 1. Information Synthesis
 
-1. **Synthesizes Information**: Combines all gathered context
-2. **Identifies Tasks**: Breaks down work into logical chunks
-3. **Maps Dependencies**: Determines task ordering
-4. **Generates Structure**: Creates the epic file
+Combines all context into coherent understanding:
+- User's wish and intent
+- Technical requirements and constraints
+- Architectural insights from consultations
+- Existing patterns and code
 
-## Output: Structured Epic File
+### 2. Task Decomposition
+
+Breaks work into logical, atomic tasks:
+- Each task has single responsibility
+- Tasks are sized for single agent work
+- Dependencies are explicitly mapped
+- Parallel work opportunities identified
+
+### 3. Dependency Mapping
+
+Creates clear task flow:
+```
+task-001 → task-002 → task-004
+         ↘ task-003 ↗
+```
+
+### 4. Success Criteria Definition
+
+Converts user's definition into measurable outcomes:
+- Functional requirements
+- Performance metrics
+- Quality standards
+- User experience goals
+
+## Epic Document Structure
 
 ```markdown
-# Epic: Genie Framework Context Automation
-*Generated from wish: "bulletproof framework where context flows automatically"*
+# Epic: [Generated Title]
+*Generated from wish: "[original wish]"*
 
-## Epic ID: genie-context-automation
-## Type: enhancement
-## Priority: high
+## Metadata
+- **Epic ID**: [kebab-case-id]
+- **Type**: [epic|feature|bug|refactor]
+- **Priority**: [high|medium|low]
+- **Branch**: [epic-id]
+- **Created**: [timestamp]
+- **Status**: draft
 
 ## Overview
-Implement automatic context injection and reference resolution to eliminate manual context management across all agents and commands.
+[Comprehensive description synthesized from all context]
 
 ## Context & Background
-- Current State: Manual epic checking, no task references
-- Desired State: Natural #epic/#task syntax with auto-injection
-- Key Insight: Combine Genie coordination with CCDK automation
+### Current State
+[What exists now, pain points, manual processes]
+
+### Desired State
+[Vision of success, automated flows, improvements]
+
+### Technical Context
+- **Architecture Decision**: [From Gemini/analysis]
+- **Pattern References**: [From reference/]
+- **Key Constraints**: [Technical limitations]
 
 ## Scope
 ### In Scope
-- Reference resolver for #epic:, #task:, #dep: syntax
-- Context injection hooks (subagent, epic, security)
-- Command integration for all slash commands
-- State management automation
+[Explicit list from user clarification]
 
 ### Out of Scope
-- Complete framework rewrite
-- Changing epic-based Kanban structure
-- PagBank-specific features
+[What we're NOT doing]
+
+### Future Considerations
+[What could come next]
 
 ## Tasks
-- [ ] 📋 task-001: Design reference resolver architecture
-- [ ] 📋 task-002: Implement #epic/#task parser
-- [ ] 📋 task-003: Create context injection hooks
-- [ ] 📋 task-004: Integrate with existing commands
-- [ ] 📋 task-005: Add automation triggers
-- [ ] 📋 task-006: Create comprehensive tests
+[Generated with T-### format for easy parsing]
 
-## Dependencies
-task-001 → task-002 → task-004
-task-001 → task-003 → task-004
-task-004 → task-005 → task-006
+T-001: Design reference resolver architecture
+- Description: Create extensible system for #epic/#task parsing
+- Acceptance: Architecture doc with parser design
+- Estimate: 2-3 hours
+- Dependencies: none
 
-## Success Criteria
-- [ ] Natural reference syntax works in all commands
-- [ ] Zero manual epic/task context loading
-- [ ] Automatic state updates on task transitions
-- [ ] All agents receive consistent context
-- [ ] Hooks prevent security issues
+T-002: Implement reference parser
+- Description: Build regex-based parser for references
+- Acceptance: All reference types parse correctly
+- Estimate: 3-4 hours
+- Dependencies: T-001
 
-## Technical Specifications
-- Parser: Regex-based with extensible resolver registry
-- Storage: Epic state in CLAUDE.md, tasks in genie folders
-- Hooks: Shell scripts triggered by Claude Code events
-- Integration: Minimal changes to existing commands
+[Continue for all tasks...]
 
-## References
-- @genie/active/genie-framework-analysis-report.md
-- @genie/active/genie-framework-refinement-recommendations.md
-- @genie/reference/multi-agent-patterns.md
-- @genie/Claude-Code-Development-Kit/hooks/
-
-## Approval Status
-⏳ Awaiting user approval
+## Task Dependencies
+```
+T-001 → T-002 → T-004
+      ↘ T-003 ↗
 ```
 
-## Automation Trigger
+## Success Criteria
+[Measurable outcomes from user input]
+- [ ] Reference syntax works: #epic:current, #task:id
+- [ ] Zero manual context loading required
+- [ ] All agents auto-receive context
+- [ ] Performance: <50ms resolution time
 
-Once approved, placing this file in `genie/staging/epic-[id].md` triggers:
-1. Parse epic structure
-2. Generate individual task files
-3. Update CLAUDE.md with new CURRENT_EPIC
-4. Create epic main file in active/
-5. Initialize reference patterns
+## Technical Specifications
+[Detailed from analysis and consultation]
 
-## Development Testing Flow
+## Risk Assessment
+[Identified risks and mitigation strategies]
 
-1. **Test Question Selection**: Which questions get asked based on wish
-2. **Test Dialogue Flow**: How context builds through conversation  
-3. **Test Epic Generation**: Quality of generated structure
-4. **Test Automation**: Hook triggers and file generation
+## References
+[All relevant files and documentation]
+
+## Approval
+- [ ] Epic structure approved
+- [ ] Ready for task generation
+```
+
+## Automation Integration
+
+The epic file is written to `genie/staging/[epic-id].md` which:
+1. Triggers validation hook
+2. Awaits user approval
+3. Once approved, triggers `/spawn-tasks`
+
+## Quality Checks
+
+Before writing the epic, validate:
+- [ ] All tasks are atomic and clear
+- [ ] Dependencies make logical sense
+- [ ] Success criteria are measurable
+- [ ] Scope is well-defined
+- [ ] Technical approach is sound
+
+## Development Notes
+
+Since we're building this:
+1. Start with simple epic generation
+2. Test task decomposition logic
+3. Refine dependency mapping
+4. Add validation layers
+5. Integrate with hooks
+
+The goal: Transform messy human wishes into pristine, actionable epics that agents can execute flawlessly.
 
 ---
 
-🚧 **Note**: Each execution refines the context gathering intelligence. The goal is a natural conversation that captures all necessary information without overwhelming the user.
+🚧 **Internal Use Only**: This command is called by Claude during the /wish workflow, not directly by users.

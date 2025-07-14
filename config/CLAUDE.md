@@ -1,7 +1,7 @@
 # Configuration Management - Global Application Settings
 
 <system_context>
-You are working with the PagBank Multi-Agent System's global configuration layer. This directory manages application-wide settings, environment variables, database connections, model configurations, and system parameters that affect the entire multi-agent ecosystem. Configuration follows a YAML-first approach with automatic fallbacks and environment-based overrides.
+You are working with the Automagik Multi-Agent Framework's global configuration layer. This directory manages application-wide settings, environment variables, database connections, model configurations, and system parameters that affect the entire multi-agent ecosystem. Configuration follows a YAML-first approach with automatic fallbacks and environment-based overrides.
 </system_context>
 
 <critical_rules>
@@ -59,7 +59,7 @@ class Settings:
         self.logs_dir.mkdir(exist_ok=True)
         
         # Application identity
-        self.app_name = "PagBank Multi-Agent System"
+        self.app_name = "Automagik Multi-Agent Framework"
         self.version = "0.1.0"
         self.environment = os.getenv("ENVIRONMENT", "development")
         self.debug = os.getenv("DEBUG", "false").lower() == "true"
@@ -77,8 +77,8 @@ class EnvironmentConfig:
     """Environment variable configuration with automatic validation."""
     
     # API Server (from api/serve.py pattern)
-    PB_AGENTS_HOST = os.getenv("PB_AGENTS_HOST")          # Optional: Agno defaults to localhost
-    PB_AGENTS_PORT = os.getenv("PB_AGENTS_PORT")          # Optional: Agno defaults to 7777
+    AUTOMAGIK_AGENTS_HOST = os.getenv("AUTOMAGIK_AGENTS_HOST")          # Optional: Agno defaults to localhost
+    AUTOMAGIK_AGENTS_PORT = os.getenv("AUTOMAGIK_AGENTS_PORT")          # Optional: Agno defaults to 7777
     
     # Database (from config/database.py pattern)
     DATABASE_URL = os.getenv("DATABASE_URL")               # Optional: Auto-fallback to SQLite
@@ -146,7 +146,7 @@ class DatabaseConfig:
 # PostgreSQL Storage (Preferred)
 postgres_storage_config = {
     "provider": "postgresql",
-    "table_name": "pagbank_sessions",        # Required
+    "table_name": "automagik_sessions",        # Required
     "schema": "ai",                          # Default schema
     "db_url": DATABASE_URL,                  # From environment
     "schema_version": 1,                     # Auto-versioning
@@ -157,8 +157,8 @@ postgres_storage_config = {
 # SQLite Storage (Automatic Fallback)  
 sqlite_storage_config = {
     "provider": "sqlite", 
-    "table_name": "pagbank_sessions",        # Required
-    "db_file": "./data/pagbank.db",         # Auto-created
+    "table_name": "automagik_sessions",        # Required
+    "db_file": "./data/automagik.db",         # Auto-created
     "schema_version": 1,
     "auto_upgrade_schema": True,
     "mode": "team"
@@ -173,7 +173,7 @@ class ApiSettings(BaseSettings):
     """API configuration with environment-driven overrides."""
     
     # Application identity
-    title: str = "PagBank Multi-Agent System"
+    title: str = "Automagik Multi-Agent Framework"
     version: str = "1.0.0"
     
     # Runtime environment validation
@@ -371,8 +371,8 @@ def create_model_from_config(model_config: Dict[str, Any], override_id: Optional
 ```python
 # ✅ CORRECT: Static configuration in YAML
 team_config = {
-    "name": "Ana - Atendimento PagBank",           # Static team identity
-    "team_id": "ana-pagbank-assistant",            # Static identifier
+    "name": "Domain-Specific Assistant",           # Static team identity
+    "team_id": "domain-specific-assistant",            # Static identifier
     "mode": "route",                               # Static routing mode
     "model": {                                     # Static model defaults
         "provider": "anthropic",
@@ -569,4 +569,4 @@ KNOWLEDGE_DIR = settings.knowledge_dir
 
 ### ✅ Validation Completed - Ready for db/CLAUDE.md Review
 
-This configuration system provides a robust foundation for the PagBank Multi-Agent System with secure defaults, comprehensive validation, and production-ready patterns.
+This configuration system provides a robust foundation for the Automagik Multi-Agent Framework with secure defaults, comprehensive validation, and production-ready patterns.

@@ -1,14 +1,14 @@
 # Teams Directory - Team Composition and Routing
 
 <system_context>
-This directory contains team definitions that orchestrate multiple agents for the PagBank multi-agent system. Teams use mode="route" to intelligently direct queries to the most appropriate specialist agent.
+This directory contains team definitions that orchestrate multiple agents for the Automagik Multi-Agent Framework. Teams use mode="route" to intelligently direct queries to the most appropriate specialist agent.
 </system_context>
 
-## Core Principle: Ana Team = Simplified Orchestration
+## Core Principle: Routing Team = Simplified Orchestration
 
-**V2 Architecture**: Remove complex orchestrator, replace with simple Ana Team using mode="route"
-- Ana Team handles ALL routing via Agno's built-in Team with mode="route"
-- Routing logic lives in Ana's config.yaml instructions
+**V2 Architecture**: Remove complex orchestrator, replace with simple Routing Team using mode="route"
+- Routing Team handles ALL routing via Agno's built-in Team with mode="route"
+- Routing logic lives in the team's config.yaml instructions
 - No manual orchestration code needed
 
 ## Directory Structure
@@ -17,33 +17,31 @@ This directory contains team definitions that orchestrate multiple agents for th
 teams/
 ├── CLAUDE.md              # This file - Team development guidelines
 ├── registry.py            # Team registry and loader  
-└── ana/                   # Ana team (main customer assistant)
-    ├── team.py            # Team factory function (copy from finance_researcher.py)
+└── routing_team/          # Example routing team
+    ├── team.py            # Team factory function
     └── config.yaml        # Team configuration with routing instructions
 ```
 
 **Important**: Team configs live HERE in teams/, NOT in config/ directory.
 
-## Ana Team Architecture (From Demo App)
+## Routing Team Architecture (From Demo App)
 
-### Copy from Finance Researcher Pattern
+### Generic Routing Pattern
 ```python
-# teams/ana/team.py
-# COPY FROM: genie/agno-demo-app/teams/finance_researcher.py (lines 83-117)
-
+# teams/routing_team/team.py
 from typing import Optional
 import yaml
 from pathlib import Path
 from agno import Team
 from agno.storage.postgresql import PostgresStorage
 
-def get_ana_team(
+def get_routing_team(
     model_id: Optional[str] = None,        # API parameter - model override
     user_id: Optional[str] = None,         # API parameter - user session
     session_id: Optional[str] = None,      # API parameter - session continuation  
     debug_mode: bool = True,               # API parameter - debug mode
 ):
-    """Ana Team factory - copied from finance_researcher.py pattern"""
+    """Routing Team factory"""
     # Load static config from YAML
     config_path = Path(__file__).parent / "config.yaml"
     with open(config_path) as f:
@@ -71,14 +69,14 @@ def get_ana_team(
     )
 ```
 
-### Ana Team Configuration Pattern
+### Routing Team Configuration Pattern
 ```yaml
-# teams/ana/config.yaml
+# teams/routing_team/config.yaml
 team:
-  name: "Ana - Atendimento PagBank"
-  team_id: "ana-pagbank-assistant"
+  name: "Routing Assistant"
+  team_id: "routing-assistant"
   mode: "route"                                    # KEY: Automatic routing
-  description: "Assistente virtual PagBank para todas as unidades de negócio"
+  description: "Virtual assistant for all business domains"
 
 model:
   provider: "anthropic"
@@ -86,19 +84,19 @@ model:
   temperature: 0.7
 
 members:                                           # Agent specialists to route to
-  - "pagbank-specialist"
-  - "adquirencia-specialist"  
-  - "emissao-specialist"
+  - "domain-a-specialist"
+  - "domain-b-specialist"  
+  - "domain-c-specialist"
 
 instructions:                                      # Routing logic (replaces orchestrator)
-  - "Você é Ana, a assistente virtual oficial do PagBank"
-  - "Route PIX and transfer queries to pagbank-specialist"
-  - "Route card and credit queries to emissao-specialist"
-  - "Route merchant and sales queries to adquirencia-specialist"
-  - "If customer is frustrated or requests human help, trigger human handoff workflow"
+  - "You are a virtual assistant for the company."
+  - "Route queries about topic A to domain-a-specialist"
+  - "Route queries about topic B to domain-b-specialist"
+  - "Route queries about topic C to domain-c-specialist"
+  - "If user is frustrated or requests human help, trigger human handoff workflow"
 
 storage:
-  table_name: "ana_team_sessions"
+  table_name: "routing_team_sessions"
   auto_upgrade_schema: true
 ```
 
@@ -106,21 +104,21 @@ storage:
 
 ### Automatic Query Analysis
 The `mode="route"` automatically:
-1. **Analyzes user query** - Understands customer intent and business domain
-2. **Selects most appropriate agent** - Routes to PagBank, Adquirência, or Emissão specialist
+1. **Analyzes user query** - Understands user intent and business domain
+2. **Selects most appropriate agent** - Routes to the correct domain specialist
 3. **Routes request to that agent** - Forwards query with full context
-4. **Returns agent response** - Customer gets specialist response seamlessly
+4. **Returns agent response** - User gets specialist response seamlessly
 
 ### No Manual Orchestration Needed!
 ```python
 # ❌ OLD V1 (400+ lines orchestrator.py):
 # Complex routing logic, manual keyword matching, state management
 
-# ✅ NEW V2 (Ana Team with mode="route"):
-ana_team = Team(
-    name="Ana - PagBank Assistant", 
+# ✅ NEW V2 (Routing Team with mode="route"):
+routing_team = Team(
+    name="Routing Assistant", 
     mode="route",  # Agno handles ALL routing logic!
-    members=[pagbank_agent, adquirencia_agent, emissao_agent]
+    members=[domain_a_agent, domain_b_agent, domain_c_agent]
 )
 ```
 
@@ -154,7 +152,7 @@ mode_behaviors:
     - Team leader routes user query to single most appropriate member
     - Uses forward_task_to_member tool
     - Response includes agent_id of handling member
-    - Perfect for Ana Team routing to business unit specialists
+    - Perfect for routing to domain specialists
     
   coordinate: |
     - Team leader assigns specific tasks to multiple agents
@@ -207,29 +205,29 @@ memory_history:
   num_history_sessions: Optional[int]           # Default: None
 ```
 
-## Ana Routing Strategy
+## Generic Routing Strategy
 
-### Business Unit Routing
-- **PagBank**: PIX, transfers, account balance, digital banking services
-- **Adquirência**: Merchant services, sales anticipation, machines, fees
-- **Emissão**: Credit/debit cards, limits, bills, international usage
-- **Human Handoff**: Frustrated customers, complex issues requiring human intervention
+### Domain-Based Routing
+- **Domain A**: Topic A1, Topic A2, Topic A3
+- **Domain B**: Topic B1, Topic B2, Topic B3
+- **Domain C**: Topic C1, Topic C2, Topic C3
+- **Human Handoff**: Frustrated users, complex issues requiring human intervention
 
 ### Routing Instructions (In config.yaml)
 ```yaml
 instructions:
-  - "Você é Ana, assistente virtual do PagBank"
-  - "Para consultas sobre PIX, transferências, conta digital: route to pagbank-specialist"
-  - "Para consultas sobre cartões, limites, faturas: route to emissao-specialist"  
-  - "Para consultas sobre máquinas, antecipação, vendas: route to adquirencia-specialist"
-  - "Para clientes frustrados ou pedidos de atendimento humano: trigger human handoff workflow"
+  - "You are a virtual assistant."
+  - "For queries about Topic A, route to domain-a-specialist"
+  - "For queries about Topic B, route to domain-b-specialist"  
+  - "For queries about Topic C, route to domain-c-specialist"
+  - "For frustrated users or requests for human help, trigger human handoff workflow"
 ```
 
 ## Implementation Workflow
 
 ### Phase 1: Replace Orchestrator
-1. **Remove orchestrator.py** - Delete 400+ line complex routing logic
-2. **Create Ana Team** - Simple Team with mode="route" 
+1. **Remove orchestrator.py** - Delete complex routing logic
+2. **Create Routing Team** - Simple Team with mode="route" 
 3. **Move routing to instructions** - Logic in config.yaml, not Python code
 4. **Test routing accuracy** - Verify all current functionality works
 
@@ -242,14 +240,14 @@ instructions:
 ## Testing Requirements
 
 ### Team Routing Tests
-- **Portuguese Test Queries**: Test routing accuracy with real customer queries
-- **Business Unit Coverage**: Each specialist gets appropriate queries
-- **Frustration Escalation**: Detect and route frustrated customers properly
+- **Domain-Specific Test Queries**: Test routing accuracy with real user queries
+- **Domain Coverage**: Each specialist gets appropriate queries
+- **Frustration Escalation**: Detect and route frustrated users properly
 - **Session Continuity**: Team maintains conversation context across messages
 
 ### Performance Tests
 - **Routing Speed**: Ensure automatic routing is faster than manual orchestrator
-- **Concurrent Sessions**: Multiple customers can use Ana Team simultaneously
+- **Concurrent Sessions**: Multiple users can use the Routing Team simultaneously
 - **Memory Usage**: Team consumes fewer resources than orchestrator
 
 ## Team Patterns (From Agno Framework)
@@ -294,7 +292,7 @@ multi_language_team = Team(
 # Different mode for comparison
 content_team = Team(
     name="Content Team",
-    mode="coordinate",  # Different from Ana's "route" mode
+    mode="coordinate",  # Different from the "route" mode
     members=[researcher, writer],
     instructions="You are a team of researchers and writers that work together to create high-quality content.",
     model=OpenAIChat("gpt-4o"),
@@ -308,12 +306,12 @@ content_team = Team(
 **Before proceeding to workflows/CLAUDE.md, validate this teams/ documentation:**
 
 #### ✅ Core Team Patterns Documented
-1. ✅ **Ana Team architecture** extracted from finance_researcher.py pattern correctly
+1. ✅ **Routing Team architecture** extracted from a generic pattern
 2. ✅ **Mode="route" explanation** clearly demonstrates automatic routing benefits over manual orchestrator
 3. ✅ **YAML configuration structure** focuses on team-specific settings, not duplicating agent configs
 4. ✅ **Routing instructions** provide clear replacement for complex orchestrator logic
 5. ✅ **Team parameter reference** includes all necessary Agno Team parameters and modes
-6. ✅ **Testing strategy** emphasizes routing accuracy and Portuguese query validation
+6. ✅ **Testing strategy** emphasizes routing accuracy and domain-specific query validation
 7. ✅ **No duplication** with agents/ configs (teams have different orchestration purpose)
 
 #### ✅ Cross-Reference Validation with Other CLAUDE.md Files
@@ -322,7 +320,7 @@ content_team = Team(
 - **config/CLAUDE.md**: Team configs should align with global model and storage settings
 - **db/CLAUDE.md**: Team storage patterns should match database schema for sessions/routing
 - **api/CLAUDE.md**: Team endpoints should support all documented routing modes and parameters
-- **tests/CLAUDE.md**: Team testing should validate routing accuracy for all business units
+- **tests/CLAUDE.md**: Team testing should validate routing accuracy for all domains
 
 #### ✅ Missing Content Identification
 **Content that should be transferred TO other CLAUDE.md files:**
@@ -345,12 +343,12 @@ content_team = Team(
 
 #### ✅ Context Transfer Requirements for Future Development
 **Essential team context that must be preserved:**
-1. **Mode="route" Simplification**: Replaces 400+ line orchestrator with simple Agno Team
-2. **Ana Team as Single Entry Point**: All customer queries start with Ana routing team
+1. **Mode="route" Simplification**: Replaces complex orchestrator with simple Agno Team
+2. **Routing Team as Single Entry Point**: All user queries start with the routing team
 3. **Member Agent Loading**: Teams must load agents using documented factory patterns
-4. **Business Unit Routing**: Clear keyword-based routing to appropriate specialists
+4. **Domain-Based Routing**: Clear keyword-based routing to appropriate specialists
 5. **Frustration Detection**: Team-level detection and escalation to human handoff workflow
-6. **Portuguese Context Preservation**: All routing decisions must maintain pt-BR language
+6. **Language Context Preservation**: All routing decisions must maintain language context
 
 #### ✅ Integration Validation Requirements
 **Validate these integration points when implementing:**
@@ -358,29 +356,29 @@ content_team = Team(
 - **Team → Workflow Integration**: Confirm team can trigger workflows for complex scenarios
 - **Team → Database Integration**: Test routing decisions are properly stored and tracked
 - **Team → API Integration**: Ensure team endpoints support all documented parameters
-- **Team → Testing Integration**: Validate routing accuracy meets 95%+ target for all business units
+- **Team → Testing Integration**: Validate routing accuracy meets 95%+ target for all domains
 
 ### ✅ Content Successfully Organized in teams/CLAUDE.md
-- ✅ **Ana Team Architecture**: Complete replacement strategy for manual orchestrator
-- ✅ **Team Factory Patterns**: Direct adaptation from demo app finance_researcher pattern
+- ✅ **Routing Team Architecture**: Complete replacement strategy for manual orchestrator
+- ✅ **Team Factory Patterns**: Direct adaptation from demo app patterns
 - ✅ **Mode="route" Implementation**: Automatic routing with configuration-driven logic
 - ✅ **Team Configuration Structure**: YAML patterns for routing instructions and member definition
 - ✅ **Complete Team Parameter Reference**: All Agno Team parameters with mode behaviors
-- ✅ **Business Unit Routing Strategy**: Clear keyword mapping and escalation paths
+- ✅ **Domain-Based Routing Strategy**: Clear keyword mapping and escalation paths
 
 ### ✅ Validation Completed - Ready for workflows/CLAUDE.md Review
 
 ## Key References
 - **Demo Pattern**: `@genie/agno-demo-app/teams/finance_researcher.py`
-- **Current Ana**: `agents/orchestrator/main_orchestrator.py` - For replacement reference
+- **Current Orchestrator**: `agents/orchestrator/main_orchestrator.py` - For replacement reference
 - **Team Parameters**: Agno Components Parameters (extracted above)
 - **Implementation Plan**: `@genie/active/phase1-review-and-refinement.md`
 
 ## Critical Rules
-- ✅ Copy finance_researcher.py pattern exactly for Ana Team
+- ✅ Copy a generic routing pattern for the Routing Team
 - ✅ Use mode="route" for automatic routing (no manual orchestrator)
 - ✅ Keep routing logic in config.yaml instructions, not Python code
-- ✅ Test routing accuracy with Portuguese customer queries
+- ✅ Test routing accuracy with domain-specific user queries
 - ✅ Keep team configs in teams/ folders, NOT config/ directory
 - ✅ Focus on Team orchestration, not individual agent logic
 - ❌ Never recreate complex orchestrator logic in Python

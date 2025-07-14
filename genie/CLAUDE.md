@@ -3,19 +3,18 @@
 <genie_overview>
 The Genie Framework is an epic-based Kanban system for coordinated development across multiple specialized agents. Each epic represents a major project with its own branch, task cards, and isolated development flow to prevent cross-epic contamination.
 
-**Current Epic: PagBank V2 Multi-Agent System**
-- Brazilian financial services customer support system built with Agno framework
-- Four business units: Adquirência (merchant), Emissão (cards), PagBank (digital banking), Human Handoff
-- Focus: intelligent routing, context persistence, seamless escalation
+**Current Epic: Automagik V2 Multi-Agent Framework**
+- A general-purpose agent framework built with Agno
+- Focus: intelligent routing, context persistence, seamless escalation, and domain-specific adaptation
 </genie_overview>
 
 ## Core Capabilities
 
 <genie_architecture>
-- **Agent Decomposition**: Break features across specialist agents (Adquirência, Emissão, PagBank, Human)
+- **Agent Decomposition**: Break features across specialist agents (e.g., technical, business, support)
 - **Pattern Persistence**: Store successful routing patterns in `reference/`
 - **Parallel Development**: Coordinate changes across multiple agents simultaneously
-- **Context Awareness**: Maintain business unit context throughout development
+- **Context Awareness**: Maintain domain context throughout development
 </genie_architecture>
 
 ## Epic-Based Kanban Structure (File Prefixes)
@@ -24,11 +23,11 @@ The Genie Framework is an epic-based Kanban system for coordinated development a
 ```
 genie/
 ├── todo/                              # 📋 BACKLOG
-│   ├── pagbank-v2_phase1-*.md          # V2 epic task cards
+│   ├── automagik-v2_phase1-*.md        # V2 epic task cards
 │   └── other-project_*.md              # Other epic task cards
 ├── active/                            # 🔄 IN PROGRESS  
-│   ├── pagbank-v2.md                   # Epic main file
-│   ├── pagbank-v2_phase1-*.md          # V2 active tasks
+│   ├── automagik-v2.md                 # Epic main file
+│   ├── automagik-v2_phase1-*.md        # V2 active tasks
 │   └── agent-coordination.md           # Framework rules
 ├── archive/                           # ✅ DONE/OBSOLETE (gitignored)
 └── reference/                         # 📚 PATTERNS & KNOWLEDGE
@@ -56,13 +55,13 @@ genie/
 - **Epic branch**: Same as main file: `v2` (for current epic)
 
 ### Task Cards (EPICNAME_TASKNAME Format)  
-- **Phase tasks**: `EPICNAME_phase[N]-[task].md` (e.g., `${CURRENT_EPIC}_phase1-refactor-ana-team.md`)
+- **Phase tasks**: `EPICNAME_phase[N]-[task].md` (e.g., `${CURRENT_EPIC}_phase1-refactor-routing-team.md`)
 - **Bug fixes**: `EPICNAME_fix-[component]-[issue].md` (e.g., `${CURRENT_EPIC}_fix-routing-timeout.md`)
-- **Features**: `EPICNAME_feat-[area].md` (e.g., `${CURRENT_EPIC}_feat-ana-memory-upgrade.md`)
+- **Features**: `EPICNAME_feat-[area].md` (e.g., `${CURRENT_EPIC}_feat-memory-upgrade.md`)
 - **Analysis**: `EPICNAME_analysis-[topic].md` (e.g., `${CURRENT_EPIC}_analysis-current-agents.md`)
 - **Reviews**: `EPICNAME_review-[topic].md` (e.g., `${CURRENT_EPIC}_review-epic-transformation.md`)
 
-### PagBank V2 Branch Strategy (File Prefixes)
+### Automagik V2 Branch Strategy (File Prefixes)
 ```bash
 # Single branch approach - all work in v2
 git checkout v2
@@ -79,10 +78,10 @@ git commit -m "✅ Complete ${CURRENT_EPIC}_[task-name]"
 **Rules**: Direct commits to v2 branch, frequent checkpoints per task card
 ```
 
-**Project Context**: For PagBank system architecture, compliance requirements, and development setup, see root CLAUDE.md.
+**Project Context**: For system architecture, compliance requirements, and development setup, see root CLAUDE.md.
 
 **Epic Focus**: V2 development emphasizes:
-- Ana team refactoring with mode=config["team"]["mode"]
+- Routing team refactoring with mode=config["team"]["mode"]
 - Database infrastructure upgrade
 - API structure improvements  
 - Enhanced testing and monitoring
@@ -105,9 +104,9 @@ echo "## Pattern: [Feature Name]" > genie/active/pattern-[feature].md
 ```python
 # From genie/reference/routing-patterns.md
 ROUTING_PATTERNS = {
-    "pix_keywords": ["pix", "transferência instantânea", "qr code"],
-    "card_keywords": ["cartão", "limite", "fatura", "senha"],
-    "merchant_keywords": ["máquina", "vendas", "antecipação"]
+    "technical_keywords": ["api", "database", "server", "code"],
+    "business_keywords": ["requirements", "process", "strategy", "roadmap"],
+    "support_keywords": ["issue", "ticket", "bug", "error"]
 }
 ```
 </pattern_storage_protocol>
@@ -165,12 +164,12 @@ docs = mcp__search-repo-docs__get-library-docs(
 mv genie/active/${CURRENT_EPIC}_taskname.md genie/archive/
 ```
 
-### 📋 Agent Specialization Strategy for PagBank V2
-- **Agent 1**: Agno/Teams Expert (Ana routing, team configuration, playground)
+### 📋 Agent Specialization Strategy for Automagik V2
+- **Agent 1**: Agno/Teams Expert (Routing, team configuration, playground)
 - **Agent 2**: Database Expert (PostgreSQL, schema, monitoring)  
 - **Agent 3**: API Expert (FastAPI structure, versioning, security)
-- **Agent 4**: Business Logic Expert (typification workflow, financial compliance)
-- **Agent 5**: Integration Expert (testing, deployment, Portuguese language validation)
+- **Agent 4**: Business Logic Expert (Typification workflow, domain-specific compliance)
+- **Agent 5**: Integration Expert (Testing, deployment, language validation)
 
 ### 🛠️ Context Tools Usage
 **Common Agno Topics:**
@@ -186,8 +185,8 @@ mv genie/active/${CURRENT_EPIC}_taskname.md genie/archive/
 - **ALWAYS** wait for dependencies using mcp__wait__wait_minutes  
 - **ALWAYS** update status when claiming/completing tasks
 - **ALWAYS** use context search tools for Agno questions
-- **ALWAYS** follow PagBank compliance requirements (see root CLAUDE.md)
-- **ALWAYS** work in Portuguese for customer-facing content
+- **ALWAYS** follow domain-specific compliance requirements (see root CLAUDE.md)
+- **ALWAYS** work in the appropriate language for user-facing content
 - **NEVER** work on blocked tasks without waiting
 - **NEVER** modify files marked [🔄] by another agent
 - **WIP Limit**: Max 5 tasks in active/ per epic
@@ -199,11 +198,11 @@ mv genie/active/${CURRENT_EPIC}_taskname.md genie/archive/
 ```markdown
 # Task: [Agent] - [Feature Name]
 
-## Business Unit
-[Adquirência | Emissão | PagBank | Human Handoff]
+## Domain
+[Technical | Business | Support | Human Handoff]
 
 ## Objective
-[Clear purpose aligned with business unit]
+[Clear purpose aligned with domain]
 
 ## Context Requirements
 - Knowledge base entries needed
@@ -214,34 +213,34 @@ mv genie/active/${CURRENT_EPIC}_taskname.md genie/archive/
 [Numbered, specific to agent]
 
 ## Testing Scenarios
-[Portuguese test queries]
+[Domain-specific test queries]
 
 ## Integration Points
 [Other agents affected]
 ```
 </task_template>
 
-## Kanban Workflow Example - Adding PIX Scheduling
+## Kanban Workflow Example - Adding a New Feature
 
 <kanban_workflow>
 ```bash
 # 1. Analysis Phase (active/)
-genie/active/analysis-pix-scheduling.md
+genie/active/analysis-new-feature.md
 
 # 2. Agent Decomposition (active/ - under WIP limit)
-genie/active/task-pagbank-pix-schedule.md
-genie/active/task-emissao-limit-validation.md
-genie/active/fix-routing-pix-keywords.md
+genie/active/task-technical-agent-implementation.md
+genie/active/task-business-agent-validation.md
+genie/active/fix-routing-feature-keywords.md
 
 # 3. Pattern Documentation (active/)
-genie/active/pattern-scheduled-transactions.md
+genie/active/pattern-new-feature.md
 
 # 4. Branch Creation (using filename as branch name)
-git checkout -b task-pagbank-pix-schedule
-git checkout -b fix-routing-pix-keywords
+git checkout -b task-technical-agent-implementation
+git checkout -b fix-routing-feature-keywords
 
 # 5. Completion (archive when done)
-→ Extract patterns to genie/reference/scheduled-transactions.md
+→ Extract patterns to genie/reference/new-feature-patterns.md
 → Move completed tasks to genie/archive/
 → Pattern remains in reference/ for future use
 ```
@@ -257,29 +256,29 @@ git checkout -b fix-routing-pix-keywords
 ```
 
 ### Workflow Process
-When implementing features like "Add new payment method support":
+When implementing features like "Add new integration support":
 
 1. **Create Tasks** → Add to `todo/` (backlog)
 2. **Start Work** → Move from `todo/` to `active/` (respecting WIP limit of 5)
-2. **Branch Creation** → Use filename as branch: `git checkout -b pagbank-v2_payment-method`
+2. **Branch Creation** → Use filename as branch: `git checkout -b automagik-v2_new-integration`
 3. **Implementation** → Work in feature branch, commit with Genie co-author
 4. **Pattern Extraction** → Save reusable patterns to `reference/`
 5. **Archive Complete** → Move finished tasks to `archive/` (gitignored)
 6. **Merge & Clean** → Merge branch, delete task from active/
 
 ### Multi-Agent Coordination
-- Check `reference/` for existing payment integration patterns
-- Create task files in `active/` for each affected agent (PagBank + Emissão)
+- Check `reference/` for existing integration patterns
+- Create task files in `active/` for each affected agent
 - Implement changes in parallel using separate branches
-- Test routing logic with Portuguese query variations
+- Test routing logic with domain-specific query variations
 - Extract successful patterns to `reference/` before archiving
 
-Each workflow maintains Portuguese language consistency and compliance requirements.
+Each workflow maintains language consistency and compliance requirements.
 
 ## Critical Kanban Rules
 
 - **WIP Limit**: NEVER exceed 5 files in `active/` (Kanban work-in-progress limit)
-- **Branch Names**: Use filename without .md as branch name (e.g., `pagbank-v2_fix-routing`)
+- **Branch Names**: Use filename without .md as branch name (e.g., `automagik-v2_fix-routing`)
 - **Archive Complete**: Move finished/obsolete tasks to `archive/` (gitignored)
 - **Extract Patterns**: Save reusable patterns to `reference/` before archiving
 - **Check Patterns**: ALWAYS review `reference/` before implementing
@@ -325,7 +324,7 @@ library_info = mcp__search-repo-docs__resolve-library-id(
 # Second step - retrieve specific docs
 docs = mcp__search-repo-docs__get-library-docs(
     context7CompatibleLibraryID="/context7/agno",  # From step 1
-    topic="teams",      # Optional: focus area
+    topic="teams"      # Optional: focus area
     tokens=10000        # Optional: max tokens (default 10000)
 )
 
@@ -333,7 +332,7 @@ docs = mcp__search-repo-docs__get-library-docs(
 # - "agents" - Agent creation and configuration
 # - "teams" - Team composition and routing (mode='route', 'coordinate', 'collaborate')
 # - "workflows" - Sequential/parallel workflows
-# - "memory" - Session and storage management
+# - "memory" - Session and memory management
 # - "tools" - Tool creation and integration
 # - "models" - Model configuration
 # - "streaming" - Streaming responses
@@ -359,7 +358,7 @@ answer = mcp__ask-repo-agent__ask_question(
 
 #### Pattern 1: Learning About Teams
 ```python
-# When implementing Ana Team refactor
+# When implementing a routing team refactor
 library_id = mcp__search-repo-docs__resolve-library-id(
     libraryName="agno"
 )

@@ -3,7 +3,7 @@
 > **Note**: This is component-specific context. See root **CLAUDE.md** for master project context and coding standards.
 
 ## Purpose
-The database layer provides persistent storage and data management for the PagBank Multi-Agent System. It implements a dual-database architecture with PostgreSQL (production) and SQLite (development), featuring vector similarity search, automated schema management, and seamless integration with the Agno framework's storage abstractions.
+The database layer provides persistent storage and data management for the Automagik Multi-Agent Framework. It implements a dual-database architecture with PostgreSQL (production) and SQLite (development), featuring vector similarity search, automated schema management, and seamless integration with the Agno framework's storage abstractions.
 
 ## Current Status: Production Ready ✅
 - PostgreSQL with PgVector integration for vector similarity search
@@ -49,7 +49,7 @@ The database layer provides persistent storage and data management for the PagBa
 ### Vector Similarity Search
 - **PgVector Integration**: 1536-dimension embeddings for knowledge base similarity matching
 - **Optimized Indexing**: IVFFlat indexes for fast vector distance calculations  
-- **Business Unit Filtering**: Combined vector search with categorical filtering for accuracy
+- **Domain Filtering**: Combined vector search with categorical filtering for accuracy
 - **Performance Tuning**: Connection pooling and query optimization for production workloads
 
 ### Agno Framework Integration
@@ -70,7 +70,7 @@ from sqlalchemy import create_engine
 from agno.storage.postgres import PostgresStorage
 from agno.storage.sqlite import SqliteStorage
 
-def get_database_storage(table_name: str = "pagbank_sessions") -> Union[PostgresStorage, SqliteStorage]:
+def get_database_storage(table_name: str = "automagik_sessions") -> Union[PostgresStorage, SqliteStorage]:
     """
     Get appropriate storage based on environment configuration.
     Falls back to SQLite if PostgreSQL is not available.
@@ -95,7 +95,7 @@ def get_database_storage(table_name: str = "pagbank_sessions") -> Union[Postgres
 ```
 
 ### Vector Search Implementation  
-**PgVector Knowledge Retrieval**: Optimized similarity search with business unit filtering
+**PgVector Knowledge Retrieval**: Optimized similarity search with domain filtering
 
 ```python
 # Vector similarity search with categorical filtering
@@ -105,15 +105,15 @@ from sqlalchemy.orm import Session
 def search_knowledge_with_vector(
     db: Session, 
     query_embedding: List[float], 
-    business_unit: str, 
+    domain: str, 
     limit: int = 5
 ) -> List[KnowledgeBase]:
     """
-    Search knowledge base using vector similarity with business unit filtering.
+    Search knowledge base using vector similarity with domain filtering.
     Combines semantic search with categorical precision.
     """
     return db.query(KnowledgeBase)\
-        .filter(KnowledgeBase.business_unit == business_unit)\
+        .filter(KnowledgeBase.domain == domain)\
         .order_by(KnowledgeBase.embedding.l2_distance(query_embedding))\
         .limit(limit)\
         .options(defer(KnowledgeBase.embedding))  # Optimize query performance
@@ -141,7 +141,7 @@ def upgrade():
         # Create knowledge base with vector support
         op.create_table('knowledge_base',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
-            sa.Column('business_unit', sa.String(50), nullable=False),
+            sa.Column('domain', sa.String(50), nullable=False),
             sa.Column('question', sa.Text(), nullable=False),
             sa.Column('answer', sa.Text(), nullable=False),
             sa.Column('embedding', Vector(1536)),  # OpenAI embedding dimensions
@@ -155,7 +155,7 @@ def upgrade():
         # SQLite-compatible schema without vector support
         op.create_table('knowledge_base',
             sa.Column('id', sa.String(36), primary_key=True),
-            sa.Column('business_unit', sa.String(50), nullable=False),
+            sa.Column('domain', sa.String(50), nullable=False),
             sa.Column('question', sa.Text(), nullable=False),
             sa.Column('answer', sa.Text(), nullable=False),
             sa.Column('created_at', sa.DateTime(), default=sa.func.now())
@@ -200,18 +200,18 @@ uv run python -c "from config.database import health_check; print(health_check()
 
 ### Agno Storage Patterns
 ```python
-# Essential storage configuration for PagBank multi-agent system
+# Essential storage configuration for Automagik Multi-Agent Framework
 from agno.storage.postgres import PostgresStorage
 from agno.storage.sqlite import SqliteStorage
 
 # Production PostgreSQL with automatic fallback
 storage = PostgresStorage(
-    table_name="pagbank_sessions",
+    table_name="automagik_sessions",
     db_url=os.getenv("DATABASE_URL"),
     auto_upgrade_schema=True,
     mode="team"  # Multi-agent team support
 ) if os.getenv("DATABASE_URL") else SqliteStorage(
-    table_name="pagbank_sessions",
+    table_name="automagik_sessions",
     auto_upgrade_schema=True,
     mode="team"
 )

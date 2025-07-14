@@ -1,13 +1,13 @@
-# PagBank Agents V2 - Epic Status Central
+# Automagik Agents V2 - Epic Status Central
 
 **Last Updated**: 2025-01-12
 **Branch**: v2 (clean rewrite, no backwards compatibility)
 **Status**: PLANNING COMPLETE - READY FOR PARALLEL EXECUTION
 
 ## 🎯 Project Overview
-Complete V2 rewrite of PagBank multi-agent system using Agno framework patterns.
-- Transform POC into production-ready "agent factory" platform
-- Support ALL PagBank business units through YAML configuration
+Complete V2 rewrite of the multi-agent system using Agno framework patterns.
+- Transform POC into a production-ready "agent factory" platform
+- Support multiple domains through YAML configuration
 - Implement Team mode=config["team"]["mode"] pattern from agno-demo-app
 - Database-driven configuration with hot reload
 - 5-level hierarchical typification workflow
@@ -15,12 +15,12 @@ Complete V2 rewrite of PagBank multi-agent system using Agno framework patterns.
 ## 📊 Overall Progress
 
 ### Phase 1: Foundation
-- [✅] **Ana Team Refactor** → Agent 1 (COMPLETED)
+- [✅] **Routing Team Refactor** → Agent 1 (COMPLETED)
   - [✅] Extract routing logic from orchestrator
   - [✅] Implement Team mode=config["team"]["mode"] pattern
   - [✅] Create specialist definitions
   - [✅] Test routing accuracy
-  - **File**: `task-cards/phase1/01-refactor-ana-team.md`
+  - **File**: `task-cards/phase1/01-refactor-routing-team.md`
   - **Blocks**: None
 
 - [🔄] **Database Infrastructure** → Agent 2 (CLAIMED)
@@ -59,10 +59,10 @@ Complete V2 rewrite of PagBank multi-agent system using Agno framework patterns.
 - [ ] **Typification Workflow** → Agent 4
   - [ ] Parse CSV hierarchy (5 levels)
   - [ ] Create sequential workflow
-  - [ ] Integrate with Ana team
+  - [ ] Integrate with Routing team
   - [ ] Test categorization accuracy
   - **File**: `task-cards/phase2/02-typification-workflow.md`
-  - **Blocks**: Ana Team Refactor complete
+  - **Blocks**: Routing Team Refactor complete
 
 - [ ] **Knowledge Base** → Agent 2
   - [ ] Setup pgvector tables
@@ -103,7 +103,7 @@ Complete V2 rewrite of PagBank multi-agent system using Agno framework patterns.
   - [ ] Implement comparisons
   - [ ] Test user experience
   - **File**: `task-cards/phase3/02-advanced-playground.md`
-  - **Blocks**: Ana Team Refactor complete
+  - **Blocks**: Routing Team Refactor complete
 
 - [ ] **Security & Compliance** → Agent 6
   - [ ] Implement auth system
@@ -118,7 +118,7 @@ Complete V2 rewrite of PagBank multi-agent system using Agno framework patterns.
 ```mermaid
 graph TD
     A[Database Infrastructure] --> D[Load Agents]
-    B[Ana Team Refactor] --> F[Typification Workflow]
+    B[Routing Team Refactor] --> F[Typification Workflow]
     B --> K[Advanced Playground]
     C[API Structure] --> I[Hot Reload API]
     C --> J[Enhanced Monitoring]
@@ -189,7 +189,7 @@ mcp__wait__wait_minutes(duration=30)
 cat genie/active/epic-status.md
 
 # When clear, proceed with task
-cat genie/task-cards/phase1/01-refactor-ana-team.md
+cat genie/task-cards/phase1/01-refactor-routing-team.md
 ```
 
 ## 📝 Notes

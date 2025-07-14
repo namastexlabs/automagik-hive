@@ -1,8 +1,8 @@
-# PagBank Multi-Agent System - Detailed Architecture
+# Automagik Multi-Agent Framework - Detailed Architecture
 
 ## Current Implementation Overview
 
-The PagBank system has been simplified from a complex multi-team architecture to a streamlined single-agent-per-department design, reducing from 16+ agents to just 6 agents total.
+The framework has been simplified from a complex multi-team architecture to a streamlined single-agent-per-domain design, reducing from 16+ agents to just 6 agents total.
 
 ## 1. Main Orchestrator (Team in Route Mode)
 
@@ -12,7 +12,7 @@ The PagBank system has been simplified from a complex multi-team architecture to
 ### Key Features
 ```python
 self.routing_team = Team(
-    name="PagBank Customer Service Orchestrator",
+    name="Customer Service Orchestrator",
     mode="route",  # Automatic routing to members
     model=Claude(
         id="claude-sonnet-4-20250514",
@@ -27,16 +27,16 @@ self.routing_team = Team(
 
 ### Preprocessing Pipeline
 1. **Text Normalization** (`text_normalizer.py`)
-   - Fixes Portuguese spelling errors: "cartao" → "cartão"
-   - Common abbreviations: "pra" → "para", "vc" → "você"
-   - Accent corrections
+   - Fixes spelling errors
+   - Expands common abbreviations
+   - Corrects accents
 
 2. **Frustration Detection** (`frustration_detector.py`)
    - Level 0-3 scale
-   - Keywords: ["droga", "merda", "porra", "não aguento mais"]
+   - Keywords and patterns indicating frustration
    - CAPS LOCK detection
    - Multiple punctuation (!!!, ???)
-   - Explicit requests: "quero falar com humano"
+   - Explicit requests for human help
 
 3. **Routing Logic** (`routing_logic.py`)
    - Keyword-based routing to specialists
@@ -47,8 +47,8 @@ self.routing_team = Team(
 ```python
 team_session_state = {
     'session_id': str,
-    'customer_id': Optional[str],
-    'customer_name': Optional[str],
+    'user_id': Optional[str],
+    'user_name': Optional[str],
     'interaction_count': int,
     'frustration_level': int,  # 0-3
     'message_history': List[Dict],
@@ -56,7 +56,7 @@ team_session_state = {
     'current_topic': Optional[str],
     'resolved': bool,
     'awaiting_human': bool,
-    'customer_context': {
+    'user_context': {
         'language_level': str,  # 'formal', 'informal', 'basic'
         'failed_attempts': int,
         'preferred_channel': str
@@ -89,45 +89,45 @@ class BaseSpecialistAgent:
 
 ### Specialist Agents
 
-#### 1. Cards Agent (`cards_agent.py`)
-- **Knowledge Filter**: `{"area": "cartoes"}`
+#### 1. Domain A Agent (`domain_a_agent.py`)
+- **Knowledge Filter**: `{"domain": "domain_a"}`
 - **Special Features**:
-  - Fraud escalation triggers
-  - High-value transaction detection (>R$5,000)
-  - Urgent operations (blocking)
+  - Escalation triggers for critical issues
+  - High-value transaction detection
+  - Urgent operations handling
 - **Tools**: All base tools + security_checker
 
-#### 2. Digital Account Agent (`digital_account_agent.py`)
-- **Knowledge Filter**: `{"area": "conta_digital"}`
+#### 2. Domain B Agent (`domain_b_agent.py`)
+- **Knowledge Filter**: `{"domain": "domain_b"}`
 - **Special Features**:
-  - PIX validation and limits
-  - Transfer authorization
-  - Balance inquiries
+  - Validation and limits for domain-specific operations
+  - Authorization for sensitive actions
+  - Balance and status inquiries
 - **Tools**: All base tools + security_checker
 
-#### 3. Investments Agent (`investments_agent.py`)
-- **Knowledge Filter**: `{"area": "investimentos"}`
+#### 3. Domain C Agent (`domain_c_agent.py`)
+- **Knowledge Filter**: `{"domain": "domain_c"}`
 - **Special Features**:
   - Compliance warnings
   - Suitability checks
   - Product recommendations
-- **Tools**: All base tools + financial_calculator
+- **Tools**: All base tools + domain_c_calculator
 
-#### 4. Credit Agent (`credit_agent.py`)
-- **Knowledge Filter**: `{"area": "credito"}`
+#### 4. Domain D Agent (`domain_d_agent.py`)
+- **Knowledge Filter**: `{"domain": "domain_d"}`
 - **Special Features**:
-  - Fraud detection (payment advance scams)
-  - Credit analysis
-  - FGTS loan information
-- **Tools**: All base tools + financial_calculator
+  - Fraud detection for common scams
+  - Analysis of domain-specific data
+  - Information retrieval for specific topics
+- **Tools**: All base tools + domain_d_calculator
 
-#### 5. Insurance Agent (`insurance_agent.py`)
-- **Knowledge Filter**: `{"area": "seguros"}`
+#### 5. Domain E Agent (`domain_e_agent.py`)
+- **Knowledge Filter**: `{"domain": "domain_e"}`
 - **Special Features**:
   - Claim processing
   - Coverage explanations
   - Premium calculations
-- **Tools**: All base tools + financial_calculator
+- **Tools**: All base tools + domain_e_calculator
 
 ## 3. Tools System
 
@@ -140,14 +140,14 @@ class BaseSpecialistAgent:
 - **check_user_history**: Access user history
 
 #### Specialized Tools
-- **pagbank_validator**: Validates CPF, CNPJ, PIX keys, phone, email
+- **domain_validator**: Validates domain-specific data (e.g., IDs, keys, phone, email)
 - **security_checker**: Fraud detection and security alerts
-- **financial_calculator**: Loan, investment calculations
+- **domain_calculator**: Domain-specific calculations
 
 ### Tool Access in Agents
 Agents access shared state through tools:
 ```python
-def get_customer_context(agent: Agent) -> dict:
+def get_user_context(agent: Agent) -> dict:
     """Access team shared state"""
     return {
         'session_id': agent.team_session_state.get('session_id'),
@@ -161,8 +161,8 @@ def get_customer_context(agent: Agent) -> dict:
 ```python
 memory = Memory(
     driver=SqliteMemoryDb(
-        database="data/memory/pagbank_memory_dev.db",
-        table_name="pagbank_memory"
+        database="data/memory/automagik_memory_dev.db",
+        table_name="automagik_memory"
     ),
     enable_agentic_memory=True,
     auto_update_user_info=True
@@ -177,9 +177,9 @@ memory = Memory(
 
 ## 5. Knowledge Base
 
-### CSV Knowledge (`/knowledge/pagbank_knowledge.csv`)
-- 571 entries covering all PagBank products
-- Metadata columns: area, tipo_produto, tags, keywords
+### CSV Knowledge (`/knowledge/domain_knowledge.csv`)
+- Entries covering all supported domains
+- Metadata columns: domain, category, tags, keywords
 - OpenAI embeddings (text-embedding-3-small)
 - PgVector for similarity search
 
@@ -187,11 +187,11 @@ memory = Memory(
 Each agent has specific filters:
 ```python
 AGENT_FILTERS = {
-    "cards": {"area": "cartoes"},
-    "digital_account": {"area": "conta_digital"},
-    "investments": {"area": "investimentos"},
-    "credit": {"area": "credito"},
-    "insurance": {"area": "seguros"}
+    "domain_a": {"domain": "domain_a"},
+    "domain_b": {"domain": "domain_b"},
+    "domain_c": {"domain": "domain_c"},
+    "domain_d": {"domain": "domain_d"},
+    "domain_e": {"domain": "domain_e"}
 }
 ```
 

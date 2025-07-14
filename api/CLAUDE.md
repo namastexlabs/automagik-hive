@@ -3,7 +3,7 @@
 > **Note**: This is component-specific context. See root **CLAUDE.md** for master project context and coding standards.
 
 ## Purpose
-The API component serves as the FastAPI-based web interface for the PagBank multi-agent system, providing HTTP endpoints for customer interactions through specialized AI agents. It orchestrates requests between clients and the Ana routing team, enabling seamless communication with business unit specialists (Adquirência, Emissão, PagBank) while maintaining session continuity and supporting real-time streaming responses. The API layer abstracts complex multi-agent orchestration into simple REST endpoints with comprehensive monitoring, authentication, and error handling.
+The API component serves as the FastAPI-based web interface for the Automagik Multi-Agent Framework, providing HTTP endpoints for user interactions through specialized AI agents. It orchestrates requests between clients and the routing team, enabling seamless communication with domain specialists while maintaining session continuity and supporting real-time streaming responses. The API layer abstracts complex multi-agent orchestration into simple REST endpoints with comprehensive monitoring, authentication, and error handling.
 
 ## Current Status: Production Ready ✅
 - **Agno-first FastAPI integration** with auto-generated endpoints via Playground
@@ -27,7 +27,7 @@ The API component serves as the FastAPI-based web interface for the PagBank mult
 
 ### Core API Modules (`api/`)
 - **serve.py** - Production FastAPI app factory with Agno integration and environment configuration
-  - FastAPI app creation using `create_pagbank_api()` factory pattern
+  - FastAPI app creation using `create_automagik_api()` factory pattern
   - Environment-based settings (dev/staging/production) with security scaling
   - Agno `FastAPIApp()` integration with automatic storage and monitoring setup
 - **playground.py** - Development playground with auto-generated endpoints
@@ -74,10 +74,10 @@ from agno.playground import Playground
 
 # Create comprehensive playground
 playground = Playground(
-    agents=[pagbank_agent, adquirencia_agent, emissao_agent, human_handoff_agent],
-    teams=[ana_team],
+    agents=[domain_a_agent, domain_b_agent, domain_c_agent, human_handoff_agent],
+    teams=[routing_team],
     workflows=[human_handoff_workflow, typification_workflow],
-    app_id="pagbank-multi-agent-system"
+    app_id="automagik-multi-agent-system"
 )
 
 # Get router with all endpoints auto-registered
@@ -85,7 +85,7 @@ playground_router = playground.get_router()
 ```
 
 ### Real-Time Streaming Architecture
-**Architecture Decision**: Use Agno's native streaming for real-time customer interactions
+**Architecture Decision**: Use Agno's native streaming for real-time user interactions
 
 ```python
 # Server-Sent Events with Agno integration
@@ -100,7 +100,9 @@ async def generate():
             'content': chunk.content,
             'metadata': chunk.metadata,
             'thinking': getattr(chunk, 'thinking', None)
-        })}\n\n"
+        })}
+
+"
 ```
 
 ### Environment-Based Security Scaling
@@ -117,7 +119,7 @@ class ApiSettings(BaseSettings):
     def set_cors_origins(cls, cors_origins, info):
         if info.data.get("runtime_env") == "dev":
             return ["*"]  # Development: allow all
-        return ["https://pagbank.com.br"]  # Production: strict
+        return ["https://your-production-domain.com"]  # Production: strict
 ```
 
 ## Development Notes

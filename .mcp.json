@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "genie-memory": {
+      "type": "sse",
+      "url": "http://localhost:8765/mcp/openmemory/sse/namastex"
+    },
     "ask-repo-agent": {
       "type": "sse",
       "url": "https://mcp.deepwiki.com/sse"
@@ -19,7 +23,7 @@
     "send_whatsapp_message": {
       "command": "uvx",
       "args": [
-        "automagik-tools@0.7.7",
+        "automagik-tools@0.7.2",
         "tool",
         "evolution-api"
       ],
@@ -28,6 +32,20 @@
         "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
         "EVOLUTION_API_INSTANCE": "SofIA",
         "EVOLUTION_API_FIXED_RECIPIENT": "5511986780008@s.whatsapp.net"
+      }
+    },
+    "automagik-workflows": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@0.7.7",
+        "tool",
+        "automagik-workflows"
+      ],
+      "env": {
+        "AUTOMAGIK_WORKFLOWS_API_KEY": "namastex888",
+        "AUTOMAGIK_WORKFLOWS_BASE_URL": "http://localhost:28881",
+        "AUTOMAGIK_WORKFLOWS_POLLING_INTERVAL": "8",
+        "AUTOMAGIK_WORKFLOWS_MAX_RETRIES": "3"
       }
     }
   }

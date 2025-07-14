@@ -1,4 +1,4 @@
-# CLAUDE.md
+# GEMINI.md
 
 <state_configuration>
 <!-- UPDATE WHEN SWITCHING EPICS -->
@@ -26,7 +26,7 @@ You are working with the Automagik Multi-Agent Framework - a sophisticated agent
 ## Genie Framework
 
 <genie_note>
-The Genie Framework is a multi-agent task orchestration system for coordinated development. For detailed Genie documentation, see `genie/CLAUDE.md` which automatically loads when navigating to the genie/ folder.
+The Genie Framework is a multi-agent task orchestration system for coordinated development. For detailed Genie documentation, see `genie/GEMINI.md` which automatically loads when navigating to the genie/ folder.
 
 **Quick Reference:**
 - Use `genie/active/` for current work (MAX 5 files)
@@ -84,7 +84,7 @@ docs = mcp__search-repo-docs__get-library-docs(
 - **NEVER** work on blocked tasks without waiting for dependencies
 - **NEVER** modify files another agent is working on (check [🔄])
 
-For detailed epic-based Kanban workflow and task orchestration, see `genie/CLAUDE.md`.
+For detailed epic-based Kanban workflow and task orchestration, see `genie/GEMINI.md`.
 </multi_agent_coordination>
 
 ## Multi-Agent Workflows & Context Injection
@@ -92,19 +92,12 @@ For detailed epic-based Kanban workflow and task orchestration, see `genie/CLAUD
 <multi_agent_workflows>
 ### Automatic Context Injection for Sub-Agents
 When using the Task tool to spawn sub-agents, core project context is automatically injected via hooks:
-- **Primary Context**: `CLAUDE.md` (this file)
+- **Primary Context**: `GEMINI.md` (this file)
 - **Project Structure**: `genie/ai-context/project-structure.md` - Complete tech stack and file tree
 - **Development Standards**: `genie/ai-context/development-standards.md` - Universal coding standards
 - **System Integration**: `genie/ai-context/system-integration.md` - Integration patterns
 
 This ensures all sub-agents have immediate access to essential project documentation without manual specification.
-
-### Epic Development Guidelines
-When creating epics in `genie/staging/`:
-- **NO time estimates** - Tasks take as long as they need
-- **NO duration predictions** - We work until it's done right
-- Focus on clear task descriptions and dependencies
-- Let the work flow naturally without artificial deadlines
 
 ### Context Search Integration
 ```python
@@ -396,6 +389,33 @@ uv run python scripts/preprocessing/validate_knowledge.py
 uv run python scripts/preprocessing/generate_rag_csv.py
 ```
 
+### 4. Domain-Specific Compliance Checks
+**Domain Validation (Required for domain-specific changes):**
+- Verify domain-specific keywords are properly integrated in routing logic
+- Test escalation paths for complex scenarios
+- Validate compliance warnings are triggered appropriately
+
+**Data Security (Required for all data handling changes):**
+- Ensure no sensitive data appears in logs
+- Verify data encryption in memory storage
+- Test audit trail generation for sensitive operations
+
+### 5. Multi-Agent Coordination Verification
+**Agent Communication (Required for agent modifications):**
+```bash
+# Test agent registry and loading
+uv run python -c "from agents.registry import get_agent; print(get_agent('domain-specialist-v1'))"
+
+# Verify team routing configuration
+uv run python tests/integration/test_team_routing.py -v
+```
+
+**Frustration Detection (Required for conversation flow changes):**
+```bash
+# Test human handoff scenarios
+uv run pytest tests/unit/test_human_handoff_detector.py -v
+```
+
 ### Completion Checklist
 Before marking any task as complete, ensure:
 - [ ] All type checks pass without errors
@@ -451,7 +471,7 @@ Before marking any task as complete, ensure:
 ❌ Never expose sensitive user data in logs
 ❌ Never exceed escalation thresholds without proper handling
 ❌ Never use pip (always use uv)
-❌ Never work directly with production data without proper safeguards
+❌ Never work directly with production data
 ❌ Never ignore domain-specific language requirements
 ❌ Never work on tasks marked as [🔄] by another agent
 ❌ Never skip dependency checks
@@ -485,12 +505,6 @@ Before marking any task as complete, ensure:
 - **Documentation Overview**: `genie/ai-context/docs-overview.md`
   - Complete documentation structure and guidelines
   - Knowledge management and pattern storage protocols
-
-### CCDK Integration
-The project includes the Claude Code Development Kit for enhanced development workflows:
-- **Commands**: `genie/Claude-Code-Development-Kit/commands/` - Specialized development commands
-- **Hooks**: `genie/Claude-Code-Development-Kit/hooks/` - Git hooks and automation
-- **Documentation**: `genie/Claude-Code-Development-Kit/docs/` - CCDK reference materials
 
 ### Pattern Library
 For detailed Agno framework patterns, context search tools, and development reference materials, see:

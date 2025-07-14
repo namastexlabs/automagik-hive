@@ -42,6 +42,8 @@ You are working on the PagBank Multi-Agent System project. Before proceeding wit
 @/CLAUDE.md
 @/genie/ai-context/project-structure.md
 @/genie/ai-context/docs-overview.md
+@/genie/ai-context/development-standards.md
+@/genie/ai-context/system-integration.md
 
 ## Step 1: Intelligent Analysis Strategy Decision
 
@@ -100,34 +102,32 @@ You have complete freedom to design sub-agent tasks based on:
 ```
 Task: "Analyze [SPECIFIC_COMPONENT(S)] for [TASK_OBJECTIVE] related to user request '$ARGUMENTS'"
 
-Standard Investigation Workflow:
-1. Review auto-loaded project context (CLAUDE.md, project-structure.md, docs-overview.md)
-2. (Optionally) Read additional relevant documentation files for architectural context
-3. Analyze actual code files in [COMPONENT(S)] for implementation reality
-4. For code-related tasks: Map import/export dependencies and identify affected files
-5. Assess impact on tests, configurations, and related components
-6. Verify alignment with project patterns and conventions
-7. For structural changes: Identify obsolete code, unused imports, and files that should be removed
-8. Consider business unit implications and routing impact
-9. Validate compliance and Portuguese language requirements
-10. Use enhanced analysis tools when beneficial:
-    - mcp__zen__analyze for comprehensive code analysis
-    - mcp__zen__thinkdeep for complex problem investigation
-    - mcp__search-repo-docs__get-library-docs for Agno framework patterns
+Context-Aware Investigation:
+1. Core context auto-loaded via hooks - focus on specific investigation
+2. Read relevant component/feature CONTEXT.md files based on area
+3. Analyze actual implementation code in [COMPONENT(S)]
+4. Map relationships: imports, exports, dependencies, consumers
+5. Understand patterns: How does this follow project conventions?
+6. Business context: Which business units affected (Adquirência, Emissão, PagBank, Human)?
+7. Integration points: External services, databases, APIs
+8. Optional: Use zen tools for deeper analysis:
+   - mcp__zen__analyze for architectural understanding
+   - mcp__zen__thinkdeep for complex problem investigation
+   - mcp__search-repo-docs for Agno framework patterns
 
-Return comprehensive findings that address the user's request from this component perspective, including architectural insights, implementation details, dependency mapping, compliance considerations, and practical considerations for safe execution."
+Return findings that build understanding: current state, how it works, key patterns, relationships, and considerations for the user's planned action."
 ```
 
-### Enhanced Analysis Capabilities:
+### Enhanced Analysis Through Tool Integration:
 ```bash
-# Sub-agents can leverage powerful analysis tools:
-# - Comprehensive code analysis with zen framework
-# - Deep problem investigation with systematic reasoning
-# - External documentation research for best practices
-# - Repository pattern analysis for implementation guidance
+# Both you and sub-agents can leverage zen tools as auxiliaries:
+# - mcp__zen__analyze - Architectural and code quality insights
+# - mcp__zen__thinkdeep - Multi-stage investigation for complex problems
+# - mcp__search-repo-docs - Current framework documentation
+# - mcp__ask-repo-agent - Specific implementation questions
 
-# Example enhanced sub-agent task:
-Task: "As Business_Logic_Analyst, use mcp__zen__analyze to comprehensively analyze @agents/pagbank/ and @context/knowledge/ to understand current payment processing patterns and assess integration points for user request about fraud detection enhancement. Include dependency mapping, compliance validation, and routing impact assessment."
+# Example: Sub-agent using zen for deep analysis
+Task: "As Business_Logic_Analyst, investigate payment processing patterns in @agents/pagbank/ to understand current implementation for user's question about transaction flow. Use mcp__zen__analyze if architectural clarity needed. Focus on how transactions route through business units."
 ```
 
 Example Usage:

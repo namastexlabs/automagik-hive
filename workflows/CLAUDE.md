@@ -1,7 +1,7 @@
 # Workflows Directory - Multi-Step Process Orchestration
 
 <system_context>
-You are working with workflows in the PagBank Multi-Agent System - a sophisticated Brazilian financial services customer support system built with the Agno framework. Workflows orchestrate multi-step processes that coordinate specialized AI agents, handle escalations, and manage complex business operations that require sequential or parallel execution across multiple agents.
+You are working with workflows in the Automagik Multi-Agent Framework - a sophisticated agent creation and orchestration system built with the Agno framework. Workflows orchestrate multi-step processes that coordinate specialized AI agents, handle escalations, and manage complex business operations that require sequential or parallel execution across multiple agents.
 </system_context>
 
 <critical_rules>
@@ -11,11 +11,11 @@ You are working with workflows in the PagBank Multi-Agent System - a sophisticat
 - ALWAYS track workflow execution for compliance and monitoring
 - ALWAYS validate team-to-workflow integration patterns
 - ALWAYS test workflow routing logic before deploying
-- ALWAYS include proper Portuguese language handling in customer-facing steps
+- ALWAYS include proper language handling in user-facing steps
 - NEVER use workflows for simple agent routing tasks
-- NEVER lose customer context during workflow transitions
+- NEVER lose user context during workflow transitions
 - NEVER implement business logic directly in workflows (use agents)
-- NEVER skip compliance validations in financial workflows
+- NEVER skip domain-specific validations in workflows
 - NEVER expose sensitive data in workflow logs
 </critical_rules>
 
@@ -26,10 +26,10 @@ You are working with workflows in the PagBank Multi-Agent System - a sophisticat
 ```
 Workflows (Multi-step orchestration)
     ↳ Teams (Intelligent routing)
-        ↳ Agents (Business domain expertise)
+        ↳ Agents (Domain expertise)
 ```
 
-**Agents**: Handle specific business domain queries (PagBank, Adquirência, Emissão)
+**Agents**: Handle specific domain queries
 **Teams**: Route queries to appropriate agents using intelligent mode selection
 **Workflows**: Orchestrate complex, multi-step processes that require coordination
 </architecture_hierarchy>
@@ -39,23 +39,23 @@ Workflows (Multi-step orchestration)
 Teams can trigger workflows when complex processing is needed:
 
 ```python
-# teams/ana/team.py - Ana Team routing to workflows
+# teams/routing_team/team.py - Routing Team to workflows
 from workflows.human_handoff import trigger_human_handoff
 
-def get_ana_team():
+def get_routing_team():
     return Team(
-        name="Ana - Atendimento PagBank",
+        name="Routing Assistant",
         mode="route",  # Intelligent routing mode
         members=[
-            get_pagbank_agent(),
-            get_adquirencia_agent(),
-            get_emissao_agent()
+            get_domain_a_agent(),
+            get_domain_b_agent(),
+            get_domain_c_agent()
         ],
         instructions=[
-            "Route banking queries to pagbank agent",
-            "Route merchant queries to adquirencia agent",
-            "Route card queries to emissao agent",
-            "If customer shows frustration or requests human help, trigger human handoff workflow",
+            "Route queries for Domain A to domain_a_agent",
+            "Route queries for Domain B to domain_b_agent",
+            "Route queries for Domain C to domain_c_agent",
+            "If user shows frustration or requests human help, trigger human handoff workflow",
             "For complex multi-step processes, escalate to appropriate workflow"
         ]
     )
@@ -66,7 +66,7 @@ def get_ana_team():
 
 <handoff_evolution>
 ### V2 Architecture: From Agent to Workflow
-In PagBank V2, human handoff evolved from a simple agent to a sophisticated workflow:
+In V2, human handoff evolved from a simple agent to a sophisticated workflow:
 
 **V1 (Agent-based)**:
 ```python
@@ -79,10 +79,10 @@ human_handoff_agent.run(query)
 # NEW: Multi-step workflow orchestration
 workflow = HumanHandoffWorkflow()
 workflow.run(
-    customer_query=query,
+    user_query=query,
     escalation_reason="frustration_detected",
     conversation_history=history,
-    business_unit=detected_unit
+    domain=detected_domain
 )
 ```
 </handoff_evolution>
@@ -151,7 +151,7 @@ class MyBusinessWorkflow(Workflow):
         if not step1_result or not step1_result.content:
             yield RunResponse(
                 run_id=self.run_id,
-                content="Erro: Falha no processamento inicial"
+                content="Error: Initial processing failed"
             )
             return
         
@@ -160,7 +160,7 @@ class MyBusinessWorkflow(Workflow):
         if not step2_result or not step2_result.content:
             yield RunResponse(
                 run_id=self.run_id,
-                content="Erro: Falha no processamento final"
+                content="Error: Final processing failed"
             )
             return
         
@@ -233,21 +233,21 @@ class ParallelWorkflow(Workflow):
 <current_workflows>
 ### 1. Human Handoff Workflow (`human_handoff.py`) ✅ IMPLEMENTED
 **Purpose**: Handle escalation to human agents with proper context transfer
-**Business Units**: All (PagBank, Adquirência, Emissão)
+**Domains**: All
 **Trigger Conditions**:
-- Customer frustration detection (Ana sentiment analysis)
-- Explicit human agent requests ("quero falar com humano")
+- User frustration detection (sentiment analysis)
+- Explicit human agent requests
 - Complex issues beyond agent capabilities
 - Compliance requirements for human review
 
 **Workflow Steps**:
-1. **Context Analysis**: Extract conversation context, issues, and customer state
+1. **Context Analysis**: Extract conversation context, issues, and user state
 2. **Ticket Creation**: Generate structured support ticket with priority and SLA
-3. **Handoff Coordination**: Notify support team and provide customer feedback
+3. **Handoff Coordination**: Notify support team and provide user feedback
 
 **Integration Points**:
-- Ana Team routing logic
-- WhatsApp notification system
+- Routing Team logic
+- Notification systems (e.g., Slack, WhatsApp)
 - Support ticket management
 - SLA tracking system
 </current_workflows>
@@ -259,7 +259,7 @@ class ParallelWorkflow(Workflow):
 ```python
 # 5-level categorization process
 class TypificationWorkflow(Workflow):
-    level1_categorizer = Agent(...)  # Business unit classification
+    level1_categorizer = Agent(...)  # Domain classification
     level2_categorizer = Agent(...)  # Product category
     level3_categorizer = Agent(...)  # Specific issue type
     level4_categorizer = Agent(...)  # Resolution complexity
@@ -297,7 +297,7 @@ workflows:
           high: "@channel"
           critical: "@here"
       - type: "whatsapp"
-        number: "+5511999999999"
+        number: "+1234567890"
         template: "support_handoff"
     sla_configuration:
       response_time: 3600  # 1 hour for initial response
@@ -321,8 +321,8 @@ CREATE TABLE workflow_executions (
     workflow_name VARCHAR(255) NOT NULL,
     workflow_id VARCHAR(255),
     session_id VARCHAR(255),
-    customer_id VARCHAR(255),
-    business_unit VARCHAR(100),
+    user_id VARCHAR(255),
+    domain VARCHAR(100),
     status VARCHAR(50) DEFAULT 'running',
     priority VARCHAR(20) DEFAULT 'medium',
     started_at TIMESTAMP DEFAULT NOW(),
@@ -384,10 +384,10 @@ class TestHumanHandoffWorkflow:
         assert workflow.handoff_coordinator
     
     def test_frustration_escalation(self):
-        """Test workflow handles frustrated customer"""
+        """Test workflow handles frustrated user"""
         workflow = HumanHandoffWorkflow()
         result = list(workflow.run(
-            customer_query="Estou muito frustrado com este aplicativo!",
+            user_query="I am very frustrated with this application!",
             escalation_reason="frustration_detected",
             urgency_level="high"
         ))
@@ -398,17 +398,17 @@ class TestHumanHandoffWorkflow:
     
     def test_context_preservation(self):
         """Test workflow preserves conversation context"""
-        conversation_history = "Customer reported app crashes 3 times in 10 minutes"
+        conversation_history = "User reported app crashes 3 times in 10 minutes"
         
         result = list(trigger_human_handoff(
-            customer_query="O app não funciona!",
+            user_query="The app is not working!",
             escalation_reason="technical_issue",
             conversation_history=conversation_history,
-            business_unit="PagBank"
+            domain="Support"
         ))
         
         assert len(result) > 0
-        assert "PagBank" in str(result[-1].metadata)
+        assert "Support" in str(result[-1].metadata)
     
     def test_error_handling(self):
         """Test workflow handles errors gracefully"""
@@ -416,7 +416,7 @@ class TestHumanHandoffWorkflow:
         
         # Test with invalid input
         result = list(workflow.run(
-            customer_query="",  # Empty query
+            user_query="",  # Empty query
             escalation_reason="test"
         ))
         
@@ -431,15 +431,15 @@ class TestHumanHandoffWorkflow:
 class TestWorkflowIntegration:
     """Test workflow integration with teams and agents"""
     
-    def test_ana_team_to_workflow_integration(self):
-        """Test Ana Team can trigger human handoff workflow"""
-        from teams.ana.team import get_ana_team
+    def test_routing_team_to_workflow_integration(self):
+        """Test Routing Team can trigger human handoff workflow"""
+        from teams.routing_team.team import get_routing_team
         
-        ana_team = get_ana_team()
-        response = ana_team.run("Quero falar com um humano agora!")
+        routing_team = get_routing_team()
+        response = routing_team.run("I want to talk to a human now!")
         
         # Should trigger workflow, not route to agent
-        assert "atendimento humano" in response.content.lower()
+        assert "human support" in response.content.lower()
         assert "ticket" in response.content.lower()
     
     def test_workflow_database_integration(self):
@@ -451,7 +451,7 @@ class TestWorkflowIntegration:
         # Run workflow
         workflow = HumanHandoffWorkflow(storage=storage)
         list(workflow.run(
-            customer_query="Test query",
+            user_query="Test query",
             escalation_reason="test"
         ))
         
@@ -462,19 +462,17 @@ class TestWorkflowIntegration:
     
     def test_end_to_end_workflow_flow(self):
         """Test complete flow from user query to workflow completion"""
-        # Simulate customer interaction
-        user_query = "Não consigo fazer PIX, já tentei 5 vezes! Quero ajuda humana!"
+        # Simulate user interaction
+        user_query = "I can't get this to work, I've tried 5 times! I want human help!"
         
-        # Should trigger Ana Team → Frustration Detection → Human Handoff Workflow
-        from api.serve import process_customer_query
+        # Should trigger Routing Team → Frustration Detection → Human Handoff Workflow
+        from api.serve import process_user_query
         
-        response = process_customer_query(user_query)
+        response = process_user_query(user_query)
         
         # Verify workflow was triggered
         assert "ticket" in response.lower()
-        assert "atendimento" in response.lower()
-        # Should be in Portuguese
-        assert any(word in response.lower() for word in ["será", "você", "nosso"])
+        assert "support" in response.lower()
 ```
 </integration_testing>
 
@@ -590,7 +588,7 @@ workflow_core:
   description: Optional[str]                    # Default: None - For UI display
   
   # USER & SESSION MANAGEMENT
-  user_id: Optional[str]                        # Default: None - Customer identifier
+  user_id: Optional[str]                        # Default: None - User identifier
   session_id: Optional[str]                     # Default: Autogenerated UUID
   session_name: Optional[str]                   # Default: None - Human-readable session name
   session_state: Optional[Dict[str, Any]]       # Default: None - Session-specific data
@@ -615,7 +613,7 @@ execution_patterns:
   synchronous: |
     # workflow.run(**kwargs) -> Iterator[RunResponse]
     # Steps: set IDs, init memory, register workflow, execute run(), store results
-    # Use for: Real-time customer interactions, immediate responses needed
+    # Use for: Real-time user interactions, immediate responses needed
     
     def run(self, **kwargs) -> Iterator[RunResponse]:
         # Sequential step execution
@@ -658,8 +656,8 @@ api_patterns:
     
     # Register workflows in playground
     playground_router = get_playground_router(
-        agents=[pagbank_agent, adquirencia_agent],
-        teams=[ana_team],
+        agents=[domain_a_agent, domain_b_agent],
+        teams=[routing_team],
         workflows=[human_handoff_workflow, typification_workflow],
         default_model=config["model"],
         storage_path="./storage"
@@ -691,18 +689,18 @@ api_patterns:
 
 **Sequential Multi-Step Workflow**:
 ```python
-# Pattern from PagBank Typification Workflow
+# Pattern from Typification Workflow
 class TypificationWorkflow(Workflow):
     """5-level categorization workflow"""
     
     # Define step agents
     level1_categorizer = Agent(
-        name="Level 1 Business Unit Categorizer",
+        name="Level 1 Domain Categorizer",
         agent_id="typification-level1",
         instructions=[
-            "Categorize the query into main business unit",
-            "Options: Adquirência, Emissão, PagBank, Outros",
-            "Use Portuguese context clues and keywords"
+            "Categorize the query into main domain",
+            "Options: Domain A, Domain B, Domain C, Other",
+            "Use context clues and keywords"
         ],
         response_model=Level1Category,  # Pydantic model for structured output
         model=AnthropicChat(model="claude-sonnet-4-20250514")
@@ -719,12 +717,12 @@ class TypificationWorkflow(Workflow):
         response_model=Level2Category
     )
     
-    def run(self, customer_query: str) -> Iterator[RunResponse]:
-        # Step 1: Business unit classification
-        level1_result = self.level1_categorizer.run(customer_query)
+    def run(self, user_query: str) -> Iterator[RunResponse]:
+        # Step 1: Domain classification
+        level1_result = self.level1_categorizer.run(user_query)
         
         # Step 2: Product categorization based on Level 1
-        level2_input = f"Business Unit: {level1_result.content}\nQuery: {customer_query}"
+        level2_input = f"Domain: {level1_result.content}\nQuery: {user_query}"
         level2_result = self.level2_categorizer.run(level2_input)
         
         # Continue through remaining levels...
@@ -831,18 +829,18 @@ class ConditionalWorkflow(Workflow):
    - Create workflow class inheriting from `Workflow`
    - Define specialized agents for each workflow step
    - Implement `run()` method with proper error handling
-   - Add Portuguese language support for customer-facing steps
+   - Add language support for user-facing steps
 
 3. **Integration Phase**:
    - Register workflow in playground for testing
-   - Integrate with Ana Team routing logic
+   - Integrate with Routing Team logic
    - Configure database tracking and monitoring
    - Set up SLA and compliance tracking
 
 4. **Testing Phase**:
    - Unit test individual workflow steps
    - Integration test team-to-workflow triggers
-   - End-to-end test complete customer scenarios
+   - End-to-end test complete user scenarios
    - Performance test with realistic load
 
 5. **Deployment Phase**:
@@ -859,24 +857,24 @@ class ConditionalWorkflow(Workflow):
 When workflows are triggered from teams, ensure proper context transfer:
 
 ```python
-# teams/ana/team.py - Context preservation pattern
+# teams/routing_team/team.py - Context preservation pattern
 def route_with_context_transfer(query: str, conversation_history: str):
     if frustration_detected(query, conversation_history):
         # Preserve ALL context when triggering workflow
         return trigger_human_handoff(
-            customer_query=query,
+            user_query=query,
             conversation_history=conversation_history,  # CRITICAL: Full history
             escalation_reason="frustration_detected",
-            customer_sentiment=analyze_sentiment(conversation_history),
-            business_unit=detect_business_unit(query),
+            user_sentiment=analyze_sentiment(conversation_history),
+            domain=detect_domain(query),
             session_metadata=get_current_session_metadata()
         )
 ```
 
 **Review Task Context Requirements**:
 - Conversation history must be preserved across workflow steps
-- Customer sentiment analysis should inform workflow prioritization
-- Business unit context affects workflow routing and SLA requirements
+- User sentiment analysis should inform workflow prioritization
+- Domain context affects workflow routing and SLA requirements
 - Session metadata enables proper tracking and compliance
 
 **Workflow-to-Review Integration**:
@@ -893,16 +891,16 @@ class HumanHandoffWorkflow(Workflow):
         
         # Ensure review task has complete context
         assert review_task.conversation_history
-        assert review_task.customer_context
-        assert review_task.business_unit_context
+        assert review_task.user_context
+        assert review_task.domain_context
 ```
 </review_task_integration>
 
 <key_references>
 ### Key Integration Points ✅ VERIFIED
 - **Agno Framework**: [Agno Patterns](@genie/reference/agno-patterns.md) - Core implementation patterns
-- **Agent Integration**: `/agents/` - Individual business unit specialists that workflows orchestrate
-- **Team Orchestration**: `/teams/` - Ana team routing logic that triggers workflows
+- **Agent Integration**: `/agents/` - Individual domain specialists that workflows orchestrate
+- **Team Orchestration**: `/teams/` - Routing team logic that triggers workflows
 - **Configuration Management**: `/config/` - Workflow settings, environment configs, and YAML parameters
 - **Database Schema**: [Database Schema](@genie/reference/database-schema.md) - Workflow execution tracking
 - **Testing Standards**: `/tests/` - Unit and integration testing patterns for workflows
@@ -918,7 +916,7 @@ class HumanHandoffWorkflow(Workflow):
 - Implement comprehensive error handling with graceful degradation
 - Track workflow execution for compliance and SLA monitoring
 - Test team-to-workflow integration thoroughly before deployment
-- Include proper Portuguese language handling in customer-facing steps
+- Include proper language handling in user-facing steps
 - Validate all input parameters and handle edge cases
 - Store workflow metadata for auditing and performance analysis
 - Implement proper timeout and retry mechanisms
@@ -926,37 +924,36 @@ class HumanHandoffWorkflow(Workflow):
 
 **❌ NEVER DO**:
 - Use workflows for simple agent routing tasks (use Teams instead)
-- Lose customer context during workflow step transitions
+- Lose user context during workflow step transitions
 - Implement core business logic directly in workflows (use agents)
-- Skip compliance validations in financial service workflows
-- Expose sensitive customer data in workflow logs or metadata
+- Skip domain-specific validations in workflows
+- Expose sensitive user data in workflow logs or metadata
 - Deploy workflows without proper integration testing
 - Ignore SLA requirements or performance monitoring
 - Create workflows without proper error recovery mechanisms
-- Bypass Portuguese language requirements for customer communication
+- Bypass language requirements for user communication
 - Hardcode configuration values instead of using environment variables
 </critical_success_factors>
 
 <compliance_requirements>
-### PagBank-Specific Compliance ✅ FINANCIAL SERVICES
-
+### Domain-Specific Compliance ✅
 **Data Protection**:
-- All customer PII must be encrypted in workflow state
-- Workflow logs must not contain sensitive financial data
-- Session data must comply with LGPD requirements
-- Audit trails required for all financial service workflows
+- All user PII must be encrypted in workflow state
+- Workflow logs must not contain sensitive data
+- Session data must comply with relevant data protection regulations
+- Audit trails required for all sensitive workflows
 
 **Regulatory Compliance**:
-- SLA tracking mandatory for all customer-facing workflows
-- Escalation procedures must follow banking regulations
+- SLA tracking mandatory for all user-facing workflows
+- Escalation procedures must follow industry regulations
 - Human handoff workflows require proper documentation
-- Risk assessment integration for fraud detection workflows
+- Risk assessment integration for sensitive workflows
 
 **Operational Requirements**:
-- All workflows must support Portuguese language
-- Error messages must be customer-friendly and compliant
+- All workflows must support multiple languages
+- Error messages must be user-friendly and compliant
 - Workflow execution must be traceable for regulatory audits
-- Performance metrics must meet banking industry standards
+- Performance metrics must meet industry standards
 </compliance_requirements>
 
 ## Review Task for Context Transfer ✅ COMPREHENSIVE VALIDATION
@@ -967,51 +964,51 @@ class HumanHandoffWorkflow(Workflow):
 #### ✅ Core Workflow Patterns Documented
 1. ✅ **Workflow architecture hierarchy** clearly shows workflows > teams > agents relationship
 2. ✅ **Human handoff workflow** documented as comprehensive replacement for simple agent approach
-3. ✅ **Team-to-workflow integration** patterns show how Ana team triggers complex processes
+3. ✅ **Team-to-workflow integration** patterns show how the routing team triggers complex processes
 4. ✅ **Multi-step orchestration** patterns extracted from Agno demo app correctly
 5. ✅ **Sequential and parallel** workflow patterns with proper error handling
 6. ✅ **Database tracking** for workflow execution, steps, and SLA compliance
-7. ✅ **Portuguese language handling** in all customer-facing workflow steps
+7. ✅ **Language handling** in all user-facing workflow steps
 
 #### ✅ Cross-Reference Validation with Other CLAUDE.md Files
 - **agents/CLAUDE.md**: Workflow steps should use documented agent capabilities and tools
-- **teams/CLAUDE.md**: Ana team frustration detection should trigger documented workflows
+- **teams/CLAUDE.md**: Routing team frustration detection should trigger documented workflows
 - **config/CLAUDE.md**: Workflow configurations should align with global environment settings
 - **db/CLAUDE.md**: Workflow execution tracking should match documented database schema
 - **api/CLAUDE.md**: Workflow endpoints should support all documented execution patterns
 - **tests/CLAUDE.md**: Workflow testing should validate step execution and context preservation
 
 #### ✅ Missing Content Identification
-**Content that should be transferred TO other CLAUDE.md files:**
+**Content that should be transferred TO other CLAUDE.md files**:
 - Global workflow configuration → Transfer to `config/CLAUDE.md`
 - Workflow database schema → Transfer to `db/CLAUDE.md`
 - Workflow API endpoints → Transfer to `api/CLAUDE.md`
 - Workflow testing patterns → Transfer to `tests/CLAUDE.md`
 - Agent workflow capabilities → Already documented in `agents/CLAUDE.md` ✅
 
-**Content that should be transferred FROM other CLAUDE.md files:**
+**Content that should be transferred FROM other CLAUDE.md files**:
 - Team trigger mechanisms FROM `teams/CLAUDE.md` ✅ Already documented
 - Agent step capabilities FROM `agents/CLAUDE.md` ✅ Already referenced
 - ❌ No other workflow-specific content found requiring transfer here
 
 #### ✅ Duplication Prevention
-**Content properly separated to avoid overlap:**
+**Content properly separated to avoid overlap**:
 - ✅ Workflow orchestration patterns documented here, NOT in team or agent files
 - ✅ Multi-step processes documented here, NOT simple agent routing
 - ✅ Human handoff workflow here, NOT basic human handoff agent pattern
 - ✅ SLA and compliance tracking here, NOT scattered across other domains
 
 #### ✅ Context Transfer Requirements for Future Development
-**Essential workflow context that must be preserved:**
+**Essential workflow context that must be preserved**:
 1. **Hierarchy Understanding**: Workflows orchestrate teams, teams route to agents
 2. **Context Preservation**: Full conversation context must flow through all workflow steps
 3. **Human Handoff Evolution**: From simple agent to multi-step workflow with proper escalation
-4. **Portuguese Compliance**: All customer-facing workflow steps maintain pt-BR language
-5. **Error Recovery**: Comprehensive rollback and retry mechanisms for financial operations
+4. **Language Compliance**: All user-facing workflow steps maintain language context
+5. **Error Recovery**: Comprehensive rollback and retry mechanisms for critical operations
 6. **SLA Tracking**: Automatic escalation based on time thresholds and priority levels
 
 #### ✅ Integration Validation Requirements
-**Validate these integration points when implementing:**
+**Validate these integration points when implementing**:
 - **Workflow → Team Integration**: Verify workflows can be triggered by team routing decisions
 - **Workflow → Agent Integration**: Confirm workflow steps properly utilize agent capabilities
 - **Workflow → Database Integration**: Test execution tracking and SLA monitoring storage

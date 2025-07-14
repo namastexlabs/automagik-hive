@@ -1,74 +1,74 @@
-# Sistema Multi-Agente de Atendimento PagBank
+# Automagik Multi-Agent Framework
 
-Sistema sofisticado de atendimento ao cliente multi-agente construído com o framework Agno. O sistema roteia consultas de clientes para agentes especializados por unidade de negócio: Adquirência, Emissão, PagBank e Escalação Humana.
+A sophisticated multi-agent system framework built with the Agno framework. This system provides the foundation for creating specialized AI agents that can handle various domain-specific tasks with intelligent routing, context persistence, and seamless workflow management.
 
-## 🏗️ Visão Geral da Arquitetura
+## 🏗️ Framework Architecture Overview
 
-O sistema utiliza uma arquitetura de orquestração inteligente onde o Orquestrador Principal roteia consultas de clientes para agentes especializados. Cada agente possui acesso dedicado à base de conhecimento com filtragem inteligente para respostas precisas e contextuais.
+The framework utilizes an intelligent orchestration architecture where a central routing system directs queries to specialized agents. Each agent has dedicated access to domain-specific knowledge bases with intelligent filtering for precise and contextual responses.
 
 ```mermaid
 graph TB
-    %% Ponto de Entrada do Cliente
-    Customer[👤 Consulta do Cliente<br/>Linguagem Portuguesa] --> Orchestrator
+    %% User Entry Point
+    User[👤 User Query<br/>Domain-Specific Input] --> Router
 
-    %% Orquestrador Principal
-    Orchestrator[🎯 Orquestrador Principal<br/>Claude Sonnet 4<br/>Análise e Roteamento]
+    %% Central Router
+    Router[🎯 Central Router<br/>Claude Sonnet 4<br/>Analysis & Routing]
     
-    %% Decisão de Roteamento
-    Orchestrator --> Routing{🔀 Roteamento por<br/>Unidade de Negócio}
+    %% Routing Decision
+    Router --> Routing{🔀 Route by<br/>Domain/Context}
     
-    %% Detecção de Escalação Humana
-    Orchestrator --> HumanCheck{😤 Detecção de<br/>Frustração?}
-    HumanCheck -->|Nível 3+| HumanAgent[👨‍💼 Agente de Escalação<br/>Transferência Humana]
-    HumanAgent --> McpTool[🔧 MCP: automagik-tools<br/>mcp_evolution-api_send_message]
-    McpTool --> WhatsApp[📱 WhatsApp<br/>Notificação Stakeholders]
+    %% Human Escalation Detection
+    Router --> EscalationCheck{😤 Escalation<br/>Detection?}
+    EscalationCheck -->|Threshold Met| HumanAgent[👨‍💼 Escalation Agent<br/>Human Handoff]
+    HumanAgent --> McpTool[🔧 MCP: automagik-tools<br/>External Integrations]
+    McpTool --> ExternalSystems[📱 External Systems<br/>Notifications & APIs]
     
-    %% Agentes por Unidade de Negócio
-    Routing -->|Serviços Lojista| AdquirenciaAgent[🏪 Agente Adquirência<br/>Antecipação de Vendas<br/>Multiadquirência]
-    Routing -->|Produtos Cartão| EmissaoAgent[💳 Agente Emissão<br/>Cartões Crédito/Débito<br/>Gestão de Cartões]
-    Routing -->|Banco Digital| PagBankAgent[💻 Agente PagBank<br/>PIX, Transferências<br/>Conta Digital]
+    %% Domain Agents
+    Routing -->|Technical| TechAgent[💻 Technical Agent<br/>Technical Support<br/>Implementation Help]
+    Routing -->|Business| BusinessAgent[🏢 Business Agent<br/>Requirements Analysis<br/>Process Optimization]
+    Routing -->|Support| SupportAgent[🎧 Support Agent<br/>Customer Service<br/>Issue Resolution]
     
-    %% Sistema Base de Conhecimento
-    subgraph Knowledge["📚 Sistema Base de Conhecimento"]
-        CSV[📄 Conhecimento CSV<br/>622 Documentos<br/>Filtrado por Unidade]
-        Vector[(🔍 Banco Vetorial<br/>Embeddings OpenAI<br/>Busca Semântica)]
-        CSV --> Vector
+    %% Knowledge System
+    subgraph Knowledge["📚 Knowledge Management System"]
+        KB[📄 Domain Knowledge<br/>CSV/Documents<br/>Filtered by Context]
+        Vector[(🔍 Vector Store<br/>Embeddings<br/>Semantic Search)]
+        KB --> Vector
     end
     
-    %% Filtragem por Unidade
-    AdquirenciaAgent --> Filter1[🎯 Filtro Negócio<br/>unidade: adquirencia<br/>Foco Lojista]
-    EmissaoAgent --> Filter2[🎯 Filtro Negócio<br/>unidade: emissao<br/>Foco Cartões]
-    PagBankAgent --> Filter3[🎯 Filtro Negócio<br/>unidade: pagbank<br/>Foco Bancário]
+    %% Domain Filtering
+    TechAgent --> Filter1[🎯 Context Filter<br/>domain: technical<br/>Focus: Implementation]
+    BusinessAgent --> Filter2[🎯 Context Filter<br/>domain: business<br/>Focus: Strategy]
+    SupportAgent --> Filter3[🎯 Context Filter<br/>domain: support<br/>Focus: Resolution]
     
-    %% Consultas de Conhecimento
+    %% Knowledge Queries
     Filter1 --> Vector
     Filter2 --> Vector
     Filter3 --> Vector
     
-    %% Sistema de Memória
-    subgraph Memory["🧠 Sistema de Memória"]
-        AgnoMemory[(🗃️ Agno Memory v2<br/>Armazenamento SQLite<br/>Contexto Entre Sessões)]
-        PatternDetect[🔍 Detecção de Padrões<br/>Sistema de Aprendizado]
-        SessionMgmt[⏱️ Gestão de Sessões<br/>Timeout 30min<br/>Limite 20 Turnos]
+    %% Memory System
+    subgraph Memory["🧠 Memory Management"]
+        AgnoMemory[(🗃️ Agno Memory v2<br/>SQLite Storage<br/>Cross-Session Context)]
+        PatternDetect[🔍 Pattern Detection<br/>Learning System]
+        SessionMgmt[⏱️ Session Management<br/>Configurable Timeouts<br/>Conversation Limits]
     end
     
-    %% Integração de Memória
-    AdquirenciaAgent --> AgnoMemory
-    EmissaoAgent --> AgnoMemory
-    PagBankAgent --> AgnoMemory
+    %% Memory Integration
+    TechAgent --> AgnoMemory
+    BusinessAgent --> AgnoMemory
+    SupportAgent --> AgnoMemory
     HumanAgent --> AgnoMemory
-    Orchestrator --> AgnoMemory
+    Router --> AgnoMemory
     
     AgnoMemory --> PatternDetect
     AgnoMemory --> SessionMgmt
     
-    %% Fluxo de Resposta
-    AdquirenciaAgent --> Response[📝 Resposta do Agente<br/>Especializada por Unidade]
-    EmissaoAgent --> Response
-    PagBankAgent --> Response
+    %% Response Flow
+    TechAgent --> Response[📝 Agent Response<br/>Domain-Specialized]
+    BusinessAgent --> Response
+    SupportAgent --> Response
     
-    Response --> MemoryUpdate[💾 Atualização Memória<br/>Preservação Contexto]
-    MemoryUpdate --> FinalResponse[✅ Resposta Final<br/>para Cliente]
+    Response --> MemoryUpdate[💾 Memory Update<br/>Context Preservation]
+    MemoryUpdate --> FinalResponse[✅ Final Response<br/>to User]
     
     %% Styling
     classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
@@ -77,30 +77,30 @@ graph TB
     classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
     classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
     
-    class AdquirenciaAgent,EmissaoAgent,PagBankAgent,HumanAgent agent
-    class CSV,Vector,Filter1,Filter2,Filter3 knowledge
+    class TechAgent,BusinessAgent,SupportAgent,HumanAgent agent
+    class KB,Vector,Filter1,Filter2,Filter3 knowledge
     class AgnoMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
-    class Routing,HumanCheck decision
-    class WhatsApp,Customer,McpTool external
+    class Routing,EscalationCheck decision
+    class ExternalSystems,User,McpTool external
 ```
 
-## 🚀 Início Rápido
+## 🚀 Quick Start
 
-### Configuração de Desenvolvimento
+### Development Setup
 
-#### Configuração de Ambiente
+#### Environment Configuration
 ```bash
-# Copiar arquivo de exemplo
+# Copy example configuration
 cp .env.example .env
 
-# Editar .env com suas configurações
-# PB_AGENTS_HOST=localhost  # Usar localhost para acesso local
-# PB_AGENTS_PORT=8008       # Porta customizável
+# Edit .env with your settings
+# AGENTS_HOST=localhost  # Use localhost for local access
+# AGENTS_PORT=8008       # Customizable port
 ```
 
-#### Opção 1: PostgreSQL (Recomendado)
+#### Option 1: PostgreSQL (Recommended)
 ```bash
-# Iniciar PostgreSQL com Docker
+# Start PostgreSQL with Docker
 docker run -d \
   -e POSTGRES_DB=ai \
   -e POSTGRES_USER=ai \
@@ -109,190 +109,210 @@ docker run -d \
   --name pgvector \
   agno/pgvector:16
 
-# Instalar dependências
+# Install dependencies
 uv sync
 
-# Iniciar sistema
-uv run python api/playground.py  # Desenvolvimento
-uv run python api/serve.py       # Produção
+# Start system
+uv run python api/playground.py  # Development
+uv run python api/serve.py       # Production
 ```
 
-#### Opção 2: SQLite (Desenvolvimento Local)
+#### Option 2: SQLite (Local Development)
 ```bash
-# Instalar dependências
+# Install dependencies
 uv sync
 
-# Iniciar sistema (SQLite será usado automaticamente)
-uv run python api/playground.py  # Desenvolvimento
-uv run python api/serve.py       # Produção
+# Start system (SQLite used automatically)
+uv run python api/playground.py  # Development
+uv run python api/serve.py       # Production
 ```
 
-Endpoints disponíveis:
-- Desenvolvimento: http://localhost:7777 (Playground com UI)
-- Produção: Usa portas padrão do Agno (configurável via PB_AGENTS_HOST e PB_AGENTS_PORT)
+Available endpoints:
+- Development: http://localhost:7777 (Playground with UI)
+- Production: Uses standard Agno ports (configurable via AGENTS_HOST and AGENTS_PORT)
 
-## 🤖 Agentes por Unidade de Negócio
+## 🤖 Agent Architecture
 
-### Arquitetura dos Agentes
-Cada agente de unidade de negócio opera independentemente com:
+### Core Agent Components
+Each domain agent operates independently with:
 
-- **Claude Sonnet 4**: Raciocínio avançado com capacidade de thinking
-- **Filtragem por Unidade**: Filtragem especializada da base de conhecimento
-- **Integração de Memória**: Contexto persistente entre conversas
-- **Expertise de Domínio**: Conhecimento profundo para cada unidade de negócio
+- **Claude Sonnet 4**: Advanced reasoning with thinking capabilities
+- **Domain Filtering**: Specialized knowledge base filtering
+- **Memory Integration**: Persistent context across conversations
+- **Domain Expertise**: Deep knowledge for specific use cases
 
-### Unidades de Negócio
+### Example Domain Implementations
 
-1. **🏪 Adquirência**: Antecipação de vendas, multiadquirência, soluções para lojistas, processamento de pagamentos
-2. **💳 Emissão**: Cartões de crédito/débito, gestão de cartões, limites, benefícios, uso internacional
-3. **💻 PagBank**: Transferências PIX, conta digital, folha de pagamento, recarga celular, segurança da conta
-4. **👨‍💼 Escalação Humana**: Gestão de escalações, integração WhatsApp, roteamento de casos complexos
+The framework includes example implementations to demonstrate its capabilities:
 
-## 🎯 Filtragem Inteligente de Conhecimento
+1. **🏪 Merchant Services**: Payment processing, merchant services, sales anticipation
+2. **💳 Card Services**: Card management, credit/debit cards, limits and benefits
+3. **💻 Digital Banking**: Digital transfers, digital account, payments, security
+4. **👨‍💼 Human Escalation**: Escalation management, external integrations, complex case routing
 
-### Sistema de Filtros por Unidade de Negócio
-O sistema automaticamente aplica filtros precisos baseados nas unidades de negócio:
+## 🎯 Intelligent Knowledge Filtering
+
+### Context-Aware Filtering System
+The framework automatically applies precise filters based on domain context:
 
 ```
-Consulta: "Como solicitar antecipação de vendas?"
-↓ Análise Automática ↓
-Filtros Aplicados:
-- business_unit: "adquirencia" (contexto do agente)
-- typification: auto-detectado da consulta
-↓ Resultado ↓
-Documentos mais relevantes da unidade de negócio
+Query: "How do I implement OAuth authentication?"
+↓ Automatic Analysis ↓
+Filters Applied:
+- domain: "technical" (from agent context)
+- topic: auto-detected from query
+↓ Result ↓
+Most relevant technical documentation
 ```
 
-### Estrutura da Base de Conhecimento
-- **📄 622 Documentos**: Conhecimento abrangente dos serviços
-- **🎯 4 Colunas Principais**: 
-  - `problem`: Descrição do problema/consulta
-  - `solution`: Solução detalhada
-  - `typification`: Classificação do tipo de atendimento
-  - `business_unit`: Unidade de negócio responsável
-- **🔍 Embeddings OpenAI**: Busca semântica rápida
-- **🔄 Hot Reload**: Atualizações do CSV sem parada do sistema
+### Knowledge Base Structure
+- **📄 Flexible Documents**: Extensible knowledge management
+- **🎯 Core Columns**: 
+  - `problem`: Query/issue description
+  - `solution`: Detailed solution
+  - `category`: Classification type
+  - `domain`: Responsible domain area
+- **🔍 Semantic Search**: Fast OpenAI embeddings-based search
+- **🔄 Hot Reload**: Knowledge updates without system restart
 
-## 🧠 Gestão de Memória e Contexto
+## 🧠 Memory & Context Management
 
-### Integração Agno Memory v2
-- **Persistência Entre Sessões**: Contexto do cliente mantido entre conversas
-- **Detecção de Padrões**: Sistema aprende com problemas e comportamentos recorrentes
-- **Estado Compartilhado**: Transferências perfeitas entre agentes
-- **Limites de Conversa**: Sessões de 30 minutos com máximo de 20 turnos
+### Agno Memory v2 Integration
+- **Cross-Session Persistence**: User context maintained between conversations
+- **Pattern Detection**: System learns from recurring issues and behaviors
+- **Shared State**: Seamless transfers between agents
+- **Configurable Limits**: Customizable session timeouts and conversation limits
 
-### Funcionalidades de Memória
-- **Contexto do Usuário**: Interações anteriores e preferências
-- **Rastreamento de Problemas**: Histórico de resolução de problemas
-- **Sistema de Aprendizado**: Melhoria adaptativa através de padrões
-- **Trilha de Auditoria**: Log completo de interações para compliance
+### Memory Features
+- **User Context**: Previous interactions and preferences
+- **Issue Tracking**: Problem resolution history
+- **Learning System**: Adaptive improvement through pattern recognition
+- **Audit Trail**: Complete interaction logging for compliance
 
-## 📱 Escalação Humana & Integração WhatsApp
+## 📱 Escalation & External Integrations
 
-### Detecção de Frustração
-- **Monitoramento Automático**: Rastreamento em tempo real do nível de frustração
-- **Trigger Nível 3**: Escalação imediata para agente humano
-- **Preservação de Contexto**: Histórico completo da conversa transferido
+### Escalation Detection
+- **Automatic Monitoring**: Real-time escalation threshold tracking
+- **Configurable Triggers**: Customizable escalation criteria
+- **Context Preservation**: Complete conversation history transferred
 
-### Integração WhatsApp Evolution API
+### External System Integration
 ```
-Frustração Detectada → Agente de Escalação → Evolution API
-                                          ↓
-                        Chamada HTTP direta para serviço WhatsApp
-                        com contexto completo da conversa
+Escalation Detected → Escalation Agent → External APIs
+                                      ↓
+                    Direct HTTP calls to external services
+                    with complete conversation context
 ```
 
-## 🛠️ Stack Técnico
+## 🛠️ Technology Stack
 
-- **🤖 Framework IA**: Sistema Multi-Agente Agno
-- **🧠 LLM**: Claude Sonnet 4 com capacidade de thinking
-- **💾 Memória**: SQLite com Agno Memory v2
-- **🔍 Vector Store**: Banco vetorial com indexação
+- **🤖 AI Framework**: Agno Multi-Agent System
+- **🧠 LLM**: Claude Sonnet 4 with thinking capabilities
+- **💾 Memory**: SQLite with Agno Memory v2
+- **🔍 Vector Store**: Vector database with indexing
 - **📄 Embeddings**: OpenAI text-embedding-3-small
-- **🔧 Linguagem**: Python 3.12+ com gerenciamento UV
+- **🔧 Language**: Python 3.12+ with UV package management
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
-pagbank-multiagents/
-├── agents/                    # Sistema de agentes por unidade de negócio
-│   ├── specialists/               # Agentes especializados por unidade
-│   │   ├── base_agent.py         # Classe base dos agentes
-│   │   ├── adquirencia_agent.py  # Agente de Adquirência
-│   │   ├── emissao_agent.py      # Agente de Emissão
-│   │   ├── pagbank_agent.py      # Agente PagBank
-│   │   └── human_handoff_agent.py # Escalação humana
-│   ├── prompts/                   # Prompts dos agentes
-│   │   └── specialists/           # Prompts especializados por unidade
-│   └── tools/                     # Ferramentas compartilhadas
-├── orchestrator/              # Sistema de orquestração
-│   ├── main_orchestrator.py       # Orquestrador principal
-│   ├── clarification_handler.py   # Tratamento de esclarecimentos
-│   ├── human_handoff_detector.py  # Detecção de frustração
-│   ├── routing_logic.py           # Algoritmos de roteamento
-│   └── state_synchronizer.py     # Gestão de estado
-├── knowledge/                 # Sistema de base de conhecimento
-│   ├── csv_knowledge_base.py      # Integração CSV
-│   ├── enhanced_csv_reader.py     # Extração de metadados
-│   ├── agentic_filters.py         # Filtragem inteligente
-│   └── knowledge_rag.csv          # 622 documentos
-├── memory/                    # Sistema de memória
+automagik-agents/
+├── agents/                    # Domain-specific agents
+│   ├── specialists/               # Specialized agents
+│   │   ├── base_agent.py         # Base agent class
+│   │   ├── technical_agent.py    # Technical domain agent
+│   │   ├── business_agent.py     # Business domain agent
+│   │   ├── support_agent.py      # Support domain agent
+│   │   └── escalation_agent.py   # Human escalation
+│   ├── prompts/                   # Agent prompts
+│   │   └── specialists/           # Domain-specific prompts
+│   └── tools/                     # Shared tools
+├── orchestrator/              # Orchestration system
+│   ├── main_orchestrator.py       # Central orchestrator
+│   ├── clarification_handler.py   # Query clarification
+│   ├── escalation_detector.py     # Escalation detection
+│   ├── routing_logic.py           # Routing algorithms
+│   └── state_synchronizer.py     # State management
+├── knowledge/                 # Knowledge management
+│   ├── knowledge_base.py          # Knowledge integration
+│   ├── enhanced_reader.py         # Metadata extraction
+│   ├── context_filters.py         # Intelligent filtering
+│   └── domain_knowledge.csv       # Domain knowledge
+├── memory/                    # Memory system
 │   ├── memory_manager.py          # Agno Memory v2
-│   ├── pattern_detector.py        # Reconhecimento de padrões
-│   └── session_manager.py         # Gestão de sessões
-├── config/                    # Configuração do sistema
-├── data/                      # Bancos de dados SQLite
-├── tests/                     # Testes automatizados
-│   ├── unit/                      # Testes unitários
-│   ├── integration/               # Testes de integração
-│   └── performance/               # Testes de performance
-├── scripts/                   # Scripts utilitários
-└── playground.py              # Ponto de entrada do sistema
+│   ├── pattern_detector.py        # Pattern recognition
+│   └── session_manager.py         # Session management
+├── config/                    # System configuration
+├── data/                      # Database storage
+├── tests/                     # Automated testing
+│   ├── unit/                      # Unit tests
+│   ├── integration/               # Integration tests
+│   └── performance/               # Performance tests
+├── scripts/                   # Utility scripts
+├── examples/                  # Example implementations
+│   └── financial_services/        # Financial services example
+└── playground.py              # System entry point
 ```
 
-## 🎯 Funcionalidades Principais
+## 🎯 Key Features
 
-### Inteligência & Automação
-- **🎯 Filtragem de Precisão**: Filtros por unidade de negócio entregam respostas mais relevantes
-- **🧠 Consciência de Contexto**: Conversas alimentadas por memória com capacidades de aprendizado
-- **⚡ Performance**: Tempos de resposta sub-2-segundos com roteamento inteligente
-- **🔄 Escalabilidade**: Agentes independentes com infraestrutura de conhecimento compartilhada
+### Intelligence & Automation
+- **🎯 Precision Filtering**: Domain-based filters deliver highly relevant responses
+- **🧠 Context Awareness**: Memory-powered conversations with learning capabilities
+- **⚡ Performance**: Sub-2-second response times with intelligent routing
+- **🔄 Scalability**: Independent agents with shared knowledge infrastructure
 
-### Integração Humana
-- **👥 Escalação Perfeita**: Detecção automática de frustração com notificações WhatsApp
-- **📱 Evolution API**: Integração HTTP direta com serviço WhatsApp
-- **📊 Transferência de Contexto**: Histórico completo de conversa preservado durante transferências
-- **🎫 Sistema de Tickets**: Gestão estruturada e rastreamento de casos
+### Human Integration
+- **👥 Seamless Escalation**: Automatic escalation detection with external notifications
+- **📱 External APIs**: Direct HTTP integration with external services
+- **📊 Context Transfer**: Complete conversation history preserved during transfers
+- **🎫 Ticket System**: Structured case management and tracking
 
-### Gestão de Conhecimento
-- **📚 Busca Inteligente**: Consultas em linguagem natural automaticamente filtradas
-- **🔄 Hot Reload**: Atualizações de conhecimento em tempo real sem reinicialização
-- **🎯 Expertise de Domínio**: Especialização por unidade de negócio
-- **📈 Sistema de Aprendizado**: Melhoria contínua através de detecção de padrões
+### Knowledge Management
+- **📚 Intelligent Search**: Natural language queries automatically filtered
+- **🔄 Hot Reload**: Real-time knowledge updates without restart
+- **🎯 Domain Expertise**: Specialization by domain area
+- **📈 Learning System**: Continuous improvement through pattern detection
 
-## 🔐 Segurança & Compliance
+## 🔐 Security & Compliance
 
-- **🔒 Privacidade de Dados**: Proteção de informações do cliente com trilhas de auditoria abrangentes
-- **🏛️ Compliance Bancário**: Aderência total às regulamentações financeiras
-- **📊 Garantia de Qualidade**: Validação de respostas e monitoramento de precisão
-- **🛡️ Detecção de Fraude**: Reconhecimento avançado de padrões para ameaças de segurança
-- **🔑 Controle de Acesso**: Permissões baseadas em função e integração segura de API
+- **🔒 Data Privacy**: User information protection with comprehensive audit trails
+- **🏛️ Configurable Compliance**: Adaptable to various regulatory requirements
+- **📊 Quality Assurance**: Response validation and accuracy monitoring
+- **🛡️ Pattern Detection**: Advanced pattern recognition for security threats
+- **🔑 Access Control**: Role-based permissions and secure API integration
 
-## 📊 Performance do Sistema
+## 📊 System Performance
 
-### Otimização de Resposta
-- **Roteamento Inteligente**: Distribuição de consultas consciente de contexto entre agentes especializados
-- **Filtragem de Precisão**: Redução significativa no espaço de busca através de filtragem por unidade
-- **Eficiência de Memória**: Gestão de contexto persistente sem redundância
-- **Tempo de Resposta**: < 2 segundos em média com respostas altamente relevantes e contextuais
+### Response Optimization
+- **Intelligent Routing**: Context-aware query distribution across specialized agents
+- **Precision Filtering**: Significant search space reduction through domain filtering
+- **Memory Efficiency**: Persistent context management without redundancy
+- **Response Time**: < 2 seconds average with highly relevant and contextual responses
 
-### Métricas de Escalabilidade
-- **Independência de Agentes**: Especialização por unidade sem overhead de coordenação
-- **Eficiência de Conhecimento**: Filtragem reduz overhead de processamento
-- **Escalabilidade de Memória**: Armazenamento e recuperação eficientes entre sessões
-- **Distribuição de Carga**: Roteamento automático balanceia carga do sistema efetivamente
+### Scalability Metrics
+- **Agent Independence**: Domain specialization without coordination overhead
+- **Knowledge Efficiency**: Filtering reduces processing overhead
+- **Memory Scalability**: Efficient cross-session storage and retrieval
+- **Load Distribution**: Automatic routing balances system load effectively
+
+## 🌟 Example Implementations
+
+### Financial Services Example
+The framework includes a complete financial services implementation demonstrating:
+- Multi-domain agent coordination (Banking, Cards, Merchant Services)
+- Internationalization and language support
+- Domain-specific compliance and fraud detection
+- External notification integration for human escalation
+
+### Getting Started with Your Domain
+1. **Define Your Domain**: Identify your specific use case and requirements
+2. **Create Agents**: Implement domain-specific agents using the provided base classes
+3. **Configure Knowledge**: Set up your domain knowledge base and filtering rules
+4. **Customize Routing**: Define routing logic for your specific workflows
+5. **Test & Deploy**: Use the comprehensive testing framework to validate your implementation
 
 ---
 
-**Desenvolvido pela Namastex Labs & Yaitech usando o Framework Agno**  
-**© PagBank 2025**
+**Developed by Namastex Labs & Yaitech using the Agno Framework**  
+**© 2025 - Open Source Multi-Agent Framework**

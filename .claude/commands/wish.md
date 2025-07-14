@@ -2,188 +2,239 @@
 
 ---
 allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(*), Bash(*), LS(*), NotebookRead(*), NotebookEdit(*), WebFetch(*), TodoWrite(*), WebSearch(*), ListMcpResourcesTool(*), ReadMcpResourceTool(*), mcp__zen__chat(*), mcp__zen__thinkdeep(*), mcp__zen__planner(*), mcp__zen__consensus(*), mcp__zen__codereview(*), mcp__zen__precommit(*), mcp__zen__debug(*), mcp__zen__secaudit(*), mcp__zen__docgen(*), mcp__zen__analyze(*), mcp__zen__refactor(*), mcp__zen__tracer(*), mcp__zen__testgen(*), mcp__zen__challenge(*), mcp__zen__listmodels(*), mcp__zen__version(*), mcp__search-repo-docs__*, mcp__ask-repo-agent__*, mcp__wait__*, mcp__send_whatsapp_message__*
-description: Transform user wishes into structured epics through intelligent analysis, multi-model consultation, and automated orchestration
+description: Transform development wishes into actionable work
 ---
 
-🚧 **DEVELOPMENT MODE** 🚧
-Testing the complete wish → epic → tasks workflow with context injection and automation.
+## Purpose
 
-Transform any development wish into a fully orchestrated epic with automatic task generation and context flow.
+Intelligent orchestration entry point that transforms natural language development wishes into actionable work through AI classification, clarification dialogue, and command routing.
 
-## Enhanced Workflow (Learning from CCDK)
+## Core Flow
 
-```mermaid
-graph TD
-    A[User: /wish "I want..."] --> B[Claude: Analyzes wish]
-    B --> C{Complex enough for Gemini?}
-    C -->|Yes| D[/gemini-consult for architecture advice]
-    C -->|No| E[Direct analysis]
-    D --> F[Claude: Intelligent Q&A with user]
-    E --> F
-    F --> G[Claude: /epic to structure]
-    G --> H[Claude: /spawn-tasks to create files]
-    H --> I[Hooks: Automate everything]
-    I --> J[Ready for multi-agent work]
+```
+/wish → classify intent → clarify scope → route to commands → progressive enhancement → epic/tasks (if needed) → execution
 ```
 
-## How It Works
+## Execution Protocol
 
-### Phase 1: Wish Analysis & Consultation
+### 1. Intent Classification
 
-When you express a wish, Claude:
+Analyze user wish: "$ARGUMENTS"
 
-1. **Analyzes the request** to understand scope and complexity
-2. **Checks existing context**:
-   - Current epic state
-   - Available patterns in reference/
-   - Recently modified files
-   - Open issues or blockers
+**Classification categories:**
 
-3. **Decides if external consultation needed**:
-   ```python
-   # Complex architectural decisions → Gemini
-   # Framework questions → search-repo-docs
-   # Pattern questions → reference/ files
-   # Simple tasks → direct processing
-   ```
+| Intent | Routes To | Complexity |
+|--------|-----------|------------|
+| **Understanding/Investigation** | `/full-context` | Low → High |
+| **Bug/Fix** | `/code-review` | Low → High |
+| **Code Review** | `/code-review` | Medium |
+| **Refactoring** | `/refactor` | Medium → High |
+| **Architecture/Design** | `/architect`* | High |
+| **Implementation** | `/full-context` → implement | Medium → High |
+| **Documentation** | `/create-docs` or `/update-docs` | Low → Medium |
+| **Testing** | `/test-gen`* | Medium |
+| **Knowledge Transfer** | `/handoff` | Medium |
+| **Multi-Intent/Complex** | Decompose & coordinate | High |
 
-4. **Consults intelligently** (if needed):
-   ```python
-   # Example: Architecture consultation
-   /gemini-consult "User wants: [wish]. Given our epic-based Genie Framework 
-                   with @genie/active/genie-framework-analysis-report.md context,
-                   what's the best approach for automatic context flow?"
-   ```
+*Commands marked with asterisk need implementation
 
-### Phase 2: Intelligent Dialogue
+### 2. Clarification Dialogue
 
-Claude engages with you to gather context, asking questions based on:
-- Wish complexity
-- Detected patterns
-- Gemini's insights (if consulted)
-- Existing framework constraints
+**ALWAYS engage user for clarity after classification:**
 
-Questions are dynamic and contextual, not a rigid form.
+Based on detected intent, ask focused questions:
+- **Bug/Fix**: "Which component or file? What's the exact error or behavior?"
+- **Implementation**: "New feature or enhancement? Similar to any existing features?"
+- **Refactoring**: "Focus on performance, readability, or structural improvements?"
+- **Understanding**: "Which specific system, component, or workflow?"
+- **Architecture**: "Greenfield design or evolution of existing system?"
+- **Multi-Intent**: "What's the priority order for these tasks?"
 
-### Phase 3: Epic Structuring (Internal)
+Continue dialogue until scope is crystal clear before proceeding.
 
-Claude internally uses `/epic` to:
-- Synthesize all gathered information
-- Structure tasks with dependencies
-- Define success criteria
-- Generate comprehensive epic document
+### 3. Progressive Enhancement Strategy
 
-### Phase 4: Task Generation (Internal)
+**Start simple, escalate as needed:**
 
-Claude uses `/spawn-tasks` to:
-- Parse the epic structure
-- Create individual task files
-- Set up automation triggers
-- Initialize reference patterns
+#### Level 1: Direct Execution
+- Try immediate fix or implementation
+- Single command execution
+- No analysis paralysis
 
-### Phase 5: Automation Magic
+#### Level 2: Add Analysis (if L1 fails)
+- Include investigation phase
+- Use command's analysis capabilities
+- Single agent with deeper dive
 
-Hooks handle everything automatically:
-- Update CURRENT_EPIC in CLAUDE.md
-- Move files to correct folders
-- Set up task dependencies
-- Inject context for all agents
+#### Level 3: Consult Specialists (if L2 fails)
+- Use zen tools with specific LLM models
+- Leverage specialized reasoning
+- Coordinate multiple perspectives
 
-## Usage Examples
+#### Level 4: Full Investigation (if L3 fails)
+- Comprehensive multi-agent analysis
+- Parallel investigations across domains
+- Generate epic with full task breakdown
 
-### Simple Wish
-```bash
-/wish "Fix the routing bug in Ana team"
+### 4. Command Routing & Orchestration
+
+**Natural language command generation:**
 ```
-Claude: Direct analysis → targeted questions → bug fix epic
-
-### Complex Wish
-```bash
-/wish "I wish to finish the creation of my AI development agent team and framework system. My desired output is to create a truly bulletproof framework where context flows automatically to every agent at every level."
-```
-Claude: Gemini consultation → deep architecture discussion → comprehensive epic
-
-### Feature Wish
-```bash
-/wish "Add support for #epic: and #task: references in all commands"
-```
-Claude: Pattern analysis → implementation questions → feature epic
-
-## Intelligent Context Gathering
-
-### What Claude Considers
-1. **Existing Patterns**: Checks @genie/reference/* for similar work
-2. **Current State**: Reads epic status, active tasks, blockers
-3. **Technical Context**: Reviews recent commits, modified files
-4. **External Knowledge**: Consults documentation via MCP tools
-
-### Dynamic Question Categories
-
-Based on wish analysis, Claude selects from:
-
-```yaml
-architecture_questions:
-  - "What's the desired end-state architecture?"
-  - "Should we follow patterns from @genie/reference/*?"
-  - "Are there external libraries to consider?"
-
-implementation_questions:
-  - "Which files are the main touchpoints?"
-  - "What's the preferred technical approach?"
-  - "Any existing code to preserve?"
-
-validation_questions:
-  - "How will we test this?"
-  - "What are the success metrics?"
-  - "Any compliance requirements?"
-
-scope_questions:
-  - "What's explicitly in/out of scope?"
-  - "Should this affect all agents or subset?"
-  - "Any timeline constraints?"
+# Instead of regex, use understanding:
+"Look for existing patterns in reference/ related to: [clarified scope]"
+"Check if similar problems have been solved before"
 ```
 
-## Multi-Command Orchestration
+**Multi-intent handling:**
+- Decompose compound wishes
+- Identify parallelizable work with [P] markers
+- Mark dependencies with [W:task-id]
+- Sequential work marked with [S]
 
-The `/wish` command orchestrates multiple tools:
+### 5. Epic Generation & Task Automation
 
-1. **Analysis Phase**:
-   - `/zen-analyze` - Deep pattern analysis
-   - `/full-context` - Comprehensive understanding
-   - `/gemini-consult` - Architecture advice
+**When epic is needed (based on complexity, not just intent):**
 
-2. **Planning Phase**:
-   - `/zen-plan` - Sequential planning
-   - `/zen-consensus` - Multi-model validation
+1. Write epic document to `genie/staging/[epic-id].md`
+2. Hook `epic-generator.sh` triggers:
+   - Parses epic structure
+   - Identifies task parallelization
+   - Creates dependency graph
+   - Generates `/spawn-tasks` command
+   - Marks tasks: [P] parallel, [W:id] wait, [S] sequential
 
-3. **Execution Phase**:
-   - `/epic` - Structure generation (internal)
-   - `/spawn-tasks` - Task creation (internal)
+**Epic triggers when:**
+- Multiple commands needed
+- Cross-system changes
+- Multi-day effort estimated
+- Architectural decisions involved
 
-## Context Injection (Coming Soon)
+## LLM Model Integration via Zen Tools
 
-All commands will benefit from automatic context:
-- Epic context via #epic:current
-- Task context via #task:id
-- Pattern context via #pattern:name
-- Agent context via #context:agent
+### Zen Commands Supporting Multiple Models:
+```
+# Commands that work with O3, Grok, and Gemini (when available):
+mcp__zen__chat - General discussion and brainstorming
+mcp__zen__thinkdeep - Complex problem investigation
+mcp__zen__consensus - Multi-model validation
+mcp__zen__analyze - Code and architecture analysis
+mcp__zen__debug - Debugging assistance
+mcp__zen__codereview - Code quality assessment
+mcp__zen__refactor - Refactoring suggestions
+```
 
-## Development Testing Flow
+### Model Selection for Progressive Enhancement:
+**Level 3 Specialist Consultation Examples:**
+```python
+# For complex debugging (L3)
+mcp__zen__debug(
+    model="o3",  # Strong reasoning
+    step="Debug complex race condition",
+    problem_context=clarified_scope
+)
 
-Since we're building this together:
+# For architectural validation (L3)
+mcp__zen__consensus(
+    models=[
+        {"model": "o3"},
+        {"model": "grok"},
+        {"model": "gemini"}  # if available
+    ],
+    step="Validate caching architecture"
+)
 
-1. **Test Wish Analysis**: Try different wishes, see how it routes
-2. **Test Consultations**: When does it consult Gemini/docs?
-3. **Test Dialogue**: Are questions extracting good context?
-4. **Test Epic Generation**: Quality of structured output
-5. **Test Automation**: Do hooks work correctly?
+# For deep analysis (L3)
+mcp__zen__thinkdeep(
+    model="grok",  # 256K context
+    step="Investigate system bottleneck",
+    thinking_mode="high"
+)
+```
 
-## Next Commands to Build
+### Natural Model Selection:
+Each command intelligently selects models based on task:
+- **Complex reasoning**: O3 family
+- **Large context**: Grok (256K)
+- **Implementation guidance**: Your analysis + zen validation
+- **Consensus needs**: Multiple models via consensus
 
-1. **`/epic`** (internal use): Structures epic from gathered context
-2. **`/spawn-tasks`** (internal use): Creates task files from epic
-3. **Hooks**: Automate file movements and state updates
+## Intelligence Rules
+
+1. **Multi-intent detection**: Decompose compound wishes into atomic, executable intents
+2. **Context preservation**: Original wish context flows through entire execution chain
+3. **Progressive complexity**: Start simple (L1), escalate only on failure
+4. **Parallel execution**: Identify and mark all parallelizable work
+5. **Implicit requirements**: Detect unstated needs (tests for new features, docs for APIs)
+
+## Hook Integration
+
+- **Pre-execution**: Pattern detection via `pattern-finder.sh`
+- **Post-classification**: Clarification dialogue logger
+- **Epic creation**: `epic-generator.sh` for task decomposition
+- **Task spawning**: Auto-parallelization analyzer
+- **Context injection**: Ensures all agents get necessary context
+
+## Structured Output Format
+
+```markdown
+# Wish Analysis: [User's Original Wish]
+
+## 1. Intent Classification
+- Primary: [category] (confidence: X%)
+- Secondary: [if any] (confidence: Y%)
+- Complexity: [Low/Medium/High]
+
+## 2. Clarification Summary
+- Questions asked: [list]
+- User responses: [answers]
+- Refined scope: [clear description]
+
+## 3. Execution Strategy
+- Starting level: [L1/L2/L3/L4]
+- Commands to execute: [ordered list]
+- Parallelization: [P] marked tasks
+- Dependencies: [W:id] marked tasks
+
+## 4. Command Results
+[Results from each executed command]
+
+## 5. Epic Proposal (if complexity warrants)
+- Epic needed: [Yes/No]
+- Reason: [complexity/multi-command/cross-system]
+- Task breakdown:
+  - [P] T-001: [task] 
+  - [W:T-001] T-002: [task]
+  - [S] T-003: [task]
+
+## 6. Next Steps
+- Immediate actions: [list]
+- Hook triggers: [which hooks will fire]
+- User approval needed: [what needs confirmation]
+```
+
+## Key Principles
+
+### 1. Clarification First
+Always engage in dialogue after classification to ensure crystal clear scope before any command execution.
+
+### 2. Progressive Enhancement
+Start with the simplest approach (L1), escalate only when needed. A one-line bug fix shouldn't trigger multi-agent analysis.
+
+### 3. Parallel Execution
+Identify all work that can run simultaneously and mark with [P]. Use [W:id] for dependencies, [S] for sequential.
+
+### 4. Natural Language Understanding
+No regex patterns or rigid rules. Use AI comprehension to understand intent and generate appropriate commands.
+
+### 5. Model Specialization via Zen
+- **You (Claude)**: Orchestration, analysis, understanding
+- **O3**: Complex reasoning, debugging (via zen tools)
+- **Grok**: Large context analysis (via zen tools)
+- **Gemini**: When available (via zen tools)
+
+### 6. Epic Automation
+Epics generate automatically via hooks when complexity warrants, not based on intent category alone.
 
 ---
 
-🚧 **Note**: This is our vision being built live. Each test refines the intelligence.
+**Note**: This command orchestrates existing commands and zen tools. It doesn't create custom LLM-specific commands but leverages the zen framework's multi-model capabilities.

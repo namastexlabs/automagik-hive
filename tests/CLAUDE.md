@@ -1,7 +1,7 @@
 # Tests Directory - Multi-Agent Testing Architecture
 
 <system_context>
-This directory contains comprehensive testing components for the PagBank multi-agent system. The testing architecture ensures 90%+ coverage across agents, routing logic, knowledge retrieval, memory management, and end-to-end customer scenarios with Portuguese language validation.
+This directory contains comprehensive testing components for the Automagik Multi-Agent Framework. The testing architecture ensures 90%+ coverage across agents, routing logic, knowledge retrieval, memory management, and end-to-end user scenarios with language validation.
 </system_context>
 
 ## Core Testing Principles
@@ -9,16 +9,16 @@ This directory contains comprehensive testing components for the PagBank multi-a
 ### Quality Gates & Coverage Targets
 - **Unit Tests**: 95%+ coverage for individual components
 - **Integration Tests**: 90%+ coverage for agent interactions
-- **End-to-End Tests**: 85%+ coverage for customer scenarios
+- **End-to-End Tests**: 85%+ coverage for user scenarios
 - **Performance Tests**: Response times under 5000ms, throughput > 20 queries/sec
-- **Language Tests**: All customer responses validated in Portuguese (pt-BR)
+- **Language Tests**: All user-facing responses validated for correct language and content
 
 ### Testing Philosophy
 Each test category follows the multi-agent architecture patterns:
 - **Isolated Testing**: Agents tested independently with mocked dependencies
 - **Interaction Testing**: Agent communication and routing validation
-- **Scenario Testing**: Complete customer journey validation
-- **Compliance Testing**: Financial services regulations and security
+- **Scenario Testing**: Complete user journey validation
+- **Compliance Testing**: Domain-specific regulations and security
 
 ## Directory Structure
 
@@ -27,14 +27,14 @@ tests/
 ├── CLAUDE.md                    # This file - Testing guidelines
 ├── conftest.py                  # Pytest configuration and fixtures
 ├── unit/                        # Unit tests for individual components
-│   ├── test_routing_logic.py    # Routing engine and business unit logic
+│   ├── test_routing_logic.py    # Routing engine and domain logic
 │   ├── test_knowledge_base.py   # Knowledge retrieval and filtering
-│   ├── test_business_unit_agents.py # Individual agent behavior
+│   ├── test_domain_agents.py # Individual agent behavior
 │   └── domain/                  # Domain-specific unit tests
 ├── integration/                 # Integration tests for agent interactions
 │   ├── test_end_to_end_flow.py  # Complete query processing pipeline
 │   ├── test_knowledge_retrieval.py # Knowledge integration scenarios
-│   ├── test_hybrid_unit_routing.py # Business unit routing accuracy
+│   ├── test_hybrid_unit_routing.py # Domain routing accuracy
 │   └── test_infrastructure.py   # Database and system integration
 ├── performance/                 # Performance and load testing
 │   └── test_baseline_metrics.py # Response time and throughput tests
@@ -51,24 +51,24 @@ tests/
 ## Critical Testing Rules
 
 ### Must Do ✅
-- **ALWAYS use Portuguese test queries** for customer-facing scenarios
-- **ALWAYS test all business units** (Adquirência, Emissão, PagBank, Human Handoff)
+- **ALWAYS use domain-specific test queries** for user-facing scenarios
+- **ALWAYS test all domains**
 - **ALWAYS validate routing accuracy** with confidence scores and reasoning
 - **ALWAYS test frustration detection** and escalation paths
-- **ALWAYS test knowledge filtering** by business unit
+- **ALWAYS test knowledge filtering** by domain
 - **ALWAYS test memory persistence** and session management
 - **ALWAYS test concurrent performance** under load
 - **ALWAYS validate compliance** requirements (PII, audit trails)
 - **ALWAYS test error scenarios** and graceful degradation
 - **ALWAYS run performance baselines** before deployment
-- **ALWAYS test with realistic Portuguese customer queries**
+- **ALWAYS test with realistic user queries**
 - **ALWAYS validate response time thresholds** (under 5 seconds)
 
 ### Never Do ❌
-- **NEVER test with English customer queries** (use Portuguese pt-BR)
-- **NEVER skip routing accuracy validation** for any business unit
+- **NEVER test with out-of-domain user queries**
+- **NEVER skip routing accuracy validation** for any domain
 - **NEVER ignore performance degradation** warnings
-- **NEVER test with fake/unrealistic customer data**
+- **NEVER test with fake/unrealistic user data**
 - **NEVER skip compliance validation** tests
 - **NEVER test without proper database cleanup**
 - **NEVER ignore memory leak indicators**
@@ -84,36 +84,36 @@ tests/
 import pytest
 from agno.testing import AgentTestCase
 
-class TestPagBankAgent(AgentTestCase):
-    def test_pix_query(self):
+class TestDomainAgent(AgentTestCase):
+    def test_domain_query(self):
         response = self.run_agent(
-            agent=pagbank_agent,
-            message="Como faço um PIX?"
+            agent=domain_agent,
+            message="How do I do [domain-specific action]?"
         )
         
-        assert "PIX" in response.content
-        assert response.metadata["language"] == "pt-BR"
+        assert "domain-specific keyword" in response.content
+        assert response.metadata["language"] == "en-US"
 ```
 
 ### Multi-Agent Integration Testing
 ```python
 # From tests/integration/test_end_to_end_flow.py
 class TestEndToEndQueryFlow:
-    def test_adquirencia_query_flow(self):
-        """Test complete flow for Adquirência queries"""
+    def test_domain_a_query_flow(self):
+        """Test complete flow for Domain A queries"""
         queries = [
-            "Como antecipar vendas da minha máquina?",
-            "Preciso fazer antecipação de recebíveis"
+            "How do I do [action 1] in Domain A?",
+            "I need help with [action 2] in Domain A"
         ]
         
         for query in queries:
             # Step 1: Query analysis
             filters = extract_filters_from_query(query)
-            assert filters.get('business_unit') == 'Adquirência Web'
+            assert filters.get('domain') == 'Domain A'
             
             # Step 2: Routing decision
             routing_decision = self.routing_engine.route_query(query)
-            assert routing_decision.primary_unit == BusinessUnit.ADQUIRENCIA
+            assert routing_decision.primary_unit == Domain.A
             assert routing_decision.confidence > 0.0
 ```
 
@@ -140,18 +140,18 @@ class TestBaselineMetrics:
         assert max(routing_times) < 0.5, "Max routing time should be under 500ms"
 ```
 
-### Portuguese Language Testing Pattern
+### Language Testing Pattern
 ```python
 # From tests/conftest.py - Sample fixtures
 @pytest.fixture
 def sample_user_message():
     """Sample user message for testing."""
     return {
-        "content": "Olá, gostaria de saber sobre meu saldo",
+        "content": "Hello, I'd like to know about my balance",
         "user_id": "test_user_123",
         "session_id": "test_session_456",
         "timestamp": "2024-01-01T10:00:00Z",
-        "language": "pt-BR"
+        "language": "en-US"
     }
 
 @pytest.fixture
@@ -159,10 +159,10 @@ def sample_knowledge_entries():
     """Sample knowledge entries for testing."""
     return [
         {
-            "question": "Como consultar saldo?",
-            "answer": "Para consultar seu saldo, acesse o app PagBank...",
-            "keywords": ["saldo", "consultar", "conta"],
-            "team_filter": "digital_account"
+            "question": "How to check balance?",
+            "answer": "To check your balance, please open the app...",
+            "keywords": ["balance", "check", "account"],
+            "team_filter": "account_services"
         }
     ]
 ```
@@ -172,8 +172,8 @@ def sample_knowledge_entries():
 ### Essential Fixtures
 - **`test_db`**: PostgreSQL test database initialization
 - **`claude_client`**: Anthropic client for agent testing
-- **`sample_user_message`**: Portuguese customer queries
-- **`sample_knowledge_entries`**: Business unit knowledge samples
+- **`sample_user_message`**: User queries in different languages
+- **`sample_knowledge_entries`**: Domain-specific knowledge samples
 - **`performance_thresholds`**: Response time and memory limits
 - **`integration_test_flow`**: End-to-end scenario data
 
@@ -196,18 +196,18 @@ performance_thresholds = {
 
 ### Unit Tests (/unit/)
 **Purpose**: Test individual components in isolation
-- **Routing Logic**: Business unit classification accuracy
+- **Routing Logic**: Domain classification accuracy
 - **Knowledge Base**: CSV filtering and search efficiency
-- **Business Unit Agents**: Individual agent response quality
-- **Domain Logic**: Financial calculations and validations
+- **Domain Agents**: Individual agent response quality
+- **Domain Logic**: Business-specific calculations and validations
 
 **Coverage Target**: 95%+
 
 ### Integration Tests (/integration/)
 **Purpose**: Test component interactions and workflows
-- **End-to-End Flow**: Complete customer query processing
+- **End-to-End Flow**: Complete user query processing
 - **Knowledge Retrieval**: Cross-system knowledge integration
-- **Hybrid Unit Routing**: Multi-business unit scenarios
+- **Hybrid Domain Routing**: Multi-domain scenarios
 - **Infrastructure**: Database and system integrations
 
 **Coverage Target**: 90%+
@@ -231,43 +231,40 @@ performance_thresholds = {
 - **Session Manager**: User session lifecycle
 - **MCP Integration**: External system integrations
 
-## Portuguese Testing Requirements
+## Language Testing Requirements
 
 ### Language Validation Rules
-- All customer-facing responses MUST be in Portuguese (pt-BR)
-- Test queries MUST use realistic Portuguese customer language
-- Error messages MUST be bilingual (Portuguese for customers, English for system)
-- Knowledge base content MUST be in Portuguese
+- All user-facing responses MUST be in the user's language
+- Test queries MUST use realistic user language
+- Error messages MUST be bilingual (user's language and English for system)
+- Knowledge base content should be managed for multiple languages
 
-### Sample Portuguese Test Queries by Business Unit
+### Sample Test Queries by Domain
 ```python
 # From tests/unit/test_routing_logic.py
-adquirencia_queries = [
-    "Como antecipar vendas da minha máquina?",
-    "Preciso fazer antecipação de recebíveis",
-    "Antecipação agendada não está funcionando"
+domain_a_queries = [
+    "How do I do [action 1] in Domain A?",
+    "I need help with [action 2] in Domain A"
 ]
 
-emissao_queries = [
-    "Meu cartão não chegou",
-    "Problemas com cartão de crédito",
-    "Limite do cartão múltiplo"
+domain_b_queries = [
+    "How do I do [action 1] in Domain B?",
+    "I need help with [action 2] in Domain B"
 ]
 
-pagbank_queries = [
-    "Como fazer PIX?",
-    "Problemas no aplicativo PagBank",
-    "Folha de pagamento não funciona"
+domain_c_queries = [
+    "How do I do [action 1] in Domain C?",
+    "I need help with [action 2] in Domain C"
 ]
 ```
 
 ## Compliance Testing Requirements
 
-### Financial Services Compliance
+### Domain-Specific Compliance
 - **PII Data Protection**: Encryption and secure handling tests
 - **Audit Trail**: Transaction logging and traceability tests
 - **Fraud Detection**: Suspicious activity pattern tests
-- **Regulatory Compliance**: Financial regulation adherence tests
+- **Regulatory Compliance**: Domain-specific regulation adherence tests
 
 ### Security Testing
 - **Data Encryption**: In-memory and database encryption tests
@@ -288,12 +285,12 @@ uv run pytest tests/integration/ -v             # Integration tests only
 uv run pytest tests/performance/ -v             # Performance tests only
 ```
 
-### Portuguese Language Tests
+### Language Tests
 ```bash
-# Test Portuguese routing accuracy
-uv run pytest tests/unit/test_routing_logic.py::TestRoutingEngine::test_route_query_pagbank -v
+# Test routing accuracy for a specific domain
+uv run pytest tests/unit/test_routing_logic.py::TestRoutingEngine::test_route_query_domain_a -v
 
-# Test end-to-end Portuguese scenarios
+# Test end-to-end scenarios
 uv run pytest tests/integration/test_end_to_end_flow.py -v
 ```
 
@@ -308,8 +305,8 @@ uv run pytest tests/performance/test_baseline_metrics.py::TestBaselineMetrics::t
 
 ### Agent-Specific Tests
 ```bash
-# Test individual business unit agents
-uv run pytest tests/unit/test_business_unit_agents.py -v
+# Test individual domain agents
+uv run pytest tests/unit/test_domain_agents.py -v
 
 # Test routing logic accuracy
 uv run pytest tests/integration/test_hybrid_unit_routing.py -v
@@ -321,17 +318,17 @@ uv run pytest tests/integration/test_hybrid_unit_routing.py -v
 1. **Unit Test Coverage**: Minimum 95% for all components
 2. **Integration Coverage**: Minimum 90% for agent interactions
 3. **Performance Benchmarks**: All thresholds met or improved
-4. **Portuguese Validation**: All customer scenarios tested in Portuguese
+4. **Language Validation**: All user scenarios tested in relevant languages
 5. **Routing Accuracy**: 100% accuracy for known query patterns
 6. **Memory Leak Detection**: No memory growth over extended testing
-7. **Compliance Validation**: All financial regulations verified
+7. **Compliance Validation**: All domain-specific regulations verified
 8. **Error Handling**: Graceful degradation for all failure scenarios
 
 ### Continuous Integration Requirements
 - All tests MUST pass before merge
 - Performance regressions MUST be investigated
 - New features MUST include corresponding tests
-- Portuguese language tests MUST be maintained
+- Language tests MUST be maintained
 - Knowledge base changes MUST include test updates
 
 ## Review Task for Context Transfer ✅ COMPREHENSIVE VALIDATION
@@ -342,14 +339,14 @@ uv run pytest tests/integration/test_hybrid_unit_routing.py -v
 #### ✅ Core Testing Patterns Documented
 1. ✅ **Multi-agent testing architecture** ensuring 90%+ coverage across agents, routing, and scenarios
 2. ✅ **Quality gates and coverage targets** with specific thresholds for each testing category
-3. ✅ **Portuguese language testing** requirements for all customer-facing scenarios
-4. ✅ **Compliance testing framework** for financial services regulations and security
+3. ✅ **Language testing** requirements for all user-facing scenarios
+4. ✅ **Compliance testing framework** for domain-specific regulations and security
 5. ✅ **Performance testing patterns** with baseline metrics and scalability validation
 6. ✅ **Integration testing strategy** covering agent interactions and end-to-end flows
 7. ✅ **Essential testing commands** for comprehensive test suite execution
 
 #### ✅ Cross-Reference Validation with Other CLAUDE.md Files
-- **agents/CLAUDE.md**: Agent testing should cover all documented factory patterns and business units
+- **agents/CLAUDE.md**: Agent testing should cover all documented factory patterns and domains
 - **teams/CLAUDE.md**: Team routing testing should validate all documented modes and routing accuracy
 - **workflows/CLAUDE.md**: Workflow testing should verify step execution and context preservation
 - **config/CLAUDE.md**: Configuration testing should validate all environment setups and security
@@ -373,16 +370,16 @@ uv run pytest tests/integration/test_hybrid_unit_routing.py -v
 **Content properly separated to avoid overlap:**
 - ✅ Testing strategies documented here, NOT scattered across component files
 - ✅ Quality gates and coverage targets centralized here
-- ✅ Portuguese testing requirements consolidated here
+- ✅ Language testing requirements consolidated here
 - ✅ Compliance testing framework unified here
 
 #### ✅ Context Transfer Requirements for Future Development
 **Essential testing context that must be preserved:**
 1. **90%+ Coverage Target**: Unit (95%), Integration (90%), End-to-End (85%) across all components
-2. **Portuguese Language Validation**: All customer scenarios must be tested in pt-BR
+2. **Language Validation**: All user scenarios must be tested in relevant languages
 3. **Multi-Agent Testing**: Isolated and interaction testing for parallel agent development
 4. **Performance Thresholds**: Response time <5s, throughput >20 queries/sec, memory <512MB
-5. **Compliance Requirements**: Financial services regulations, PII protection, audit trails
+5. **Compliance Requirements**: Domain-specific regulations, PII protection, audit trails
 6. **Quality Gates**: All tests must pass before deployment with no performance regressions
 
 #### ✅ Integration Validation Requirements
@@ -397,30 +394,30 @@ uv run pytest tests/integration/test_hybrid_unit_routing.py -v
 ### ✅ Content Successfully Organized in tests/CLAUDE.md
 - ✅ **Testing Architecture**: Multi-agent testing with quality gates and coverage targets
 - ✅ **Quality Standards**: Specific coverage percentages and performance thresholds
-- ✅ **Portuguese Requirements**: Language validation for all customer-facing scenarios
-- ✅ **Compliance Framework**: Financial services regulations and security testing
+- ✅ **Language Requirements**: Language validation for all user-facing scenarios
+- ✅ **Compliance Framework**: Domain-specific regulations and security testing
 - ✅ **Performance Baselines**: Response time, throughput, and memory usage targets
 - ✅ **Integration Patterns**: Agent interaction and end-to-end scenario validation
 
 ### ✅ Current Testing State Analysis
 1. **Coverage Assessment**: Framework established for analyzing coverage across all components
 2. **Performance Baseline**: Thresholds documented for establishing current benchmarks
-3. **Portuguese Content**: Requirements validated for all Portuguese test scenarios
+3. **Language Content**: Requirements validated for all language test scenarios
 4. **Integration Gaps**: Patterns provided for identifying missing integration scenarios
-5. **Compliance Coverage**: Framework established for financial services compliance testing
+5. **Compliance Coverage**: Framework established for domain-specific compliance testing
 
 ### ✅ Testing Enhancement Priorities
 1. **Agent Version Testing**: Patterns for testing dynamic agent versioning
 2. **Knowledge Sync Testing**: Framework for knowledge base hot reload scenarios
 3. **Escalation Path Testing**: Patterns for validating human handoff scenarios
-4. **Cross-Business Unit**: Framework for queries spanning multiple business units
+4. **Cross-Domain**: Framework for queries spanning multiple domains
 5. **Performance Optimization**: Patterns for identifying and optimizing bottlenecks
 
 ### ✅ Final Context Transfer Validation - ALL CLAUDE.md FILES COMPLETE
 
 **✅ Complete Set of Enhanced CLAUDE.md Files:**
-1. **agents/CLAUDE.md**: Agent development with factory patterns and business unit specifications
-2. **teams/CLAUDE.md**: Team orchestration with Ana routing and mode="route" implementation
+1. **agents/CLAUDE.md**: Agent development with factory patterns and domain specifications
+2. **teams/CLAUDE.md**: Team orchestration with routing and mode="route" implementation
 3. **workflows/CLAUDE.md**: Multi-step workflow orchestration with human handoff evolution
 4. **config/CLAUDE.md**: Global configuration management with environment scaling
 5. **db/CLAUDE.md**: Database schema and management with PostgreSQL/SQLite patterns

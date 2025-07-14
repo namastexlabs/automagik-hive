@@ -1,6 +1,6 @@
-# PagBank Multi-Agent System - Project Structure
+# Automagik Multi-Agent Framework - Project Structure
 
-This document provides the complete technology stack and file tree structure for the PagBank Multi-Agent System. **AI agents MUST read this file to understand the project organization before making any changes.**
+This document provides the complete technology stack and file tree structure for the Automagik Multi-Agent Framework. **AI agents MUST read this file to understand the project organization before making any changes.**
 
 ## Technology Stack
 
@@ -19,7 +19,7 @@ This document provides the complete technology stack and file tree structure for
 
 ### AI & Multi-Agent Infrastructure
 - **Agno Orchestrator** - Main routing logic and agent coordination
-- **Specialist Agents** - Business unit specific agents (Adquirência, Emissão, PagBank, Human Handoff)
+- **Specialist Agents** - Domain-specific agents (Technical, Business, Support, Human Handoff)
 - **Claude AI Integration** - Primary LLM for all agent interactions
 - **Memory Management** - Session persistence, pattern detection, and context preservation
 - **Knowledge RAG System** - CSV-based retrieval augmented generation
@@ -46,7 +46,7 @@ This document provides the complete technology stack and file tree structure for
 ## Complete Project Structure
 
 ```
-pagbank-multiagents/
+automagik-agents/
 ├── README.md                           # Project overview and setup instructions
 ├── CLAUDE.md                           # Master AI context and development guidelines
 ├── pyproject.toml                      # UV package configuration and dependencies
