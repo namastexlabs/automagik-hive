@@ -96,7 +96,7 @@ uv sync
 
 # Start development environment
 docker-compose up -d postgres redis
-uv run python api/playground.py
+uv run python api/serve.py
 
 # Run tests
 uv run pytest tests/

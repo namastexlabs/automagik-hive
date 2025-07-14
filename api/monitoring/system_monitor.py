@@ -136,12 +136,13 @@ class SystemMonitor:
         """Check database connectivity and performance"""
         try:
             from db.session import get_db_session
+            from sqlalchemy import text
             
             start_time = time.time()
             
             # Test database connection
-            async with get_db_session() as session:
-                await session.execute("SELECT 1")
+            with get_db_session() as session:
+                session.execute(text("SELECT 1"))
             
             response_time = time.time() - start_time
             

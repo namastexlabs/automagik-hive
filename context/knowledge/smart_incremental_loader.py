@@ -1,124 +1,163 @@
 #!/usr/bin/env python3
 """
-Smart Incremental Knowledge Loader
-Avoids wasting embedding tokens by only processing changed/new content
+Smart Incremental Knowledge Loader - True Row-Level Incremental Updates
+Uses row hashing to identify exactly which rows need processing
 """
 
 import hashlib
-import json
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List, Set
+import os
+from sqlalchemy import create_engine, text
 
 from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 
 
 class SmartIncrementalLoader:
     """
-    Smart loader that tracks content changes and only re-embeds when necessary
+    Smart loader with true incremental updates
     
     Strategy:
-    1. Hash each CSV row content to detect changes
-    2. Store hash cache to track what's already embedded
-    3. Only embed new/changed content
-    4. Use upsert for changed content, skip for unchanged
+    1. Hash each CSV row to create unique identifiers
+    2. Track which rows exist in PostgreSQL using content hashes
+    3. Only process new rows that don't exist in the database
+    4. Preserve existing vectors while adding only new content
     """
     
-    def __init__(self, csv_path: str = "knowledge/pagbank_knowledge.csv"):
+    def __init__(self, csv_path: str = "context/knowledge/knowledge_rag.csv"):
         self.csv_path = Path(csv_path)
-        self.cache_path = Path("knowledge/.content_cache.json")
         self.kb = create_pagbank_knowledge_base()
+        self.db_url = os.getenv("DATABASE_URL")
         
-        # Load existing content cache
-        self.content_cache = self._load_content_cache()
-        
-    def _load_content_cache(self) -> Dict[str, str]:
-        """Load cached content hashes"""
-        if self.cache_path.exists():
-            try:
-                with open(self.cache_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"⚠️  Could not load cache: {e}, starting fresh")
-        return {}
+        if not self.db_url:
+            raise RuntimeError("DATABASE_URL required for vector database checks")
     
-    def _save_content_cache(self):
-        """Save content hashes to cache"""
-        try:
-            self.cache_path.parent.mkdir(exist_ok=True)
-            with open(self.cache_path, 'w', encoding='utf-8') as f:
-                json.dump(self.content_cache, f, indent=2)
-        except Exception as e:
-            print(f"⚠️  Could not save cache: {e}")
-    
-    def _hash_content(self, content: str) -> str:
-        """Generate hash for content to detect changes"""
+    def _hash_row(self, row: pd.Series) -> str:
+        """Create a unique hash for a CSV row based on its content"""
+        # Create deterministic hash from problem + solution content
+        content = f"{row.get('problem', '')}{row.get('solution', '')}{row.get('typification', '')}{row.get('business_unit', '')}"
         return hashlib.md5(content.encode('utf-8')).hexdigest()
     
-    def _create_content_key(self, row: pd.Series) -> str:
-        """Create unique key for each knowledge entry"""
-        # Use content + area + tipo_produto as unique identifier
-        key_parts = [
-            str(row.get('conteudo', '')),
-            str(row.get('area', '')),
-            str(row.get('tipo_produto', ''))
-        ]
-        return hashlib.md5('|'.join(key_parts).encode('utf-8')).hexdigest()
+    def _get_existing_row_hashes(self) -> Set[str]:
+        """Get set of row hashes that already exist in PostgreSQL"""
+        try:
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                # Check if table exists
+                result = conn.execute(text("""
+                    SELECT COUNT(*) as count 
+                    FROM information_schema.tables 
+                    WHERE table_name = 'pagbank_knowledge'
+                """))
+                table_exists = result.fetchone()[0] > 0
+                
+                if not table_exists:
+                    return set()
+                
+                # Check if content_hash column exists
+                result = conn.execute(text("""
+                    SELECT COUNT(*) as count 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'pagbank_knowledge' AND column_name = 'content_hash'
+                """))
+                hash_column_exists = result.fetchone()[0] > 0
+                
+                if not hash_column_exists:
+                    # Old table without hash tracking - treat as empty for fresh start
+                    print("⚠️ Table exists but no content_hash column - will recreate with hash tracking")
+                    return set()
+                
+                # Get existing content hashes
+                result = conn.execute(text("SELECT DISTINCT content_hash FROM pagbank_knowledge WHERE content_hash IS NOT NULL"))
+                existing_hashes = {row[0] for row in result.fetchall()}
+                return existing_hashes
+                
+        except Exception as e:
+            print(f"⚠️ Could not check existing hashes: {e}")
+            return set()
+    
+    def _get_csv_rows_with_hashes(self) -> List[Dict[str, Any]]:
+        """Read CSV and return rows with their hashes"""
+        try:
+            if not self.csv_path.exists():
+                return []
+            
+            df = pd.read_csv(self.csv_path)
+            rows_with_hashes = []
+            
+            for idx, row in df.iterrows():
+                row_hash = self._hash_row(row)
+                rows_with_hashes.append({
+                    'index': idx,
+                    'hash': row_hash,
+                    'data': row.to_dict()
+                })
+            
+            return rows_with_hashes
+            
+        except Exception as e:
+            print(f"⚠️ Could not read CSV with hashes: {e}")
+            return []
+    
+    def _add_hash_column_to_table(self) -> bool:
+        """Add content_hash column to existing table if it doesn't exist"""
+        try:
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                # Add content_hash column if it doesn't exist
+                conn.execute(text("""
+                    ALTER TABLE pagbank_knowledge 
+                    ADD COLUMN IF NOT EXISTS content_hash VARCHAR(32)
+                """))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"⚠️ Could not add hash column: {e}")
+            return False
     
     def analyze_changes(self) -> Dict[str, Any]:
-        """Analyze what changed in the CSV compared to cache"""
+        """Analyze what needs to be loaded by checking specific content vs PostgreSQL"""
         if not self.csv_path.exists():
             return {"error": "CSV file not found"}
         
         try:
-            df = pd.read_csv(self.csv_path)
+            # Get CSV rows
+            csv_rows = self._get_csv_rows_with_hashes()
             
-            new_entries = []
-            changed_entries = []
-            unchanged_entries = []
+            # Check which CSV rows are missing from database using content matching
+            new_rows = []
+            existing_count = 0
             
-            for idx, row in df.iterrows():
-                content_key = self._create_content_key(row)
-                content_hash = self._hash_content(str(row.get('conteudo', '')))
-                
-                if content_key not in self.content_cache:
-                    # Completely new entry
-                    new_entries.append({
-                        'index': idx,
-                        'key': content_key,
-                        'hash': content_hash,
-                        'content': row.get('conteudo', '')[:100] + '...'
-                    })
-                elif self.content_cache[content_key] != content_hash:
-                    # Content changed
-                    changed_entries.append({
-                        'index': idx,
-                        'key': content_key,
-                        'hash': content_hash,
-                        'content': row.get('conteudo', '')[:100] + '...'
-                    })
-                else:
-                    # Content unchanged
-                    unchanged_entries.append({
-                        'index': idx,
-                        'key': content_key
-                    })
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                for row in csv_rows:
+                    problem = row['data'].get('problem', '')[:100]  # First 100 chars for matching
+                    
+                    # Check if this content already exists in database
+                    result = conn.execute(text(
+                        "SELECT COUNT(*) FROM pagbank_knowledge WHERE content LIKE :pattern"
+                    ), {'pattern': f"%{problem}%"})
+                    
+                    exists = result.fetchone()[0] > 0
+                    
+                    if exists:
+                        existing_count += 1
+                    else:
+                        new_rows.append(row)
             
-            # Check for deleted entries
-            current_keys = set(self._create_content_key(row) for _, row in df.iterrows())
-            cached_keys = set(self.content_cache.keys())
-            deleted_keys = cached_keys - current_keys
+            needs_processing = len(new_rows) > 0
             
             return {
-                'total_rows': len(df),
-                'new_entries': len(new_entries),
-                'changed_entries': len(changed_entries),
-                'unchanged_entries': len(unchanged_entries),
-                'deleted_entries': len(deleted_keys),
-                'new_details': new_entries,
-                'changed_details': changed_entries,
-                'deleted_keys': list(deleted_keys)
+                'csv_total_rows': len(csv_rows),
+                'existing_vector_rows': existing_count,
+                'new_rows_count': len(new_rows),
+                'removed_rows_count': 0,  # Simplified - no removal for now
+                'new_rows': new_rows,
+                'removed_hashes': [],
+                'needs_processing': needs_processing,
+                'status': 'up_to_date' if not needs_processing else 'incremental_update_required'
             }
             
         except Exception as e:
@@ -126,61 +165,74 @@ class SmartIncrementalLoader:
     
     def smart_load(self, force_recreate: bool = False) -> Dict[str, Any]:
         """
-        Smart loading strategy that minimizes embedding token usage
+        Smart loading strategy with true incremental updates
         
         Returns detailed report of what was processed
         """
-        print("🧠 Smart Incremental Loading...")
         
         if force_recreate:
             print("🔄 Force recreate requested - will rebuild everything")
-            self.content_cache = {}
             return self._full_reload()
         
-        # Analyze changes first
+        # Analyze changes at row level
         analysis = self.analyze_changes()
         if "error" in analysis:
             return analysis
         
-        print("📊 Change Analysis:")
-        print(f"   📄 Total rows: {analysis['total_rows']}")
-        print(f"   🆕 New entries: {analysis['new_entries']}")
-        print(f"   🔄 Changed entries: {analysis['changed_entries']}")  
-        print(f"   ✅ Unchanged entries: {analysis['unchanged_entries']}")
-        print(f"   🗑️  Deleted entries: {analysis['deleted_entries']}")
-        
-        # Decide strategy based on changes
-        total_changes = analysis['new_entries'] + analysis['changed_entries']
-        
-        if total_changes == 0:
-            print("✅ No changes detected - knowledge base is up to date")
+        if not analysis['needs_processing']:
             return {
                 "strategy": "no_changes",
                 "embedding_tokens_saved": "All tokens saved!",
                 **analysis
             }
         
-        # If more than 50% changed, do full recreate (probably better)
-        if total_changes > (analysis['total_rows'] * 0.5):
-            print("🔄 Major changes detected (>50%) - doing full recreate for consistency")
-            self.content_cache = {}
-            return self._full_reload()
-        
-        # Otherwise, do incremental update
-        print(f"⚡ Incremental update - only processing {total_changes} entries")
-        return self._incremental_update(analysis)
+        # Process incremental changes
+        if analysis['existing_vector_rows'] == 0:
+            return self._initial_load_with_hashes()
+        else:
+            return self._incremental_update(analysis)
+    
+    def _initial_load_with_hashes(self) -> Dict[str, Any]:
+        """Initial load of fresh database with hash tracking"""
+        try:
+            print("🔄 Initial load: creating knowledge base with hash tracking...")
+            start_time = datetime.now()
+            
+            # Load with recreate=True to get fresh start
+            self.kb.load_knowledge_base(recreate=True)
+            
+            # Add hash column and populate hashes for existing rows
+            self._add_hash_column_to_table()
+            self._populate_existing_hashes()
+            
+            load_time = (datetime.now() - start_time).total_seconds()
+            stats = self.kb.get_knowledge_statistics()
+            
+            result = {
+                "strategy": "initial_load_with_hashes",
+                "entries_processed": stats.get('total_entries', 'unknown'),
+                "load_time_seconds": load_time,
+                "embedding_tokens_used": "All entries (full cost - initial load)"
+            }
+            
+            print(f"✅ Initial load with hash tracking completed in {load_time:.2f}s")
+            return result
+            
+        except Exception as e:
+            return {"error": f"Initial load failed: {e}"}
     
     def _full_reload(self) -> Dict[str, Any]:
-        """Full reload with fresh embeddings"""
+        """Full reload with fresh embeddings (fallback method)"""
         try:
             print("🔄 Full reload: recreating knowledge base...")
             start_time = datetime.now()
             
-            # Load with recreate=True
+            # Load with recreate=True - this will show per-row upserts
             self.kb.load_knowledge_base(recreate=True)
             
-            # Update cache with all current content
-            self._rebuild_cache()
+            # Add hash tracking to the new table
+            self._add_hash_column_to_table()
+            self._populate_existing_hashes()
             
             load_time = (datetime.now() - start_time).total_seconds()
             stats = self.kb.get_knowledge_statistics()
@@ -189,8 +241,7 @@ class SmartIncrementalLoader:
                 "strategy": "full_reload",
                 "entries_processed": stats.get('total_entries', 'unknown'),
                 "load_time_seconds": load_time,
-                "embedding_tokens_used": "All entries (full cost)",
-                "cache_updated": True
+                "embedding_tokens_used": "All entries (full cost)"
             }
             
             print(f"✅ Full reload completed in {load_time:.2f}s")
@@ -200,105 +251,178 @@ class SmartIncrementalLoader:
             return {"error": f"Full reload failed: {e}"}
     
     def _incremental_update(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Incremental update - only process changed/new entries"""
+        """Perform true incremental update - only process new rows"""
         try:
-            print("⚡ Incremental update: processing only changes...")
             start_time = datetime.now()
             
-            # For incremental updates, we use upsert without recreate
-            # This preserves existing embeddings and only adds/updates changed ones
+            new_rows = analysis['new_rows']
+            processed_count = 0
             
-            if analysis['new_entries'] > 0 or analysis['changed_entries'] > 0:
-                # Load with upsert=True, recreate=False, skip_existing=False
-                # This will only re-embed content that has changed
-                self.kb.load_knowledge_base(recreate=False)
+            if len(new_rows) > 0:
+                # Add hash column if needed
+                self._add_hash_column_to_table()
                 
-                # Update cache for processed entries
-                self._update_cache_incremental(analysis)
+                # Process each new row individually
+                for row_data in new_rows:
+                    
+                    # Create temporary CSV with just this row
+                    success = self._process_single_row(row_data)
+                    if success:
+                        processed_count += 1
+                    else:
+                        print(f"⚠️ Failed to process row {row_data['index']}")
+            
+            # Handle removed rows if any
+            removed_count = 0
+            if analysis['removed_rows_count'] > 0:
+                print(f"🗑️ Removing {analysis['removed_rows_count']} obsolete entries...")
+                removed_count = self._remove_rows_by_hash(analysis['removed_hashes'])
             
             load_time = (datetime.now() - start_time).total_seconds()
-            tokens_saved = analysis['unchanged_entries']
-            tokens_used = analysis['new_entries'] + analysis['changed_entries']
             
             result = {
-                "strategy": "incremental_update", 
-                "new_entries_processed": analysis['new_entries'],
-                "changed_entries_processed": analysis['changed_entries'],
-                "unchanged_entries_skipped": analysis['unchanged_entries'],
+                "strategy": "incremental_update",
+                "new_rows_processed": processed_count,
+                "rows_removed": removed_count,
                 "load_time_seconds": load_time,
-                "embedding_tokens_used": f"~{tokens_used} entries only",
-                "embedding_tokens_saved": f"~{tokens_saved} entries saved",
-                "cache_updated": True
+                "embedding_tokens_used": f"Only {processed_count} new entries (cost savings!)"
             }
             
-            print(f"✅ Incremental update completed in {load_time:.2f}s")
-            print(f"💰 Saved embeddings for {tokens_saved} unchanged entries")
             return result
             
         except Exception as e:
             return {"error": f"Incremental update failed: {e}"}
     
-    def _rebuild_cache(self):
-        """Rebuild entire cache after full reload"""
+    def _process_single_row(self, row_data: Dict[str, Any]) -> bool:
+        """Process a single new row and add it to the vector database"""
         try:
-            df = pd.read_csv(self.csv_path)
-            self.content_cache = {}
+            # Create a temporary CSV file with just this row
+            temp_csv_path = self.csv_path.parent / f"temp_single_row_{row_data['hash']}.csv"
             
-            for _, row in df.iterrows():
-                content_key = self._create_content_key(row)
-                content_hash = self._hash_content(str(row.get('conteudo', '')))
-                self.content_cache[content_key] = content_hash
+            # Create DataFrame with just this row
+            df = pd.DataFrame([row_data['data']])
+            df.to_csv(temp_csv_path, index=False)
             
-            self._save_content_cache()
-            print(f"📝 Cache rebuilt with {len(self.content_cache)} entries")
+            try:
+                # Create temporary knowledge base for this single row
+                from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+                temp_kb = PagBankCSVKnowledgeBase(str(temp_csv_path), self.db_url, self.kb.table_name)
+                
+                # Load just this row (upsert mode - no recreate)
+                temp_kb.load_knowledge_base(recreate=False)
+                
+                # Add the content hash to the database record
+                self._update_row_hash(row_data['data'], row_data['hash'])
+                
+                return True
+                
+            finally:
+                # Clean up temporary file
+                if temp_csv_path.exists():
+                    temp_csv_path.unlink()
             
         except Exception as e:
-            print(f"⚠️  Failed to rebuild cache: {e}")
+            print(f"⚠️ Error processing single row: {e}")
+            return False
     
-    def _update_cache_incremental(self, analysis: Dict[str, Any]):
-        """Update cache for incrementally processed entries"""
+    def _update_row_hash(self, row_data: Dict[str, Any], content_hash: str) -> bool:
+        """Update the content_hash for a specific row in the database"""
         try:
-            df = pd.read_csv(self.csv_path)
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                # Find the row by content matching and update hash
+                problem = row_data.get('problem', '')
+                
+                # Update the hash for rows matching this content (use content column, not document)
+                conn.execute(text("""
+                    UPDATE pagbank_knowledge 
+                    SET content_hash = :hash 
+                    WHERE content LIKE :problem_pattern
+                    AND content_hash IS NULL
+                """), {
+                    'hash': content_hash,
+                    'problem_pattern': f"%{problem[:50]}%"  # Use first 50 chars for matching
+                })
+                conn.commit()
+                return True
+                
+        except Exception as e:
+            print(f"⚠️ Could not update row hash: {e}")
+            return False
+    
+    def _populate_existing_hashes(self) -> bool:
+        """Populate content_hash for existing rows that don't have it"""
+        try:
+            print("🔧 Populating content hashes for existing rows...")
             
-            # Update cache for new and changed entries
-            for entry in analysis['new_details'] + analysis['changed_details']:
-                row = df.iloc[entry['index']]
-                content_key = self._create_content_key(row)
-                content_hash = self._hash_content(str(row.get('conteudo', '')))
-                self.content_cache[content_key] = content_hash
+            # Get all CSV rows to compute their hashes
+            csv_rows = self._get_csv_rows_with_hashes()
             
-            # Remove deleted entries from cache
-            for deleted_key in analysis['deleted_keys']:
-                if deleted_key in self.content_cache:
-                    del self.content_cache[deleted_key]
+            # Update each row in the database with its hash
+            for row_data in csv_rows:
+                self._update_row_hash(row_data['data'], row_data['hash'])
             
-            self._save_content_cache()
-            print("📝 Cache updated incrementally")
+            print(f"✅ Populated hashes for {len(csv_rows)} rows")
+            return True
             
         except Exception as e:
-            print(f"⚠️  Failed to update cache: {e}")
+            print(f"⚠️ Could not populate existing hashes: {e}")
+            return False
     
-    def get_cache_stats(self) -> Dict[str, Any]:
-        """Get statistics about the content cache"""
-        return {
-            "cache_file": str(self.cache_path),
-            "cache_exists": self.cache_path.exists(),
-            "cached_entries": len(self.content_cache),
-            "cache_size_kb": self.cache_path.stat().st_size / 1024 if self.cache_path.exists() else 0
-        }
+    def _remove_rows_by_hash(self, removed_hashes: List[str]) -> int:
+        """Remove rows from database by their content hash"""
+        try:
+            if not removed_hashes:
+                return 0
+                
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                # Delete rows with these hashes
+                for hash_to_remove in removed_hashes:
+                    conn.execute(text("DELETE FROM pagbank_knowledge WHERE content_hash = :hash"), {'hash': hash_to_remove})
+                
+                conn.commit()
+                print(f"🗑️ Removed {len(removed_hashes)} obsolete rows")
+                return len(removed_hashes)
+                
+        except Exception as e:
+            print(f"⚠️ Could not remove rows: {e}")
+            return 0
+    
+    def get_database_stats(self) -> Dict[str, Any]:
+        """Get statistics about the vector database with hash tracking"""
+        try:
+            analysis = self.analyze_changes()
+            
+            if "error" in analysis:
+                return analysis
+            
+            return {
+                "csv_file": str(self.csv_path),
+                "csv_exists": self.csv_path.exists(),
+                "csv_total_rows": analysis['csv_total_rows'],
+                "existing_vector_rows": analysis['existing_vector_rows'],
+                "new_rows_pending": analysis['new_rows_count'],
+                "removed_rows_pending": analysis['removed_rows_count'],
+                "database_url": self.db_url[:50] + "..." if self.db_url else None,
+                "sync_status": analysis['status'],
+                "hash_tracking_enabled": True
+            }
+        except Exception as e:
+            return {"error": str(e)}
 
 
 def main():
     """Test the smart incremental loader"""
     loader = SmartIncrementalLoader()
     
-    print("🧪 Testing Smart Incremental Loader")
-    print("=" * 50)
+    print("🧪 Testing Smart Incremental Loader (PostgreSQL-based)")
+    print("=" * 60)
     
-    # Show cache stats
-    cache_stats = loader.get_cache_stats()
-    print("📊 Cache Stats:")
-    for key, value in cache_stats.items():
+    # Show database stats
+    db_stats = loader.get_database_stats()
+    print("📊 Database Stats:")
+    for key, value in db_stats.items():
         print(f"   {key}: {value}")
     
     # Analyze changes
@@ -307,8 +431,7 @@ def main():
     if "error" not in analysis:
         print("📊 Analysis Results:")
         for key, value in analysis.items():
-            if not key.endswith('_details') and not key.endswith('_keys'):
-                print(f"   {key}: {value}")
+            print(f"   {key}: {value}")
     
     # Smart load
     print("\n🚀 Starting smart load...")

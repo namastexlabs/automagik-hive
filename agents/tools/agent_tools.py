@@ -8,7 +8,7 @@ import os
 import httpx
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -603,69 +603,84 @@ def ask_repo_question(repo_name: str, question: str) -> Dict[str, Any]:
         }
 
 
-def send_whatsapp_message(message: str) -> Dict[str, Any]:
-    """Send WhatsApp message via Evolution API
+# WhatsApp functionality has been moved to MCP tools
+# Use mcp__send_whatsapp_message__send_text_message instead
+
+
+def search_knowledge_base(
+    query: str, 
+    business_unit: Optional[str] = None,
+    max_results: int = 5,
+    relevance_threshold: float = 0.6,
+    filters: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Search PagBank knowledge base with business unit filtering
     
     Args:
-        message: Message content to send
+        query: Search query in Portuguese
+        business_unit: Business unit filter (PagBank, Adquirência Web, Emissão)
+        max_results: Maximum number of results to return
+        relevance_threshold: Minimum relevance score (0.0-1.0)
+        filters: Additional metadata filters
         
     Returns:
-        Dict with send status and details
+        Dict with search results and metadata
     """
-    # Get Evolution API configuration from environment
-    base_url = os.getenv("EVOLUTION_API_BASE_URL", "http://192.168.112.142:8080")
-    api_key = os.getenv("EVOLUTION_API_API_KEY", "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF")
-    instance = os.getenv("EVOLUTION_API_INSTANCE", "SofIA")
-    recipient = os.getenv("EVOLUTION_API_FIXED_RECIPIENT", "5511986780008@s.whatsapp.net")
-    
     try:
-        # Evolution API endpoint for sending messages
-        url = f"{base_url}/message/sendText/{instance}"
+        # Import here to avoid circular imports
+        from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
         
-        # Prepare request
-        headers = {
-            "apikey": api_key,
-            "Content-Type": "application/json"
+        # Create knowledge base instance
+        kb = create_pagbank_knowledge_base()
+        
+        # Determine team filter based on business unit
+        team_mapping = {
+            "PagBank": "pagbank",
+            "Adquirência Web": "adquirencia", 
+            "Adquirência Web / Adquirência Presencial": "adquirencia",
+            "Emissão": "emissao"
         }
         
-        payload = {
-            "number": recipient,
-            "text": message,
-            "options": {
-                "delay": 1200,
-                "presence": "composing",
-                "linkPreview": False
-            }
-        }
+        team = team_mapping.get(business_unit) if business_unit else None
         
-        # Send message
-        with httpx.Client() as client:
-            response = client.post(url, json=payload, headers=headers, timeout=10.0)
-            response.raise_for_status()
+        # Search with filters
+        search_filters = filters or {}
+        if business_unit:
+            search_filters["business_unit"] = business_unit
             
-            result = response.json()
-            
-            return {
-                "success": True,
-                "message_id": result.get("key", {}).get("id"),
-                "recipient": recipient,
-                "instance": instance,
-                "response": result
-            }
-            
-    except httpx.HTTPError as e:
+        results = kb.search_with_filters(
+            query=query,
+            team=team,
+            filters=search_filters,
+            max_results=max_results
+        )
+        
+        # Filter by relevance threshold
+        filtered_results = [
+            result for result in results 
+            if result.get("relevance_score", 0.0) >= relevance_threshold
+        ]
+        
         return {
-            "success": False,
-            "error": f"HTTP error: {str(e)}",
-            "recipient": recipient,
-            "instance": instance
+            "success": True,
+            "query": query,
+            "business_unit": business_unit,
+            "total_results": len(filtered_results),
+            "results": filtered_results,
+            "search_metadata": {
+                "team_filter": team,
+                "relevance_threshold": relevance_threshold,
+                "applied_filters": search_filters
+            }
         }
+        
     except Exception as e:
         return {
             "success": False,
-            "error": f"Unexpected error: {str(e)}",
-            "recipient": recipient,
-            "instance": instance
+            "error": f"Knowledge search error: {str(e)}",
+            "query": query,
+            "business_unit": business_unit,
+            "results": []
         }
 
 
@@ -745,9 +760,9 @@ AGENT_TOOLS = {
     "security": security_checker,
     "calculator": financial_calculator,
     "alert": check_security_alert,
-    "whatsapp": send_whatsapp_message,
     "search_docs": search_library_docs,
-    "ask_repo": ask_repo_question
+    "ask_repo": ask_repo_question,
+    "search_knowledge_base": search_knowledge_base
 }
 
 
@@ -755,6 +770,10 @@ def get_agent_tools(agent_name: str) -> List[Callable]:
     """Get appropriate tools for a specific agent"""
     # All agents get validation tool
     tools = [AGENT_TOOLS["validation"]]
+    
+    # Knowledge search for PagBank specialists
+    if agent_name in ["pagbank-specialist", "adquirencia-specialist", "emissao-specialist"]:
+        tools.append(AGENT_TOOLS["search_knowledge_base"])
     
     # Agent-specific tools
     if agent_name in ["cards_specialist", "digital_account_specialist"]:
@@ -766,9 +785,8 @@ def get_agent_tools(agent_name: str) -> List[Callable]:
     if agent_name == "insurance_specialist":
         tools.append(AGENT_TOOLS["calculator"])  # For premium calculations
     
-    if agent_name == "human_handoff":
-        # Add WhatsApp tool for human handoff
-        tools.append(AGENT_TOOLS["whatsapp"])
+    # Note: WhatsApp functionality is now handled via MCP tools in workflows
+    # No longer adding native WhatsApp tools to agents
     
     # Context tools for development and orchestration agents
     if agent_name in ["pagbank", "orchestrator", "development", "agno"]:

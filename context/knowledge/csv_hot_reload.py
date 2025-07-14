@@ -1,16 +1,53 @@
 #!/usr/bin/env python3
 """
-CSV Hot Reload Manager - KISS Principle
-Watches the CSV file and reloads knowledge base when it changes
+CSV Hot Reload Manager - Real-Time File Watching
+Watches the CSV file and reloads knowledge base instantly when it changes
 Management can edit CSV in Excel, save to cloud, and changes apply automatically
 """
 
 import time
 from datetime import datetime
 from pathlib import Path
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 from context.knowledge.smart_incremental_loader import SmartIncrementalLoader
+
+
+class CSVFileHandler(FileSystemEventHandler):
+    """File system event handler for CSV file changes with bulletproof debounce"""
+    
+    _last_global_trigger = 0
+    _global_processing = False
+    
+    def __init__(self, manager):
+        self.manager = manager
+        self.csv_filename = manager.csv_path.name
+        
+    def on_modified(self, event):
+        if (not event.is_directory and 
+            event.src_path.endswith(self.csv_filename) and 
+            not CSVFileHandler._global_processing):
+            
+            now = time.time()
+            
+            # Global debounce: ignore if ANY instance triggered within 2 seconds
+            if now - CSVFileHandler._last_global_trigger < 2.0:
+                return
+                
+            CSVFileHandler._global_processing = True
+            CSVFileHandler._last_global_trigger = now
+            
+            try:
+                timestamp = datetime.now().strftime('%H:%M:%S')
+                print(f"🔥 {timestamp} | CSV changed")
+                
+                # Delay to ensure file write is complete
+                time.sleep(0.8)
+                self.manager._reload_knowledge_base()
+            finally:
+                CSVFileHandler._global_processing = False
 
 
 class CSVHotReloadManager:
@@ -24,17 +61,17 @@ class CSVHotReloadManager:
     4. Zero downtime - agents get updated knowledge immediately
     """
     
-    def __init__(self, csv_path: str = "context/knowledge/knowledge_rag.csv", check_interval: int = 30):
+    def __init__(self, csv_path: str = "context/knowledge/knowledge_rag.csv"):
         self.csv_path = Path(csv_path)
-        self.check_interval = check_interval  # seconds
-        self.last_modified = 0
         self.kb = None
         self.smart_loader = None
         self.is_running = False
+        self.observer = None
+        self.file_handler = None
         
-        print("📄 CSV Hot Reload Manager initialized")
+        print("📄 CSV Hot Reload Manager initialized (REAL-TIME)")
         print(f"   Watching: {self.csv_path}")
-        print(f"   Check interval: {check_interval} seconds")
+        print(f"   Mode: INSTANT file change detection")
         
         # Initialize knowledge base
         self._initialize_knowledge_base()
@@ -50,7 +87,6 @@ class CSVHotReloadManager:
                 # Smart initial load
                 print("🧠 Performing smart initial load...")
                 result = self.smart_loader.smart_load()
-                self.last_modified = self.csv_path.stat().st_mtime
                 
                 if "error" in result:
                     print(f"❌ Smart load error: {result['error']}")
@@ -58,8 +94,6 @@ class CSVHotReloadManager:
                     self.kb.load_knowledge_base(recreate=True)
                 else:
                     print(f"✅ Smart load completed: {result.get('strategy', 'unknown')}")
-                    if result.get('embedding_tokens_saved'):
-                        print(f"💰 {result['embedding_tokens_saved']}")
                 
                 stats = self.kb.get_knowledge_statistics()
                 print(f"✅ Knowledge base ready with {stats.get('total_entries', 'unknown')} entries")
@@ -71,102 +105,77 @@ class CSVHotReloadManager:
             raise
     
     def start_watching(self):
-        """Start watching the CSV file for changes"""
+        """Start real-time watching of the CSV file for changes"""
         if self.is_running:
             print("⚠️  Manager already running")
             return
             
         self.is_running = True
-        print("👀 Started watching CSV file for changes...")
-        print("💡 Management can now edit the CSV file and changes will be applied automatically")
+        print("👀 Started REAL-TIME watching CSV file for changes...")
+        print("🔥 Changes will be detected INSTANTLY when file is saved")
+        print("💡 Management can now edit the CSV file and changes will be applied immediately")
         print("   Press Ctrl+C to stop")
         
         try:
+            # Set up file system watcher
+            self.file_handler = CSVFileHandler(self)
+            self.observer = Observer()
+            
+            # Watch the directory containing the CSV file
+            watch_directory = str(self.csv_path.parent.absolute())
+            self.observer.schedule(self.file_handler, watch_directory, recursive=False)
+            
+            print(f"🔍 Watching directory: {watch_directory}")
+            print(f"📁 Target file: {self.csv_path.name}")
+            
+            # Start the observer
+            self.observer.start()
+            
+            # Keep the main thread alive
             while self.is_running:
-                self._check_for_changes()
-                time.sleep(self.check_interval)
+                time.sleep(1)
                 
         except KeyboardInterrupt:
             print("\n👋 Stopping CSV hot reload manager...")
-            self.is_running = False
+            self.stop_watching()
         except Exception as e:
             print(f"❌ Error in watch loop: {e}")
-            self.is_running = False
+            self.stop_watching()
     
     def stop_watching(self):
         """Stop watching for changes"""
         self.is_running = False
+        
+        if self.observer:
+            self.observer.stop()
+            self.observer.join()
+            self.observer = None
+            
+        if self.file_handler:
+            self.file_handler = None
+            
         print("⏹️  Stopped watching CSV file")
     
-    def _check_for_changes(self):
-        """Check if CSV file has been modified"""
-        try:
-            if not self.csv_path.exists():
-                print(f"⚠️  CSV file not found: {self.csv_path}")
-                return
-            
-            current_modified = self.csv_path.stat().st_mtime
-            
-            if current_modified > self.last_modified:
-                self._reload_knowledge_base()
-                self.last_modified = current_modified
-                
-        except Exception as e:
-            print(f"❌ Error checking file: {e}")
     
     def _reload_knowledge_base(self):
-        """Smart reload of the knowledge base from CSV"""
+        """Simple reload with minimal logging"""
         try:
-            print(f"📄 CSV file changed at {datetime.now().strftime('%H:%M:%S')}")
-            print("🧠 Smart reloading knowledge base...")
-            
             start_time = time.time()
-            
-            # Use smart incremental loading
             result = self.smart_loader.smart_load()
             
-            reload_time = time.time() - start_time
-            
-            if "error" in result:
-                print(f"❌ Smart reload failed: {result['error']}")
-                print("🔄 Falling back to full reload...")
-                self.kb.load_knowledge_base(recreate=True)
-                result = {"strategy": "fallback_full_reload"}
-            
-            # Get updated stats
-            stats = self.kb.get_knowledge_statistics()
-            
-            print("✅ Knowledge base reloaded successfully!")
-            print(f"   📊 Strategy: {result.get('strategy', 'unknown')}")
-            print(f"   📊 Entries: {stats.get('total_entries', 'unknown')}")
-            print(f"   ⏱️  Reload time: {reload_time:.2f} seconds")
-            print(f"   🕒 Updated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            
-            # Show token savings if available
-            if result.get('embedding_tokens_saved'):
-                print(f"   💰 Tokens saved: {result['embedding_tokens_saved']}")
-            if result.get('embedding_tokens_used'):
-                print(f"   🔥 Tokens used: {result['embedding_tokens_used']}")
-            
-            # Quick validation test
-            self._validate_reload()
-            
-        except Exception as e:
-            print(f"❌ Failed to reload knowledge base: {e}")
-            print("💡 Check CSV file format and try again")
-    
-    def _validate_reload(self):
-        """Quick validation that the reload worked"""
-        try:
-            # Test search functionality
-            results = self.kb.knowledge_base.search("cartão", num_documents=1)
-            if len(results) > 0:
-                print("✅ Validation: Search functionality working")
+            if result and "error" not in result:
+                load_time = time.time() - start_time
+                processed = result.get('new_rows_processed', 0)
+                strategy = result.get('strategy', 'updated')
+                stats = self.kb.get_knowledge_statistics()
+                total = stats.get('total_entries', 0)
+                print(f"✅ {strategy} {processed} | {load_time:.1f}s | total: {total}")
             else:
-                print("⚠️  Validation: No search results (check CSV content)")
+                print("✅ No changes")
                 
         except Exception as e:
-            print(f"⚠️  Validation failed: {e}")
+            print(f"❌ Error: {e}")
+    
     
     def get_status(self):
         """Get current status of the manager"""
@@ -179,14 +188,12 @@ class CSVHotReloadManager:
         
         try:
             stats = self.kb.get_knowledge_statistics() if self.kb else {}
-            last_modified_time = datetime.fromtimestamp(self.last_modified).strftime('%Y-%m-%d %H:%M:%S')
             
             return {
                 "status": "running" if self.is_running else "stopped",
                 "csv_path": str(self.csv_path),
-                "last_modified": last_modified_time,
+                "mode": "real-time watchdog",
                 "total_entries": stats.get('total_entries', 'unknown'),
-                "check_interval": self.check_interval,
                 "areas": list(stats.get('by_area', {}).keys())
             }
             
@@ -206,15 +213,14 @@ def main():
     """Main entry point for standalone execution"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="CSV Hot Reload Manager for PagBank Knowledge Base")
+    parser = argparse.ArgumentParser(description="CSV Hot Reload Manager for PagBank Knowledge Base - Real-Time Watchdog")
     parser.add_argument("--csv", default="knowledge/knowledge_rag.csv", help="Path to CSV file")
-    parser.add_argument("--interval", type=int, default=30, help="Check interval in seconds")
     parser.add_argument("--status", action="store_true", help="Show status and exit")
     parser.add_argument("--force-reload", action="store_true", help="Force reload and exit")
     
     args = parser.parse_args()
     
-    manager = CSVHotReloadManager(args.csv, args.interval)
+    manager = CSVHotReloadManager(args.csv)
     
     if args.status:
         status = manager.get_status()

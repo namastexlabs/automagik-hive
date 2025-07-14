@@ -30,4 +30,4 @@ VIRTUAL_ENV=${VENV_DIR} uv pip install -e ${REPO_ROOT}
 
 print_heading "Configuração completa!"
 print_heading "Ative o ambiente com: source .venv/bin/activate"
-print_heading "Inicie o playground com: uv run python api/playground.py"
+print_heading "Inicie o servidor com: uv run python api/serve.py"

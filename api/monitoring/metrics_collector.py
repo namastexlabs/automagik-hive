@@ -94,9 +94,15 @@ class MetricsCollector:
     
     def _start_background_tasks(self):
         """Start background monitoring tasks"""
-        # Schedule periodic metrics aggregation
-        asyncio.create_task(self._periodic_aggregation())
-        asyncio.create_task(self._system_health_check())
+        # Don't start tasks during import - no event loop yet
+        self._tasks_started = False
+    
+    def start_monitoring(self):
+        """Start monitoring tasks when event loop is ready"""
+        if not self._tasks_started:
+            asyncio.create_task(self._periodic_aggregation())
+            asyncio.create_task(self._system_health_check())
+            self._tasks_started = True
     
     async def _periodic_aggregation(self):
         """Periodically aggregate metrics for analytics"""

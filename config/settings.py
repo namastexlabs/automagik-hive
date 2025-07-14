@@ -63,12 +63,7 @@ class Settings:
         self.team_routing_timeout = int(os.getenv("TEAM_ROUTING_TIMEOUT", "30"))
         self.max_team_switches = int(os.getenv("MAX_TEAM_SWITCHES", "3"))
         
-        # Escalation settings
-        self.escalation_triggers = {
-            "frustration_threshold": int(os.getenv("FRUSTRATION_THRESHOLD", "3")),
-            "complex_query_threshold": int(os.getenv("COMPLEX_QUERY_THRESHOLD", "5")),
-            "unresolved_time_threshold": int(os.getenv("UNRESOLVED_TIME_THRESHOLD", "600"))  # 10 minutes
-        }
+        # Human handoff thresholds are configured in Ana team YAML, not environment variables
         
         # Supported languages
         self.supported_languages = ["pt-BR", "en-US"]

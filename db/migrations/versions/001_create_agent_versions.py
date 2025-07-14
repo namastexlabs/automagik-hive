@@ -24,6 +24,11 @@ depends_on = None
 def upgrade():
     """Create agent versioning tables."""
     
+    # Initialize PgVector extension for PostgreSQL
+    bind = op.get_bind()
+    if "postgresql" in str(bind.dialect):
+        op.execute('CREATE EXTENSION IF NOT EXISTS vector')
+    
     # Create agent_versions table
     op.create_table(
         'agent_versions',
@@ -36,8 +41,7 @@ def upgrade():
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default='false', comment='Whether this version is currently active'),
         sa.Column('is_deprecated', sa.Boolean(), nullable=False, server_default='false', comment='Whether this version is deprecated'),
         sa.Column('description', sa.Text(), comment='Description of changes in this version'),
-        sa.PrimaryKeyConstraint('id'),
-        schema='public'
+        sa.PrimaryKeyConstraint('id')
     )
     
     # Create unique index for agent_id + version
@@ -45,16 +49,14 @@ def upgrade():
         'idx_agent_versions_unique', 
         'agent_versions', 
         ['agent_id', 'version'], 
-        unique=True,
-        schema='public'
+        unique=True
     )
     
     # Create lookup index
     op.create_index(
         'idx_agent_versions_lookup',
         'agent_versions',
-        ['agent_id', 'version'],
-        schema='public'
+        ['agent_id', 'version']
     )
     
     # Create active version index
@@ -62,16 +64,14 @@ def upgrade():
         'idx_agent_versions_active',
         'agent_versions',
         ['agent_id', 'is_active'],
-        postgresql_where=sa.text('is_active = true'),
-        schema='public'
+        postgresql_where=sa.text('is_active = true')
     )
     
     # Create created_at index
     op.create_index(
         'idx_agent_versions_created',
         'agent_versions',
-        ['created_at'],
-        schema='public'
+        ['created_at']
     )
     
     # Create agent_version_history table
@@ -86,25 +86,19 @@ def upgrade():
         sa.Column('changed_by', sa.String(length=255), comment='User who made the change'),
         sa.Column('changed_at', sa.DateTime(), server_default=sa.text('now()'), comment='When the change was made'),
         sa.Column('reason', sa.Text(), comment='Reason for the change'),
-        sa.PrimaryKeyConstraint('id'),
-        schema='public'
-    )
+        sa.PrimaryKeyConstraint('id')    )
     
     # Create history lookup index
     op.create_index(
         'idx_agent_version_history_lookup',
         'agent_version_history',
-        ['agent_id', 'version', 'changed_at'],
-        schema='public'
-    )
+        ['agent_id', 'version', 'changed_at']    )
     
     # Create changed_at index
     op.create_index(
         'idx_agent_version_history_changed',
         'agent_version_history',
-        ['changed_at'],
-        schema='public'
-    )
+        ['changed_at']    )
     
     # Create agent_version_metrics table
     op.create_table(
@@ -119,25 +113,19 @@ def upgrade():
         sa.Column('average_response_time', sa.Integer(), comment='Average response time in milliseconds'),
         sa.Column('escalation_rate', sa.Integer(), comment='Percentage of requests that were escalated'),
         sa.Column('user_satisfaction', sa.Integer(), comment='User satisfaction score (1-10)'),
-        sa.PrimaryKeyConstraint('id'),
-        schema='public'
-    )
+        sa.PrimaryKeyConstraint('id')    )
     
     # Create metrics lookup index
     op.create_index(
         'idx_agent_version_metrics_lookup',
         'agent_version_metrics',
-        ['agent_id', 'version', 'metric_date'],
-        schema='public'
-    )
+        ['agent_id', 'version', 'metric_date']    )
     
     # Create metric date index
     op.create_index(
         'idx_agent_version_metrics_date',
         'agent_version_metrics',
-        ['metric_date'],
-        schema='public'
-    )
+        ['metric_date']    )
 
 
 def downgrade():

@@ -7,6 +7,9 @@
 
 set -euo pipefail
 
+# Get the project root directory dynamically
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
 # Read input from stdin
 INPUT_JSON=$(cat)
 
@@ -23,15 +26,45 @@ fi
 # Extract the original prompt
 ORIGINAL_PROMPT=$(echo "$INPUT_JSON" | jq -r '.tool_input.prompt // ""')
 
-# Build context prefix with essential files
+# Function to get recent memory context
+get_memory_context() {
+    local recent_patterns=""
+    local recent_tasks=""
+    local recent_findings=""
+    
+    # Check if memory command is available and get recent context
+    if command -v memory >/dev/null 2>&1; then
+        recent_patterns=$(memory search "PATTERN:" 2>/dev/null | head -3 || echo "")
+        recent_tasks=$(memory search "TASK:" 2>/dev/null | head -2 || echo "")
+        recent_findings=$(memory search "FOUND:" 2>/dev/null | head -3 || echo "")
+    fi
+    
+    echo "🧠 RECENT MEMORY CONTEXT:"
+    if [ -n "$recent_patterns" ]; then
+        echo "   Recent patterns: $recent_patterns"
+    fi
+    if [ -n "$recent_tasks" ]; then
+        echo "   Active tasks: $recent_tasks"
+    fi
+    if [ -n "$recent_findings" ]; then
+        echo "   Recent findings: $recent_findings"
+    fi
+    echo ""
+}
+
+# Build context prefix with essential files and dynamic memory
+MEMORY_CONTEXT=$(get_memory_context)
+
 CONTEXT_PREFIX="=== DYNAMIC PROJECT CONTEXT ===
+Project Root: $PROJECT_ROOT
 
 📋 ESSENTIAL FILES:
-   - @/CLAUDE.md - Master project context and workflow rules
-   - @/genie/ai-context/project-structure.md - Complete tech stack and architecture
-   - @/genie/ai-context/development-standards.md - Coding standards and patterns
+   - @CLAUDE.md - Master project context and workflow rules
+   - @genie/CLAUDE.md - Framework-specific instructions
 
-🧠 MEMORY CONTEXT:
+$MEMORY_CONTEXT
+
+🔍 MEMORY SEARCH COMMANDS:
    Search for patterns: memory.search('PATTERN: [topic]')
    Check current work: memory.search('TASK: Working')
    Find discoveries: memory.search('FOUND: [topic]')

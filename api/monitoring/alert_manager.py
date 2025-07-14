@@ -9,10 +9,18 @@ from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import json
-import smtplib
 from pathlib import Path
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
+
+# Optional email imports - make non-blocking
+try:
+    import smtplib
+    from email.mime.text import MimeText
+    from email.mime.multipart import MimeMultipart
+    EMAIL_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Email functionality disabled: {e}")
+    EMAIL_AVAILABLE = False
+    MimeText = MimeMultipart = smtplib = None
 
 logger = logging.getLogger(__name__)
 
@@ -360,6 +368,10 @@ class AlertManager:
     
     async def _deliver_email(self, alert: Alert):
         """Deliver alert via email"""
+        if not EMAIL_AVAILABLE:
+            logger.warning("Email delivery requested but email functionality not available")
+            return
+            
         email_config = self.config.get('email', {})
         
         if not email_config.get('enabled', False):

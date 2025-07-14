@@ -621,3 +621,11 @@ Produto: Aplicativo PagBank
 Motivo: Erros no aplicativo
 Submotivo: Pop-up de erro encerrando app
 Conclusão: Orientação","PagBank"
+"TEST-001: UPDATED - Real-time detection verified successfully","This entry tests instant file detection with proper content logging","Testing Category","Real-time Unit"
+"TEST-003: Rapid addition test","Testing rapid sequential additions to verify debounce works properly","Stress Testing","Real-time Unit"
+"TEST-004: Final verification entry","Last test entry to ensure all detection types work correctly","Final Testing","Real-time Unit"
+"TEST-CLEAN: Single trigger test","Testing clean single trigger with 3-second debounce and minimal logging","Clean Testing","Real-time Unit"
+"TEST-FINAL: Clean system test","Testing the cleaned up system with single trigger and minimal logging","Final Clean Test","Real-time Unit"
+"TEST-CLEAN-UPDATE: Entry updated cleanly","Testing clean single add operation with minimal logging","Clean Add Test","Real-time Unit"
+"TEST-FRESH-START: First clean test","Testing if the system detects changes at all","Fresh Start Test","Real-time Unit"
+"TEST-1: Fresh start after path fix","Testing file detection with correct absolute path and 2-second debounce","Path Fix Test","Real-time Unit"

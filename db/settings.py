@@ -6,13 +6,17 @@ Based on agno-demo-app with PagBank-specific configurations.
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+
+# Load environment variables at module level
+load_dotenv()
 
 from utils.log import logger
 
 
 class DbSettings(BaseSettings):
     """
-    Database settings with automatic fallback from PostgreSQL to SQLite.
+    Database settings for PostgreSQL.
     Compatible with Agno storage patterns.
     
     Reference: https://docs.pydantic.dev/latest/usage/pydantic_settings/
@@ -32,14 +36,15 @@ class DbSettings(BaseSettings):
 
     def get_db_url(self) -> str:
         """
-        Get database URL with automatic fallback.
-        Returns PostgreSQL URL if environment is configured, 
-        otherwise falls back to SQLite.
+        Get PostgreSQL database URL from environment.
+        This enterprise setup requires PostgreSQL.
         """
-        # Check for full DATABASE_URL first (highest priority)
-        if database_url := os.getenv("DATABASE_URL"):
-            if "None" not in database_url and database_url.strip():
-                return database_url
+        # Get DATABASE_URL from environment
+        database_url = os.getenv("DATABASE_URL")
+        
+        if database_url and "postgresql" in database_url:
+            print(f"✅ Using PostgreSQL: {database_url.split('@')[1] if '@' in database_url else database_url}")
+            return database_url
         
         # Try to construct PostgreSQL URL from individual components
         if all([self.db_host, self.db_port, self.db_user, self.db_database]):
@@ -51,32 +56,19 @@ class DbSettings(BaseSettings):
                 self.db_port,
                 self.db_database,
             )
-            if "None" not in db_url:
-                return db_url
+            print(f"✅ Using PostgreSQL from components: {self.db_host}:{self.db_port}")
+            return db_url
         
-        # Fallback to workspace PostgreSQL (agno-demo-app pattern)
-        try:
-            from workspace.dev_resources import dev_db
-            logger.debug("Using workspace dev database connection")
-            local_db_url = dev_db.get_db_connection_local()
-            if local_db_url:
-                return local_db_url
-        except Exception:
-            pass
-        
-        # Final fallback to SQLite
-        print("⚠️ PostgreSQL not available, falling back to SQLite")
-        sqlite_path = os.path.join(os.getcwd(), "data", "pagbank_v2.db")
-        os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
-        return f"sqlite:///{sqlite_path}"
+        # Enterprise setup requires PostgreSQL
+        raise RuntimeError(
+            "❌ PostgreSQL required but DATABASE_URL not found!\n"
+            "Please set DATABASE_URL in .env:\n"
+            "DATABASE_URL=postgresql+psycopg://ai:ai@localhost:5532/ai"
+        )
 
     def is_postgresql(self) -> bool:
         """Check if using PostgreSQL database."""
         return "postgresql" in self.get_db_url().lower()
-    
-    def is_sqlite(self) -> bool:
-        """Check if using SQLite database."""
-        return "sqlite" in self.get_db_url().lower()
 
 
 # Create global db_settings instance

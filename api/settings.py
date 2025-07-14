@@ -15,48 +15,53 @@ class ApiSettings(BaseSettings):
     title: str = "PagBank Multi-Agent System"
     version: str = "2.0"
 
-    # Api runtime_env derived from the `runtime_env` environment variable.
-    # Valid values include "dev", "stg", "prd"
-    runtime_env: str = "dev"
+    # Application environment derived from the `ENVIRONMENT` environment variable.
+    # Valid values include "development", "production"
+    environment: str = "development"
 
     # Set to False to disable docs at /docs and /redoc
     docs_enabled: bool = True
 
     # Cors origin list to allow requests from.
     # This list is set using the set_cors_origin_list validator
-    # which uses the runtime_env variable to set the
+    # which uses the environment variable to set the
     # default cors origin list.
     cors_origin_list: Optional[List[str]] = Field(None, validate_default=True)
 
-    @field_validator("runtime_env")
-    def validate_runtime_env(cls, runtime_env):
-        """Validate runtime_env."""
+    @field_validator("environment")
+    def validate_environment(cls, environment):
+        """Validate environment."""
 
-        valid_runtime_envs = ["dev", "stg", "prd"]
-        if runtime_env not in valid_runtime_envs:
-            raise ValueError(f"Invalid runtime_env: {runtime_env}")
+        valid_environments = ["development", "production"]
+        if environment not in valid_environments:
+            raise ValueError(f"Invalid environment: {environment}")
 
-        return runtime_env
+        return environment
 
     @field_validator("cors_origin_list", mode="before")
     def set_cors_origin_list(cls, cors_origin_list, info: FieldValidationInfo):
         valid_cors = cors_origin_list or []
 
-        # Add localhost and any domain for PagBank development
-        valid_cors.extend(
-            [
+        environment = info.data.get("environment")
+        
+        if environment == "development":
+            # Development: Allow all origins for easy testing
+            valid_cors.extend([
                 "http://localhost:3000",
-                "http://localhost:7777",
+                "http://localhost:7777", 
                 "http://localhost:8000",
+                "*"
+            ])
+        elif environment == "production":
+            # Production: Only allow specific PagBank domains
+            valid_cors.extend([
                 "https://app.pagbank.com.br",
                 "https://pagbank.com.br",
-                # Allow any domain in development
-                "*" if info.data.get("runtime_env") == "dev" else None,
-            ]
-        )
+                "https://www.pagbank.com.br"
+            ])
 
-        # Remove None values
-        valid_cors = [cors for cors in valid_cors if cors is not None]
+        # Remove None values and duplicates
+        valid_cors = list(set([cors for cors in valid_cors if cors is not None]))
 
         return valid_cors
 

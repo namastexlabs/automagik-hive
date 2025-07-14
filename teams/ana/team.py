@@ -2,6 +2,7 @@
 # Based on Agno Team(mode="route") pattern
 # Generic implementation for any agent system
 
+import os
 from typing import Optional
 import yaml
 from pathlib import Path
@@ -15,7 +16,14 @@ from db.session import db_url
 # Import generic agent factory
 from agents.registry import get_agent
 
+# Memory system integration
+from context.memory.memory_manager import create_memory_manager
 
+# Demo logging enhancement
+from .demo_logging import get_demo_enhanced_ana_team
+
+
+@get_demo_enhanced_ana_team
 def get_ana_team(
     model_id: Optional[str] = None,
     user_id: Optional[str] = None,
@@ -55,6 +63,14 @@ def get_ana_team(
     # Use model override if provided (agno-demo-app pattern)
     model_id = model_id or config["model"]["id"]
     
+    # Initialize memory system from YAML config
+    memory_manager = None
+    if config.get("memory"):
+        memory_manager = create_memory_manager()
+        memory = memory_manager.create_memory_for_agent(user_id or "system", session_id)
+    else:
+        memory = None
+    
     # Create Team with route mode (Agno docs pattern)
     return Team(
         name=config["team"]["name"],                    # From YAML
@@ -80,6 +96,7 @@ def get_ana_team(
             mode=config["storage"]["mode"],
             auto_upgrade_schema=config["storage"]["auto_upgrade_schema"],
         ),
+        memory=memory,  # Connect comprehensive memory framework
         debug_mode=debug_mode,
     )
 
@@ -148,6 +165,10 @@ def get_custom_team(
         for name in agent_names
     ]
     
+    # Initialize memory for custom team
+    memory_manager = create_memory_manager()
+    memory = memory_manager.create_memory_for_agent(user_id or "system", session_id)
+    
     return Team(
         name=team_name,
         team_id=f"{team_name.lower().replace(' ', '-')}-team",
@@ -169,5 +190,6 @@ def get_custom_team(
             mode=config["storage"]["mode"],
             auto_upgrade_schema=config["storage"]["auto_upgrade_schema"],
         ),
+        memory=memory,  # Connect comprehensive memory framework
         debug_mode=debug_mode,
     )

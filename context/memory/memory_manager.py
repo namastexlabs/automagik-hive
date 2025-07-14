@@ -8,14 +8,13 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from agno.memory.v2.db.sqlite import SqliteMemoryDb
 from agno.memory.v2.db.postgres import PostgresMemoryDb
 from agno.memory.v2.memory import Memory
 from agno.models.anthropic import Claude
 
 from .memory_config import MemoryConfig, get_memory_config
 from .pattern_detector import create_pattern_detector
-from .session_manager import create_session_manager
+# Session manager removed - using PostgreSQL-only approach
 
 
 class MemoryManager:
@@ -31,19 +30,14 @@ class MemoryManager:
         # Check if we should use PostgreSQL
         db_url = os.getenv("DATABASE_URL")
         
-        # Initialize memory database
-        if db_url:
-            # Use PostgreSQL
-            self.memory_db = PostgresMemoryDb(
-                table_name=self.config.table_name,
-                db_url=db_url
-            )
-        else:
-            # Fall back to SQLite
-            self.memory_db = SqliteMemoryDb(
-                table_name=self.config.table_name,
-                db_file=str(self.config.get_db_path())
-            )
+        # Initialize PostgreSQL memory database
+        if not db_url:
+            raise RuntimeError("❌ PostgreSQL DATABASE_URL required for memory system")
+        
+        self.memory_db = PostgresMemoryDb(
+            table_name=self.config.table_name,
+            db_url=db_url
+        )
         
         self.memory = Memory(
             model=Claude(id=self.config.memory_model),
@@ -56,13 +50,8 @@ class MemoryManager:
             self.config.pattern_similarity_threshold
         )
         
-        # Initialize session manager
-        # For now, always use SQLite session manager
-        # (Agno's PostgresStorage handles team/agent sessions separately)
-        self.session_manager = create_session_manager(
-            "data/pagbank.db",
-            self.config.session_timeout_minutes
-        )
+        # Session management now handled by Agno storage layer
+        self.session_manager = None
         
         # Memory statistics
         self.interaction_count = 0

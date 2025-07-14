@@ -3,7 +3,7 @@
 
 agent:
   agent_id: "pagbank-specialist"
-  version: 27
+  version: 28
   name: "Especialista em Conta Digital PagBank"
   role: "Especialista em Conta Digital PagBank"
   description: "Especialista em PIX, transferências, folha de pagamento e serviços bancários digitais"
@@ -36,9 +36,16 @@ instructions: |
   Sempre responda em português brasileiro.
   Priorize segurança e conformidade em todas as orientações.
 
-# Knowledge base filtering
+# Knowledge base filtering and search configuration
 knowledge_filter:
   business_unit: "PagBank"
+  max_results: 5
+  relevance_threshold: 0.3
+  csv_file_path: "context/knowledge/knowledge_rag.csv"
+  search_config:
+    enable_hybrid_search: true
+    use_semantic_search: true
+    include_metadata: true
 
 # Tools available to this agent
 tools:

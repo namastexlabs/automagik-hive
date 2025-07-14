@@ -4,8 +4,12 @@
 from typing import Iterator, Optional
 from agno.workflow import Workflow, RunResponse
 from agno.agent import Agent
-from agno.models.anthropic import AnthropicChat
+from agno.models.anthropic import Claude
 from agno.utils.log import logger
+from agno.storage.postgres import PostgresStorage
+
+# V2 Database infrastructure
+from db.session import db_url
 
 
 class HumanHandoffWorkflow(Workflow):
@@ -23,7 +27,7 @@ class HumanHandoffWorkflow(Workflow):
     context_analyzer = Agent(
         name="Context Analyzer",
         role="Analyze conversation context for human handoff",
-        model=AnthropicChat(model="claude-sonnet-4-20250514"),
+        model=Claude(id="claude-sonnet-4-20250514"),
         instructions=[
             "Analyze the conversation context to extract key information for human agents.",
             "Identify the customer's main issue, frustration level, and priority.",
@@ -38,7 +42,7 @@ class HumanHandoffWorkflow(Workflow):
     ticket_creator = Agent(
         name="Ticket Creator", 
         role="Create structured support tickets",
-        model=AnthropicChat(model="claude-sonnet-4-20250514"),
+        model=Claude(id="claude-sonnet-4-20250514"),
         instructions=[
             "Create a structured support ticket with all relevant information.",
             "Include customer details, issue summary, urgency level, and context.",
@@ -53,7 +57,7 @@ class HumanHandoffWorkflow(Workflow):
     handoff_coordinator = Agent(
         name="Handoff Coordinator",
         role="Coordinate handoff to human agents",
-        model=AnthropicChat(model="claude-sonnet-4-20250514"),
+        model=Claude(id="claude-sonnet-4-20250514"),
         instructions=[
             "Coordinate the handoff process to human agents.",
             "Send appropriate notifications to the support team.",
@@ -193,6 +197,38 @@ class HumanHandoffWorkflow(Workflow):
 
 
 # Convenience function for triggering from Ana Team
+def get_human_handoff_workflow(
+    debug_mode: bool = False,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None
+) -> HumanHandoffWorkflow:
+    """
+    Factory function to create HumanHandoffWorkflow instance.
+    
+    Args:
+        debug_mode: Enable debug mode
+        session_id: Session ID for tracking
+        user_id: User ID for tracking
+        
+    Returns:
+        Configured HumanHandoffWorkflow instance
+    """
+    return HumanHandoffWorkflow(
+        workflow_id="human-handoff",
+        name="Human Handoff Workflow",
+        description="Escalate conversations to human agents with proper context transfer",
+        session_id=session_id,
+        user_id=user_id,
+        storage=PostgresStorage(
+            table_name="human_handoff_workflows",
+            db_url=db_url,
+            mode="workflow",
+            auto_upgrade_schema=True,
+        ),
+        debug_mode=debug_mode,
+    )
+
+
 def trigger_human_handoff(
     customer_query: str,
     escalation_reason: str,

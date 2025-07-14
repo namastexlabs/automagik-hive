@@ -100,7 +100,9 @@ protocol_fields:
   - "customer_emotion"
   - "recommended_action"
 
-# WhatsApp integration (future)
+# WhatsApp integration
+# Now handled by dedicated WhatsApp Notifier Agent
 whatsapp:
-  enabled: false
+  enabled: true
   instance: "pagbank_support"
+  agent: "whatsapp-notifier"  # Dedicated MCP-enabled agent

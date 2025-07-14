@@ -162,6 +162,41 @@ def list_agent_versions(
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+@router.get("/{agent_id}/versions/active", response_model=AgentVersionResponse)
+def get_active_agent_version(
+    agent_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get the currently active version for an agent.
+    
+    Returns the version that is currently marked as active for the specified agent.
+    """
+    try:
+        service = AgentVersionService(db)
+        active_version = service.get_active_version(agent_id)
+        
+        if not active_version:
+            raise HTTPException(status_code=404, detail=f"No active version found for agent {agent_id}")
+        
+        return AgentVersionResponse(
+            id=active_version.id,
+            agent_id=active_version.agent_id,
+            version=active_version.version,
+            created_at=active_version.created_at,
+            created_by=active_version.created_by,
+            is_active=active_version.is_active,
+            is_deprecated=active_version.is_deprecated,
+            description=active_version.description,
+            config=active_version.config
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @router.get("/{agent_id}/versions/{version}", response_model=AgentVersionResponse)
 def get_agent_version(
     agent_id: str,
@@ -190,41 +225,6 @@ def get_agent_version(
             is_deprecated=agent_version.is_deprecated,
             description=agent_version.description,
             config=agent_version.config
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-
-@router.get("/{agent_id}/versions/active", response_model=AgentVersionResponse)
-def get_active_agent_version(
-    agent_id: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Get the currently active version for an agent.
-    
-    Returns the version that is currently marked as active for the specified agent.
-    """
-    try:
-        service = AgentVersionService(db)
-        active_version = service.get_active_version(agent_id)
-        
-        if not active_version:
-            raise HTTPException(status_code=404, detail=f"No active version found for agent {agent_id}")
-        
-        return AgentVersionResponse(
-            id=active_version.id,
-            agent_id=active_version.agent_id,
-            version=active_version.version,
-            created_at=active_version.created_at,
-            created_by=active_version.created_by,
-            is_active=active_version.is_active,
-            is_deprecated=active_version.is_deprecated,
-            description=active_version.description,
-            config=active_version.config
         )
         
     except HTTPException:

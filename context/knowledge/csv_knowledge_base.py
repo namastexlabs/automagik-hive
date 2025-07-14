@@ -69,11 +69,9 @@ class PagBankCSVKnowledgeBase:
         # Add valid_metadata_filters attribute for Agno agentic filtering
         self.knowledge_base.valid_metadata_filters = {"business_unit", "solution", "typification"}
         
-        print(f"Initialized PagBank CSV Knowledge Base with {self.csv_path}")
     
     def load_knowledge_base(self, recreate: bool = False) -> None:
         """Load knowledge base into vector database"""
-        print(f"Loading knowledge base from {self.csv_path}")
         
         # Verify CSV file exists
         if not self.csv_path.exists():

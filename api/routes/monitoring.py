@@ -4,11 +4,10 @@ Provides real-time monitoring, analytics, and alerting endpoints
 """
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse
 from typing import Dict, Any, Optional
 from datetime import datetime
 import logging
-from pathlib import Path
 
 from api.monitoring.metrics_collector import metrics_collector
 from api.monitoring.system_monitor import system_monitor
@@ -19,19 +18,6 @@ logger = logging.getLogger(__name__)
 
 monitoring_router = APIRouter(tags=["Monitoring"], prefix="/monitoring")
 
-@monitoring_router.get("/dashboard", response_class=HTMLResponse)
-async def get_monitoring_dashboard():
-    """Serve the monitoring dashboard HTML"""
-    try:
-        dashboard_path = Path(__file__).parent / "dashboard.html"
-        if dashboard_path.exists():
-            with open(dashboard_path, 'r', encoding='utf-8') as f:
-                return HTMLResponse(content=f.read(), status_code=200)
-        else:
-            raise HTTPException(status_code=404, detail="Dashboard not found")
-    except Exception as e:
-        logger.error(f"Error serving dashboard: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @monitoring_router.get("/health")
 async def get_system_health():

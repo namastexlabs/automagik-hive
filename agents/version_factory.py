@@ -11,9 +11,11 @@ import yaml
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
+from agno.tools import Function
 
 from db.services.agent_version_service import AgentVersionService
 from db.session import get_db
+from agents.tools.agent_tools import search_knowledge_base
 
 
 class AgentVersionFactory:
@@ -25,6 +27,7 @@ class AgentVersionFactory:
     - Falling back to file-based configuration
     - A/B testing with version distribution
     - Hot-swapping configurations without deployment
+    - Dynamic tool loading from configuration
     """
     
     def __init__(self, db_session=None):
@@ -80,12 +83,16 @@ class AgentVersionFactory:
         # Create storage instance
         storage = self._create_storage(config, db_url)
         
+        # Create tools from configuration
+        tools = self._create_tools(config)
+        
         # Create agent instance
         agent = Agent(
             name=config["agent"]["name"],
             agent_id=config["agent"]["agent_id"],
             instructions=config["instructions"],
             model=model,
+            tools=tools if tools else None,
             storage=storage,
             session_id=session_id,
             debug_mode=debug_mode,
@@ -96,9 +103,21 @@ class AgentVersionFactory:
             num_history_runs=config.get("memory", {}).get("num_history_runs", 5)
         )
         
+        # Get the actual version from database or config
+        actual_version = version
+        if actual_version is None and config.get("agent", {}).get("version"):
+            actual_version = config["agent"]["version"]
+        elif actual_version is None:
+            # Try to get active version from database
+            try:
+                active_version = self.version_service.get_active_version(agent_id)
+                actual_version = active_version.version if active_version else 1
+            except:
+                actual_version = 1
+        
         # Add version metadata
         agent.metadata = {
-            "version": config["agent"].get("version"),
+            "version": actual_version,
             "loaded_from": "database" if version is not None else "file",
             "agent_id": agent_id
         }
@@ -121,9 +140,33 @@ class AgentVersionFactory:
             if config:
                 # Ensure the config has the expected structure
                 if "agent" not in config:
-                    config["agent"] = {"agent_id": agent_id, "version": version}
-                elif "agent_id" not in config["agent"]:
-                    config["agent"]["agent_id"] = agent_id
+                    config["agent"] = {
+                        "agent_id": agent_id, 
+                        "version": version,
+                        "name": config.get("name", f"Agent {agent_id}"),
+                        "role": config.get("role", config.get("name", f"Agent {agent_id}")),
+                        "description": config.get("description", f"Agent {agent_id}")
+                    }
+                else:
+                    # Ensure required fields in agent section
+                    if "agent_id" not in config["agent"]:
+                        config["agent"]["agent_id"] = agent_id
+                    if "name" not in config["agent"]:
+                        config["agent"]["name"] = config.get("name", f"Agent {agent_id}")
+                    if "role" not in config["agent"]:
+                        config["agent"]["role"] = config["agent"].get("name", f"Agent {agent_id}")
+                    if "description" not in config["agent"]:
+                        config["agent"]["description"] = config.get("description", f"Agent {agent_id}")
+                
+                # Ensure other required sections exist
+                if "instructions" not in config:
+                    config["instructions"] = f"You are {config['agent']['name']}. Help users with their requests."
+                if "model" not in config:
+                    config["model"] = {"id": "claude-sonnet-4-20250514", "temperature": 0.7, "max_tokens": 2000}
+                if "storage" not in config:
+                    config["storage"] = {"table_name": "agent_conversations", "auto_upgrade_schema": True}
+                if "memory" not in config:
+                    config["memory"] = {"add_history_to_messages": True, "num_history_runs": 5}
                     
                 return config
         except Exception as e:
@@ -187,6 +230,90 @@ class AgentVersionFactory:
             table_name=storage_config.get("table_name", "agent_conversations"),
             db_url=db_url,
             auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
+        )
+    
+    def _create_tools(self, config: Dict[str, Any]) -> list:
+        """
+        Create tools from configuration.
+        
+        Args:
+            config: Full agent configuration
+            
+        Returns:
+            List of configured tools
+        """
+        tools = []
+        
+        # Get configured tools
+        configured_tools = config.get("tools", [])
+        
+        # Add knowledge search tool if configured
+        if "search_knowledge_base" in configured_tools:
+            knowledge_config = config.get("knowledge_filter", {})
+            business_unit = knowledge_config.get("business_unit")
+            
+            if business_unit:
+                tools.append(self._create_knowledge_search_tool(business_unit, config))
+        
+        return tools
+    
+    def _create_knowledge_search_tool(self, business_unit: str, config: dict = None) -> Function:
+        """Create knowledge search tool configured for specific business unit"""
+        
+        # Extract config values if provided
+        default_max_results = 5
+        default_threshold = 0.6
+        
+        if config:
+            knowledge_config = config.get("knowledge_filter", {})
+            default_max_results = knowledge_config.get("max_results", 5)
+            default_threshold = knowledge_config.get("relevance_threshold", 0.3)  # Lower threshold for better recall
+        
+        def knowledge_search(query: str, max_results: int = None) -> str:
+            """Search PagBank knowledge base for relevant information
+            
+            Args:
+                query: Search query in Portuguese
+                max_results: Maximum number of results to return (uses config default if None)
+                
+            Returns:
+                Formatted search results with solutions and information
+            """
+            # Use config defaults if not specified
+            search_max_results = max_results if max_results is not None else default_max_results
+            
+            result = search_knowledge_base(
+                query=query,
+                business_unit=business_unit,
+                max_results=search_max_results,
+                relevance_threshold=default_threshold
+            )
+            
+            if not result["success"]:
+                return f"Erro na busca: {result.get('error', 'Erro desconhecido')}"
+            
+            if not result["results"]:
+                return "Nenhuma informação encontrada na base de conhecimento para esta consulta."
+            
+            # Format results for agent consumption
+            formatted_results = []
+            for i, item in enumerate(result["results"], 1):
+                content = item.get("content", "")
+                metadata = item.get("metadata", {})
+                score = item.get("relevance_score", 0)
+                
+                formatted_results.append(
+                    f"Resultado {i} (relevância: {score:.2f}):\n"
+                    f"Conteúdo: {content}\n"
+                    f"Metadados: {metadata}\n"
+                )
+            
+            return "\n".join(formatted_results)
+        
+        return Function(
+            function=knowledge_search,
+            name="search_knowledge_base",
+            description=f"Busca informações na base de conhecimento do PagBank para {business_unit}"
         )
     
     def migrate_file_to_database(

@@ -111,7 +111,7 @@ The `task-context-injector.sh` hook automatically prepends to ALL Task() calls:
 cat genie/active/${CURRENT_EPIC}.md
 
 # Start development (port 7777)
-uv run python api/playground.py
+uv run python api/serve.py
 
 # Run tests
 uv run pytest tests/

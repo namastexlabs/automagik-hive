@@ -1,5 +1,5 @@
-# Enterprise Docker Compose for PagBank Multi-Agent System
-# Production-ready with monitoring, security, and scalability
+# Simplified Docker Compose for PagBank Multi-Agent System
+# Essential services only: App + PostgreSQL
 
 version: '3.8'
 
@@ -18,30 +18,17 @@ services:
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/pagbank_agents
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-pagbank123}@postgres:5432/pagbank_agents
       - RUNTIME_ENV=prd
-      - API_WORKERS=4
       - LOG_LEVEL=info
-      - PROMETHEUS_METRICS=true
     volumes:
       - app_logs:/app/logs
       - app_data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - app_network
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.0'
-        reservations:
-          memory: 1G
-          cpus: '0.5'
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -49,15 +36,15 @@ services:
       retries: 3
       start_period: 60s
 
-  # PostgreSQL database with optimized configuration
+  # PostgreSQL database with pgvector extension
   postgres:
-    image: postgres:16-alpine
-    container_name: pagbank-postgres
+    image: pgvector/pgvector:pg16
+    container_name: pagbank-pgvector
     restart: unless-stopped
     environment:
       - POSTGRES_DB=pagbank_agents
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pagbank123}
       - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -66,11 +53,6 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - app_network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -81,120 +63,17 @@ services:
       -c max_connections=200
       -c shared_buffers=256MB
       -c effective_cache_size=1GB
-      -c maintenance_work_mem=64MB
-      -c checkpoint_completion_target=0.9
-      -c wal_buffers=16MB
-      -c default_statistics_target=100
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-
-  # Redis for caching and session management
-  redis:
-    image: redis:7-alpine
-    container_name: pagbank-redis
-    restart: unless-stopped
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - app_network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.25'
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    command: >
-      redis-server
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --appendonly yes
-
-  # NGINX reverse proxy with SSL termination
-  nginx:
-    image: nginx:alpine
-    container_name: pagbank-nginx
-    restart: unless-stopped
-    ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx_logs:/var/log/nginx
-    depends_on:
-      - app
-    networks:
-      - app_network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-
-  # Prometheus monitoring
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: pagbank-prometheus
-    restart: unless-stopped
-    ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    networks:
-      - app_network
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.enable-lifecycle'
-
-  # Grafana dashboard
-  grafana:
-    image: grafana/grafana:latest
-    container_name: pagbank-grafana
-    restart: unless-stopped
-    ports:
-      - "${GRAFANA_PORT:-3000}:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    networks:
-      - app_network
 
 # Network configuration
 networks:
   app_network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
 
 # Persistent volumes
 volumes:
   postgres_data:
     driver: local
-  redis_data:
-    driver: local
   app_logs:
     driver: local
   app_data:
-    driver: local
-  nginx_logs:
-    driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
     driver: local

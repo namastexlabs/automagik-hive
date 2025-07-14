@@ -10,12 +10,12 @@ def get_postgres_storage(
 ) -> Optional[PostgresStorage]:
     """
     Get PostgreSQL storage using Agno's built-in PostgresStorage.
-    Falls back to None if DATABASE_URL is not set (will use SQLite).
+    Enterprise setup requires PostgreSQL - no SQLite fallback.
     """
     db_url = os.getenv("DATABASE_URL")
     
     if not db_url:
-        return None
+        raise RuntimeError("❌ PostgreSQL DATABASE_URL required for enterprise setup")
     
     # Agno handles everything - table creation, schema management, etc.
     return PostgresStorage(
