@@ -1,0 +1,183 @@
+# Conversation Typification Workflow Configuration
+# 5-level hierarchical classification for PagBank conversations
+
+workflow:
+  id: "conversation_typification"
+  name: "Tipificação Automática de Atendimento"
+  description: "Análise hierárquica da conversa seguindo padrão PagBank de 5 níveis"
+  version: "1.0.0"
+  
+# Database configuration
+storage:
+  type: "postgres"
+  table_name: "conversation_typification_workflows"
+  url: "${DATABASE_URL}"
+  mode: "workflow"
+  auto_upgrade_schema: true
+
+# Agent configurations
+agents:
+  
+  # Level 1: Business Unit Classifier
+  business_unit_classifier:
+    name: "Business Unit Classifier"
+    model:
+      provider: "anthropic"
+      id: "claude-haiku-4-20250514"
+      max_tokens: 300
+      temperature: 0.1
+    description: "Especialista em classificação de unidades de negócio PagBank"
+    structured_outputs: true
+    response_model: "BusinessUnitSelection"
+    
+  # Level 2: Product Classifier (Dynamic)
+  product_classifier:
+    name: "Product Classifier"
+    model:
+      provider: "anthropic"
+      id: "claude-haiku-4-20250514"
+      max_tokens: 300
+      temperature: 0.1
+    description: "Especialista em produtos por unidade de negócio"
+    structured_outputs: true
+    response_model: "ProductSelection"
+    
+  # Level 3: Motive Classifier (Dynamic)
+  motive_classifier:
+    name: "Motive Classifier"
+    model:
+      provider: "anthropic"
+      id: "claude-haiku-4-20250514"
+      max_tokens: 400
+      temperature: 0.1
+    description: "Especialista em motivos por produto"
+    structured_outputs: true
+    response_model: "MotiveSelection"
+    
+  # Level 4: Submotive Classifier (Dynamic)
+  submotive_classifier:
+    name: "Submotive Classifier"
+    model:
+      provider: "anthropic"
+      id: "claude-sonnet-4-20250514"  # More capable for final classification
+      max_tokens: 500
+      temperature: 0.1
+    description: "Especialista em submotivos específicos"
+    structured_outputs: true
+    response_model: "SubmotiveSelection"
+    
+  # Level 5: Ticket Generator
+  ticket_generator:
+    name: "Ticket Generator"
+    model:
+      provider: "anthropic"
+      id: "claude-haiku-4-20250514"
+      max_tokens: 300
+      temperature: 0.0
+    description: "Gerador de tickets com tipificação completa"
+    tools:
+      - ticket_system_integration
+    structured_outputs: true
+    response_model: "TicketCreationResult"
+
+# Workflow execution settings
+flow:
+  steps:
+    - name: "business_unit_classification"
+      description: "Classificar unidade de negócio"
+      agent: "business_unit_classifier"
+      required: true
+      
+    - name: "product_classification"
+      description: "Classificar produto baseado na unidade"
+      agent: "product_classifier"
+      required: true
+      depends_on: ["business_unit_classification"]
+      
+    - name: "motive_classification"
+      description: "Classificar motivo baseado no produto"
+      agent: "motive_classifier"
+      required: true
+      depends_on: ["product_classification"]
+      
+    - name: "submotive_classification"
+      description: "Classificar submotivo baseado no motivo"
+      agent: "submotive_classifier"
+      required: true
+      depends_on: ["motive_classification"]
+      
+    - name: "ticket_generation"
+      description: "Gerar ticket com tipificação completa"
+      agent: "ticket_generator"
+      required: true
+      depends_on: ["submotive_classification"]
+      
+  sequential: true  # Must be sequential for hierarchy validation
+  max_retries: 2
+  retry_delay: 1  # seconds
+
+# Performance settings
+settings:
+  timeout: 180  # 3 minutes for complete workflow
+  max_concurrent: 1  # Sequential execution only
+  structured_outputs: true
+  enable_cache: false  # Always fresh analysis for accuracy
+  debug_mode: false
+
+# Validation settings
+validation:
+  enable_hierarchy_validation: true
+  hierarchy_file: "workflows/conversation_typification/hierarchy.json"
+  min_confidence_threshold: 0.7
+  enable_quality_checks: true
+  
+# Integration settings
+integration:
+  ana_team_integration: true
+  ticket_system_integration: true
+  escalation_rules:
+    low_confidence_threshold: 0.7
+    high_priority_keywords: ["bloqueio", "fraude", "perda", "roubo", "urgente"]
+    escalation_timeout: 300  # 5 minutes
+    
+# Monitoring and metrics
+monitoring:
+  enable_metrics: true
+  track_confidence_scores: true
+  track_resolution_time: true
+  track_validation_failures: true
+  
+  # Alerts
+  alerts:
+    low_confidence_threshold: 0.6
+    high_resolution_time_threshold: 300  # 5 minutes
+    validation_failure_threshold: 0.1  # 10% failure rate
+    
+# Business unit to team mapping
+team_routing:
+  "Adquirência Web": "adquirencia_team"
+  "Adquirência Web / Adquirência Presencial": "adquirencia_team"
+  "Emissão": "emissao_team"
+  "PagBank": "pagbank_team"
+  
+# Priority mapping based on motive keywords
+priority_mapping:
+  high:
+    - "bloqueio"
+    - "fraude"
+    - "perda"
+    - "roubo"
+    - "urgente"
+    - "problema crítico"
+    
+  medium:
+    - "dúvida"
+    - "orientação"
+    - "informação"
+    - "como fazer"
+    - "procedimento"
+    
+  low:
+    - "consulta"
+    - "verificação"
+    - "confirmação"
