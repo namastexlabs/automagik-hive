@@ -126,8 +126,8 @@ main() {
         fi
     done
     
-    # Check specific question for Context7
-    if [[ "$tool_name" == "mcp__context7__get-library-docs" ]]; then
+    # Check specific question for Context7 search-repo tools
+    if [[ "$tool_name" == "mcp__search-repo-docs__get-library-docs" ]]; then
         local library_id=$(echo "$tool_args" | jq -r '.context7CompatibleLibraryID // ""' 2>/dev/null || echo "")
         # Basic check to prevent injection attacks
         if echo "$library_id" | grep -qE '(\$|`|;|&&|\|\||>|<)'; then
@@ -135,6 +135,28 @@ main() {
             echo '{"decision": "block", "reason": "Security Alert: Detected suspicious characters in library ID that could indicate command injection. Please use only alphanumeric characters, hyphens, underscores, and forward slashes."}'
             exit 2
         fi
+    fi
+    
+    # Check specific question for ask-repo agent
+    if [[ "$tool_name" == "mcp__ask-repo-agent__ask_question" ]]; then
+        local repo_name=$(echo "$tool_args" | jq -r '.repoName // ""' 2>/dev/null || echo "")
+        local question=$(echo "$tool_args" | jq -r '.question // ""' 2>/dev/null || echo "")
+        
+        # Basic check to prevent injection attacks in repo name
+        if echo "$repo_name" | grep -qE '(\$|`|;|&&|\|\||>|<|\.\.)'; then
+            log_security_event "blocked" "suspicious_repo_name" "$tool_name"
+            echo '{"decision": "block", "reason": "Security Alert: Detected suspicious characters in repository name that could indicate command injection or path traversal. Please use only alphanumeric characters, hyphens, underscores, and forward slashes."}'
+            exit 2
+        fi
+        
+        # Check for sensitive patterns in question
+        for pattern_type in api_keys credentials regex_patterns; do
+            if check_sensitive_content "$question" "$pattern_type"; then
+                log_security_event "blocked" "sensitive_data_in_question" "$tool_name"
+                echo '{"decision": "block", "reason": "Security Alert: Detected sensitive data in repository question. Found patterns matching actual credentials or secrets. For security discussions, use placeholders like YOUR_API_KEY, <password>, or example values."}'
+                exit 2
+            fi
+        done
     fi
     
     log_security_event "scan_completed" "no_sensitive_data_found" "$tool_name"

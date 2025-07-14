@@ -379,6 +379,96 @@ wheels = [
 ]
 
 [[package]]
+name = "genie-agents"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "agno" },
+    { name = "aiofiles" },
+    { name = "anthropic" },
+    { name = "asyncpg" },
+    { name = "cohere" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "mcp" },
+    { name = "openai" },
+    { name = "pandas" },
+    { name = "pgvector" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "psycopg2-binary" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "rich" },
+    { name = "sentence-transformers" },
+    { name = "sqlalchemy" },
+    { name = "uvicorn" },
+    { name = "watchdog" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "black" },
+    { name = "flake8" },
+    { name = "isort" },
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pyflakes" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "autoflake" },
+    { name = "black" },
+    { name = "isort" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agno", specifier = ">=1.7.0" },
+    { name = "aiofiles", specifier = ">=24.1.0" },
+    { name = "anthropic", specifier = ">=0.31.0" },
+    { name = "asyncpg", specifier = ">=0.29.0" },
+    { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
+    { name = "cohere", specifier = ">=5.15.0" },
+    { name = "fastapi", specifier = ">=0.116.0" },
+    { name = "flake8", marker = "extra == 'dev'", specifier = ">=6.0.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "isort", marker = "extra == 'dev'", specifier = ">=5.12.0" },
+    { name = "mcp", specifier = ">=1.10.1" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.5.0" },
+    { name = "openai", specifier = ">=1.93.2" },
+    { name = "pandas", specifier = ">=2.0.0" },
+    { name = "pgvector", specifier = ">=0.2.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.4.0" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.9" },
+    { name = "psycopg2-binary", specifier = ">=2.9.9" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pyflakes", marker = "extra == 'dev'", specifier = ">=3.4.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2.1" },
+    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.1" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "rich", specifier = ">=13.0.0" },
+    { name = "sentence-transformers", specifier = ">=2.2.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.0" },
+    { name = "uvicorn", specifier = ">=0.35.0" },
+    { name = "watchdog", specifier = ">=6.0.0" },
+]
+provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "autoflake", specifier = ">=2.3.1" },
+    { name = "black", specifier = ">=25.1.0" },
+    { name = "isort", specifier = ">=6.0.1" },
+]
+
+[[package]]
 name = "gitdb"
 version = "4.0.12"
 source = { registry = "https://pypi.org/simple" }
@@ -998,96 +1088,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a1/d4/1fc4078c65507b51b96ca8f8c3ba19e6a61c8253c72794544580a7b6c24d/packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f", size = 165727, upload-time = "2025-04-19T11:48:59.673Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484", size = 66469, upload-time = "2025-04-19T11:48:57.875Z" },
-]
-
-[[package]]
-name = "pagbank"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "agno" },
-    { name = "aiofiles" },
-    { name = "anthropic" },
-    { name = "asyncpg" },
-    { name = "cohere" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "mcp" },
-    { name = "openai" },
-    { name = "pandas" },
-    { name = "pgvector" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "psycopg2-binary" },
-    { name = "pydantic" },
-    { name = "python-dotenv" },
-    { name = "rich" },
-    { name = "sentence-transformers" },
-    { name = "sqlalchemy" },
-    { name = "uvicorn" },
-    { name = "watchdog" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "black" },
-    { name = "flake8" },
-    { name = "isort" },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pyflakes" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "autoflake" },
-    { name = "black" },
-    { name = "isort" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agno", specifier = ">=1.7.0" },
-    { name = "aiofiles", specifier = ">=24.1.0" },
-    { name = "anthropic", specifier = ">=0.31.0" },
-    { name = "asyncpg", specifier = ">=0.29.0" },
-    { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
-    { name = "cohere", specifier = ">=5.15.0" },
-    { name = "fastapi", specifier = ">=0.116.0" },
-    { name = "flake8", marker = "extra == 'dev'", specifier = ">=6.0.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "isort", marker = "extra == 'dev'", specifier = ">=5.12.0" },
-    { name = "mcp", specifier = ">=1.10.1" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.5.0" },
-    { name = "openai", specifier = ">=1.93.2" },
-    { name = "pandas", specifier = ">=2.0.0" },
-    { name = "pgvector", specifier = ">=0.2.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.4.0" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.9" },
-    { name = "psycopg2-binary", specifier = ">=2.9.9" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pyflakes", marker = "extra == 'dev'", specifier = ">=3.4.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2.1" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.1" },
-    { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "rich", specifier = ">=13.0.0" },
-    { name = "sentence-transformers", specifier = ">=2.2.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
-    { name = "uvicorn", specifier = ">=0.35.0" },
-    { name = "watchdog", specifier = ">=6.0.0" },
-]
-provides-extras = ["dev"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autoflake", specifier = ">=2.3.1" },
-    { name = "black", specifier = ">=25.1.0" },
-    { name = "isort", specifier = ">=6.0.1" },
 ]
 
 [[package]]

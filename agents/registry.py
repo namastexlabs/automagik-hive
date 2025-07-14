@@ -1,63 +1,61 @@
-# Agent Registry for PagBank V2
+# Generic Agent Registry for Multi-Agent Systems
 # Dynamic agent loading from factory functions
 
 from typing import Dict, Optional
 from agno.agent import Agent
 import os
 
-# Import all agent factories
-try:
-    from agents.pagbank.agent import get_pagbank_agent
-except ImportError:
-    print("⚠️ PagBank agent not found")
-    get_pagbank_agent = None
+# Dynamic import system for agent discovery
+_agent_modules = {
+    "pagbank": "agents.pagbank.agent",
+    "adquirencia": "agents.adquirencia.agent", 
+    "emissao": "agents.emissao.agent",
+    "human_handoff": "agents.human_handoff.agent"
+}
 
-try:
-    from agents.adquirencia.agent import get_adquirencia_agent
-except ImportError:
-    print("⚠️ Adquirência agent not found")
-    get_adquirencia_agent = None
+# Cache for imported agent factories
+_imported_factories = {}
 
-try:
-    from agents.emissao.agent import get_emissao_agent
-except ImportError:
-    print("⚠️ Emissão agent not found")
-    get_emissao_agent = None
 
-try:
-    from agents.human_handoff.agent import get_human_handoff_agent
-except ImportError:
-    print("⚠️ Human handoff agent not found")
-    get_human_handoff_agent = None
+def _import_agent_factory(agent_name: str):
+    """Dynamically import agent factory function"""
+    if agent_name in _imported_factories:
+        return _imported_factories[agent_name]
+    
+    if agent_name not in _agent_modules:
+        return None
+        
+    try:
+        module_path = _agent_modules[agent_name]
+        module = __import__(module_path, fromlist=[f"get_{agent_name}_agent"])
+        factory = getattr(module, f"get_{agent_name}_agent")
+        _imported_factories[agent_name] = factory
+        return factory
+    except (ImportError, AttributeError) as e:
+        print(f"⚠️ {agent_name.title()} agent not found: {e}")
+        _imported_factories[agent_name] = None
+        return None
 
 
 class AgentRegistry:
     """
-    Registry for managing agent creation and versioning.
-    Follows agno-demo-app patterns for dynamic agent loading.
+    Generic registry for managing agent creation and versioning.
+    Supports any agent system, not just PagBank.
     """
     
-    # Agent factory mapping (only include available agents)
-    _agent_factories = {}
-    
     @classmethod
-    def _initialize_factories(cls):
-        """Initialize agent factories, only including available ones"""
-        if get_pagbank_agent:
-            cls._agent_factories["pagbank_specialist"] = get_pagbank_agent
-            cls._agent_factories["pagbank"] = get_pagbank_agent
-            
-        if get_adquirencia_agent:
-            cls._agent_factories["adquirencia_specialist"] = get_adquirencia_agent
-            cls._agent_factories["adquirencia"] = get_adquirencia_agent
-            
-        if get_emissao_agent:
-            cls._agent_factories["emissao_specialist"] = get_emissao_agent
-            cls._agent_factories["emissao"] = get_emissao_agent
-            
-        if get_human_handoff_agent:
-            cls._agent_factories["human_handoff_specialist"] = get_human_handoff_agent
-            cls._agent_factories["human_handoff"] = get_human_handoff_agent
+    def _get_available_agents(cls) -> Dict[str, callable]:
+        """Get all available agent factories"""
+        factories = {}
+        
+        for agent_name in _agent_modules.keys():
+            factory = _import_agent_factory(agent_name)
+            if factory:
+                # Register both full name and alias
+                factories[f"{agent_name}_specialist"] = factory
+                factories[agent_name] = factory
+                
+        return factories
     
     @classmethod
     def get_agent(
@@ -69,10 +67,10 @@ class AgentRegistry:
         db_url: Optional[str] = None
     ) -> Agent:
         """
-        Get agent instance by ID.
+        Get agent instance by ID - Generic factory pattern.
         
         Args:
-            agent_id: Agent identifier (e.g., 'pagbank_specialist')
+            agent_id: Agent identifier (e.g., 'pagbank', 'adquirencia')
             version: Specific version to load
             session_id: Session ID for conversation tracking
             debug_mode: Enable debug mode
@@ -84,15 +82,13 @@ class AgentRegistry:
         Raises:
             KeyError: If agent_id not found
         """
-        # Initialize factories if not done yet
-        if not cls._agent_factories:
-            cls._initialize_factories()
-            
-        if agent_id not in cls._agent_factories:
-            available_agents = list(cls._agent_factories.keys())
+        available_factories = cls._get_available_agents()
+        
+        if agent_id not in available_factories:
+            available_agents = list(available_factories.keys())
             raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
         
-        factory = cls._agent_factories[agent_id]
+        factory = available_factories[agent_id]
         
         # Use environment database URL if not provided
         if db_url is None:
@@ -119,14 +115,13 @@ class AgentRegistry:
             Dictionary mapping agent_id to Agent instance
         """
         agents = {}
+        available_factories = cls._get_available_agents()
         
-        # Get the unique agent IDs (remove aliases)
-        unique_agents = [
-            "pagbank_specialist",
-            "adquirencia_specialist", 
-            "emissao_specialist",
-            "human_handoff_specialist"
-        ]
+        # Get unique agent names (no duplicates for aliases)
+        unique_agents = set()
+        for agent_name in _agent_modules.keys():
+            if f"{agent_name}_specialist" in available_factories:
+                unique_agents.add(f"{agent_name}_specialist")
         
         for agent_id in unique_agents:
             try:
@@ -138,7 +133,6 @@ class AgentRegistry:
                 )
             except Exception as e:
                 print(f"⚠️ Failed to load agent {agent_id}: {e}")
-                # Continue loading other agents
                 continue
         
         return agents
@@ -146,30 +140,70 @@ class AgentRegistry:
     @classmethod
     def list_available_agents(cls) -> list[str]:
         """Get list of available agent IDs."""
-        return list(cls._agent_factories.keys())
+        return list(cls._get_available_agents().keys())
     
     @classmethod
-    def register_agent(cls, agent_id: str, factory_function):
+    def register_agent(cls, agent_name: str, module_path: str):
         """
-        Register a new agent factory function.
+        Register a new agent module.
         
         Args:
-            agent_id: Unique agent identifier
-            factory_function: Function that returns Agent instance
+            agent_name: Agent name (e.g., 'pagbank')
+            module_path: Import path to agent module
         """
-        cls._agent_factories[agent_id] = factory_function
+        _agent_modules[agent_name] = module_path
 
 
-# Convenience functions
-def get_pagbank_team_agents(
+# Generic factory function - main entry point
+def get_agent(
+    name: str,
+    version: Optional[int] = None,
+    session_id: Optional[str] = None,
+    debug_mode: bool = False,
+    db_url: Optional[str] = None
+) -> Agent:
+    """
+    Generic agent factory - main entry point for any agent system.
+    
+    Args:
+        name: Agent name (e.g., 'pagbank', 'adquirencia')
+        version: Specific version to load
+        session_id: Session ID for conversation tracking
+        debug_mode: Enable debug mode
+        db_url: Database URL override
+        
+    Returns:
+        Configured Agent instance
+    """
+    return AgentRegistry.get_agent(
+        agent_id=name,
+        version=version,
+        session_id=session_id,
+        debug_mode=debug_mode,
+        db_url=db_url
+    )
+
+
+# Team convenience function
+def get_team_agents(
+    agent_names: list[str],
     session_id: Optional[str] = None,
     debug_mode: bool = False,
     db_url: Optional[str] = None
 ) -> list[Agent]:
-    """Get all agents for the PagBank team."""
+    """
+    Get multiple agents for team composition.
+    
+    Args:
+        agent_names: List of agent names to load
+        session_id: Session ID for conversation tracking
+        debug_mode: Enable debug mode
+        db_url: Database URL override
+        
+    Returns:
+        List of configured Agent instances
+    """
     return [
-        AgentRegistry.get_agent("pagbank_specialist", session_id=session_id, debug_mode=debug_mode, db_url=db_url),
-        AgentRegistry.get_agent("adquirencia_specialist", session_id=session_id, debug_mode=debug_mode, db_url=db_url),
-        AgentRegistry.get_agent("emissao_specialist", session_id=session_id, debug_mode=debug_mode, db_url=db_url),
-        AgentRegistry.get_agent("human_handoff_specialist", session_id=session_id, debug_mode=debug_mode, db_url=db_url),
+        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url)
+        for name in agent_names
     ]

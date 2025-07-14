@@ -18,19 +18,20 @@ You are working with **Genie-Agents** - a semi-autonomous AI development framewo
 - ALWAYS use UV for Python (NEVER pip/python directly)
 - ALWAYS commit with: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
 - ALWAYS use the 14 consolidated commands (with model= parameter)
+- ALWAYS manually move tasks: todo→active→archive (no automation)
 - NEVER exceed 5 files in `genie/active/` (Kanban WIP limit)
 - NEVER add time estimates to tasks
 - NEVER create complex wrappers - keep memory usage simple
 </critical_rules>
 
-## Command System (14 Commands)
+## Command System (16 Commands)
 
 <command_reference>
 ### Core Commands (5)
 - `/wish` - Adaptive task routing entry point
 - `/planner` - Interactive planning with continuation
 - `/epic` - Epic-based development workflow
-- `/spawn-tasks` - Parallel sub-agent orchestration
+- `/spawn-tasks` - Parallel sub-agent orchestration (CRITICAL: Use for parallel work, NOT Task() tool)
 - `/context` - Continuation thread management
 
 ### Development Commands (7)
@@ -46,7 +47,12 @@ You are working with **Genie-Agents** - a semi-autonomous AI development framewo
 - `/docs` - Create/update documentation
 - `/full-context` - Comprehensive analysis
 
+### Context Tools (2)
+- `/search-docs` - Search library documentation via Context7
+- `/ask-repo` - Interactive Q&A with GitHub repositories
+
 **Example**: `/analyze "Review auth system" model="o3"`
+**Agno Docs**: `/ask-repo "agno-agi/agno" "How do I create an agent?"`
 </command_reference>
 
 ## Memory-First Architecture
@@ -70,6 +76,10 @@ knowledge = memory.search("FOUND tests")    # How to run tests
 - Memory replaces most CONTEXT.md files
 - Automatic context search in task-context-injector.sh
 - Files only for: structured data, large documents, version control
+
+### Context Tools
+- **Search Repo**: `/context7/agno` for Agno framework documentation
+- **Ask Repo**: `agno-agi/agno` for Q&A with latest Agno repository
 
 ### Memory Patterns
 1. **Project Context**: Architecture decisions, tech stack
@@ -122,8 +132,9 @@ uv run ruff format .
 1. **Check Patterns**: Review `@genie/reference/` first
 2. **Use Memory**: Add discoveries as you work
 3. **Simple Commands**: Use the 14 commands with model parameter
-4. **Test Everything**: Type checks, unit tests, integration tests
-5. **Archive Complete**: Move done work to `genie/archive/`
+4. **Manual Task Management**: Move tasks todo→active→archive manually
+5. **Test Everything**: Type checks, unit tests, integration tests
+6. **Archive Complete**: Move done work to `genie/archive/`
 </workflow>
 
 ## Project Structure
@@ -152,11 +163,13 @@ genie-agents/
 ✅ Keep it simple - no complex wrappers
 ✅ Test with mypy and pytest before completing
 ✅ Archive to maintain 5-file active limit
+✅ Manual task orchestration (no hook automation)
 
 ❌ No time estimates on tasks
 ❌ No backwards compatibility needed
 ❌ No pip - always use uv
 ❌ No manual context references
+❌ No automatic task management (hooks don't work)
 </reminders>
 
 ---

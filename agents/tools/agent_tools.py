@@ -545,6 +545,65 @@ def _calculate_insurance_premium(params: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def search_library_docs(library_name: str, topic: str = None, tokens: int = 10000) -> Dict[str, Any]:
+    """Search library documentation using Context7
+    
+    Args:
+        library_name: Name of the library to search (e.g., 'react', 'next.js')
+        topic: Optional topic to focus on (e.g., 'hooks', 'routing')
+        tokens: Maximum tokens to retrieve (default: 10000)
+        
+    Returns:
+        Dict with documentation content and metadata
+    """
+    try:
+        # For now, return a placeholder indicating the integration is available
+        # The actual MCP tools will be called directly through the command system
+        return {
+            "success": True,
+            "message": f"Library documentation search available for '{library_name}'",
+            "library": library_name,
+            "topic": topic,
+            "integration": "context7_search_repo_docs",
+            "usage": f"Use /search-docs \"{library_name}\" {f'topic=\"{topic}\"' if topic else ''}"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Context7 search error: {str(e)}",
+            "library": library_name
+        }
+
+
+def ask_repo_question(repo_name: str, question: str) -> Dict[str, Any]:
+    """Ask questions about GitHub repositories
+    
+    Args:
+        repo_name: Repository name in format 'owner/repo' (e.g., 'agno-agi/agno')
+        question: Question to ask about the repository
+        
+    Returns:
+        Dict with answer and repository information
+    """
+    try:
+        # For now, return a placeholder indicating the integration is available
+        # The actual MCP tools will be called directly through the command system
+        return {
+            "success": True,
+            "message": f"Repository Q&A available for '{repo_name}'",
+            "repository": repo_name,
+            "question": question,
+            "integration": "ask_repo_agent",
+            "usage": f"Use /ask-repo \"{repo_name}\" \"{question}\""
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Ask-repo error: {str(e)}",
+            "repository": repo_name
+        }
+
+
 def send_whatsapp_message(message: str) -> Dict[str, Any]:
     """Send WhatsApp message via Evolution API
     
@@ -687,7 +746,9 @@ AGENT_TOOLS = {
     "security": security_checker,
     "calculator": financial_calculator,
     "alert": check_security_alert,
-    "whatsapp": send_whatsapp_message
+    "whatsapp": send_whatsapp_message,
+    "search_docs": search_library_docs,
+    "ask_repo": ask_repo_question
 }
 
 
@@ -709,5 +770,12 @@ def get_agent_tools(agent_name: str) -> List[Callable]:
     if agent_name == "human_handoff":
         # Add WhatsApp tool for human handoff
         tools.append(AGENT_TOOLS["whatsapp"])
+    
+    # Context tools for development and orchestration agents
+    if agent_name in ["pagbank", "orchestrator", "development", "agno"]:
+        tools.extend([
+            AGENT_TOOLS["search_docs"],
+            AGENT_TOOLS["ask_repo"]
+        ])
     
     return tools

@@ -174,12 +174,13 @@ if deps:
 
 <kanban_rules>
 1. **WIP Limit**: Maximum 5 files in active/ at any time
-2. **One Task Per File**: Each task gets its own file
-3. **Pattern First**: Check reference/ before implementing
-4. **Archive Complete**: Move done tasks to archive/
-5. **Extract Value**: Save patterns before archiving
-6. **Status Updates**: Real-time checkbox updates
-7. **Clean Commits**: Include epic/task ID in commits
+2. **One Task Per File**: Each task gets its own file  
+3. **Manual Movement**: Move tasks todo→active→archive manually
+4. **Pattern First**: Check reference/ before implementing
+5. **Archive Complete**: Move done tasks to archive/
+6. **Extract Value**: Save patterns before archiving
+7. **Status Updates**: Real-time checkbox updates
+8. **Clean Commits**: Include epic/task ID in commits
 </kanban_rules>
 
 ## Task Creation Guidelines
