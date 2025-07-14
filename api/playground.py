@@ -52,8 +52,11 @@ playground_app = Playground(
     name="PagBank Multi-Agent System"
 )
 
-# Get the FastAPI app for ASGI
+# Get the FastAPI app for ASGI  
 app = playground_app.get_app()
+
+# COMPATIBILITY: Also make modernized API available via new main.py
+from api.main import app as modern_app
 
 if not os.environ.get('UVICORN_RELOADER_PROCESS'):
     print(f"📦 Configured storage: {storage_type}")
