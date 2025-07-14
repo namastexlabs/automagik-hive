@@ -24,23 +24,30 @@ fi
 ORIGINAL_PROMPT=$(echo "$INPUT_JSON" | jq -r '.tool_input.prompt // ""')
 
 # Build context prefix with essential files
-CONTEXT_PREFIX="ESSENTIAL PROJECT CONTEXT - Read these files first:
+CONTEXT_PREFIX="=== DYNAMIC PROJECT CONTEXT ===
 
-1. Project Overview and Rules:
+📋 ESSENTIAL FILES:
    - @/CLAUDE.md - Master project context and workflow rules
-   
-2. Technical Foundation:
    - @/genie/ai-context/project-structure.md - Complete tech stack and architecture
    - @/genie/ai-context/development-standards.md - Coding standards and patterns
 
-3. Memory Context:
-   Search genie-memory for any relevant context using: memory.search('your topic')
-   
-After reading the above context, proceed with your assigned task:
+🧠 MEMORY CONTEXT:
+   Search for patterns: memory.search('PATTERN: [topic]')
+   Check current work: memory.search('TASK: Working')
+   Find discoveries: memory.search('FOUND: [topic]')
+   Check for blockers: memory.search('TASK: BLOCKED')
+
+💡 QUICK CONTEXT QUERIES:
+   - Project tech stack: memory.search('PROJECT: tech')
+   - Authentication: memory.search('PATTERN: auth')
+   - Database info: memory.search('FOUND: database')
+   - API structure: memory.search('FOUND: api')
+
+Your assigned task:
 "
 
 # Check if context is already injected (to avoid double injection)
-if echo "$ORIGINAL_PROMPT" | grep -q "ESSENTIAL PROJECT CONTEXT"; then
+if echo "$ORIGINAL_PROMPT" | grep -q "DYNAMIC PROJECT CONTEXT"; then
     # Already has context, pass through unchanged
     echo "$INPUT_JSON"
     exit 0
