@@ -1,0 +1,110 @@
+# Docker ignore file for optimized builds
+# Excludes unnecessary files from Docker context
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and databases
+*.log
+logs/
+*.db
+*.sqlite
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Test and coverage files
+.coverage
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+.tox/
+
+# Documentation build
+docs/_build/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Local data and temporary files
+data/
+temp/
+tmp/
+uploads/
+
+# Monitoring and deployment
+monitoring/
+nginx/
+docker-compose.override.yml
+
+# Framework-specific files
+genie/
+workspace/
+examples/
+
+# Package managers
+node_modules/
+package-lock.json
+
+# Development tools
+.envrc
+.python-version
+
+# Large files that shouldn't be in containers
+*.tar.gz
+*.zip
+*.rar
+
+# Claude development files
+CLAUDE.md
+*.analysis.md
+README.md
+TODO.md
