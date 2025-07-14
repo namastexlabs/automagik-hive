@@ -16,10 +16,11 @@ from context.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
 
 class CSVFileHandler(FileSystemEventHandler):
-    """File system event handler for CSV file changes with bulletproof debounce"""
+    """Single trigger file handler with bulletproof debounce"""
     
-    _last_global_trigger = 0
-    _global_processing = False
+    _last_trigger_time = 0
+    _processing_lock = False
+    _last_file_size = 0
     
     def __init__(self, manager):
         self.manager = manager
@@ -27,27 +28,32 @@ class CSVFileHandler(FileSystemEventHandler):
         
     def on_modified(self, event):
         if (not event.is_directory and 
-            event.src_path.endswith(self.csv_filename) and 
-            not CSVFileHandler._global_processing):
+            event.src_path.endswith(self.csv_filename)):
             
+            # Ultra-strong debounce with size check
             now = time.time()
-            
-            # Global debounce: ignore if ANY instance triggered within 2 seconds
-            if now - CSVFileHandler._last_global_trigger < 2.0:
+            try:
+                current_size = os.path.getsize(event.src_path)
+            except:
                 return
                 
-            CSVFileHandler._global_processing = True
-            CSVFileHandler._last_global_trigger = now
+            # Skip if: recently triggered, currently processing, or size unchanged
+            if (now - CSVFileHandler._last_trigger_time < 3.0 or 
+                CSVFileHandler._processing_lock or
+                current_size == CSVFileHandler._last_file_size):
+                return
+                
+            # Lock and process
+            CSVFileHandler._processing_lock = True
+            CSVFileHandler._last_trigger_time = now
+            CSVFileHandler._last_file_size = current_size
             
             try:
-                timestamp = datetime.now().strftime('%H:%M:%S')
-                print(f"🔥 {timestamp} | CSV changed")
-                
-                # Delay to ensure file write is complete
-                time.sleep(0.8)
+                # Single trigger with content detection
+                time.sleep(1.0)  # Ensure file write complete
                 self.manager._reload_knowledge_base()
             finally:
-                CSVFileHandler._global_processing = False
+                CSVFileHandler._processing_lock = False
 
 
 class CSVHotReloadManager:
@@ -158,9 +164,23 @@ class CSVHotReloadManager:
     
     
     def _reload_knowledge_base(self):
-        """Simple reload with minimal logging"""
+        """Single clean log line like an API call"""
         try:
             start_time = time.time()
+            
+            # Get the last few lines to see what changed
+            try:
+                with open(self.csv_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                last_line = lines[-1].strip() if lines else ""
+                # Extract problem field (first field after quotes)
+                if last_line.startswith('"') and '","' in last_line:
+                    content = last_line.split('","')[0][1:][:40] + "..."
+                else:
+                    content = "unknown content"
+            except:
+                content = "unknown content"
+            
             result = self.smart_loader.smart_load()
             
             if result and "error" not in result:
@@ -169,9 +189,14 @@ class CSVHotReloadManager:
                 strategy = result.get('strategy', 'updated')
                 stats = self.kb.get_knowledge_statistics()
                 total = stats.get('total_entries', 0)
-                print(f"✅ {strategy} {processed} | {load_time:.1f}s | total: {total}")
+                
+                if processed > 0:
+                    action = "ADD" if strategy == "incremental_update" else "UPD"
+                    print(f"✅ {action} \"{content}\" | {load_time:.1f}s | total: {total}")
+                else:
+                    print(f"✅ No changes | {load_time:.1f}s")
             else:
-                print("✅ No changes")
+                print(f"❌ Error processing changes")
                 
         except Exception as e:
             print(f"❌ Error: {e}")
