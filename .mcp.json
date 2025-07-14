@@ -23,7 +23,7 @@
     "send_whatsapp_message": {
       "command": "uvx",
       "args": [
-        "automagik-tools@0.7.2",
+        "automagik-tools@0.7.8",
         "tool",
         "evolution-api"
       ],

@@ -1,502 +1,166 @@
 # CLAUDE.md
 
 <state_configuration>
-<!-- UPDATE WHEN SWITCHING EPICS -->
-CURRENT_EPIC: "automagik-v2"
-<!-- epic-status.md is always the current epic status file -->
+<!-- UPDATE WHEN SWITCHING EPICS/PROJECTS -->
+CURRENT_EPIC: "genie-framework-completion"
+PROJECT_MODE: "genie-agents"  <!-- automagik-v2 | genie-agents -->
 </state_configuration>
 
 <system_context>
-You are working with the Automagik Multi-Agent Framework - a sophisticated agent creation and orchestration system built with the Agno framework. This framework provides the foundation for building specialized AI agents that can handle various domain-specific tasks with intelligent routing, context persistence, and seamless workflow management. The framework includes example implementations to demonstrate its capabilities across different domains.
+You are working with **Genie-Agents** - a semi-autonomous AI development framework. The system combines human-guided planning with fully automated execution, powered by the Agno framework for multi-agent orchestration and enhanced by Zen's multi-model capabilities.
+
+**Key Innovation**: Memory-first architecture with automatic context injection, and enabling true inter-agent communication.
 </system_context>
 
 <critical_rules>
-- ALWAYS check existing patterns in `@genie/reference/` before implementing
-- ALWAYS create documentation in `genie/active/` before starting work
-- ALWAYS use UV for Python operations (NEVER pip/python directly)
-- ALWAYS commit with co-author: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
-- ALWAYS test routing logic before deploying changes
-- ALWAYS consider domain-specific requirements when implementing agents
-- ALWAYS implement proper error handling and fallback mechanisms
-- NEVER modify core Agno framework classes
-- NEVER exceed 5 active files in `genie/active/`
-- NEVER skip testing for agent interactions and workflows
+- ALWAYS use memory for context sharing (agents can read AND write)
+- ALWAYS search memory for patterns: memory.search("PATTERN [topic]")
+- ALWAYS use UV for Python (NEVER pip/python directly)
+- ALWAYS commit with: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
+- ALWAYS use the 14 consolidated commands (with model= parameter)
+- NEVER exceed 5 files in `genie/active/` (Kanban WIP limit)
+- NEVER add time estimates to tasks
+- NEVER create complex wrappers - keep memory usage simple
 </critical_rules>
 
-## Genie Framework
+## Command System (14 Commands)
 
-<genie_note>
-The Genie Framework is a multi-agent task orchestration system for coordinated development. For detailed Genie documentation, see `genie/CLAUDE.md` which automatically loads when navigating to the genie/ folder.
+<command_reference>
+### Core Commands (5)
+- `/wish` - Adaptive task routing entry point
+- `/planner` - Interactive planning with continuation
+- `/epic` - Epic-based development workflow
+- `/spawn-tasks` - Parallel sub-agent orchestration
+- `/context` - Continuation thread management
 
-**Quick Reference:**
-- Use `genie/active/` for current work (MAX 5 files)
-- Check `@genie/reference/` for patterns before implementing
-- Use branch-friendly naming: `task-[agent]-[feature]` (no .md needed for branch names)
-- Archive completed/obsolete work to `genie/archive/` (.gitignored)
-</genie_note>
+### Development Commands (7)
+- `/analyze` - Code/architecture analysis (`model="o3|grok|gemini"`)
+- `/debug` - Systematic debugging (`model="o3|grok|gemini"`)
+- `/review` - Code review workflow (`model="o3|grok|gemini"`)
+- `/refactor` - Refactoring analysis
+- `/test` - Test generation (`model="o3|grok|gemini"`)
+- `/chat` - Collaborative thinking (`model="o3|grok|gemini"`)
+- `/thinkdeep` - Deep investigation (`model="o3|grok|gemini"`)
 
-## Multi-Agent Coordination for V2 Development
+### Documentation Commands (2)
+- `/docs` - Create/update documentation
+- `/full-context` - Comprehensive analysis
 
-<multi_agent_coordination>
-### Parallel Agent Execution Protocol
+**Example**: `/analyze "Review auth system" model="o3"`
+</command_reference>
 
-**Central Status Tracking**
+## Memory-First Architecture
+
+<memory_system>
+### Simple Usage Pattern
+```python
+# Three simple prefixes for everything
+memory.add("PATTERN: Auth Flow - Use JWT with refresh tokens #auth")
+memory.add("TASK T-001: Working on API endpoints - Alice") 
+memory.add("FOUND: Run tests with 'uv run pytest'")
+
+# Search is natural
+results = memory.search("PATTERN auth")     # Find auth patterns
+status = memory.search("TASK T-001")        # Check task status
+knowledge = memory.search("FOUND tests")    # How to run tests
+```
+
+### Context Sharing
+- All agents can read AND write to memory
+- Memory replaces most CONTEXT.md files
+- Automatic context search in task-context-injector.sh
+- Files only for: structured data, large documents, version control
+
+### Memory Patterns
+1. **Project Context**: Architecture decisions, tech stack
+2. **Error Solutions**: Known issues and fixes
+3. **Task Progress**: What's been done, what's pending
+4. **Agent Communication**: Messages between agents
+5. **User Preferences**: Learned patterns and style
+</memory_system>
+
+## Automated Context Injection
+
+<context_automation>
+### Hook System
+The `task-context-injector.sh` hook automatically prepends to ALL Task() calls:
+1. Essential project context from CLAUDE.md
+2. Technical foundation from ai-context files
+3. Memory search instructions
+
+### No Manual References Needed
+- Subagents automatically receive context
+- No more `@file` references in prompts
+- Context flows naturally through the system
+</context_automation>
+
+## Quick Start
+
+<quick_reference>
 ```bash
-# Every agent MUST check epic overview first
-# (Uses CURRENT_EPIC from state configuration above)
+# Check current epic/project
 cat genie/active/${CURRENT_EPIC}.md
 
-# Then check detailed epic status (always epic-status.md)
-cat genie/active/epic-status.md
+# Start development (port 7777)
+uv run python api/playground.py
 
-# Update status when claiming task
-# Change [ ] 📋 to [🔄] 🔄 when starting
-# Change [🔄] 🔄 to [✅] ✅ when complete
-```
+# Run tests
+uv run pytest tests/
 
-**Dependency Management**
-```python
-# Wait for dependencies using wait tool
-while task_blocked():
-    mcp__wait__wait_minutes(duration=30)
-    status = read("genie/active/epic-status.md")
-    if dependencies_complete():
-        break
-```
+# Type checking
+uv run mypy agents/ --strict
 
-**Context Search Tools for Agno**
-```python
-# When needing Agno framework information
-library_id = mcp__search-repo-docs__resolve-library-id(
-    libraryName="agno"
-)
-docs = mcp__search-repo-docs__get-library-docs(
-    context7CompatibleLibraryID=library_id,
-    topic="teams"  # or agents, workflows, etc
-)
-```
-
-### Critical Multi-Agent Rules
-- **ALWAYS** read current epic status (genie/active/${CURRENT_EPIC}.md and genie/active/epic-status.md) before starting any work
-- **ALWAYS** wait for dependencies using mcp__wait__wait_minutes
-- **ALWAYS** update status checkboxes when claiming/completing tasks
-- **ALWAYS** use context search tools for Agno questions
-- **NEVER** work on blocked tasks without waiting for dependencies
-- **NEVER** modify files another agent is working on (check [🔄])
-
-For detailed epic-based Kanban workflow and task orchestration, see `genie/CLAUDE.md`.
-</multi_agent_coordination>
-
-## Multi-Agent Workflows & Context Injection
-
-<multi_agent_workflows>
-### Automatic Context Injection for Sub-Agents
-When using the Task tool to spawn sub-agents, core project context is automatically injected via hooks:
-- **Primary Context**: `CLAUDE.md` (this file)
-- **Project Structure**: `genie/ai-context/project-structure.md` - Complete tech stack and file tree
-- **Development Standards**: `genie/ai-context/development-standards.md` - Universal coding standards
-- **System Integration**: `genie/ai-context/system-integration.md` - Integration patterns
-
-This ensures all sub-agents have immediate access to essential project documentation without manual specification.
-
-### Epic Development Guidelines
-When creating epics in `genie/staging/`:
-- **NO time estimates** - Tasks take as long as they need
-- **NO duration predictions** - We work until it's done right
-- Focus on clear task descriptions and dependencies
-- Let the work flow naturally without artificial deadlines
-
-### Context Search Integration
-```python
-# Repository documentation consultation
-question_response = mcp__ask-repo-agent__ask_question(
-    repoName="agno-agi/agno",
-    question="How do I implement custom team routing logic?"
-)
-
-# Read repository wiki structure
-wiki_structure = mcp__ask-repo-agent__read_wiki_structure(
-    repoName="agno-agi/agno"
-)
-
-# Get full repository documentation
-wiki_contents = mcp__ask-repo-agent__read_wiki_contents(
-    repoName="agno-agi/agno"
-)
-```
-</multi_agent_workflows>
-
-## Architecture & Development Patterns
-
-<codebase_structure>
-```
-automagik-agents/ (V2 Structure)
-├── agents/             # Individual agent definitions
-│   ├── registry.py     # Agent registry and loader
-│   └── [agent-id]/     # Each agent in its own folder
-│       ├── agent.py
-│       └── config.yaml
-├── teams/              # Team definitions
-│   ├── registry.py     # Team registry
-│   └── [team-name]/    # Example: ana team, customer-support, etc.
-│       ├── team.py     # Simple Team with mode=config["team"]["mode"]
-│       └── config.yaml # Routing logic in instructions
-├── workflows/          # Sequential workflows
-│   └── [domain]/       # Domain-specific workflows (e.g., typification)
-├── context/
-│   ├── knowledge/      # Domain knowledge base
-│   └── memory/         # Session & patterns
-├── api/
-│   └── main.py         # FastAPI with playground
-├── db/                 # Database layer
-│   ├── migrations/     # Alembic migrations
-│   └── tables/         # SQLAlchemy models
-├── tests/              # Comprehensive test suite
-├── examples/           # Example implementations
-└── genie/              # Development workspace
-```
-</codebase_structure>
-
-<agent_integration_patterns>
-### V2 Agent Communication Flow
-```python
-# Team handles ALL routing via mode=config["team"]["mode"]
-routing_team = Team(
-    name="Domain Routing Assistant",
-    mode=config["team"]["mode"],  # From YAML
-    members=[specialists...]
-)
-
-# Routing logic lives in team's config.yaml instructions:
-# "Route technical queries to tech-specialist-v1"
-# "Route customer issues to customer-service-v1"
-# "Route billing queries to billing-specialist-v1"
-# "Route escalations to human-handoff-v1"
-```
-
-### V2 Agent Definition Pattern
-```python
-# agents/domain-specialist-v1/agent.py
-from agno import Agent, ModelConfig
-
-def get_agent():
-    return Agent(
-        agent_id="domain-specialist-v1",
-        name="Domain Expert Assistant",
-        model=config["model"]  # From YAML,
-        system_prompt="""You are a domain specialist..."""
-    )
-```
-</agent_integration_patterns>
-
-## MCP Server Integrations
-
-<mcp_integrations>
-### Repository Documentation Server (search-repo-docs)
-**When to use:**
-- Working with external libraries/frameworks (React, FastAPI, Next.js, Agno, etc.)
-- Need current documentation beyond training cutoff
-- Implementing new integrations or features with third-party tools
-- Troubleshooting library-specific issues
-
-**Usage patterns:**
-```python
-# Resolve library name to Context7 ID
-library_id = mcp__search_repo_docs__resolve_library_id(
-    libraryName="agno"
-)
-
-# Fetch focused documentation
-docs = mcp__search_repo_docs__get_library_docs(
-    context7CompatibleLibraryID="/agno-agi/agno",
-    topic="teams",  # Focus on specific topics
-    tokens=8000     # Control documentation scope
-)
-```
-
-### Repository Agent Server (ask-repo-agent)
-**When to use:**
-- Deep analysis of specific repositories
-- Understanding implementation patterns in external codebases
-- Getting contextual answers about repository structure and patterns
-
-**Usage patterns:**
-```python
-# Ask specific questions about repositories
-answer = mcp__ask_repo_agent__ask_question(
-    repoName="agno-agi/agno",
-    question="How should I configure team routing for my domain-specific use case?"
-)
-
-# Explore repository documentation structure
-structure = mcp__ask_repo_agent__read_wiki_structure(
-    repoName="agno-agi/agno"
-)
-
-# Read complete repository documentation
-content = mcp__ask_repo_agent__read_wiki_contents(
-    repoName="agno-agi/agno"
-)
-```
-
-### Integration Best Practices
-- **Always resolve library IDs first** before fetching documentation
-- **Use topic filtering** to get focused, relevant documentation
-- **Combine both servers** for comprehensive external research
-- **Cache results** when possible to avoid redundant API calls
-- **Focus queries** on specific implementation needs rather than general exploration
-</mcp_integrations>
-
-## Development Configuration
-
-<environment_setup>
-### Essential Commands - Automagik Framework
-```bash
-# Environment setup
-uv sync                    # Install all dependencies
-uv add package-name        # Add new dependency
-
-# Development
-uv run python api/playground.py     # Start system (port 7777)
-uv run python -m pytest tests/      # Run test suite
-
-# Knowledge Management
-uv run python scripts/preprocessing/validate_knowledge.py
-uv run python scripts/preprocessing/generate_rag_csv.py
-
-# Agent Testing
-uv run python tests/unit/test_routing_logic.py -v
-uv run python tests/integration/test_end_to_end_flow.py
-```
-</environment_setup>
-
-<database_configuration>
-### Database Configuration
-
-**PostgreSQL (Preferred)**
-```bash
-# Set DATABASE_URL in .env file:
-DATABASE_URL=postgresql://ai:ai@localhost:5532/ai
-
-# Agno automatically handles:
-- Table creation and schema management
-- Connection pooling and retries
-- Session storage with auto-upgrade
-```
-
-**SQLite (Default fallback)**
-- Automatic if DATABASE_URL not set
-- Zero configuration required
-- Uses Agno's built-in SQLite storage
-</database_configuration>
-
-## Quality Standards & Compliance
-
-<compliance_requirements>
-### Domain-Specific Compliance
-- Configurable data encryption and security measures
-- Audit trail for sensitive operations
-- Domain-specific validation and safety checks
-- Configurable compliance warnings
-- Human escalation for complex scenarios
-
-### Internationalization Support
-- Configurable language preferences
-- Multi-language response capabilities
-- Domain-specific terminology management
-- Localized error messages and responses
-</compliance_requirements>
-
-<testing_standards>
-### Multi-Agent Testing Requirements
-- Unit tests for each specialist agent
-- Integration tests for routing logic
-- End-to-end conversation flows
-- Frustration escalation scenarios
-- Knowledge retrieval accuracy
-
-```bash
-# Run specific agent tests
-uv run pytest tests/unit/test_domain_agent.py -v
-
-# Test routing accuracy
-uv run pytest tests/integration/test_hybrid_unit_routing.py
-
-# Full test suite with coverage
-uv run pytest --cov=agents --cov=context
-```
-</testing_standards>
-
-## Post-Task Completion Protocol
-
-<post_task_completion>
-After completing any coding task, follow this comprehensive checklist to ensure quality and maintainability:
-
-### 1. Type Safety & Quality Checks
-Run the appropriate commands based on what was modified:
-
-**Python Type Checking (Required for all Python changes):**
-```bash
-# Run mypy type checking on modified modules
-uv run mypy agents/ context/ api/ --strict
-
-# Check specific files for targeted validation
-uv run mypy path/to/modified_file.py
-```
-
-**Code Quality Validation:**
-```bash
-# Run ruff linting and formatting
+# Quality checks
 uv run ruff check .
 uv run ruff format .
-
-# Validate import organization
-uv run ruff check --select I .
 ```
+</quick_reference>
 
-### 2. Testing Verification
-**Unit Tests (Required for agent changes):**
-```bash
-# Run tests for modified components
-uv run pytest tests/unit/test_[modified_component].py -v
+## Development Flow
 
-# Run full unit test suite
-uv run pytest tests/unit/ --cov=agents --cov=context
+<workflow>
+1. **Check Patterns**: Review `@genie/reference/` first
+2. **Use Memory**: Add discoveries as you work
+3. **Simple Commands**: Use the 14 commands with model parameter
+4. **Test Everything**: Type checks, unit tests, integration tests
+5. **Archive Complete**: Move done work to `genie/archive/`
+</workflow>
+
+## Project Structure
+
+<architecture>
 ```
-
-**Integration Tests (Required for routing/workflow changes):**
-```bash
-# Test agent coordination and routing
-uv run pytest tests/integration/test_end_to_end_flow.py -v
-uv run pytest tests/integration/test_hybrid_unit_routing.py
+genie-agents/
+├── agents/          # Agent definitions (YAML-driven)
+├── teams/           # Team routing configurations  
+├── workflows/       # Sequential task flows
+├── api/             # FastAPI endpoints
+├── db/              # PostgreSQL/SQLite storage
+├── .claude/         
+│   ├── commands/    # 14 consolidated commands
+│   └── hooks/       # task-context-injector.sh
+└── genie/           # Framework workspace (see genie/CLAUDE.md)
 ```
+</architecture>
 
-**Language-Specific Validation (Required for customer-facing changes):**
-```bash
-# Test language-specific responses
-uv run pytest tests/unit/test_language_responses.py -v
-```
+## Critical Reminders
 
-### 3. System Integration Verification
-**Database Integrity (Required for data model changes):**
-```bash
-# Verify database migrations
-uv run alembic check
+<reminders>
+✅ Memory is bidirectional - all agents read/write
+✅ Commands use model= parameter (not separate files)
+✅ Context injection is automatic via hooks
+✅ Keep it simple - no complex wrappers
+✅ Test with mypy and pytest before completing
+✅ Archive to maintain 5-file active limit
 
-# Test database connectivity
-uv run python -c "from config.database import get_db; next(get_db())"
-```
+❌ No time estimates on tasks
+❌ No backwards compatibility needed
+❌ No pip - always use uv
+❌ No manual context references
+</reminders>
 
-**Knowledge Base Validation (Required for CSV knowledge changes):**
-```bash
-# Validate knowledge base consistency
-uv run python scripts/preprocessing/validate_knowledge.py
+---
 
-# Regenerate RAG CSV if needed
-uv run python scripts/preprocessing/generate_rag_csv.py
-```
-
-### Completion Checklist
-Before marking any task as complete, ensure:
-- [ ] All type checks pass without errors
-- [ ] Unit tests pass for modified components
-- [ ] Integration tests pass for affected workflows
-- [ ] Language-specific responses validated
-- [ ] No sensitive data exposed in logs
-- [ ] Domain-specific validation patterns updated if applicable
-- [ ] Knowledge base validation passes
-- [ ] Agent registry loads modified agents successfully
-- [ ] Routing logic handles new scenarios correctly
-- [ ] Documentation updated in relevant `genie/` files
-
-**If ANY check fails, the task is NOT complete. Fix issues before proceeding.**
-</post_task_completion>
-
-## Development Best Practices
-
-<workflow_summary>
-### Optimal Multi-Agent Development Flow
-
-1. **Pattern Check** → Review `@genie/reference/` for existing patterns
-2. **Impact Analysis** → Identify affected components and domains
-3. **Task Creation** → Create tasks in `genie/active/` per agent
-4. **Parallel Implementation** → Develop across agents simultaneously
-5. **Routing Update** → Adjust keywords and routing logic
-6. **Knowledge Sync** → Update CSV knowledge base
-7. **Integration Test** → Verify cross-agent communication
-8. **Pattern Storage** → Save successful patterns to reference
-</workflow_summary>
-
-<critical_reminders>
-### Always Remember
-✅ Read `genie/ai-context/` foundation files before starting any development
-✅ Check patterns in `@genie/reference/` first
-✅ Test routing with domain-appropriate queries
-✅ Validate domain requirements using post-task completion protocol
-✅ Update knowledge CSV when adding features
-✅ Test escalation paths
-✅ Commit with Genie co-authorship
-✅ Keep `genie/active/` under 5 files (Kanban WIP limit)
-✅ Use branch-friendly filenames (task-fix-pix-validation)
-✅ Archive obsolete work to `genie/archive/` when no longer relevant
-✅ Document patterns for reuse
-✅ Check epic status before starting work
-✅ Wait for task dependencies with mcp__wait__wait_minutes
-✅ Use MCP server integrations for external documentation (search-repo-docs, ask-repo-agent)
-✅ Run type checks and quality validation before task completion
-✅ Follow development standards in `genie/ai-context/development-standards.md`
-
-❌ Never modify Agno framework code
-❌ Never skip domain-specific validations
-❌ Never expose sensitive user data in logs
-❌ Never exceed escalation thresholds without proper handling
-❌ Never use pip (always use uv)
-❌ Never work directly with production data without proper safeguards
-❌ Never ignore domain-specific language requirements
-❌ Never work on tasks marked as [🔄] by another agent
-❌ Never skip dependency checks
-❌ Never mark tasks complete without running the post-task completion protocol
-❌ Never ignore type checking failures
-❌ Never skip the ai-context foundation files when joining the project
-</critical_reminders>
-
-## Development Standards & Reference
-
-<development_standards>
-### AI Context Foundation Files
-**Essential reading for all AI agents working on this codebase:**
-
-- **Project Structure**: `genie/ai-context/project-structure.md`
-  - Complete technology stack and file tree structure
-  - Multi-agent architecture patterns
-  - Testing and configuration management strategies
-
-- **Development Standards**: `genie/ai-context/development-standards.md`
-  - Universal coding standards for all development
-  - Type safety requirements and naming conventions
-  - Testing standards and git commit protocols
-  - Agno framework integration patterns
-
-- **System Integration**: `genie/ai-context/system-integration.md`
-  - Integration patterns for external services
-  - Database and storage integration guidelines
-  - API design and security standards
-
-- **Documentation Overview**: `genie/ai-context/docs-overview.md`
-  - Complete documentation structure and guidelines
-  - Knowledge management and pattern storage protocols
-
-### CCDK Integration
-The project includes the Claude Code Development Kit for enhanced development workflows:
-- **Commands**: `genie/Claude-Code-Development-Kit/commands/` - Specialized development commands
-- **Hooks**: `genie/Claude-Code-Development-Kit/hooks/` - Git hooks and automation
-- **Documentation**: `genie/Claude-Code-Development-Kit/docs/` - CCDK reference materials
-
-### Pattern Library
-For detailed Agno framework patterns, context search tools, and development reference materials, see:
-- **Reusable Patterns**: `@genie/reference/` - Proven implementation patterns
-- **Active Development**: `genie/active/` - Current work in progress (MAX 5 files)
-- **Archive**: `genie/archive/` - Completed development tasks and lessons learned
-</development_standards>
-
-
+**For Genie Framework details**: See `genie/CLAUDE.md`
+**For technical standards**: See `genie/ai-context/development-standards.md`
+**For project structure**: See `genie/ai-context/project-structure.md`
