@@ -6,10 +6,39 @@ Management can edit CSV in Excel, save to cloud, and changes apply automatically
 """
 
 import time
+import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure logging based on environment variables
+def setup_logging():
+    """Configure logging levels based on environment variables"""
+    # Get environment settings (using existing variable names)
+    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "warning").upper()
+    
+    # Set Agno framework logging level
+    agno_level = getattr(logging, agno_log_level, logging.WARNING)
+    logging.getLogger("agno").setLevel(agno_level)
+    
+    # Set general logging level based on debug mode
+    if debug_mode:
+        logging.getLogger().setLevel(logging.DEBUG)
+    elif demo_mode:
+        logging.getLogger().setLevel(logging.INFO)
+    else:
+        logging.getLogger().setLevel(logging.WARNING)
+
+# Setup logging on import
+setup_logging()
 
 from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 from context.knowledge.smart_incremental_loader import SmartIncrementalLoader
@@ -21,6 +50,7 @@ class CSVFileHandler(FileSystemEventHandler):
     _last_trigger_time = 0
     _processing_lock = False
     _last_file_size = 0
+    _last_file_hash = ""
     
     def __init__(self, manager):
         self.manager = manager
@@ -38,7 +68,7 @@ class CSVFileHandler(FileSystemEventHandler):
                 return
                 
             # Skip if: recently triggered, currently processing, or size unchanged
-            if (now - CSVFileHandler._last_trigger_time < 3.0 or 
+            if (now - CSVFileHandler._last_trigger_time < 5.0 or 
                 CSVFileHandler._processing_lock or
                 current_size == CSVFileHandler._last_file_size):
                 return
@@ -120,14 +150,13 @@ class CSVHotReloadManager:
         print("👀 Started REAL-TIME watching CSV file for changes...")
         print("🔥 Changes will be detected INSTANTLY when file is saved")
         print("💡 Management can now edit the CSV file and changes will be applied immediately")
-        print("   Press Ctrl+C to stop")
         
         try:
             # Set up file system watcher
             self.file_handler = CSVFileHandler(self)
             self.observer = Observer()
             
-            # Watch the directory containing the CSV file
+            # Watch the directory containing the CSV file  
             watch_directory = str(self.csv_path.parent.absolute())
             self.observer.schedule(self.file_handler, watch_directory, recursive=False)
             
@@ -136,16 +165,13 @@ class CSVHotReloadManager:
             
             # Start the observer
             self.observer.start()
+            print("✅ Real-time file watching ACTIVE")
             
-            # Keep the main thread alive
-            while self.is_running:
-                time.sleep(1)
+            # For daemon threads, just return after starting observer
+            # Observer runs in its own thread, no blocking needed
                 
-        except KeyboardInterrupt:
-            print("\n👋 Stopping CSV hot reload manager...")
-            self.stop_watching()
         except Exception as e:
-            print(f"❌ Error in watch loop: {e}")
+            print(f"❌ Error setting up file watcher: {e}")
             self.stop_watching()
     
     def stop_watching(self):
@@ -164,39 +190,85 @@ class CSVHotReloadManager:
     
     
     def _reload_knowledge_base(self):
-        """Single clean log line like an API call"""
+        """Demo-ready logging with diff view for updates"""
+        # Store the last CSV row before processing for diff comparison
+        before_content = ""
+        try:
+            import pandas as pd
+            df_before = pd.read_csv(self.csv_path)
+            if not df_before.empty:
+                last_row = df_before.iloc[-1]
+                before_content = str(last_row.iloc[0])  # First column (problem field)
+        except:
+            pass
+            
         try:
             start_time = time.time()
             
-            # Get the last few lines to see what changed
+            # Store current count before processing
             try:
-                with open(self.csv_path, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
-                last_line = lines[-1].strip() if lines else ""
-                # Extract problem field (first field after quotes)
-                if last_line.startswith('"') and '","' in last_line:
-                    content = last_line.split('","')[0][1:][:40] + "..."
-                else:
-                    content = "unknown content"
+                current_stats = self.kb.get_knowledge_statistics()
+                count_before = current_stats.get('total_entries', 0)
             except:
-                content = "unknown content"
+                count_before = 0
             
-            result = self.smart_loader.smart_load()
+            # Process the change with suppressed output
+            import sys
+            from io import StringIO
+            
+            # Capture and suppress all stdout during processing
+            old_stdout = sys.stdout
+            sys.stdout = StringIO()
+            
+            try:
+                result = self.smart_loader.smart_load()
+            finally:
+                sys.stdout = old_stdout
+            
+            load_time = time.time() - start_time
             
             if result and "error" not in result:
-                load_time = time.time() - start_time
-                processed = result.get('new_rows_processed', 0)
-                strategy = result.get('strategy', 'updated')
-                stats = self.kb.get_knowledge_statistics()
-                total = stats.get('total_entries', 0)
+                try:
+                    new_stats = self.kb.get_knowledge_statistics()
+                    count_after = new_stats.get('total_entries', 0)
+                except:
+                    count_after = count_before
                 
-                if processed > 0:
-                    action = "ADD" if strategy == "incremental_update" else "UPD"
-                    print(f"✅ {action} \"{content}\" | {load_time:.1f}s | total: {total}")
+                # Get current content for comparison using proper CSV parsing
+                after_content = ""
+                try:
+                    import pandas as pd
+                    df_after = pd.read_csv(self.csv_path)
+                    if not df_after.empty:
+                        last_row = df_after.iloc[-1]
+                        after_content = str(last_row.iloc[0])  # First column (problem field)
+                except:
+                    pass
+                
+                # Determine what happened
+                if count_after > count_before:
+                    # Addition
+                    content = after_content[:50] + "..." if len(after_content) > 50 else after_content
+                    print(f"✅ ADD \"{content}\" | {load_time:.1f}s | {count_before}→{count_after}")
+                    
+                elif count_after < count_before:
+                    # Deletion
+                    removed_count = count_before - count_after
+                    print(f"✅ DEL {removed_count} entries | {load_time:.1f}s | {count_before}→{count_after}")
+                    
+                elif before_content != after_content and before_content and after_content:
+                    # Update with diff
+                    before_text = before_content[:40] + "..." if len(before_content) > 40 else before_content
+                    after_text = after_content[:40] + "..." if len(after_content) > 40 else after_content
+                    print(f"✅ UPD | {load_time:.1f}s | total: {count_after}")
+                    print(f"  📝 Before: \"{before_text}\"")
+                    print(f"  ✨ After:  \"{after_text}\"")
+                    
                 else:
-                    print(f"✅ No changes | {load_time:.1f}s")
+                    # No actual changes
+                    print(f"✅ No changes | {load_time:.1f}s | total: {count_after}")
             else:
-                print(f"❌ Error processing changes")
+                print(f"❌ Error: {result.get('error', 'unknown error')}")
                 
         except Exception as e:
             print(f"❌ Error: {e}")

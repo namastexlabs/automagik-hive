@@ -133,8 +133,7 @@ automagik-agents/
 │   │   ├── knowledge_rag.csv           # Hot-reloadable knowledge data
 │   │   ├── enhanced_csv_reader.py      # Advanced CSV parsing with filtering
 │   │   ├── agentic_filters.py          # Business unit specific filtering
-│   │   ├── csv_hot_reload.py           # Real-time knowledge updates
-│   │   ├── hot_reload_manager.py       # File system monitoring
+│   │   ├── csv_hot_reload.py           # Real-time CSV file watching
 │   │   ├── smart_incremental_loader.py # Efficient knowledge loading
 │   │   ├── knowledge_parser.py         # Knowledge data processing
 │   │   └── simple_example.py           # Knowledge system examples

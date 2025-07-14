@@ -6,6 +6,7 @@ Production-ready API endpoint using V2 Ana Team architecture
 import os
 import sys
 import threading
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from agno.app.fastapi.app import FastAPIApp
@@ -13,6 +14,38 @@ from agno.playground import Playground
 from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+
+# Load environment variables first
+load_dotenv()
+
+# Configure logging levels based on environment
+def setup_demo_logging():
+    """Setup logging for demo presentation"""
+    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "warning").upper()
+    
+    # Set Agno framework logging level
+    agno_level = getattr(logging, agno_log_level, logging.WARNING)
+    logging.getLogger("agno").setLevel(agno_level)
+    
+    # Suppress INFO level from all loggers for clean demo
+    if demo_mode and not debug_mode:
+        logging.getLogger().setLevel(logging.ERROR)
+        # Specifically suppress ALL noisy loggers
+        logging.getLogger("uvicorn").setLevel(logging.ERROR)
+        logging.getLogger("fastapi").setLevel(logging.ERROR)
+        logging.getLogger("sqlalchemy").setLevel(logging.ERROR)
+        logging.getLogger("alembic").setLevel(logging.ERROR)
+        
+        # Force all known loggers to ERROR level
+        for logger_name in ["agno", "openai", "httpx", "httpcore", "urllib3"]:
+            logging.getLogger(logger_name).setLevel(logging.ERROR)
+    
+    print(f"🎯 Demo mode: {'ON' if demo_mode else 'OFF'} | Debug: {'ON' if debug_mode else 'OFF'} | Agno: {agno_log_level}")
+
+# Setup logging immediately
+setup_demo_logging()
 
 # Add current directory to Python path for module imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -26,9 +59,6 @@ from workflows.human_handoff import get_human_handoff_workflow
 
 # Import CSV hot reload manager
 from context.knowledge.csv_hot_reload import CSVHotReloadManager
-
-# Load environment variables
-load_dotenv()
 
 
 @asynccontextmanager
