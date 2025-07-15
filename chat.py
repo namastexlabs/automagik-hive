@@ -76,17 +76,8 @@ class WebChatInterface:
             Layout(name="events", ratio=1)
         )
         
-        # Input area
-        self.layout["input_area"].update(
-            Panel(
-                "[bold cyan]💬 Type your message and press Enter[/bold cyan]\n"
-                "[dim]📊 Watch real-time events in the right panel[/dim]\n"
-                "[dim]🔄 Press Ctrl+C to exit[/dim]",
-                title="Input",
-                border_style="blue",
-                box=ROUNDED
-            )
-        )
+        # Input area - show current input or prompt
+        self.update_input_area()
         
         # Initialize panels
         self.update_messages_panel()
@@ -223,6 +214,23 @@ class WebChatInterface:
                 border_style="yellow",
                 box=ROUNDED,
                 padding=(1, 1)
+            )
+        )
+    
+    def update_input_area(self):
+        """Update the input area"""
+        input_text = getattr(self, 'current_input', '')
+        if input_text:
+            content = f"[bold cyan]💬 {input_text}[/bold cyan]"
+        else:
+            content = "[dim]Ready for your message...[/dim]"
+        
+        self.layout["input_area"].update(
+            Panel(
+                content,
+                title="💬 Chat Input",
+                border_style="blue",
+                box=ROUNDED
             )
         )
     
@@ -529,15 +537,23 @@ class WebChatInterface:
         with Live(self.layout, refresh_per_second=4, screen=True) as live:
             self.live = live
             
-            console.print("💬 Chat interface ready! Type your messages below:")
-            
-            # Main chat loop
+            # Main chat loop with integrated input
             while self.running:
                 try:
-                    # Get user input
+                    # Update input area to show we're waiting
+                    self.current_input = "Type your message and press Enter..."
+                    self.update_input_area()
+                    live.refresh()
+                    
+                    # Get user input without stopping live
                     user_input = await asyncio.get_event_loop().run_in_executor(
-                        None, input, "> "
+                        None, input, ""
                     )
+                    
+                    # Clear input area
+                    self.current_input = ""
+                    self.update_input_area()
+                    live.refresh()
                     
                     if user_input.strip():
                         if user_input.strip().lower() in ['quit', 'exit', 'bye']:

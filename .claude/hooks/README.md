@@ -108,6 +108,87 @@ These hooks execute at specific points in Claude Code's lifecycle, providing det
   - `input`: When Claude needs user input
   - `complete`: When Claude completes tasks
 
+## Command-Specific Hooks
+
+### 5. Fix Context Injector (`fix-context-injector.sh`)
+
+**Purpose**: Enhances `/fix` command usage with intelligent debugging context and guidance.
+
+**Trigger**: `PreCommand` for `/fix.*` commands
+
+**Features**:
+- Automatic issue classification (performance, API, database, concurrency, agent-specific)
+- Context-aware debugging strategy recommendations
+- Intelligent keyword analysis for targeted guidance
+- Memory search suggestions based on issue type
+- Expert consultation triggers for complex scenarios
+- Structured debugging methodology injection
+
+**Example Enhancement**:
+```bash
+# Input: /fix "API returns 500 error"
+# Enhanced with: API integration context, error handling guidance, debugging strategy
+```
+
+### 6. Build Planner (`build-planner.sh`)
+
+**Purpose**: Enhances `/build` command usage with implementation planning and architecture guidance.
+
+**Trigger**: `PreCommand` for `/build.*` commands
+
+**Features**:
+- Complexity analysis (LOW/MEDIUM/HIGH) with strategy recommendations
+- Project pattern identification (Agent V2, FastAPI, SQLAlchemy, etc.)
+- Implementation strategy guidance (direct, pattern-analysis, multi-agent)
+- Architecture considerations specific to Genie Agents V2
+- Memory search patterns for similar implementations
+- Expert consultation triggers for complex features
+
+**Strategy Levels**:
+- **Direct Implementation**: Simple functions and utilities
+- **Pattern Analysis**: API endpoints and moderate complexity features
+- **Multi-Agent Design**: Complex systems and architecture decisions
+
+### 7. Nuke Checkpoint (`nuke-checkpoint.sh`)
+
+**Purpose**: Enhances `/nuke` command usage with automatic git checkpoint management and recovery.
+
+**Trigger**: `PreCommand` for `/nuke.*` commands
+
+**Features**:
+- Automatic git checkpoint creation before nuclear debugging
+- Timestamp-based checkpoint IDs for easy tracking
+- Checkpoint metadata storage (issue, timestamp, commit hash, branch)
+- Recovery instructions and rollback guidance
+- Audit trail logging for all checkpoint operations
+- Emergency recovery procedures for critical issues
+
+**Safety Features**:
+- Git tag creation for stable rollback points
+- JSON-based checkpoint tracking
+- Detailed recovery instructions
+- Audit logging for debugging sessions
+
+### 8. Command Memory (`command-memory.sh`)
+
+**Purpose**: Automatically tags memory entries with command context for better organization and searchability.
+
+**Trigger**: `PreToolUse` for `mcp__genie-memory__add_memories`
+
+**Features**:
+- Command context detection (fix, build, nuke, debug, analyze)
+- Content type classification (solution, pattern, issue, task, nuclear, etc.)
+- Automatic tag generation based on content keywords
+- Structured memory enhancement with prefixes
+- Temporal tagging for time-based organization
+- Context-aware memory categorization
+
+**Tag Categories**:
+- **Command Tags**: `#fix`, `#build`, `#nuke`, `#debug`, `#analyze`
+- **Content Tags**: `#solution`, `#pattern`, `#issue`, `#nuclear`, `#api`, `#agent`
+- **Context Tags**: `#performance`, `#security`, `#integration`, `#testing`
+- **Temporal Tags**: `#2025-07` (year-month format)
+
 ## Installation
 
 1. **Copy the hooks to your project**:
@@ -127,9 +208,21 @@ These hooks execute at specific points in Claude Code's lifecycle, providing det
    .claude/hooks/notify.sh input
    .claude/hooks/notify.sh complete
    
+   # Test command-specific hooks
+   .claude/hooks/test-command-hooks.sh
+   
+   # Test individual hooks
+   echo '{"message": "/fix test issue"}' | .claude/hooks/fix-context-injector.sh
+   echo '{"message": "/build test feature"}' | .claude/hooks/build-planner.sh
+   echo '{"message": "/nuke test bug"}' | .claude/hooks/nuke-checkpoint.sh
+   
    # View logs
    tail -f .claude/logs/context-injection.log
    tail -f .claude/logs/security-scan.log
+   tail -f .claude/logs/fix-context-injection.log
+   tail -f .claude/logs/build-planning.log
+   tail -f .claude/logs/nuke-checkpoint.log
+   tail -f .claude/logs/command-memory.log
    ```
 
 ## Hook Configuration
@@ -164,6 +257,44 @@ Add to your Claude Code `settings.json`:
           {
             "type": "command",
             "command": "${WORKSPACE}/.claude/hooks/subagent-context-injector.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__genie-memory__add_memories",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/command-memory.sh"
+          }
+        ]
+      }
+    ],
+    "PreCommand": [
+      {
+        "matcher": "/fix.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/fix-context-injector.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "/build.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/build-planner.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "/nuke.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/nuke-checkpoint.sh"
           }
         ]
       }
