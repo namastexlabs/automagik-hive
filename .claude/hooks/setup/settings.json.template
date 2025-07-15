@@ -30,6 +30,48 @@
             "description": "Automatically adds project context to sub-agent prompts"
           }
         ]
+      },
+      {
+        "matcher": "mcp__genie-memory__add_memories",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/command-memory.sh",
+            "description": "Automatically tags memory entries with command context"
+          }
+        ]
+      }
+    ],
+    "PreCommand": [
+      {
+        "matcher": "/fix.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/fix-context-injector.sh",
+            "description": "Enhances /fix commands with debugging context and guidance"
+          }
+        ]
+      },
+      {
+        "matcher": "/build.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/build-planner.sh",
+            "description": "Enhances /build commands with implementation planning guidance"
+          }
+        ]
+      },
+      {
+        "matcher": "/nuke.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${WORKSPACE}/.claude/hooks/nuke-checkpoint.sh",
+            "description": "Creates git checkpoint before nuclear debugging sessions"
+          }
+        ]
       }
     ],
     "Notification": [

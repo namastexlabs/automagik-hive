@@ -105,27 +105,13 @@ def calculate_similarity(text1: str, text2: str) -> float:
     pass
 ```
 
-### Security First
-- Never trust external inputs - validate everything at the boundaries
-- Keep secrets in environment variables, never in code
-- Log security events (login attempts, auth failures, rate limits, permission denials) but never log sensitive data (audio, conversation content, tokens, personal info)
-- Authenticate users at the API gateway level - never trust client-side tokens
-- Use Row Level Security (RLS) to enforce data isolation between users
-- Design auth to work across all client types consistently
-- Use secure authentication patterns for your platform
-- Validate all authentication tokens server-side before creating sessions
-- Sanitize all user inputs before storing or processing
-
 ### Error Handling
 - Use specific exceptions over generic ones
 - Always log errors with context
 - Provide helpful error messages
 - Fail securely - errors shouldn't reveal system internals
 
-### Observable Systems & Logging Standards
-- Every request needs a correlation ID for debugging
-- Structure logs for machines, not humans - use JSON format with consistent fields (timestamp, level, correlation_id, event, context) for automated analysis
-- Make debugging possible across service boundaries
+
 
 ### State Management
 - Have one source of truth for each piece of state

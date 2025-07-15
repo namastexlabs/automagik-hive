@@ -2,7 +2,7 @@
 
 ---
 allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(*), Bash(*), LS(*), mcp__zen__*, mcp__genie-memory__*, mcp__send_whatsapp_message__*
-description: Nuclear debugging - systematic multi-model approach when all else fails
+description: Enhanced 3-Layer Parallel Nuclear Debugging with Checkpoint Recovery
 ---
 
 🚨 **NUCLEAR DEBUGGING** 🚨
@@ -31,130 +31,275 @@ When traditional debugging fails, `/nuke` systematically tests ALL zen combinati
 /nuke "Race condition in payment processing" time_limit="45m"
 ```
 
-## Nuclear Debugging Framework
+## Enhanced 3-Layer Parallel Nuclear Architecture
 
-### Phase 1: Intelligence Gathering (5 approaches)
-```
-1. Individual Model Analysis
-   - o3: Systematic logical analysis
-   - grok: Large context examination  
-   - pro: Creative problem-solving
-   - mini: Quick pattern recognition
+### 🔍 **Layer 1: Parallel Investigation**
+*Smart model selection for optimal analysis*
 
-2. Specialized Tool Analysis
-   - debug: Traditional debugging workflow
-   - analyze: Architectural analysis
-   - thinkdeep: Deep investigation
-   - tracer: Code flow tracing
-   - challenge: Adversarial questioning
-
-3. Multi-Model Consensus
-   - 3-model consensus: o3 + grok + pro
-   - 2-model debate: o3 vs grok
-   - Challenge mode: All models question assumptions
+**Model Selection Strategy:**
+```yaml
+investigation_models:
+  complex_systems: "gemini-2.5-pro"     # 1M context, thinking mode
+  logical_debugging: "o3"               # Strong reasoning chains  
+  performance_analysis: "grok"          # Large context analysis
+  quick_patterns: "o4-mini"             # Fast pattern recognition
+  architectural_review: "gemini-2.5-pro" # Deep architectural insight
 ```
 
-### Phase 2: Hypothesis Testing (3 approaches)
-```
-4. Hypothesis Validation
-   - Each model proposes fix
-   - Consensus on most likely solution
-   - Challenge mode validates each hypothesis
+**Parallel Investigation Execution:**
+- **Task 1**: `mcp__zen__debug` - Traditional debugging workflow
+- **Task 2**: `mcp__zen__analyze` - Architectural analysis  
+- **Task 3**: `mcp__zen__thinkdeep` - Deep investigation
+- **Task 4**: `mcp__zen__tracer` - Code flow tracing (if code-related)
 
-5. Alternative Perspectives  
-   - Models argue FOR the bug (why it makes sense)
-   - Models argue AGAINST each fix
-   - Consensus on safest approach
-```
+### ⚔️ **Layer 2: Parallel Debates**
+*Challenge assumptions and build consensus*
 
-### Phase 3: Solution Synthesis (2 approaches)
-```
-6. Implementation Planning
-   - Consensus on implementation steps
-   - Risk assessment from multiple models
-   - Validation testing approach
-
-7. Final Validation
-   - All models review proposed solution
-   - Challenge any remaining assumptions
-   - Consensus on deployment safety
+**Debate Strategy:**
+```yaml
+debate_modes:
+  challenge: "Question all assumptions and findings"
+  consensus: "Build agreement on root cause"
+  adversarial: "Argue FOR/AGAINST each hypothesis"
 ```
 
-## Automated Execution Protocol
+**Parallel Debate Execution:**
+- **Task 1**: `mcp__zen__challenge` - Question investigation findings
+- **Task 2**: `mcp__zen__consensus` - Build consensus on root cause
+- **Task 3**: `mcp__zen__consensus` - Adversarial debate (FOR vs AGAINST)
 
-### Step 1: Memory Search & Context
+### 🎯 **Layer 3: Parallel Solution Generation**
+*Generate, narrow, and validate solutions*
+
+**Bug Solution Protocol:**
+1. **Each model finds 3 bug probabilities**
+2. **Narrow down to 2 most likely causes**
+3. **Compare all results and synthesize**
+4. **Consensus on 1-2 final solutions**
+5. **Implementation with checkpoint recovery**
+
+**Solution Validation:**
+- **Task 1**: Generate 3 bug theories per model
+- **Task 2**: Cross-validate and rank probabilities  
+- **Task 3**: Consensus on final 1-2 solutions
+- **Task 4**: Implementation planning with rollback
+
+## Enhanced Parallel Execution Protocol
+
+### Checkpoint Recovery System
 ```python
-# Search for similar issues
-mcp__genie-memory__search_memory(query="ERROR {bug_keywords}")
-mcp__genie-memory__search_memory(query="FIX {component}")
-mcp__genie-memory__search_memory(query="ZEN debug")
+# CHECKPOINT MANAGEMENT
+def create_nuclear_checkpoint(issue: str) -> str:
+    """Create git checkpoint before nuclear debugging"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    checkpoint_id = f"nuclear-{timestamp}"
+    
+    # Create checkpoint commit
+    Bash(f'git add . && git commit -m "🚨 NUCLEAR CHECKPOINT: {issue}"')
+    Bash(f'git tag {checkpoint_id}')
+    
+    return checkpoint_id
 
-# Capture current state
-context = {
-    "issue": "$ARGUMENTS",
-    "focus": "$FOCUS",
-    "files_affected": [],
-    "previous_attempts": []
-}
+def revert_to_checkpoint(checkpoint_id: str):
+    """Revert to checkpoint if solution fails"""
+    Bash(f'git reset --hard {checkpoint_id}')
+    mcp__genie-memory__add_memories(f"NUCLEAR REVERT: {checkpoint_id} - solution failed, trying different strategy")
 ```
 
-### Step 2: Individual Model Analysis (Parallel)
+### Smart Model Selection
 ```python
-# Run all models simultaneously on same issue
-models = ["o3", "grok", "pro", "mini"]
-for model in models:
-    mcp__zen__debug(
-        model=model,
-        step=f"[NUKE-{model.upper()}] Analyze: {issue}",
-        problem_context="Nuclear debugging - all standard approaches failed",
-        thinking_mode="max" if model == "pro" else "high"
-    )
+def select_optimal_model(issue: str, context: dict) -> str:
+    """Choose best model for the situation"""
+    
+    keywords = issue.lower()
+    
+    if any(word in keywords for word in ["performance", "memory", "scale", "slow"]):
+        return "grok"  # Large context for performance analysis
+    elif any(word in keywords for word in ["logic", "algorithm", "calculation"]):
+        return "o3"    # Strong reasoning for logical bugs
+    elif any(word in keywords for word in ["complex", "architecture", "system"]):
+        return "gemini-2.5-pro"  # Thinking mode for complex systems
+    else:
+        return "o4-mini"  # Fast general analysis
 ```
 
-### Step 3: Specialized Analysis Tools
+### Layer 1: Parallel Investigation
 ```python
-# Different analytical approaches
-tools = [
-    ("analyze", "architectural analysis"),
-    ("thinkdeep", "deep investigation"), 
-    ("tracer", "code flow analysis"),
-    ("challenge", "question assumptions")
-]
-
-for tool, description in tools:
-    mcp__zen__[tool](
-        model="rotate", # o3 → grok → pro → o3
-        step=f"[NUKE-{tool.upper()}] {description}",
-        relevant_files=context["files_affected"]
-    )
+async def nuclear_layer_1(issue: str, context: dict) -> tuple[str, list]:
+    """Layer 1: Parallel Investigation with smart model selection"""
+    
+    # Create checkpoint
+    checkpoint_id = create_nuclear_checkpoint(issue)
+    
+    # Search memory for similar issues
+    mcp__genie-memory__search_memory(query=f"ERROR {extract_keywords(issue)}")
+    mcp__genie-memory__search_memory(query=f"NUCLEAR {extract_keywords(issue)}")
+    
+    # Select optimal model
+    model = select_optimal_model(issue, context)
+    
+    # Parallel investigation tasks
+    investigation_tasks = [
+        Task(description=f"NUCLEAR-DEBUG: Use mcp__zen__debug with {model} to analyze: {issue}"),
+        Task(description=f"NUCLEAR-ANALYZE: Use mcp__zen__analyze with {model} to review: {issue}"),  
+        Task(description=f"NUCLEAR-DEEP: Use mcp__zen__thinkdeep with {model} to investigate: {issue}"),
+    ]
+    
+    # Execute in parallel
+    results = await asyncio.gather(*[execute_task(task) for task in investigation_tasks])
+    
+    return checkpoint_id, results
 ```
 
-### Step 4: Multi-Model Consensus & Debate
+### Layer 2: Parallel Debates
 ```python
-# 3-model consensus
-mcp__zen__consensus(
-    models=[
-        {"model": "o3", "stance": "neutral"},
-        {"model": "grok", "stance": "neutral"}, 
-        {"model": "pro", "stance": "neutral"}
-    ],
-    step="[NUKE-CONSENSUS] Synthesize all findings",
-    findings="Combined insights from individual analyses"
-)
+async def nuclear_layer_2(investigation_results: list, checkpoint_id: str) -> list:
+    """Layer 2: Parallel debates to challenge and validate findings"""
+    
+    findings_summary = synthesize_investigation_results(investigation_results)
+    
+    # Parallel debate tasks
+    debate_tasks = [
+        Task(description=f"NUCLEAR-CHALLENGE: Use mcp__zen__challenge to question findings: {findings_summary}"),
+        Task(description=f"NUCLEAR-CONSENSUS: Use mcp__zen__consensus with o3,grok,gemini-2.5-pro to build agreement on root cause"),
+        Task(description=f"NUCLEAR-ADVERSARIAL: Use mcp__zen__consensus with FOR/AGAINST stances to stress-test theories"),
+    ]
+    
+    # Execute debates in parallel
+    debate_results = await asyncio.gather(*[execute_task(task) for task in debate_tasks])
+    
+    return debate_results
 
-# Adversarial challenge
-mcp__zen__challenge(
-    prompt="[NUKE-CHALLENGE] Question all assumptions about this bug"
-)
+### Layer 3: Parallel Solution Generation
+async def nuclear_layer_3(debate_results: list, checkpoint_id: str) -> dict:
+    """Layer 3: Generate, narrow, and validate solutions"""
+    
+    # Each model generates 3 bug probabilities
+    solution_tasks = [
+        Task(description="NUCLEAR-SOLUTIONS-O3: Use mcp__zen__debug with o3 to find 3 most likely bug causes"),
+        Task(description="NUCLEAR-SOLUTIONS-GROK: Use mcp__zen__debug with grok to find 3 most likely bug causes"),  
+        Task(description="NUCLEAR-SOLUTIONS-PRO: Use mcp__zen__debug with gemini-2.5-pro to find 3 most likely bug causes"),
+    ]
+    
+    # Generate solutions in parallel
+    solution_results = await asyncio.gather(*[execute_task(task) for task in solution_tasks])
+    
+    # Narrow down to 2 most likely causes
+    narrowing_task = Task(description=f"NUCLEAR-NARROW: Use mcp__zen__consensus to narrow {len(solution_results)} sets of solutions to 2 most likely causes")
+    narrowed_solutions = await execute_task(narrowing_task)
+    
+    # Final consensus on 1-2 solutions
+    final_task = Task(description=f"NUCLEAR-FINAL: Use mcp__zen__consensus to agree on 1-2 final solutions from: {narrowed_solutions}")
+    final_solutions = await execute_task(final_task)
+    
+    return {
+        "checkpoint_id": checkpoint_id,
+        "all_solutions": solution_results,
+        "narrowed_solutions": narrowed_solutions,
+        "final_solutions": final_solutions
+    }
+```
 
-# 2-model debate  
-mcp__zen__consensus(
-    models=[
-        {"model": "o3", "stance": "for"},
-        {"model": "grok", "stance": "against"}
-    ],
-    step="[NUKE-DEBATE] Argue competing hypotheses"
-)
+### Implementation with Recovery
+```python
+async def nuclear_implementation(solutions: dict) -> bool:
+    """Implement solution with checkpoint recovery"""
+    
+    checkpoint_id = solutions["checkpoint_id"]
+    final_solutions = solutions["final_solutions"]
+    
+    for attempt, solution in enumerate(final_solutions, 1):
+        try:
+            # Implement solution
+            implementation_task = Task(
+                description=f"NUCLEAR-IMPLEMENT-{attempt}: Implement solution: {solution}"
+            )
+            
+            result = await execute_task(implementation_task)
+            
+            # Test solution
+            test_task = Task(
+                description=f"NUCLEAR-TEST-{attempt}: Test implemented solution: {solution}"
+            )
+            
+            test_result = await execute_task(test_task)
+            
+            if test_result.success:
+                # Solution worked!
+                mcp__genie-memory__add_memories(
+                    f"NUCLEAR SUCCESS: {solution} - implemented and tested successfully"
+                )
+                return True
+                
+        except Exception as e:
+            # Solution failed - revert to checkpoint
+            revert_to_checkpoint(checkpoint_id)
+            
+            mcp__genie-memory__add_memories(
+                f"NUCLEAR REVERT: Solution {attempt} failed: {e} - trying different strategy"
+            )
+            
+            # Try different strategy if more attempts remain
+            if attempt < len(final_solutions):
+                continue
+    
+    # All solutions failed
+    return False
+```
+
+### Complete Nuclear Protocol
+```python
+async def nuclear_protocol(issue: str, context: dict = None) -> dict:
+    """Complete 3-layer parallel nuclear debugging protocol"""
+    
+    if context is None:
+        context = {"focus": "general", "files_affected": [], "previous_attempts": []}
+    
+    try:
+        # Layer 1: Parallel Investigation
+        print("🔍 Layer 1: Parallel Investigation")
+        checkpoint_id, investigation_results = await nuclear_layer_1(issue, context)
+        
+        # Layer 2: Parallel Debates  
+        print("⚔️ Layer 2: Parallel Debates")
+        debate_results = await nuclear_layer_2(investigation_results, checkpoint_id)
+        
+        # Layer 3: Parallel Solution Generation
+        print("🎯 Layer 3: Parallel Solution Generation")
+        solutions = await nuclear_layer_3(debate_results, checkpoint_id)
+        
+        # Implementation with Recovery
+        print("🚀 Implementation with Recovery")
+        success = await nuclear_implementation(solutions)
+        
+        # Final report
+        nuclear_report = {
+            "issue": issue,
+            "checkpoint_id": checkpoint_id,
+            "investigation_results": investigation_results,
+            "debate_results": debate_results,
+            "solutions": solutions,
+            "implementation_success": success,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Store in memory
+        mcp__genie-memory__add_memories(
+            f"NUCLEAR COMPLETE: {issue} - Success: {success} - Checkpoint: {checkpoint_id}"
+        )
+        
+        return nuclear_report
+        
+    except Exception as e:
+        # Nuclear protocol failed
+        if 'checkpoint_id' in locals():
+            revert_to_checkpoint(checkpoint_id)
+        
+        mcp__genie-memory__add_memories(
+            f"NUCLEAR FAILURE: {issue} - Protocol failed: {e}"
+        )
+        
+        raise e
 ```
 
 ### Step 5: Solution Validation Matrix
