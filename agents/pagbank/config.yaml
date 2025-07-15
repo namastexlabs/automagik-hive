@@ -61,12 +61,15 @@ storage:
 
 # Memory and history settings
 memory:
+  enable_user_memories: true
+  enable_agentic_memory: true
   add_history_to_messages: true
   num_history_runs: 5
 
 # Display settings
 markdown: false
 show_tool_calls: true
+add_datetime_to_instructions: true
 
 # CRITICAL: Specialist response constraints (to prevent verbose responses)
 success_criteria: "SUCESSO = Forneceu solução prática e objetiva para PIX/transferências/conta digital em máximo 300 palavras"

@@ -1,7 +1,7 @@
 # Generic Agent Registry for Multi-Agent Systems
 # Dynamic agent loading from factory functions
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from agno.agent import Agent
 import os
 from .version_factory import create_versioned_agent
@@ -65,7 +65,9 @@ class AgentRegistry:
         version: Optional[int] = None,
         session_id: Optional[str] = None,
         debug_mode: bool = False,
-        db_url: Optional[str] = None
+        db_url: Optional[str] = None,
+        memory: Optional[Any] = None,
+        memory_db: Optional[Any] = None
     ) -> Agent:
         """
         Get agent instance by ID - Generic factory pattern with versioning support.
@@ -83,17 +85,19 @@ class AgentRegistry:
         Raises:
             KeyError: If agent_id not found
         """
-        # Try database-driven versioning first
+        # Try database-driven versioning first (now includes knowledge base)
         try:
             return create_versioned_agent(
                 agent_id=f"{agent_id}-specialist" if not agent_id.endswith("-specialist") else agent_id,
                 version=version,
                 session_id=session_id,
                 debug_mode=debug_mode,
-                db_url=db_url
+                db_url=db_url,
+                memory=memory,              # CRITICAL: Pass memory parameters
+                memory_db=memory_db         # CRITICAL: Pass memory database
             )
         except ValueError:
-            # Fall back to old system if versioning fails
+            # Fall back to agent factories if versioning fails
             available_factories = cls._get_available_agents()
             
             if agent_id not in available_factories:
@@ -110,7 +114,9 @@ class AgentRegistry:
                 version=version,
                 session_id=session_id,
                 debug_mode=debug_mode,
-                db_url=db_url
+                db_url=db_url,
+                memory=memory,
+                memory_db=memory_db
             )
     
     @classmethod
@@ -172,7 +178,9 @@ def get_agent(
     version: Optional[int] = None,
     session_id: Optional[str] = None,
     debug_mode: bool = False,
-    db_url: Optional[str] = None
+    db_url: Optional[str] = None,
+    memory: Optional[Any] = None,
+    memory_db: Optional[Any] = None
 ) -> Agent:
     """
     Generic agent factory - main entry point for any agent system.
@@ -192,7 +200,9 @@ def get_agent(
         version=version,
         session_id=session_id,
         debug_mode=debug_mode,
-        db_url=db_url
+        db_url=db_url,
+        memory=memory,
+        memory_db=memory_db
     )
 
 
@@ -201,7 +211,8 @@ def get_team_agents(
     agent_names: list[str],
     session_id: Optional[str] = None,
     debug_mode: bool = False,
-    db_url: Optional[str] = None
+    db_url: Optional[str] = None,
+    memory: Optional[Any] = None
 ) -> list[Agent]:
     """
     Get multiple agents for team composition.
@@ -216,6 +227,6 @@ def get_team_agents(
         List of configured Agent instances
     """
     return [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url)
+        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory)
         for name in agent_names
     ]

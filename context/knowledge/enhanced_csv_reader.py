@@ -29,6 +29,9 @@ class EnhancedCSVReader(CSVReader):
         metadata_columns: Optional[List[str]] = None,
         exclude_columns: Optional[List[str]] = None,
         encoding: str = "utf-8",
+        chunk: bool = True,
+        chunk_size: int = 5000,
+        separators: Optional[List[str]] = None,
         **kwargs
     ):
         """
@@ -39,8 +42,20 @@ class EnhancedCSVReader(CSVReader):
             metadata_columns: Columns to extract as metadata (if None, extracts all except content)
             exclude_columns: Columns to completely ignore
             encoding: File encoding
+            chunk: Whether to chunk documents
+            chunk_size: Size for chunking
+            separators: List of separators for chunking
         """
-        super().__init__(**kwargs)
+        # Initialize parent class properly
+        super().__init__(chunk=chunk, chunk_size=chunk_size, **kwargs)
+        
+        # Set separators attribute explicitly
+        if separators is None:
+            self.separators = ["\n", "\n\n", "\r", "\r\n", "\n\r", "\t", " ", "  "]
+        else:
+            self.separators = separators
+        
+        # Enhanced CSV reader specific attributes
         self.content_column = content_column
         self.metadata_columns = metadata_columns or []
         self.exclude_columns = exclude_columns or []

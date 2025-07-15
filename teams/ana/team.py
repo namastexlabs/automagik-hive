@@ -54,22 +54,29 @@ def get_ana_team(
     if agent_names is None:
         agent_names = ["adquirencia", "emissao", "pagbank", "human_handoff"]  # Added back human_handoff for routing
     
-    # Load member agents using generic get_agent factory
-    members = [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url)
-        for name in agent_names
-    ]
-    
     # Use model override if provided (agno-demo-app pattern)
     model_id = model_id or config["model"]["id"]
     
-    # Initialize memory system from YAML config
+    # Initialize memory system from YAML config - use Agno Memory V2 correctly
     memory_manager = None
+    memory = None
+    memory_db = None
     if config.get("memory"):
-        memory_manager = create_memory_manager()
-        memory = memory_manager.create_memory_for_agent(user_id or "system", session_id)
-    else:
-        memory = None
+        try:
+            memory_manager = create_memory_manager()
+            # Get the shared memory instance for both team and agents
+            memory = memory_manager.memory
+            # Also get the memory database for agents that need it
+            memory_db = memory_manager.memory_db
+        except Exception as e:
+            print(f"⚠️ Memory system initialization failed: {e}")
+            print("Continuing without memory system...")
+    
+    # Load member agents using generic get_agent factory
+    members = [
+        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory, memory_db=memory_db)
+        for name in agent_names
+    ]
     
     # Load workflow tools for escalation triggers
     tools = []
@@ -119,7 +126,13 @@ def get_ana_team(
             mode=config["storage"]["mode"],
             auto_upgrade_schema=config["storage"]["auto_upgrade_schema"],
         ),
-        memory=memory,  # Connect comprehensive memory framework
+        # Agno Memory V2 configuration - provide Memory object for team
+        memory=memory,  # Team needs the Memory object, not the memory database
+        # Memory configuration from YAML
+        enable_user_memories=config.get("memory", {}).get("enable_user_memories", True),
+        enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
+        add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
+        num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
         debug_mode=debug_mode,
     )
 
@@ -183,15 +196,25 @@ def get_custom_team(
     with open(config_path) as f:
         config = yaml.safe_load(f)
     
+    # Initialize memory for custom team - use Agno Memory V2 correctly
+    memory_manager = None
+    memory = None
+    memory_db = None
+    try:
+        memory_manager = create_memory_manager()
+        # Get the shared memory instance for both team and agents
+        memory = memory_manager.memory
+        # Also get the memory database for agents that need it
+        memory_db = memory_manager.memory_db
+    except Exception as e:
+        print(f"⚠️ Memory system initialization failed: {e}")
+        print("Continuing without memory system...")
+    
     # Load member agents using generic get_agent factory
     members = [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url)
+        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory, memory_db=memory_db)
         for name in agent_names
     ]
-    
-    # Initialize memory for custom team
-    memory_manager = create_memory_manager()
-    memory = memory_manager.create_memory_for_agent(user_id or "system", session_id)
     
     return Team(
         name=team_name,
@@ -214,6 +237,12 @@ def get_custom_team(
             mode=config["storage"]["mode"],
             auto_upgrade_schema=config["storage"]["auto_upgrade_schema"],
         ),
-        memory=memory,  # Connect comprehensive memory framework
+        # Agno Memory V2 configuration - provide Memory object for team
+        memory=memory,  # Team needs the Memory object, not the memory database
+        # Memory configuration from YAML
+        enable_user_memories=config.get("memory", {}).get("enable_user_memories", True),
+        enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
+        add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
+        num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
         debug_mode=debug_mode,
     )

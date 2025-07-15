@@ -28,9 +28,12 @@ WORKDIR /app
 # Copy dependency files first for better cache utilization
 COPY pyproject.toml uv.lock ./
 
+# Copy source code needed for editable install
+COPY . .
+
 # Install dependencies in virtual environment
 RUN uv venv /opt/venv && \
-    uv pip install --no-cache-dir -r uv.lock
+    uv sync --no-dev --no-cache
 
 # Production stage - Minimal runtime image
 FROM python:3.12-slim as production

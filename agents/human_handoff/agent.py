@@ -1,7 +1,7 @@
 # Human Handoff Agent Factory
 # Based on agno-demo-app patterns for dynamic agent creation
 
-from typing import Optional
+from typing import Optional, Any
 import yaml
 from pathlib import Path
 from agno.agent import Agent
@@ -15,7 +15,9 @@ def get_human_handoff_agent(
     version: Optional[int] = None,        # API parameter - specific version
     session_id: Optional[str] = None,     # API parameter - session management  
     debug_mode: bool = False,             # API parameter - debugging
-    db_url: Optional[str] = None          # API parameter - database connection
+    db_url: Optional[str] = None,         # API parameter - database connection
+    memory: Optional[Any] = None,         # API parameter - memory instance from team
+    memory_db: Optional[Any] = None       # API parameter - memory database (unused but kept for compatibility)
 ) -> Agent:
     """
     Factory function for Human Handoff specialist agent.
@@ -77,6 +79,10 @@ def get_human_handoff_agent(
         ),
         session_id=session_id,
         debug_mode=debug_mode,
+        # POC memory integration
+        memory=memory,
+        enable_user_memories=config.get("memory", {}).get("enable_user_memories", True),
+        enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
         # Additional Agno parameters from config
         markdown=config.get("markdown", False),
         show_tool_calls=config.get("show_tool_calls", True),

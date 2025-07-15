@@ -59,7 +59,7 @@ store_events: false  # Don't store streaming events
 enable_agentic_context: true
 share_member_interactions: true  # Let specialists communicate
 add_datetime_to_instructions: true
-add_member_tools_to_system_message: true
+add_member_tools_to_system_message: false  # Prevent context explosion with knowledge search tools
 
 # CRITICAL: Enforce ULTRA-BRIEF routing behavior  
 success_criteria: "SUCESSO = Ana disse MÁXIMO 15 palavras + chamou forward_task_to_member. Ana NÃO explicou NADA."

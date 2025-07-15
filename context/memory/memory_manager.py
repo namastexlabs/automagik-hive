@@ -77,14 +77,14 @@ class MemoryManager:
         current_time = datetime.now()
         self.interaction_count += 1
         
-        # Get or create session
-        if session_id:
-            session = self.session_manager.get_session(session_id)
-        else:
-            session = None
+        # Session management now handled by Agno storage layer
+        # Create a dummy session object for compatibility
+        class DummySession:
+            def __init__(self, session_id: str):
+                self.session_id = session_id
+                self.interaction_count = 1
         
-        if not session:
-            session = self.session_manager.create_session(user_id, team_id)
+        session = DummySession(session_id or f"session_{user_id}")
         
         # Update session activity
         session_metadata = {
@@ -96,10 +96,8 @@ class MemoryManager:
         if metadata:
             session_metadata.update(metadata)
         
-        self.session_manager.update_session_activity(
-            session.session_id, 
-            session_metadata
-        )
+        # Session activity updates now handled by Agno storage layer
+        # self.session_manager.update_session_activity(session.session_id, session_metadata)
         
         # Detect patterns
         pattern_metadata = {
@@ -165,20 +163,22 @@ class MemoryManager:
         insights = self.pattern_detector.get_pattern_insights(user_id)
         
         # Store insights in session context
-        sessions = self.session_manager.get_user_sessions(user_id)
-        if sessions:
-            latest_session = sessions[0]
-            self.session_manager.update_session_context(
-                latest_session.session_id,
-                {'pattern_insights': insights}
-            )
+        # Session context now handled by Agno storage layer
+        # sessions = self.session_manager.get_user_sessions(user_id)
+        # if sessions:
+        #     latest_session = sessions[0]
+        #     self.session_manager.update_session_context(
+        #         latest_session.session_id,
+        #         {'pattern_insights': insights}
+        #     )
     
     def _perform_cleanup(self):
         """Perform memory and session cleanup"""
         current_time = datetime.now()
         
         # Clean up expired sessions
-        expired_sessions = self.session_manager.cleanup_expired_sessions()
+        # Session cleanup now handled by Agno storage layer
+        expired_sessions = 0  # self.session_manager.cleanup_expired_sessions()
         
         # Memory cleanup would be handled by the Memory object
         # For now, we'll just track the cleanup
@@ -200,7 +200,8 @@ class MemoryManager:
         pattern_insights = self.pattern_detector.get_pattern_insights(user_id)
         
         # Get user sessions
-        sessions = self.session_manager.get_user_sessions(user_id)
+        # Session data now handled by Agno storage layer
+        sessions = []  # self.session_manager.get_user_sessions(user_id)
         
         return {
             'user_id': user_id,
@@ -215,8 +216,8 @@ class MemoryManager:
             },
             'sessions': {
                 'count': len(sessions),
-                'active_sessions': len([s for s in sessions if s.is_active]),
-                'latest_session': sessions[0].to_dict() if sessions else None
+                'active_sessions': 0,  # len([s for s in sessions if s.is_active]),
+                'latest_session': None  # sessions[0].to_dict() if sessions else None
             },
             'generated_at': datetime.now().isoformat()
         }
@@ -264,14 +265,16 @@ class MemoryManager:
             )
             
             # Update session
-            self.session_manager.update_session_activity(
-                session_id,
-                {"last_query": query, "last_response": response[:200]}
-            )
+            # Session activity now handled by Agno storage layer
+            # self.session_manager.update_session_activity(
+            #     session_id,
+            #     {"last_query": query, "last_response": response[:200]}
+            # )
             
             return True
         except Exception as e:
-            self.logger.error(f"Error storing interaction: {e}")
+            # self.logger.error(f"Error storing interaction: {e}")
+            print(f"Error storing interaction: {e}")
             return False
     
     def get_user_patterns(self, user_id: str) -> List[Any]:
@@ -281,7 +284,8 @@ class MemoryManager:
     def get_memory_statistics(self) -> Dict[str, Any]:
         """Get comprehensive memory statistics"""
         pattern_stats = self.pattern_detector.get_pattern_statistics()
-        session_stats = self.session_manager.get_session_statistics()
+        # Session statistics now handled by Agno storage layer
+        session_stats = {}  # self.session_manager.get_session_statistics()
         
         return {
             'interaction_count': self.interaction_count,
@@ -295,7 +299,8 @@ class MemoryManager:
         """Export all user data"""
         context = self.get_user_context(user_id)
         pattern_export = self.pattern_detector.export_patterns(user_id)
-        session_export = self.session_manager.export_session_data(user_id)
+        # Session export now handled by Agno storage layer
+        session_export = "{}"  # self.session_manager.export_session_data(user_id)
         
         export_data = {
             'user_id': user_id,
@@ -317,9 +322,10 @@ class MemoryManager:
             self.pattern_detector.clear_user_patterns(user_id)
             
             # Deactivate sessions
-            sessions = self.session_manager.get_user_sessions(user_id)
-            for session in sessions:
-                self.session_manager.deactivate_session(session.session_id)
+            # Session deactivation now handled by Agno storage layer
+            # sessions = self.session_manager.get_user_sessions(user_id)
+            # for session in sessions:
+            #     self.session_manager.deactivate_session(session.session_id)
             
             return True
             
@@ -354,7 +360,8 @@ class MemoryManager:
         
         try:
             # Check session manager
-            session_stats = self.session_manager.get_session_statistics()
+            # Session manager now handled by Agno storage layer
+            # session_stats = self.session_manager.get_session_statistics()
             health['components']['session_manager'] = 'healthy'
         except Exception as e:
             health['status'] = 'unhealthy'

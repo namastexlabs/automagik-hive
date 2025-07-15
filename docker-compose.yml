@@ -18,7 +18,7 @@ services:
     ports:
       - "${PB_AGENTS_PORT:-7777}:${PB_AGENTS_PORT:-7777}"
     environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-pagbank123}@postgres:5432/pagbank_agents
+      - DATABASE_URL=postgresql://ai:ai@postgres:5432/ai
       - RUNTIME_ENV=prd
       - LOG_LEVEL=info
       - PB_AGENTS_PORT=${PB_AGENTS_PORT:-7777}
@@ -39,23 +39,23 @@ services:
 
   # PostgreSQL database with pgvector extension
   postgres:
-    image: pgvector/pgvector:pg16
+    image: agnohq/pgvector:16
     container_name: pagbank-pgvector
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=pagbank_agents
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pagbank123}
-      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+      - POSTGRES_DB=ai
+      - POSTGRES_USER=ai
+      - POSTGRES_PASSWORD=ai
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5532:5432"
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ai"]
       interval: 10s
       timeout: 5s
       retries: 5

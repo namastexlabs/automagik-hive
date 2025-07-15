@@ -42,7 +42,7 @@ def setup_logging():
 # Setup logging on import
 setup_logging()
 
-from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+from context.knowledge.pagbank_knowledge_factory import get_knowledge_base
 from context.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
 
@@ -142,15 +142,21 @@ class CSVHotReloadManager:
         self._initialize_knowledge_base()
     
     def _initialize_knowledge_base(self):
-        """Initialize the knowledge base on startup with change detection"""
+        """Use shared knowledge base instead of creating a new one"""
         demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
         is_development = os.getenv("ENVIRONMENT", "production") == "development"
         should_print = demo_mode or is_development
         
         try:
             if should_print:
-                print("🔄 Initializing smart knowledge base...")
-            self.kb = create_pagbank_knowledge_base()
+                print("🔄 Connecting to shared knowledge base...")
+            
+            # Use shared knowledge base
+            from db.session import db_url
+            self.kb = get_knowledge_base(db_url)
+            if should_print:
+                print("✅ Connected to shared knowledge base")
+            
             self.smart_loader = SmartIncrementalLoader(str(self.csv_path))
             
             if self.csv_path.exists():

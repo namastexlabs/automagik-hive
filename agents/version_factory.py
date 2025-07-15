@@ -42,7 +42,9 @@ class AgentVersionFactory:
         session_id: Optional[str] = None,
         debug_mode: bool = False,
         db_url: Optional[str] = None,
-        fallback_to_file: bool = True
+        fallback_to_file: bool = True,
+        memory: Optional[Any] = None,        # ADD: Memory parameter
+        memory_db: Optional[Any] = None      # ADD: Memory database parameter
     ) -> Agent:
         """
         Create an agent with version support.
@@ -86,6 +88,26 @@ class AgentVersionFactory:
         # Create tools from configuration
         tools = self._create_tools(config)
         
+        # Create knowledge base if configured
+        knowledge_base = None
+        search_knowledge = False
+        enable_agentic_knowledge_filters = False
+        knowledge_filters = {}
+        
+        if config.get("knowledge", {}).get("search_knowledge"):
+            # Import knowledge base factory
+            from context.knowledge.pagbank_knowledge_factory import get_knowledge_base
+            knowledge_base = get_knowledge_base(db_url)
+            
+            # Get knowledge configuration
+            knowledge_config = config["knowledge"]
+            search_knowledge = knowledge_config["search_knowledge"]
+            enable_agentic_knowledge_filters = knowledge_config["enable_agentic_knowledge_filters"]
+            
+            # Set business unit filter
+            if config.get("knowledge_filter", {}).get("business_unit"):
+                knowledge_filters["business_unit"] = config["knowledge_filter"]["business_unit"]
+        
         # Create agent instance
         agent = Agent(
             name=config["agent"]["name"],
@@ -96,6 +118,15 @@ class AgentVersionFactory:
             storage=storage,
             session_id=session_id,
             debug_mode=debug_mode,
+            # Knowledge base configuration
+            knowledge=knowledge_base,
+            search_knowledge=search_knowledge,
+            enable_agentic_knowledge_filters=enable_agentic_knowledge_filters,
+            knowledge_filters=knowledge_filters,
+            # Memory configuration - FIX: Add memory parameters to prevent warnings
+            memory=memory,                   # CRITICAL: Pass memory with database
+            enable_user_memories=config.get("memory", {}).get("enable_user_memories", True),
+            enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
             # Additional Agno parameters
             markdown=config.get("markdown", False),
             show_tool_calls=config.get("show_tool_calls", True),
@@ -380,7 +411,9 @@ def create_versioned_agent(
     version: Optional[int] = None,
     session_id: Optional[str] = None,
     debug_mode: bool = False,
-    db_url: Optional[str] = None
+    db_url: Optional[str] = None,
+    memory: Optional[Any] = None,        # ADD: Memory parameter
+    memory_db: Optional[Any] = None      # ADD: Memory database parameter
 ) -> Agent:
     """
     Convenience function for creating versioned agents.
@@ -400,7 +433,9 @@ def create_versioned_agent(
         version=version,
         session_id=session_id,
         debug_mode=debug_mode,
-        db_url=db_url
+        db_url=db_url,
+        memory=memory,              # CRITICAL: Pass memory parameters
+        memory_db=memory_db         # CRITICAL: Pass memory database
     )
 
 

@@ -24,14 +24,8 @@ def apply_team_demo_patches():
     if _patched or os.getenv("DEMO_MODE", "false").lower() != "true":
         return
 
-    # Force immediate output that bypasses logging levels
-    print("\n" + "="*80)
-    print("🚀 DETECTED DEMO_MODE=true. APPLYING GLOBAL LOGGING PATCHES TO agno.Team.")
-    print("="*80 + "\n")
-    
-    # Also use logger with direct INFO level
-    logger.info("🎬 DEMO MODE PATCHES: Starting global Team class patching")
-    logger.info("🔧 DEMO MODE PATCHES: Environment DEMO_MODE=true detected")
+    # Simple one-line confirmation instead of redundant banners
+    logger.info("🎬 DEMO MODE: Global Team class patching applied")
 
     # Store original methods before patching
     original_init = Team.__init__
