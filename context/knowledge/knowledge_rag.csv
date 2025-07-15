@@ -1,5 +1,5 @@
-"problem","solution","typification","business_unit"
-"Cliente deseja entender o que é e como funciona a antecipação de vendas.","No PagBank o vendedor consegue antecipar os valores que ainda irá receber, tanto do Pags como de outras maquininhas (multiadquirência). A antecipação de vendas é um recurso que o PagBank oferece para alguns clientes anteciparem as suas vendas realizadas no crédito à vista ou parceladas antes do prazo padrão escolhido em seu plano de recebimento.
+problem,solution,typification,business_unit
+Cliente deseja entender o que é e como funciona a antecipação de vendas.,"No PagBank o vendedor consegue antecipar os valores que ainda irá receber, tanto do Pags como de outras maquininhas (multiadquirência). A antecipação de vendas é um recurso que o PagBank oferece para alguns clientes anteciparem as suas vendas realizadas no crédito à vista ou parceladas antes do prazo padrão escolhido em seu plano de recebimento.
 
 Exemplo: um cliente transacionou uma venda na Web e o seu plano de recebimento é de 30 dias. Ele teve um imprevisto ou precisa de um fôlego financeiro; então, caso seja elegível, pode antecipar esta venda antes do prazo de 30 dias.
 
@@ -7,8 +7,8 @@ A antecipação de venda é liberada de forma esporádica de acordo com análise
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação de Vendas
 Submotivo: Cliente orientado sobre a Antecipação de Vendas
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja saber quais são os critérios para se tornar elegível à antecipação de vendas nas máquinas do PagBank.","Todas as contas passam por análises diárias que definem quais clientes recebem a oferta de antecipação e qual percentual de suas vendas pode ser antecipado. Isso significa que a opção de antecipar pode aparecer ou desaparecer conforme essas análises internas.
+Conclusão: Orientação",Adquirência Web
+Cliente deseja saber quais são os critérios para se tornar elegível à antecipação de vendas nas máquinas do PagBank.,"Todas as contas passam por análises diárias que definem quais clientes recebem a oferta de antecipação e qual percentual de suas vendas pode ser antecipado. Isso significa que a opção de antecipar pode aparecer ou desaparecer conforme essas análises internas.
 
 **Disponibilidade da oferta:**
 - A opção de antecipação é liberada apenas para alguns clientes, de acordo com critérios internos do PagBank;
@@ -24,8 +24,8 @@ Esses critérios explicam por que nem todos os clientes ou vendas terão a opç�
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação de Vendas
 Submotivo: Cliente orientado sobre a Antecipação de Vendas
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja saber como funciona a antecipação de vendas nas máquinas do PagBank.","Somente vendas no crédito (realizadas nas maquininhas PagBank) podem ser antecipadas, e elas ficam disponíveis para antecipação apenas no próximo dia útil após a venda. Pontos importantes sobre o funcionamento:
+Conclusão: Orientação",Adquirência Web
+Cliente deseja saber como funciona a antecipação de vendas nas máquinas do PagBank.,"Somente vendas no crédito (realizadas nas maquininhas PagBank) podem ser antecipadas, e elas ficam disponíveis para antecipação apenas no próximo dia útil após a venda. Pontos importantes sobre o funcionamento:
 - A habilitação da antecipação não pode ser feita manualmente pelo cliente; é o sistema do PagBank que libera a opção quando elegível;
 - Ao solicitar a antecipação, o valor antecipado leva até 1 hora para ficar disponível na conta PagBank do cliente;
 - Não é possível cancelar uma antecipação após sua realização;
@@ -36,8 +36,8 @@ Além disso, se o cliente solicitar saque do valor antecipado para uma conta de 
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação Agendada
 Submotivo: Cliente orientado sobre Antecipação Agendada
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja saber como antecipar as vendas pela máquina.","Se o vendedor for elegível, ele poderá solicitar a antecipação de vendas diretamente pela sua máquina PagBank, seguindo os passos:
+Conclusão: Orientação",Adquirência Web
+Cliente deseja saber como antecipar as vendas pela máquina.,"Se o vendedor for elegível, ele poderá solicitar a antecipação de vendas diretamente pela sua máquina PagBank, seguindo os passos:
 1. No menu inicial da maquininha, clique em **Meu Negócio** e, em seguida, em **Antecipação de Recebíveis**;
 2. Selecione o valor desejado para antecipar (dentre o saldo disponível para antecipação);
 3. Confira as condições e taxa de antecipação apresentadas e clique em **Continuar**;
@@ -48,8 +48,8 @@ Pronto! O valor antecipado será disponibilizado na conta PagBank dentro de apro
 Produto: Antecipação de Vendas
 Motivo: Cliente deseja fazer a Antecipação de Vendas
 Submotivo: Cliente orientado a fazer o processo via máquina
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja saber o que é e como funciona a antecipação agendada.","A **Antecipação Agendada do PagBank** é uma funcionalidade que permite que o vendedor escolha um dia específico da semana ou do mês para, de forma automática, antecipar todas as vendas realizadas no crédito acumuladas até aquele dia. Alguns detalhes:
+Conclusão: Orientação",Adquirência Web
+Cliente deseja saber o que é e como funciona a antecipação agendada.,"A **Antecipação Agendada do PagBank** é uma funcionalidade que permite que o vendedor escolha um dia específico da semana ou do mês para, de forma automática, antecipar todas as vendas realizadas no crédito acumuladas até aquele dia. Alguns detalhes:
 - O agendamento da antecipação de vendas está sujeito à análise de crédito e à existência de saldo disponível para recebimento na data escolhida;
 - O serviço de antecipação agendada está disponível a qualquer momento (24h, todos os dias), via aplicativo ou site;
 - O recebimento da primeira antecipação agendada ocorre no próximo dia programado. Se a data cair em um fim de semana ou feriado, o valor é creditado no dia útil anterior;
@@ -59,8 +59,8 @@ Trata-se de uma forma prática de o cliente manter um fluxo de caixa recorrente,
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação Agendada
 Submotivo: Cliente orientado sobre Antecipação Agendada
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja saber como funciona o agendamento da antecipação de vendas nas máquinas do PagBank.","A **antecipação agendada nas máquinas PagBank** funciona de maneira similar à antecipação agendada via app/site, com as seguintes características:
+Conclusão: Orientação",Adquirência Web
+Cliente deseja saber como funciona o agendamento da antecipação de vendas nas máquinas do PagBank.,"A **antecipação agendada nas máquinas PagBank** funciona de maneira similar à antecipação agendada via app/site, com as seguintes características:
 - O agendamento está sujeito à análise de crédito e saldo disponível na data escolhida;
 - Pode ser configurado para ocorrer diariamente, semanalmente ou mensalmente, conforme disponibilizado;
 - Se a data agendada cair em fim de semana ou feriado, o PagBank antecipa o pagamento para o dia útil anterior;
@@ -72,13 +72,13 @@ Essa funcionalidade permite um planejamento automático das antecipações, faci
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação Agendada
 Submotivo: Cliente orientado sobre Antecipação Agendada
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja ativar a antecipação programada das vendas de outras adquirentes/máquinas.","Após o cliente realizar a antecipação esporádica ou avulsa, surge na tela a opção de ativar a antecipação programada. Ao optar por esse modelo, todas as vendas do cliente serão antecipadas uma vez ao dia. Para ativar, selecione os adquirentes desejados e clique em **Ativar agendamento**.","Unidade de negócio: Adquirência Web
+Conclusão: Orientação",Adquirência Web
+Cliente deseja ativar a antecipação programada das vendas de outras adquirentes/máquinas.,"Após o cliente realizar a antecipação esporádica ou avulsa, surge na tela a opção de ativar a antecipação programada. Ao optar por esse modelo, todas as vendas do cliente serão antecipadas uma vez ao dia. Para ativar, selecione os adquirentes desejados e clique em **Ativar agendamento**.","Unidade de negócio: Adquirência Web
 Produto: Antecipação de Vendas
 Motivo: Cliente deseja fazer a Antecipação de Vendas
 Submotivo: Cliente orientado a fazer o processo via app - vendas de outras adquirentes/máquinas
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja obter informações sobre o que é e quais clientes são elegíveis a antecipação de vendas de outras adquirentes/máquinas.","A antecipação de vendas de outras máquinas permite que o vendedor antecipe suas vendas de outras adquirentes/maquininhas com o PagBank, além das vendas já realizadas no próprio PagBank.
+Conclusão: Orientação",Adquirência Web
+Cliente deseja obter informações sobre o que é e quais clientes são elegíveis a antecipação de vendas de outras adquirentes/máquinas.,"A antecipação de vendas de outras máquinas permite que o vendedor antecipe suas vendas de outras adquirentes/maquininhas com o PagBank, além das vendas já realizadas no próprio PagBank.
 
 **Critérios de elegibilidade:**
 - Disponível apenas para clientes PJ ativos na adquirência PagBank;
@@ -95,8 +95,8 @@ Para mais orientações, siga o fluxo no fim da página.","Unidade de negócio:�
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação
 Submotivo: Esclarecimentos sobre a Antecipação de vendas de outras adquirentes/máquinas
-Conclusão: Orientação","Adquirência Web / Adquirência Presencial"
-"Cliente deseja saber como funciona a antecipação de vendas de outras adquirentes/máquinas.","Saiba como funciona a antecipação de vendas de outras adquirentes/máquinas:
+Conclusão: Orientação",Adquirência Web / Adquirência Presencial
+Cliente deseja saber como funciona a antecipação de vendas de outras adquirentes/máquinas.,"Saiba como funciona a antecipação de vendas de outras adquirentes/máquinas:
 
 - Apenas vendas no crédito podem be antecipadas e ficam disponíveis para antecipação somente no próximo dia útil;
 - Quando uma venda é antecipada, o plano de recebimento do cliente pode ser alterado na outra adquirente e o seu valor pode ficar comprometido;
@@ -113,8 +113,8 @@ Em resumo, a antecipação de vendas de outras adquirentes funciona de forma par
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação
 Submotivo: Esclarecimentos sobre a Antecipação de vendas de outras adquirentes/máquinas
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja obter informações sobre comprometimento dos valores a receber após antecipação de vendas de outra adquirente/máquina.","Devido às regras de negócio de outras instituições, ao antecipar vendas com outra adquirente, o saldo restante do cliente pode ser **bloqueado ou comprometido** nessa outra instituição. Isso ocorre porque, quando o PagBank antecipa os valores, ele informa a outra adquirente para ajustar o cronograma de pagamento. A outra adquirente, então, marca aquele valor como comprometido (pois já foi adiantado via PagBank).
+Conclusão: Orientação",Adquirência Web
+Cliente deseja obter informações sobre comprometimento dos valores a receber após antecipação de vendas de outra adquirente/máquina.,"Devido às regras de negócio de outras instituições, ao antecipar vendas com outra adquirente, o saldo restante do cliente pode ser **bloqueado ou comprometido** nessa outra instituição. Isso ocorre porque, quando o PagBank antecipa os valores, ele informa a outra adquirente para ajustar o cronograma de pagamento. A outra adquirente, então, marca aquele valor como comprometido (pois já foi adiantado via PagBank).
 
 **O que é FIDC ou Oliveira Trust?**
 No processo de antecipação de outras adquirentes, a razão social responsável que aparece é um fundo de investimento: **FUNDO DE INVESTIMENTO EM DIREITOS CREDITÓRIOS - PAGBANK MULTIADQUIRENCIA - RESPONSABILIDADE LIMITADA (FIDC)**, vinculado à empresa **OLIVEIRATRUST** (parceira do PagBank). Essa informação pode aparecer no extrato da adquirente original.
@@ -125,18 +125,18 @@ Em resumo, o cliente não perde dinheiro — é apenas uma garantia de que o val
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação
 Submotivo: Esclarecimentos sobre a Antecipação de vendas de outras adquirentes/máquinas
-Conclusão: Orientação","Adquirência Web"
-"Cliente deseja obter informações sobre como agendar a antecipação das vendas de outras adquirentes/máquinas.","Neste momento não é possível agendar antecipação de vendas de outras máquinas.","Unidade de negócio: Adquirência Web / Adquirência Presencial
+Conclusão: Orientação",Adquirência Web
+Cliente deseja obter informações sobre como agendar a antecipação das vendas de outras adquirentes/máquinas.,Neste momento não é possível agendar antecipação de vendas de outras máquinas.,"Unidade de negócio: Adquirência Web / Adquirência Presencial
 Produto: Antecipação de Vendas
 Motivo: Dúvidas sobre a Antecipação
 Submotivo: Esclarecimentos sobre a Antecipação de vendas de outras adquirentes/máquinas
-Conclusão: Orientação","Adquirência Web / Adquirência Presencial"
+Conclusão: Orientação",Adquirência Web / Adquirência Presencial
 "Cliente informa que teve uma cobrança de R$19,90 no cartão Pré-Pago referente a mensalidade e deseja saber do que se trata.","Desde setembro de 2020, a mensalidade do Cartão passou a ser gratuita para clientes que usam o cartão. No entanto, caso o cartão não seja usado em 12 meses (1 ano), é cobrada uma mensalidade no valor de R$19,90 por mês, limitada ao saldo disponível no Cartão.","Unidade de negócio: Emissão
 Produto: Cartão Pré-Pago
 Motivo: Uso do cartão
 Submotivo: Cobrança de mensalidade por falta de utilização do cartão
-Conclusão: Orientação","Emissão"
-"Cliente deseja saber como realizar a recarga do cartão pré-pago.","Para realizar a recarga do cartão pré-pago, é necessário ter realizado o envio de documentos pelo aplicativo PagBank. Se o cliente já realizou esse processo, basta seguir o passo a passo acessando o aplicativo do PagBank, indo na aba **Cartões** no rodapé, selecionar o cartão pré-pago, clicar em **Recarregar** abaixo do saldo, inserir o valor de recarga desejado e clicar em **Continuar**. O valor mínimo de recarga é de R$1,00 e o saldo fica disponível em até 1 hora no cartão.
+Conclusão: Orientação",Emissão
+Cliente deseja saber como realizar a recarga do cartão pré-pago.,"Para realizar a recarga do cartão pré-pago, é necessário ter realizado o envio de documentos pelo aplicativo PagBank. Se o cliente já realizou esse processo, basta seguir o passo a passo acessando o aplicativo do PagBank, indo na aba **Cartões** no rodapé, selecionar o cartão pré-pago, clicar em **Recarregar** abaixo do saldo, inserir o valor de recarga desejado e clicar em **Continuar**. O valor mínimo de recarga é de R$1,00 e o saldo fica disponível em até 1 hora no cartão.
 
 Para clientes com conta **Vendedor**, os limites são:
 - Limite máximo de recarga: R$25.000,00
@@ -150,8 +150,8 @@ Os limites de recarga são contados a partir do dia 1o de cada mês até o últi
 Produto: Cartão Pré-Pago
 Motivo: Uso do cartão
 Submotivo: Como recarregar o cartão
-Conclusão: Orientação","Emissão"
-"Cliente deseja saber os limites de recarga do cartão pré-pago.","Para clientes com conta **Vendedor**, os limites são:
+Conclusão: Orientação",Emissão
+Cliente deseja saber os limites de recarga do cartão pré-pago.,"Para clientes com conta **Vendedor**, os limites são:
 - Limite máximo de recarga: R$25.000,00
 - Limite máximo de saldo do cartão: R$25.000,00
 
@@ -163,8 +163,8 @@ Os limites de recarga são contados a partir do dia 1o de cada mês até o últi
 Produto: Cartão Pré-Pago
 Motivo: Uso do cartão
 Submotivo: Como recarregar o cartão
-Conclusão: Orientação","Emissão"
-"Cliente não recebeu o cartão (Cartão da Conta PagBank).","Se o cliente solicitou o Cartão da Conta PagBank (débito) e não recebeu dentro do prazo estimado (que geralmente é de até 15 dias úteis após a aprovação do pedido), orientá-lo a:
+Conclusão: Orientação",Emissão
+Cliente não recebeu o cartão (Cartão da Conta PagBank).,"Se o cliente solicitou o Cartão da Conta PagBank (débito) e não recebeu dentro do prazo estimado (que geralmente é de até 15 dias úteis após a aprovação do pedido), orientá-lo a:
 - Verificar se o endereço de entrega cadastrado estava correto e completo;
 - Checar se houve alguma tentativa de entrega registrada pelo correio/transportadora;
 - Caso o prazo já tenha excedido significativamente, será necessário solicitar um novo cartão através do app ou central de atendimento.
@@ -173,8 +173,8 @@ Lembrar o cliente de manter os dados atualizados e acompanhar notificações de 
 Produto: Cartão da Conta (débito)
 Motivo: Entrega de cartão
 Submotivo: Não recebimento do cartão
-Conclusão: Orientação","Emissão"
-"Cliente deseja informações sobre cartão múltiplo (Cartão da Conta com função crédito).","O **Cartão Múltiplo PagBank** é aquele que une as funções débito (Cartão da Conta) e crédito em um só. Para ter a função crédito habilitada, o cliente deve passar por análise de crédito do PagBank. Algumas informações importantes:
+Conclusão: Orientação",Emissão
+Cliente deseja informações sobre cartão múltiplo (Cartão da Conta com função crédito).,"O **Cartão Múltiplo PagBank** é aquele que une as funções débito (Cartão da Conta) e crédito em um só. Para ter a função crédito habilitada, o cliente deve passar por análise de crédito do PagBank. Algumas informações importantes:
 - A função crédito, se aprovada, permitirá compras parceladas e online, conforme o limite concedido;
 - O cliente continua com a função débito para usar o saldo da conta PagBank;
 - As faturas do crédito serão disponibilizadas no app para pagamento.
@@ -183,8 +183,8 @@ Se o cliente deseja solicitar ou ativar essa função, deve verificar no app Pag
 Produto: Cartão Múltiplo PagBank
 Motivo: Informações sobre cartão múltiplo
 Submotivo: Dúvidas sobre função crédito do Cartão da Conta
-Conclusão: Orientação","Emissão"
-"Cliente pergunta sobre a participação do Cartão Pré-Pago Mastercard na campanha Vai de Visa.","O cartão pré-pago **Mastercard PagBank** não participa da campanha **Vai de Visa**, já que esta promoção é exclusiva para cartões da bandeira Visa. Se o cliente está tentando se cadastrar ou aproveitar benefícios do Vai de Visa com um cartão Mastercard, não será possível.
+Conclusão: Orientação",Emissão
+Cliente pergunta sobre a participação do Cartão Pré-Pago Mastercard na campanha Vai de Visa.,"O cartão pré-pago **Mastercard PagBank** não participa da campanha **Vai de Visa**, já que esta promoção é exclusiva para cartões da bandeira Visa. Se o cliente está tentando se cadastrar ou aproveitar benefícios do Vai de Visa com um cartão Mastercard, não será possível.
 
 Oriente-o de forma empática, explicando que:
 - A campanha **Vai de Visa** é destinada apenas a cartões Visa;
@@ -194,8 +194,8 @@ Assim, se o cliente quiser usufruir das promoções Vai de Visa, ele precisaria 
 Produto: Cartão Pré-Pago Mastercard
 Motivo: Promoções de bandeira (Vai de Visa)
 Submotivo: Cartão Mastercard não elegível à campanha Visa
-Conclusão: Orientação","Emissão"
-"Cliente quer saber como cadastrar o Cartão Pré-Pago Visa no programa Vai de Visa.","Para cadastrar o **Cartão Pré-Pago Visa PagBank** no programa **Vai de Visa**:
+Conclusão: Orientação",Emissão
+Cliente quer saber como cadastrar o Cartão Pré-Pago Visa no programa Vai de Visa.,"Para cadastrar o **Cartão Pré-Pago Visa PagBank** no programa **Vai de Visa**:
 1. Acesse o site oficial do Vai de Visa (visa.com.br/promotions/vai-de-visa.html);
 2. Clique em **Criar Conta** e preencha as informações solicitadas para se registrar no programa;
 3. Após criar login, informe os dados do Cartão Visa PagBank conforme solicitado para cadastrá-lo;
@@ -205,8 +205,8 @@ Explique ao cliente passo a passo, garantindo que ele saiba que o programa é to
 Produto: Cartão Pré-Pago Visa
 Motivo: Promoções de bandeira (Vai de Visa)
 Submotivo: Cadastro do cartão Visa em campanha Vai de Visa
-Conclusão: Orientação","Emissão"
-"Cliente deseja informações sobre o programa Mastercard Surpreenda.","O **Mastercard Surpreenda** é um programa de benefícios da bandeira Mastercard. Para participar com o Cartão PagBank Mastercard:
+Conclusão: Orientação",Emissão
+Cliente deseja informações sobre o programa Mastercard Surpreenda.,"O **Mastercard Surpreenda** é um programa de benefícios da bandeira Mastercard. Para participar com o Cartão PagBank Mastercard:
 - Acesse o site do programa (surpreenda.naotempreco.com.br/como-funciona);
 - Clique em **Quero me cadastrar** e preencha os dados do seu Cartão Mastercard PagBank (número, nome, validade etc.) e informações pessoais;
 - Após cadastro, o cliente poderá acumular pontos a cada compra realizada com o cartão (geralmente, 1 compra = 1 ponto, independentemente do valor);
@@ -216,15 +216,15 @@ Ressalte algumas vantagens do programa (descontos, ofertas “pague 1 leve 2” 
 Produto: Cartão PagBank Mastercard
 Motivo: Promoções de bandeira (Mastercard Surpreenda)
 Submotivo: Informações sobre cadastro e benefícios do Mastercard Surpreenda
-Conclusão: Orientação","Emissão"
-"Cliente quer saber como cadastrar o cartão Visa PagBank no programa Mastercard Surpreenda.","O programa **Mastercard Surpreenda** é exclusivo para cartões da bandeira Mastercard. Portanto, **cartões Visa PagBank não podem ser cadastrados** no Mastercard Surpreenda.
+Conclusão: Orientação",Emissão
+Cliente quer saber como cadastrar o cartão Visa PagBank no programa Mastercard Surpreenda.,"O programa **Mastercard Surpreenda** é exclusivo para cartões da bandeira Mastercard. Portanto, **cartões Visa PagBank não podem ser cadastrados** no Mastercard Surpreenda.
 
 Se o cliente demonstra interesse em benefícios de cartões Visa, oriente-o sobre o programa Vai de Visa (exclusivo para Visa), ou outros benefícios que o PagBank/Visa possam oferecer, mas deixe claro que Mastercard Surpreenda aceita somente cartões Mastercard.","Unidade de negócio: Emissão
 Produto: Cartão PagBank Visa
 Motivo: Promoções de bandeira
 Submotivo: Cartão Visa não participa do Mastercard Surpreenda
-Conclusão: Orientação","Emissão"
-"Cliente pergunta se o cartão de débito Visa participa do programa Mastercard Surpreenda.","Não, o **Cartão da Conta PagBank (Visa Débito)** não faz parte do programa Mastercard Surpreenda, pois este é exclusivo para cartões Mastercard. Explique ao cliente que:
+Conclusão: Orientação",Emissão
+Cliente pergunta se o cartão de débito Visa participa do programa Mastercard Surpreenda.,"Não, o **Cartão da Conta PagBank (Visa Débito)** não faz parte do programa Mastercard Surpreenda, pois este é exclusivo para cartões Mastercard. Explique ao cliente que:
 - O PagBank Visa (débito) não acumula pontos no Surpreenda;
 - O programa Surpreenda é voltado para quem possui cartão Mastercard (crédito, débito ou pré-pago) e cada compra com Mastercard gera pontos.
 
@@ -232,7 +232,7 @@ Sugira que, caso o cliente queira benefícios, ele pode aproveitar o próprio **
 Produto: Cartão da Conta Visa (débito)
 Motivo: Promoções de bandeira
 Submotivo: Cartão Visa não participa do Mastercard Surpreenda
-Conclusão: Orientação","Emissão"
+Conclusão: Orientação",Emissão
 "Ao utilizar o Cartão de Crédito PagBank para compras internacionais, qual é a cobrança de IOF?","Nas compras internacionais feitas com o **Cartão de Crédito PagBank**:
 - O IOF (Imposto sobre Operações Financeiras) cobrado é de **3,38%** sobre o valor da transação (quando a compra é à vista, essa é a taxa única de IOF sobre o valor convertido);
 - Se a compra internacional for parcelada, além do IOF de 3,38% no momento da compra, incide IOF diário rotativo sobre as parcelas (ou seja, a cada parcela paga com atraso, incidiria IOF rotativo diário, mas normalmente as parcelas do cartão têm juros embutidos ou não conforme acordo no ato da compra).
@@ -241,8 +241,8 @@ Esclareça que o IOF é um imposto federal aplicado a transações em moeda estr
 Produto: Cartão de Crédito PagBank
 Motivo: Compras internacionais
 Submotivo: IOF em compras internacionais (Cartão de Crédito)
-Conclusão: Orientação","Emissão"
-"Qual o IOF aplicado em compras internacionais com o Cartão da Conta PagBank?","Para compras internacionais realizadas com o **Cartão da Conta PagBank (débito Visa)**:
+Conclusão: Orientação",Emissão
+Qual o IOF aplicado em compras internacionais com o Cartão da Conta PagBank?,"Para compras internacionais realizadas com o **Cartão da Conta PagBank (débito Visa)**:
 - O IOF aplicado é de **3,38%** sobre o valor da transação, uma vez que envolve conversão de moeda.
 - A conversão dos valores em moeda estrangeira para reais é feita com base na taxa PTAX do dia, acrescida de 5% (taxa de conversão usada pelo PagBank).
 
@@ -250,7 +250,7 @@ Em resumo, ao usar o cartão de débito internacionalmente, o cliente pagará 3,
 Produto: Cartão da Conta PagBank (débito Visa)
 Motivo: Compras internacionais
 Submotivo: IOF e conversão em compras internacionais (débito)
-Conclusão: Orientação","Emissão"
+Conclusão: Orientação",Emissão
 "Quando utiliza o Cartão Múltiplo PagBank - Função Débito para compras internacionais, qual a taxa de IOF?","Ao usar o **Cartão Múltiplo PagBank na função débito** para compras internacionais (ou seja, usando o saldo da conta PagBank em moeda estrangeira):
 - Será cobrado IOF de **3,38%** sobre o valor da compra, conforme regulamentação para transações internacionais;
 - A conversão da moeda estrangeira para real seguirá a taxa PTAX do dia acrescida de uma margem (5%).
@@ -259,29 +259,29 @@ Portanto, mesmo na função débito, a taxa de IOF é a mesma aplicada em transa
 Produto: Cartão Múltiplo PagBank (débito internacional)
 Motivo: Compras internacionais
 Submotivo: IOF em compras internacionais (débito)
-Conclusão: Orientação","Emissão"
+Conclusão: Orientação",Emissão
 "Transação Pix não enviada e recebimento de mensagem ""Por questões de segurança, não foi possível concluir esta transação""","As transações Pix do PagBank passam por análises de segurança para proteger as contas, por isso durante o envio, os clientes podem ter bloqueios que ocorrem por possíveis riscos no aparelho utilizado pelo cliente ou nos dados fornecidos. Neste caso, é necessário que realize os passos abaixo e tente ao decorrer do dia. Utilize anti-vírus no aparelho utilizado, utilize uma conexão de internet segura, verifique os dados fornecidos novamente, em casos de compras, verifique a segurança do site e tente ao decorrer do dia.","Unidade de negócio: PagBank
 Produto: Pix
 Motivo: Envio de Pix
 Submotivo: Bloqueio de transação por segurança
-Conclusão: Orientação","PagBank"
+Conclusão: Orientação",PagBank
 "Transação TED não enviada e recebimento de mensagem ""Por questões de segurança, não foi possível concluir esta transação""","As transações TED do PagBank passam por análises de segurança para proteger as contas, por isso durante o envio, os clientes podem ter bloqueios que ocorrem por possíveis riscos no aparelho utilizado pelo cliente ou nos dados fornecidos. Neste caso, é necessário que realize os passos abaixo e tente ao decorrer do dia. Utilize anti-vírus no aparelho utilizado, utilize uma conexão de internet segura, verifique os dados fornecidos novamente, em casos de compras, verifique a segurança do site e tente ao decorrer do dia.","Unidade de negócio: PagBank
 Produto: TED
 Motivo: Envio de TED
 Submotivo: Bloqueio de transação por segurança
-Conclusão: Orientação","PagBank"
-"O que é gerenciar dispositivos autorizados para fazer Pix? Bloqueio e exclusão de chave","Funcionalidade de segurança que possibilita o gerenciamento dos dispositivos autorizados a fazer transações Pix. Com ela, o cliente poderá excluir a autorização de um aparelho celular ou bloquear o dispositivo. Nesta primeira versão, ambas as funcionalidades, bloqueio ou exclusão, desativarão a permissão de transferência Pix com exclusão da chave. Para um novo uso, será necessário validar a conta novamente com um novo cadastro.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+O que é gerenciar dispositivos autorizados para fazer Pix? Bloqueio e exclusão de chave,"Funcionalidade de segurança que possibilita o gerenciamento dos dispositivos autorizados a fazer transações Pix. Com ela, o cliente poderá excluir a autorização de um aparelho celular ou bloquear o dispositivo. Nesta primeira versão, ambas as funcionalidades, bloqueio ou exclusão, desativarão a permissão de transferência Pix com exclusão da chave. Para um novo uso, será necessário validar a conta novamente com um novo cadastro.","Unidade de negócio: PagBank
 Produto: Pix
 Motivo: Dúvidas normativa dispositivos cadastrados
 Submotivo: Cliente orientado sobre normativa Pix
-Conclusão: Orientação","PagBank"
-"O cliente deseja saber como identificar a versão do app instalada","Para identificar a versão do app instalado no aparelho do cliente, oriente-o a seguir o passo a passo:
+Conclusão: Orientação",PagBank
+O cliente deseja saber como identificar a versão do app instalada,"Para identificar a versão do app instalado no aparelho do cliente, oriente-o a seguir o passo a passo:
 Na página inicial do app, clique no ícone de um boneco disponível na parte de cima do app; vá ao fim da página e veja o número da versão do app PagBank.","Unidade de negócio: PagBank
 Produto: Aplicativo PagBank
 Motivo: Uso do aplicativo
 Submotivo: Como atualizar a versão do aplicativo
-Conclusão: Orientação","PagBank"
-"O cliente deseja saber como atualizar o App PagBank no sistema Android","No Android:
+Conclusão: Orientação",PagBank
+O cliente deseja saber como atualizar o App PagBank no sistema Android,"No Android:
 Vá até a Play Store, procure pelo aplicativo PagBank. Caso o botão **Atualizar** esteja disponível, há uma nova versão. Toque no botão **Atualizar** e aguarde; pronto! Agora é só continuar utilizando o seu app.
 
 Para clientes que usam o sistema Android, se a atualização ficar com o status ""download pendente"", oriente-o a:
@@ -294,14 +294,14 @@ Para clientes que usam o sistema Android, se a atualização ficar com o status 
 Produto: Aplicativo PagBank
 Motivo: Uso do aplicativo
 Submotivo: Como atualizar a versão do aplicativo
-Conclusão: Orientação","PagBank"
-"O cliente deseja saber como atualizar o App PagBank no sistema iOS","No iOS:
+Conclusão: Orientação",PagBank
+O cliente deseja saber como atualizar o App PagBank no sistema iOS,"No iOS:
 Vá até a Apple Store, busque o App PagBank ou entre na aba **Atualizações**. Deslize a tela para baixo e aguarde a página ser atualizada. Ao lado do aplicativo PagBank, toque em **Atualizar** e espere o processo ser concluído; pronto! Agora é só acessar o seu aplicativo e usá-lo sempre que precisar.","Unidade de negócio: PagBank
 Produto: Aplicativo PagBank
 Motivo: Uso do aplicativo
 Submotivo: Como atualizar a versão do aplicativo
-Conclusão: Orientação","PagBank"
-"Como cadastrar uma chave Pix no site PagBank?","Para cadastrar uma chave Pix no site PagBank, siga o passo a passo:
+Conclusão: Orientação",PagBank
+Como cadastrar uma chave Pix no site PagBank?,"Para cadastrar uma chave Pix no site PagBank, siga o passo a passo:
 1. Acesse o site PagBank e faça login com seu e-mail e senha;
 2. Clique em **Pix/QR Code** no menu;
 3. Escolha a opção **Cadastrar chave**;
@@ -312,18 +312,18 @@ Pronto! A chave Pix estará cadastrada no PagBank.","Unidade de negócio: PagBan
 Produto: Pix
 Motivo: Cadastro de Chave Pix
 Submotivo: Cadastramento de chave Pix via site
-Conclusão: Orientação","PagBank"
-"Como cancelar a portabilidade de salário","Para cancelar a portabilidade de salário, o cliente precisa entrar em contato diretamente com o banco de origem que autorizou a portabilidade. Somente o banco de origem pode realizar o cancelamento dessa solicitação.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+Como cancelar a portabilidade de salário,"Para cancelar a portabilidade de salário, o cliente precisa entrar em contato diretamente com o banco de origem que autorizou a portabilidade. Somente o banco de origem pode realizar o cancelamento dessa solicitação.","Unidade de negócio: PagBank
 Produto: Portabilidade de Salário
 Motivo: Cancelamento de portabilidade
 Submotivo: Cliente orientado a contatar o banco de origem
-Conclusão: Orientação","PagBank"
-"Como devolver uma transferência Pix no site PagBank.","No momento, não é possível devolver uma transferência Pix pelo site PagBank. O cliente consegue fazer a devolução pelo aplicativo PagBank: basta acessar o extrato, identificar a transação Pix recebida que deseja devolver, clicar nela para ver os detalhes, rolar a tela para baixo e selecionar a opção **Devolver transferência**.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+Como devolver uma transferência Pix no site PagBank.,"No momento, não é possível devolver uma transferência Pix pelo site PagBank. O cliente consegue fazer a devolução pelo aplicativo PagBank: basta acessar o extrato, identificar a transação Pix recebida que deseja devolver, clicar nela para ver os detalhes, rolar a tela para baixo e selecionar a opção **Devolver transferência**.","Unidade de negócio: PagBank
 Produto: Pix
 Motivo: Devolução de Pix
 Submotivo: Devolução de transferência via site (não disponível)
-Conclusão: Orientação","PagBank"
-"Como exportar o Informe de Rendimentos da conta PagBank?","Para exportar o Informe de Rendimentos da conta PagBank, faça o seguinte:
+Conclusão: Orientação",PagBank
+Como exportar o Informe de Rendimentos da conta PagBank?,"Para exportar o Informe de Rendimentos da conta PagBank, faça o seguinte:
 - Acesse o site PagBank e faça login;
 - Clique no menu **Extratos e Relatórios**;
 - Selecione **Imposto de Renda**;
@@ -333,8 +333,8 @@ Caso o arquivo não abra diretamente, será necessário informar o CPF ou CNPJ d
 Produto: Conta PagBank
 Motivo: Informe de Rendimentos
 Submotivo: Exportar/baixar Informe de Rendimentos
-Conclusão: Orientação","PagBank"
-"Como fazer uma transferência Pix no site PagBank.","Para fazer uma transferência Pix pelo site PagBank, é necessário ter uma **conta CNPJ**. Caso o cliente possua conta Pessoa Física, a transferência Pix deve ser feita pelo aplicativo. Se o cliente tiver conta de Pessoa Jurídica (empresa), ele pode seguir estes passos no site:
+Conclusão: Orientação",PagBank
+Como fazer uma transferência Pix no site PagBank.,"Para fazer uma transferência Pix pelo site PagBank, é necessário ter uma **conta CNPJ**. Caso o cliente possua conta Pessoa Física, a transferência Pix deve ser feita pelo aplicativo. Se o cliente tiver conta de Pessoa Jurídica (empresa), ele pode seguir estes passos no site:
 1. Acesse sua conta PagBank pelo site;
 2. Clique em **Pix** no menu;
 3. Selecione **Fazer transferência por Pix**;
@@ -346,8 +346,8 @@ Lembre-se: pelo site, apenas contas CNPJ podem realizar Pix; contas PF devem usa
 Produto: Pix
 Motivo: Transferência Pix
 Submotivo: Transferência Pix via site PagBank
-Conclusão: Orientação","PagBank"
-"Veja o que é Folha de pagamento e quais os passos para utilizar.","A folha de pagamento é uma ferramenta disponibilizada pelo PagBank para clientes empresariais, que permite realizar o pagamento dos funcionários diretamente pelo site. Para utilizar a folha de pagamento, é necessário:
+Conclusão: Orientação",PagBank
+Veja o que é Folha de pagamento e quais os passos para utilizar.,"A folha de pagamento é uma ferramenta disponibilizada pelo PagBank para clientes empresariais, que permite realizar o pagamento dos funcionários diretamente pelo site. Para utilizar a folha de pagamento, é necessário:
 1. Ter uma conta PagBank ativa e validada para a empresa;
 2. Cadastrar os funcionários como beneficiários (cada funcionário precisa ter uma conta PagBank ativa);
 3. Acessar a funcionalidade **Folha de Pagamento** no site PagBank;
@@ -358,8 +358,8 @@ Com a folha de pagamento PagBank, os pagamentos aos funcionários podem ser feit
 Produto: Folha de Pagamento
 Motivo: Uso da Folha de Pagamento
 Submotivo: Orientações sobre uso da ferramenta
-Conclusão: Orientação","PagBank"
-"Regras da Folha de Pagamento","As regras para utilização da Folha de Pagamento do PagBank incluem:
+Conclusão: Orientação",PagBank
+Regras da Folha de Pagamento,"As regras para utilização da Folha de Pagamento do PagBank incluem:
 - Todos os funcionários da empresa precisam ter uma conta PagBank ativa e validada para receber via folha de pagamento;
 - É possível agendar os pagamentos da folha para datas específicas (como todo dia 5 ou todo final de mês);
 - Se o dia do pagamento cair em fim de semana ou feriado, o PagBank antecipa para o dia útil anterior;
@@ -370,8 +370,8 @@ Certifique-se de seguir essas regras para garantir que todos os pagamentos sejam
 Produto: Folha de Pagamento
 Motivo: Dúvidas sobre regras da folha de pagamento
 Submotivo: Cliente orientado sobre regras da ferramenta
-Conclusão: Orientação","PagBank"
-"Quais são os benefícios da Folha de Pagamento?","Os benefícios da Folha de Pagamento PagBank incluem:
+Conclusão: Orientação",PagBank
+Quais são os benefícios da Folha de Pagamento?,"Os benefícios da Folha de Pagamento PagBank incluem:
 - **Gratuidade:** o serviço é 100% gratuito, sem tarifas para a empresa ou para os funcionários;
 - **Praticidade:** permite agendar pagamentos de forma automática, facilitando a gestão de pagamentos recorrentes;
 - **Abertura de conta facilitada:** os funcionários podem abrir contas PagBank gratuitamente para receber seus pagamentos;
@@ -381,8 +381,8 @@ Esses benefícios tornam a Folha de Pagamento do PagBank uma opção vantajosa p
 Produto: Folha de Pagamento
 Motivo: Vantagens da Folha de Pagamento
 Submotivo: Cliente orientado sobre benefícios da ferramenta
-Conclusão: Orientação","PagBank"
-"Como cancelar o agendamento da folha de pagamento?","Para cancelar um agendamento da folha de pagamento no PagBank:
+Conclusão: Orientação",PagBank
+Como cancelar o agendamento da folha de pagamento?,"Para cancelar um agendamento da folha de pagamento no PagBank:
 1. Acesse a seção **Folha de Pagamento** no site PagBank;
 2. Clique em **Detalhes da transferência** referente ao agendamento que deseja cancelar;
 3. Na lista de agendamentos (Histórico de arquivos), localize o agendamento futuro;
@@ -392,8 +392,8 @@ Após cancelar, caso exista um pagamento programado para o mesmo dia, ele ainda 
 Produto: Folha de Pagamento
 Motivo: Cancelamento de agendamento
 Submotivo: Cliente orientado a cancelar agendamento da folha
-Conclusão: Orientação","PagBank"
-"Como cancelar o agendamento pelo aplicativo para folha de pagamento?","Para cancelar um agendamento da folha de pagamento pelo aplicativo PagBank:
+Conclusão: Orientação",PagBank
+Como cancelar o agendamento pelo aplicativo para folha de pagamento?,"Para cancelar um agendamento da folha de pagamento pelo aplicativo PagBank:
 1. Faça login no app PagBank;
 2. No menu, toque em **Folha de Pagamento**;
 3. Selecione a opção **Conferir agendamento** (caso haja um agendamento ativo);
@@ -403,15 +403,15 @@ Após esse procedimento, o agendamento programado será cancelado (lembrando que
 Produto: Folha de Pagamento
 Motivo: Cancelamento de agendamento (via app)
 Submotivo: Cliente orientado a cancelar agendamento pelo app
-Conclusão: Orientação","PagBank"
-"Por onde posso importar arquivos da folha de pagamento?","O cliente pode importar os arquivos da folha de pagamento diretamente pelo site PagBank. Na seção **Folha de Pagamento** do site, existe uma opção para **importar arquivos** com os dados da folha (normalmente em formato .CSV ou planilha). Basta acessar essa opção, selecionar o arquivo com as informações de pagamento dos funcionários e fazer a importação.
+Conclusão: Orientação",PagBank
+Por onde posso importar arquivos da folha de pagamento?,"O cliente pode importar os arquivos da folha de pagamento diretamente pelo site PagBank. Na seção **Folha de Pagamento** do site, existe uma opção para **importar arquivos** com os dados da folha (normalmente em formato .CSV ou planilha). Basta acessar essa opção, selecionar o arquivo com as informações de pagamento dos funcionários e fazer a importação.
 
 Essa funcionalidade permite que a empresa envie em lote os dados da folha, facilitando o processo de pagamento.","Unidade de negócio: PagBank
 Produto: Folha de Pagamento
 Motivo: Importação de arquivos
 Submotivo: Cliente orientado sobre importação de folha de pagamento
-Conclusão: Orientação","PagBank"
-"Como fazer o agendamento da folha de pagamento?","Para agendar a folha de pagamento no PagBank:
+Conclusão: Orientação",PagBank
+Como fazer o agendamento da folha de pagamento?,"Para agendar a folha de pagamento no PagBank:
 1. Acesse a opção **Folha de Pagamento** no site PagBank;
 2. Insira ou importe os dados dos funcionários e valores a serem pagos, caso ainda não tenha feito;
 3. Escolha a data em que deseja que os pagamentos sejam realizados (pode ser uma data específica da semana ou do mês);
@@ -421,8 +421,8 @@ A partir daí, o PagBank efetuará os pagamentos conforme o agendamento definido
 Produto: Folha de Pagamento
 Motivo: Agendamento de folha de pagamento
 Submotivo: Cliente orientado a agendar pagamentos
-Conclusão: Orientação","PagBank"
-"Como consultar os agendamentos da folha de pagamento?","Para consultar os agendamentos já programados na Folha de Pagamento PagBank:
+Conclusão: Orientação",PagBank
+Como consultar os agendamentos da folha de pagamento?,"Para consultar os agendamentos já programados na Folha de Pagamento PagBank:
 1. Acesse a seção **Folha de Pagamento** no site PagBank;
 2. Procure a aba ou opção de **Histórico de arquivos** ou **Agendamentos realizados**;
 3. Nessa aba, você verá a lista de agendamentos de folha de pagamento já cadastrados, incluindo datas e status;
@@ -432,8 +432,8 @@ Assim, o cliente pode verificar quais pagamentos já estão agendados e acompanh
 Produto: Folha de Pagamento
 Motivo: Consulta de agendamentos
 Submotivo: Cliente orientado a consultar agendamentos
-Conclusão: Orientação","PagBank"
-"Quais os status do agendamento da folha de pagamento?","Os agendamentos da folha de pagamento podem apresentar alguns status, por exemplo:
+Conclusão: Orientação",PagBank
+Quais os status do agendamento da folha de pagamento?,"Os agendamentos da folha de pagamento podem apresentar alguns status, por exemplo:
 - **Pendente:** o agendamento foi criado e o pagamento está programado para a data futura definida;
 - **Concluído:** o agendamento já foi executado e os pagamentos realizados;
 - **Cancelado:** o agendamento foi cancelado pelo cliente antes da execução;
@@ -443,8 +443,8 @@ Esses status ajudam o cliente a entender a situação de cada agendamento progra
 Produto: Folha de Pagamento
 Motivo: Dúvidas sobre status de agendamento
 Submotivo: Cliente orientado sobre status de folha de pagamento
-Conclusão: Orientação","PagBank"
-"Como aprovar ou rejeitar o agendamento da folha de pagamento?","Para aprovar ou rejeitar um agendamento da folha de pagamento:
+Conclusão: Orientação",PagBank
+Como aprovar ou rejeitar o agendamento da folha de pagamento?,"Para aprovar ou rejeitar um agendamento da folha de pagamento:
 - Caso haja um fluxo de aprovação (por exemplo, se um usuário cadastrou o agendamento e outro precisa aprovar), o aprovador deve acessar a seção **Folha de Pagamento** no site PagBank, localizar o agendamento pendente de aprovação e clicar em **Aprovar** ou **Rejeitar** conforme o caso.
 - Se o sistema PagBank não exige aprovação explícita (a maioria dos agendamentos é automática), então todos os agendamentos criados serão executados automaticamente a menos que o cliente cancele (o que seria equivalente a rejeitar antes da execução).
 
@@ -452,8 +452,8 @@ No contexto do PagBank, geralmente o agendamento é criado pelo próprio cliente
 Produto: Folha de Pagamento
 Motivo: Aprovação/rejeição de agendamento
 Submotivo: Cliente orientado sobre aprovação de folha de pagamento
-Conclusão: Orientação","PagBank"
-"Aprovação de agendamento da folha de pagamento no site PagBank","A aprovação de um agendamento de folha de pagamento no site PagBank, caso necessária, deve ser feita na própria área de Folha de Pagamento. Se o PagBank permitir configuração de múltiplos perfis (um que agenda e outro que aprova), o usuário com poderes de aprovação deverá:
+Conclusão: Orientação",PagBank
+Aprovação de agendamento da folha de pagamento no site PagBank,"A aprovação de um agendamento de folha de pagamento no site PagBank, caso necessária, deve ser feita na própria área de Folha de Pagamento. Se o PagBank permitir configuração de múltiplos perfis (um que agenda e outro que aprova), o usuário com poderes de aprovação deverá:
 1. Entrar na seção **Folha de Pagamento** no site PagBank;
 2. Visualizar os agendamentos pendentes de aprovação;
 3. Selecionar o agendamento e clicar em **Aprovar**.
@@ -462,8 +462,8 @@ No entanto, se não houver um mecanismo de aprovação adicional, então todos o
 Produto: Folha de Pagamento
 Motivo: Dúvidas sobre aprovação de agendamento
 Submotivo: Cliente orientado sobre aprovação de agendamento
-Conclusão: Orientação","PagBank"
-"Como consultar os agendamentos realizados da folha de pagamento no site PagBank","Para consultar agendamentos já realizados (executados) da folha de pagamento no site PagBank:
+Conclusão: Orientação",PagBank
+Como consultar os agendamentos realizados da folha de pagamento no site PagBank,"Para consultar agendamentos já realizados (executados) da folha de pagamento no site PagBank:
 1. Acesse o site PagBank e faça login na conta empresarial;
 2. Vá até a seção **Folha de Pagamento**;
 3. Procure pela lista de **Histórico** ou **Agendamentos realizados**;
@@ -473,8 +473,8 @@ Assim, o cliente consegue visualizar todos os agendamentos que já foram efetiva
 Produto: Folha de Pagamento
 Motivo: Consulta de agendamentos realizados
 Submotivo: Cliente orientado a consultar histórico de agendamentos
-Conclusão: Orientação","PagBank"
-"Quais os status do agendamento da folha de pagamento no site PagBank","Os status dos agendamentos de folha de pagamento no site PagBank podem incluir:
+Conclusão: Orientação",PagBank
+Quais os status do agendamento da folha de pagamento no site PagBank,"Os status dos agendamentos de folha de pagamento no site PagBank podem incluir:
 - **Agendado/Pendente:** pagamento programado para data futura;
 - **Concluído:** pagamento realizado com sucesso na data agendada;
 - **Cancelado:** agendamento cancelado antes da data;
@@ -484,8 +484,8 @@ Esses status são exibidos na área de Folha de Pagamento e permitem ao cliente 
 Produto: Folha de Pagamento
 Motivo: Dúvidas sobre status de agendamento
 Submotivo: Cliente orientado sobre status de agendamento (site)
-Conclusão: Orientação","PagBank"
-"Como fazer o agendamento da folha de pagamento no site PagBank","Para fazer o agendamento da folha de pagamento pelo **site PagBank**:
+Conclusão: Orientação",PagBank
+Como fazer o agendamento da folha de pagamento no site PagBank,"Para fazer o agendamento da folha de pagamento pelo **site PagBank**:
 1. Acesse sua conta PagBank (Perfil empresarial) pelo site;
 2. Navegue até **Folha de Pagamento**;
 3. Caso ainda não tenha cadastrado, importe ou adicione os funcionários e dados salariais;
@@ -497,8 +497,8 @@ O PagBank irá programar os pagamentos para a data escolhida. Lembre-se de verif
 Produto: Folha de Pagamento
 Motivo: Agendamento de folha de pagamento
 Submotivo: Cliente orientado a agendar folha pelo site
-Conclusão: Orientação","PagBank"
-"Como editar ou excluir um Contato Seguro no Pix","Para editar ou excluir um **Contato Seguro** cadastrado no Pix PagBank:
+Conclusão: Orientação",PagBank
+Como editar ou excluir um Contato Seguro no Pix,"Para editar ou excluir um **Contato Seguro** cadastrado no Pix PagBank:
 1. Abra o app PagBank e faça login;
 2. Na tela inicial, toque em **Pix/QR Code**;
 3. Procure pela opção **Contatos Seguros**;
@@ -509,8 +509,8 @@ Dessa forma, o cliente pode gerenciar seus Contatos Seguros diretamente pelo apl
 Produto: Pix (Contatos Seguros)
 Motivo: Gerenciamento de Contatos Seguros
 Submotivo: Edição/Exclusão de Contato Seguro
-Conclusão: Orientação","PagBank"
-"Prazos para cadastro ou alteração de limites de Contatos Seguros","Os prazos relacionados ao cadastro ou alteração de limites de **Contatos Seguros** no PagBank são:
+Conclusão: Orientação",PagBank
+Prazos para cadastro ou alteração de limites de Contatos Seguros,"Os prazos relacionados ao cadastro ou alteração de limites de **Contatos Seguros** no PagBank são:
 - **Cadastro de Contato Seguro:** o contato passa a valer imediatamente após ser cadastrado com sucesso;
 - **Alteração de Limite de Contato Seguro:** ao alterar o limite para um contato seguro, geralmente o novo limite entra em vigor imediatamente. Contudo, caso haja alguma análise de segurança envolvida, pode haver um pequeno prazo (por exemplo, alguns minutos) para atualização.
 
@@ -518,30 +518,30 @@ No geral, as mudanças nos contatos seguros têm efeito quase instantâneo, mas 
 Produto: Pix (Contatos Seguros)
 Motivo: Limites de Contatos Seguros
 Submotivo: Dúvidas sobre prazo de atualização de limites
-Conclusão: Orientação","PagBank"
-"Limite separado para Contatos Seguros","No PagBank, existe um limite específico (separado) para transações com **Contatos Seguros**. Isso significa que, além do limite geral de Pix, o cliente tem um limite dedicado para operações envolvendo os contatos marcados como seguros. Esse limite adicional visa proporcionar mais segurança e controle nas transações.
+Conclusão: Orientação",PagBank
+Limite separado para Contatos Seguros,"No PagBank, existe um limite específico (separado) para transações com **Contatos Seguros**. Isso significa que, além do limite geral de Pix, o cliente tem um limite dedicado para operações envolvendo os contatos marcados como seguros. Esse limite adicional visa proporcionar mais segurança e controle nas transações.
 
 Por exemplo: se o cliente definir um determinado valor como limite para Contatos Seguros, ele poderá transacionar até esse valor com contatos confiáveis, independentemente do limite geral de Pix.","Unidade de negócio: PagBank
 Produto: Pix (Contatos Seguros)
 Motivo: Limites de Contatos Seguros
 Submotivo: Explicação sobre limite separado para contatos seguros
-Conclusão: Orientação","PagBank"
-"Uso do limite de Contatos Seguros em qualquer horário","O limite definido para **Contatos Seguros** pode ser utilizado a qualquer horário. Não há restrição de período do dia para usar o limite dos contatos seguros, diferentemente de algumas transações Pix comuns que podem ter limites reduzidos em horários noturnos. Assim, se um contato está marcado como seguro, o cliente pode realizar transações até o limite estabelecido para esse contato em qualquer horário, inclusive à noite ou de madrugada.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+Uso do limite de Contatos Seguros em qualquer horário,"O limite definido para **Contatos Seguros** pode ser utilizado a qualquer horário. Não há restrição de período do dia para usar o limite dos contatos seguros, diferentemente de algumas transações Pix comuns que podem ter limites reduzidos em horários noturnos. Assim, se um contato está marcado como seguro, o cliente pode realizar transações até o limite estabelecido para esse contato em qualquer horário, inclusive à noite ou de madrugada.","Unidade de negócio: PagBank
 Produto: Pix (Contatos Seguros)
 Motivo: Limites de Contatos Seguros
 Submotivo: Uso do limite de contatos seguros em horário irrestrito
-Conclusão: Orientação","PagBank"
-"Disponibilidade da funcionalidade para QR Code Pix","A funcionalidade de **Contatos Seguros** do PagBank atualmente se aplica às transferências Pix por chave, número de conta ou CPF/CNPJ. Para QR Code Pix, não há necessidade de ""Contato Seguro"", pois o QR Code em si já contém as informações de destino e não identifica previamente um contato como seguro ou não. Portanto, não existe uma configuração específica de Contato Seguro para transações via QR Code Pix. O cliente pode usar QR Codes normalmente, respeitando os limites gerais de Pix.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+Disponibilidade da funcionalidade para QR Code Pix,"A funcionalidade de **Contatos Seguros** do PagBank atualmente se aplica às transferências Pix por chave, número de conta ou CPF/CNPJ. Para QR Code Pix, não há necessidade de ""Contato Seguro"", pois o QR Code em si já contém as informações de destino e não identifica previamente um contato como seguro ou não. Portanto, não existe uma configuração específica de Contato Seguro para transações via QR Code Pix. O cliente pode usar QR Codes normalmente, respeitando os limites gerais de Pix.","Unidade de negócio: PagBank
 Produto: Pix
 Motivo: Uso de QR Code Pix
 Submotivo: Esclarecimento sobre Contatos Seguros e QR Code
-Conclusão: Orientação","PagBank"
-"Identificação automática de Contatos Seguros nas transferências Pix","As transferências Pix identificam automaticamente quando o destinatário é um **Contato Seguro** cadastrado pelo cliente. Ou seja, se o cliente já adicionou certo destinatário como contato seguro, o sistema PagBank reconhecerá e aplicará o limite diferenciado (mais alto) para aquela transferência. O cliente não precisa fazer nenhuma ação adicional no momento da transferência — a identificação é interna e automática, garantindo mais agilidade nas transações com contatos confiáveis.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+Identificação automática de Contatos Seguros nas transferências Pix,"As transferências Pix identificam automaticamente quando o destinatário é um **Contato Seguro** cadastrado pelo cliente. Ou seja, se o cliente já adicionou certo destinatário como contato seguro, o sistema PagBank reconhecerá e aplicará o limite diferenciado (mais alto) para aquela transferência. O cliente não precisa fazer nenhuma ação adicional no momento da transferência — a identificação é interna e automática, garantindo mais agilidade nas transações com contatos confiáveis.","Unidade de negócio: PagBank
 Produto: Pix (Contatos Seguros)
 Motivo: Funcionamento de Contatos Seguros
 Submotivo: Identificação automática de contatos seguros em Pix
-Conclusão: Orientação","PagBank"
-"Como as cobranças da tarifa administrativa são feitas?","A **tarifa administrativa** do PagBank, quando aplicável, é cobrada da seguinte forma:
+Conclusão: Orientação",PagBank
+Como as cobranças da tarifa administrativa são feitas?,"A **tarifa administrativa** do PagBank, quando aplicável, é cobrada da seguinte forma:
 - A tarifa é descontada diretamente da conta PagBank do cliente, automaticamente, no momento em que o serviço sujeito à tarifa é utilizado ou em ciclos mensais (dependendo da natureza da tarifa);
 - O cliente pode verificar essas cobranças no extrato da conta PagBank, onde serão descritas como tarifa administrativa ou descrição similar;
 - Não é enviada cobrança em boleto ou outro meio — o valor é debitado do saldo disponível na conta PagBank.
@@ -550,8 +550,8 @@ Dessa forma, as tarifas administrativas são simples e transparentes, aparecendo
 Produto: Conta PagBank
 Motivo: Tarifa administrativa
 Submotivo: Dúvidas sobre cobrança de tarifa administrativa
-Conclusão: Orientação","PagBank"
-"Quais são os critérios de cobrança da tarifa administrativa?","Os critérios para cobrança de **tarifa administrativa** no PagBank podem incluir:
+Conclusão: Orientação",PagBank
+Quais são os critérios de cobrança da tarifa administrativa?,"Os critérios para cobrança de **tarifa administrativa** no PagBank podem incluir:
 - Tipo de conta ou serviço: algumas tarifas podem ser aplicáveis apenas a certos tipos de conta (exemplo: conta jurídica) ou serviços específicos;
 - Tempo de inatividade ou uso: em alguns casos, se a conta ou cartão ficar muito tempo sem uso, pode incidir alguma tarifa (como mensalidade de cartão pré-pago após 12 meses sem uso, por exemplo);
 - Regulamentos promocionais: o PagBank pode isentar tarifas mediante certas condições (uso mínimo do serviço, promoções vigentes etc.).
@@ -560,8 +560,8 @@ Em suma, a cobrança da tarifa administrativa ocorre conforme previsto no contra
 Produto: Conta PagBank
 Motivo: Tarifa administrativa
 Submotivo: Critérios de cobrança de tarifa administrativa
-Conclusão: Orientação","PagBank"
-"Como excluir uma recarga favorita","Para excluir uma **recarga favorita** no PagBank (recarga de celular, por exemplo):
+Conclusão: Orientação",PagBank
+Como excluir uma recarga favorita,"Para excluir uma **recarga favorita** no PagBank (recarga de celular, por exemplo):
 1. Acesse o aplicativo PagBank e faça login;
 2. Vá ao menu de **Recargas** (de celular);
 3. Encontre a seção de **Favoritos** ou **Recargas Favoritas**;
@@ -572,18 +572,18 @@ Após confirmar, a recarga selecionada deixará de aparecer na lista de favorita
 Produto: Recarga de Celular
 Motivo: Gerenciamento de Recargas Favoritas
 Submotivo: Exclusão de recarga favorita
-Conclusão: Orientação","PagBank"
-"É possível mudar/editar as informações da recarga favoritada?","No momento, **não é possível editar** as informações de uma recarga que já foi favoritada. Se o cliente precisa alterar algum dado (por exemplo, o valor padrão da recarga ou o número de telefone), será necessário excluir a recarga dos favoritos e adicionar novamente com os dados desejados.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+É possível mudar/editar as informações da recarga favoritada?,"No momento, **não é possível editar** as informações de uma recarga que já foi favoritada. Se o cliente precisa alterar algum dado (por exemplo, o valor padrão da recarga ou o número de telefone), será necessário excluir a recarga dos favoritos e adicionar novamente com os dados desejados.","Unidade de negócio: PagBank
 Produto: Recarga de Celular
 Motivo: Gerenciamento de Recargas Favoritas
 Submotivo: Edição de recarga favorita (não disponível)
-Conclusão: Orientação","PagBank"
-"É possível salvar mais de uma combinação com o mesmo número de telefone?","Não. Cada número de telefone pode ter apenas uma recarga favoritada associada a ele. Se o cliente tentar salvar outra recarga favorita com o mesmo número, o sistema não permitirá duplicatas. Para adicionar uma nova ""combinação"" diferente (por exemplo, outro valor) para o mesmo número, será preciso alterar a recarga favorita existente para esse número ou remover e cadastrar novamente com os novos parâmetros.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+É possível salvar mais de uma combinação com o mesmo número de telefone?,"Não. Cada número de telefone pode ter apenas uma recarga favoritada associada a ele. Se o cliente tentar salvar outra recarga favorita com o mesmo número, o sistema não permitirá duplicatas. Para adicionar uma nova ""combinação"" diferente (por exemplo, outro valor) para o mesmo número, será preciso alterar a recarga favorita existente para esse número ou remover e cadastrar novamente com os novos parâmetros.","Unidade de negócio: PagBank
 Produto: Recarga de Celular
 Motivo: Gerenciamento de Recargas Favoritas
 Submotivo: Limite de favoritos por número
-Conclusão: Orientação","PagBank"
-"O botão de favoritar não ficou disponível. Por quê?","Se o botão de **favoritar** não ficou disponível após uma recarga, possíveis motivos incluem:
+Conclusão: Orientação",PagBank
+O botão de favoritar não ficou disponível. Por quê?,"Se o botão de **favoritar** não ficou disponível após uma recarga, possíveis motivos incluem:
 - A recarga mínima para favoritar não foi atendida (alguns serviços podem exigir um valor mínimo para permitir favoritar);
 - Pode ter ocorrido alguma instabilidade momentânea no app no momento de salvar a recarga como favorita;
 - O cliente já tem aquele número salvo como favorito (não sendo possível duplicar);
@@ -593,12 +593,12 @@ Orientamos o cliente a verificar se a recarga atendeu aos critérios para favori
 Produto: Recarga de Celular
 Motivo: Dificuldade em favoritar recarga
 Submotivo: Botão de favoritar indisponível
-Conclusão: Orientação","PagBank"
-"É possível favoritar uma recarga que está na lista de recentes?","Sim, é possível favoritar uma recarga que aparece na lista de recentes do PagBank. Para isso, localize a recarga desejada no histórico de recargas recentes e procure a opção (estrela ou botão) para adicionar aos favoritos. Ao selecioná-la, aquela recarga passará a constar na lista de recargas favoritas para acesso rápido.","Unidade de negócio: PagBank
+Conclusão: Orientação",PagBank
+É possível favoritar uma recarga que está na lista de recentes?,"Sim, é possível favoritar uma recarga que aparece na lista de recentes do PagBank. Para isso, localize a recarga desejada no histórico de recargas recentes e procure a opção (estrela ou botão) para adicionar aos favoritos. Ao selecioná-la, aquela recarga passará a constar na lista de recargas favoritas para acesso rápido.","Unidade de negócio: PagBank
 Produto: Recarga de Celular
 Motivo: Gerenciamento de Recargas Favoritas
 Submotivo: Favoritar recarga recente
-Conclusão: Orientação","PagBank"
+Conclusão: Orientação",PagBank
 "Aparece uma tela branca e, em seguida, o aplicativo fecha.","Caso o app PagBank apresente uma tela branca e feche sozinho (crash), oriente o cliente a:
 - Verificar se o aplicativo está atualizado para a última versão disponível;
 - Limpar o cache do aplicativo PagBank nas configurações do dispositivo;
@@ -609,8 +609,8 @@ Esses passos geralmente resolvem falhas temporárias no aplicativo. Se mesmo ass
 Produto: Aplicativo PagBank
 Motivo: Erros no aplicativo
 Submotivo: App fechando inesperadamente (tela branca)
-Conclusão: Orientação","PagBank"
-"Surge um pop-up de erro que requer o encerramento do aplicativo.","Se um pop-up de erro aparece pedindo para encerrar o aplicativo PagBank, trate-se de uma falha do app. Orientações ao cliente:
+Conclusão: Orientação",PagBank
+Surge um pop-up de erro que requer o encerramento do aplicativo.,"Se um pop-up de erro aparece pedindo para encerrar o aplicativo PagBank, trate-se de uma falha do app. Orientações ao cliente:
 - Forçar a parada do aplicativo nas configurações do aparelho e abri-lo novamente;
 - Verificar se o app está atualizado e, se não, atualizar na loja (Play Store/App Store);
 - Limpar cache e dados do app (lembrando que limpar dados irá requerer novo login);
@@ -620,12 +620,4 @@ Geralmente, essas ações resolvem erros transitórios. Caso contrário, a recom
 Produto: Aplicativo PagBank
 Motivo: Erros no aplicativo
 Submotivo: Pop-up de erro encerrando app
-Conclusão: Orientação","PagBank"
-"TEST-001: UPDATED - Real-time detection verified successfully","This entry tests instant file detection with proper content logging","Testing Category","Real-time Unit"
-"TEST-003: Rapid addition test","Testing rapid sequential additions to verify debounce works properly","Stress Testing","Real-time Unit"
-"TEST-004: Final verification entry","Last test entry to ensure all detection types work correctly","Final Testing","Real-time Unit"
-"TEST-CLEAN: Single trigger test","Testing clean single trigger with 3-second debounce and minimal logging","Clean Testing","Real-time Unit"
-"TEST-FINAL: Clean system test","Testing the cleaned up system with single trigger and minimal logging","Final Clean Test","Real-time Unit"
-"TEST-CLEAN-UPDATE: Entry updated cleanly","Testing clean single add operation with minimal logging","Clean Add Test","Real-time Unit"
-"TEST-FRESH-START: First clean test","Testing if the system detects changes at all","Fresh Start Test","Real-time Unit"
-"TEST-1: Fresh start after path fix","Testing file detection with correct absolute path and 2-second debounce","Path Fix Test","Real-time Unit"
+Conclusão: Orientação",PagBank

@@ -1,6 +1,19 @@
 {
   "patterns": {
-    "api_keys": [],
+    "api_keys": [
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY",
+      "COHERE_API_KEY",
+      "GROQ_API_KEY",
+      "GOOGLE_API_KEY",
+      "GEMINI_API_KEY",
+      "EVOLUTION_API_KEY",
+      "WHATSAPP_API_KEY",
+      "POSTGRES_PASSWORD",
+      "REDIS_PASSWORD",
+      "SECRET_KEY",
+      "JWT_SECRET"
+    ],
     "credentials": [
       "password\\s*[:=]\\s*[\"']?[^\\s\"']+[\"']?",
       "passwd\\s*[:=]\\s*[\"']?[^\\s\"']+[\"']?",
@@ -17,6 +30,8 @@
       ".env.production",
       ".env.development",
       ".env.staging",
+      ".env.prod",
+      ".env.dev",
       "credentials.json",
       "google-credentials.json",
       "service-account.json",
@@ -30,7 +45,11 @@
       ".p12",
       ".pfx",
       "keystore",
-      ".jks"
+      ".jks",
+      "agent_secrets.yaml",
+      "whatsapp_config.json",
+      "evolution_api_config.json",
+      "database_credentials.json"
     ],
     "regex_patterns": [
       "sk-[a-zA-Z0-9]{32,}",
@@ -61,26 +80,40 @@
       "GROQ_API_KEY=your_groq_api_key_here",
       "OPENAI_API_KEY=your_openai_api_key_here",
       "GEMINI_API_KEY=your_gemini_api_key_here",
+      "ANTHROPIC_API_KEY=your_anthropic_api_key_here",
+      "COHERE_API_KEY=your_cohere_api_key_here",
+      "EVOLUTION_API_KEY=your_evolution_api_key_here",
       "AWS_ACCESS_KEY_ID=your_access_key_here",
       "api_key=settings.api_key",
       "api_key=process.env.API_KEY",
       "api_key=YOUR_API_KEY",
+      "api_key=config.api_key",
+      "api_key=agent_config.api_key",
       "password=your_password_here",
       "password=<your_password>",
       "password=${PASSWORD}",
+      "password=settings.database_password",
       "token=your_token_here",
       "token=<auth_token>",
+      "token=${AUTH_TOKEN}",
       "secret=your_secret_here",
+      "secret=${SECRET_KEY}",
       "Bearer YOUR_TOKEN_HERE",
       "Bearer <token>",
+      "Bearer ${AUTH_TOKEN}",
       "postgres://user:password@localhost",
+      "postgresql://user:password@postgres:5432/genie_agents",
       "mysql://root:password@localhost",
       "mongodb://user:password@localhost",
       "redis://user:password@localhost",
+      "redis://default:password@redis:6379",
       "connection_string = \"your_connection_string_here\"",
       "API_KEY=<your_api_key>",
       "SECRET_KEY=<your_secret_key>",
-      "DATABASE_URL=<your_database_url>"
+      "DATABASE_URL=<your_database_url>",
+      "DATABASE_URL=postgresql://user:pass@host:5432/db",
+      "POSTGRES_PASSWORD=secure-password",
+      "SECRET_KEY=your-secret-key"
     ]
   }
 }

@@ -191,26 +191,24 @@ class CSVHotReloadManager:
     
     def _reload_knowledge_base(self):
         """Demo-ready logging with diff view for updates"""
-        # Store the last CSV row before processing for diff comparison
-        before_content = ""
-        try:
-            import pandas as pd
-            df_before = pd.read_csv(self.csv_path)
-            if not df_before.empty:
-                last_row = df_before.iloc[-1]
-                before_content = str(last_row.iloc[0])  # First column (problem field)
-        except:
-            pass
-            
         try:
             start_time = time.time()
             
-            # Store current count before processing
+            # Get current state BEFORE processing
+            try:
+                import pandas as pd
+                df_before = pd.read_csv(self.csv_path)
+                csv_rows_before = len(df_before) if not df_before.empty else 0
+                last_content_before = str(df_before.iloc[-1].iloc[0]) if not df_before.empty else ""
+            except:
+                csv_rows_before = 0
+                last_content_before = ""
+                
             try:
                 current_stats = self.kb.get_knowledge_statistics()
-                count_before = current_stats.get('total_entries', 0)
+                db_count_before = current_stats.get('total_entries', 0)
             except:
-                count_before = 0
+                db_count_before = 0
             
             # Process the change with suppressed output
             import sys
@@ -227,46 +225,56 @@ class CSVHotReloadManager:
             
             load_time = time.time() - start_time
             
+            # Check what actually happened after processing
             if result and "error" not in result:
+                # Get NEW state after processing
+                try:
+                    df_after = pd.read_csv(self.csv_path)
+                    csv_rows_after = len(df_after) if not df_after.empty else 0
+                    last_content_after = str(df_after.iloc[-1].iloc[0]) if not df_after.empty else ""
+                except:
+                    csv_rows_after = csv_rows_before
+                    last_content_after = last_content_before
+                    
                 try:
                     new_stats = self.kb.get_knowledge_statistics()
-                    count_after = new_stats.get('total_entries', 0)
+                    db_count_after = new_stats.get('total_entries', 0)
                 except:
-                    count_after = count_before
+                    db_count_after = db_count_before
                 
-                # Get current content for comparison using proper CSV parsing
-                after_content = ""
-                try:
-                    import pandas as pd
-                    df_after = pd.read_csv(self.csv_path)
-                    if not df_after.empty:
-                        last_row = df_after.iloc[-1]
-                        after_content = str(last_row.iloc[0])  # First column (problem field)
-                except:
-                    pass
+                # Look at the smart_loader result to understand what happened
+                strategy = result.get('strategy', 'unknown')
                 
-                # Determine what happened
-                if count_after > count_before:
-                    # Addition
-                    content = after_content[:50] + "..." if len(after_content) > 50 else after_content
-                    print(f"✅ ADD \"{content}\" | {load_time:.1f}s | {count_before}→{count_after}")
+                if strategy == 'no_changes':
+                    print(f"✅ No changes | {load_time:.1f}s | total: {db_count_after}")
                     
-                elif count_after < count_before:
-                    # Deletion
-                    removed_count = count_before - count_after
-                    print(f"✅ DEL {removed_count} entries | {load_time:.1f}s | {count_before}→{count_after}")
+                elif csv_rows_after > csv_rows_before:
+                    # Addition detected
+                    added_rows = csv_rows_after - csv_rows_before
+                    content = last_content_after[:50] + "..." if len(last_content_after) > 50 else last_content_after
+                    print(f"✅ ADD +{added_rows} \"{content}\" | {load_time:.1f}s | {csv_rows_before}→{csv_rows_after}")
                     
-                elif before_content != after_content and before_content and after_content:
-                    # Update with diff
-                    before_text = before_content[:40] + "..." if len(before_content) > 40 else before_content
-                    after_text = after_content[:40] + "..." if len(after_content) > 40 else after_content
-                    print(f"✅ UPD | {load_time:.1f}s | total: {count_after}")
+                elif csv_rows_after < csv_rows_before:
+                    # Deletion detected
+                    removed_rows = csv_rows_before - csv_rows_after
+                    print(f"✅ DEL -{removed_rows} entries | {load_time:.1f}s | {csv_rows_before}→{csv_rows_after}")
+                    
+                elif last_content_before != last_content_after and last_content_before and last_content_after:
+                    # Content update detected
+                    before_text = last_content_before[:40] + "..." if len(last_content_before) > 40 else last_content_before
+                    after_text = last_content_after[:40] + "..." if len(last_content_after) > 40 else last_content_after
+                    print(f"✅ UPD | {load_time:.1f}s | total: {csv_rows_after}")
                     print(f"  📝 Before: \"{before_text}\"")
                     print(f"  ✨ After:  \"{after_text}\"")
                     
+                elif strategy in ['incremental_update', 'initial_load_with_hashes', 'full_reload']:
+                    # Smart loader processed something but we can't detect the exact change
+                    processed_count = result.get('entries_processed', result.get('new_rows_processed', 'unknown'))
+                    print(f"✅ SYNC {strategy} | {processed_count} entries | {load_time:.1f}s | total: {db_count_after}")
+                    
                 else:
-                    # No actual changes
-                    print(f"✅ No changes | {load_time:.1f}s | total: {count_after}")
+                    # Default case
+                    print(f"✅ PROC {strategy} | {load_time:.1f}s | total: {db_count_after}")
             else:
                 print(f"❌ Error: {result.get('error', 'unknown error')}")
                 

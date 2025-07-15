@@ -1,178 +1,257 @@
-# CLAUDE.md
+# Genie Agents - Enterprise Multi-Agent System (claude-master)
 
-<state_configuration>
-<!-- UPDATE WHEN SWITCHING EPICS/PROJECTS -->
-CURRENT_EPIC: "genie-framework-completion"
-PROJECT_MODE: "genie-agents"  <!-- automagik-v2 | genie-agents -->
-</state_configuration>
+## 1. Project Overview
+- **Vision:** Production-ready enterprise boilerplate for building sophisticated multi-agent AI systems with intelligent routing, comprehensive monitoring, and enterprise-grade deployment capabilities
+- **Current Phase:** Enterprise-ready deployment with full monitoring, security, and CI/CD integration
+- **Key Architecture:** Clean V2 Architecture with YAML-driven agent configuration, Agno Framework integration for intelligent routing, PostgreSQL backend with auto-migrations
+- **Development Strategy:** Microservices-ready architecture with Docker containerization, real-time monitoring via Prometheus/Grafana, and enterprise security layers
 
-<system_context>
-You are working with **Genie-Agents** - a semi-autonomous AI development framework. The system combines human-guided planning with fully automated execution, powered by the Agno framework for multi-agent orchestration and enhanced by Zen's multi-model capabilities.
+## 2. Project Structure
 
-**Key Innovation**: Memory-first architecture with automatic context injection, and enabling true inter-agent communication.
-</system_context>
+**⚠️ CRITICAL: AI agents MUST read the [Project Structure documentation](/docs/ai-context/project-structure.md) before attempting any task to understand the complete technology stack, file tree and project organization.**
 
-<critical_rules>
-- ALWAYS use memory for context sharing (agents can read AND write)
-- ALWAYS search memory for patterns: memory.search("PATTERN [topic]")
-- ALWAYS use UV for Python (NEVER pip/python directly)
-- ALWAYS commit with: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
-- ALWAYS use the 14 consolidated commands (with model= parameter)
-- ALWAYS manually move tasks: todo→active→archive (no automation)
-- NEVER exceed 5 files in `genie/active/` (Kanban WIP limit)
-- NEVER add time estimates to tasks
-- NEVER create complex wrappers - keep memory usage simple
-</critical_rules>
+Genie Agents follows a Clean V2 Architecture pattern with YAML-driven agent configuration and factory patterns. For the complete tech stack and file tree structure, see [docs/ai-context/project-structure.md](/docs/ai-context/project-structure.md).
 
-## Command System (16 Commands)
+## 3. Coding Standards & AI Instructions
 
-<command_reference>
-### Core Commands (5)
-- `/wish` - Adaptive task routing entry point
-- `/planner` - Interactive planning with continuation
-- `/epic` - Epic-based development workflow
-- `/spawn-tasks` - Parallel sub-agent orchestration (CRITICAL: Use for parallel work, NOT Task() tool)
-- `/context` - Continuation thread management
+### General Instructions
+- Your most important job is to manage your own context. Always read any relevant files BEFORE planning changes.
+- When updating documentation, keep updates concise and on point to prevent bloat.
+- Write code following KISS, YAGNI, and DRY principles.
+- When in doubt follow proven best practices for implementation.
+- Do not commit to git without user approval.
+- Do not run any servers, rather tell the user to run servers for testing.
+- Always consider industry standard libraries/frameworks first over custom implementations.
+- Never mock anything. Never use placeholders. Never omit code.
+- Apply SOLID principles where relevant. Use modern framework features rather than reinventing solutions.
+- Be brutally honest about whether an idea is good or bad.
+- Make side effects explicit and minimal.
+- Design database schema to be evolution-friendly (avoid breaking changes).
 
-### Development Commands (7)
-- `/analyze` - Code/architecture analysis (`model="o3|grok|gemini"`)
-- `/debug` - Systematic debugging (`model="o3|grok|gemini"`)
-- `/review` - Code review workflow (`model="o3|grok|gemini"`)
-- `/refactor` - Refactoring analysis
-- `/test` - Test generation (`model="o3|grok|gemini"`)
-- `/chat` - Collaborative thinking (`model="o3|grok|gemini"`)
-- `/thinkdeep` - Deep investigation (`model="o3|grok|gemini"`)
-
-### Documentation Commands (4)
-- `/docs` - Create/update documentation
-- `/full-context` - Comprehensive analysis
-- `/search-docs` - Search Context7 documentation (agno framework)
-- `/ask-repo` - Ask questions to GitHub repositories (agno-agi/agno)
+### Genie Agents Specific Instructions
+- **Agent Development**: Always use YAML configuration files for new agents following the V2 architecture pattern
+- **Team Routing**: Utilize Agno's Team(mode="route") for intelligent agent selection
+- **Database Operations**: Use SQLAlchemy ORM for all database interactions, raw SQL only for complex queries
+- **Monitoring**: Include metrics collection for all new endpoints and agent interactions
+- **Security**: All agent responses must be sanitized, never expose internal system details
+- **Testing**: Every new agent must have corresponding unit and integration tests
+- **Knowledge Base**: Use the CSV-based RAG system for context-aware responses
+- **Memory Management**: Implement session-based memory with pattern detection for conversation continuity
 
 
-**Example**: `/analyze "Review auth system" model="o3"`
-**Agno Docs**: `/ask-repo "agno-agi/agno" "How do I create an agent?"`
-</command_reference>
+### File Organization & Modularity
+- Default to creating multiple small, focused files rather than large monolithic ones
+- Each file should have a single responsibility and clear purpose
+- Keep files under 350 lines when possible - split larger files by extracting utilities, constants, types, or logical components into separate modules
+- Separate concerns: utilities, constants, types, components, and business logic into different files
+- Prefer composition over inheritance - use inheritance only for true 'is-a' relationships, favor composition for 'has-a' or behavior mixing
 
-## Memory-First Architecture
+- Follow existing project structure and conventions - place files in appropriate directories. Create new directories and move files if deemed appropriate.
+- Use well defined sub-directories to keep things organized and scalable
+- Structure projects with clear folder hierarchies and consistent naming conventions
+- Import/export properly - design for reusability and maintainability
 
-<memory_system>
-### Simple Usage Pattern
+### Type Hints (REQUIRED)
+- **Always** use type hints for function parameters and return values
+- Use `from typing import` for complex types
+- Prefer `Optional[T]` over `Union[T, None]`
+- Use Pydantic models for data structures
+
 ```python
-# Three simple prefixes for everything
-memory.add("PATTERN: Auth Flow - Use JWT with refresh tokens #auth")
-memory.add("TASK T-001: Working on API endpoints - Alice") 
-memory.add("FOUND: Run tests with 'uv run pytest'")
+# Good
+from typing import Optional, List, Dict, Tuple
 
-# Search is natural
-results = memory.search("PATTERN auth")     # Find auth patterns
-status = memory.search("TASK T-001")        # Check task status
-knowledge = memory.search("FOUND tests")    # How to run tests
+async def process_audio(
+    audio_data: bytes,
+    session_id: str,
+    language: Optional[str] = None
+) -> Tuple[bytes, Dict[str, Any]]:
+    """Process audio through the pipeline."""
+    pass
 ```
 
-### Context Sharing
-- All agents can read AND write to memory
-- Memory replaces most CONTEXT.md files
-- Automatic context search in task-context-injector.sh
-- Files only for: structured data, large documents, version control
+### Naming Conventions
+- **Classes**: PascalCase (e.g., `VoicePipeline`)
+- **Functions/Methods**: snake_case (e.g., `process_audio`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_AUDIO_SIZE`)
+- **Private methods**: Leading underscore (e.g., `_validate_input`)
+- **Pydantic Models**: PascalCase with `Schema` suffix (e.g., `ChatRequestSchema`, `UserSchema`)
 
-### Context Tools
-- **Search Repo**: `/context7/agno` for Agno framework documentation
-- **Ask Repo**: `agno-agi/agno` for Q&A with latest Agno repository
 
-### Memory Patterns
-1. **Project Context**: Architecture decisions, tech stack
-2. **Error Solutions**: Known issues and fixes
-3. **Task Progress**: What's been done, what's pending
-4. **Agent Communication**: Messages between agents
-5. **User Preferences**: Learned patterns and style
-</memory_system>
+### Documentation Requirements
+- Every module needs a docstring
+- Every public function needs a docstring
+- Use Google-style docstrings
+- Include type information in docstrings
 
-## Automated Context Injection
+```python
+def calculate_similarity(text1: str, text2: str) -> float:
+    """Calculate semantic similarity between two texts.
 
-<context_automation>
-### Hook System
-The `task-context-injector.sh` hook automatically prepends to ALL Task() calls:
-1. Essential project context from CLAUDE.md
-2. Technical foundation from ai-context files
-3. Memory search instructions
+    Args:
+        text1: First text to compare
+        text2: Second text to compare
 
-### No Manual References Needed
-- Subagents automatically receive context
-- No more `@file` references in prompts
-- Context flows naturally through the system
-</context_automation>
+    Returns:
+        Similarity score between 0 and 1
 
-## Quick Start
-
-<quick_reference>
-```bash
-# Check current epic/project
-cat genie/active/${CURRENT_EPIC}.md
-
-# Start development (port 7777)
-uv run python api/serve.py
-
-# Run tests
-uv run pytest tests/
-
-# Type checking
-uv run mypy agents/ --strict
-
-# Quality checks
-uv run ruff check .
-uv run ruff format .
+    Raises:
+        ValueError: If either text is empty
+    """
+    pass
 ```
-</quick_reference>
 
-## Development Flow
+### Security First
+- Never trust external inputs - validate everything at the boundaries
+- Keep secrets in environment variables, never in code
+- Log security events (login attempts, auth failures, rate limits, permission denials) but never log sensitive data (audio, conversation content, tokens, personal info)
+- Authenticate users at the API gateway level - never trust client-side tokens
+- Use Row Level Security (RLS) to enforce data isolation between users
+- Design auth to work across all client types consistently
+- Use secure authentication patterns for your platform
+- Validate all authentication tokens server-side before creating sessions
+- Sanitize all user inputs before storing or processing
 
-<workflow>
-1. **Check Patterns**: Review `@genie/reference/` first
-2. **Use Memory**: Add discoveries as you work
-3. **Simple Commands**: Use the 14 commands with model parameter
-4. **Manual Task Management**: Move tasks todo→active→archive manually
-5. **Test Everything**: Type checks, unit tests, integration tests
-6. **Archive Complete**: Move done work to `genie/archive/`
-</workflow>
+### Error Handling
+- Use specific exceptions over generic ones
+- Always log errors with context
+- Provide helpful error messages
+- Fail securely - errors shouldn't reveal system internals
 
-## Project Structure
+### Observable Systems & Logging Standards
+- Every request needs a correlation ID for debugging
+- Structure logs for machines, not humans - use JSON format with consistent fields (timestamp, level, correlation_id, event, context) for automated analysis
+- Make debugging possible across service boundaries
 
-<architecture>
+### State Management
+- Have one source of truth for each piece of state
+- Make state changes explicit and traceable
+- Design for multi-service voice processing - use session IDs for state coordination, avoid storing conversation data in server memory
+- Keep conversation history lightweight (text, not audio)
+
+### API Design Principles
+- RESTful design with consistent URL patterns
+- Use HTTP status codes correctly
+- Version APIs from day one (/v1/, /v2/)
+- Support pagination for list endpoints
+- Use consistent JSON response format:
+  - Success: `{ "data": {...}, "error": null }`
+  - Error: `{ "data": null, "error": {"message": "...", "code": "..."} }`
+
+
+## 4. Multi-Agent Workflows & Context Injection
+
+### Automatic Context Injection for Sub-Agents
+When using the Task tool to spawn sub-agents, the core project context (CLAUDE.md, project-structure.md, docs-overview.md) is automatically injected into their prompts via the subagent-context-injector hook. This ensures all sub-agents have immediate access to essential project documentation without the need of manual specification in each Task prompt.
+
+
+## 5. MCP Server Integrations
+
+### Gemini Consultation Server
+**When to use:**
+- Complex coding problems requiring deep analysis or multiple approaches
+- Code reviews and architecture discussions
+- Debugging complex issues across multiple files
+- Performance optimization and refactoring guidance
+- Detailed explanations of complex implementations
+- Highly security relevant tasks
+
+**Automatic Context Injection:**
+- The kit's `gemini-context-injector.sh` hook automatically includes two key files for new sessions:
+  - `/docs/ai-context/project-structure.md` - Complete project structure and tech stack
+  - `/MCP-ASSISTANT-RULES.md` - Your project-specific coding standards and guidelines
+- This ensures Gemini always has comprehensive understanding of your technology stack, architecture, and project standards
+
+**Usage patterns:**
+```python
+# New consultation session (project structure auto-attached by hooks)
+mcp__gemini__consult_gemini(
+    specific_question="How should I optimize this voice pipeline?",
+    problem_description="Need to reduce latency in real-time audio processing",
+    code_context="Current pipeline processes audio sequentially...",
+    attached_files=[
+        "src/core/pipelines/voice_pipeline.py"  # Your specific files
+    ],
+    preferred_approach="optimize"
+)
+
+# Follow-up in existing session
+mcp__gemini__consult_gemini(
+    specific_question="What about memory usage?",
+    session_id="session_123",
+    additional_context="Implemented your suggestions, now seeing high memory usage"
+)
 ```
-genie-agents/
-├── agents/          # Agent definitions (YAML-driven)
-├── teams/           # Team routing configurations  
-├── workflows/       # Sequential task flows
-├── api/             # FastAPI endpoints
-├── db/              # PostgreSQL/SQLite storage
-├── .claude/         
-│   ├── commands/    # 14 consolidated commands
-│   └── hooks/       # task-context-injector.sh
-└── genie/           # Framework workspace (see genie/CLAUDE.md)
+
+**Key capabilities:**
+- Persistent conversation sessions with context retention
+- File attachment and caching for multi-file analysis
+- Specialized assistance modes (solution, review, debug, optimize, explain)
+- Session management for complex, multi-step problems
+
+**Important:** Treat Gemini's responses as advisory feedback. Evaluate the suggestions critically, incorporate valuable insights into your solution, then proceed with your implementation.
+
+### Advanced Documentation Servers
+
+#### Search Repo Docs
+**When to use:**
+- Finding specific Agno framework documentation and code snippets
+- Searching for implementation examples in library repositories
+- Understanding framework-specific patterns and best practices
+- Getting up-to-date information about Agno features
+
+**Usage patterns:**
+```python
+# Resolve library to get available documentation
+mcp__search-repo-docs__resolve-library-id(libraryName="agno")
+
+# Get focused documentation on specific topics
+mcp__search-repo-docs__get-library-docs(
+    context7CompatibleLibraryID="/agno/agno",
+    topic="Team routing",
+    tokens=10000
+)
 ```
-</architecture>
 
-## Critical Reminders
+#### Ask Repo Agent
+**When to use:**
+- Asking specific questions about GitHub repositories
+- Understanding codebase architecture and patterns
+- Finding implementation details in source code
+- Getting contextual answers about how libraries work
 
-<reminders>
-✅ Memory is bidirectional - all agents read/write
-✅ Commands use model= parameter (not separate files)
-✅ Context injection is automatic via hooks
-✅ Keep it simple - no complex wrappers
-✅ Test with mypy and pytest before completing
-✅ Archive to maintain 5-file active limit
-✅ Manual task orchestration (no hook automation)
+**Usage patterns:**
+```python
+# Get repository structure
+mcp__ask-repo-agent__read_wiki_structure(repoName="agno-org/agno")
 
-❌ No time estimates on tasks
-❌ No backwards compatibility needed
-❌ No pip - always use uv
-❌ No manual context references
-❌ No automatic task management (hooks don't work)
-</reminders>
+# View repository documentation
+mcp__ask-repo-agent__read_wiki_contents(repoName="agno-org/agno")
 
----
+# Ask specific questions about the codebase
+mcp__ask-repo-agent__ask_question(
+    repoName="agno-org/agno",
+    question="How does Team mode='route' select the appropriate agent?"
+)
+```
 
-**For Genie Framework details**: See `genie/CLAUDE.md`
-**For technical standards**: See `genie/ai-context/development-standards.md`
-**For project structure**: See `genie/ai-context/project-structure.md`
+**Key capabilities:**
+- Direct repository exploration and Q&A
+- Source code understanding with context
+- Pattern and implementation discovery
+- Real-time documentation from GitHub repositories
+
+
+
+## 6. Post-Task Completion Protocol
+After completing any coding task, follow this checklist:
+
+### 1. Type Safety & Quality Checks
+Run the appropriate commands based on what was modified:
+- **Python projects**: Run mypy type checking
+- **TypeScript projects**: Run tsc --noEmit
+- **Other languages**: Run appropriate linting/type checking tools
+
+### 2. Verification
+- Ensure all type checks pass before considering the task complete
+- If type errors are found, fix them before marking the task as done
