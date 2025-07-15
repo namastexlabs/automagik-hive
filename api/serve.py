@@ -18,6 +18,8 @@ from fastapi import FastAPI
 # Load environment variables first
 load_dotenv()
 
+# Load environment variables
+
 # Configure logging levels based on environment
 def setup_demo_logging():
     """Setup logging for demo presentation"""
@@ -83,6 +85,8 @@ async def lifespan(app: FastAPI):
         print("✅ Monitoring system stopped")
     except Exception as e:
         print(f"⚠️  Warning: Could not stop monitoring system: {e}")
+    
+    # No cleanup needed anymore
 
 
 def create_pagbank_api():
@@ -91,26 +95,38 @@ def create_pagbank_api():
     # Get environment settings
     environment = os.getenv("ENVIRONMENT", "production")
     is_development = environment == "development"
+    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
     
-    print(f"🌍 Environment: {environment}")
-    print(f"🔧 Development features: {'ENABLED' if is_development else 'DISABLED'}")
+    # Show environment info in demo/development mode
+    if demo_mode or is_development:
+        print(f"🌍 Environment: {environment}")
+        print(f"🔧 Development features: {'ENABLED' if is_development else 'DISABLED'}")
     
     # Initialize database automatically
     try:
         from db.session import init_database
         init_database()
-        print("✅ Database initialized successfully")
+        if demo_mode or is_development:
+            print("✅ Database initialized successfully")
     except Exception as e:
-        print(f"⚠️ Database initialization warning: {e}")
-        print("📝 Note: Some features may be limited without database tables")
+        if demo_mode or is_development:
+            print(f"⚠️ Database initialization warning: {e}")
+            print("📝 Note: Some features may be limited without database tables")
     
-    # Start CSV hot reload manager - REAL-TIME watchdog
+    # Initialize CSV hot reload manager for lazy loading
     csv_path = Path(__file__).parent.parent / "context/knowledge/knowledge_rag.csv"
-    print(f"🔍 CSV hot reload watching: {csv_path}")
-    csv_manager = CSVHotReloadManager(csv_path=str(csv_path))
-    csv_thread = threading.Thread(target=csv_manager.start_watching, daemon=True)
-    csv_thread.start()
-    print("📄 CSV hot reload manager: ACTIVE (real-time file watching)")
+    if demo_mode or is_development:
+        print(f"🔍 CSV hot reload manager configured: {csv_path}")
+        
+        # Start CSV hot reload manager immediately in demo/development mode
+        try:
+            from context.knowledge.csv_hot_reload import CSVHotReloadManager
+            csv_manager = CSVHotReloadManager(str(csv_path))
+            csv_manager.start_watching()
+            print("📄 CSV hot reload manager: ACTIVE (watching for changes)")
+        except Exception as e:
+            print(f"⚠️ Could not start CSV hot reload manager: {e}")
+            print("📄 CSV hot reload manager: CONFIGURED (will start on first use)")
     
     # Create the Ana routing team (V2 architecture) - simplified for debugging
     try:
@@ -126,21 +142,23 @@ def create_pagbank_api():
             debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true")
         )
     except Exception as e:
-        print(f"⚠️ Agent/Team loading error: {e}")
+        if demo_mode or is_development:
+            print(f"⚠️ Agent/Team loading error: {e}")
         # Fallback: create minimal setup
         ana_team = None
         available_agents = {}
     
     # Debug: Print team and agents information
-    if ana_team:
-        print(f"📋 Team Name: {ana_team.name}")
-        print(f"🆔 Team ID: {ana_team.team_id}")
-        print("💡 Use this team_id in API calls: /runs?team_id=" + ana_team.team_id)
-        print("✅ Using V2 Ana Team architecture with Agno routing")
-    else:
-        print("⚠️ No team loaded - creating minimal FastAPI app")
-    
-    print(f"👥 Available Agents: {list(available_agents.keys())}")
+    if demo_mode or is_development:
+        if ana_team:
+            print(f"📋 Team Name: {ana_team.name}")
+            print(f"🆔 Team ID: {ana_team.team_id}")
+            print("💡 Use this team_id in API calls: /runs?team_id=" + ana_team.team_id)
+            print("✅ Using V2 Ana Team architecture with Agno routing")
+        else:
+            print("⚠️ No team loaded - creating minimal FastAPI app")
+        
+        print(f"👥 Available Agents: {list(available_agents.keys())}")
     
     # Create FastAPI app with both teams AND agents for full endpoint generation
     teams_list = [ana_team] if ana_team else []
@@ -160,13 +178,16 @@ def create_pagbank_api():
             get_conversation_typification_workflow(debug_mode=is_development),
             get_human_handoff_workflow(debug_mode=is_development)
         ]
-        print("✅ Workflows loaded: ConversationTypification, HumanHandoff")
+        if demo_mode or is_development:
+            print("✅ Workflows loaded: ConversationTypification, HumanHandoff")
     except Exception as e:
-        print(f"⚠️ Could not load workflows: {e}")
+        if demo_mode or is_development:
+            print(f"⚠️ Could not load workflows: {e}")
         workflows_list = []
     
     # Create FastAPIApp for all environments
-    print("🚀 Using FastAPIApp mode")
+    if demo_mode or is_development:
+        print("🚀 Using FastAPIApp mode")
     app_instance = FastAPIApp(
         teams=teams_list,
         agents=agents_list,
@@ -196,7 +217,8 @@ def create_pagbank_api():
     async_router = app_instance.get_async_router()
     
     app.include_router(async_router)
-    print("✅ FastAPIApp endpoints registered: /runs, /sessions, /agents, /teams (async)")
+    if demo_mode or is_development:
+        print("✅ FastAPIApp endpoints registered: /runs, /sessions, /agents, /teams (async)")
     
     # ✅ ADD PLAYGROUND ROUTER FOR WORKFLOW CRUD ENDPOINTS
     # This provides the missing /workflows endpoints that FastAPIApp doesn't generate
@@ -210,17 +232,20 @@ def create_pagbank_api():
         )
         playground_router = playground.get_async_router()
         app.include_router(playground_router)
-        print("✅ Playground endpoints registered: /playground/workflows, /playground/agents, /playground/teams")
-        print("   • Workflow CRUD: GET /playground/workflows, POST /playground/workflows/{id}/runs")
+        if demo_mode or is_development:
+            print("✅ Playground endpoints registered: /playground/workflows, /playground/agents, /playground/teams")
+            print("   • Workflow CRUD: GET /playground/workflows, POST /playground/workflows/{id}/runs")
     except Exception as e:
-        print(f"⚠️ Could not register playground endpoints: {e}")
+        if demo_mode or is_development:
+            print(f"⚠️ Could not register playground endpoints: {e}")
     
     # Configure docs based on settings and environment
     if is_development or api_settings.docs_enabled:
         app.docs_url = "/docs"
         app.redoc_url = "/redoc"
         app.openapi_url = "/openapi.json"
-        print("✅ API documentation enabled")
+        if demo_mode or is_development:
+            print("✅ API documentation enabled")
     else:
         app.docs_url = None
         app.redoc_url = None
@@ -231,20 +256,22 @@ def create_pagbank_api():
     try:
         from api.routes.v1_router import v1_router
         app.include_router(v1_router)
-        print("✅ Custom business endpoints registered: Health, Monitoring, Agent Versioning")
-        print("   • Health checks: /api/v1/health")
-        print("   • Monitoring: /api/v1/monitoring/*") 
-        print("   • Agent versions: /api/v1/agents/*")
-        print("   • WebSocket: /api/v1/monitoring/ws/realtime")
-        print("📋 Native Agno framework endpoints (UNTOUCHED for UI):")
-        print("   • FastAPIApp - Basic execution: /runs")
-        print("   • Sessions: /sessions") 
-        print("   • Entity lists: /agents, /teams")
-        print("   • Status: /status")
-        print("   • Playground - Full CRUD: /playground/workflows, /playground/agents, /playground/teams")
-        print("   • Workflow execution: POST /playground/workflows/{id}/runs")
+        if demo_mode or is_development:
+            print("✅ Custom business endpoints registered: Health, Monitoring, Agent Versioning")
+            print("   • Health checks: /api/v1/health")
+            print("   • Monitoring: /api/v1/monitoring/*") 
+            print("   • Agent versions: /api/v1/agents/*")
+            print("   • WebSocket: /api/v1/monitoring/ws/realtime")
+            print("📋 Native Agno framework endpoints (UNTOUCHED for UI):")
+            print("   • FastAPIApp - Basic execution: /runs")
+            print("   • Sessions: /sessions") 
+            print("   • Entity lists: /agents, /teams")
+            print("   • Status: /status")
+            print("   • Playground - Full CRUD: /playground/workflows, /playground/agents, /playground/teams")
+            print("   • Workflow execution: POST /playground/workflows/{id}/runs")
     except Exception as e:
-        print(f"⚠️ Could not register custom business endpoints: {e}")
+        if demo_mode or is_development:
+            print(f"⚠️ Could not register custom business endpoints: {e}")
     
     # ✅ ADD CORS MIDDLEWARE (unified from main.py)
     app.add_middleware(
@@ -258,23 +285,37 @@ def create_pagbank_api():
     return app_instance
 
 
-# Create the unified app instance
-app_instance = create_pagbank_api()
-app = app_instance.get_app()
+# Lazy app creation - only create when imported by uvicorn, not when running as script
+app_instance = None
+app = None
+
+# Only create app if being imported (not run as script)
+if __name__ != "__main__":
+    app_instance = create_pagbank_api()
+    app = app_instance.get_app()
 
 
 if __name__ == "__main__":
     import uvicorn
     
-    # Get all server configuration from environment variables
+    # No cleanup needed anymore
+    
+    # Get server configuration from environment variables
     host = os.getenv("PB_AGENTS_HOST", "0.0.0.0")
     port = int(os.getenv("PB_AGENTS_PORT", "7777"))
-    reload = os.getenv("PB_AGENTS_RELOAD", "true").lower() == "true"
+    environment = os.getenv("ENVIRONMENT", "production")
     
-    print(f"🌐 Using host: {host}")
-    print(f"🔧 Using port: {port}")
-    print(f"🔄 Reload: {reload}")
-    print("🚀 Starting PagBank API...")
+    # Auto-reload based on environment: enabled for development, disabled for production
+    reload = environment == "development"
+    
+    # Show startup info in demo/development mode
+    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    is_development = environment == "development"
+    if demo_mode or is_development:
+        print(f"🌐 Using host: {host}")
+        print(f"🔧 Using port: {port}")
+        print(f"🔄 Auto-reload: {reload} ({'development' if reload else 'production'} mode)")
+        print("🚀 Starting PagBank API...")
     
     # Use uvicorn directly with import string for reload/workers support
     uvicorn.run(

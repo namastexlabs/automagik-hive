@@ -76,20 +76,14 @@ RUN mkdir -p /app/logs /app/data /app/uploads && \
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:${PB_AGENTS_PORT:-7777}/health || exit 1
 
 # Switch to non-root user
 USER appuser
 
 # Expose port for the application
-EXPOSE 8000
+ARG PB_AGENTS_PORT=7777
+EXPOSE ${PB_AGENTS_PORT}
 
 # Production startup command with proper process management
-CMD ["python", "-m", "uvicorn", "api.serve:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--workers", "4", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--log-level", "info", \
-     "--access-log", \
-     "--no-server-header"]
+CMD ["sh", "-c", "python -m uvicorn api.serve:app --host 0.0.0.0 --port ${PB_AGENTS_PORT:-7777} --workers 4 --worker-class uvicorn.workers.UvicornWorker --log-level info --access-log --no-server-header"]

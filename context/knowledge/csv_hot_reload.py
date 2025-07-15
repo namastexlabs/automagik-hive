@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# No module-level flags needed anymore
+
 # Configure logging based on environment variables
 def setup_logging():
     """Configure logging levels based on environment variables"""
@@ -51,39 +53,62 @@ class CSVFileHandler(FileSystemEventHandler):
     _processing_lock = False
     _last_file_size = 0
     _last_file_hash = ""
+    _last_line_count = 0
     
     def __init__(self, manager):
         self.manager = manager
         self.csv_filename = manager.csv_path.name
         
+    def on_moved(self, event):
+        """Handle file moves (atomic writes from editors)"""
+        if (not event.is_directory and 
+            hasattr(event, 'dest_path') and 
+            event.dest_path.endswith(self.csv_filename)):
+            self._handle_csv_change(event.dest_path)
+    
     def on_modified(self, event):
+        """Handle direct file modifications"""
         if (not event.is_directory and 
             event.src_path.endswith(self.csv_filename)):
+            self._handle_csv_change(event.src_path)
+    
+    def _handle_csv_change(self, file_path):
+        """Common logic for handling CSV file changes"""
+        # Ultra-strong debounce with size check
+        now = time.time()
+        try:
+            current_size = os.path.getsize(file_path)
+            # Count CSV records using proper CSV parsing (handles multiline fields)
+            import csv
+            with open(file_path, 'r', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                try:
+                    next(reader)  # Skip header
+                    current_rows = sum(1 for row in reader if any(field.strip() for field in row))
+                except StopIteration:
+                    current_rows = 0
+        except:
+            return
             
-            # Ultra-strong debounce with size check
-            now = time.time()
-            try:
-                current_size = os.path.getsize(event.src_path)
-            except:
-                return
-                
-            # Skip if: recently triggered, currently processing, or size unchanged
-            if (now - CSVFileHandler._last_trigger_time < 5.0 or 
-                CSVFileHandler._processing_lock or
-                current_size == CSVFileHandler._last_file_size):
-                return
-                
-            # Lock and process
-            CSVFileHandler._processing_lock = True
-            CSVFileHandler._last_trigger_time = now
-            CSVFileHandler._last_file_size = current_size
+        # Skip if: recently triggered, currently processing, or size unchanged
+        if (now - CSVFileHandler._last_trigger_time < 5.0 or 
+            CSVFileHandler._processing_lock or
+            current_size == CSVFileHandler._last_file_size):
+            return
             
-            try:
-                # Single trigger with content detection
-                time.sleep(1.0)  # Ensure file write complete
-                self.manager._reload_knowledge_base()
-            finally:
-                CSVFileHandler._processing_lock = False
+        # Lock and process
+        CSVFileHandler._processing_lock = True
+        CSVFileHandler._last_trigger_time = now
+        rows_before = CSVFileHandler._last_line_count
+        CSVFileHandler._last_file_size = current_size
+        CSVFileHandler._last_line_count = current_rows
+        
+        try:
+            # Single trigger with CSV row count detection
+            time.sleep(1.0)  # Ensure file write complete
+            self.manager._simple_reload_with_row_count(rows_before, current_rows)
+        finally:
+            CSVFileHandler._processing_lock = False
 
 
 class CSVHotReloadManager:
@@ -105,53 +130,87 @@ class CSVHotReloadManager:
         self.observer = None
         self.file_handler = None
         
-        print("📄 CSV Hot Reload Manager initialized (REAL-TIME)")
-        print(f"   Watching: {self.csv_path}")
-        print(f"   Mode: INSTANT file change detection")
+        # Show initialization messages in demo/development mode
+        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        if demo_mode or is_development:
+            print("📄 CSV Hot Reload Manager initialized (REAL-TIME)")
+            print(f"   Watching: {self.csv_path}")
+            print(f"   Mode: INSTANT file change detection")
         
         # Initialize knowledge base
         self._initialize_knowledge_base()
     
     def _initialize_knowledge_base(self):
         """Initialize the knowledge base on startup"""
+        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        should_print = demo_mode or is_development
+        
         try:
-            print("🔄 Initializing smart knowledge base...")
+            if should_print:
+                print("🔄 Initializing smart knowledge base...")
             self.kb = create_pagbank_knowledge_base()
             self.smart_loader = SmartIncrementalLoader(str(self.csv_path))
             
             if self.csv_path.exists():
                 # Smart initial load
-                print("🧠 Performing smart initial load...")
+                if should_print:
+                    print("🧠 Performing smart initial load...")
                 result = self.smart_loader.smart_load()
                 
                 if "error" in result:
-                    print(f"❌ Smart load error: {result['error']}")
+                    if should_print:
+                        print(f"❌ Smart load error: {result['error']}")
                     # Fallback to regular load
                     self.kb.load_knowledge_base(recreate=True)
                 else:
-                    print(f"✅ Smart load completed: {result.get('strategy', 'unknown')}")
+                    if should_print:
+                        print(f"✅ Smart load completed: {result.get('strategy', 'unknown')}")
                 
                 stats = self.kb.get_knowledge_statistics()
-                print(f"✅ Knowledge base ready with {stats.get('total_entries', 'unknown')} entries")
+                if should_print:
+                    print(f"✅ Knowledge base ready with {stats.get('total_entries', 'unknown')} entries")
             else:
-                print(f"⚠️  CSV file not found: {self.csv_path}")
+                if should_print:
+                    print(f"⚠️  CSV file not found: {self.csv_path}")
                 
         except Exception as e:
-            print(f"❌ Failed to initialize knowledge base: {e}")
+            if should_print:
+                print(f"❌ Failed to initialize knowledge base: {e}")
             raise
     
     def start_watching(self):
         """Start real-time watching of the CSV file for changes"""
+        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        should_print = demo_mode or is_development
+        
         if self.is_running:
-            print("⚠️  Manager already running")
+            if should_print:
+                print("⚠️  Manager already running")
             return
             
         self.is_running = True
-        print("👀 Started REAL-TIME watching CSV file for changes...")
-        print("🔥 Changes will be detected INSTANTLY when file is saved")
-        print("💡 Management can now edit the CSV file and changes will be applied immediately")
+        if should_print:
+            print("👀 Started REAL-TIME watching CSV file for changes...")
+            print("🔥 Changes will be detected INSTANTLY when file is saved")
+            print("💡 Management can now edit the CSV file and changes will be applied immediately")
         
         try:
+            # Initialize CSV data row count for comparison
+            try:
+                import csv
+                with open(self.csv_path, 'r', encoding='utf-8') as f:
+                    reader = csv.reader(f)
+                    try:
+                        next(reader)  # Skip header
+                        CSVFileHandler._last_line_count = sum(1 for row in reader if any(field.strip() for field in row))
+                    except StopIteration:
+                        CSVFileHandler._last_line_count = 0
+            except:
+                CSVFileHandler._last_line_count = 0
+            
             # Set up file system watcher
             self.file_handler = CSVFileHandler(self)
             self.observer = Observer()
@@ -160,18 +219,21 @@ class CSVHotReloadManager:
             watch_directory = str(self.csv_path.parent.absolute())
             self.observer.schedule(self.file_handler, watch_directory, recursive=False)
             
-            print(f"🔍 Watching directory: {watch_directory}")
-            print(f"📁 Target file: {self.csv_path.name}")
+            if should_print:
+                print(f"🔍 Watching directory: {watch_directory}")
+                print(f"📁 Target file: {self.csv_path.name}")
             
             # Start the observer
             self.observer.start()
-            print("✅ Real-time file watching ACTIVE")
+            if should_print:
+                print("✅ Real-time file watching ACTIVE")
             
             # For daemon threads, just return after starting observer
             # Observer runs in its own thread, no blocking needed
                 
         except Exception as e:
-            print(f"❌ Error setting up file watcher: {e}")
+            if should_print:
+                print(f"❌ Error setting up file watcher: {e}")
             self.stop_watching()
     
     def stop_watching(self):
@@ -186,8 +248,124 @@ class CSVHotReloadManager:
         if self.file_handler:
             self.file_handler = None
             
-        print("⏹️  Stopped watching CSV file")
+        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        should_print = demo_mode or is_development
+        
+        if should_print:
+            print("⏹️  Stopped watching CSV file")
     
+    
+    def _simple_reload_with_row_count(self, csv_rows_before, csv_rows_after):
+        """Clean CSV hot reload with table display of affected rows"""
+        try:
+            start_time = time.time()
+            
+            # Process the change with suppressed output
+            import sys
+            from io import StringIO
+            old_stdout = sys.stdout
+            sys.stdout = StringIO()
+            
+            try:
+                result = self.smart_loader.smart_load()
+            finally:
+                sys.stdout = old_stdout
+            
+            load_time = time.time() - start_time
+            
+            # Get final KB stats
+            try:
+                kb_stats = self.kb.get_knowledge_statistics()
+                kb_total = kb_stats.get('total_entries', 0)
+            except:
+                kb_total = 0
+            
+            # Determine operation type first (before checking no_changes)
+            if csv_rows_after > csv_rows_before:
+                operation = "ADD"
+                count = csv_rows_after - csv_rows_before
+            elif csv_rows_after < csv_rows_before:
+                operation = "DEL"
+                count = csv_rows_before - csv_rows_after
+            else:
+                operation = "UPD"
+                count = result.get('new_rows_processed', 1) if result else 1
+            
+            # Special handling for "no changes" detection
+            if result and result.get('strategy') == 'no_changes' and operation != "DEL":
+                print(f"✅ No changes | {load_time:.1f}s | KB: {kb_total} entries")
+                return
+            
+            print(f"✅ {operation} {count} entries | {load_time:.1f}s | KB: {kb_total}")
+            
+            # Show affected data as table
+            if operation in ["ADD", "UPD"]:
+                self._show_affected_rows_table(result, operation)
+            elif operation == "DEL":
+                # Use actual CSV count difference since smart loader is unreliable for deletions
+                actual_removed = count  # This is csv_rows_before - csv_rows_after
+                print(f"  🗑️  Removed {actual_removed} rows from knowledge base")
+                
+        except Exception as e:
+            print(f"❌ Error during hot reload: {e}")
+    
+    def _show_affected_rows_table(self, result, operation):
+        """Display affected CSV rows as a clean table"""
+        try:
+            import pandas as pd
+            
+            # Get the latest CSV data
+            df = pd.read_csv(self.csv_path)
+            
+            if operation == "ADD":
+                # Show new rows from smart loader result
+                new_rows = result.get('new_rows', []) if result else []
+                if new_rows:
+                    # Create DataFrame from new rows
+                    if len(new_rows) > 0 and isinstance(new_rows[0], dict):
+                        new_df = pd.DataFrame(new_rows)
+                    else:
+                        # Show last N rows from CSV
+                        count = len(new_rows)
+                        new_df = df.tail(count)
+                    
+                    print(f"  📊 Added rows:")
+                    self._print_clean_table(new_df)
+                else:
+                    # Fallback: show last row
+                    print(f"  📊 Added row:")
+                    self._print_clean_table(df.tail(1))
+                    
+            elif operation == "UPD":
+                # For updates, show what was processed
+                processed_count = result.get('new_rows_processed', 1) if result else 1
+                print(f"  📊 Updated row:")
+                self._print_clean_table(df.tail(1))
+                
+        except Exception as e:
+            print(f"  ⚠️  Could not display table: {e}")
+    
+    def _print_clean_table(self, df):
+        """Print CSV data in a simple, readable format"""
+        try:
+            if df.empty:
+                print("  (No data)")
+                return
+            
+            # Simple row-by-row display
+            for idx, row in df.iterrows():
+                print(f"  ┌─ Row {idx + 1}")
+                for col_name, value in row.items():
+                    # Clean up the value
+                    clean_value = str(value).replace('\n', ' | ').strip()
+                    if len(clean_value) > 80:
+                        clean_value = clean_value[:77] + "..."
+                    print(f"  │ {col_name}: {clean_value}")
+                print(f"  └─")
+                
+        except Exception as e:
+            print(f"  ⚠️  Display error: {e}")
     
     def _reload_knowledge_base(self):
         """Demo-ready logging with diff view for updates"""
@@ -200,9 +378,19 @@ class CSVHotReloadManager:
                 df_before = pd.read_csv(self.csv_path)
                 csv_rows_before = len(df_before) if not df_before.empty else 0
                 last_content_before = str(df_before.iloc[-1].iloc[0]) if not df_before.empty else ""
-            except:
+                
+                # DEBUG: Show before state
+                demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+                is_development = os.getenv("ENVIRONMENT", "production") == "development"
+                if demo_mode or is_development:
+                    print(f"🔍 BEFORE: {csv_rows_before} rows, last='{last_content_before[:30]}...'")
+            except Exception as e:
                 csv_rows_before = 0
                 last_content_before = ""
+                demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+                is_development = os.getenv("ENVIRONMENT", "production") == "development"
+                if demo_mode or is_development:
+                    print(f"🔍 BEFORE ERROR: {e}")
                 
             try:
                 current_stats = self.kb.get_knowledge_statistics()
@@ -232,9 +420,15 @@ class CSVHotReloadManager:
                     df_after = pd.read_csv(self.csv_path)
                     csv_rows_after = len(df_after) if not df_after.empty else 0
                     last_content_after = str(df_after.iloc[-1].iloc[0]) if not df_after.empty else ""
-                except:
+                    
+                    # DEBUG: Show after state
+                    if demo_mode or is_development:
+                        print(f"🔍 AFTER: {csv_rows_after} rows, last='{last_content_after[:30]}...'")
+                except Exception as e:
                     csv_rows_after = csv_rows_before
                     last_content_after = last_content_before
+                    if demo_mode or is_development:
+                        print(f"🔍 AFTER ERROR: {e}")
                     
                 try:
                     new_stats = self.kb.get_knowledge_statistics()
@@ -245,36 +439,42 @@ class CSVHotReloadManager:
                 # Look at the smart_loader result to understand what happened
                 strategy = result.get('strategy', 'unknown')
                 
+                # DEBUG: Show what we detected
+                demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+                is_development = os.getenv("ENVIRONMENT", "production") == "development"
+                if demo_mode or is_development:
+                    print(f"🔍 ROWS: {csv_rows_before}→{csv_rows_after}, CONTENT CHANGED: {last_content_before != last_content_after}")
+                
+                # Priority: Specific change detection FIRST, then fallback to strategy
                 if strategy == 'no_changes':
                     print(f"✅ No changes | {load_time:.1f}s | total: {db_count_after}")
                     
                 elif csv_rows_after > csv_rows_before:
-                    # Addition detected
+                    # Addition detected - HIGHEST PRIORITY
                     added_rows = csv_rows_after - csv_rows_before
                     content = last_content_after[:50] + "..." if len(last_content_after) > 50 else last_content_after
                     print(f"✅ ADD +{added_rows} \"{content}\" | {load_time:.1f}s | {csv_rows_before}→{csv_rows_after}")
                     
                 elif csv_rows_after < csv_rows_before:
-                    # Deletion detected
+                    # Deletion detected - HIGH PRIORITY
                     removed_rows = csv_rows_before - csv_rows_after
                     print(f"✅ DEL -{removed_rows} entries | {load_time:.1f}s | {csv_rows_before}→{csv_rows_after}")
                     
                 elif last_content_before != last_content_after and last_content_before and last_content_after:
-                    # Content update detected
+                    # Content update detected - HIGH PRIORITY
                     before_text = last_content_before[:40] + "..." if len(last_content_before) > 40 else last_content_before
                     after_text = last_content_after[:40] + "..." if len(last_content_after) > 40 else last_content_after
                     print(f"✅ UPD | {load_time:.1f}s | total: {csv_rows_after}")
                     print(f"  📝 Before: \"{before_text}\"")
                     print(f"  ✨ After:  \"{after_text}\"")
                     
-                elif strategy in ['incremental_update', 'initial_load_with_hashes', 'full_reload']:
-                    # Smart loader processed something but we can't detect the exact change
-                    processed_count = result.get('entries_processed', result.get('new_rows_processed', 'unknown'))
-                    print(f"✅ SYNC {strategy} | {processed_count} entries | {load_time:.1f}s | total: {db_count_after}")
-                    
                 else:
-                    # Default case
-                    print(f"✅ PROC {strategy} | {load_time:.1f}s | total: {db_count_after}")
+                    # Fallback: Use strategy-based messages only if no specific change detected
+                    if strategy in ['incremental_update', 'initial_load_with_hashes', 'full_reload']:
+                        processed_count = result.get('entries_processed', result.get('new_rows_processed', 'unknown'))
+                        print(f"✅ SYNC {strategy} | {processed_count} entries | {load_time:.1f}s | total: {db_count_after}")
+                    else:
+                        print(f"✅ PROC {strategy} | {load_time:.1f}s | total: {db_count_after}")
             else:
                 print(f"❌ Error: {result.get('error', 'unknown error')}")
                 
@@ -310,7 +510,12 @@ class CSVHotReloadManager:
     
     def force_reload(self):
         """Manually force a reload (for testing/debugging)"""
-        print("🔄 Force reloading knowledge base...")
+        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        should_print = demo_mode or is_development
+        
+        if should_print:
+            print("🔄 Force reloading knowledge base...")
         self._reload_knowledge_base()
 
 

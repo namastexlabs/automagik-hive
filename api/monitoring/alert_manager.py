@@ -4,6 +4,7 @@ Handles alert configuration, routing, and delivery
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
@@ -108,14 +109,19 @@ class AlertManager:
                 logger.error(f"Error loading alert config: {e}")
         
         # Default configuration
+        default_recipients = []
+        if os.getenv('EMAIL_RECIPIENT'):
+            default_recipients = [os.getenv('EMAIL_RECIPIENT')]
+        
         return {
             'email': {
-                'enabled': False,
-                'smtp_server': 'smtp.gmail.com',
-                'smtp_port': 587,
-                'username': '',
-                'password': '',
-                'recipients': []
+                'enabled': bool(os.getenv('RESEND_API_KEY') and os.getenv('EMAIL_RECIPIENT')),
+                'smtp_server': 'smtp.resend.com',
+                'smtp_port': 465,
+                'use_tls': True,
+                'username': 'resend',
+                'password': os.getenv('RESEND_API_KEY', ''),
+                'recipients': default_recipients
             },
             'webhook': {
                 'enabled': False,
@@ -396,9 +402,16 @@ class AlertManager:
             
             msg.attach(MimeText(body, 'plain'))
             
-            # Send email
-            server = smtplib.SMTP(email_config['smtp_server'], email_config['smtp_port'])
-            server.starttls()
+            # Send email via SMTP
+            if email_config.get('use_tls', True) and email_config['smtp_port'] == 465:
+                # Use SMTP_SSL for port 465 (implicit TLS)
+                server = smtplib.SMTP_SSL(email_config['smtp_server'], email_config['smtp_port'])
+            else:
+                # Use regular SMTP with STARTTLS for port 587
+                server = smtplib.SMTP(email_config['smtp_server'], email_config['smtp_port'])
+                if email_config.get('use_tls', True):
+                    server.starttls()
+            
             server.login(email_config['username'], email_config['password'])
             server.send_message(msg)
             server.quit()

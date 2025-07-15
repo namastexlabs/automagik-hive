@@ -38,6 +38,12 @@ DOCKER_COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then ech
 # UV command
 UV := uv
 
+# Load port from .env file
+PB_AGENTS_PORT := $(shell grep -E '^PB_AGENTS_PORT=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
+ifeq ($(PB_AGENTS_PORT),)
+    PB_AGENTS_PORT := 7777
+endif
+
 # ===========================================
 # 🛠️ Utility Functions
 # ===========================================
@@ -58,19 +64,30 @@ define print_error
 endef
 
 define show_pagbank_logo
-    [ -z "$PAGBANK_QUIET_LOGO" ] && { \
+    if [ -z "$${PAGBANK_QUIET_LOGO}" ]; then \
         echo ""; \
-        echo -e "$(FONT_PURPLE)                                                                                            $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  ██████╗  █████╗  ██████╗ ██████╗  █████╗ ███╗   ██╗██╗  ██╗                            $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  ██╔══██╗██╔══██╗██╔════╝ ██╔══██╗██╔══██╗████╗  ██║██║ ██╔╝                            $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  ██████╔╝███████║██║  ███╗██████╔╝███████║██╔██╗ ██║█████╔╝                             $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  ██╔═══╝ ██╔══██║██║   ██║██╔══██╗██╔══██║██║╚██╗██║██╔═██╗                             $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  ██║     ██║  ██║╚██████╔╝██████╔╝██║  ██║██║ ╚████║██║  ██╗                            $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝                            $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)                                                                                            $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)                    Multi-Agent AI System                                                   $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)           @@@@@]^^}@@@@@@                                                                                                                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)       @@@*++++++++++++)@@@                                                                                                                      $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    @@@@+++++++++++++++++*@@@                                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)   @@@++++++++++++++++++++++@@@                                                                                                                  $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)  @@@++++****^>>****+++++++++@@@                                                                               @@@@                              $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE) @@@++**>@@@%()(%@@@#**++++++*@@%         @%%@%@@@@                         @%%%%%%@@@                         @@@@                              $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)#@@^+*%@(...........(@@*++++++@@@        %@@@%%@@@@@     @%%%@      @@#@@   @@@@  %@@@      @%%%@       @#@   @@@@                               $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)@@@**@................(@@<^*+=#@@@       @@@@   %@@% @@@@@%@@@@  %@@@@%@@%  @@@  @@@@@  @@@@@%@@@@ @@@%@@@@@  @@@@ %@@%%                         $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)@@@>@..............@@>**+++*@@@@@@      @@@@@@@@@@@ @@@@@  @@@ @@@@%  %@@% %@@@%@@@@%  @@@@@  @@% @@@@@  @@@  @@@%@@@@                           $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)@@@@..............@>*+++++*+++@@@@      @@@@@@@@%  %@@@   @@@% @@@@   @@@  @@@   @@@@ @@@@   @@@% @@@%  @@@@ #@@@@@@                             $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)@@@=.............@>**++++++++++@@%      @@@        @@@%  %@@@ @@@@  @@@@@ @@@@   @@@@ @@@%  %@@@  @@@   @@@% @@@@@@@@                            $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)#@@..............@**+++++++++++#@      %@@@        %@@@%@@@@@  @@@@@@@@@@ @@@@@@@@@@@ %@@@%@@@@@ @@@@   @@@ @@@@  @@@@                           $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE) @@@.............@>**++++++++++@@      @%%@         @%%@  %#@   @%%@@@@@  @%%%%%%@     @%%@  %%@ @#%@   #%@ @##@   @%#                           $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)  @@..............@>*+++++*+++@@                              @@@@@@@@@                                                                          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)   @@..............@@>*++++~@@@                               %@@@@@@@                                                                           $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    @@@..............+%@@@@@@                                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      @@@=.........^%@@@@@@                                                                                                                      $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)         @@@@@@@@@@@@@@@                                                                                                                         $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                                                                  $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                    Multi-Agent AI System                                                                                                         $(FONT_RESET)"; \
         echo ""; \
-    } || true
+    fi
 endef
 
 define check_docker
@@ -141,163 +158,204 @@ endef
 # ===========================================
 .PHONY: help
 help: ## 🏦 Show this help message
-    @$(call show_pagbank_logo)
-    @echo -e "$(FONT_BOLD)$(FONT_CYAN)PagBank Multi-Agent System$(FONT_RESET) - $(FONT_GRAY)AI Customer Service Agents$(FONT_RESET)"
-    @echo ""
-    @echo -e "$(FONT_PURPLE)🏦 Simple & Powerful - From Development to Production$(FONT_RESET)"
-    @echo ""
-    @echo -e "$(FONT_CYAN)🚀 Quick Start:$(FONT_RESET)"
-    @echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install development environment (uv sync)"
-    @echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Start development server (port 7777)"
-    @echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Start production Docker stack"
-    @echo ""
-    @echo -e "$(FONT_CYAN)🎛️ Service Management:$(FONT_RESET)"
-    @echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Development mode with hot reload (uv run)"
-    @echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Production Docker stack (app + PostgreSQL)"
-    @echo -e "  $(FONT_PURPLE)stop$(FONT_RESET)            Stop all services"
-    @echo -e "  $(FONT_PURPLE)status$(FONT_RESET)          Show service status"
-    @echo ""
-    @echo -e "$(FONT_CYAN)📋 Monitoring:$(FONT_RESET)"
-    @echo -e "  $(FONT_PURPLE)logs$(FONT_RESET)            Show container logs"
-    @echo -e "  $(FONT_PURPLE)health$(FONT_RESET)          Check service health"
-    @echo ""
-    @echo -e "$(FONT_CYAN)🔄 Maintenance:$(FONT_RESET)"
-    @echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files"
-    @echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run test suite"
-    @echo ""
-    @echo -e "$(FONT_YELLOW)💡 Development runs on port 7777, Production uses Docker$(FONT_RESET)"
-    @echo ""
+	@$(call show_pagbank_logo)
+	@echo -e "$(FONT_BOLD)$(FONT_CYAN)PagBank Multi-Agent System$(FONT_RESET) - $(FONT_GRAY)AI Customer Service Agents$(FONT_RESET)"
+	@echo ""
+	@echo -e "$(FONT_PURPLE)🏦 Simple & Powerful - From Development to Production$(FONT_RESET)"
+	@echo ""
+	@echo -e "$(FONT_CYAN)🚀 Quick Start:$(FONT_RESET)"
+	@echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install development environment (uv sync)"
+	@echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Start development server"
+	@echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Start production Docker stack"
+	@echo ""
+	@echo -e "$(FONT_CYAN)🎛️ Service Management:$(FONT_RESET)"
+	@echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Development mode with hot reload (uv run)"
+	@echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Production Docker stack (app + PostgreSQL)"
+	@echo -e "  $(FONT_PURPLE)stop$(FONT_RESET)            Stop all services"
+	@echo -e "  $(FONT_PURPLE)status$(FONT_RESET)          Show service status"
+	@echo ""
+	@echo -e "$(FONT_CYAN)📋 Monitoring:$(FONT_RESET)"
+	@echo -e "  $(FONT_PURPLE)logs$(FONT_RESET)            Show logs (container or local development)"
+	@echo -e "  $(FONT_PURPLE)logs-live$(FONT_RESET)       Follow logs in real-time"
+	@echo -e "  $(FONT_PURPLE)health$(FONT_RESET)          Check service health"
+	@echo ""
+	@echo -e "$(FONT_CYAN)🔄 Maintenance:$(FONT_RESET)"
+	@echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files"
+	@echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run test suite"
+	@echo ""
+	@echo -e "$(FONT_YELLOW)💡Production uses Docker$(FONT_RESET)"
+	@echo ""
 
 # ===========================================
 # 🚀 Installation
 # ===========================================
 .PHONY: install
 install: ## 🛠️ Install development environment
-    @$(call print_status,Installing development environment...)
-    @$(call check_prerequisites)
-    @$(call setup_python_env)
-    @$(call check_env_file)
-    @$(call show_pagbank_logo)
-    @$(call print_success,Development environment ready!)
-    @echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
+	@$(call print_status,Installing development environment...)
+	@$(call check_prerequisites)
+	@$(call setup_python_env)
+	@$(call check_env_file)
+	@$(call show_pagbank_logo)
+	@$(call print_success,Development environment ready!)
+	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
 
 # ===========================================
 # 🎛️ Service Management
 # ===========================================
 .PHONY: dev
-dev: ## 🛠️ Start development server with hot reload (port 7777)
-    @$(call print_status,Starting PagBank development server...)
-    @$(call check_env_file)
-    @if [ ! -d "$(VENV_PATH)" ]; then \
-        $(call print_error,Virtual environment not found); \
-        echo -e "$(FONT_YELLOW)💡 Run 'make install' first$(FONT_RESET)"; \
-        exit 1; \
-    fi
-    @echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
-    @echo -e "$(FONT_PURPLE)🚀 Starting server on port 7777...$(FONT_RESET)"
-    @uv run python api/serve.py
+dev: ## 🛠️ Start development server with hot reload )
+	@$(call show_pagbank_logo)
+	@$(call print_status,Starting PagBank development server...)
+	@$(call check_env_file)
+	@if [ ! -d "$(VENV_PATH)" ]; then \
+		$(call print_error,Virtual environment not found); \
+		echo -e "$(FONT_YELLOW)💡 Run 'make install' first$(FONT_RESET)"; \
+		exit 1; \
+	fi
+	@echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
+	@echo -e "$(FONT_PURPLE)🚀 Starting server...$(FONT_RESET)"
+	@uv run python api/serve.py
 
 .PHONY: prod
 prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
-    @$(call print_status,Starting production Docker stack...)
-    @$(call check_docker)
-    @$(call check_env_file)
-    @echo -e "$(FONT_CYAN)🐳 Building and starting containers...$(FONT_RESET)"
-    @$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
-    @$(call show_pagbank_logo)
-    @$(call print_success,Production stack started!)
-    @echo -e "$(FONT_CYAN)💡 API available at http://localhost:8000$(FONT_RESET)"
-    @echo -e "$(FONT_CYAN)💡 Check status with 'make status'$(FONT_RESET)"
+	@$(call print_status,Starting production Docker stack...)
+	@$(call check_docker)
+	@$(call check_env_file)
+	@echo -e "$(FONT_CYAN)🐳 Building and starting containers...$(FONT_RESET)"
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
+	@$(call show_pagbank_logo)
+	@$(call print_success,Production stack started!)
+	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(PB_AGENTS_PORT)$(FONT_RESET)"
+	@echo -e "$(FONT_CYAN)💡 Check status with 'make status'$(FONT_RESET)"
 
 .PHONY: stop
 stop: ## 🛑 Stop all services
-    @$(call print_status,Stopping all services...)
-    @$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
-    @pkill -f "python.*api/serve.py" 2>/dev/null || true
-    @$(call print_success,All services stopped!)
+	@$(call print_status,Stopping all services...)
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
+	@pkill -f "python.*api/serve.py" 2>/dev/null || true
+	@$(call print_success,All services stopped!)
 
 .PHONY: status
 status: ## 📊 Show service status
-    @$(call print_status,Service Status)
-    @echo ""
-    @echo -e "$(FONT_PURPLE)┌─────────────────────────┬──────────┬─────────┬──────────┐$(FONT_RESET)"
-    @echo -e "$(FONT_PURPLE)│ Service                 │ Status   │ Port    │ Container│$(FONT_RESET)"
-    @echo -e "$(FONT_PURPLE)├─────────────────────────┼──────────┼─────────┼──────────┤$(FONT_RESET)"
-    @if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
-        printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-            "pagbank-agents" "running" "8000" "$(shell docker ps --filter 'name=pagbank-agents' --format '{{.ID}}' | head -c 6)"; \
-    else \
-        printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-            "pagbank-agents" "stopped" "-" "-"; \
-    fi
-    @if docker ps --filter "name=pagbank-pgvector" --format "{{.Names}}" | grep -q pagbank-pgvector; then \
-        printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-            "pagbank-pgvector" "running" "5432" "$(shell docker ps --filter 'name=pagbank-pgvector' --format '{{.ID}}' | head -c 6)"; \
-    else \
-        printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-            "pagbank-pgvector" "stopped" "-" "-"; \
-    fi
-    @if pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
-        pid=$(pgrep -f "python.*api/serve.py"); \
-        printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-            "local-development" "running" "7777" "$$pid"; \
-    fi
-    @echo -e "$(FONT_PURPLE)└─────────────────────────┴──────────┴─────────┴──────────┘$(FONT_RESET)"
+	@$(call print_status,Service Status)
+	@echo ""
+	@echo -e "$(FONT_PURPLE)┌─────────────────────────┬──────────┬─────────┬──────────┐$(FONT_RESET)"
+	@echo -e "$(FONT_PURPLE)│ Service                 │ Status   │ Port    │ Container│$(FONT_RESET)"
+	@echo -e "$(FONT_PURPLE)├─────────────────────────┼──────────┼─────────┼──────────┤$(FONT_RESET)"
+	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"pagbank-agents" "running" "$(PB_AGENTS_PORT)" "$(shell docker ps --filter 'name=pagbank-agents' --format '{{.ID}}' | head -c 6)"; \
+	else \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"pagbank-agents" "stopped" "-" "-"; \
+	fi
+	@if docker ps --filter "name=pagbank-pgvector" --format "{{.Names}}" | grep -q pagbank-pgvector; then \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"pagbank-pgvector" "running" "5432" "$(shell docker ps --filter 'name=pagbank-pgvector' --format '{{.ID}}' | head -c 6)"; \
+	else \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"pagbank-pgvector" "stopped" "-" "-"; \
+	fi
+	@if pgrep -f "python.*api/serve.py" > /dev/null 2>&1; then \
+		pid=$(pgrep -f "python.*api/serve.py"); \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"local-development" "running" "$$pid"; \
+	fi
+	@echo -e "$(FONT_PURPLE)└─────────────────────────┴──────────┴─────────┴──────────┘$(FONT_RESET)"
 
 # ===========================================
 # 📋 Monitoring
 # ===========================================
 .PHONY: logs
-logs: ## 📄 Show container logs
-    @echo -e "$(FONT_PURPLE)🏦 Container Logs$(FONT_RESET)"
-    @if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
-        echo -e "$(FONT_CYAN)=== PagBank Agents Logs ====$(FONT_RESET)"; \
-        docker logs --tail=50 pagbank-agents; \
-    else \
-        echo -e "$(FONT_YELLOW)⚠️ pagbank-agents container not running$(FONT_RESET)"; \
-    fi
+logs: ## 📄 Show logs (container or local development)
+	@echo -e "$(FONT_PURPLE)🏦 Application Logs$(FONT_RESET)"
+	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
+		echo -e "$(FONT_CYAN)=== PagBank Agents Container Logs ====$(FONT_RESET)"; \
+		docker logs --tail=50 pagbank-agents; \
+	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
+		echo -e "$(FONT_CYAN)=== Local Development Server Logs ====$(FONT_RESET)"; \
+		echo -e "$(FONT_YELLOW)💡 Local development server is running (PID: $$(pgrep -f 'python.*api/serve.py'))$(FONT_RESET)"; \
+		echo -e "$(FONT_GRAY)📋 To see live logs, use: tail -f logs/app.log (if logging to file)$(FONT_RESET)"; \
+		echo -e "$(FONT_GRAY)📋 Or check the terminal where 'make dev' is running$(FONT_RESET)"; \
+		if [ -f "logs/app.log" ]; then \
+			echo -e "$(FONT_CYAN)=== Recent Application Logs ====$(FONT_RESET)"; \
+			tail -50 logs/app.log 2>/dev/null || echo -e "$(FONT_YELLOW)⚠️ Could not read logs/app.log$(FONT_RESET)"; \
+		elif [ -f "app.log" ]; then \
+			echo -e "$(FONT_CYAN)=== Recent Application Logs ====$(FONT_RESET)"; \
+			tail -50 app.log 2>/dev/null || echo -e "$(FONT_YELLOW)⚠️ Could not read app.log$(FONT_RESET)"; \
+		else \
+			echo -e "$(FONT_GRAY)📝 No log files found - logs are displayed in the development terminal$(FONT_RESET)"; \
+		fi \
+	else \
+		echo -e "$(FONT_YELLOW)⚠️ No running services found$(FONT_RESET)"; \
+		echo -e "$(FONT_GRAY)💡 Start services with 'make dev' (local) or 'make prod' (Docker)$(FONT_RESET)"; \
+	fi
+
+.PHONY: logs-live
+logs-live: ## 📄 Follow logs in real-time
+	@echo -e "$(FONT_PURPLE)🏦 Live Application Logs$(FONT_RESET)"
+	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
+		echo -e "$(FONT_CYAN)=== Following PagBank Agents Container Logs ====$(FONT_RESET)"; \
+		echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
+		docker logs -f pagbank-agents; \
+	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
+		echo -e "$(FONT_CYAN)=== Following Local Development Logs ====$(FONT_RESET)"; \
+		if [ -f "logs/app.log" ]; then \
+			echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
+			tail -f logs/app.log; \
+		elif [ -f "app.log" ]; then \
+			echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
+			tail -f app.log; \
+		else \
+			echo -e "$(FONT_YELLOW)⚠️ No log files found for local development$(FONT_RESET)"; \
+			echo -e "$(FONT_GRAY)📋 Logs are displayed in the terminal where 'make dev' is running$(FONT_RESET)"; \
+		fi \
+	else \
+		echo -e "$(FONT_YELLOW)⚠️ No running services found$(FONT_RESET)"; \
+		echo -e "$(FONT_GRAY)💡 Start services with 'make dev' (local) or 'make prod' (Docker)$(FONT_RESET)"; \
+	fi
 
 .PHONY: health
 health: ## 💊 Check service health
-    @$(call print_status,Health Check)
-    @if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
-        if curl -s http://localhost:8000/health >/dev/null 2>&1; then \
-            echo -e "$(FONT_GREEN)$(CHECKMARK) API health check: passed$(FONT_RESET)"; \
-        else \
-            echo -e "$(FONT_YELLOW)$(WARNING) API health check: failed$(FONT_RESET)"; \
-        fi; \
-    else \
-        echo -e "$(FONT_YELLOW)$(WARNING) Docker containers not running$(FONT_RESET)"; \
-    fi
-    @if curl -s http://localhost:7777/health >/dev/null 2>&1; then \
-        echo -e "$(FONT_GREEN)$(CHECKMARK) Development server: healthy$(FONT_RESET)"; \
-    elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
-        echo -e "$(FONT_YELLOW)$(WARNING) Development server running but health check failed$(FONT_RESET)"; \
-    fi
+	@$(call print_status,Health Check)
+	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
+		if curl -s http://localhost:$(PB_AGENTS_PORT)/health >/dev/null 2>&1; then \
+			echo -e "$(FONT_GREEN)$(CHECKMARK) API health check: passed$(FONT_RESET)"; \
+		else \
+			echo -e "$(FONT_YELLOW)$(WARNING) API health check: failed$(FONT_RESET)"; \
+		fi; \
+	else \
+		echo -e "$(FONT_YELLOW)$(WARNING) Docker containers not running$(FONT_RESET)"; \
+	fi
+	@if curl -s http://localhost:$(PB_AGENTS_PORT)/health >/dev/null 2>&1; then \
+		echo -e "$(FONT_GREEN)$(CHECKMARK) Development server: healthy$(FONT_RESET)"; \
+	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
+		echo -e "$(FONT_YELLOW)$(WARNING) Development server running but health check failed$(FONT_RESET)"; \
+	fi
 
 # ===========================================
 # 🔄 Maintenance
 # ===========================================
 .PHONY: clean
 clean: ## 🧹 Clean temporary files
-    @$(call print_status,Cleaning temporary files...)
-    @rm -rf logs/ 2>/dev/null || true
-    @find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-    @find . -name "*.pyc" -type f -delete 2>/dev/null || true
-    @find . -name "*.pyo" -type f -delete 2>/dev/null || true
-    @$(call print_success,Cleanup complete!)
+	@$(call print_status,Cleaning temporary files...)
+	@rm -rf logs/ 2>/dev/null || true
+	@find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find . -name "*.pyc" -type f -delete 2>/dev/null || true
+	@find . -name "*.pyo" -type f -delete 2>/dev/null || true
+	@$(call print_success,Cleanup complete!)
 
 .PHONY: test
 test: ## 🧪 Run test suite
-    @$(call print_status,Running tests...)
-    @if [ ! -d "$(VENV_PATH)" ]; then \
-        $(call print_error,Virtual environment not found); \
-        echo -e "$(FONT_YELLOW)💡 Run 'make install' first$(FONT_RESET)"; \
-        exit 1; \
-    fi
-    @uv run pytest
+	@$(call print_status,Running tests...)
+	@if [ ! -d "$(VENV_PATH)" ]; then \
+		$(call print_error,Virtual environment not found); \
+		echo -e "$(FONT_YELLOW)💡 Run 'make install' first$(FONT_RESET)"; \
+		exit 1; \
+	fi
+	@uv run pytest
 
 # ===========================================
 # 🧹 Phony Targets
 # ===========================================
-.PHONY: help install dev prod stop status logs health clean test
+.PHONY: help install dev prod stop status logs logs-live health clean test

@@ -165,7 +165,7 @@ When using the Task tool to spawn sub-agents, the core project context (CLAUDE.m
 **Usage patterns:**
 ```python
 # New consultation session (project structure auto-attached by hooks)
-mcp__gemini__consult_gemini(
+mcp__gemini-consult__consult_gemini(
     specific_question="How should I optimize this voice pipeline?",
     problem_description="Need to reduce latency in real-time audio processing",
     code_context="Current pipeline processes audio sequentially...",
@@ -176,7 +176,7 @@ mcp__gemini__consult_gemini(
 )
 
 # Follow-up in existing session
-mcp__gemini__consult_gemini(
+mcp__gemini-consult__consult_gemini(
     specific_question="What about memory usage?",
     session_id="session_123",
     additional_context="Implemented your suggestions, now seeing high memory usage"
@@ -243,7 +243,20 @@ mcp__ask-repo-agent__ask_question(
 
 
 
-## 6. Post-Task Completion Protocol
+## 6. Development Server Configuration
+
+### Simple Configuration
+The development server uses environment variables in `.env` for configuration:
+
+**Development Mode**:
+```bash
+make dev
+```
+
+### Environment Variables
+- `CSV_HOT_RELOAD=true` - Enable CSV file watching for knowledge base updates
+
+## 7. Post-Task Completion Protocol
 After completing any coding task, follow this checklist:
 
 ### 1. Type Safety & Quality Checks

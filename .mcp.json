@@ -34,18 +34,16 @@
         "EVOLUTION_API_FIXED_RECIPIENT": "5511986780008@s.whatsapp.net"
       }
     },
-    "automagik-workflows": {
-      "command": "uvx",
-      "args": [
-        "automagik-tools@0.7.7",
-        "tool",
-        "automagik-workflows"
-      ],
-      "env": {
-        "AUTOMAGIK_WORKFLOWS_API_KEY": "namastex888",
-        "AUTOMAGIK_WORKFLOWS_BASE_URL": "http://localhost:28881",
-        "AUTOMAGIK_WORKFLOWS_POLLING_INTERVAL": "8",
-        "AUTOMAGIK_WORKFLOWS_MAX_RETRIES": "3"
+     "gemini": {
+       "command": "uvx",
+       "args": [
+         "automagik-tools@0.8.11",
+         "tool",
+         "gemini-assistant"
+       ],
+       "env": {
+         "GEMINI_API_KEY": "AIzaSyBnrXsOX0S-k6rrZEsqR4N9Fo4e45XrHGg",
+         "GEMINI_MODEL": "gemini-2.5-pro"
       }
     }
   }
