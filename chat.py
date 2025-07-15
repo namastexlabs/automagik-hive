@@ -525,36 +525,51 @@ class WebChatInterface:
         # Setup layout
         self.setup_layout()
         
-        # Display initial layout
-        console.print(self.layout)
-        
-        # Main chat loop without Live screen mode
-        while self.running:
-            try:
-                # Show input prompt
-                console.print("\n" + "─" * 80)
-                user_input = Prompt.ask("💬 [bold cyan]Your message[/bold cyan]")
-                
-                if user_input.strip():
-                    if user_input.strip().lower() in ['quit', 'exit', 'bye']:
-                        break
+        # Use Live display with proper input integration
+        with Live(self.layout, refresh_per_second=2, screen=False) as live:
+            self.live = live
+            
+            # Main chat loop with integrated input
+            while self.running:
+                try:
+                    # Show we're waiting for input
+                    self.current_input = "Type your message and press Enter..."
+                    self.update_input_area()
+                    live.refresh()
                     
-                    # Send message
-                    await self.send_message(user_input.strip())
+                    # Pause live to get clean input
+                    live.stop()
                     
-                    # Update and display the layout
-                    self.update_header()
-                    self.update_messages_panel()
-                    self.update_events_panel()
-                    console.clear()
-                    console.print(self.layout)
-                
-            except KeyboardInterrupt:
-                break
-            except EOFError:
-                break
-            except Exception as e:
-                console.print(f"Input error: {e}", style="red")
+                    # Get user input
+                    user_input = input()
+                    
+                    # Resume live display
+                    live.start()
+                    
+                    # Clear input area
+                    self.current_input = ""
+                    self.update_input_area()
+                    live.refresh()
+                    
+                    if user_input.strip():
+                        if user_input.strip().lower() in ['quit', 'exit', 'bye']:
+                            break
+                        
+                        # Send message
+                        await self.send_message(user_input.strip())
+                        
+                        # Update displays
+                        self.update_header()
+                        self.update_messages_panel()
+                        self.update_events_panel()
+                        live.refresh()
+                    
+                except KeyboardInterrupt:
+                    break
+                except EOFError:
+                    break
+                except Exception as e:
+                    console.print(f"Input error: {e}", style="red")
         
         # Cleanup
         if self.session:
