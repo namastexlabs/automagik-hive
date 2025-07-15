@@ -122,16 +122,6 @@ def _log_query_complete(team_instance, result):
     ))
 
 
-# Legacy functions for backward compatibility (now deprecated)
-def get_demo_enhanced_ana_team(original_team_func):
-    """
-    DEPRECATED: This decorator approach is no longer used.
-    Use global patching instead.
-    """
-    def enhanced_team_factory(*args, **kwargs):
-        print("WARNING: Using deprecated decorator approach. Use global patching instead.")
-        return original_team_func(*args, **kwargs)
-    return enhanced_team_factory
 
 
 class DemoAnaTeam(Team):
