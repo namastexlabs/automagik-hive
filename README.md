@@ -12,13 +12,13 @@ graph TB
     Customer[👤 Consulta do Cliente<br/>Chat CLI ou API] --> Ana
 
     %% Ana Coordenadora Central
-    Ana[🤖 Ana Team<br/>Claude Sonnet 4<br/>Coordenadora V2<br/>mode="route"]
+    Ana[🤖 Ana Team<br/>Claude Sonnet 4<br/>Coordenadora V2<br/>mode route]
     
     %% Decisão de Roteamento Ana
-    Ana --> Routing{🔀 Análise Ana<br/>Roteamento Inteligente<br/>≤15 palavras + routing}
+    Ana --> Routing{🔀 Análise Ana<br/>Roteamento Inteligente<br/>15 palavras + routing}
     
     %% Detecção de Escalação Humana
-    Ana --> HumanCheck{😤 Detecção de<br/>Frustração/Complexidade?}
+    Ana --> HumanCheck{😤 Detecção de<br/>Frustração/Complexidade}
     HumanCheck -->|Escalação Necessária| HumanAgent[👨‍💼 Agente Human Handoff<br/>Transferência Humana<br/>Preservação Contexto]
     HumanAgent --> McpTool[🔧 MCP WhatsApp<br/>mcp_send_whatsapp_message]
     McpTool --> WhatsApp[📱 WhatsApp Evolution API<br/>Notificação Stakeholders]
@@ -30,10 +30,10 @@ graph TB
     Routing -->|Notificações| WhatsAppAgent[📱 Agente WhatsApp<br/>Notificações Cliente<br/>Evolution API]
     
     %% Sistema Base de Conhecimento com Hot Reload
-    subgraph Knowledge["📚 Sistema Base de Conhecimento"]
+    subgraph Knowledge[📚 Sistema Base de Conhecimento]
         CSV[📄 knowledge_rag.csv<br/>Hot Reload Ativo<br/>Filtrado por Unidade]
         HotReload[🔄 CSV Hot Reload Manager<br/>Watchdog Ativo<br/>Atualizações em Tempo Real]
-        Vector[(🔍 Busca Semântica<br/>Embeddings<br/>Relevância por Score)]
+        Vector[🔍 Busca Semântica<br/>Embeddings<br/>Relevância por Score]
         CSV --> HotReload
         HotReload --> Vector
     end
@@ -49,8 +49,8 @@ graph TB
     Filter3 --> Vector
     
     %% Sistema de Memória PostgreSQL + Session
-    subgraph Memory["🧠 Sistema de Memória V2"]
-        PostgresMemory[(🗃️ PostgreSQL Memory<br/>Session Persistente<br/>Pattern Detection)]
+    subgraph Memory[🧠 Sistema de Memória V2]
+        PostgresMemory[🗃️ PostgreSQL Memory<br/>Session Persistente<br/>Pattern Detection]
         SessionMgmt[⏱️ Session Manager<br/>Continuidade Conversação<br/>Auto-upgrade Schema]
         PatternDetect[🔍 Pattern Detector<br/>Análise Comportamental<br/>Aprendizado Contínuo]
     end
@@ -67,7 +67,7 @@ graph TB
     PostgresMemory --> PatternDetect
     
     %% Interface Rica de Chat CLI
-    subgraph CLI["💬 Rich Chat Interface"]
+    subgraph CLI[💬 Rich Chat Interface]
         ChatPy[chat.py<br/>Rich Console Interface<br/>Real-time Events]
         Events[📊 Event Monitoring<br/>Agent Activity<br/>Success Criteria]
         Metrics[📈 Live Metrics<br/>Response Times<br/>Routing Decisions]
@@ -79,7 +79,7 @@ graph TB
     Events --> Metrics
     
     %% Fluxo de Resposta com Success Criteria
-    AdquirenciaAgent --> Response[📝 Resposta Especializada<br/>Validação Success Criteria<br/>≤15 palavras Ana + routing]
+    AdquirenciaAgent --> Response[📝 Resposta Especializada<br/>Validação Success Criteria<br/>15 palavras Ana + routing]
     EmissaoAgent --> Response
     PagBankAgent --> Response
     WhatsAppAgent --> Response
