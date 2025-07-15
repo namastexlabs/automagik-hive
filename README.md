@@ -1,444 +1,419 @@
-# PagBank Multi-Agent AI System
+# Sistema Multi-Agente PagBank com Ana
 
-## 🚀 Overview
+Sistema sofisticado de atendimento ao cliente multi-agente construído com o framework Agno. O sistema utiliza Ana como coordenadora inteligente que roteia consultas de clientes para agentes especializados por unidade de negócio: Adquirência, Emissão, PagBank e Escalação Humana.
 
-Production-ready multi-agent AI system for PagBank customer service, built with modern architecture patterns, comprehensive monitoring, and enterprise-grade deployment capabilities. Features intelligent routing through Ana (the AI coordinator) who directs customer queries to specialized domain agents for optimal assistance.
+## 🏗️ Visão Geral da Arquitetura
 
-## ✨ Key Features
+O sistema utiliza uma arquitetura V2 com Ana como coordenadora central que analisa consultas e roteia para agentes especializados. Cada agente possui acesso dedicado à base de conhecimento com filtragem inteligente para respostas precisas e contextuais.
 
-### 🏗️ Architecture
-- **Clean V2 Architecture**: YAML-driven agent configuration with factory patterns
-- **Agno Framework Integration**: Leverages Agno's Team(mode="route") for intelligent routing through Ana
-- **Ana Coordinator**: Central AI assistant that routes queries to specialist agents
-- **Rich CLI Chat Interface**: Interactive command-line chat for development and testing
-- **Microservices Ready**: Containerized with Docker and orchestrated with Docker Compose
-- **Database-Driven**: PostgreSQL with auto-migrations and connection pooling
+```mermaid
+graph TB
+    %% Ponto de Entrada do Cliente
+    Customer[👤 Consulta do Cliente<br/>Chat CLI ou API] --> Ana
 
-### 🤖 AI Agents & Routing
-- **Ana Team**: Central routing coordinator with intelligent agent selection
-- **Domain Specialists**: Adquirência, Emissão, PagBank, and Human Handoff agents
-- **Dynamic Agent Selection**: Confidence-based routing with escalation capabilities
-- **Session Continuity**: Persistent conversation memory across interactions
-- **Real-time Monitoring**: Live agent activity and performance tracking
-
-### 🔒 Enterprise Security
-- **Multi-layer Security**: NGINX reverse proxy with SSL termination
-- **Container Security**: Non-root execution, vulnerability scanning
-- **API Security**: Rate limiting, CORS protection, authentication
-- **Network Isolation**: Docker networks with firewall configuration
-
-### 📊 Monitoring & Observability
-- **Real-time Metrics**: Prometheus + Grafana dashboards
-- **Health Checks**: Comprehensive endpoint monitoring
-- **Performance Analytics**: Response times, success rates, resource usage
-- **Agent Analytics**: Routing decisions, escalation rates, success criteria
-- **Alerting**: Configurable alerts with multiple notification channels
-
-### 🚢 Deployment & DevOps
-- **CI/CD Pipeline**: GitHub Actions with security scanning
-- **Multi-Environment**: Development, staging, production configurations
-- **Auto-Scaling**: Horizontal and vertical scaling capabilities
-- **Backup & Recovery**: Automated database backups with retention policies
-
-## 🏗️ Architecture
-
-### System Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     PagBank Multi-Agent System                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
-│  │   Client    │    │  Chat CLI   │    │   API Gateway       │  │
-│  │ Applications│◄──►│ Interface   │◄──►│  (FastAPI + Agno)   │  │
-│  └─────────────┘    └─────────────┘    └─────────────────────┘  │
-│                                                ▲                │
-│                                                │                │
-├────────────────────────────────────────────────┼────────────────┤
-│                          Ana Coordinator      │                │
-│  ┌─────────────────────────────────────────────▼─────────────┐  │
-│  │              Ana Team (Router)                           │  │
-│  │  • Query Analysis & Intent Detection                    │  │
-│  │  • Intelligent Agent Selection                          │  │
-│  │  • Confidence-based Routing                             │  │
-│  │  • Escalation Management                                │  │
-│  └─────────────────┬───────────────────────────────────────┘  │
-│                    │                                          │
-├────────────────────┼──────────────────────────────────────────┤
-│              Specialist Agents                              │
-│                    │                                          │
-│  ┌──────────────┬──▼──┬────────────────┬────────────────────┐  │
-│  │              │     │                │                    │  │
-│  ▼              ▼     ▼                ▼                    ▼  │
-│ ┌─────────┐ ┌────────┐ ┌─────────┐ ┌─────────────┐ ┌──────────┐ │
-│ │Adquir.  │ │Emissão │ │PagBank  │ │WhatsApp     │ │Human     │ │
-│ │Agent    │ │Agent   │ │Agent    │ │Notifier     │ │Handoff   │ │
-│ │         │ │        │ │         │ │Agent        │ │Agent     │ │
-│ └─────────┘ └────────┘ └─────────┘ └─────────────┘ └──────────┘ │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                    Supporting Systems                           │
-│                                                                 │
-│ ┌─────────────┐ ┌──────────────┐ ┌─────────────┐ ┌───────────┐ │
-│ │ Knowledge   │ │ Conversation │ │ Workflow    │ │ Session   │ │
-│ │ Base (CSV)  │ │ Memory       │ │ Engine      │ │ Manager   │ │
-│ │ + Hot Reload│ │ + Patterns   │ │ + Handoff   │ │ + State   │ │
-│ └─────────────┘ └──────────────┘ └─────────────┘ └───────────┘ │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                     Data & Infrastructure                       │
-│                                                                 │
-│ ┌─────────────┐ ┌──────────────┐ ┌─────────────┐ ┌───────────┐ │
-│ │ PostgreSQL  │ │ Monitoring   │ │ WhatsApp    │ │ Email     │ │
-│ │ + pgvector  │ │ (Prometheus/ │ │ Integration │ │ Alerts    │ │
-│ │ + Alembic   │ │  Grafana)    │ │ (Evolution) │ │ (Resend)  │ │
-│ └─────────────┘ └──────────────┘ └─────────────┘ └───────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Component Architecture
-
-#### Ana Coordinator (Central Router)
-- **Purpose**: Intelligent query analysis and agent selection
-- **Technology**: Agno Team with mode="route" 
-- **Capabilities**: 
-  - Natural language intent detection
-  - Confidence-based agent selection
-  - Automatic escalation to human handoff
-  - Success criteria validation (≤15 words + routing)
-
-#### Domain Specialist Agents
-- **Adquirência Agent**: Credit card acquiring and merchant services
-- **Emissão Agent**: Card issuance and cardholder services  
-- **PagBank Agent**: General PagBank banking and financial services
-- **WhatsApp Notifier**: Automated customer notifications
-- **Human Handoff**: Escalation to human support representatives
-
-#### Data Flow Architecture
-```
-User Query → Ana Analysis → Agent Selection → Specialist Response → Optional Handoff
-     ↓              ↓              ↓                ↓                     ↓
-Session Store → Knowledge Base → Tool Usage → Response Cache → Monitoring
+    %% Ana Coordenadora Central
+    Ana[🤖 Ana Team<br/>Claude Sonnet 4<br/>Coordenadora V2<br/>mode="route"]
+    
+    %% Decisão de Roteamento Ana
+    Ana --> Routing{🔀 Análise Ana<br/>Roteamento Inteligente<br/>≤15 palavras + routing}
+    
+    %% Detecção de Escalação Humana
+    Ana --> HumanCheck{😤 Detecção de<br/>Frustração/Complexidade?}
+    HumanCheck -->|Escalação Necessária| HumanAgent[👨‍💼 Agente Human Handoff<br/>Transferência Humana<br/>Preservação Contexto]
+    HumanAgent --> McpTool[🔧 MCP WhatsApp<br/>mcp_send_whatsapp_message]
+    McpTool --> WhatsApp[📱 WhatsApp Evolution API<br/>Notificação Stakeholders]
+    
+    %% Agentes Especializados por Unidade
+    Routing -->|Serviços Lojista| AdquirenciaAgent[🏪 Agente Adquirência<br/>Antecipação de Vendas<br/>Multiadquirência<br/>Soluções Lojista]
+    Routing -->|Produtos Cartão| EmissaoAgent[💳 Agente Emissão<br/>Cartões Crédito/Débito<br/>Gestão de Cartões<br/>Benefícios]
+    Routing -->|Banco Digital| PagBankAgent[💻 Agente PagBank<br/>PIX, Transferências<br/>Conta Digital<br/>Folha Pagamento]
+    Routing -->|Notificações| WhatsAppAgent[📱 Agente WhatsApp<br/>Notificações Cliente<br/>Evolution API]
+    
+    %% Sistema Base de Conhecimento com Hot Reload
+    subgraph Knowledge["📚 Sistema Base de Conhecimento"]
+        CSV[📄 knowledge_rag.csv<br/>Hot Reload Ativo<br/>Filtrado por Unidade]
+        HotReload[🔄 CSV Hot Reload Manager<br/>Watchdog Ativo<br/>Atualizações em Tempo Real]
+        Vector[(🔍 Busca Semântica<br/>Embeddings<br/>Relevância por Score)]
+        CSV --> HotReload
+        HotReload --> Vector
+    end
+    
+    %% Filtragem Agentic por Unidade
+    AdquirenciaAgent --> Filter1[🎯 Filtro Agentic<br/>business_unit: Adquirência<br/>max_results: 5<br/>threshold: 0.6]
+    EmissaoAgent --> Filter2[🎯 Filtro Agentic<br/>business_unit: Emissão<br/>max_results: 5<br/>threshold: 0.6]
+    PagBankAgent --> Filter3[🎯 Filtro Agentic<br/>business_unit: PagBank<br/>max_results: 5<br/>threshold: 0.6]
+    
+    %% Consultas de Conhecimento
+    Filter1 --> Vector
+    Filter2 --> Vector
+    Filter3 --> Vector
+    
+    %% Sistema de Memória PostgreSQL + Session
+    subgraph Memory["🧠 Sistema de Memória V2"]
+        PostgresMemory[(🗃️ PostgreSQL Memory<br/>Session Persistente<br/>Pattern Detection)]
+        SessionMgmt[⏱️ Session Manager<br/>Continuidade Conversação<br/>Auto-upgrade Schema]
+        PatternDetect[🔍 Pattern Detector<br/>Análise Comportamental<br/>Aprendizado Contínuo]
+    end
+    
+    %% Integração de Memória com Agentes
+    Ana --> PostgresMemory
+    AdquirenciaAgent --> PostgresMemory
+    EmissaoAgent --> PostgresMemory
+    PagBankAgent --> PostgresMemory
+    HumanAgent --> PostgresMemory
+    WhatsAppAgent --> PostgresMemory
+    
+    PostgresMemory --> SessionMgmt
+    PostgresMemory --> PatternDetect
+    
+    %% Interface Rica de Chat CLI
+    subgraph CLI["💬 Rich Chat Interface"]
+        ChatPy[chat.py<br/>Rich Console Interface<br/>Real-time Events]
+        Events[📊 Event Monitoring<br/>Agent Activity<br/>Success Criteria]
+        Metrics[📈 Live Metrics<br/>Response Times<br/>Routing Decisions]
+    end
+    
+    Customer --> ChatPy
+    ChatPy --> Ana
+    Ana --> Events
+    Events --> Metrics
+    
+    %% Fluxo de Resposta com Success Criteria
+    AdquirenciaAgent --> Response[📝 Resposta Especializada<br/>Validação Success Criteria<br/>≤15 palavras Ana + routing]
+    EmissaoAgent --> Response
+    PagBankAgent --> Response
+    WhatsAppAgent --> Response
+    
+    Response --> MemoryUpdate[💾 Memory Update<br/>Pattern Learning<br/>Session Continuity]
+    MemoryUpdate --> FinalResponse[✅ Resposta Final<br/>Cliente + Events Display]
+    
+    %% Styling
+    classDef ana fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
+    classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
+    classDef knowledge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+    classDef memory fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+    classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+    classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
+    classDef cli fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000000
+    
+    class Ana ana
+    class AdquirenciaAgent,EmissaoAgent,PagBankAgent,HumanAgent,WhatsAppAgent agent
+    class CSV,Vector,Filter1,Filter2,Filter3,HotReload knowledge
+    class PostgresMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
+    class Routing,HumanCheck decision
+    class WhatsApp,Customer,McpTool external
+    class ChatPy,Events,Metrics cli
 ```
 
-### Technology Stack
+## 🚀 Início Rápido
 
-#### Core Framework
-- **Agno 1.7.1+**: Multi-agent orchestration and routing
-- **FastAPI 0.116.0+**: RESTful API layer with auto-generated documentation
-- **Python 3.12+**: Modern Python runtime with UV dependency management
-- **Pydantic 2.0+**: Configuration validation and schema management
+### Configuração de Desenvolvimento
 
-#### AI & Models
-- **Anthropic Claude**: Primary AI models (Sonnet-4, Opus)
-- **OpenAI GPT**: Alternative models for cost optimization
-- **Gemini**: Consultation and complex analysis via MCP integration
-- **Model Context Protocol (MCP)**: Enhanced agent capabilities
-
-#### Data & Persistence
-- **PostgreSQL 16+**: Primary database with pgvector for semantic search
-- **SQLAlchemy 2.0+**: Async ORM with automatic migrations
-- **CSV Knowledge Base**: Hot-reloadable domain knowledge with RAG
-- **Sentence Transformers**: Embeddings for knowledge retrieval
-
-#### Integration & Communication
-- **Evolution API**: WhatsApp messaging integration
-- **Resend SMTP**: Email notifications and alerts
-- **WebSocket**: Real-time monitoring and live chat
-- **HTTPX**: Async HTTP client for external integrations
-
-## 🏁 Quick Start
-
-### Prerequisites
-- Python 3.12+ 
-- Docker 24.0+ and Docker Compose 2.0+
-- PostgreSQL (or use Docker setup)
-- 4GB+ RAM, 50GB+ storage
-
-### Development Setup (Recommended)
+#### Configuração de Ambiente
 ```bash
-# Clone the repository
-git clone <your-repository-url>
-cd genie-agents
+# Copiar arquivo de exemplo
+cp .env.example .env
 
-# Install dependencies and setup environment
+# Editar .env com suas configurações
+# PB_AGENTS_PORT=9888       # Porta dinâmica (default: 7777)
+# ENVIRONMENT=development   # Modo desenvolvimento
+# DEMO_MODE=true           # Interface rica habilitada
+```
+
+#### Opção 1: Desenvolvimento Rápido (Recomendado)
+```bash
+# Instalar dependências com UV
 make install
 
-# Start development server (default port 7777, configured via .env)
+# Iniciar servidor de desenvolvimento
 make dev
 
-# Access the system
-open http://localhost:7777  # or check your .env for PB_AGENTS_PORT
-```
-
-### Chat CLI Interface
-```bash
-# Interactive chat with Ana and specialists
+# Em outro terminal, iniciar chat CLI
 python chat.py
-
-# The CLI provides:
-# - Real-time agent routing visualization
-# - Success criteria monitoring
-# - Agent activity tracking
-# - Rich console interface
 ```
 
-### Production Deployment
+#### Opção 2: Produção com Docker
 ```bash
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys and settings
+# Configurar ambiente
+make install
 
-# Start production stack
+# Iniciar stack de produção
 make prod
 
-# Check service status
+# Verificar status
 make status
-
-# View logs
-make logs
 ```
 
-### Environment Configuration
+Endpoints disponíveis:
+- **API**: http://localhost:9888 (.env configurable, default 7777)
+- **Docs**: http://localhost:9888/docs (Swagger UI)
+- **Chat CLI**: `python chat.py` (Rich interface)
+- **Health**: http://localhost:9888/api/v1/health
 
-The system uses a layered configuration approach with **.env as king**:
+## 🤖 Ana Coordenadora & Agentes Especializados
+
+### Arquitetura V2 com Ana
+O sistema V2 utiliza Ana como coordenadora central com capacidades avançadas:
+
+- **Ana Team Router**: Agno Team com mode="route" para seleção inteligente
+- **Success Criteria**: Respostas ≤15 palavras + roteamento adequado
+- **Confidence Scoring**: Seleção baseada em confiança do agente
+- **Context Preservation**: Memória persistente entre interações
+
+### Agentes por Unidade de Negócio
+
+1. **🏪 Adquirência**: Antecipação de vendas, multiadquirência, soluções para lojistas, processamento de pagamentos
+2. **💳 Emissão**: Cartões de crédito/débito, gestão de cartões, limites, benefícios, uso internacional
+3. **💻 PagBank**: Transferências PIX, conta digital, folha de pagamento, recarga celular, segurança da conta
+4. **📱 WhatsApp Notifier**: Notificações automáticas via Evolution API
+5. **👨‍💼 Human Handoff**: Escalação para atendimento humano com preservação de contexto
+
+## 💬 Interface Chat CLI Rica
+
+### Chat Interativo em Tempo Real
+O sistema inclui uma interface de chat avançada com monitoramento em tempo real:
 
 ```bash
-# Core Application (.env)
+# Iniciar chat CLI
+python chat.py
+
+# Funcionalidades:
+# - Interface Rich Console com painéis divididos
+# - Monitoramento de eventos em tempo real
+# - Visualização de seleção de agentes
+# - Tracking de success criteria (≤15 palavras)
+# - Métricas de performance ao vivo
+```
+
+### Recursos da Interface
+- **Painéis Divididos**: Chat à esquerda, eventos à direita
+- **Event Streaming**: Atividade dos agentes em tempo real
+- **Success Validation**: Monitoramento automático dos critérios Ana
+- **Rich Formatting**: Markdown e formatação avançada
+- **Session Tracking**: Continuidade de conversação
+
+## 🎯 Sistema de Conhecimento com Hot Reload
+
+### Base de Conhecimento Inteligente
+- **📄 CSV Hot Reload**: Atualizações automáticas sem restart do sistema
+- **🎯 Filtros Agentic**: Filtragem automática por business_unit
+- **🔍 Busca Semântica**: Embeddings para relevância contextual
+- **⚡ Performance**: Respostas sub-segundo com cache inteligente
+
+### Filtragem por Unidade de Negócio
+```
+Consulta Ana: "Como solicitar antecipação de vendas?"
+↓ Análise Automática Ana ↓
+Roteamento: Agente Adquirência
+↓ Filtro Agentic Aplicado ↓
+- business_unit: "Adquirência"
+- max_results: 5
+- relevance_threshold: 0.6
+↓ Resultado ↓
+Documentos mais relevantes da unidade
+```
+
+### Configuração Hot Reload
+```python
+# Ativado automaticamente em desenvolvimento
+CSV_HOT_RELOAD=true
+
+# Watchdog monitora alterações em:
+# context/knowledge/knowledge_rag.csv
+```
+
+## 🧠 Sistema de Memória V2
+
+### PostgreSQL + Session Management
+- **Base PostgreSQL**: Armazenamento persistente com auto-upgrade
+- **Session Continuity**: Contexto preservado entre conversações
+- **Pattern Detection**: Aprendizado contínuo de comportamentos
+- **Schema Auto-upgrade**: Migrations automáticas via Alembic
+
+### Funcionalidades de Memória
+- **User Memories**: Preferências e contexto do cliente
+- **Agentic Memory**: Aprendizado dos agentes
+- **Pattern Recognition**: Detecção de problemas recorrentes
+- **Session Tracking**: Gestão de estado conversacional
+
+## 📱 Integração WhatsApp & MCP
+
+### Evolution API Integration
+```
+Escalação Detectada → Human Handoff Agent → MCP WhatsApp Tool
+                                         ↓
+                    mcp_send_whatsapp_message → Evolution API
+                                         ↓
+                           Notificação WhatsApp Stakeholder
+```
+
+### Recursos de Integração
+- **MCP Protocol**: Integração via Model Context Protocol
+- **Evolution API**: Conexão direta com WhatsApp Business
+- **Context Transfer**: Histórico completo da conversa
+- **Real-time Alerts**: Notificações instantâneas
+
+## 🛠️ Stack Técnico
+
+### Core Framework
+- **🤖 Agno Framework 1.7.1+**: Orquestração multi-agente
+- **🧠 Claude Sonnet 4**: IA primária com thinking mode
+- **🐍 Python 3.12+**: Runtime moderno com UV
+- **⚡ FastAPI 0.116.0+**: API REST com docs automáticas
+
+### Dados & Persistência
+- **🐘 PostgreSQL 16+**: Banco principal com pgvector
+- **📊 SQLAlchemy 2.0+**: ORM async com migrations
+- **📄 CSV Knowledge**: Base hot-reload com RAG
+- **🔍 Embeddings**: Busca semântica avançada
+
+### Integração & Comunicação
+- **📱 Evolution API**: WhatsApp Business integration
+- **📧 Resend SMTP**: Email notifications
+- **🔌 MCP Protocol**: Enhanced agent capabilities
+- **⚡ WebSocket**: Real-time monitoring
+
+## 📁 Estrutura do Projeto
+
+```
+genie-agents/
+├── README.md                           # Este arquivo
+├── CLAUDE.md                           # Contexto e padrões de desenvolvimento
+├── Makefile                            # Automação (install, dev, prod, test)
+├── chat.py                             # Interface Chat CLI Rica
+├── pyproject.toml                      # Configuração Python com UV
+├── .env                                # Configuração ambiente (port dinâmico)
+├── agents/                             # Agentes especializados (YAML-driven)
+│   ├── registry.py                     # Factory e registro central
+│   ├── adquirencia/                    # Especialista adquirência
+│   ├── emissao/                        # Especialista emissão
+│   ├── pagbank/                        # Especialista PagBank
+│   ├── human_handoff/                  # Escalação humana
+│   └── whatsapp_notifier/              # Notificações WhatsApp
+├── teams/                              # Ana Team Routing V2
+│   └── ana/                            # Coordenadora Ana
+│       ├── team.py                     # Team(mode="route")
+│       ├── config.yaml                 # Configuração roteamento
+│       └── demo_logging.py             # Rich console logging
+├── api/                                # Interface FastAPI + Agno
+│   ├── serve.py                        # Servidor principal
+│   ├── main.py                         # App FastAPI
+│   ├── routes/                         # Endpoints customizados
+│   └── monitoring/                     # Sistema monitoramento
+├── context/                            # Conhecimento e memória
+│   ├── knowledge/                      # Base conhecimento CSV
+│   │   ├── knowledge_rag.csv           # Dados domínio
+│   │   ├── csv_hot_reload.py           # Hot reload manager
+│   │   └── agentic_filters.py          # Filtros por unidade
+│   └── memory/                         # Sistema memória V2
+│       ├── memory_manager.py           # PostgreSQL memory
+│       └── pattern_detector.py         # Detecção padrões
+├── workflows/                          # Workflows multi-step
+│   ├── conversation_typification/      # Classificação consultas
+│   └── human_handoff/                  # Processo escalação
+├── db/                                 # Camada banco dados
+│   ├── migrations/                     # Migrations Alembic
+│   └── tables/                         # Modelos SQLAlchemy
+├── tests/                              # Suite testes completa
+│   ├── unit/                           # Testes unitários
+│   ├── integration/                    # Testes integração
+│   └── monitoring/                     # Testes monitoramento
+└── docs/                               # Documentação projeto
+    └── ai-context/                     # Docs específicas IA
+```
+
+## 🎯 Funcionalidades Principais
+
+### Ana Coordenadora Inteligente
+- **🎯 Routing Precisão**: Ana analisa e roteia com confidence scoring
+- **⚡ Success Criteria**: Validação automática ≤15 palavras + routing
+- **🧠 Context Awareness**: Memória persistente com pattern learning
+- **🔄 Escalação Inteligente**: Detecção automática de complexidade
+
+### Interface Rica & Monitoramento
+- **💬 Chat CLI Avançado**: Interface Rich Console com painéis divididos
+- **📊 Real-time Events**: Monitoramento atividade agentes ao vivo
+- **📈 Métricas Live**: Performance e success criteria em tempo real
+- **🎨 Rich Formatting**: Markdown e formatação avançada
+
+### Sistema Conhecimento Dinâmico
+- **🔄 Hot Reload**: Atualizações CSV sem restart sistema
+- **🎯 Filtros Agentic**: Filtragem automática por business_unit
+- **🔍 Busca Semântica**: Relevância contextual com embeddings
+- **⚡ Performance**: Respostas sub-segundo com cache inteligente
+
+### Integração Empresarial
+- **📱 WhatsApp Evolution**: Notificações via MCP protocol
+- **👥 Human Handoff**: Escalação com preservação contexto
+- **🏛️ Compliance**: Auditoria e segurança empresarial
+- **📊 Analytics**: Métricas detalhadas e pattern detection
+
+## 🔐 Configuração & Deployment
+
+### Configuração de Ambiente
+```bash
+# Configuração dinâmica via .env
 ENVIRONMENT=development
-PB_AGENTS_HOST=0.0.0.0
-PB_AGENTS_PORT=9888  # Overrides code default of 7777
+PB_AGENTS_PORT=9888          # Sobrescreve default 7777
+DEMO_MODE=true              # Interface rica habilitada
+CSV_HOT_RELOAD=true         # Hot reload ativo
 
-# Required AI API Keys
-ANTHROPIC_API_KEY=your-anthropic-key
-OPENAI_API_KEY=your-openai-key
-GEMINI_API_KEY=your-gemini-key
+# APIs necessárias
+ANTHROPIC_API_KEY=your-key
+OPENAI_API_KEY=your-key
+GEMINI_API_KEY=your-key
 
-# Database (PostgreSQL required)
+# Base dados
 DATABASE_URL=postgresql+psycopg://ai:ai@localhost:5532/ai
 
-# Optional Integrations
+# Integrações opcionais
 EVOLUTION_API_BASE_URL=http://localhost:8080
 RESEND_API_KEY=your-resend-key
 ```
 
-## 📁 Project Structure
-
-```
-genie-agents/
-├── README.md                           # This file
-├── CLAUDE.md                           # AI context and development guidelines
-├── Makefile                            # Task automation (install, dev, prod, test)
-├── chat.py                             # Rich CLI chat interface
-├── pyproject.toml                      # Python project configuration with UV
-├── docker-compose.yml                  # Development environment
-├── docker-compose.full.yml             # Production with monitoring
-├── .env                                # Environment configuration (dynamic port)
-├── .env.example                        # Environment template
-├── agents/                             # AI Agent definitions (YAML-driven)
-│   ├── registry.py                     # Central agent factory and registry
-│   ├── adquirencia/                    # Credit card acquiring specialist
-│   ├── emissao/                        # Card issuance specialist  
-│   ├── pagbank/                        # PagBank banking specialist
-│   ├── human_handoff/                  # Human escalation agent
-│   └── whatsapp_notifier/              # WhatsApp notification agent
-├── teams/                              # Team routing and orchestration
-│   └── ana/                            # Ana coordinator team
-│       ├── team.py                     # Team(mode="route") implementation
-│       ├── config.yaml                 # Ana routing configuration
-│       └── demo_logging.py             # Rich console logging
-├── api/                                # FastAPI web interface
-│   ├── main.py                         # FastAPI application
-│   ├── serve.py                        # Uvicorn server with Agno integration
-│   ├── routes/                         # API endpoints
-│   └── monitoring/                     # Real-time monitoring system
-├── context/                            # Knowledge and memory systems
-│   ├── knowledge/                      # CSV-based RAG knowledge base
-│   │   ├── knowledge_rag.csv           # Domain knowledge data
-│   │   └── csv_hot_reload.py           # Hot reload capability
-│   └── memory/                         # Conversation memory and patterns
-├── workflows/                          # Multi-step business workflows
-│   ├── conversation_typification/      # Query classification
-│   └── human_handoff/                  # Escalation workflows
-├── db/                                 # Database layer
-│   ├── migrations/                     # Alembic schema migrations
-│   ├── tables/                         # SQLAlchemy models
-│   └── services/                       # Database services
-├── tests/                              # Comprehensive test suite
-│   ├── unit/                           # Unit tests
-│   ├── integration/                    # Integration tests
-│   └── monitoring/                     # Monitoring tests
-├── monitoring/                         # Observability configuration
-│   ├── prometheus.yml                  # Metrics collection
-│   └── grafana/                        # Dashboard visualization
-└── docs/                               # Project documentation
-    └── ai-context/                     # AI-specific documentation
-```
-
-## 🛠️ Development Workflow
-
-### Local Development
+### Comandos de Desenvolvimento
 ```bash
-# Install dependencies
+# Setup completo
 make install
 
-# Start development environment  
+# Desenvolvimento com hot reload
 make dev
 
-# Run tests
-make test
+# Chat CLI interativo
+python chat.py
 
-# Check service status
+# Produção com Docker
+make prod
+
+# Status e logs
 make status
-
-# View logs
 make logs
+
+# Testes
+make test
 ```
 
-### Chat Interface Development
-```bash
-# Start API server first
-make dev
+## 📊 Performance & Métricas
 
-# In another terminal, start chat CLI
-python chat.py
+### Critérios de Sucesso Ana
+- **Eficiência Resposta**: ≤15 palavras + roteamento adequado
+- **Precisão Routing**: Confidence-based agent selection
+- **Taxa Escalação**: Monitoramento handoff frequency
+- **Success Rate**: Validação automática critérios
 
-# Features:
-# - Real-time Ana routing visualization
-# - Agent selection monitoring
-# - Success criteria tracking (≤15 words + routing)
-# - Rich console interface with events panel
-```
+### Métricas do Sistema
+- **Tempo Resposta**: <500ms média para routing Ana
+- **Throughput**: 1000+ requests/minuto suportados
+- **Disponibilidade**: 99.9% uptime com health monitoring
+- **Usuários Concorrentes**: 1000+ via arquitetura async
 
-### Agent Development
-1. **Create Agent Directory**: `agents/your_domain/`
-2. **Configure YAML**: Define agent behavior in `config.yaml`
-3. **Implement Factory**: Create `agent.py` with factory function
-4. **Register Agent**: Add to `agents/registry.py`
-5. **Test Integration**: Verify routing through Ana team
-
-### API Endpoints
-
-#### Core Agno Endpoints (Auto-generated)
-- **Playground**: `/playground/` - Interactive agent testing
-- **Agents**: `/agents/` - Individual agent management
-- **Teams**: `/teams/` - Team routing and coordination
-- **Workflows**: `/workflows/` - Multi-step business processes
-- **Sessions**: `/sessions/` - Conversation state management
-
-#### Custom Business Endpoints
-- **Health Check**: `/api/v1/health` - Service health monitoring
-- **Monitoring**: `/api/v1/monitoring/` - Real-time system metrics
-- **Agent Versions**: `/api/v1/agent-versions/` - Version management
-
-#### API Documentation
-- **Swagger UI**: `http://localhost:{port}/docs`
-- **ReDoc**: `http://localhost:{port}/redoc`
-
-### Configuration Management
-
-#### Port Configuration (Dynamic)
-```bash
-# Code default: 7777 (fallback)
-# .env override: 9888 (current setting)
-# Makefile detects: Uses .env value or falls back to 7777
-
-# To change port:
-echo "PB_AGENTS_PORT=8080" >> .env
-make dev  # Will use port 8080
-```
-
-#### Agent Configuration Pattern
-```yaml
-# agents/domain/config.yaml
-agent:
-  agent_id: "domain-specialist"
-  name: "Domain Specialist"
-  role: "Expert in domain services"
-
-model:
-  provider: "anthropic"
-  id: "claude-sonnet-4-20250514"
-  temperature: 0.7
-
-instructions: |
-  You are a specialist in domain services.
-  Provide accurate, helpful responses.
-
-knowledge_filter:
-  business_unit: "YourDomain"
-  max_results: 5
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Follow CLAUDE.md coding standards
-4. Test with: `make test`
-5. Commit changes: `git commit -m 'Add amazing feature'`
-6. Push to branch: `git push origin feature/amazing-feature`
-7. Open Pull Request
-
-## 📊 Performance & Monitoring
-
-### Success Criteria (Ana Team)
-- **Response Efficiency**: ≤15 words + proper routing
-- **Routing Accuracy**: Confidence-based agent selection
-- **Escalation Rate**: Tracks human handoff frequency
-
-### System Performance
-- **Response Time**: <500ms average for agent routing
-- **Throughput**: 1000+ requests/minute supported
-- **Availability**: 99.9% uptime with health monitoring
-- **Concurrent Users**: 1000+ supported via async architecture
-
-### Monitoring Stack
-- **Prometheus**: `:9090` - Metrics collection
-- **Grafana**: `:3000` - Dashboard visualization  
-- **PostgreSQL**: `:5432` - Database access
-- **Application**: `:{PB_AGENTS_PORT}` - Main API (dynamic port)
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Port Conflicts**
-```bash
-# Check current port setting
-grep PB_AGENTS_PORT .env
-
-# Change port if needed
-echo "PB_AGENTS_PORT=8080" >> .env
-```
-
-**Database Issues**
-```bash
-# Reset database
-make clean
-make install
-```
-
-**Chat CLI Not Connecting**
-```bash
-# Ensure API server is running first
-make dev
-# Then in another terminal:
-python chat.py
-```
-
-## 🆘 Support
-
-- **Documentation**: See `/docs/` directory
-- **Issues**: GitHub Issues
-- **Development**: Follow CLAUDE.md guidelines
-- **Architecture**: See `/docs/ai-context/project-structure.md`
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Stack Monitoramento
+- **Rich Console**: Interface desenvolvimento com events
+- **Health Checks**: Endpoints monitoramento automático
+- **Pattern Detection**: Aprendizado comportamental contínuo
+- **Performance Analytics**: Métricas tempo real
 
 ---
 
-**Built for PagBank customer service excellence through intelligent AI agents**
+**Desenvolvido com Agno Framework V2 + Ana Intelligence**  
+**© PagBank 2025 - Sistema Multi-Agente Avançado**
