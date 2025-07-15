@@ -9,7 +9,7 @@ O sistema utiliza uma arquitetura V2 com Ana como coordenadora central que anali
 ```mermaid
 graph TB
     %% Ponto de Entrada do Cliente
-    Customer[👤 Consulta do Cliente<br/>Chat CLI ou API] --> Ana
+    Customer[👤 Consulta do Cliente<br/>API] --> Ana
 
     %% Ana Coordenadora Central
     Ana[🤖 Ana Team<br/>Claude Sonnet 4<br/>Coordenadora V2<br/>mode route]
@@ -17,17 +17,14 @@ graph TB
     %% Decisão de Roteamento Ana
     Ana --> Routing{🔀 Análise Ana<br/>Roteamento Inteligente<br/>15 palavras + routing}
     
-    %% Detecção de Escalação Humana
-    Ana --> HumanCheck{😤 Detecção de<br/>Frustração/Complexidade}
-    HumanCheck -->|Escalação Necessária| HumanAgent[👨‍💼 Agente Human Handoff<br/>Transferência Humana<br/>Preservação Contexto]
-    HumanAgent --> McpTool[🔧 MCP WhatsApp<br/>mcp_send_whatsapp_message]
-    McpTool --> WhatsApp[📱 WhatsApp Evolution API<br/>Notificação Stakeholders]
+    %% Escalação Humana via Workflow
+    Ana --> HumanWorkflow[🚨 trigger_human_handoff_workflow<br/>Tool direto sem agente<br/>Workflow com MCP]
+    HumanWorkflow --> WhatsApp[📱 WhatsApp Evolution API<br/>Notificação Stakeholders<br/>MCP Integration]
     
     %% Agentes Especializados por Unidade
-    Routing -->|Serviços Lojista| AdquirenciaAgent[🏪 Agente Adquirência<br/>Antecipação de Vendas<br/>Multiadquirência<br/>Soluções Lojista]
-    Routing -->|Produtos Cartão| EmissaoAgent[💳 Agente Emissão<br/>Cartões Crédito/Débito<br/>Gestão de Cartões<br/>Benefícios]
-    Routing -->|Banco Digital| PagBankAgent[💻 Agente PagBank<br/>PIX, Transferências<br/>Conta Digital<br/>Folha Pagamento]
-    Routing -->|Notificações| WhatsAppAgent[📱 Agente WhatsApp<br/>Notificações Cliente<br/>Evolution API]
+    Routing -->|forward_task_to_member| AdquirenciaAgent[🏪 Agente Adquirência<br/>Antecipação de Vendas<br/>Multiadquirência<br/>Soluções Lojista]
+    Routing -->|forward_task_to_member| EmissaoAgent[💳 Agente Emissão<br/>Cartões Crédito/Débito<br/>Gestão de Cartões<br/>Benefícios]
+    Routing -->|forward_task_to_member| PagBankAgent[💻 Agente PagBank<br/>PIX, Transferências<br/>Conta Digital<br/>Folha Pagamento]
     
     %% Sistema Base de Conhecimento com Hot Reload
     subgraph Knowledge[📚 Sistema Base de Conhecimento]
@@ -60,32 +57,17 @@ graph TB
     AdquirenciaAgent --> PostgresMemory
     EmissaoAgent --> PostgresMemory
     PagBankAgent --> PostgresMemory
-    HumanAgent --> PostgresMemory
-    WhatsAppAgent --> PostgresMemory
     
     PostgresMemory --> SessionMgmt
     PostgresMemory --> PatternDetect
-    
-    %% Interface Rica de Chat CLI
-    subgraph CLI[💬 Rich Chat Interface]
-        ChatPy[chat.py<br/>Rich Console Interface<br/>Real-time Events]
-        Events[📊 Event Monitoring<br/>Agent Activity<br/>Success Criteria]
-        Metrics[📈 Live Metrics<br/>Response Times<br/>Routing Decisions]
-    end
-    
-    Customer --> ChatPy
-    ChatPy --> Ana
-    Ana --> Events
-    Events --> Metrics
     
     %% Fluxo de Resposta com Success Criteria
     AdquirenciaAgent --> Response[📝 Resposta Especializada<br/>Validação Success Criteria<br/>15 palavras Ana + routing]
     EmissaoAgent --> Response
     PagBankAgent --> Response
-    WhatsAppAgent --> Response
     
     Response --> MemoryUpdate[💾 Memory Update<br/>Pattern Learning<br/>Session Continuity]
-    MemoryUpdate --> FinalResponse[✅ Resposta Final<br/>Cliente + Events Display]
+    MemoryUpdate --> FinalResponse[✅ Resposta Final<br/>para Cliente]
     
     %% Styling
     classDef ana fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
@@ -93,16 +75,16 @@ graph TB
     classDef knowledge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
     classDef memory fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
     classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+    classDef workflow fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000000
     classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
-    classDef cli fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000000
     
     class Ana ana
-    class AdquirenciaAgent,EmissaoAgent,PagBankAgent,HumanAgent,WhatsAppAgent agent
+    class AdquirenciaAgent,EmissaoAgent,PagBankAgent agent
     class CSV,Vector,Filter1,Filter2,Filter3,HotReload knowledge
     class PostgresMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
-    class Routing,HumanCheck decision
-    class WhatsApp,Customer,McpTool external
-    class ChatPy,Events,Metrics cli
+    class Routing decision
+    class HumanWorkflow workflow
+    class WhatsApp,Customer external
 ```
 
 ## 🚀 Início Rápido
@@ -128,7 +110,7 @@ make install
 # Iniciar servidor de desenvolvimento
 make dev
 
-# Em outro terminal, iniciar chat CLI
+# Playground: Chat CLI para testes (opcional)
 python chat.py
 ```
 
@@ -147,7 +129,7 @@ make status
 Endpoints disponíveis:
 - **API**: http://localhost:9888 (.env configurable, default 7777)
 - **Docs**: http://localhost:9888/docs (Swagger UI)
-- **Chat CLI**: `python chat.py` (Rich interface)
+- **Chat CLI**: `python chat.py` (playground/testes)
 - **Health**: http://localhost:9888/api/v1/health
 
 ## 🤖 Ana Coordenadora & Agentes Especializados
@@ -165,8 +147,7 @@ O sistema V2 utiliza Ana como coordenadora central com capacidades avançadas:
 1. **🏪 Adquirência**: Antecipação de vendas, multiadquirência, soluções para lojistas, processamento de pagamentos
 2. **💳 Emissão**: Cartões de crédito/débito, gestão de cartões, limites, benefícios, uso internacional
 3. **💻 PagBank**: Transferências PIX, conta digital, folha de pagamento, recarga celular, segurança da conta
-4. **📱 WhatsApp Notifier**: Notificações automáticas via Evolution API
-5. **👨‍💼 Human Handoff**: Escalação para atendimento humano com preservação de contexto
+4. **🚨 Human Handoff**: Workflow automático de escalação para atendimento humano com preservação de contexto e notificação WhatsApp
 
 ## 💬 Interface Chat CLI Rica
 
@@ -240,11 +221,11 @@ CSV_HOT_RELOAD=true
 
 ### Evolution API Integration
 ```
-Escalação Detectada → Human Handoff Agent → MCP WhatsApp Tool
-                                         ↓
-                    mcp_send_whatsapp_message → Evolution API
-                                         ↓
-                           Notificação WhatsApp Stakeholder
+Escalação Detectada → trigger_human_handoff_workflow → MCP WhatsApp Tool
+                                                    ↓
+                                  mcp_send_whatsapp_message → Evolution API
+                                                    ↓
+                                          Notificação WhatsApp Stakeholder
 ```
 
 ### Recursos de Integração
