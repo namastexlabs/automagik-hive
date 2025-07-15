@@ -1,7 +1,7 @@
 # /plan
 
 ---
-allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(*), mcp__gemini__*, mcp__search-repo-docs__*, mcp__ask-repo-agent__*, mcp__genie_memory__*, mcp__send_whatsapp_message__*
+allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(*), mcp__zen__*, mcp__search-repo-docs__*, mcp__ask-repo-agent__*, mcp__genie-memory__*, mcp__send_whatsapp_message__*
 description: Plan complex features and architecture
 ---
 
@@ -41,7 +41,7 @@ Strategic planning for complex features, architecture decisions, and multi-step 
 - **Claude** (default): Project-aware planning with context
 - **O3**: Systematic planning, logical structuring
 - **Grok**: Large context for complex systems
-- **Gemini**: Creative architectural solutions
+- **Pro (Gemini)**: Creative architectural solutions via zen
 
 ## Output
 
@@ -58,13 +58,23 @@ Generates:
 For complex planning:
 
 ```python
-# Strategic planning consultation
-mcp__gemini__consult_gemini(
-    specific_question="How to architect [complex feature]?",
-    problem_description="Planning [system/feature] with [constraints]",
-    code_context="Current architecture uses [patterns]...",
-    attached_files=["architecture/files.py"],
-    preferred_approach="optimize"
+# Strategic planning consultation with zen
+mcp__zen__consensus(
+    models=[
+        {"model": "o3", "stance": "for"},
+        {"model": "grok", "stance": "against"}, 
+        {"model": "pro", "stance": "neutral"}
+    ],
+    step="Evaluate architectural approach for [feature]",
+    findings="Current architecture uses [patterns]..."
+)
+
+# Deep architectural analysis
+mcp__zen__thinkdeep(
+    model="pro",
+    step="Design system architecture for [complex feature]",
+    problem_context="Planning [system/feature] with [constraints]",
+    thinking_mode="high"
 )
 
 # Research architectural patterns
@@ -88,17 +98,17 @@ Every planning session automatically updates memory:
 
 ```python
 # Store architectural decisions
-mcp__genie_memory__add_memory(
-    content="PATTERN: Architecture - [Feature] planned with [approach] using [technologies] #architecture"
+mcp__genie-memory__add_memories(
+    text="PATTERN: Architecture - [Feature] planned with [approach] using [technologies] #architecture"
 )
 
 # Store planning insights
-mcp__genie_memory__add_memory(
-    content="FOUND: [Challenge] solved with [solution] in planning phase #planning"
+mcp__genie-memory__add_memories(
+    text="FOUND: [Challenge] solved with [solution] in planning phase #planning"
 )
 
 # Search for similar architectural patterns
-mcp__genie_memory__search_memory(
+mcp__genie-memory__search_memory(
     query="PATTERN architecture [similar feature]"
 )
 ```
@@ -107,14 +117,14 @@ mcp__genie_memory__search_memory(
 
 ```bash
 # Search memory for architectural patterns
-mcp__genie_memory__search_memory query="PATTERN architecture $ARGUMENTS"
+mcp__genie-memory__search_memory query="PATTERN architecture $ARGUMENTS"
 
-# For major architectural decisions, consult Gemini
+# For major architectural decisions, use zen consensus
 if [[ "$ARGUMENTS" =~ architecture|system|migration|scaling ]]; then
-    mcp__gemini__consult_gemini \
-        specific_question="Architecture planning for: $ARGUMENTS" \
-        problem_description="Planning major system changes in genie-agents" \
-        preferred_approach="optimize"
+    mcp__zen__consensus \
+        models='[{"model": "o3", "stance": "for"}, {"model": "grok", "stance": "neutral"}]' \
+        step="Architecture planning for: $ARGUMENTS" \
+        findings="Planning major system changes in genie-agents"
 fi
 
 # Research architectural patterns

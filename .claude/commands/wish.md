@@ -32,6 +32,7 @@ Analyze user wish: "$ARGUMENTS"
 | **Testing** | `/test` | Medium |
 | **Architecture/Planning** | `/plan` | High |
 | **Documentation** | `/docs` | Low → Medium |
+| **Cleanup/Dead Code** | `/clean` | High |
 | **Multi-Intent/Complex** | Decompose & coordinate | High |
 
 ### 2. Clarification Dialogue
@@ -46,6 +47,7 @@ Based on detected intent, ask focused questions:
 - **Testing**: "Which functions/modules need tests? Unit or integration?"
 - **Planning**: "New feature or architecture change? Scope and constraints?"
 - **Documentation**: "What needs documenting? API, code, or user guides?"
+- **Cleanup**: "Full codebase or specific directories? Any files to preserve?"
 - **Multi-Intent**: "What's the priority order for these tasks?"
 
 Continue dialogue until scope is crystal clear before proceeding.
