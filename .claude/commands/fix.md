@@ -1,95 +1,114 @@
 # /fix
 
 ---
-allowed-tools: Task(*), Read(*), Edit(*), MultiEdit(*), Write(*), Bash(*), Glob(*), Grep(*), mcp__gemini__*, mcp__search-repo-docs__*, mcp__ask-repo-agent__*, mcp__genie_memory__*, mcp__send_whatsapp_message__*, mcp__wait__*
-description: Debug and fix issues systematically
+allowed-tools: mcp__zen__debug(*), Task(*), Read(*), Edit(*), MultiEdit(*), Write(*), Bash(*), Glob(*), Grep(*), mcp__gemini__*, mcp__search-repo-docs__*, mcp__ask-repo-agent__*, mcp__genie_memory__*, mcp__send_whatsapp_message__*, mcp__wait__*
+description: Unified debugging and fixing command with multiple investigation strategies
 ---
 
-Debug problems and implement fixes through systematic investigation and expert consultation.
+Comprehensive debugging and fixing command that unifies systematic debugging with intelligent strategy selection for different problem complexities.
 
 ## Auto-Loaded Project Context:
 @/CLAUDE.md
 @/docs/ai-context/project-structure.md
 @/docs/ai-context/docs-overview.md
 
-## Usage
+## Debugging Strategies
 
+### Simple Strategy (default)
 ```bash
-# Simple fixes
+# Quick debugging for obvious issues (replaces /debug default)
 /fix "API returns 500 error when uploading files"
-/fix "Payment processing failing for new users"
-/fix "Memory leak in agent sessions"
-
-# Complex issues
-/fix "Race condition in agent routing system"
-/fix "Database connection timeouts under load"
+/fix "Payment processing failing for new users" model="o3"
 ```
 
-## Intelligent Debugging Strategy
+### Systematic Strategy  
+```bash
+# Multi-step investigation (original /fix behavior)
+/fix "Memory leak in agent sessions" strategy="systematic"
+/fix "Database connection timeouts under load" strategy="systematic"
+```
 
-### Step 1: Problem Classification
-Parse user issue: "$ARGUMENTS"
+### Multi-Agent Strategy
+```bash
+# Parallel debugging teams (from original /fix multi-agent)
+/fix "Race condition in agent routing system" strategy="multi-agent"
+/fix "Complex integration failure" strategy="multi-agent"
+```
 
-**Issue Categories:**
-- **Simple Bug** → Direct investigation and fix
-- **System Error** → Multi-component analysis
-- **Performance Issue** → Profiling and optimization
-- **Integration Problem** → Cross-system debugging
-- **Complex Bug** → Expert consultation needed
+### Expert Strategy
+```bash
+# With expert consultation (enhanced debugging)
+/fix "Mysterious performance degradation" strategy="expert"
+/fix "Complex architectural issue" strategy="expert" model="gemini"
+```
 
-### Step 2: Progressive Debugging Strategy
+## Usage Examples
 
-**Level 1: Direct Investigation** (Clear, simple issues)
-- Reproduce the problem
-- Identify obvious causes
-- Apply immediate fix
+```bash
+# Default (uses Claude with simple strategy)
+/fix "API returns 500 error"
 
-**Level 2: Systematic Analysis** (Moderate complexity)
-- Deploy 1-2 focused debugging agents
-- Analyze logs and error patterns
-- Test hypotheses systematically
+# With specific model and strategy
+/fix "Race condition in payment processing" strategy="multi-agent" model="o3"
+/fix "Memory leak in agent sessions" strategy="systematic" model="grok"
+```
 
-**Level 3: Multi-Agent Investigation** (Complex issues)
-- Deploy 3-4 specialized debugging agents:
+## Model Strengths
+
+- **Claude** (default): Full project context, holistic debugging
+- **O3**: Systematic reasoning, logical deduction, step-by-step analysis
+- **Grok**: Large context for complex traces, performance issues
+- **Gemini**: Creative problem-solving, architectural insights
+
+## Intelligent Strategy Selection
+
+The command automatically selects the optimal debugging approach:
+
+### Simple Strategy (default)
+- Uses `mcp__zen__debug` with single-model investigation
+- Direct problem reproduction and fix
+- Best for: obvious bugs, clear error messages, simple issues
+
+### Systematic Strategy
+- Uses `mcp__zen__debug` with multi-step investigation workflow
+- Methodical hypothesis testing and validation
+- Best for: moderate complexity, unclear symptoms, integration issues
+
+### Multi-Agent Strategy  
+- Deploys 3-4 specialized debugging agents in parallel:
   - **Error_Tracker**: Reproduce and isolate the issue
   - **Code_Analyst**: Examine relevant code paths
   - **System_Investigator**: Check infrastructure and dependencies
   - **Solution_Designer**: Design and validate fixes
+- Best for: complex bugs, race conditions, multi-system issues
 
-**Level 4: Expert Consultation** (Critical/complex bugs)
-- Use Gemini for complex debugging scenarios
+### Expert Strategy
+- Uses `mcp__zen__debug` with expert consultation
+- Leverages Gemini for complex debugging scenarios
 - Research similar issues in documentation
-- Consult best practices and patterns
+- Best for: mysterious issues, architectural problems, novel bugs
 
-### Step 3: Investigation Execution
+## Debugging Methodology
 
-**For Sub-Agent Approach:**
-```
-Task: "Debug [COMPONENT] for issue [PROBLEM] related to user request '$ARGUMENTS'"
+### 1. Problem Analysis
+- **Reproduce the issue** - Understand exact conditions
+- **Classify complexity** - Choose appropriate strategy
+- **Gather context** - Relevant files, logs, error messages
+- **Set expectations** - Time and resource allocation
 
-Standard Debugging Workflow:
-1. Review auto-loaded project context (CLAUDE.md, project-structure.md, docs-overview.md)
-2. Analyze error symptoms and reproduction steps
-3. Examine relevant code paths and dependencies
-4. Check logs, configuration, and environment
-5. Form hypotheses about root cause
-6. Test hypotheses and validate solutions
-7. Return actionable debugging findings
-```
+### 2. Investigation Approach
+- **Simple**: Direct `mcp__zen__debug` investigation
+- **Systematic**: Multi-step investigation with hypothesis testing
+- **Multi-Agent**: Parallel specialized investigations
+- **Expert**: Enhanced with consultation and research
 
-**CRITICAL: Launch all debugging agents in parallel using single message with multiple Task invocations.**
+### 3. Root Cause Analysis
+- **Trace execution path** - Follow code flow to failure point
+- **Identify root cause** - Distinguish symptoms from causes
+- **Assess impact** - Understand scope and criticality
+- **Validate findings** - Confirm with testing
 
-### Step 4: Root Cause Analysis
-
-Based on investigation findings:
-1. **Reproduce the issue** - Understand exact conditions
-2. **Trace execution path** - Follow code flow to failure point
-3. **Identify root cause** - Distinguish symptoms from causes
-4. **Assess impact** - Understand scope and criticality
-5. **Design solution** - Fix root cause, not symptoms
-
-### Step 5: Solution Implementation
-
+### 4. Solution Implementation
 - **Minimal changes** - Fix only what's broken
 - **Preserve functionality** - Don't break existing features
 - **Add safeguards** - Prevent similar issues
@@ -209,29 +228,59 @@ mcp__genie_memory__search_memory(
 - [Critical fixes reported via WhatsApp]
 ```
 
+## Migration from Previous Commands
+
+**From `/debug`**: Use default strategy for quick debugging
+**From `/fix` multi-agent**: Use `strategy="multi-agent"` for complex parallel debugging
+
 ## Automatic Execution
 
 ```bash
-# Check memory for similar issues
-mcp__genie_memory__search_memory query="FOUND bug $ARGUMENTS"
+# Parse strategy and arguments
+STRATEGY="${STRATEGY:-simple}"
+DEBUG_ARGS="$ARGUMENTS"
 
-# For critical/complex bugs, consult Gemini
-if [[ "$ARGUMENTS" =~ critical|complex|race|memory|performance ]]; then
+# Route to appropriate debugging based on strategy
+case "$STRATEGY" in
+    "systematic")
+        # Multi-step investigation (original /fix behavior)
+        # Use systematic debugging workflow
+        ;;
+    "multi-agent")
+        # Parallel debugging teams (original /fix multi-agent)
+        # Deploy specialized debugging agents in parallel
+        ;;
+    "expert")
+        # Enhanced debugging with consultation
+        mcp__zen__debug "$DEBUG_ARGS" model="${MODEL:-gemini}" use_websearch=true
+        ;;
+    *)
+        # Simple debugging (original /debug behavior)
+        mcp__zen__debug "$DEBUG_ARGS" model="${MODEL:-claude}"
+        ;;
+esac
+
+# Check memory for similar issues
+mcp__genie_memory__search_memory query="FOUND bug $DEBUG_ARGS"
+
+# For critical/complex bugs, auto-escalate to expert strategy
+if [[ "$DEBUG_ARGS" =~ critical|complex|race|memory|performance ]] && [[ "$STRATEGY" == "simple" ]]; then
+    echo "Auto-escalating to expert strategy for complex issue"
     mcp__gemini__consult_gemini \
-        specific_question="How to debug: $ARGUMENTS" \
-        problem_description="Experiencing issue in genie-agents system" \
+        specific_question="How to debug: $DEBUG_ARGS" \
+        problem_description="Experiencing complex issue in genie-agents system" \
         preferred_approach="debug"
 fi
 
 # Notify about critical bugs
-if [[ "$ARGUMENTS" =~ critical|urgent|production ]]; then
+if [[ "$DEBUG_ARGS" =~ critical|urgent|production ]]; then
     mcp__send_whatsapp_message__send_text_message \
         instance="SofIA" \
-        message="🚨 CRITICAL BUG: $ARGUMENTS - Investigation started" \
+        message="🚨 CRITICAL BUG: $DEBUG_ARGS - Investigation started with $STRATEGY strategy" \
         number="5511986780008@s.whatsapp.net"
 fi
 ```
 
 ---
 
-**Systematic Debugging**: From problem to solution with expert guidance and thorough investigation.
+**Unified Debugging**: From simple fixes to complex multi-agent investigation with intelligent strategy selection.
