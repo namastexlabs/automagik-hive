@@ -30,13 +30,17 @@ Genie Agents follows a Clean V2 Architecture pattern with YAML-driven agent conf
 
 ### Genie Agents Specific Instructions
 - **Agent Development**: Always use YAML configuration files for new agents following the V2 architecture pattern
-- **Team Routing**: Utilize Agno's Team(mode="route") for intelligent agent selection
+- **Team Routing**: Utilize Agno's Team(mode="route") for intelligent agent selection with confidence scoring
 - **Database Operations**: Use SQLAlchemy ORM for all database interactions, raw SQL only for complex queries
 - **Monitoring**: Include metrics collection for all new endpoints and agent interactions
 - **Security**: All agent responses must be sanitized, never expose internal system details
 - **Testing**: Every new agent must have corresponding unit and integration tests
-- **Knowledge Base**: Use the CSV-based RAG system for context-aware responses
+- **Knowledge Base**: Use the CSV-based RAG system with hot reload for context-aware responses
 - **Memory Management**: Implement session-based memory with pattern detection for conversation continuity
+- **Configuration**: Never hardcode values - always use .env files and YAML configs
+- **MCP Integration**: Use available MCP tools for WhatsApp notifications, Gemini consultation, and documentation lookup
+- **V2 Architecture**: Follow the V2 pattern with agents, teams, and workflows all configured via YAML
+- **Hot Reload**: Leverage CSV hot reload for instant knowledge base updates without server restart
 
 
 ### File Organization & Modularity
@@ -157,27 +161,28 @@ When using the Task tool to spawn sub-agents, the core project context (CLAUDE.m
 - Highly security relevant tasks
 
 **Automatic Context Injection:**
-- The kit's `gemini-context-injector.sh` hook automatically includes two key files for new sessions:
+- The system automatically includes key project files for new sessions:
   - `/docs/ai-context/project-structure.md` - Complete project structure and tech stack
-  - `/MCP-ASSISTANT-RULES.md` - Your project-specific coding standards and guidelines
+  - `/CLAUDE.md` - Project-specific coding standards and guidelines
 - This ensures Gemini always has comprehensive understanding of your technology stack, architecture, and project standards
 
 **Usage patterns:**
 ```python
-# New consultation session (project structure auto-attached by hooks)
-mcp__gemini-consult__consult_gemini(
-    specific_question="How should I optimize this voice pipeline?",
-    problem_description="Need to reduce latency in real-time audio processing",
-    code_context="Current pipeline processes audio sequentially...",
+# New consultation session (project structure auto-attached)
+mcp__gemini__consult_gemini(
+    specific_question="How should I optimize the Ana team routing?",
+    problem_description="Need to improve agent selection accuracy in team routing",
+    code_context="Current routing uses score-based selection...",
     attached_files=[
-        "src/core/pipelines/voice_pipeline.py"  # Your specific files
+        "teams/ana/team.py",
+        "teams/ana/config.yaml"
     ],
     preferred_approach="optimize"
 )
 
 # Follow-up in existing session
-mcp__gemini-consult__consult_gemini(
-    specific_question="What about memory usage?",
+mcp__gemini__consult_gemini(
+    specific_question="What about memory usage with large conversations?",
     session_id="session_123",
     additional_context="Implemented your suggestions, now seeing high memory usage"
 )
@@ -235,6 +240,60 @@ mcp__ask-repo-agent__ask_question(
 )
 ```
 
+### WhatsApp Integration Server
+**When to use:**
+- Sending WhatsApp notifications to customers
+- Human handoff workflows
+- Alert notifications to administrators
+- Customer communication automation
+
+**Usage patterns:**
+```python
+# Send text message
+mcp__send_whatsapp_message__send_text_message(
+    instance="pagbank-instance",
+    message="Your request has been processed successfully!",
+    number="5511999999999"
+)
+
+# Send media with caption
+mcp__send_whatsapp_message__send_media(
+    instance="pagbank-instance",
+    media="base64_encoded_image_data",
+    mediatype="image",
+    mimetype="image/jpeg",
+    caption="Transaction receipt"
+)
+
+# Send location
+mcp__send_whatsapp_message__send_location(
+    instance="pagbank-instance",
+    latitude=-23.5505,
+    longitude=-46.6333,
+    name="PagBank Office",
+    address="São Paulo, Brazil"
+)
+```
+
+**Key capabilities:**
+- Text messages with mentions and link previews
+- Media sharing (images, videos, documents)
+- Audio message support
+- Location sharing
+- Contact information sharing
+- Presence indicators (typing, recording)
+- Message reactions
+- Integration with Evolution API v2
+
+**Configuration:**
+```bash
+# Required environment variables
+EVOLUTION_API_BASE_URL=http://localhost:8080
+EVOLUTION_API_INSTANCE=your-instance
+EVOLUTION_API_KEY=your-api-key
+EVOLUTION_API_FIXED_RECIPIENT=5511999999999
+```
+
 **Key capabilities:**
 - Direct repository exploration and Q&A
 - Source code understanding with context
@@ -243,20 +302,318 @@ mcp__ask-repo-agent__ask_question(
 
 
 
-## 6. Development Server Configuration
+## 6. Configuration Management
 
-### Simple Configuration
-The development server uses environment variables in `.env` for configuration:
+### Environment Configuration Pattern
+Genie Agents uses a layered configuration approach:
 
-**Development Mode**:
-```bash
-make dev
+**Never hardcode values - always use configuration files and environment variables.**
+
+### Configuration Files Structure
+```
+├── .env                           # Main environment variables (required)
+├── .env.example                   # Template with all available options
+├── config/settings.py             # General application settings
+├── api/settings.py                # API-specific settings
+├── agents/settings.py             # Agent-specific settings
+├── agents/{agent}/config.yaml     # Individual agent configurations
+└── teams/{team}/config.yaml       # Team routing configurations
 ```
 
-### Environment Variables
-- `CSV_HOT_RELOAD=true` - Enable CSV file watching for knowledge base updates
+### Environment Variables (.env)
 
-## 7. Post-Task Completion Protocol
+**Core Application:**
+```bash
+# Environment selection
+ENVIRONMENT=development  # development|production
+DEBUG=true              # Enable debug logging
+DEMO_MODE=true          # Demo presentation features
+AGNO_LOG_LEVEL=debug    # Agno framework verbosity
+
+# API Server
+PB_AGENTS_HOST=0.0.0.0
+PB_AGENTS_PORT=9888
+
+# Database (PostgreSQL required)
+DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/db
+
+# Development Features
+CSV_HOT_RELOAD=true     # Enable CSV file watching
+```
+
+**AI API Keys (Required):**
+```bash
+ANTHROPIC_API_KEY=your-key-here
+OPENAI_API_KEY=your-key-here
+GEMINI_API_KEY=your-key-here
+```
+
+**WhatsApp Integration:**
+```bash
+EVOLUTION_API_BASE_URL=http://localhost:8080
+EVOLUTION_API_INSTANCE=your-instance
+EVOLUTION_API_KEY=your-key
+EVOLUTION_API_FIXED_RECIPIENT=5511999999999
+```
+
+**Email Notifications:**
+```bash
+RESEND_API_KEY=your-resend-key
+EMAIL_RECIPIENT=admin@yourcompany.com
+```
+
+**Monitoring System:**
+```bash
+# Feature toggles
+MONITORING_METRICS_ENABLED=true
+MONITORING_ALERTING_ENABLED=true
+MONITORING_ANALYTICS_ENABLED=true
+
+# Thresholds
+MONITORING_RESPONSE_TIME_WARNING=2.0
+MONITORING_RESPONSE_TIME_CRITICAL=5.0
+MONITORING_SUCCESS_RATE_WARNING=95.0
+MONITORING_SUCCESS_RATE_CRITICAL=90.0
+
+# Storage paths
+MONITORING_METRICS_STORAGE=logs/metrics
+MONITORING_ALERT_STORAGE=logs/alerts
+MONITORING_ANALYTICS_STORAGE=logs/analytics
+```
+
+### YAML Configuration Pattern
+
+**Agent Configuration (agents/{agent}/config.yaml):**
+```yaml
+agent:
+  agent_id: "specialist-name"
+  version: 1
+  name: "Specialist Name"
+  role: "Domain Expert"
+  description: "Expert in specific domain"
+
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 0.7
+  max_tokens: 2000
+
+instructions: |
+  System instructions for the agent...
+
+knowledge_filter:
+  business_unit: "Domain Area"
+  max_results: 5
+  relevance_threshold: 0.6
+  csv_file_path: "context/knowledge/knowledge_rag.csv"
+
+tools:
+  - "search_knowledge_base"
+  - "domain_specific_tool"
+
+storage:
+  type: "postgres"
+  table_name: "agent_table"
+  auto_upgrade_schema: true
+
+memory:
+  add_history_to_messages: true
+  num_history_runs: 5
+```
+
+**Team Configuration (teams/{team}/config.yaml):**
+```yaml
+team:
+  name: "Team Name"
+  team_id: "team-identifier"
+  mode: "route"  # Key for intelligent routing
+  description: "Team purpose and capabilities"
+
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 1.0  # Required for thinking mode
+  thinking:
+    type: "enabled"
+    budget_tokens: 1024
+
+instructions: |
+  Routing and coordination instructions...
+
+storage:
+  type: "postgres"
+  table_name: "team_table"
+  mode: "team"
+  auto_upgrade_schema: true
+
+memory:
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+  num_history_runs: 5
+```
+
+### Configuration Loading Pattern
+
+```python
+# Always load environment variables first
+from dotenv import load_dotenv
+load_dotenv()
+
+# Use Pydantic for settings validation
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    environment: str = "development"
+    debug: bool = False
+    api_host: str = "0.0.0.0"
+    api_port: int = 9888
+    
+    # Database configuration
+    database_url: str
+    
+    # API keys (required)
+    anthropic_api_key: str
+    openai_api_key: str
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+
+# Global settings instance
+settings = Settings()
+```
+
+### Database Connection Configuration
+
+**PostgreSQL (Required):**
+```python
+# config/postgres_config.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import os
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is required")
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+```
+
+**Auto-migrations with Alembic:**
+```python
+# db/session.py
+def init_database():
+    """Initialize database with auto-migrations"""
+    from alembic import command
+    from alembic.config import Config
+    
+    alembic_cfg = Config("db/alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+```
+
+### Configuration Validation
+
+```python
+# config/settings.py
+def validate_settings() -> Dict[str, bool]:
+    """Validate all required configuration"""
+    validations = {
+        "database_url": bool(os.getenv("DATABASE_URL")),
+        "anthropic_api_key": bool(os.getenv("ANTHROPIC_API_KEY")),
+        "valid_port": 1 <= int(os.getenv("PB_AGENTS_PORT", "9888")) <= 65535,
+        "environment": os.getenv("ENVIRONMENT") in ["development", "production"]
+    }
+    return validations
+```
+
+## 7. Development Server Configuration
+
+### Simple Development Setup
+```bash
+# Quick start
+make install  # Install dependencies
+make dev      # Start development server
+```
+
+### Development vs Production
+
+**Development Mode (`ENVIRONMENT=development`):**
+- Hot reload enabled
+- Debug logging active
+- API documentation available
+- CSV hot reload for knowledge base
+- Permissive CORS policy
+
+**Production Mode (`ENVIRONMENT=production`):**
+- Docker containerized
+- Optimized logging
+- Restricted CORS
+- Monitoring enabled
+- Auto-scaling ready
+
+### Server Access Points
+
+**Development Server:**
+- **API Documentation**: http://localhost:9888/docs (Swagger UI)
+- **Alternative API Docs**: http://localhost:9888/redoc (ReDoc)
+- **Main API Endpoint**: http://localhost:9888
+- **Health Check**: http://localhost:9888/api/v1/health
+- **Monitoring Dashboard**: http://localhost:9888/api/v1/monitoring/dashboard
+
+**Production Server:**
+- **Main API**: http://localhost:9888 (or configured port)
+- **Health Check**: http://localhost:9888/api/v1/health
+- **Monitoring**: http://localhost:9888/api/v1/monitoring/*
+- **WebSocket**: ws://localhost:9888/api/v1/monitoring/ws/realtime
+
+### Knowledge Base Hot Reload
+
+**CSV Hot Reload Manager:**
+```bash
+# Enable in .env
+CSV_HOT_RELOAD=true
+
+# Watch for changes
+CSV_FILE_PATH=context/knowledge/knowledge_rag.csv
+```
+
+**Features:**
+- Real-time file watching
+- Instant knowledge base updates
+- Smart incremental loading
+- Change detection and logging
+- Management-friendly editing
+
+### API Endpoints Structure
+
+**Unified Agno Framework Endpoints:**
+```
+/runs                     # Core execution (agents/teams/workflows)
+/sessions                 # Session management
+/agents                   # Agent management
+/agents/{id}/runs         # Agent-specific execution
+/agents/{id}/sessions     # Agent sessions
+/agents/{id}/memories     # Agent memory
+/teams                    # Team management
+/teams/{id}/runs          # Team execution
+/teams/{id}/sessions      # Team sessions
+/teams/{id}/memories      # Team memory
+/workflows                # Workflow management
+/workflows/{id}/runs      # Workflow execution
+/status                   # System status
+```
+
+**Custom Business Endpoints:**
+```
+/api/v1/health           # Health checks
+/api/v1/monitoring/*     # Monitoring system
+/api/v1/agents/*         # Agent versioning
+/api/v1/monitoring/ws/realtime  # WebSocket monitoring
+```
+
+## 8. Post-Task Completion Protocol
 After completing any coding task, follow this checklist:
 
 ### 1. Type Safety & Quality Checks

@@ -15,13 +15,13 @@ from pathlib import Path
 # Optional email imports - make non-blocking
 try:
     import smtplib
-    from email.mime.text import MimeText
-    from email.mime.multipart import MimeMultipart
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
     EMAIL_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ Email functionality disabled: {e}")
     EMAIL_AVAILABLE = False
-    MimeText = MimeMultipart = smtplib = None
+    MIMEText = MIMEMultipart = smtplib = None
 
 logger = logging.getLogger(__name__)
 
@@ -384,7 +384,7 @@ class AlertManager:
             return
         
         try:
-            msg = MimeMultipart()
+            msg = MIMEMultipart()
             msg['From'] = email_config['username']
             msg['To'] = ', '.join(email_config['recipients'])
             msg['Subject'] = f"[{alert.severity.value.upper()}] PagBank System Alert"
@@ -400,7 +400,7 @@ class AlertManager:
             This is an automated alert from the PagBank Multi-Agent System monitoring.
             """
             
-            msg.attach(MimeText(body, 'plain'))
+            msg.attach(MIMEText(body, 'plain'))
             
             # Send email via SMTP
             if email_config.get('use_tls', True) and email_config['smtp_port'] == 465:

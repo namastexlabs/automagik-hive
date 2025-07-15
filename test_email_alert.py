@@ -72,7 +72,7 @@ async def test_smtp_connection():
     
     try:
         import smtplib
-        from email.mime.text import MimeText
+        from email.mime.text import MIMEText
         
         # Get credentials from environment
         api_key = os.getenv('RESEND_API_KEY')
@@ -90,7 +90,7 @@ async def test_smtp_connection():
         print(f"📧 Sending to: {recipient}")
         
         # Create test message
-        msg = MimeText("This is a test message from Genie Agents SMTP configuration.")
+        msg = MIMEText("This is a test message from Genie Agents SMTP configuration.")
         msg['From'] = 'resend'
         msg['To'] = recipient
         msg['Subject'] = 'Genie Agents SMTP Test'

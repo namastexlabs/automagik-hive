@@ -31,18 +31,35 @@ def setup_demo_logging():
     agno_level = getattr(logging, agno_log_level, logging.WARNING)
     logging.getLogger("agno").setLevel(agno_level)
     
-    # Suppress INFO level from all loggers for clean demo
-    if demo_mode and not debug_mode:
-        logging.getLogger().setLevel(logging.ERROR)
-        # Specifically suppress ALL noisy loggers
+    # Configure logging for demo mode
+    if demo_mode:
+        # Keep INFO level for demo logging but suppress noisy framework loggers
+        logging.getLogger().setLevel(logging.INFO)
+        
+        # Suppress specific noisy loggers only
         logging.getLogger("uvicorn").setLevel(logging.ERROR)
         logging.getLogger("fastapi").setLevel(logging.ERROR)
         logging.getLogger("sqlalchemy").setLevel(logging.ERROR)
         logging.getLogger("alembic").setLevel(logging.ERROR)
         
-        # Force all known loggers to ERROR level
-        for logger_name in ["agno", "openai", "httpx", "httpcore", "urllib3"]:
+        # Force all known noisy loggers to ERROR level
+        for logger_name in ["openai", "httpx", "httpcore", "urllib3"]:
             logging.getLogger(logger_name).setLevel(logging.ERROR)
+        
+        # Enable demo logging specifically
+        logging.getLogger("teams.ana.demo_logging").setLevel(logging.INFO)
+        logging.getLogger("teams.ana.team").setLevel(logging.INFO)
+        
+        # Set console handler to INFO level
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(message)s')
+        console_handler.setFormatter(formatter)
+        
+        # Add handler to root logger if not already present
+        root_logger = logging.getLogger()
+        if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+            root_logger.addHandler(console_handler)
     
     print(f"🎯 Demo mode: {'ON' if demo_mode else 'OFF'} | Debug: {'ON' if debug_mode else 'OFF'} | Agno: {agno_log_level}")
 
@@ -97,8 +114,12 @@ def create_pagbank_api():
     is_development = environment == "development"
     demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
     
-    # Show environment info in demo/development mode
-    if demo_mode or is_development:
+    # Check if we're in uvicorn reload process to prevent duplicate output
+    import sys
+    is_reloader = any("reloader" in str(arg) for arg in sys.argv) or "StatReload" in str(sys.modules.get("uvicorn", ""))
+    
+    # Show environment info in demo/development mode (but not in reloader)
+    if (demo_mode or is_development) and not is_reloader:
         print(f"🌍 Environment: {environment}")
         print(f"🔧 Development features: {'ENABLED' if is_development else 'DISABLED'}")
     
@@ -106,16 +127,16 @@ def create_pagbank_api():
     try:
         from db.session import init_database
         init_database()
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print("✅ Database initialized successfully")
     except Exception as e:
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print(f"⚠️ Database initialization warning: {e}")
             print("📝 Note: Some features may be limited without database tables")
     
     # Initialize CSV hot reload manager for lazy loading
     csv_path = Path(__file__).parent.parent / "context/knowledge/knowledge_rag.csv"
-    if demo_mode or is_development:
+    if (demo_mode or is_development) and not is_reloader:
         print(f"🔍 CSV hot reload manager configured: {csv_path}")
         
         # Start CSV hot reload manager immediately in demo/development mode
@@ -142,14 +163,14 @@ def create_pagbank_api():
             debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true")
         )
     except Exception as e:
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print(f"⚠️ Agent/Team loading error: {e}")
         # Fallback: create minimal setup
         ana_team = None
         available_agents = {}
     
     # Debug: Print team and agents information
-    if demo_mode or is_development:
+    if (demo_mode or is_development) and not is_reloader:
         if ana_team:
             print(f"📋 Team Name: {ana_team.name}")
             print(f"🆔 Team ID: {ana_team.team_id}")
@@ -178,29 +199,21 @@ def create_pagbank_api():
             get_conversation_typification_workflow(debug_mode=is_development),
             get_human_handoff_workflow(debug_mode=is_development)
         ]
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print("✅ Workflows loaded: ConversationTypification, HumanHandoff")
     except Exception as e:
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print(f"⚠️ Could not load workflows: {e}")
         workflows_list = []
     
-    # Create FastAPIApp for all environments
-    if demo_mode or is_development:
-        print("🚀 Using FastAPIApp mode")
-    app_instance = FastAPIApp(
-        teams=teams_list,
-        agents=agents_list,
-        workflows=workflows_list,
-        name="PagBank Multi-Agent System",
-        app_id="pagbank_multiagent", 
-        description="Sistema multi-agente de atendimento ao cliente PagBank com Ana como assistente unificada",
-        version="1.0.0",
-        monitoring=True
-    )
+    # Create base FastAPI app for configuration
     
-    # Get the FastAPI app instance
-    app = app_instance.get_app()
+    # Create base FastAPI app that will be configured by Playground
+    app = FastAPI(
+        title="PagBank Multi-Agent System",
+        description="Sistema multi-agente de atendimento ao cliente PagBank com Ana como assistente unificada",
+        version="1.0.0"
+    )
     
     # ✅ CONFIGURE APP WITH UNIFIED SETTINGS
     # Apply settings from api/settings.py
@@ -212,39 +225,53 @@ def create_pagbank_api():
     # Set lifespan for monitoring
     app.router.lifespan_context = lifespan
     
-    # ✅ ADD ENDPOINTS
-    # Add async router only (sync router would create duplicate operation IDs)
-    async_router = app_instance.get_async_router()
-    
-    app.include_router(async_router)
-    if demo_mode or is_development:
-        print("✅ FastAPIApp endpoints registered: /runs, /sessions, /agents, /teams (async)")
-    
-    # ✅ ADD PLAYGROUND ROUTER FOR WORKFLOW CRUD ENDPOINTS
-    # This provides the missing /workflows endpoints that FastAPIApp doesn't generate
+    # ✅ UNIFIED API - Single set of endpoints for both production and playground
+    # Use Playground as the primary router since it provides comprehensive CRUD operations
     try:
         playground = Playground(
             agents=agents_list,
             teams=teams_list,
             workflows=workflows_list,
-            name="PagBank Multi-Agent Playground",
-            app_id="pagbank_playground"
+            name="PagBank Multi-Agent System",
+            app_id="pagbank_multiagent"
         )
-        playground_router = playground.get_async_router()
-        app.include_router(playground_router)
-        if demo_mode or is_development:
-            print("✅ Playground endpoints registered: /playground/workflows, /playground/agents, /playground/teams")
-            print("   • Workflow CRUD: GET /playground/workflows, POST /playground/workflows/{id}/runs")
+        
+        # Get the unified router - this provides all endpoints including workflows
+        unified_router = playground.get_async_router()
+        app.include_router(unified_router)
+        
+        if (demo_mode or is_development) and not is_reloader:
+            print("🚀 Using unified Playground API mode")
+            print("✅ Unified API endpoints registered:")
+            print("   • Core execution: /runs")
+            print("   • Sessions: /sessions") 
+            print("   • Agent management: /agents, /agents/{id}/runs, /agents/{id}/sessions")
+            print("   • Team management: /teams, /teams/{id}/runs, /teams/{id}/sessions")
+            print("   • Workflow management: /workflows, /workflows/{id}/runs, /workflows/{id}/sessions")
+            print("   • Status: /status")
+            print("   • Memory: /agents/{id}/memories, /teams/{id}/memories")
+            
     except Exception as e:
-        if demo_mode or is_development:
-            print(f"⚠️ Could not register playground endpoints: {e}")
+        if (demo_mode or is_development) and not is_reloader:
+            print(f"⚠️ Could not register unified API endpoints: {e}")
+        # Fallback: create minimal endpoints if Playground fails
+        if not is_reloader:
+            print("⚠️ Fallback: Playground failed, creating minimal endpoints")
+        
+        @app.get("/status")
+        async def status():
+            return {"status": "ok", "message": "PagBank Multi-Agent System"}
+        
+        @app.post("/runs")
+        async def minimal_runs():
+            return {"error": "Playground initialization failed - limited functionality"}
     
     # Configure docs based on settings and environment
     if is_development or api_settings.docs_enabled:
         app.docs_url = "/docs"
         app.redoc_url = "/redoc"
         app.openapi_url = "/openapi.json"
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print("✅ API documentation enabled")
     else:
         app.docs_url = None
@@ -256,21 +283,39 @@ def create_pagbank_api():
     try:
         from api.routes.v1_router import v1_router
         app.include_router(v1_router)
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print("✅ Custom business endpoints registered: Health, Monitoring, Agent Versioning")
             print("   • Health checks: /api/v1/health")
             print("   • Monitoring: /api/v1/monitoring/*") 
             print("   • Agent versions: /api/v1/agents/*")
             print("   • WebSocket: /api/v1/monitoring/ws/realtime")
-            print("📋 Native Agno framework endpoints (UNTOUCHED for UI):")
-            print("   • FastAPIApp - Basic execution: /runs")
-            print("   • Sessions: /sessions") 
-            print("   • Entity lists: /agents, /teams")
+            print("📋 Unified Agno framework endpoints (Production + Playground):")
+            print("   • Core execution: /runs (works for agents, teams, workflows)")
+            print("   • Sessions: /sessions, /agents/{id}/sessions, /teams/{id}/sessions, /workflows/{id}/sessions")
+            print("   • Agent management: /agents, /agents/{id}/runs, /agents/{id}/memories")
+            print("   • Team management: /teams, /teams/{id}/runs, /teams/{id}/memories")
+            print("   • Workflow management: /workflows, /workflows/{id}/runs, /workflows/{id}/sessions")
             print("   • Status: /status")
-            print("   • Playground - Full CRUD: /playground/workflows, /playground/agents, /playground/teams")
-            print("   • Workflow execution: POST /playground/workflows/{id}/runs")
+            
+            # Add development welcome message with documentation and MCP info
+            port = int(os.getenv("PB_AGENTS_PORT", "9888"))
+            print(f"\n🌟 Development Server Ready!")
+            print(f"📖 API Documentation: http://localhost:{port}/docs")
+            print(f"📋 Alternative Docs: http://localhost:{port}/redoc")
+            print(f"🚀 Main API: http://localhost:{port}")
+            print(f"💗 Health Check: http://localhost:{port}/api/v1/health")
+            print(f"\n🔧 MCP Integration Available:")
+            print(f'   Add to your MCP client config:')
+            print(f'   "genie-agents": {{')
+            print(f'     "command": "uvx",')
+            print(f'     "args": ["automagik-tools", "tool", "genie-agents"],')
+            print(f'     "env": {{')
+            print(f'       "GENIE_AGENTS_API_BASE_URL": "http://localhost:{port}",')
+            print(f'       "GENIE_AGENTS_TIMEOUT": "300"')
+            print(f'     }}')
+            print(f'   }}')
     except Exception as e:
-        if demo_mode or is_development:
+        if (demo_mode or is_development) and not is_reloader:
             print(f"⚠️ Could not register custom business endpoints: {e}")
     
     # ✅ ADD CORS MIDDLEWARE (unified from main.py)
@@ -282,17 +327,15 @@ def create_pagbank_api():
         allow_headers=["*"],
     )
     
-    return app_instance
+    return app
 
 
 # Lazy app creation - only create when imported by uvicorn, not when running as script
-app_instance = None
 app = None
 
 # Only create app if being imported (not run as script)
 if __name__ != "__main__":
-    app_instance = create_pagbank_api()
-    app = app_instance.get_app()
+    app = create_pagbank_api()
 
 
 if __name__ == "__main__":

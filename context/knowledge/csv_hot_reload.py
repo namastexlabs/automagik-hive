@@ -142,7 +142,7 @@ class CSVHotReloadManager:
         self._initialize_knowledge_base()
     
     def _initialize_knowledge_base(self):
-        """Initialize the knowledge base on startup"""
+        """Initialize the knowledge base on startup with change detection"""
         demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
         is_development = os.getenv("ENVIRONMENT", "production") == "development"
         should_print = demo_mode or is_development
@@ -154,23 +154,40 @@ class CSVHotReloadManager:
             self.smart_loader = SmartIncrementalLoader(str(self.csv_path))
             
             if self.csv_path.exists():
-                # Smart initial load
+                # Get current CSV row count for startup sync detection
+                import csv
+                try:
+                    with open(self.csv_path, 'r', encoding='utf-8') as f:
+                        reader = csv.reader(f)
+                        try:
+                            next(reader)  # Skip header
+                            csv_rows = sum(1 for row in reader if any(field.strip() for field in row))
+                        except StopIteration:
+                            csv_rows = 0
+                except:
+                    csv_rows = 0
+                
+                # Smart initial load with startup sync detection
                 if should_print:
-                    print("🧠 Performing smart initial load...")
+                    print("🧠 Performing smart initial load with startup sync detection...")
+                
+                import time
+                start_time = time.time()
                 result = self.smart_loader.smart_load()
+                load_time = time.time() - start_time
                 
                 if "error" in result:
                     if should_print:
                         print(f"❌ Smart load error: {result['error']}")
                     # Fallback to regular load
                     self.kb.load_knowledge_base(recreate=True)
-                else:
+                    stats = self.kb.get_knowledge_statistics()
                     if should_print:
-                        print(f"✅ Smart load completed: {result.get('strategy', 'unknown')}")
+                        print(f"✅ Knowledge base ready with {stats.get('total_entries', 'unknown')} entries")
+                else:
+                    # Show startup sync with proper visual indicators
+                    self._show_startup_sync_result(result, load_time, csv_rows)
                 
-                stats = self.kb.get_knowledge_statistics()
-                if should_print:
-                    print(f"✅ Knowledge base ready with {stats.get('total_entries', 'unknown')} entries")
             else:
                 if should_print:
                     print(f"⚠️  CSV file not found: {self.csv_path}")
@@ -179,6 +196,50 @@ class CSVHotReloadManager:
             if should_print:
                 print(f"❌ Failed to initialize knowledge base: {e}")
             raise
+    
+    def _show_startup_sync_result(self, result, load_time, csv_rows):
+        """Show startup sync result with proper visual indicators"""
+        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        should_print = demo_mode or is_development
+        
+        if not should_print:
+            return
+            
+        try:
+            # Get final KB stats
+            stats = self.kb.get_knowledge_statistics()
+            kb_total = stats.get('total_entries', 0)
+            
+            strategy = result.get('strategy', 'unknown')
+            
+            if strategy == 'no_changes':
+                print(f"✅ No changes | {load_time:.1f}s | KB: {kb_total} entries")
+            elif strategy == 'initial_load_with_hashes':
+                print(f"🔄 Initial load | {load_time:.1f}s | KB: {kb_total} entries")
+            elif strategy == 'incremental_update':
+                # Show as UPDATE since changes were detected
+                processed_count = result.get('new_rows_processed', 0)
+                print(f"🟡 UPD {processed_count} entries | {load_time:.1f}s | KB: {kb_total}")
+                print(f"  📊 Startup sync detected changes and updated knowledge base")
+                
+                # Show affected rows
+                try:
+                    import pandas as pd
+                    df = pd.read_csv(self.csv_path)
+                    print(f"  📊 Updated content (showing recent entries):")
+                    self._print_clean_table(df.tail(min(processed_count, 3)))
+                except:
+                    pass
+                    
+            elif strategy == 'full_reload':
+                print(f"🔄 Full reload | {load_time:.1f}s | KB: {kb_total} entries")
+                print(f"  📊 Complete knowledge base rebuild")
+            else:
+                print(f"🔄 {strategy} | {load_time:.1f}s | KB: {kb_total} entries")
+                
+        except Exception as e:
+            print(f"❌ Error displaying startup sync result: {e}")
     
     def start_watching(self):
         """Start real-time watching of the CSV file for changes"""

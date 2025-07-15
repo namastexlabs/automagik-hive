@@ -8,11 +8,20 @@
       "GOOGLE_API_KEY",
       "GEMINI_API_KEY",
       "EVOLUTION_API_KEY",
+      "EVOLUTION_API_BASE_URL",
+      "EVOLUTION_API_INSTANCE",
       "WHATSAPP_API_KEY",
+      "RESEND_API_KEY",
       "POSTGRES_PASSWORD",
       "REDIS_PASSWORD",
       "SECRET_KEY",
-      "JWT_SECRET"
+      "JWT_SECRET",
+      "DATABASE_URL",
+      "AGNO_LOG_LEVEL",
+      "CSV_HOT_RELOAD",
+      "DEBUG",
+      "DEMO_MODE",
+      "ENVIRONMENT"
     ],
     "credentials": [
       "password\\s*[:=]\\s*[\"']?[^\\s\"']+[\"']?",
@@ -32,6 +41,7 @@
       ".env.staging",
       ".env.prod",
       ".env.dev",
+      ".env.example",
       "credentials.json",
       "google-credentials.json",
       "service-account.json",
@@ -49,7 +59,12 @@
       "agent_secrets.yaml",
       "whatsapp_config.json",
       "evolution_api_config.json",
-      "database_credentials.json"
+      "database_credentials.json",
+      "alert_config.json",
+      "config.yaml",
+      "agent_config.yaml",
+      "team_config.yaml",
+      "workflow_config.yaml"
     ],
     "regex_patterns": [
       "sk-[a-zA-Z0-9]{32,}",
@@ -83,6 +98,9 @@
       "ANTHROPIC_API_KEY=your_anthropic_api_key_here",
       "COHERE_API_KEY=your_cohere_api_key_here",
       "EVOLUTION_API_KEY=your_evolution_api_key_here",
+      "EVOLUTION_API_BASE_URL=http://localhost:8080",
+      "EVOLUTION_API_INSTANCE=your_instance_name",
+      "RESEND_API_KEY=your_resend_api_key_here",
       "AWS_ACCESS_KEY_ID=your_access_key_here",
       "api_key=settings.api_key",
       "api_key=process.env.API_KEY",
@@ -112,8 +130,16 @@
       "SECRET_KEY=<your_secret_key>",
       "DATABASE_URL=<your_database_url>",
       "DATABASE_URL=postgresql://user:pass@host:5432/db",
+      "DATABASE_URL=postgresql+psycopg://ai:ai@localhost:5532/ai",
       "POSTGRES_PASSWORD=secure-password",
-      "SECRET_KEY=your-secret-key"
+      "SECRET_KEY=your-secret-key",
+      "AGNO_LOG_LEVEL=WARNING",
+      "CSV_HOT_RELOAD=true",
+      "DEBUG=true",
+      "DEMO_MODE=true",
+      "ENVIRONMENT=development",
+      "PB_AGENTS_HOST=0.0.0.0",
+      "PB_AGENTS_PORT=9888"
     ]
   }
 }
