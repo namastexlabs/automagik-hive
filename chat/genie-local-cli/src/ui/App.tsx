@@ -16,6 +16,9 @@ import { LoadingIndicator } from './components/LoadingIndicator.js';
 import { InputPrompt } from './components/InputPrompt.js';
 import { Footer } from './components/Footer.js';
 import { ChatDisplay } from './components/ChatDisplay.js';
+import { TargetTypeDialog } from './components/TargetTypeDialog.js';
+import { TargetSelectionDialog } from './components/TargetSelectionDialog.js';
+import { SessionSelectionDialog } from './components/SessionSelectionDialog.js';
 import { SessionProvider, useSession } from './contexts/SessionContext.js';
 import { StreamingProvider } from './contexts/StreamingContext.js';
 import { appConfig } from '../config/settings.js';
@@ -60,12 +63,16 @@ const App = ({ version }: AppProps) => {
   
   // API state
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
-  const [selectedTarget, setSelectedTarget] = useState<{ type: 'agent' | 'team' | 'workflow'; id: string } | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<{ type: 'agent' | 'team' | 'workflow'; id: string; name: string } | null>(null);
   const [availableTargets, setAvailableTargets] = useState<{
-    agents: string[];
-    teams: string[];
-    workflows: string[];
+    agents: any[];
+    teams: any[];
+    workflows: any[];
   }>({ agents: [], teams: [], workflows: [] });
+  
+  // UI flow state
+  const [uiState, setUiState] = useState<'selecting_type' | 'selecting_target' | 'selecting_session' | 'chatting'>('selecting_type');
+  const [selectedTargetType, setSelectedTargetType] = useState<'agent' | 'team' | 'workflow' | null>(null);
 
   // Local API streaming
   const {
@@ -107,14 +114,12 @@ const App = ({ version }: AppProps) => {
 
         setConnectionStatus('connected');
         
-        // Auto-select first available target
-        if (agentsResponse.data && agentsResponse.data.length > 0) {
-          setSelectedTarget({ type: 'agent', id: agentsResponse.data[0] });
-        } else if (teamsResponse.data && teamsResponse.data.length > 0) {
-          setSelectedTarget({ type: 'team', id: teamsResponse.data[0] });
-        } else if (workflowsResponse.data && workflowsResponse.data.length > 0) {
-          setSelectedTarget({ type: 'workflow', id: workflowsResponse.data[0] });
+        if (appConfig.cliDebug) {
+          console.log(`Loaded ${agentsResponse.data?.length || 0} agents, ${teamsResponse.data?.length || 0} teams, ${workflowsResponse.data?.length || 0} workflows`);
         }
+        
+        // Start with target type selection
+        setUiState('selecting_type');
 
       } catch (error) {
         console.error('Failed to connect to API:', error);
@@ -128,7 +133,7 @@ const App = ({ version }: AppProps) => {
     };
 
     initializeAPI();
-  }, [addMessage]);
+  }, []); // Remove addMessage dependency to prevent re-initialization
 
   // Handle keyboard shortcuts
   const handleExit = useCallback(
@@ -176,14 +181,141 @@ const App = ({ version }: AppProps) => {
     [submitQuery, selectedTarget],
   );
 
-  const handleTargetChange = useCallback((newTarget: { type: 'agent' | 'team' | 'workflow'; id: string }) => {
-    setSelectedTarget(newTarget);
+  // Interactive flow handlers
+  const handleTargetTypeSelect = useCallback((targetType: 'agent' | 'team' | 'workflow') => {
+    setSelectedTargetType(targetType);
+    setUiState('selecting_target');
+  }, []);
+
+  const handleTargetSelect = useCallback((target: { type: 'agent' | 'team' | 'workflow'; id: string; name: string }) => {
+    setSelectedTarget(target);
+    setUiState('selecting_session');
+  }, []);
+
+  const handleSessionSelect = useCallback((sessionAction: 'new' | 'existing') => {
+    if (sessionAction === 'new') {
+      // Start a new session
+      setUiState('chatting');
+    }
+    // TODO: Handle existing session loading
+  }, []);
+
+  const handleBackToTargetType = useCallback(() => {
+    setSelectedTargetType(null);
+    setUiState('selecting_type');
+  }, []);
+
+  const handleBackToTargetSelection = useCallback(() => {
+    setSelectedTarget(null);
+    setUiState('selecting_target');
   }, []);
 
   const isInputActive = streamingState === StreamingState.Idle && connectionStatus === 'connected';
   const widthFraction = 0.9;
   const inputWidth = Math.max(20, Math.floor(terminalWidth * widthFraction) - 3);
 
+  // Show connection error
+  if (connectionStatus === 'error') {
+    return (
+      <Box flexDirection="column" marginBottom={1} width="90%">
+        <Box
+          borderStyle="round"
+          borderColor="red"
+          paddingX={1}
+          marginY={1}
+        >
+          <Text color="red">
+            Failed to connect to API at {appConfig.apiBaseUrl}
+          </Text>
+          <Text>Make sure the multi-agent server is running and try again.</Text>
+        </Box>
+        <Footer
+          debugMode={appConfig.cliDebug}
+          debugMessage={debugMessage}
+          sessionId={currentSessionId}
+          apiUrl={appConfig.apiBaseUrl}
+        />
+      </Box>
+    );
+  }
+
+  // Show loading while connecting
+  if (connectionStatus === 'connecting') {
+    return (
+      <Box flexDirection="column" marginBottom={1} width="90%">
+        <Text>🧞 Connecting to {appConfig.apiBaseUrl}...</Text>
+        <Footer
+          debugMode={appConfig.cliDebug}
+          debugMessage={debugMessage}
+          sessionId={currentSessionId}
+          apiUrl={appConfig.apiBaseUrl}
+        />
+      </Box>
+    );
+  }
+
+  // Interactive setup flow
+  if (uiState === 'selecting_type') {
+    return (
+      <Box flexDirection="column" marginBottom={1} width="90%">
+        <TargetTypeDialog
+          onSelect={handleTargetTypeSelect}
+          availableTargets={availableTargets}
+        />
+        <Footer
+          debugMode={appConfig.cliDebug}
+          debugMessage={debugMessage}
+          sessionId={currentSessionId}
+          apiUrl={appConfig.apiBaseUrl}
+        />
+      </Box>
+    );
+  }
+
+  if (uiState === 'selecting_target' && selectedTargetType) {
+    const targets = selectedTargetType === 'agent' 
+      ? availableTargets.agents 
+      : selectedTargetType === 'team' 
+      ? availableTargets.teams 
+      : availableTargets.workflows;
+
+    return (
+      <Box flexDirection="column" marginBottom={1} width="90%">
+        <TargetSelectionDialog
+          targetType={selectedTargetType}
+          targets={targets}
+          onSelect={handleTargetSelect}
+          onBack={handleBackToTargetType}
+        />
+        <Footer
+          debugMode={appConfig.cliDebug}
+          debugMessage={debugMessage}
+          sessionId={currentSessionId}
+          apiUrl={appConfig.apiBaseUrl}
+        />
+      </Box>
+    );
+  }
+
+  if (uiState === 'selecting_session' && selectedTarget) {
+    return (
+      <Box flexDirection="column" marginBottom={1} width="90%">
+        <SessionSelectionDialog
+          selectedTarget={selectedTarget}
+          onSelect={handleSessionSelect}
+          onBack={handleBackToTargetSelection}
+        />
+        <Footer
+          debugMode={appConfig.cliDebug}
+          debugMessage={debugMessage}
+          sessionId={currentSessionId}
+          apiUrl={appConfig.apiBaseUrl}
+        />
+      </Box>
+    );
+  }
+
+  // Main chat interface
   return (
     <Box flexDirection="column" marginBottom={1} width="90%">
       <Header
@@ -192,7 +324,7 @@ const App = ({ version }: AppProps) => {
         connectionStatus={connectionStatus}
         selectedTarget={selectedTarget}
         availableTargets={availableTargets}
-        onTargetChange={handleTargetChange}
+        onTargetChange={() => setUiState('selecting_type')}
       />
 
       <ChatDisplay
@@ -215,7 +347,7 @@ const App = ({ version }: AppProps) => {
             <Text>• Ctrl+H: Toggle this help</Text>
             <Text>• Ctrl+L: Clear screen</Text>
             <Text>• Ctrl+C or Ctrl+D (twice): Exit</Text>
-            <Text>• Use the target selector to switch between agents, teams, and workflows</Text>
+            <Text>• Click target name to change selection</Text>
           </Box>
         </Box>
       )}
@@ -246,14 +378,14 @@ const App = ({ version }: AppProps) => {
           </Box>
         )}
 
-        {isInputActive && (
+        {isInputActive && uiState === 'chatting' && (
           <InputPrompt
             onSubmit={handleSubmit}
             inputWidth={inputWidth}
             disabled={!selectedTarget}
             placeholder={
               selectedTarget
-                ? `Message ${selectedTarget.type} ${selectedTarget.id}...`
+                ? `Message ${selectedTarget.name}...`
                 : 'No target selected'
             }
           />

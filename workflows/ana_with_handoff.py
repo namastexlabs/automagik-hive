@@ -44,7 +44,6 @@ class AnaWithHandoffWorkflow(Workflow):
         # Extract custom parameters
         self.debug_mode = kwargs.pop('debug_mode', False)
         self.whatsapp_enabled = kwargs.pop('whatsapp_enabled', True)
-        self.mcp_tools = kwargs.pop('mcp_tools', None)
         
         super().__init__(**kwargs)
         
@@ -68,8 +67,6 @@ class AnaWithHandoffWorkflow(Workflow):
         if self._human_handoff_workflow is None:
             from .human_handoff.workflow import get_human_handoff_workflow
             self._human_handoff_workflow = get_human_handoff_workflow(
-                mcp_tools=self.mcp_tools,
-                debug_mode=self.debug_mode,
                 whatsapp_enabled=self.whatsapp_enabled
             )
         return self._human_handoff_workflow
@@ -232,7 +229,6 @@ class AnaWithHandoffWorkflow(Workflow):
 
 
 def get_ana_with_handoff_workflow(
-    mcp_tools=None,
     debug_mode: bool = False,
     whatsapp_enabled: bool = True
 ) -> AnaWithHandoffWorkflow:
@@ -245,7 +241,6 @@ def get_ana_with_handoff_workflow(
             db_url=db_url,
             auto_upgrade_schema=True
         ),
-        mcp_tools=mcp_tools,
         debug_mode=debug_mode,
         whatsapp_enabled=whatsapp_enabled
     )

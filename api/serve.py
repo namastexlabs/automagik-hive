@@ -204,7 +204,7 @@ def create_pagbank_api():
     try:
         workflows_list = [
             get_conversation_typification_workflow(debug_mode=is_development),
-            get_human_handoff_workflow(debug_mode=is_development)
+            get_human_handoff_workflow()
         ]
         if (demo_mode or is_development) and not is_reloader:
             print("✅ Workflows loaded: ConversationTypification, HumanHandoff")

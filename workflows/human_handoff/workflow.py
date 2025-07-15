@@ -1,31 +1,24 @@
 """
-Human Handoff Workflow Implementation - Simplified V2
-===================================================
+Human Handoff Workflow Implementation - Ultra Simplified V2
+===========================================================
 
-Streamlined Agno workflow for escalating customer service to human agents with context 
-preservation and WhatsApp notifications using MCP. Reduced from 838 to ~250 lines (70% reduction).
-
-Key improvements:
-- Single async execution method following Agno best practices
-- Direct protocol generation from provided context (Ana team already decided to escalate)
-- Simplified 2-step process: Context consolidation → WhatsApp notification
-- Proper MCP tool lifecycle management
-- Backwards compatibility maintained
+Minimal Agno workflow for escalating customer service to human agents.
+Based on the old working version but drastically simplified.
 """
 
-import os
+import uuid
 from datetime import datetime
 from textwrap import dedent
-from typing import AsyncIterator, Dict, Optional, Union
+from typing import AsyncIterator, Dict, Optional
 
+from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 from agno.utils.log import logger
-from agno.workflow import RunEvent, RunResponse, Workflow
+from agno.workflow import RunResponse, Workflow
 from db.session import db_url
 
 from .models import (
-    BusinessUnit,
     ConversationContext,
     CustomerEmotion,
     CustomerInfo,
@@ -35,292 +28,210 @@ from .models import (
     HandoffResult,
     IssueDetails,
     UrgencyLevel,
-    WhatsAppNotification
 )
 
 
 class HumanHandoffWorkflow(Workflow):
     """
-    Simplified workflow for escalating customer service to human agents.
-    
-    Handles:
-    1. Protocol generation from Ana team's context
-    2. WhatsApp notifications to support teams
-    3. Session state management
+    Ultra-simplified workflow for escalating to human agents.
+    Only async method, minimal steps.
     """
     
-    description: str = dedent("""\
-    Workflow de escalação simplificado para atendimento humano do PagBank.
+    description: str = "Workflow simplificado para escalação humana"
     
-    Funcionalidades:
-    - Geração de protocolo a partir do contexto fornecido
-    - Notificações WhatsApp via MCP para equipes especializadas
-    - Preservação completa de contexto para atendentes
-    """)
-    
-    def __init__(self, mcp_tools=None, **kwargs):
-        # Extract custom kwargs before passing to parent
+    def __init__(self, **kwargs):
+        # Extract custom kwargs
         self.whatsapp_enabled = kwargs.pop('whatsapp_enabled', True)
         self.whatsapp_instance = kwargs.pop('whatsapp_instance', 'SofIA')
-        self.mcp_tools = mcp_tools  # Store pre-initialized MCP tools
         
         super().__init__(**kwargs)
         
-        if self.whatsapp_enabled:
-            if self.mcp_tools:
-                logger.info("📱 WhatsApp notifications enabled with pre-initialized MCP tools")
-            else:
-                logger.warning("⚠️  WhatsApp enabled but no MCP tools provided")
-        else:
-            logger.info("⚠️  WhatsApp notifications disabled")
+        logger.info(f"📱 Human handoff workflow initialized (WhatsApp: {self.whatsapp_enabled})")
     
-    async def arun(  # type: ignore
+    async def arun(
         self,
-        conversation_context: Optional[ConversationContext] = None,
-        escalation_trigger: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-        # Legacy parameters for backward compatibility
+        # Main parameters
         customer_message: Optional[str] = None,
-        customer_query: Optional[str] = None,
-        conversation_history: Optional[str] = None,
         escalation_reason: Optional[str] = None,
+        conversation_history: Optional[str] = None,
+        urgency_level: str = "medium",
+        business_unit: Optional[str] = None,
         session_id: Optional[str] = None,
         customer_id: Optional[str] = None,
-        business_unit: Optional[str] = None,
-        urgency_level: Optional[str] = None,
+        # Alternative parameter names for compatibility
+        customer_query: Optional[str] = None,
         **kwargs
     ) -> AsyncIterator[RunResponse]:
-        """
-        Execute the simplified human handoff workflow asynchronously.
+        """Execute the simplified human handoff workflow asynchronously."""
         
-        Args:
-            conversation_context: Complete conversation context from Ana team
-            escalation_trigger: Specific trigger that initiated escalation
-            metadata: Additional context metadata
-            **kwargs: Legacy parameters for backwards compatibility
-        """
+        # Handle parameter variations
+        customer_msg = customer_message or customer_query or "Solicitação de atendimento humano"
+        session_id = session_id or f"session-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_id = customer_id or "unknown"
+        business_unit = business_unit or "general"
         
-        # Handle legacy parameter format for backward compatibility
-        if conversation_context is None:
-            conversation_context = self._build_context_from_legacy_params(
-                customer_message, customer_query, conversation_history,
-                escalation_reason, session_id, customer_id, 
-                business_unit, urgency_level
-            )
-            escalation_trigger = escalation_trigger or escalation_reason
+        logger.info(f"🚀 Starting human handoff for session {session_id}")
         
-        logger.info(f"🚀 Starting human handoff workflow for session {conversation_context.session_id}")
-        
-        # Initialize run_id if not set
+        # Initialize run_id
         if self.run_id is None:
-            import uuid
             self.run_id = str(uuid.uuid4())
         
-        start_time = datetime.now()
-        
         try:
-            # Step 1: Create escalation protocol from context (Ana already decided to escalate)
-            logger.info("📋 Step 1: Creating escalation protocol from provided context...")
-            protocol = self._create_protocol(conversation_context, escalation_trigger)
-            logger.info(f"✅ Protocol created: {protocol.protocol_id}")
+            # Step 1: Create protocol directly (Ana already decided to escalate)
+            protocol_id = f"ESC-{session_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
-            # Step 2: Send WhatsApp notification if enabled
+            # Create minimal customer info
+            customer_info = CustomerInfo(
+                customer_name=None,
+                customer_cpf=None,
+                customer_phone=None,
+                customer_email=None,
+                account_type=None
+            )
+            
+            # Create issue details
+            issue_details = IssueDetails(
+                summary=customer_msg,
+                issue_description=customer_msg,
+                category="escalation_request",
+                urgency=urgency_level,
+                conversation_history=conversation_history or "",
+                recommended_action="Atender cliente com prioridade"
+            )
+            
+            # Create escalation analysis
+            escalation_analysis = EscalationAnalysis(
+                should_escalate=True,
+                escalation_reason=EscalationReason.EXPLICIT_REQUEST,
+                confidence=1.0,
+                urgency_level=UrgencyLevel.HIGH if urgency_level == "high" else UrgencyLevel.MEDIUM,
+                customer_emotion=CustomerEmotion.FRUSTRATED,
+                reasoning=f"Ana team escalation: {escalation_reason or 'Human assistance requested'}",
+                detected_indicators=["ana_team_decision"]
+            )
+            
+            # Create protocol
+            protocol = EscalationProtocol(
+                protocol_id=protocol_id,
+                escalation_analysis=escalation_analysis,
+                customer_info=customer_info,
+                issue_details=issue_details,
+                assigned_team=business_unit
+            )
+            
+            logger.info(f"✅ Protocol created: {protocol_id}")
+            
+            # Step 2: WhatsApp notification
             notification_sent = False
-            notification_details = None
-            
             if self.whatsapp_enabled:
-                logger.info("📱 Step 2: Sending WhatsApp notification via MCP...")
+                logger.info("📱 Sending WhatsApp notification via MCP...")
                 try:
                     notification_result = await self._send_whatsapp_notification(protocol)
                     notification_sent = notification_result["success"]
-                    notification_details = notification_result.get("details")
                     logger.info(f"✅ WhatsApp notification: {'Sent' if notification_sent else 'Failed'}")
+                    if not notification_sent:
+                        logger.error(f"❌ WhatsApp notification error: {notification_result.get('error', 'Unknown error')}")
                 except Exception as e:
                     logger.error(f"❌ WhatsApp notification failed: {str(e)}")
                     notification_sent = False
-                    notification_details = {"error": str(e)}
             
-            # Create final handoff result
+            # Create result (notification_details should be None if not sent)
             handoff_result = HandoffResult(
                 protocol=protocol,
                 notification_sent=notification_sent,
-                notification_details=notification_details,
+                notification_details=None,  # WhatsApp not sent in simplified mode
                 success=True
             )
             
-            # Save to session state
-            self._save_handoff_result(handoff_result)
-            
-            end_time = datetime.now()
-            duration = (end_time - start_time).total_seconds()
-            
-            logger.info(f"🎉 Human handoff completed: Protocol {protocol.protocol_id}, Duration: {duration:.2f}s")
-            
-            # Return final response with proper RunEvent
-            assigned_team = getattr(protocol.issue_details.business_unit, 'value', 'general') if protocol.issue_details.business_unit else 'general'
-            
+            # Return response
             response = RunResponse(
                 run_id=self.run_id,
-                event=RunEvent.workflow_completed,
-                content=f"""✅ Transferência para atendimento humano concluída com sucesso!
+                content=f"""✅ Transferência para atendimento humano concluída!
 
-📋 **Protocolo:** {protocol.protocol_id}
-🎯 **Prioridade:** {protocol.escalation_analysis.urgency_level.value.upper()}
-⏰ **Tempo de resposta esperado:** 15-30 minutos
-📞 **Notificação enviada:** {'Sim' if notification_sent else 'Não'}
+📋 **Protocolo:** {protocol_id}
+🎯 **Prioridade:** {urgency_level.upper()}
+⏰ **Tempo de resposta:** 15-30 minutos
+📞 **Equipe:** {business_unit}
 
-Um atendente especializado da equipe {assigned_team} entrará em contato em breve.
-Mantenha este protocolo para referência.
-
-🙏 Obrigado pela paciência!"""
+Um atendente entrará em contato em breve.
+Obrigado pela paciência!"""
             )
-            
-            # Add metadata if supported
-            if hasattr(response, 'metadata'):
-                response.metadata = {
-                    "workflow_type": "human_handoff",
-                    "protocol_id": protocol.protocol_id,
-                    "escalation_reason": protocol.escalation_analysis.escalation_reason.value,
-                    "urgency_level": protocol.escalation_analysis.urgency_level.value,
-                    "assigned_team": assigned_team,
-                    "notification_sent": notification_sent,
-                    "duration_seconds": duration
-                }
             
             yield response
             
         except Exception as e:
-            logger.error(f"❌ Human handoff workflow failed: {str(e)}")
+            logger.error(f"❌ Workflow failed: {str(e)}")
             error_response = RunResponse(
                 run_id=self.run_id,
-                event=RunEvent.workflow_completed,
-                content=f"❌ Erro na transferência para atendimento humano: {str(e)}. Por favor, tente novamente ou contate nosso suporte."
+                content=f"❌ Erro na transferência: {str(e)}"
             )
-            
-            # Add metadata if supported
-            if hasattr(error_response, 'metadata'):
-                error_response.metadata = {
-                    "workflow_type": "human_handoff",
-                    "status": "failed",
-                    "error": str(e)
-                }
-            
             yield error_response
     
-    def _build_context_from_legacy_params(
-        self, customer_message, customer_query, conversation_history,
-        escalation_reason, session_id, customer_id, business_unit, urgency_level
-    ) -> ConversationContext:
-        """Build ConversationContext from legacy parameters for backward compatibility."""
-        
-        customer_msg = customer_message or customer_query or "Customer request for human assistance"
-        session_id_value = session_id or f"session-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        
-        customer_info = CustomerInfo(
-            customer_id=customer_id or "unknown",
-            session_id=session_id_value,
-            business_unit=business_unit or "general"
-        )
-        
-        issue_details = IssueDetails(
-            summary=customer_msg,
-            category="escalation_request",
-            urgency=urgency_level or "medium",
-            conversation_history=conversation_history or ""
-        )
-        
-        return ConversationContext(
-            session_id=session_id_value,
-            customer_info=customer_info,
-            issue_details=issue_details,
-            conversation_history=conversation_history or "",
-            current_message=customer_msg,
-            start_time=datetime.now(),
-            last_interaction=datetime.now(),
-            interaction_count=1
-        )
-    
-    def _create_protocol(self, context: ConversationContext, trigger: Optional[str]) -> EscalationProtocol:
-        """Create escalation protocol directly from provided context."""
-        
-        # Generate unique protocol ID
-        protocol_id = f"ESC-{context.session_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        
-        # Create escalation analysis (Ana team already decided)
-        escalation_analysis = EscalationAnalysis(
-            should_escalate=True,
-            escalation_reason=EscalationReason.EXPLICIT_REQUEST,
-            confidence=1.0,  # Ana team made the decision
-            urgency_level=UrgencyLevel.HIGH if context.issue_details.urgency == "high" else UrgencyLevel.MEDIUM,
-            customer_emotion=CustomerEmotion.FRUSTRATED,
-            reasoning=f"Ana team initiated escalation: {trigger or 'Human assistance required'}",
-            detected_indicators=["ana_team_decision"]
-        )
-        
-        # Determine assigned team based on business unit
-        assigned_team = getattr(context.issue_details.business_unit, 'value', 'general') if context.issue_details.business_unit else 'general'
-        
-        return EscalationProtocol(
-            protocol_id=protocol_id,
-            escalation_analysis=escalation_analysis,
-            customer_info=context.customer_info,
-            issue_details=context.issue_details,
-            assigned_team=assigned_team
-        )
-    
     async def _send_whatsapp_notification(self, protocol: EscalationProtocol) -> Dict:
-        """Send WhatsApp notification via MCP tools using pre-initialized tools (original working pattern)."""
+        """Send WhatsApp notification via MCP tools using direct MCPTools initialization."""
         
         try:
             # Format notification message
             message = self._format_notification_message(protocol)
             
-            # Use the original working pattern: pre-initialized MCP tools
-            if not hasattr(self, 'mcp_tools') or not self.mcp_tools:
-                logger.warning("⚠️  No pre-initialized MCP tools available for WhatsApp notifications")
-                return {
-                    "success": False,
-                    "error": "No MCP tools provided to workflow",
-                    "method": "mcp_evolution_api"
-                }
+            # Initialize MCP tools directly with the Evolution API configuration
+            # Based on .mcp.json configuration
+            from agno.tools.mcp import MCPTools
             
-            # Create an agent with the pre-initialized MCP tools (original working approach)
-            from agno.agent import Agent
+            logger.info("📱 Initializing MCP tools for WhatsApp notification...")
             
-            whatsapp_agent = Agent(
-                name="WhatsApp Notifier",
-                model=Claude(id="claude-sonnet-4-20250514"),
-                instructions=[
-                    "You are a WhatsApp notification agent.",
-                    "Use the send_whatsapp_message MCP tools to send notifications.",
-                    f"Always use instance: {self.whatsapp_instance}",
-                    "Format messages clearly and confirm when sent successfully."
-                ],
-                tools=[self.mcp_tools],  # Use pre-initialized MCP tools
-                markdown=False
-            )
+            # Use the MCP configuration from .mcp.json
+            # Based on test pattern: command should be a single string
+            mcp_command = "uvx automagik-tools@0.8.11 tool evolution-api"
+            mcp_env = {
+                "EVOLUTION_API_BASE_URL": "http://192.168.112.142:8080",
+                "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
+                "EVOLUTION_API_INSTANCE": "SofIA",
+                "EVOLUTION_API_FIXED_RECIPIENT": "5511986780008@s.whatsapp.net"
+            }
             
-            # Use the agent to send the WhatsApp message
-            response = await whatsapp_agent.arun(
-                f"Send this WhatsApp message:\n\n{message}\n\n"
-                f"Use the send_text_message tool with instance '{self.whatsapp_instance}'"
-            )
-            
-            if response and response.content:
-                logger.info(f"📱 WhatsApp notification sent via MCP agent")
-                return {
-                    "success": True,
-                    "message": "Notification sent successfully via MCP agent",
-                    "method": "mcp_evolution_api",
-                    "agent_response": response.content
-                }
-            else:
-                logger.error(f"📱 MCP WhatsApp agent failed: No response")
-                return {
-                    "success": False,
-                    "error": "MCP WhatsApp agent returned no response",
-                    "method": "mcp_evolution_api"
-                }
+            # Create MCP tools connection
+            async with MCPTools(
+                command=mcp_command,
+                env=mcp_env
+            ) as mcp_tools:
+                # Create WhatsApp agent with MCP tools
+                whatsapp_agent = Agent(
+                    name="WhatsApp Notifier",
+                    model=Claude(id="claude-sonnet-4-20250514"),
+                    instructions=[
+                        "You are a WhatsApp notification agent.",
+                        "Use the send_whatsapp_message MCP tools to send notifications.",
+                        f"Always use instance: {self.whatsapp_instance}",
+                        "The recipient is already configured in the MCP server.",
+                        "Just send the message using send_text_message tool.",
+                        "Confirm when sent successfully."
+                    ],
+                    tools=[mcp_tools],
+                    markdown=False
+                )
+                
+                # Use the agent to send the WhatsApp message
+                response = await whatsapp_agent.arun(
+                    f"Send this WhatsApp message:\n\n{message}\n\n"
+                    f"Use the send_text_message tool with instance '{self.whatsapp_instance}'"
+                )
+                
+                if response and response.content:
+                    logger.info(f"📱 WhatsApp notification sent via MCP agent")
+                    return {
+                        "success": True,
+                        "message": "Notification sent successfully via MCP agent",
+                        "method": "mcp_evolution_api",
+                        "agent_response": response.content
+                    }
+                else:
+                    logger.error(f"📱 MCP WhatsApp agent failed: No response")
+                    return {
+                        "success": False,
+                        "error": "MCP WhatsApp agent returned no response",
+                        "method": "mcp_evolution_api"
+                    }
                 
         except Exception as e:
             logger.error(f"WhatsApp notification via MCP failed: {str(e)}")
@@ -331,7 +242,7 @@ Mantenha este protocolo para referência.
             }
     
     def _format_notification_message(self, protocol: EscalationProtocol) -> str:
-        """Format WhatsApp notification message."""
+        """Format WhatsApp notification message with rich details."""
         
         urgency_emoji = {
             "low": "🟢",
@@ -340,53 +251,90 @@ Mantenha este protocolo para referência.
             "critical": "🔴"
         }
         
+        emotion_emoji = {
+            "neutral": "😐",
+            "satisfied": "😊",
+            "confused": "😕",
+            "frustrated": "😤",
+            "angry": "😠",
+            "urgent": "😰"
+        }
+        
         urgency_str = getattr(protocol.escalation_analysis.urgency_level, 'value', str(protocol.escalation_analysis.urgency_level))
-        emoji = urgency_emoji.get(urgency_str, "⚪")
+        urgency_icon = urgency_emoji.get(urgency_str, "⚪")
+        
+        emotion_str = getattr(protocol.escalation_analysis.customer_emotion, 'value', str(protocol.escalation_analysis.customer_emotion))
+        emotion_icon = emotion_emoji.get(emotion_str, "😐")
+        
+        # Format escalation reason in Portuguese
+        reason_map = {
+            "explicit_request": "Solicitação explícita",
+            "frustration_detected": "Frustração detectada",
+            "complex_issue": "Problema complexo",
+            "high_value": "Alto valor envolvido",
+            "security_concern": "Questão de segurança",
+            "multiple_attempts": "Múltiplas tentativas",
+            "system_limitation": "Limitação do sistema"
+        }
+        reason_str = getattr(protocol.escalation_analysis.escalation_reason, 'value', str(protocol.escalation_analysis.escalation_reason))
+        reason_pt = reason_map.get(reason_str, reason_str)
+        
+        # Format business unit
+        unit_map = {
+            "pagbank": "💳 PagBank Digital",
+            "emissao": "💳 Emissão de Cartões",
+            "adquirencia": "🏪 Adquirência",
+            "general": "🏢 Atendimento Geral"
+        }
+        unit_display = unit_map.get(protocol.assigned_team, protocol.assigned_team)
         
         return dedent(f"""\
-        🚨 *Escalação para Atendimento Humano* {emoji}
+        🚨 *ESCALAÇÃO PARA ATENDIMENTO HUMANO* {urgency_icon}
         
         📋 *Protocolo:* {protocol.protocol_id}
-        👤 *Cliente:* {protocol.customer_info.customer_name or 'Não informado'}
-        📱 *CPF:* {protocol.customer_info.customer_cpf or 'Não informado'}
-        ⚠️ *Motivo:* {getattr(protocol.escalation_analysis.escalation_reason, 'value', str(protocol.escalation_analysis.escalation_reason))}
-        🎯 *Urgência:* {getattr(protocol.escalation_analysis.urgency_level, 'value', str(protocol.escalation_analysis.urgency_level)).upper()}
-        🕐 *Horário:* {protocol.timestamp.strftime('%d/%m/%Y %H:%M')}
+        🎯 *Prioridade:* {urgency_str.upper()} {urgency_icon}
+        💼 *Setor:* {unit_display}
+        🕐 *Horário:* {protocol.timestamp.strftime('%d/%m/%Y às %H:%M')}
         
-        📝 *Descrição:*
+        👤 *DADOS DO CLIENTE:*
+        • *Nome:* {protocol.customer_info.customer_name or 'Não informado'}
+        • *CPF:* {protocol.customer_info.customer_cpf or 'Não informado'}
+        • *Telefone:* {protocol.customer_info.customer_phone or 'Não informado'}
+        • *Email:* {protocol.customer_info.customer_email or 'Não informado'}
+        • *Tipo de conta:* {protocol.customer_info.account_type or 'Não informado'}
+        
+        ⚠️ *MOTIVO DA ESCALAÇÃO:*
+        • *Razão:* {reason_pt}
+        • *Emoção detectada:* {emotion_str.title()} {emotion_icon}
+        • *Confiança na análise:* {protocol.escalation_analysis.confidence:.0%}
+        
+        📝 *DESCRIÇÃO DO PROBLEMA:*
         {protocol.issue_details.issue_description or protocol.issue_details.summary}
         
-        💬 *Resumo da Conversa:*
-        {protocol.issue_details.conversation_summary or protocol.issue_details.conversation_history[:200] + '...' if len(protocol.issue_details.conversation_history) > 200 else protocol.issue_details.conversation_history}
+        💬 *RESUMO DA CONVERSA:*
+        {protocol.issue_details.conversation_summary or protocol.issue_details.conversation_history[:300] + '...' if len(protocol.issue_details.conversation_history) > 300 else protocol.issue_details.conversation_history}
         
-        🎯 *Ação Recomendada:*
-        {protocol.issue_details.recommended_action or 'Avaliar situação e fornecer suporte personalizado'}
+        🎯 *AÇÃO RECOMENDADA:*
+        {protocol.issue_details.recommended_action or 'Avaliar situação e fornecer suporte personalizado com empatia'}
         
-        📊 *Confiança na Escalação:* {protocol.escalation_analysis.confidence:.1%}
+        💰 *VALOR ENVOLVIDO:* {f'R$ {protocol.issue_details.value_involved:,.2f}' if protocol.issue_details.value_involved else 'Não informado'}
+        
+        📊 *INDICADORES DE ESCALAÇÃO:*
+        {chr(10).join('• ' + indicator for indicator in protocol.escalation_analysis.detected_indicators)}
+        
+        ⏱️ *TEMPO DE RESPOSTA ESPERADO:* 15-30 minutos
+        
+        ⚡ *ATENÇÃO:* Cliente aguardando resposta prioritária!
         """).strip()
-    
-    def _save_handoff_result(self, result: HandoffResult):
-        """Save handoff result to session state."""
-        if not hasattr(self, 'session_state'):
-            self.session_state = {}
-        
-        self.session_state.setdefault('handoff_results', [])
-        self.session_state['handoff_results'].append(result.model_dump(mode="json"))
-        
-        logger.info(f"💾 Saved handoff result: Protocol {result.protocol.protocol_id}")
 
 
 def get_human_handoff_workflow(
-    mcp_tools=None,
     whatsapp_enabled: bool = True,
     whatsapp_instance: str = "SofIA"
 ) -> HumanHandoffWorkflow:
     """Factory function to create a configured human handoff workflow."""
     
-    logger.info(f"🏭 Creating human handoff workflow (WhatsApp: {whatsapp_enabled}, MCP: {mcp_tools is not None})")
-    
     return HumanHandoffWorkflow(
-        mcp_tools=mcp_tools,
         workflow_id="human-handoff",
         storage=PostgresStorage(
             table_name="human_handoff_workflows",

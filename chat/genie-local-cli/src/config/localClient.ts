@@ -1,4 +1,4 @@
-import { request, GaxiosOptions, GaxiosResponse } from 'gaxios';
+import { request as gaxiosRequest, GaxiosOptions, GaxiosResponse } from 'gaxios';
 import WebSocket from 'ws';
 import { appConfig } from './settings.js';
 
@@ -50,7 +50,7 @@ export class LocalAPIClient {
     const url = `${this.baseUrl}${endpoint}`;
     
     try {
-      const response: GaxiosResponse<T> = await request({
+      const response: GaxiosResponse<T> = await gaxiosRequest({
         url,
         timeout: this.timeout,
         ...options,
@@ -58,7 +58,7 @@ export class LocalAPIClient {
 
       return {
         data: response.data,
-        session_id: response.headers['x-session-id'] as string,
+        session_id: response.headers.get('x-session-id') || (response.data as any)?.session_id || undefined,
       };
     } catch (error) {
       if (appConfig.cliDebug) {
@@ -80,51 +80,65 @@ export class LocalAPIClient {
   }
 
   // List available agents
-  async listAgents(): Promise<LocalAPIResponse<string[]>> {
-    return this.makeRequest('/agents', {
+  async listAgents(): Promise<LocalAPIResponse<any[]>> {
+    return this.makeRequest('/playground/agents', {
       method: 'GET',
     });
   }
 
   // List available teams
-  async listTeams(): Promise<LocalAPIResponse<string[]>> {
-    return this.makeRequest('/teams', {
+  async listTeams(): Promise<LocalAPIResponse<any[]>> {
+    return this.makeRequest('/playground/teams', {
       method: 'GET',
     });
   }
 
   // List available workflows
-  async listWorkflows(): Promise<LocalAPIResponse<string[]>> {
-    return this.makeRequest('/workflows', {
+  async listWorkflows(): Promise<LocalAPIResponse<any[]>> {
+    return this.makeRequest('/playground/workflows', {
       method: 'GET',
     });
   }
 
   // Invoke an agent (non-streaming)
   async invokeAgent(request: AgentRequest): Promise<LocalAPIResponse<any>> {
-    return this.makeRequest(`/agents/${request.agent_id}/runs`, {
+    const formData = new FormData();
+    formData.append('message', request.message);
+    formData.append('stream', 'false');
+    if (request.session_id) {
+      formData.append('session_id', request.session_id);
+    }
+
+    return this.makeRequest(`/playground/agents/${request.agent_id}/runs`, {
       method: 'POST',
-      data: {
-        message: request.message,
-        session_id: request.session_id,
+      data: formData,
+      headers: {
+        // Don't set Content-Type, let browser set it with boundary for multipart
       },
     });
   }
 
   // Invoke a team (non-streaming)
   async invokeTeam(request: TeamRequest): Promise<LocalAPIResponse<any>> {
-    return this.makeRequest(`/teams/${request.team_id}/runs`, {
+    const formData = new FormData();
+    formData.append('message', request.message);
+    formData.append('stream', 'false');
+    if (request.session_id) {
+      formData.append('session_id', request.session_id);
+    }
+
+    return this.makeRequest(`/playground/teams/${request.team_id}/runs`, {
       method: 'POST',
-      data: {
-        message: request.message,
-        session_id: request.session_id,
+      data: formData,
+      headers: {
+        // Don't set Content-Type, let browser set it with boundary for multipart
       },
     });
   }
 
   // Execute a workflow (non-streaming)
   async executeWorkflow(request: WorkflowRequest): Promise<LocalAPIResponse<any>> {
-    return this.makeRequest(`/workflows/${request.workflow_id}/runs`, {
+    return this.makeRequest(`/playground/workflows/${request.workflow_id}/runs`, {
       method: 'POST',
       data: {
         params: request.params,
@@ -156,41 +170,374 @@ export class LocalAPIClient {
     return ws;
   }
 
-  // Stream agent response
+  // Stream agent response with real API streaming
   async streamAgent(
     request: AgentRequest,
     onMessage: (data: StreamingResponse) => void,
     onError: (error: Error) => void,
     onComplete: () => void
   ): Promise<void> {
-    // For now, implement polling-based streaming as fallback
-    // This can be enhanced when WebSocket streaming is available
     try {
-      const response = await this.invokeAgent(request);
-      
-      if (response.error) {
-        onError(new Error(response.error));
-        return;
+      const formData = new FormData();
+      formData.append('message', request.message);
+      formData.append('stream', 'true');
+      formData.append('monitor', 'true');
+      if (request.session_id) {
+        formData.append('session_id', request.session_id);
       }
 
-      // Simulate streaming by chunking the response
-      const content = response.data?.content || '';
-      const chunks = content.match(/.{1,10}/g) || [content];
+      const url = `${this.baseUrl}/playground/agents/${request.agent_id}/runs`;
       
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        setTimeout(() => {
-          onMessage({
-            content: chunk,
-            done: i === chunks.length - 1,
-            session_id: response.session_id,
-          });
+      const response = await gaxiosRequest({
+        url,
+        method: 'POST',
+        data: formData,
+        responseType: 'stream',
+        timeout: 0, // No timeout for streaming requests
+      });
+
+      let buffer = '';
+      let finalContent = '';
+      let sessionId = request.session_id;
+
+      (response.data as any).on('data', (chunk: Buffer) => {
+        const chunkStr = chunk.toString();
+        if (appConfig.cliDebug) {
+          console.log('[STREAM CHUNK]:', chunkStr.slice(0, 200) + (chunkStr.length > 200 ? '...' : ''));
+        }
+        buffer += chunkStr;
+        
+        // Process complete JSON objects in buffer
+        // JSON objects are separated by }{ not newlines
+        let separatorIndex;
+        while ((separatorIndex = buffer.indexOf('}{')) !== -1) {
+          const jsonStr = buffer.slice(0, separatorIndex + 1).trim();
+          buffer = '{' + buffer.slice(separatorIndex + 2); // Keep the opening { for next object
           
-          if (i === chunks.length - 1) {
-            onComplete();
+          if (jsonStr) {
+            try {
+              const event = JSON.parse(jsonStr);
+              if (appConfig.cliDebug) {
+                console.log('[EVENT]:', event.event, event.content ? `"${event.content.slice(0, 50)}..."` : '');
+              }
+              
+              // Extract session_id from first event
+              if (event.session_id && !sessionId) {
+                sessionId = event.session_id;
+              }
+              
+              // Handle content events (including thinking)
+              if (event.event === 'TeamRunResponseContent' || event.event === 'RunResponseContent') {
+                if (event.content) {
+                  // Handle both regular content and thinking content
+                  const content = event.content;
+                  if (event.content_type === 'str') {
+                    finalContent += content;
+                  }
+                  onMessage({
+                    content: content,
+                    done: false,
+                    session_id: sessionId,
+                  });
+                }
+              }
+              
+              // Handle tool call events
+              if (event.event === 'TeamToolCallStarted' || event.event === 'ToolCallStarted') {
+                const toolName = event.tool?.tool_name || 'unknown';
+                onMessage({
+                  content: `🔧 Starting tool: ${toolName}`,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+              
+              if (event.event === 'ToolCallCompleted') {
+                const toolName = event.tool?.tool_name || 'unknown';
+                const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1000).toFixed(0)}ms)` : '';
+                onMessage({
+                  content: `✅ Completed tool: ${toolName}${duration}`,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+              
+              // Handle agent start events
+              if (event.event === 'RunStarted') {
+                const agentName = event.agent_name || event.agent_id || 'unknown';
+                onMessage({
+                  content: `🤖 Starting agent: ${agentName}`,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+              
+              // Handle completion events
+              if (event.event === 'TeamRunCompleted' || event.event === 'RunCompleted') {
+                onMessage({
+                  content: '',
+                  done: true,
+                  session_id: sessionId,
+                });
+                onComplete();
+                return;
+              }
+              
+            } catch (parseError) {
+              console.warn('Failed to parse JSON:', jsonStr?.slice(0, 100));
+            }
           }
-        }, i * appConfig.streamDelay);
+        }
+      });
+
+      (response.data as any).on('end', () => {
+        // Process any remaining JSON in buffer
+        if (buffer.trim()) {
+          try {
+            const event = JSON.parse(buffer.trim());
+            if (appConfig.cliDebug) {
+              console.log('[FINAL EVENT]:', event.event);
+            }
+            
+            // Handle final content events
+            if (event.event === 'TeamRunResponseContent' || event.event === 'RunResponseContent') {
+              if (event.content) {
+                const content = event.content;
+                if (event.content_type === 'str') {
+                  finalContent += content;
+                }
+                onMessage({
+                  content: content,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+            }
+            
+            // Handle completion events
+            if (event.event === 'TeamRunCompleted' || event.event === 'RunCompleted') {
+              onMessage({
+                content: '',
+                done: true,
+                session_id: sessionId,
+              });
+              onComplete();
+              return;
+            }
+          } catch (parseError) {
+            console.warn('Failed to parse final JSON:', buffer.slice(0, 100));
+          }
+        }
+        
+        // Complete anyway
+        onMessage({
+          content: '',
+          done: true,
+          session_id: sessionId,
+        });
+        onComplete();
+      });
+
+      (response.data as any).on('error', (error: Error) => {
+        if (appConfig.cliDebug) {
+          console.log('[STREAM ERROR]:', error.message);
+        }
+        // Don't treat timeout/abort as fatal error if we got some content
+        if (error.message.includes('aborted') || error.message.includes('timeout')) {
+          onMessage({
+            content: '\n⚠️ Stream interrupted - response may be incomplete',
+            done: true,
+            session_id: sessionId,
+          });
+          onComplete();
+        } else {
+          onError(error);
+        }
+      });
+      
+    } catch (error) {
+      onError(error instanceof Error ? error : new Error('Unknown streaming error'));
+    }
+  }
+
+  // Stream team response with real API streaming
+  async streamTeam(
+    request: TeamRequest,
+    onMessage: (data: StreamingResponse) => void,
+    onError: (error: Error) => void,
+    onComplete: () => void
+  ): Promise<void> {
+    try {
+      const formData = new FormData();
+      formData.append('message', request.message);
+      formData.append('stream', 'true');
+      formData.append('monitor', 'true');
+      if (request.session_id) {
+        formData.append('session_id', request.session_id);
       }
+
+      const url = `${this.baseUrl}/playground/teams/${request.team_id}/runs`;
+      
+      const response = await gaxiosRequest({
+        url,
+        method: 'POST',
+        data: formData,
+        responseType: 'stream',
+        timeout: 0, // No timeout for streaming requests
+      });
+
+      let buffer = '';
+      let finalContent = '';
+      let sessionId = request.session_id;
+
+      (response.data as any).on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        
+        // Process complete JSON objects in buffer
+        // JSON objects are separated by }{ not newlines
+        let separatorIndex;
+        while ((separatorIndex = buffer.indexOf('}{')) !== -1) {
+          const jsonStr = buffer.slice(0, separatorIndex + 1).trim();
+          buffer = '{' + buffer.slice(separatorIndex + 2); // Keep the opening { for next object
+          
+          if (jsonStr) {
+            try {
+              const event = JSON.parse(jsonStr);
+              
+              // Extract session_id from first event
+              if (event.session_id && !sessionId) {
+                sessionId = event.session_id;
+              }
+              
+              // Handle content events (including thinking)
+              if (event.event === 'TeamRunResponseContent' || event.event === 'RunResponseContent') {
+                if (event.content) {
+                  // Handle both regular content and thinking content
+                  const content = event.content;
+                  if (event.content_type === 'str') {
+                    finalContent += content;
+                  }
+                  onMessage({
+                    content: content,
+                    done: false,
+                    session_id: sessionId,
+                  });
+                }
+              }
+              
+              // Handle tool call events
+              if (event.event === 'TeamToolCallStarted' || event.event === 'ToolCallStarted') {
+                const toolName = event.tool?.tool_name || 'unknown';
+                onMessage({
+                  content: `🔧 Starting tool: ${toolName}`,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+              
+              if (event.event === 'ToolCallCompleted') {
+                const toolName = event.tool?.tool_name || 'unknown';
+                const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1000).toFixed(0)}ms)` : '';
+                onMessage({
+                  content: `✅ Completed tool: ${toolName}${duration}`,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+              
+              // Handle agent start events
+              if (event.event === 'RunStarted') {
+                const agentName = event.agent_name || event.agent_id || 'unknown';
+                onMessage({
+                  content: `🤖 Starting agent: ${agentName}`,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+              
+              // Handle completion events
+              if (event.event === 'TeamRunCompleted') {
+                onMessage({
+                  content: '',
+                  done: true,
+                  session_id: sessionId,
+                });
+                onComplete();
+                return;
+              }
+              
+            } catch (parseError) {
+              console.warn('Failed to parse JSON:', jsonStr?.slice(0, 100));
+            }
+          }
+        }
+      });
+
+      (response.data as any).on('end', () => {
+        // Process any remaining JSON in buffer
+        if (buffer.trim()) {
+          try {
+            const event = JSON.parse(buffer.trim());
+            if (appConfig.cliDebug) {
+              console.log('[FINAL EVENT]:', event.event);
+            }
+            
+            // Handle final content events
+            if (event.event === 'TeamRunResponseContent' || event.event === 'RunResponseContent') {
+              if (event.content) {
+                const content = event.content;
+                if (event.content_type === 'str') {
+                  finalContent += content;
+                }
+                onMessage({
+                  content: content,
+                  done: false,
+                  session_id: sessionId,
+                });
+              }
+            }
+            
+            // Handle completion events
+            if (event.event === 'TeamRunCompleted' || event.event === 'RunCompleted') {
+              onMessage({
+                content: '',
+                done: true,
+                session_id: sessionId,
+              });
+              onComplete();
+              return;
+            }
+          } catch (parseError) {
+            console.warn('Failed to parse final JSON:', buffer.slice(0, 100));
+          }
+        }
+        
+        // Complete anyway
+        onMessage({
+          content: '',
+          done: true,
+          session_id: sessionId,
+        });
+        onComplete();
+      });
+
+      (response.data as any).on('error', (error: Error) => {
+        if (appConfig.cliDebug) {
+          console.log('[STREAM ERROR]:', error.message);
+        }
+        // Don't treat timeout/abort as fatal error if we got some content
+        if (error.message.includes('aborted') || error.message.includes('timeout')) {
+          onMessage({
+            content: '\n⚠️ Stream interrupted - response may be incomplete',
+            done: true,
+            session_id: sessionId,
+          });
+          onComplete();
+        } else {
+          onError(error);
+        }
+      });
+      
     } catch (error) {
       onError(error instanceof Error ? error : new Error('Unknown streaming error'));
     }
@@ -198,7 +545,7 @@ export class LocalAPIClient {
 
   // Health check
   async healthCheck(): Promise<LocalAPIResponse<{ status: string }>> {
-    return this.makeRequest('/health', {
+    return this.makeRequest('/api/v1/health', {
       method: 'GET',
     });
   }

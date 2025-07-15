@@ -106,7 +106,7 @@ export const ChatDisplay: React.FC<ChatDisplayProps> = ({
         {/* Message content */}
         <Box flexDirection="column" marginLeft={2} marginTop={1}>
           {textLines.map((line, index) => (
-            <Text key={index} color={isPending ? 'gray' : undefined}>
+            <Text key={index} color={isPending ? 'gray' : 'white'}>
               {line}
             </Text>
           ))}
@@ -138,7 +138,7 @@ export const ChatDisplay: React.FC<ChatDisplayProps> = ({
       ) : (
         <Box flexDirection="column">
           {visibleMessages.map((message, index) => {
-            const isPending = pendingMessage && message === pendingMessage;
+            const isPending = Boolean(pendingMessage && message === pendingMessage);
             return renderMessage(message, isPending);
           })}
         </Box>

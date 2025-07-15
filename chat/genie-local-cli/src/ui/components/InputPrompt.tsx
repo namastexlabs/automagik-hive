@@ -25,7 +25,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
     }
   }, [input, onSubmit, disabled]);
 
-  useInput((inputChar, key) => {
+  useInput((inputChar: string, key: any) => {
     if (disabled) {
       return;
     }

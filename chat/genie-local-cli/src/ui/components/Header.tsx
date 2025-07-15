@@ -6,13 +6,13 @@ interface HeaderProps {
   terminalWidth: number;
   version: string;
   connectionStatus: 'connecting' | 'connected' | 'error';
-  selectedTarget: { type: 'agent' | 'team' | 'workflow'; id: string } | null;
+  selectedTarget: { type: 'agent' | 'team' | 'workflow'; id: string; name: string } | null;
   availableTargets: {
-    agents: string[];
-    teams: string[];
-    workflows: string[];
+    agents: any[];
+    teams: any[];
+    workflows: any[];
   };
-  onTargetChange: (target: { type: 'agent' | 'team' | 'workflow'; id: string }) => void;
+  onTargetChange: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
     if (!selectedTarget) {
       return 'No target selected';
     }
-    return `${selectedTarget.type.toUpperCase()}: ${selectedTarget.id}`;
+    return `${selectedTarget.type.toUpperCase()}: ${selectedTarget.name}`;
   };
 
   return (

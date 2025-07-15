@@ -75,12 +75,12 @@ class MemoryFixTester:
             if not self.memory_manager.memory:
                 raise ValueError("Memory object not created")
             
-            if not self.memory_manager.memory_db:
+            if not self.memory_manager.memory.db:
                 raise ValueError("Memory database not created")
             
             print(f"✅ Memory system initialized successfully")
             print(f"   - Memory object: {type(self.memory_manager.memory)}")
-            print(f"   - Memory DB: {type(self.memory_manager.memory_db)}")
+            print(f"   - Memory DB: {type(self.memory_manager.memory.db)}")
             print()
             
             return True
@@ -98,8 +98,7 @@ class MemoryFixTester:
             agent = agent_factory.create_agent(
                 agent_id="pagbank-specialist",
                 session_id=self.session_id,
-                memory=self.memory_manager.memory,
-                memory_db=self.memory_manager.memory_db
+                memory=self.memory_manager.memory
             )
             
             # Check if agent was created successfully
@@ -136,8 +135,7 @@ class MemoryFixTester:
             agent = create_versioned_agent(
                 agent_id="pagbank-specialist",
                 session_id=self.session_id,
-                memory=self.memory_manager.memory,
-                memory_db=self.memory_manager.memory_db
+                memory=self.memory_manager.memory
             )
             
             # Check if agent was created successfully
@@ -174,8 +172,7 @@ class MemoryFixTester:
             agent = AgentRegistry.get_agent(
                 agent_id="pagbank",
                 session_id=self.session_id,
-                memory=self.memory_manager.memory,
-                memory_db=self.memory_manager.memory_db
+                memory=self.memory_manager.memory
             )
             
             # Check if agent was created successfully
@@ -212,8 +209,7 @@ class MemoryFixTester:
             agent = get_agent(
                 name="pagbank",
                 session_id=self.session_id,
-                memory=self.memory_manager.memory,
-                memory_db=self.memory_manager.memory_db
+                memory=self.memory_manager.memory
             )
             
             # Check if agent was created successfully
@@ -298,8 +294,7 @@ class MemoryFixTester:
                     agent = get_agent(
                         name=name,
                         session_id=self.session_id,
-                        memory=self.memory_manager.memory,
-                        memory_db=self.memory_manager.memory_db
+                        memory=self.memory_manager.memory
                     )
                     agents.append((name, agent))
                 except Exception as e:
@@ -354,16 +349,14 @@ class MemoryFixTester:
                 agent1 = create_versioned_agent(
                     agent_id="pagbank-specialist",
                     session_id=self.session_id,
-                    memory=self.memory_manager.memory,
-                    memory_db=self.memory_manager.memory_db
+                    memory=self.memory_manager.memory
                 )
                 
                 # Test registry path
                 agent2 = get_agent(
                     name="pagbank",
                     session_id=self.session_id,
-                    memory=self.memory_manager.memory,
-                    memory_db=self.memory_manager.memory_db
+                    memory=self.memory_manager.memory
                 )
             
             # Check captured output for warnings
@@ -396,8 +389,7 @@ class MemoryFixTester:
             agent = create_versioned_agent(
                 agent_id="pagbank-specialist",
                 session_id=self.session_id,
-                memory=self.memory_manager.memory,
-                memory_db=self.memory_manager.memory_db
+                memory=self.memory_manager.memory
             )
             
             # Test memory operations

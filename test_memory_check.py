@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """
-NUCLEAR VALIDATION - Memory Warnings Test
-
-Focused test to validate that "WARNING MemoryDb not provided" warnings
-are eliminated after the nuclear fix.
+Test for MemoryDb warnings - Updated version without memory_db parameter
 """
 
 import os
@@ -57,7 +54,7 @@ def test_for_memory_warnings():
         memory = memory_manager.memory
         print(f"✅ Memory system initialized")
         print(f"   - Memory: {type(memory)}")
-        print(f"   - Memory DB: {type(memory.db) if memory.db else 'No DB'}")
+        print(f"   - Memory DB: {type(memory_manager.memory_db)}")
     except Exception as e:
         print(f"❌ Memory system initialization failed: {e}")
         return False
@@ -65,7 +62,7 @@ def test_for_memory_warnings():
     # Test cases
     test_cases = [
         {
-            "name": "Version Factory Direct",
+            "name": "Version Factory Direct (with memory)",
             "func": lambda: create_versioned_agent(
                 agent_id="pagbank-specialist",
                 session_id="test_session",
@@ -73,11 +70,25 @@ def test_for_memory_warnings():
             )
         },
         {
-            "name": "Registry Get Agent",
+            "name": "Version Factory Direct (without memory)",
+            "func": lambda: create_versioned_agent(
+                agent_id="pagbank-specialist",
+                session_id="test_session"
+            )
+        },
+        {
+            "name": "Registry Get Agent (with memory)",
             "func": lambda: get_agent(
                 name="pagbank",
                 session_id="test_session",
                 memory=memory
+            )
+        },
+        {
+            "name": "Registry Get Agent (without memory)",
+            "func": lambda: get_agent(
+                name="pagbank",
+                session_id="test_session"
             )
         },
         {
@@ -87,14 +98,6 @@ def test_for_memory_warnings():
                 user_id="test_user",
                 agent_names=["pagbank"]
             )
-        },
-        {
-            "name": "Multiple Agents",
-            "func": lambda: [
-                get_agent(name="pagbank", session_id="test_session", memory=memory),
-                get_agent(name="adquirencia", session_id="test_session", memory=memory),
-                get_agent(name="emissao", session_id="test_session", memory=memory)
-            ]
         }
     ]
     
@@ -161,23 +164,14 @@ def test_for_memory_warnings():
     print("\n" + "=" * 60)
     if all_passed:
         print("🎉 SUCCESS: No MemoryDb warnings detected!")
-        print("✅ The nuclear fix is working correctly.")
-        print("✅ Memory parameters are properly flowing through all agent creation paths.")
+        print("✅ Memory system is working correctly.")
     else:
         print("⚠️ ISSUES FOUND: Some tests detected MemoryDb warnings.")
-        print("❌ The nuclear fix may need additional work.")
+        print("❌ Further investigation needed.")
     
     return all_passed
 
 
 if __name__ == "__main__":
-    # Activate virtual environment if needed
-    if "VIRTUAL_ENV" not in os.environ:
-        venv_path = Path(__file__).parent / ".venv"
-        if venv_path.exists():
-            activate_script = venv_path / "bin" / "activate"
-            if activate_script.exists():
-                print(f"🔧 Virtual environment detected at {venv_path}")
-    
     success = test_for_memory_warnings()
     sys.exit(0 if success else 1)

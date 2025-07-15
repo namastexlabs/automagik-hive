@@ -147,24 +147,16 @@ export const useLocalAPIStream = (
           break;
 
         case 'team':
-          // For now, use non-streaming fallback for teams
-          const teamResponse = await localAPIClient.invokeTeam({
-            team_id: selectedTarget.id,
-            message,
-            session_id: sessionId,
-          });
-          
-          if (teamResponse.error) {
-            throw new Error(teamResponse.error);
-          }
-          
-          // Simulate streaming for teams
-          const teamContent = teamResponse.data?.content || 'No response from team';
-          handleStreamingMessage({
-            content: teamContent,
-            done: true,
-            session_id: teamResponse.session_id,
-          });
+          await localAPIClient.streamTeam(
+            {
+              team_id: selectedTarget.id,
+              message,
+              session_id: sessionId,
+            },
+            handleStreamingMessage,
+            handleStreamingError,
+            handleStreamingComplete
+          );
           break;
 
         case 'workflow':

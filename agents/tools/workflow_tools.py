@@ -39,15 +39,15 @@ def trigger_human_handoff_workflow(
     logger.info(f"🚨 Human handoff workflow triggered: {escalation_reason}")
     
     try:
-        # Execute workflow without MCP tools to avoid context manager lifecycle issues
-        # Note: MCP tools should be managed at a higher level (Ana team/API level)
+        # Execute workflow - MCP tools are now initialized directly within the workflow
+        # This eliminates the need for complex context manager lifecycle management
         import asyncio
         
         async def execute_workflow():
-            # Create workflow without MCP tools for now to avoid lifecycle issues
+            # Create workflow with WhatsApp enabled
+            # MCP tools will be initialized directly within the workflow
             workflow = get_human_handoff_workflow(
-                mcp_tools=None,  # No MCP tools - workflow will handle gracefully
-                whatsapp_enabled=False,  # Disable WhatsApp until MCP tools are properly managed
+                whatsapp_enabled=True,  # Enable WhatsApp notifications
                 whatsapp_instance="SofIA"
             )
             
@@ -102,14 +102,14 @@ def handle_workflow_trigger_external(tool_execution):
             
             logger.info(f"🚀 Executing human handoff workflow externally with args: {args}")
             
-            # Execute workflow without MCP tools to avoid context manager lifecycle issues
+            # Execute workflow - MCP tools are now initialized directly within the workflow
             import asyncio
             
             async def execute_workflow():
-                # Create workflow without MCP tools for now to avoid lifecycle issues
+                # Create workflow with WhatsApp enabled
+                # MCP tools will be initialized directly within the workflow
                 workflow = get_human_handoff_workflow(
-                    mcp_tools=None,  # No MCP tools - workflow will handle gracefully
-                    whatsapp_enabled=False,  # Disable WhatsApp until MCP tools are properly managed
+                    whatsapp_enabled=True,  # Enable WhatsApp notifications
                     whatsapp_instance="SofIA"
                 )
                 
