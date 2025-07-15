@@ -336,21 +336,13 @@ class WebChatInterface:
         }
         self.messages.append(message)
         
-        # Update UI
-        if self.live:
-            self.update_messages_panel()
-            self.update_header()
-            self.live.refresh()
+        # Update UI - will be refreshed in main loop
     
     def add_event(self, event: Dict[str, Any]):
         """Add an event to the events panel"""
         self.events.append(event)
         
-        # Update UI
-        if self.live:
-            self.update_events_panel()
-            self.update_header()
-            self.live.refresh()
+        # Update UI - will be refreshed in main loop
     
     def check_success_criteria(self, response: str) -> tuple[bool, str]:
         """Check Ana's success criteria"""
@@ -533,41 +525,36 @@ class WebChatInterface:
         # Setup layout
         self.setup_layout()
         
-        # Start live display
-        with Live(self.layout, refresh_per_second=4, screen=True) as live:
-            self.live = live
-            
-            # Main chat loop with integrated input
-            while self.running:
-                try:
-                    # Update input area to show we're waiting
-                    self.current_input = "Type your message and press Enter..."
-                    self.update_input_area()
-                    live.refresh()
+        # Display initial layout
+        console.print(self.layout)
+        
+        # Main chat loop without Live screen mode
+        while self.running:
+            try:
+                # Show input prompt
+                console.print("\n" + "─" * 80)
+                user_input = Prompt.ask("💬 [bold cyan]Your message[/bold cyan]")
+                
+                if user_input.strip():
+                    if user_input.strip().lower() in ['quit', 'exit', 'bye']:
+                        break
                     
-                    # Get user input without stopping live
-                    user_input = await asyncio.get_event_loop().run_in_executor(
-                        None, input, ""
-                    )
+                    # Send message
+                    await self.send_message(user_input.strip())
                     
-                    # Clear input area
-                    self.current_input = ""
-                    self.update_input_area()
-                    live.refresh()
-                    
-                    if user_input.strip():
-                        if user_input.strip().lower() in ['quit', 'exit', 'bye']:
-                            break
-                        
-                        # Send message
-                        await self.send_message(user_input.strip())
-                    
-                except KeyboardInterrupt:
-                    break
-                except EOFError:
-                    break
-                except Exception as e:
-                    console.print(f"Input error: {e}", style="red")
+                    # Update and display the layout
+                    self.update_header()
+                    self.update_messages_panel()
+                    self.update_events_panel()
+                    console.clear()
+                    console.print(self.layout)
+                
+            except KeyboardInterrupt:
+                break
+            except EOFError:
+                break
+            except Exception as e:
+                console.print(f"Input error: {e}", style="red")
         
         # Cleanup
         if self.session:
