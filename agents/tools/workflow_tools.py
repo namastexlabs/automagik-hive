@@ -7,7 +7,7 @@ from agno.utils.log import logger
 from workflows.human_handoff.workflow import get_human_handoff_workflow
 
 
-@tool  # Remove external_execution=True - execute directly
+@tool  # Direct execution - Ana can call this directly
 def trigger_human_handoff_workflow(
     customer_message: str,
     escalation_reason: str,
@@ -39,19 +39,34 @@ def trigger_human_handoff_workflow(
     logger.info(f"🚨 Human handoff workflow triggered: {escalation_reason}")
     
     try:
-        # Execute the workflow directly within the tool
-        workflow = get_human_handoff_workflow(debug_mode=True)
+        # Execute workflow without MCP tools to avoid context manager lifecycle issues
+        # Note: MCP tools should be managed at a higher level (Ana team/API level)
+        import asyncio
         
-        # Execute workflow with provided arguments
-        results = list(workflow.run(
-            customer_message=customer_message,
-            escalation_reason=escalation_reason,
-            conversation_history=conversation_history,
-            urgency_level=urgency_level,
-            business_unit=business_unit,
-            session_id=session_id,
-            customer_id=customer_id
-        ))
+        async def execute_workflow():
+            # Create workflow without MCP tools for now to avoid lifecycle issues
+            workflow = get_human_handoff_workflow(
+                mcp_tools=None,  # No MCP tools - workflow will handle gracefully
+                whatsapp_enabled=False,  # Disable WhatsApp until MCP tools are properly managed
+                whatsapp_instance="SofIA"
+            )
+            
+            # Execute workflow async
+            results = []
+            async for result in workflow.arun(
+                customer_message=customer_message,
+                escalation_reason=escalation_reason,
+                conversation_history=conversation_history,
+                urgency_level=urgency_level,
+                business_unit=business_unit,
+                session_id=session_id,
+                customer_id=customer_id
+            ):
+                results.append(result)
+            return results
+        
+        # Execute async workflow
+        results = asyncio.run(execute_workflow())
         
         if results:
             # Get the final result and extract the protocol
@@ -87,19 +102,34 @@ def handle_workflow_trigger_external(tool_execution):
             
             logger.info(f"🚀 Executing human handoff workflow externally with args: {args}")
             
-            # Create and run the workflow
-            workflow = get_human_handoff_workflow(debug_mode=True)
+            # Execute workflow without MCP tools to avoid context manager lifecycle issues
+            import asyncio
             
-            # Execute workflow with provided arguments
-            results = list(workflow.run(
-                customer_message=args.get("customer_message"),
-                escalation_reason=args.get("escalation_reason"),
-                conversation_history=args.get("conversation_history"),
-                urgency_level=args.get("urgency_level", "medium"),
-                business_unit=args.get("business_unit"),
-                session_id=args.get("session_id"),
-                customer_id=args.get("customer_id")
-            ))
+            async def execute_workflow():
+                # Create workflow without MCP tools for now to avoid lifecycle issues
+                workflow = get_human_handoff_workflow(
+                    mcp_tools=None,  # No MCP tools - workflow will handle gracefully
+                    whatsapp_enabled=False,  # Disable WhatsApp until MCP tools are properly managed
+                    whatsapp_instance="SofIA"
+                )
+                
+                # Execute workflow with provided arguments using async
+                results = []
+                async for result in workflow.arun(
+                    customer_message=args.get("customer_message"),
+                    escalation_reason=args.get("escalation_reason"),
+                    conversation_history=args.get("conversation_history"),
+                    urgency_level=args.get("urgency_level", "medium"),
+                    business_unit=args.get("business_unit"),
+                    session_id=args.get("session_id"),
+                    customer_id=args.get("customer_id")
+                ):
+                    results.append(result)
+                
+                return results
+            
+            # Run async workflow
+            results = asyncio.run(execute_workflow())
             
             if results:
                 # Get the final result

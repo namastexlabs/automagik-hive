@@ -66,8 +66,7 @@ class AgentRegistry:
         session_id: Optional[str] = None,
         debug_mode: bool = False,
         db_url: Optional[str] = None,
-        memory: Optional[Any] = None,
-        memory_db: Optional[Any] = None
+        memory: Optional[Any] = None
     ) -> Agent:
         """
         Get agent instance by ID - Generic factory pattern with versioning support.
@@ -93,8 +92,7 @@ class AgentRegistry:
                 session_id=session_id,
                 debug_mode=debug_mode,
                 db_url=db_url,
-                memory=memory,              # CRITICAL: Pass memory parameters
-                memory_db=memory_db         # CRITICAL: Pass memory database
+                memory=memory
             )
         except ValueError:
             # Fall back to agent factories if versioning fails
@@ -115,8 +113,7 @@ class AgentRegistry:
                 session_id=session_id,
                 debug_mode=debug_mode,
                 db_url=db_url,
-                memory=memory,
-                memory_db=memory_db
+                memory=memory
             )
     
     @classmethod
@@ -179,8 +176,7 @@ def get_agent(
     session_id: Optional[str] = None,
     debug_mode: bool = False,
     db_url: Optional[str] = None,
-    memory: Optional[Any] = None,
-    memory_db: Optional[Any] = None
+    memory: Optional[Any] = None
 ) -> Agent:
     """
     Generic agent factory - main entry point for any agent system.
@@ -201,8 +197,7 @@ def get_agent(
         session_id=session_id,
         debug_mode=debug_mode,
         db_url=db_url,
-        memory=memory,
-        memory_db=memory_db
+        memory=memory
     )
 
 

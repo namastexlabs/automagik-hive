@@ -15,8 +15,7 @@ def get_emissao_agent(
     session_id: Optional[str] = None,     # API parameter - session management  
     debug_mode: bool = False,             # API parameter - debugging
     db_url: Optional[str] = None,         # API parameter - database connection
-    memory: Optional[Any] = None,         # API parameter - memory instance from team
-    memory_db: Optional[Any] = None       # API parameter - memory database (unused but kept for compatibility)
+    memory: Optional[Any] = None         # API parameter - memory instance from team
 ) -> Agent:
     """
     Factory function for Emissão card services specialist agent.

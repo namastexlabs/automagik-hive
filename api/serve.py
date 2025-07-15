@@ -81,7 +81,7 @@ from teams.ana.team import get_ana_team
 
 # Import workflows
 from workflows.conversation_typification import get_conversation_typification_workflow
-from workflows.human_handoff import get_human_handoff_workflow
+from workflows.human_handoff.workflow import get_human_handoff_workflow
 
 # Import CSV hot reload manager
 from context.knowledge.csv_hot_reload import CSVHotReloadManager

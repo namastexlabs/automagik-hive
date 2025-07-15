@@ -43,8 +43,7 @@ class AgentVersionFactory:
         debug_mode: bool = False,
         db_url: Optional[str] = None,
         fallback_to_file: bool = True,
-        memory: Optional[Any] = None,        # ADD: Memory parameter
-        memory_db: Optional[Any] = None      # ADD: Memory database parameter
+        memory: Optional[Any] = None
     ) -> Agent:
         """
         Create an agent with version support.
@@ -412,8 +411,7 @@ def create_versioned_agent(
     session_id: Optional[str] = None,
     debug_mode: bool = False,
     db_url: Optional[str] = None,
-    memory: Optional[Any] = None,        # ADD: Memory parameter
-    memory_db: Optional[Any] = None      # ADD: Memory database parameter
+    memory: Optional[Any] = None
 ) -> Agent:
     """
     Convenience function for creating versioned agents.
@@ -434,8 +432,7 @@ def create_versioned_agent(
         session_id=session_id,
         debug_mode=debug_mode,
         db_url=db_url,
-        memory=memory,              # CRITICAL: Pass memory parameters
-        memory_db=memory_db         # CRITICAL: Pass memory database
+        memory=memory
     )
 
 

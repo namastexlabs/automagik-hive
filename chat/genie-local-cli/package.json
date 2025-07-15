@@ -1,0 +1,52 @@
+{
+  "name": "@genie/local-cli",
+  "version": "0.1.0",
+  "description": "Genie Local CLI - Chat interface for local multi-agent API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "genie-cli": "bundle/genie-cli.js"
+  },
+  "scripts": {
+    "start": "node scripts/start.js",
+    "dev": "cross-env NODE_ENV=development npm run start",
+    "build": "node scripts/build.js",
+    "bundle": "node esbuild.config.js",
+    "clean": "rimraf dist bundle",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write ."
+  },
+  "files": [
+    "bundle/",
+    "README.md"
+  ],
+  "dependencies": {
+    "dotenv": "^17.1.0",
+    "gaxios": "^7.1.1",
+    "highlight.js": "^11.11.1",
+    "ink": "^6.0.1",
+    "ink-spinner": "^5.0.0",
+    "ink-select-input": "^6.2.0",
+    "react": "^19.1.0",
+    "string-width": "^7.1.0",
+    "strip-ansi": "^7.1.0",
+    "yargs": "^18.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@types/react": "^19.1.8",
+    "@types/ws": "^8.5.10",
+    "@types/yargs": "^17.0.32",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.24.0",
+    "prettier": "^3.5.3",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

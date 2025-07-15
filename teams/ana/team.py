@@ -52,7 +52,7 @@ def get_ana_team(
     
     # Use provided agent names or default from config/system
     if agent_names is None:
-        agent_names = ["adquirencia", "emissao", "pagbank", "human_handoff"]  # Added back human_handoff for routing
+        agent_names = ["adquirencia", "emissao", "pagbank"]  # Removed human_handoff - use workflow instead
     
     # Use model override if provided (agno-demo-app pattern)
     model_id = model_id or config["model"]["id"]
@@ -60,21 +60,18 @@ def get_ana_team(
     # Initialize memory system from YAML config - use Agno Memory V2 correctly
     memory_manager = None
     memory = None
-    memory_db = None
     if config.get("memory"):
         try:
             memory_manager = create_memory_manager()
             # Get the shared memory instance for both team and agents
             memory = memory_manager.memory
-            # Also get the memory database for agents that need it
-            memory_db = memory_manager.memory_db
         except Exception as e:
             print(f"⚠️ Memory system initialization failed: {e}")
             print("Continuing without memory system...")
     
     # Load member agents using generic get_agent factory
     members = [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory, memory_db=memory_db)
+        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory)
         for name in agent_names
     ]
     
@@ -199,20 +196,17 @@ def get_custom_team(
     # Initialize memory for custom team - use Agno Memory V2 correctly
     memory_manager = None
     memory = None
-    memory_db = None
     try:
         memory_manager = create_memory_manager()
         # Get the shared memory instance for both team and agents
         memory = memory_manager.memory
-        # Also get the memory database for agents that need it
-        memory_db = memory_manager.memory_db
     except Exception as e:
         print(f"⚠️ Memory system initialization failed: {e}")
         print("Continuing without memory system...")
     
     # Load member agents using generic get_agent factory
     members = [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory, memory_db=memory_db)
+        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory)
         for name in agent_names
     ]
     
