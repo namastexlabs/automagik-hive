@@ -3,7 +3,7 @@
 # Generic implementation for any agent system
 
 import os
-from typing import Optional
+from typing import Optional, Union
 import yaml
 from pathlib import Path
 from agno.team import Team
@@ -19,20 +19,19 @@ from agents.registry import get_agent
 # Memory system integration
 from context.memory.memory_manager import create_memory_manager
 
-# Demo logging enhancement
-from .demo_logging import get_demo_enhanced_ana_team
+# Demo logging is now handled by global patching in serve.py
 
 
-@get_demo_enhanced_ana_team
 def get_ana_team(
     model_id: Optional[str] = None,
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
     debug_mode: bool = True,
     agent_names: Optional[list[str]] = None,
-):
+) -> Team:
     """
     Ana Team factory - Generic Agno Team(mode="route") implementation.
+    Demo logging is handled by global patching in serve.py.
     
     Args:
         model_id: Override model configuration
@@ -72,6 +71,7 @@ def get_ana_team(
         memory = None
     
     # Create Team with route mode (Agno docs pattern)
+    # Demo logging is handled by global patching
     return Team(
         name=config["team"]["name"],                    # From YAML
         team_id=config["team"]["team_id"],              # From YAML  
@@ -154,6 +154,10 @@ def get_custom_team(
     Returns:
         Configured Team instance with route mode
     """
+    # Logic to select the class to use
+    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    TeamClass = DemoAnaTeam if demo_mode else Team
+    
     # Load base config for storage/model settings
     config_path = Path(__file__).parent / "config.yaml"
     with open(config_path) as f:
@@ -169,7 +173,7 @@ def get_custom_team(
     memory_manager = create_memory_manager()
     memory = memory_manager.create_memory_for_agent(user_id or "system", session_id)
     
-    return Team(
+    return TeamClass(
         name=team_name,
         team_id=f"{team_name.lower().replace(' ', '-')}-team",
         mode="route",                                   # Key Agno pattern

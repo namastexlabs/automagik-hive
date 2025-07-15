@@ -18,7 +18,10 @@ from fastapi import FastAPI
 # Load environment variables first
 load_dotenv()
 
-# Load environment variables
+# Apply global demo patches immediately after loading environment variables
+# This must be done before any other imports that might use agno.Team
+from teams.ana.demo_logging import apply_team_demo_patches
+apply_team_demo_patches()
 
 # Configure logging levels based on environment
 def setup_demo_logging():
@@ -241,15 +244,7 @@ def create_pagbank_api():
         app.include_router(unified_router)
         
         if (demo_mode or is_development) and not is_reloader:
-            print("🚀 Using unified Playground API mode")
-            print("✅ Unified API endpoints registered:")
-            print("   • Core execution: /runs")
-            print("   • Sessions: /sessions") 
-            print("   • Agent management: /agents, /agents/{id}/runs, /agents/{id}/sessions")
-            print("   • Team management: /teams, /teams/{id}/runs, /teams/{id}/sessions")
-            print("   • Workflow management: /workflows, /workflows/{id}/runs, /workflows/{id}/sessions")
-            print("   • Status: /status")
-            print("   • Memory: /agents/{id}/memories, /teams/{id}/memories")
+            pass  # Removed verbose endpoint logging
             
     except Exception as e:
         if (demo_mode or is_development) and not is_reloader:
@@ -272,7 +267,7 @@ def create_pagbank_api():
         app.redoc_url = "/redoc"
         app.openapi_url = "/openapi.json"
         if (demo_mode or is_development) and not is_reloader:
-            print("✅ API documentation enabled")
+            pass  # Removed verbose API documentation logging
     else:
         app.docs_url = None
         app.redoc_url = None
@@ -284,36 +279,34 @@ def create_pagbank_api():
         from api.routes.v1_router import v1_router
         app.include_router(v1_router)
         if (demo_mode or is_development) and not is_reloader:
-            print("✅ Custom business endpoints registered: Health, Monitoring, Agent Versioning")
-            print("   • Health checks: /api/v1/health")
-            print("   • Monitoring: /api/v1/monitoring/*") 
-            print("   • Agent versions: /api/v1/agents/*")
-            print("   • WebSocket: /api/v1/monitoring/ws/realtime")
-            print("📋 Unified Agno framework endpoints (Production + Playground):")
-            print("   • Core execution: /runs (works for agents, teams, workflows)")
-            print("   • Sessions: /sessions, /agents/{id}/sessions, /teams/{id}/sessions, /workflows/{id}/sessions")
-            print("   • Agent management: /agents, /agents/{id}/runs, /agents/{id}/memories")
-            print("   • Team management: /teams, /teams/{id}/runs, /teams/{id}/memories")
-            print("   • Workflow management: /workflows, /workflows/{id}/runs, /workflows/{id}/sessions")
-            print("   • Status: /status")
-            
             # Add development welcome message with documentation and MCP info
             port = int(os.getenv("PB_AGENTS_PORT", "9888"))
-            print(f"\n🌟 Development Server Ready!")
-            print(f"📖 API Documentation: http://localhost:{port}/docs")
-            print(f"📋 Alternative Docs: http://localhost:{port}/redoc")
-            print(f"🚀 Main API: http://localhost:{port}")
-            print(f"💗 Health Check: http://localhost:{port}/api/v1/health")
-            print(f"\n🔧 MCP Integration Available:")
-            print(f'   Add to your MCP client config:')
-            print(f'   "genie-agents": {{')
-            print(f'     "command": "uvx",')
-            print(f'     "args": ["automagik-tools", "tool", "genie-agents"],')
-            print(f'     "env": {{')
-            print(f'       "GENIE_AGENTS_API_BASE_URL": "http://localhost:{port}",')
-            print(f'       "GENIE_AGENTS_TIMEOUT": "300"')
-            print(f'     }}')
-            print(f'   }}')
+            print(f"\n👋 Hey Mr. Dev! Your server is ready to rock!")
+            
+            # Use Rich library for proper table formatting
+            from rich.console import Console
+            from rich.table import Table
+            
+            console = Console()
+            table = Table(title="🚀 Development Server")
+            table.add_column("Service", style="cyan")
+            table.add_column("URL", style="green")
+            
+            table.add_row("📖 API Documentation", f"http://localhost:{port}/docs")
+            table.add_row("📋 Alternative Docs", f"http://localhost:{port}/redoc")
+            table.add_row("🚀 Main API", f"http://localhost:{port}")
+            table.add_row("💗 Health Check", f"http://localhost:{port}/api/v1/health")
+            
+            console.print(table)
+            print(f"\n🔧 MCP Integration Config (for playground testing of agents, teams, and workflows):")
+            print(f'"genie-agents": {{')
+            print(f'  "command": "uvx",')
+            print(f'  "args": ["automagik-tools", "tool", "genie-agents"],')
+            print(f'  "env": {{')
+            print(f'    "GENIE_AGENTS_API_BASE_URL": "http://localhost:{port}",')
+            print(f'    "GENIE_AGENTS_TIMEOUT": "300"')
+            print(f'  }}')
+            print(f'}}')
     except Exception as e:
         if (demo_mode or is_development) and not is_reloader:
             print(f"⚠️ Could not register custom business endpoints: {e}")
