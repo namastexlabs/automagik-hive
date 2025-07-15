@@ -4,6 +4,7 @@
 
 Sequential Agno workflow for hierarchical conversation typification.
 Validates each level against the extracted CSV hierarchy.
+Uses shared protocol generator for consistent protocol format.
 """
 
 import os
@@ -22,6 +23,13 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
 
+# Shared protocol generator
+from workflows.shared.protocol_generator import (
+    generate_protocol, 
+    save_protocol_to_session_state,
+    format_protocol_for_user
+)
+
 from .models import (
     BusinessUnitSelection,
     ProductSelection,
@@ -35,6 +43,7 @@ from .models import (
     FinalReport,
     WhatsAppNotificationData,
     NPSRating,
+    UnidadeNegocio,
     get_valid_products,
     get_valid_motives,
     get_valid_submotives,
@@ -80,9 +89,6 @@ class ConversationTypificationWorkflow(Workflow):
         if self.debug_mode:
             logger.debug(f"🔧 DEBUG MODE: Workflow state tracking enabled")
         
-        if self.demo_mode:
-            logger.info(f"🎬 DEMO MODE: Enhanced presentation logging enabled")
-            logger.info(f"📊 Features: Rich console, enum displays, step visualization")
     
     # Step 1: Business Unit Classifier
     business_unit_classifier: Agent = Agent(
@@ -136,9 +142,6 @@ class ConversationTypificationWorkflow(Workflow):
         valid_products = get_valid_products(business_unit)
         products_list = "\n".join(f"• {p}" for p in valid_products)
         
-        if self.demo_mode:
-            logger.info(f"🔧 AGENT CREATION: Product classifier for '{business_unit}'")
-            logger.info(f"📋 Available products ({len(valid_products)}): {', '.join(valid_products[:3])}{'...' if len(valid_products) > 3 else ''}")
         
         return Agent(
             name=f"Product Classifier - {business_unit}",
@@ -168,9 +171,6 @@ class ConversationTypificationWorkflow(Workflow):
         valid_motives = get_valid_motives(business_unit, product)
         motives_list = "\n".join(f"• {m}" for m in valid_motives)
         
-        if self.demo_mode:
-            logger.info(f"🔧 AGENT CREATION: Motive classifier for '{product}' in '{business_unit}'")
-            logger.info(f"📋 Available motives ({len(valid_motives)}): {', '.join(valid_motives[:3])}{'...' if len(valid_motives) > 3 else ''}")
         
         return Agent(
             name=f"Motive Classifier - {product}",
@@ -200,10 +200,6 @@ class ConversationTypificationWorkflow(Workflow):
         valid_submotives = get_valid_submotives(business_unit, product, motive)
         submotives_list = "\n".join(f"• {s}" for s in valid_submotives)
         
-        if self.demo_mode:
-            logger.info(f"🔧 AGENT CREATION: Submotive classifier for '{motive}' (Final Level)")
-            logger.info(f"📋 Available submotives ({len(valid_submotives)}): {', '.join(valid_submotives[:2])}{'...' if len(valid_submotives) > 2 else ''}")
-            logger.info(f"🎯 Using Claude Sonnet 4 for final classification")
         
         return Agent(
             name=f"Submotive Classifier - {motive}",
@@ -374,8 +370,11 @@ class ConversationTypificationWorkflow(Workflow):
                 raise ValueError(f"Invalid typification path: {validation_result.error_message}")
             
             # Create final typification
+            # Convert business_unit string back to enum
+            business_unit_enum = UnidadeNegocio(business_unit)
+            
             final_typification = HierarchicalTypification(
-                unidade_negocio=business_unit,
+                unidade_negocio=business_unit_enum,
                 produto=product,
                 motivo=motive,
                 submotivo=submotive,
@@ -478,10 +477,7 @@ class ConversationTypificationWorkflow(Workflow):
         conversation_history: str,
         customer_id: Optional[str] = None
     ) -> TicketCreationResult:
-        """Create or update ticket with typification data"""
-        
-        # Generate unique ticket ID
-        ticket_id = f"TKT-{session_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        """Create or update ticket with typification data using shared protocol generator"""
         
         # Determine assigned team based on business unit
         team_mapping = {
@@ -493,9 +489,33 @@ class ConversationTypificationWorkflow(Workflow):
         
         assigned_team = team_mapping.get(typification.unidade_negocio.value, "general_support")
         
-        # Create ticket result
+        # Generate unified protocol
+        workflow_data = {
+            "typification_data": typification.as_dict,
+            "conversation_summary": self._generate_summary(conversation_history),
+            "business_unit": typification.unidade_negocio.value,
+            "product": typification.produto,
+            "motive": typification.motivo,
+            "submotive": typification.submotivo,
+            "conclusion": typification.conclusao
+        }
+        
+        unified_protocol = generate_protocol(
+            session_id=session_id,
+            protocol_type="typification",
+            customer_info={"customer_id": customer_id} if customer_id else {},
+            workflow_data=workflow_data,
+            assigned_team=assigned_team,
+            notes=f"Typification completed for {typification.unidade_negocio.value}"
+        )
+        
+        # Save protocol to session state for access by other agents
+        if hasattr(self, 'session_state') and self.session_state:
+            save_protocol_to_session_state(unified_protocol, self.session_state)
+        
+        # Create ticket result using unified protocol ID
         ticket_result = TicketCreationResult(
-            ticket_id=ticket_id,
+            ticket_id=unified_protocol.protocol_id,
             action="created",
             status="resolved",  # Assuming auto-resolved with orientation
             assigned_team=assigned_team,
@@ -505,7 +525,7 @@ class ConversationTypificationWorkflow(Workflow):
             error_message=None
         )
         
-        logger.info(f"Created ticket {ticket_id} for team {assigned_team}")
+        logger.info(f"Created ticket {unified_protocol.protocol_id} for team {assigned_team}")
         
         return ticket_result
     
@@ -749,88 +769,22 @@ class ConversationTypificationWorkflow(Workflow):
         logger.info(f"Saved final report {report.report_id} for session {report.session_id}")
     
     def _log_workflow_start(self, session_id: str, conversation_history: str):
-        """Log detailed workflow startup information for demo"""
-        if self.console:
-            self.console.print(Panel.fit(
-                f"[bold blue]🎯 TYPIFICATION WORKFLOW STARTED[/bold blue]\n"
-                f"[yellow]Session:[/yellow] {session_id}\n"
-                f"[yellow]Model:[/yellow] Claude Sonnet 4 (claude-sonnet-4-20250514)\n"
-                f"[yellow]Hierarchy Levels:[/yellow] 5 (Business Unit → Product → Motive → Submotive → Conclusion)\n"
-                f"[yellow]Conversation Length:[/yellow] {len(conversation_history)} characters",
-                title="🚀 AI Workflow Demo",
-                border_style="blue"
-            ))
-        
-        logger.info(f"🎯 WORKFLOW START: Session {session_id}, Conversation: {len(conversation_history)} chars")
-        logger.info(f"🤖 AI Model: Claude Sonnet 4 - Structured output with Pydantic validation")
-        logger.info(f"📊 Hierarchy: Business Unit → Product → Motive → Submotive → Conclusion")
+        """Log workflow startup"""
+        logger.info(f"Typification started | Session: {session_id} | Length: {len(conversation_history)} chars")
     
     def _log_step_start(self, step_num: int, step_name: str, available_options: list, context: dict = None):
-        """Log the start of each classification step with available enum options"""
-        if self.console:
-            # Create table for available options
-            table = Table(title=f"Step {step_num}: {step_name}")
-            table.add_column("Available Options", style="cyan")
-            table.add_column("Count", style="magenta")
-            
-            for i, option in enumerate(available_options[:5]):  # Show first 5
-                table.add_row(f"{i+1}. {option}", "")
-            
-            if len(available_options) > 5:
-                table.add_row(f"... and {len(available_options) - 5} more", str(len(available_options)))
-            else:
-                table.add_row("", str(len(available_options)))
-            
-            self.console.print(table)
-            
-            if context:
-                context_text = " → ".join([f"{k}: {v}" for k, v in context.items()])
-                self.console.print(f"[dim]Context Path: {context_text}[/dim]")
-        
-        logger.info(f"🔄 STEP {step_num}: {step_name}")
-        logger.info(f"📋 Available options ({len(available_options)}): {', '.join(available_options[:3])}{'...' if len(available_options) > 3 else ''}")
-        
-        if context:
-            context_str = " → ".join([f"{k}={v}" for k, v in context.items()])
-            logger.info(f"📍 Context: {context_str}")
-        
-        logger.info(f"🤖 Agent: Creating specialized classifier with Claude Sonnet 4")
+        """Log classification step start"""
+        pass  # Silent for concise mode
     
     def _log_classification_result(self, step_num: int, classification_type: str, selected_option: str, confidence: float, reasoning: str, available_options: list, context: dict = None):
-        """Log detailed classification results showing LLM decision process"""
-        if self.console:
-            # Highlight selected option
-            options_display = []
-            for option in available_options:
-                if option == selected_option:
-                    options_display.append(f"[bold green]✓ {option}[/bold green] ({confidence:.2%})")
-                else:
-                    options_display.append(f"[dim]  {option}[/dim]")
-            
-            self.console.print(Panel(
-                f"[bold yellow]CLASSIFICATION RESULT[/bold yellow]\n\n"
-                f"[green]Selected:[/green] {selected_option}\n"
-                f"[blue]Confidence:[/blue] {confidence:.1%}\n"
-                f"[cyan]Reasoning:[/cyan] {reasoning[:200]}{'...' if len(reasoning) > 200 else ''}\n\n"
-                f"[dim]Options considered:[/dim]\n" + "\n".join(options_display[:7]),
-                title=f"✅ Step {step_num}: {classification_type}",
-                border_style="green"
-            ))
-        
-        logger.info(f"✅ STEP {step_num} RESULT: {classification_type} = '{selected_option}'")
-        logger.info(f"🎯 Confidence: {confidence:.1%} (from Claude Sonnet 4 structured output)")
-        logger.info(f"🧠 Reasoning: {reasoning[:150]}{'...' if len(reasoning) > 150 else ''}")
-        logger.info(f"📊 Options processed: {len(available_options)} total, selected: {selected_option}")
-        
-        # Log tool interactions (knowledge base validation)
-        logger.info(f"🔧 Tool Usage: Validated against CSV hierarchy - Path exists: ✓")
-        logger.info(f"📊 Enum Selection: {available_options.index(selected_option) + 1}/{len(available_options)}")
+        """Log classification result"""
+        logger.info(f"Step {step_num}/5: {selected_option} ({confidence:.0%})")
     
     def _log_final_typification(self, typification: HierarchicalTypification, confidence_scores: dict, validation_result):
-        """Log the complete final typification with full hierarchy path"""
+        """Log final typification result with summary table"""
         if self.console:
-            # Create final summary table
-            table = Table(title="🏆 FINAL TYPIFICATION RESULT")
+            # Create final summary table (preserve this for data visibility)
+            table = Table(title="FINAL TYPIFICATION RESULT")
             table.add_column("Level", style="yellow")
             table.add_column("Selection", style="green")
             table.add_column("Confidence", style="blue")
@@ -842,38 +796,14 @@ class ConversationTypificationWorkflow(Workflow):
             table.add_row("5. Conclusion", typification.conclusao, "100.0%")
             
             self.console.print(table)
-            
-            # Show hierarchy path
-            path = typification.hierarchy_path
-            self.console.print(f"\n[bold cyan]Hierarchy Path:[/bold cyan] {path}")
-            self.console.print(f"[green]Validation:[/green] ✓ {validation_result.error_message or 'Valid path'}")
         
-        logger.info(f"🏆 FINAL TYPIFICATION: {typification.hierarchy_path}")
-        logger.info(f"📊 Confidence Scores: BU={confidence_scores.get('business_unit', 0):.1%}, P={confidence_scores.get('product', 0):.1%}, M={confidence_scores.get('motive', 0):.1%}, SM={confidence_scores.get('submotive', 0):.1%}")
-        logger.info(f"✅ Hierarchy Validation: {validation_result.error_message or 'VALID PATH'}")
-        logger.info(f"📊 Complete Classification: {typification.unidade_negocio.value} → {typification.produto} → {typification.motivo} → {typification.submotivo} → {typification.conclusao}")
+        logger.info(f"Typification complete: {typification.hierarchy_path}")
     
     def _log_workflow_completion(self, typification: HierarchicalTypification, confidence_scores: dict, start_time: datetime, end_time: datetime):
-        """Log workflow completion with performance metrics"""
+        """Log workflow completion"""
         duration = (end_time - start_time).total_seconds()
         avg_confidence = sum(confidence_scores.values()) / len(confidence_scores) if confidence_scores else 0
-        
-        if self.console:
-            self.console.print(Panel.fit(
-                f"[bold green]✅ WORKFLOW COMPLETED SUCCESSFULLY[/bold green]\n\n"
-                f"[yellow]Duration:[/yellow] {duration:.2f} seconds\n"
-                f"[yellow]Average Confidence:[/yellow] {avg_confidence:.1%}\n"
-                f"[yellow]Classification Levels:[/yellow] 5/5 completed\n"
-                f"[yellow]Final Path:[/yellow] {typification.hierarchy_path}\n"
-                f"[yellow]Agent Interactions:[/yellow] 4 specialized agents + 1 validator",
-                title="✨ Demo Complete",
-                border_style="green"
-            ))
-        
-        logger.info(f"✨ WORKFLOW COMPLETED: Duration {duration:.2f}s, Avg Confidence {avg_confidence:.1%}")
-        logger.info(f"📊 Performance: 5 levels classified in {duration:.2f} seconds")
-        logger.info(f"🤖 AI Interactions: 4 dynamic agents + 1 hierarchy validator")
-        logger.info(f"🎯 Final Result: {typification.hierarchy_path}")
+        logger.info(f"Workflow completed in {duration:.1f}s | Avg confidence: {avg_confidence:.0%}")
 
 def get_conversation_typification_workflow(debug_mode: bool = False) -> ConversationTypificationWorkflow:
     """Factory function to create a configured typification workflow"""
@@ -882,11 +812,6 @@ def get_conversation_typification_workflow(debug_mode: bool = False) -> Conversa
     demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
     env_debug = os.getenv("DEBUG", "false").lower() == "true"
     
-    if demo_mode:
-        logger.info(f"🎬 Creating typification workflow with demo presentation features")
-    
-    if debug_mode or env_debug:
-        logger.debug(f"🔧 Debug mode enabled - workflow state tracking active")
     
     return ConversationTypificationWorkflow(
         workflow_id="conversation-typification",

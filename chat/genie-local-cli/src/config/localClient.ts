@@ -12,24 +12,37 @@ export interface StreamingResponse {
   content: string;
   done: boolean;
   session_id?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface AgentRequest {
   agent_id: string;
   message: string;
   session_id?: string;
+  user_id?: string;
+  user_name?: string;
+  phone_number?: string;
+  cpf?: string;
 }
 
 export interface TeamRequest {
   team_id: string;
   message: string;
   session_id?: string;
+  user_id?: string;
+  user_name?: string;
+  phone_number?: string;
+  cpf?: string;
 }
 
 export interface WorkflowRequest {
   workflow_id: string;
   params: Record<string, any>;
   session_id?: string;
+  user_id?: string;
+  user_name?: string;
+  phone_number?: string;
+  cpf?: string;
 }
 
 export class LocalAPIClient {
@@ -108,6 +121,18 @@ export class LocalAPIClient {
     if (request.session_id) {
       formData.append('session_id', request.session_id);
     }
+    if (request.user_id) {
+      formData.append('user_id', request.user_id);
+    }
+    if (request.user_name) {
+      formData.append('user_name', request.user_name);
+    }
+    if (request.phone_number) {
+      formData.append('phone_number', request.phone_number);
+    }
+    if (request.cpf) {
+      formData.append('cpf', request.cpf);
+    }
 
     return this.makeRequest(`/playground/agents/${request.agent_id}/runs`, {
       method: 'POST',
@@ -126,6 +151,18 @@ export class LocalAPIClient {
     if (request.session_id) {
       formData.append('session_id', request.session_id);
     }
+    if (request.user_id) {
+      formData.append('user_id', request.user_id);
+    }
+    if (request.user_name) {
+      formData.append('user_name', request.user_name);
+    }
+    if (request.phone_number) {
+      formData.append('phone_number', request.phone_number);
+    }
+    if (request.cpf) {
+      formData.append('cpf', request.cpf);
+    }
 
     return this.makeRequest(`/playground/teams/${request.team_id}/runs`, {
       method: 'POST',
@@ -143,6 +180,10 @@ export class LocalAPIClient {
       data: {
         params: request.params,
         session_id: request.session_id,
+        user_id: request.user_id,
+        user_name: request.user_name,
+        phone_number: request.phone_number,
+        cpf: request.cpf,
       },
     });
   }
@@ -184,6 +225,18 @@ export class LocalAPIClient {
       formData.append('monitor', 'true');
       if (request.session_id) {
         formData.append('session_id', request.session_id);
+      }
+      if (request.user_id) {
+        formData.append('user_id', request.user_id);
+      }
+      if (request.user_name) {
+        formData.append('user_name', request.user_name);
+      }
+      if (request.phone_number) {
+        formData.append('phone_number', request.phone_number);
+      }
+      if (request.cpf) {
+        formData.append('cpf', request.cpf);
       }
 
       const url = `${this.baseUrl}/playground/agents/${request.agent_id}/runs`;
@@ -374,6 +427,18 @@ export class LocalAPIClient {
       formData.append('monitor', 'true');
       if (request.session_id) {
         formData.append('session_id', request.session_id);
+      }
+      if (request.user_id) {
+        formData.append('user_id', request.user_id);
+      }
+      if (request.user_name) {
+        formData.append('user_name', request.user_name);
+      }
+      if (request.phone_number) {
+        formData.append('phone_number', request.phone_number);
+      }
+      if (request.cpf) {
+        formData.append('cpf', request.cpf);
       }
 
       const url = `${this.baseUrl}/playground/teams/${request.team_id}/runs`;

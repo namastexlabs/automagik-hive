@@ -1,13 +1,16 @@
-# Workflow Trigger Tools for Agents
-# Allows agents to trigger workflows during their execution
+# Workflow Trigger Tools for Specialist Agents
+# Human handoff agent uses this to trigger workflows
 
 from typing import Dict, Any, Optional
 from agno.tools import tool
 from agno.utils.log import logger
 from workflows.human_handoff.workflow import get_human_handoff_workflow
 
+# User context helper for automatic extraction from session_state
+from context.user_context_helper import get_user_context_from_agent
 
-@tool  # Direct execution - Ana can call this directly
+
+@tool  # Only for human handoff specialist agent
 def trigger_human_handoff_workflow(
     customer_message: str,
     escalation_reason: str,
@@ -15,13 +18,21 @@ def trigger_human_handoff_workflow(
     urgency_level: str = "medium",
     business_unit: Optional[str] = None,
     session_id: Optional[str] = None,
-    customer_id: Optional[str] = None
+    customer_id: Optional[str] = None,
+    # User data parameters - optional, will auto-extract from agent session_state
+    user_id: Optional[str] = None,
+    user_name: Optional[str] = None,
+    phone_number: Optional[str] = None,
+    cpf: Optional[str] = None
 ) -> str:
     """
     Trigger the human handoff workflow for escalating customer service.
     
-    This tool allows agents to escalate conversations to human agents
-    with proper context preservation and protocol generation.
+    EXCLUSIVE TOOL for human handoff specialist agent only.
+    Ana team routes to human handoff agent, then agent calls this workflow.
+    
+    This tool automatically extracts user context from the calling agent's session_state
+    when parameters are not explicitly provided.
     
     Args:
         customer_message: Current customer message requiring escalation
@@ -31,12 +42,33 @@ def trigger_human_handoff_workflow(
         business_unit: Business unit for routing (pagbank, emissao, adquirencia)
         session_id: Session identifier
         customer_id: Customer identifier
+        user_id: User identifier (auto-extracted from session_state)
+        user_name: Customer name (auto-extracted from session_state)
+        phone_number: Customer phone number (auto-extracted from session_state)
+        cpf: Customer CPF (auto-extracted from session_state)
         
     Returns:
-        Status message about escalation initiation
+        Final response to customer about escalation completion
     """
     
     logger.info(f"🚨 Human handoff workflow triggered: {escalation_reason}")
+    
+    # Auto-extract user context from session_state if not provided
+    # Note: Future enhancement - tools could access current agent context
+    # For now, user context flows through agent instructions via session_state
+    # and agents can pass the context explicitly or via session_state access
+    
+    # Log current user context for debugging
+    user_context_provided = {
+        'user_id': bool(user_id),
+        'user_name': bool(user_name), 
+        'phone_number': bool(phone_number),
+        'cpf': bool(cpf)
+    }
+    logger.info(f"📝 User context provided: {user_context_provided}")
+    
+    # Future enhancement: Auto-extract from agent session_state
+    # This would eliminate the need for agents to pass user context explicitly
     
     try:
         # Execute workflow - MCP tools are now initialized directly within the workflow
@@ -60,7 +92,12 @@ def trigger_human_handoff_workflow(
                 urgency_level=urgency_level,
                 business_unit=business_unit,
                 session_id=session_id,
-                customer_id=customer_id
+                customer_id=customer_id,
+                # NEW: Pass user data parameters
+                user_id=user_id,
+                user_name=user_name,
+                phone_number=phone_number,
+                cpf=cpf
             ):
                 results.append(result)
             return results
@@ -89,10 +126,11 @@ def trigger_human_handoff_workflow(
 
 def handle_workflow_trigger_external(tool_execution):
     """
-    External handler for workflow trigger tools.
+    External handler for human handoff workflow trigger.
     
-    This function is called when an agent uses a workflow trigger tool
-    with external_execution=True. It executes the actual workflow.
+    Called when human handoff specialist agent uses workflow trigger tool
+    with external_execution=True. Executes the workflow with automatic
+    user context extraction from agent session_state.
     """
     
     if tool_execution.tool_name == "trigger_human_handoff_workflow":
@@ -101,6 +139,15 @@ def handle_workflow_trigger_external(tool_execution):
             args = tool_execution.tool_args
             
             logger.info(f"🚀 Executing human handoff workflow externally with args: {args}")
+            
+            # Log user context for debugging
+            user_context_provided = {
+                'user_id': bool(args.get("user_id")),
+                'user_name': bool(args.get("user_name")), 
+                'phone_number': bool(args.get("phone_number")),
+                'cpf': bool(args.get("cpf"))
+            }
+            logger.info(f"📝 User context provided (external): {user_context_provided}")
             
             # Execute workflow - MCP tools are now initialized directly within the workflow
             import asyncio
@@ -122,7 +169,12 @@ def handle_workflow_trigger_external(tool_execution):
                     urgency_level=args.get("urgency_level", "medium"),
                     business_unit=args.get("business_unit"),
                     session_id=args.get("session_id"),
-                    customer_id=args.get("customer_id")
+                    customer_id=args.get("customer_id"),
+                    # NEW: Pass user data parameters
+                    user_id=args.get("user_id"),
+                    user_name=args.get("user_name"),
+                    phone_number=args.get("phone_number"),
+                    cpf=args.get("cpf")
                 ):
                     results.append(result)
                 

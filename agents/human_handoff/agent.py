@@ -8,6 +8,9 @@ from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 
+# User context management - simple helper for session_state
+from context.user_context_helper import create_user_context_state
+
 # Workflow tools will be imported safely in factory function
 
 
@@ -16,7 +19,13 @@ def get_human_handoff_agent(
     session_id: Optional[str] = None,     # API parameter - session management  
     debug_mode: bool = False,             # API parameter - debugging
     db_url: Optional[str] = None,         # API parameter - database connection
-    memory: Optional[Any] = None         # API parameter - memory instance from team
+    memory: Optional[Any] = None,         # API parameter - memory instance from team
+    # User context parameters - will be stored in session_state
+    user_id: Optional[str] = None,
+    user_name: Optional[str] = None,
+    phone_number: Optional[str] = None,
+    cpf: Optional[str] = None,
+    **kwargs
 ) -> Agent:
     """
     Factory function for Human Handoff specialist agent.
@@ -54,6 +63,15 @@ def get_human_handoff_agent(
         from db.session import db_url as default_db_url
         db_url = default_db_url
     
+    # Create user context session_state (Agno's built-in way)
+    user_context_state = create_user_context_state(
+        user_id=user_id,
+        user_name=user_name,
+        phone_number=phone_number,
+        cpf=cpf,
+        **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
+    )
+    
     # Create tools list based on config
     tools = []
     try:
@@ -82,6 +100,10 @@ def get_human_handoff_agent(
         memory=memory,
         enable_user_memories=config.get("memory", {}).get("enable_user_memories", True),
         enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
+        # User context stored in session_state (Agno's built-in persistence)
+        session_state=user_context_state if user_context_state.get('user_context') else None,
+        # Make user context available in instructions
+        add_state_in_messages=True,  # This allows {user_name}, {user_id}, etc. in instructions
         # Additional Agno parameters from config
         markdown=config.get("markdown", False),
         show_tool_calls=config.get("show_tool_calls", True),

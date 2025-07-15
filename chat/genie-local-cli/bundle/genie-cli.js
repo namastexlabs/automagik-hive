@@ -1031,11 +1031,11 @@ var require_signals = __commonJS({
 // node_modules/signal-exit/index.js
 var require_signal_exit = __commonJS({
   "node_modules/signal-exit/index.js"(exports, module) {
-    var process13 = global.process;
-    var processOk = function(process14) {
-      return process14 && typeof process14 === "object" && typeof process14.removeListener === "function" && typeof process14.emit === "function" && typeof process14.reallyExit === "function" && typeof process14.listeners === "function" && typeof process14.kill === "function" && typeof process14.pid === "number" && typeof process14.on === "function";
+    var process14 = global.process;
+    var processOk = function(process15) {
+      return process15 && typeof process15 === "object" && typeof process15.removeListener === "function" && typeof process15.emit === "function" && typeof process15.reallyExit === "function" && typeof process15.listeners === "function" && typeof process15.kill === "function" && typeof process15.pid === "number" && typeof process15.on === "function";
     };
-    if (!processOk(process13)) {
+    if (!processOk(process14)) {
       module.exports = function() {
         return function() {
         };
@@ -1043,15 +1043,15 @@ var require_signal_exit = __commonJS({
     } else {
       assert = __require("assert");
       signals = require_signals();
-      isWin = /^win/i.test(process13.platform);
+      isWin = /^win/i.test(process14.platform);
       EE = __require("events");
       if (typeof EE !== "function") {
         EE = EE.EventEmitter;
       }
-      if (process13.__signal_exit_emitter__) {
-        emitter = process13.__signal_exit_emitter__;
+      if (process14.__signal_exit_emitter__) {
+        emitter = process14.__signal_exit_emitter__;
       } else {
-        emitter = process13.__signal_exit_emitter__ = new EE();
+        emitter = process14.__signal_exit_emitter__ = new EE();
         emitter.count = 0;
         emitter.emitted = {};
       }
@@ -1088,12 +1088,12 @@ var require_signal_exit = __commonJS({
         loaded = false;
         signals.forEach(function(sig) {
           try {
-            process13.removeListener(sig, sigListeners[sig]);
+            process14.removeListener(sig, sigListeners[sig]);
           } catch (er) {
           }
         });
-        process13.emit = originalProcessEmit;
-        process13.reallyExit = originalProcessReallyExit;
+        process14.emit = originalProcessEmit;
+        process14.reallyExit = originalProcessReallyExit;
         emitter.count -= 1;
       };
       module.exports.unload = unload;
@@ -1110,7 +1110,7 @@ var require_signal_exit = __commonJS({
           if (!processOk(global.process)) {
             return;
           }
-          var listeners = process13.listeners(sig);
+          var listeners = process14.listeners(sig);
           if (listeners.length === emitter.count) {
             unload();
             emit("exit", null, sig);
@@ -1118,7 +1118,7 @@ var require_signal_exit = __commonJS({
             if (isWin && sig === "SIGHUP") {
               sig = "SIGINT";
             }
-            process13.kill(process13.pid, sig);
+            process14.kill(process14.pid, sig);
           }
         };
       });
@@ -1134,36 +1134,36 @@ var require_signal_exit = __commonJS({
         emitter.count += 1;
         signals = signals.filter(function(sig) {
           try {
-            process13.on(sig, sigListeners[sig]);
+            process14.on(sig, sigListeners[sig]);
             return true;
           } catch (er) {
             return false;
           }
         });
-        process13.emit = processEmit;
-        process13.reallyExit = processReallyExit;
+        process14.emit = processEmit;
+        process14.reallyExit = processReallyExit;
       };
       module.exports.load = load;
-      originalProcessReallyExit = process13.reallyExit;
+      originalProcessReallyExit = process14.reallyExit;
       processReallyExit = function processReallyExit2(code) {
         if (!processOk(global.process)) {
           return;
         }
-        process13.exitCode = code || /* istanbul ignore next */
+        process14.exitCode = code || /* istanbul ignore next */
         0;
-        emit("exit", process13.exitCode, null);
-        emit("afterexit", process13.exitCode, null);
-        originalProcessReallyExit.call(process13, process13.exitCode);
+        emit("exit", process14.exitCode, null);
+        emit("afterexit", process14.exitCode, null);
+        originalProcessReallyExit.call(process14, process14.exitCode);
       };
-      originalProcessEmit = process13.emit;
+      originalProcessEmit = process14.emit;
       processEmit = function processEmit2(ev, arg) {
         if (ev === "exit" && processOk(global.process)) {
           if (arg !== void 0) {
-            process13.exitCode = arg;
+            process14.exitCode = arg;
           }
           var ret = originalProcessEmit.apply(this, arguments);
-          emit("exit", process13.exitCode, null);
-          emit("afterexit", process13.exitCode, null);
+          emit("exit", process14.exitCode, null);
+          emit("afterexit", process14.exitCode, null);
           return ret;
         } else {
           return originalProcessEmit.apply(this, arguments);
@@ -2334,9 +2334,9 @@ var require_react_reconciler_development = __commonJS({
               for (var i2 = debugInfo.length - 1; 0 <= i2; i2--) {
                 var entry = debugInfo[i2];
                 if ("string" === typeof entry.name) {
-                  var JSCompiler_temp_const = info, env3 = entry.env;
+                  var JSCompiler_temp_const = info, env4 = entry.env;
                   var JSCompiler_inline_result = describeBuiltInComponentFrame(
-                    entry.name + (env3 ? " [" + env3 + "]" : "")
+                    entry.name + (env4 ? " [" + env4 + "]" : "")
                   );
                   info = JSCompiler_temp_const + JSCompiler_inline_result;
                 }
@@ -11467,14 +11467,14 @@ var require_react_reconciler_development = __commonJS({
       }
       var exports2 = {};
       "use strict";
-      var React17 = require_react(), Scheduler = require_scheduler(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
+      var React18 = require_react(), Scheduler = require_scheduler(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
       Symbol.for("react.scope");
       var REACT_ACTIVITY_TYPE = Symbol.for("react.activity");
       Symbol.for("react.legacy_hidden");
       Symbol.for("react.tracing_marker");
       var REACT_MEMO_CACHE_SENTINEL = Symbol.for("react.memo_cache_sentinel");
       Symbol.for("react.view_transition");
-      var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React17.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, rendererVersion = $$$config.rendererVersion, rendererPackageName = $$$config.rendererPackageName, extraDevToolsConfig = $$$config.extraDevToolsConfig, getPublicInstance = $$$config.getPublicInstance, getRootHostContext = $$$config.getRootHostContext, getChildHostContext = $$$config.getChildHostContext, prepareForCommit = $$$config.prepareForCommit, resetAfterCommit = $$$config.resetAfterCommit, createInstance = $$$config.createInstance;
+      var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React18.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, rendererVersion = $$$config.rendererVersion, rendererPackageName = $$$config.rendererPackageName, extraDevToolsConfig = $$$config.extraDevToolsConfig, getPublicInstance = $$$config.getPublicInstance, getRootHostContext = $$$config.getRootHostContext, getChildHostContext = $$$config.getChildHostContext, prepareForCommit = $$$config.prepareForCommit, resetAfterCommit = $$$config.resetAfterCommit, createInstance = $$$config.createInstance;
       $$$config.cloneMutableInstance;
       var appendInitialChild = $$$config.appendInitialChild, finalizeInitialChildren = $$$config.finalizeInitialChildren, shouldSetTextContent = $$$config.shouldSetTextContent, createTextInstance = $$$config.createTextInstance;
       $$$config.cloneMutableTextInstance;
@@ -17166,7 +17166,7 @@ var require_backend = __commonJS({
                     });
                     return a._currentValue;
                   },
-                  useEffect: function useEffect9(a) {
+                  useEffect: function useEffect11(a) {
                     C();
                     x2.push({
                       primitive: "Effect",
@@ -17243,7 +17243,7 @@ var require_backend = __commonJS({
                     });
                     return a;
                   },
-                  useState: function useState11(a) {
+                  useState: function useState12(a) {
                     var b = C();
                     a = null !== b ? b.memoizedState : "function" === typeof a ? a() : a;
                     x2.push({
@@ -18439,12 +18439,12 @@ var require_backend = __commonJS({
               /***/
               (module2, __unused_webpack_exports, __webpack_require__2) => {
                 "use strict";
-                var process13 = __webpack_require__2(169);
+                var process14 = __webpack_require__2(169);
                 module2.exports = LRUCache;
                 var Map2 = __webpack_require__2(307);
                 var util2 = __webpack_require__2(82);
                 var Yallist = __webpack_require__2(695);
-                var hasSymbol = typeof Symbol === "function" && process13.env._nodeLRUCacheForceNoSymbol !== "1";
+                var hasSymbol = typeof Symbol === "function" && process14.env._nodeLRUCacheForceNoSymbol !== "1";
                 var makeSymbol;
                 if (hasSymbol) {
                   makeSymbol = function makeSymbol2(key) {
@@ -18835,7 +18835,7 @@ var require_backend = __commonJS({
             169: (
               /***/
               (module2) => {
-                var process13 = module2.exports = {};
+                var process14 = module2.exports = {};
                 var cachedSetTimeout;
                 var cachedClearTimeout;
                 function defaultSetTimout() {
@@ -18940,7 +18940,7 @@ var require_backend = __commonJS({
                   draining = false;
                   runClearTimeout(timeout);
                 }
-                process13.nextTick = function(fun) {
+                process14.nextTick = function(fun) {
                   var args = new Array(arguments.length - 1);
                   if (arguments.length > 1) {
                     for (var i2 = 1; i2 < arguments.length; i2++) {
@@ -18959,36 +18959,36 @@ var require_backend = __commonJS({
                 Item.prototype.run = function() {
                   this.fun.apply(null, this.array);
                 };
-                process13.title = "browser";
-                process13.browser = true;
-                process13.env = {};
-                process13.argv = [];
-                process13.version = "";
-                process13.versions = {};
+                process14.title = "browser";
+                process14.browser = true;
+                process14.env = {};
+                process14.argv = [];
+                process14.version = "";
+                process14.versions = {};
                 function noop3() {
                 }
-                process13.on = noop3;
-                process13.addListener = noop3;
-                process13.once = noop3;
-                process13.off = noop3;
-                process13.removeListener = noop3;
-                process13.removeAllListeners = noop3;
-                process13.emit = noop3;
-                process13.prependListener = noop3;
-                process13.prependOnceListener = noop3;
-                process13.listeners = function(name) {
+                process14.on = noop3;
+                process14.addListener = noop3;
+                process14.once = noop3;
+                process14.off = noop3;
+                process14.removeListener = noop3;
+                process14.removeAllListeners = noop3;
+                process14.emit = noop3;
+                process14.prependListener = noop3;
+                process14.prependOnceListener = noop3;
+                process14.listeners = function(name) {
                   return [];
                 };
-                process13.binding = function(name) {
+                process14.binding = function(name) {
                   throw new Error("process.binding is not supported");
                 };
-                process13.cwd = function() {
+                process14.cwd = function() {
                   return "/";
                 };
-                process13.chdir = function(dir) {
+                process14.chdir = function(dir) {
                   throw new Error("process.chdir is not supported");
                 };
-                process13.umask = function() {
+                process14.umask = function() {
                   return 0;
                 };
               }
@@ -18997,9 +18997,9 @@ var require_backend = __commonJS({
             307: (
               /***/
               (module2, __unused_webpack_exports, __webpack_require__2) => {
-                var process13 = __webpack_require__2(169);
-                if (process13.env.npm_package_name === "pseudomap" && process13.env.npm_lifecycle_script === "test") process13.env.TEST_PSEUDOMAP = "true";
-                if (typeof Map === "function" && !process13.env.TEST_PSEUDOMAP) {
+                var process14 = __webpack_require__2(169);
+                if (process14.env.npm_package_name === "pseudomap" && process14.env.npm_lifecycle_script === "test") process14.env.TEST_PSEUDOMAP = "true";
+                if (typeof Map === "function" && !process14.env.TEST_PSEUDOMAP) {
                   module2.exports = Map;
                 } else {
                   module2.exports = __webpack_require__2(761);
@@ -19290,7 +19290,7 @@ var require_backend = __commonJS({
             82: (
               /***/
               (__unused_webpack_module, exports2, __webpack_require__2) => {
-                var process13 = __webpack_require__2(169);
+                var process14 = __webpack_require__2(169);
                 function _typeof(obj) {
                   "@babel/helpers - typeof";
                   if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
@@ -19349,15 +19349,15 @@ var require_backend = __commonJS({
                       return exports2.deprecate(fn, msg).apply(this, arguments);
                     };
                   }
-                  if (process13.noDeprecation === true) {
+                  if (process14.noDeprecation === true) {
                     return fn;
                   }
                   var warned = false;
                   function deprecated() {
                     if (!warned) {
-                      if (process13.throwDeprecation) {
+                      if (process14.throwDeprecation) {
                         throw new Error(msg);
-                      } else if (process13.traceDeprecation) {
+                      } else if (process14.traceDeprecation) {
                         console.trace(msg);
                       } else {
                         console.error(msg);
@@ -19371,11 +19371,11 @@ var require_backend = __commonJS({
                 var debugs = {};
                 var debugEnviron;
                 exports2.debuglog = function(set) {
-                  if (isUndefined(debugEnviron)) debugEnviron = process13.env.NODE_DEBUG || "";
+                  if (isUndefined(debugEnviron)) debugEnviron = process14.env.NODE_DEBUG || "";
                   set = set.toUpperCase();
                   if (!debugs[set]) {
                     if (new RegExp("\\b" + set + "\\b", "i").test(debugEnviron)) {
-                      var pid = process13.pid;
+                      var pid = process14.pid;
                       debugs[set] = function() {
                         var msg = exports2.format.apply(exports2, arguments);
                         console.error("%s %d: %s", set, pid, msg);
@@ -21229,7 +21229,7 @@ var require_backend = __commonJS({
             var isArray = Array.isArray;
             const src_isArray = isArray;
             ;
-            var process13 = __webpack_require__(169);
+            var process14 = __webpack_require__(169);
             function utils_typeof(obj) {
               "@babel/helpers - typeof";
               if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
@@ -21504,7 +21504,7 @@ var require_backend = __commonJS({
               return (_parseBool4 = parseBool(raw)) !== null && _parseBool4 !== void 0 ? _parseBool4 : true;
             }
             function getDefaultOpenInEditorURL() {
-              return typeof process13.env.EDITOR_URL === "string" ? process13.env.EDITOR_URL : "";
+              return typeof process14.env.EDITOR_URL === "string" ? process14.env.EDITOR_URL : "";
             }
             function getOpenInEditorURL() {
               try {
@@ -24403,7 +24403,7 @@ var require_backend = __commonJS({
                   symbolOrNumber.toString()
                 ) : symbolOrNumber;
               }
-              var _ReactTypeOfWork = ReactTypeOfWork, CacheComponent = _ReactTypeOfWork.CacheComponent, ClassComponent = _ReactTypeOfWork.ClassComponent, IncompleteClassComponent = _ReactTypeOfWork.IncompleteClassComponent, FunctionComponent = _ReactTypeOfWork.FunctionComponent, IndeterminateComponent = _ReactTypeOfWork.IndeterminateComponent, ForwardRef = _ReactTypeOfWork.ForwardRef, HostRoot = _ReactTypeOfWork.HostRoot, HostHoistable = _ReactTypeOfWork.HostHoistable, HostSingleton = _ReactTypeOfWork.HostSingleton, HostComponent = _ReactTypeOfWork.HostComponent, HostPortal = _ReactTypeOfWork.HostPortal, HostText = _ReactTypeOfWork.HostText, Fragment3 = _ReactTypeOfWork.Fragment, LazyComponent = _ReactTypeOfWork.LazyComponent, LegacyHiddenComponent = _ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = _ReactTypeOfWork.MemoComponent, OffscreenComponent = _ReactTypeOfWork.OffscreenComponent, Profiler = _ReactTypeOfWork.Profiler, ScopeComponent = _ReactTypeOfWork.ScopeComponent, SimpleMemoComponent = _ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = _ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = _ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = _ReactTypeOfWork.TracingMarkerComponent;
+              var _ReactTypeOfWork = ReactTypeOfWork, CacheComponent = _ReactTypeOfWork.CacheComponent, ClassComponent = _ReactTypeOfWork.ClassComponent, IncompleteClassComponent = _ReactTypeOfWork.IncompleteClassComponent, FunctionComponent = _ReactTypeOfWork.FunctionComponent, IndeterminateComponent = _ReactTypeOfWork.IndeterminateComponent, ForwardRef = _ReactTypeOfWork.ForwardRef, HostRoot = _ReactTypeOfWork.HostRoot, HostHoistable = _ReactTypeOfWork.HostHoistable, HostSingleton = _ReactTypeOfWork.HostSingleton, HostComponent = _ReactTypeOfWork.HostComponent, HostPortal = _ReactTypeOfWork.HostPortal, HostText = _ReactTypeOfWork.HostText, Fragment2 = _ReactTypeOfWork.Fragment, LazyComponent = _ReactTypeOfWork.LazyComponent, LegacyHiddenComponent = _ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = _ReactTypeOfWork.MemoComponent, OffscreenComponent = _ReactTypeOfWork.OffscreenComponent, Profiler = _ReactTypeOfWork.Profiler, ScopeComponent = _ReactTypeOfWork.ScopeComponent, SimpleMemoComponent = _ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = _ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = _ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = _ReactTypeOfWork.TracingMarkerComponent;
               function resolveFiberType(type) {
                 var typeSymbol = getTypeSymbol(type);
                 switch (typeSymbol) {
@@ -24448,7 +24448,7 @@ var require_backend = __commonJS({
                   case HostPortal:
                   case HostText:
                     return null;
-                  case Fragment3:
+                  case Fragment2:
                     return "Fragment";
                   case LazyComponent:
                     return "Lazy";
@@ -24512,7 +24512,7 @@ var require_backend = __commonJS({
             function attach(hook2, rendererID, renderer2, global2) {
               var version2 = renderer2.reconcilerVersion || renderer2.version;
               var _getInternalReactCons = getInternalReactConstants(version2), getDisplayNameForFiber = _getInternalReactCons.getDisplayNameForFiber, getTypeSymbol = _getInternalReactCons.getTypeSymbol, ReactPriorityLevels = _getInternalReactCons.ReactPriorityLevels, ReactTypeOfWork = _getInternalReactCons.ReactTypeOfWork, StrictModeBits = _getInternalReactCons.StrictModeBits;
-              var CacheComponent = ReactTypeOfWork.CacheComponent, ClassComponent = ReactTypeOfWork.ClassComponent, ContextConsumer = ReactTypeOfWork.ContextConsumer, DehydratedSuspenseComponent = ReactTypeOfWork.DehydratedSuspenseComponent, ForwardRef = ReactTypeOfWork.ForwardRef, Fragment3 = ReactTypeOfWork.Fragment, FunctionComponent = ReactTypeOfWork.FunctionComponent, HostRoot = ReactTypeOfWork.HostRoot, HostHoistable = ReactTypeOfWork.HostHoistable, HostSingleton = ReactTypeOfWork.HostSingleton, HostPortal = ReactTypeOfWork.HostPortal, HostComponent = ReactTypeOfWork.HostComponent, HostText = ReactTypeOfWork.HostText, IncompleteClassComponent = ReactTypeOfWork.IncompleteClassComponent, IndeterminateComponent = ReactTypeOfWork.IndeterminateComponent, LegacyHiddenComponent = ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = ReactTypeOfWork.MemoComponent, OffscreenComponent = ReactTypeOfWork.OffscreenComponent, SimpleMemoComponent = ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = ReactTypeOfWork.TracingMarkerComponent;
+              var CacheComponent = ReactTypeOfWork.CacheComponent, ClassComponent = ReactTypeOfWork.ClassComponent, ContextConsumer = ReactTypeOfWork.ContextConsumer, DehydratedSuspenseComponent = ReactTypeOfWork.DehydratedSuspenseComponent, ForwardRef = ReactTypeOfWork.ForwardRef, Fragment2 = ReactTypeOfWork.Fragment, FunctionComponent = ReactTypeOfWork.FunctionComponent, HostRoot = ReactTypeOfWork.HostRoot, HostHoistable = ReactTypeOfWork.HostHoistable, HostSingleton = ReactTypeOfWork.HostSingleton, HostPortal = ReactTypeOfWork.HostPortal, HostComponent = ReactTypeOfWork.HostComponent, HostText = ReactTypeOfWork.HostText, IncompleteClassComponent = ReactTypeOfWork.IncompleteClassComponent, IndeterminateComponent = ReactTypeOfWork.IndeterminateComponent, LegacyHiddenComponent = ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = ReactTypeOfWork.MemoComponent, OffscreenComponent = ReactTypeOfWork.OffscreenComponent, SimpleMemoComponent = ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = ReactTypeOfWork.TracingMarkerComponent;
               var ImmediatePriority = ReactPriorityLevels.ImmediatePriority, UserBlockingPriority = ReactPriorityLevels.UserBlockingPriority, NormalPriority = ReactPriorityLevels.NormalPriority, LowPriority = ReactPriorityLevels.LowPriority, IdlePriority = ReactPriorityLevels.IdlePriority, NoPriority = ReactPriorityLevels.NoPriority;
               var getLaneLabelMap = renderer2.getLaneLabelMap, injectProfilingHooks = renderer2.injectProfilingHooks, overrideHookState = renderer2.overrideHookState, overrideHookStateDeletePath = renderer2.overrideHookStateDeletePath, overrideHookStateRenamePath = renderer2.overrideHookStateRenamePath, overrideProps = renderer2.overrideProps, overridePropsDeletePath = renderer2.overridePropsDeletePath, overridePropsRenamePath = renderer2.overridePropsRenamePath, scheduleRefresh = renderer2.scheduleRefresh, setErrorHandler = renderer2.setErrorHandler, setSuspenseHandler = renderer2.setSuspenseHandler, scheduleUpdate = renderer2.scheduleUpdate;
               var supportsTogglingError = typeof setErrorHandler === "function" && typeof scheduleUpdate === "function";
@@ -24719,7 +24719,7 @@ var require_backend = __commonJS({
                     return true;
                   case HostRoot:
                     return false;
-                  case Fragment3:
+                  case Fragment2:
                     return key === null;
                   default:
                     var typeSymbol = getTypeSymbol(type);
@@ -24793,7 +24793,7 @@ var require_backend = __commonJS({
                     return ElementTypeHostComponent;
                   case HostPortal:
                   case HostText:
-                  case Fragment3:
+                  case Fragment2:
                     return ElementTypeOtherOrUnknown;
                   case MemoComponent:
                   case SimpleMemoComponent:
@@ -30671,20 +30671,20 @@ var require_react_jsx_runtime_development = __commonJS({
       function validateChildKeys(node) {
         "object" === typeof node && null !== node && node.$$typeof === REACT_ELEMENT_TYPE && node._store && (node._store.validated = 1);
       }
-      var React17 = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler");
+      var React18 = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler");
       Symbol.for("react.provider");
-      var REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React17.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
+      var REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React18.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
         return null;
       };
-      React17 = {
+      React18 = {
         "react-stack-bottom-frame": function(callStackForError) {
           return callStackForError();
         }
       };
       var specialPropKeyWarningShown;
       var didWarnAboutElementRef = {};
-      var unknownOwnerDebugStack = React17["react-stack-bottom-frame"].bind(
-        React17,
+      var unknownOwnerDebugStack = React18["react-stack-bottom-frame"].bind(
+        React18,
         UnknownOwner
       )();
       var unknownOwnerDebugTask = createTask(getTaskName(UnknownOwner));
@@ -31058,7 +31058,7 @@ var require_ms = __commonJS({
 // node_modules/debug/src/common.js
 var require_common = __commonJS({
   "node_modules/debug/src/common.js"(exports, module) {
-    function setup(env3) {
+    function setup(env4) {
       createDebug.debug = createDebug;
       createDebug.default = createDebug;
       createDebug.coerce = coerce;
@@ -31067,8 +31067,8 @@ var require_common = __commonJS({
       createDebug.enabled = enabled;
       createDebug.humanize = require_ms();
       createDebug.destroy = destroy;
-      Object.keys(env3).forEach((key) => {
-        createDebug[key] = env3[key];
+      Object.keys(env4).forEach((key) => {
+        createDebug[key] = env4[key];
       });
       createDebug.names = [];
       createDebug.skips = [];
@@ -31419,26 +31419,26 @@ var require_has_flag = __commonJS({
 var require_supports_color = __commonJS({
   "node_modules/supports-color/index.js"(exports, module) {
     "use strict";
-    var os2 = __require("os");
-    var tty2 = __require("tty");
-    var hasFlag2 = require_has_flag();
-    var { env: env3 } = process;
+    var os3 = __require("os");
+    var tty3 = __require("tty");
+    var hasFlag3 = require_has_flag();
+    var { env: env4 } = process;
     var forceColor;
-    if (hasFlag2("no-color") || hasFlag2("no-colors") || hasFlag2("color=false") || hasFlag2("color=never")) {
+    if (hasFlag3("no-color") || hasFlag3("no-colors") || hasFlag3("color=false") || hasFlag3("color=never")) {
       forceColor = 0;
-    } else if (hasFlag2("color") || hasFlag2("colors") || hasFlag2("color=true") || hasFlag2("color=always")) {
+    } else if (hasFlag3("color") || hasFlag3("colors") || hasFlag3("color=true") || hasFlag3("color=always")) {
       forceColor = 1;
     }
-    if ("FORCE_COLOR" in env3) {
-      if (env3.FORCE_COLOR === "true") {
+    if ("FORCE_COLOR" in env4) {
+      if (env4.FORCE_COLOR === "true") {
         forceColor = 1;
-      } else if (env3.FORCE_COLOR === "false") {
+      } else if (env4.FORCE_COLOR === "false") {
         forceColor = 0;
       } else {
-        forceColor = env3.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env3.FORCE_COLOR, 10), 3);
+        forceColor = env4.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env4.FORCE_COLOR, 10), 3);
       }
     }
-    function translateLevel2(level) {
+    function translateLevel3(level) {
       if (level === 0) {
         return false;
       }
@@ -31449,70 +31449,70 @@ var require_supports_color = __commonJS({
         has16m: level >= 3
       };
     }
-    function supportsColor2(haveStream, streamIsTTY) {
+    function supportsColor3(haveStream, streamIsTTY) {
       if (forceColor === 0) {
         return 0;
       }
-      if (hasFlag2("color=16m") || hasFlag2("color=full") || hasFlag2("color=truecolor")) {
+      if (hasFlag3("color=16m") || hasFlag3("color=full") || hasFlag3("color=truecolor")) {
         return 3;
       }
-      if (hasFlag2("color=256")) {
+      if (hasFlag3("color=256")) {
         return 2;
       }
       if (haveStream && !streamIsTTY && forceColor === void 0) {
         return 0;
       }
       const min = forceColor || 0;
-      if (env3.TERM === "dumb") {
+      if (env4.TERM === "dumb") {
         return min;
       }
       if (process.platform === "win32") {
-        const osRelease = os2.release().split(".");
+        const osRelease = os3.release().split(".");
         if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
           return Number(osRelease[2]) >= 14931 ? 3 : 2;
         }
         return 1;
       }
-      if ("CI" in env3) {
-        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign) => sign in env3) || env3.CI_NAME === "codeship") {
+      if ("CI" in env4) {
+        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign) => sign in env4) || env4.CI_NAME === "codeship") {
           return 1;
         }
         return min;
       }
-      if ("TEAMCITY_VERSION" in env3) {
-        return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env3.TEAMCITY_VERSION) ? 1 : 0;
+      if ("TEAMCITY_VERSION" in env4) {
+        return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env4.TEAMCITY_VERSION) ? 1 : 0;
       }
-      if (env3.COLORTERM === "truecolor") {
+      if (env4.COLORTERM === "truecolor") {
         return 3;
       }
-      if ("TERM_PROGRAM" in env3) {
-        const version2 = parseInt((env3.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
-        switch (env3.TERM_PROGRAM) {
+      if ("TERM_PROGRAM" in env4) {
+        const version2 = parseInt((env4.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+        switch (env4.TERM_PROGRAM) {
           case "iTerm.app":
             return version2 >= 3 ? 3 : 2;
           case "Apple_Terminal":
             return 2;
         }
       }
-      if (/-256(color)?$/i.test(env3.TERM)) {
+      if (/-256(color)?$/i.test(env4.TERM)) {
         return 2;
       }
-      if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env3.TERM)) {
+      if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env4.TERM)) {
         return 1;
       }
-      if ("COLORTERM" in env3) {
+      if ("COLORTERM" in env4) {
         return 1;
       }
       return min;
     }
     function getSupportLevel(stream) {
-      const level = supportsColor2(stream, stream && stream.isTTY);
-      return translateLevel2(level);
+      const level = supportsColor3(stream, stream && stream.isTTY);
+      return translateLevel3(level);
     }
     module.exports = {
       supportsColor: getSupportLevel,
-      stdout: translateLevel2(supportsColor2(true, tty2.isatty(1))),
-      stderr: translateLevel2(supportsColor2(true, tty2.isatty(2)))
+      stdout: translateLevel3(supportsColor3(true, tty3.isatty(1))),
+      stderr: translateLevel3(supportsColor3(true, tty3.isatty(2)))
     };
   }
 });
@@ -31520,7 +31520,7 @@ var require_supports_color = __commonJS({
 // node_modules/debug/src/node.js
 var require_node = __commonJS({
   "node_modules/debug/src/node.js"(exports, module) {
-    var tty2 = __require("tty");
+    var tty3 = __require("tty");
     var util2 = __require("util");
     exports.init = init;
     exports.log = log;
@@ -31535,8 +31535,8 @@ var require_node = __commonJS({
     );
     exports.colors = [6, 2, 3, 4, 5, 1];
     try {
-      const supportsColor2 = require_supports_color();
-      if (supportsColor2 && (supportsColor2.stderr || supportsColor2).level >= 2) {
+      const supportsColor3 = require_supports_color();
+      if (supportsColor3 && (supportsColor3.stderr || supportsColor3).level >= 2) {
         exports.colors = [
           20,
           21,
@@ -31638,7 +31638,7 @@ var require_node = __commonJS({
       return obj;
     }, {});
     function useColors() {
-      return "colors" in exports.inspectOpts ? Boolean(exports.inspectOpts.colors) : tty2.isatty(process.stderr.fd);
+      return "colors" in exports.inspectOpts ? Boolean(exports.inspectOpts.colors) : tty3.isatty(process.stderr.fd);
     }
     function formatArgs(args) {
       const { namespace: name, useColors: useColors2 } = this;
@@ -36499,15 +36499,15 @@ var require_streams = __commonJS({
     var POOL_SIZE2 = 65536;
     if (!globalThis.ReadableStream) {
       try {
-        const process13 = __require("node:process");
-        const { emitWarning } = process13;
+        const process14 = __require("node:process");
+        const { emitWarning } = process14;
         try {
-          process13.emitWarning = () => {
+          process14.emitWarning = () => {
           };
           Object.assign(globalThis, __require("node:stream/web"));
-          process13.emitWarning = emitWarning;
+          process14.emitWarning = emitWarning;
         } catch (error) {
-          process13.emitWarning = emitWarning;
+          process14.emitWarning = emitWarning;
           throw error;
         }
       } catch (error) {
@@ -38734,7 +38734,7 @@ var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports, module) {
     var fs3 = __require("fs");
     var path = __require("path");
-    var os2 = __require("os");
+    var os3 = __require("os");
     var crypto = __require("crypto");
     var packageJson = require_package2();
     var version2 = packageJson.version;
@@ -38884,7 +38884,7 @@ var require_main = __commonJS({
       return null;
     }
     function _resolveHome(envPath) {
-      return envPath[0] === "~" ? path.join(os2.homedir(), envPath.slice(1)) : envPath;
+      return envPath[0] === "~" ? path.join(os3.homedir(), envPath.slice(1)) : envPath;
     }
     function _configVault(options) {
       const debug = parseBoolean(process.env.DOTENV_CONFIG_DEBUG || options && options.debug);
@@ -40698,7 +40698,7 @@ var require_cli_spinners = __commonJS({
 });
 
 // src/index.ts
-var import_react32 = __toESM(require_react(), 1);
+var import_react33 = __toESM(require_react(), 1);
 
 // node_modules/ink/build/render.js
 import { Stream } from "node:stream";
@@ -44481,10 +44481,10 @@ var applyOptions = (object, options = {}) => {
   object.level = options.level === void 0 ? colorLevel : options.level;
 };
 var chalkFactory = (options) => {
-  const chalk2 = (...strings) => strings.join(" ");
-  applyOptions(chalk2, options);
-  Object.setPrototypeOf(chalk2, createChalk.prototype);
-  return chalk2;
+  const chalk3 = (...strings) => strings.join(" ");
+  applyOptions(chalk3, options);
+  Object.setPrototypeOf(chalk3, createChalk.prototype);
+  return chalk3;
 };
 function createChalk(options) {
   return chalkFactory(options);
@@ -46838,7 +46838,7 @@ var import_react21 = __toESM(require_react(), 1);
 var import_react22 = __toESM(require_react(), 1);
 
 // src/ui/App.tsx
-var import_react31 = __toESM(require_react(), 1);
+var import_react32 = __toESM(require_react(), 1);
 
 // src/ui/hooks/useTerminalSize.ts
 var import_react23 = __toESM(require_react(), 1);
@@ -47790,6 +47790,18 @@ var LocalAPIClient = class {
     if (request2.session_id) {
       formData.append("session_id", request2.session_id);
     }
+    if (request2.user_id) {
+      formData.append("user_id", request2.user_id);
+    }
+    if (request2.user_name) {
+      formData.append("user_name", request2.user_name);
+    }
+    if (request2.phone_number) {
+      formData.append("phone_number", request2.phone_number);
+    }
+    if (request2.cpf) {
+      formData.append("cpf", request2.cpf);
+    }
     return this.makeRequest(`/playground/agents/${request2.agent_id}/runs`, {
       method: "POST",
       data: formData,
@@ -47806,6 +47818,18 @@ var LocalAPIClient = class {
     if (request2.session_id) {
       formData.append("session_id", request2.session_id);
     }
+    if (request2.user_id) {
+      formData.append("user_id", request2.user_id);
+    }
+    if (request2.user_name) {
+      formData.append("user_name", request2.user_name);
+    }
+    if (request2.phone_number) {
+      formData.append("phone_number", request2.phone_number);
+    }
+    if (request2.cpf) {
+      formData.append("cpf", request2.cpf);
+    }
     return this.makeRequest(`/playground/teams/${request2.team_id}/runs`, {
       method: "POST",
       data: formData,
@@ -47820,7 +47844,11 @@ var LocalAPIClient = class {
       method: "POST",
       data: {
         params: request2.params,
-        session_id: request2.session_id
+        session_id: request2.session_id,
+        user_id: request2.user_id,
+        user_name: request2.user_name,
+        phone_number: request2.phone_number,
+        cpf: request2.cpf
       }
     });
   }
@@ -47848,6 +47876,18 @@ var LocalAPIClient = class {
       formData.append("monitor", "true");
       if (request2.session_id) {
         formData.append("session_id", request2.session_id);
+      }
+      if (request2.user_id) {
+        formData.append("user_id", request2.user_id);
+      }
+      if (request2.user_name) {
+        formData.append("user_name", request2.user_name);
+      }
+      if (request2.phone_number) {
+        formData.append("phone_number", request2.phone_number);
+      }
+      if (request2.cpf) {
+        formData.append("cpf", request2.cpf);
       }
       const url = `${this.baseUrl}/playground/agents/${request2.agent_id}/runs`;
       const response = await request({
@@ -48001,6 +48041,18 @@ var LocalAPIClient = class {
       formData.append("monitor", "true");
       if (request2.session_id) {
         formData.append("session_id", request2.session_id);
+      }
+      if (request2.user_id) {
+        formData.append("user_id", request2.user_id);
+      }
+      if (request2.user_name) {
+        formData.append("user_name", request2.user_name);
+      }
+      if (request2.phone_number) {
+        formData.append("phone_number", request2.phone_number);
+      }
+      if (request2.cpf) {
+        formData.append("cpf", request2.cpf);
       }
       const url = `${this.baseUrl}/playground/teams/${request2.team_id}/runs`;
       const response = await request({
@@ -48196,19 +48248,30 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
       setStreamingState("responding" /* Responding */);
       setDebugMessage(`Streaming response from ${selectedTarget.type} ${selectedTarget.id}...`);
       const handleStreamingMessage = (data) => {
-        currentStreamRef.current += data.content;
-        setPendingMessage((prev) => prev ? {
-          ...prev,
-          text: currentStreamRef.current,
-          metadata: {
-            ...prev.metadata,
-            complete: data.done
-          }
-        } : null);
-        if (data.done) {
-          const finalMessage = {
-            type: "assistant" /* ASSISTANT */,
+        let messageType = "assistant" /* ASSISTANT */;
+        if (data.metadata?.type === "thinking") {
+          messageType = "thinking" /* THINKING */;
+        } else if (data.metadata?.type === "tool_start") {
+          messageType = "tool_start" /* TOOL_START */;
+        } else if (data.metadata?.type === "tool_complete") {
+          messageType = "tool_complete" /* TOOL_COMPLETE */;
+        } else if (data.metadata?.type === "agent_start") {
+          messageType = "agent_start" /* AGENT_START */;
+        }
+        if (data.metadata?.type === "content" || !data.metadata?.type) {
+          currentStreamRef.current += data.content;
+          setPendingMessage((prev) => prev ? {
+            ...prev,
             text: currentStreamRef.current,
+            metadata: {
+              ...prev.metadata,
+              complete: data.done
+            }
+          } : null);
+        } else {
+          const immediateMessage = {
+            type: messageType,
+            text: data.content,
             timestamp: Date.now(),
             sessionId: data.session_id || sessionId,
             metadata: {
@@ -48217,7 +48280,23 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
               complete: true
             }
           };
-          addMessage(finalMessage);
+          addMessage(immediateMessage);
+        }
+        if (data.done) {
+          if (currentStreamRef.current.trim()) {
+            const finalMessage = {
+              type: "assistant" /* ASSISTANT */,
+              text: currentStreamRef.current,
+              timestamp: Date.now(),
+              sessionId: data.session_id || sessionId,
+              metadata: {
+                target: selectedTarget,
+                streaming: false,
+                complete: true
+              }
+            };
+            addMessage(finalMessage);
+          }
           setPendingMessage(null);
           setStreamingState("idle" /* Idle */);
           setDebugMessage("");
@@ -48495,70 +48574,656 @@ var LoadingIndicator = ({
   ] }) });
 };
 
-// src/ui/components/InputPrompt.tsx
+// src/ui/components/LibraryInputPrompt.tsx
+var import_react29 = __toESM(require_react(), 1);
+
+// node_modules/ink-text-input/build/index.js
 var import_react28 = __toESM(require_react(), 1);
-var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-var InputPrompt = ({
-  onSubmit,
-  inputWidth,
-  disabled = false,
-  placeholder = "Type your message..."
-}) => {
-  const [input, setInput] = (0, import_react28.useState)("");
-  const [cursorPosition, setCursorPosition] = (0, import_react28.useState)(0);
-  const handleSubmit = (0, import_react28.useCallback)(() => {
-    if (input.trim() && !disabled) {
-      onSubmit(input.trim());
-      setInput("");
-      setCursorPosition(0);
+
+// node_modules/ink-text-input/node_modules/chalk/source/vendor/ansi-styles/index.js
+var ANSI_BACKGROUND_OFFSET6 = 10;
+var wrapAnsi166 = (offset = 0) => (code) => `\x1B[${code + offset}m`;
+var wrapAnsi2566 = (offset = 0) => (code) => `\x1B[${38 + offset};5;${code}m`;
+var wrapAnsi16m6 = (offset = 0) => (red, green, blue) => `\x1B[${38 + offset};2;${red};${green};${blue}m`;
+var styles8 = {
+  modifier: {
+    reset: [0, 0],
+    // 21 isn't widely supported and 22 does the same thing
+    bold: [1, 22],
+    dim: [2, 22],
+    italic: [3, 23],
+    underline: [4, 24],
+    overline: [53, 55],
+    inverse: [7, 27],
+    hidden: [8, 28],
+    strikethrough: [9, 29]
+  },
+  color: {
+    black: [30, 39],
+    red: [31, 39],
+    green: [32, 39],
+    yellow: [33, 39],
+    blue: [34, 39],
+    magenta: [35, 39],
+    cyan: [36, 39],
+    white: [37, 39],
+    // Bright color
+    blackBright: [90, 39],
+    gray: [90, 39],
+    // Alias of `blackBright`
+    grey: [90, 39],
+    // Alias of `blackBright`
+    redBright: [91, 39],
+    greenBright: [92, 39],
+    yellowBright: [93, 39],
+    blueBright: [94, 39],
+    magentaBright: [95, 39],
+    cyanBright: [96, 39],
+    whiteBright: [97, 39]
+  },
+  bgColor: {
+    bgBlack: [40, 49],
+    bgRed: [41, 49],
+    bgGreen: [42, 49],
+    bgYellow: [43, 49],
+    bgBlue: [44, 49],
+    bgMagenta: [45, 49],
+    bgCyan: [46, 49],
+    bgWhite: [47, 49],
+    // Bright color
+    bgBlackBright: [100, 49],
+    bgGray: [100, 49],
+    // Alias of `bgBlackBright`
+    bgGrey: [100, 49],
+    // Alias of `bgBlackBright`
+    bgRedBright: [101, 49],
+    bgGreenBright: [102, 49],
+    bgYellowBright: [103, 49],
+    bgBlueBright: [104, 49],
+    bgMagentaBright: [105, 49],
+    bgCyanBright: [106, 49],
+    bgWhiteBright: [107, 49]
+  }
+};
+var modifierNames6 = Object.keys(styles8.modifier);
+var foregroundColorNames6 = Object.keys(styles8.color);
+var backgroundColorNames6 = Object.keys(styles8.bgColor);
+var colorNames6 = [...foregroundColorNames6, ...backgroundColorNames6];
+function assembleStyles6() {
+  const codes = /* @__PURE__ */ new Map();
+  for (const [groupName, group] of Object.entries(styles8)) {
+    for (const [styleName, style] of Object.entries(group)) {
+      styles8[styleName] = {
+        open: `\x1B[${style[0]}m`,
+        close: `\x1B[${style[1]}m`
+      };
+      group[styleName] = styles8[styleName];
+      codes.set(style[0], style[1]);
     }
-  }, [input, onSubmit, disabled]);
-  use_input_default((inputChar, key) => {
-    if (disabled) {
+    Object.defineProperty(styles8, groupName, {
+      value: group,
+      enumerable: false
+    });
+  }
+  Object.defineProperty(styles8, "codes", {
+    value: codes,
+    enumerable: false
+  });
+  styles8.color.close = "\x1B[39m";
+  styles8.bgColor.close = "\x1B[49m";
+  styles8.color.ansi = wrapAnsi166();
+  styles8.color.ansi256 = wrapAnsi2566();
+  styles8.color.ansi16m = wrapAnsi16m6();
+  styles8.bgColor.ansi = wrapAnsi166(ANSI_BACKGROUND_OFFSET6);
+  styles8.bgColor.ansi256 = wrapAnsi2566(ANSI_BACKGROUND_OFFSET6);
+  styles8.bgColor.ansi16m = wrapAnsi16m6(ANSI_BACKGROUND_OFFSET6);
+  Object.defineProperties(styles8, {
+    rgbToAnsi256: {
+      value(red, green, blue) {
+        if (red === green && green === blue) {
+          if (red < 8) {
+            return 16;
+          }
+          if (red > 248) {
+            return 231;
+          }
+          return Math.round((red - 8) / 247 * 24) + 232;
+        }
+        return 16 + 36 * Math.round(red / 255 * 5) + 6 * Math.round(green / 255 * 5) + Math.round(blue / 255 * 5);
+      },
+      enumerable: false
+    },
+    hexToRgb: {
+      value(hex) {
+        const matches = /[a-f\d]{6}|[a-f\d]{3}/i.exec(hex.toString(16));
+        if (!matches) {
+          return [0, 0, 0];
+        }
+        let [colorString] = matches;
+        if (colorString.length === 3) {
+          colorString = [...colorString].map((character) => character + character).join("");
+        }
+        const integer = Number.parseInt(colorString, 16);
+        return [
+          /* eslint-disable no-bitwise */
+          integer >> 16 & 255,
+          integer >> 8 & 255,
+          integer & 255
+          /* eslint-enable no-bitwise */
+        ];
+      },
+      enumerable: false
+    },
+    hexToAnsi256: {
+      value: (hex) => styles8.rgbToAnsi256(...styles8.hexToRgb(hex)),
+      enumerable: false
+    },
+    ansi256ToAnsi: {
+      value(code) {
+        if (code < 8) {
+          return 30 + code;
+        }
+        if (code < 16) {
+          return 90 + (code - 8);
+        }
+        let red;
+        let green;
+        let blue;
+        if (code >= 232) {
+          red = ((code - 232) * 10 + 8) / 255;
+          green = red;
+          blue = red;
+        } else {
+          code -= 16;
+          const remainder = code % 36;
+          red = Math.floor(code / 36) / 5;
+          green = Math.floor(remainder / 6) / 5;
+          blue = remainder % 6 / 5;
+        }
+        const value = Math.max(red, green, blue) * 2;
+        if (value === 0) {
+          return 30;
+        }
+        let result = 30 + (Math.round(blue) << 2 | Math.round(green) << 1 | Math.round(red));
+        if (value === 2) {
+          result += 60;
+        }
+        return result;
+      },
+      enumerable: false
+    },
+    rgbToAnsi: {
+      value: (red, green, blue) => styles8.ansi256ToAnsi(styles8.rgbToAnsi256(red, green, blue)),
+      enumerable: false
+    },
+    hexToAnsi: {
+      value: (hex) => styles8.ansi256ToAnsi(styles8.hexToAnsi256(hex)),
+      enumerable: false
+    }
+  });
+  return styles8;
+}
+var ansiStyles6 = assembleStyles6();
+var ansi_styles_default6 = ansiStyles6;
+
+// node_modules/ink-text-input/node_modules/chalk/source/vendor/supports-color/index.js
+import process13 from "node:process";
+import os2 from "node:os";
+import tty2 from "node:tty";
+function hasFlag2(flag, argv = globalThis.Deno ? globalThis.Deno.args : process13.argv) {
+  const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
+  const position = argv.indexOf(prefix + flag);
+  const terminatorPosition = argv.indexOf("--");
+  return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
+}
+var { env: env3 } = process13;
+var flagForceColor2;
+if (hasFlag2("no-color") || hasFlag2("no-colors") || hasFlag2("color=false") || hasFlag2("color=never")) {
+  flagForceColor2 = 0;
+} else if (hasFlag2("color") || hasFlag2("colors") || hasFlag2("color=true") || hasFlag2("color=always")) {
+  flagForceColor2 = 1;
+}
+function envForceColor2() {
+  if ("FORCE_COLOR" in env3) {
+    if (env3.FORCE_COLOR === "true") {
+      return 1;
+    }
+    if (env3.FORCE_COLOR === "false") {
+      return 0;
+    }
+    return env3.FORCE_COLOR.length === 0 ? 1 : Math.min(Number.parseInt(env3.FORCE_COLOR, 10), 3);
+  }
+}
+function translateLevel2(level) {
+  if (level === 0) {
+    return false;
+  }
+  return {
+    level,
+    hasBasic: true,
+    has256: level >= 2,
+    has16m: level >= 3
+  };
+}
+function _supportsColor2(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
+  const noFlagForceColor = envForceColor2();
+  if (noFlagForceColor !== void 0) {
+    flagForceColor2 = noFlagForceColor;
+  }
+  const forceColor = sniffFlags ? flagForceColor2 : noFlagForceColor;
+  if (forceColor === 0) {
+    return 0;
+  }
+  if (sniffFlags) {
+    if (hasFlag2("color=16m") || hasFlag2("color=full") || hasFlag2("color=truecolor")) {
+      return 3;
+    }
+    if (hasFlag2("color=256")) {
+      return 2;
+    }
+  }
+  if ("TF_BUILD" in env3 && "AGENT_NAME" in env3) {
+    return 1;
+  }
+  if (haveStream && !streamIsTTY && forceColor === void 0) {
+    return 0;
+  }
+  const min = forceColor || 0;
+  if (env3.TERM === "dumb") {
+    return min;
+  }
+  if (process13.platform === "win32") {
+    const osRelease = os2.release().split(".");
+    if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
+      return Number(osRelease[2]) >= 14931 ? 3 : 2;
+    }
+    return 1;
+  }
+  if ("CI" in env3) {
+    if (["GITHUB_ACTIONS", "GITEA_ACTIONS", "CIRCLECI"].some((key) => key in env3)) {
+      return 3;
+    }
+    if (["TRAVIS", "APPVEYOR", "GITLAB_CI", "BUILDKITE", "DRONE"].some((sign) => sign in env3) || env3.CI_NAME === "codeship") {
+      return 1;
+    }
+    return min;
+  }
+  if ("TEAMCITY_VERSION" in env3) {
+    return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env3.TEAMCITY_VERSION) ? 1 : 0;
+  }
+  if (env3.COLORTERM === "truecolor") {
+    return 3;
+  }
+  if (env3.TERM === "xterm-kitty") {
+    return 3;
+  }
+  if ("TERM_PROGRAM" in env3) {
+    const version2 = Number.parseInt((env3.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+    switch (env3.TERM_PROGRAM) {
+      case "iTerm.app": {
+        return version2 >= 3 ? 3 : 2;
+      }
+      case "Apple_Terminal": {
+        return 2;
+      }
+    }
+  }
+  if (/-256(color)?$/i.test(env3.TERM)) {
+    return 2;
+  }
+  if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env3.TERM)) {
+    return 1;
+  }
+  if ("COLORTERM" in env3) {
+    return 1;
+  }
+  return min;
+}
+function createSupportsColor2(stream, options = {}) {
+  const level = _supportsColor2(stream, {
+    streamIsTTY: stream && stream.isTTY,
+    ...options
+  });
+  return translateLevel2(level);
+}
+var supportsColor2 = {
+  stdout: createSupportsColor2({ isTTY: tty2.isatty(1) }),
+  stderr: createSupportsColor2({ isTTY: tty2.isatty(2) })
+};
+var supports_color_default2 = supportsColor2;
+
+// node_modules/ink-text-input/node_modules/chalk/source/utilities.js
+function stringReplaceAll2(string, substring, replacer) {
+  let index = string.indexOf(substring);
+  if (index === -1) {
+    return string;
+  }
+  const substringLength = substring.length;
+  let endIndex = 0;
+  let returnValue = "";
+  do {
+    returnValue += string.slice(endIndex, index) + substring + replacer;
+    endIndex = index + substringLength;
+    index = string.indexOf(substring, endIndex);
+  } while (index !== -1);
+  returnValue += string.slice(endIndex);
+  return returnValue;
+}
+function stringEncaseCRLFWithFirstIndex2(string, prefix, postfix, index) {
+  let endIndex = 0;
+  let returnValue = "";
+  do {
+    const gotCR = string[index - 1] === "\r";
+    returnValue += string.slice(endIndex, gotCR ? index - 1 : index) + prefix + (gotCR ? "\r\n" : "\n") + postfix;
+    endIndex = index + 1;
+    index = string.indexOf("\n", endIndex);
+  } while (index !== -1);
+  returnValue += string.slice(endIndex);
+  return returnValue;
+}
+
+// node_modules/ink-text-input/node_modules/chalk/source/index.js
+var { stdout: stdoutColor2, stderr: stderrColor2 } = supports_color_default2;
+var GENERATOR2 = Symbol("GENERATOR");
+var STYLER2 = Symbol("STYLER");
+var IS_EMPTY2 = Symbol("IS_EMPTY");
+var levelMapping2 = [
+  "ansi",
+  "ansi",
+  "ansi256",
+  "ansi16m"
+];
+var styles9 = /* @__PURE__ */ Object.create(null);
+var applyOptions2 = (object, options = {}) => {
+  if (options.level && !(Number.isInteger(options.level) && options.level >= 0 && options.level <= 3)) {
+    throw new Error("The `level` option should be an integer from 0 to 3");
+  }
+  const colorLevel = stdoutColor2 ? stdoutColor2.level : 0;
+  object.level = options.level === void 0 ? colorLevel : options.level;
+};
+var chalkFactory2 = (options) => {
+  const chalk3 = (...strings) => strings.join(" ");
+  applyOptions2(chalk3, options);
+  Object.setPrototypeOf(chalk3, createChalk2.prototype);
+  return chalk3;
+};
+function createChalk2(options) {
+  return chalkFactory2(options);
+}
+Object.setPrototypeOf(createChalk2.prototype, Function.prototype);
+for (const [styleName, style] of Object.entries(ansi_styles_default6)) {
+  styles9[styleName] = {
+    get() {
+      const builder = createBuilder2(this, createStyler2(style.open, style.close, this[STYLER2]), this[IS_EMPTY2]);
+      Object.defineProperty(this, styleName, { value: builder });
+      return builder;
+    }
+  };
+}
+styles9.visible = {
+  get() {
+    const builder = createBuilder2(this, this[STYLER2], true);
+    Object.defineProperty(this, "visible", { value: builder });
+    return builder;
+  }
+};
+var getModelAnsi2 = (model, level, type, ...arguments_) => {
+  if (model === "rgb") {
+    if (level === "ansi16m") {
+      return ansi_styles_default6[type].ansi16m(...arguments_);
+    }
+    if (level === "ansi256") {
+      return ansi_styles_default6[type].ansi256(ansi_styles_default6.rgbToAnsi256(...arguments_));
+    }
+    return ansi_styles_default6[type].ansi(ansi_styles_default6.rgbToAnsi(...arguments_));
+  }
+  if (model === "hex") {
+    return getModelAnsi2("rgb", level, type, ...ansi_styles_default6.hexToRgb(...arguments_));
+  }
+  return ansi_styles_default6[type][model](...arguments_);
+};
+var usedModels2 = ["rgb", "hex", "ansi256"];
+for (const model of usedModels2) {
+  styles9[model] = {
+    get() {
+      const { level } = this;
+      return function(...arguments_) {
+        const styler = createStyler2(getModelAnsi2(model, levelMapping2[level], "color", ...arguments_), ansi_styles_default6.color.close, this[STYLER2]);
+        return createBuilder2(this, styler, this[IS_EMPTY2]);
+      };
+    }
+  };
+  const bgModel = "bg" + model[0].toUpperCase() + model.slice(1);
+  styles9[bgModel] = {
+    get() {
+      const { level } = this;
+      return function(...arguments_) {
+        const styler = createStyler2(getModelAnsi2(model, levelMapping2[level], "bgColor", ...arguments_), ansi_styles_default6.bgColor.close, this[STYLER2]);
+        return createBuilder2(this, styler, this[IS_EMPTY2]);
+      };
+    }
+  };
+}
+var proto2 = Object.defineProperties(() => {
+}, {
+  ...styles9,
+  level: {
+    enumerable: true,
+    get() {
+      return this[GENERATOR2].level;
+    },
+    set(level) {
+      this[GENERATOR2].level = level;
+    }
+  }
+});
+var createStyler2 = (open, close, parent) => {
+  let openAll;
+  let closeAll;
+  if (parent === void 0) {
+    openAll = open;
+    closeAll = close;
+  } else {
+    openAll = parent.openAll + open;
+    closeAll = close + parent.closeAll;
+  }
+  return {
+    open,
+    close,
+    openAll,
+    closeAll,
+    parent
+  };
+};
+var createBuilder2 = (self2, _styler, _isEmpty) => {
+  const builder = (...arguments_) => applyStyle2(builder, arguments_.length === 1 ? "" + arguments_[0] : arguments_.join(" "));
+  Object.setPrototypeOf(builder, proto2);
+  builder[GENERATOR2] = self2;
+  builder[STYLER2] = _styler;
+  builder[IS_EMPTY2] = _isEmpty;
+  return builder;
+};
+var applyStyle2 = (self2, string) => {
+  if (self2.level <= 0 || !string) {
+    return self2[IS_EMPTY2] ? "" : string;
+  }
+  let styler = self2[STYLER2];
+  if (styler === void 0) {
+    return string;
+  }
+  const { openAll, closeAll } = styler;
+  if (string.includes("\x1B")) {
+    while (styler !== void 0) {
+      string = stringReplaceAll2(string, styler.close, styler.open);
+      styler = styler.parent;
+    }
+  }
+  const lfIndex = string.indexOf("\n");
+  if (lfIndex !== -1) {
+    string = stringEncaseCRLFWithFirstIndex2(string, closeAll, openAll, lfIndex);
+  }
+  return openAll + string + closeAll;
+};
+Object.defineProperties(createChalk2.prototype, styles9);
+var chalk2 = createChalk2();
+var chalkStderr2 = createChalk2({ level: stderrColor2 ? stderrColor2.level : 0 });
+var source_default2 = chalk2;
+
+// node_modules/ink-text-input/build/index.js
+function TextInput({ value: originalValue, placeholder = "", focus = true, mask, highlightPastedText = false, showCursor = true, onChange, onSubmit }) {
+  const [state, setState] = (0, import_react28.useState)({
+    cursorOffset: (originalValue || "").length,
+    cursorWidth: 0
+  });
+  const { cursorOffset, cursorWidth } = state;
+  (0, import_react28.useEffect)(() => {
+    setState((previousState) => {
+      if (!focus || !showCursor) {
+        return previousState;
+      }
+      const newValue = originalValue || "";
+      if (previousState.cursorOffset > newValue.length - 1) {
+        return {
+          cursorOffset: newValue.length,
+          cursorWidth: 0
+        };
+      }
+      return previousState;
+    });
+  }, [originalValue, focus, showCursor]);
+  const cursorActualWidth = highlightPastedText ? cursorWidth : 0;
+  const value = mask ? mask.repeat(originalValue.length) : originalValue;
+  let renderedValue = value;
+  let renderedPlaceholder = placeholder ? source_default2.grey(placeholder) : void 0;
+  if (showCursor && focus) {
+    renderedPlaceholder = placeholder.length > 0 ? source_default2.inverse(placeholder[0]) + source_default2.grey(placeholder.slice(1)) : source_default2.inverse(" ");
+    renderedValue = value.length > 0 ? "" : source_default2.inverse(" ");
+    let i2 = 0;
+    for (const char of value) {
+      renderedValue += i2 >= cursorOffset - cursorActualWidth && i2 <= cursorOffset ? source_default2.inverse(char) : char;
+      i2++;
+    }
+    if (value.length > 0 && cursorOffset === value.length) {
+      renderedValue += source_default2.inverse(" ");
+    }
+  }
+  use_input_default((input, key) => {
+    if (key.upArrow || key.downArrow || key.ctrl && input === "c" || key.tab || key.shift && key.tab) {
       return;
     }
     if (key.return) {
-      handleSubmit();
-    } else if (key.backspace || key.delete) {
-      if (cursorPosition > 0) {
-        const newInput = input.slice(0, cursorPosition - 1) + input.slice(cursorPosition);
-        setInput(newInput);
-        setCursorPosition(Math.max(0, cursorPosition - 1));
+      if (onSubmit) {
+        onSubmit(originalValue);
       }
-    } else if (key.leftArrow) {
-      setCursorPosition(Math.max(0, cursorPosition - 1));
-    } else if (key.rightArrow) {
-      setCursorPosition(Math.min(input.length, cursorPosition + 1));
-    } else if (key.ctrl && inputChar === "a") {
-      setCursorPosition(0);
-    } else if (key.ctrl && inputChar === "e") {
-      setCursorPosition(input.length);
-    } else if (key.ctrl && inputChar === "u") {
-      setInput("");
-      setCursorPosition(0);
-    } else if (key.ctrl && inputChar === "k") {
-      setInput(input.slice(0, cursorPosition));
-    } else if (inputChar && !key.ctrl && !key.meta) {
-      const newInput = input.slice(0, cursorPosition) + inputChar + input.slice(cursorPosition);
-      setInput(newInput);
-      setCursorPosition(cursorPosition + 1);
+      return;
     }
-  });
-  const displayText = input || placeholder;
-  const isPlaceholder = !input;
-  const beforeCursor = input.slice(0, cursorPosition);
-  const atCursor = input[cursorPosition] || " ";
-  const afterCursor = input.slice(cursorPosition + 1);
+    let nextCursorOffset = cursorOffset;
+    let nextValue = originalValue;
+    let nextCursorWidth = 0;
+    if (key.leftArrow) {
+      if (showCursor) {
+        nextCursorOffset--;
+      }
+    } else if (key.rightArrow) {
+      if (showCursor) {
+        nextCursorOffset++;
+      }
+    } else if (key.backspace || key.delete) {
+      if (cursorOffset > 0) {
+        nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length);
+        nextCursorOffset--;
+      }
+    } else {
+      nextValue = originalValue.slice(0, cursorOffset) + input + originalValue.slice(cursorOffset, originalValue.length);
+      nextCursorOffset += input.length;
+      if (input.length > 1) {
+        nextCursorWidth = input.length;
+      }
+    }
+    if (cursorOffset < 0) {
+      nextCursorOffset = 0;
+    }
+    if (cursorOffset > originalValue.length) {
+      nextCursorOffset = originalValue.length;
+    }
+    setState({
+      cursorOffset: nextCursorOffset,
+      cursorWidth: nextCursorWidth
+    });
+    if (nextValue !== originalValue) {
+      onChange(nextValue);
+    }
+  }, { isActive: focus });
+  return import_react28.default.createElement(Text, null, placeholder ? value.length > 0 ? renderedValue : renderedPlaceholder : renderedValue);
+}
+var build_default2 = TextInput;
+
+// src/ui/components/LibraryInputPrompt.tsx
+var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+var LibraryInputPrompt = ({
+  onSubmit,
+  disabled = false,
+  placeholder = "Type your message..."
+}) => {
+  const [input, setInput] = (0, import_react29.useState)("");
+  const [isMultiline, setIsMultiline] = (0, import_react29.useState)(false);
+  (0, import_react29.useEffect)(() => {
+    setIsMultiline(input.includes("\n") || input.length > 100);
+  }, [input]);
+  const handleSubmit = (0, import_react29.useCallback)((value) => {
+    if (value.trim() && !disabled) {
+      onSubmit(value.trim());
+      setInput("");
+      setIsMultiline(false);
+    }
+  }, [onSubmit, disabled]);
+  const handleChange = (0, import_react29.useCallback)((value) => {
+    setInput(value);
+  }, []);
+  const handleKeyPress = (0, import_react29.useCallback)((value) => {
+    if (value.length > input.length + 50) {
+      setIsMultiline(true);
+    }
+  }, [input.length]);
+  const lines = input.split("\n");
+  const displayLines = lines.slice(0, 8);
+  if (isMultiline && lines.length > 1) {
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", borderStyle: "round", borderColor: "cyan", paddingX: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "cyan", children: [
+          "Multiline input (",
+          lines.length,
+          " lines, ",
+          input.length,
+          " chars)"
+        ] }),
+        displayLines.map((line, index) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: line || " " }, index)),
+        lines.length > 8 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", children: [
+          "... ",
+          lines.length - 8,
+          " more lines"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Paste your content and press Ctrl+Enter to send, or type normally" }) })
+    ] });
+  }
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "> " }),
-      disabled ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: placeholder }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: isPlaceholder ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: placeholder }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: beforeCursor }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { inverse: true, children: atCursor }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: afterCursor })
-      ] }) })
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        build_default2,
+        {
+          value: input,
+          placeholder,
+          onChange: handleChange,
+          onSubmit: handleSubmit,
+          focus: !disabled,
+          showCursor: !disabled,
+          highlightPastedText: true
+        }
+      )
     ] }),
-    !disabled && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Press Enter to send \u2022 Ctrl+H for help \u2022 Ctrl+L to clear \u2022 Ctrl+C to exit" }) })
+    !disabled && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Type your message \u2022 Enter to send \u2022 Large content becomes multiline automatically" }) })
   ] });
 };
 
@@ -48614,6 +49279,14 @@ var ChatDisplay = ({
         return "blue";
       case "assistant" /* ASSISTANT */:
         return "green";
+      case "thinking" /* THINKING */:
+        return "cyan";
+      case "tool_start" /* TOOL_START */:
+        return "yellow";
+      case "tool_complete" /* TOOL_COMPLETE */:
+        return "green";
+      case "agent_start" /* AGENT_START */:
+        return "magenta";
       case "error" /* ERROR */:
         return "red";
       case "info" /* INFO */:
@@ -48630,6 +49303,14 @@ var ChatDisplay = ({
         return "\u{1F464} You";
       case "assistant" /* ASSISTANT */:
         return "\u{1F916} Assistant";
+      case "thinking" /* THINKING */:
+        return "\u{1F4AD} Thinking";
+      case "tool_start" /* TOOL_START */:
+        return "\u{1F527} Tool";
+      case "tool_complete" /* TOOL_COMPLETE */:
+        return "\u2705 Tool";
+      case "agent_start" /* AGENT_START */:
+        return "\u{1F680} Agent";
       case "error" /* ERROR */:
         return "\u274C Error";
       case "info" /* INFO */:
@@ -48659,10 +49340,26 @@ var ChatDisplay = ({
     }
     return lines.length > 0 ? lines : [""];
   };
+  const isCompactMessage = (type) => {
+    return [
+      "thinking" /* THINKING */,
+      "tool_start" /* TOOL_START */,
+      "tool_complete" /* TOOL_COMPLETE */,
+      "agent_start" /* AGENT_START */
+    ].includes(type);
+  };
   const renderMessage = (message, isPending = false) => {
     const color = getMessageColor(message.type);
     const prefix = getMessagePrefix(message.type);
     const timestamp = formatTimestamp(message.timestamp);
+    const isCompact = isCompactMessage(message.type);
+    if (isCompact && !isPending) {
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginY: 0, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color, dimColor: true, children: [
+        prefix,
+        ": ",
+        message.text
+      ] }) }, message.id);
+    }
     const textLines = wrapText2(message.text, maxWidth - 4);
     return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
       /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { justifyContent: "space-between", children: [
@@ -48679,7 +49376,22 @@ var ChatDisplay = ({
         ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginLeft: 2, marginTop: 1, children: [
-        textLines.map((line, index) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: isPending ? "gray" : "white", children: line }, index)),
+        textLines.map((line, index) => {
+          let formattedLine = line;
+          const isBold = line.startsWith("**") && line.endsWith("**");
+          const isListItem = line.trim().startsWith("- ") || line.trim().startsWith("\u2022 ");
+          const isHeader = line.startsWith("##") || line.startsWith("###");
+          return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+            Text,
+            {
+              color: isPending ? "gray" : "white",
+              bold: isBold,
+              dimColor: isListItem,
+              children: formattedLine
+            },
+            index
+          );
+        }),
         isPending && message.text && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: "yellow", children: "\u258A" })
       ] })
     ] }, isPending ? "pending" : message.id);
@@ -48696,7 +49408,7 @@ var ChatDisplay = ({
 };
 
 // src/ui/components/RadioButtonSelect.tsx
-var import_react29 = __toESM(require_react(), 1);
+var import_react30 = __toESM(require_react(), 1);
 var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
 function RadioButtonSelect({
   items,
@@ -48707,9 +49419,9 @@ function RadioButtonSelect({
   showScrollArrows = false,
   maxItemsToShow = 10
 }) {
-  const [activeIndex, setActiveIndex] = (0, import_react29.useState)(initialIndex);
-  const [scrollOffset, setScrollOffset] = (0, import_react29.useState)(0);
-  (0, import_react29.useEffect)(() => {
+  const [activeIndex, setActiveIndex] = (0, import_react30.useState)(initialIndex);
+  const [scrollOffset, setScrollOffset] = (0, import_react30.useState)(0);
+  (0, import_react30.useEffect)(() => {
     const newScrollOffset = Math.max(
       0,
       Math.min(activeIndex - maxItemsToShow + 1, items.length - maxItemsToShow)
@@ -48945,24 +49657,24 @@ function SessionSelectionDialog({
 }
 
 // src/ui/contexts/SessionContext.tsx
-var import_react30 = __toESM(require_react(), 1);
+var import_react31 = __toESM(require_react(), 1);
 var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
 import { resolve } from "path";
 import { writeFile, readFile, mkdir } from "fs/promises";
 import { existsSync as existsSync2 } from "fs";
-var SessionContext = (0, import_react30.createContext)(void 0);
+var SessionContext = (0, import_react31.createContext)(void 0);
 var useSession = () => {
-  const context = (0, import_react30.useContext)(SessionContext);
+  const context = (0, import_react31.useContext)(SessionContext);
   if (!context) {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return context;
 };
 var SessionProvider = ({ children }) => {
-  const [history, setHistory] = (0, import_react30.useState)([]);
-  const [currentSessionId, setCurrentSessionId] = (0, import_react30.useState)("");
-  const [nextMessageId, setNextMessageId] = (0, import_react30.useState)(1);
-  (0, import_react30.useEffect)(() => {
+  const [history, setHistory] = (0, import_react31.useState)([]);
+  const [currentSessionId, setCurrentSessionId] = (0, import_react31.useState)("");
+  const [nextMessageId, setNextMessageId] = (0, import_react31.useState)(1);
+  (0, import_react31.useEffect)(() => {
     const initSession = async () => {
       const sessionId = generateSessionId();
       setCurrentSessionId(sessionId);
@@ -48977,17 +49689,17 @@ var SessionProvider = ({ children }) => {
     };
     initSession();
   }, []);
-  const generateSessionId = (0, import_react30.useCallback)(() => {
+  const generateSessionId = (0, import_react31.useCallback)(() => {
     return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }, []);
-  const getSessionDir = (0, import_react30.useCallback)(() => {
+  const getSessionDir = (0, import_react31.useCallback)(() => {
     const sessionDir = appConfig.sessionDir.replace("~", process.env.HOME || "");
     return resolve(sessionDir);
   }, []);
-  const getSessionFilePath = (0, import_react30.useCallback)((sessionId) => {
+  const getSessionFilePath = (0, import_react31.useCallback)((sessionId) => {
     return resolve(getSessionDir(), `${sessionId}.json`);
   }, [getSessionDir]);
-  const addMessage = (0, import_react30.useCallback)((message) => {
+  const addMessage = (0, import_react31.useCallback)((message) => {
     const newMessage = {
       ...message,
       id: nextMessageId
@@ -48998,11 +49710,11 @@ var SessionProvider = ({ children }) => {
       setTimeout(() => saveSessionData(), 100);
     }
   }, [nextMessageId]);
-  const clearHistory = (0, import_react30.useCallback)(() => {
+  const clearHistory = (0, import_react31.useCallback)(() => {
     setHistory([]);
     setNextMessageId(1);
   }, []);
-  const saveSessionData = (0, import_react30.useCallback)(async () => {
+  const saveSessionData = (0, import_react31.useCallback)(async () => {
     if (!currentSessionId || history.length === 0) {
       return;
     }
@@ -49026,7 +49738,7 @@ var SessionProvider = ({ children }) => {
       console.error("Failed to save session:", error);
     }
   }, [currentSessionId, history, getSessionFilePath]);
-  const loadSessionData = (0, import_react30.useCallback)(async (sessionId) => {
+  const loadSessionData = (0, import_react31.useCallback)(async (sessionId) => {
     try {
       const filePath = getSessionFilePath(sessionId);
       const data = await readFile(filePath, "utf8");
@@ -49042,13 +49754,13 @@ var SessionProvider = ({ children }) => {
       throw error;
     }
   }, [getSessionFilePath]);
-  const createNewSession = (0, import_react30.useCallback)(() => {
+  const createNewSession = (0, import_react31.useCallback)(() => {
     const newSessionId = generateSessionId();
     setCurrentSessionId(newSessionId);
     setHistory([]);
     setNextMessageId(1);
   }, [generateSessionId]);
-  const listSessions = (0, import_react30.useCallback)(async () => {
+  const listSessions = (0, import_react31.useCallback)(async () => {
     try {
       const { readdir } = await import("fs/promises");
       const sessionDir = getSessionDir();
@@ -49091,17 +49803,17 @@ var App2 = ({ version: version2 }) => {
     saveSession,
     loadSession
   } = useSession();
-  const [showHelp, setShowHelp] = (0, import_react31.useState)(false);
-  const [debugMessage, setDebugMessage] = (0, import_react31.useState)("");
-  const [ctrlCPressedOnce, setCtrlCPressedOnce] = (0, import_react31.useState)(false);
-  const [ctrlDPressedOnce, setCtrlDPressedOnce] = (0, import_react31.useState)(false);
-  const ctrlCTimerRef = (0, import_react31.useRef)(null);
-  const ctrlDTimerRef = (0, import_react31.useRef)(null);
-  const [connectionStatus, setConnectionStatus] = (0, import_react31.useState)("connecting");
-  const [selectedTarget, setSelectedTarget] = (0, import_react31.useState)(null);
-  const [availableTargets, setAvailableTargets] = (0, import_react31.useState)({ agents: [], teams: [], workflows: [] });
-  const [uiState, setUiState] = (0, import_react31.useState)("selecting_type");
-  const [selectedTargetType, setSelectedTargetType] = (0, import_react31.useState)(null);
+  const [showHelp, setShowHelp] = (0, import_react32.useState)(false);
+  const [debugMessage, setDebugMessage] = (0, import_react32.useState)("");
+  const [ctrlCPressedOnce, setCtrlCPressedOnce] = (0, import_react32.useState)(false);
+  const [ctrlDPressedOnce, setCtrlDPressedOnce] = (0, import_react32.useState)(false);
+  const ctrlCTimerRef = (0, import_react32.useRef)(null);
+  const ctrlDTimerRef = (0, import_react32.useRef)(null);
+  const [connectionStatus, setConnectionStatus] = (0, import_react32.useState)("connecting");
+  const [selectedTarget, setSelectedTarget] = (0, import_react32.useState)(null);
+  const [availableTargets, setAvailableTargets] = (0, import_react32.useState)({ agents: [], teams: [], workflows: [] });
+  const [uiState, setUiState] = (0, import_react32.useState)("selecting_type");
+  const [selectedTargetType, setSelectedTargetType] = (0, import_react32.useState)(null);
   const {
     streamingState,
     submitQuery,
@@ -49114,7 +49826,7 @@ var App2 = ({ version: version2 }) => {
     setDebugMessage
   );
   const { elapsedTime, currentLoadingPhrase } = useLoadingIndicator(streamingState);
-  (0, import_react31.useEffect)(() => {
+  (0, import_react32.useEffect)(() => {
     const initializeAPI = async () => {
       try {
         const healthResponse = await localAPIClient.healthCheck();
@@ -49148,7 +49860,7 @@ var App2 = ({ version: version2 }) => {
     };
     initializeAPI();
   }, []);
-  const handleExit = (0, import_react31.useCallback)(
+  const handleExit = (0, import_react32.useCallback)(
     (pressedOnce, setPressedOnce, timerRef) => {
       if (pressedOnce) {
         if (timerRef.current) {
@@ -49165,6 +49877,7 @@ var App2 = ({ version: version2 }) => {
     },
     []
   );
+  const isGlobalInputActive = streamingState === "idle" /* Idle */ && connectionStatus === "connected" && uiState === "chatting";
   use_input_default((input, key) => {
     if (key.ctrl && (input === "c" || input === "C")) {
       handleExit(ctrlCPressedOnce, setCtrlCPressedOnce, ctrlCTimerRef);
@@ -49176,8 +49889,10 @@ var App2 = ({ version: version2 }) => {
       clearHistory();
       stdout.write("\\x1B[2J\\x1B[3J\\x1B[H");
     }
+  }, {
+    isActive: !isGlobalInputActive
   });
-  const handleSubmit = (0, import_react31.useCallback)(
+  const handleSubmit = (0, import_react32.useCallback)(
     (message) => {
       const trimmedMessage = message.trim();
       if (trimmedMessage.length > 0 && selectedTarget) {
@@ -49186,28 +49901,28 @@ var App2 = ({ version: version2 }) => {
     },
     [submitQuery, selectedTarget]
   );
-  const handleTargetTypeSelect = (0, import_react31.useCallback)((targetType) => {
+  const handleTargetTypeSelect = (0, import_react32.useCallback)((targetType) => {
     setSelectedTargetType(targetType);
     setUiState("selecting_target");
   }, []);
-  const handleTargetSelect = (0, import_react31.useCallback)((target) => {
+  const handleTargetSelect = (0, import_react32.useCallback)((target) => {
     setSelectedTarget(target);
     setUiState("selecting_session");
   }, []);
-  const handleSessionSelect = (0, import_react31.useCallback)((sessionAction) => {
+  const handleSessionSelect = (0, import_react32.useCallback)((sessionAction) => {
     if (sessionAction === "new") {
       setUiState("chatting");
     }
   }, []);
-  const handleBackToTargetType = (0, import_react31.useCallback)(() => {
+  const handleBackToTargetType = (0, import_react32.useCallback)(() => {
     setSelectedTargetType(null);
     setUiState("selecting_type");
   }, []);
-  const handleBackToTargetSelection = (0, import_react31.useCallback)(() => {
+  const handleBackToTargetSelection = (0, import_react32.useCallback)(() => {
     setSelectedTarget(null);
     setUiState("selecting_target");
   }, []);
-  const isInputActive = streamingState === "idle" /* Idle */ && connectionStatus === "connected";
+  const isInputActive = isGlobalInputActive;
   const widthFraction = 0.9;
   const inputWidth = Math.max(20, Math.floor(terminalWidth * widthFraction) - 3);
   if (connectionStatus === "error") {
@@ -49383,10 +50098,9 @@ var App2 = ({ version: version2 }) => {
         }
       ),
       isInputActive && uiState === "chatting" && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        InputPrompt,
+        LibraryInputPrompt,
         {
           onSubmit: handleSubmit,
-          inputWidth,
           disabled: !selectedTarget,
           placeholder: selectedTarget ? `Message ${selectedTarget.name}...` : "No target selected"
         }
@@ -49414,7 +50128,7 @@ var main = async () => {
     console.log(`Debug Mode: ${appConfig.cliDebug}`);
     console.log("---");
   }
-  const { unmount } = render_default(import_react32.default.createElement(AppWrapper, { version }));
+  const { unmount } = render_default(import_react33.default.createElement(AppWrapper, { version }));
   const cleanup = () => {
     if (appConfig.cliDebug) {
       console.log("\\n\u{1F9DE} Genie Local CLI shutting down...");

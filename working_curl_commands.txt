@@ -1,0 +1,55 @@
+# WORKING CURL COMMANDS FOR GENIE AGENTS API
+# Port: 9888 | Format: multipart/form-data (NOT JSON)
+
+# ==========================================
+# COMPLETE EXAMPLE WITH ALL PARAMETERS
+# ==========================================
+
+# Team endpoint with ALL user context parameters
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Olá Ana, preciso de ajuda com minha conta PagBank" \
+  -F "session_id=test_session_123" \
+  -F "user_id=customer_456" \
+  -F "user_name=João da Silva" \
+  -F "phone_number=5511999999999" \
+  -F "cpf=12345678901" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# Agent endpoint with ALL user context parameters  
+curl -X POST "http://localhost:9888/playground/agents/pagbank-specialist/runs" \
+  -F "message=Preciso consultar meu saldo PIX" \
+  -F "session_id=agent_session_456" \
+  -F "user_id=direct_user_789" \
+  -F "user_name=Maria Santos" \
+  -F "phone_number=5511888888888" \
+  -F "cpf=98765432100" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# ==========================================
+# AVAILABLE PARAMETERS
+# ==========================================
+# message (REQUIRED): User's message/question
+# session_id (optional): Session identifier 
+# user_id (optional): User identifier
+# user_name (optional): User's full name
+# phone_number (optional): Brazilian format (5511999999999)
+# cpf (optional): 11 digits (12345678901)
+# stream (optional): true/false (default: true)
+# monitor (optional): true/false (default: true)
+
+# ==========================================
+# AVAILABLE ENDPOINTS
+# ==========================================
+# Team: ana-pagbank-assistant (routes to specialists)
+# Agents: pagbank-specialist, emissao-specialist, adquirencia-specialist, human-handoff-specialist
+
+# Health check
+curl -s http://localhost:9888/api/v1/health
+
+# List teams
+curl -s http://localhost:9888/playground/teams
+
+# List agents  
+curl -s http://localhost:9888/playground/agents

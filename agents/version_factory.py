@@ -13,7 +13,7 @@ from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 from agno.tools import Function
 
-from db.services.agent_version_service import AgentVersionService
+from db.services.component_version_service import ComponentVersionService
 from db.session import get_db
 # Native Agno knowledge integration - no custom tools needed
 
@@ -33,7 +33,7 @@ class AgentVersionFactory:
     def __init__(self, db_session=None):
         """Initialize with optional database session."""
         self.db_session = db_session or next(get_db())
-        self.version_service = AgentVersionService(self.db_session)
+        self.version_service = ComponentVersionService(self.db_session)
     
     def create_agent(
         self,
@@ -166,7 +166,8 @@ class AgentVersionFactory:
             Configuration dictionary or None if not found
         """
         try:
-            config = self.version_service.get_config(agent_id, version)
+            version_record = self.version_service.get_version(agent_id, version) if version else self.version_service.get_active_version(agent_id)
+            config = version_record.config if version_record else None
             if config:
                 # Ensure the config has the expected structure
                 if "agent" not in config:
@@ -315,7 +316,8 @@ class AgentVersionFactory:
             
             # Create database version
             self.version_service.create_version(
-                agent_id=agent_id,
+                component_id=agent_id,
+                component_type="agent",
                 version=version,
                 config=config,
                 created_by=created_by,
@@ -340,7 +342,7 @@ class AgentVersionFactory:
         agents_info = {}
         
         # Get agents from database
-        db_agents = self.version_service.get_all_agents()
+        db_agents = self.version_service.get_all_components("agent")
         for agent_id in db_agents:
             versions = self.version_service.list_versions(agent_id)
             active_version = self.version_service.get_active_version(agent_id)
@@ -411,7 +413,13 @@ def create_versioned_agent(
     session_id: Optional[str] = None,
     debug_mode: bool = False,
     db_url: Optional[str] = None,
-    memory: Optional[Any] = None
+    memory: Optional[Any] = None,
+    # User context parameters (accepted but not used in current implementation)
+    user_id: Optional[str] = None,
+    user_name: Optional[str] = None,
+    phone_number: Optional[str] = None,
+    cpf: Optional[str] = None,
+    **kwargs
 ) -> Agent:
     """
     Convenience function for creating versioned agents.

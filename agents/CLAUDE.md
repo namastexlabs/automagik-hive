@@ -72,7 +72,7 @@ from typing import Optional
 import yaml
 from pathlib import Path
 from agno import Agent, ModelConfig
-from agno.storage.postgresql import PostgresStorage
+from agno.storage.postgres import PostgresStorage
 
 def get_pagbank_agent(
     version: Optional[int] = None,

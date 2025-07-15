@@ -33,7 +33,7 @@ from typing import Optional
 import yaml
 from pathlib import Path
 from agno import Team
-from agno.storage.postgresql import PostgresStorage
+from agno.storage.postgres import PostgresStorage
 
 def get_routing_team(
     model_id: Optional[str] = None,        # API parameter - model override

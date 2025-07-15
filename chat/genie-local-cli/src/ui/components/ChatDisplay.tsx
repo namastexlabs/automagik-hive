@@ -28,6 +28,14 @@ export const ChatDisplay: React.FC<ChatDisplayProps> = ({
         return 'blue';
       case MessageType.ASSISTANT:
         return 'green';
+      case MessageType.THINKING:
+        return 'cyan';
+      case MessageType.TOOL_START:
+        return 'yellow';
+      case MessageType.TOOL_COMPLETE:
+        return 'green';
+      case MessageType.AGENT_START:
+        return 'magenta';
       case MessageType.ERROR:
         return 'red';
       case MessageType.INFO:
@@ -45,6 +53,14 @@ export const ChatDisplay: React.FC<ChatDisplayProps> = ({
         return '👤 You';
       case MessageType.ASSISTANT:
         return '🤖 Assistant';
+      case MessageType.THINKING:
+        return '💭 Thinking';
+      case MessageType.TOOL_START:
+        return '🔧 Tool';
+      case MessageType.TOOL_COMPLETE:
+        return '✅ Tool';
+      case MessageType.AGENT_START:
+        return '🚀 Agent';
       case MessageType.ERROR:
         return '❌ Error';
       case MessageType.INFO:
@@ -79,10 +95,33 @@ export const ChatDisplay: React.FC<ChatDisplayProps> = ({
     return lines.length > 0 ? lines : [''];
   };
 
+  const isCompactMessage = (type: MessageType): boolean => {
+    return [
+      MessageType.THINKING,
+      MessageType.TOOL_START,
+      MessageType.TOOL_COMPLETE,
+      MessageType.AGENT_START
+    ].includes(type);
+  };
+
   const renderMessage = (message: HistoryItem, isPending: boolean = false) => {
     const color = getMessageColor(message.type);
     const prefix = getMessagePrefix(message.type);
     const timestamp = formatTimestamp(message.timestamp);
+    const isCompact = isCompactMessage(message.type);
+    
+    // For compact messages (thinking, tools), show inline
+    if (isCompact && !isPending) {
+      return (
+        <Box key={message.id} marginY={0}>
+          <Text color={color} dimColor>
+            {prefix}: {message.text}
+          </Text>
+        </Box>
+      );
+    }
+
+    // For main messages (user, assistant), show full format
     const textLines = wrapText(message.text, maxWidth - 4);
 
     return (
@@ -105,11 +144,24 @@ export const ChatDisplay: React.FC<ChatDisplayProps> = ({
 
         {/* Message content */}
         <Box flexDirection="column" marginLeft={2} marginTop={1}>
-          {textLines.map((line, index) => (
-            <Text key={index} color={isPending ? 'gray' : 'white'}>
-              {line}
-            </Text>
-          ))}
+          {textLines.map((line, index) => {
+            // Simple markdown-like formatting
+            let formattedLine = line;
+            const isBold = line.startsWith('**') && line.endsWith('**');
+            const isListItem = line.trim().startsWith('- ') || line.trim().startsWith('• ');
+            const isHeader = line.startsWith('##') || line.startsWith('###');
+            
+            return (
+              <Text 
+                key={index} 
+                color={isPending ? 'gray' : 'white'}
+                bold={isBold}
+                dimColor={isListItem}
+              >
+                {formattedLine}
+              </Text>
+            );
+          })}
           {isPending && message.text && (
             <Text color="yellow">▊</Text> // Cursor for streaming
           )}

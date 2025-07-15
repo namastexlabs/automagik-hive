@@ -9,13 +9,22 @@ from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 from context.knowledge.pagbank_knowledge_factory import get_knowledge_base
 
+# User context management - simple helper for session_state
+from context.user_context_helper import create_user_context_state
+
 
 def get_pagbank_agent(
     version: Optional[int] = None,        # API parameter - specific version
     session_id: Optional[str] = None,     # API parameter - session management  
     debug_mode: bool = False,             # API parameter - debugging
     db_url: Optional[str] = None,         # API parameter - database connection
-    memory: Optional[Any] = None         # API parameter - memory instance from team
+    memory: Optional[Any] = None,         # API parameter - memory instance from team
+    # User context parameters - will be stored in session_state
+    user_id: Optional[str] = None,
+    user_name: Optional[str] = None,
+    phone_number: Optional[str] = None,
+    cpf: Optional[str] = None,
+    **kwargs
 ) -> Agent:
     """
     Factory function for PagBank digital banking specialist agent.
@@ -64,6 +73,15 @@ def get_pagbank_agent(
     # Load business unit filter from YAML config
     business_unit_filter = config["knowledge_filter"]["business_unit"]
     
+    # Create user context session_state (Agno's built-in way)
+    user_context_state = create_user_context_state(
+        user_id=user_id,
+        user_name=user_name,
+        phone_number=phone_number,
+        cpf=cpf,
+        **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
+    )
+    
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
@@ -91,6 +109,10 @@ def get_pagbank_agent(
         add_datetime_to_instructions=config.get("add_datetime_to_instructions", True),
         add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
         num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
+        # User context stored in session_state (Agno's built-in persistence)
+        session_state=user_context_state if user_context_state.get('user_context') else None,
+        # Make user context available in instructions
+        add_state_in_messages=True,  # This allows {user_name}, {user_id}, etc. in instructions
         # CRITICAL: Response constraints from YAML configuration (dynamic, not hardcoded)
         success_criteria=config.get("success_criteria"),
         expected_output=config.get("expected_output")

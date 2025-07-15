@@ -1,0 +1,529 @@
+# GENIE AGENTS API - COMPREHENSIVE QA TEST SUITE
+# ================================================
+# Server: http://localhost:9888
+# Format: multipart/form-data (use -F flag)
+# Version: Complete API Coverage Test Suite
+
+# ================================================
+# QUICK SETUP & VALIDATION
+# ================================================
+
+# 1. Check if server is running
+curl -s http://localhost:9888/api/v1/health
+
+# 2. Verify API documentation is accessible
+curl -s http://localhost:9888/docs | grep -q "swagger" && echo "API docs available" || echo "API docs not found"
+
+# 3. Get OpenAPI specification
+curl -s http://localhost:9888/openapi.json | jq '.info.title'
+
+# ================================================
+# SECTION 1: CORE API TESTS
+# ================================================
+
+echo "=== TESTING CORE API ENDPOINTS ==="
+
+# Health Check Tests
+echo "--- Health Check Tests ---"
+curl -s http://localhost:9888/api/v1/health | jq '.'
+
+# Playground Status
+echo "--- Playground Status ---"
+curl -s http://localhost:9888/playground/status | jq '.'
+
+# ================================================
+# SECTION 2: PLAYGROUND AGENT TESTS
+# ================================================
+
+echo "=== TESTING PLAYGROUND AGENT ENDPOINTS ==="
+
+# List all available agents
+echo "--- List Available Agents ---"
+curl -s http://localhost:9888/playground/agents | jq '.'
+
+# Test individual agents with full parameters
+echo "--- Individual Agent Tests ---"
+
+# PagBank Specialist (PIX, transfers, app issues)
+echo "Testing: pagbank-specialist"
+curl -X POST "http://localhost:9888/playground/agents/pagbank-specialist/runs" \
+  -F "message=Preciso consultar meu saldo PIX" \
+  -F "session_id=qa_test_pagbank_001" \
+  -F "user_id=qa_user_pagbank" \
+  -F "user_name=QA Test User PagBank" \
+  -F "phone_number=5511999888777" \
+  -F "cpf=12345678901" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+echo "Testing: emissao-specialist (Cards)"
+curl -X POST "http://localhost:9888/playground/agents/emissao-specialist/runs" \
+  -F "message=Como desbloquear meu cartão de crédito?" \
+  -F "session_id=qa_test_emissao_001" \
+  -F "user_id=qa_user_emissao" \
+  -F "user_name=QA Test User Emissão" \
+  -F "phone_number=5511888777666" \
+  -F "cpf=98765432100" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+echo "Testing: adquirencia-specialist (Sales/Machines)"
+curl -X POST "http://localhost:9888/playground/agents/adquirencia-specialist/runs" \
+  -F "message=Qual a taxa para antecipar R$ 10.000?" \
+  -F "session_id=qa_test_adquirencia_001" \
+  -F "user_id=qa_user_adquirencia" \
+  -F "user_name=QA Test Merchant" \
+  -F "phone_number=5511777666555" \
+  -F "cpf=45612378900" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+echo "Testing: human-handoff-specialist"
+curl -X POST "http://localhost:9888/playground/agents/human-handoff-specialist/runs" \
+  -F "message=Estou muito frustrado, preciso falar com uma pessoa!" \
+  -F "session_id=qa_test_handoff_001" \
+  -F "user_id=qa_user_handoff" \
+  -F "user_name=QA Test Frustrated User" \
+  -F "phone_number=5511666555444" \
+  -F "cpf=78912345600" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# Agent Sessions Tests
+echo "--- Agent Session Management ---"
+
+# List agent sessions
+curl -s "http://localhost:9888/playground/agents/pagbank-specialist/sessions" | jq '.'
+
+# Get specific session (using session from previous test)
+curl -s "http://localhost:9888/playground/agents/pagbank-specialist/sessions/qa_test_pagbank_001" | jq '.'
+
+# Agent Memory Tests
+echo "--- Agent Memory Tests ---"
+curl -s "http://localhost:9888/playground/agents/pagbank-specialist/memories" | jq '.'
+
+# ================================================
+# SECTION 3: PLAYGROUND TEAM TESTS
+# ================================================
+
+echo "=== TESTING PLAYGROUND TEAM ENDPOINTS ==="
+
+# List all available teams
+echo "--- List Available Teams ---"
+curl -s http://localhost:9888/playground/teams | jq '.'
+
+# Test Ana routing team with different scenarios
+echo "--- Ana Team Routing Tests ---"
+
+# Card-related question (should route to emissao-specialist)
+echo "Testing: Card routing"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Ana, preciso saber sobre taxas do meu cartão de crédito" \
+  -F "session_id=qa_test_team_card_001" \
+  -F "user_id=qa_team_card_user" \
+  -F "user_name=QA Team Card Test" \
+  -F "phone_number=5511555444333" \
+  -F "cpf=32165498700" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# PIX-related question (should route to pagbank-specialist)
+echo "Testing: PIX routing"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Ana, meu PIX não está funcionando" \
+  -F "session_id=qa_test_team_pix_001" \
+  -F "user_id=qa_team_pix_user" \
+  -F "user_name=QA Team PIX Test" \
+  -F "phone_number=5511444333222" \
+  -F "cpf=65498732100" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# Sales-related question (should route to adquirencia-specialist)
+echo "Testing: Sales routing"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Ana, quero antecipar minhas vendas" \
+  -F "session_id=qa_test_team_sales_001" \
+  -F "user_id=qa_team_sales_user" \
+  -F "user_name=QA Team Sales Test" \
+  -F "phone_number=5511333222111" \
+  -F "cpf=14725836900" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# Human handoff request (should route to human-handoff-specialist)
+echo "Testing: Human handoff routing"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Ana, quero falar com um atendente humano" \
+  -F "session_id=qa_test_team_handoff_001" \
+  -F "user_id=qa_team_handoff_user" \
+  -F "user_name=QA Team Handoff Test" \
+  -F "phone_number=5511222111000" \
+  -F "cpf=96385274100" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# Team Sessions Tests
+echo "--- Team Session Management ---"
+curl -s "http://localhost:9888/playground/teams/ana-pagbank-assistant/sessions" | jq '.'
+
+# Team Memory Tests  
+echo "--- Team Memory Tests ---"
+curl -s "http://localhost:9888/playground/team/ana-pagbank-assistant/memories" | jq '.'
+
+# ================================================
+# SECTION 4: PLAYGROUND WORKFLOW TESTS
+# ================================================
+
+echo "=== TESTING PLAYGROUND WORKFLOW ENDPOINTS ==="
+
+# List all available workflows
+echo "--- List Available Workflows ---"
+curl -s http://localhost:9888/playground/workflows | jq '.'
+
+# Test workflow execution (if any workflows are available)
+echo "--- Workflow Execution Tests ---"
+# Note: Specific workflow tests depend on what workflows are configured
+
+# Workflow Sessions
+echo "--- Workflow Session Management ---"
+# curl -s "http://localhost:9888/playground/workflows/{workflow_id}/sessions" | jq '.'
+
+# ================================================
+# SECTION 5: MONITORING & ANALYTICS TESTS
+# ================================================
+
+echo "=== TESTING MONITORING ENDPOINTS ==="
+
+# Health monitoring
+echo "--- Health Monitoring ---"
+curl -s "http://localhost:9888/api/v1/monitoring/health" | jq '.'
+
+# Metrics collection
+echo "--- Metrics Collection ---"
+curl -s "http://localhost:9888/api/v1/monitoring/metrics" | jq '.'
+
+# Agent metrics
+curl -s "http://localhost:9888/api/v1/monitoring/metrics/agents" | jq '.'
+
+# Performance metrics
+curl -s "http://localhost:9888/api/v1/monitoring/performance/metrics" | jq '.'
+
+# Analytics data
+echo "--- Analytics Data ---"
+curl -s "http://localhost:9888/api/v1/monitoring/analytics" | jq '.'
+
+# Typification analytics
+curl -s "http://localhost:9888/api/v1/monitoring/analytics/typification" | jq '.'
+
+# Versioning analytics
+curl -s "http://localhost:9888/api/v1/monitoring/analytics/versioning" | jq '.'
+
+# Dashboard data
+echo "--- Monitoring Dashboard ---"
+curl -s "http://localhost:9888/api/v1/monitoring/dashboard" | jq '.'
+
+# Performance report
+curl -s "http://localhost:9888/api/v1/monitoring/performance-report" | jq '.'
+
+# ================================================
+# SECTION 6: ALERTS & MANAGEMENT TESTS
+# ================================================
+
+echo "=== TESTING ALERT MANAGEMENT ==="
+
+# List all alerts
+echo "--- Alert Management ---"
+curl -s "http://localhost:9888/api/v1/monitoring/alerts" | jq '.'
+
+# Alert statistics
+curl -s "http://localhost:9888/api/v1/monitoring/alerts/statistics" | jq '.'
+
+# Alert rules
+curl -s "http://localhost:9888/api/v1/monitoring/alerts/rules" | jq '.'
+
+# Evaluate alerts (trigger evaluation)
+curl -X POST "http://localhost:9888/api/v1/monitoring/evaluate-alerts" | jq '.'
+
+# Start monitoring
+echo "--- Monitoring Control ---"
+curl -X POST "http://localhost:9888/api/v1/monitoring/start-monitoring" | jq '.'
+
+# Stop monitoring
+curl -X POST "http://localhost:9888/api/v1/monitoring/stop-monitoring" | jq '.'
+
+# ================================================
+# SECTION 7: PARAMETER VALIDATION TESTS
+# ================================================
+
+echo "=== TESTING PARAMETER VALIDATION ==="
+
+# Test with minimal parameters (only required)
+echo "--- Minimal Parameter Tests ---"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Teste mínimo - apenas parâmetro obrigatório"
+
+# Test with invalid parameters
+echo "--- Invalid Parameter Tests ---"
+
+# Invalid team ID
+curl -X POST "http://localhost:9888/playground/teams/invalid-team-id/runs" \
+  -F "message=Teste com team ID inválido" \
+  -F "session_id=qa_invalid_team_test"
+
+# Invalid agent ID
+curl -X POST "http://localhost:9888/playground/agents/invalid-agent-id/runs" \
+  -F "message=Teste com agent ID inválido" \
+  -F "session_id=qa_invalid_agent_test"
+
+# Missing required message parameter
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "session_id=qa_missing_message_test" \
+  -F "user_id=qa_error_user"
+
+# Test with very long message
+echo "--- Edge Case Parameter Tests ---"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=$(printf 'A%.0s' {1..10000})" \
+  -F "session_id=qa_long_message_test"
+
+# Test with special characters in parameters
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Teste com caracteres especiais: àéíóú ç ñ üß €" \
+  -F "session_id=qa_special_chars_test" \
+  -F "user_name=José da Silva-Santos (Tëst)"
+
+# Test with invalid CPF format
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Teste com CPF inválido" \
+  -F "session_id=qa_invalid_cpf_test" \
+  -F "cpf=123"
+
+# Test with invalid phone format
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Teste com telefone inválido" \
+  -F "session_id=qa_invalid_phone_test" \
+  -F "phone_number=123"
+
+# ================================================
+# SECTION 8: STREAMING TESTS
+# ================================================
+
+echo "=== TESTING STREAMING FUNCTIONALITY ==="
+
+# Test streaming response
+echo "--- Streaming Response Test ---"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Teste de streaming - me explique sobre PIX" \
+  -F "session_id=qa_streaming_test" \
+  -F "user_id=qa_streaming_user" \
+  -F "user_name=QA Streaming Test" \
+  -F "phone_number=5511123456789" \
+  -F "cpf=11111111111" \
+  -F "stream=true" \
+  -F "monitor=true"
+
+# Test non-streaming response
+echo "--- Non-Streaming Response Test ---"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Teste sem streaming - consulta rápida sobre cartão" \
+  -F "session_id=qa_no_stream_test" \
+  -F "user_id=qa_no_stream_user" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# ================================================
+# SECTION 9: SESSION CONTINUITY TESTS
+# ================================================
+
+echo "=== TESTING SESSION CONTINUITY ==="
+
+# First message in conversation
+echo "--- Session Continuity Test Part 1 ---"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Olá Ana, preciso de ajuda com meu cartão" \
+  -F "session_id=qa_continuity_session" \
+  -F "user_id=qa_continuity_user" \
+  -F "user_name=QA Continuity Test User" \
+  -F "phone_number=5511987654321" \
+  -F "cpf=22222222222" \
+  -F "stream=false"
+
+# Second message in same session
+echo "--- Session Continuity Test Part 2 ---"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Quero saber especificamente sobre o limite" \
+  -F "session_id=qa_continuity_session" \
+  -F "user_id=qa_continuity_user" \
+  -F "stream=false"
+
+# Third message in same session
+echo "--- Session Continuity Test Part 3 ---"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=E sobre as taxas também" \
+  -F "session_id=qa_continuity_session" \
+  -F "user_id=qa_continuity_user" \
+  -F "stream=false"
+
+# ================================================
+# SECTION 10: PERFORMANCE TESTS
+# ================================================
+
+echo "=== TESTING PERFORMANCE ==="
+
+# Concurrent requests test
+echo "--- Concurrent Requests Test ---"
+for i in {1..5}; do
+  curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+    -F "message=Teste de performance - requisição $i" \
+    -F "session_id=qa_perf_test_$i" \
+    -F "user_id=qa_perf_user_$i" \
+    -F "stream=false" &
+done
+wait
+
+# Large batch test
+echo "--- Large Batch Test ---"
+for i in {1..10}; do
+  curl -X POST "http://localhost:9888/playground/agents/pagbank-specialist/runs" \
+    -F "message=Teste batch $i - consulta PIX" \
+    -F "session_id=qa_batch_test_$i" \
+    -F "user_id=qa_batch_user_$i" \
+    -F "stream=false" > /dev/null &
+done
+wait
+
+# ================================================
+# SECTION 11: INTEGRATION TESTS
+# ================================================
+
+echo "=== TESTING INTEGRATION SCENARIOS ==="
+
+# Complete workflow test: Question -> Routing -> Specialist -> Response
+echo "--- Complete Workflow Integration Test ---"
+
+# 1. Customer asks about card fees (should route to emissao-specialist)
+echo "Integration Test 1: Card fees workflow"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Ana, quais são as taxas do cartão de crédito?" \
+  -F "session_id=qa_integration_card_workflow" \
+  -F "user_id=qa_integration_user_1" \
+  -F "user_name=Cliente Integração Cartão" \
+  -F "phone_number=5511111111111" \
+  -F "cpf=33333333333" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# 2. Merchant asks about sales anticipation (should route to adquirencia-specialist)
+echo "Integration Test 2: Sales anticipation workflow"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Ana, preciso antecipar vendas de R$ 15.000" \
+  -F "session_id=qa_integration_sales_workflow" \
+  -F "user_id=qa_integration_user_2" \
+  -F "user_name=Lojista Integração" \
+  -F "phone_number=5511222222222" \
+  -F "cpf=44444444444" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# 3. Customer escalates to human (should route to human-handoff-specialist)
+echo "Integration Test 3: Human handoff workflow"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Ana, não conseguiu resolver meu problema, quero falar com humano" \
+  -F "session_id=qa_integration_handoff_workflow" \
+  -F "user_id=qa_integration_user_3" \
+  -F "user_name=Cliente Escalação" \
+  -F "phone_number=5511333333333" \
+  -F "cpf=55555555555" \
+  -F "stream=false" \
+  -F "monitor=true"
+
+# ================================================
+# SECTION 12: ERROR HANDLING TESTS
+# ================================================
+
+echo "=== TESTING ERROR HANDLING ==="
+
+# Test various error conditions
+echo "--- Error Condition Tests ---"
+
+# Server overload simulation (many rapid requests)
+echo "Testing: Rapid request handling"
+for i in {1..20}; do
+  curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+    -F "message=Teste sobrecarga $i" \
+    -F "session_id=qa_overload_$i" \
+    -F "stream=false" > /dev/null 2>&1 &
+done
+
+# Invalid JSON in request (though we use form-data)
+echo "Testing: Invalid request format"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -H "Content-Type: application/json" \
+  -d '{"invalid": "json", "message":}' 2>/dev/null
+
+# Extremely long session ID
+echo "Testing: Edge case session ID"
+curl -X POST "http://localhost:9888/playground/teams/ana-pagbank-assistant/runs" \
+  -F "message=Teste session ID longo" \
+  -F "session_id=$(printf 'x%.0s' {1..1000})" \
+  -F "stream=false"
+
+# ================================================
+# TEST EXECUTION SUMMARY
+# ================================================
+
+echo ""
+echo "=================================================="
+echo "QA TEST SUITE EXECUTION COMPLETE"
+echo "=================================================="
+echo ""
+echo "TESTS COVERED:"
+echo "✓ Core API endpoints (health, status)"
+echo "✓ Individual agent functionality (all 4 agents)"
+echo "✓ Team routing and workflow"
+echo "✓ Session management and continuity"
+echo "✓ Parameter validation (positive & negative)"
+echo "✓ Streaming vs non-streaming responses"
+echo "✓ Monitoring and analytics endpoints"
+echo "✓ Alert management functionality"
+echo "✓ Performance and concurrent request handling"
+echo "✓ Integration workflow scenarios"
+echo "✓ Error handling and edge cases"
+echo ""
+echo "NEXT STEPS:"
+echo "1. Review test outputs for errors or unexpected responses"
+echo "2. Identify any failing endpoints or functionality"
+echo "3. Document issues for development team"
+echo "4. Create focused bug reports for specific problems"
+echo ""
+echo "=================================================="
+
+# ================================================
+# AVAILABLE PARAMETERS REFERENCE
+# ================================================
+
+echo ""
+echo "PARAMETER REFERENCE:"
+echo "Required: message"
+echo "Optional: session_id, user_id, user_name, phone_number, cpf, stream, monitor"
+echo ""
+echo "ENDPOINTS TESTED:"
+echo "- /api/v1/health"
+echo "- /playground/status"
+echo "- /playground/agents"
+echo "- /playground/agents/{agent_id}/runs"
+echo "- /playground/agents/{agent_id}/sessions"
+echo "- /playground/agents/{agent_id}/memories"
+echo "- /playground/teams"
+echo "- /playground/teams/{team_id}/runs"
+echo "- /playground/teams/{team_id}/sessions"
+echo "- /playground/team/{team_id}/memories"
+echo "- /playground/workflows"
+echo "- /api/v1/monitoring/*"
+echo "- /api/v1/monitoring/alerts/*"
+echo ""
+echo "Agent IDs: pagbank-specialist, emissao-specialist, adquirencia-specialist, human-handoff-specialist"
+echo "Team IDs: ana-pagbank-assistant"
+echo ""
+echo "Run this file with: bash comprehensive_qa_test_suite.txt"

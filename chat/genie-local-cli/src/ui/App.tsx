@@ -13,7 +13,7 @@ import { useLocalAPIStream } from './hooks/useLocalAPIStream.js';
 import { useLoadingIndicator } from './hooks/useLoadingIndicator.js';
 import { Header } from './components/Header.js';
 import { LoadingIndicator } from './components/LoadingIndicator.js';
-import { InputPrompt } from './components/InputPrompt.js';
+import { LibraryInputPrompt } from './components/LibraryInputPrompt.js';
 import { Footer } from './components/Footer.js';
 import { ChatDisplay } from './components/ChatDisplay.js';
 import { TargetTypeDialog } from './components/TargetTypeDialog.js';
@@ -158,6 +158,8 @@ const App = ({ version }: AppProps) => {
     [],
   );
 
+  const isGlobalInputActive = streamingState === StreamingState.Idle && connectionStatus === 'connected' && uiState === 'chatting';
+  
   useInput((input: string, key: InkKeyType) => {
     if (key.ctrl && (input === 'c' || input === 'C')) {
       handleExit(ctrlCPressedOnce, setCtrlCPressedOnce, ctrlCTimerRef);
@@ -169,6 +171,8 @@ const App = ({ version }: AppProps) => {
       clearHistory();
       stdout.write('\\x1B[2J\\x1B[3J\\x1B[H'); // Clear screen
     }
+  }, {
+    isActive: !isGlobalInputActive
   });
 
   const handleSubmit = useCallback(
@@ -210,7 +214,7 @@ const App = ({ version }: AppProps) => {
     setUiState('selecting_target');
   }, []);
 
-  const isInputActive = streamingState === StreamingState.Idle && connectionStatus === 'connected';
+  const isInputActive = isGlobalInputActive;
   const widthFraction = 0.9;
   const inputWidth = Math.max(20, Math.floor(terminalWidth * widthFraction) - 3);
 
@@ -379,9 +383,8 @@ const App = ({ version }: AppProps) => {
         )}
 
         {isInputActive && uiState === 'chatting' && (
-          <InputPrompt
+          <LibraryInputPrompt
             onSubmit={handleSubmit}
-            inputWidth={inputWidth}
             disabled={!selectedTarget}
             placeholder={
               selectedTarget

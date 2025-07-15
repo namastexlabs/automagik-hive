@@ -55,20 +55,11 @@ def apply_team_demo_patches():
 
 def _log_team_ready(team_instance):
     """Log team readiness with member details."""
-    # Use workflow-style logging pattern
+    # Use workflow-style logging pattern - no visual panels
     logger.info(f"🎬 DEMO MODE: ANA TEAM READY - {team_instance.name}")
     logger.info(f"🤖 AI Model: Mode={team_instance.mode}, Members={len(team_instance.members)}")
     logger.info(f"🎯 Team Configuration: ID={team_instance.team_id}")
-    
-    panel_content = (
-        f"[bold blue]🎬 ANA TEAM READY FOR DEMO (Patched)[/bold blue]\n\n"
-        f"[yellow]Team Name:[/yellow] {team_instance.name}\n"
-        f"[yellow]Mode:[/yellow] {team_instance.mode}\n"
-        f"[yellow]Available Specialists:[/yellow] {len(team_instance.members)}\n"
-        f"[yellow]Team ID:[/yellow] {team_instance.team_id}"
-    )
-    console.print(Panel.fit(panel_content, title="🚀 Demo Team Active", border_style="blue"))
-    print(f"--- [DEMO LOG] Patched agno.Team instance '{team_instance.name}' is ready. ---\n")
+    # Removed demo panel output - will be shown in startup display instead
 
 def _log_query_start(team_instance, args):
     """Log the start of a query."""

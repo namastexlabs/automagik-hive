@@ -9,6 +9,10 @@ export enum StreamingState {
 export enum MessageType {
   USER = 'user',
   ASSISTANT = 'assistant',
+  THINKING = 'thinking',
+  TOOL_START = 'tool_start',
+  TOOL_COMPLETE = 'tool_complete',
+  AGENT_START = 'agent_start',
   INFO = 'info',
   ERROR = 'error',
   SYSTEM = 'system',

@@ -11,6 +11,7 @@ from agno.playground import Playground
 from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from common.startup_display import create_startup_display, display_simple_status
 
 # Load environment variables first (optional)
 try:
@@ -176,17 +177,62 @@ def create_pagbank_api():
         ana_team = None
         available_agents = {}
     
-    # Debug: Print team and agents information
-    if (demo_mode or is_development) and not is_reloader:
-        if ana_team:
-            print(f"📋 Team Name: {ana_team.name}")
-            print(f"🆔 Team ID: {ana_team.team_id}")
-            print("💡 Use this team_id in API calls: /runs?team_id=" + ana_team.team_id)
-            print("✅ Using V2 Ana Team architecture with Agno routing")
-        else:
-            print("⚠️ No team loaded - creating minimal FastAPI app")
+    # Initialize startup display
+    startup_display = create_startup_display()
+    
+    # Initialize component version sync and capture results for startup display
+    sync_results = None
+    try:
+        from services.version_sync_service import VersionSyncService
         
-        print(f"👥 Available Agents: {list(available_agents.keys())}")
+        # Create custom sync service to capture logs
+        class StartupVersionSync(VersionSyncService):
+            def __init__(self, startup_display):
+                super().__init__()
+                self.startup_display = startup_display
+            
+            def sync_on_startup(self):
+                """Override to capture logs for startup display."""
+                self.startup_display.add_version_sync_log("🔄 Starting component version sync...")
+                
+                total_synced = 0
+                
+                for component_type in ['agent', 'team', 'workflow']:
+                    try:
+                        results = self.sync_component_type(component_type)
+                        self.sync_results[component_type + 's'] = results
+                        total_synced += len(results)
+                        
+                        if results:
+                            self.startup_display.add_version_sync_log(f"✅ Synced {len(results)} {component_type}(s)")
+                    except Exception as e:
+                        self.startup_display.add_version_sync_log(f"❌ Error syncing {component_type}s: {e}")
+                        self.sync_results[component_type + 's'] = {"error": str(e)}
+                
+                self.startup_display.add_version_sync_log(f"🎉 Version sync completed: {total_synced} components processed")
+                return self.sync_results
+        
+        sync_service = StartupVersionSync(startup_display)
+        sync_results = sync_service.sync_on_startup()
+        startup_display.set_sync_results(sync_results)
+        
+    except Exception as e:
+        startup_display.add_error("Version Sync", f"Component version sync failed: {e}")
+    
+    # Collect component information
+    if ana_team and available_agents:
+        startup_display.add_team(
+            ana_team.team_id, 
+            ana_team.name, 
+            len(available_agents), 
+            "✅"
+        )
+        
+        # Add individual agents
+        for agent_id, agent in available_agents.items():
+            startup_display.add_agent(agent_id, agent.name or agent_id, status="✅")
+    elif not ana_team or not available_agents:
+        startup_display.add_error("System", "No team or agents loaded - running with minimal configuration")
     
     # Create FastAPI app with both teams AND agents for full endpoint generation
     teams_list = [ana_team] if ana_team else []
@@ -206,11 +252,11 @@ def create_pagbank_api():
             get_conversation_typification_workflow(debug_mode=is_development),
             get_human_handoff_workflow()
         ]
-        if (demo_mode or is_development) and not is_reloader:
-            print("✅ Workflows loaded: ConversationTypification, HumanHandoff")
+        # Add workflows to startup display
+        startup_display.add_workflow("conversation_typification", "Conversation Typification", "✅")
+        startup_display.add_workflow("human_handoff", "Human Handoff", "✅")
     except Exception as e:
-        if (demo_mode or is_development) and not is_reloader:
-            print(f"⚠️ Could not load workflows: {e}")
+        startup_display.add_error("Workflows", f"Could not load workflows: {e}")
         workflows_list = []
     
     # Create base FastAPI app for configuration
@@ -240,11 +286,8 @@ def create_pagbank_api():
         try:
             from agents.tools.workflow_tools import handle_workflow_trigger_external
             external_handler = handle_workflow_trigger_external
-            if (demo_mode or is_development) and not is_reloader:
-                print("✅ Workflow external execution handler loaded")
         except ImportError as e:
-            if (demo_mode or is_development) and not is_reloader:
-                print(f"⚠️ Could not load workflow handler: {e}")
+            startup_display.add_error("Workflow Handler", f"Could not load handler: {e}")
         
         # Create playground (external_execution_handler not supported in current Agno version)
         playground = Playground(
@@ -258,16 +301,10 @@ def create_pagbank_api():
         # Get the unified router - this provides all endpoints including workflows
         unified_router = playground.get_async_router()
         app.include_router(unified_router)
-        
-        if (demo_mode or is_development) and not is_reloader:
-            pass  # Removed verbose endpoint logging
             
     except Exception as e:
-        if (demo_mode or is_development) and not is_reloader:
-            print(f"⚠️ Could not register unified API endpoints: {e}")
+        startup_display.add_error("API Endpoints", f"Could not register unified API endpoints: {e}")
         # Fallback: create minimal endpoints if Playground fails
-        if not is_reloader:
-            print("⚠️ Fallback: Playground failed, creating minimal endpoints")
         
         @app.get("/status")
         async def status():
@@ -295,37 +332,44 @@ def create_pagbank_api():
         from api.routes.v1_router import v1_router
         app.include_router(v1_router)
         if (demo_mode or is_development) and not is_reloader:
-            # Add development welcome message with documentation and MCP info
-            port = int(os.getenv("PB_AGENTS_PORT", "9888"))
-            print(f"\n👋 Hey Mr. Dev! Your server is ready to rock!")
+            # Display startup summary
+            startup_display.display_summary()
             
-            # Use Rich library for proper table formatting
+            # Add development URLs
+            port = int(os.getenv("PB_AGENTS_PORT", "9888"))
             from rich.console import Console
             from rich.table import Table
             
             console = Console()
-            table = Table(title="🚀 Development Server")
-            table.add_column("Service", style="cyan")
-            table.add_column("URL", style="green")
+            table = Table(title="🌐 Development URLs", show_header=False, box=None)
+            table.add_column("", style="cyan", width=20)
+            table.add_column("", style="green")
             
-            table.add_row("📖 API Documentation", f"http://localhost:{port}/docs")
-            table.add_row("📋 Alternative Docs", f"http://localhost:{port}/redoc")
-            table.add_row("🚀 Main API", f"http://localhost:{port}")
-            table.add_row("💗 Health Check", f"http://localhost:{port}/api/v1/health")
+            table.add_row("📖 API Docs:", f"http://localhost:{port}/docs")
+            table.add_row("🚀 Main API:", f"http://localhost:{port}")
+            table.add_row("💗 Health:", f"http://localhost:{port}/api/v1/health")
             
+            console.print("\n")
             console.print(table)
-            print(f"\n🔧 MCP Integration Config (for playground testing of agents, teams, and workflows):")
-            print(f'"genie-agents": {{')
-            print(f'  "command": "uvx",')
-            print(f'  "args": ["automagik-tools", "tool", "genie-agents"],')
-            print(f'  "env": {{')
-            print(f'    "GENIE_AGENTS_API_BASE_URL": "http://localhost:{port}",')
-            print(f'    "GENIE_AGENTS_TIMEOUT": "300"')
-            print(f'  }}')
-            print(f'}}')
     except Exception as e:
-        if (demo_mode or is_development) and not is_reloader:
-            print(f"⚠️ Could not register custom business endpoints: {e}")
+        startup_display.add_error("Business Endpoints", f"Could not register custom business endpoints: {e}")
+    
+    # ✅ ADD AGNO MESSAGE VALIDATION MIDDLEWARE
+    # Validates messages for Agno Playground endpoints (before version middleware)
+    try:
+        from api.middleware.agno_validation_middleware import AgnoValidationMiddleware
+        app.add_middleware(AgnoValidationMiddleware)
+    except Exception as e:
+        startup_display.add_error("Middleware", f"Could not add Agno validation middleware: {e}")
+    
+    # ✅ ADD VERSION MIDDLEWARE (before CORS)
+    # Add version support to existing playground endpoints
+    try:
+        from api.middleware.version_middleware import PlaygroundVersionMiddleware
+        app.add_middleware(PlaygroundVersionMiddleware)
+        pass  # Version middleware added silently
+    except Exception as e:
+        startup_display.add_error("Version Middleware", f"Could not add version middleware: {e}")
     
     # ✅ ADD CORS MIDDLEWARE (unified from main.py)
     app.add_middleware(

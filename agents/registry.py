@@ -11,7 +11,8 @@ _agent_modules = {
     "pagbank": "agents.pagbank.agent",
     "adquirencia": "agents.adquirencia.agent", 
     "emissao": "agents.emissao.agent",
-    "human_handoff": "agents.human_handoff.agent"
+    "human_handoff": "agents.human_handoff.agent",
+    "finalizacao": "agents.finalizacao.agent"
 }
 
 # Cache for imported agent factories
@@ -66,7 +67,13 @@ class AgentRegistry:
         session_id: Optional[str] = None,
         debug_mode: bool = False,
         db_url: Optional[str] = None,
-        memory: Optional[Any] = None
+        memory: Optional[Any] = None,
+        # User context parameters - forwarded to agent factories
+        user_id: Optional[str] = None,
+        user_name: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        cpf: Optional[str] = None,
+        **kwargs
     ) -> Agent:
         """
         Get agent instance by ID - Generic factory pattern with versioning support.
@@ -77,6 +84,10 @@ class AgentRegistry:
             session_id: Session ID for conversation tracking
             debug_mode: Enable debug mode
             db_url: Database URL override
+            user_id: User identifier for session state
+            user_name: User name for session state
+            phone_number: User phone for session state
+            cpf: User CPF for session state
             
         Returns:
             Configured Agent instance
@@ -84,7 +95,7 @@ class AgentRegistry:
         Raises:
             KeyError: If agent_id not found
         """
-        # Try database-driven versioning first (now includes knowledge base)
+        # Try database-driven versioning first (includes knowledge base and auto-update)
         try:
             return create_versioned_agent(
                 agent_id=f"{agent_id}-specialist" if not agent_id.endswith("-specialist") else agent_id,
@@ -92,7 +103,13 @@ class AgentRegistry:
                 session_id=session_id,
                 debug_mode=debug_mode,
                 db_url=db_url,
-                memory=memory
+                memory=memory,
+                # Forward user context parameters
+                user_id=user_id,
+                user_name=user_name,
+                phone_number=phone_number,
+                cpf=cpf,
+                **kwargs
             )
         except ValueError:
             # Fall back to agent factories if versioning fails
@@ -113,7 +130,13 @@ class AgentRegistry:
                 session_id=session_id,
                 debug_mode=debug_mode,
                 db_url=db_url,
-                memory=memory
+                memory=memory,
+                # Forward user context parameters
+                user_id=user_id,
+                user_name=user_name,
+                phone_number=phone_number,
+                cpf=cpf,
+                **kwargs
             )
     
     @classmethod
@@ -176,7 +199,13 @@ def get_agent(
     session_id: Optional[str] = None,
     debug_mode: bool = False,
     db_url: Optional[str] = None,
-    memory: Optional[Any] = None
+    memory: Optional[Any] = None,
+    # User context parameters - forwarded to agent factories
+    user_id: Optional[str] = None,
+    user_name: Optional[str] = None,
+    phone_number: Optional[str] = None,
+    cpf: Optional[str] = None,
+    **kwargs
 ) -> Agent:
     """
     Generic agent factory - main entry point for any agent system.
@@ -197,7 +226,13 @@ def get_agent(
         session_id=session_id,
         debug_mode=debug_mode,
         db_url=db_url,
-        memory=memory
+        memory=memory,
+        # Forward user context parameters
+        user_id=user_id,
+        user_name=user_name,
+        phone_number=phone_number,
+        cpf=cpf,
+        **kwargs
     )
 
 
@@ -207,7 +242,13 @@ def get_team_agents(
     session_id: Optional[str] = None,
     debug_mode: bool = False,
     db_url: Optional[str] = None,
-    memory: Optional[Any] = None
+    memory: Optional[Any] = None,
+    # User context parameters - forwarded to agent factories
+    user_id: Optional[str] = None,
+    user_name: Optional[str] = None,
+    phone_number: Optional[str] = None,
+    cpf: Optional[str] = None,
+    **kwargs
 ) -> list[Agent]:
     """
     Get multiple agents for team composition.
@@ -222,6 +263,18 @@ def get_team_agents(
         List of configured Agent instances
     """
     return [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory)
+        get_agent(
+            name, 
+            session_id=session_id, 
+            debug_mode=debug_mode, 
+            db_url=db_url, 
+            memory=memory,
+            # Forward user context parameters
+            user_id=user_id,
+            user_name=user_name,
+            phone_number=phone_number,
+            cpf=cpf,
+            **kwargs
+        )
         for name in agent_names
     ]

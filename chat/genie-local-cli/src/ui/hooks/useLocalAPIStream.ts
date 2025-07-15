@@ -77,22 +77,35 @@ export const useLocalAPIStream = (
 
       // Handle streaming response
       const handleStreamingMessage = (data: StreamingResponse) => {
-        currentStreamRef.current += data.content;
-        
-        setPendingMessage(prev => prev ? {
-          ...prev,
-          text: currentStreamRef.current,
-          metadata: {
-            ...prev.metadata,
-            complete: data.done,
-          },
-        } : null);
+        // Determine message type based on metadata
+        let messageType = MessageType.ASSISTANT;
+        if (data.metadata?.type === 'thinking') {
+          messageType = MessageType.THINKING;
+        } else if (data.metadata?.type === 'tool_start') {
+          messageType = MessageType.TOOL_START;
+        } else if (data.metadata?.type === 'tool_complete') {
+          messageType = MessageType.TOOL_COMPLETE;
+        } else if (data.metadata?.type === 'agent_start') {
+          messageType = MessageType.AGENT_START;
+        }
 
-        if (data.done) {
-          // Finalize the message
-          const finalMessage: Omit<HistoryItem, 'id'> = {
-            type: MessageType.ASSISTANT,
+        // For content messages, accumulate in current stream
+        if (data.metadata?.type === 'content' || !data.metadata?.type) {
+          currentStreamRef.current += data.content;
+          
+          setPendingMessage(prev => prev ? {
+            ...prev,
             text: currentStreamRef.current,
+            metadata: {
+              ...prev.metadata,
+              complete: data.done,
+            },
+          } : null);
+        } else {
+          // For other message types, add as separate messages immediately
+          const immediateMessage: Omit<HistoryItem, 'id'> = {
+            type: messageType,
+            text: data.content,
             timestamp: Date.now(),
             sessionId: data.session_id || sessionId,
             metadata: {
@@ -101,8 +114,27 @@ export const useLocalAPIStream = (
               complete: true,
             },
           };
+          addMessage(immediateMessage);
+        }
+
+        if (data.done) {
+          // Finalize the main content message if it exists
+          if (currentStreamRef.current.trim()) {
+            const finalMessage: Omit<HistoryItem, 'id'> = {
+              type: MessageType.ASSISTANT,
+              text: currentStreamRef.current,
+              timestamp: Date.now(),
+              sessionId: data.session_id || sessionId,
+              metadata: {
+                target: selectedTarget,
+                streaming: false,
+                complete: true,
+              },
+            };
+            
+            addMessage(finalMessage);
+          }
           
-          addMessage(finalMessage);
           setPendingMessage(null);
           setStreamingState(StreamingState.Idle);
           setDebugMessage('');

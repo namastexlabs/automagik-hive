@@ -444,7 +444,7 @@ class TestWorkflowIntegration:
     
     def test_workflow_database_integration(self):
         """Test workflow execution is properly tracked in database"""
-        from agno.storage.postgresql import PostgresStorage
+        from agno.storage.postgres import PostgresStorage
         
         storage = PostgresStorage()
         

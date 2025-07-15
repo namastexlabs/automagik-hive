@@ -20,6 +20,9 @@ from agents.registry import get_agent
 # Memory system integration
 from context.memory.memory_manager import create_memory_manager
 
+# User context management - simple helper for session_state
+from context.user_context_helper import create_user_context_state
+
 # Demo logging is now handled by global patching in serve.py
 
 
@@ -29,6 +32,11 @@ def get_ana_team(
     session_id: Optional[str] = None,
     debug_mode: bool = True,
     agent_names: Optional[list[str]] = None,
+    # User context parameters - will be stored in session_state
+    user_name: Optional[str] = None,
+    phone_number: Optional[str] = None,
+    cpf: Optional[str] = None,
+    **kwargs
 ) -> Team:
     """
     Ana Team factory - Generic Agno Team(mode="route") implementation.
@@ -52,10 +60,19 @@ def get_ana_team(
     
     # Use provided agent names or default from config/system
     if agent_names is None:
-        agent_names = ["adquirencia", "emissao", "pagbank"]  # Removed human_handoff - use workflow instead
+        agent_names = ["adquirencia", "emissao", "pagbank", "human_handoff", "finalizacao"]  # Added finalizacao for conversation closure
     
     # Use model override if provided (agno-demo-app pattern)
     model_id = model_id or config["model"]["id"]
+    
+    # Create user context session_state (Agno's built-in way)
+    user_context_state = create_user_context_state(
+        user_id=user_id,
+        user_name=user_name,
+        phone_number=phone_number,
+        cpf=cpf,
+        **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
+    )
     
     # Initialize memory system from YAML config - use Agno Memory V2 correctly
     memory_manager = None
@@ -71,20 +88,22 @@ def get_ana_team(
     
     # Load member agents using generic get_agent factory
     members = [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory)
+        get_agent(
+            name, 
+            session_id=session_id, 
+            debug_mode=debug_mode, 
+            db_url=db_url, 
+            memory=memory,
+            # Pass user context parameters to member agents
+            user_id=user_id,
+            user_name=user_name,
+            phone_number=phone_number,
+            cpf=cpf
+        )
         for name in agent_names
     ]
     
-    # Load workflow tools for escalation triggers
-    tools = []
-    if "tools" in config:
-        try:
-            from agents.tools.workflow_tools import trigger_human_handoff_workflow
-            if "trigger_human_handoff_workflow" in config["tools"]:
-                tools.append(trigger_human_handoff_workflow)
-        except ImportError as e:
-            logger.warning(f"Could not load workflow tools for Ana team: {e}")
-            # Continue without tools
+    # Ana team only routes - no tools needed (tools are in specialist agents)
     
     # Create Team with route mode (Agno docs pattern)
     # Demo logging is handled by global patching
@@ -94,7 +113,6 @@ def get_ana_team(
         mode="route",                                   # Key Agno pattern
         members=members,                                # Generic agent loading
         instructions=config["instructions"],            # From YAML (routing logic)
-        tools=tools if tools else None,                     # Workflow trigger tools
         session_id=session_id,
         user_id=user_id,
         description=config["team"]["description"],
@@ -117,6 +135,10 @@ def get_ana_team(
         show_tool_calls=config.get("show_tool_calls", True),
         add_datetime_to_instructions=config.get("add_datetime_to_instructions", True),
         add_member_tools_to_system_message=config.get("add_member_tools_to_system_message", True),
+        # User context stored in session_state (Agno's built-in persistence)
+        session_state=user_context_state if user_context_state.get('user_context') else None,
+        # Make user context available in instructions
+        add_state_in_messages=True,  # This allows {user_name}, {user_id}, etc. in instructions
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,
@@ -206,7 +228,15 @@ def get_custom_team(
     
     # Load member agents using generic get_agent factory
     members = [
-        get_agent(name, session_id=session_id, debug_mode=debug_mode, db_url=db_url, memory=memory)
+        get_agent(
+            name, 
+            session_id=session_id, 
+            debug_mode=debug_mode, 
+            db_url=db_url, 
+            memory=memory,
+            # Note: Custom team doesn't receive user context parameters
+            # If needed, extend this function to accept user context parameters
+        )
         for name in agent_names
     ]
     

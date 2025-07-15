@@ -33,6 +33,18 @@
         "EVOLUTION_API_INSTANCE": "SofIA",
         "EVOLUTION_API_FIXED_RECIPIENT": "5511986780008@s.whatsapp.net"
       }
+    },
+     "genie-agents": {
+       "command": "uvx",
+       "args": [
+         "automagik-tools@0.8.12",
+         "tool",
+         "genie-agents"
+       ],
+       "env": {
+         "GENIE_AGENTS_API_BASE_URL": "http://localhost:9888",
+         "GENIE_AGENTS_TIMEOUT": "300"
+      }
     }
   }
 }
