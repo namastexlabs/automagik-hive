@@ -1,5 +1,5 @@
 # Emissão Card Services Agent Factory
-# Based on agno-demo-app patterns for dynamic agent creation
+# Based on agno-demo-app patterns for dynamic agent creation with native knowledge integration
 
 from typing import Optional
 import yaml
@@ -7,68 +7,9 @@ from pathlib import Path
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
-from agents.tools.agent_tools import search_knowledge_base
-from agno.tools import Function
-
-
-def create_knowledge_search_tool(business_unit: str, config: dict = None) -> Function:
-    """Create knowledge search tool configured for specific business unit"""
-    
-    # Extract config values if provided
-    default_max_results = 5
-    default_threshold = 0.6
-    
-    if config:
-        knowledge_config = config.get("knowledge_filter", {})
-        default_max_results = knowledge_config.get("max_results", 5)
-        default_threshold = knowledge_config.get("relevance_threshold", 0.6)
-    
-    def knowledge_search(query: str, max_results: int = None) -> str:
-        """Search PagBank knowledge base for relevant information
-        
-        Args:
-            query: Search query in Portuguese
-            max_results: Maximum number of results to return (uses config default if None)
-            
-        Returns:
-            Formatted search results with solutions and information
-        """
-        # Use config defaults if not specified
-        search_max_results = max_results if max_results is not None else default_max_results
-        
-        result = search_knowledge_base(
-            query=query,
-            business_unit=business_unit,
-            max_results=search_max_results,
-            relevance_threshold=default_threshold
-        )
-        
-        if not result["success"]:
-            return f"Erro na busca: {result.get('error', 'Erro desconhecido')}"
-        
-        if not result["results"]:
-            return "Nenhuma informação encontrada na base de conhecimento para esta consulta."
-        
-        # Format results for agent consumption
-        formatted_results = []
-        for i, item in enumerate(result["results"], 1):
-            content = item.get("content", "")
-            metadata = item.get("metadata", {})
-            score = item.get("relevance_score", 0)
-            
-            formatted_results.append(
-                f"Resultado {i} (relevância: {score:.2f}):\n"
-                f"Conteúdo: {content}\n"
-                f"Metadados: {metadata}\n"
-            )
-        
-        return "\n".join(formatted_results)
-    
-    return Function(
-        function=knowledge_search,
-        name="search_knowledge_base",
-        description=f"Busca informações na base de conhecimento do PagBank para {business_unit}"
-    )
+from agno.knowledge.csv import CSVKnowledgeBase
+from agno.embedder.openai import OpenAIEmbedder
+from agno.vectordb.pgvector import HNSW, PgVector, SearchType
 
 
 def get_emissao_agent(
@@ -87,9 +28,9 @@ def get_emissao_agent(
         db_url: Database URL for storage (defaults to environment)
         
     Returns:
-        Configured Emissão Agent instance
+        Configured Emissão Agent instance with native Agno knowledge integration
     """
-    # Load configuration (in V2 this will come from database)
+    # Load configuration from YAML
     config_path = Path(__file__).parent / "config.yaml"
     with open(config_path) as f:
         config = yaml.safe_load(f)
@@ -113,22 +54,52 @@ def get_emissao_agent(
         from db.session import db_url as default_db_url
         db_url = default_db_url
     
-    # Create tools list from config
-    tools = []
-    
-    # Add knowledge search tool if configured
+    # Create Agno native knowledge base integration
     knowledge_config = config.get("knowledge_filter", {})
-    if knowledge_config and "search_knowledge_base" in config.get("tools", []):
-        business_unit = knowledge_config.get("business_unit")
-        if business_unit:
-            tools.append(create_knowledge_search_tool(business_unit, config))
+    knowledge_settings = config.get("knowledge", {})
+    knowledge_base = None
     
+    if knowledge_config:
+        csv_file_path = knowledge_config.get("csv_file_path", "context/knowledge/knowledge_rag.csv")
+        business_unit = knowledge_config.get("business_unit", "Emissão")
+        
+        # Create vector database for knowledge
+        vector_db = PgVector(
+            table_name="emissao_knowledge",
+            db_url=db_url,
+            embedder=OpenAIEmbedder(id="text-embedding-3-small"),
+            search_type=SearchType.hybrid,
+            vector_index=HNSW(),
+            distance="cosine"
+        )
+        
+        # Create knowledge base with business unit filtering
+        knowledge_base = CSVKnowledgeBase(
+            path=csv_file_path,
+            vector_db=vector_db,
+            num_documents=knowledge_config.get("max_results", 5)
+        )
+        
+        # Add valid metadata filters for Agno agentic filtering from config
+        valid_filters = knowledge_settings.get("valid_metadata_filters", ["business_unit", "solution", "typification"])
+        knowledge_base.valid_metadata_filters = set(valid_filters)
+        
+        # Load knowledge base
+        knowledge_base.load(recreate=False, upsert=True)
+    
+    # Create agent with native Agno knowledge integration
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
         instructions=config["instructions"],
         model=model,
-        tools=tools if tools else None,
+        
+        # CRITICAL: Use Agno's native knowledge integration from YAML config
+        knowledge=knowledge_base,
+        search_knowledge=knowledge_settings.get("search_knowledge", True),
+        enable_agentic_knowledge_filters=knowledge_settings.get("enable_agentic_knowledge_filters", True),
+        knowledge_filters={"business_unit": knowledge_config.get("business_unit", "Emissão")},
+        
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,
@@ -136,12 +107,14 @@ def get_emissao_agent(
         ),
         session_id=session_id,
         debug_mode=debug_mode,
+        
         # Additional Agno parameters from config
         markdown=config.get("markdown", False),
         show_tool_calls=config.get("show_tool_calls", True),
         add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
         num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
-        # CRITICAL: Response constraints from YAML configuration (dynamic, not hardcoded)
+        
+        # CRITICAL: Response constraints from YAML configuration
         success_criteria=config.get("success_criteria"),
         expected_output=config.get("expected_output")
     )
@@ -153,6 +126,6 @@ def get_emissao_agent_latest(session_id: Optional[str] = None, debug_mode: bool 
     return get_emissao_agent(session_id=session_id, debug_mode=debug_mode)
 
 
-def get_emissao_agent_v27(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
-    """Get specific v27 of Emissão agent for testing/rollback"""
-    return get_emissao_agent(version=27, session_id=session_id, debug_mode=debug_mode)
+def get_emissao_agent_v28(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
+    """Get specific v28 of Emissão agent for testing/rollback"""
+    return get_emissao_agent(version=28, session_id=session_id, debug_mode=debug_mode)

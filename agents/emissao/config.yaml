@@ -46,11 +46,16 @@ knowledge_filter:
     use_semantic_search: true
     include_metadata: true
 
-# Tools available to this agent
+# Agno agentic knowledge configuration
+knowledge:
+  search_knowledge: true
+  enable_agentic_knowledge_filters: true
+  valid_metadata_filters: ["business_unit", "solution", "typification"]
+
+# Tools available to this agent (no custom knowledge search - using Agno native)
 tools:
-  - "search_knowledge_base"
   - "check_card_status"
-  - "verify_credit_limits"
+  - "verify_credit_limits"  
   - "process_bill_inquiries"
 
 # Storage configuration
