@@ -15,7 +15,7 @@ from agno.tools import Function
 
 from db.services.agent_version_service import AgentVersionService
 from db.session import get_db
-from agents.tools.agent_tools import search_knowledge_base
+# Native Agno knowledge integration - no custom tools needed
 
 
 class AgentVersionFactory:
@@ -247,74 +247,12 @@ class AgentVersionFactory:
         # Get configured tools
         configured_tools = config.get("tools", [])
         
-        # Add knowledge search tool if configured
-        if "search_knowledge_base" in configured_tools:
-            knowledge_config = config.get("knowledge_filter", {})
-            business_unit = knowledge_config.get("business_unit")
-            
-            if business_unit:
-                tools.append(self._create_knowledge_search_tool(business_unit, config))
+        # Native Agno knowledge integration - no custom tools needed
+        # Knowledge search is handled by Agno's native capabilities
         
         return tools
     
-    def _create_knowledge_search_tool(self, business_unit: str, config: dict = None) -> Function:
-        """Create knowledge search tool configured for specific business unit"""
-        
-        # Extract config values if provided
-        default_max_results = 5
-        default_threshold = 0.6
-        
-        if config:
-            knowledge_config = config.get("knowledge_filter", {})
-            default_max_results = knowledge_config.get("max_results", 5)
-            default_threshold = knowledge_config.get("relevance_threshold", 0.3)  # Lower threshold for better recall
-        
-        def knowledge_search(query: str, max_results: int = None) -> str:
-            """Search PagBank knowledge base for relevant information
-            
-            Args:
-                query: Search query in Portuguese
-                max_results: Maximum number of results to return (uses config default if None)
-                
-            Returns:
-                Formatted search results with solutions and information
-            """
-            # Use config defaults if not specified
-            search_max_results = max_results if max_results is not None else default_max_results
-            
-            result = search_knowledge_base(
-                query=query,
-                business_unit=business_unit,
-                max_results=search_max_results,
-                relevance_threshold=default_threshold
-            )
-            
-            if not result["success"]:
-                return f"Erro na busca: {result.get('error', 'Erro desconhecido')}"
-            
-            if not result["results"]:
-                return "Nenhuma informação encontrada na base de conhecimento para esta consulta."
-            
-            # Format results for agent consumption
-            formatted_results = []
-            for i, item in enumerate(result["results"], 1):
-                content = item.get("content", "")
-                metadata = item.get("metadata", {})
-                score = item.get("relevance_score", 0)
-                
-                formatted_results.append(
-                    f"Resultado {i} (relevância: {score:.2f}):\n"
-                    f"Conteúdo: {content}\n"
-                    f"Metadados: {metadata}\n"
-                )
-            
-            return "\n".join(formatted_results)
-        
-        return Function(
-            function=knowledge_search,
-            name="search_knowledge_base",
-            description=f"Busca informações na base de conhecimento do PagBank para {business_unit}"
-        )
+    # Native Agno knowledge integration - no custom knowledge search tools needed
     
     def migrate_file_to_database(
         self,

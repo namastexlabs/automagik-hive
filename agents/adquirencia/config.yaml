@@ -33,22 +33,22 @@ instructions: |
   Sempre responda em português brasileiro.
   Priorize conformidade e análise de risco em todas as orientações.
 
-# Knowledge base filtering and search configuration
+# Knowledge base filtering and search configuration (POC pattern)
 knowledge_filter:
   business_unit: "Adquirência Web"
-  max_results: 5
-  relevance_threshold: 0.6
+  max_results: 3
+  relevance_threshold: 0.7
   csv_file_path: "context/knowledge/knowledge_rag.csv"
   search_config:
     enable_hybrid_search: true
     use_semantic_search: true
     include_metadata: true
 
-# Tools available to this agent
-tools:
-  - "search_knowledge_base"
-  - "check_sales_eligibility"
-  - "calculate_anticipation_rates"
+# Native Agno knowledge integration (no custom tools needed)
+knowledge:
+  search_knowledge: true
+  enable_agentic_knowledge_filters: true
+  valid_metadata_filters: ["business_unit", "solution", "typification"]
 
 # Storage configuration
 storage:

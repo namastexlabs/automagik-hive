@@ -1,5 +1,5 @@
 # PagBank Digital Banking Agent Factory
-# Based on agno-demo-app patterns for dynamic agent creation
+# Native Agno knowledge integration with POC business unit filters
 
 from typing import Optional
 import yaml
@@ -7,68 +7,10 @@ from pathlib import Path
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
-from agents.tools.agent_tools import get_agent_tools, search_knowledge_base
-from agno.tools import Function
-
-
-def create_knowledge_search_tool(business_unit: str, config: dict = None) -> Function:
-    """Create knowledge search tool configured for specific business unit"""
-    
-    # Extract config values if provided
-    default_max_results = 5
-    default_threshold = 0.6
-    
-    if config:
-        knowledge_config = config.get("knowledge_filter", {})
-        default_max_results = knowledge_config.get("max_results", 5)
-        default_threshold = knowledge_config.get("relevance_threshold", 0.6)
-    
-    def knowledge_search(query: str, max_results: int = None) -> str:
-        """Search PagBank knowledge base for relevant information
-        
-        Args:
-            query: Search query in Portuguese
-            max_results: Maximum number of results to return (uses config default if None)
-            
-        Returns:
-            Formatted search results with solutions and information
-        """
-        # Use config defaults if not specified
-        search_max_results = max_results if max_results is not None else default_max_results
-        
-        result = search_knowledge_base(
-            query=query,
-            business_unit=business_unit,
-            max_results=search_max_results,
-            relevance_threshold=default_threshold
-        )
-        
-        if not result["success"]:
-            return f"Erro na busca: {result.get('error', 'Erro desconhecido')}"
-        
-        if not result["results"]:
-            return "Nenhuma informação encontrada na base de conhecimento para esta consulta."
-        
-        # Format results for agent consumption
-        formatted_results = []
-        for i, item in enumerate(result["results"], 1):
-            content = item.get("content", "")
-            metadata = item.get("metadata", {})
-            score = item.get("relevance_score", 0)
-            
-            formatted_results.append(
-                f"Resultado {i} (relevância: {score:.2f}):\n"
-                f"Conteúdo: {content}\n"
-                f"Metadados: {metadata}\n"
-            )
-        
-        return "\n".join(formatted_results)
-    
-    return Function(
-        function=knowledge_search,
-        name="search_knowledge_base",
-        description=f"Busca informações na base de conhecimento do PagBank para {business_unit}"
-    )
+from agno.knowledge.csv import CSVKnowledgeBase
+from agno.vectordb.pgvector import PgVector, SearchType, HNSW
+from agno.embedder.openai import OpenAIEmbedder
+from context.knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
 
 
 def get_pagbank_agent(
@@ -79,6 +21,7 @@ def get_pagbank_agent(
 ) -> Agent:
     """
     Factory function for PagBank digital banking specialist agent.
+    Uses native Agno knowledge integration with exact POC business unit filtering.
     
     Args:
         version: Specific agent version to load (defaults to latest)
@@ -87,7 +30,7 @@ def get_pagbank_agent(
         db_url: Database URL for storage (defaults to environment)
         
     Returns:
-        Configured PagBank Agent instance
+        Configured PagBank Agent instance with native knowledge integration
     """
     # Load configuration (in V2 this will come from database)
     config_path = Path(__file__).parent / "config.yaml"
@@ -113,22 +56,47 @@ def get_pagbank_agent(
         from db.session import db_url as default_db_url
         db_url = default_db_url
     
-    # Create tools list from config
-    tools = []
+    # Create native Agno knowledge base with POC configuration
+    csv_path = Path(__file__).parent.parent.parent / "context" / "knowledge" / "knowledge_rag.csv"
     
-    # Add knowledge search tool if configured
-    knowledge_config = config.get("knowledge_filter", {})
-    if knowledge_config and "search_knowledge_base" in config.get("tools", []):
-        business_unit = knowledge_config.get("business_unit")
-        if business_unit:
-            tools.append(create_knowledge_search_tool(business_unit, config))
+    # Create PgVector with OpenAI embedder and HNSW index (same as POC)
+    vector_db = PgVector(
+        table_name="pagbank_knowledge_pagbank",
+        db_url=db_url,
+        embedder=OpenAIEmbedder(id="text-embedding-3-small"),
+        search_type=SearchType.hybrid,
+        vector_index=HNSW(),  # High-performance vector index from POC
+        distance="cosine"
+    )
+    
+    # Create CSVKnowledgeBase with enhanced reader (same as POC)
+    knowledge_base = CSVKnowledgeBase(
+        path=csv_path,
+        vector_db=vector_db,
+        reader=create_enhanced_csv_reader_for_pagbank(),
+        num_documents=config["knowledge_filter"]["max_results"]
+    )
+    
+    # Add valid_metadata_filters attribute for Agno agentic filtering from config
+    knowledge_config = config["knowledge"]
+    knowledge_base.valid_metadata_filters = set(knowledge_config["valid_metadata_filters"])
+    
+    # Load knowledge base
+    knowledge_base.load(recreate=False, upsert=True)
+    
+    # Load business unit filter from YAML config
+    business_unit_filter = config["knowledge_filter"]["business_unit"]
     
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
         instructions=config["instructions"],
         model=model,
-        tools=tools if tools else None,
+        # Native Agno knowledge integration with exact POC filtering
+        knowledge=knowledge_base,
+        search_knowledge=knowledge_config["search_knowledge"],
+        enable_agentic_knowledge_filters=knowledge_config["enable_agentic_knowledge_filters"],
+        knowledge_filters={"business_unit": business_unit_filter},
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,

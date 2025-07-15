@@ -13,3 +13,17 @@ AGENT_TOOLS = {
 }
 
 
+def get_agent_tools(agent_type: str) -> List[Any]:
+    """
+    Get tools for a specific agent type
+    
+    Args:
+        agent_type: Type of agent (e.g., 'adquirencia_specialist', 'pagbank_specialist')
+        
+    Returns:
+        List of tools for the agent (empty list - using Agno native integration)
+    """
+    # Native Agno knowledge integration - no custom tools needed
+    return []
+
+

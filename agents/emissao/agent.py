@@ -1,5 +1,5 @@
 # Emissão Card Services Agent Factory
-# Based on agno-demo-app patterns for dynamic agent creation with native knowledge integration
+# Native Agno knowledge integration with POC business unit filters
 
 from typing import Optional
 import yaml
@@ -8,8 +8,9 @@ from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 from agno.knowledge.csv import CSVKnowledgeBase
+from agno.vectordb.pgvector import PgVector, SearchType, HNSW
 from agno.embedder.openai import OpenAIEmbedder
-from agno.vectordb.pgvector import HNSW, PgVector, SearchType
+from context.knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
 
 
 def get_emissao_agent(
@@ -20,6 +21,7 @@ def get_emissao_agent(
 ) -> Agent:
     """
     Factory function for Emissão card services specialist agent.
+    Uses native Agno knowledge integration with exact POC business unit filtering.
     
     Args:
         version: Specific agent version to load (defaults to latest)
@@ -28,7 +30,7 @@ def get_emissao_agent(
         db_url: Database URL for storage (defaults to environment)
         
     Returns:
-        Configured Emissão Agent instance with native Agno knowledge integration
+        Configured Emissão Agent instance with native knowledge integration
     """
     # Load configuration from YAML
     config_path = Path(__file__).parent / "config.yaml"
@@ -54,52 +56,47 @@ def get_emissao_agent(
         from db.session import db_url as default_db_url
         db_url = default_db_url
     
-    # Create Agno native knowledge base integration
-    knowledge_config = config.get("knowledge_filter", {})
-    knowledge_settings = config.get("knowledge", {})
-    knowledge_base = None
+    # Create native Agno knowledge base with POC configuration
+    csv_path = Path(__file__).parent.parent.parent / "context" / "knowledge" / "knowledge_rag.csv"
     
-    if knowledge_config:
-        csv_file_path = knowledge_config.get("csv_file_path", "context/knowledge/knowledge_rag.csv")
-        business_unit = knowledge_config.get("business_unit", "Emissão")
-        
-        # Create vector database for knowledge
-        vector_db = PgVector(
-            table_name="emissao_knowledge",
-            db_url=db_url,
-            embedder=OpenAIEmbedder(id="text-embedding-3-small"),
-            search_type=SearchType.hybrid,
-            vector_index=HNSW(),
-            distance="cosine"
-        )
-        
-        # Create knowledge base with business unit filtering
-        knowledge_base = CSVKnowledgeBase(
-            path=csv_file_path,
-            vector_db=vector_db,
-            num_documents=knowledge_config.get("max_results", 5)
-        )
-        
-        # Add valid metadata filters for Agno agentic filtering from config
-        valid_filters = knowledge_settings.get("valid_metadata_filters", ["business_unit", "solution", "typification"])
-        knowledge_base.valid_metadata_filters = set(valid_filters)
-        
-        # Load knowledge base
-        knowledge_base.load(recreate=False, upsert=True)
+    # Create PgVector with OpenAI embedder and HNSW index (same as POC)
+    vector_db = PgVector(
+        table_name="pagbank_knowledge_emissao",
+        db_url=db_url,
+        embedder=OpenAIEmbedder(id="text-embedding-3-small"),
+        search_type=SearchType.hybrid,
+        vector_index=HNSW(),  # High-performance vector index from POC
+        distance="cosine"
+    )
     
-    # Create agent with native Agno knowledge integration
+    # Create CSVKnowledgeBase with enhanced reader (same as POC)
+    knowledge_base = CSVKnowledgeBase(
+        path=csv_path,
+        vector_db=vector_db,
+        reader=create_enhanced_csv_reader_for_pagbank(),
+        num_documents=config["knowledge_filter"]["max_results"]
+    )
+    
+    # Add valid_metadata_filters attribute for Agno agentic filtering from config
+    knowledge_config = config["knowledge"]
+    knowledge_base.valid_metadata_filters = set(knowledge_config["valid_metadata_filters"])
+    
+    # Load knowledge base
+    knowledge_base.load(recreate=False, upsert=True)
+    
+    # Load business unit filter from YAML config
+    business_unit_filter = config["knowledge_filter"]["business_unit"]
+    
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
         instructions=config["instructions"],
         model=model,
-        
-        # CRITICAL: Use Agno's native knowledge integration from YAML config
+        # Native Agno knowledge integration with exact POC filtering
         knowledge=knowledge_base,
-        search_knowledge=knowledge_settings.get("search_knowledge", True),
-        enable_agentic_knowledge_filters=knowledge_settings.get("enable_agentic_knowledge_filters", True),
-        knowledge_filters={"business_unit": knowledge_config.get("business_unit", "Emissão")},
-        
+        search_knowledge=knowledge_config["search_knowledge"],
+        enable_agentic_knowledge_filters=knowledge_config["enable_agentic_knowledge_filters"],
+        knowledge_filters={"business_unit": business_unit_filter},
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,
@@ -107,14 +104,12 @@ def get_emissao_agent(
         ),
         session_id=session_id,
         debug_mode=debug_mode,
-        
         # Additional Agno parameters from config
         markdown=config.get("markdown", False),
         show_tool_calls=config.get("show_tool_calls", True),
         add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
         num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
-        
-        # CRITICAL: Response constraints from YAML configuration
+        # CRITICAL: Response constraints from YAML configuration (dynamic, not hardcoded)
         success_criteria=config.get("success_criteria"),
         expected_output=config.get("expected_output")
     )
