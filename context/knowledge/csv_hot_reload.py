@@ -297,7 +297,13 @@ class CSVHotReloadManager:
                 print(f"✅ No changes | {load_time:.1f}s | KB: {kb_total} entries")
                 return
             
-            print(f"✅ {operation} {count} entries | {load_time:.1f}s | KB: {kb_total}")
+            # Use colored icons for better visual distinction
+            if operation == "ADD":
+                print(f"✅ {operation} {count} entries | {load_time:.1f}s | KB: {kb_total}")
+            elif operation == "UPD":
+                print(f"🟡 {operation} {count} entries | {load_time:.1f}s | KB: {kb_total}")
+            elif operation == "DEL":
+                print(f"🔴 {operation} {count} entries | {load_time:.1f}s | KB: {kb_total}")
             
             # Show affected data as table
             if operation in ["ADD", "UPD"]:
