@@ -140,7 +140,10 @@ def get_adquirencia_agent(
         markdown=config.get("markdown", False),
         show_tool_calls=config.get("show_tool_calls", True),
         add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
-        num_history_runs=config.get("memory", {}).get("num_history_runs", 5)
+        num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
+        # CRITICAL: Response constraints from YAML configuration (dynamic, not hardcoded)
+        success_criteria=config.get("success_criteria"),
+        expected_output=config.get("expected_output")
     )
 
 

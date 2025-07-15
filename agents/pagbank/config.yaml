@@ -68,6 +68,10 @@ memory:
 markdown: false
 show_tool_calls: true
 
+# CRITICAL: Specialist response constraints (to prevent verbose responses)
+success_criteria: "SUCESSO = Forneceu solução prática e objetiva para PIX/transferências/conta digital em máximo 300 palavras"
+expected_output: "Resposta concisa e prática com: 1) Solução direta, 2) Passos específicos, 3) Informações essenciais apenas. EVITAR textos longos desnecessários."
+
 # Business logic for escalation (extracted from existing code)
 escalation_triggers:
   high_value_threshold: 5000  # R$ 5,000 for transfers

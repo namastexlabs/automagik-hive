@@ -228,10 +228,10 @@ class ConversationTypificationWorkflow(Workflow):
             structured_outputs=True
         )
     
-    async def run(  # type: ignore
+    def run(  # type: ignore
         self, 
-        session_id: str, 
-        conversation_history: str,
+        conversation_text: str,
+        session_id: Optional[str] = None,
         customer_id: Optional[str] = None,
         satisfaction_data: Optional[CustomerSatisfactionData] = None,
         escalation_data: Optional[Dict] = None,
@@ -241,13 +241,19 @@ class ConversationTypificationWorkflow(Workflow):
         Execute the complete 5-level typification workflow with enhanced reporting
         
         Args:
-            session_id: Session identifier for tracking
-            conversation_history: Complete conversation text
+            conversation_text: Complete conversation text to classify
+            session_id: Optional session identifier for tracking
             customer_id: Optional customer identifier
             satisfaction_data: Customer satisfaction and NPS data from Ana
             escalation_data: Human escalation data if applicable
             metadata: Additional conversation metadata
         """
+        
+        # Generate session_id if not provided
+        if session_id is None:
+            session_id = f"session-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        conversation_history = conversation_text  # Use the input parameter
         
         if self.demo_mode:
             self._log_workflow_start(session_id, conversation_history)
@@ -422,7 +428,7 @@ class ConversationTypificationWorkflow(Workflow):
             )
             
             # Send WhatsApp notification if enabled
-            notification_result = await self._send_whatsapp_notification(
+            notification_result = self._send_whatsapp_notification_sync(
                 final_report, final_typification
             )
             
@@ -440,15 +446,15 @@ class ConversationTypificationWorkflow(Workflow):
             yield WorkflowCompletedEvent(
                 run_id=self.run_id,
                 content={
-                    "typification": final_typification.model_dump(),
-                    "ticket": ticket_result.model_dump(),
-                    "final_report": final_report.model_dump(),
-                    "satisfaction_data": satisfaction_data.model_dump(),
-                    "conversation_metrics": conversation_metrics.model_dump(),
+                    "typification": final_typification.model_dump(mode="json"),
+                    "ticket": ticket_result.model_dump(mode="json"),
+                    "final_report": final_report.model_dump(mode="json"),
+                    "satisfaction_data": satisfaction_data.model_dump(mode="json"),
+                    "conversation_metrics": conversation_metrics.model_dump(mode="json"),
                     "notification_result": notification_result,
                     "hierarchy_path": final_typification.hierarchy_path,
                     "confidence_scores": confidence_scores,
-                    "validation_result": validation_result.model_dump(),
+                    "validation_result": validation_result.model_dump(mode="json"),
                     "resolution_time_minutes": resolution_time,
                     "status": "completed"
                 }
@@ -536,7 +542,7 @@ class ConversationTypificationWorkflow(Workflow):
             self.session_state = {}
         
         self.session_state.setdefault('typification_results', [])
-        self.session_state['typification_results'].append(typification.model_dump())
+        self.session_state['typification_results'].append(typification.model_dump(mode="json"))
         
         logger.info(f"Saved typification result for session {typification.session_id}")
     
@@ -654,7 +660,7 @@ class ConversationTypificationWorkflow(Workflow):
         
         return "; ".join(impacts) if impacts else "Impacto padrão no atendimento"
     
-    async def _send_whatsapp_notification(
+    def _send_whatsapp_notification_sync(
         self, 
         final_report: FinalReport,
         typification: HierarchicalTypification
@@ -690,7 +696,7 @@ class ConversationTypificationWorkflow(Workflow):
             
             return {
                 "success": True,
-                "notification_data": notification_data.model_dump(),
+                "notification_data": notification_data.model_dump(mode="json"),
                 "message": "Notification prepared successfully"
             }
             
@@ -717,7 +723,7 @@ class ConversationTypificationWorkflow(Workflow):
 
 📋 *Relatório:* {report.report_id}
 🆔 *Sessão:* {report.session_id}
-🕐 *Gerado:* {report.generated_at.strftime('%d/%m/%Y %H:%M')}
+🕐 *Gerado:* {datetime.fromisoformat(report.generated_at).strftime('%d/%m/%Y %H:%M')}
 
 🎯 *Tipificação:*
 {report.typification.hierarchy_path}
@@ -738,7 +744,7 @@ class ConversationTypificationWorkflow(Workflow):
             self.session_state = {}
         
         self.session_state.setdefault('final_reports', [])
-        self.session_state['final_reports'].append(report.model_dump())
+        self.session_state['final_reports'].append(report.model_dump(mode="json"))
         
         logger.info(f"Saved final report {report.report_id} for session {report.session_id}")
     
@@ -887,7 +893,6 @@ def get_conversation_typification_workflow(debug_mode: bool = False) -> Conversa
         storage=PostgresStorage(
             table_name="conversation_typification_workflows",
             db_url=db_url,
-            mode="workflow",
             auto_upgrade_schema=True,
         ),
         debug_mode=debug_mode or env_debug,

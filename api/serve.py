@@ -5,18 +5,22 @@ Production-ready API endpoint using V2 Ana Team architecture
 
 import os
 import sys
-import threading
 import logging
 from pathlib import Path
-from dotenv import load_dotenv
-from agno.app.fastapi.app import FastAPIApp
 from agno.playground import Playground
 from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-# Load environment variables first
-load_dotenv()
+# Load environment variables first (optional)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("⚠️ python-dotenv not installed, using system environment variables")
+
+# Add current directory to Python path for module imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Apply global demo patches immediately after loading environment variables
 # This must be done before any other imports that might use agno.Team
@@ -231,6 +235,18 @@ def create_pagbank_api():
     # ✅ UNIFIED API - Single set of endpoints for both production and playground
     # Use Playground as the primary router since it provides comprehensive CRUD operations
     try:
+        # Try to import workflow trigger handler safely
+        external_handler = None
+        try:
+            from agents.tools.workflow_tools import handle_workflow_trigger_external
+            external_handler = handle_workflow_trigger_external
+            if (demo_mode or is_development) and not is_reloader:
+                print("✅ Workflow external execution handler loaded")
+        except ImportError as e:
+            if (demo_mode or is_development) and not is_reloader:
+                print(f"⚠️ Could not load workflow handler: {e}")
+        
+        # Create playground (external_execution_handler not supported in current Agno version)
         playground = Playground(
             agents=agents_list,
             teams=teams_list,

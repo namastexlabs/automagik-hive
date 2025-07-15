@@ -1,7 +1,7 @@
 # Human Handoff Workflow
 # Triggered when Ana Team routes to human escalation
 
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Union
 from agno.workflow import Workflow, RunResponse
 from agno.agent import Agent
 from agno.models.anthropic import Claude
@@ -70,26 +70,32 @@ class HumanHandoffWorkflow(Workflow):
     
     def run(
         self,
-        customer_query: str,
+        customer_message: str,
         conversation_history: Optional[str] = None,
         escalation_reason: Optional[str] = None,
         customer_id: Optional[str] = None,
         session_id: Optional[str] = None,
         urgency_level: str = "medium",
-        business_unit: Optional[str] = None
+        business_unit: Optional[str] = None,
+        customer_query: Optional[str] = None  # Legacy support
     ) -> Iterator[RunResponse]:
         """
         Execute the human handoff workflow.
         
         Args:
-            customer_query: The current customer query
+            customer_message: The current customer message/query
             conversation_history: Previous conversation context
             escalation_reason: Why escalation was triggered
             customer_id: Customer identifier
             session_id: Session identifier
             urgency_level: Priority level (low, medium, high, critical)
+            customer_query: Legacy parameter (use customer_message instead)
             business_unit: Which business unit this relates to
         """
+        
+        # Support legacy parameter
+        if customer_query and not customer_message:
+            customer_message = customer_query
         
         logger.info(f"Starting human handoff workflow for session {session_id}")
         
@@ -98,7 +104,7 @@ class HumanHandoffWorkflow(Workflow):
         context_prompt = f"""
         Analyze this customer interaction for human handoff:
         
-        Customer Query: {customer_query}
+        Customer Message: {customer_message}
         Escalation Reason: {escalation_reason or 'Not specified'}
         Business Unit: {business_unit or 'General'}
         Urgency: {urgency_level}
@@ -222,7 +228,6 @@ def get_human_handoff_workflow(
         storage=PostgresStorage(
             table_name="human_handoff_workflows",
             db_url=db_url,
-            mode="workflow",
             auto_upgrade_schema=True,
         ),
         debug_mode=debug_mode,
@@ -246,7 +251,7 @@ def trigger_human_handoff(
     """
     workflow = HumanHandoffWorkflow()
     return workflow.run(
-        customer_query=customer_query,
+        customer_message=customer_query,
         conversation_history=conversation_history,
         escalation_reason=escalation_reason,
         customer_id=customer_id,

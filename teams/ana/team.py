@@ -9,6 +9,7 @@ from pathlib import Path
 from agno.team import Team
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
+from agno.utils.log import logger
 
 # V2 Database infrastructure (from agno-demo-app pattern)
 from db.session import db_url
@@ -51,7 +52,7 @@ def get_ana_team(
     
     # Use provided agent names or default from config/system
     if agent_names is None:
-        agent_names = ["adquirencia", "emissao", "pagbank", "human_handoff"]
+        agent_names = ["adquirencia", "emissao", "pagbank", "human_handoff"]  # Added back human_handoff for routing
     
     # Load member agents using generic get_agent factory
     members = [
@@ -70,6 +71,17 @@ def get_ana_team(
     else:
         memory = None
     
+    # Load workflow tools for escalation triggers
+    tools = []
+    if "tools" in config:
+        try:
+            from agents.tools.workflow_tools import trigger_human_handoff_workflow
+            if "trigger_human_handoff_workflow" in config["tools"]:
+                tools.append(trigger_human_handoff_workflow)
+        except ImportError as e:
+            logger.warning(f"Could not load workflow tools for Ana team: {e}")
+            # Continue without tools
+    
     # Create Team with route mode (Agno docs pattern)
     # Demo logging is handled by global patching
     return Team(
@@ -78,6 +90,7 @@ def get_ana_team(
         mode="route",                                   # Key Agno pattern
         members=members,                                # Generic agent loading
         instructions=config["instructions"],            # From YAML (routing logic)
+        tools=tools if tools else None,                     # Workflow trigger tools
         session_id=session_id,
         user_id=user_id,
         description=config["team"]["description"],
@@ -87,9 +100,19 @@ def get_ana_team(
             temperature=config["model"]["temperature"],
             thinking=config["model"]["thinking"]
         ),
-        success_criteria=config["success_criteria"],
-        enable_agentic_context=config["enable_agentic_context"],
-        expected_output=config["expected_output"],
+        success_criteria=config.get("success_criteria"),
+        expected_output=config.get("expected_output"),
+        # CRITICAL: Team-specific parameters (VERIFIED from Agno docs - dynamically configured)
+        show_members_responses=config.get("show_members_responses", True),  # Show specialist responses
+        stream_intermediate_steps=config.get("stream_intermediate_steps", True),  # Stream routing process
+        stream_member_events=config.get("stream_member_events", True),  # Stream member events
+        store_events=config.get("store_events", False),  # Don't store streaming events
+        enable_agentic_context=config.get("enable_agentic_context", True),
+        share_member_interactions=config.get("share_member_interactions", True),
+        markdown=config.get("markdown", True),
+        show_tool_calls=config.get("show_tool_calls", True),
+        add_datetime_to_instructions=config.get("add_datetime_to_instructions", True),
+        add_member_tools_to_system_message=config.get("add_member_tools_to_system_message", True),
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,
@@ -154,9 +177,6 @@ def get_custom_team(
     Returns:
         Configured Team instance with route mode
     """
-    # Logic to select the class to use
-    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-    TeamClass = DemoAnaTeam if demo_mode else Team
     
     # Load base config for storage/model settings
     config_path = Path(__file__).parent / "config.yaml"
@@ -173,7 +193,7 @@ def get_custom_team(
     memory_manager = create_memory_manager()
     memory = memory_manager.create_memory_for_agent(user_id or "system", session_id)
     
-    return TeamClass(
+    return Team(
         name=team_name,
         team_id=f"{team_name.lower().replace(' ', '-')}-team",
         mode="route",                                   # Key Agno pattern

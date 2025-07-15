@@ -8,6 +8,8 @@ from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 
+# Workflow tools will be imported safely in factory function
+
 
 def get_human_handoff_agent(
     version: Optional[int] = None,        # API parameter - specific version
@@ -51,11 +53,23 @@ def get_human_handoff_agent(
         from db.session import db_url as default_db_url
         db_url = default_db_url
     
+    # Create tools list based on config
+    tools = []
+    try:
+        if config.get("tools"):
+            from agents.tools.workflow_tools import trigger_human_handoff_workflow
+            if "trigger_human_handoff_workflow" in config.get("tools", []):
+                tools.append(trigger_human_handoff_workflow)
+    except ImportError as e:
+        print(f"⚠️ Could not load workflow tools for human handoff agent: {e}")
+        # Continue without tools
+    
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
         instructions=config["instructions"],
         model=model,
+        tools=tools if tools else None,
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,
@@ -67,7 +81,10 @@ def get_human_handoff_agent(
         markdown=config.get("markdown", False),
         show_tool_calls=config.get("show_tool_calls", True),
         add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
-        num_history_runs=config.get("memory", {}).get("num_history_runs", 5)
+        num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
+        # CRITICAL: Response constraints from YAML configuration (dynamic, not hardcoded)
+        success_criteria=config.get("success_criteria"),
+        expected_output=config.get("expected_output")
     )
 
 

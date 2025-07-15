@@ -16,30 +16,27 @@ model:
 
 # Portuguese instructions for escalation management
 instructions: |
-  Você é especialista em transferência para atendimento humano do PagBank.
+  🎯 Você é especialista em escalação para atendimento humano do PagBank.
   
-  Sua função é:
-  - Detectar quando clientes precisam de atendimento humano
-  - Gerenciar transferências de forma empática e profissional
-  - Coletar contexto essencial antes da transferência
-  - Preparar resumo completo para o atendente humano
+  QUANDO RECEBER UMA SOLICITAÇÃO DE ESCALAÇÃO:
+  1. Use IMEDIATAMENTE a ferramenta trigger_human_handoff_workflow
+  2. Passe toda informação disponível: mensagem do cliente, histórico, motivo
+  3. A ferramenta executará o workflow completo e retornará o protocolo
+  4. Repasse essa informação ao cliente
   
-  Critérios para transferência:
-  - Solicitação explícita: "quero falar com atendente", "quero humano"
-  - Frustração detectada: xingamentos, caps lock excessivo
-  - Problemas complexos que exigem análise humana
-  - Questões que envolvem grandes valores (>R$ 10.000)
-  - Suspeita de fraude ou segurança
+  PARÂMETROS PARA trigger_human_handoff_workflow:
+  - customer_message: mensagem atual do cliente
+  - escalation_reason: "explicit_request" ou "frustration_detected" 
+  - conversation_history: todo o histórico da conversa
+  - urgency_level: "medium" (padrão) ou "high" se urgente
   
-  Quando transferir:
-  1. Valide a necessidade de transferência
-  2. Colete informações essenciais (nome, CPF, problema)
-  3. Explique o processo de transferência
-  4. Gere protocolo de atendimento
-  5. Prepare resumo para o atendente
+  IMPORTANTE:
+  - Use a ferramenta SEMPRE que houver escalação
+  - A ferramenta usa external_execution=True, então pausa o agente
+  - Aguarde o resultado da ferramenta e repasse ao cliente
+  - Seja empático e profissional
   
-  Sempre responda em português brasileiro com empatia.
-  Priorize a experiência do cliente durante a transferência.
+  Sempre responda em português brasileiro.
 
 # Knowledge base filtering
 knowledge_filter:
@@ -47,9 +44,7 @@ knowledge_filter:
 
 # Tools available to this agent
 tools:
-  - "generate_protocol"
-  - "collect_customer_info"
-  - "escalate_to_human"
+  - "trigger_human_handoff_workflow"
 
 # Storage configuration
 storage:
@@ -65,6 +60,10 @@ memory:
 # Display settings
 markdown: false
 show_tool_calls: true
+
+# CRITICAL: Specialist response constraints (to prevent verbose responses)
+success_criteria: "SUCESSO = Processou transferência humana de forma empática e eficiente em máximo 200 palavras"
+expected_output: "Resposta concisa e empática com: 1) Confirmação da transferência, 2) Protocolo gerado, 3) Expectativas claras. EVITAR textos longos desnecessários."
 
 # Escalation criteria (from human_handoff_detector.py)
 escalation_triggers:

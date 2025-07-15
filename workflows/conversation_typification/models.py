@@ -516,9 +516,9 @@ class FinalReport(BaseModel):
         ...,
         description="ID único do relatório"
     )
-    generated_at: datetime = Field(
-        default_factory=datetime.now,
-        description="Timestamp de geração do relatório"
+    generated_at: str = Field(
+        default_factory=lambda: datetime.now().isoformat(),
+        description="Timestamp de geração do relatório (ISO format)"
     )
     session_id: str = Field(
         ...,
@@ -596,9 +596,9 @@ class WhatsAppNotificationData(BaseModel):
     )
     
     # Delivery tracking
-    sent_at: Optional[datetime] = Field(
+    sent_at: Optional[str] = Field(
         None,
-        description="Timestamp do envio"
+        description="Timestamp do envio (ISO format)"
     )
     delivery_status: str = Field(
         default="pending",

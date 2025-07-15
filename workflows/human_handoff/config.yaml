@@ -70,7 +70,7 @@ protocol_fields:
 # WhatsApp notification settings
 whatsapp:
   enabled: true
-  instance: "pagbank_support"
+  instance: "SofIA"
   notification_template: |
     🚨 *Escalação para Atendimento Humano*
     

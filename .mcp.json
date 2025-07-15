@@ -23,7 +23,7 @@
     "send_whatsapp_message": {
       "command": "uvx",
       "args": [
-        "automagik-tools@0.7.8",
+        "automagik-tools@0.8.11",
         "tool",
         "evolution-api"
       ],
@@ -32,18 +32,6 @@
         "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
         "EVOLUTION_API_INSTANCE": "SofIA",
         "EVOLUTION_API_FIXED_RECIPIENT": "5511986780008@s.whatsapp.net"
-      }
-    },
-     "gemini": {
-       "command": "uvx",
-       "args": [
-         "automagik-tools@0.8.11",
-         "tool",
-         "gemini-assistant"
-       ],
-       "env": {
-         "GEMINI_API_KEY": "AIzaSyBnrXsOX0S-k6rrZEsqR4N9Fo4e45XrHGg",
-         "GEMINI_MODEL": "gemini-2.5-pro"
       }
     }
   }

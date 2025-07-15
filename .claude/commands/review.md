@@ -1,6 +1,27 @@
-# /code-review
+# /review
 
-*Performs focused multi-agent code review that surfaces only critical, high-impact findings for solo developers using AI tools.*
+---
+allowed-tools: Task(*), Read(*), Glob(*), Grep(*), Bash(*), mcp__gemini__*, mcp__search-repo-docs__*, mcp__genie_memory__*, mcp__send_whatsapp_message__*
+description: Expert code review team for quality and security
+---
+
+Multi-expert code review focusing on critical issues and high-impact improvements.
+
+## Usage
+
+```bash
+# Review recent changes
+/review "Latest commit for security issues"
+
+# Review specific files  
+/review "agents/routing/handler.py for performance"
+
+# Review feature
+/review "Authentication system implementation"
+
+# Security focus
+/review "API endpoints security audit"
+```
 
 ## Core Philosophy
 
@@ -19,13 +40,6 @@ Changes that unlock new capabilities, remove significant constraints, or improve
 
 ### ❌ Excluded from Reports
 Minor style issues, micro-optimizations (<10%), theoretical best practices, edge cases affecting <1% of users.
-
-
-## Auto-Loaded Project Context:
-@/CLAUDE.md
-@/docs/ai-context/project-structure.md
-@/docs/ai-context/docs-overview.md
-
 
 ## Command Execution
 
@@ -166,8 +180,8 @@ For each dynamically generated agent:
   1. Review auto-loaded project context (CLAUDE.md, project-structure.md, docs-overview.md)
   2. Analyze your assigned coverage areas with deep focus
   3. For complex issues, use:
-     - mcp__gemini__consult_gemini for architectural analysis
-     - mcp__context7__get-library-docs for framework best practices
+     - mcp__gemini__consult_gemini for comprehensive code analysis
+     - mcp__search-repo-docs__get-library-docs for framework best practices
   4. Cross-reference with other coverage areas for systemic issues
   5. Document ONLY high-impact findings:
 
@@ -320,3 +334,52 @@ If issues occur during review:
 - **Large scope detected**: Dynamically scale agents based on calculated complexity
 - **No files found**: Provide helpful suggestions based on project structure
 - **Coverage gaps**: Deploy supplementary agents for missed areas
+
+## Automatic Memory Integration
+
+Every code review automatically updates memory:
+
+```python
+# Store review patterns
+mcp__genie_memory__add_memory(
+    content="PATTERN: Code Review - [Component] issues: [findings] #review"
+)
+
+# Store solutions discovered
+mcp__genie_memory__add_memory(
+    content="FOUND: [Issue] in [file] fixed with [solution] #codefix"
+)
+
+# Search for known issues before review
+mcp__genie_memory__search_memory(
+    query="FOUND [component] issues"
+)
+
+# Notify about critical findings
+mcp__send_whatsapp_message__send_text_message(
+    instance="SofIA",
+    message="🔍 REVIEW: Critical issues found in [component]. Immediate attention needed.",
+    number="5511986780008@s.whatsapp.net"
+)
+```
+
+## Automatic Execution
+
+```bash
+# Search memory for known code issues
+mcp__genie_memory__search_memory query="FOUND review issues $ARGUMENTS"
+
+# For feature/system reviews, get expert consultation
+if [[ "$ARGUMENTS" =~ feature|system|architecture|implementation ]]; then
+    mcp__gemini__consult_gemini \
+        specific_question="Code review focus for: $ARGUMENTS" \
+        problem_description="Need expert review perspective on genie-agents code" \
+        preferred_approach="review"
+fi
+
+# Notify about critical review findings
+mcp__send_whatsapp_message__send_text_message \
+    instance="SofIA" \
+    message="🔍 REVIEW: Starting code review of: $ARGUMENTS" \
+    number="5511986780008@s.whatsapp.net"
+```

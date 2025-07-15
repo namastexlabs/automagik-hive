@@ -17,8 +17,6 @@ class Settings:
         self.project_root = Path(__file__).parent.parent
         self.data_dir = self.project_root / "data"
         self.logs_dir = self.project_root / "logs"
-        self.knowledge_dir = self.project_root / "knowledge"
-        self.tests_dir = self.project_root / "tests"
         
         # Create directories if they don't exist
         self.data_dir.mkdir(exist_ok=True)
@@ -50,7 +48,7 @@ class Settings:
         self.max_memory_entries = int(os.getenv("MAX_MEMORY_ENTRIES", "1000"))
         
         # Knowledge base settings
-        self.knowledge_file = self.knowledge_dir / "knowledge.csv"
+        self.knowledge_file = self.project_root / "context/knowledge/knowledge_rag.csv"
         self.knowledge_update_interval = int(os.getenv("KNOWLEDGE_UPDATE_INTERVAL", "3600"))  # 1 hour
         self.max_knowledge_results = int(os.getenv("MAX_KNOWLEDGE_RESULTS", "10"))
         
@@ -69,49 +67,7 @@ class Settings:
         self.supported_languages = ["pt-BR", "en-US"]
         self.default_language = "pt-BR"
         
-        # Team configurations
-        self.team_configs = {
-            "cards": {
-                "name": "Cards Team",
-                "description": "Especialistas em cartões de crédito e débito",
-                "max_agents": 3,
-                "knowledge_filters": ["cartao", "credito", "debito", "fatura", "limite"]
-            },
-            "digital_account": {
-                "name": "Digital Account Team", 
-                "description": "Especialistas em conta digital e PIX",
-                "max_agents": 3,
-                "knowledge_filters": ["conta", "pix", "transferencia", "saldo", "extrato"]
-            },
-            "investments": {
-                "name": "Investments Team",
-                "description": "Especialistas em investimentos",
-                "max_agents": 2,
-                "knowledge_filters": ["investimento", "cdb", "tesouro", "renda", "aplicacao"]
-            },
-            "credit": {
-                "name": "Credit Team",
-                "description": "Especialistas em crédito e empréstimos",
-                "max_agents": 2,
-                "knowledge_filters": ["credito", "emprestimo", "financiamento", "juros", "parcela"]
-            },
-            "insurance": {
-                "name": "Insurance Team",
-                "description": "Especialistas em seguros",
-                "max_agents": 2,
-                "knowledge_filters": ["seguro", "proteção", "cobertura", "sinistro", "apolice"]
-            }
-        }
         
-        # Demo settings
-        self.demo_scenarios = [
-            "Consulta de Saldo e Extrato",
-            "Problemas com Cartão de Crédito",
-            "Configuração de PIX",
-            "Dúvidas sobre Investimentos",
-            "Solicitação de Crédito",
-            "Informações sobre Seguros"
-        ]
         
         # Performance monitoring
         self.enable_metrics = os.getenv("ENABLE_METRICS", "true").lower() == "true"
@@ -120,17 +76,6 @@ class Settings:
         # Cache settings
         self.cache_ttl = int(os.getenv("CACHE_TTL", "300"))  # 5 minutes
         self.cache_max_size = int(os.getenv("CACHE_MAX_SIZE", "1000"))
-    
-    def get_team_config(self, team_name: str) -> Dict[str, Any]:
-        """Get configuration for specific team."""
-        return self.team_configs.get(team_name, {})
-    
-    def get_all_knowledge_filters(self) -> List[str]:
-        """Get all knowledge filters from all teams."""
-        filters = []
-        for team_config in self.team_configs.values():
-            filters.extend(team_config.get("knowledge_filters", []))
-        return list(set(filters))
     
     def is_production(self) -> bool:
         """Check if running in production environment."""
@@ -180,7 +125,6 @@ class Settings:
         # Check required directories
         validations["data_dir"] = self.data_dir.exists()
         validations["logs_dir"] = self.logs_dir.exists()
-        validations["knowledge_dir"] = self.knowledge_dir.exists()
         
         # Check environment variables
         validations["anthropic_api_key"] = bool(os.getenv("ANTHROPIC_API_KEY"))
@@ -200,9 +144,6 @@ def get_setting(key: str, default: Any = None) -> Any:
     """Get a setting value."""
     return getattr(settings, key, default)
 
-def get_team_names() -> List[str]:
-    """Get all team names."""
-    return list(settings.team_configs.keys())
 
 def get_project_root() -> Path:
     """Get project root directory."""
@@ -214,7 +155,3 @@ def validate_environment() -> Dict[str, bool]:
 
 # Export key settings for easy access
 PROJECT_ROOT = settings.project_root
-DATA_DIR = settings.data_dir
-LOGS_DIR = settings.logs_dir
-KNOWLEDGE_DIR = settings.knowledge_dir
-TESTS_DIR = settings.tests_dir
