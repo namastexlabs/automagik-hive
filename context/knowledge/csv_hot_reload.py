@@ -57,26 +57,33 @@ class CSVFileHandler(FileSystemEventHandler):
         self.csv_filename = manager.csv_path.name
         
     def on_modified(self, event):
+        print(f"🔥 FILE EVENT DETECTED: {event.src_path}")
         if (not event.is_directory and 
             event.src_path.endswith(self.csv_filename)):
+            
+            print(f"🔥 CSV FILE MODIFIED: {event.src_path}")
             
             # Ultra-strong debounce with size check
             now = time.time()
             try:
                 current_size = os.path.getsize(event.src_path)
             except:
+                print(f"❌ Could not get file size for {event.src_path}")
                 return
                 
             # Skip if: recently triggered, currently processing, or size unchanged
             if (now - CSVFileHandler._last_trigger_time < 5.0 or 
                 CSVFileHandler._processing_lock or
                 current_size == CSVFileHandler._last_file_size):
+                print(f"⏭️ SKIPPING (debounce): last_trigger={now - CSVFileHandler._last_trigger_time:.1f}s ago, processing={CSVFileHandler._processing_lock}, size_changed={current_size != CSVFileHandler._last_file_size}")
                 return
                 
             # Lock and process
             CSVFileHandler._processing_lock = True
             CSVFileHandler._last_trigger_time = now
             CSVFileHandler._last_file_size = current_size
+            
+            print(f"🚀 PROCESSING CSV CHANGE...")
             
             try:
                 # Single trigger with content detection
@@ -191,32 +198,37 @@ class CSVHotReloadManager:
     
     def _reload_knowledge_base(self):
         """Demo-ready logging with diff view for updates"""
-        # Store the last CSV row before processing for diff comparison
-        before_content = ""
-        try:
-            import pandas as pd
-            df_before = pd.read_csv(self.csv_path)
-            if not df_before.empty:
-                last_row = df_before.iloc[-1]
-                before_content = str(last_row.iloc[0])  # First column (problem field)
-        except:
-            pass
-            
         try:
             start_time = time.time()
             
-            # Store current count before processing
+            # Get current state BEFORE processing - capture CSV snapshot
+            csv_rows_before = 0
+            last_content_before = ""
+            all_content_before = []
+            
+            try:
+                import pandas as pd
+                df_before = pd.read_csv(self.csv_path)
+                if not df_before.empty:
+                    csv_rows_before = len(df_before)
+                    last_content_before = str(df_before.iloc[-1].iloc[0])  # Last row, first column
+                    # Store all content for better change detection
+                    all_content_before = [str(row.iloc[0]) for _, row in df_before.iterrows()]
+                print(f"📊 CSV BEFORE: {csv_rows_before} rows, last_content='{last_content_before[:30]}...'")
+            except Exception as e:
+                print(f"Debug: Error reading CSV before: {e}")
+                
+            # Get DB state before processing
             try:
                 current_stats = self.kb.get_knowledge_statistics()
-                count_before = current_stats.get('total_entries', 0)
+                db_count_before = current_stats.get('total_entries', 0)
             except:
-                count_before = 0
+                db_count_before = 0
             
             # Process the change with suppressed output
             import sys
             from io import StringIO
             
-            # Capture and suppress all stdout during processing
             old_stdout = sys.stdout
             sys.stdout = StringIO()
             
@@ -227,46 +239,71 @@ class CSVHotReloadManager:
             
             load_time = time.time() - start_time
             
+            # Get current state AFTER processing - capture new CSV snapshot
+            csv_rows_after = 0
+            last_content_after = ""
+            all_content_after = []
+            
+            try:
+                df_after = pd.read_csv(self.csv_path)
+                if not df_after.empty:
+                    csv_rows_after = len(df_after)
+                    last_content_after = str(df_after.iloc[-1].iloc[0])  # Last row, first column
+                    all_content_after = [str(row.iloc[0]) for _, row in df_after.iterrows()]
+                print(f"📊 CSV AFTER: {csv_rows_after} rows, last_content='{last_content_after[:30]}...'")
+            except Exception as e:
+                print(f"Debug: Error reading CSV after: {e}")
+                csv_rows_after = csv_rows_before
+                last_content_after = last_content_before
+                all_content_after = all_content_before
+                    
+            # Get DB state after processing
+            try:
+                new_stats = self.kb.get_knowledge_statistics()
+                db_count_after = new_stats.get('total_entries', 0)
+            except:
+                db_count_after = db_count_before
+                
+            # ALWAYS analyze CSV changes first, regardless of smart_loader strategy
             if result and "error" not in result:
-                try:
-                    new_stats = self.kb.get_knowledge_statistics()
-                    count_after = new_stats.get('total_entries', 0)
-                except:
-                    count_after = count_before
+                print(f"🔍 CHANGE ANALYSIS: before={csv_rows_before} rows, after={csv_rows_after} rows")
+                print(f"🔍 CONTENT LENGTHS: before={len(all_content_before)}, after={len(all_content_after)}")
                 
-                # Get current content for comparison using proper CSV parsing
-                after_content = ""
-                try:
-                    import pandas as pd
-                    df_after = pd.read_csv(self.csv_path)
-                    if not df_after.empty:
-                        last_row = df_after.iloc[-1]
-                        after_content = str(last_row.iloc[0])  # First column (problem field)
-                except:
-                    pass
-                
-                # Determine what happened
-                if count_after > count_before:
-                    # Addition
-                    content = after_content[:50] + "..." if len(after_content) > 50 else after_content
-                    print(f"✅ ADD \"{content}\" | {load_time:.1f}s | {count_before}→{count_after}")
+                # CSV CHANGE DETECTION FIRST - ignore smart_loader strategy
+                if csv_rows_after > csv_rows_before:
+                    # Addition detected
+                    added_rows = csv_rows_after - csv_rows_before
+                    # Find the new content (last rows)
+                    new_content = all_content_after[-added_rows:] if added_rows <= len(all_content_after) else [last_content_after]
+                    content_snippet = new_content[0][:50] + "..." if len(new_content[0]) > 50 else new_content[0]
+                    print(f"✅ ADD +{added_rows} \"{content_snippet}\" | {load_time:.1f}s | {csv_rows_before}→{csv_rows_after}")
                     
-                elif count_after < count_before:
-                    # Deletion
-                    removed_count = count_before - count_after
-                    print(f"✅ DEL {removed_count} entries | {load_time:.1f}s | {count_before}→{count_after}")
+                elif csv_rows_after < csv_rows_before:
+                    # Deletion detected
+                    removed_rows = csv_rows_before - csv_rows_after
+                    print(f"✅ DEL -{removed_rows} entries | {load_time:.1f}s | {csv_rows_before}→{csv_rows_after}")
                     
-                elif before_content != after_content and before_content and after_content:
-                    # Update with diff
-                    before_text = before_content[:40] + "..." if len(before_content) > 40 else before_content
-                    after_text = after_content[:40] + "..." if len(after_content) > 40 else after_content
-                    print(f"✅ UPD | {load_time:.1f}s | total: {count_after}")
-                    print(f"  📝 Before: \"{before_text}\"")
-                    print(f"  ✨ After:  \"{after_text}\"")
+                elif csv_rows_before == csv_rows_after and len(all_content_before) > 0 and len(all_content_after) > 0:
+                    # Same row count - check for content updates
+                    changed_content = []
+                    for i, (before, after) in enumerate(zip(all_content_before, all_content_after)):
+                        if before != after:
+                            changed_content.append((before, after, i))
                     
+                    if changed_content:
+                        # Update detected
+                        before_text = changed_content[0][0][:40] + "..." if len(changed_content[0][0]) > 40 else changed_content[0][0]
+                        after_text = changed_content[0][1][:40] + "..." if len(changed_content[0][1]) > 40 else changed_content[0][1]
+                        print(f"✅ UPD | {load_time:.1f}s | total: {csv_rows_after}")
+                        print(f"  📝 Before: \"{before_text}\"")
+                        print(f"  ✨ After:  \"{after_text}\"")
+                    else:
+                        # No content changes detected
+                        print(f"✅ No changes | {load_time:.1f}s | total: {db_count_after}")
                 else:
-                    # No actual changes
-                    print(f"✅ No changes | {load_time:.1f}s | total: {count_after}")
+                    # No CSV changes detected
+                    print(f"✅ No changes | {load_time:.1f}s | total: {db_count_after}")
+                    
             else:
                 print(f"❌ Error: {result.get('error', 'unknown error')}")
                 
