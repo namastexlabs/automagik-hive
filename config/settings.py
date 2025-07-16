@@ -48,7 +48,7 @@ class Settings:
         self.max_memory_entries = int(os.getenv("MAX_MEMORY_ENTRIES", "1000"))
         
         # Knowledge base settings
-        self.knowledge_file = self.project_root / "context/knowledge/knowledge_rag.csv"
+        self.knowledge_file = self.project_root / "core/knowledge/knowledge_rag.csv"
         self.knowledge_update_interval = int(os.getenv("KNOWLEDGE_UPDATE_INTERVAL", "3600"))  # 1 hour
         self.max_knowledge_results = int(os.getenv("MAX_KNOWLEDGE_RESULTS", "10"))
         

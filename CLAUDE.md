@@ -27,6 +27,8 @@ Genie Agents follows a Clean V2 Architecture pattern with YAML-driven agent conf
 - Be brutally honest about whether an idea is good or bad.
 - Make side effects explicit and minimal.
 - Design database schema to be evolution-friendly (avoid breaking changes).
+- **🚫 ABSOLUTE RULE: NEVER IMPLEMENT BACKWARD COMPATIBILITY** - It is forbidden and will be rejected. Always break compatibility in favor of clean, modern implementations.
+- **📧 Git Commits**: ALWAYS co-author commits with Automagik Genie using: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
 
 ### Genie Agents Specific Instructions
 - **Agent Development**: Always use YAML configuration files for new agents following the V2 architecture pattern
@@ -39,9 +41,11 @@ Genie Agents follows a Clean V2 Architecture pattern with YAML-driven agent conf
 - **Knowledge Base**: Use the CSV-based RAG system with hot reload for context-aware responses
 - **Memory Management**: Implement session-based memory with pattern detection for conversation continuity
 - **Configuration**: Never hardcode values - always use .env files and YAML configs
-- **MCP Integration**: Use available MCP tools for WhatsApp notifications, Gemini consultation, and documentation lookup
+- **MCP Integration**: Use the clean MCP connection pooling system with NO backward compatibility
 - **V2 Architecture**: Follow the V2 pattern with agents, teams, and workflows all configured via YAML
 - **Hot Reload**: Leverage CSV hot reload for instant knowledge base updates without server restart
+- **🚫 NO LEGACY CODE**: Remove any backward compatibility code immediately - clean implementations only
+- **🎯 KISS Principle**: Simplify over-engineered components, eliminate redundant layers and abstractions
 
 
 ### File Organization & Modularity
@@ -392,7 +396,7 @@ knowledge_filter:
   business_unit: "Domain Area"
   max_results: 5
   relevance_threshold: 0.6
-  csv_file_path: "context/knowledge/knowledge_rag.csv"
+  csv_file_path: "core/knowledge/knowledge_rag.csv"
 
 tools:
   - "search_knowledge_base"
@@ -593,7 +597,7 @@ uv add --dev package-name
 CSV_HOT_RELOAD=true
 
 # Watch for changes
-CSV_FILE_PATH=context/knowledge/knowledge_rag.csv
+CSV_FILE_PATH=core/knowledge/knowledge_rag.csv
 ```
 
 **Features:**
@@ -642,3 +646,79 @@ Run the appropriate commands based on what was modified:
 ### 2. Verification
 - Ensure all type checks pass before considering the task complete
 - If type errors are found, fix them before marking the task as done
+
+## 9. 🚫 ABSOLUTE BACKWARD COMPATIBILITY PROHIBITION
+
+**ZERO TOLERANCE POLICY**: Backward compatibility is **STRICTLY FORBIDDEN** in this codebase.
+
+### Why We Reject Backward Compatibility
+- **Clean Code**: Forces clean, modern implementations
+- **Performance**: Eliminates performance overhead of legacy support
+- **Maintainability**: Reduces code complexity and technical debt
+- **Innovation**: Enables rapid adoption of new patterns without legacy constraints
+- **KISS Principle**: Keeps implementations simple and focused
+
+### What to Do Instead
+- **Break things**: If a change improves the codebase, make it
+- **Migrate actively**: Update all usage to new patterns immediately
+- **Document changes**: Clearly document what changed and why
+- **Version bumps**: Use semantic versioning to signal breaking changes
+- **Clean slate**: Remove old code completely when replacing it
+
+### Examples of Forbidden Patterns
+```python
+# ❌ FORBIDDEN - Do not implement backward compatibility
+def new_function(param1, param2=None, legacy_param=None):
+    if legacy_param:  # Supporting old API
+        # Convert legacy format
+        pass
+    # New implementation
+
+# ❌ FORBIDDEN - Do not keep legacy imports
+from .old_module import OldClass  # For backward compatibility
+from .new_module import NewClass
+
+# ❌ FORBIDDEN - Do not maintain legacy configuration
+if config.get('old_setting'):
+    # Handle old config format
+    pass
+```
+
+### Correct Implementation Approach
+```python
+# ✅ CORRECT - Clean, modern implementation only
+def improved_function(param1: str, param2: str) -> Result:
+    """New improved function with better API."""
+    # Clean implementation only
+    
+# ✅ CORRECT - Only new imports
+from .modern_module import ModernClass
+
+# ✅ CORRECT - Only current configuration
+def load_config() -> Config:
+    """Load current configuration format only."""
+    return Config.from_env()
+```
+
+### Enforcement Rules
+1. **Code Review**: Any backward compatibility code will be **rejected**
+2. **Immediate Removal**: Legacy code must be removed when replaced
+3. **No Deprecation**: No deprecation periods - direct replacement only
+4. **Documentation**: Update all documentation to reflect new patterns only
+5. **Tests**: Remove tests for legacy functionality when migrating
+
+### Git Commit Requirements
+When making breaking changes, use this commit format:
+```bash
+git commit -m "BREAKING: Remove legacy XYZ, implement clean ABC
+
+Replaces old XYZ system with modern ABC implementation.
+Breaking change: Old API no longer supported.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Automagik Genie <genie@namastex.ai>"
+```
+
+**Remember**: In this codebase, clean and modern always wins over compatible and legacy.

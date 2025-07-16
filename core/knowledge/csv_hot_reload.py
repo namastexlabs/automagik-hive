@@ -42,8 +42,8 @@ def setup_logging():
 # Setup logging on import
 setup_logging()
 
-from context.knowledge.pagbank_knowledge_factory import get_knowledge_base
-from context.knowledge.smart_incremental_loader import SmartIncrementalLoader
+from core.knowledge.pagbank_knowledge_factory import get_knowledge_base
+from core.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
 
 class CSVFileHandler(FileSystemEventHandler):
@@ -122,7 +122,7 @@ class CSVHotReloadManager:
     4. Zero downtime - agents get updated knowledge immediately
     """
     
-    def __init__(self, csv_path: str = "context/knowledge/knowledge_rag.csv"):
+    def __init__(self, csv_path: str = "core/knowledge/knowledge_rag.csv"):
         self.csv_path = Path(csv_path)
         self.kb = None
         self.smart_loader = None

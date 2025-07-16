@@ -449,3 +449,94 @@ async def websocket_realtime_monitoring(websocket):
         logger.error(f"WebSocket error: {e}")
     finally:
         await websocket.close()
+
+
+# MCP-specific endpoints
+@monitoring_router.get("/mcp/health")
+async def get_mcp_health():
+    """Get MCP connection pool health status"""
+    try:
+        from api.monitoring.mcp_monitor import get_mcp_health_monitor
+        monitor = await get_mcp_health_monitor()
+        health_summary = monitor.get_health_summary()
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "data": health_summary,
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting MCP health: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@monitoring_router.get("/mcp/pools/{server_name}")
+async def get_mcp_pool_health(server_name: str):
+    """Get health status for a specific MCP pool"""
+    try:
+        from api.monitoring.mcp_monitor import get_mcp_health_monitor
+        monitor = await get_mcp_health_monitor()
+        pool_health = monitor.get_pool_health(server_name)
+        
+        if "error" in pool_health:
+            raise HTTPException(status_code=404, detail=pool_health["error"])
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "data": pool_health,
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting MCP pool health: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@monitoring_router.get("/mcp/alerts")
+async def get_mcp_alerts(
+    severity: Optional[str] = Query(None, description="Alert severity filter"),
+    limit: int = Query(50, description="Maximum number of alerts to return")
+):
+    """Get MCP-specific alerts"""
+    try:
+        from api.monitoring.mcp_monitor import get_mcp_health_monitor
+        monitor = await get_mcp_health_monitor()
+        alerts = monitor.get_recent_alerts(severity=severity, limit=limit)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "data": alerts,
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting MCP alerts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def add_monitoring_endpoint(router: APIRouter, path: str, endpoint_func):
+    """
+    Add a monitoring endpoint to the router.
+    
+    This function is used by the MCP monitoring system to dynamically
+    register additional monitoring endpoints.
+    """
+    try:
+        router.add_api_route(
+            path,
+            endpoint_func,
+            methods=["GET"],
+            tags=["MCP Monitoring"]
+        )
+        logger.info(f"Added MCP monitoring endpoint: {path}")
+    except Exception as e:
+        logger.error(f"Failed to add monitoring endpoint {path}: {e}")

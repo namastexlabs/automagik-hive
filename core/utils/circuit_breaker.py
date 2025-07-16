@@ -70,7 +70,12 @@ class CircuitBreaker:
             Exception: Original exception from function call
         """
         if self.is_open():
-            raise CircuitBreakerOpenError("Circuit breaker is open")
+            # Import here to avoid circular imports
+            try:
+                from ..mcp.exceptions import CircuitBreakerOpenError as MCPCircuitBreakerOpenError
+                raise MCPCircuitBreakerOpenError("Circuit breaker is open")
+            except ImportError:
+                raise CircuitBreakerOpenError("Circuit breaker is open")
         
         try:
             result = func(*args, **kwargs)
@@ -97,7 +102,12 @@ class CircuitBreaker:
             Exception: Original exception from function call
         """
         if self.is_open():
-            raise CircuitBreakerOpenError("Circuit breaker is open")
+            # Import here to avoid circular imports
+            try:
+                from ..mcp.exceptions import CircuitBreakerOpenError as MCPCircuitBreakerOpenError
+                raise MCPCircuitBreakerOpenError("Circuit breaker is open")
+            except ImportError:
+                raise CircuitBreakerOpenError("Circuit breaker is open")
         
         try:
             result = await func(*args, **kwargs)

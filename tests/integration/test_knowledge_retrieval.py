@@ -10,7 +10,7 @@ from collections import Counter
 import sys
 sys.path.append('.')
 
-from context.knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
+from core.knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
 
 
 class TestKnowledgeRetrievalAccuracy(unittest.TestCase):
@@ -240,7 +240,7 @@ class TestKnowledgeRetrievalAccuracy(unittest.TestCase):
     
     def test_business_unit_cross_reference(self):
         """Test business unit cross-reference consistency"""
-        from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+        from core.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
         
         # Get business units from knowledge base filters
         kb_filters = PagBankCSVKnowledgeBase.BUSINESS_UNIT_FILTERS

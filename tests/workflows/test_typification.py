@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch, MagicMock
 import pytest
 from pydantic import ValidationError
 
-from workflows.conversation_typification import models
-from workflows.conversation_typification import workflow as wf_mod
+from ai.workflows.conversation_typification import models
+from ai.workflows.conversation_typification import workflow as wf_mod
 from agno.agent import Agent
 from agno.workflow import RunResponse
 from agno.storage.postgres import PostgresStorage
@@ -501,7 +501,7 @@ def test_hierarchy_loading_file_not_found():
     with patch("builtins.open", side_effect=FileNotFoundError("No such file or directory")):
         with pytest.raises(FileNotFoundError):
             # Call the original function
-            with open("workflows/conversation_typification/hierarchy.json", "r", encoding="utf-8") as f:
+            with open("ai/workflows/conversation_typification/hierarchy.json", "r", encoding="utf-8") as f:
                 import json
                 json.load(f)
 

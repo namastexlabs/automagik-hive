@@ -36,7 +36,7 @@ curl -X POST "http://localhost:9888/playground/agents/pagbank-specialist/runs" \
 # user_name (optional): User's full name
 # phone_number (optional): Brazilian format (5511999999999)
 # cpf (optional): 11 digits (12345678901)
-# stream (optional): true/false (default: true)
+# stream (optional): true/false (default: false)
 # monitor (optional): true/false (default: true)
 
 # ==========================================

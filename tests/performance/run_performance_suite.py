@@ -46,7 +46,7 @@ except ImportError:
             pass
 
 try:
-    from agents.registry import AgentRegistry
+    from ai.agents.registry import AgentRegistry
     HAS_AGENT_REGISTRY = True
 except ImportError:
     HAS_AGENT_REGISTRY = False

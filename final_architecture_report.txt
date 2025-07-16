@@ -1,0 +1,55 @@
+=== FINAL ARCHITECTURE STRUCTURE ===
+Generated: Wed Jul 16 19:34:24 -03 2025
+
+FOUNDATIONAL PLATFORM (core/):
+core/mcp/pooled_tools.py
+core/mcp/config.py
+core/mcp/__init__.py
+core/mcp/connection_manager.py
+core/mcp/exceptions.py
+core/mcp/catalog.py
+core/mcp/metrics.py
+core/__init__.py
+core/config/yaml_parser.py
+core/config/__init__.py
+core/config/schemas.py
+core/knowledge/agentic_filters.py
+core/knowledge/csv_knowledge_base.py
+core/knowledge/enhanced_csv_reader.py
+core/knowledge/__init__.py
+core/knowledge/pagbank_knowledge_factory.py
+core/knowledge/smart_incremental_loader.py
+core/knowledge/csv_hot_reload.py
+core/memory/__init__.py
+core/memory/memory_manager.py
+
+AI IMPLEMENTATIONS (ai/):
+ai/agents/emissao/config.yaml
+ai/agents/emissao/agent.py
+ai/agents/finalizacao/config.yaml
+ai/agents/finalizacao/agent.py
+ai/agents/__init__.py
+ai/agents/tools/finishing_tools.py
+ai/agents/tools/__init__.py
+ai/agents/tools/agent_tools_poc.py
+ai/agents/tools/workflow_tools.py
+ai/agents/tools/agent_tools.py
+ai/agents/human_handoff/config.yaml
+ai/agents/human_handoff/agent.py
+ai/agents/settings.py
+ai/agents/registry.py
+ai/agents/pagbank/config.yaml
+ai/agents/pagbank/agent.py
+ai/agents/adquirencia/config.yaml
+ai/agents/adquirencia/agent.py
+ai/workflows/config_loader.py
+ai/workflows/__init__.py
+
+SHARED UTILITIES (common/):
+common/startup_display.py
+common/version_factory.py
+
+INFRASTRUCTURE (monitoring/):
+monitoring/prometheus.yml
+monitoring/grafana/datasources/prometheus.yml
+monitoring/grafana/dashboards/dashboard.yml

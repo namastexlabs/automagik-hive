@@ -5,7 +5,7 @@ Pydantic models for validating and managing configuration data.
 """
 
 from typing import Dict, List, Optional, Any, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class MCPToolConfig(BaseModel):
@@ -16,21 +16,34 @@ class MCPToolConfig(BaseModel):
     parameters: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Default parameters for the tool")
     enabled: bool = Field(True, description="Whether the tool is enabled")
     
-    @validator('server_name')
+    @field_validator('server_name')
+    @classmethod
     def validate_server_name(cls, v):
         if not v or not isinstance(v, str):
             raise ValueError("server_name must be a non-empty string")
         return v
 
 
-class AgentConfig(BaseModel):
-    """Standard agent configuration schema"""
-    
+class AgentInfo(BaseModel):
+    """Agent metadata section"""
     agent_id: str = Field(..., description="Unique identifier for the agent")
     version: int = Field(1, description="Agent version number")
     name: str = Field(..., description="Display name for the agent")
     role: Optional[str] = Field(None, description="Agent role description")
     description: Optional[str] = Field(None, description="Agent description")
+    
+    @field_validator('version')
+    @classmethod
+    def validate_version(cls, v):
+        if not isinstance(v, int) or v < 1:
+            raise ValueError("version must be a positive integer")
+        return v
+
+class AgentConfig(BaseModel):
+    """Standard agent configuration schema"""
+    
+    # Agent info section (nested structure from YAML)
+    agent: AgentInfo = Field(..., description="Agent information section")
     
     # Model configuration
     model: Dict[str, Any] = Field(..., description="Model configuration")
@@ -50,16 +63,32 @@ class AgentConfig(BaseModel):
     # Memory configuration
     memory: Optional[Dict[str, Any]] = Field(None, description="Memory configuration")
     
-    @validator('tools')
+    # Convenience properties for backward compatibility
+    @property
+    def agent_id(self) -> str:
+        return self.agent.agent_id
+    
+    @property
+    def version(self) -> int:
+        return self.agent.version
+    
+    @property
+    def name(self) -> str:
+        return self.agent.name
+    
+    @property
+    def role(self) -> Optional[str]:
+        return self.agent.role
+    
+    @property
+    def description(self) -> Optional[str]:
+        return self.agent.description
+    
+    @field_validator('tools')
+    @classmethod
     def validate_tools(cls, v):
         if not isinstance(v, list):
             raise ValueError("tools must be a list")
-        return v
-    
-    @validator('version')
-    def validate_version(cls, v):
-        if not isinstance(v, int) or v < 1:
-            raise ValueError("version must be a positive integer")
         return v
 
 
@@ -83,7 +112,8 @@ class TeamConfig(BaseModel):
     # Memory configuration
     memory: Optional[Dict[str, Any]] = Field(None, description="Memory configuration")
     
-    @validator('mode')
+    @field_validator('mode')
+    @classmethod
     def validate_mode(cls, v):
         allowed_modes = ["route", "consensus", "sequential"]
         if v not in allowed_modes:

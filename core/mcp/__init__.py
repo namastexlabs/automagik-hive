@@ -1,20 +1,13 @@
 """
 MCP (Model Context Protocol) Integration Package
 
-Provides comprehensive MCP integration with connection pooling, health monitoring,
-and transparent interface compatibility for the Genie Agents system.
-
-Key components:
-- MCPCatalog: Loads and manages MCP servers from .mcp.json
-- MCPConnectionManager: Global connection manager with pooling
-- PooledMCPTools: Transparent wrapper maintaining MCPTools interface
-- MCPHealthMonitor: Health monitoring and alerting
-- CircuitBreaker: Fault tolerance and automatic recovery
+Simple MCP integration with connection pooling for the Genie Agents system.
+No backward compatibility - clean, modern implementation only.
 """
 
 from .catalog import MCPCatalog, MCPServerConfig
 from .connection_manager import (
-    MCPConnectionManager, MCPConnectionPool, PoolConfig,
+    MCPConnectionManager, MCPConnectionPool, 
     get_mcp_connection_manager, shutdown_mcp_connection_manager
 )
 from .pooled_tools import (
@@ -24,15 +17,15 @@ from .pooled_tools import (
 from .exceptions import (
     MCPException, MCPConnectionError, MCPPoolExhaustedException,
     MCPHealthCheckError, MCPServerNotFoundError, MCPToolError,
-    MCPConfigurationError
+    MCPConfigurationError, CircuitBreakerOpenError, MCPTimeoutError,
+    MCPValidationError
 )
-
-# Legacy imports for backward compatibility
-try:
-    from .tools import MCPTool, MCPSSETool, MCPCommandTool
-    _legacy_tools_available = True
-except ImportError:
-    _legacy_tools_available = False
+from .config import (
+    MCPSettings, PoolConfig, get_mcp_settings
+)
+from .metrics import (
+    MCPMetricsCollector, get_metrics_collector, PoolStatus
+)
 
 __all__ = [
     # Catalog
@@ -42,7 +35,6 @@ __all__ = [
     # Connection Management
     "MCPConnectionManager",
     "MCPConnectionPool", 
-    "PoolConfig",
     "get_mcp_connection_manager",
     "shutdown_mcp_connection_manager",
     
@@ -52,6 +44,16 @@ __all__ = [
     "create_pooled_mcp_tools",
     "get_mcp_tools_factory",
     
+    # Configuration
+    "MCPSettings",
+    "PoolConfig",
+    "get_mcp_settings",
+    
+    # Metrics
+    "MCPMetricsCollector",
+    "get_metrics_collector",
+    "PoolStatus",
+    
     # Exceptions
     "MCPException",
     "MCPConnectionError",
@@ -60,8 +62,7 @@ __all__ = [
     "MCPServerNotFoundError",
     "MCPToolError",
     "MCPConfigurationError",
+    "CircuitBreakerOpenError",
+    "MCPTimeoutError",
+    "MCPValidationError",
 ]
-
-# Add legacy tools if available
-if _legacy_tools_available:
-    __all__.extend(["MCPTool", "MCPSSETool", "MCPCommandTool"])

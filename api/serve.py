@@ -12,10 +12,6 @@ from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-# ✅ PATCH AGNO STREAMING DEFAULT BEHAVIOR
-# This must be imported before creating the playground to patch the router
-from api.streaming_patch import patch_agno_streaming_default
-patch_agno_streaming_default()
 
 # Add project root to path to import common module
 project_root = Path(__file__).parent.parent
@@ -36,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Apply global demo patches immediately after loading environment variables
 # This must be done before any other imports that might use agno.Team
-from teams.ana.demo_logging import apply_team_demo_patches
+from ai.teams.ana.demo_logging import apply_team_demo_patches
 apply_team_demo_patches()
 
 # Configure logging levels based on environment
@@ -89,14 +85,14 @@ setup_demo_logging()
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import V2 Ana team (replaces orchestrator)
-from teams.ana.team import get_ana_team
+from ai.teams.ana.team import get_ana_team
 
 # Import workflows
-from workflows.conversation_typification import get_conversation_typification_workflow
-from workflows.human_handoff.workflow import get_human_handoff_workflow
+from ai.workflows.conversation_typification import get_conversation_typification_workflow
+from ai.workflows.human_handoff.workflow import get_human_handoff_workflow
 
 # Import CSV hot reload manager
-from context.knowledge.csv_hot_reload import CSVHotReloadManager
+from core.knowledge.csv_hot_reload import CSVHotReloadManager
 
 
 @asynccontextmanager
@@ -186,13 +182,13 @@ def create_pagbank_api():
             print("📝 Note: Some features may be limited without database tables")
     
     # Initialize CSV hot reload manager for lazy loading
-    csv_path = Path(__file__).parent.parent / "context/knowledge/knowledge_rag.csv"
+    csv_path = Path(__file__).parent.parent / "core/knowledge/knowledge_rag.csv"
     if (demo_mode or is_development) and not is_reloader:
         print(f"🔍 CSV hot reload manager configured: {csv_path}")
         
         # Start CSV hot reload manager immediately in demo/development mode
         try:
-            from context.knowledge.csv_hot_reload import CSVHotReloadManager
+            from core.knowledge.csv_hot_reload import CSVHotReloadManager
             csv_manager = CSVHotReloadManager(str(csv_path))
             csv_manager.start_watching()
             print("📄 CSV hot reload manager: ACTIVE (watching for changes)")
@@ -203,7 +199,7 @@ def create_pagbank_api():
     # Initialize global memory manager for consistent memory across all components
     global_memory = None
     try:
-        from context.memory.memory_manager import create_memory_manager
+        from core.memory.memory_manager import create_memory_manager
         memory_manager = create_memory_manager()
         global_memory = memory_manager.memory
         if (demo_mode or is_development) and not is_reloader:
@@ -222,7 +218,7 @@ def create_pagbank_api():
         )
         
         # Get all agents for comprehensive endpoint generation
-        from agents.registry import AgentRegistry
+        from ai.agents.registry import AgentRegistry
         agent_registry = AgentRegistry()
         available_agents = agent_registry.get_all_agents(
             debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true"),
@@ -379,7 +375,7 @@ def create_pagbank_api():
         # Try to import workflow trigger handler safely
         external_handler = None
         try:
-            from agents.tools.workflow_tools import handle_workflow_trigger_external
+            from ai.agents.tools.workflow_tools import handle_workflow_trigger_external
             external_handler = handle_workflow_trigger_external
         except ImportError as e:
             startup_display.add_error("Workflow Handler", f"Could not load handler: {e}")
@@ -394,7 +390,6 @@ def create_pagbank_api():
         )
         
         # Get the unified router - this provides all endpoints including workflows
-        # Note: The router has been patched to use stream=true as default
         unified_router = playground.get_async_router()
         app.include_router(unified_router)
             

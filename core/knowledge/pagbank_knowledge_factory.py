@@ -7,7 +7,7 @@ from pathlib import Path
 from agno.knowledge.csv import CSVKnowledgeBase
 from agno.vectordb.pgvector import PgVector, SearchType, HNSW
 from agno.embedder.openai import OpenAIEmbedder
-from context.knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
+from core.knowledge.enhanced_csv_reader import create_enhanced_csv_reader_for_pagbank
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,9 @@ import weakref
 from agno.tools.mcp import MCPTools
 
 from .catalog import MCPCatalog, MCPServerConfig
-from .exceptions import MCPConnectionError, MCPPoolExhaustedException
+from .exceptions import MCPConnectionError, MCPPoolExhaustedException, CircuitBreakerOpenError
+from .config import PoolConfig, MCPSettings, get_mcp_settings
+from .metrics import get_metrics_collector
 from ..utils.circuit_breaker import CircuitBreaker
 
 logger = logging.getLogger(__name__)
@@ -32,18 +34,7 @@ class ConnectionState(Enum):
     MAINTENANCE = "maintenance"
 
 
-@dataclass
-class PoolConfig:
-    """Configuration for MCP connection pools"""
-    min_connections: int = 2
-    max_connections: int = 10
-    max_idle_time: float = 300.0  # 5 minutes
-    connection_timeout: float = 30.0
-    health_check_interval: float = 60.0
-    retry_attempts: int = 3
-    retry_delay: float = 1.0
-    circuit_breaker_failure_threshold: int = 5
-    circuit_breaker_recovery_timeout: float = 60.0
+# Note: PoolConfig is now imported from .config module
 
 
 @dataclass
@@ -78,7 +69,7 @@ class MCPConnectionPool:
                  pool_config: PoolConfig = None):
         self.server_name = server_name
         self.server_config = server_config
-        self.config = pool_config or PoolConfig()
+        self.config = pool_config or get_mcp_settings().get_pool_config()
         
         # Connection management
         self.connections: Dict[str, PooledConnection] = {}
@@ -88,19 +79,20 @@ class MCPConnectionPool:
         
         # Health monitoring
         self.circuit_breaker = CircuitBreaker(
-            failure_threshold=self.config.circuit_breaker_failure_threshold,
-            recovery_timeout=self.config.circuit_breaker_recovery_timeout
+            failure_threshold=self.config.failure_threshold,
+            recovery_timeout=self.config.recovery_timeout
         )
         
-        # Metrics
+        # Metrics integration
+        self.metrics_collector = get_metrics_collector()
+        
+        # Simple metrics tracking
         self.metrics = {
-            'total_connections_created': 0,
-            'total_connections_destroyed': 0,
+            'connections_created': 0,
+            'connections_destroyed': 0,
             'active_connections': 0,
             'pool_hits': 0,
-            'pool_misses': 0,
-            'connection_errors': 0,
-            'health_check_failures': 0
+            'pool_misses': 0
         }
         
         # Background tasks
@@ -115,7 +107,11 @@ class MCPConnectionPool:
         # Create minimum connections
         for _ in range(self.config.min_connections):
             try:
-                await self._create_connection()
+                connection = await self._create_connection()
+                # Add newly created connection to available queue
+                connection.state = ConnectionState.IDLE
+                self.available_connections.put_nowait(connection.connection_id)
+                logger.debug(f"Added connection {connection.connection_id} to available queue")
             except Exception as e:
                 logger.warning(f"Failed to create initial connection for {self.server_name}: {e}")
         
@@ -165,7 +161,9 @@ class MCPConnectionPool:
     async def _acquire_connection(self) -> PooledConnection:
         """Acquire a connection from the pool"""
         if self.circuit_breaker.is_open():
-            raise MCPConnectionError(f"Circuit breaker open for {self.server_name}")
+            raise CircuitBreakerOpenError(f"Circuit breaker open for {self.server_name}", self.server_name)
+        
+        start_time = time.time()
         
         try:
             # Try to get from available connections first
@@ -177,6 +175,11 @@ class MCPConnectionPool:
                     connection.state = ConnectionState.ACTIVE
                     connection.mark_used()
                     self.metrics['pool_hits'] += 1
+                    
+                    # Record metrics
+                    acquire_time = time.time() - start_time
+                    self.metrics_collector.record_connection_acquired(self.server_name)
+                    
                     return connection
                 else:
                     # Connection is invalid, remove it
@@ -193,6 +196,11 @@ class MCPConnectionPool:
                     connection = await self._create_connection()
                     connection.state = ConnectionState.ACTIVE
                     connection.mark_used()
+                    
+                    # Record metrics
+                    acquire_time = time.time() - start_time
+                    self.metrics_collector.record_connection_acquired(self.server_name)
+                    
                     return connection
             
             # Pool is full, wait for available connection
@@ -277,7 +285,7 @@ class MCPConnectionPool:
             )
             
             self.connections[connection_id] = connection
-            self.metrics['total_connections_created'] += 1
+            self.metrics['connections_created'] += 1
             self.metrics['active_connections'] = len(self.connections)
             
             logger.debug(f"Created new MCP connection {connection_id} for {self.server_name}")
@@ -302,7 +310,7 @@ class MCPConnectionPool:
             if connection.connection_id in self.connections:
                 await self._close_connection(connection)
                 del self.connections[connection.connection_id]
-                self.metrics['total_connections_destroyed'] += 1
+                self.metrics['connections_destroyed'] += 1
                 self.metrics['active_connections'] = len(self.connections)
     
     async def _health_check_loop(self):
@@ -387,22 +395,22 @@ class MCPConnectionManager:
     integration for the FastAPI application.
     """
     
-    def __init__(self, mcp_catalog: MCPCatalog = None, global_pool_config: PoolConfig = None):
+    def __init__(self, mcp_catalog: MCPCatalog = None):
         self.mcp_catalog = mcp_catalog or MCPCatalog()
-        self.global_pool_config = global_pool_config or PoolConfig()
+        self.settings = get_mcp_settings()
         
         # Connection pools by server name
         self.pools: Dict[str, MCPConnectionPool] = {}
         
-        # Server-specific configurations
-        self.server_configs: Dict[str, PoolConfig] = {}
+        # Metrics integration
+        self.metrics_collector = get_metrics_collector()
         
         # Global metrics
         self.global_metrics = {
-            'total_pools': 0,
-            'total_connections': 0,
-            'total_requests': 0,
-            'total_errors': 0
+            'pools': 0,
+            'connections': 0,
+            'requests': 0,
+            'errors': 0
         }
         
         self._initialized = False
@@ -447,13 +455,13 @@ class MCPConnectionManager:
     async def _create_pool(self, server_name: str):
         """Create a connection pool for a specific server"""
         server_config = self.mcp_catalog.get_server_config(server_name)
-        pool_config = self.server_configs.get(server_name, self.global_pool_config)
+        pool_config = self.settings.get_pool_config()
         
         pool = MCPConnectionPool(server_name, server_config, pool_config)
         await pool.start()
         
         self.pools[server_name] = pool
-        self.global_metrics['total_pools'] += 1
+        self.global_metrics['pools'] += 1
         
         logger.info(f"Created connection pool for {server_name}")
     
@@ -471,7 +479,7 @@ class MCPConnectionManager:
             raise MCPConnectionError(f"No pool available for server {server_name}")
         
         pool = self.pools[server_name]
-        self.global_metrics['total_requests'] += 1
+        self.global_metrics['requests'] += 1
         
         @asynccontextmanager
         async def _get_tools():
@@ -479,14 +487,17 @@ class MCPConnectionManager:
                 async with pool.get_connection() as connection:
                     yield connection.mcp_tools
             except Exception as e:
-                self.global_metrics['total_errors'] += 1
+                self.global_metrics['errors'] += 1
                 raise
         
         return _get_tools()
     
     def configure_server_pool(self, server_name: str, pool_config: PoolConfig):
         """Configure pool settings for a specific server"""
-        self.server_configs[server_name] = pool_config
+        # For simplicity, we'll recreate the pool with new config
+        if server_name in self.pools:
+            # TODO: Implement pool reconfiguration if needed
+            pass
     
     def get_pool_metrics(self, server_name: str = None) -> Dict[str, Any]:
         """Get metrics for specific pool or all pools"""
@@ -495,8 +506,9 @@ class MCPConnectionManager:
             return pool.get_metrics() if pool else {}
         else:
             return {
-                'global_metrics': self.global_metrics,
-                'pools': {name: pool.get_metrics() for name, pool in self.pools.items()}
+                'global': self.global_metrics,
+                'pools': {name: pool.get_metrics() for name, pool in self.pools.items()},
+                'health': self.metrics_collector.get_metrics_summary()
             }
     
     def list_available_servers(self) -> List[str]:

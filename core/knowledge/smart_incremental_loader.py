@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Set
 import os
 from sqlalchemy import create_engine, text
 
-from context.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
+from core.knowledge.csv_knowledge_base import create_pagbank_knowledge_base
 
 
 class SmartIncrementalLoader:
@@ -26,7 +26,7 @@ class SmartIncrementalLoader:
     4. Preserve existing vectors while adding only new content
     """
     
-    def __init__(self, csv_path: str = "context/knowledge/knowledge_rag.csv"):
+    def __init__(self, csv_path: str = "core/knowledge/knowledge_rag.csv"):
         self.csv_path = Path(csv_path)
         self.kb = create_pagbank_knowledge_base()
         self.db_url = os.getenv("DATABASE_URL")
@@ -305,7 +305,7 @@ class SmartIncrementalLoader:
             
             try:
                 # Create temporary knowledge base for this single row
-                from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+                from core.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
                 temp_kb = PagBankCSVKnowledgeBase(str(temp_csv_path), self.db_url, self.kb.table_name)
                 
                 # Load just this row (upsert mode - no recreate)

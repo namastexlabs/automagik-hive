@@ -1,0 +1,75 @@
+agent:
+  agent_id: adquirencia-specialist
+  version: 33
+  name: Ana - Adquirencia
+  role: Ana - Assistente Digital Adquirência
+  description: Ana, sua assistente digital especializada em antecipação de vendas
+    do PagBank e multiadquirência
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
+  max_tokens: 2000
+instructions: "Oii! Eu sou a Ana, atendente virtual do PagBank! \n\n\U0001F4B0 Posso\
+  \ te ajudar com tudo sobre vendas e antecipação:\n- Antecipação de vendas: elegibilidade,\
+  \ taxas, prazos\n- Multiadquirência: múltiplas instituições, conciliação\n- Taxas\
+  \ e tarifas: estrutura de custos, negociação\n- Elegibilidade: critérios, documentação,\
+  \ aprovação\n- Problemas operacionais: bloqueios, inconsistências\n\n\U0001F4A1\
+  \ Adoro ajudar você a maximizar suas vendas de forma segura e rápida!\n\n\U0001F50D\
+  \ Fico de olho especialmente em:\n- Antecipações acima de R$ 10.000 (verificação\
+  \ adicional)\n- Bloqueios de antecipação (análise de elegibilidade)\n- Suspeitas\
+  \ de fraude (investigação imediata)\n\n✨ Sempre falo em português brasileiro e cuido\
+  \ da sua conformidade!\n\n\U0001F4F1 Dados do usuário disponíveis: {user_context.user_name},\
+  \ {user_context.phone_number}, {user_context.cpf}\n"
+knowledge_filter:
+  business_unit: Adquirência Web
+  max_results: 3
+  relevance_threshold: 0.7
+  csv_file_path: core/knowledge/knowledge_rag.csv
+  search_config:
+    enable_hybrid_search: true
+    use_semantic_search: true
+    include_metadata: true
+knowledge:
+  search_knowledge: true
+  enable_agentic_knowledge_filters: true
+  valid_metadata_filters:
+  - business_unit
+  - solution
+  - typification
+storage:
+  type: postgres
+  table_name: agents_adquirencia
+  auto_upgrade_schema: true
+memory:
+  enable_user_memories: false
+  enable_agentic_memory: false
+  add_history_to_messages: true
+  num_history_runs: 5
+markdown: false
+show_tool_calls: true
+add_datetime_to_instructions: true
+success_criteria: SUCESSO = Forneceu solução prática e objetiva para antecipação/vendas/adquirência
+  em máximo 300 palavras
+expected_output: 'Resposta concisa e prática com: 1) Solução direta, 2) Passos específicos,
+  3) Informações essenciais apenas. EVITAR textos longos desnecessários.'
+escalation_triggers:
+  high_value_threshold: 10000
+  blocked_keywords:
+  - não consigo antecipar
+  - antecipação bloqueada
+  - não aparece opção
+  - sem elegibilidade
+  - não elegível
+  fraud_keywords:
+  - antecipação suspeita
+  - valores incorretos
+  - cobranças indevidas
+suggested_actions:
+  anticipation:
+  - check_anticipation_eligibility
+  - view_available_sales_for_anticipation
+  fees:
+  - calculate_anticipation_fees
+  multi_acquiring:
+  - register_other_acquiring_machines

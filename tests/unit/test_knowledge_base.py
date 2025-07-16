@@ -12,12 +12,12 @@ from unittest.mock import patch
 import sys
 sys.path.append('.')
 
-from context.knowledge.agentic_filters import (
+from core.knowledge.agentic_filters import (
     extract_filters_from_query, 
     get_business_unit_context,
     validate_business_unit_filters
 )
-from context.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
+from core.knowledge.csv_knowledge_base import PagBankCSVKnowledgeBase
 
 
 class TestAgenticFilters(unittest.TestCase):

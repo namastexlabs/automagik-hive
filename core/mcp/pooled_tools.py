@@ -102,14 +102,13 @@ class PooledMCPTools:
                 return result
             return {}
     
-    # Additional methods for compatibility
+    # Dynamic method proxy
     
     def __getattr__(self, name: str) -> Any:
         """
         Proxy attribute access to the underlying MCPTools instance.
         
-        This ensures compatibility with any additional methods or properties
-        that might be added to MCPTools in the future.
+        This ensures any additional methods or properties work seamlessly.
         """
         async def _async_proxy(*args, **kwargs):
             async with self._get_tools() as tools:

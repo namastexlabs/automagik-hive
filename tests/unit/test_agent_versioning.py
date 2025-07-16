@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from db.services.agent_version_service import AgentVersionService
 from db.tables.agent_versions import AgentVersion
-from agents.version_factory import AgentVersionFactory
+from common.version_factory import EnhancedAgentVersionFactory as AgentVersionFactory
 
 
 class TestAgentVersionService:
@@ -249,8 +249,8 @@ class TestAgentVersionFactory:
             "show_tool_calls": True
         }
     
-    @patch('agents.version_factory.get_db')
-    @patch('agents.version_factory.AgentVersionService')
+    @patch('common.version_factory.get_db')
+    @patch('common.version_factory.AgentVersionService')
     def test_load_config_from_db(self, mock_service_class, mock_get_db, version_factory, sample_config):
         """Test loading configuration from database."""
         # Mock service
@@ -264,8 +264,8 @@ class TestAgentVersionFactory:
         assert result == sample_config
         mock_service.get_config.assert_called_once_with("test-specialist", 1)
     
-    @patch('agents.version_factory.Path')
-    @patch('agents.version_factory.yaml.safe_load')
+    @patch('common.version_factory.Path')
+    @patch('common.version_factory.yaml.safe_load')
     @patch('builtins.open')
     def test_load_config_from_file(self, mock_open, mock_yaml_load, mock_path, version_factory, sample_config):
         """Test loading configuration from file."""
@@ -281,7 +281,7 @@ class TestAgentVersionFactory:
         mock_open.assert_called_once()
         mock_yaml_load.assert_called_once()
     
-    @patch('agents.version_factory.Claude')
+    @patch('common.version_factory.Claude')
     def test_create_model(self, mock_claude, version_factory):
         """Test creating model instance."""
         model_config = {
@@ -298,7 +298,7 @@ class TestAgentVersionFactory:
             max_tokens=2000
         )
     
-    @patch('agents.version_factory.PostgresStorage')
+    @patch('common.version_factory.PostgresStorage')
     def test_create_storage(self, mock_postgres, version_factory, sample_config):
         """Test creating storage instance."""
         db_url = "postgresql://user:pass@localhost/db"
@@ -311,9 +311,9 @@ class TestAgentVersionFactory:
             auto_upgrade_schema=True
         )
     
-    @patch('agents.version_factory.Agent')
-    @patch('agents.version_factory.get_db')
-    @patch('agents.version_factory.AgentVersionService')
+    @patch('common.version_factory.Agent')
+    @patch('common.version_factory.get_db')
+    @patch('common.version_factory.AgentVersionService')
     def test_create_agent_from_db(self, mock_service_class, mock_get_db, mock_agent, version_factory, sample_config):
         """Test creating agent from database configuration."""
         # Mock service
@@ -322,7 +322,7 @@ class TestAgentVersionFactory:
         mock_service_class.return_value = mock_service
         
         # Mock database URL
-        with patch('agents.version_factory.db_url', "postgresql://test"):
+        with patch('common.version_factory.db_url', "postgresql://test"):
             result = version_factory.create_agent(
                 agent_id="test-specialist",
                 version=1,
@@ -338,8 +338,8 @@ class TestAgentVersionFactory:
         assert call_args[1]['session_id'] == "test-session"
         assert call_args[1]['debug_mode'] == True
     
-    @patch('agents.version_factory.get_db')
-    @patch('agents.version_factory.AgentVersionService')
+    @patch('common.version_factory.get_db')
+    @patch('common.version_factory.AgentVersionService')
     def test_create_agent_not_found(self, mock_service_class, mock_get_db, version_factory):
         """Test creating agent that doesn't exist."""
         # Mock service to return None
@@ -354,8 +354,8 @@ class TestAgentVersionFactory:
                 fallback_to_file=False
             )
     
-    @patch('agents.version_factory.get_db')
-    @patch('agents.version_factory.AgentVersionService')
+    @patch('common.version_factory.get_db')
+    @patch('common.version_factory.AgentVersionService')
     def test_migrate_file_to_database(self, mock_service_class, mock_get_db, version_factory, sample_config):
         """Test migrating file configuration to database."""
         # Mock service
@@ -374,8 +374,8 @@ class TestAgentVersionFactory:
         assert result == True
         mock_service.create_version.assert_called_once()
     
-    @patch('agents.version_factory.get_db')
-    @patch('agents.version_factory.AgentVersionService')
+    @patch('common.version_factory.get_db')
+    @patch('common.version_factory.AgentVersionService')
     def test_list_available_agents(self, mock_service_class, mock_get_db, version_factory):
         """Test listing available agents."""
         # Mock service
@@ -389,7 +389,7 @@ class TestAgentVersionFactory:
         mock_service_class.return_value = mock_service
         
         # Mock file system
-        with patch('agents.version_factory.Path') as mock_path:
+        with patch('common.version_factory.Path') as mock_path:
             mock_path.return_value.parent.iterdir.return_value = []
             
             result = version_factory.list_available_agents()

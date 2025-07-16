@@ -27,8 +27,8 @@ import aiohttp
 from agno.agent import Agent
 from agno.team import Team
 
-from agents.registry import AgentRegistry
-from teams.ana.team import get_ana_team
+from ai.agents.registry import AgentRegistry
+from ai.teams.ana.team import get_ana_team
 from config.settings import settings
 from utils.log import logger
 

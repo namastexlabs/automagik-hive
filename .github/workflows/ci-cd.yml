@@ -112,7 +112,7 @@ jobs:
       - name: Run type checking
         run: |
           source .venv/bin/activate
-          uv run mypy agents/ api/ --strict
+          uv run mypy ai/agents/ api/ --strict
 
       - name: Run tests
         env:

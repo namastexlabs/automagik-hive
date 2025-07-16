@@ -8,7 +8,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from teams.ana.team import get_ana_team
+from ai.teams.ana.team import get_ana_team
 from agno.utils.log import logger
 
 def test_ana_demo_logging():

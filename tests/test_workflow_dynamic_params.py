@@ -17,8 +17,8 @@ import os
 os.environ['DATABASE_URL'] = 'postgresql://test:test@localhost:5432/test'
 
 # Import workflow classes - we'll patch db_url in fixtures
-from workflows.conversation_typification.workflow import ConversationTypificationWorkflow
-from workflows.human_handoff.workflow import HumanHandoffWorkflow
+from ai.workflows.conversation_typification.workflow import ConversationTypificationWorkflow
+from ai.workflows.human_handoff.workflow import HumanHandoffWorkflow
 from agno.workflow import WorkflowCompletedEvent
 
 
@@ -70,7 +70,7 @@ class TestConversationTypificationDynamicParams:
     @pytest.fixture
     def mock_agent_responses(self):
         """Mock agent responses for the typification flow"""
-        from workflows.conversation_typification.models import (
+        from ai.workflows.conversation_typification.models import (
             BusinessUnitSelection, ProductSelection, MotiveSelection, 
             SubmotiveSelection, UnidadeNegocio
         )
@@ -158,7 +158,7 @@ class TestConversationTypificationDynamicParams:
                     mock_submotive.return_value = mock_submotive_agent
                     
                     # Create satisfaction data
-                    from workflows.conversation_typification.models import CustomerSatisfactionData
+                    from ai.workflows.conversation_typification.models import CustomerSatisfactionData
                     satisfaction_data = CustomerSatisfactionData(
                         nps_score=9,
                         nps_offered=True,
@@ -375,13 +375,13 @@ class TestWorkflowIntegration:
         with patch('workflows.conversation_typification.workflow.PostgresStorage'):
             with patch('workflows.conversation_typification.workflow.db_url', 'postgresql://test'):
                 with patch('workflows.conversation_typification.workflow.load_hierarchy', return_value={}):
-                    from workflows.conversation_typification.workflow import get_conversation_typification_workflow
+                    from ai.workflows.conversation_typification.workflow import get_conversation_typification_workflow
                     workflow = get_conversation_typification_workflow(debug_mode=True)
                     assert workflow.workflow_id == "conversation-typification"
         
         with patch('workflows.human_handoff.workflow.PostgresStorage'):
             with patch('workflows.human_handoff.workflow.db_url', 'postgresql://test'):
-                from workflows.human_handoff.workflow import get_human_handoff_workflow
+                from ai.workflows.human_handoff.workflow import get_human_handoff_workflow
                 workflow = get_human_handoff_workflow(whatsapp_enabled=False)
                 assert workflow.workflow_id == "human-handoff"
 
