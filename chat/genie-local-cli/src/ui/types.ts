@@ -13,6 +13,11 @@ export enum MessageType {
   TOOL_START = 'tool_start',
   TOOL_COMPLETE = 'tool_complete',
   AGENT_START = 'agent_start',
+  TEAM_START = 'team_start',
+  RUN_START = 'run_start',
+  RUN_COMPLETE = 'run_complete',
+  MEMORY_UPDATE = 'memory_update',
+  RESPONSE_CONTENT = 'response_content',
   INFO = 'info',
   ERROR = 'error',
   SYSTEM = 'system',
@@ -24,13 +29,55 @@ export interface HistoryItem {
   text: string;
   timestamp: number;
   sessionId?: string;
+  details?: string; // For error details or additional information
   metadata?: {
     target?: {
       type: 'agent' | 'team' | 'workflow';
       id: string;
+      name?: string;
     };
     streaming?: boolean;
     complete?: boolean;
+    // Rich event data from API
+    event?: string;
+    tool?: {
+      tool_name: string;
+      tool_args?: any;
+      tool_result?: any;
+      metrics?: {
+        time: number;
+        tokens?: number;
+      };
+    };
+    agent?: {
+      agent_id: string;
+      agent_name?: string;
+      instructions?: string;
+    };
+    memory?: {
+      type: string;
+      content?: string;
+      metadata?: any;
+    };
+    run?: {
+      run_id: string;
+      status?: string;
+      metrics?: any;
+    };
+    team?: {
+      team_id: string;
+      team_name?: string;
+      mode?: string;
+    };
+    thinking?: {
+      content: string;
+      reasoning?: string;
+    };
+    rag?: {
+      query?: string;
+      results?: any[];
+      metadata?: any;
+    };
   };
 }
 

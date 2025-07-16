@@ -103,7 +103,7 @@ def get_human_handoff_agent(
         # User context stored in session_state (Agno's built-in persistence)
         session_state=user_context_state if user_context_state.get('user_context') else None,
         # Make user context available in instructions
-        add_state_in_messages=True,  # This allows {user_name}, {user_id}, etc. in instructions
+        add_state_in_messages=config.get("add_state_in_messages", True),  # This allows {user_name}, {user_id}, etc. in instructions
         # Additional Agno parameters from config
         markdown=config.get("markdown", False),
         show_tool_calls=config.get("show_tool_calls", True),

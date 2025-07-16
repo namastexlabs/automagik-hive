@@ -112,7 +112,7 @@ def get_emissao_agent(
         # User context stored in session_state (Agno's built-in persistence)
         session_state=user_context_state if user_context_state.get('user_context') else None,
         # Make user context available in instructions
-        add_state_in_messages=True,  # This allows {user_name}, {user_id}, etc. in instructions
+        add_state_in_messages=config.get("add_state_in_messages", True),  # This allows {user_name}, {user_id}, etc. in instructions
         # CRITICAL: Response constraints from YAML configuration (dynamic, not hardcoded)
         success_criteria=config.get("success_criteria"),
         expected_output=config.get("expected_output")

@@ -14,6 +14,9 @@ from agents.tools.finishing_tools import (
     finalize_conversation
 )
 
+# User context management - simple helper for session_state
+from context.user_context_helper import create_user_context_state
+
 
 def get_finalizacao_agent(
     version: Optional[int] = None,
@@ -71,6 +74,15 @@ def get_finalizacao_agent(
             auto_upgrade_schema=config["storage"]["auto_upgrade_schema"]
         )
     
+    # Create user context session_state (Agno's built-in way)
+    user_context_state = create_user_context_state(
+        user_id=user_id,
+        user_name=user_name,
+        phone_number=phone_number,
+        cpf=cpf,
+        **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
+    )
+    
     # Create agent
     agent = Agent(
         name=config["agent"]["name"],
@@ -88,9 +100,13 @@ def get_finalizacao_agent(
         memory=memory,
         session_id=session_id,
         debug_mode=debug_mode,
-        markdown=True,
-        show_tool_calls=True,
-        # User context will be available in session_state
+        # Behavioral parameters from YAML configuration
+        markdown=config.get("markdown", True),
+        show_tool_calls=config.get("show_tool_calls", True),
+        add_state_in_messages=config.get("add_state_in_messages", True),
+        # User context stored in session_state (Agno's built-in persistence)
+        session_state=user_context_state if user_context_state.get('user_context') else None,
+        # Memory configuration from YAML
         add_history_to_messages=config["memory"]["add_history_to_messages"],
         num_history_runs=config["memory"]["num_history_runs"]
     )

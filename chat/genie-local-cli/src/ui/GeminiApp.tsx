@@ -28,6 +28,7 @@ import { useTextBuffer } from './components/shared/text-buffer.js';
 import { TargetTypeDialog } from './components/TargetTypeDialog.js';
 import { TargetSelectionDialog } from './components/TargetSelectionDialog.js';
 import { SessionSelectionDialog } from './components/SessionSelectionDialog.js';
+import { GeminiInputPrompt } from './components/GeminiInputPrompt.js';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
 
@@ -126,7 +127,19 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
         });
 
         setConnectionStatus('connected');
-        setUiState('selecting_type');
+        
+        // Auto-select first agent for direct gemini-style interface
+        if (agentsResponse.data && agentsResponse.data.length > 0) {
+          const firstAgent = agentsResponse.data[0];
+          setSelectedTarget({
+            type: 'agent',
+            id: firstAgent.agent_id,
+            name: firstAgent.name
+          });
+          setUiState('chatting');
+        } else {
+          setUiState('selecting_type');
+        }
 
       } catch (error) {
         setConnectionStatus('error');
@@ -297,30 +310,36 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
       {/* Gemini-style header */}
       <Box 
         borderStyle="round" 
-        borderColor={Colors.AccentBlue} 
+        borderColor="blue" 
         paddingX={1} 
         marginBottom={1}
         justifyContent="space-between"
       >
         <Box>
-          <Text bold color={Colors.AccentCyan}>🧞 Genie Local CLI</Text>
-          <Text color={Colors.Gray}> v{version}</Text>
+          <Text bold color="cyan">🧞 Genie Local CLI</Text>
+          <Text color="gray"> v{version}</Text>
         </Box>
-        <Text color={Colors.AccentGreen}>● Connected</Text>
+        <Text color="green">● Connected</Text>
       </Box>
 
-      {/* Target info */}
-      <Box marginBottom={1}>
-        <Text color={Colors.AccentPurple}>
-          Current: {selectedTarget?.type.toUpperCase()}: {selectedTarget?.name}
+      {/* Target info banner with gemini styling */}
+      <Box 
+        borderStyle="round" 
+        borderColor="magenta" 
+        paddingX={1} 
+        marginBottom={1}
+      >
+        <Text color="magenta">
+          💬 Chatting with: {selectedTarget?.name}
         </Text>
+        <Text color="gray"> ({selectedTarget?.type})</Text>
       </Box>
 
       {/* Chat history */}
       <Static
-        items={history.map((h) => (
-          <Box key={h.id} marginBottom={1}>
-            <Text color={h.type === MessageType.USER ? Colors.AccentBlue : Colors.Foreground}>
+        items={history.map((h, index) => (
+          <Box key={`history-${h.id}-${index}`} marginBottom={1}>
+            <Text color={h.type === MessageType.USER ? "blue" : "white"}>
               {h.type === MessageType.USER ? '> ' : '< '}{h.text}
             </Text>
           </Box>
@@ -332,7 +351,7 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
       {/* Pending message */}
       {pendingMessage && (
         <Box marginBottom={1}>
-          <Text color={Colors.Foreground}>
+          <Text color="white">
             {'< '}{pendingMessage.text}
           </Text>
         </Box>
@@ -341,7 +360,7 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
       {/* Loading indicator */}
       {streamingState !== StreamingState.Idle && (
         <Box marginBottom={1}>
-          <Text color={Colors.AccentYellow}>
+          <Text color="yellow">
             {currentLoadingPhrase} ({elapsedTime > 0 ? `${Math.floor(elapsedTime / 1000)}s` : ''})
           </Text>
         </Box>
@@ -349,36 +368,40 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
 
       {/* Exit prompts */}
       {ctrlCPressedOnce ? (
-        <Text color={Colors.AccentYellow}>Press Ctrl+C again to exit.</Text>
+        <Text color="yellow">Press Ctrl+C again to exit.</Text>
       ) : ctrlDPressedOnce ? (
-        <Text color={Colors.AccentYellow}>Press Ctrl+D again to exit.</Text>
+        <Text color="yellow">Press Ctrl+D again to exit.</Text>
       ) : null}
 
       {/* Input prompt with gemini styling */}
       {isInputActive && (
-        <Box borderStyle="round" borderColor={Colors.AccentBlue} paddingX={1}>
-          <Text color={Colors.AccentPurple}>{'> '}</Text>
-          <Box flexGrow={1}>
-            <Text>{buffer.text}</Text>
-          </Box>
-        </Box>
+        <GeminiInputPrompt
+          buffer={buffer}
+          onSubmit={handleFinalSubmit}
+          onClearScreen={handleClearScreen}
+          placeholder="  Type your message..."
+          focus={true}
+          inputWidth={inputWidth}
+          shellModeActive={false}
+          isActive={isInputActive}
+        />
       )}
 
       {/* Footer */}
       <Box 
         borderStyle="round" 
-        borderColor={Colors.Gray} 
+        borderColor="gray" 
         paddingX={1} 
         marginTop={1}
         justifyContent="space-between"
       >
         <Box>
-          <Text color={Colors.Gray}>
+          <Text color="gray">
             Session: {currentSessionId.slice(-8)}
           </Text>
         </Box>
         <Box>
-          <Text color={Colors.Gray}>
+          <Text color="gray">
             API: {appConfig.apiBaseUrl}
           </Text>
         </Box>
@@ -386,8 +409,8 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
 
       {/* Debug */}
       {appConfig.cliDebug && debugMessage && (
-        <Box marginTop={1} borderStyle="round" borderColor={Colors.AccentYellow} paddingX={1}>
-          <Text color={Colors.AccentYellow}>Debug: {debugMessage}</Text>
+        <Box marginTop={1} borderStyle="round" borderColor="yellow" paddingX={1}>
+          <Text color="yellow">Debug: {debugMessage}</Text>
         </Box>
       )}
     </Box>

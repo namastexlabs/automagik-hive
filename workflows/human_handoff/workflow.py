@@ -19,6 +19,9 @@ from agno.utils.log import logger
 from agno.workflow import RunResponse, Workflow, WorkflowCompletedEvent
 from db.session import db_url
 
+# YAML configuration loader
+from workflows.config_loader import config_loader
+
 # Shared protocol generator
 from workflows.shared.protocol_generator import (
     generate_protocol, 
@@ -351,12 +354,22 @@ def get_human_handoff_workflow(
 ) -> HumanHandoffWorkflow:
     """Factory function to create a configured human handoff workflow."""
     
+    # Load configuration from YAML
+    storage_config = config_loader.get_storage_config('human-handoff')
+    workflow_settings = config_loader.get_workflow_settings('human-handoff')
+    workflow_config = config_loader.load_workflow_config('human-handoff')
+    
+    # Get WhatsApp settings from config
+    whatsapp_config = workflow_config.get('whatsapp', {})
+    whatsapp_enabled = whatsapp_config.get('enabled', whatsapp_enabled)
+    whatsapp_instance = whatsapp_config.get('instance', whatsapp_instance)
+    
     return HumanHandoffWorkflow(
-        workflow_id="human-handoff",
+        workflow_id=workflow_settings.get('workflow_id', 'human-handoff'),
         storage=PostgresStorage(
-            table_name="human_handoff_workflows",
+            table_name=storage_config.get('table_name', 'human_handoff_workflows'),
             db_url=db_url,
-            auto_upgrade_schema=True,
+            auto_upgrade_schema=storage_config.get('auto_upgrade_schema', True),
         ),
         whatsapp_enabled=whatsapp_enabled,
         whatsapp_instance=whatsapp_instance

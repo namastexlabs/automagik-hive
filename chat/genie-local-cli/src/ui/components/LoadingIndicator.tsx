@@ -1,27 +1,37 @@
+/**
+ * Loading indicator adapted from gemini-cli for genie context
+ */
+
 import React from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { StreamingState } from '../types.js';
-import { appConfig } from '../../config/settings.js';
+import { Colors } from '../colors.js';
 
 interface LoadingIndicatorProps {
-  currentLoadingPhrase: string;
+  currentLoadingPhrase?: string;
   elapsedTime: number;
-  streamingState: StreamingState;
+  thought?: string;
+  streamingState?: StreamingState;
 }
 
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   currentLoadingPhrase,
   elapsedTime,
+  thought,
   streamingState,
 }) => {
-  const isLoading = streamingState === StreamingState.Connecting || 
-                   streamingState === StreamingState.Waiting ||
-                   streamingState === StreamingState.Responding;
+  // Show loading if we have a current phrase or if we're not idle
+  const isLoading = streamingState !== StreamingState.Idle && (
+    currentLoadingPhrase || 
+    streamingState === StreamingState.Connecting || 
+    streamingState === StreamingState.Waiting ||
+    streamingState === StreamingState.Responding
+  );
 
   const isStreaming = streamingState === StreamingState.Responding;
 
-  if (!isLoading) {
+  if (!isLoading && !thought) {
     return null;
   }
 
@@ -31,34 +41,46 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   };
 
   const getStreamingStateText = (): string => {
+    if (currentLoadingPhrase) {
+      return currentLoadingPhrase;
+    }
+    
     switch (streamingState) {
       case StreamingState.Connecting:
-        return 'Connecting to API...';
+        return '🧞 Connecting to genie...';
       case StreamingState.Waiting:
-        return 'Waiting for response...';
+        return '🧞 Waiting for response...';
       case StreamingState.Responding:
-        return 'Receiving response...';
+        return '🧞 Receiving response...';
       default:
-        return currentLoadingPhrase;
+        return '🧞 Thinking...';
     }
   };
 
   return (
-    <Box marginY={1}>
-      <Box alignItems="center">
-        {appConfig.enableSpinner && (
-          <>
-            <Spinner type="dots" />
-            <Text> </Text>
-          </>
-        )}
-        <Text color={isStreaming ? 'green' : 'yellow'}>
-          {getStreamingStateText()}
-        </Text>
-        {elapsedTime > 0 && (
-          <Text color="gray"> ({formatElapsedTime(elapsedTime)})</Text>
-        )}
-      </Box>
+    <Box marginY={1} flexDirection="column">
+      {/* Thought display (if available) */}
+      {thought && (
+        <Box marginBottom={1}>
+          <Text color={Colors.Comment} italic>
+            💭 {thought}
+          </Text>
+        </Box>
+      )}
+
+      {/* Loading indicator */}
+      {isLoading && (
+        <Box alignItems="center">
+          <Spinner type="dots" />
+          <Text> </Text>
+          <Text color={isStreaming ? Colors.AccentGreen : Colors.AccentYellow}>
+            {getStreamingStateText()}
+          </Text>
+          {elapsedTime > 0 && (
+            <Text color={Colors.Gray}> ({formatElapsedTime(elapsedTime)})</Text>
+          )}
+        </Box>
+      )}
     </Box>
   );
 };

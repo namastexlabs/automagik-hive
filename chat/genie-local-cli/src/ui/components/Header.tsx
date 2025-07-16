@@ -1,92 +1,63 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React from 'react';
 import { Box, Text } from 'ink';
-import SelectInput from 'ink-select-input';
+import Gradient from 'ink-gradient';
+import { Colors } from '../colors.js';
+import { shortGenieAsciiLogo, longGenieAsciiLogo } from './AsciiArt.js';
+import { getAsciiArtWidth } from '../utils/textUtils.js';
 
 interface HeaderProps {
-  terminalWidth: number;
+  customAsciiArt?: string; // For user-defined ASCII art
+  terminalWidth: number; // For responsive logo
   version: string;
-  connectionStatus: 'connecting' | 'connected' | 'error';
-  selectedTarget: { type: 'agent' | 'team' | 'workflow'; id: string; name: string } | null;
-  availableTargets: {
-    agents: any[];
-    teams: any[];
-    workflows: any[];
-  };
-  onTargetChange: () => void;
+  nightly: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  customAsciiArt,
   terminalWidth,
   version,
-  connectionStatus,
-  selectedTarget,
-  availableTargets,
-  onTargetChange,
+  nightly,
 }) => {
-  const getConnectionStatusColor = () => {
-    switch (connectionStatus) {
-      case 'connected': return 'green';
-      case 'connecting': return 'yellow';
-      case 'error': return 'red';
-      default: return 'gray';
-    }
-  };
+  let displayTitle;
+  const widthOfLongLogo = getAsciiArtWidth(longGenieAsciiLogo);
 
-  const getConnectionStatusText = () => {
-    switch (connectionStatus) {
-      case 'connected': return '● Connected';
-      case 'connecting': return '○ Connecting...';
-      case 'error': return '✗ Connection Error';
-      default: return '○ Unknown';
-    }
-  };
+  if (customAsciiArt) {
+    displayTitle = customAsciiArt;
+  } else {
+    displayTitle =
+      terminalWidth >= widthOfLongLogo ? longGenieAsciiLogo : shortGenieAsciiLogo;
+  }
 
-  const formatTargetDisplay = () => {
-    if (!selectedTarget) {
-      return 'No target selected';
-    }
-    return `${selectedTarget.type.toUpperCase()}: ${selectedTarget.name}`;
-  };
+  const artWidth = getAsciiArtWidth(displayTitle);
 
   return (
-    <Box flexDirection="column" marginBottom={1}>
-      {/* Title and version with gemini-style border */}
-      <Box 
-        borderStyle="round" 
-        borderColor="blue" 
-        paddingX={1} 
-        marginBottom={1}
-        justifyContent="space-between"
-      >
-        <Box>
-          <Text bold color="cyan">🧞 Genie Local CLI</Text>
-          <Text color="gray"> v{version}</Text>
+    <Box
+      marginBottom={1}
+      alignItems="flex-start"
+      width={artWidth}
+      flexShrink={0}
+      flexDirection="column"
+    >
+      {Colors.GradientColors ? (
+        <Gradient colors={Colors.GradientColors}>
+          <Text>{displayTitle}</Text>
+        </Gradient>
+      ) : (
+        <Text>{displayTitle}</Text>
+      )}
+      {nightly && (
+        <Box width="100%" flexDirection="row" justifyContent="flex-end">
+          <Gradient colors={Colors.GradientColors}>
+            <Text>v{version}</Text>
+          </Gradient>
         </Box>
-        <Text color={getConnectionStatusColor()}>
-          {getConnectionStatusText()}
-        </Text>
-      </Box>
-
-      {/* Target selection display */}
-      <Box marginTop={1} marginBottom={1}>
-        <Box flexDirection="column">
-          <Text color="cyan">Current Target: </Text>
-          <Text bold>{formatTargetDisplay()}</Text>
-          
-          {connectionStatus === 'connected' && (
-            <Box marginTop={1}>
-              <Text color="gray">
-                Available: {availableTargets.agents.length} agents, {availableTargets.teams.length} teams, {availableTargets.workflows.length} workflows
-              </Text>
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      {/* Separator */}
-      <Box>
-        <Text color="gray">{'─'.repeat(Math.min(terminalWidth, 80))}</Text>
-      </Box>
+      )}
     </Box>
   );
 };

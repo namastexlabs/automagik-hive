@@ -163,18 +163,33 @@ def create_pagbank_api():
             print(f"⚠️ Could not start CSV hot reload manager: {e}")
             print("📄 CSV hot reload manager: CONFIGURED (will start on first use)")
     
+    # Initialize global memory manager for consistent memory across all components
+    global_memory = None
+    try:
+        from context.memory.memory_manager import create_memory_manager
+        memory_manager = create_memory_manager()
+        global_memory = memory_manager.memory
+        if (demo_mode or is_development) and not is_reloader:
+            print("✅ Global memory manager initialized successfully")
+    except Exception as e:
+        if (demo_mode or is_development) and not is_reloader:
+            print(f"⚠️ Memory manager initialization warning: {e}")
+            print("📝 Note: Teams/agents will create fallback memory instances")
+    
     # Create the Ana routing team (V2 architecture) - simplified for debugging
     try:
         ana_team = get_ana_team(
             debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true"),
-            session_id=None  # Will be set per request
+            session_id=None,  # Will be set per request
+            memory=global_memory  # Pass initialized memory to prevent fallback warnings
         )
         
         # Get all agents for comprehensive endpoint generation
         from agents.registry import AgentRegistry
         agent_registry = AgentRegistry()
         available_agents = agent_registry.get_all_agents(
-            debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true")
+            debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true"),
+            memory=global_memory  # Pass global memory to agents too
         )
     except Exception as e:
         if (demo_mode or is_development) and not is_reloader:
@@ -374,6 +389,11 @@ def create_pagbank_api():
     try:
         from api.routes.v1_router import v1_router
         app.include_router(v1_router)
+        
+        # ✅ ADD VERSION ROUTER (API Architecture Cleanup - T-005)
+        # Provides lightweight version handling endpoints to replace heavy middleware operations
+        from api.routes.version_router import version_router
+        app.include_router(version_router)
         if (demo_mode or is_development) and not is_reloader:
             # Display startup summary
             startup_display.display_summary()
@@ -416,14 +436,9 @@ def create_pagbank_api():
     except Exception as e:
         startup_display.add_error("Middleware", f"Could not add Agno validation middleware: {e}")
     
-    # ✅ ADD VERSION MIDDLEWARE (before CORS)
-    # Add version support to existing playground endpoints
-    try:
-        from api.middleware.version_middleware import PlaygroundVersionMiddleware
-        app.add_middleware(PlaygroundVersionMiddleware)
-        pass  # Version middleware added silently
-    except Exception as e:
-        startup_display.add_error("Version Middleware", f"Could not add version middleware: {e}")
+    # ✅ VERSION SUPPORT VIA ROUTER (T-006: Single Extension Mechanism)
+    # Version support is now handled via /api/v1/version/* endpoints in version_router
+    # This follows pure Agno patterns using FastAPI routers instead of blocking middleware
     
     # ✅ ADD CORS MIDDLEWARE (unified from main.py)
     app.add_middleware(

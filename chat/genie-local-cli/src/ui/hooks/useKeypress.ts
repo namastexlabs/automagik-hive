@@ -42,9 +42,7 @@ export function useKeypress(
   }, [onKeypress]);
 
   useEffect(() => {
-    console.log('useKeypress effect:', { isActive, isTTY: stdin.isTTY });
     if (!isActive || !stdin.isTTY) {
-      console.log('useKeypress not active or not TTY');
       return;
     }
 
@@ -67,7 +65,6 @@ export function useKeypress(
     let pasteBuffer = Buffer.alloc(0);
 
     const handleKeypress = (_: unknown, key: Key) => {
-      console.log('useKeypress handleKeypress:', key);
       if (key.name === 'paste-start') {
         isPaste = true;
       } else if (key.name === 'paste-end') {
@@ -150,27 +147,30 @@ export function useKeypress(
     let rl: readline.Interface;
     if (usePassthrough) {
       rl = readline.createInterface({ input: keypressStream });
+      readline.emitKeypressEvents(keypressStream, rl);
+      keypressStream.on('keypress', handleKeypress);
       stdin.on('data', handleRawKeypress);
     } else {
       rl = readline.createInterface({ input: stdin });
+      readline.emitKeypressEvents(stdin, rl);
+      stdin.on('keypress', handleKeypress);
     }
 
     // Enable bracketed paste mode
     process.stdout.write('\x1B[?2004h');
 
-    rl.on('keypress', handleKeypress);
-
     return () => {
       // Disable bracketed paste mode
       process.stdout.write('\x1B[?2004l');
       
-      rl.removeListener('keypress', handleKeypress);
-      rl.close();
-      
       if (usePassthrough) {
+        keypressStream.removeListener('keypress', handleKeypress);
         stdin.removeListener('data', handleRawKeypress);
+      } else {
+        stdin.removeListener('keypress', handleKeypress);
       }
       
+      rl.close();
       setRawMode(false);
     };
   }, [isActive, stdin, setRawMode]);

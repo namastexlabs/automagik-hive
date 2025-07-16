@@ -1,45 +1,28 @@
 /**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+ * Exact copy of gemini-cli InputPrompt adapted for Genie backend
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Text } from 'ink';
 import { Colors } from '../colors.js';
-import { SuggestionsDisplay } from './SuggestionsDisplay.js';
-import { useInputHistory } from '../hooks/useInputHistory.js';
+import { useInputHistory } from '../hooks-minimal/useInputHistory.js';
 import { TextBuffer } from './shared/text-buffer.js';
 import { cpSlice, cpLen } from '../utils/textUtils.js';
 import chalk from 'chalk';
 import stringWidth from 'string-width';
-import { useShellHistory } from '../hooks/useShellHistory.js';
-import { useCompletion } from '../hooks/useCompletion.js';
 import { useKeypress, Key } from '../hooks/useKeypress.js';
-import { isAtCommand, isSlashCommand } from '../utils/commandUtils.js';
-import { CommandContext, SlashCommand } from '../commands/types.js';
-import { Config } from '@google/gemini-cli-core';
-import {
-  clipboardHasImage,
-  saveClipboardImage,
-  cleanupOldClipboardImages,
-} from '../utils/clipboardUtils.js';
-import * as path from 'path';
 
 export interface InputPromptProps {
   buffer: TextBuffer;
   onSubmit: (value: string) => void;
   userMessages: readonly string[];
   onClearScreen: () => void;
-  config: Config;
-  slashCommands: SlashCommand[];
-  commandContext: CommandContext;
-  placeholder?: string;
-  focus?: boolean;
   inputWidth: number;
   suggestionsWidth: number;
   shellModeActive: boolean;
   setShellModeActive: (value: boolean) => void;
+  placeholder?: string;
+  focus?: boolean;
 }
 
 export const InputPrompt: React.FC<InputPromptProps> = ({
@@ -47,41 +30,26 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   onSubmit,
   userMessages,
   onClearScreen,
-  config,
-  slashCommands,
-  commandContext,
-  placeholder = '  Type your message or @path/to/file',
-  focus = true,
   inputWidth,
   suggestionsWidth,
   shellModeActive,
   setShellModeActive,
+  placeholder = '  Type your message or @path/to/file',
+  focus = true,
 }) => {
   const [justNavigatedHistory, setJustNavigatedHistory] = useState(false);
-  const completion = useCompletion(
-    buffer.text,
-    config.getTargetDir(),
-    isAtCommand(buffer.text) || isSlashCommand(buffer.text),
-    slashCommands,
-    commandContext,
-    config,
-  );
-
-  const resetCompletionState = completion.resetCompletionState;
-  const shellHistory = useShellHistory(config.getProjectRoot());
 
   const handleSubmitAndClear = useCallback(
     (submittedValue: string) => {
       if (shellModeActive) {
-        shellHistory.addCommandToHistory(submittedValue);
+        // Could add shell history here if needed
       }
       // Clear the buffer *before* calling onSubmit to prevent potential re-submission
       // if onSubmit triggers a re-render while the buffer still holds the old value.
       buffer.setText('');
       onSubmit(submittedValue);
-      resetCompletionState();
     },
-    [onSubmit, buffer, resetCompletionState, shellModeActive, shellHistory],
+    [onSubmit, buffer, shellModeActive],
   );
 
   const customSetTextAndResetCompletionSignal = useCallback(
@@ -95,7 +63,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   const inputHistory = useInputHistory({
     userMessages,
     onSubmit: handleSubmitAndClear,
-    isActive: !completion.showSuggestions && !shellModeActive,
+    isActive: !shellModeActive,
     currentQuery: buffer.text,
     onChange: customSetTextAndResetCompletionSignal,
   });
@@ -103,133 +71,13 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   // Effect to reset completion if history navigation just occurred and set the text
   useEffect(() => {
     if (justNavigatedHistory) {
-      resetCompletionState();
       setJustNavigatedHistory(false);
     }
   }, [
     justNavigatedHistory,
     buffer.text,
-    resetCompletionState,
     setJustNavigatedHistory,
   ]);
-
-  const completionSuggestions = completion.suggestions;
-  const handleAutocomplete = useCallback(
-    (indexToUse: number) => {
-      if (indexToUse < 0 || indexToUse >= completionSuggestions.length) {
-        return;
-      }
-      const query = buffer.text;
-      const suggestion = completionSuggestions[indexToUse].value;
-
-      if (query.trimStart().startsWith('/')) {
-        const hasTrailingSpace = query.endsWith(' ');
-        const parts = query
-          .trimStart()
-          .substring(1)
-          .split(/\s+/)
-          .filter(Boolean);
-
-        let isParentPath = false;
-        // If there's no trailing space, we need to check if the current query
-        // is already a complete path to a parent command.
-        if (!hasTrailingSpace) {
-          let currentLevel: SlashCommand[] | undefined = slashCommands;
-          for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-            const found: SlashCommand | undefined = currentLevel?.find(
-              (cmd) => cmd.name === part || cmd.altName === part,
-            );
-
-            if (found) {
-              if (i === parts.length - 1 && found.subCommands) {
-                isParentPath = true;
-              }
-              currentLevel = found.subCommands;
-            } else {
-              // Path is invalid, so it can't be a parent path.
-              currentLevel = undefined;
-              break;
-            }
-          }
-        }
-
-        // Determine the base path of the command.
-        // - If there's a trailing space, the whole command is the base.
-        // - If it's a known parent path, the whole command is the base.
-        // - Otherwise, the base is everything EXCEPT the last partial part.
-        const basePath =
-          hasTrailingSpace || isParentPath ? parts : parts.slice(0, -1);
-        const newValue = `/${[...basePath, suggestion].join(' ')} `;
-
-        buffer.setText(newValue);
-      } else {
-        const atIndex = query.lastIndexOf('@');
-        if (atIndex === -1) return;
-        const pathPart = query.substring(atIndex + 1);
-        const lastSlashIndexInPath = pathPart.lastIndexOf('/');
-        let autoCompleteStartIndex = atIndex + 1;
-        if (lastSlashIndexInPath !== -1) {
-          autoCompleteStartIndex += lastSlashIndexInPath + 1;
-        }
-        buffer.replaceRangeByOffset(
-          autoCompleteStartIndex,
-          buffer.text.length,
-          suggestion,
-        );
-      }
-      resetCompletionState();
-    },
-    [resetCompletionState, buffer, completionSuggestions, slashCommands],
-  );
-
-  // Handle clipboard image pasting with Ctrl+V
-  const handleClipboardImage = useCallback(async () => {
-    try {
-      if (await clipboardHasImage()) {
-        const imagePath = await saveClipboardImage(config.getTargetDir());
-        if (imagePath) {
-          // Clean up old images
-          cleanupOldClipboardImages(config.getTargetDir()).catch(() => {
-            // Ignore cleanup errors
-          });
-
-          // Get relative path from current directory
-          const relativePath = path.relative(config.getTargetDir(), imagePath);
-
-          // Insert @path reference at cursor position
-          const insertText = `@${relativePath}`;
-          const currentText = buffer.text;
-          const [row, col] = buffer.cursor;
-
-          // Calculate offset from row/col
-          let offset = 0;
-          for (let i = 0; i < row; i++) {
-            offset += buffer.lines[i].length + 1; // +1 for newline
-          }
-          offset += col;
-
-          // Add spaces around the path if needed
-          let textToInsert = insertText;
-          const charBefore = offset > 0 ? currentText[offset - 1] : '';
-          const charAfter =
-            offset < currentText.length ? currentText[offset] : '';
-
-          if (charBefore && charBefore !== ' ' && charBefore !== '\n') {
-            textToInsert = ' ' + textToInsert;
-          }
-          if (!charAfter || (charAfter !== ' ' && charAfter !== '\n')) {
-            textToInsert = textToInsert + ' ';
-          }
-
-          // Insert at cursor position
-          buffer.replaceRangeByOffset(offset, offset, textToInsert);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling clipboard image:', error);
-    }
-  }, [buffer, config]);
 
   const handleInput = useCallback(
     (key: Key) => {
@@ -239,8 +87,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
 
       if (
         key.sequence === '!' &&
-        buffer.text === '' &&
-        !completion.showSuggestions
+        buffer.text === ''
       ) {
         setShellModeActive(!shellModeActive);
         buffer.setText(''); // Clear the '!' from input
@@ -252,11 +99,6 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
           setShellModeActive(false);
           return;
         }
-
-        if (completion.showSuggestions) {
-          completion.resetCompletionState();
-          return;
-        }
       }
 
       if (key.ctrl && key.name === 'l') {
@@ -264,83 +106,47 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         return;
       }
 
-      if (completion.showSuggestions) {
-        if (key.name === 'up') {
-          completion.navigateUp();
+      if (!shellModeActive) {
+        if (key.ctrl && key.name === 'p') {
+          inputHistory.navigateUp();
           return;
         }
-        if (key.name === 'down') {
-          completion.navigateDown();
+        if (key.ctrl && key.name === 'n') {
+          inputHistory.navigateDown();
           return;
         }
+        // Handle arrow-up/down for history on single-line or at edges
+        if (
+          key.name === 'up' &&
+          (buffer.allVisualLines.length === 1 ||
+            (buffer.visualCursor[0] === 0 && buffer.visualScrollRow === 0))
+        ) {
+          inputHistory.navigateUp();
+          return;
+        }
+        if (
+          key.name === 'down' &&
+          (buffer.allVisualLines.length === 1 ||
+            buffer.visualCursor[0] === buffer.allVisualLines.length - 1)
+        ) {
+          inputHistory.navigateDown();
+          return;
+        }
+      }
 
-        if (key.name === 'tab' || (key.name === 'return' && !key.ctrl)) {
-          if (completion.suggestions.length > 0) {
-            const targetIndex =
-              completion.activeSuggestionIndex === -1
-                ? 0 // Default to the first if none is active
-                : completion.activeSuggestionIndex;
-            if (targetIndex < completion.suggestions.length) {
-              handleAutocomplete(targetIndex);
-            }
-          }
-          return;
-        }
-      } else {
-        if (!shellModeActive) {
-          if (key.ctrl && key.name === 'p') {
-            inputHistory.navigateUp();
-            return;
-          }
-          if (key.ctrl && key.name === 'n') {
-            inputHistory.navigateDown();
-            return;
-          }
-          // Handle arrow-up/down for history on single-line or at edges
-          if (
-            key.name === 'up' &&
-            (buffer.allVisualLines.length === 1 ||
-              (buffer.visualCursor[0] === 0 && buffer.visualScrollRow === 0))
-          ) {
-            inputHistory.navigateUp();
-            return;
-          }
-          if (
-            key.name === 'down' &&
-            (buffer.allVisualLines.length === 1 ||
-              buffer.visualCursor[0] === buffer.allVisualLines.length - 1)
-          ) {
-            inputHistory.navigateDown();
-            return;
-          }
-        } else {
-          // Shell History Navigation
-          if (key.name === 'up') {
-            const prevCommand = shellHistory.getPreviousCommand();
-            if (prevCommand !== null) buffer.setText(prevCommand);
-            return;
-          }
-          if (key.name === 'down') {
-            const nextCommand = shellHistory.getNextCommand();
-            if (nextCommand !== null) buffer.setText(nextCommand);
-            return;
+      if (key.name === 'return' && !key.ctrl && !key.meta && !key.paste) {
+        if (buffer.text.trim()) {
+          const [row, col] = buffer.cursor;
+          const line = buffer.lines[row];
+          const charBefore = col > 0 ? cpSlice(line, col - 1, col) : '';
+          if (charBefore === '\\') {
+            buffer.backspace();
+            buffer.newline();
+          } else {
+            handleSubmitAndClear(buffer.text);
           }
         }
-
-        if (key.name === 'return' && !key.ctrl && !key.meta && !key.paste) {
-          if (buffer.text.trim()) {
-            const [row, col] = buffer.cursor;
-            const line = buffer.lines[row];
-            const charBefore = col > 0 ? cpSlice(line, col - 1, col) : '';
-            if (charBefore === '\\') {
-              buffer.backspace();
-              buffer.newline();
-            } else {
-              handleSubmitAndClear(buffer.text);
-            }
-          }
-          return;
-        }
+        return;
       }
 
       // Newline insertion
@@ -376,27 +182,17 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         return;
       }
 
-      // Ctrl+V for clipboard image paste
-      if (key.ctrl && key.name === 'v') {
-        handleClipboardImage();
-        return;
-      }
-
       // Fallback to the text buffer's default input handling for all other keys
       buffer.handleInput(key);
     },
     [
       focus,
       buffer,
-      completion,
       shellModeActive,
       setShellModeActive,
       onClearScreen,
       inputHistory,
-      handleAutocomplete,
       handleSubmitAndClear,
-      shellHistory,
-      handleClipboardImage,
     ],
   );
 
@@ -469,18 +265,6 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
           )}
         </Box>
       </Box>
-      {completion.showSuggestions && (
-        <Box>
-          <SuggestionsDisplay
-            suggestions={completion.suggestions}
-            activeIndex={completion.activeSuggestionIndex}
-            isLoading={completion.isLoadingSuggestions}
-            width={suggestionsWidth}
-            scrollOffset={completion.visibleStartIndex}
-            userInput={buffer.text}
-          />
-        </Box>
-      )}
     </>
   );
 };

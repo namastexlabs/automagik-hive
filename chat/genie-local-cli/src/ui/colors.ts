@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Color system adapted from gemini-cli
+ * Provides consistent theming support for genie-local-cli
+ */
+
 import { themeManager } from './themes/theme-manager.js';
 import { ColorsTheme } from './themes/theme.js';
 

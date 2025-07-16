@@ -274,6 +274,7 @@ export class LocalAPIClient {
               const event = JSON.parse(jsonStr);
               if (appConfig.cliDebug) {
                 console.log('[EVENT]:', event.event, event.content ? `"${event.content.slice(0, 50)}..."` : '');
+                console.log('[EVENT DATA]:', JSON.stringify(event, null, 2));
               }
               
               // Extract session_id from first event
@@ -293,37 +294,169 @@ export class LocalAPIClient {
                     content: content,
                     done: false,
                     session_id: sessionId,
+                    metadata: {
+                      type: 'content',
+                      event: event.event,
+                      content_type: event.content_type,
+                    },
                   });
                 }
               }
               
-              // Handle tool call events
-              if (event.event === 'TeamToolCallStarted' || event.event === 'ToolCallStarted') {
-                const toolName = event.tool?.tool_name || 'unknown';
+              // Handle team start events
+              if (event.event === 'TeamRunStarted') {
+                const teamName = event.team_name || event.team_id || event.team?.team_name || event.team?.team_id || 'unknown';
                 onMessage({
-                  content: `🔧 Starting tool: ${toolName}`,
+                  content: `🔵 ${teamName}`,
                   done: false,
                   session_id: sessionId,
+                  metadata: {
+                    type: 'team_start',
+                    event: event.event,
+                    team: {
+                      team_id: event.team_id,
+                      team_name: event.team_name,
+                      run_id: event.run_id,
+                      model: event.model,
+                      model_provider: event.model_provider,
+                    },
+                  },
                 });
               }
               
-              if (event.event === 'ToolCallCompleted') {
-                const toolName = event.tool?.tool_name || 'unknown';
-                const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1000).toFixed(0)}ms)` : '';
+              // Handle tool call events
+              if (event.event === 'TeamToolCallStarted' || event.event === 'ToolCallStarted') {
+                const toolName = event.tool?.tool_name || event.tool_name || 'unknown';
+                const toolArgs = event.tool?.tool_args || event.tool_args || {};
+                const argsStr = Object.keys(toolArgs).length > 0 ? JSON.stringify(toolArgs, null, 2) : '';
                 onMessage({
-                  content: `✅ Completed tool: ${toolName}${duration}`,
+                  content: `🔧 ${toolName}${argsStr ? '\n\nArguments:\n' + argsStr : ''}`,
                   done: false,
                   session_id: sessionId,
+                  metadata: {
+                    type: 'tool_start',
+                    event: event.event,
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                    },
+                  },
+                });
+              }
+              
+              if (event.event === 'ToolCallCompleted' || event.event === 'TeamToolCallCompleted') {
+                const toolName = event.tool?.tool_name || event.tool_name || 'unknown';
+                const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1000).toFixed(0)}ms)` : '';
+                const toolResult = event.tool?.result || event.tool?.tool_result || event.tool_result || event.result;
+                const resultStr = toolResult && typeof toolResult === 'string' && toolResult.trim() ? 
+                  (toolResult.length > 500 ? toolResult.substring(0, 500) + '...' : toolResult) : '';
+                onMessage({
+                  content: `✅ ${toolName}${duration}${resultStr ? '\n\nResult:\n' + resultStr : ''}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'tool_complete',
+                    event: event.event,
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      tool_result: event.tool?.result || event.tool?.tool_result || event.tool_result || event.result,
+                      metrics: event.tool?.metrics || event.metrics,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                      tool_call_error: event.tool?.tool_call_error,
+                    },
+                  },
                 });
               }
               
               // Handle agent start events
               if (event.event === 'RunStarted') {
-                const agentName = event.agent_name || event.agent_id || 'unknown';
+                const agentName = event.agent_name || event.agent?.agent_name || event.agent_id || event.agent?.agent_id || 'unknown';
                 onMessage({
-                  content: `🤖 Starting agent: ${agentName}`,
+                  content: `🤖 ${agentName}`,
                   done: false,
                   session_id: sessionId,
+                  metadata: {
+                    type: 'agent_start',
+                    event: event.event,
+                    agent: {
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                      session_id: event.session_id,
+                      team_session_id: event.team_session_id,
+                      model: event.model,
+                      model_provider: event.model_provider,
+                    },
+                  },
+                });
+              }
+              
+              // Handle memory events
+              if (event.event === 'MemoryUpdateStarted' || event.event === 'MemoryUpdateCompleted') {
+                const memoryType = event.memory_type || event.memory?.type || event.type || 'user memory';
+                const action = event.event === 'MemoryUpdateStarted' ? 'Updating' : 'Updated';
+                const memoryContent = event.memory_content || event.content || event.memory?.content || '';
+                onMessage({
+                  content: `🧠 ${action} ${memoryType}${memoryContent ? '\n\nContent:\n' + memoryContent : ''}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'memory_update',
+                    event: event.event,
+                    memory: event.memory || {
+                      type: event.memory_type || event.type,
+                      content: event.memory_content || event.content,
+                      metadata: event.metadata,
+                    },
+                  },
+                });
+              }
+              
+              // Handle thinking events
+              if (event.event === 'ThinkingStarted' || event.event === 'ThinkingCompleted') {
+                const thinkingAction = event.event === 'ThinkingStarted' ? 'Thinking...' : 'Thought complete';
+                onMessage({
+                  content: `🤔 ${thinkingAction}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'thinking',
+                    event: event.event,
+                    thinking: {
+                      content: event.content || '',
+                      reasoning: event.reasoning || '',
+                    },
+                  },
+                });
+              }
+              
+              // Handle RAG events
+              if (event.event === 'RAGQueryStarted' || event.event === 'RAGQueryCompleted') {
+                const ragAction = event.event === 'RAGQueryStarted' ? 'Searching' : 'Found';
+                const query = event.query || 'knowledge base';
+                onMessage({
+                  content: `🔍 ${ragAction} in ${query}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'rag_query',
+                    event: event.event,
+                    rag: {
+                      query: event.query,
+                      results: event.results,
+                      metadata: event.metadata,
+                    },
+                  },
                 });
               }
               
@@ -490,37 +623,169 @@ export class LocalAPIClient {
                     content: content,
                     done: false,
                     session_id: sessionId,
+                    metadata: {
+                      type: 'content',
+                      event: event.event,
+                      content_type: event.content_type,
+                    },
                   });
                 }
               }
               
-              // Handle tool call events
-              if (event.event === 'TeamToolCallStarted' || event.event === 'ToolCallStarted') {
-                const toolName = event.tool?.tool_name || 'unknown';
+              // Handle team start events
+              if (event.event === 'TeamRunStarted') {
+                const teamName = event.team_name || event.team_id || event.team?.team_name || event.team?.team_id || 'unknown';
                 onMessage({
-                  content: `🔧 Starting tool: ${toolName}`,
+                  content: `🔵 ${teamName}`,
                   done: false,
                   session_id: sessionId,
+                  metadata: {
+                    type: 'team_start',
+                    event: event.event,
+                    team: {
+                      team_id: event.team_id,
+                      team_name: event.team_name,
+                      run_id: event.run_id,
+                      model: event.model,
+                      model_provider: event.model_provider,
+                    },
+                  },
                 });
               }
               
-              if (event.event === 'ToolCallCompleted') {
-                const toolName = event.tool?.tool_name || 'unknown';
-                const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1000).toFixed(0)}ms)` : '';
+              // Handle tool call events
+              if (event.event === 'TeamToolCallStarted' || event.event === 'ToolCallStarted') {
+                const toolName = event.tool?.tool_name || event.tool_name || 'unknown';
+                const toolArgs = event.tool?.tool_args || event.tool_args || {};
+                const argsStr = Object.keys(toolArgs).length > 0 ? JSON.stringify(toolArgs, null, 2) : '';
                 onMessage({
-                  content: `✅ Completed tool: ${toolName}${duration}`,
+                  content: `🔧 ${toolName}${argsStr ? '\n\nArguments:\n' + argsStr : ''}`,
                   done: false,
                   session_id: sessionId,
+                  metadata: {
+                    type: 'tool_start',
+                    event: event.event,
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                    },
+                  },
+                });
+              }
+              
+              if (event.event === 'ToolCallCompleted' || event.event === 'TeamToolCallCompleted') {
+                const toolName = event.tool?.tool_name || event.tool_name || 'unknown';
+                const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1000).toFixed(0)}ms)` : '';
+                const toolResult = event.tool?.result || event.tool?.tool_result || event.tool_result || event.result;
+                const resultStr = toolResult && typeof toolResult === 'string' && toolResult.trim() ? 
+                  (toolResult.length > 500 ? toolResult.substring(0, 500) + '...' : toolResult) : '';
+                onMessage({
+                  content: `✅ ${toolName}${duration}${resultStr ? '\n\nResult:\n' + resultStr : ''}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'tool_complete',
+                    event: event.event,
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      tool_result: event.tool?.result || event.tool?.tool_result || event.tool_result || event.result,
+                      metrics: event.tool?.metrics || event.metrics,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                      tool_call_error: event.tool?.tool_call_error,
+                    },
+                  },
                 });
               }
               
               // Handle agent start events
               if (event.event === 'RunStarted') {
-                const agentName = event.agent_name || event.agent_id || 'unknown';
+                const agentName = event.agent_name || event.agent?.agent_name || event.agent_id || event.agent?.agent_id || 'unknown';
                 onMessage({
-                  content: `🤖 Starting agent: ${agentName}`,
+                  content: `🤖 ${agentName}`,
                   done: false,
                   session_id: sessionId,
+                  metadata: {
+                    type: 'agent_start',
+                    event: event.event,
+                    agent: {
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                      session_id: event.session_id,
+                      team_session_id: event.team_session_id,
+                      model: event.model,
+                      model_provider: event.model_provider,
+                    },
+                  },
+                });
+              }
+              
+              // Handle memory events
+              if (event.event === 'MemoryUpdateStarted' || event.event === 'MemoryUpdateCompleted') {
+                const memoryType = event.memory_type || event.memory?.type || event.type || 'user memory';
+                const action = event.event === 'MemoryUpdateStarted' ? 'Updating' : 'Updated';
+                const memoryContent = event.memory_content || event.content || event.memory?.content || '';
+                onMessage({
+                  content: `🧠 ${action} ${memoryType}${memoryContent ? '\n\nContent:\n' + memoryContent : ''}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'memory_update',
+                    event: event.event,
+                    memory: event.memory || {
+                      type: event.memory_type || event.type,
+                      content: event.memory_content || event.content,
+                      metadata: event.metadata,
+                    },
+                  },
+                });
+              }
+              
+              // Handle thinking events
+              if (event.event === 'ThinkingStarted' || event.event === 'ThinkingCompleted') {
+                const thinkingAction = event.event === 'ThinkingStarted' ? 'Thinking...' : 'Thought complete';
+                onMessage({
+                  content: `🤔 ${thinkingAction}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'thinking',
+                    event: event.event,
+                    thinking: {
+                      content: event.content || '',
+                      reasoning: event.reasoning || '',
+                    },
+                  },
+                });
+              }
+              
+              // Handle RAG events
+              if (event.event === 'RAGQueryStarted' || event.event === 'RAGQueryCompleted') {
+                const ragAction = event.event === 'RAGQueryStarted' ? 'Searching' : 'Found';
+                const query = event.query || 'knowledge base';
+                onMessage({
+                  content: `🔍 ${ragAction} in ${query}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: 'rag_query',
+                    event: event.event,
+                    rag: {
+                      query: event.query,
+                      results: event.results,
+                      metadata: event.metadata,
+                    },
+                  },
                 });
               }
               

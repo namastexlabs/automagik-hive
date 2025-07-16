@@ -109,6 +109,12 @@ export const useLocalAPIStream = (
           messageType = MessageType.TOOL_COMPLETE;
         } else if (data.metadata?.type === 'agent_start') {
           messageType = MessageType.AGENT_START;
+        } else if (data.metadata?.type === 'team_start') {
+          messageType = MessageType.TEAM_START;
+        } else if (data.metadata?.type === 'memory_update') {
+          messageType = MessageType.MEMORY_UPDATE;
+        } else if (data.metadata?.type === 'rag_query') {
+          messageType = MessageType.INFO;
         }
 
         // For content messages, accumulate in current stream
@@ -124,7 +130,7 @@ export const useLocalAPIStream = (
             },
           } : null);
         } else {
-          // For other message types, add as separate messages immediately
+          // For other message types, add as separate messages immediately with rich metadata
           const immediateMessage: Omit<HistoryItem, 'id'> = {
             type: messageType,
             text: data.content,
@@ -134,6 +140,14 @@ export const useLocalAPIStream = (
               target: selectedTarget,
               streaming: false,
               complete: true,
+              event: data.metadata?.event,
+              // Pass through all the rich metadata from the API
+              tool: data.metadata?.tool,
+              agent: data.metadata?.agent,
+              team: data.metadata?.team,
+              memory: data.metadata?.memory,
+              thinking: data.metadata?.thinking,
+              rag: data.metadata?.rag,
             },
           };
           addMessage(immediateMessage);

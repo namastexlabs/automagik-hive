@@ -23,6 +23,9 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
 
+# YAML configuration loader
+from workflows.config_loader import config_loader
+
 # Shared protocol generator
 from workflows.shared.protocol_generator import (
     generate_protocol, 
@@ -84,57 +87,79 @@ class ConversationTypificationWorkflow(Workflow):
         self.demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
         self.console = Console() if self.demo_mode else None
         
+        # Load workflow configuration
+        self.workflow_config = config_loader.load_workflow_config('conversation-typification')
+        
         logger.info(f"Loaded hierarchy with {len(self.hierarchy)} business units")
         
         if self.debug_mode:
             logger.debug(f"🔧 DEBUG MODE: Workflow state tracking enabled")
+    
+    def _create_model_from_config(self, agent_key: str) -> Claude:
+        """
+        Create Claude model from YAML configuration.
+        
+        Args:
+            agent_key: Key for agent configuration in YAML
+            
+        Returns:
+            Configured Claude model instance
+        """
+        model_config = config_loader.get_model_config('conversation-typification', agent_key)
+        
+        return Claude(
+            id=model_config.get('id', 'claude-sonnet-4-20250514'),
+            temperature=model_config.get('temperature', 0.7),
+            max_tokens=model_config.get('max_tokens', 2000)
+        )
         
     
-    # Step 1: Business Unit Classifier
-    business_unit_classifier: Agent = Agent(
-        name="Business Unit Classifier",
-        model=Claude(id="claude-sonnet-4-20250514"),
-        description=dedent("""\
-        Especialista em classificação de unidades de negócio PagBank.
-        Analisa conversas para identificar a área de negócio apropriada.
-        """),
-        instructions=dedent("""\
-        Analise a conversa e identifique a Unidade de Negócio correta.
-        
-        OPÇÕES VÁLIDAS (exatamente como aparece no sistema):
-        
-        1. "Adquirência Web" 
-           - Antecipação de vendas online
-           - Recebimento de vendas web
-           - Taxas de recebimento online
-        
-        2. "Adquirência Web / Adquirência Presencial"
-           - Antecipação multi-canal
-           - Vendas online e presencial
-           - Máquinas de cartão combinadas
-        
-        3. "Emissão"
-           - Todos os tipos de cartão
-           - Cartão múltiplo, pré-pago, crédito, débito
-           - Problemas com cartões físicos
-        
-        4. "PagBank"
-           - Conta digital PagBank
-           - Pix, TED, transferências
-           - Aplicativo PagBank
-           - Folha de pagamento
-           - Recarga de celular
-        
-        INSTRUÇÕES:
-        - Identifique as palavras-chave na conversa
-        - Considere o contexto do problema/solicitação
-        - Escolha apenas UMA das 4 opções válidas
-        - Justifique sua escolha baseada no conteúdo
-        - Seja preciso - a classificação afeta todo o fluxo
-        """),
-        response_model=BusinessUnitSelection,
-        structured_outputs=True
-    )
+    def _create_business_unit_classifier(self) -> Agent:
+        """Create business unit classifier from configuration"""
+        return Agent(
+            name="Business Unit Classifier",
+            model=self._create_model_from_config('business_unit_classifier'),
+            description=dedent("""\
+            Especialista em classificação de unidades de negócio PagBank.
+            Analisa conversas para identificar a área de negócio apropriada.
+            """),
+            instructions=dedent("""\
+            Analise a conversa e identifique a Unidade de Negócio correta.
+            
+            OPÇÕES VÁLIDAS (exatamente como aparece no sistema):
+            
+            1. "Adquirência Web" 
+               - Antecipação de vendas online
+               - Recebimento de vendas web
+               - Taxas de recebimento online
+            
+            2. "Adquirência Web / Adquirência Presencial"
+               - Antecipação multi-canal
+               - Vendas online e presencial
+               - Máquinas de cartão combinadas
+            
+            3. "Emissão"
+               - Todos os tipos de cartão
+               - Cartão múltiplo, pré-pago, crédito, débito
+               - Problemas com cartões físicos
+            
+            4. "PagBank"
+               - Conta digital PagBank
+               - Pix, TED, transferências
+               - Aplicativo PagBank
+               - Folha de pagamento
+               - Recarga de celular
+            
+            INSTRUÇÕES:
+            - Identifique as palavras-chave na conversa
+            - Considere o contexto do problema/solicitação
+            - Escolha apenas UMA das 4 opções válidas
+            - Justifique sua escolha baseada no conteúdo
+            - Seja preciso - a classificação afeta todo o fluxo
+            """),
+            response_model=BusinessUnitSelection,
+            structured_outputs=True
+        )
     
     def create_product_classifier(self, business_unit: str) -> Agent:
         """Create dynamic product classifier for the selected business unit"""
@@ -145,7 +170,7 @@ class ConversationTypificationWorkflow(Workflow):
         
         return Agent(
             name=f"Product Classifier - {business_unit}",
-            model=Claude(id="claude-sonnet-4-20250514"),
+            model=self._create_model_from_config('product_classifier'),
             description=f"Especialista em produtos da unidade {business_unit}",
             instructions=dedent(f"""\
             Baseado na Unidade de Negócio "{business_unit}", identifique o Produto correto.
@@ -174,7 +199,7 @@ class ConversationTypificationWorkflow(Workflow):
         
         return Agent(
             name=f"Motive Classifier - {product}",
-            model=Claude(id="claude-sonnet-4-20250514"),
+            model=self._create_model_from_config('motive_classifier'),
             description=f"Especialista em motivos para o produto {product}",
             instructions=dedent(f"""\
             Baseado no Produto "{product}", identifique o Motivo correto.
@@ -203,7 +228,7 @@ class ConversationTypificationWorkflow(Workflow):
         
         return Agent(
             name=f"Submotive Classifier - {motive}",
-            model=Claude(id="claude-sonnet-4-20250514"),  # More capable model for final classification
+            model=self._create_model_from_config('submotive_classifier'),
             description=f"Especialista em submotivos para {motive}",
             instructions=dedent(f"""\
             Baseado no Motivo "{motive}", identifique o Submotivo mais específico.
@@ -268,7 +293,8 @@ class ConversationTypificationWorkflow(Workflow):
                 self._log_step_start(1, "Business Unit Classification", ["Adquirência Web", "Adquirência Web / Adquirência Presencial", "Emissão", "PagBank"])
             
             logger.info("Step 1: Classifying business unit...")
-            unit_response: RunResponse = self.business_unit_classifier.run(
+            business_unit_classifier = self._create_business_unit_classifier()
+            unit_response: RunResponse = business_unit_classifier.run(
                 f"Conversa para classificar:\n\n{conversation_history}"
             )
             
@@ -812,13 +838,16 @@ def get_conversation_typification_workflow(debug_mode: bool = False) -> Conversa
     demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
     env_debug = os.getenv("DEBUG", "false").lower() == "true"
     
+    # Load storage configuration from YAML
+    storage_config = config_loader.get_storage_config('conversation-typification')
+    workflow_settings = config_loader.get_workflow_settings('conversation-typification')
     
     return ConversationTypificationWorkflow(
-        workflow_id="conversation-typification",
+        workflow_id=workflow_settings.get('workflow_id', 'conversation-typification'),
         storage=PostgresStorage(
-            table_name="conversation-typification-workflows",
+            table_name=storage_config.get('table_name', 'conversation-typification-workflows'),
             db_url=db_url,
-            auto_upgrade_schema=True,
+            auto_upgrade_schema=storage_config.get('auto_upgrade_schema', True),
         ),
         debug_mode=debug_mode or env_debug,
     )

@@ -139,7 +139,7 @@ def create_versioned_team(
             add_member_tools_to_system_message=config.get("add_member_tools_to_system_message", True),
             # User context stored in session_state
             session_state=user_context_state if user_context_state.get('user_context') else None,
-            add_state_in_messages=True,
+            add_state_in_messages=config.get("add_state_in_messages", True),
             storage=PostgresStorage(
                 table_name=config["storage"]["table_name"],
                 db_url=db_url,

@@ -2334,9 +2334,9 @@ var require_react_reconciler_development = __commonJS({
               for (var i2 = debugInfo.length - 1; 0 <= i2; i2--) {
                 var entry = debugInfo[i2];
                 if ("string" === typeof entry.name) {
-                  var JSCompiler_temp_const = info, env4 = entry.env;
+                  var JSCompiler_temp_const = info, env3 = entry.env;
                   var JSCompiler_inline_result = describeBuiltInComponentFrame(
-                    entry.name + (env4 ? " [" + env4 + "]" : "")
+                    entry.name + (env3 ? " [" + env3 + "]" : "")
                   );
                   info = JSCompiler_temp_const + JSCompiler_inline_result;
                 }
@@ -11467,14 +11467,14 @@ var require_react_reconciler_development = __commonJS({
       }
       var exports2 = {};
       "use strict";
-      var React18 = require_react(), Scheduler = require_scheduler(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
+      var React17 = require_react(), Scheduler = require_scheduler(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
       Symbol.for("react.scope");
       var REACT_ACTIVITY_TYPE = Symbol.for("react.activity");
       Symbol.for("react.legacy_hidden");
       Symbol.for("react.tracing_marker");
       var REACT_MEMO_CACHE_SENTINEL = Symbol.for("react.memo_cache_sentinel");
       Symbol.for("react.view_transition");
-      var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React18.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, rendererVersion = $$$config.rendererVersion, rendererPackageName = $$$config.rendererPackageName, extraDevToolsConfig = $$$config.extraDevToolsConfig, getPublicInstance = $$$config.getPublicInstance, getRootHostContext = $$$config.getRootHostContext, getChildHostContext = $$$config.getChildHostContext, prepareForCommit = $$$config.prepareForCommit, resetAfterCommit = $$$config.resetAfterCommit, createInstance = $$$config.createInstance;
+      var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React17.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, rendererVersion = $$$config.rendererVersion, rendererPackageName = $$$config.rendererPackageName, extraDevToolsConfig = $$$config.extraDevToolsConfig, getPublicInstance = $$$config.getPublicInstance, getRootHostContext = $$$config.getRootHostContext, getChildHostContext = $$$config.getChildHostContext, prepareForCommit = $$$config.prepareForCommit, resetAfterCommit = $$$config.resetAfterCommit, createInstance = $$$config.createInstance;
       $$$config.cloneMutableInstance;
       var appendInitialChild = $$$config.appendInitialChild, finalizeInitialChildren = $$$config.finalizeInitialChildren, shouldSetTextContent = $$$config.shouldSetTextContent, createTextInstance = $$$config.createTextInstance;
       $$$config.cloneMutableTextInstance;
@@ -17149,7 +17149,7 @@ var require_backend = __commonJS({
                     return function() {
                     };
                   },
-                  useCallback: function useCallback6(a) {
+                  useCallback: function useCallback8(a) {
                     var b = C();
                     x2.push({
                       primitive: "Callback",
@@ -17166,7 +17166,7 @@ var require_backend = __commonJS({
                     });
                     return a._currentValue;
                   },
-                  useEffect: function useEffect11(a) {
+                  useEffect: function useEffect12(a) {
                     C();
                     x2.push({
                       primitive: "Effect",
@@ -17207,7 +17207,7 @@ var require_backend = __commonJS({
                       value: a
                     });
                   },
-                  useMemo: function useMemo3(a) {
+                  useMemo: function useMemo5(a) {
                     var b = C();
                     a = null !== b ? b.memoizedState[0] : a();
                     x2.push({
@@ -17220,7 +17220,7 @@ var require_backend = __commonJS({
                   useMemoCache: function useMemoCache() {
                     return [];
                   },
-                  useReducer: function useReducer(a, b, e2) {
+                  useReducer: function useReducer2(a, b, e2) {
                     a = C();
                     b = null !== a ? a.memoizedState : void 0 !== e2 ? e2(b) : b;
                     x2.push({
@@ -17231,7 +17231,7 @@ var require_backend = __commonJS({
                     return [b, function() {
                     }];
                   },
-                  useRef: function useRef3(a) {
+                  useRef: function useRef4(a) {
                     var b = C();
                     a = null !== b ? b.memoizedState : {
                       current: a
@@ -17243,7 +17243,7 @@ var require_backend = __commonJS({
                     });
                     return a;
                   },
-                  useState: function useState12(a) {
+                  useState: function useState13(a) {
                     var b = C();
                     a = null !== b ? b.memoizedState : "function" === typeof a ? a() : a;
                     x2.push({
@@ -30671,20 +30671,20 @@ var require_react_jsx_runtime_development = __commonJS({
       function validateChildKeys(node) {
         "object" === typeof node && null !== node && node.$$typeof === REACT_ELEMENT_TYPE && node._store && (node._store.validated = 1);
       }
-      var React18 = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler");
+      var React17 = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler");
       Symbol.for("react.provider");
-      var REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React18.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
+      var REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React17.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
         return null;
       };
-      React18 = {
+      React17 = {
         "react-stack-bottom-frame": function(callStackForError) {
           return callStackForError();
         }
       };
       var specialPropKeyWarningShown;
       var didWarnAboutElementRef = {};
-      var unknownOwnerDebugStack = React18["react-stack-bottom-frame"].bind(
-        React18,
+      var unknownOwnerDebugStack = React17["react-stack-bottom-frame"].bind(
+        React17,
         UnknownOwner
       )();
       var unknownOwnerDebugTask = createTask(getTaskName(UnknownOwner));
@@ -31058,7 +31058,7 @@ var require_ms = __commonJS({
 // node_modules/debug/src/common.js
 var require_common = __commonJS({
   "node_modules/debug/src/common.js"(exports, module) {
-    function setup(env4) {
+    function setup(env3) {
       createDebug.debug = createDebug;
       createDebug.default = createDebug;
       createDebug.coerce = coerce;
@@ -31067,8 +31067,8 @@ var require_common = __commonJS({
       createDebug.enabled = enabled;
       createDebug.humanize = require_ms();
       createDebug.destroy = destroy;
-      Object.keys(env4).forEach((key) => {
-        createDebug[key] = env4[key];
+      Object.keys(env3).forEach((key) => {
+        createDebug[key] = env3[key];
       });
       createDebug.names = [];
       createDebug.skips = [];
@@ -31420,25 +31420,25 @@ var require_supports_color = __commonJS({
   "node_modules/supports-color/index.js"(exports, module) {
     "use strict";
     var os3 = __require("os");
-    var tty3 = __require("tty");
-    var hasFlag3 = require_has_flag();
-    var { env: env4 } = process;
+    var tty2 = __require("tty");
+    var hasFlag2 = require_has_flag();
+    var { env: env3 } = process;
     var forceColor;
-    if (hasFlag3("no-color") || hasFlag3("no-colors") || hasFlag3("color=false") || hasFlag3("color=never")) {
+    if (hasFlag2("no-color") || hasFlag2("no-colors") || hasFlag2("color=false") || hasFlag2("color=never")) {
       forceColor = 0;
-    } else if (hasFlag3("color") || hasFlag3("colors") || hasFlag3("color=true") || hasFlag3("color=always")) {
+    } else if (hasFlag2("color") || hasFlag2("colors") || hasFlag2("color=true") || hasFlag2("color=always")) {
       forceColor = 1;
     }
-    if ("FORCE_COLOR" in env4) {
-      if (env4.FORCE_COLOR === "true") {
+    if ("FORCE_COLOR" in env3) {
+      if (env3.FORCE_COLOR === "true") {
         forceColor = 1;
-      } else if (env4.FORCE_COLOR === "false") {
+      } else if (env3.FORCE_COLOR === "false") {
         forceColor = 0;
       } else {
-        forceColor = env4.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env4.FORCE_COLOR, 10), 3);
+        forceColor = env3.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env3.FORCE_COLOR, 10), 3);
       }
     }
-    function translateLevel3(level) {
+    function translateLevel2(level) {
       if (level === 0) {
         return false;
       }
@@ -31449,21 +31449,21 @@ var require_supports_color = __commonJS({
         has16m: level >= 3
       };
     }
-    function supportsColor3(haveStream, streamIsTTY) {
+    function supportsColor2(haveStream, streamIsTTY) {
       if (forceColor === 0) {
         return 0;
       }
-      if (hasFlag3("color=16m") || hasFlag3("color=full") || hasFlag3("color=truecolor")) {
+      if (hasFlag2("color=16m") || hasFlag2("color=full") || hasFlag2("color=truecolor")) {
         return 3;
       }
-      if (hasFlag3("color=256")) {
+      if (hasFlag2("color=256")) {
         return 2;
       }
       if (haveStream && !streamIsTTY && forceColor === void 0) {
         return 0;
       }
       const min = forceColor || 0;
-      if (env4.TERM === "dumb") {
+      if (env3.TERM === "dumb") {
         return min;
       }
       if (process.platform === "win32") {
@@ -31473,46 +31473,46 @@ var require_supports_color = __commonJS({
         }
         return 1;
       }
-      if ("CI" in env4) {
-        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign) => sign in env4) || env4.CI_NAME === "codeship") {
+      if ("CI" in env3) {
+        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign) => sign in env3) || env3.CI_NAME === "codeship") {
           return 1;
         }
         return min;
       }
-      if ("TEAMCITY_VERSION" in env4) {
-        return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env4.TEAMCITY_VERSION) ? 1 : 0;
+      if ("TEAMCITY_VERSION" in env3) {
+        return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env3.TEAMCITY_VERSION) ? 1 : 0;
       }
-      if (env4.COLORTERM === "truecolor") {
+      if (env3.COLORTERM === "truecolor") {
         return 3;
       }
-      if ("TERM_PROGRAM" in env4) {
-        const version2 = parseInt((env4.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
-        switch (env4.TERM_PROGRAM) {
+      if ("TERM_PROGRAM" in env3) {
+        const version2 = parseInt((env3.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+        switch (env3.TERM_PROGRAM) {
           case "iTerm.app":
             return version2 >= 3 ? 3 : 2;
           case "Apple_Terminal":
             return 2;
         }
       }
-      if (/-256(color)?$/i.test(env4.TERM)) {
+      if (/-256(color)?$/i.test(env3.TERM)) {
         return 2;
       }
-      if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env4.TERM)) {
+      if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env3.TERM)) {
         return 1;
       }
-      if ("COLORTERM" in env4) {
+      if ("COLORTERM" in env3) {
         return 1;
       }
       return min;
     }
     function getSupportLevel(stream) {
-      const level = supportsColor3(stream, stream && stream.isTTY);
-      return translateLevel3(level);
+      const level = supportsColor2(stream, stream && stream.isTTY);
+      return translateLevel2(level);
     }
     module.exports = {
       supportsColor: getSupportLevel,
-      stdout: translateLevel3(supportsColor3(true, tty3.isatty(1))),
-      stderr: translateLevel3(supportsColor3(true, tty3.isatty(2)))
+      stdout: translateLevel2(supportsColor2(true, tty2.isatty(1))),
+      stderr: translateLevel2(supportsColor2(true, tty2.isatty(2)))
     };
   }
 });
@@ -31520,7 +31520,7 @@ var require_supports_color = __commonJS({
 // node_modules/debug/src/node.js
 var require_node = __commonJS({
   "node_modules/debug/src/node.js"(exports, module) {
-    var tty3 = __require("tty");
+    var tty2 = __require("tty");
     var util2 = __require("util");
     exports.init = init;
     exports.log = log;
@@ -31535,8 +31535,8 @@ var require_node = __commonJS({
     );
     exports.colors = [6, 2, 3, 4, 5, 1];
     try {
-      const supportsColor3 = require_supports_color();
-      if (supportsColor3 && (supportsColor3.stderr || supportsColor3).level >= 2) {
+      const supportsColor2 = require_supports_color();
+      if (supportsColor2 && (supportsColor2.stderr || supportsColor2).level >= 2) {
         exports.colors = [
           20,
           21,
@@ -31638,7 +31638,7 @@ var require_node = __commonJS({
       return obj;
     }, {});
     function useColors() {
-      return "colors" in exports.inspectOpts ? Boolean(exports.inspectOpts.colors) : tty3.isatty(process.stderr.fd);
+      return "colors" in exports.inspectOpts ? Boolean(exports.inspectOpts.colors) : tty2.isatty(process.stderr.fd);
     }
     function formatArgs(args) {
       const { namespace: name, useColors: useColors2 } = this;
@@ -38732,7 +38732,7 @@ var require_package2 = __commonJS({
 // node_modules/dotenv/lib/main.js
 var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports, module) {
-    var fs3 = __require("fs");
+    var fs4 = __require("fs");
     var path = __require("path");
     var os3 = __require("os");
     var crypto = __require("crypto");
@@ -38868,7 +38868,7 @@ var require_main = __commonJS({
       if (options && options.path && options.path.length > 0) {
         if (Array.isArray(options.path)) {
           for (const filepath of options.path) {
-            if (fs3.existsSync(filepath)) {
+            if (fs4.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
@@ -38878,7 +38878,7 @@ var require_main = __commonJS({
       } else {
         possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
       }
-      if (fs3.existsSync(possibleVaultPath)) {
+      if (fs4.existsSync(possibleVaultPath)) {
         return possibleVaultPath;
       }
       return null;
@@ -38931,7 +38931,7 @@ var require_main = __commonJS({
       const parsedAll = {};
       for (const path2 of optionPaths) {
         try {
-          const parsed = DotenvModule.parse(fs3.readFileSync(path2, { encoding }));
+          const parsed = DotenvModule.parse(fs4.readFileSync(path2, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e2) {
           if (debug) {
@@ -39049,6 +39049,3564 @@ var require_main = __commonJS({
     module.exports.parse = DotenvModule.parse;
     module.exports.populate = DotenvModule.populate;
     module.exports = DotenvModule;
+  }
+});
+
+// node_modules/react-is/cjs/react-is.development.js
+var require_react_is_development = __commonJS({
+  "node_modules/react-is/cjs/react-is.development.js"(exports) {
+    "use strict";
+    if (true) {
+      (function() {
+        "use strict";
+        var hasSymbol = typeof Symbol === "function" && Symbol.for;
+        var REACT_ELEMENT_TYPE = hasSymbol ? Symbol.for("react.element") : 60103;
+        var REACT_PORTAL_TYPE = hasSymbol ? Symbol.for("react.portal") : 60106;
+        var REACT_FRAGMENT_TYPE = hasSymbol ? Symbol.for("react.fragment") : 60107;
+        var REACT_STRICT_MODE_TYPE = hasSymbol ? Symbol.for("react.strict_mode") : 60108;
+        var REACT_PROFILER_TYPE = hasSymbol ? Symbol.for("react.profiler") : 60114;
+        var REACT_PROVIDER_TYPE = hasSymbol ? Symbol.for("react.provider") : 60109;
+        var REACT_CONTEXT_TYPE = hasSymbol ? Symbol.for("react.context") : 60110;
+        var REACT_ASYNC_MODE_TYPE = hasSymbol ? Symbol.for("react.async_mode") : 60111;
+        var REACT_CONCURRENT_MODE_TYPE = hasSymbol ? Symbol.for("react.concurrent_mode") : 60111;
+        var REACT_FORWARD_REF_TYPE = hasSymbol ? Symbol.for("react.forward_ref") : 60112;
+        var REACT_SUSPENSE_TYPE = hasSymbol ? Symbol.for("react.suspense") : 60113;
+        var REACT_SUSPENSE_LIST_TYPE = hasSymbol ? Symbol.for("react.suspense_list") : 60120;
+        var REACT_MEMO_TYPE = hasSymbol ? Symbol.for("react.memo") : 60115;
+        var REACT_LAZY_TYPE = hasSymbol ? Symbol.for("react.lazy") : 60116;
+        var REACT_BLOCK_TYPE = hasSymbol ? Symbol.for("react.block") : 60121;
+        var REACT_FUNDAMENTAL_TYPE = hasSymbol ? Symbol.for("react.fundamental") : 60117;
+        var REACT_RESPONDER_TYPE = hasSymbol ? Symbol.for("react.responder") : 60118;
+        var REACT_SCOPE_TYPE = hasSymbol ? Symbol.for("react.scope") : 60119;
+        function isValidElementType(type) {
+          return typeof type === "string" || typeof type === "function" || // Note: its typeof might be other than 'symbol' or 'number' if it's a polyfill.
+          type === REACT_FRAGMENT_TYPE || type === REACT_CONCURRENT_MODE_TYPE || type === REACT_PROFILER_TYPE || type === REACT_STRICT_MODE_TYPE || type === REACT_SUSPENSE_TYPE || type === REACT_SUSPENSE_LIST_TYPE || typeof type === "object" && type !== null && (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE || type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE || type.$$typeof === REACT_FORWARD_REF_TYPE || type.$$typeof === REACT_FUNDAMENTAL_TYPE || type.$$typeof === REACT_RESPONDER_TYPE || type.$$typeof === REACT_SCOPE_TYPE || type.$$typeof === REACT_BLOCK_TYPE);
+        }
+        function typeOf(object) {
+          if (typeof object === "object" && object !== null) {
+            var $$typeof = object.$$typeof;
+            switch ($$typeof) {
+              case REACT_ELEMENT_TYPE:
+                var type = object.type;
+                switch (type) {
+                  case REACT_ASYNC_MODE_TYPE:
+                  case REACT_CONCURRENT_MODE_TYPE:
+                  case REACT_FRAGMENT_TYPE:
+                  case REACT_PROFILER_TYPE:
+                  case REACT_STRICT_MODE_TYPE:
+                  case REACT_SUSPENSE_TYPE:
+                    return type;
+                  default:
+                    var $$typeofType = type && type.$$typeof;
+                    switch ($$typeofType) {
+                      case REACT_CONTEXT_TYPE:
+                      case REACT_FORWARD_REF_TYPE:
+                      case REACT_LAZY_TYPE:
+                      case REACT_MEMO_TYPE:
+                      case REACT_PROVIDER_TYPE:
+                        return $$typeofType;
+                      default:
+                        return $$typeof;
+                    }
+                }
+              case REACT_PORTAL_TYPE:
+                return $$typeof;
+            }
+          }
+          return void 0;
+        }
+        var AsyncMode = REACT_ASYNC_MODE_TYPE;
+        var ConcurrentMode = REACT_CONCURRENT_MODE_TYPE;
+        var ContextConsumer = REACT_CONTEXT_TYPE;
+        var ContextProvider = REACT_PROVIDER_TYPE;
+        var Element = REACT_ELEMENT_TYPE;
+        var ForwardRef = REACT_FORWARD_REF_TYPE;
+        var Fragment2 = REACT_FRAGMENT_TYPE;
+        var Lazy = REACT_LAZY_TYPE;
+        var Memo = REACT_MEMO_TYPE;
+        var Portal = REACT_PORTAL_TYPE;
+        var Profiler = REACT_PROFILER_TYPE;
+        var StrictMode = REACT_STRICT_MODE_TYPE;
+        var Suspense = REACT_SUSPENSE_TYPE;
+        var hasWarnedAboutDeprecatedIsAsyncMode = false;
+        function isAsyncMode(object) {
+          {
+            if (!hasWarnedAboutDeprecatedIsAsyncMode) {
+              hasWarnedAboutDeprecatedIsAsyncMode = true;
+              console["warn"]("The ReactIs.isAsyncMode() alias has been deprecated, and will be removed in React 17+. Update your code to use ReactIs.isConcurrentMode() instead. It has the exact same API.");
+            }
+          }
+          return isConcurrentMode(object) || typeOf(object) === REACT_ASYNC_MODE_TYPE;
+        }
+        function isConcurrentMode(object) {
+          return typeOf(object) === REACT_CONCURRENT_MODE_TYPE;
+        }
+        function isContextConsumer(object) {
+          return typeOf(object) === REACT_CONTEXT_TYPE;
+        }
+        function isContextProvider(object) {
+          return typeOf(object) === REACT_PROVIDER_TYPE;
+        }
+        function isElement(object) {
+          return typeof object === "object" && object !== null && object.$$typeof === REACT_ELEMENT_TYPE;
+        }
+        function isForwardRef(object) {
+          return typeOf(object) === REACT_FORWARD_REF_TYPE;
+        }
+        function isFragment(object) {
+          return typeOf(object) === REACT_FRAGMENT_TYPE;
+        }
+        function isLazy(object) {
+          return typeOf(object) === REACT_LAZY_TYPE;
+        }
+        function isMemo(object) {
+          return typeOf(object) === REACT_MEMO_TYPE;
+        }
+        function isPortal(object) {
+          return typeOf(object) === REACT_PORTAL_TYPE;
+        }
+        function isProfiler(object) {
+          return typeOf(object) === REACT_PROFILER_TYPE;
+        }
+        function isStrictMode(object) {
+          return typeOf(object) === REACT_STRICT_MODE_TYPE;
+        }
+        function isSuspense(object) {
+          return typeOf(object) === REACT_SUSPENSE_TYPE;
+        }
+        exports.AsyncMode = AsyncMode;
+        exports.ConcurrentMode = ConcurrentMode;
+        exports.ContextConsumer = ContextConsumer;
+        exports.ContextProvider = ContextProvider;
+        exports.Element = Element;
+        exports.ForwardRef = ForwardRef;
+        exports.Fragment = Fragment2;
+        exports.Lazy = Lazy;
+        exports.Memo = Memo;
+        exports.Portal = Portal;
+        exports.Profiler = Profiler;
+        exports.StrictMode = StrictMode;
+        exports.Suspense = Suspense;
+        exports.isAsyncMode = isAsyncMode;
+        exports.isConcurrentMode = isConcurrentMode;
+        exports.isContextConsumer = isContextConsumer;
+        exports.isContextProvider = isContextProvider;
+        exports.isElement = isElement;
+        exports.isForwardRef = isForwardRef;
+        exports.isFragment = isFragment;
+        exports.isLazy = isLazy;
+        exports.isMemo = isMemo;
+        exports.isPortal = isPortal;
+        exports.isProfiler = isProfiler;
+        exports.isStrictMode = isStrictMode;
+        exports.isSuspense = isSuspense;
+        exports.isValidElementType = isValidElementType;
+        exports.typeOf = typeOf;
+      })();
+    }
+  }
+});
+
+// node_modules/react-is/index.js
+var require_react_is = __commonJS({
+  "node_modules/react-is/index.js"(exports, module) {
+    "use strict";
+    if (false) {
+      module.exports = null;
+    } else {
+      module.exports = require_react_is_development();
+    }
+  }
+});
+
+// node_modules/object-assign/index.js
+var require_object_assign = __commonJS({
+  "node_modules/object-assign/index.js"(exports, module) {
+    "use strict";
+    var getOwnPropertySymbols = Object.getOwnPropertySymbols;
+    var hasOwnProperty = Object.prototype.hasOwnProperty;
+    var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+    function toObject(val) {
+      if (val === null || val === void 0) {
+        throw new TypeError("Object.assign cannot be called with null or undefined");
+      }
+      return Object(val);
+    }
+    function shouldUseNative() {
+      try {
+        if (!Object.assign) {
+          return false;
+        }
+        var test1 = new String("abc");
+        test1[5] = "de";
+        if (Object.getOwnPropertyNames(test1)[0] === "5") {
+          return false;
+        }
+        var test2 = {};
+        for (var i2 = 0; i2 < 10; i2++) {
+          test2["_" + String.fromCharCode(i2)] = i2;
+        }
+        var order2 = Object.getOwnPropertyNames(test2).map(function(n) {
+          return test2[n];
+        });
+        if (order2.join("") !== "0123456789") {
+          return false;
+        }
+        var test3 = {};
+        "abcdefghijklmnopqrst".split("").forEach(function(letter) {
+          test3[letter] = letter;
+        });
+        if (Object.keys(Object.assign({}, test3)).join("") !== "abcdefghijklmnopqrst") {
+          return false;
+        }
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
+    module.exports = shouldUseNative() ? Object.assign : function(target, source) {
+      var from;
+      var to = toObject(target);
+      var symbols;
+      for (var s2 = 1; s2 < arguments.length; s2++) {
+        from = Object(arguments[s2]);
+        for (var key in from) {
+          if (hasOwnProperty.call(from, key)) {
+            to[key] = from[key];
+          }
+        }
+        if (getOwnPropertySymbols) {
+          symbols = getOwnPropertySymbols(from);
+          for (var i2 = 0; i2 < symbols.length; i2++) {
+            if (propIsEnumerable.call(from, symbols[i2])) {
+              to[symbols[i2]] = from[symbols[i2]];
+            }
+          }
+        }
+      }
+      return to;
+    };
+  }
+});
+
+// node_modules/prop-types/lib/ReactPropTypesSecret.js
+var require_ReactPropTypesSecret = __commonJS({
+  "node_modules/prop-types/lib/ReactPropTypesSecret.js"(exports, module) {
+    "use strict";
+    var ReactPropTypesSecret = "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED";
+    module.exports = ReactPropTypesSecret;
+  }
+});
+
+// node_modules/prop-types/lib/has.js
+var require_has = __commonJS({
+  "node_modules/prop-types/lib/has.js"(exports, module) {
+    module.exports = Function.call.bind(Object.prototype.hasOwnProperty);
+  }
+});
+
+// node_modules/prop-types/checkPropTypes.js
+var require_checkPropTypes = __commonJS({
+  "node_modules/prop-types/checkPropTypes.js"(exports, module) {
+    "use strict";
+    var printWarning = function() {
+    };
+    if (true) {
+      ReactPropTypesSecret = require_ReactPropTypesSecret();
+      loggedTypeFailures = {};
+      has = require_has();
+      printWarning = function(text) {
+        var message = "Warning: " + text;
+        if (typeof console !== "undefined") {
+          console.error(message);
+        }
+        try {
+          throw new Error(message);
+        } catch (x2) {
+        }
+      };
+    }
+    var ReactPropTypesSecret;
+    var loggedTypeFailures;
+    var has;
+    function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
+      if (true) {
+        for (var typeSpecName in typeSpecs) {
+          if (has(typeSpecs, typeSpecName)) {
+            var error;
+            try {
+              if (typeof typeSpecs[typeSpecName] !== "function") {
+                var err = Error(
+                  (componentName || "React class") + ": " + location + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`."
+                );
+                err.name = "Invariant Violation";
+                throw err;
+              }
+              error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);
+            } catch (ex) {
+              error = ex;
+            }
+            if (error && !(error instanceof Error)) {
+              printWarning(
+                (componentName || "React class") + ": type specification of " + location + " `" + typeSpecName + "` is invalid; the type checker function must return `null` or an `Error` but returned a " + typeof error + ". You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument)."
+              );
+            }
+            if (error instanceof Error && !(error.message in loggedTypeFailures)) {
+              loggedTypeFailures[error.message] = true;
+              var stack = getStack ? getStack() : "";
+              printWarning(
+                "Failed " + location + " type: " + error.message + (stack != null ? stack : "")
+              );
+            }
+          }
+        }
+      }
+    }
+    checkPropTypes.resetWarningCache = function() {
+      if (true) {
+        loggedTypeFailures = {};
+      }
+    };
+    module.exports = checkPropTypes;
+  }
+});
+
+// node_modules/prop-types/factoryWithTypeCheckers.js
+var require_factoryWithTypeCheckers = __commonJS({
+  "node_modules/prop-types/factoryWithTypeCheckers.js"(exports, module) {
+    "use strict";
+    var ReactIs = require_react_is();
+    var assign = require_object_assign();
+    var ReactPropTypesSecret = require_ReactPropTypesSecret();
+    var has = require_has();
+    var checkPropTypes = require_checkPropTypes();
+    var printWarning = function() {
+    };
+    if (true) {
+      printWarning = function(text) {
+        var message = "Warning: " + text;
+        if (typeof console !== "undefined") {
+          console.error(message);
+        }
+        try {
+          throw new Error(message);
+        } catch (x2) {
+        }
+      };
+    }
+    function emptyFunctionThatReturnsNull() {
+      return null;
+    }
+    module.exports = function(isValidElement, throwOnDirectAccess) {
+      var ITERATOR_SYMBOL = typeof Symbol === "function" && Symbol.iterator;
+      var FAUX_ITERATOR_SYMBOL = "@@iterator";
+      function getIteratorFn(maybeIterable) {
+        var iteratorFn = maybeIterable && (ITERATOR_SYMBOL && maybeIterable[ITERATOR_SYMBOL] || maybeIterable[FAUX_ITERATOR_SYMBOL]);
+        if (typeof iteratorFn === "function") {
+          return iteratorFn;
+        }
+      }
+      var ANONYMOUS = "<<anonymous>>";
+      var ReactPropTypes = {
+        array: createPrimitiveTypeChecker("array"),
+        bigint: createPrimitiveTypeChecker("bigint"),
+        bool: createPrimitiveTypeChecker("boolean"),
+        func: createPrimitiveTypeChecker("function"),
+        number: createPrimitiveTypeChecker("number"),
+        object: createPrimitiveTypeChecker("object"),
+        string: createPrimitiveTypeChecker("string"),
+        symbol: createPrimitiveTypeChecker("symbol"),
+        any: createAnyTypeChecker(),
+        arrayOf: createArrayOfTypeChecker,
+        element: createElementTypeChecker(),
+        elementType: createElementTypeTypeChecker(),
+        instanceOf: createInstanceTypeChecker,
+        node: createNodeChecker(),
+        objectOf: createObjectOfTypeChecker,
+        oneOf: createEnumTypeChecker,
+        oneOfType: createUnionTypeChecker,
+        shape: createShapeTypeChecker,
+        exact: createStrictShapeTypeChecker
+      };
+      function is(x2, y) {
+        if (x2 === y) {
+          return x2 !== 0 || 1 / x2 === 1 / y;
+        } else {
+          return x2 !== x2 && y !== y;
+        }
+      }
+      function PropTypeError(message, data) {
+        this.message = message;
+        this.data = data && typeof data === "object" ? data : {};
+        this.stack = "";
+      }
+      PropTypeError.prototype = Error.prototype;
+      function createChainableTypeChecker(validate2) {
+        if (true) {
+          var manualPropTypeCallCache = {};
+          var manualPropTypeWarningCount = 0;
+        }
+        function checkType(isRequired, props, propName, componentName, location, propFullName, secret) {
+          componentName = componentName || ANONYMOUS;
+          propFullName = propFullName || propName;
+          if (secret !== ReactPropTypesSecret) {
+            if (throwOnDirectAccess) {
+              var err = new Error(
+                "Calling PropTypes validators directly is not supported by the `prop-types` package. Use `PropTypes.checkPropTypes()` to call them. Read more at http://fb.me/use-check-prop-types"
+              );
+              err.name = "Invariant Violation";
+              throw err;
+            } else if (typeof console !== "undefined") {
+              var cacheKey = componentName + ":" + propName;
+              if (!manualPropTypeCallCache[cacheKey] && // Avoid spamming the console because they are often not actionable except for lib authors
+              manualPropTypeWarningCount < 3) {
+                printWarning(
+                  "You are manually calling a React.PropTypes validation function for the `" + propFullName + "` prop on `" + componentName + "`. This is deprecated and will throw in the standalone `prop-types` package. You may be seeing this warning due to a third-party PropTypes library. See https://fb.me/react-warning-dont-call-proptypes for details."
+                );
+                manualPropTypeCallCache[cacheKey] = true;
+                manualPropTypeWarningCount++;
+              }
+            }
+          }
+          if (props[propName] == null) {
+            if (isRequired) {
+              if (props[propName] === null) {
+                return new PropTypeError("The " + location + " `" + propFullName + "` is marked as required " + ("in `" + componentName + "`, but its value is `null`."));
+              }
+              return new PropTypeError("The " + location + " `" + propFullName + "` is marked as required in " + ("`" + componentName + "`, but its value is `undefined`."));
+            }
+            return null;
+          } else {
+            return validate2(props, propName, componentName, location, propFullName);
+          }
+        }
+        var chainedCheckType = checkType.bind(null, false);
+        chainedCheckType.isRequired = checkType.bind(null, true);
+        return chainedCheckType;
+      }
+      function createPrimitiveTypeChecker(expectedType) {
+        function validate2(props, propName, componentName, location, propFullName, secret) {
+          var propValue = props[propName];
+          var propType = getPropType(propValue);
+          if (propType !== expectedType) {
+            var preciseType = getPreciseType(propValue);
+            return new PropTypeError(
+              "Invalid " + location + " `" + propFullName + "` of type " + ("`" + preciseType + "` supplied to `" + componentName + "`, expected ") + ("`" + expectedType + "`."),
+              { expectedType }
+            );
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createAnyTypeChecker() {
+        return createChainableTypeChecker(emptyFunctionThatReturnsNull);
+      }
+      function createArrayOfTypeChecker(typeChecker) {
+        function validate2(props, propName, componentName, location, propFullName) {
+          if (typeof typeChecker !== "function") {
+            return new PropTypeError("Property `" + propFullName + "` of component `" + componentName + "` has invalid PropType notation inside arrayOf.");
+          }
+          var propValue = props[propName];
+          if (!Array.isArray(propValue)) {
+            var propType = getPropType(propValue);
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` of type " + ("`" + propType + "` supplied to `" + componentName + "`, expected an array."));
+          }
+          for (var i2 = 0; i2 < propValue.length; i2++) {
+            var error = typeChecker(propValue, i2, componentName, location, propFullName + "[" + i2 + "]", ReactPropTypesSecret);
+            if (error instanceof Error) {
+              return error;
+            }
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createElementTypeChecker() {
+        function validate2(props, propName, componentName, location, propFullName) {
+          var propValue = props[propName];
+          if (!isValidElement(propValue)) {
+            var propType = getPropType(propValue);
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` of type " + ("`" + propType + "` supplied to `" + componentName + "`, expected a single ReactElement."));
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createElementTypeTypeChecker() {
+        function validate2(props, propName, componentName, location, propFullName) {
+          var propValue = props[propName];
+          if (!ReactIs.isValidElementType(propValue)) {
+            var propType = getPropType(propValue);
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` of type " + ("`" + propType + "` supplied to `" + componentName + "`, expected a single ReactElement type."));
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createInstanceTypeChecker(expectedClass) {
+        function validate2(props, propName, componentName, location, propFullName) {
+          if (!(props[propName] instanceof expectedClass)) {
+            var expectedClassName = expectedClass.name || ANONYMOUS;
+            var actualClassName = getClassName(props[propName]);
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` of type " + ("`" + actualClassName + "` supplied to `" + componentName + "`, expected ") + ("instance of `" + expectedClassName + "`."));
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createEnumTypeChecker(expectedValues) {
+        if (!Array.isArray(expectedValues)) {
+          if (true) {
+            if (arguments.length > 1) {
+              printWarning(
+                "Invalid arguments supplied to oneOf, expected an array, got " + arguments.length + " arguments. A common mistake is to write oneOf(x, y, z) instead of oneOf([x, y, z])."
+              );
+            } else {
+              printWarning("Invalid argument supplied to oneOf, expected an array.");
+            }
+          }
+          return emptyFunctionThatReturnsNull;
+        }
+        function validate2(props, propName, componentName, location, propFullName) {
+          var propValue = props[propName];
+          for (var i2 = 0; i2 < expectedValues.length; i2++) {
+            if (is(propValue, expectedValues[i2])) {
+              return null;
+            }
+          }
+          var valuesString = JSON.stringify(expectedValues, function replacer(key, value) {
+            var type = getPreciseType(value);
+            if (type === "symbol") {
+              return String(value);
+            }
+            return value;
+          });
+          return new PropTypeError("Invalid " + location + " `" + propFullName + "` of value `" + String(propValue) + "` " + ("supplied to `" + componentName + "`, expected one of " + valuesString + "."));
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createObjectOfTypeChecker(typeChecker) {
+        function validate2(props, propName, componentName, location, propFullName) {
+          if (typeof typeChecker !== "function") {
+            return new PropTypeError("Property `" + propFullName + "` of component `" + componentName + "` has invalid PropType notation inside objectOf.");
+          }
+          var propValue = props[propName];
+          var propType = getPropType(propValue);
+          if (propType !== "object") {
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` of type " + ("`" + propType + "` supplied to `" + componentName + "`, expected an object."));
+          }
+          for (var key in propValue) {
+            if (has(propValue, key)) {
+              var error = typeChecker(propValue, key, componentName, location, propFullName + "." + key, ReactPropTypesSecret);
+              if (error instanceof Error) {
+                return error;
+              }
+            }
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createUnionTypeChecker(arrayOfTypeCheckers) {
+        if (!Array.isArray(arrayOfTypeCheckers)) {
+          true ? printWarning("Invalid argument supplied to oneOfType, expected an instance of array.") : void 0;
+          return emptyFunctionThatReturnsNull;
+        }
+        for (var i2 = 0; i2 < arrayOfTypeCheckers.length; i2++) {
+          var checker = arrayOfTypeCheckers[i2];
+          if (typeof checker !== "function") {
+            printWarning(
+              "Invalid argument supplied to oneOfType. Expected an array of check functions, but received " + getPostfixForTypeWarning(checker) + " at index " + i2 + "."
+            );
+            return emptyFunctionThatReturnsNull;
+          }
+        }
+        function validate2(props, propName, componentName, location, propFullName) {
+          var expectedTypes = [];
+          for (var i3 = 0; i3 < arrayOfTypeCheckers.length; i3++) {
+            var checker2 = arrayOfTypeCheckers[i3];
+            var checkerResult = checker2(props, propName, componentName, location, propFullName, ReactPropTypesSecret);
+            if (checkerResult == null) {
+              return null;
+            }
+            if (checkerResult.data && has(checkerResult.data, "expectedType")) {
+              expectedTypes.push(checkerResult.data.expectedType);
+            }
+          }
+          var expectedTypesMessage = expectedTypes.length > 0 ? ", expected one of type [" + expectedTypes.join(", ") + "]" : "";
+          return new PropTypeError("Invalid " + location + " `" + propFullName + "` supplied to " + ("`" + componentName + "`" + expectedTypesMessage + "."));
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createNodeChecker() {
+        function validate2(props, propName, componentName, location, propFullName) {
+          if (!isNode2(props[propName])) {
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` supplied to " + ("`" + componentName + "`, expected a ReactNode."));
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function invalidValidatorError(componentName, location, propFullName, key, type) {
+        return new PropTypeError(
+          (componentName || "React class") + ": " + location + " type `" + propFullName + "." + key + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + type + "`."
+        );
+      }
+      function createShapeTypeChecker(shapeTypes) {
+        function validate2(props, propName, componentName, location, propFullName) {
+          var propValue = props[propName];
+          var propType = getPropType(propValue);
+          if (propType !== "object") {
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` of type `" + propType + "` " + ("supplied to `" + componentName + "`, expected `object`."));
+          }
+          for (var key in shapeTypes) {
+            var checker = shapeTypes[key];
+            if (typeof checker !== "function") {
+              return invalidValidatorError(componentName, location, propFullName, key, getPreciseType(checker));
+            }
+            var error = checker(propValue, key, componentName, location, propFullName + "." + key, ReactPropTypesSecret);
+            if (error) {
+              return error;
+            }
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function createStrictShapeTypeChecker(shapeTypes) {
+        function validate2(props, propName, componentName, location, propFullName) {
+          var propValue = props[propName];
+          var propType = getPropType(propValue);
+          if (propType !== "object") {
+            return new PropTypeError("Invalid " + location + " `" + propFullName + "` of type `" + propType + "` " + ("supplied to `" + componentName + "`, expected `object`."));
+          }
+          var allKeys = assign({}, props[propName], shapeTypes);
+          for (var key in allKeys) {
+            var checker = shapeTypes[key];
+            if (has(shapeTypes, key) && typeof checker !== "function") {
+              return invalidValidatorError(componentName, location, propFullName, key, getPreciseType(checker));
+            }
+            if (!checker) {
+              return new PropTypeError(
+                "Invalid " + location + " `" + propFullName + "` key `" + key + "` supplied to `" + componentName + "`.\nBad object: " + JSON.stringify(props[propName], null, "  ") + "\nValid keys: " + JSON.stringify(Object.keys(shapeTypes), null, "  ")
+              );
+            }
+            var error = checker(propValue, key, componentName, location, propFullName + "." + key, ReactPropTypesSecret);
+            if (error) {
+              return error;
+            }
+          }
+          return null;
+        }
+        return createChainableTypeChecker(validate2);
+      }
+      function isNode2(propValue) {
+        switch (typeof propValue) {
+          case "number":
+          case "string":
+          case "undefined":
+            return true;
+          case "boolean":
+            return !propValue;
+          case "object":
+            if (Array.isArray(propValue)) {
+              return propValue.every(isNode2);
+            }
+            if (propValue === null || isValidElement(propValue)) {
+              return true;
+            }
+            var iteratorFn = getIteratorFn(propValue);
+            if (iteratorFn) {
+              var iterator = iteratorFn.call(propValue);
+              var step;
+              if (iteratorFn !== propValue.entries) {
+                while (!(step = iterator.next()).done) {
+                  if (!isNode2(step.value)) {
+                    return false;
+                  }
+                }
+              } else {
+                while (!(step = iterator.next()).done) {
+                  var entry = step.value;
+                  if (entry) {
+                    if (!isNode2(entry[1])) {
+                      return false;
+                    }
+                  }
+                }
+              }
+            } else {
+              return false;
+            }
+            return true;
+          default:
+            return false;
+        }
+      }
+      function isSymbol(propType, propValue) {
+        if (propType === "symbol") {
+          return true;
+        }
+        if (!propValue) {
+          return false;
+        }
+        if (propValue["@@toStringTag"] === "Symbol") {
+          return true;
+        }
+        if (typeof Symbol === "function" && propValue instanceof Symbol) {
+          return true;
+        }
+        return false;
+      }
+      function getPropType(propValue) {
+        var propType = typeof propValue;
+        if (Array.isArray(propValue)) {
+          return "array";
+        }
+        if (propValue instanceof RegExp) {
+          return "object";
+        }
+        if (isSymbol(propType, propValue)) {
+          return "symbol";
+        }
+        return propType;
+      }
+      function getPreciseType(propValue) {
+        if (typeof propValue === "undefined" || propValue === null) {
+          return "" + propValue;
+        }
+        var propType = getPropType(propValue);
+        if (propType === "object") {
+          if (propValue instanceof Date) {
+            return "date";
+          } else if (propValue instanceof RegExp) {
+            return "regexp";
+          }
+        }
+        return propType;
+      }
+      function getPostfixForTypeWarning(value) {
+        var type = getPreciseType(value);
+        switch (type) {
+          case "array":
+          case "object":
+            return "an " + type;
+          case "boolean":
+          case "date":
+          case "regexp":
+            return "a " + type;
+          default:
+            return type;
+        }
+      }
+      function getClassName(propValue) {
+        if (!propValue.constructor || !propValue.constructor.name) {
+          return ANONYMOUS;
+        }
+        return propValue.constructor.name;
+      }
+      ReactPropTypes.checkPropTypes = checkPropTypes;
+      ReactPropTypes.resetWarningCache = checkPropTypes.resetWarningCache;
+      ReactPropTypes.PropTypes = ReactPropTypes;
+      return ReactPropTypes;
+    };
+  }
+});
+
+// node_modules/prop-types/index.js
+var require_prop_types = __commonJS({
+  "node_modules/prop-types/index.js"(exports, module) {
+    if (true) {
+      ReactIs = require_react_is();
+      throwOnDirectAccess = true;
+      module.exports = require_factoryWithTypeCheckers()(ReactIs.isElement, throwOnDirectAccess);
+    } else {
+      module.exports = null();
+    }
+    var ReactIs;
+    var throwOnDirectAccess;
+  }
+});
+
+// node_modules/color-name/index.js
+var require_color_name = __commonJS({
+  "node_modules/color-name/index.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      "aliceblue": [240, 248, 255],
+      "antiquewhite": [250, 235, 215],
+      "aqua": [0, 255, 255],
+      "aquamarine": [127, 255, 212],
+      "azure": [240, 255, 255],
+      "beige": [245, 245, 220],
+      "bisque": [255, 228, 196],
+      "black": [0, 0, 0],
+      "blanchedalmond": [255, 235, 205],
+      "blue": [0, 0, 255],
+      "blueviolet": [138, 43, 226],
+      "brown": [165, 42, 42],
+      "burlywood": [222, 184, 135],
+      "cadetblue": [95, 158, 160],
+      "chartreuse": [127, 255, 0],
+      "chocolate": [210, 105, 30],
+      "coral": [255, 127, 80],
+      "cornflowerblue": [100, 149, 237],
+      "cornsilk": [255, 248, 220],
+      "crimson": [220, 20, 60],
+      "cyan": [0, 255, 255],
+      "darkblue": [0, 0, 139],
+      "darkcyan": [0, 139, 139],
+      "darkgoldenrod": [184, 134, 11],
+      "darkgray": [169, 169, 169],
+      "darkgreen": [0, 100, 0],
+      "darkgrey": [169, 169, 169],
+      "darkkhaki": [189, 183, 107],
+      "darkmagenta": [139, 0, 139],
+      "darkolivegreen": [85, 107, 47],
+      "darkorange": [255, 140, 0],
+      "darkorchid": [153, 50, 204],
+      "darkred": [139, 0, 0],
+      "darksalmon": [233, 150, 122],
+      "darkseagreen": [143, 188, 143],
+      "darkslateblue": [72, 61, 139],
+      "darkslategray": [47, 79, 79],
+      "darkslategrey": [47, 79, 79],
+      "darkturquoise": [0, 206, 209],
+      "darkviolet": [148, 0, 211],
+      "deeppink": [255, 20, 147],
+      "deepskyblue": [0, 191, 255],
+      "dimgray": [105, 105, 105],
+      "dimgrey": [105, 105, 105],
+      "dodgerblue": [30, 144, 255],
+      "firebrick": [178, 34, 34],
+      "floralwhite": [255, 250, 240],
+      "forestgreen": [34, 139, 34],
+      "fuchsia": [255, 0, 255],
+      "gainsboro": [220, 220, 220],
+      "ghostwhite": [248, 248, 255],
+      "gold": [255, 215, 0],
+      "goldenrod": [218, 165, 32],
+      "gray": [128, 128, 128],
+      "green": [0, 128, 0],
+      "greenyellow": [173, 255, 47],
+      "grey": [128, 128, 128],
+      "honeydew": [240, 255, 240],
+      "hotpink": [255, 105, 180],
+      "indianred": [205, 92, 92],
+      "indigo": [75, 0, 130],
+      "ivory": [255, 255, 240],
+      "khaki": [240, 230, 140],
+      "lavender": [230, 230, 250],
+      "lavenderblush": [255, 240, 245],
+      "lawngreen": [124, 252, 0],
+      "lemonchiffon": [255, 250, 205],
+      "lightblue": [173, 216, 230],
+      "lightcoral": [240, 128, 128],
+      "lightcyan": [224, 255, 255],
+      "lightgoldenrodyellow": [250, 250, 210],
+      "lightgray": [211, 211, 211],
+      "lightgreen": [144, 238, 144],
+      "lightgrey": [211, 211, 211],
+      "lightpink": [255, 182, 193],
+      "lightsalmon": [255, 160, 122],
+      "lightseagreen": [32, 178, 170],
+      "lightskyblue": [135, 206, 250],
+      "lightslategray": [119, 136, 153],
+      "lightslategrey": [119, 136, 153],
+      "lightsteelblue": [176, 196, 222],
+      "lightyellow": [255, 255, 224],
+      "lime": [0, 255, 0],
+      "limegreen": [50, 205, 50],
+      "linen": [250, 240, 230],
+      "magenta": [255, 0, 255],
+      "maroon": [128, 0, 0],
+      "mediumaquamarine": [102, 205, 170],
+      "mediumblue": [0, 0, 205],
+      "mediumorchid": [186, 85, 211],
+      "mediumpurple": [147, 112, 219],
+      "mediumseagreen": [60, 179, 113],
+      "mediumslateblue": [123, 104, 238],
+      "mediumspringgreen": [0, 250, 154],
+      "mediumturquoise": [72, 209, 204],
+      "mediumvioletred": [199, 21, 133],
+      "midnightblue": [25, 25, 112],
+      "mintcream": [245, 255, 250],
+      "mistyrose": [255, 228, 225],
+      "moccasin": [255, 228, 181],
+      "navajowhite": [255, 222, 173],
+      "navy": [0, 0, 128],
+      "oldlace": [253, 245, 230],
+      "olive": [128, 128, 0],
+      "olivedrab": [107, 142, 35],
+      "orange": [255, 165, 0],
+      "orangered": [255, 69, 0],
+      "orchid": [218, 112, 214],
+      "palegoldenrod": [238, 232, 170],
+      "palegreen": [152, 251, 152],
+      "paleturquoise": [175, 238, 238],
+      "palevioletred": [219, 112, 147],
+      "papayawhip": [255, 239, 213],
+      "peachpuff": [255, 218, 185],
+      "peru": [205, 133, 63],
+      "pink": [255, 192, 203],
+      "plum": [221, 160, 221],
+      "powderblue": [176, 224, 230],
+      "purple": [128, 0, 128],
+      "rebeccapurple": [102, 51, 153],
+      "red": [255, 0, 0],
+      "rosybrown": [188, 143, 143],
+      "royalblue": [65, 105, 225],
+      "saddlebrown": [139, 69, 19],
+      "salmon": [250, 128, 114],
+      "sandybrown": [244, 164, 96],
+      "seagreen": [46, 139, 87],
+      "seashell": [255, 245, 238],
+      "sienna": [160, 82, 45],
+      "silver": [192, 192, 192],
+      "skyblue": [135, 206, 235],
+      "slateblue": [106, 90, 205],
+      "slategray": [112, 128, 144],
+      "slategrey": [112, 128, 144],
+      "snow": [255, 250, 250],
+      "springgreen": [0, 255, 127],
+      "steelblue": [70, 130, 180],
+      "tan": [210, 180, 140],
+      "teal": [0, 128, 128],
+      "thistle": [216, 191, 216],
+      "tomato": [255, 99, 71],
+      "turquoise": [64, 224, 208],
+      "violet": [238, 130, 238],
+      "wheat": [245, 222, 179],
+      "white": [255, 255, 255],
+      "whitesmoke": [245, 245, 245],
+      "yellow": [255, 255, 0],
+      "yellowgreen": [154, 205, 50]
+    };
+  }
+});
+
+// node_modules/color-convert/conversions.js
+var require_conversions = __commonJS({
+  "node_modules/color-convert/conversions.js"(exports, module) {
+    var cssKeywords = require_color_name();
+    var reverseKeywords = {};
+    for (const key of Object.keys(cssKeywords)) {
+      reverseKeywords[cssKeywords[key]] = key;
+    }
+    var convert = {
+      rgb: { channels: 3, labels: "rgb" },
+      hsl: { channels: 3, labels: "hsl" },
+      hsv: { channels: 3, labels: "hsv" },
+      hwb: { channels: 3, labels: "hwb" },
+      cmyk: { channels: 4, labels: "cmyk" },
+      xyz: { channels: 3, labels: "xyz" },
+      lab: { channels: 3, labels: "lab" },
+      lch: { channels: 3, labels: "lch" },
+      hex: { channels: 1, labels: ["hex"] },
+      keyword: { channels: 1, labels: ["keyword"] },
+      ansi16: { channels: 1, labels: ["ansi16"] },
+      ansi256: { channels: 1, labels: ["ansi256"] },
+      hcg: { channels: 3, labels: ["h", "c", "g"] },
+      apple: { channels: 3, labels: ["r16", "g16", "b16"] },
+      gray: { channels: 1, labels: ["gray"] }
+    };
+    module.exports = convert;
+    for (const model of Object.keys(convert)) {
+      if (!("channels" in convert[model])) {
+        throw new Error("missing channels property: " + model);
+      }
+      if (!("labels" in convert[model])) {
+        throw new Error("missing channel labels property: " + model);
+      }
+      if (convert[model].labels.length !== convert[model].channels) {
+        throw new Error("channel and label counts mismatch: " + model);
+      }
+      const { channels, labels } = convert[model];
+      delete convert[model].channels;
+      delete convert[model].labels;
+      Object.defineProperty(convert[model], "channels", { value: channels });
+      Object.defineProperty(convert[model], "labels", { value: labels });
+    }
+    convert.rgb.hsl = function(rgb) {
+      const r2 = rgb[0] / 255;
+      const g = rgb[1] / 255;
+      const b = rgb[2] / 255;
+      const min = Math.min(r2, g, b);
+      const max = Math.max(r2, g, b);
+      const delta = max - min;
+      let h2;
+      let s2;
+      if (max === min) {
+        h2 = 0;
+      } else if (r2 === max) {
+        h2 = (g - b) / delta;
+      } else if (g === max) {
+        h2 = 2 + (b - r2) / delta;
+      } else if (b === max) {
+        h2 = 4 + (r2 - g) / delta;
+      }
+      h2 = Math.min(h2 * 60, 360);
+      if (h2 < 0) {
+        h2 += 360;
+      }
+      const l = (min + max) / 2;
+      if (max === min) {
+        s2 = 0;
+      } else if (l <= 0.5) {
+        s2 = delta / (max + min);
+      } else {
+        s2 = delta / (2 - max - min);
+      }
+      return [h2, s2 * 100, l * 100];
+    };
+    convert.rgb.hsv = function(rgb) {
+      let rdif;
+      let gdif;
+      let bdif;
+      let h2;
+      let s2;
+      const r2 = rgb[0] / 255;
+      const g = rgb[1] / 255;
+      const b = rgb[2] / 255;
+      const v = Math.max(r2, g, b);
+      const diff2 = v - Math.min(r2, g, b);
+      const diffc = function(c) {
+        return (v - c) / 6 / diff2 + 1 / 2;
+      };
+      if (diff2 === 0) {
+        h2 = 0;
+        s2 = 0;
+      } else {
+        s2 = diff2 / v;
+        rdif = diffc(r2);
+        gdif = diffc(g);
+        bdif = diffc(b);
+        if (r2 === v) {
+          h2 = bdif - gdif;
+        } else if (g === v) {
+          h2 = 1 / 3 + rdif - bdif;
+        } else if (b === v) {
+          h2 = 2 / 3 + gdif - rdif;
+        }
+        if (h2 < 0) {
+          h2 += 1;
+        } else if (h2 > 1) {
+          h2 -= 1;
+        }
+      }
+      return [
+        h2 * 360,
+        s2 * 100,
+        v * 100
+      ];
+    };
+    convert.rgb.hwb = function(rgb) {
+      const r2 = rgb[0];
+      const g = rgb[1];
+      let b = rgb[2];
+      const h2 = convert.rgb.hsl(rgb)[0];
+      const w = 1 / 255 * Math.min(r2, Math.min(g, b));
+      b = 1 - 1 / 255 * Math.max(r2, Math.max(g, b));
+      return [h2, w * 100, b * 100];
+    };
+    convert.rgb.cmyk = function(rgb) {
+      const r2 = rgb[0] / 255;
+      const g = rgb[1] / 255;
+      const b = rgb[2] / 255;
+      const k = Math.min(1 - r2, 1 - g, 1 - b);
+      const c = (1 - r2 - k) / (1 - k) || 0;
+      const m2 = (1 - g - k) / (1 - k) || 0;
+      const y = (1 - b - k) / (1 - k) || 0;
+      return [c * 100, m2 * 100, y * 100, k * 100];
+    };
+    function comparativeDistance(x2, y) {
+      return (x2[0] - y[0]) ** 2 + (x2[1] - y[1]) ** 2 + (x2[2] - y[2]) ** 2;
+    }
+    convert.rgb.keyword = function(rgb) {
+      const reversed = reverseKeywords[rgb];
+      if (reversed) {
+        return reversed;
+      }
+      let currentClosestDistance = Infinity;
+      let currentClosestKeyword;
+      for (const keyword of Object.keys(cssKeywords)) {
+        const value = cssKeywords[keyword];
+        const distance = comparativeDistance(rgb, value);
+        if (distance < currentClosestDistance) {
+          currentClosestDistance = distance;
+          currentClosestKeyword = keyword;
+        }
+      }
+      return currentClosestKeyword;
+    };
+    convert.keyword.rgb = function(keyword) {
+      return cssKeywords[keyword];
+    };
+    convert.rgb.xyz = function(rgb) {
+      let r2 = rgb[0] / 255;
+      let g = rgb[1] / 255;
+      let b = rgb[2] / 255;
+      r2 = r2 > 0.04045 ? ((r2 + 0.055) / 1.055) ** 2.4 : r2 / 12.92;
+      g = g > 0.04045 ? ((g + 0.055) / 1.055) ** 2.4 : g / 12.92;
+      b = b > 0.04045 ? ((b + 0.055) / 1.055) ** 2.4 : b / 12.92;
+      const x2 = r2 * 0.4124 + g * 0.3576 + b * 0.1805;
+      const y = r2 * 0.2126 + g * 0.7152 + b * 0.0722;
+      const z = r2 * 0.0193 + g * 0.1192 + b * 0.9505;
+      return [x2 * 100, y * 100, z * 100];
+    };
+    convert.rgb.lab = function(rgb) {
+      const xyz = convert.rgb.xyz(rgb);
+      let x2 = xyz[0];
+      let y = xyz[1];
+      let z = xyz[2];
+      x2 /= 95.047;
+      y /= 100;
+      z /= 108.883;
+      x2 = x2 > 8856e-6 ? x2 ** (1 / 3) : 7.787 * x2 + 16 / 116;
+      y = y > 8856e-6 ? y ** (1 / 3) : 7.787 * y + 16 / 116;
+      z = z > 8856e-6 ? z ** (1 / 3) : 7.787 * z + 16 / 116;
+      const l = 116 * y - 16;
+      const a = 500 * (x2 - y);
+      const b = 200 * (y - z);
+      return [l, a, b];
+    };
+    convert.hsl.rgb = function(hsl) {
+      const h2 = hsl[0] / 360;
+      const s2 = hsl[1] / 100;
+      const l = hsl[2] / 100;
+      let t2;
+      let t3;
+      let val;
+      if (s2 === 0) {
+        val = l * 255;
+        return [val, val, val];
+      }
+      if (l < 0.5) {
+        t2 = l * (1 + s2);
+      } else {
+        t2 = l + s2 - l * s2;
+      }
+      const t1 = 2 * l - t2;
+      const rgb = [0, 0, 0];
+      for (let i2 = 0; i2 < 3; i2++) {
+        t3 = h2 + 1 / 3 * -(i2 - 1);
+        if (t3 < 0) {
+          t3++;
+        }
+        if (t3 > 1) {
+          t3--;
+        }
+        if (6 * t3 < 1) {
+          val = t1 + (t2 - t1) * 6 * t3;
+        } else if (2 * t3 < 1) {
+          val = t2;
+        } else if (3 * t3 < 2) {
+          val = t1 + (t2 - t1) * (2 / 3 - t3) * 6;
+        } else {
+          val = t1;
+        }
+        rgb[i2] = val * 255;
+      }
+      return rgb;
+    };
+    convert.hsl.hsv = function(hsl) {
+      const h2 = hsl[0];
+      let s2 = hsl[1] / 100;
+      let l = hsl[2] / 100;
+      let smin = s2;
+      const lmin = Math.max(l, 0.01);
+      l *= 2;
+      s2 *= l <= 1 ? l : 2 - l;
+      smin *= lmin <= 1 ? lmin : 2 - lmin;
+      const v = (l + s2) / 2;
+      const sv = l === 0 ? 2 * smin / (lmin + smin) : 2 * s2 / (l + s2);
+      return [h2, sv * 100, v * 100];
+    };
+    convert.hsv.rgb = function(hsv) {
+      const h2 = hsv[0] / 60;
+      const s2 = hsv[1] / 100;
+      let v = hsv[2] / 100;
+      const hi = Math.floor(h2) % 6;
+      const f3 = h2 - Math.floor(h2);
+      const p = 255 * v * (1 - s2);
+      const q = 255 * v * (1 - s2 * f3);
+      const t2 = 255 * v * (1 - s2 * (1 - f3));
+      v *= 255;
+      switch (hi) {
+        case 0:
+          return [v, t2, p];
+        case 1:
+          return [q, v, p];
+        case 2:
+          return [p, v, t2];
+        case 3:
+          return [p, q, v];
+        case 4:
+          return [t2, p, v];
+        case 5:
+          return [v, p, q];
+      }
+    };
+    convert.hsv.hsl = function(hsv) {
+      const h2 = hsv[0];
+      const s2 = hsv[1] / 100;
+      const v = hsv[2] / 100;
+      const vmin = Math.max(v, 0.01);
+      let sl;
+      let l;
+      l = (2 - s2) * v;
+      const lmin = (2 - s2) * vmin;
+      sl = s2 * vmin;
+      sl /= lmin <= 1 ? lmin : 2 - lmin;
+      sl = sl || 0;
+      l /= 2;
+      return [h2, sl * 100, l * 100];
+    };
+    convert.hwb.rgb = function(hwb) {
+      const h2 = hwb[0] / 360;
+      let wh = hwb[1] / 100;
+      let bl = hwb[2] / 100;
+      const ratio = wh + bl;
+      let f3;
+      if (ratio > 1) {
+        wh /= ratio;
+        bl /= ratio;
+      }
+      const i2 = Math.floor(6 * h2);
+      const v = 1 - bl;
+      f3 = 6 * h2 - i2;
+      if ((i2 & 1) !== 0) {
+        f3 = 1 - f3;
+      }
+      const n = wh + f3 * (v - wh);
+      let r2;
+      let g;
+      let b;
+      switch (i2) {
+        default:
+        case 6:
+        case 0:
+          r2 = v;
+          g = n;
+          b = wh;
+          break;
+        case 1:
+          r2 = n;
+          g = v;
+          b = wh;
+          break;
+        case 2:
+          r2 = wh;
+          g = v;
+          b = n;
+          break;
+        case 3:
+          r2 = wh;
+          g = n;
+          b = v;
+          break;
+        case 4:
+          r2 = n;
+          g = wh;
+          b = v;
+          break;
+        case 5:
+          r2 = v;
+          g = wh;
+          b = n;
+          break;
+      }
+      return [r2 * 255, g * 255, b * 255];
+    };
+    convert.cmyk.rgb = function(cmyk) {
+      const c = cmyk[0] / 100;
+      const m2 = cmyk[1] / 100;
+      const y = cmyk[2] / 100;
+      const k = cmyk[3] / 100;
+      const r2 = 1 - Math.min(1, c * (1 - k) + k);
+      const g = 1 - Math.min(1, m2 * (1 - k) + k);
+      const b = 1 - Math.min(1, y * (1 - k) + k);
+      return [r2 * 255, g * 255, b * 255];
+    };
+    convert.xyz.rgb = function(xyz) {
+      const x2 = xyz[0] / 100;
+      const y = xyz[1] / 100;
+      const z = xyz[2] / 100;
+      let r2;
+      let g;
+      let b;
+      r2 = x2 * 3.2406 + y * -1.5372 + z * -0.4986;
+      g = x2 * -0.9689 + y * 1.8758 + z * 0.0415;
+      b = x2 * 0.0557 + y * -0.204 + z * 1.057;
+      r2 = r2 > 31308e-7 ? 1.055 * r2 ** (1 / 2.4) - 0.055 : r2 * 12.92;
+      g = g > 31308e-7 ? 1.055 * g ** (1 / 2.4) - 0.055 : g * 12.92;
+      b = b > 31308e-7 ? 1.055 * b ** (1 / 2.4) - 0.055 : b * 12.92;
+      r2 = Math.min(Math.max(0, r2), 1);
+      g = Math.min(Math.max(0, g), 1);
+      b = Math.min(Math.max(0, b), 1);
+      return [r2 * 255, g * 255, b * 255];
+    };
+    convert.xyz.lab = function(xyz) {
+      let x2 = xyz[0];
+      let y = xyz[1];
+      let z = xyz[2];
+      x2 /= 95.047;
+      y /= 100;
+      z /= 108.883;
+      x2 = x2 > 8856e-6 ? x2 ** (1 / 3) : 7.787 * x2 + 16 / 116;
+      y = y > 8856e-6 ? y ** (1 / 3) : 7.787 * y + 16 / 116;
+      z = z > 8856e-6 ? z ** (1 / 3) : 7.787 * z + 16 / 116;
+      const l = 116 * y - 16;
+      const a = 500 * (x2 - y);
+      const b = 200 * (y - z);
+      return [l, a, b];
+    };
+    convert.lab.xyz = function(lab) {
+      const l = lab[0];
+      const a = lab[1];
+      const b = lab[2];
+      let x2;
+      let y;
+      let z;
+      y = (l + 16) / 116;
+      x2 = a / 500 + y;
+      z = y - b / 200;
+      const y2 = y ** 3;
+      const x22 = x2 ** 3;
+      const z2 = z ** 3;
+      y = y2 > 8856e-6 ? y2 : (y - 16 / 116) / 7.787;
+      x2 = x22 > 8856e-6 ? x22 : (x2 - 16 / 116) / 7.787;
+      z = z2 > 8856e-6 ? z2 : (z - 16 / 116) / 7.787;
+      x2 *= 95.047;
+      y *= 100;
+      z *= 108.883;
+      return [x2, y, z];
+    };
+    convert.lab.lch = function(lab) {
+      const l = lab[0];
+      const a = lab[1];
+      const b = lab[2];
+      let h2;
+      const hr = Math.atan2(b, a);
+      h2 = hr * 360 / 2 / Math.PI;
+      if (h2 < 0) {
+        h2 += 360;
+      }
+      const c = Math.sqrt(a * a + b * b);
+      return [l, c, h2];
+    };
+    convert.lch.lab = function(lch) {
+      const l = lch[0];
+      const c = lch[1];
+      const h2 = lch[2];
+      const hr = h2 / 360 * 2 * Math.PI;
+      const a = c * Math.cos(hr);
+      const b = c * Math.sin(hr);
+      return [l, a, b];
+    };
+    convert.rgb.ansi16 = function(args, saturation = null) {
+      const [r2, g, b] = args;
+      let value = saturation === null ? convert.rgb.hsv(args)[2] : saturation;
+      value = Math.round(value / 50);
+      if (value === 0) {
+        return 30;
+      }
+      let ansi = 30 + (Math.round(b / 255) << 2 | Math.round(g / 255) << 1 | Math.round(r2 / 255));
+      if (value === 2) {
+        ansi += 60;
+      }
+      return ansi;
+    };
+    convert.hsv.ansi16 = function(args) {
+      return convert.rgb.ansi16(convert.hsv.rgb(args), args[2]);
+    };
+    convert.rgb.ansi256 = function(args) {
+      const r2 = args[0];
+      const g = args[1];
+      const b = args[2];
+      if (r2 === g && g === b) {
+        if (r2 < 8) {
+          return 16;
+        }
+        if (r2 > 248) {
+          return 231;
+        }
+        return Math.round((r2 - 8) / 247 * 24) + 232;
+      }
+      const ansi = 16 + 36 * Math.round(r2 / 255 * 5) + 6 * Math.round(g / 255 * 5) + Math.round(b / 255 * 5);
+      return ansi;
+    };
+    convert.ansi16.rgb = function(args) {
+      let color = args % 10;
+      if (color === 0 || color === 7) {
+        if (args > 50) {
+          color += 3.5;
+        }
+        color = color / 10.5 * 255;
+        return [color, color, color];
+      }
+      const mult = (~~(args > 50) + 1) * 0.5;
+      const r2 = (color & 1) * mult * 255;
+      const g = (color >> 1 & 1) * mult * 255;
+      const b = (color >> 2 & 1) * mult * 255;
+      return [r2, g, b];
+    };
+    convert.ansi256.rgb = function(args) {
+      if (args >= 232) {
+        const c = (args - 232) * 10 + 8;
+        return [c, c, c];
+      }
+      args -= 16;
+      let rem;
+      const r2 = Math.floor(args / 36) / 5 * 255;
+      const g = Math.floor((rem = args % 36) / 6) / 5 * 255;
+      const b = rem % 6 / 5 * 255;
+      return [r2, g, b];
+    };
+    convert.rgb.hex = function(args) {
+      const integer = ((Math.round(args[0]) & 255) << 16) + ((Math.round(args[1]) & 255) << 8) + (Math.round(args[2]) & 255);
+      const string = integer.toString(16).toUpperCase();
+      return "000000".substring(string.length) + string;
+    };
+    convert.hex.rgb = function(args) {
+      const match = args.toString(16).match(/[a-f0-9]{6}|[a-f0-9]{3}/i);
+      if (!match) {
+        return [0, 0, 0];
+      }
+      let colorString = match[0];
+      if (match[0].length === 3) {
+        colorString = colorString.split("").map((char) => {
+          return char + char;
+        }).join("");
+      }
+      const integer = parseInt(colorString, 16);
+      const r2 = integer >> 16 & 255;
+      const g = integer >> 8 & 255;
+      const b = integer & 255;
+      return [r2, g, b];
+    };
+    convert.rgb.hcg = function(rgb) {
+      const r2 = rgb[0] / 255;
+      const g = rgb[1] / 255;
+      const b = rgb[2] / 255;
+      const max = Math.max(Math.max(r2, g), b);
+      const min = Math.min(Math.min(r2, g), b);
+      const chroma = max - min;
+      let grayscale;
+      let hue;
+      if (chroma < 1) {
+        grayscale = min / (1 - chroma);
+      } else {
+        grayscale = 0;
+      }
+      if (chroma <= 0) {
+        hue = 0;
+      } else if (max === r2) {
+        hue = (g - b) / chroma % 6;
+      } else if (max === g) {
+        hue = 2 + (b - r2) / chroma;
+      } else {
+        hue = 4 + (r2 - g) / chroma;
+      }
+      hue /= 6;
+      hue %= 1;
+      return [hue * 360, chroma * 100, grayscale * 100];
+    };
+    convert.hsl.hcg = function(hsl) {
+      const s2 = hsl[1] / 100;
+      const l = hsl[2] / 100;
+      const c = l < 0.5 ? 2 * s2 * l : 2 * s2 * (1 - l);
+      let f3 = 0;
+      if (c < 1) {
+        f3 = (l - 0.5 * c) / (1 - c);
+      }
+      return [hsl[0], c * 100, f3 * 100];
+    };
+    convert.hsv.hcg = function(hsv) {
+      const s2 = hsv[1] / 100;
+      const v = hsv[2] / 100;
+      const c = s2 * v;
+      let f3 = 0;
+      if (c < 1) {
+        f3 = (v - c) / (1 - c);
+      }
+      return [hsv[0], c * 100, f3 * 100];
+    };
+    convert.hcg.rgb = function(hcg) {
+      const h2 = hcg[0] / 360;
+      const c = hcg[1] / 100;
+      const g = hcg[2] / 100;
+      if (c === 0) {
+        return [g * 255, g * 255, g * 255];
+      }
+      const pure = [0, 0, 0];
+      const hi = h2 % 1 * 6;
+      const v = hi % 1;
+      const w = 1 - v;
+      let mg = 0;
+      switch (Math.floor(hi)) {
+        case 0:
+          pure[0] = 1;
+          pure[1] = v;
+          pure[2] = 0;
+          break;
+        case 1:
+          pure[0] = w;
+          pure[1] = 1;
+          pure[2] = 0;
+          break;
+        case 2:
+          pure[0] = 0;
+          pure[1] = 1;
+          pure[2] = v;
+          break;
+        case 3:
+          pure[0] = 0;
+          pure[1] = w;
+          pure[2] = 1;
+          break;
+        case 4:
+          pure[0] = v;
+          pure[1] = 0;
+          pure[2] = 1;
+          break;
+        default:
+          pure[0] = 1;
+          pure[1] = 0;
+          pure[2] = w;
+      }
+      mg = (1 - c) * g;
+      return [
+        (c * pure[0] + mg) * 255,
+        (c * pure[1] + mg) * 255,
+        (c * pure[2] + mg) * 255
+      ];
+    };
+    convert.hcg.hsv = function(hcg) {
+      const c = hcg[1] / 100;
+      const g = hcg[2] / 100;
+      const v = c + g * (1 - c);
+      let f3 = 0;
+      if (v > 0) {
+        f3 = c / v;
+      }
+      return [hcg[0], f3 * 100, v * 100];
+    };
+    convert.hcg.hsl = function(hcg) {
+      const c = hcg[1] / 100;
+      const g = hcg[2] / 100;
+      const l = g * (1 - c) + 0.5 * c;
+      let s2 = 0;
+      if (l > 0 && l < 0.5) {
+        s2 = c / (2 * l);
+      } else if (l >= 0.5 && l < 1) {
+        s2 = c / (2 * (1 - l));
+      }
+      return [hcg[0], s2 * 100, l * 100];
+    };
+    convert.hcg.hwb = function(hcg) {
+      const c = hcg[1] / 100;
+      const g = hcg[2] / 100;
+      const v = c + g * (1 - c);
+      return [hcg[0], (v - c) * 100, (1 - v) * 100];
+    };
+    convert.hwb.hcg = function(hwb) {
+      const w = hwb[1] / 100;
+      const b = hwb[2] / 100;
+      const v = 1 - b;
+      const c = v - w;
+      let g = 0;
+      if (c < 1) {
+        g = (v - c) / (1 - c);
+      }
+      return [hwb[0], c * 100, g * 100];
+    };
+    convert.apple.rgb = function(apple) {
+      return [apple[0] / 65535 * 255, apple[1] / 65535 * 255, apple[2] / 65535 * 255];
+    };
+    convert.rgb.apple = function(rgb) {
+      return [rgb[0] / 255 * 65535, rgb[1] / 255 * 65535, rgb[2] / 255 * 65535];
+    };
+    convert.gray.rgb = function(args) {
+      return [args[0] / 100 * 255, args[0] / 100 * 255, args[0] / 100 * 255];
+    };
+    convert.gray.hsl = function(args) {
+      return [0, 0, args[0]];
+    };
+    convert.gray.hsv = convert.gray.hsl;
+    convert.gray.hwb = function(gray) {
+      return [0, 100, gray[0]];
+    };
+    convert.gray.cmyk = function(gray) {
+      return [0, 0, 0, gray[0]];
+    };
+    convert.gray.lab = function(gray) {
+      return [gray[0], 0, 0];
+    };
+    convert.gray.hex = function(gray) {
+      const val = Math.round(gray[0] / 100 * 255) & 255;
+      const integer = (val << 16) + (val << 8) + val;
+      const string = integer.toString(16).toUpperCase();
+      return "000000".substring(string.length) + string;
+    };
+    convert.rgb.gray = function(rgb) {
+      const val = (rgb[0] + rgb[1] + rgb[2]) / 3;
+      return [val / 255 * 100];
+    };
+  }
+});
+
+// node_modules/color-convert/route.js
+var require_route = __commonJS({
+  "node_modules/color-convert/route.js"(exports, module) {
+    var conversions = require_conversions();
+    function buildGraph() {
+      const graph = {};
+      const models = Object.keys(conversions);
+      for (let len = models.length, i2 = 0; i2 < len; i2++) {
+        graph[models[i2]] = {
+          // http://jsperf.com/1-vs-infinity
+          // micro-opt, but this is simple.
+          distance: -1,
+          parent: null
+        };
+      }
+      return graph;
+    }
+    function deriveBFS(fromModel) {
+      const graph = buildGraph();
+      const queue = [fromModel];
+      graph[fromModel].distance = 0;
+      while (queue.length) {
+        const current = queue.pop();
+        const adjacents = Object.keys(conversions[current]);
+        for (let len = adjacents.length, i2 = 0; i2 < len; i2++) {
+          const adjacent = adjacents[i2];
+          const node = graph[adjacent];
+          if (node.distance === -1) {
+            node.distance = graph[current].distance + 1;
+            node.parent = current;
+            queue.unshift(adjacent);
+          }
+        }
+      }
+      return graph;
+    }
+    function link2(from, to) {
+      return function(args) {
+        return to(from(args));
+      };
+    }
+    function wrapConversion(toModel, graph) {
+      const path = [graph[toModel].parent, toModel];
+      let fn = conversions[graph[toModel].parent][toModel];
+      let cur = graph[toModel].parent;
+      while (graph[cur].parent) {
+        path.unshift(graph[cur].parent);
+        fn = link2(conversions[graph[cur].parent][cur], fn);
+        cur = graph[cur].parent;
+      }
+      fn.conversion = path;
+      return fn;
+    }
+    module.exports = function(fromModel) {
+      const graph = deriveBFS(fromModel);
+      const conversion = {};
+      const models = Object.keys(graph);
+      for (let len = models.length, i2 = 0; i2 < len; i2++) {
+        const toModel = models[i2];
+        const node = graph[toModel];
+        if (node.parent === null) {
+          continue;
+        }
+        conversion[toModel] = wrapConversion(toModel, graph);
+      }
+      return conversion;
+    };
+  }
+});
+
+// node_modules/color-convert/index.js
+var require_color_convert = __commonJS({
+  "node_modules/color-convert/index.js"(exports, module) {
+    var conversions = require_conversions();
+    var route = require_route();
+    var convert = {};
+    var models = Object.keys(conversions);
+    function wrapRaw(fn) {
+      const wrappedFn = function(...args) {
+        const arg0 = args[0];
+        if (arg0 === void 0 || arg0 === null) {
+          return arg0;
+        }
+        if (arg0.length > 1) {
+          args = arg0;
+        }
+        return fn(args);
+      };
+      if ("conversion" in fn) {
+        wrappedFn.conversion = fn.conversion;
+      }
+      return wrappedFn;
+    }
+    function wrapRounded(fn) {
+      const wrappedFn = function(...args) {
+        const arg0 = args[0];
+        if (arg0 === void 0 || arg0 === null) {
+          return arg0;
+        }
+        if (arg0.length > 1) {
+          args = arg0;
+        }
+        const result = fn(args);
+        if (typeof result === "object") {
+          for (let len = result.length, i2 = 0; i2 < len; i2++) {
+            result[i2] = Math.round(result[i2]);
+          }
+        }
+        return result;
+      };
+      if ("conversion" in fn) {
+        wrappedFn.conversion = fn.conversion;
+      }
+      return wrappedFn;
+    }
+    models.forEach((fromModel) => {
+      convert[fromModel] = {};
+      Object.defineProperty(convert[fromModel], "channels", { value: conversions[fromModel].channels });
+      Object.defineProperty(convert[fromModel], "labels", { value: conversions[fromModel].labels });
+      const routes = route(fromModel);
+      const routeModels = Object.keys(routes);
+      routeModels.forEach((toModel) => {
+        const fn = routes[toModel];
+        convert[fromModel][toModel] = wrapRounded(fn);
+        convert[fromModel][toModel].raw = wrapRaw(fn);
+      });
+    });
+    module.exports = convert;
+  }
+});
+
+// node_modules/ansi-styles/index.js
+var require_ansi_styles = __commonJS({
+  "node_modules/ansi-styles/index.js"(exports, module) {
+    "use strict";
+    var wrapAnsi166 = (fn, offset) => (...args) => {
+      const code = fn(...args);
+      return `\x1B[${code + offset}m`;
+    };
+    var wrapAnsi2566 = (fn, offset) => (...args) => {
+      const code = fn(...args);
+      return `\x1B[${38 + offset};5;${code}m`;
+    };
+    var wrapAnsi16m6 = (fn, offset) => (...args) => {
+      const rgb = fn(...args);
+      return `\x1B[${38 + offset};2;${rgb[0]};${rgb[1]};${rgb[2]}m`;
+    };
+    var ansi2ansi = (n) => n;
+    var rgb2rgb = (r2, g, b) => [r2, g, b];
+    var setLazyProperty = (object, property, get) => {
+      Object.defineProperty(object, property, {
+        get: () => {
+          const value = get();
+          Object.defineProperty(object, property, {
+            value,
+            enumerable: true,
+            configurable: true
+          });
+          return value;
+        },
+        enumerable: true,
+        configurable: true
+      });
+    };
+    var colorConvert;
+    var makeDynamicStyles = (wrap, targetSpace, identity, isBackground) => {
+      if (colorConvert === void 0) {
+        colorConvert = require_color_convert();
+      }
+      const offset = isBackground ? 10 : 0;
+      const styles8 = {};
+      for (const [sourceSpace, suite] of Object.entries(colorConvert)) {
+        const name = sourceSpace === "ansi16" ? "ansi" : sourceSpace;
+        if (sourceSpace === targetSpace) {
+          styles8[name] = wrap(identity, offset);
+        } else if (typeof suite === "object") {
+          styles8[name] = wrap(suite[targetSpace], offset);
+        }
+      }
+      return styles8;
+    };
+    function assembleStyles6() {
+      const codes = /* @__PURE__ */ new Map();
+      const styles8 = {
+        modifier: {
+          reset: [0, 0],
+          // 21 isn't widely supported and 22 does the same thing
+          bold: [1, 22],
+          dim: [2, 22],
+          italic: [3, 23],
+          underline: [4, 24],
+          inverse: [7, 27],
+          hidden: [8, 28],
+          strikethrough: [9, 29]
+        },
+        color: {
+          black: [30, 39],
+          red: [31, 39],
+          green: [32, 39],
+          yellow: [33, 39],
+          blue: [34, 39],
+          magenta: [35, 39],
+          cyan: [36, 39],
+          white: [37, 39],
+          // Bright color
+          blackBright: [90, 39],
+          redBright: [91, 39],
+          greenBright: [92, 39],
+          yellowBright: [93, 39],
+          blueBright: [94, 39],
+          magentaBright: [95, 39],
+          cyanBright: [96, 39],
+          whiteBright: [97, 39]
+        },
+        bgColor: {
+          bgBlack: [40, 49],
+          bgRed: [41, 49],
+          bgGreen: [42, 49],
+          bgYellow: [43, 49],
+          bgBlue: [44, 49],
+          bgMagenta: [45, 49],
+          bgCyan: [46, 49],
+          bgWhite: [47, 49],
+          // Bright color
+          bgBlackBright: [100, 49],
+          bgRedBright: [101, 49],
+          bgGreenBright: [102, 49],
+          bgYellowBright: [103, 49],
+          bgBlueBright: [104, 49],
+          bgMagentaBright: [105, 49],
+          bgCyanBright: [106, 49],
+          bgWhiteBright: [107, 49]
+        }
+      };
+      styles8.color.gray = styles8.color.blackBright;
+      styles8.bgColor.bgGray = styles8.bgColor.bgBlackBright;
+      styles8.color.grey = styles8.color.blackBright;
+      styles8.bgColor.bgGrey = styles8.bgColor.bgBlackBright;
+      for (const [groupName, group] of Object.entries(styles8)) {
+        for (const [styleName, style] of Object.entries(group)) {
+          styles8[styleName] = {
+            open: `\x1B[${style[0]}m`,
+            close: `\x1B[${style[1]}m`
+          };
+          group[styleName] = styles8[styleName];
+          codes.set(style[0], style[1]);
+        }
+        Object.defineProperty(styles8, groupName, {
+          value: group,
+          enumerable: false
+        });
+      }
+      Object.defineProperty(styles8, "codes", {
+        value: codes,
+        enumerable: false
+      });
+      styles8.color.close = "\x1B[39m";
+      styles8.bgColor.close = "\x1B[49m";
+      setLazyProperty(styles8.color, "ansi", () => makeDynamicStyles(wrapAnsi166, "ansi16", ansi2ansi, false));
+      setLazyProperty(styles8.color, "ansi256", () => makeDynamicStyles(wrapAnsi2566, "ansi256", ansi2ansi, false));
+      setLazyProperty(styles8.color, "ansi16m", () => makeDynamicStyles(wrapAnsi16m6, "rgb", rgb2rgb, false));
+      setLazyProperty(styles8.bgColor, "ansi", () => makeDynamicStyles(wrapAnsi166, "ansi16", ansi2ansi, true));
+      setLazyProperty(styles8.bgColor, "ansi256", () => makeDynamicStyles(wrapAnsi2566, "ansi256", ansi2ansi, true));
+      setLazyProperty(styles8.bgColor, "ansi16m", () => makeDynamicStyles(wrapAnsi16m6, "rgb", rgb2rgb, true));
+      return styles8;
+    }
+    Object.defineProperty(module, "exports", {
+      enumerable: true,
+      get: assembleStyles6
+    });
+  }
+});
+
+// node_modules/gradient-string/node_modules/chalk/source/util.js
+var require_util2 = __commonJS({
+  "node_modules/gradient-string/node_modules/chalk/source/util.js"(exports, module) {
+    "use strict";
+    var stringReplaceAll2 = (string, substring, replacer) => {
+      let index = string.indexOf(substring);
+      if (index === -1) {
+        return string;
+      }
+      const substringLength = substring.length;
+      let endIndex = 0;
+      let returnValue = "";
+      do {
+        returnValue += string.substr(endIndex, index - endIndex) + substring + replacer;
+        endIndex = index + substringLength;
+        index = string.indexOf(substring, endIndex);
+      } while (index !== -1);
+      returnValue += string.substr(endIndex);
+      return returnValue;
+    };
+    var stringEncaseCRLFWithFirstIndex2 = (string, prefix, postfix, index) => {
+      let endIndex = 0;
+      let returnValue = "";
+      do {
+        const gotCR = string[index - 1] === "\r";
+        returnValue += string.substr(endIndex, (gotCR ? index - 1 : index) - endIndex) + prefix + (gotCR ? "\r\n" : "\n") + postfix;
+        endIndex = index + 1;
+        index = string.indexOf("\n", endIndex);
+      } while (index !== -1);
+      returnValue += string.substr(endIndex);
+      return returnValue;
+    };
+    module.exports = {
+      stringReplaceAll: stringReplaceAll2,
+      stringEncaseCRLFWithFirstIndex: stringEncaseCRLFWithFirstIndex2
+    };
+  }
+});
+
+// node_modules/gradient-string/node_modules/chalk/source/templates.js
+var require_templates = __commonJS({
+  "node_modules/gradient-string/node_modules/chalk/source/templates.js"(exports, module) {
+    "use strict";
+    var TEMPLATE_REGEX = /(?:\\(u(?:[a-f\d]{4}|\{[a-f\d]{1,6}\})|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
+    var STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
+    var STRING_REGEX = /^(['"])((?:\\.|(?!\1)[^\\])*)\1$/;
+    var ESCAPE_REGEX = /\\(u(?:[a-f\d]{4}|{[a-f\d]{1,6}})|x[a-f\d]{2}|.)|([^\\])/gi;
+    var ESCAPES5 = /* @__PURE__ */ new Map([
+      ["n", "\n"],
+      ["r", "\r"],
+      ["t", "	"],
+      ["b", "\b"],
+      ["f", "\f"],
+      ["v", "\v"],
+      ["0", "\0"],
+      ["\\", "\\"],
+      ["e", "\x1B"],
+      ["a", "\x07"]
+    ]);
+    function unescape2(c) {
+      const u = c[0] === "u";
+      const bracket = c[1] === "{";
+      if (u && !bracket && c.length === 5 || c[0] === "x" && c.length === 3) {
+        return String.fromCharCode(parseInt(c.slice(1), 16));
+      }
+      if (u && bracket) {
+        return String.fromCodePoint(parseInt(c.slice(2, -1), 16));
+      }
+      return ESCAPES5.get(c) || c;
+    }
+    function parseArguments(name, arguments_) {
+      const results = [];
+      const chunks = arguments_.trim().split(/\s*,\s*/g);
+      let matches;
+      for (const chunk of chunks) {
+        const number = Number(chunk);
+        if (!Number.isNaN(number)) {
+          results.push(number);
+        } else if (matches = chunk.match(STRING_REGEX)) {
+          results.push(matches[2].replace(ESCAPE_REGEX, (m2, escape2, character) => escape2 ? unescape2(escape2) : character));
+        } else {
+          throw new Error(`Invalid Chalk template style argument: ${chunk} (in style '${name}')`);
+        }
+      }
+      return results;
+    }
+    function parseStyle(style) {
+      STYLE_REGEX.lastIndex = 0;
+      const results = [];
+      let matches;
+      while ((matches = STYLE_REGEX.exec(style)) !== null) {
+        const name = matches[1];
+        if (matches[2]) {
+          const args = parseArguments(name, matches[2]);
+          results.push([name].concat(args));
+        } else {
+          results.push([name]);
+        }
+      }
+      return results;
+    }
+    function buildStyle(chalk2, styles8) {
+      const enabled = {};
+      for (const layer of styles8) {
+        for (const style of layer.styles) {
+          enabled[style[0]] = layer.inverse ? null : style.slice(1);
+        }
+      }
+      let current = chalk2;
+      for (const [styleName, styles9] of Object.entries(enabled)) {
+        if (!Array.isArray(styles9)) {
+          continue;
+        }
+        if (!(styleName in current)) {
+          throw new Error(`Unknown Chalk style: ${styleName}`);
+        }
+        current = styles9.length > 0 ? current[styleName](...styles9) : current[styleName];
+      }
+      return current;
+    }
+    module.exports = (chalk2, temporary) => {
+      const styles8 = [];
+      const chunks = [];
+      let chunk = [];
+      temporary.replace(TEMPLATE_REGEX, (m2, escapeCharacter, inverse, style, close, character) => {
+        if (escapeCharacter) {
+          chunk.push(unescape2(escapeCharacter));
+        } else if (style) {
+          const string = chunk.join("");
+          chunk = [];
+          chunks.push(styles8.length === 0 ? string : buildStyle(chalk2, styles8)(string));
+          styles8.push({ inverse, styles: parseStyle(style) });
+        } else if (close) {
+          if (styles8.length === 0) {
+            throw new Error("Found extraneous } in Chalk template literal");
+          }
+          chunks.push(buildStyle(chalk2, styles8)(chunk.join("")));
+          chunk = [];
+          styles8.pop();
+        } else {
+          chunk.push(character);
+        }
+      });
+      chunks.push(chunk.join(""));
+      if (styles8.length > 0) {
+        const errMessage = `Chalk template literal is missing ${styles8.length} closing bracket${styles8.length === 1 ? "" : "s"} (\`}\`)`;
+        throw new Error(errMessage);
+      }
+      return chunks.join("");
+    };
+  }
+});
+
+// node_modules/gradient-string/node_modules/chalk/source/index.js
+var require_source = __commonJS({
+  "node_modules/gradient-string/node_modules/chalk/source/index.js"(exports, module) {
+    "use strict";
+    var ansiStyles6 = require_ansi_styles();
+    var { stdout: stdoutColor2, stderr: stderrColor2 } = require_supports_color();
+    var {
+      stringReplaceAll: stringReplaceAll2,
+      stringEncaseCRLFWithFirstIndex: stringEncaseCRLFWithFirstIndex2
+    } = require_util2();
+    var { isArray } = Array;
+    var levelMapping2 = [
+      "ansi",
+      "ansi",
+      "ansi256",
+      "ansi16m"
+    ];
+    var styles8 = /* @__PURE__ */ Object.create(null);
+    var applyOptions2 = (object, options = {}) => {
+      if (options.level && !(Number.isInteger(options.level) && options.level >= 0 && options.level <= 3)) {
+        throw new Error("The `level` option should be an integer from 0 to 3");
+      }
+      const colorLevel = stdoutColor2 ? stdoutColor2.level : 0;
+      object.level = options.level === void 0 ? colorLevel : options.level;
+    };
+    var ChalkClass = class {
+      constructor(options) {
+        return chalkFactory2(options);
+      }
+    };
+    var chalkFactory2 = (options) => {
+      const chalk3 = {};
+      applyOptions2(chalk3, options);
+      chalk3.template = (...arguments_) => chalkTag(chalk3.template, ...arguments_);
+      Object.setPrototypeOf(chalk3, Chalk.prototype);
+      Object.setPrototypeOf(chalk3.template, chalk3);
+      chalk3.template.constructor = () => {
+        throw new Error("`chalk.constructor()` is deprecated. Use `new chalk.Instance()` instead.");
+      };
+      chalk3.template.Instance = ChalkClass;
+      return chalk3.template;
+    };
+    function Chalk(options) {
+      return chalkFactory2(options);
+    }
+    for (const [styleName, style] of Object.entries(ansiStyles6)) {
+      styles8[styleName] = {
+        get() {
+          const builder = createBuilder2(this, createStyler2(style.open, style.close, this._styler), this._isEmpty);
+          Object.defineProperty(this, styleName, { value: builder });
+          return builder;
+        }
+      };
+    }
+    styles8.visible = {
+      get() {
+        const builder = createBuilder2(this, this._styler, true);
+        Object.defineProperty(this, "visible", { value: builder });
+        return builder;
+      }
+    };
+    var usedModels2 = ["rgb", "hex", "keyword", "hsl", "hsv", "hwb", "ansi", "ansi256"];
+    for (const model of usedModels2) {
+      styles8[model] = {
+        get() {
+          const { level } = this;
+          return function(...arguments_) {
+            const styler = createStyler2(ansiStyles6.color[levelMapping2[level]][model](...arguments_), ansiStyles6.color.close, this._styler);
+            return createBuilder2(this, styler, this._isEmpty);
+          };
+        }
+      };
+    }
+    for (const model of usedModels2) {
+      const bgModel = "bg" + model[0].toUpperCase() + model.slice(1);
+      styles8[bgModel] = {
+        get() {
+          const { level } = this;
+          return function(...arguments_) {
+            const styler = createStyler2(ansiStyles6.bgColor[levelMapping2[level]][model](...arguments_), ansiStyles6.bgColor.close, this._styler);
+            return createBuilder2(this, styler, this._isEmpty);
+          };
+        }
+      };
+    }
+    var proto2 = Object.defineProperties(() => {
+    }, {
+      ...styles8,
+      level: {
+        enumerable: true,
+        get() {
+          return this._generator.level;
+        },
+        set(level) {
+          this._generator.level = level;
+        }
+      }
+    });
+    var createStyler2 = (open, close, parent) => {
+      let openAll;
+      let closeAll;
+      if (parent === void 0) {
+        openAll = open;
+        closeAll = close;
+      } else {
+        openAll = parent.openAll + open;
+        closeAll = close + parent.closeAll;
+      }
+      return {
+        open,
+        close,
+        openAll,
+        closeAll,
+        parent
+      };
+    };
+    var createBuilder2 = (self2, _styler, _isEmpty) => {
+      const builder = (...arguments_) => {
+        if (isArray(arguments_[0]) && isArray(arguments_[0].raw)) {
+          return applyStyle2(builder, chalkTag(builder, ...arguments_));
+        }
+        return applyStyle2(builder, arguments_.length === 1 ? "" + arguments_[0] : arguments_.join(" "));
+      };
+      Object.setPrototypeOf(builder, proto2);
+      builder._generator = self2;
+      builder._styler = _styler;
+      builder._isEmpty = _isEmpty;
+      return builder;
+    };
+    var applyStyle2 = (self2, string) => {
+      if (self2.level <= 0 || !string) {
+        return self2._isEmpty ? "" : string;
+      }
+      let styler = self2._styler;
+      if (styler === void 0) {
+        return string;
+      }
+      const { openAll, closeAll } = styler;
+      if (string.indexOf("\x1B") !== -1) {
+        while (styler !== void 0) {
+          string = stringReplaceAll2(string, styler.close, styler.open);
+          styler = styler.parent;
+        }
+      }
+      const lfIndex = string.indexOf("\n");
+      if (lfIndex !== -1) {
+        string = stringEncaseCRLFWithFirstIndex2(string, closeAll, openAll, lfIndex);
+      }
+      return openAll + string + closeAll;
+    };
+    var template;
+    var chalkTag = (chalk3, ...strings) => {
+      const [firstString] = strings;
+      if (!isArray(firstString) || !isArray(firstString.raw)) {
+        return strings.join(" ");
+      }
+      const arguments_ = strings.slice(1);
+      const parts = [firstString.raw[0]];
+      for (let i2 = 1; i2 < firstString.length; i2++) {
+        parts.push(
+          String(arguments_[i2 - 1]).replace(/[{}\\]/g, "\\$&"),
+          String(firstString.raw[i2])
+        );
+      }
+      if (template === void 0) {
+        template = require_templates();
+      }
+      return template(chalk3, parts.join(""));
+    };
+    Object.defineProperties(Chalk.prototype, styles8);
+    var chalk2 = Chalk();
+    chalk2.supportsColor = stdoutColor2;
+    chalk2.stderr = Chalk({ level: stderrColor2 ? stderrColor2.level : 0 });
+    chalk2.stderr.supportsColor = stderrColor2;
+    module.exports = chalk2;
+  }
+});
+
+// node_modules/tinycolor2/cjs/tinycolor.js
+var require_tinycolor = __commonJS({
+  "node_modules/tinycolor2/cjs/tinycolor.js"(exports, module) {
+    (function(global2, factory) {
+      typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.tinycolor = factory());
+    })(exports, function() {
+      "use strict";
+      function _typeof(obj) {
+        "@babel/helpers - typeof";
+        return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(obj2) {
+          return typeof obj2;
+        } : function(obj2) {
+          return obj2 && "function" == typeof Symbol && obj2.constructor === Symbol && obj2 !== Symbol.prototype ? "symbol" : typeof obj2;
+        }, _typeof(obj);
+      }
+      var trimLeft = /^\s+/;
+      var trimRight = /\s+$/;
+      function tinycolor(color, opts) {
+        color = color ? color : "";
+        opts = opts || {};
+        if (color instanceof tinycolor) {
+          return color;
+        }
+        if (!(this instanceof tinycolor)) {
+          return new tinycolor(color, opts);
+        }
+        var rgb = inputToRGB(color);
+        this._originalInput = color, this._r = rgb.r, this._g = rgb.g, this._b = rgb.b, this._a = rgb.a, this._roundA = Math.round(100 * this._a) / 100, this._format = opts.format || rgb.format;
+        this._gradientType = opts.gradientType;
+        if (this._r < 1) this._r = Math.round(this._r);
+        if (this._g < 1) this._g = Math.round(this._g);
+        if (this._b < 1) this._b = Math.round(this._b);
+        this._ok = rgb.ok;
+      }
+      tinycolor.prototype = {
+        isDark: function isDark() {
+          return this.getBrightness() < 128;
+        },
+        isLight: function isLight() {
+          return !this.isDark();
+        },
+        isValid: function isValid() {
+          return this._ok;
+        },
+        getOriginalInput: function getOriginalInput() {
+          return this._originalInput;
+        },
+        getFormat: function getFormat() {
+          return this._format;
+        },
+        getAlpha: function getAlpha() {
+          return this._a;
+        },
+        getBrightness: function getBrightness() {
+          var rgb = this.toRgb();
+          return (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1e3;
+        },
+        getLuminance: function getLuminance() {
+          var rgb = this.toRgb();
+          var RsRGB, GsRGB, BsRGB, R, G, B;
+          RsRGB = rgb.r / 255;
+          GsRGB = rgb.g / 255;
+          BsRGB = rgb.b / 255;
+          if (RsRGB <= 0.03928) R = RsRGB / 12.92;
+          else R = Math.pow((RsRGB + 0.055) / 1.055, 2.4);
+          if (GsRGB <= 0.03928) G = GsRGB / 12.92;
+          else G = Math.pow((GsRGB + 0.055) / 1.055, 2.4);
+          if (BsRGB <= 0.03928) B = BsRGB / 12.92;
+          else B = Math.pow((BsRGB + 0.055) / 1.055, 2.4);
+          return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+        },
+        setAlpha: function setAlpha(value) {
+          this._a = boundAlpha(value);
+          this._roundA = Math.round(100 * this._a) / 100;
+          return this;
+        },
+        toHsv: function toHsv() {
+          var hsv = rgbToHsv(this._r, this._g, this._b);
+          return {
+            h: hsv.h * 360,
+            s: hsv.s,
+            v: hsv.v,
+            a: this._a
+          };
+        },
+        toHsvString: function toHsvString() {
+          var hsv = rgbToHsv(this._r, this._g, this._b);
+          var h2 = Math.round(hsv.h * 360), s2 = Math.round(hsv.s * 100), v = Math.round(hsv.v * 100);
+          return this._a == 1 ? "hsv(" + h2 + ", " + s2 + "%, " + v + "%)" : "hsva(" + h2 + ", " + s2 + "%, " + v + "%, " + this._roundA + ")";
+        },
+        toHsl: function toHsl() {
+          var hsl = rgbToHsl(this._r, this._g, this._b);
+          return {
+            h: hsl.h * 360,
+            s: hsl.s,
+            l: hsl.l,
+            a: this._a
+          };
+        },
+        toHslString: function toHslString() {
+          var hsl = rgbToHsl(this._r, this._g, this._b);
+          var h2 = Math.round(hsl.h * 360), s2 = Math.round(hsl.s * 100), l = Math.round(hsl.l * 100);
+          return this._a == 1 ? "hsl(" + h2 + ", " + s2 + "%, " + l + "%)" : "hsla(" + h2 + ", " + s2 + "%, " + l + "%, " + this._roundA + ")";
+        },
+        toHex: function toHex(allow3Char) {
+          return rgbToHex(this._r, this._g, this._b, allow3Char);
+        },
+        toHexString: function toHexString(allow3Char) {
+          return "#" + this.toHex(allow3Char);
+        },
+        toHex8: function toHex8(allow4Char) {
+          return rgbaToHex(this._r, this._g, this._b, this._a, allow4Char);
+        },
+        toHex8String: function toHex8String(allow4Char) {
+          return "#" + this.toHex8(allow4Char);
+        },
+        toRgb: function toRgb() {
+          return {
+            r: Math.round(this._r),
+            g: Math.round(this._g),
+            b: Math.round(this._b),
+            a: this._a
+          };
+        },
+        toRgbString: function toRgbString() {
+          return this._a == 1 ? "rgb(" + Math.round(this._r) + ", " + Math.round(this._g) + ", " + Math.round(this._b) + ")" : "rgba(" + Math.round(this._r) + ", " + Math.round(this._g) + ", " + Math.round(this._b) + ", " + this._roundA + ")";
+        },
+        toPercentageRgb: function toPercentageRgb() {
+          return {
+            r: Math.round(bound01(this._r, 255) * 100) + "%",
+            g: Math.round(bound01(this._g, 255) * 100) + "%",
+            b: Math.round(bound01(this._b, 255) * 100) + "%",
+            a: this._a
+          };
+        },
+        toPercentageRgbString: function toPercentageRgbString() {
+          return this._a == 1 ? "rgb(" + Math.round(bound01(this._r, 255) * 100) + "%, " + Math.round(bound01(this._g, 255) * 100) + "%, " + Math.round(bound01(this._b, 255) * 100) + "%)" : "rgba(" + Math.round(bound01(this._r, 255) * 100) + "%, " + Math.round(bound01(this._g, 255) * 100) + "%, " + Math.round(bound01(this._b, 255) * 100) + "%, " + this._roundA + ")";
+        },
+        toName: function toName() {
+          if (this._a === 0) {
+            return "transparent";
+          }
+          if (this._a < 1) {
+            return false;
+          }
+          return hexNames[rgbToHex(this._r, this._g, this._b, true)] || false;
+        },
+        toFilter: function toFilter(secondColor) {
+          var hex8String = "#" + rgbaToArgbHex(this._r, this._g, this._b, this._a);
+          var secondHex8String = hex8String;
+          var gradientType = this._gradientType ? "GradientType = 1, " : "";
+          if (secondColor) {
+            var s2 = tinycolor(secondColor);
+            secondHex8String = "#" + rgbaToArgbHex(s2._r, s2._g, s2._b, s2._a);
+          }
+          return "progid:DXImageTransform.Microsoft.gradient(" + gradientType + "startColorstr=" + hex8String + ",endColorstr=" + secondHex8String + ")";
+        },
+        toString: function toString(format) {
+          var formatSet = !!format;
+          format = format || this._format;
+          var formattedString = false;
+          var hasAlpha = this._a < 1 && this._a >= 0;
+          var needsAlphaFormat = !formatSet && hasAlpha && (format === "hex" || format === "hex6" || format === "hex3" || format === "hex4" || format === "hex8" || format === "name");
+          if (needsAlphaFormat) {
+            if (format === "name" && this._a === 0) {
+              return this.toName();
+            }
+            return this.toRgbString();
+          }
+          if (format === "rgb") {
+            formattedString = this.toRgbString();
+          }
+          if (format === "prgb") {
+            formattedString = this.toPercentageRgbString();
+          }
+          if (format === "hex" || format === "hex6") {
+            formattedString = this.toHexString();
+          }
+          if (format === "hex3") {
+            formattedString = this.toHexString(true);
+          }
+          if (format === "hex4") {
+            formattedString = this.toHex8String(true);
+          }
+          if (format === "hex8") {
+            formattedString = this.toHex8String();
+          }
+          if (format === "name") {
+            formattedString = this.toName();
+          }
+          if (format === "hsl") {
+            formattedString = this.toHslString();
+          }
+          if (format === "hsv") {
+            formattedString = this.toHsvString();
+          }
+          return formattedString || this.toHexString();
+        },
+        clone: function clone2() {
+          return tinycolor(this.toString());
+        },
+        _applyModification: function _applyModification(fn, args) {
+          var color = fn.apply(null, [this].concat([].slice.call(args)));
+          this._r = color._r;
+          this._g = color._g;
+          this._b = color._b;
+          this.setAlpha(color._a);
+          return this;
+        },
+        lighten: function lighten() {
+          return this._applyModification(_lighten, arguments);
+        },
+        brighten: function brighten() {
+          return this._applyModification(_brighten, arguments);
+        },
+        darken: function darken() {
+          return this._applyModification(_darken, arguments);
+        },
+        desaturate: function desaturate() {
+          return this._applyModification(_desaturate, arguments);
+        },
+        saturate: function saturate() {
+          return this._applyModification(_saturate, arguments);
+        },
+        greyscale: function greyscale() {
+          return this._applyModification(_greyscale, arguments);
+        },
+        spin: function spin() {
+          return this._applyModification(_spin, arguments);
+        },
+        _applyCombination: function _applyCombination(fn, args) {
+          return fn.apply(null, [this].concat([].slice.call(args)));
+        },
+        analogous: function analogous() {
+          return this._applyCombination(_analogous, arguments);
+        },
+        complement: function complement() {
+          return this._applyCombination(_complement, arguments);
+        },
+        monochromatic: function monochromatic() {
+          return this._applyCombination(_monochromatic, arguments);
+        },
+        splitcomplement: function splitcomplement() {
+          return this._applyCombination(_splitcomplement, arguments);
+        },
+        // Disabled until https://github.com/bgrins/TinyColor/issues/254
+        // polyad: function (number) {
+        //   return this._applyCombination(polyad, [number]);
+        // },
+        triad: function triad() {
+          return this._applyCombination(polyad, [3]);
+        },
+        tetrad: function tetrad() {
+          return this._applyCombination(polyad, [4]);
+        }
+      };
+      tinycolor.fromRatio = function(color, opts) {
+        if (_typeof(color) == "object") {
+          var newColor = {};
+          for (var i2 in color) {
+            if (color.hasOwnProperty(i2)) {
+              if (i2 === "a") {
+                newColor[i2] = color[i2];
+              } else {
+                newColor[i2] = convertToPercentage(color[i2]);
+              }
+            }
+          }
+          color = newColor;
+        }
+        return tinycolor(color, opts);
+      };
+      function inputToRGB(color) {
+        var rgb = {
+          r: 0,
+          g: 0,
+          b: 0
+        };
+        var a = 1;
+        var s2 = null;
+        var v = null;
+        var l = null;
+        var ok = false;
+        var format = false;
+        if (typeof color == "string") {
+          color = stringInputToObject(color);
+        }
+        if (_typeof(color) == "object") {
+          if (isValidCSSUnit(color.r) && isValidCSSUnit(color.g) && isValidCSSUnit(color.b)) {
+            rgb = rgbToRgb(color.r, color.g, color.b);
+            ok = true;
+            format = String(color.r).substr(-1) === "%" ? "prgb" : "rgb";
+          } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.v)) {
+            s2 = convertToPercentage(color.s);
+            v = convertToPercentage(color.v);
+            rgb = hsvToRgb(color.h, s2, v);
+            ok = true;
+            format = "hsv";
+          } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.l)) {
+            s2 = convertToPercentage(color.s);
+            l = convertToPercentage(color.l);
+            rgb = hslToRgb(color.h, s2, l);
+            ok = true;
+            format = "hsl";
+          }
+          if (color.hasOwnProperty("a")) {
+            a = color.a;
+          }
+        }
+        a = boundAlpha(a);
+        return {
+          ok,
+          format: color.format || format,
+          r: Math.min(255, Math.max(rgb.r, 0)),
+          g: Math.min(255, Math.max(rgb.g, 0)),
+          b: Math.min(255, Math.max(rgb.b, 0)),
+          a
+        };
+      }
+      function rgbToRgb(r2, g, b) {
+        return {
+          r: bound01(r2, 255) * 255,
+          g: bound01(g, 255) * 255,
+          b: bound01(b, 255) * 255
+        };
+      }
+      function rgbToHsl(r2, g, b) {
+        r2 = bound01(r2, 255);
+        g = bound01(g, 255);
+        b = bound01(b, 255);
+        var max = Math.max(r2, g, b), min = Math.min(r2, g, b);
+        var h2, s2, l = (max + min) / 2;
+        if (max == min) {
+          h2 = s2 = 0;
+        } else {
+          var d = max - min;
+          s2 = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r2:
+              h2 = (g - b) / d + (g < b ? 6 : 0);
+              break;
+            case g:
+              h2 = (b - r2) / d + 2;
+              break;
+            case b:
+              h2 = (r2 - g) / d + 4;
+              break;
+          }
+          h2 /= 6;
+        }
+        return {
+          h: h2,
+          s: s2,
+          l
+        };
+      }
+      function hslToRgb(h2, s2, l) {
+        var r2, g, b;
+        h2 = bound01(h2, 360);
+        s2 = bound01(s2, 100);
+        l = bound01(l, 100);
+        function hue2rgb(p2, q2, t2) {
+          if (t2 < 0) t2 += 1;
+          if (t2 > 1) t2 -= 1;
+          if (t2 < 1 / 6) return p2 + (q2 - p2) * 6 * t2;
+          if (t2 < 1 / 2) return q2;
+          if (t2 < 2 / 3) return p2 + (q2 - p2) * (2 / 3 - t2) * 6;
+          return p2;
+        }
+        if (s2 === 0) {
+          r2 = g = b = l;
+        } else {
+          var q = l < 0.5 ? l * (1 + s2) : l + s2 - l * s2;
+          var p = 2 * l - q;
+          r2 = hue2rgb(p, q, h2 + 1 / 3);
+          g = hue2rgb(p, q, h2);
+          b = hue2rgb(p, q, h2 - 1 / 3);
+        }
+        return {
+          r: r2 * 255,
+          g: g * 255,
+          b: b * 255
+        };
+      }
+      function rgbToHsv(r2, g, b) {
+        r2 = bound01(r2, 255);
+        g = bound01(g, 255);
+        b = bound01(b, 255);
+        var max = Math.max(r2, g, b), min = Math.min(r2, g, b);
+        var h2, s2, v = max;
+        var d = max - min;
+        s2 = max === 0 ? 0 : d / max;
+        if (max == min) {
+          h2 = 0;
+        } else {
+          switch (max) {
+            case r2:
+              h2 = (g - b) / d + (g < b ? 6 : 0);
+              break;
+            case g:
+              h2 = (b - r2) / d + 2;
+              break;
+            case b:
+              h2 = (r2 - g) / d + 4;
+              break;
+          }
+          h2 /= 6;
+        }
+        return {
+          h: h2,
+          s: s2,
+          v
+        };
+      }
+      function hsvToRgb(h2, s2, v) {
+        h2 = bound01(h2, 360) * 6;
+        s2 = bound01(s2, 100);
+        v = bound01(v, 100);
+        var i2 = Math.floor(h2), f3 = h2 - i2, p = v * (1 - s2), q = v * (1 - f3 * s2), t2 = v * (1 - (1 - f3) * s2), mod = i2 % 6, r2 = [v, q, p, p, t2, v][mod], g = [t2, v, v, q, p, p][mod], b = [p, p, t2, v, v, q][mod];
+        return {
+          r: r2 * 255,
+          g: g * 255,
+          b: b * 255
+        };
+      }
+      function rgbToHex(r2, g, b, allow3Char) {
+        var hex = [pad2(Math.round(r2).toString(16)), pad2(Math.round(g).toString(16)), pad2(Math.round(b).toString(16))];
+        if (allow3Char && hex[0].charAt(0) == hex[0].charAt(1) && hex[1].charAt(0) == hex[1].charAt(1) && hex[2].charAt(0) == hex[2].charAt(1)) {
+          return hex[0].charAt(0) + hex[1].charAt(0) + hex[2].charAt(0);
+        }
+        return hex.join("");
+      }
+      function rgbaToHex(r2, g, b, a, allow4Char) {
+        var hex = [pad2(Math.round(r2).toString(16)), pad2(Math.round(g).toString(16)), pad2(Math.round(b).toString(16)), pad2(convertDecimalToHex(a))];
+        if (allow4Char && hex[0].charAt(0) == hex[0].charAt(1) && hex[1].charAt(0) == hex[1].charAt(1) && hex[2].charAt(0) == hex[2].charAt(1) && hex[3].charAt(0) == hex[3].charAt(1)) {
+          return hex[0].charAt(0) + hex[1].charAt(0) + hex[2].charAt(0) + hex[3].charAt(0);
+        }
+        return hex.join("");
+      }
+      function rgbaToArgbHex(r2, g, b, a) {
+        var hex = [pad2(convertDecimalToHex(a)), pad2(Math.round(r2).toString(16)), pad2(Math.round(g).toString(16)), pad2(Math.round(b).toString(16))];
+        return hex.join("");
+      }
+      tinycolor.equals = function(color1, color2) {
+        if (!color1 || !color2) return false;
+        return tinycolor(color1).toRgbString() == tinycolor(color2).toRgbString();
+      };
+      tinycolor.random = function() {
+        return tinycolor.fromRatio({
+          r: Math.random(),
+          g: Math.random(),
+          b: Math.random()
+        });
+      };
+      function _desaturate(color, amount) {
+        amount = amount === 0 ? 0 : amount || 10;
+        var hsl = tinycolor(color).toHsl();
+        hsl.s -= amount / 100;
+        hsl.s = clamp01(hsl.s);
+        return tinycolor(hsl);
+      }
+      function _saturate(color, amount) {
+        amount = amount === 0 ? 0 : amount || 10;
+        var hsl = tinycolor(color).toHsl();
+        hsl.s += amount / 100;
+        hsl.s = clamp01(hsl.s);
+        return tinycolor(hsl);
+      }
+      function _greyscale(color) {
+        return tinycolor(color).desaturate(100);
+      }
+      function _lighten(color, amount) {
+        amount = amount === 0 ? 0 : amount || 10;
+        var hsl = tinycolor(color).toHsl();
+        hsl.l += amount / 100;
+        hsl.l = clamp01(hsl.l);
+        return tinycolor(hsl);
+      }
+      function _brighten(color, amount) {
+        amount = amount === 0 ? 0 : amount || 10;
+        var rgb = tinycolor(color).toRgb();
+        rgb.r = Math.max(0, Math.min(255, rgb.r - Math.round(255 * -(amount / 100))));
+        rgb.g = Math.max(0, Math.min(255, rgb.g - Math.round(255 * -(amount / 100))));
+        rgb.b = Math.max(0, Math.min(255, rgb.b - Math.round(255 * -(amount / 100))));
+        return tinycolor(rgb);
+      }
+      function _darken(color, amount) {
+        amount = amount === 0 ? 0 : amount || 10;
+        var hsl = tinycolor(color).toHsl();
+        hsl.l -= amount / 100;
+        hsl.l = clamp01(hsl.l);
+        return tinycolor(hsl);
+      }
+      function _spin(color, amount) {
+        var hsl = tinycolor(color).toHsl();
+        var hue = (hsl.h + amount) % 360;
+        hsl.h = hue < 0 ? 360 + hue : hue;
+        return tinycolor(hsl);
+      }
+      function _complement(color) {
+        var hsl = tinycolor(color).toHsl();
+        hsl.h = (hsl.h + 180) % 360;
+        return tinycolor(hsl);
+      }
+      function polyad(color, number) {
+        if (isNaN(number) || number <= 0) {
+          throw new Error("Argument to polyad must be a positive number");
+        }
+        var hsl = tinycolor(color).toHsl();
+        var result = [tinycolor(color)];
+        var step = 360 / number;
+        for (var i2 = 1; i2 < number; i2++) {
+          result.push(tinycolor({
+            h: (hsl.h + i2 * step) % 360,
+            s: hsl.s,
+            l: hsl.l
+          }));
+        }
+        return result;
+      }
+      function _splitcomplement(color) {
+        var hsl = tinycolor(color).toHsl();
+        var h2 = hsl.h;
+        return [tinycolor(color), tinycolor({
+          h: (h2 + 72) % 360,
+          s: hsl.s,
+          l: hsl.l
+        }), tinycolor({
+          h: (h2 + 216) % 360,
+          s: hsl.s,
+          l: hsl.l
+        })];
+      }
+      function _analogous(color, results, slices) {
+        results = results || 6;
+        slices = slices || 30;
+        var hsl = tinycolor(color).toHsl();
+        var part = 360 / slices;
+        var ret = [tinycolor(color)];
+        for (hsl.h = (hsl.h - (part * results >> 1) + 720) % 360; --results; ) {
+          hsl.h = (hsl.h + part) % 360;
+          ret.push(tinycolor(hsl));
+        }
+        return ret;
+      }
+      function _monochromatic(color, results) {
+        results = results || 6;
+        var hsv = tinycolor(color).toHsv();
+        var h2 = hsv.h, s2 = hsv.s, v = hsv.v;
+        var ret = [];
+        var modification = 1 / results;
+        while (results--) {
+          ret.push(tinycolor({
+            h: h2,
+            s: s2,
+            v
+          }));
+          v = (v + modification) % 1;
+        }
+        return ret;
+      }
+      tinycolor.mix = function(color1, color2, amount) {
+        amount = amount === 0 ? 0 : amount || 50;
+        var rgb1 = tinycolor(color1).toRgb();
+        var rgb2 = tinycolor(color2).toRgb();
+        var p = amount / 100;
+        var rgba = {
+          r: (rgb2.r - rgb1.r) * p + rgb1.r,
+          g: (rgb2.g - rgb1.g) * p + rgb1.g,
+          b: (rgb2.b - rgb1.b) * p + rgb1.b,
+          a: (rgb2.a - rgb1.a) * p + rgb1.a
+        };
+        return tinycolor(rgba);
+      };
+      tinycolor.readability = function(color1, color2) {
+        var c1 = tinycolor(color1);
+        var c2 = tinycolor(color2);
+        return (Math.max(c1.getLuminance(), c2.getLuminance()) + 0.05) / (Math.min(c1.getLuminance(), c2.getLuminance()) + 0.05);
+      };
+      tinycolor.isReadable = function(color1, color2, wcag2) {
+        var readability = tinycolor.readability(color1, color2);
+        var wcag2Parms, out;
+        out = false;
+        wcag2Parms = validateWCAG2Parms(wcag2);
+        switch (wcag2Parms.level + wcag2Parms.size) {
+          case "AAsmall":
+          case "AAAlarge":
+            out = readability >= 4.5;
+            break;
+          case "AAlarge":
+            out = readability >= 3;
+            break;
+          case "AAAsmall":
+            out = readability >= 7;
+            break;
+        }
+        return out;
+      };
+      tinycolor.mostReadable = function(baseColor, colorList, args) {
+        var bestColor = null;
+        var bestScore = 0;
+        var readability;
+        var includeFallbackColors, level, size;
+        args = args || {};
+        includeFallbackColors = args.includeFallbackColors;
+        level = args.level;
+        size = args.size;
+        for (var i2 = 0; i2 < colorList.length; i2++) {
+          readability = tinycolor.readability(baseColor, colorList[i2]);
+          if (readability > bestScore) {
+            bestScore = readability;
+            bestColor = tinycolor(colorList[i2]);
+          }
+        }
+        if (tinycolor.isReadable(baseColor, bestColor, {
+          level,
+          size
+        }) || !includeFallbackColors) {
+          return bestColor;
+        } else {
+          args.includeFallbackColors = false;
+          return tinycolor.mostReadable(baseColor, ["#fff", "#000"], args);
+        }
+      };
+      var names = tinycolor.names = {
+        aliceblue: "f0f8ff",
+        antiquewhite: "faebd7",
+        aqua: "0ff",
+        aquamarine: "7fffd4",
+        azure: "f0ffff",
+        beige: "f5f5dc",
+        bisque: "ffe4c4",
+        black: "000",
+        blanchedalmond: "ffebcd",
+        blue: "00f",
+        blueviolet: "8a2be2",
+        brown: "a52a2a",
+        burlywood: "deb887",
+        burntsienna: "ea7e5d",
+        cadetblue: "5f9ea0",
+        chartreuse: "7fff00",
+        chocolate: "d2691e",
+        coral: "ff7f50",
+        cornflowerblue: "6495ed",
+        cornsilk: "fff8dc",
+        crimson: "dc143c",
+        cyan: "0ff",
+        darkblue: "00008b",
+        darkcyan: "008b8b",
+        darkgoldenrod: "b8860b",
+        darkgray: "a9a9a9",
+        darkgreen: "006400",
+        darkgrey: "a9a9a9",
+        darkkhaki: "bdb76b",
+        darkmagenta: "8b008b",
+        darkolivegreen: "556b2f",
+        darkorange: "ff8c00",
+        darkorchid: "9932cc",
+        darkred: "8b0000",
+        darksalmon: "e9967a",
+        darkseagreen: "8fbc8f",
+        darkslateblue: "483d8b",
+        darkslategray: "2f4f4f",
+        darkslategrey: "2f4f4f",
+        darkturquoise: "00ced1",
+        darkviolet: "9400d3",
+        deeppink: "ff1493",
+        deepskyblue: "00bfff",
+        dimgray: "696969",
+        dimgrey: "696969",
+        dodgerblue: "1e90ff",
+        firebrick: "b22222",
+        floralwhite: "fffaf0",
+        forestgreen: "228b22",
+        fuchsia: "f0f",
+        gainsboro: "dcdcdc",
+        ghostwhite: "f8f8ff",
+        gold: "ffd700",
+        goldenrod: "daa520",
+        gray: "808080",
+        green: "008000",
+        greenyellow: "adff2f",
+        grey: "808080",
+        honeydew: "f0fff0",
+        hotpink: "ff69b4",
+        indianred: "cd5c5c",
+        indigo: "4b0082",
+        ivory: "fffff0",
+        khaki: "f0e68c",
+        lavender: "e6e6fa",
+        lavenderblush: "fff0f5",
+        lawngreen: "7cfc00",
+        lemonchiffon: "fffacd",
+        lightblue: "add8e6",
+        lightcoral: "f08080",
+        lightcyan: "e0ffff",
+        lightgoldenrodyellow: "fafad2",
+        lightgray: "d3d3d3",
+        lightgreen: "90ee90",
+        lightgrey: "d3d3d3",
+        lightpink: "ffb6c1",
+        lightsalmon: "ffa07a",
+        lightseagreen: "20b2aa",
+        lightskyblue: "87cefa",
+        lightslategray: "789",
+        lightslategrey: "789",
+        lightsteelblue: "b0c4de",
+        lightyellow: "ffffe0",
+        lime: "0f0",
+        limegreen: "32cd32",
+        linen: "faf0e6",
+        magenta: "f0f",
+        maroon: "800000",
+        mediumaquamarine: "66cdaa",
+        mediumblue: "0000cd",
+        mediumorchid: "ba55d3",
+        mediumpurple: "9370db",
+        mediumseagreen: "3cb371",
+        mediumslateblue: "7b68ee",
+        mediumspringgreen: "00fa9a",
+        mediumturquoise: "48d1cc",
+        mediumvioletred: "c71585",
+        midnightblue: "191970",
+        mintcream: "f5fffa",
+        mistyrose: "ffe4e1",
+        moccasin: "ffe4b5",
+        navajowhite: "ffdead",
+        navy: "000080",
+        oldlace: "fdf5e6",
+        olive: "808000",
+        olivedrab: "6b8e23",
+        orange: "ffa500",
+        orangered: "ff4500",
+        orchid: "da70d6",
+        palegoldenrod: "eee8aa",
+        palegreen: "98fb98",
+        paleturquoise: "afeeee",
+        palevioletred: "db7093",
+        papayawhip: "ffefd5",
+        peachpuff: "ffdab9",
+        peru: "cd853f",
+        pink: "ffc0cb",
+        plum: "dda0dd",
+        powderblue: "b0e0e6",
+        purple: "800080",
+        rebeccapurple: "663399",
+        red: "f00",
+        rosybrown: "bc8f8f",
+        royalblue: "4169e1",
+        saddlebrown: "8b4513",
+        salmon: "fa8072",
+        sandybrown: "f4a460",
+        seagreen: "2e8b57",
+        seashell: "fff5ee",
+        sienna: "a0522d",
+        silver: "c0c0c0",
+        skyblue: "87ceeb",
+        slateblue: "6a5acd",
+        slategray: "708090",
+        slategrey: "708090",
+        snow: "fffafa",
+        springgreen: "00ff7f",
+        steelblue: "4682b4",
+        tan: "d2b48c",
+        teal: "008080",
+        thistle: "d8bfd8",
+        tomato: "ff6347",
+        turquoise: "40e0d0",
+        violet: "ee82ee",
+        wheat: "f5deb3",
+        white: "fff",
+        whitesmoke: "f5f5f5",
+        yellow: "ff0",
+        yellowgreen: "9acd32"
+      };
+      var hexNames = tinycolor.hexNames = flip(names);
+      function flip(o) {
+        var flipped = {};
+        for (var i2 in o) {
+          if (o.hasOwnProperty(i2)) {
+            flipped[o[i2]] = i2;
+          }
+        }
+        return flipped;
+      }
+      function boundAlpha(a) {
+        a = parseFloat(a);
+        if (isNaN(a) || a < 0 || a > 1) {
+          a = 1;
+        }
+        return a;
+      }
+      function bound01(n, max) {
+        if (isOnePointZero(n)) n = "100%";
+        var processPercent = isPercentage(n);
+        n = Math.min(max, Math.max(0, parseFloat(n)));
+        if (processPercent) {
+          n = parseInt(n * max, 10) / 100;
+        }
+        if (Math.abs(n - max) < 1e-6) {
+          return 1;
+        }
+        return n % max / parseFloat(max);
+      }
+      function clamp01(val) {
+        return Math.min(1, Math.max(0, val));
+      }
+      function parseIntFromHex(val) {
+        return parseInt(val, 16);
+      }
+      function isOnePointZero(n) {
+        return typeof n == "string" && n.indexOf(".") != -1 && parseFloat(n) === 1;
+      }
+      function isPercentage(n) {
+        return typeof n === "string" && n.indexOf("%") != -1;
+      }
+      function pad2(c) {
+        return c.length == 1 ? "0" + c : "" + c;
+      }
+      function convertToPercentage(n) {
+        if (n <= 1) {
+          n = n * 100 + "%";
+        }
+        return n;
+      }
+      function convertDecimalToHex(d) {
+        return Math.round(parseFloat(d) * 255).toString(16);
+      }
+      function convertHexToDecimal(h2) {
+        return parseIntFromHex(h2) / 255;
+      }
+      var matchers = function() {
+        var CSS_INTEGER = "[-\\+]?\\d+%?";
+        var CSS_NUMBER = "[-\\+]?\\d*\\.\\d+%?";
+        var CSS_UNIT = "(?:" + CSS_NUMBER + ")|(?:" + CSS_INTEGER + ")";
+        var PERMISSIVE_MATCH3 = "[\\s|\\(]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")\\s*\\)?";
+        var PERMISSIVE_MATCH4 = "[\\s|\\(]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")\\s*\\)?";
+        return {
+          CSS_UNIT: new RegExp(CSS_UNIT),
+          rgb: new RegExp("rgb" + PERMISSIVE_MATCH3),
+          rgba: new RegExp("rgba" + PERMISSIVE_MATCH4),
+          hsl: new RegExp("hsl" + PERMISSIVE_MATCH3),
+          hsla: new RegExp("hsla" + PERMISSIVE_MATCH4),
+          hsv: new RegExp("hsv" + PERMISSIVE_MATCH3),
+          hsva: new RegExp("hsva" + PERMISSIVE_MATCH4),
+          hex3: /^#?([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})$/,
+          hex6: /^#?([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/,
+          hex4: /^#?([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})$/,
+          hex8: /^#?([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/
+        };
+      }();
+      function isValidCSSUnit(color) {
+        return !!matchers.CSS_UNIT.exec(color);
+      }
+      function stringInputToObject(color) {
+        color = color.replace(trimLeft, "").replace(trimRight, "").toLowerCase();
+        var named = false;
+        if (names[color]) {
+          color = names[color];
+          named = true;
+        } else if (color == "transparent") {
+          return {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0,
+            format: "name"
+          };
+        }
+        var match;
+        if (match = matchers.rgb.exec(color)) {
+          return {
+            r: match[1],
+            g: match[2],
+            b: match[3]
+          };
+        }
+        if (match = matchers.rgba.exec(color)) {
+          return {
+            r: match[1],
+            g: match[2],
+            b: match[3],
+            a: match[4]
+          };
+        }
+        if (match = matchers.hsl.exec(color)) {
+          return {
+            h: match[1],
+            s: match[2],
+            l: match[3]
+          };
+        }
+        if (match = matchers.hsla.exec(color)) {
+          return {
+            h: match[1],
+            s: match[2],
+            l: match[3],
+            a: match[4]
+          };
+        }
+        if (match = matchers.hsv.exec(color)) {
+          return {
+            h: match[1],
+            s: match[2],
+            v: match[3]
+          };
+        }
+        if (match = matchers.hsva.exec(color)) {
+          return {
+            h: match[1],
+            s: match[2],
+            v: match[3],
+            a: match[4]
+          };
+        }
+        if (match = matchers.hex8.exec(color)) {
+          return {
+            r: parseIntFromHex(match[1]),
+            g: parseIntFromHex(match[2]),
+            b: parseIntFromHex(match[3]),
+            a: convertHexToDecimal(match[4]),
+            format: named ? "name" : "hex8"
+          };
+        }
+        if (match = matchers.hex6.exec(color)) {
+          return {
+            r: parseIntFromHex(match[1]),
+            g: parseIntFromHex(match[2]),
+            b: parseIntFromHex(match[3]),
+            format: named ? "name" : "hex"
+          };
+        }
+        if (match = matchers.hex4.exec(color)) {
+          return {
+            r: parseIntFromHex(match[1] + "" + match[1]),
+            g: parseIntFromHex(match[2] + "" + match[2]),
+            b: parseIntFromHex(match[3] + "" + match[3]),
+            a: convertHexToDecimal(match[4] + "" + match[4]),
+            format: named ? "name" : "hex8"
+          };
+        }
+        if (match = matchers.hex3.exec(color)) {
+          return {
+            r: parseIntFromHex(match[1] + "" + match[1]),
+            g: parseIntFromHex(match[2] + "" + match[2]),
+            b: parseIntFromHex(match[3] + "" + match[3]),
+            format: named ? "name" : "hex"
+          };
+        }
+        return false;
+      }
+      function validateWCAG2Parms(parms) {
+        var level, size;
+        parms = parms || {
+          level: "AA",
+          size: "small"
+        };
+        level = (parms.level || "AA").toUpperCase();
+        size = (parms.size || "small").toLowerCase();
+        if (level !== "AA" && level !== "AAA") {
+          level = "AA";
+        }
+        if (size !== "small" && size !== "large") {
+          size = "small";
+        }
+        return {
+          level,
+          size
+        };
+      }
+      return tinycolor;
+    });
+  }
+});
+
+// node_modules/tinygradient/index.js
+var require_tinygradient = __commonJS({
+  "node_modules/tinygradient/index.js"(exports, module) {
+    var tinycolor = require_tinycolor();
+    var RGBA_MAX = { r: 256, g: 256, b: 256, a: 1 };
+    var HSVA_MAX = { h: 360, s: 1, v: 1, a: 1 };
+    function stepize(start, end, steps) {
+      let step = {};
+      for (let k in start) {
+        if (start.hasOwnProperty(k)) {
+          step[k] = steps === 0 ? 0 : (end[k] - start[k]) / steps;
+        }
+      }
+      return step;
+    }
+    function interpolate(step, start, i2, max) {
+      let color = {};
+      for (let k in start) {
+        if (start.hasOwnProperty(k)) {
+          color[k] = step[k] * i2 + start[k];
+          color[k] = color[k] < 0 ? color[k] + max[k] : max[k] !== 1 ? color[k] % max[k] : color[k];
+        }
+      }
+      return color;
+    }
+    function interpolateRgb(stop1, stop2, steps) {
+      const start = stop1.color.toRgb();
+      const end = stop2.color.toRgb();
+      const step = stepize(start, end, steps);
+      let gradient = [stop1.color];
+      for (let i2 = 1; i2 < steps; i2++) {
+        const color = interpolate(step, start, i2, RGBA_MAX);
+        gradient.push(tinycolor(color));
+      }
+      return gradient;
+    }
+    function interpolateHsv(stop1, stop2, steps, mode) {
+      const start = stop1.color.toHsv();
+      const end = stop2.color.toHsv();
+      if (start.s === 0 || end.s === 0) {
+        return interpolateRgb(stop1, stop2, steps);
+      }
+      let trigonometric;
+      if (typeof mode === "boolean") {
+        trigonometric = mode;
+      } else {
+        const trigShortest = start.h < end.h && end.h - start.h < 180 || start.h > end.h && start.h - end.h > 180;
+        trigonometric = mode === "long" && trigShortest || mode === "short" && !trigShortest;
+      }
+      const step = stepize(start, end, steps);
+      let gradient = [stop1.color];
+      let diff2;
+      if (start.h <= end.h && !trigonometric || start.h >= end.h && trigonometric) {
+        diff2 = end.h - start.h;
+      } else if (trigonometric) {
+        diff2 = 360 - end.h + start.h;
+      } else {
+        diff2 = 360 - start.h + end.h;
+      }
+      step.h = Math.pow(-1, trigonometric ? 1 : 0) * Math.abs(diff2) / steps;
+      for (let i2 = 1; i2 < steps; i2++) {
+        const color = interpolate(step, start, i2, HSVA_MAX);
+        gradient.push(tinycolor(color));
+      }
+      return gradient;
+    }
+    function computeSubsteps(stops, steps) {
+      const l = stops.length;
+      steps = parseInt(steps, 10);
+      if (isNaN(steps) || steps < 2) {
+        throw new Error("Invalid number of steps (< 2)");
+      }
+      if (steps < l) {
+        throw new Error("Number of steps cannot be inferior to number of stops");
+      }
+      let substeps = [];
+      for (let i2 = 1; i2 < l; i2++) {
+        const step = (steps - 1) * (stops[i2].pos - stops[i2 - 1].pos);
+        substeps.push(Math.max(1, Math.round(step)));
+      }
+      let totalSubsteps = 1;
+      for (let n = l - 1; n--; ) totalSubsteps += substeps[n];
+      while (totalSubsteps !== steps) {
+        if (totalSubsteps < steps) {
+          const min = Math.min.apply(null, substeps);
+          substeps[substeps.indexOf(min)]++;
+          totalSubsteps++;
+        } else {
+          const max = Math.max.apply(null, substeps);
+          substeps[substeps.indexOf(max)]--;
+          totalSubsteps--;
+        }
+      }
+      return substeps;
+    }
+    function computeAt(stops, pos, method, max) {
+      if (pos < 0 || pos > 1) {
+        throw new Error("Position must be between 0 and 1");
+      }
+      let start, end;
+      for (let i2 = 0, l = stops.length; i2 < l - 1; i2++) {
+        if (pos >= stops[i2].pos && pos < stops[i2 + 1].pos) {
+          start = stops[i2];
+          end = stops[i2 + 1];
+          break;
+        }
+      }
+      if (!start) {
+        start = end = stops[stops.length - 1];
+      }
+      const step = stepize(start.color[method](), end.color[method](), (end.pos - start.pos) * 100);
+      const color = interpolate(step, start.color[method](), (pos - start.pos) * 100, max);
+      return tinycolor(color);
+    }
+    var TinyGradient = class _TinyGradient {
+      /**
+       * @param {StopInput[]|ColorInput[]} stops
+       * @returns {TinyGradient}
+       */
+      constructor(stops) {
+        if (stops.length < 2) {
+          throw new Error("Invalid number of stops (< 2)");
+        }
+        const havingPositions = stops[0].pos !== void 0;
+        let l = stops.length;
+        let p = -1;
+        let lastColorLess = false;
+        this.stops = stops.map((stop, i2) => {
+          const hasPosition = stop.pos !== void 0;
+          if (havingPositions ^ hasPosition) {
+            throw new Error("Cannot mix positionned and not posionned color stops");
+          }
+          if (hasPosition) {
+            const hasColor = stop.color !== void 0;
+            if (!hasColor && (lastColorLess || i2 === 0 || i2 === l - 1)) {
+              throw new Error("Cannot define two consecutive position-only stops");
+            }
+            lastColorLess = !hasColor;
+            stop = {
+              color: hasColor ? tinycolor(stop.color) : null,
+              colorLess: !hasColor,
+              pos: stop.pos
+            };
+            if (stop.pos < 0 || stop.pos > 1) {
+              throw new Error("Color stops positions must be between 0 and 1");
+            } else if (stop.pos < p) {
+              throw new Error("Color stops positions are not ordered");
+            }
+            p = stop.pos;
+          } else {
+            stop = {
+              color: tinycolor(stop.color !== void 0 ? stop.color : stop),
+              pos: i2 / (l - 1)
+            };
+          }
+          return stop;
+        });
+        if (this.stops[0].pos !== 0) {
+          this.stops.unshift({
+            color: this.stops[0].color,
+            pos: 0
+          });
+          l++;
+        }
+        if (this.stops[l - 1].pos !== 1) {
+          this.stops.push({
+            color: this.stops[l - 1].color,
+            pos: 1
+          });
+        }
+      }
+      /**
+       * Return new instance with reversed stops
+       * @return {TinyGradient}
+       */
+      reverse() {
+        let stops = [];
+        this.stops.forEach(function(stop) {
+          stops.push({
+            color: stop.color,
+            pos: 1 - stop.pos
+          });
+        });
+        return new _TinyGradient(stops.reverse());
+      }
+      /**
+       * Return new instance with looped stops
+       * @return {TinyGradient}
+       */
+      loop() {
+        let stops1 = [];
+        let stops2 = [];
+        this.stops.forEach((stop) => {
+          stops1.push({
+            color: stop.color,
+            pos: stop.pos / 2
+          });
+        });
+        this.stops.slice(0, -1).forEach((stop) => {
+          stops2.push({
+            color: stop.color,
+            pos: 1 - stop.pos / 2
+          });
+        });
+        return new _TinyGradient(stops1.concat(stops2.reverse()));
+      }
+      /**
+       * Generate gradient with RGBa interpolation
+       * @param {number} steps
+       * @return {tinycolor[]}
+       */
+      rgb(steps) {
+        const substeps = computeSubsteps(this.stops, steps);
+        let gradient = [];
+        this.stops.forEach((stop, i2) => {
+          if (stop.colorLess) {
+            stop.color = interpolateRgb(this.stops[i2 - 1], this.stops[i2 + 1], 2)[1];
+          }
+        });
+        for (let i2 = 0, l = this.stops.length; i2 < l - 1; i2++) {
+          const rgb = interpolateRgb(this.stops[i2], this.stops[i2 + 1], substeps[i2]);
+          gradient.splice(gradient.length, 0, ...rgb);
+        }
+        gradient.push(this.stops[this.stops.length - 1].color);
+        return gradient;
+      }
+      /**
+       * Generate gradient with HSVa interpolation
+       * @param {number} steps
+       * @param {boolean|'long'|'short'} [mode=false]
+       *    - false to step in clockwise
+       *    - true to step in trigonometric order
+       *    - 'short' to use the shortest way
+       *    - 'long' to use the longest way
+       * @return {tinycolor[]}
+       */
+      hsv(steps, mode) {
+        const substeps = computeSubsteps(this.stops, steps);
+        let gradient = [];
+        this.stops.forEach((stop, i2) => {
+          if (stop.colorLess) {
+            stop.color = interpolateHsv(this.stops[i2 - 1], this.stops[i2 + 1], 2, mode)[1];
+          }
+        });
+        for (let i2 = 0, l = this.stops.length; i2 < l - 1; i2++) {
+          const hsv = interpolateHsv(this.stops[i2], this.stops[i2 + 1], substeps[i2], mode);
+          gradient.splice(gradient.length, 0, ...hsv);
+        }
+        gradient.push(this.stops[this.stops.length - 1].color);
+        return gradient;
+      }
+      /**
+       * Generate CSS3 command (no prefix) for this gradient
+       * @param {String} [mode=linear] - 'linear' or 'radial'
+       * @param {String} [direction] - default is 'to right' or 'ellipse at center'
+       * @return {String}
+       */
+      css(mode, direction) {
+        mode = mode || "linear";
+        direction = direction || (mode === "linear" ? "to right" : "ellipse at center");
+        let css = mode + "-gradient(" + direction;
+        this.stops.forEach(function(stop) {
+          css += ", " + (stop.colorLess ? "" : stop.color.toRgbString() + " ") + stop.pos * 100 + "%";
+        });
+        css += ")";
+        return css;
+      }
+      /**
+       * Returns the color at specific position with RGBa interpolation
+       * @param {number} pos, between 0 and 1
+       * @return {tinycolor}
+       */
+      rgbAt(pos) {
+        return computeAt(this.stops, pos, "toRgb", RGBA_MAX);
+      }
+      /**
+       * Returns the color at specific position with HSVa interpolation
+       * @param {number} pos, between 0 and 1
+       * @return {tinycolor}
+       */
+      hsvAt(pos) {
+        return computeAt(this.stops, pos, "toHsv", HSVA_MAX);
+      }
+    };
+    module.exports = function(stops) {
+      if (arguments.length === 1) {
+        if (!Array.isArray(arguments[0])) {
+          throw new Error('"stops" is not an array');
+        }
+        stops = arguments[0];
+      } else {
+        stops = Array.prototype.slice.call(arguments);
+      }
+      return new TinyGradient(stops);
+    };
+  }
+});
+
+// node_modules/gradient-string/index.js
+var require_gradient_string = __commonJS({
+  "node_modules/gradient-string/index.js"(exports, module) {
+    "use strict";
+    var chalk2 = require_source();
+    var tinygradient = require_tinygradient();
+    var forbiddenChars = /\s/g;
+    function InitGradient(...args) {
+      const grad = tinygradient.apply(this, args);
+      const ret = (str, opts) => applyGradient(str ? str.toString() : "", grad, opts);
+      ret.multiline = (str, opts) => multilineGradient(str ? str.toString() : "", grad, opts);
+      return ret;
+    }
+    var getColors = (gradient, options, count) => options.interpolation.toLowerCase() === "hsv" ? gradient.hsv(count, options.hsvSpin.toLowerCase()) : gradient.rgb(count);
+    function applyGradient(str, gradient, opts) {
+      const options = validateOptions(opts);
+      const colorsCount = Math.max(str.replace(forbiddenChars, "").length, gradient.stops.length);
+      const colors = getColors(gradient, options, colorsCount);
+      let result = "";
+      for (const s2 of str) {
+        result += s2.match(forbiddenChars) ? s2 : chalk2.hex(colors.shift().toHex())(s2);
+      }
+      return result;
+    }
+    function multilineGradient(str, gradient, opts) {
+      const options = validateOptions(opts);
+      const lines = str.split("\n");
+      const maxLength = Math.max.apply(null, lines.map((l) => l.length).concat([gradient.stops.length]));
+      const colors = getColors(gradient, options, maxLength);
+      const results = [];
+      for (const line of lines) {
+        const lineColors = colors.slice(0);
+        let lineResult = "";
+        for (const l of line) {
+          lineResult += chalk2.hex(lineColors.shift().toHex())(l);
+        }
+        results.push(lineResult);
+      }
+      return results.join("\n");
+    }
+    function validateOptions(opts) {
+      const options = { interpolation: "rgb", hsvSpin: "short", ...opts };
+      if (opts !== void 0 && typeof opts !== "object") {
+        throw new TypeError(`Expected \`options\` to be an \`object\`, got \`${typeof opts}\``);
+      }
+      if (typeof options.interpolation !== "string") {
+        throw new TypeError(`Expected \`options.interpolation\` to be a \`string\`, got \`${typeof options.interpolation}\``);
+      }
+      if (options.interpolation.toLowerCase() === "hsv" && typeof options.hsvSpin !== "string") {
+        throw new TypeError(`Expected \`options.hsvSpin\` to be a \`string\`, got \`${typeof options.hsvSpin}\``);
+      }
+      return options;
+    }
+    var aliases = {
+      atlas: { colors: ["#feac5e", "#c779d0", "#4bc0c8"], options: {} },
+      cristal: { colors: ["#bdfff3", "#4ac29a"], options: {} },
+      teen: { colors: ["#77a1d3", "#79cbca", "#e684ae"], options: {} },
+      mind: { colors: ["#473b7b", "#3584a7", "#30d2be"], options: {} },
+      morning: { colors: ["#ff5f6d", "#ffc371"], options: { interpolation: "hsv" } },
+      vice: { colors: ["#5ee7df", "#b490ca"], options: { interpolation: "hsv" } },
+      passion: { colors: ["#f43b47", "#453a94"], options: {} },
+      fruit: { colors: ["#ff4e50", "#f9d423"], options: {} },
+      instagram: { colors: ["#833ab4", "#fd1d1d", "#fcb045"], options: {} },
+      retro: { colors: ["#3f51b1", "#5a55ae", "#7b5fac", "#8f6aae", "#a86aa4", "#cc6b8e", "#f18271", "#f3a469", "#f7c978"], options: {} },
+      summer: { colors: ["#fdbb2d", "#22c1c3"], options: {} },
+      rainbow: { colors: ["#ff0000", "#ff0100"], options: { interpolation: "hsv", hsvSpin: "long" } },
+      pastel: { colors: ["#74ebd5", "#74ecd5"], options: { interpolation: "hsv", hsvSpin: "long" } }
+    };
+    module.exports = InitGradient;
+    for (const a in aliases) {
+      module.exports[a] = (str) => new InitGradient(aliases[a].colors)(str, aliases[a].options);
+      module.exports[a].multiline = (str) => new InitGradient(aliases[a].colors).multiline(str, aliases[a].options);
+    }
   }
 });
 
@@ -40698,7 +44256,7 @@ var require_cli_spinners = __commonJS({
 });
 
 // src/index.ts
-var import_react33 = __toESM(require_react(), 1);
+var import_react36 = __toESM(require_react(), 1);
 
 // node_modules/ink/build/render.js
 import { Stream } from "node:stream";
@@ -44119,7 +47677,7 @@ var get_max_width_default = getMaxWidth;
 // node_modules/ink/build/render-border.js
 var import_cli_boxes = __toESM(require_cli_boxes(), 1);
 
-// node_modules/ink/node_modules/chalk/source/vendor/ansi-styles/index.js
+// node_modules/chalk/source/vendor/ansi-styles/index.js
 var ANSI_BACKGROUND_OFFSET3 = 10;
 var wrapAnsi163 = (offset = 0) => (code) => `\x1B[${code + offset}m`;
 var wrapAnsi2563 = (offset = 0) => (code) => `\x1B[${38 + offset};5;${code}m`;
@@ -44305,7 +47863,7 @@ function assembleStyles3() {
 var ansiStyles3 = assembleStyles3();
 var ansi_styles_default3 = ansiStyles3;
 
-// node_modules/ink/node_modules/chalk/source/vendor/supports-color/index.js
+// node_modules/chalk/source/vendor/supports-color/index.js
 import process4 from "node:process";
 import os from "node:os";
 import tty from "node:tty";
@@ -44431,7 +47989,7 @@ var supportsColor = {
 };
 var supports_color_default = supportsColor;
 
-// node_modules/ink/node_modules/chalk/source/utilities.js
+// node_modules/chalk/source/utilities.js
 function stringReplaceAll(string, substring, replacer) {
   let index = string.indexOf(substring);
   if (index === -1) {
@@ -44461,7 +48019,7 @@ function stringEncaseCRLFWithFirstIndex(string, prefix, postfix, index) {
   return returnValue;
 }
 
-// node_modules/ink/node_modules/chalk/source/index.js
+// node_modules/chalk/source/index.js
 var { stdout: stdoutColor, stderr: stderrColor } = supports_color_default;
 var GENERATOR = Symbol("GENERATOR");
 var STYLER = Symbol("STYLER");
@@ -44481,10 +48039,10 @@ var applyOptions = (object, options = {}) => {
   object.level = options.level === void 0 ? colorLevel : options.level;
 };
 var chalkFactory = (options) => {
-  const chalk3 = (...strings) => strings.join(" ");
-  applyOptions(chalk3, options);
-  Object.setPrototypeOf(chalk3, createChalk.prototype);
-  return chalk3;
+  const chalk2 = (...strings) => strings.join(" ");
+  applyOptions(chalk2, options);
+  Object.setPrototypeOf(chalk2, createChalk.prototype);
+  return chalk2;
 };
 function createChalk(options) {
   return chalkFactory(options);
@@ -46548,9 +50106,34 @@ var getInstance = (stdout, createInstance) => {
 
 // node_modules/ink/build/components/Static.js
 var import_react12 = __toESM(require_react(), 1);
+function Static(props) {
+  const { items, children: render2, style: customStyle } = props;
+  const [index, setIndex] = (0, import_react12.useState)(0);
+  const itemsToRender = (0, import_react12.useMemo)(() => {
+    return items.slice(index);
+  }, [items, index]);
+  (0, import_react12.useLayoutEffect)(() => {
+    setIndex(items.length);
+  }, [items.length]);
+  const children = itemsToRender.map((item, itemIndex) => {
+    return render2(item, index + itemIndex);
+  });
+  const style = (0, import_react12.useMemo)(() => ({
+    position: "absolute",
+    flexDirection: "column",
+    ...customStyle
+  }), [customStyle]);
+  return import_react12.default.createElement("ink-box", { internal_static: true, style }, children);
+}
 
 // node_modules/ink/build/components/Transform.js
 var import_react13 = __toESM(require_react(), 1);
+function Transform({ children, transform }) {
+  if (children === void 0 || children === null) {
+    return null;
+  }
+  return import_react13.default.createElement("ink-text", { style: { flexGrow: 0, flexShrink: 1, flexDirection: "row" }, internal_transform: transform }, children);
+}
 
 // node_modules/ink/build/components/Newline.js
 var import_react14 = __toESM(require_react(), 1);
@@ -46837,8 +50420,15 @@ var import_react21 = __toESM(require_react(), 1);
 // node_modules/ink/build/hooks/use-focus-manager.js
 var import_react22 = __toESM(require_react(), 1);
 
+// node_modules/ink/build/measure-element.js
+var measureElement = (node) => ({
+  width: node.yogaNode?.getComputedWidth() ?? 0,
+  height: node.yogaNode?.getComputedHeight() ?? 0
+});
+var measure_element_default = measureElement;
+
 // src/ui/App.tsx
-var import_react32 = __toESM(require_react(), 1);
+var import_react35 = __toESM(require_react(), 1);
 
 // src/ui/hooks/useTerminalSize.ts
 var import_react23 = __toESM(require_react(), 1);
@@ -47917,6 +51507,7 @@ var LocalAPIClient = class {
               const event = JSON.parse(jsonStr);
               if (appConfig.cliDebug) {
                 console.log("[EVENT]:", event.event, event.content ? `"${event.content.slice(0, 50)}..."` : "");
+                console.log("[EVENT DATA]:", JSON.stringify(event, null, 2));
               }
               if (event.session_id && !sessionId) {
                 sessionId = event.session_id;
@@ -47930,33 +51521,138 @@ var LocalAPIClient = class {
                   onMessage({
                     content,
                     done: false,
-                    session_id: sessionId
+                    session_id: sessionId,
+                    metadata: {
+                      type: "content",
+                      event: event.event,
+                      content_type: event.content_type
+                    }
                   });
                 }
               }
-              if (event.event === "TeamToolCallStarted" || event.event === "ToolCallStarted") {
-                const toolName = event.tool?.tool_name || "unknown";
+              if (event.event === "TeamRunStarted") {
+                const teamName = event.team_name || event.team_id || event.team?.team_name || event.team?.team_id || "unknown";
                 onMessage({
-                  content: `\u{1F527} Starting tool: ${toolName}`,
+                  content: `\u{1F535} Starting team: ${teamName}`,
                   done: false,
-                  session_id: sessionId
+                  session_id: sessionId,
+                  metadata: {
+                    type: "team_start",
+                    event: event.event,
+                    team: event.team || {
+                      team_id: event.team_id,
+                      team_name: event.team_name,
+                      mode: event.mode
+                    }
+                  }
+                });
+              }
+              if (event.event === "TeamToolCallStarted" || event.event === "ToolCallStarted") {
+                const toolName = event.tool?.tool_name || event.tool_name || "unknown";
+                const toolArgs = event.tool?.tool_args || event.tool_args || {};
+                const argsStr = Object.keys(toolArgs).length > 0 ? JSON.stringify(toolArgs, null, 2) : "";
+                onMessage({
+                  content: `\u{1F527} ${toolName}${argsStr ? "\n\nArguments:\n" + argsStr : ""}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "tool_start",
+                    event: event.event,
+                    tool: event.tool || {
+                      tool_name: event.tool_name,
+                      tool_args: event.tool_args
+                    }
+                  }
                 });
               }
               if (event.event === "ToolCallCompleted") {
-                const toolName = event.tool?.tool_name || "unknown";
+                const toolName = event.tool?.tool_name || event.tool_name || "unknown";
                 const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1e3).toFixed(0)}ms)` : "";
+                const toolResult = event.tool?.tool_result || event.tool_result || event.result;
+                const resultStr = toolResult ? typeof toolResult === "string" ? toolResult : JSON.stringify(toolResult, null, 2) : "";
                 onMessage({
-                  content: `\u2705 Completed tool: ${toolName}${duration}`,
+                  content: `\u2705 ${toolName}${duration}${resultStr ? "\n\nResult:\n" + resultStr : ""}`,
                   done: false,
-                  session_id: sessionId
+                  session_id: sessionId,
+                  metadata: {
+                    type: "tool_complete",
+                    event: event.event,
+                    tool: event.tool || {
+                      tool_name: event.tool_name,
+                      tool_result: event.tool_result || event.result,
+                      metrics: event.metrics || { time: event.time }
+                    }
+                  }
                 });
               }
               if (event.event === "RunStarted") {
-                const agentName = event.agent_name || event.agent_id || "unknown";
+                const agentName = event.agent_name || event.agent?.agent_name || event.agent_id || event.agent?.agent_id || "unknown";
                 onMessage({
-                  content: `\u{1F916} Starting agent: ${agentName}`,
+                  content: `\u{1F916} ${agentName}`,
                   done: false,
-                  session_id: sessionId
+                  session_id: sessionId,
+                  metadata: {
+                    type: "agent_start",
+                    event: event.event,
+                    agent: event.agent || {
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      instructions: event.instructions
+                    }
+                  }
+                });
+              }
+              if (event.event === "MemoryUpdateStarted" || event.event === "MemoryUpdateCompleted") {
+                const memoryType = event.memory_type || event.memory?.type || event.type || "user memory";
+                const action = event.event === "MemoryUpdateStarted" ? "Updating" : "Updated";
+                const memoryContent = event.memory_content || event.content || event.memory?.content || "";
+                onMessage({
+                  content: `\u{1F9E0} ${action} ${memoryType}${memoryContent ? "\n\nContent:\n" + memoryContent : ""}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "memory_update",
+                    event: event.event,
+                    memory: event.memory || {
+                      type: event.memory_type || event.type,
+                      content: event.memory_content || event.content,
+                      metadata: event.metadata
+                    }
+                  }
+                });
+              }
+              if (event.event === "ThinkingStarted" || event.event === "ThinkingCompleted") {
+                const thinkingAction = event.event === "ThinkingStarted" ? "Thinking..." : "Thought complete";
+                onMessage({
+                  content: `\u{1F914} ${thinkingAction}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "thinking",
+                    event: event.event,
+                    thinking: {
+                      content: event.content || "",
+                      reasoning: event.reasoning || ""
+                    }
+                  }
+                });
+              }
+              if (event.event === "RAGQueryStarted" || event.event === "RAGQueryCompleted") {
+                const ragAction = event.event === "RAGQueryStarted" ? "Searching" : "Found";
+                const query = event.query || "knowledge base";
+                onMessage({
+                  content: `\u{1F50D} ${ragAction} in ${query}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "rag_query",
+                    event: event.event,
+                    rag: {
+                      query: event.query,
+                      results: event.results,
+                      metadata: event.metadata
+                    }
+                  }
                 });
               }
               if (event.event === "TeamRunCompleted" || event.event === "RunCompleted") {
@@ -48089,33 +51785,138 @@ var LocalAPIClient = class {
                   onMessage({
                     content,
                     done: false,
-                    session_id: sessionId
+                    session_id: sessionId,
+                    metadata: {
+                      type: "content",
+                      event: event.event,
+                      content_type: event.content_type
+                    }
                   });
                 }
               }
-              if (event.event === "TeamToolCallStarted" || event.event === "ToolCallStarted") {
-                const toolName = event.tool?.tool_name || "unknown";
+              if (event.event === "TeamRunStarted") {
+                const teamName = event.team_name || event.team_id || event.team?.team_name || event.team?.team_id || "unknown";
                 onMessage({
-                  content: `\u{1F527} Starting tool: ${toolName}`,
+                  content: `\u{1F535} Starting team: ${teamName}`,
                   done: false,
-                  session_id: sessionId
+                  session_id: sessionId,
+                  metadata: {
+                    type: "team_start",
+                    event: event.event,
+                    team: event.team || {
+                      team_id: event.team_id,
+                      team_name: event.team_name,
+                      mode: event.mode
+                    }
+                  }
+                });
+              }
+              if (event.event === "TeamToolCallStarted" || event.event === "ToolCallStarted") {
+                const toolName = event.tool?.tool_name || event.tool_name || "unknown";
+                const toolArgs = event.tool?.tool_args || event.tool_args || {};
+                const argsStr = Object.keys(toolArgs).length > 0 ? JSON.stringify(toolArgs, null, 2) : "";
+                onMessage({
+                  content: `\u{1F527} ${toolName}${argsStr ? "\n\nArguments:\n" + argsStr : ""}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "tool_start",
+                    event: event.event,
+                    tool: event.tool || {
+                      tool_name: event.tool_name,
+                      tool_args: event.tool_args
+                    }
+                  }
                 });
               }
               if (event.event === "ToolCallCompleted") {
-                const toolName = event.tool?.tool_name || "unknown";
+                const toolName = event.tool?.tool_name || event.tool_name || "unknown";
                 const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1e3).toFixed(0)}ms)` : "";
+                const toolResult = event.tool?.tool_result || event.tool_result || event.result;
+                const resultStr = toolResult ? typeof toolResult === "string" ? toolResult : JSON.stringify(toolResult, null, 2) : "";
                 onMessage({
-                  content: `\u2705 Completed tool: ${toolName}${duration}`,
+                  content: `\u2705 ${toolName}${duration}${resultStr ? "\n\nResult:\n" + resultStr : ""}`,
                   done: false,
-                  session_id: sessionId
+                  session_id: sessionId,
+                  metadata: {
+                    type: "tool_complete",
+                    event: event.event,
+                    tool: event.tool || {
+                      tool_name: event.tool_name,
+                      tool_result: event.tool_result || event.result,
+                      metrics: event.metrics || { time: event.time }
+                    }
+                  }
                 });
               }
               if (event.event === "RunStarted") {
-                const agentName = event.agent_name || event.agent_id || "unknown";
+                const agentName = event.agent_name || event.agent?.agent_name || event.agent_id || event.agent?.agent_id || "unknown";
                 onMessage({
-                  content: `\u{1F916} Starting agent: ${agentName}`,
+                  content: `\u{1F916} ${agentName}`,
                   done: false,
-                  session_id: sessionId
+                  session_id: sessionId,
+                  metadata: {
+                    type: "agent_start",
+                    event: event.event,
+                    agent: event.agent || {
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      instructions: event.instructions
+                    }
+                  }
+                });
+              }
+              if (event.event === "MemoryUpdateStarted" || event.event === "MemoryUpdateCompleted") {
+                const memoryType = event.memory_type || event.memory?.type || event.type || "user memory";
+                const action = event.event === "MemoryUpdateStarted" ? "Updating" : "Updated";
+                const memoryContent = event.memory_content || event.content || event.memory?.content || "";
+                onMessage({
+                  content: `\u{1F9E0} ${action} ${memoryType}${memoryContent ? "\n\nContent:\n" + memoryContent : ""}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "memory_update",
+                    event: event.event,
+                    memory: event.memory || {
+                      type: event.memory_type || event.type,
+                      content: event.memory_content || event.content,
+                      metadata: event.metadata
+                    }
+                  }
+                });
+              }
+              if (event.event === "ThinkingStarted" || event.event === "ThinkingCompleted") {
+                const thinkingAction = event.event === "ThinkingStarted" ? "Thinking..." : "Thought complete";
+                onMessage({
+                  content: `\u{1F914} ${thinkingAction}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "thinking",
+                    event: event.event,
+                    thinking: {
+                      content: event.content || "",
+                      reasoning: event.reasoning || ""
+                    }
+                  }
+                });
+              }
+              if (event.event === "RAGQueryStarted" || event.event === "RAGQueryCompleted") {
+                const ragAction = event.event === "RAGQueryStarted" ? "Searching" : "Found";
+                const query = event.query || "knowledge base";
+                onMessage({
+                  content: `\u{1F50D} ${ragAction} in ${query}`,
+                  done: false,
+                  session_id: sessionId,
+                  metadata: {
+                    type: "rag_query",
+                    event: event.event,
+                    rag: {
+                      query: event.query,
+                      results: event.results,
+                      metadata: event.metadata
+                    }
+                  }
                 });
               }
               if (event.event === "TeamRunCompleted") {
@@ -48275,6 +52076,12 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
           messageType = "tool_complete" /* TOOL_COMPLETE */;
         } else if (data.metadata?.type === "agent_start") {
           messageType = "agent_start" /* AGENT_START */;
+        } else if (data.metadata?.type === "team_start") {
+          messageType = "team_start" /* TEAM_START */;
+        } else if (data.metadata?.type === "memory_update") {
+          messageType = "memory_update" /* MEMORY_UPDATE */;
+        } else if (data.metadata?.type === "rag_query") {
+          messageType = "info" /* INFO */;
         }
         if (data.metadata?.type === "content" || !data.metadata?.type) {
           currentStreamRef.current += data.content;
@@ -48295,7 +52102,15 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
             metadata: {
               target: selectedTarget,
               streaming: false,
-              complete: true
+              complete: true,
+              event: data.metadata?.event,
+              // Pass through all the rich metadata from the API
+              tool: data.metadata?.tool,
+              agent: data.metadata?.agent,
+              team: data.metadata?.team,
+              memory: data.metadata?.memory,
+              thinking: data.metadata?.thinking,
+              rag: data.metadata?.rag
             }
           };
           addMessage(immediateMessage);
@@ -48464,91 +52279,2554 @@ var useLoadingIndicator = (streamingState) => {
   };
 };
 
+// node_modules/ink-gradient/dist/index.js
+var import_react27 = __toESM(require_react(), 1);
+var import_prop_types = __toESM(require_prop_types(), 1);
+var import_gradient_string = __toESM(require_gradient_string(), 1);
+var Gradient = (props) => {
+  if (props.name && props.colors) {
+    throw new Error("The `name` and `colors` props are mutually exclusive");
+  }
+  let gradient;
+  if (props.name) {
+    gradient = import_gradient_string.default[props.name];
+  } else if (props.colors) {
+    gradient = (0, import_gradient_string.default)(props.colors);
+  } else {
+    throw new Error("Either `name` or `colors` prop must be provided");
+  }
+  const applyGradient = (text) => gradient.multiline(stripAnsi(text));
+  return import_react27.default.createElement(Transform, { transform: applyGradient }, props.children);
+};
+Gradient.propTypes = {
+  children: import_prop_types.default.oneOfType([
+    import_prop_types.default.arrayOf(import_prop_types.default.node),
+    import_prop_types.default.node
+  ]).isRequired,
+  name: import_prop_types.default.oneOf([
+    "cristal",
+    "teen",
+    "mind",
+    "morning",
+    "vice",
+    "passion",
+    "fruit",
+    "instagram",
+    "atlas",
+    "retro",
+    "summer",
+    "pastel",
+    "rainbow"
+  ]),
+  colors: import_prop_types.default.arrayOf(import_prop_types.default.oneOfType([
+    import_prop_types.default.string,
+    import_prop_types.default.object
+  ]))
+};
+var dist_default5 = Gradient;
+
+// src/ui/themes/theme.ts
+var lightTheme = {
+  type: "light",
+  Background: "#FAFAFA",
+  Foreground: "#3C3C43",
+  LightBlue: "#89BDCD",
+  AccentBlue: "#3B82F6",
+  AccentPurple: "#8B5CF6",
+  AccentCyan: "#06B6D4",
+  AccentGreen: "#3CA84B",
+  AccentYellow: "#D5A40A",
+  AccentRed: "#DD4C4C",
+  Comment: "#008000",
+  Gray: "#B7BECC",
+  GradientColors: ["#4796E4", "#847ACE", "#C3677F"]
+};
+var darkTheme = {
+  type: "dark",
+  Background: "#1E1E2E",
+  Foreground: "#CDD6F4",
+  LightBlue: "#ADD8E6",
+  AccentBlue: "#89B4FA",
+  AccentPurple: "#CBA6F7",
+  AccentCyan: "#89DCEB",
+  AccentGreen: "#A6E3A1",
+  AccentYellow: "#F9E2AF",
+  AccentRed: "#F38BA8",
+  Comment: "#6C7086",
+  Gray: "#6C7086",
+  GradientColors: ["#4796E4", "#847ACE", "#C3677F"]
+};
+var Theme = class _Theme {
+  /**
+   * Creates a new Theme instance.
+   * @param name The name of the theme.
+   * @param rawMappings The raw CSSProperties mappings from a react-syntax-highlighter theme object.
+   */
+  constructor(name, type, rawMappings, colors) {
+    this.name = name;
+    this.type = type;
+    this.colors = colors;
+    this._colorMap = Object.freeze(this._buildColorMap(rawMappings));
+    const rawDefaultColor = rawMappings["hljs"]?.color;
+    this.defaultColor = (rawDefaultColor ? _Theme._resolveColor(rawDefaultColor) : void 0) ?? "";
+  }
+  /**
+   * The default foreground color for text when no specific highlight rule applies.
+   * This is an Ink-compatible color string (hex or name).
+   */
+  defaultColor;
+  /**
+   * Stores the mapping from highlight.js class names (e.g., 'hljs-keyword')
+   * to Ink-compatible color strings (hex or name).
+   */
+  _colorMap;
+  // --- Static Helper Data ---
+  // Mapping from common CSS color names (lowercase) to hex codes (lowercase)
+  // Excludes names directly supported by Ink
+  static cssNameToHexMap = {
+    aliceblue: "#f0f8ff",
+    antiquewhite: "#faebd7",
+    aqua: "#00ffff",
+    aquamarine: "#7fffd4",
+    azure: "#f0ffff",
+    beige: "#f5f5dc",
+    bisque: "#ffe4c4",
+    blanchedalmond: "#ffebcd",
+    blueviolet: "#8a2be2",
+    brown: "#a52a2a",
+    burlywood: "#deb887",
+    cadetblue: "#5f9ea0",
+    chartreuse: "#7fff00",
+    chocolate: "#d2691e",
+    coral: "#ff7f50",
+    cornflowerblue: "#6495ed",
+    cornsilk: "#fff8dc",
+    crimson: "#dc143c",
+    darkblue: "#00008b",
+    darkcyan: "#008b8b",
+    darkgoldenrod: "#b8860b",
+    darkgray: "#a9a9a9",
+    darkgrey: "#a9a9a9",
+    darkgreen: "#006400",
+    darkkhaki: "#bdb76b",
+    darkmagenta: "#8b008b",
+    darkolivegreen: "#556b2f",
+    darkorange: "#ff8c00",
+    darkorchid: "#9932cc",
+    darkred: "#8b0000",
+    darksalmon: "#e9967a",
+    darkseagreen: "#8fbc8f",
+    darkslateblue: "#483d8b",
+    darkslategray: "#2f4f4f",
+    darkslategrey: "#2f4f4f",
+    darkturquoise: "#00ced1",
+    darkviolet: "#9400d3",
+    deeppink: "#ff1493",
+    deepskyblue: "#00bfff",
+    dimgray: "#696969",
+    dimgrey: "#696969",
+    dodgerblue: "#1e90ff",
+    firebrick: "#b22222",
+    floralwhite: "#fffaf0",
+    forestgreen: "#228b22",
+    fuchsia: "#ff00ff",
+    gainsboro: "#dcdcdc",
+    ghostwhite: "#f8f8ff",
+    gold: "#ffd700",
+    goldenrod: "#daa520",
+    greenyellow: "#adff2f",
+    honeydew: "#f0fff0",
+    hotpink: "#ff69b4",
+    indianred: "#cd5c5c",
+    indigo: "#4b0082",
+    ivory: "#fffff0",
+    khaki: "#f0e68c",
+    lavender: "#e6e6fa",
+    lavenderblush: "#fff0f5",
+    lawngreen: "#7cfc00",
+    lemonchiffon: "#fffacd",
+    lightblue: "#add8e6",
+    lightcoral: "#f08080",
+    lightcyan: "#e0ffff",
+    lightgoldenrodyellow: "#fafad2",
+    lightgray: "#d3d3d3",
+    lightgrey: "#d3d3d3",
+    lightgreen: "#90ee90",
+    lightpink: "#ffb6c1",
+    lightsalmon: "#ffa07a",
+    lightseagreen: "#20b2aa",
+    lightskyblue: "#87cefa",
+    lightslategray: "#778899",
+    lightslategrey: "#778899",
+    lightsteelblue: "#b0c4de",
+    lightyellow: "#ffffe0",
+    lime: "#00ff00",
+    limegreen: "#32cd32",
+    linen: "#faf0e6",
+    maroon: "#800000",
+    mediumaquamarine: "#66cdaa",
+    mediumblue: "#0000cd",
+    mediumorchid: "#ba55d3",
+    mediumpurple: "#9370db",
+    mediumseagreen: "#3cb371",
+    mediumslateblue: "#7b68ee",
+    mediumspringgreen: "#00fa9a",
+    mediumturquoise: "#48d1cc",
+    mediumvioletred: "#c71585",
+    midnightblue: "#191970",
+    mintcream: "#f5fffa",
+    mistyrose: "#ffe4e1",
+    moccasin: "#ffe4b5",
+    navajowhite: "#ffdead",
+    navy: "#000080",
+    oldlace: "#fdf5e6",
+    olive: "#808000",
+    olivedrab: "#6b8e23",
+    orange: "#ffa500",
+    orangered: "#ff4500",
+    orchid: "#da70d6",
+    palegoldenrod: "#eee8aa",
+    palegreen: "#98fb98",
+    paleturquoise: "#afeeee",
+    palevioletred: "#db7093",
+    papayawhip: "#ffefd5",
+    peachpuff: "#ffdab9",
+    peru: "#cd853f",
+    pink: "#ffc0cb",
+    plum: "#dda0dd",
+    powderblue: "#b0e0e6",
+    purple: "#800080",
+    rebeccapurple: "#663399",
+    rosybrown: "#bc8f8f",
+    royalblue: "#4169e1",
+    saddlebrown: "#8b4513",
+    salmon: "#fa8072",
+    sandybrown: "#f4a460",
+    seagreen: "#2e8b57",
+    seashell: "#fff5ee",
+    sienna: "#a0522d",
+    silver: "#c0c0c0",
+    skyblue: "#87ceeb",
+    slateblue: "#6a5acd",
+    slategray: "#708090",
+    slategrey: "#708090",
+    snow: "#fffafa",
+    springgreen: "#00ff7f",
+    steelblue: "#4682b4",
+    tan: "#d2b48c",
+    teal: "#008080",
+    thistle: "#d8bfd8",
+    tomato: "#ff6347",
+    turquoise: "#40e0d0",
+    violet: "#ee82ee",
+    wheat: "#f5deb3",
+    whitesmoke: "#f5f5f5",
+    yellowgreen: "#9acd32"
+  };
+  // Define the set of Ink's named colors for quick lookup
+  static inkSupportedNames = /* @__PURE__ */ new Set([
+    "black",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "cyan",
+    "magenta",
+    "white",
+    "gray",
+    "grey",
+    "blackbright",
+    "redbright",
+    "greenbright",
+    "yellowbright",
+    "bluebright",
+    "cyanbright",
+    "magentabright",
+    "whitebright"
+  ]);
+  /**
+   * Gets the Ink-compatible color string for a given highlight.js class name.
+   * @param hljsClass The highlight.js class name (e.g., 'hljs-keyword', 'hljs-string').
+   * @returns The corresponding Ink color string (hex or name) if it exists.
+   */
+  getInkColor(hljsClass) {
+    return this._colorMap[hljsClass];
+  }
+  /**
+   * Resolves a CSS color value (name or hex) into an Ink-compatible color string.
+   * @param colorValue The raw color string (e.g., 'blue', '#ff0000', 'darkkhaki').
+   * @returns An Ink-compatible color string (hex or name), or undefined if not resolvable.
+   */
+  static _resolveColor(colorValue) {
+    const lowerColor = colorValue.toLowerCase();
+    if (lowerColor.startsWith("#")) {
+      return lowerColor;
+    } else if (_Theme.inkSupportedNames.has(lowerColor)) {
+      return lowerColor;
+    } else if (_Theme.cssNameToHexMap[lowerColor]) {
+      return _Theme.cssNameToHexMap[lowerColor];
+    }
+    console.warn(
+      `[Theme] Could not resolve color "${colorValue}" to an Ink-compatible format.`
+    );
+    return void 0;
+  }
+  /**
+   * Builds the internal map from highlight.js class names to Ink-compatible color strings.
+   * This method is protected and primarily intended for use by the constructor.
+   * @param hljsTheme The raw CSSProperties mappings from a react-syntax-highlighter theme object.
+   * @returns An Ink-compatible theme map (Record<string, string>).
+   */
+  _buildColorMap(hljsTheme) {
+    const inkTheme = {};
+    for (const key in hljsTheme) {
+      if (!key.startsWith("hljs-") && key !== "hljs") {
+        continue;
+      }
+      const style = hljsTheme[key];
+      if (style?.color) {
+        const resolvedColor = _Theme._resolveColor(style.color);
+        if (resolvedColor !== void 0) {
+          inkTheme[key] = resolvedColor;
+        }
+      }
+    }
+    return inkTheme;
+  }
+};
+
+// src/ui/themes/ayu.ts
+var ayuDarkColors = {
+  type: "dark",
+  Background: "#0b0e14",
+  Foreground: "#bfbdb6",
+  LightBlue: "#59C2FF",
+  AccentBlue: "#39BAE6",
+  AccentPurple: "#D2A6FF",
+  AccentCyan: "#95E6CB",
+  AccentGreen: "#AAD94C",
+  AccentYellow: "#FFB454",
+  AccentRed: "#F26D78",
+  Comment: "#646A71",
+  Gray: "##3D4149",
+  GradientColors: ["#FFB454", "#F26D78"]
+};
+var AyuDark = new Theme(
+  "Ayu",
+  "dark",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: ayuDarkColors.Background,
+      color: ayuDarkColors.Foreground
+    },
+    "hljs-keyword": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-literal": {
+      color: ayuDarkColors.AccentPurple
+    },
+    "hljs-symbol": {
+      color: ayuDarkColors.AccentCyan
+    },
+    "hljs-name": {
+      color: ayuDarkColors.LightBlue
+    },
+    "hljs-link": {
+      color: ayuDarkColors.AccentBlue
+    },
+    "hljs-function .hljs-keyword": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-subst": {
+      color: ayuDarkColors.Foreground
+    },
+    "hljs-string": {
+      color: ayuDarkColors.AccentGreen
+    },
+    "hljs-title": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-type": {
+      color: ayuDarkColors.AccentBlue
+    },
+    "hljs-attribute": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-bullet": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-addition": {
+      color: ayuDarkColors.AccentGreen
+    },
+    "hljs-variable": {
+      color: ayuDarkColors.Foreground
+    },
+    "hljs-template-tag": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-template-variable": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-comment": {
+      color: ayuDarkColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-quote": {
+      color: ayuDarkColors.AccentCyan,
+      fontStyle: "italic"
+    },
+    "hljs-deletion": {
+      color: ayuDarkColors.AccentRed
+    },
+    "hljs-meta": {
+      color: ayuDarkColors.AccentYellow
+    },
+    "hljs-doctag": {
+      fontWeight: "bold"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    }
+  },
+  ayuDarkColors
+);
+
+// src/ui/themes/ayu-light.ts
+var ayuLightColors = {
+  type: "light",
+  Background: "#f8f9fa",
+  Foreground: "#5c6166",
+  LightBlue: "#55b4d4",
+  AccentBlue: "#399ee6",
+  AccentPurple: "#a37acc",
+  AccentCyan: "#4cbf99",
+  AccentGreen: "#86b300",
+  AccentYellow: "#f2ae49",
+  AccentRed: "#f07171",
+  Comment: "#ABADB1",
+  Gray: "#CCCFD3",
+  GradientColors: ["#399ee6", "#86b300"]
+};
+var AyuLight = new Theme(
+  "Ayu Light",
+  "light",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: ayuLightColors.Background,
+      color: ayuLightColors.Foreground
+    },
+    "hljs-comment": {
+      color: ayuLightColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-quote": {
+      color: ayuLightColors.AccentCyan,
+      fontStyle: "italic"
+    },
+    "hljs-string": {
+      color: ayuLightColors.AccentGreen
+    },
+    "hljs-constant": {
+      color: ayuLightColors.AccentCyan
+    },
+    "hljs-number": {
+      color: ayuLightColors.AccentPurple
+    },
+    "hljs-keyword": {
+      color: ayuLightColors.AccentYellow
+    },
+    "hljs-selector-tag": {
+      color: ayuLightColors.AccentYellow
+    },
+    "hljs-attribute": {
+      color: ayuLightColors.AccentYellow
+    },
+    "hljs-variable": {
+      color: ayuLightColors.Foreground
+    },
+    "hljs-variable.language": {
+      color: ayuLightColors.LightBlue,
+      fontStyle: "italic"
+    },
+    "hljs-title": {
+      color: ayuLightColors.AccentBlue
+    },
+    "hljs-section": {
+      color: ayuLightColors.AccentGreen,
+      fontWeight: "bold"
+    },
+    "hljs-type": {
+      color: ayuLightColors.LightBlue
+    },
+    "hljs-class .hljs-title": {
+      color: ayuLightColors.AccentBlue
+    },
+    "hljs-tag": {
+      color: ayuLightColors.LightBlue
+    },
+    "hljs-name": {
+      color: ayuLightColors.AccentBlue
+    },
+    "hljs-builtin-name": {
+      color: ayuLightColors.AccentYellow
+    },
+    "hljs-meta": {
+      color: ayuLightColors.AccentYellow
+    },
+    "hljs-symbol": {
+      color: ayuLightColors.AccentRed
+    },
+    "hljs-bullet": {
+      color: ayuLightColors.AccentYellow
+    },
+    "hljs-regexp": {
+      color: ayuLightColors.AccentCyan
+    },
+    "hljs-link": {
+      color: ayuLightColors.LightBlue
+    },
+    "hljs-deletion": {
+      color: ayuLightColors.AccentRed
+    },
+    "hljs-addition": {
+      color: ayuLightColors.AccentGreen
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    "hljs-literal": {
+      color: ayuLightColors.AccentCyan
+    },
+    "hljs-built_in": {
+      color: ayuLightColors.AccentRed
+    },
+    "hljs-doctag": {
+      color: ayuLightColors.AccentRed
+    },
+    "hljs-template-variable": {
+      color: ayuLightColors.AccentCyan
+    },
+    "hljs-selector-id": {
+      color: ayuLightColors.AccentRed
+    }
+  },
+  ayuLightColors
+);
+
+// src/ui/themes/atom-one-dark.ts
+var atomOneDarkColors = {
+  type: "dark",
+  Background: "#282c34",
+  Foreground: "#abb2bf",
+  LightBlue: "#61aeee",
+  AccentBlue: "#61aeee",
+  AccentPurple: "#c678dd",
+  AccentCyan: "#56b6c2",
+  AccentGreen: "#98c379",
+  AccentYellow: "#e6c07b",
+  AccentRed: "#e06c75",
+  Comment: "#5c6370",
+  Gray: "#5c6370",
+  GradientColors: ["#61aeee", "#98c379"]
+};
+var AtomOneDark = new Theme(
+  "Atom One",
+  "dark",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      color: atomOneDarkColors.Foreground,
+      background: atomOneDarkColors.Background
+    },
+    "hljs-comment": {
+      color: atomOneDarkColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-quote": {
+      color: atomOneDarkColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-doctag": {
+      color: atomOneDarkColors.AccentPurple
+    },
+    "hljs-keyword": {
+      color: atomOneDarkColors.AccentPurple
+    },
+    "hljs-formula": {
+      color: atomOneDarkColors.AccentPurple
+    },
+    "hljs-section": {
+      color: atomOneDarkColors.AccentRed
+    },
+    "hljs-name": {
+      color: atomOneDarkColors.AccentRed
+    },
+    "hljs-selector-tag": {
+      color: atomOneDarkColors.AccentRed
+    },
+    "hljs-deletion": {
+      color: atomOneDarkColors.AccentRed
+    },
+    "hljs-subst": {
+      color: atomOneDarkColors.AccentRed
+    },
+    "hljs-literal": {
+      color: atomOneDarkColors.AccentCyan
+    },
+    "hljs-string": {
+      color: atomOneDarkColors.AccentGreen
+    },
+    "hljs-regexp": {
+      color: atomOneDarkColors.AccentGreen
+    },
+    "hljs-addition": {
+      color: atomOneDarkColors.AccentGreen
+    },
+    "hljs-attribute": {
+      color: atomOneDarkColors.AccentGreen
+    },
+    "hljs-meta-string": {
+      color: atomOneDarkColors.AccentGreen
+    },
+    "hljs-built_in": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-class .hljs-title": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-attr": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-variable": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-template-variable": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-type": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-selector-class": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-selector-attr": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-selector-pseudo": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-number": {
+      color: atomOneDarkColors.AccentYellow
+    },
+    "hljs-symbol": {
+      color: atomOneDarkColors.AccentBlue
+    },
+    "hljs-bullet": {
+      color: atomOneDarkColors.AccentBlue
+    },
+    "hljs-link": {
+      color: atomOneDarkColors.AccentBlue,
+      textDecoration: "underline"
+    },
+    "hljs-meta": {
+      color: atomOneDarkColors.AccentBlue
+    },
+    "hljs-selector-id": {
+      color: atomOneDarkColors.AccentBlue
+    },
+    "hljs-title": {
+      color: atomOneDarkColors.AccentBlue
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    }
+  },
+  atomOneDarkColors
+);
+
+// src/ui/themes/dracula.ts
+var draculaColors = {
+  type: "dark",
+  Background: "#282a36",
+  Foreground: "#f8f8f2",
+  LightBlue: "#8be9fd",
+  AccentBlue: "#8be9fd",
+  AccentPurple: "#ff79c6",
+  AccentCyan: "#8be9fd",
+  AccentGreen: "#50fa7b",
+  AccentYellow: "#f1fa8c",
+  AccentRed: "#ff5555",
+  Comment: "#6272a4",
+  Gray: "#6272a4",
+  GradientColors: ["#ff79c6", "#8be9fd"]
+};
+var Dracula = new Theme(
+  "Dracula",
+  "dark",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: draculaColors.Background,
+      color: draculaColors.Foreground
+    },
+    "hljs-keyword": {
+      color: draculaColors.AccentBlue,
+      fontWeight: "bold"
+    },
+    "hljs-selector-tag": {
+      color: draculaColors.AccentBlue,
+      fontWeight: "bold"
+    },
+    "hljs-literal": {
+      color: draculaColors.AccentBlue,
+      fontWeight: "bold"
+    },
+    "hljs-section": {
+      color: draculaColors.AccentBlue,
+      fontWeight: "bold"
+    },
+    "hljs-link": {
+      color: draculaColors.AccentBlue
+    },
+    "hljs-function .hljs-keyword": {
+      color: draculaColors.AccentPurple
+    },
+    "hljs-subst": {
+      color: draculaColors.Foreground
+    },
+    "hljs-string": {
+      color: draculaColors.AccentYellow
+    },
+    "hljs-title": {
+      color: draculaColors.AccentYellow,
+      fontWeight: "bold"
+    },
+    "hljs-name": {
+      color: draculaColors.AccentYellow,
+      fontWeight: "bold"
+    },
+    "hljs-type": {
+      color: draculaColors.AccentYellow,
+      fontWeight: "bold"
+    },
+    "hljs-attribute": {
+      color: draculaColors.AccentYellow
+    },
+    "hljs-symbol": {
+      color: draculaColors.AccentYellow
+    },
+    "hljs-bullet": {
+      color: draculaColors.AccentYellow
+    },
+    "hljs-addition": {
+      color: draculaColors.AccentGreen
+    },
+    "hljs-variable": {
+      color: draculaColors.AccentYellow
+    },
+    "hljs-template-tag": {
+      color: draculaColors.AccentYellow
+    },
+    "hljs-template-variable": {
+      color: draculaColors.AccentYellow
+    },
+    "hljs-comment": {
+      color: draculaColors.Comment
+    },
+    "hljs-quote": {
+      color: draculaColors.Comment
+    },
+    "hljs-deletion": {
+      color: draculaColors.AccentRed
+    },
+    "hljs-meta": {
+      color: draculaColors.Comment
+    },
+    "hljs-doctag": {
+      fontWeight: "bold"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    }
+  },
+  draculaColors
+);
+
+// src/ui/themes/github-dark.ts
+var githubDarkColors = {
+  type: "dark",
+  Background: "#24292e",
+  Foreground: "#d1d5da",
+  LightBlue: "#79B8FF",
+  AccentBlue: "#79B8FF",
+  AccentPurple: "#B392F0",
+  AccentCyan: "#9ECBFF",
+  AccentGreen: "#85E89D",
+  AccentYellow: "#FFAB70",
+  AccentRed: "#F97583",
+  Comment: "#6A737D",
+  Gray: "#6A737D",
+  GradientColors: ["#79B8FF", "#85E89D"]
+};
+var GitHubDark = new Theme(
+  "GitHub",
+  "dark",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      color: githubDarkColors.Foreground,
+      background: githubDarkColors.Background
+    },
+    "hljs-comment": {
+      color: githubDarkColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-quote": {
+      color: githubDarkColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-keyword": {
+      color: githubDarkColors.AccentRed,
+      fontWeight: "bold"
+    },
+    "hljs-selector-tag": {
+      color: githubDarkColors.AccentRed,
+      fontWeight: "bold"
+    },
+    "hljs-subst": {
+      color: githubDarkColors.Foreground
+    },
+    "hljs-number": {
+      color: githubDarkColors.LightBlue
+    },
+    "hljs-literal": {
+      color: githubDarkColors.LightBlue
+    },
+    "hljs-variable": {
+      color: githubDarkColors.AccentYellow
+    },
+    "hljs-template-variable": {
+      color: githubDarkColors.AccentYellow
+    },
+    "hljs-tag .hljs-attr": {
+      color: githubDarkColors.AccentYellow
+    },
+    "hljs-string": {
+      color: githubDarkColors.AccentCyan
+    },
+    "hljs-doctag": {
+      color: githubDarkColors.AccentCyan
+    },
+    "hljs-title": {
+      color: githubDarkColors.AccentPurple,
+      fontWeight: "bold"
+    },
+    "hljs-section": {
+      color: githubDarkColors.AccentPurple,
+      fontWeight: "bold"
+    },
+    "hljs-selector-id": {
+      color: githubDarkColors.AccentPurple,
+      fontWeight: "bold"
+    },
+    "hljs-type": {
+      color: githubDarkColors.AccentGreen,
+      fontWeight: "bold"
+    },
+    "hljs-class .hljs-title": {
+      color: githubDarkColors.AccentGreen,
+      fontWeight: "bold"
+    },
+    "hljs-tag": {
+      color: githubDarkColors.AccentGreen
+    },
+    "hljs-name": {
+      color: githubDarkColors.AccentGreen
+    },
+    "hljs-attribute": {
+      color: githubDarkColors.LightBlue
+    },
+    "hljs-regexp": {
+      color: githubDarkColors.AccentCyan
+    },
+    "hljs-link": {
+      color: githubDarkColors.AccentCyan
+    },
+    "hljs-symbol": {
+      color: githubDarkColors.AccentPurple
+    },
+    "hljs-bullet": {
+      color: githubDarkColors.AccentPurple
+    },
+    "hljs-built_in": {
+      color: githubDarkColors.LightBlue
+    },
+    "hljs-builtin-name": {
+      color: githubDarkColors.LightBlue
+    },
+    "hljs-meta": {
+      color: githubDarkColors.LightBlue,
+      fontWeight: "bold"
+    },
+    "hljs-deletion": {
+      background: "#86181D",
+      color: githubDarkColors.AccentRed
+    },
+    "hljs-addition": {
+      background: "#144620",
+      color: githubDarkColors.AccentGreen
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    }
+  },
+  githubDarkColors
+);
+
+// src/ui/themes/github-light.ts
+var githubLightColors = {
+  type: "light",
+  Background: "#f8f8f8",
+  Foreground: "#24292E",
+  LightBlue: "#0086b3",
+  AccentBlue: "#458",
+  AccentPurple: "#900",
+  AccentCyan: "#009926",
+  AccentGreen: "#008080",
+  AccentYellow: "#990073",
+  AccentRed: "#d14",
+  Comment: "#998",
+  Gray: "#999",
+  GradientColors: ["#458", "#008080"]
+};
+var GitHubLight = new Theme(
+  "GitHub Light",
+  "light",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      color: githubLightColors.Foreground,
+      background: githubLightColors.Background
+    },
+    "hljs-comment": {
+      color: githubLightColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-quote": {
+      color: githubLightColors.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-keyword": {
+      color: githubLightColors.Foreground,
+      fontWeight: "bold"
+    },
+    "hljs-selector-tag": {
+      color: githubLightColors.Foreground,
+      fontWeight: "bold"
+    },
+    "hljs-subst": {
+      color: githubLightColors.Foreground,
+      fontWeight: "normal"
+    },
+    "hljs-number": {
+      color: githubLightColors.AccentGreen
+    },
+    "hljs-literal": {
+      color: githubLightColors.AccentGreen
+    },
+    "hljs-variable": {
+      color: githubLightColors.AccentGreen
+    },
+    "hljs-template-variable": {
+      color: githubLightColors.AccentGreen
+    },
+    "hljs-tag .hljs-attr": {
+      color: githubLightColors.AccentGreen
+    },
+    "hljs-string": {
+      color: githubLightColors.AccentRed
+    },
+    "hljs-doctag": {
+      color: githubLightColors.AccentRed
+    },
+    "hljs-title": {
+      color: githubLightColors.AccentPurple,
+      fontWeight: "bold"
+    },
+    "hljs-section": {
+      color: githubLightColors.AccentPurple,
+      fontWeight: "bold"
+    },
+    "hljs-selector-id": {
+      color: githubLightColors.AccentPurple,
+      fontWeight: "bold"
+    },
+    "hljs-type": {
+      color: githubLightColors.AccentBlue,
+      fontWeight: "bold"
+    },
+    "hljs-class .hljs-title": {
+      color: githubLightColors.AccentBlue,
+      fontWeight: "bold"
+    },
+    "hljs-tag": {
+      color: githubLightColors.AccentBlue,
+      fontWeight: "normal"
+    },
+    "hljs-name": {
+      color: githubLightColors.AccentBlue,
+      fontWeight: "normal"
+    },
+    "hljs-attribute": {
+      color: githubLightColors.AccentBlue,
+      fontWeight: "normal"
+    },
+    "hljs-regexp": {
+      color: githubLightColors.AccentCyan
+    },
+    "hljs-link": {
+      color: githubLightColors.AccentCyan
+    },
+    "hljs-symbol": {
+      color: githubLightColors.AccentYellow
+    },
+    "hljs-bullet": {
+      color: githubLightColors.AccentYellow
+    },
+    "hljs-built_in": {
+      color: githubLightColors.LightBlue
+    },
+    "hljs-builtin-name": {
+      color: githubLightColors.LightBlue
+    },
+    "hljs-meta": {
+      color: githubLightColors.Gray,
+      fontWeight: "bold"
+    },
+    "hljs-deletion": {
+      background: "#fdd"
+    },
+    "hljs-addition": {
+      background: "#dfd"
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    }
+  },
+  githubLightColors
+);
+
+// src/ui/themes/googlecode.ts
+var googleCodeColors = {
+  type: "light",
+  Background: "white",
+  Foreground: "black",
+  LightBlue: "#066",
+  AccentBlue: "#008",
+  AccentPurple: "#606",
+  AccentCyan: "#066",
+  AccentGreen: "#080",
+  AccentYellow: "#660",
+  AccentRed: "#800",
+  Comment: "#5f6368",
+  Gray: lightTheme.Gray,
+  GradientColors: ["#066", "#606"]
+};
+var GoogleCode = new Theme(
+  "Google Code",
+  "light",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: googleCodeColors.Background,
+      color: googleCodeColors.Foreground
+    },
+    "hljs-comment": {
+      color: googleCodeColors.AccentRed
+    },
+    "hljs-quote": {
+      color: googleCodeColors.AccentRed
+    },
+    "hljs-keyword": {
+      color: googleCodeColors.AccentBlue
+    },
+    "hljs-selector-tag": {
+      color: googleCodeColors.AccentBlue
+    },
+    "hljs-section": {
+      color: googleCodeColors.AccentBlue
+    },
+    "hljs-title": {
+      color: googleCodeColors.AccentPurple
+    },
+    "hljs-name": {
+      color: googleCodeColors.AccentBlue
+    },
+    "hljs-variable": {
+      color: googleCodeColors.AccentYellow
+    },
+    "hljs-template-variable": {
+      color: googleCodeColors.AccentYellow
+    },
+    "hljs-string": {
+      color: googleCodeColors.AccentGreen
+    },
+    "hljs-selector-attr": {
+      color: googleCodeColors.AccentGreen
+    },
+    "hljs-selector-pseudo": {
+      color: googleCodeColors.AccentGreen
+    },
+    "hljs-regexp": {
+      color: googleCodeColors.AccentGreen
+    },
+    "hljs-literal": {
+      color: googleCodeColors.AccentCyan
+    },
+    "hljs-symbol": {
+      color: googleCodeColors.AccentCyan
+    },
+    "hljs-bullet": {
+      color: googleCodeColors.AccentCyan
+    },
+    "hljs-meta": {
+      color: googleCodeColors.AccentCyan
+    },
+    "hljs-number": {
+      color: googleCodeColors.AccentCyan
+    },
+    "hljs-link": {
+      color: googleCodeColors.AccentCyan
+    },
+    "hljs-doctag": {
+      color: googleCodeColors.AccentPurple,
+      fontWeight: "bold"
+    },
+    "hljs-type": {
+      color: googleCodeColors.AccentPurple
+    },
+    "hljs-attr": {
+      color: googleCodeColors.AccentPurple
+    },
+    "hljs-built_in": {
+      color: googleCodeColors.AccentPurple
+    },
+    "hljs-builtin-name": {
+      color: googleCodeColors.AccentPurple
+    },
+    "hljs-params": {
+      color: googleCodeColors.AccentPurple
+    },
+    "hljs-attribute": {
+      color: googleCodeColors.Foreground
+    },
+    "hljs-subst": {
+      color: googleCodeColors.Foreground
+    },
+    "hljs-formula": {
+      backgroundColor: "#eee",
+      fontStyle: "italic"
+    },
+    "hljs-selector-id": {
+      color: googleCodeColors.AccentYellow
+    },
+    "hljs-selector-class": {
+      color: googleCodeColors.AccentYellow
+    },
+    "hljs-addition": {
+      backgroundColor: "#baeeba"
+    },
+    "hljs-deletion": {
+      backgroundColor: "#ffc8bd"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    }
+  },
+  googleCodeColors
+);
+
+// src/ui/themes/default-light.ts
+var DefaultLight = new Theme(
+  "Default Light",
+  "light",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: lightTheme.Background,
+      color: lightTheme.Foreground
+    },
+    "hljs-comment": {
+      color: lightTheme.Comment
+    },
+    "hljs-quote": {
+      color: lightTheme.Comment
+    },
+    "hljs-variable": {
+      color: lightTheme.Foreground
+    },
+    "hljs-keyword": {
+      color: lightTheme.AccentBlue
+    },
+    "hljs-selector-tag": {
+      color: lightTheme.AccentBlue
+    },
+    "hljs-built_in": {
+      color: lightTheme.AccentBlue
+    },
+    "hljs-name": {
+      color: lightTheme.AccentBlue
+    },
+    "hljs-tag": {
+      color: lightTheme.AccentBlue
+    },
+    "hljs-string": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-title": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-section": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-attribute": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-literal": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-template-tag": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-template-variable": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-type": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-addition": {
+      color: lightTheme.AccentGreen
+    },
+    "hljs-deletion": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-selector-attr": {
+      color: lightTheme.AccentCyan
+    },
+    "hljs-selector-pseudo": {
+      color: lightTheme.AccentCyan
+    },
+    "hljs-meta": {
+      color: lightTheme.AccentCyan
+    },
+    "hljs-doctag": {
+      color: lightTheme.Gray
+    },
+    "hljs-attr": {
+      color: lightTheme.AccentRed
+    },
+    "hljs-symbol": {
+      color: lightTheme.AccentCyan
+    },
+    "hljs-bullet": {
+      color: lightTheme.AccentCyan
+    },
+    "hljs-link": {
+      color: lightTheme.AccentCyan
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    }
+  },
+  lightTheme
+);
+
+// src/ui/themes/default.ts
+var DefaultDark = new Theme(
+  "Default",
+  "dark",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: darkTheme.Background,
+      color: darkTheme.Foreground
+    },
+    "hljs-keyword": {
+      color: darkTheme.AccentBlue
+    },
+    "hljs-literal": {
+      color: darkTheme.AccentBlue
+    },
+    "hljs-symbol": {
+      color: darkTheme.AccentBlue
+    },
+    "hljs-name": {
+      color: darkTheme.AccentBlue
+    },
+    "hljs-link": {
+      color: darkTheme.AccentBlue,
+      textDecoration: "underline"
+    },
+    "hljs-built_in": {
+      color: darkTheme.AccentCyan
+    },
+    "hljs-type": {
+      color: darkTheme.AccentCyan
+    },
+    "hljs-number": {
+      color: darkTheme.AccentGreen
+    },
+    "hljs-class": {
+      color: darkTheme.AccentGreen
+    },
+    "hljs-string": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-meta-string": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-regexp": {
+      color: darkTheme.AccentRed
+    },
+    "hljs-template-tag": {
+      color: darkTheme.AccentRed
+    },
+    "hljs-subst": {
+      color: darkTheme.Foreground
+    },
+    "hljs-function": {
+      color: darkTheme.Foreground
+    },
+    "hljs-title": {
+      color: darkTheme.Foreground
+    },
+    "hljs-params": {
+      color: darkTheme.Foreground
+    },
+    "hljs-formula": {
+      color: darkTheme.Foreground
+    },
+    "hljs-comment": {
+      color: darkTheme.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-quote": {
+      color: darkTheme.Comment,
+      fontStyle: "italic"
+    },
+    "hljs-doctag": {
+      color: darkTheme.Comment
+    },
+    "hljs-meta": {
+      color: darkTheme.Gray
+    },
+    "hljs-meta-keyword": {
+      color: darkTheme.Gray
+    },
+    "hljs-tag": {
+      color: darkTheme.Gray
+    },
+    "hljs-variable": {
+      color: darkTheme.AccentPurple
+    },
+    "hljs-template-variable": {
+      color: darkTheme.AccentPurple
+    },
+    "hljs-attr": {
+      color: darkTheme.LightBlue
+    },
+    "hljs-attribute": {
+      color: darkTheme.LightBlue
+    },
+    "hljs-builtin-name": {
+      color: darkTheme.LightBlue
+    },
+    "hljs-section": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    "hljs-bullet": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-selector-tag": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-selector-id": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-selector-class": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-selector-attr": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-selector-pseudo": {
+      color: darkTheme.AccentYellow
+    },
+    "hljs-addition": {
+      backgroundColor: "#144212",
+      display: "inline-block",
+      width: "100%"
+    },
+    "hljs-deletion": {
+      backgroundColor: "#600",
+      display: "inline-block",
+      width: "100%"
+    }
+  },
+  darkTheme
+);
+
+// src/ui/themes/shades-of-purple.ts
+var shadesOfPurpleColors = {
+  type: "dark",
+  // Required colors for ColorsTheme interface
+  Background: "#2d2b57",
+  // Main background
+  Foreground: "#e3dfff",
+  // Default text color (hljs, hljs-subst)
+  LightBlue: "#847ace",
+  // Light blue/purple accent
+  AccentBlue: "#a599e9",
+  // Borders, secondary blue
+  AccentPurple: "#ac65ff",
+  // Comments (main purple)
+  AccentCyan: "#a1feff",
+  // Names
+  AccentGreen: "#A5FF90",
+  // Strings and many others
+  AccentYellow: "#fad000",
+  // Title, main yellow
+  AccentRed: "#ff628c",
+  // Error/deletion accent
+  Comment: "#B362FF",
+  // Comment color (same as AccentPurple)
+  Gray: "#726c86",
+  // Gray color
+  GradientColors: ["#4d21fc", "#847ace", "#ff628c"]
+};
+var additionalColors = {
+  AccentYellowAlt: "#f8d000",
+  // Attr yellow (slightly different)
+  AccentOrange: "#fb9e00",
+  // Keywords, built_in, meta
+  AccentPink: "#fa658d",
+  // Numbers, literals
+  AccentLightPurple: "#c991ff",
+  // For params and properties
+  AccentDarkPurple: "#6943ff",
+  // For operators
+  AccentTeal: "#2ee2fa"
+  // For special constructs
+};
+var ShadesOfPurple = new Theme(
+  "Shades Of Purple",
+  "dark",
+  {
+    // Base styles
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      background: shadesOfPurpleColors.Background,
+      color: shadesOfPurpleColors.Foreground
+    },
+    // Title elements
+    "hljs-title": {
+      color: shadesOfPurpleColors.AccentYellow,
+      fontWeight: "normal"
+    },
+    // Names
+    "hljs-name": {
+      color: shadesOfPurpleColors.AccentCyan,
+      fontWeight: "normal"
+    },
+    // Tags
+    "hljs-tag": {
+      color: shadesOfPurpleColors.Foreground
+    },
+    // Attributes
+    "hljs-attr": {
+      color: additionalColors.AccentYellowAlt,
+      fontStyle: "italic"
+    },
+    // Built-ins, selector tags, sections
+    "hljs-built_in": {
+      color: additionalColors.AccentOrange
+    },
+    "hljs-selector-tag": {
+      color: additionalColors.AccentOrange,
+      fontWeight: "normal"
+    },
+    "hljs-section": {
+      color: additionalColors.AccentOrange
+    },
+    // Keywords
+    "hljs-keyword": {
+      color: additionalColors.AccentOrange,
+      fontWeight: "normal"
+    },
+    // Default text and substitutions
+    "hljs-subst": {
+      color: shadesOfPurpleColors.Foreground
+    },
+    // Strings and related elements (all green)
+    "hljs-string": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-attribute": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-symbol": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-bullet": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-addition": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-code": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-regexp": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-selector-class": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-selector-attr": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-selector-pseudo": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-template-tag": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-quote": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-deletion": {
+      color: shadesOfPurpleColors.AccentRed
+    },
+    // Meta elements
+    "hljs-meta": {
+      color: additionalColors.AccentOrange
+    },
+    "hljs-meta-string": {
+      color: additionalColors.AccentOrange
+    },
+    // Comments
+    "hljs-comment": {
+      color: shadesOfPurpleColors.AccentPurple
+    },
+    // Literals and numbers
+    "hljs-literal": {
+      color: additionalColors.AccentPink,
+      fontWeight: "normal"
+    },
+    "hljs-number": {
+      color: additionalColors.AccentPink
+    },
+    // Emphasis and strong
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    // Diff-specific classes
+    "hljs-diff": {
+      color: shadesOfPurpleColors.Foreground
+    },
+    "hljs-meta.hljs-diff": {
+      color: shadesOfPurpleColors.AccentBlue
+    },
+    "hljs-ln": {
+      color: shadesOfPurpleColors.Gray
+    },
+    // Additional elements that might be needed
+    "hljs-type": {
+      color: shadesOfPurpleColors.AccentYellow,
+      fontWeight: "normal"
+    },
+    "hljs-variable": {
+      color: shadesOfPurpleColors.AccentYellow
+    },
+    "hljs-template-variable": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    "hljs-function .hljs-keyword": {
+      color: additionalColors.AccentOrange
+    },
+    "hljs-link": {
+      color: shadesOfPurpleColors.LightBlue
+    },
+    "hljs-doctag": {
+      fontWeight: "bold"
+    },
+    // Function parameters
+    "hljs-params": {
+      color: additionalColors.AccentLightPurple,
+      fontStyle: "italic"
+    },
+    // Class definitions
+    "hljs-class": {
+      color: shadesOfPurpleColors.AccentCyan,
+      fontWeight: "bold"
+    },
+    // Function definitions
+    "hljs-function": {
+      color: shadesOfPurpleColors.AccentCyan
+    },
+    // Object properties
+    "hljs-property": {
+      color: shadesOfPurpleColors.AccentBlue
+    },
+    // Operators
+    "hljs-operator": {
+      color: additionalColors.AccentDarkPurple
+    },
+    // Punctuation (if supported by the parser)
+    "hljs-punctuation": {
+      color: shadesOfPurpleColors.Gray
+    },
+    // CSS ID selectors
+    "hljs-selector-id": {
+      color: shadesOfPurpleColors.AccentYellow,
+      fontWeight: "bold"
+    },
+    // Character literals
+    "hljs-char": {
+      color: shadesOfPurpleColors.AccentGreen
+    },
+    // Escape sequences
+    "hljs-escape": {
+      color: additionalColors.AccentPink,
+      fontWeight: "bold"
+    },
+    // Meta keywords
+    "hljs-meta-keyword": {
+      color: additionalColors.AccentOrange,
+      fontWeight: "bold"
+    },
+    // Built-in names
+    "hljs-builtin-name": {
+      color: additionalColors.AccentTeal
+    },
+    // Modules
+    "hljs-module": {
+      color: shadesOfPurpleColors.AccentCyan
+    },
+    // Namespaces
+    "hljs-namespace": {
+      color: shadesOfPurpleColors.LightBlue
+    },
+    // Important annotations
+    "hljs-important": {
+      color: shadesOfPurpleColors.AccentRed,
+      fontWeight: "bold"
+    },
+    // Formulas (for LaTeX, etc.)
+    "hljs-formula": {
+      color: shadesOfPurpleColors.AccentCyan,
+      fontStyle: "italic"
+    },
+    // Language-specific additions
+    // Python decorators
+    "hljs-decorator": {
+      color: additionalColors.AccentTeal,
+      fontWeight: "bold"
+    },
+    // Ruby symbols
+    "hljs-symbol.ruby": {
+      color: additionalColors.AccentPink
+    },
+    // SQL keywords
+    "hljs-keyword.sql": {
+      color: additionalColors.AccentOrange,
+      textTransform: "uppercase"
+    },
+    // Markdown specific
+    "hljs-section.markdown": {
+      color: shadesOfPurpleColors.AccentYellow,
+      fontWeight: "bold"
+    },
+    // JSON keys
+    "hljs-attr.json": {
+      color: shadesOfPurpleColors.AccentCyan
+    },
+    // XML/HTML specific
+    "hljs-tag .hljs-name": {
+      color: shadesOfPurpleColors.AccentRed
+    },
+    "hljs-tag .hljs-attr": {
+      color: additionalColors.AccentYellowAlt
+    },
+    // Line highlighting (if line numbers are enabled)
+    "hljs.hljs-line-numbers": {
+      borderRight: `1px solid ${shadesOfPurpleColors.Gray}`
+    },
+    "hljs.hljs-line-numbers .hljs-ln-numbers": {
+      color: shadesOfPurpleColors.Gray,
+      paddingRight: "1em"
+    },
+    "hljs.hljs-line-numbers .hljs-ln-code": {
+      paddingLeft: "1em"
+    },
+    // Selection styling
+    "hljs::selection": {
+      background: shadesOfPurpleColors.AccentBlue + "40"
+      // 40 = 25% opacity
+    },
+    "hljs ::-moz-selection": {
+      background: shadesOfPurpleColors.AccentBlue + "40"
+    },
+    // Highlighted lines (for emphasis)
+    "hljs .hljs-highlight": {
+      background: shadesOfPurpleColors.AccentPurple + "20",
+      // 20 = 12.5% opacity
+      display: "block",
+      width: "100%"
+    }
+  },
+  shadesOfPurpleColors
+);
+
+// src/ui/themes/xcode.ts
+var xcodeColors = {
+  type: "light",
+  Background: "#fff",
+  Foreground: "black",
+  LightBlue: "#0E0EFF",
+  AccentBlue: "#1c00cf",
+  AccentPurple: "#aa0d91",
+  AccentCyan: "#3F6E74",
+  AccentGreen: "#007400",
+  AccentYellow: "#836C28",
+  AccentRed: "#c41a16",
+  Comment: "#007400",
+  Gray: "#c0c0c0",
+  GradientColors: ["#1c00cf", "#007400"]
+};
+var XCode = new Theme(
+  "Xcode",
+  "light",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: xcodeColors.Background,
+      color: xcodeColors.Foreground
+    },
+    "xml .hljs-meta": {
+      color: xcodeColors.Gray
+    },
+    "hljs-comment": {
+      color: xcodeColors.Comment
+    },
+    "hljs-quote": {
+      color: xcodeColors.Comment
+    },
+    "hljs-tag": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-attribute": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-keyword": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-selector-tag": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-literal": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-name": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-variable": {
+      color: xcodeColors.AccentCyan
+    },
+    "hljs-template-variable": {
+      color: xcodeColors.AccentCyan
+    },
+    "hljs-code": {
+      color: xcodeColors.AccentRed
+    },
+    "hljs-string": {
+      color: xcodeColors.AccentRed
+    },
+    "hljs-meta-string": {
+      color: xcodeColors.AccentRed
+    },
+    "hljs-regexp": {
+      color: xcodeColors.LightBlue
+    },
+    "hljs-link": {
+      color: xcodeColors.LightBlue
+    },
+    "hljs-title": {
+      color: xcodeColors.AccentBlue
+    },
+    "hljs-symbol": {
+      color: xcodeColors.AccentBlue
+    },
+    "hljs-bullet": {
+      color: xcodeColors.AccentBlue
+    },
+    "hljs-number": {
+      color: xcodeColors.AccentBlue
+    },
+    "hljs-section": {
+      color: xcodeColors.AccentYellow
+    },
+    "hljs-meta": {
+      color: xcodeColors.AccentYellow
+    },
+    "hljs-class .hljs-title": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-type": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-built_in": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-builtin-name": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-params": {
+      color: xcodeColors.AccentPurple
+    },
+    "hljs-attr": {
+      color: xcodeColors.AccentYellow
+    },
+    "hljs-subst": {
+      color: xcodeColors.Foreground
+    },
+    "hljs-formula": {
+      backgroundColor: "#eee",
+      fontStyle: "italic"
+    },
+    "hljs-addition": {
+      backgroundColor: "#baeeba"
+    },
+    "hljs-deletion": {
+      backgroundColor: "#ffc8bd"
+    },
+    "hljs-selector-id": {
+      color: xcodeColors.AccentYellow
+    },
+    "hljs-selector-class": {
+      color: xcodeColors.AccentYellow
+    },
+    "hljs-doctag": {
+      fontWeight: "bold"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    }
+  },
+  xcodeColors
+);
+
+// src/ui/themes/ansi.ts
+var ansiColors = {
+  type: "dark",
+  Background: "black",
+  Foreground: "white",
+  LightBlue: "bluebright",
+  AccentBlue: "blue",
+  AccentPurple: "magenta",
+  AccentCyan: "cyan",
+  AccentGreen: "green",
+  AccentYellow: "yellow",
+  AccentRed: "red",
+  Comment: "gray",
+  Gray: "gray",
+  GradientColors: ["cyan", "green"]
+};
+var ANSI = new Theme(
+  "ANSI",
+  "dark",
+  // Consistent with its color palette base
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: "black",
+      // Mapped from #1E1E1E
+      color: "white"
+      // Mapped from #DCDCDC
+    },
+    "hljs-keyword": {
+      color: "blue"
+      // Mapped from #569CD6
+    },
+    "hljs-literal": {
+      color: "blue"
+      // Mapped from #569CD6
+    },
+    "hljs-symbol": {
+      color: "blue"
+      // Mapped from #569CD6
+    },
+    "hljs-name": {
+      color: "blue"
+      // Mapped from #569CD6
+    },
+    "hljs-link": {
+      color: "blue"
+      // Mapped from #569CD6
+      // textDecoration is ignored by Theme class
+    },
+    "hljs-built_in": {
+      color: "cyan"
+      // Mapped from #4EC9B0
+    },
+    "hljs-type": {
+      color: "cyan"
+      // Mapped from #4EC9B0
+    },
+    "hljs-number": {
+      color: "green"
+      // Mapped from #B8D7A3
+    },
+    "hljs-class": {
+      color: "green"
+      // Mapped from #B8D7A3
+    },
+    "hljs-string": {
+      color: "yellow"
+      // Mapped from #D69D85
+    },
+    "hljs-meta-string": {
+      color: "yellow"
+      // Mapped from #D69D85
+    },
+    "hljs-regexp": {
+      color: "red"
+      // Mapped from #9A5334
+    },
+    "hljs-template-tag": {
+      color: "red"
+      // Mapped from #9A5334
+    },
+    "hljs-subst": {
+      color: "white"
+      // Mapped from #DCDCDC
+    },
+    "hljs-function": {
+      color: "white"
+      // Mapped from #DCDCDC
+    },
+    "hljs-title": {
+      color: "white"
+      // Mapped from #DCDCDC
+    },
+    "hljs-params": {
+      color: "white"
+      // Mapped from #DCDCDC
+    },
+    "hljs-formula": {
+      color: "white"
+      // Mapped from #DCDCDC
+    },
+    "hljs-comment": {
+      color: "green"
+      // Mapped from #57A64A
+      // fontStyle is ignored by Theme class
+    },
+    "hljs-quote": {
+      color: "green"
+      // Mapped from #57A64A
+      // fontStyle is ignored by Theme class
+    },
+    "hljs-doctag": {
+      color: "green"
+      // Mapped from #608B4E
+    },
+    "hljs-meta": {
+      color: "gray"
+      // Mapped from #9B9B9B
+    },
+    "hljs-meta-keyword": {
+      color: "gray"
+      // Mapped from #9B9B9B
+    },
+    "hljs-tag": {
+      color: "gray"
+      // Mapped from #9B9B9B
+    },
+    "hljs-variable": {
+      color: "magenta"
+      // Mapped from #BD63C5
+    },
+    "hljs-template-variable": {
+      color: "magenta"
+      // Mapped from #BD63C5
+    },
+    "hljs-attr": {
+      color: "bluebright"
+      // Mapped from #9CDCFE
+    },
+    "hljs-attribute": {
+      color: "bluebright"
+      // Mapped from #9CDCFE
+    },
+    "hljs-builtin-name": {
+      color: "bluebright"
+      // Mapped from #9CDCFE
+    },
+    "hljs-section": {
+      color: "yellow"
+      // Mapped from gold
+    },
+    "hljs-emphasis": {
+      // fontStyle is ignored by Theme class
+    },
+    "hljs-strong": {
+      // fontWeight is ignored by Theme class
+    },
+    "hljs-bullet": {
+      color: "yellow"
+      // Mapped from #D7BA7D
+    },
+    "hljs-selector-tag": {
+      color: "yellow"
+      // Mapped from #D7BA7D
+    },
+    "hljs-selector-id": {
+      color: "yellow"
+      // Mapped from #D7BA7D
+    },
+    "hljs-selector-class": {
+      color: "yellow"
+      // Mapped from #D7BA7D
+    },
+    "hljs-selector-attr": {
+      color: "yellow"
+      // Mapped from #D7BA7D
+    },
+    "hljs-selector-pseudo": {
+      color: "yellow"
+      // Mapped from #D7BA7D
+    }
+  },
+  ansiColors
+);
+
+// src/ui/themes/ansi-light.ts
+var ansiLightColors = {
+  type: "light",
+  Background: "white",
+  Foreground: "black",
+  LightBlue: "blue",
+  AccentBlue: "blue",
+  AccentPurple: "purple",
+  AccentCyan: "cyan",
+  AccentGreen: "green",
+  AccentYellow: "orange",
+  AccentRed: "red",
+  Comment: "gray",
+  Gray: "gray",
+  GradientColors: ["blue", "green"]
+};
+var ANSILight = new Theme(
+  "ANSI Light",
+  "light",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em",
+      background: "white",
+      color: "black"
+    },
+    "hljs-keyword": {
+      color: "blue"
+    },
+    "hljs-literal": {
+      color: "blue"
+    },
+    "hljs-symbol": {
+      color: "blue"
+    },
+    "hljs-name": {
+      color: "blue"
+    },
+    "hljs-link": {
+      color: "blue"
+    },
+    "hljs-built_in": {
+      color: "cyan"
+    },
+    "hljs-type": {
+      color: "cyan"
+    },
+    "hljs-number": {
+      color: "green"
+    },
+    "hljs-class": {
+      color: "green"
+    },
+    "hljs-string": {
+      color: "red"
+    },
+    "hljs-meta-string": {
+      color: "red"
+    },
+    "hljs-regexp": {
+      color: "magenta"
+    },
+    "hljs-template-tag": {
+      color: "magenta"
+    },
+    "hljs-subst": {
+      color: "black"
+    },
+    "hljs-function": {
+      color: "black"
+    },
+    "hljs-title": {
+      color: "black"
+    },
+    "hljs-params": {
+      color: "black"
+    },
+    "hljs-formula": {
+      color: "black"
+    },
+    "hljs-comment": {
+      color: "gray"
+    },
+    "hljs-quote": {
+      color: "gray"
+    },
+    "hljs-doctag": {
+      color: "gray"
+    },
+    "hljs-meta": {
+      color: "gray"
+    },
+    "hljs-meta-keyword": {
+      color: "gray"
+    },
+    "hljs-tag": {
+      color: "gray"
+    },
+    "hljs-variable": {
+      color: "purple"
+    },
+    "hljs-template-variable": {
+      color: "purple"
+    },
+    "hljs-attr": {
+      color: "blue"
+    },
+    "hljs-attribute": {
+      color: "blue"
+    },
+    "hljs-builtin-name": {
+      color: "blue"
+    },
+    "hljs-section": {
+      color: "orange"
+    },
+    "hljs-bullet": {
+      color: "orange"
+    },
+    "hljs-selector-tag": {
+      color: "orange"
+    },
+    "hljs-selector-id": {
+      color: "orange"
+    },
+    "hljs-selector-class": {
+      color: "orange"
+    },
+    "hljs-selector-attr": {
+      color: "orange"
+    },
+    "hljs-selector-pseudo": {
+      color: "orange"
+    }
+  },
+  ansiLightColors
+);
+
+// src/ui/themes/no-color.ts
+var noColorColorsTheme = {
+  type: "ansi",
+  Background: "",
+  Foreground: "",
+  LightBlue: "",
+  AccentBlue: "",
+  AccentPurple: "",
+  AccentCyan: "",
+  AccentGreen: "",
+  AccentYellow: "",
+  AccentRed: "",
+  Comment: "",
+  Gray: ""
+};
+var NoColorTheme = new Theme(
+  "No Color",
+  "dark",
+  {
+    hljs: {
+      display: "block",
+      overflowX: "auto",
+      padding: "0.5em"
+    },
+    "hljs-keyword": {},
+    "hljs-literal": {},
+    "hljs-symbol": {},
+    "hljs-name": {},
+    "hljs-link": {
+      textDecoration: "underline"
+    },
+    "hljs-built_in": {},
+    "hljs-type": {},
+    "hljs-number": {},
+    "hljs-class": {},
+    "hljs-string": {},
+    "hljs-meta-string": {},
+    "hljs-regexp": {},
+    "hljs-template-tag": {},
+    "hljs-subst": {},
+    "hljs-function": {},
+    "hljs-title": {},
+    "hljs-params": {},
+    "hljs-formula": {},
+    "hljs-comment": {
+      fontStyle: "italic"
+    },
+    "hljs-quote": {
+      fontStyle: "italic"
+    },
+    "hljs-doctag": {},
+    "hljs-meta": {},
+    "hljs-meta-keyword": {},
+    "hljs-tag": {},
+    "hljs-variable": {},
+    "hljs-template-variable": {},
+    "hljs-attr": {},
+    "hljs-attribute": {},
+    "hljs-builtin-name": {},
+    "hljs-section": {},
+    "hljs-emphasis": {
+      fontStyle: "italic"
+    },
+    "hljs-strong": {
+      fontWeight: "bold"
+    },
+    "hljs-bullet": {},
+    "hljs-selector-tag": {},
+    "hljs-selector-id": {},
+    "hljs-selector-class": {},
+    "hljs-selector-attr": {},
+    "hljs-selector-pseudo": {},
+    "hljs-addition": {
+      display: "inline-block",
+      width: "100%"
+    },
+    "hljs-deletion": {
+      display: "inline-block",
+      width: "100%"
+    }
+  },
+  noColorColorsTheme
+);
+
+// src/ui/themes/theme-manager.ts
+import process13 from "node:process";
+var DEFAULT_THEME = DefaultDark;
+var ThemeManager = class {
+  availableThemes;
+  activeTheme;
+  constructor() {
+    this.availableThemes = [
+      AyuDark,
+      AyuLight,
+      AtomOneDark,
+      Dracula,
+      DefaultLight,
+      DefaultDark,
+      GitHubDark,
+      GitHubLight,
+      GoogleCode,
+      ShadesOfPurple,
+      XCode,
+      ANSI,
+      ANSILight
+    ];
+    this.activeTheme = DEFAULT_THEME;
+  }
+  /**
+   * Returns a list of available theme names.
+   */
+  getAvailableThemes() {
+    const sortedThemes = [...this.availableThemes].sort((a, b) => {
+      const typeOrder = (type) => {
+        switch (type) {
+          case "dark":
+            return 1;
+          case "light":
+            return 2;
+          default:
+            return 3;
+        }
+      };
+      const typeComparison = typeOrder(a.type) - typeOrder(b.type);
+      if (typeComparison !== 0) {
+        return typeComparison;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    return sortedThemes.map((theme) => ({
+      name: theme.name,
+      type: theme.type
+    }));
+  }
+  /**
+   * Sets the active theme.
+   * @param themeName The name of the theme to activate.
+   * @returns True if the theme was successfully set, false otherwise.
+   */
+  setActiveTheme(themeName) {
+    const foundTheme = this.findThemeByName(themeName);
+    if (foundTheme) {
+      this.activeTheme = foundTheme;
+      return true;
+    } else {
+      if (themeName === void 0) {
+        this.activeTheme = DEFAULT_THEME;
+        return true;
+      }
+      return false;
+    }
+  }
+  findThemeByName(themeName) {
+    if (!themeName) {
+      return DEFAULT_THEME;
+    }
+    return this.availableThemes.find((theme) => theme.name === themeName);
+  }
+  /**
+   * Returns the currently active theme object.
+   */
+  getActiveTheme() {
+    if (process13.env.NO_COLOR) {
+      return NoColorTheme;
+    }
+    return this.activeTheme;
+  }
+};
+var themeManager = new ThemeManager();
+
+// src/ui/colors.ts
+var Colors = {
+  get type() {
+    return themeManager.getActiveTheme().colors.type;
+  },
+  get Foreground() {
+    return themeManager.getActiveTheme().colors.Foreground;
+  },
+  get Background() {
+    return themeManager.getActiveTheme().colors.Background;
+  },
+  get LightBlue() {
+    return themeManager.getActiveTheme().colors.LightBlue;
+  },
+  get AccentBlue() {
+    return themeManager.getActiveTheme().colors.AccentBlue;
+  },
+  get AccentPurple() {
+    return themeManager.getActiveTheme().colors.AccentPurple;
+  },
+  get AccentCyan() {
+    return themeManager.getActiveTheme().colors.AccentCyan;
+  },
+  get AccentGreen() {
+    return themeManager.getActiveTheme().colors.AccentGreen;
+  },
+  get AccentYellow() {
+    return themeManager.getActiveTheme().colors.AccentYellow;
+  },
+  get AccentRed() {
+    return themeManager.getActiveTheme().colors.AccentRed;
+  },
+  get Comment() {
+    return themeManager.getActiveTheme().colors.Comment;
+  },
+  get Gray() {
+    return themeManager.getActiveTheme().colors.Gray;
+  },
+  get GradientColors() {
+    return themeManager.getActiveTheme().colors.GradientColors;
+  }
+};
+
+// src/ui/components/AsciiArt.ts
+var shortGenieAsciiLogo = `
+   \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557
+  \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D
+  \u2588\u2588\u2551  \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557  
+  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551\u255A\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  
+  \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551 \u255A\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557
+   \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D  \u255A\u2550\u2550\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D
+`;
+var longGenieAsciiLogo = `
+  \u2588\u2588\u2588      \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557     \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557    \u2588\u2588\u2557     \u2588\u2588\u2557
+  \u2591\u2588\u2588      \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D     \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557   \u2588\u2588\u2551     \u2588\u2588\u2551
+  \u2591\u2588\u2588      \u2588\u2588\u2551  \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557       \u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D   \u2588\u2588\u2551     \u2588\u2588\u2551
+  \u2591\u2588\u2588      \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551\u255A\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D       \u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557   \u2588\u2588\u2551     \u2588\u2588\u2551
+  \u2588\u2588       \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551 \u255A\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557     \u2588\u2588\u2551     \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2551  \u2588\u2588\u2551\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551
+  \u255A\u2550       \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D  \u255A\u2550\u2550\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D     \u255A\u2550\u255D      \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u255D  \u255A\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D
+`;
+
+// src/ui/utils/textUtils.ts
+function toCodePoints(str) {
+  return Array.from(str);
+}
+function cpLen(str) {
+  return toCodePoints(str).length;
+}
+function cpSlice(str, start, end) {
+  const arr = toCodePoints(str).slice(start, end);
+  return arr.join("");
+}
+function getAsciiArtWidth(asciiArt) {
+  const lines = asciiArt.split("\n").filter((line) => line.trim() !== "");
+  if (lines.length === 0) return 0;
+  return Math.max(...lines.map((line) => line.length));
+}
+function shortenPath(path, maxLength) {
+  if (path.length <= maxLength) {
+    return path;
+  }
+  const parts = path.split("/");
+  if (parts.length <= 1) {
+    return path.slice(-maxLength);
+  }
+  const lastPart = parts[parts.length - 1];
+  const remaining = maxLength - lastPart.length - 3;
+  if (remaining <= 0) {
+    return "..." + lastPart.slice(-(maxLength - 3));
+  }
+  const firstParts = parts.slice(0, -1).join("/");
+  if (firstParts.length <= remaining) {
+    return firstParts + "/" + lastPart;
+  }
+  return firstParts.slice(0, remaining) + ".../" + lastPart;
+}
+function tildeifyPath(path) {
+  const homedir = process.env.HOME || process.env.USERPROFILE || "";
+  if (homedir && path.startsWith(homedir)) {
+    return "~" + path.slice(homedir.length);
+  }
+  return path;
+}
+
 // src/ui/components/Header.tsx
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 var Header = ({
+  customAsciiArt,
   terminalWidth,
   version: version2,
-  connectionStatus,
-  selectedTarget,
-  availableTargets,
-  onTargetChange
+  nightly
 }) => {
-  const getConnectionStatusColor = () => {
-    switch (connectionStatus) {
-      case "connected":
-        return "green";
-      case "connecting":
-        return "yellow";
-      case "error":
-        return "red";
-      default:
-        return "gray";
+  let displayTitle;
+  const widthOfLongLogo = getAsciiArtWidth(longGenieAsciiLogo);
+  if (customAsciiArt) {
+    displayTitle = customAsciiArt;
+  } else {
+    displayTitle = terminalWidth >= widthOfLongLogo ? longGenieAsciiLogo : shortGenieAsciiLogo;
+  }
+  const artWidth = getAsciiArtWidth(displayTitle);
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+    Box_default,
+    {
+      marginBottom: 1,
+      alignItems: "flex-start",
+      width: artWidth,
+      flexShrink: 0,
+      flexDirection: "column",
+      children: [
+        Colors.GradientColors ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(dist_default5, { colors: Colors.GradientColors, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { children: displayTitle }) }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { children: displayTitle }),
+        nightly && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { width: "100%", flexDirection: "row", justifyContent: "flex-end", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(dist_default5, { colors: Colors.GradientColors, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { children: [
+          "v",
+          version2
+        ] }) }) })
+      ]
     }
-  };
-  const getConnectionStatusText = () => {
-    switch (connectionStatus) {
-      case "connected":
-        return "\u25CF Connected";
-      case "connecting":
-        return "\u25CB Connecting...";
-      case "error":
-        return "\u2717 Connection Error";
-      default:
-        return "\u25CB Unknown";
-    }
-  };
-  const formatTargetDisplay = () => {
-    if (!selectedTarget) {
-      return "No target selected";
-    }
-    return `${selectedTarget.type.toUpperCase()}: ${selectedTarget.name}`;
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
-      Box_default,
-      {
-        borderStyle: "round",
-        borderColor: "blue",
-        paddingX: 1,
-        marginBottom: 1,
-        justifyContent: "space-between",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { bold: true, color: "cyan", children: "\u{1F9DE} Genie Local CLI" }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", children: [
-              " v",
-              version2
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: getConnectionStatusColor(), children: getConnectionStatusText() })
-        ]
-      }
-    ),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "cyan", children: "Current Target: " }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { bold: true, children: formatTargetDisplay() }),
-      connectionStatus === "connected" && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", children: [
-        "Available: ",
-        availableTargets.agents.length,
-        " agents, ",
-        availableTargets.teams.length,
-        " teams, ",
-        availableTargets.workflows.length,
-        " workflows"
-      ] }) })
-    ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", children: "\u2500".repeat(Math.min(terminalWidth, 80)) }) })
-  ] });
+  );
 };
 
 // node_modules/ink-spinner/build/index.js
-var import_react27 = __toESM(require_react(), 1);
+var import_react28 = __toESM(require_react(), 1);
 var import_cli_spinners = __toESM(require_cli_spinners(), 1);
 function Spinner({ type = "dots" }) {
-  const [frame, setFrame] = (0, import_react27.useState)(0);
+  const [frame, setFrame] = (0, import_react28.useState)(0);
   const spinner = import_cli_spinners.default[type];
-  (0, import_react27.useEffect)(() => {
+  (0, import_react28.useEffect)(() => {
     const timer = setInterval(() => {
       setFrame((previousFrame) => {
         const isLastFrame = previousFrame === spinner.frames.length - 1;
@@ -48559,7 +54837,7 @@ function Spinner({ type = "dots" }) {
       clearInterval(timer);
     };
   }, [spinner]);
-  return import_react27.default.createElement(Text, null, spinner.frames[frame]);
+  return import_react28.default.createElement(Text, null, spinner.frames[frame]);
 }
 var build_default = Spinner;
 
@@ -48568,11 +54846,12 @@ var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
 var LoadingIndicator = ({
   currentLoadingPhrase,
   elapsedTime,
+  thought,
   streamingState
 }) => {
-  const isLoading = streamingState === "connecting" /* Connecting */ || streamingState === "waiting" /* Waiting */ || streamingState === "responding" /* Responding */;
+  const isLoading = streamingState !== "idle" /* Idle */ && (currentLoadingPhrase || streamingState === "connecting" /* Connecting */ || streamingState === "waiting" /* Waiting */ || streamingState === "responding" /* Responding */);
   const isStreaming = streamingState === "responding" /* Responding */;
-  if (!isLoading) {
+  if (!isLoading && !thought) {
     return null;
   }
   const formatElapsedTime = (ms) => {
@@ -48580,897 +54859,721 @@ var LoadingIndicator = ({
     return `${seconds}s`;
   };
   const getStreamingStateText = () => {
+    if (currentLoadingPhrase) {
+      return currentLoadingPhrase;
+    }
     switch (streamingState) {
       case "connecting" /* Connecting */:
-        return "Connecting to API...";
+        return "\u{1F9DE} Connecting to genie...";
       case "waiting" /* Waiting */:
-        return "Waiting for response...";
+        return "\u{1F9DE} Waiting for response...";
       case "responding" /* Responding */:
-        return "Receiving response...";
+        return "\u{1F9DE} Receiving response...";
       default:
-        return currentLoadingPhrase;
+        return "\u{1F9DE} Thinking...";
     }
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginY: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { alignItems: "center", children: [
-    appConfig.enableSpinner && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { marginY: 1, flexDirection: "column", children: [
+    thought && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: Colors.Comment, italic: true, children: [
+      "\u{1F4AD} ",
+      thought
+    ] }) }),
+    isLoading && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { alignItems: "center", children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(build_default, { type: "dots" }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " })
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isStreaming ? "green" : "yellow", children: getStreamingStateText() }),
-    elapsedTime > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", children: [
-      " (",
-      formatElapsedTime(elapsedTime),
-      ")"
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isStreaming ? Colors.AccentGreen : Colors.AccentYellow, children: getStreamingStateText() }),
+      elapsedTime > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: Colors.Gray, children: [
+        " (",
+        formatElapsedTime(elapsedTime),
+        ")"
+      ] })
     ] })
-  ] }) });
+  ] });
 };
 
-// src/ui/components/GeminiStyleInput.tsx
+// src/ui/components/InputPrompt.tsx
+var import_react31 = __toESM(require_react(), 1);
+
+// src/ui/hooks-minimal/useInputHistory.ts
 var import_react29 = __toESM(require_react(), 1);
-
-// node_modules/ink-text-input/build/index.js
-var import_react28 = __toESM(require_react(), 1);
-
-// node_modules/ink-text-input/node_modules/chalk/source/vendor/ansi-styles/index.js
-var ANSI_BACKGROUND_OFFSET6 = 10;
-var wrapAnsi166 = (offset = 0) => (code) => `\x1B[${code + offset}m`;
-var wrapAnsi2566 = (offset = 0) => (code) => `\x1B[${38 + offset};5;${code}m`;
-var wrapAnsi16m6 = (offset = 0) => (red, green, blue) => `\x1B[${38 + offset};2;${red};${green};${blue}m`;
-var styles8 = {
-  modifier: {
-    reset: [0, 0],
-    // 21 isn't widely supported and 22 does the same thing
-    bold: [1, 22],
-    dim: [2, 22],
-    italic: [3, 23],
-    underline: [4, 24],
-    overline: [53, 55],
-    inverse: [7, 27],
-    hidden: [8, 28],
-    strikethrough: [9, 29]
-  },
-  color: {
-    black: [30, 39],
-    red: [31, 39],
-    green: [32, 39],
-    yellow: [33, 39],
-    blue: [34, 39],
-    magenta: [35, 39],
-    cyan: [36, 39],
-    white: [37, 39],
-    // Bright color
-    blackBright: [90, 39],
-    gray: [90, 39],
-    // Alias of `blackBright`
-    grey: [90, 39],
-    // Alias of `blackBright`
-    redBright: [91, 39],
-    greenBright: [92, 39],
-    yellowBright: [93, 39],
-    blueBright: [94, 39],
-    magentaBright: [95, 39],
-    cyanBright: [96, 39],
-    whiteBright: [97, 39]
-  },
-  bgColor: {
-    bgBlack: [40, 49],
-    bgRed: [41, 49],
-    bgGreen: [42, 49],
-    bgYellow: [43, 49],
-    bgBlue: [44, 49],
-    bgMagenta: [45, 49],
-    bgCyan: [46, 49],
-    bgWhite: [47, 49],
-    // Bright color
-    bgBlackBright: [100, 49],
-    bgGray: [100, 49],
-    // Alias of `bgBlackBright`
-    bgGrey: [100, 49],
-    // Alias of `bgBlackBright`
-    bgRedBright: [101, 49],
-    bgGreenBright: [102, 49],
-    bgYellowBright: [103, 49],
-    bgBlueBright: [104, 49],
-    bgMagentaBright: [105, 49],
-    bgCyanBright: [106, 49],
-    bgWhiteBright: [107, 49]
-  }
-};
-var modifierNames6 = Object.keys(styles8.modifier);
-var foregroundColorNames6 = Object.keys(styles8.color);
-var backgroundColorNames6 = Object.keys(styles8.bgColor);
-var colorNames6 = [...foregroundColorNames6, ...backgroundColorNames6];
-function assembleStyles6() {
-  const codes = /* @__PURE__ */ new Map();
-  for (const [groupName, group] of Object.entries(styles8)) {
-    for (const [styleName, style] of Object.entries(group)) {
-      styles8[styleName] = {
-        open: `\x1B[${style[0]}m`,
-        close: `\x1B[${style[1]}m`
-      };
-      group[styleName] = styles8[styleName];
-      codes.set(style[0], style[1]);
-    }
-    Object.defineProperty(styles8, groupName, {
-      value: group,
-      enumerable: false
-    });
-  }
-  Object.defineProperty(styles8, "codes", {
-    value: codes,
-    enumerable: false
-  });
-  styles8.color.close = "\x1B[39m";
-  styles8.bgColor.close = "\x1B[49m";
-  styles8.color.ansi = wrapAnsi166();
-  styles8.color.ansi256 = wrapAnsi2566();
-  styles8.color.ansi16m = wrapAnsi16m6();
-  styles8.bgColor.ansi = wrapAnsi166(ANSI_BACKGROUND_OFFSET6);
-  styles8.bgColor.ansi256 = wrapAnsi2566(ANSI_BACKGROUND_OFFSET6);
-  styles8.bgColor.ansi16m = wrapAnsi16m6(ANSI_BACKGROUND_OFFSET6);
-  Object.defineProperties(styles8, {
-    rgbToAnsi256: {
-      value(red, green, blue) {
-        if (red === green && green === blue) {
-          if (red < 8) {
-            return 16;
-          }
-          if (red > 248) {
-            return 231;
-          }
-          return Math.round((red - 8) / 247 * 24) + 232;
-        }
-        return 16 + 36 * Math.round(red / 255 * 5) + 6 * Math.round(green / 255 * 5) + Math.round(blue / 255 * 5);
-      },
-      enumerable: false
-    },
-    hexToRgb: {
-      value(hex) {
-        const matches = /[a-f\d]{6}|[a-f\d]{3}/i.exec(hex.toString(16));
-        if (!matches) {
-          return [0, 0, 0];
-        }
-        let [colorString] = matches;
-        if (colorString.length === 3) {
-          colorString = [...colorString].map((character) => character + character).join("");
-        }
-        const integer = Number.parseInt(colorString, 16);
-        return [
-          /* eslint-disable no-bitwise */
-          integer >> 16 & 255,
-          integer >> 8 & 255,
-          integer & 255
-          /* eslint-enable no-bitwise */
-        ];
-      },
-      enumerable: false
-    },
-    hexToAnsi256: {
-      value: (hex) => styles8.rgbToAnsi256(...styles8.hexToRgb(hex)),
-      enumerable: false
-    },
-    ansi256ToAnsi: {
-      value(code) {
-        if (code < 8) {
-          return 30 + code;
-        }
-        if (code < 16) {
-          return 90 + (code - 8);
-        }
-        let red;
-        let green;
-        let blue;
-        if (code >= 232) {
-          red = ((code - 232) * 10 + 8) / 255;
-          green = red;
-          blue = red;
-        } else {
-          code -= 16;
-          const remainder = code % 36;
-          red = Math.floor(code / 36) / 5;
-          green = Math.floor(remainder / 6) / 5;
-          blue = remainder % 6 / 5;
-        }
-        const value = Math.max(red, green, blue) * 2;
-        if (value === 0) {
-          return 30;
-        }
-        let result = 30 + (Math.round(blue) << 2 | Math.round(green) << 1 | Math.round(red));
-        if (value === 2) {
-          result += 60;
-        }
-        return result;
-      },
-      enumerable: false
-    },
-    rgbToAnsi: {
-      value: (red, green, blue) => styles8.ansi256ToAnsi(styles8.rgbToAnsi256(red, green, blue)),
-      enumerable: false
-    },
-    hexToAnsi: {
-      value: (hex) => styles8.ansi256ToAnsi(styles8.hexToAnsi256(hex)),
-      enumerable: false
-    }
-  });
-  return styles8;
-}
-var ansiStyles6 = assembleStyles6();
-var ansi_styles_default6 = ansiStyles6;
-
-// node_modules/ink-text-input/node_modules/chalk/source/vendor/supports-color/index.js
-import process13 from "node:process";
-import os2 from "node:os";
-import tty2 from "node:tty";
-function hasFlag2(flag, argv = globalThis.Deno ? globalThis.Deno.args : process13.argv) {
-  const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
-  const position = argv.indexOf(prefix + flag);
-  const terminatorPosition = argv.indexOf("--");
-  return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
-}
-var { env: env3 } = process13;
-var flagForceColor2;
-if (hasFlag2("no-color") || hasFlag2("no-colors") || hasFlag2("color=false") || hasFlag2("color=never")) {
-  flagForceColor2 = 0;
-} else if (hasFlag2("color") || hasFlag2("colors") || hasFlag2("color=true") || hasFlag2("color=always")) {
-  flagForceColor2 = 1;
-}
-function envForceColor2() {
-  if ("FORCE_COLOR" in env3) {
-    if (env3.FORCE_COLOR === "true") {
-      return 1;
-    }
-    if (env3.FORCE_COLOR === "false") {
-      return 0;
-    }
-    return env3.FORCE_COLOR.length === 0 ? 1 : Math.min(Number.parseInt(env3.FORCE_COLOR, 10), 3);
-  }
-}
-function translateLevel2(level) {
-  if (level === 0) {
-    return false;
-  }
-  return {
-    level,
-    hasBasic: true,
-    has256: level >= 2,
-    has16m: level >= 3
-  };
-}
-function _supportsColor2(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
-  const noFlagForceColor = envForceColor2();
-  if (noFlagForceColor !== void 0) {
-    flagForceColor2 = noFlagForceColor;
-  }
-  const forceColor = sniffFlags ? flagForceColor2 : noFlagForceColor;
-  if (forceColor === 0) {
-    return 0;
-  }
-  if (sniffFlags) {
-    if (hasFlag2("color=16m") || hasFlag2("color=full") || hasFlag2("color=truecolor")) {
-      return 3;
-    }
-    if (hasFlag2("color=256")) {
-      return 2;
-    }
-  }
-  if ("TF_BUILD" in env3 && "AGENT_NAME" in env3) {
-    return 1;
-  }
-  if (haveStream && !streamIsTTY && forceColor === void 0) {
-    return 0;
-  }
-  const min = forceColor || 0;
-  if (env3.TERM === "dumb") {
-    return min;
-  }
-  if (process13.platform === "win32") {
-    const osRelease = os2.release().split(".");
-    if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
-      return Number(osRelease[2]) >= 14931 ? 3 : 2;
-    }
-    return 1;
-  }
-  if ("CI" in env3) {
-    if (["GITHUB_ACTIONS", "GITEA_ACTIONS", "CIRCLECI"].some((key) => key in env3)) {
-      return 3;
-    }
-    if (["TRAVIS", "APPVEYOR", "GITLAB_CI", "BUILDKITE", "DRONE"].some((sign) => sign in env3) || env3.CI_NAME === "codeship") {
-      return 1;
-    }
-    return min;
-  }
-  if ("TEAMCITY_VERSION" in env3) {
-    return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env3.TEAMCITY_VERSION) ? 1 : 0;
-  }
-  if (env3.COLORTERM === "truecolor") {
-    return 3;
-  }
-  if (env3.TERM === "xterm-kitty") {
-    return 3;
-  }
-  if ("TERM_PROGRAM" in env3) {
-    const version2 = Number.parseInt((env3.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
-    switch (env3.TERM_PROGRAM) {
-      case "iTerm.app": {
-        return version2 >= 3 ? 3 : 2;
-      }
-      case "Apple_Terminal": {
-        return 2;
-      }
-    }
-  }
-  if (/-256(color)?$/i.test(env3.TERM)) {
-    return 2;
-  }
-  if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env3.TERM)) {
-    return 1;
-  }
-  if ("COLORTERM" in env3) {
-    return 1;
-  }
-  return min;
-}
-function createSupportsColor2(stream, options = {}) {
-  const level = _supportsColor2(stream, {
-    streamIsTTY: stream && stream.isTTY,
-    ...options
-  });
-  return translateLevel2(level);
-}
-var supportsColor2 = {
-  stdout: createSupportsColor2({ isTTY: tty2.isatty(1) }),
-  stderr: createSupportsColor2({ isTTY: tty2.isatty(2) })
-};
-var supports_color_default2 = supportsColor2;
-
-// node_modules/ink-text-input/node_modules/chalk/source/utilities.js
-function stringReplaceAll2(string, substring, replacer) {
-  let index = string.indexOf(substring);
-  if (index === -1) {
-    return string;
-  }
-  const substringLength = substring.length;
-  let endIndex = 0;
-  let returnValue = "";
-  do {
-    returnValue += string.slice(endIndex, index) + substring + replacer;
-    endIndex = index + substringLength;
-    index = string.indexOf(substring, endIndex);
-  } while (index !== -1);
-  returnValue += string.slice(endIndex);
-  return returnValue;
-}
-function stringEncaseCRLFWithFirstIndex2(string, prefix, postfix, index) {
-  let endIndex = 0;
-  let returnValue = "";
-  do {
-    const gotCR = string[index - 1] === "\r";
-    returnValue += string.slice(endIndex, gotCR ? index - 1 : index) + prefix + (gotCR ? "\r\n" : "\n") + postfix;
-    endIndex = index + 1;
-    index = string.indexOf("\n", endIndex);
-  } while (index !== -1);
-  returnValue += string.slice(endIndex);
-  return returnValue;
-}
-
-// node_modules/ink-text-input/node_modules/chalk/source/index.js
-var { stdout: stdoutColor2, stderr: stderrColor2 } = supports_color_default2;
-var GENERATOR2 = Symbol("GENERATOR");
-var STYLER2 = Symbol("STYLER");
-var IS_EMPTY2 = Symbol("IS_EMPTY");
-var levelMapping2 = [
-  "ansi",
-  "ansi",
-  "ansi256",
-  "ansi16m"
-];
-var styles9 = /* @__PURE__ */ Object.create(null);
-var applyOptions2 = (object, options = {}) => {
-  if (options.level && !(Number.isInteger(options.level) && options.level >= 0 && options.level <= 3)) {
-    throw new Error("The `level` option should be an integer from 0 to 3");
-  }
-  const colorLevel = stdoutColor2 ? stdoutColor2.level : 0;
-  object.level = options.level === void 0 ? colorLevel : options.level;
-};
-var chalkFactory2 = (options) => {
-  const chalk3 = (...strings) => strings.join(" ");
-  applyOptions2(chalk3, options);
-  Object.setPrototypeOf(chalk3, createChalk2.prototype);
-  return chalk3;
-};
-function createChalk2(options) {
-  return chalkFactory2(options);
-}
-Object.setPrototypeOf(createChalk2.prototype, Function.prototype);
-for (const [styleName, style] of Object.entries(ansi_styles_default6)) {
-  styles9[styleName] = {
-    get() {
-      const builder = createBuilder2(this, createStyler2(style.open, style.close, this[STYLER2]), this[IS_EMPTY2]);
-      Object.defineProperty(this, styleName, { value: builder });
-      return builder;
-    }
-  };
-}
-styles9.visible = {
-  get() {
-    const builder = createBuilder2(this, this[STYLER2], true);
-    Object.defineProperty(this, "visible", { value: builder });
-    return builder;
-  }
-};
-var getModelAnsi2 = (model, level, type, ...arguments_) => {
-  if (model === "rgb") {
-    if (level === "ansi16m") {
-      return ansi_styles_default6[type].ansi16m(...arguments_);
-    }
-    if (level === "ansi256") {
-      return ansi_styles_default6[type].ansi256(ansi_styles_default6.rgbToAnsi256(...arguments_));
-    }
-    return ansi_styles_default6[type].ansi(ansi_styles_default6.rgbToAnsi(...arguments_));
-  }
-  if (model === "hex") {
-    return getModelAnsi2("rgb", level, type, ...ansi_styles_default6.hexToRgb(...arguments_));
-  }
-  return ansi_styles_default6[type][model](...arguments_);
-};
-var usedModels2 = ["rgb", "hex", "ansi256"];
-for (const model of usedModels2) {
-  styles9[model] = {
-    get() {
-      const { level } = this;
-      return function(...arguments_) {
-        const styler = createStyler2(getModelAnsi2(model, levelMapping2[level], "color", ...arguments_), ansi_styles_default6.color.close, this[STYLER2]);
-        return createBuilder2(this, styler, this[IS_EMPTY2]);
-      };
-    }
-  };
-  const bgModel = "bg" + model[0].toUpperCase() + model.slice(1);
-  styles9[bgModel] = {
-    get() {
-      const { level } = this;
-      return function(...arguments_) {
-        const styler = createStyler2(getModelAnsi2(model, levelMapping2[level], "bgColor", ...arguments_), ansi_styles_default6.bgColor.close, this[STYLER2]);
-        return createBuilder2(this, styler, this[IS_EMPTY2]);
-      };
-    }
-  };
-}
-var proto2 = Object.defineProperties(() => {
-}, {
-  ...styles9,
-  level: {
-    enumerable: true,
-    get() {
-      return this[GENERATOR2].level;
-    },
-    set(level) {
-      this[GENERATOR2].level = level;
-    }
-  }
-});
-var createStyler2 = (open, close, parent) => {
-  let openAll;
-  let closeAll;
-  if (parent === void 0) {
-    openAll = open;
-    closeAll = close;
-  } else {
-    openAll = parent.openAll + open;
-    closeAll = close + parent.closeAll;
-  }
-  return {
-    open,
-    close,
-    openAll,
-    closeAll,
-    parent
-  };
-};
-var createBuilder2 = (self2, _styler, _isEmpty) => {
-  const builder = (...arguments_) => applyStyle2(builder, arguments_.length === 1 ? "" + arguments_[0] : arguments_.join(" "));
-  Object.setPrototypeOf(builder, proto2);
-  builder[GENERATOR2] = self2;
-  builder[STYLER2] = _styler;
-  builder[IS_EMPTY2] = _isEmpty;
-  return builder;
-};
-var applyStyle2 = (self2, string) => {
-  if (self2.level <= 0 || !string) {
-    return self2[IS_EMPTY2] ? "" : string;
-  }
-  let styler = self2[STYLER2];
-  if (styler === void 0) {
-    return string;
-  }
-  const { openAll, closeAll } = styler;
-  if (string.includes("\x1B")) {
-    while (styler !== void 0) {
-      string = stringReplaceAll2(string, styler.close, styler.open);
-      styler = styler.parent;
-    }
-  }
-  const lfIndex = string.indexOf("\n");
-  if (lfIndex !== -1) {
-    string = stringEncaseCRLFWithFirstIndex2(string, closeAll, openAll, lfIndex);
-  }
-  return openAll + string + closeAll;
-};
-Object.defineProperties(createChalk2.prototype, styles9);
-var chalk2 = createChalk2();
-var chalkStderr2 = createChalk2({ level: stderrColor2 ? stderrColor2.level : 0 });
-var source_default2 = chalk2;
-
-// node_modules/ink-text-input/build/index.js
-function TextInput({ value: originalValue, placeholder = "", focus = true, mask, highlightPastedText = false, showCursor = true, onChange, onSubmit }) {
-  const [state, setState] = (0, import_react28.useState)({
-    cursorOffset: (originalValue || "").length,
-    cursorWidth: 0
-  });
-  const { cursorOffset, cursorWidth } = state;
-  (0, import_react28.useEffect)(() => {
-    setState((previousState) => {
-      if (!focus || !showCursor) {
-        return previousState;
-      }
-      const newValue = originalValue || "";
-      if (previousState.cursorOffset > newValue.length - 1) {
-        return {
-          cursorOffset: newValue.length,
-          cursorWidth: 0
-        };
-      }
-      return previousState;
-    });
-  }, [originalValue, focus, showCursor]);
-  const cursorActualWidth = highlightPastedText ? cursorWidth : 0;
-  const value = mask ? mask.repeat(originalValue.length) : originalValue;
-  let renderedValue = value;
-  let renderedPlaceholder = placeholder ? source_default2.grey(placeholder) : void 0;
-  if (showCursor && focus) {
-    renderedPlaceholder = placeholder.length > 0 ? source_default2.inverse(placeholder[0]) + source_default2.grey(placeholder.slice(1)) : source_default2.inverse(" ");
-    renderedValue = value.length > 0 ? "" : source_default2.inverse(" ");
-    let i2 = 0;
-    for (const char of value) {
-      renderedValue += i2 >= cursorOffset - cursorActualWidth && i2 <= cursorOffset ? source_default2.inverse(char) : char;
-      i2++;
-    }
-    if (value.length > 0 && cursorOffset === value.length) {
-      renderedValue += source_default2.inverse(" ");
-    }
-  }
-  use_input_default((input, key) => {
-    if (key.upArrow || key.downArrow || key.ctrl && input === "c" || key.tab || key.shift && key.tab) {
-      return;
-    }
-    if (key.return) {
-      if (onSubmit) {
-        onSubmit(originalValue);
-      }
-      return;
-    }
-    let nextCursorOffset = cursorOffset;
-    let nextValue = originalValue;
-    let nextCursorWidth = 0;
-    if (key.leftArrow) {
-      if (showCursor) {
-        nextCursorOffset--;
-      }
-    } else if (key.rightArrow) {
-      if (showCursor) {
-        nextCursorOffset++;
-      }
-    } else if (key.backspace || key.delete) {
-      if (cursorOffset > 0) {
-        nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length);
-        nextCursorOffset--;
-      }
-    } else {
-      nextValue = originalValue.slice(0, cursorOffset) + input + originalValue.slice(cursorOffset, originalValue.length);
-      nextCursorOffset += input.length;
-      if (input.length > 1) {
-        nextCursorWidth = input.length;
-      }
-    }
-    if (cursorOffset < 0) {
-      nextCursorOffset = 0;
-    }
-    if (cursorOffset > originalValue.length) {
-      nextCursorOffset = originalValue.length;
-    }
-    setState({
-      cursorOffset: nextCursorOffset,
-      cursorWidth: nextCursorWidth
-    });
-    if (nextValue !== originalValue) {
-      onChange(nextValue);
-    }
-  }, { isActive: focus });
-  return import_react28.default.createElement(Text, null, placeholder ? value.length > 0 ? renderedValue : renderedPlaceholder : renderedValue);
-}
-var build_default2 = TextInput;
-
-// src/ui/components/GeminiStyleInput.tsx
-var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-var GeminiStyleInput = ({
+function useInputHistory({
+  userMessages,
   onSubmit,
-  disabled = false,
-  placeholder = "  Type your message...",
+  isActive,
+  currentQuery,
+  onChange
+}) {
+  const [historyIndex, setHistoryIndex] = (0, import_react29.useState)(-1);
+  const [originalQueryBeforeNav, setOriginalQueryBeforeNav] = (0, import_react29.useState)("");
+  const resetHistoryNav = (0, import_react29.useCallback)(() => {
+    setHistoryIndex(-1);
+    setOriginalQueryBeforeNav("");
+  }, []);
+  const handleSubmit = (0, import_react29.useCallback)(
+    (value) => {
+      const trimmedValue = value.trim();
+      if (trimmedValue) {
+        onSubmit(trimmedValue);
+      }
+      resetHistoryNav();
+    },
+    [onSubmit, resetHistoryNav]
+  );
+  const navigateUp = (0, import_react29.useCallback)(() => {
+    if (!isActive) return false;
+    if (userMessages.length === 0) return false;
+    let nextIndex = historyIndex;
+    if (historyIndex === -1) {
+      setOriginalQueryBeforeNav(currentQuery);
+      nextIndex = 0;
+    } else if (historyIndex < userMessages.length - 1) {
+      nextIndex = historyIndex + 1;
+    } else {
+      return false;
+    }
+    if (nextIndex !== historyIndex) {
+      setHistoryIndex(nextIndex);
+      const newValue = userMessages[userMessages.length - 1 - nextIndex];
+      onChange(newValue);
+      return true;
+    }
+    return false;
+  }, [
+    historyIndex,
+    setHistoryIndex,
+    onChange,
+    userMessages,
+    isActive,
+    currentQuery,
+    // Use currentQuery from props
+    setOriginalQueryBeforeNav
+  ]);
+  const navigateDown = (0, import_react29.useCallback)(() => {
+    if (!isActive) return false;
+    if (historyIndex === -1) return false;
+    const nextIndex = historyIndex - 1;
+    setHistoryIndex(nextIndex);
+    if (nextIndex === -1) {
+      onChange(originalQueryBeforeNav);
+    } else {
+      const newValue = userMessages[userMessages.length - 1 - nextIndex];
+      onChange(newValue);
+    }
+    return true;
+  }, [
+    historyIndex,
+    setHistoryIndex,
+    originalQueryBeforeNav,
+    onChange,
+    userMessages,
+    isActive
+  ]);
+  return {
+    handleSubmit,
+    navigateUp,
+    navigateDown
+  };
+}
+
+// src/ui/hooks/useKeypress.ts
+var import_react30 = __toESM(require_react(), 1);
+import readline from "readline";
+import { PassThrough as PassThrough4 } from "stream";
+function useKeypress(onKeypress, { isActive }) {
+  const { stdin, setRawMode } = use_stdin_default();
+  const onKeypressRef = (0, import_react30.useRef)(onKeypress);
+  (0, import_react30.useEffect)(() => {
+    onKeypressRef.current = onKeypress;
+  }, [onKeypress]);
+  (0, import_react30.useEffect)(() => {
+    if (!isActive || !stdin.isTTY) {
+      return;
+    }
+    setRawMode(true);
+    const keypressStream = new PassThrough4();
+    let usePassthrough = false;
+    const nodeMajorVersion = parseInt(process.versions.node.split(".")[0], 10);
+    if (nodeMajorVersion < 20 || process.env["PASTE_WORKAROUND"] === "1" || process.env["PASTE_WORKAROUND"] === "true") {
+      usePassthrough = true;
+    }
+    let isPaste = false;
+    let pasteBuffer = Buffer.alloc(0);
+    const handleKeypress = (_, key) => {
+      if (key.name === "paste-start") {
+        isPaste = true;
+      } else if (key.name === "paste-end") {
+        isPaste = false;
+        onKeypressRef.current({
+          name: "",
+          ctrl: false,
+          meta: false,
+          shift: false,
+          paste: true,
+          sequence: pasteBuffer.toString()
+        });
+        pasteBuffer = Buffer.alloc(0);
+      } else {
+        if (isPaste) {
+          pasteBuffer = Buffer.concat([pasteBuffer, Buffer.from(key.sequence)]);
+        } else {
+          if (key.name === "return" && key.sequence === "\x1B\r") {
+            key.meta = true;
+          }
+          onKeypressRef.current({ ...key, paste: isPaste });
+        }
+      }
+    };
+    const handleRawKeypress = (data) => {
+      const PASTE_MODE_PREFIX = Buffer.from("\x1B[200~");
+      const PASTE_MODE_SUFFIX = Buffer.from("\x1B[201~");
+      let pos = 0;
+      while (pos < data.length) {
+        const prefixPos = data.indexOf(PASTE_MODE_PREFIX, pos);
+        const suffixPos = data.indexOf(PASTE_MODE_SUFFIX, pos);
+        const isPrefixNext = prefixPos !== -1 && (suffixPos === -1 || prefixPos < suffixPos);
+        const isSuffixNext = suffixPos !== -1 && (prefixPos === -1 || suffixPos < prefixPos);
+        let nextMarkerPos = -1;
+        let markerLength = 0;
+        if (isPrefixNext) {
+          nextMarkerPos = prefixPos;
+        } else if (isSuffixNext) {
+          nextMarkerPos = suffixPos;
+        }
+        markerLength = PASTE_MODE_SUFFIX.length;
+        if (nextMarkerPos === -1) {
+          keypressStream.write(data.slice(pos));
+          return;
+        }
+        const nextData = data.slice(pos, nextMarkerPos);
+        if (nextData.length > 0) {
+          keypressStream.write(nextData);
+        }
+        const createPasteKeyEvent = (name) => ({
+          name,
+          ctrl: false,
+          meta: false,
+          shift: false,
+          paste: false,
+          sequence: ""
+        });
+        if (isPrefixNext) {
+          handleKeypress(void 0, createPasteKeyEvent("paste-start"));
+        } else if (isSuffixNext) {
+          handleKeypress(void 0, createPasteKeyEvent("paste-end"));
+        }
+        pos = nextMarkerPos + markerLength;
+      }
+    };
+    let rl;
+    if (usePassthrough) {
+      rl = readline.createInterface({ input: keypressStream });
+      readline.emitKeypressEvents(keypressStream, rl);
+      keypressStream.on("keypress", handleKeypress);
+      stdin.on("data", handleRawKeypress);
+    } else {
+      rl = readline.createInterface({ input: stdin });
+      readline.emitKeypressEvents(stdin, rl);
+      stdin.on("keypress", handleKeypress);
+    }
+    process.stdout.write("\x1B[?2004h");
+    return () => {
+      process.stdout.write("\x1B[?2004l");
+      if (usePassthrough) {
+        keypressStream.removeListener("keypress", handleKeypress);
+        stdin.removeListener("data", handleRawKeypress);
+      } else {
+        stdin.removeListener("keypress", handleKeypress);
+      }
+      rl.close();
+      setRawMode(false);
+    };
+  }, [isActive, stdin, setRawMode]);
+}
+
+// src/ui/components/InputPrompt.tsx
+var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+var InputPrompt = ({
+  buffer,
+  onSubmit,
+  userMessages,
+  onClearScreen,
+  inputWidth,
+  suggestionsWidth,
+  shellModeActive,
+  setShellModeActive,
+  placeholder = "  Type your message or @path/to/file",
   focus = true
 }) => {
-  const [input, setInput] = (0, import_react29.useState)("");
-  const [isMultiline, setIsMultiline] = (0, import_react29.useState)(false);
-  (0, import_react29.useEffect)(() => {
-    setIsMultiline(input.includes("\n") || input.length > 100);
-  }, [input]);
-  const handleSubmit = (0, import_react29.useCallback)((value) => {
-    if (value.trim() && !disabled) {
-      onSubmit(value.trim());
-      setInput("");
-      setIsMultiline(false);
-    }
-  }, [onSubmit, disabled]);
-  const handleChange = (0, import_react29.useCallback)((value) => {
-    setInput(value);
-  }, []);
-  use_input_default((inputChar, key) => {
-    if (key.escape && focus && !disabled) {
-      setInput("");
-      setIsMultiline(false);
-    }
-  }, { isActive: focus && !disabled });
-  const lines = input.split("\n");
-  const displayLines = lines.slice(0, 8);
-  if (isMultiline && lines.length > 1) {
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
-        Box_default,
-        {
-          borderStyle: "round",
-          borderColor: "blue",
-          paddingX: 1,
-          flexDirection: "column",
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { marginBottom: 1, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "magenta", children: "> " }),
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", children: [
-                "Multiline input (",
-                lines.length,
-                " lines, ",
-                input.length,
-                " chars)"
-              ] })
-            ] }),
-            displayLines.map((line, index) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "white", children: line || " " }, index)),
-            lines.length > 8 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", children: [
-              "... ",
-              lines.length - 8,
-              " more lines"
-            ] })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Enter: Send \u2022 Esc: Clear text \u2022 Paste content works automatically" }) })
-    ] });
-  }
-  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
-      Box_default,
-      {
-        borderStyle: "round",
-        borderColor: "blue",
-        paddingX: 1,
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "magenta", children: "> " }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexGrow: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
-            build_default2,
-            {
-              value: input,
-              placeholder,
-              onChange: handleChange,
-              onSubmit: handleSubmit,
-              focus: focus && !disabled,
-              showCursor: focus && !disabled,
-              highlightPastedText: true
-            }
-          ) })
-        ]
+  const [justNavigatedHistory, setJustNavigatedHistory] = (0, import_react31.useState)(false);
+  const handleSubmitAndClear = (0, import_react31.useCallback)(
+    (submittedValue) => {
+      if (shellModeActive) {
       }
-    ),
-    focus && !disabled && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Enter: Send \u2022 Esc: Clear text \u2022 Paste works \u2022 Large content becomes multiline automatically" }) })
-  ] });
+      buffer.setText("");
+      onSubmit(submittedValue);
+    },
+    [onSubmit, buffer, shellModeActive]
+  );
+  const customSetTextAndResetCompletionSignal = (0, import_react31.useCallback)(
+    (newText) => {
+      buffer.setText(newText);
+      setJustNavigatedHistory(true);
+    },
+    [buffer, setJustNavigatedHistory]
+  );
+  const inputHistory = useInputHistory({
+    userMessages,
+    onSubmit: handleSubmitAndClear,
+    isActive: !shellModeActive,
+    currentQuery: buffer.text,
+    onChange: customSetTextAndResetCompletionSignal
+  });
+  (0, import_react31.useEffect)(() => {
+    if (justNavigatedHistory) {
+      setJustNavigatedHistory(false);
+    }
+  }, [
+    justNavigatedHistory,
+    buffer.text,
+    setJustNavigatedHistory
+  ]);
+  const handleInput = (0, import_react31.useCallback)(
+    (key) => {
+      if (!focus) {
+        return;
+      }
+      if (key.sequence === "!" && buffer.text === "") {
+        setShellModeActive(!shellModeActive);
+        buffer.setText("");
+        return;
+      }
+      if (key.name === "escape") {
+        if (shellModeActive) {
+          setShellModeActive(false);
+          return;
+        }
+      }
+      if (key.ctrl && key.name === "l") {
+        onClearScreen();
+        return;
+      }
+      if (!shellModeActive) {
+        if (key.ctrl && key.name === "p") {
+          inputHistory.navigateUp();
+          return;
+        }
+        if (key.ctrl && key.name === "n") {
+          inputHistory.navigateDown();
+          return;
+        }
+        if (key.name === "up" && (buffer.allVisualLines.length === 1 || buffer.visualCursor[0] === 0 && buffer.visualScrollRow === 0)) {
+          inputHistory.navigateUp();
+          return;
+        }
+        if (key.name === "down" && (buffer.allVisualLines.length === 1 || buffer.visualCursor[0] === buffer.allVisualLines.length - 1)) {
+          inputHistory.navigateDown();
+          return;
+        }
+      }
+      if (key.name === "return" && !key.ctrl && !key.meta && !key.paste) {
+        if (buffer.text.trim()) {
+          const [row, col] = buffer.cursor;
+          const line = buffer.lines[row];
+          const charBefore = col > 0 ? cpSlice(line, col - 1, col) : "";
+          if (charBefore === "\\") {
+            buffer.backspace();
+            buffer.newline();
+          } else {
+            handleSubmitAndClear(buffer.text);
+          }
+        }
+        return;
+      }
+      if (key.name === "return" && (key.ctrl || key.meta || key.paste)) {
+        buffer.newline();
+        return;
+      }
+      if (key.ctrl && key.name === "a") {
+        buffer.move("home");
+        return;
+      }
+      if (key.ctrl && key.name === "e") {
+        buffer.move("end");
+        return;
+      }
+      if (key.ctrl && key.name === "k") {
+        buffer.killLineRight();
+        return;
+      }
+      if (key.ctrl && key.name === "u") {
+        buffer.killLineLeft();
+        return;
+      }
+      const isCtrlX = key.ctrl && (key.name === "x" || key.sequence === "");
+      if (isCtrlX) {
+        buffer.openInExternalEditor();
+        return;
+      }
+      buffer.handleInput(key);
+    },
+    [
+      focus,
+      buffer,
+      shellModeActive,
+      setShellModeActive,
+      onClearScreen,
+      inputHistory,
+      handleSubmitAndClear
+    ]
+  );
+  useKeypress(handleInput, { isActive: focus });
+  const linesToRender = buffer.viewportVisualLines;
+  const [cursorVisualRowAbsolute, cursorVisualColAbsolute] = buffer.visualCursor;
+  const scrollVisualRow = buffer.visualScrollRow;
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_jsx_runtime4.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+    Box_default,
+    {
+      borderStyle: "round",
+      borderColor: shellModeActive ? Colors.AccentYellow : Colors.AccentBlue,
+      paddingX: 1,
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          Text,
+          {
+            color: shellModeActive ? Colors.AccentYellow : Colors.AccentPurple,
+            children: shellModeActive ? "! " : "> "
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexGrow: 1, flexDirection: "column", children: buffer.text.length === 0 && placeholder ? focus ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { children: [
+          source_default.inverse(placeholder.slice(0, 1)),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: Colors.Gray, children: placeholder.slice(1) })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: Colors.Gray, children: placeholder }) : linesToRender.map((lineText, visualIdxInRenderedSet) => {
+          const cursorVisualRow = cursorVisualRowAbsolute - scrollVisualRow;
+          let display = cpSlice(lineText, 0, inputWidth);
+          const currentVisualWidth = stringWidth(display);
+          if (currentVisualWidth < inputWidth) {
+            display = display + " ".repeat(inputWidth - currentVisualWidth);
+          }
+          if (visualIdxInRenderedSet === cursorVisualRow) {
+            const relativeVisualColForHighlight = cursorVisualColAbsolute;
+            if (relativeVisualColForHighlight >= 0) {
+              if (relativeVisualColForHighlight < cpLen(display)) {
+                const charToHighlight = cpSlice(
+                  display,
+                  relativeVisualColForHighlight,
+                  relativeVisualColForHighlight + 1
+                ) || " ";
+                const highlighted = source_default.inverse(charToHighlight);
+                display = cpSlice(display, 0, relativeVisualColForHighlight) + highlighted + cpSlice(display, relativeVisualColForHighlight + 1);
+              } else if (relativeVisualColForHighlight === cpLen(display) && cpLen(display) === inputWidth) {
+                display = display + source_default.inverse(" ");
+              }
+            }
+          }
+          return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: display }, `line-${visualIdxInRenderedSet}`);
+        }) })
+      ]
+    }
+  ) });
 };
 
 // src/ui/components/Footer.tsx
 var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 var Footer = ({
+  model,
+  targetDir,
   debugMode,
   debugMessage,
   sessionId,
-  apiUrl
+  apiUrl,
+  branchName,
+  nightly = false,
+  selectedTarget
 }) => {
   const formatSessionId = (id) => {
     return id.slice(-8);
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
-    debugMode && debugMessage && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginBottom: 1, borderStyle: "round", borderColor: "yellow", paddingX: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "yellow", italic: true, children: [
-      "Debug: ",
-      debugMessage
-    ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { marginTop: 1, justifyContent: "space-between", width: "100%", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { children: [
+      targetDir ? nightly ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(dist_default5, { colors: Colors.GradientColors, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { children: [
+        shortenPath(tildeifyPath(targetDir), 70),
+        branchName && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { children: [
+          " (",
+          branchName,
+          "*)"
+        ] })
+      ] }) }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.LightBlue, children: [
+        shortenPath(tildeifyPath(targetDir), 70),
+        branchName && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.Gray, children: [
+          " (",
+          branchName,
+          "*)"
+        ] })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.LightBlue, children: [
+        "Session: ",
+        formatSessionId(sessionId)
+      ] }),
+      debugMode && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: Colors.AccentRed, children: " " + (debugMessage || "--debug") })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
       Box_default,
       {
-        borderStyle: "round",
-        borderColor: "gray",
-        paddingX: 1,
-        justifyContent: "space-between",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", children: [
-            "Session: ",
-            formatSessionId(sessionId)
-          ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", children: [
-            "API: ",
-            apiUrl
-          ] }) })
-        ]
+        flexGrow: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        display: "flex",
+        children: selectedTarget ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.AccentPurple, children: [
+          "\u{1F9DE} ",
+          selectedTarget.name,
+          " ",
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.Gray, children: [
+            "(",
+            selectedTarget.type,
+            ")"
+          ] })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: Colors.AccentYellow, children: "\u{1F9DE} genie-local-cli" })
       }
     ),
-    debugMode && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", dimColor: true, children: [
-      "Debug mode enabled \u2022 Full session ID: ",
-      sessionId
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { alignItems: "center", children: model ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: Colors.AccentBlue, children: model }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.AccentBlue, children: [
+      "API: ",
+      apiUrl.replace(/^https?:\/\//, "")
     ] }) })
   ] });
 };
 
-// src/ui/components/ChatDisplay.tsx
+// src/ui/components/HistoryItemDisplay.tsx
 var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
-var ChatDisplay = ({
-  history,
-  pendingMessage,
+var HistoryItemDisplay = ({
+  item,
+  isPending = false,
+  isFocused = true,
   terminalWidth,
-  terminalHeight
+  availableTerminalHeight
 }) => {
-  const maxWidth = Math.min(terminalWidth - 4, 120);
-  const maxHeight = Math.max(terminalHeight - 15, 10);
-  const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString();
-  };
   const getMessageColor = (type) => {
     switch (type) {
       case "user" /* USER */:
-        return "blue";
+        return Colors.AccentBlue;
       case "assistant" /* ASSISTANT */:
-        return "green";
+        return Colors.Foreground;
       case "thinking" /* THINKING */:
-        return "cyan";
+        return Colors.AccentPurple;
       case "tool_start" /* TOOL_START */:
-        return "yellow";
+        return Colors.AccentYellow;
       case "tool_complete" /* TOOL_COMPLETE */:
-        return "green";
+        return Colors.AccentGreen;
       case "agent_start" /* AGENT_START */:
-        return "magenta";
+        return Colors.AccentCyan;
       case "error" /* ERROR */:
-        return "red";
+        return Colors.AccentRed;
       case "info" /* INFO */:
-        return "yellow";
+        return Colors.AccentCyan;
       case "system" /* SYSTEM */:
-        return "gray";
+        return Colors.AccentYellow;
       default:
-        return "white";
+        return Colors.Foreground;
     }
   };
   const getMessagePrefix = (type) => {
     switch (type) {
       case "user" /* USER */:
-        return "\u{1F464} You";
+        return "\u{1F9DE} ";
       case "assistant" /* ASSISTANT */:
-        return "\u{1F916} Assistant";
+        return "\u2728 ";
       case "thinking" /* THINKING */:
-        return "\u{1F4AD} Thinking";
+        return "\u{1F914} ";
       case "tool_start" /* TOOL_START */:
-        return "\u{1F527} Tool";
+        return "\u{1F527} ";
       case "tool_complete" /* TOOL_COMPLETE */:
-        return "\u2705 Tool";
+        return "\u2705 ";
       case "agent_start" /* AGENT_START */:
-        return "\u{1F680} Agent";
+        return "\u{1F916} ";
       case "error" /* ERROR */:
-        return "\u274C Error";
+        return "\u274C ";
       case "info" /* INFO */:
-        return "\u2139\uFE0F  Info";
+        return "\u2139\uFE0F  ";
       case "system" /* SYSTEM */:
-        return "\u2699\uFE0F  System";
+        return "\u2699\uFE0F  ";
       default:
-        return "\u2022 ";
+        return "";
     }
   };
-  const wrapText2 = (text, width) => {
-    const words = text.split(" ");
-    const lines = [];
-    let currentLine = "";
-    for (const word of words) {
-      if (currentLine.length + word.length + 1 <= width) {
-        currentLine += (currentLine ? " " : "") + word;
-      } else {
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-        currentLine = word;
-      }
-    }
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-    return lines.length > 0 ? lines : [""];
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
   };
-  const isCompactMessage = (type) => {
-    return [
-      "thinking" /* THINKING */,
-      "tool_start" /* TOOL_START */,
-      "tool_complete" /* TOOL_COMPLETE */,
-      "agent_start" /* AGENT_START */
-    ].includes(type);
-  };
-  const renderMessage = (message, isPending = false) => {
-    const color = getMessageColor(message.type);
-    const prefix = getMessagePrefix(message.type);
-    const timestamp = formatTimestamp(message.timestamp);
-    const isCompact = isCompactMessage(message.type);
-    if (isCompact && !isPending) {
-      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginY: 0, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color, dimColor: true, children: [
-        prefix,
-        ": ",
-        message.text
-      ] }) }, message.id);
-    }
-    const textLines = wrapText2(message.text, maxWidth - 4);
-    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { justifyContent: "space-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color, bold: true, children: prefix }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: "gray", dimColor: true, children: [
-          timestamp,
-          message.metadata?.target && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { children: [
-            " \u2022 ",
-            message.metadata.target.type,
-            ":",
-            message.metadata.target.id
-          ] }),
-          isPending && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: "yellow", children: " \u2022 streaming..." })
-        ] })
+  const renderRichToolData = () => {
+    const tool = item.metadata?.tool;
+    if (!tool) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+      tool.tool_args && Object.keys(tool.tool_args).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Arguments:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(tool.tool_args, null, 2) }) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginLeft: 2, marginTop: 1, children: [
-        textLines.map((line, index) => {
-          let formattedLine = line;
-          const isBold = line.startsWith("**") && line.endsWith("**");
-          const isListItem = line.trim().startsWith("- ") || line.trim().startsWith("\u2022 ");
-          const isHeader = line.startsWith("##") || line.startsWith("###");
-          return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
-            Text,
-            {
-              color: isPending ? "gray" : "white",
-              bold: isBold,
-              dimColor: isListItem,
-              children: formattedLine
-            },
-            index
-          );
-        }),
-        isPending && message.text && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: "yellow", children: "\u258A" })
+      tool.tool_result && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentGreen, bold: true, children: "Result:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: typeof tool.tool_result === "string" ? tool.tool_result : JSON.stringify(tool.tool_result, null, 2) }) })
+      ] }),
+      tool.metrics && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metrics:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: Colors.Gray, children: [
+          tool.metrics.time ? `\u23F1\uFE0F ${(tool.metrics.time * 1e3).toFixed(0)}ms` : "",
+          " ",
+          tool.metrics.tokens ? `\u{1F524} ${tool.metrics.tokens} tokens` : ""
+        ] }) })
       ] })
-    ] }, isPending ? "pending" : message.id);
+    ] });
   };
-  const allMessages = [...history];
-  if (pendingMessage) {
-    allMessages.push(pendingMessage);
-  }
-  const visibleMessages = allMessages.slice(-10);
-  return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { flexDirection: "column", height: maxHeight, marginY: 1, children: visibleMessages.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { justifyContent: "center", alignItems: "center", height: "100%", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: "gray", children: "Welcome! Start a conversation by typing a message below." }) }) : /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { flexDirection: "column", children: visibleMessages.map((message, index) => {
-    const isPending = Boolean(pendingMessage && message === pendingMessage);
-    return renderMessage(message, isPending);
-  }) }) });
+  const renderRAGData = () => {
+    const rag = item.metadata?.rag;
+    if (!rag) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+      rag.query && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Query:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: rag.query }) })
+      ] }),
+      rag.results && rag.results.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentGreen, bold: true, children: "Results:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: Colors.Gray, children: [
+          rag.results.length,
+          " matches found"
+        ] }) })
+      ] }),
+      rag.metadata && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(rag.metadata, null, 2) }) })
+      ] })
+    ] });
+  };
+  const renderMessageContent = () => {
+    if (item.type === "tool_start" /* TOOL_START */ || item.type === "tool_complete" /* TOOL_COMPLETE */) {
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: item.type === "tool_start" /* TOOL_START */ ? Colors.AccentYellow : Colors.AccentGreen,
+          paddingX: 1,
+          marginY: 1,
+          children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: item.text })
+        }
+      );
+    }
+    if (item.type === "agent_start" /* AGENT_START */) {
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: Colors.AccentCyan,
+          paddingX: 1,
+          marginY: 1,
+          children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: item.text })
+        }
+      );
+    }
+    if (item.type === "thinking" /* THINKING */) {
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: Colors.AccentPurple,
+          paddingX: 1,
+          marginY: 1,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), italic: true, children: item.text }),
+            item.metadata?.thinking && item.metadata.thinking.reasoning && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginTop: 1, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Reasoning:" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: Colors.Gray, italic: true, children: [
+                " ",
+                item.metadata.thinking.reasoning
+              ] })
+            ] })
+          ]
+        }
+      );
+    }
+    if (item.type === "memory_update" /* MEMORY_UPDATE */) {
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: Colors.AccentPurple,
+          paddingX: 1,
+          marginY: 1,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), bold: true, children: item.text }),
+            item.metadata?.memory && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginTop: 1, children: [
+              item.metadata.memory.type && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Type:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: item.metadata.memory.type }) })
+              ] }),
+              item.metadata.memory.content && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Content:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: item.metadata.memory.content }) })
+              ] }),
+              item.metadata.memory.metadata && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(item.metadata.memory.metadata, null, 2) }) })
+              ] })
+            ] })
+          ]
+        }
+      );
+    }
+    if (typeof item.text === "string") {
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: item.text });
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: JSON.stringify(item.text) });
+  };
+  const maxWidth = Math.floor(terminalWidth * 0.9);
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+    Box_default,
+    {
+      flexDirection: "column",
+      marginBottom: 1,
+      width: maxWidth,
+      minHeight: availableTerminalHeight ? 1 : void 0,
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { justifyContent: "space-between", marginBottom: 0, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: getMessageColor(item.type), bold: true, children: [
+              getMessagePrefix(item.type),
+              item.type === "user" /* USER */ ? "You" : item.type === "assistant" /* ASSISTANT */ ? item.metadata?.target?.name || item.metadata?.target?.id || "Genie" : item.type.charAt(0).toUpperCase() + item.type.slice(1).replace("_", " ")
+            ] }),
+            isPending && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentYellow, italic: true, children: " (processing...)" })
+          ] }),
+          item.timestamp && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, dimColor: true, children: formatTimestamp(item.timestamp) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+          Box_default,
+          {
+            marginLeft: 2,
+            flexDirection: "column",
+            width: "100%",
+            children: renderMessageContent()
+          }
+        ),
+        item.type === "error" /* ERROR */ && item.details && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+          Box_default,
+          {
+            marginLeft: 2,
+            marginTop: 1,
+            borderStyle: "round",
+            borderColor: Colors.AccentRed,
+            paddingX: 1,
+            children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, italic: true, children: item.details })
+          }
+        )
+      ]
+    }
+  );
 };
 
 // src/ui/components/RadioButtonSelect.tsx
-var import_react30 = __toESM(require_react(), 1);
+var import_react32 = __toESM(require_react(), 1);
 var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
 function RadioButtonSelect({
   items,
@@ -49481,9 +55584,9 @@ function RadioButtonSelect({
   showScrollArrows = false,
   maxItemsToShow = 10
 }) {
-  const [activeIndex, setActiveIndex] = (0, import_react30.useState)(initialIndex);
-  const [scrollOffset, setScrollOffset] = (0, import_react30.useState)(0);
-  (0, import_react30.useEffect)(() => {
+  const [activeIndex, setActiveIndex] = (0, import_react32.useState)(initialIndex);
+  const [scrollOffset, setScrollOffset] = (0, import_react32.useState)(0);
+  (0, import_react32.useEffect)(() => {
     const newScrollOffset = Math.max(
       0,
       Math.min(activeIndex - maxItemsToShow + 1, items.length - maxItemsToShow)
@@ -49548,60 +55651,8 @@ function RadioButtonSelect({
   ] });
 }
 
-// src/ui/components/TargetTypeDialog.tsx
-var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
-function TargetTypeDialog({
-  onSelect,
-  availableTargets
-}) {
-  const items = [
-    {
-      label: `Agents (${availableTargets.agents.length} available)`,
-      value: "agent",
-      disabled: availableTargets.agents.length === 0
-    },
-    {
-      label: `Teams (${availableTargets.teams.length} available)`,
-      value: "team",
-      disabled: availableTargets.teams.length === 0
-    },
-    {
-      label: `Workflows (${availableTargets.workflows.length} available)`,
-      value: "workflow",
-      disabled: availableTargets.workflows.length === 0
-    }
-  ];
-  const handleSelect = (targetType) => {
-    onSelect(targetType);
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
-    Box_default,
-    {
-      borderStyle: "round",
-      borderColor: "#666666",
-      flexDirection: "column",
-      padding: 1,
-      width: "100%",
-      children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { bold: true, children: "\u{1F9DE} Welcome to Genie Local CLI" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { children: "What would you like to interact with?" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-          RadioButtonSelect,
-          {
-            items,
-            initialIndex: 0,
-            onSelect: handleSelect,
-            isFocused: true
-          }
-        ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select)" }) })
-      ]
-    }
-  );
-}
-
 // src/ui/components/TargetSelectionDialog.tsx
-var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
 function TargetSelectionDialog({
   targetType,
   targets,
@@ -49627,7 +55678,7 @@ function TargetSelectionDialog({
     }
   });
   const targetTypeDisplay = targetType.charAt(0).toUpperCase() + targetType.slice(1);
-  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
     Box_default,
     {
       borderStyle: "round",
@@ -49636,16 +55687,16 @@ function TargetSelectionDialog({
       padding: 1,
       width: "100%",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { bold: true, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Text, { bold: true, children: [
           "Select ",
           targetTypeDisplay
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Text, { children: [
           "Choose which ",
           targetType,
           " you want to interact with:"
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
           RadioButtonSelect,
           {
             items,
@@ -49656,39 +55707,39 @@ function TargetSelectionDialog({
             maxItemsToShow: 10
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
       ]
     }
   );
 }
 
-// src/ui/components/SessionSelectionDialog.tsx
-var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
-function SessionSelectionDialog({
-  selectedTarget,
+// src/ui/components/TargetTypeDialog.tsx
+var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+function TargetTypeDialog({
   onSelect,
-  onBack
+  availableTargets
 }) {
   const items = [
     {
-      label: "Start new conversation",
-      value: "new"
+      label: `Agents (${availableTargets.agents.length} available)`,
+      value: "agent",
+      disabled: availableTargets.agents.length === 0
     },
     {
-      label: "Continue existing session (coming soon)",
-      value: "existing",
-      disabled: true
+      label: `Teams (${availableTargets.teams.length} available)`,
+      value: "team",
+      disabled: availableTargets.teams.length === 0
+    },
+    {
+      label: `Workflows (${availableTargets.workflows.length} available)`,
+      value: "workflow",
+      disabled: availableTargets.workflows.length === 0
     }
   ];
-  const handleSelect = (sessionAction) => {
-    onSelect(sessionAction);
+  const handleSelect = (targetType) => {
+    onSelect(targetType);
   };
-  use_input_default((input, key) => {
-    if (key.escape) {
-      onBack();
-    }
-  });
-  return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
     Box_default,
     {
       borderStyle: "round",
@@ -49697,13 +55748,9 @@ function SessionSelectionDialog({
       padding: 1,
       width: "100%",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { bold: true, children: "Session Options" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(Text, { children: [
-          "Ready to chat with: ",
-          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { color: "#00ff00", children: selectedTarget.name })
-        ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { children: "How would you like to proceed?" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { bold: true, children: "\u{1F9DE} Welcome to Genie Local CLI" }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { children: "What would you like to interact with?" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
           RadioButtonSelect,
           {
             items,
@@ -49712,31 +55759,935 @@ function SessionSelectionDialog({
             isFocused: true
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select)" }) })
       ]
     }
   );
 }
 
+// src/ui/components/shared/text-buffer.ts
+var import_react33 = __toESM(require_react(), 1);
+import { spawnSync } from "child_process";
+import fs3 from "fs";
+import os2 from "os";
+import pathMod from "path";
+function unescapePath(path) {
+  return path.replace(/\\(.)/g, "$1");
+}
+function isWordChar(ch) {
+  if (ch === void 0) {
+    return false;
+  }
+  return !/[\s,.;!?]/.test(ch);
+}
+function stripUnsafeCharacters(str) {
+  const stripped = stripAnsi(str);
+  return toCodePoints(stripAnsi(stripped)).filter((char) => {
+    if (char.length > 1) return false;
+    const code = char.codePointAt(0);
+    if (code === void 0) {
+      return false;
+    }
+    const isUnsafe = code === 127 || code <= 31 && code !== 13 && code !== 10;
+    return !isUnsafe;
+  }).join("");
+}
+function clamp(v, min, max) {
+  return v < min ? min : v > max ? max : v;
+}
+function calculateInitialCursorPosition(initialLines, offset) {
+  let remainingChars = offset;
+  let row = 0;
+  while (row < initialLines.length) {
+    const lineLength = cpLen(initialLines[row]);
+    const totalCharsInLineAndNewline = lineLength + (row < initialLines.length - 1 ? 1 : 0);
+    if (remainingChars <= lineLength) {
+      return [row, remainingChars];
+    }
+    remainingChars -= totalCharsInLineAndNewline;
+    row++;
+  }
+  if (initialLines.length > 0) {
+    const lastRow = initialLines.length - 1;
+    return [lastRow, cpLen(initialLines[lastRow])];
+  }
+  return [0, 0];
+}
+function offsetToLogicalPos(text, offset) {
+  let row = 0;
+  let col = 0;
+  let currentOffset = 0;
+  if (offset === 0) return [0, 0];
+  const lines = text.split("\n");
+  for (let i2 = 0; i2 < lines.length; i2++) {
+    const line = lines[i2];
+    const lineLength = cpLen(line);
+    const lineLengthWithNewline = lineLength + (i2 < lines.length - 1 ? 1 : 0);
+    if (offset <= currentOffset + lineLength) {
+      row = i2;
+      col = offset - currentOffset;
+      return [row, col];
+    } else if (offset <= currentOffset + lineLengthWithNewline) {
+      row = i2;
+      col = lineLength;
+      if (offset === currentOffset + lineLengthWithNewline && i2 < lines.length - 1) {
+        return [i2 + 1, 0];
+      }
+      return [row, col];
+    }
+    currentOffset += lineLengthWithNewline;
+  }
+  if (lines.length > 0) {
+    row = lines.length - 1;
+    col = cpLen(lines[row]);
+  } else {
+    row = 0;
+    col = 0;
+  }
+  return [row, col];
+}
+function calculateVisualLayout(logicalLines, logicalCursor, viewportWidth) {
+  const visualLines = [];
+  const logicalToVisualMap = [];
+  const visualToLogicalMap = [];
+  let currentVisualCursor = [0, 0];
+  logicalLines.forEach((logLine, logIndex) => {
+    logicalToVisualMap[logIndex] = [];
+    if (logLine.length === 0) {
+      logicalToVisualMap[logIndex].push([visualLines.length, 0]);
+      visualToLogicalMap.push([logIndex, 0]);
+      visualLines.push("");
+      if (logIndex === logicalCursor[0] && logicalCursor[1] === 0) {
+        currentVisualCursor = [visualLines.length - 1, 0];
+      }
+    } else {
+      let currentPosInLogLine = 0;
+      const codePointsInLogLine = toCodePoints(logLine);
+      while (currentPosInLogLine < codePointsInLogLine.length) {
+        let currentChunk = "";
+        let currentChunkVisualWidth = 0;
+        let numCodePointsInChunk = 0;
+        let lastWordBreakPoint = -1;
+        let numCodePointsAtLastWordBreak = 0;
+        for (let i2 = currentPosInLogLine; i2 < codePointsInLogLine.length; i2++) {
+          const char = codePointsInLogLine[i2];
+          const charVisualWidth = stringWidth(char);
+          if (currentChunkVisualWidth + charVisualWidth > viewportWidth) {
+            if (lastWordBreakPoint !== -1 && numCodePointsAtLastWordBreak > 0 && currentPosInLogLine + numCodePointsAtLastWordBreak < i2) {
+              currentChunk = codePointsInLogLine.slice(
+                currentPosInLogLine,
+                currentPosInLogLine + numCodePointsAtLastWordBreak
+              ).join("");
+              numCodePointsInChunk = numCodePointsAtLastWordBreak;
+            } else {
+              if (numCodePointsInChunk === 0 && charVisualWidth > viewportWidth) {
+                currentChunk = char;
+                numCodePointsInChunk = 1;
+              } else if (numCodePointsInChunk === 0 && charVisualWidth <= viewportWidth) {
+              }
+            }
+            break;
+          }
+          currentChunk += char;
+          currentChunkVisualWidth += charVisualWidth;
+          numCodePointsInChunk++;
+          if (char === " ") {
+            lastWordBreakPoint = i2;
+            numCodePointsAtLastWordBreak = numCodePointsInChunk - 1;
+          }
+        }
+        if (numCodePointsInChunk === 0 && currentPosInLogLine < codePointsInLogLine.length) {
+          const firstChar = codePointsInLogLine[currentPosInLogLine];
+          currentChunk = firstChar;
+          numCodePointsInChunk = 1;
+        }
+        if (numCodePointsInChunk === 0 && currentPosInLogLine < codePointsInLogLine.length) {
+          currentChunk = codePointsInLogLine[currentPosInLogLine];
+          numCodePointsInChunk = 1;
+        }
+        logicalToVisualMap[logIndex].push([
+          visualLines.length,
+          currentPosInLogLine
+        ]);
+        visualToLogicalMap.push([logIndex, currentPosInLogLine]);
+        visualLines.push(currentChunk);
+        if (logIndex === logicalCursor[0]) {
+          const cursorLogCol = logicalCursor[1];
+          if (cursorLogCol >= currentPosInLogLine && cursorLogCol < currentPosInLogLine + numCodePointsInChunk) {
+            currentVisualCursor = [
+              visualLines.length - 1,
+              cursorLogCol - currentPosInLogLine
+              // Visual col is also code point index within visual line
+            ];
+          } else if (cursorLogCol === currentPosInLogLine + numCodePointsInChunk && numCodePointsInChunk > 0) {
+            currentVisualCursor = [
+              visualLines.length - 1,
+              numCodePointsInChunk
+            ];
+          }
+        }
+        const logicalStartOfThisChunk = currentPosInLogLine;
+        currentPosInLogLine += numCodePointsInChunk;
+        if (logicalStartOfThisChunk + numCodePointsInChunk < codePointsInLogLine.length && currentPosInLogLine < codePointsInLogLine.length && // Redundant if previous is true, but safe
+        codePointsInLogLine[currentPosInLogLine] === " ") {
+          currentPosInLogLine++;
+        }
+      }
+      if (logIndex === logicalCursor[0] && logicalCursor[1] === codePointsInLogLine.length) {
+        const lastVisualLineIdx = visualLines.length - 1;
+        if (lastVisualLineIdx >= 0 && visualLines[lastVisualLineIdx] !== void 0) {
+          currentVisualCursor = [
+            lastVisualLineIdx,
+            cpLen(visualLines[lastVisualLineIdx])
+            // Cursor at end of last visual line for this logical line
+          ];
+        }
+      }
+    }
+  });
+  if (logicalLines.length === 0 || logicalLines.length === 1 && logicalLines[0] === "") {
+    if (visualLines.length === 0) {
+      visualLines.push("");
+      if (!logicalToVisualMap[0]) logicalToVisualMap[0] = [];
+      logicalToVisualMap[0].push([0, 0]);
+      visualToLogicalMap.push([0, 0]);
+    }
+    currentVisualCursor = [0, 0];
+  } else if (logicalCursor[0] === logicalLines.length - 1 && logicalCursor[1] === cpLen(logicalLines[logicalLines.length - 1]) && visualLines.length > 0) {
+    const lastVisLineIdx = visualLines.length - 1;
+    currentVisualCursor = [lastVisLineIdx, cpLen(visualLines[lastVisLineIdx])];
+  }
+  return {
+    visualLines,
+    visualCursor: currentVisualCursor,
+    logicalToVisualMap,
+    visualToLogicalMap
+  };
+}
+var historyLimit = 100;
+function textBufferReducer(state, action) {
+  const pushUndo = (currentState) => {
+    const snapshot = {
+      lines: [...currentState.lines],
+      cursorRow: currentState.cursorRow,
+      cursorCol: currentState.cursorCol
+    };
+    const newStack = [...currentState.undoStack, snapshot];
+    if (newStack.length > historyLimit) {
+      newStack.shift();
+    }
+    return { ...currentState, undoStack: newStack, redoStack: [] };
+  };
+  const currentLine = (r2) => state.lines[r2] ?? "";
+  const currentLineLen = (r2) => cpLen(currentLine(r2));
+  switch (action.type) {
+    case "set_text": {
+      let nextState = state;
+      if (action.pushToUndo !== false) {
+        nextState = pushUndo(state);
+      }
+      const newContentLines = action.payload.replace(/\r\n?/g, "\n").split("\n");
+      const lines = newContentLines.length === 0 ? [""] : newContentLines;
+      const lastNewLineIndex = lines.length - 1;
+      return {
+        ...nextState,
+        lines,
+        cursorRow: lastNewLineIndex,
+        cursorCol: cpLen(lines[lastNewLineIndex] ?? ""),
+        preferredCol: null
+      };
+    }
+    case "insert": {
+      const nextState = pushUndo(state);
+      const newLines = [...nextState.lines];
+      let newCursorRow = nextState.cursorRow;
+      let newCursorCol = nextState.cursorCol;
+      const currentLine2 = (r2) => newLines[r2] ?? "";
+      const str = stripUnsafeCharacters(
+        action.payload.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+      );
+      const parts = str.split("\n");
+      const lineContent = currentLine2(newCursorRow);
+      const before = cpSlice(lineContent, 0, newCursorCol);
+      const after = cpSlice(lineContent, newCursorCol);
+      if (parts.length > 1) {
+        newLines[newCursorRow] = before + parts[0];
+        const remainingParts = parts.slice(1);
+        const lastPartOriginal = remainingParts.pop() ?? "";
+        newLines.splice(newCursorRow + 1, 0, ...remainingParts);
+        newLines.splice(
+          newCursorRow + parts.length - 1,
+          0,
+          lastPartOriginal + after
+        );
+        newCursorRow = newCursorRow + parts.length - 1;
+        newCursorCol = cpLen(lastPartOriginal);
+      } else {
+        newLines[newCursorRow] = before + parts[0] + after;
+        newCursorCol = cpLen(before) + cpLen(parts[0]);
+      }
+      return {
+        ...nextState,
+        lines: newLines,
+        cursorRow: newCursorRow,
+        cursorCol: newCursorCol,
+        preferredCol: null
+      };
+    }
+    case "backspace": {
+      const nextState = pushUndo(state);
+      const newLines = [...nextState.lines];
+      let newCursorRow = nextState.cursorRow;
+      let newCursorCol = nextState.cursorCol;
+      const currentLine2 = (r2) => newLines[r2] ?? "";
+      if (newCursorCol === 0 && newCursorRow === 0) return state;
+      if (newCursorCol > 0) {
+        const lineContent = currentLine2(newCursorRow);
+        newLines[newCursorRow] = cpSlice(lineContent, 0, newCursorCol - 1) + cpSlice(lineContent, newCursorCol);
+        newCursorCol--;
+      } else if (newCursorRow > 0) {
+        const prevLineContent = currentLine2(newCursorRow - 1);
+        const currentLineContentVal = currentLine2(newCursorRow);
+        const newCol = cpLen(prevLineContent);
+        newLines[newCursorRow - 1] = prevLineContent + currentLineContentVal;
+        newLines.splice(newCursorRow, 1);
+        newCursorRow--;
+        newCursorCol = newCol;
+      }
+      return {
+        ...nextState,
+        lines: newLines,
+        cursorRow: newCursorRow,
+        cursorCol: newCursorCol,
+        preferredCol: null
+      };
+    }
+    case "set_viewport_width": {
+      if (action.payload === state.viewportWidth) {
+        return state;
+      }
+      return { ...state, viewportWidth: action.payload };
+    }
+    case "move": {
+      const { dir } = action.payload;
+      const { lines, cursorRow, cursorCol, viewportWidth } = state;
+      const visualLayout = calculateVisualLayout(
+        lines,
+        [cursorRow, cursorCol],
+        viewportWidth
+      );
+      const { visualLines, visualCursor, visualToLogicalMap } = visualLayout;
+      let newVisualRow = visualCursor[0];
+      let newVisualCol = visualCursor[1];
+      let newPreferredCol = state.preferredCol;
+      const currentVisLineLen = cpLen(visualLines[newVisualRow] ?? "");
+      switch (dir) {
+        case "left":
+          newPreferredCol = null;
+          if (newVisualCol > 0) {
+            newVisualCol--;
+          } else if (newVisualRow > 0) {
+            newVisualRow--;
+            newVisualCol = cpLen(visualLines[newVisualRow] ?? "");
+          }
+          break;
+        case "right":
+          newPreferredCol = null;
+          if (newVisualCol < currentVisLineLen) {
+            newVisualCol++;
+          } else if (newVisualRow < visualLines.length - 1) {
+            newVisualRow++;
+            newVisualCol = 0;
+          }
+          break;
+        case "up":
+          if (newVisualRow > 0) {
+            if (newPreferredCol === null) newPreferredCol = newVisualCol;
+            newVisualRow--;
+            newVisualCol = clamp(
+              newPreferredCol,
+              0,
+              cpLen(visualLines[newVisualRow] ?? "")
+            );
+          }
+          break;
+        case "down":
+          if (newVisualRow < visualLines.length - 1) {
+            if (newPreferredCol === null) newPreferredCol = newVisualCol;
+            newVisualRow++;
+            newVisualCol = clamp(
+              newPreferredCol,
+              0,
+              cpLen(visualLines[newVisualRow] ?? "")
+            );
+          }
+          break;
+        case "home":
+          newPreferredCol = null;
+          newVisualCol = 0;
+          break;
+        case "end":
+          newPreferredCol = null;
+          newVisualCol = currentVisLineLen;
+          break;
+        case "wordLeft": {
+          const { cursorRow: cursorRow2, cursorCol: cursorCol2, lines: lines2 } = state;
+          if (cursorCol2 === 0 && cursorRow2 === 0) return state;
+          let newCursorRow = cursorRow2;
+          let newCursorCol = cursorCol2;
+          if (cursorCol2 === 0) {
+            newCursorRow--;
+            newCursorCol = cpLen(lines2[newCursorRow] ?? "");
+          } else {
+            const lineContent = lines2[cursorRow2];
+            const arr = toCodePoints(lineContent);
+            let start = cursorCol2;
+            let onlySpaces = true;
+            for (let i2 = 0; i2 < start; i2++) {
+              if (isWordChar(arr[i2])) {
+                onlySpaces = false;
+                break;
+              }
+            }
+            if (onlySpaces && start > 0) {
+              start--;
+            } else {
+              while (start > 0 && !isWordChar(arr[start - 1])) start--;
+              while (start > 0 && isWordChar(arr[start - 1])) start--;
+            }
+            newCursorCol = start;
+          }
+          return {
+            ...state,
+            cursorRow: newCursorRow,
+            cursorCol: newCursorCol,
+            preferredCol: null
+          };
+        }
+        case "wordRight": {
+          const { cursorRow: cursorRow2, cursorCol: cursorCol2, lines: lines2 } = state;
+          if (cursorRow2 === lines2.length - 1 && cursorCol2 === cpLen(lines2[cursorRow2] ?? "")) {
+            return state;
+          }
+          let newCursorRow = cursorRow2;
+          let newCursorCol = cursorCol2;
+          const lineContent = lines2[cursorRow2] ?? "";
+          const arr = toCodePoints(lineContent);
+          if (cursorCol2 >= arr.length) {
+            newCursorRow++;
+            newCursorCol = 0;
+          } else {
+            let end = cursorCol2;
+            while (end < arr.length && !isWordChar(arr[end])) end++;
+            while (end < arr.length && isWordChar(arr[end])) end++;
+            newCursorCol = end;
+          }
+          return {
+            ...state,
+            cursorRow: newCursorRow,
+            cursorCol: newCursorCol,
+            preferredCol: null
+          };
+        }
+        default:
+          break;
+      }
+      if (visualToLogicalMap[newVisualRow]) {
+        const [logRow, logStartCol] = visualToLogicalMap[newVisualRow];
+        return {
+          ...state,
+          cursorRow: logRow,
+          cursorCol: clamp(
+            logStartCol + newVisualCol,
+            0,
+            cpLen(state.lines[logRow] ?? "")
+          ),
+          preferredCol: newPreferredCol
+        };
+      }
+      return state;
+    }
+    case "delete": {
+      const { cursorRow, cursorCol, lines } = state;
+      const lineContent = currentLine(cursorRow);
+      if (cursorCol < currentLineLen(cursorRow)) {
+        const nextState = pushUndo(state);
+        const newLines = [...nextState.lines];
+        newLines[cursorRow] = cpSlice(lineContent, 0, cursorCol) + cpSlice(lineContent, cursorCol + 1);
+        return { ...nextState, lines: newLines, preferredCol: null };
+      } else if (cursorRow < lines.length - 1) {
+        const nextState = pushUndo(state);
+        const nextLineContent = currentLine(cursorRow + 1);
+        const newLines = [...nextState.lines];
+        newLines[cursorRow] = lineContent + nextLineContent;
+        newLines.splice(cursorRow + 1, 1);
+        return { ...nextState, lines: newLines, preferredCol: null };
+      }
+      return state;
+    }
+    case "delete_word_left": {
+      const { cursorRow, cursorCol } = state;
+      if (cursorCol === 0 && cursorRow === 0) return state;
+      if (cursorCol === 0) {
+        const nextState2 = pushUndo(state);
+        const prevLineContent = currentLine(cursorRow - 1);
+        const currentLineContentVal = currentLine(cursorRow);
+        const newCol = cpLen(prevLineContent);
+        const newLines2 = [...nextState2.lines];
+        newLines2[cursorRow - 1] = prevLineContent + currentLineContentVal;
+        newLines2.splice(cursorRow, 1);
+        return {
+          ...nextState2,
+          lines: newLines2,
+          cursorRow: cursorRow - 1,
+          cursorCol: newCol,
+          preferredCol: null
+        };
+      }
+      const nextState = pushUndo(state);
+      const lineContent = currentLine(cursorRow);
+      const arr = toCodePoints(lineContent);
+      let start = cursorCol;
+      let onlySpaces = true;
+      for (let i2 = 0; i2 < start; i2++) {
+        if (isWordChar(arr[i2])) {
+          onlySpaces = false;
+          break;
+        }
+      }
+      if (onlySpaces && start > 0) {
+        start--;
+      } else {
+        while (start > 0 && !isWordChar(arr[start - 1])) start--;
+        while (start > 0 && isWordChar(arr[start - 1])) start--;
+      }
+      const newLines = [...nextState.lines];
+      newLines[cursorRow] = cpSlice(lineContent, 0, start) + cpSlice(lineContent, cursorCol);
+      return {
+        ...nextState,
+        lines: newLines,
+        cursorCol: start,
+        preferredCol: null
+      };
+    }
+    case "delete_word_right": {
+      const { cursorRow, cursorCol, lines } = state;
+      const lineContent = currentLine(cursorRow);
+      const arr = toCodePoints(lineContent);
+      if (cursorCol >= arr.length && cursorRow === lines.length - 1)
+        return state;
+      if (cursorCol >= arr.length) {
+        const nextState2 = pushUndo(state);
+        const nextLineContent = currentLine(cursorRow + 1);
+        const newLines2 = [...nextState2.lines];
+        newLines2[cursorRow] = lineContent + nextLineContent;
+        newLines2.splice(cursorRow + 1, 1);
+        return { ...nextState2, lines: newLines2, preferredCol: null };
+      }
+      const nextState = pushUndo(state);
+      let end = cursorCol;
+      while (end < arr.length && !isWordChar(arr[end])) end++;
+      while (end < arr.length && isWordChar(arr[end])) end++;
+      const newLines = [...nextState.lines];
+      newLines[cursorRow] = cpSlice(lineContent, 0, cursorCol) + cpSlice(lineContent, end);
+      return { ...nextState, lines: newLines, preferredCol: null };
+    }
+    case "kill_line_right": {
+      const { cursorRow, cursorCol, lines } = state;
+      const lineContent = currentLine(cursorRow);
+      if (cursorCol < currentLineLen(cursorRow)) {
+        const nextState = pushUndo(state);
+        const newLines = [...nextState.lines];
+        newLines[cursorRow] = cpSlice(lineContent, 0, cursorCol);
+        return { ...nextState, lines: newLines };
+      } else if (cursorRow < lines.length - 1) {
+        const nextState = pushUndo(state);
+        const nextLineContent = currentLine(cursorRow + 1);
+        const newLines = [...nextState.lines];
+        newLines[cursorRow] = lineContent + nextLineContent;
+        newLines.splice(cursorRow + 1, 1);
+        return { ...nextState, lines: newLines, preferredCol: null };
+      }
+      return state;
+    }
+    case "kill_line_left": {
+      const { cursorRow, cursorCol } = state;
+      if (cursorCol > 0) {
+        const nextState = pushUndo(state);
+        const lineContent = currentLine(cursorRow);
+        const newLines = [...nextState.lines];
+        newLines[cursorRow] = cpSlice(lineContent, cursorCol);
+        return {
+          ...nextState,
+          lines: newLines,
+          cursorCol: 0,
+          preferredCol: null
+        };
+      }
+      return state;
+    }
+    case "undo": {
+      const stateToRestore = state.undoStack[state.undoStack.length - 1];
+      if (!stateToRestore) return state;
+      const currentSnapshot = {
+        lines: [...state.lines],
+        cursorRow: state.cursorRow,
+        cursorCol: state.cursorCol
+      };
+      return {
+        ...state,
+        ...stateToRestore,
+        undoStack: state.undoStack.slice(0, -1),
+        redoStack: [...state.redoStack, currentSnapshot]
+      };
+    }
+    case "redo": {
+      const stateToRestore = state.redoStack[state.redoStack.length - 1];
+      if (!stateToRestore) return state;
+      const currentSnapshot = {
+        lines: [...state.lines],
+        cursorRow: state.cursorRow,
+        cursorCol: state.cursorCol
+      };
+      return {
+        ...state,
+        ...stateToRestore,
+        redoStack: state.redoStack.slice(0, -1),
+        undoStack: [...state.undoStack, currentSnapshot]
+      };
+    }
+    case "replace_range": {
+      const { startRow, startCol, endRow, endCol, text } = action.payload;
+      if (startRow > endRow || startRow === endRow && startCol > endCol || startRow < 0 || startCol < 0 || endRow >= state.lines.length || endRow < state.lines.length && endCol > currentLineLen(endRow)) {
+        return state;
+      }
+      const nextState = pushUndo(state);
+      const newLines = [...nextState.lines];
+      const sCol = clamp(startCol, 0, currentLineLen(startRow));
+      const eCol = clamp(endCol, 0, currentLineLen(endRow));
+      const prefix = cpSlice(currentLine(startRow), 0, sCol);
+      const suffix = cpSlice(currentLine(endRow), eCol);
+      const normalisedReplacement = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      const replacementParts = normalisedReplacement.split("\n");
+      if (startRow === endRow) {
+        newLines[startRow] = prefix + normalisedReplacement + suffix;
+      } else {
+        const firstLine = prefix + replacementParts[0];
+        if (replacementParts.length === 1) {
+          newLines.splice(startRow, endRow - startRow + 1, firstLine + suffix);
+        } else {
+          const lastLine = replacementParts[replacementParts.length - 1] + suffix;
+          const middleLines = replacementParts.slice(1, -1);
+          newLines.splice(
+            startRow,
+            endRow - startRow + 1,
+            firstLine,
+            ...middleLines,
+            lastLine
+          );
+        }
+      }
+      const finalCursorRow = startRow + replacementParts.length - 1;
+      const finalCursorCol = (replacementParts.length > 1 ? 0 : sCol) + cpLen(replacementParts[replacementParts.length - 1]);
+      return {
+        ...nextState,
+        lines: newLines,
+        cursorRow: finalCursorRow,
+        cursorCol: finalCursorCol,
+        preferredCol: null
+      };
+    }
+    case "move_to_offset": {
+      const { offset } = action.payload;
+      const [newRow, newCol] = offsetToLogicalPos(
+        state.lines.join("\n"),
+        offset
+      );
+      return {
+        ...state,
+        cursorRow: newRow,
+        cursorCol: newCol,
+        preferredCol: null
+      };
+    }
+    case "create_undo_snapshot": {
+      return pushUndo(state);
+    }
+    default: {
+      const exhaustiveCheck = action;
+      console.error(`Unknown action encountered: ${exhaustiveCheck}`);
+      return state;
+    }
+  }
+}
+function useTextBuffer({
+  initialText = "",
+  initialCursorOffset = 0,
+  viewport,
+  stdin,
+  setRawMode,
+  onChange,
+  isValidPath,
+  shellModeActive = false
+}) {
+  const initialState = (0, import_react33.useMemo)(() => {
+    const lines2 = initialText.split("\n");
+    const [initialCursorRow, initialCursorCol] = calculateInitialCursorPosition(
+      lines2.length === 0 ? [""] : lines2,
+      initialCursorOffset
+    );
+    return {
+      lines: lines2.length === 0 ? [""] : lines2,
+      cursorRow: initialCursorRow,
+      cursorCol: initialCursorCol,
+      preferredCol: null,
+      undoStack: [],
+      redoStack: [],
+      clipboard: null,
+      selectionAnchor: null,
+      viewportWidth: viewport.width
+    };
+  }, [initialText, initialCursorOffset, viewport.width]);
+  const [state, dispatch] = (0, import_react33.useReducer)(textBufferReducer, initialState);
+  const { lines, cursorRow, cursorCol, preferredCol, selectionAnchor } = state;
+  const text = (0, import_react33.useMemo)(() => lines.join("\n"), [lines]);
+  const visualLayout = (0, import_react33.useMemo)(
+    () => calculateVisualLayout(lines, [cursorRow, cursorCol], state.viewportWidth),
+    [lines, cursorRow, cursorCol, state.viewportWidth]
+  );
+  const { visualLines, visualCursor } = visualLayout;
+  const [visualScrollRow, setVisualScrollRow] = (0, import_react33.useState)(0);
+  (0, import_react33.useEffect)(() => {
+    if (onChange) {
+      onChange(text);
+    }
+  }, [text, onChange]);
+  (0, import_react33.useEffect)(() => {
+    dispatch({ type: "set_viewport_width", payload: viewport.width });
+  }, [viewport.width]);
+  (0, import_react33.useEffect)(() => {
+    const { height } = viewport;
+    let newVisualScrollRow = visualScrollRow;
+    if (visualCursor[0] < visualScrollRow) {
+      newVisualScrollRow = visualCursor[0];
+    } else if (visualCursor[0] >= visualScrollRow + height) {
+      newVisualScrollRow = visualCursor[0] - height + 1;
+    }
+    if (newVisualScrollRow !== visualScrollRow) {
+      setVisualScrollRow(newVisualScrollRow);
+    }
+  }, [visualCursor, visualScrollRow, viewport]);
+  const insert = (0, import_react33.useCallback)(
+    (ch) => {
+      if (/[\n\r]/.test(ch)) {
+        dispatch({ type: "insert", payload: ch });
+        return;
+      }
+      const minLengthToInferAsDragDrop = 3;
+      if (ch.length >= minLengthToInferAsDragDrop && !shellModeActive) {
+        let potentialPath = ch;
+        if (potentialPath.length > 2 && potentialPath.startsWith("'") && potentialPath.endsWith("'")) {
+          potentialPath = ch.slice(1, -1);
+        }
+        potentialPath = potentialPath.trim();
+        if (isValidPath(unescapePath(potentialPath))) {
+          ch = `@${potentialPath}`;
+        }
+      }
+      let currentText = "";
+      for (const char of toCodePoints(ch)) {
+        if (char.codePointAt(0) === 127) {
+          if (currentText.length > 0) {
+            dispatch({ type: "insert", payload: currentText });
+            currentText = "";
+          }
+          dispatch({ type: "backspace" });
+        } else {
+          currentText += char;
+        }
+      }
+      if (currentText.length > 0) {
+        dispatch({ type: "insert", payload: currentText });
+      }
+    },
+    [isValidPath, shellModeActive]
+  );
+  const newline = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "insert", payload: "\n" });
+  }, []);
+  const backspace = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "backspace" });
+  }, []);
+  const del = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "delete" });
+  }, []);
+  const move = (0, import_react33.useCallback)((dir) => {
+    dispatch({ type: "move", payload: { dir } });
+  }, []);
+  const undo = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "undo" });
+  }, []);
+  const redo = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "redo" });
+  }, []);
+  const setText = (0, import_react33.useCallback)((newText) => {
+    dispatch({ type: "set_text", payload: newText });
+  }, []);
+  const deleteWordLeft = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "delete_word_left" });
+  }, []);
+  const deleteWordRight = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "delete_word_right" });
+  }, []);
+  const killLineRight = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "kill_line_right" });
+  }, []);
+  const killLineLeft = (0, import_react33.useCallback)(() => {
+    dispatch({ type: "kill_line_left" });
+  }, []);
+  const openInExternalEditor = (0, import_react33.useCallback)(
+    async (opts = {}) => {
+      const editor = opts.editor ?? process.env["VISUAL"] ?? process.env["EDITOR"] ?? (process.platform === "win32" ? "notepad" : "vi");
+      const tmpDir = fs3.mkdtempSync(pathMod.join(os2.tmpdir(), "gemini-edit-"));
+      const filePath = pathMod.join(tmpDir, "buffer.txt");
+      fs3.writeFileSync(filePath, text, "utf8");
+      dispatch({ type: "create_undo_snapshot" });
+      const wasRaw = stdin?.isRaw ?? false;
+      try {
+        setRawMode?.(false);
+        const { status, error } = spawnSync(editor, [filePath], {
+          stdio: "inherit"
+        });
+        if (error) throw error;
+        if (typeof status === "number" && status !== 0)
+          throw new Error(`External editor exited with status ${status}`);
+        let newText = fs3.readFileSync(filePath, "utf8");
+        newText = newText.replace(/\r\n?/g, "\n");
+        dispatch({ type: "set_text", payload: newText, pushToUndo: false });
+      } catch (err) {
+        console.error("[useTextBuffer] external editor error", err);
+      } finally {
+        if (wasRaw) setRawMode?.(true);
+        try {
+          fs3.unlinkSync(filePath);
+        } catch {
+        }
+        try {
+          fs3.rmdirSync(tmpDir);
+        } catch {
+        }
+      }
+    },
+    [text, stdin, setRawMode]
+  );
+  const handleInput = (0, import_react33.useCallback)(
+    (key) => {
+      const { sequence: input } = key;
+      if (key.name === "return" || input === "\r" || input === "\n" || input === "\\\r")
+        newline();
+      else if (key.name === "left" && !key.meta && !key.ctrl) move("left");
+      else if (key.ctrl && key.name === "b") move("left");
+      else if (key.name === "right" && !key.meta && !key.ctrl) move("right");
+      else if (key.ctrl && key.name === "f") move("right");
+      else if (key.name === "up") move("up");
+      else if (key.name === "down") move("down");
+      else if ((key.ctrl || key.meta) && key.name === "left") move("wordLeft");
+      else if (key.meta && key.name === "b") move("wordLeft");
+      else if ((key.ctrl || key.meta) && key.name === "right")
+        move("wordRight");
+      else if (key.meta && key.name === "f") move("wordRight");
+      else if (key.name === "home") move("home");
+      else if (key.ctrl && key.name === "a") move("home");
+      else if (key.name === "end") move("end");
+      else if (key.ctrl && key.name === "e") move("end");
+      else if (key.ctrl && key.name === "w") deleteWordLeft();
+      else if ((key.meta || key.ctrl) && (key.name === "backspace" || input === "\x7F"))
+        deleteWordLeft();
+      else if ((key.meta || key.ctrl) && key.name === "delete")
+        deleteWordRight();
+      else if (key.name === "backspace" || input === "\x7F" || key.ctrl && key.name === "h")
+        backspace();
+      else if (key.name === "delete" || key.ctrl && key.name === "d") del();
+      else if (input && !key.ctrl && !key.meta) {
+        insert(input);
+      }
+    },
+    [newline, move, deleteWordLeft, deleteWordRight, backspace, del, insert]
+  );
+  const renderedVisualLines = (0, import_react33.useMemo)(
+    () => visualLines.slice(visualScrollRow, visualScrollRow + viewport.height),
+    [visualLines, visualScrollRow, viewport.height]
+  );
+  const replaceRange = (0, import_react33.useCallback)(
+    (startRow, startCol, endRow, endCol, text2) => {
+      dispatch({
+        type: "replace_range",
+        payload: { startRow, startCol, endRow, endCol, text: text2 }
+      });
+    },
+    []
+  );
+  const replaceRangeByOffset = (0, import_react33.useCallback)(
+    (startOffset, endOffset, replacementText) => {
+      const [startRow, startCol] = offsetToLogicalPos(text, startOffset);
+      const [endRow, endCol] = offsetToLogicalPos(text, endOffset);
+      replaceRange(startRow, startCol, endRow, endCol, replacementText);
+    },
+    [text, replaceRange]
+  );
+  const moveToOffset = (0, import_react33.useCallback)((offset) => {
+    dispatch({ type: "move_to_offset", payload: { offset } });
+  }, []);
+  const returnValue = {
+    lines,
+    text,
+    cursor: [cursorRow, cursorCol],
+    preferredCol,
+    selectionAnchor,
+    allVisualLines: visualLines,
+    viewportVisualLines: renderedVisualLines,
+    visualCursor,
+    visualScrollRow,
+    setText,
+    insert,
+    newline,
+    backspace,
+    del,
+    move,
+    undo,
+    redo,
+    replaceRange,
+    replaceRangeByOffset,
+    moveToOffset,
+    deleteWordLeft,
+    deleteWordRight,
+    killLineRight,
+    killLineLeft,
+    handleInput,
+    openInExternalEditor
+  };
+  return returnValue;
+}
+
 // src/ui/contexts/SessionContext.tsx
-var import_react31 = __toESM(require_react(), 1);
-var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
+var import_react34 = __toESM(require_react(), 1);
+var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
 import { resolve } from "path";
 import { writeFile, readFile, mkdir } from "fs/promises";
 import { existsSync as existsSync2 } from "fs";
-var SessionContext = (0, import_react31.createContext)(void 0);
+var SessionContext = (0, import_react34.createContext)(void 0);
 var useSession = () => {
-  const context = (0, import_react31.useContext)(SessionContext);
+  const context = (0, import_react34.useContext)(SessionContext);
   if (!context) {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return context;
 };
 var SessionProvider = ({ children }) => {
-  const [history, setHistory] = (0, import_react31.useState)([]);
-  const [currentSessionId, setCurrentSessionId] = (0, import_react31.useState)("");
-  const [nextMessageId, setNextMessageId] = (0, import_react31.useState)(1);
-  (0, import_react31.useEffect)(() => {
+  const [history, setHistory] = (0, import_react34.useState)([]);
+  const [currentSessionId, setCurrentSessionId] = (0, import_react34.useState)("");
+  const [nextMessageId, setNextMessageId] = (0, import_react34.useState)(1);
+  (0, import_react34.useEffect)(() => {
     const initSession = async () => {
       const sessionId = generateSessionId();
       setCurrentSessionId(sessionId);
@@ -49751,17 +56702,17 @@ var SessionProvider = ({ children }) => {
     };
     initSession();
   }, []);
-  const generateSessionId = (0, import_react31.useCallback)(() => {
+  const generateSessionId = (0, import_react34.useCallback)(() => {
     return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }, []);
-  const getSessionDir = (0, import_react31.useCallback)(() => {
+  const getSessionDir = (0, import_react34.useCallback)(() => {
     const sessionDir = appConfig.sessionDir.replace("~", process.env.HOME || "");
     return resolve(sessionDir);
   }, []);
-  const getSessionFilePath = (0, import_react31.useCallback)((sessionId) => {
+  const getSessionFilePath = (0, import_react34.useCallback)((sessionId) => {
     return resolve(getSessionDir(), `${sessionId}.json`);
   }, [getSessionDir]);
-  const addMessage = (0, import_react31.useCallback)((message) => {
+  const addMessage = (0, import_react34.useCallback)((message) => {
     const newMessage = {
       ...message,
       id: nextMessageId
@@ -49772,11 +56723,11 @@ var SessionProvider = ({ children }) => {
       setTimeout(() => saveSessionData(), 100);
     }
   }, [nextMessageId]);
-  const clearHistory = (0, import_react31.useCallback)(() => {
+  const clearHistory = (0, import_react34.useCallback)(() => {
     setHistory([]);
     setNextMessageId(1);
   }, []);
-  const saveSessionData = (0, import_react31.useCallback)(async () => {
+  const saveSessionData = (0, import_react34.useCallback)(async () => {
     if (!currentSessionId || history.length === 0) {
       return;
     }
@@ -49800,7 +56751,7 @@ var SessionProvider = ({ children }) => {
       console.error("Failed to save session:", error);
     }
   }, [currentSessionId, history, getSessionFilePath]);
-  const loadSessionData = (0, import_react31.useCallback)(async (sessionId) => {
+  const loadSessionData = (0, import_react34.useCallback)(async (sessionId) => {
     try {
       const filePath = getSessionFilePath(sessionId);
       const data = await readFile(filePath, "utf8");
@@ -49816,13 +56767,13 @@ var SessionProvider = ({ children }) => {
       throw error;
     }
   }, [getSessionFilePath]);
-  const createNewSession = (0, import_react31.useCallback)(() => {
+  const createNewSession = (0, import_react34.useCallback)(() => {
     const newSessionId = generateSessionId();
     setCurrentSessionId(newSessionId);
     setHistory([]);
     setNextMessageId(1);
   }, [generateSessionId]);
-  const listSessions = (0, import_react31.useCallback)(async () => {
+  const listSessions = (0, import_react34.useCallback)(async () => {
     try {
       const { readdir } = await import("fs/promises");
       const sessionDir = getSessionDir();
@@ -49846,13 +56797,15 @@ var SessionProvider = ({ children }) => {
     createNewSession,
     listSessions
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SessionContext.Provider, { value: contextValue, children });
+  return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(SessionContext.Provider, { value: contextValue, children });
 };
 
 // src/ui/App.tsx
-var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
 var CTRL_EXIT_PROMPT_DURATION_MS = 1e3;
-var AppWrapper = (props) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(SessionProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StreamingProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(App2, { ...props }) }) });
+var AppWrapper = (props) => {
+  return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SessionProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StreamingProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(App2, { ...props }) }) });
+};
 var App2 = ({ version: version2 }) => {
   const { stdout } = use_stdout_default();
   const { stdin, setRawMode } = use_stdin_default();
@@ -49861,21 +56814,39 @@ var App2 = ({ version: version2 }) => {
     history,
     addMessage,
     clearHistory,
-    currentSessionId,
-    saveSession,
-    loadSession
+    currentSessionId
   } = useSession();
-  const [showHelp, setShowHelp] = (0, import_react32.useState)(false);
-  const [debugMessage, setDebugMessage] = (0, import_react32.useState)("");
-  const [ctrlCPressedOnce, setCtrlCPressedOnce] = (0, import_react32.useState)(false);
-  const [ctrlDPressedOnce, setCtrlDPressedOnce] = (0, import_react32.useState)(false);
-  const ctrlCTimerRef = (0, import_react32.useRef)(null);
-  const ctrlDTimerRef = (0, import_react32.useRef)(null);
-  const [connectionStatus, setConnectionStatus] = (0, import_react32.useState)("connecting");
-  const [selectedTarget, setSelectedTarget] = (0, import_react32.useState)(null);
-  const [availableTargets, setAvailableTargets] = (0, import_react32.useState)({ agents: [], teams: [], workflows: [] });
-  const [uiState, setUiState] = (0, import_react32.useState)("selecting_type");
-  const [selectedTargetType, setSelectedTargetType] = (0, import_react32.useState)(null);
+  const [staticNeedsRefresh, setStaticNeedsRefresh] = (0, import_react35.useState)(false);
+  const [staticKey, setStaticKey] = (0, import_react35.useState)(0);
+  const [debugMessage, setDebugMessage] = (0, import_react35.useState)("");
+  const [ctrlCPressedOnce, setCtrlCPressedOnce] = (0, import_react35.useState)(false);
+  const [ctrlDPressedOnce, setCtrlDPressedOnce] = (0, import_react35.useState)(false);
+  const ctrlCTimerRef = (0, import_react35.useRef)(null);
+  const ctrlDTimerRef = (0, import_react35.useRef)(null);
+  const [constrainHeight, setConstrainHeight] = (0, import_react35.useState)(true);
+  const [footerHeight, setFooterHeight] = (0, import_react35.useState)(0);
+  const [shellModeActive, setShellModeActive] = (0, import_react35.useState)(false);
+  const [uiState, setUiState] = (0, import_react35.useState)("selecting_type");
+  const [selectedTargetType, setSelectedTargetType] = (0, import_react35.useState)(null);
+  const [connectionStatus, setConnectionStatus] = (0, import_react35.useState)("connecting");
+  const [selectedTarget, setSelectedTarget] = (0, import_react35.useState)(null);
+  const [availableTargets, setAvailableTargets] = (0, import_react35.useState)({ agents: [], teams: [], workflows: [] });
+  const refreshStatic = (0, import_react35.useCallback)(() => {
+    stdout.write(base_exports.clearTerminal);
+    setStaticKey((prev) => prev + 1);
+  }, [setStaticKey, stdout]);
+  const handleTargetTypeSelect = (0, import_react35.useCallback)((targetType) => {
+    setSelectedTargetType(targetType);
+    setUiState("selecting_target");
+  }, []);
+  const handleTargetSelect = (0, import_react35.useCallback)((target) => {
+    setSelectedTarget(target);
+    setUiState("chatting");
+  }, []);
+  const handleBackToTargetSelection = (0, import_react35.useCallback)(() => {
+    setUiState("selecting_type");
+    setSelectedTargetType(null);
+  }, []);
   const {
     streamingState,
     submitQuery,
@@ -49889,7 +56860,18 @@ var App2 = ({ version: version2 }) => {
     setDebugMessage
   );
   const { elapsedTime, currentLoadingPhrase } = useLoadingIndicator(streamingState);
-  (0, import_react32.useEffect)(() => {
+  const widthFraction = 0.9;
+  const inputWidth = Math.max(20, Math.floor(terminalWidth * widthFraction) - 3);
+  const suggestionsWidth = Math.max(60, Math.floor(terminalWidth * 0.8));
+  const buffer = useTextBuffer({
+    initialText: "",
+    viewport: { height: 10, width: inputWidth },
+    stdin,
+    setRawMode,
+    isValidPath: () => false,
+    shellModeActive: false
+  });
+  (0, import_react35.useEffect)(() => {
     const initializeAPI = async () => {
       try {
         const healthResponse = await localAPIClient.healthCheck();
@@ -49907,23 +56889,26 @@ var App2 = ({ version: version2 }) => {
           workflows: workflowsResponse.data || []
         });
         setConnectionStatus("connected");
-        if (appConfig.cliDebug) {
-          console.log(`Loaded ${agentsResponse.data?.length || 0} agents, ${teamsResponse.data?.length || 0} teams, ${workflowsResponse.data?.length || 0} workflows`);
+        if (agentsResponse.data && agentsResponse.data.length > 0) {
+          const firstAgent = agentsResponse.data[0];
+          setSelectedTarget({
+            type: "agent",
+            id: firstAgent.agent_id,
+            name: firstAgent.name
+          });
         }
-        setUiState("selecting_type");
       } catch (error) {
-        console.error("Failed to connect to API:", error);
         setConnectionStatus("error");
         addMessage({
           type: "error" /* ERROR */,
-          text: `Failed to connect to API at ${appConfig.apiBaseUrl}: ${error instanceof Error ? error.message : "Unknown error"}`,
+          text: `Failed to connect to API: ${error instanceof Error ? error.message : "Unknown error"}`,
           timestamp: Date.now()
         });
       }
     };
     initializeAPI();
-  }, []);
-  const handleExit = (0, import_react32.useCallback)(
+  }, [addMessage]);
+  const handleExit = (0, import_react35.useCallback)(
     (pressedOnce, setPressedOnce, timerRef) => {
       if (pressedOnce) {
         if (timerRef.current) {
@@ -49940,211 +56925,163 @@ var App2 = ({ version: version2 }) => {
     },
     []
   );
-  const isGlobalInputActive = streamingState === "idle" /* Idle */ && connectionStatus === "connected" && uiState === "chatting";
+  const isInputActive = streamingState === "idle" /* Idle */ && !initError && connectionStatus === "connected" && uiState === "chatting";
   use_input_default((input, key) => {
+    let enteringConstrainHeightMode = false;
+    if (!constrainHeight) {
+      enteringConstrainHeightMode = true;
+      setConstrainHeight(true);
+    }
     if (key.ctrl && (input === "c" || input === "C")) {
       handleExit(ctrlCPressedOnce, setCtrlCPressedOnce, ctrlCTimerRef);
     } else if (key.ctrl && (input === "d" || input === "D")) {
-      handleExit(ctrlDPressedOnce, setCtrlDPressedOnce, ctrlDTimerRef);
-    } else if (key.ctrl && input === "h") {
-      setShowHelp((prev) => !prev);
-    } else if (key.ctrl && input === "l") {
-      clearHistory();
-      stdout.write("\\x1B[2J\\x1B[3J\\x1B[H");
-    } else if (key.escape) {
-      if (streamingState !== "idle" /* Idle */) {
-        cancelStream();
+      if (buffer.text.length > 0) {
+        return;
       }
+      handleExit(ctrlDPressedOnce, setCtrlDPressedOnce, ctrlDTimerRef);
+    } else if (key.ctrl && input === "s" && !enteringConstrainHeightMode) {
+      setConstrainHeight(false);
     }
-  }, {
-    isActive: !isGlobalInputActive
   });
-  const handleSubmit = (0, import_react32.useCallback)(
-    (message) => {
-      const trimmedMessage = message.trim();
-      if (trimmedMessage.length > 0 && selectedTarget) {
-        submitQuery(trimmedMessage);
+  const handleFinalSubmit = (0, import_react35.useCallback)(
+    (submittedValue) => {
+      const trimmedValue = submittedValue.trim();
+      if (trimmedValue.length > 0 && selectedTarget) {
+        submitQuery(trimmedValue);
       }
     },
     [submitQuery, selectedTarget]
   );
-  const handleTargetTypeSelect = (0, import_react32.useCallback)((targetType) => {
-    setSelectedTargetType(targetType);
-    setUiState("selecting_target");
-  }, []);
-  const handleTargetSelect = (0, import_react32.useCallback)((target) => {
-    setSelectedTarget(target);
-    setUiState("selecting_session");
-  }, []);
-  const handleSessionSelect = (0, import_react32.useCallback)((sessionAction) => {
-    if (sessionAction === "new") {
-      setUiState("chatting");
+  const handleClearScreen = (0, import_react35.useCallback)(() => {
+    clearHistory();
+    console.clear();
+    refreshStatic();
+  }, [clearHistory, refreshStatic]);
+  const mainControlsRef = (0, import_react35.useRef)(null);
+  (0, import_react35.useEffect)(() => {
+    if (mainControlsRef.current) {
+      const fullFooterMeasurement = measure_element_default(mainControlsRef.current);
+      setFooterHeight(fullFooterMeasurement.height);
     }
-  }, []);
-  const handleBackToTargetType = (0, import_react32.useCallback)(() => {
-    setSelectedTargetType(null);
-    setUiState("selecting_type");
-  }, []);
-  const handleBackToTargetSelection = (0, import_react32.useCallback)(() => {
-    setSelectedTarget(null);
-    setUiState("selecting_target");
-  }, []);
-  const isInputActive = isGlobalInputActive;
-  const widthFraction = 0.9;
-  const inputWidth = Math.max(20, Math.floor(terminalWidth * widthFraction) - 3);
+  }, [terminalHeight]);
+  const staticExtraHeight = 3;
+  const availableTerminalHeight = (0, import_react35.useMemo)(
+    () => terminalHeight - footerHeight - staticExtraHeight,
+    [terminalHeight, footerHeight]
+  );
+  const mainAreaWidth = Math.floor(terminalWidth * 0.9);
+  const staticAreaMaxItemHeight = Math.max(terminalHeight * 4, 100);
   if (connectionStatus === "error") {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(
-        Box_default,
-        {
-          borderStyle: "round",
-          borderColor: "red",
-          paddingX: 1,
-          marginY: 1,
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: "red", children: [
-              "Failed to connect to API at ",
-              appConfig.apiBaseUrl
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "Make sure the multi-agent server is running and try again." })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        Footer,
-        {
-          debugMode: appConfig.cliDebug,
-          debugMessage,
-          sessionId: currentSessionId,
-          apiUrl: appConfig.apiBaseUrl
-        }
-      )
-    ] });
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      Box_default,
+      {
+        borderStyle: "round",
+        borderColor: Colors.AccentRed,
+        paddingX: 1,
+        marginY: 1,
+        children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Text, { color: Colors.AccentRed, children: [
+          "Failed to connect to API at ",
+          appConfig.apiBaseUrl
+        ] })
+      }
+    ) });
   }
   if (connectionStatus === "connecting") {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { children: [
-        "\u{1F9DE} Connecting to ",
-        appConfig.apiBaseUrl,
-        "..."
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        Footer,
-        {
-          debugMode: appConfig.cliDebug,
-          debugMessage,
-          sessionId: currentSessionId,
-          apiUrl: appConfig.apiBaseUrl
-        }
-      )
-    ] });
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Text, { children: [
+      "\u{1F9DE} Connecting to ",
+      appConfig.apiBaseUrl,
+      "..."
+    ] }) });
   }
   if (uiState === "selecting_type") {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        Static,
+        {
+          items: [
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+              Header,
+              {
+                terminalWidth,
+                version: version2,
+                nightly: false
+              }
+            ) }, "header")
+          ],
+          children: () => null
+        },
+        staticKey
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
         TargetTypeDialog,
         {
           onSelect: handleTargetTypeSelect,
           availableTargets
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        Footer,
-        {
-          debugMode: appConfig.cliDebug,
-          debugMessage,
-          sessionId: currentSessionId,
-          apiUrl: appConfig.apiBaseUrl
         }
       )
     ] });
   }
   if (uiState === "selecting_target" && selectedTargetType) {
     const targets = selectedTargetType === "agent" ? availableTargets.agents : selectedTargetType === "team" ? availableTargets.teams : availableTargets.workflows;
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        Static,
+        {
+          items: [
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+              Header,
+              {
+                terminalWidth,
+                version: version2,
+                nightly: false
+              }
+            ) }, "header")
+          ],
+          children: () => null
+        },
+        staticKey
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
         TargetSelectionDialog,
         {
           targetType: selectedTargetType,
           targets,
           onSelect: handleTargetSelect,
-          onBack: handleBackToTargetType
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        Footer,
-        {
-          debugMode: appConfig.cliDebug,
-          debugMessage,
-          sessionId: currentSessionId,
-          apiUrl: appConfig.apiBaseUrl
-        }
-      )
-    ] });
-  }
-  if (uiState === "selecting_session" && selectedTarget) {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        SessionSelectionDialog,
-        {
-          selectedTarget,
-          onSelect: handleSessionSelect,
           onBack: handleBackToTargetSelection
         }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        Footer,
-        {
-          debugMode: appConfig.cliDebug,
-          debugMessage,
-          sessionId: currentSessionId,
-          apiUrl: appConfig.apiBaseUrl
-        }
       )
     ] });
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-      Header,
+  return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      Static,
       {
-        terminalWidth,
-        version: version2,
-        connectionStatus,
-        selectedTarget,
-        availableTargets,
-        onTargetChange: () => setUiState("selecting_type")
-      }
+        items: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            Header,
+            {
+              terminalWidth,
+              version: version2,
+              nightly: false
+            }
+          ) }, "header"),
+          ...history.map((h2) => /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            HistoryItemDisplay,
+            {
+              terminalWidth: mainAreaWidth,
+              availableTerminalHeight: staticAreaMaxItemHeight,
+              item: h2,
+              isPending: false
+            },
+            h2.id
+          ))
+        ],
+        children: (item) => item
+      },
+      staticKey
     ),
-    /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-      ChatDisplay,
-      {
-        history,
-        pendingMessage,
-        terminalWidth,
-        terminalHeight
-      }
-    ),
-    showHelp && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-      Box_default,
-      {
-        borderStyle: "round",
-        borderColor: "blue",
-        paddingX: 1,
-        marginY: 1,
-        children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { bold: true, children: "Genie Local CLI Help" }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Type messages to chat with the selected agent/team/workflow" }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Ctrl+H: Toggle this help" }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Ctrl+L: Clear screen" }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Ctrl+C or Ctrl+D (twice): Exit" }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Esc: Cancel current run/streaming" }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Click target name to change selection" })
-        ] })
-      }
-    ),
-    /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", children: [
-      ctrlCPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: "yellow", children: "Press Ctrl+C again to exit." }) : ctrlDPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: "yellow", children: "Press Ctrl+D again to exit." }) : null,
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", ref: mainControlsRef, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
         LoadingIndicator,
         {
           currentLoadingPhrase,
@@ -50152,35 +57089,41 @@ var App2 = ({ version: version2 }) => {
           streamingState
         }
       ),
-      initError && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      ctrlCPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+C again to exit." }) : ctrlDPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+D again to exit." }) : null,
+      initError && streamingState !== "responding" /* Responding */ && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
         Box_default,
         {
           borderStyle: "round",
-          borderColor: "red",
+          borderColor: Colors.AccentRed,
           paddingX: 1,
           marginBottom: 1,
-          children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: "red", children: [
-            "Error: ",
+          children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Text, { color: Colors.AccentRed, children: [
+            "Initialization Error: ",
             initError
           ] })
         }
       ),
-      isInputActive && uiState === "chatting" && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        GeminiStyleInput,
+      isInputActive && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        InputPrompt,
         {
-          onSubmit: handleSubmit,
-          disabled: !selectedTarget,
-          placeholder: selectedTarget ? `Message ${selectedTarget.name}...` : "No target selected",
-          focus: true
+          buffer,
+          onSubmit: handleFinalSubmit,
+          userMessages: [],
+          onClearScreen: handleClearScreen,
+          inputWidth,
+          suggestionsWidth,
+          shellModeActive,
+          setShellModeActive
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
         Footer,
         {
-          debugMode: appConfig.cliDebug,
-          debugMessage,
+          selectedTarget: selectedTarget || void 0,
           sessionId: currentSessionId,
-          apiUrl: appConfig.apiBaseUrl
+          apiUrl: appConfig.apiBaseUrl,
+          debugMode: appConfig.cliDebug,
+          debugMessage
         }
       )
     ] })
@@ -50197,7 +57140,7 @@ var main = async () => {
     console.log(`Debug Mode: ${appConfig.cliDebug}`);
     console.log("---");
   }
-  const { unmount } = render_default(import_react33.default.createElement(AppWrapper, { version }));
+  const { unmount } = render_default(import_react36.default.createElement(AppWrapper, { version }));
   const cleanup = () => {
     if (appConfig.cliDebug) {
       console.log("\\n\u{1F9DE} Genie Local CLI shutting down...");
@@ -50222,6 +57165,11 @@ main().catch((error) => {
   console.error("Failed to start Genie Local CLI:", error);
   process.exit(1);
 });
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 /*! Bundled license information:
 
 react/cjs/react.development.js:
@@ -50325,5 +57273,22 @@ formdata-polyfill/esm.min.js:
 
 node-domexception/index.js:
   (*! node-domexception. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> *)
+
+react-is/cjs/react-is.development.js:
+  (** @license React v16.13.1
+   * react-is.development.js
+   *
+   * Copyright (c) Facebook, Inc. and its affiliates.
+   *
+   * This source code is licensed under the MIT license found in the
+   * LICENSE file in the root directory of this source tree.
+   *)
+
+object-assign/index.js:
+  (*
+  object-assign
+  (c) Sindre Sorhus
+  @license MIT
+  *)
 */
 //# sourceMappingURL=genie-cli.js.map

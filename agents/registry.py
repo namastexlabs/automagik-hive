@@ -144,7 +144,8 @@ class AgentRegistry:
         cls,
         session_id: Optional[str] = None,
         debug_mode: bool = False,
-        db_url: Optional[str] = None
+        db_url: Optional[str] = None,
+        memory: Optional[Any] = None
     ) -> Dict[str, Agent]:
         """
         Get all available agents.
@@ -167,7 +168,8 @@ class AgentRegistry:
                     agent_id=agent_id,
                     session_id=session_id,
                     debug_mode=debug_mode,
-                    db_url=db_url
+                    db_url=db_url,
+                    memory=memory
                 )
             except Exception as e:
                 print(f"⚠️ Failed to load agent {agent_id}: {e}")

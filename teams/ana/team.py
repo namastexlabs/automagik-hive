@@ -3,7 +3,7 @@
 # Generic implementation for any agent system
 
 import os
-from typing import Optional, Union
+from typing import Optional, Union, Any
 import yaml
 from pathlib import Path
 from agno.team import Team
@@ -32,6 +32,8 @@ def get_ana_team(
     session_id: Optional[str] = None,
     debug_mode: bool = True,
     agent_names: Optional[list[str]] = None,
+    # Memory parameter from startup to prevent fallback warnings
+    memory: Optional[Any] = None,
     # User context parameters - will be stored in session_state
     user_name: Optional[str] = None,
     phone_number: Optional[str] = None,
@@ -74,10 +76,9 @@ def get_ana_team(
         **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
     )
     
-    # Initialize memory system from YAML config - use Agno Memory V2 correctly
+    # Use provided memory or initialize from YAML config - use Agno Memory V2 correctly
     memory_manager = None
-    memory = None
-    if config.get("memory"):
+    if memory is None and config.get("memory"):
         try:
             memory_manager = create_memory_manager()
             # Get the shared memory instance for both team and agents
@@ -138,7 +139,7 @@ def get_ana_team(
         # User context stored in session_state (Agno's built-in persistence)
         session_state=user_context_state if user_context_state.get('user_context') else None,
         # Make user context available in instructions
-        add_state_in_messages=True,  # This allows {user_name}, {user_id}, etc. in instructions
+        add_state_in_messages=config.get("add_state_in_messages", True),  # This allows {user_name}, {user_id}, etc. in instructions
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,
@@ -193,7 +194,8 @@ def get_custom_team(
     instructions: str,
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
-    debug_mode: bool = False
+    debug_mode: bool = False,
+    memory: Optional[Any] = None
 ) -> Team:
     """
     Create a custom team with any agents - fully generic implementation.
@@ -215,16 +217,16 @@ def get_custom_team(
     with open(config_path) as f:
         config = yaml.safe_load(f)
     
-    # Initialize memory for custom team - use Agno Memory V2 correctly
+    # Use provided memory or initialize for custom team - use Agno Memory V2 correctly  
     memory_manager = None
-    memory = None
-    try:
-        memory_manager = create_memory_manager()
-        # Get the shared memory instance for both team and agents
-        memory = memory_manager.memory
-    except Exception as e:
-        print(f"⚠️ Memory system initialization failed: {e}")
-        print("Continuing without memory system...")
+    if memory is None:
+        try:
+            memory_manager = create_memory_manager()
+            # Get the shared memory instance for both team and agents
+            memory = memory_manager.memory
+        except Exception as e:
+            print(f"⚠️ Memory system initialization failed: {e}")
+            print("Continuing without memory system...")
     
     # Load member agents using generic get_agent factory
     members = [
@@ -268,5 +270,7 @@ def get_custom_team(
         enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
         add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
         num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
+        # Additional behavioral parameters from YAML config
+        add_state_in_messages=config.get("add_state_in_messages", True),
         debug_mode=debug_mode,
     )
