@@ -237,6 +237,30 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
+*.orig
+*.save
+*.old
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+#*#
+.#*
+*.bak.*
+*.backup.*
+*.save.*
+*.old.*
+*_backup
+*_backup.*
+*.backup_*
+*.bak_*
+*.~*
+*_old
+*_old.*
+*.old_*
+*.bak.old
+*.backup.old
 
 # Temporary files
 *.tmp

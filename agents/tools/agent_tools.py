@@ -18,7 +18,7 @@ def get_agent_tools(agent_type: str) -> List[Any]:
     Get tools for a specific agent type
     
     Args:
-        agent_type: Type of agent (e.g., 'adquirencia_specialist', 'pagbank_specialist')
+        agent_type: Type of agent (e.g., 'adquirencia-specialist', 'pagbank-specialist')
         
     Returns:
         List of tools for the agent (empty list - using Agno native integration)

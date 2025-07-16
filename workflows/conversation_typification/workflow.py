@@ -816,7 +816,7 @@ def get_conversation_typification_workflow(debug_mode: bool = False) -> Conversa
     return ConversationTypificationWorkflow(
         workflow_id="conversation-typification",
         storage=PostgresStorage(
-            table_name="conversation_typification_workflows",
+            table_name="conversation-typification-workflows",
             db_url=db_url,
             auto_upgrade_schema=True,
         ),

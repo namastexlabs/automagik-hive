@@ -200,10 +200,10 @@ class UnifiedVersionFactory:
         
         # Import specific workflow factory functions
         try:
-            if component_id == "human_handoff" or component_id == "human-handoff":
+            if component_id == "human-handoff":
                 from workflows.human_handoff.workflow import get_human_handoff_workflow
                 return get_human_handoff_workflow()
-            elif component_id == "conversation_typification":
+            elif component_id == "conversation-typification":
                 from workflows.conversation_typification import get_conversation_typification_workflow
                 return get_conversation_typification_workflow(debug_mode=debug_mode)
             else:

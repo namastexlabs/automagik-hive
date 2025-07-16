@@ -270,17 +270,95 @@ def _run_versioned_team(component_id: str, version_record, message: str, session
 
 def _run_versioned_workflow(component_id: str, version_record, message: str, session_id: Optional[str], request_data: Dict[str, Any]):
     """Run a versioned workflow."""
-    return {
-        "response": f"Versioned workflow {component_id} v{version_record.version} would process: {message}",
-        "component_id": component_id,
-        "component_type": "workflow",
-        "version": version_record.version, 
-        "session_id": session_id,
-        "metadata": {
-            "version_config": version_record.config,
-            "created_at": version_record.created_at.isoformat() if version_record.created_at else None
+    try:
+        # Import workflow registry to get the workflow
+        from workflows.registry import get_workflow
+        from agno.models import WorkflowCompletedEvent
+        
+        # Create workflow instance with the specific version
+        workflow = get_workflow(component_id, version=version_record.version)
+        
+        # Run the workflow with all parameters from request_data
+        # The workflow.run() method returns an Iterator[WorkflowCompletedEvent]
+        results = list(workflow.run(**request_data))
+        
+        # Process the workflow response
+        if results:
+            # Get the last completed event (most recent result)
+            last_event = results[-1]
+            
+            # Extract the response content
+            response_content = ""
+            if hasattr(last_event, 'content'):
+                response_content = last_event.content
+            elif hasattr(last_event, 'data') and isinstance(last_event.data, dict):
+                response_content = last_event.data.get('response', str(last_event.data))
+            else:
+                response_content = str(last_event)
+            
+            return {
+                "response": response_content,
+                "component_id": component_id,
+                "component_type": "workflow",
+                "version": version_record.version,
+                "session_id": session_id,
+                "metadata": {
+                    "version_config": version_record.config,
+                    "created_at": version_record.created_at.isoformat() if version_record.created_at else None,
+                    "workflow_metadata": getattr(workflow, 'metadata', {}),
+                    "events_count": len(results),
+                    "workflow_steps": [
+                        {
+                            "step": idx + 1,
+                            "type": type(event).__name__,
+                            "data": getattr(event, 'data', {}) if hasattr(event, 'data') else {}
+                        }
+                        for idx, event in enumerate(results)
+                    ]
+                }
+            }
+        else:
+            return {
+                "response": "Workflow completed with no results",
+                "component_id": component_id,
+                "component_type": "workflow",
+                "version": version_record.version,
+                "session_id": session_id,
+                "metadata": {
+                    "version_config": version_record.config,
+                    "created_at": version_record.created_at.isoformat() if version_record.created_at else None,
+                    "workflow_metadata": getattr(workflow, 'metadata', {})
+                }
+            }
+        
+    except ImportError as e:
+        return {
+            "response": f"Error: Workflow registry not found. Please ensure workflows.registry module exists: {str(e)}",
+            "component_id": component_id,
+            "component_type": "workflow",
+            "version": version_record.version,
+            "session_id": session_id,
+            "metadata": {
+                "error": str(e),
+                "error_type": "ImportError",
+                "version_config": version_record.config,
+                "created_at": version_record.created_at.isoformat() if version_record.created_at else None
+            }
         }
-    }
+    except Exception as e:
+        return {
+            "response": f"Error running versioned workflow {component_id} v{version_record.version}: {str(e)}",
+            "component_id": component_id,
+            "component_type": "workflow",
+            "version": version_record.version,
+            "session_id": session_id,
+            "metadata": {
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "version_config": version_record.config,
+                "created_at": version_record.created_at.isoformat() if version_record.created_at else None
+            }
+        }
 
 
 # Export the extensions

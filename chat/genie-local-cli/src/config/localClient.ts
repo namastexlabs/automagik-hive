@@ -216,7 +216,8 @@ export class LocalAPIClient {
     request: AgentRequest,
     onMessage: (data: StreamingResponse) => void,
     onError: (error: Error) => void,
-    onComplete: () => void
+    onComplete: () => void,
+    abortSignal?: AbortSignal
   ): Promise<void> {
     try {
       const formData = new FormData();
@@ -247,6 +248,7 @@ export class LocalAPIClient {
         data: formData,
         responseType: 'stream',
         timeout: 0, // No timeout for streaming requests
+        signal: abortSignal,
       });
 
       let buffer = '';
@@ -418,7 +420,8 @@ export class LocalAPIClient {
     request: TeamRequest,
     onMessage: (data: StreamingResponse) => void,
     onError: (error: Error) => void,
-    onComplete: () => void
+    onComplete: () => void,
+    abortSignal?: AbortSignal
   ): Promise<void> {
     try {
       const formData = new FormData();
@@ -449,6 +452,7 @@ export class LocalAPIClient {
         data: formData,
         responseType: 'stream',
         timeout: 0, // No timeout for streaming requests
+        signal: abortSignal,
       });
 
       let buffer = '';

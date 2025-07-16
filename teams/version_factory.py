@@ -92,7 +92,7 @@ def create_versioned_team(
         )
         
         # Get agent names from config or use defaults
-        agent_names = config.get("members", ["adquirencia", "emissao", "pagbank", "human_handoff", "finalizacao"])
+        agent_names = config.get("members", ["adquirencia", "emissao", "pagbank", "human-handoff", "finalizacao"])
         
         # Load member agents
         members = [
@@ -201,7 +201,7 @@ def get_team_default_config(team_id: str) -> Dict[str, Any]:
                 "- Para dúvidas sobre cartões, emissão ou conta PagBank: direcione para 'emissao'",
                 "- Para problemas com máquinas, vendas ou recebimentos: direcione para 'adquirencia'", 
                 "- Para questões específicas do PagBank ou produtos financeiros: direcione para 'pagbank'",
-                "- Se o usuário estiver frustrado ou solicitar atendimento humano: direcione para 'human_handoff'",
+                "- Se o usuário estiver frustrado ou solicitar atendimento humano: direcione para 'human-handoff'",
                 "- Para encerramento de conversa ou despedidas: direcione para 'finalizacao'",
                 "Seja silenciosa no roteamento - deixe o especialista responder diretamente ao usuário."
             ],
@@ -217,7 +217,7 @@ def get_team_default_config(team_id: str) -> Dict[str, Any]:
                 "add_history_to_messages": True,
                 "num_history_runs": 5
             },
-            "members": ["adquirencia", "emissao", "pagbank", "human_handoff", "finalizacao"]
+            "members": ["adquirencia", "emissao", "pagbank", "human-handoff", "finalizacao"]
         }
     }
     

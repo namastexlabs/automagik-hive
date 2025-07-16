@@ -1,43 +1,42 @@
-# Human Handoff Workflow Configuration - Simplified V2
-# Streamlined configuration with 74% reduction (134→35 lines)
-
 workflow:
-  workflow_id: "human-handoff"
-  name: "Human Handoff Workflow"
-  description: "Simplified escalation workflow for Ana team handoffs"
-  version: 2
-
+  workflow_id: human-handoff
+  name: Human Handoff Workflow
+  description: Simplified escalation workflow for Ana team handoffs
+  version: 30
 model:
-  provider: "anthropic"
-  id: "claude-sonnet-4-20250514"
+  provider: anthropic
+  id: claude-sonnet-4-20250514
   temperature: 0.8
   max_tokens: 2000
-
-# WhatsApp notification settings (simplified)
 whatsapp:
   enabled: true
-  instance: "SofIA"
-  notification_template: |
-    🚨 *Escalação para Atendimento Humano*
-    
+  instance: SofIA
+  notification_template: '🚨 *Escalação para Atendimento Humano*
+
+
     📋 *Protocolo:* {protocol_id}
+
     👤 *Cliente:* {customer_name}
+
     📱 *CPF:* {customer_cpf}
+
     ⚠️ *Motivo:* {escalation_reason}
+
     🕐 *Horário:* {timestamp}
-    
+
+
     📝 *Descrição:* {issue_description}
+
     💬 *Resumo:* {conversation_summary}
+
     🎯 *Ação:* {recommended_action}
 
-# Storage configuration
+    '
 storage:
-  type: "postgres"
-  table_name: "human_handoff_workflows"
-  mode: "workflow"
+  type: postgres
+  table_name: workflows-human-handoff
+  mode: workflow
   auto_upgrade_schema: true
-
-# Essential workflow settings only
 workflow_settings:
   timeout_minutes: 30
   enable_context_preservation: true

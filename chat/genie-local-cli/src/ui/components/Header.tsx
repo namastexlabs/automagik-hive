@@ -50,10 +50,16 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <Box flexDirection="column" marginBottom={1}>
-      {/* Title and version */}
-      <Box justifyContent="space-between" width={terminalWidth}>
+      {/* Title and version with gemini-style border */}
+      <Box 
+        borderStyle="round" 
+        borderColor="blue" 
+        paddingX={1} 
+        marginBottom={1}
+        justifyContent="space-between"
+      >
         <Box>
-          <Text bold color="blue">🧞 Genie Local CLI</Text>
+          <Text bold color="cyan">🧞 Genie Local CLI</Text>
           <Text color="gray"> v{version}</Text>
         </Box>
         <Text color={getConnectionStatusColor()}>

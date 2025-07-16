@@ -154,6 +154,10 @@ class CSVHotReloadManager:
             # Use shared knowledge base
             from db.session import db_url
             self.kb = get_knowledge_base(db_url)
+            
+            # Note: CSVKnowledgeBase doesn't have get_knowledge_statistics, 
+            # so we'll use a helper method instead
+                
             if should_print:
                 print("✅ Connected to shared knowledge base")
             
@@ -187,7 +191,7 @@ class CSVHotReloadManager:
                         print(f"❌ Smart load error: {result['error']}")
                     # Fallback to regular load
                     self.kb.load_knowledge_base(recreate=True)
-                    stats = self.kb.get_knowledge_statistics()
+                    stats = self.get_knowledge_statistics()
                     if should_print:
                         print(f"✅ Knowledge base ready with {stats.get('total_entries', 'unknown')} entries")
                 else:
@@ -203,6 +207,22 @@ class CSVHotReloadManager:
                 print(f"❌ Failed to initialize knowledge base: {e}")
             raise
     
+    def get_knowledge_statistics(self):
+        """Get basic statistics about the knowledge base"""
+        try:
+            import pandas as pd
+            if self.csv_path.exists():
+                df = pd.read_csv(self.csv_path)
+                return {
+                    'total_entries': len(df),
+                    'by_business_unit': df['business_unit'].value_counts().to_dict() if 'business_unit' in df.columns else {},
+                    'columns': list(df.columns)
+                }
+            else:
+                return {'total_entries': 0, 'by_business_unit': {}, 'columns': []}
+        except Exception as e:
+            return {'error': str(e), 'total_entries': 0}
+    
     def _show_startup_sync_result(self, result, load_time, csv_rows):
         """Show startup sync result with proper visual indicators"""
         demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
@@ -214,7 +234,7 @@ class CSVHotReloadManager:
             
         try:
             # Get final KB stats
-            stats = self.kb.get_knowledge_statistics()
+            stats = self.get_knowledge_statistics()
             kb_total = stats.get('total_entries', 0)
             
             strategy = result.get('strategy', 'unknown')
@@ -343,7 +363,7 @@ class CSVHotReloadManager:
             
             # Get final KB stats
             try:
-                kb_stats = self.kb.get_knowledge_statistics()
+                kb_stats = self.get_knowledge_statistics()
                 kb_total = kb_stats.get('total_entries', 0)
             except:
                 kb_total = 0
@@ -466,7 +486,7 @@ class CSVHotReloadManager:
                     print(f"🔍 BEFORE ERROR: {e}")
                 
             try:
-                current_stats = self.kb.get_knowledge_statistics()
+                current_stats = self.get_knowledge_statistics()
                 db_count_before = current_stats.get('total_entries', 0)
             except:
                 db_count_before = 0
@@ -504,7 +524,7 @@ class CSVHotReloadManager:
                         print(f"🔍 AFTER ERROR: {e}")
                     
                 try:
-                    new_stats = self.kb.get_knowledge_statistics()
+                    new_stats = self.get_knowledge_statistics()
                     db_count_after = new_stats.get('total_entries', 0)
                 except:
                     db_count_after = db_count_before
@@ -565,7 +585,7 @@ class CSVHotReloadManager:
             }
         
         try:
-            stats = self.kb.get_knowledge_statistics() if self.kb else {}
+            stats = self.get_knowledge_statistics() if self.kb else {}
             
             return {
                 "status": "running" if self.is_running else "stopped",

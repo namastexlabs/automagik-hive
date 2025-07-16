@@ -13,7 +13,7 @@ import { useLocalAPIStream } from './hooks/useLocalAPIStream.js';
 import { useLoadingIndicator } from './hooks/useLoadingIndicator.js';
 import { Header } from './components/Header.js';
 import { LoadingIndicator } from './components/LoadingIndicator.js';
-import { LibraryInputPrompt } from './components/LibraryInputPrompt.js';
+import { GeminiStyleInput } from './components/GeminiStyleInput.js';
 import { Footer } from './components/Footer.js';
 import { ChatDisplay } from './components/ChatDisplay.js';
 import { TargetTypeDialog } from './components/TargetTypeDialog.js';
@@ -78,6 +78,7 @@ const App = ({ version }: AppProps) => {
   const {
     streamingState,
     submitQuery,
+    cancelStream,
     initError,
     pendingMessage,
   } = useLocalAPIStream(
@@ -170,6 +171,11 @@ const App = ({ version }: AppProps) => {
     } else if (key.ctrl && input === 'l') {
       clearHistory();
       stdout.write('\\x1B[2J\\x1B[3J\\x1B[H'); // Clear screen
+    } else if (key.escape) {
+      // Cancel current run/streaming - only when not actively typing in input
+      if (streamingState !== StreamingState.Idle) {
+        cancelStream();
+      }
     }
   }, {
     isActive: !isGlobalInputActive
@@ -351,6 +357,7 @@ const App = ({ version }: AppProps) => {
             <Text>• Ctrl+H: Toggle this help</Text>
             <Text>• Ctrl+L: Clear screen</Text>
             <Text>• Ctrl+C or Ctrl+D (twice): Exit</Text>
+            <Text>• Esc: Cancel current run/streaming</Text>
             <Text>• Click target name to change selection</Text>
           </Box>
         </Box>
@@ -383,7 +390,7 @@ const App = ({ version }: AppProps) => {
         )}
 
         {isInputActive && uiState === 'chatting' && (
-          <LibraryInputPrompt
+          <GeminiStyleInput
             onSubmit={handleSubmit}
             disabled={!selectedTarget}
             placeholder={
@@ -391,6 +398,7 @@ const App = ({ version }: AppProps) => {
                 ? `Message ${selectedTarget.name}...`
                 : 'No target selected'
             }
+            focus={true}
           />
         )}
 

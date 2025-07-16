@@ -47868,7 +47868,7 @@ var LocalAPIClient = class {
     return ws;
   }
   // Stream agent response with real API streaming
-  async streamAgent(request2, onMessage, onError, onComplete) {
+  async streamAgent(request2, onMessage, onError, onComplete, abortSignal) {
     try {
       const formData = new FormData();
       formData.append("message", request2.message);
@@ -47895,8 +47895,9 @@ var LocalAPIClient = class {
         method: "POST",
         data: formData,
         responseType: "stream",
-        timeout: 0
+        timeout: 0,
         // No timeout for streaming requests
+        signal: abortSignal
       });
       let buffer = "";
       let finalContent = "";
@@ -48033,7 +48034,7 @@ var LocalAPIClient = class {
     }
   }
   // Stream team response with real API streaming
-  async streamTeam(request2, onMessage, onError, onComplete) {
+  async streamTeam(request2, onMessage, onError, onComplete, abortSignal) {
     try {
       const formData = new FormData();
       formData.append("message", request2.message);
@@ -48060,8 +48061,9 @@ var LocalAPIClient = class {
         method: "POST",
         data: formData,
         responseType: "stream",
-        timeout: 0
+        timeout: 0,
         // No timeout for streaming requests
+        signal: abortSignal
       });
       let buffer = "";
       let finalContent = "";
@@ -48206,6 +48208,22 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
   const [pendingMessage, setPendingMessage] = (0, import_react25.useState)(null);
   const abortControllerRef = (0, import_react25.useRef)(null);
   const currentStreamRef = (0, import_react25.useRef)("");
+  const cancelStream = (0, import_react25.useCallback)(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setPendingMessage(null);
+    setStreamingState("idle" /* Idle */);
+    setDebugMessage("Stream canceled by user");
+    currentStreamRef.current = "";
+    addMessage({
+      type: "error" /* ERROR */,
+      text: "Request canceled by user",
+      timestamp: Date.now(),
+      sessionId
+    });
+  }, [setStreamingState, setDebugMessage, addMessage, sessionId]);
   const submitQuery = (0, import_react25.useCallback)(async (message) => {
     if (!selectedTarget) {
       setInitError("No target selected");
@@ -48330,7 +48348,8 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
             },
             handleStreamingMessage,
             handleStreamingError,
-            handleStreamingComplete
+            handleStreamingComplete,
+            abortControllerRef.current?.signal
           );
           break;
         case "team":
@@ -48342,7 +48361,8 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
             },
             handleStreamingMessage,
             handleStreamingError,
-            handleStreamingComplete
+            handleStreamingComplete,
+            abortControllerRef.current?.signal
           );
           break;
         case "workflow":
@@ -48389,6 +48409,7 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
   return {
     streamingState,
     submitQuery,
+    cancelStream,
     initError,
     pendingMessage
   };
@@ -48484,16 +48505,26 @@ var Header = ({
     return `${selectedTarget.type.toUpperCase()}: ${selectedTarget.name}`;
   };
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { justifyContent: "space-between", width: terminalWidth, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { bold: true, color: "blue", children: "\u{1F9DE} Genie Local CLI" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", children: [
-          " v",
-          version2
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: getConnectionStatusColor(), children: getConnectionStatusText() })
-    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+      Box_default,
+      {
+        borderStyle: "round",
+        borderColor: "blue",
+        paddingX: 1,
+        marginBottom: 1,
+        justifyContent: "space-between",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { bold: true, color: "cyan", children: "\u{1F9DE} Genie Local CLI" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", children: [
+              " v",
+              version2
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: getConnectionStatusColor(), children: getConnectionStatusText() })
+        ]
+      }
+    ),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "cyan", children: "Current Target: " }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { bold: true, children: formatTargetDisplay() }),
@@ -48574,7 +48605,7 @@ var LoadingIndicator = ({
   ] }) });
 };
 
-// src/ui/components/LibraryInputPrompt.tsx
+// src/ui/components/GeminiStyleInput.tsx
 var import_react29 = __toESM(require_react(), 1);
 
 // node_modules/ink-text-input/build/index.js
@@ -49158,12 +49189,13 @@ function TextInput({ value: originalValue, placeholder = "", focus = true, mask,
 }
 var build_default2 = TextInput;
 
-// src/ui/components/LibraryInputPrompt.tsx
+// src/ui/components/GeminiStyleInput.tsx
 var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-var LibraryInputPrompt = ({
+var GeminiStyleInput = ({
   onSubmit,
   disabled = false,
-  placeholder = "Type your message..."
+  placeholder = "  Type your message...",
+  focus = true
 }) => {
   const [input, setInput] = (0, import_react29.useState)("");
   const [isMultiline, setIsMultiline] = (0, import_react29.useState)(false);
@@ -49180,50 +49212,71 @@ var LibraryInputPrompt = ({
   const handleChange = (0, import_react29.useCallback)((value) => {
     setInput(value);
   }, []);
-  const handleKeyPress = (0, import_react29.useCallback)((value) => {
-    if (value.length > input.length + 50) {
-      setIsMultiline(true);
+  use_input_default((inputChar, key) => {
+    if (key.escape && focus && !disabled) {
+      setInput("");
+      setIsMultiline(false);
     }
-  }, [input.length]);
+  }, { isActive: focus && !disabled });
   const lines = input.split("\n");
   const displayLines = lines.slice(0, 8);
   if (isMultiline && lines.length > 1) {
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", borderStyle: "round", borderColor: "cyan", paddingX: 1, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "cyan", children: [
-          "Multiline input (",
-          lines.length,
-          " lines, ",
-          input.length,
-          " chars)"
-        ] }),
-        displayLines.map((line, index) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: line || " " }, index)),
-        lines.length > 8 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", children: [
-          "... ",
-          lines.length - 8,
-          " more lines"
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Paste your content and press Ctrl+Enter to send, or type normally" }) })
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: "blue",
+          paddingX: 1,
+          flexDirection: "column",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { marginBottom: 1, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "magenta", children: "> " }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", children: [
+                "Multiline input (",
+                lines.length,
+                " lines, ",
+                input.length,
+                " chars)"
+              ] })
+            ] }),
+            displayLines.map((line, index) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "white", children: line || " " }, index)),
+            lines.length > 8 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", children: [
+              "... ",
+              lines.length - 8,
+              " more lines"
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Enter: Send \u2022 Esc: Clear text \u2022 Paste content works automatically" }) })
     ] });
   }
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginY: 1, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "> " }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
-        build_default2,
-        {
-          value: input,
-          placeholder,
-          onChange: handleChange,
-          onSubmit: handleSubmit,
-          focus: !disabled,
-          showCursor: !disabled,
-          highlightPastedText: true
-        }
-      )
-    ] }),
-    !disabled && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Type your message \u2022 Enter to send \u2022 Large content becomes multiline automatically" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+      Box_default,
+      {
+        borderStyle: "round",
+        borderColor: "blue",
+        paddingX: 1,
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "magenta", children: "> " }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexGrow: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+            build_default2,
+            {
+              value: input,
+              placeholder,
+              onChange: handleChange,
+              onSubmit: handleSubmit,
+              focus: focus && !disabled,
+              showCursor: focus && !disabled,
+              highlightPastedText: true
+            }
+          ) })
+        ]
+      }
+    ),
+    focus && !disabled && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "Enter: Send \u2022 Esc: Clear text \u2022 Paste works \u2022 Large content becomes multiline automatically" }) })
   ] });
 };
 
@@ -49239,20 +49292,29 @@ var Footer = ({
     return id.slice(-8);
   };
   return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
-    debugMode && debugMessage && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", italic: true, children: [
+    debugMode && debugMessage && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginBottom: 1, borderStyle: "round", borderColor: "yellow", paddingX: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "yellow", italic: true, children: [
       "Debug: ",
       debugMessage
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { justifyContent: "space-between", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", children: [
-        "Session: ",
-        formatSessionId(sessionId)
-      ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", children: [
-        "API: ",
-        apiUrl
-      ] }) })
-    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+      Box_default,
+      {
+        borderStyle: "round",
+        borderColor: "gray",
+        paddingX: 1,
+        justifyContent: "space-between",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", children: [
+            "Session: ",
+            formatSessionId(sessionId)
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", children: [
+            "API: ",
+            apiUrl
+          ] }) })
+        ]
+      }
+    ),
     debugMode && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", dimColor: true, children: [
       "Debug mode enabled \u2022 Full session ID: ",
       sessionId
@@ -49817,6 +49879,7 @@ var App2 = ({ version: version2 }) => {
   const {
     streamingState,
     submitQuery,
+    cancelStream,
     initError,
     pendingMessage
   } = useLocalAPIStream(
@@ -49888,6 +49951,10 @@ var App2 = ({ version: version2 }) => {
     } else if (key.ctrl && input === "l") {
       clearHistory();
       stdout.write("\\x1B[2J\\x1B[3J\\x1B[H");
+    } else if (key.escape) {
+      if (streamingState !== "idle" /* Idle */) {
+        cancelStream();
+      }
     }
   }, {
     isActive: !isGlobalInputActive
@@ -50070,6 +50137,7 @@ var App2 = ({ version: version2 }) => {
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Ctrl+H: Toggle this help" }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Ctrl+L: Clear screen" }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Ctrl+C or Ctrl+D (twice): Exit" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Esc: Cancel current run/streaming" }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { children: "\u2022 Click target name to change selection" })
         ] })
       }
@@ -50098,11 +50166,12 @@ var App2 = ({ version: version2 }) => {
         }
       ),
       isInputActive && uiState === "chatting" && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-        LibraryInputPrompt,
+        GeminiStyleInput,
         {
           onSubmit: handleSubmit,
           disabled: !selectedTarget,
-          placeholder: selectedTarget ? `Message ${selectedTarget.name}...` : "No target selected"
+          placeholder: selectedTarget ? `Message ${selectedTarget.name}...` : "No target selected",
+          focus: true
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(

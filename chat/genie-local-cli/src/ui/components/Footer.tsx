@@ -22,15 +22,20 @@ export const Footer: React.FC<FooterProps> = ({
     <Box flexDirection="column" marginTop={1}>
       {/* Debug message */}
       {debugMode && debugMessage && (
-        <Box marginBottom={1}>
-          <Text color="gray" italic>
+        <Box marginBottom={1} borderStyle="round" borderColor="yellow" paddingX={1}>
+          <Text color="yellow" italic>
             Debug: {debugMessage}
           </Text>
         </Box>
       )}
 
-      {/* Footer info */}
-      <Box justifyContent="space-between">
+      {/* Footer info with gemini-style border */}
+      <Box 
+        borderStyle="round" 
+        borderColor="gray" 
+        paddingX={1} 
+        justifyContent="space-between"
+      >
         <Box>
           <Text color="gray">
             Session: {formatSessionId(sessionId)}

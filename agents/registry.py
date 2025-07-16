@@ -11,7 +11,7 @@ _agent_modules = {
     "pagbank": "agents.pagbank.agent",
     "adquirencia": "agents.adquirencia.agent", 
     "emissao": "agents.emissao.agent",
-    "human_handoff": "agents.human_handoff.agent",
+    "human-handoff": "agents.human_handoff.agent",
     "finalizacao": "agents.finalizacao.agent"
 }
 

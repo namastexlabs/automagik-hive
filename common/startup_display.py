@@ -67,13 +67,20 @@ class StartupDisplay:
                 console.print(f"  {log}")
             console.print()
         
+        # Display warning if sync_results is None (database issues)
+        if not self.sync_results:
+            console.print("\n[bold yellow]⚠️ Database Sync Warning:[/bold yellow]")
+            console.print("  📄 Versions are being read from YAML files (database sync unavailable)")
+            console.print("  💡 Check DATABASE_URL configuration and database connectivity")
+            console.print()
+        
         # Create main components table
         table = Table(title="🚀 Genie Agents System Status", show_header=True, header_style="bold magenta")
-        table.add_column("Type", style="cyan", width=12)
-        table.add_column("ID", style="yellow", width=20)
-        table.add_column("Name", style="green", width=25)
-        table.add_column("Version", style="blue", width=10)
-        table.add_column("Status", style="white", width=8)
+        table.add_column("Type", style="cyan", width=14)
+        table.add_column("ID", style="yellow", width=30)
+        table.add_column("Name", style="green", width=45)
+        table.add_column("Version", style="blue", width=12)
+        table.add_column("Status", style="white", width=10)
         
         # Add teams
         for team_id, info in self.teams.items():
@@ -134,34 +141,85 @@ class StartupDisplay:
         console.print(f"\n{summary_text}")
     
     def _get_version_info(self, component_id: str, component_type: str) -> Optional[str]:
-        """Extract version information from sync results."""
-        if not self.sync_results:
+        """Extract version information from sync results, with YAML fallback."""
+        # Try to get version from sync results first
+        if self.sync_results:
+            # Look for component in sync results
+            component_list_key = f"{component_type}s"
+            if component_list_key in self.sync_results:
+                component_list = self.sync_results[component_list_key]
+                if not (isinstance(component_list, dict) and "error" in component_list):
+                    # Find the specific component
+                    for component in component_list:
+                        if component.get("component_id") == component_id:
+                            db_version = component.get("db_version")
+                            yaml_version = component.get("yaml_version")
+                            action = component.get("action", "")
+                            
+                            if db_version:
+                                # Show update indicator if sync happened
+                                if action in ["yaml_updated", "db_updated", "yaml_corrected"]:
+                                    return f"{db_version} ⬆️"
+                                else:
+                                    return str(db_version)
+                            elif yaml_version:
+                                return str(yaml_version)
+        
+        # Fallback: Read version directly from YAML file
+        return self._read_version_from_yaml(component_id, component_type)
+    
+    def _read_version_from_yaml(self, component_id: str, component_type: str) -> Optional[str]:
+        """Read version directly from YAML configuration file as fallback."""
+        import glob
+        import yaml
+        
+        # Map component types to directory patterns
+        patterns = {
+            'agent': f'agents/*/config.yaml',
+            'team': f'teams/*/config.yaml', 
+            'workflow': f'workflows/*/config.yaml'
+        }
+        
+        pattern = patterns.get(component_type)
+        if not pattern:
             return None
         
-        # Look for component in sync results
-        component_list_key = f"{component_type}s"
-        if component_list_key not in self.sync_results:
-            return None
-        
-        component_list = self.sync_results[component_list_key]
-        if isinstance(component_list, dict) and "error" in component_list:
-            return None
-        
-        # Find the specific component
-        for component in component_list:
-            if component.get("component_id") == component_id:
-                db_version = component.get("db_version")
-                yaml_version = component.get("yaml_version")
-                action = component.get("action", "")
-                
-                if db_version:
-                    # Show update indicator if sync happened
-                    if action in ["yaml_updated", "db_updated", "yaml_corrected"]:
-                        return f"{db_version} ⬆️"
-                    else:
-                        return str(db_version)
-                elif yaml_version:
-                    return str(yaml_version)
+        try:
+            # Search through YAML files to find the matching component
+            for config_file in glob.glob(pattern):
+                try:
+                    with open(config_file, 'r', encoding='utf-8') as f:
+                        yaml_config = yaml.safe_load(f)
+                    
+                    if not yaml_config:
+                        continue
+                    
+                    # Extract component information
+                    component_section = yaml_config.get(component_type, {})
+                    if not component_section:
+                        continue
+                    
+                    # Get component ID (different field names across types)
+                    found_component_id = (
+                        component_section.get('component_id') or
+                        component_section.get('agent_id') or
+                        component_section.get('team_id') or
+                        component_section.get('workflow_id')
+                    )
+                    
+                    # If this is the component we're looking for
+                    if found_component_id == component_id:
+                        version = component_section.get('version')
+                        if version:
+                            return f"{version} 📄"  # Add indicator that this is from YAML fallback
+                        
+                except Exception:
+                    # Skip files that can't be read or parsed
+                    continue
+                    
+        except Exception:
+            # If glob or directory access fails, return None
+            pass
         
         return None
 

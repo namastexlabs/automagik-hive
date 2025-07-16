@@ -11,6 +11,12 @@ from agno.playground import Playground
 from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+
+# Add project root to path to import common module
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 from common.startup_display import create_startup_display, display_simple_status
 
 # Load environment variables first (optional)
@@ -196,6 +202,8 @@ def create_pagbank_api():
                 self.startup_display.add_version_sync_log("🔄 Starting component version sync...")
                 
                 total_synced = 0
+                yaml_to_db_count = 0
+                db_to_yaml_count = 0
                 
                 for component_type in ['agent', 'team', 'workflow']:
                     try:
@@ -204,12 +212,45 @@ def create_pagbank_api():
                         total_synced += len(results)
                         
                         if results:
-                            self.startup_display.add_version_sync_log(f"✅ Synced {len(results)} {component_type}(s)")
+                            # Count different sync directions
+                            type_yaml_to_db = 0
+                            type_db_to_yaml = 0
+                            for result in results:
+                                if isinstance(result, dict):
+                                    action = result.get("action", "")
+                                    if action in ["db_updated", "created"]:
+                                        type_yaml_to_db += 1
+                                        yaml_to_db_count += 1
+                                    elif action in ["yaml_updated", "yaml_corrected"]:
+                                        type_db_to_yaml += 1
+                                        db_to_yaml_count += 1
+                            
+                            # Show sync direction summary
+                            sync_summary = f"✅ Synced {len(results)} {component_type}(s)"
+                            if type_yaml_to_db > 0 or type_db_to_yaml > 0:
+                                directions = []
+                                if type_yaml_to_db > 0:
+                                    directions.append(f"{type_yaml_to_db} YAML→DB")
+                                if type_db_to_yaml > 0:
+                                    directions.append(f"{type_db_to_yaml} DB→YAML")
+                                sync_summary += f" ({', '.join(directions)})"
+                            
+                            self.startup_display.add_version_sync_log(sync_summary)
                     except Exception as e:
                         self.startup_display.add_version_sync_log(f"❌ Error syncing {component_type}s: {e}")
                         self.sync_results[component_type + 's'] = {"error": str(e)}
                 
-                self.startup_display.add_version_sync_log(f"🎉 Version sync completed: {total_synced} components processed")
+                # Final summary with direction totals
+                summary_parts = [f"🎉 Version sync completed: {total_synced} components processed"]
+                if yaml_to_db_count > 0 or db_to_yaml_count > 0:
+                    direction_parts = []
+                    if yaml_to_db_count > 0:
+                        direction_parts.append(f"{yaml_to_db_count} YAML→DB")
+                    if db_to_yaml_count > 0:
+                        direction_parts.append(f"{db_to_yaml_count} DB→YAML")
+                    summary_parts.append(f"({', '.join(direction_parts)})")
+                
+                self.startup_display.add_version_sync_log(" ".join(summary_parts))
                 return self.sync_results
         
         sync_service = StartupVersionSync(startup_display)
@@ -230,7 +271,9 @@ def create_pagbank_api():
         
         # Add individual agents
         for agent_id, agent in available_agents.items():
-            startup_display.add_agent(agent_id, agent.name or agent_id, status="✅")
+            # Use the actual agent component ID (with hyphens) instead of registry key (with underscores)
+            actual_component_id = getattr(agent, 'agent_id', agent_id)
+            startup_display.add_agent(actual_component_id, agent.name or agent_id, status="✅")
     elif not ana_team or not available_agents:
         startup_display.add_error("System", "No team or agents loaded - running with minimal configuration")
     
@@ -253,8 +296,8 @@ def create_pagbank_api():
             get_human_handoff_workflow()
         ]
         # Add workflows to startup display
-        startup_display.add_workflow("conversation_typification", "Conversation Typification", "✅")
-        startup_display.add_workflow("human_handoff", "Human Handoff", "✅")
+        startup_display.add_workflow("conversation-typification", "Conversation Typification", "✅")
+        startup_display.add_workflow("human-handoff", "Human Handoff", "✅")
     except Exception as e:
         startup_display.add_error("Workflows", f"Could not load workflows: {e}")
         workflows_list = []
@@ -351,6 +394,17 @@ def create_pagbank_api():
             
             console.print("\n")
             console.print(table)
+            
+            # Add MCP Integration Config
+            print(f"\n🔧 MCP Integration Config (for playground testing of agents, teams, and workflows):")
+            print(f'"genie-agents": {{')
+            print(f'  "command": "uvx",')
+            print(f'  "args": ["automagik-tools", "tool", "genie-agents"],')
+            print(f'  "env": {{')
+            print(f'    "GENIE_AGENTS_API_BASE_URL": "http://localhost:{port}",')
+            print(f'    "GENIE_AGENTS_TIMEOUT": "300"')
+            print(f'  }}')
+            print(f'}}')
     except Exception as e:
         startup_display.add_error("Business Endpoints", f"Could not register custom business endpoints: {e}")
     

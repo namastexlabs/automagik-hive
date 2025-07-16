@@ -66,10 +66,10 @@ def create_versioned_workflow(
         config = version_record.config
         
         # Import specific workflow class based on workflow_id
-        if workflow_id == "human_handoff":
+        if workflow_id == "human-handoff":
             from workflows.human_handoff.workflow import HumanHandoffWorkflow
             workflow_class = HumanHandoffWorkflow
-        elif workflow_id == "typification":
+        elif workflow_id == "conversation-typification":
             from workflows.conversation_typification import ConversationTypificationWorkflow
             workflow_class = ConversationTypificationWorkflow
         else:
@@ -114,29 +114,29 @@ def get_workflow_default_config(workflow_id: str) -> Dict[str, Any]:
     
     # Default workflow configurations
     defaults = {
-        "human_handoff": {
+        "human-handoff": {
             "workflow": {
-                "workflow_id": "human_handoff",
+                "workflow_id": "human-handoff",
                 "name": "Human Handoff Workflow",
                 "description": "Workflow simplificado para escalação humana"
             },
             "storage": {
                 "type": "postgres",
-                "table_name": "human_handoff_workflows",
+                "table_name": "human-handoff-workflows",
                 "auto_upgrade_schema": True
             },
             "whatsapp_enabled": True,
             "whatsapp_instance": "SofIA"
         },
-        "typification": {
+        "conversation-typification": {
             "workflow": {
-                "workflow_id": "typification",
+                "workflow_id": "conversation-typification",
                 "name": "Conversation Typification Workflow",
                 "description": "5-level categorization workflow"
             },
             "storage": {
                 "type": "postgres",
-                "table_name": "typification_workflows",
+                "table_name": "conversation-typification-workflows",
                 "auto_upgrade_schema": True
             },
             "max_levels": 5,
@@ -210,7 +210,7 @@ def get_human_handoff_workflow_versioned(
         Configured HumanHandoffWorkflow instance
     """
     
-    workflow_id = "human_handoff"
+    workflow_id = "human-handoff"
     
     if version is None:
         # Get active version
