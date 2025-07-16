@@ -71,39 +71,30 @@ def trigger_human_handoff_workflow(
     # This would eliminate the need for agents to pass user context explicitly
     
     try:
-        # Execute workflow - MCP tools are now initialized directly within the workflow
-        # This eliminates the need for complex context manager lifecycle management
-        import asyncio
+        # Execute workflow - Use synchronous execution to avoid event loop issues
+        # Create workflow with WhatsApp enabled
+        workflow = get_human_handoff_workflow(
+            whatsapp_enabled=True,  # Enable WhatsApp notifications
+            whatsapp_instance="SofIA"
+        )
         
-        async def execute_workflow():
-            # Create workflow with WhatsApp enabled
-            # MCP tools will be initialized directly within the workflow
-            workflow = get_human_handoff_workflow(
-                whatsapp_enabled=True,  # Enable WhatsApp notifications
-                whatsapp_instance="SofIA"
-            )
-            
-            # Execute workflow async
-            results = []
-            async for result in workflow.arun(
-                customer_message=customer_message,
-                escalation_reason=escalation_reason,
-                conversation_history=conversation_history,
-                urgency_level=urgency_level,
-                business_unit=business_unit,
-                session_id=session_id,
-                customer_id=customer_id,
-                # NEW: Pass user data parameters
-                user_id=user_id,
-                user_name=user_name,
-                phone_number=phone_number,
-                cpf=cpf
-            ):
-                results.append(result)
-            return results
-        
-        # Execute async workflow
-        results = asyncio.run(execute_workflow())
+        # Execute workflow synchronously
+        results = []
+        for result in workflow.run(
+            customer_message=customer_message,
+            escalation_reason=escalation_reason,
+            conversation_history=conversation_history,
+            urgency_level=urgency_level,
+            business_unit=business_unit,
+            session_id=session_id,
+            customer_id=customer_id,
+            # NEW: Pass user data parameters
+            user_id=user_id,
+            user_name=user_name,
+            phone_number=phone_number,
+            cpf=cpf
+        ):
+            results.append(result)
         
         if results:
             # Get the final result and extract the protocol
@@ -149,39 +140,30 @@ def handle_workflow_trigger_external(tool_execution):
             }
             logger.info(f"📝 User context provided (external): {user_context_provided}")
             
-            # Execute workflow - MCP tools are now initialized directly within the workflow
-            import asyncio
+            # Execute workflow - Use synchronous execution to avoid event loop issues
+            # Create workflow with WhatsApp enabled
+            workflow = get_human_handoff_workflow(
+                whatsapp_enabled=True,  # Enable WhatsApp notifications
+                whatsapp_instance="SofIA"
+            )
             
-            async def execute_workflow():
-                # Create workflow with WhatsApp enabled
-                # MCP tools will be initialized directly within the workflow
-                workflow = get_human_handoff_workflow(
-                    whatsapp_enabled=True,  # Enable WhatsApp notifications
-                    whatsapp_instance="SofIA"
-                )
-                
-                # Execute workflow with provided arguments using async
-                results = []
-                async for result in workflow.arun(
-                    customer_message=args.get("customer_message"),
-                    escalation_reason=args.get("escalation_reason"),
-                    conversation_history=args.get("conversation_history"),
-                    urgency_level=args.get("urgency_level", "medium"),
-                    business_unit=args.get("business_unit"),
-                    session_id=args.get("session_id"),
-                    customer_id=args.get("customer_id"),
-                    # NEW: Pass user data parameters
-                    user_id=args.get("user_id"),
-                    user_name=args.get("user_name"),
-                    phone_number=args.get("phone_number"),
-                    cpf=args.get("cpf")
-                ):
-                    results.append(result)
-                
-                return results
-            
-            # Run async workflow
-            results = asyncio.run(execute_workflow())
+            # Execute workflow with provided arguments synchronously
+            results = []
+            for result in workflow.run(
+                customer_message=args.get("customer_message"),
+                escalation_reason=args.get("escalation_reason"),
+                conversation_history=args.get("conversation_history"),
+                urgency_level=args.get("urgency_level", "medium"),
+                business_unit=args.get("business_unit"),
+                session_id=args.get("session_id"),
+                customer_id=args.get("customer_id"),
+                # NEW: Pass user data parameters
+                user_id=args.get("user_id"),
+                user_name=args.get("user_name"),
+                phone_number=args.get("phone_number"),
+                cpf=args.get("cpf")
+            ):
+                results.append(result)
             
             if results:
                 # Get the final result

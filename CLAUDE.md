@@ -518,11 +518,41 @@ def validate_settings() -> Dict[str, bool]:
 ## 7. Development Server Configuration
 
 ### Simple Development Setup
+**IMPORTANT: This project uses UV for package management, NOT pip or traditional virtual environments.**
+
 ```bash
 # Quick start
-make install  # Install dependencies
-make dev      # Start development server
+make install  # Install dependencies (uses uv sync)
+make dev      # Start development server (uses uv run)
 ```
+
+### Package Management with UV
+The project uses UV (https://github.com/astral-sh/uv) for fast Python package management:
+
+```bash
+# Install UV (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install project dependencies
+uv sync
+
+# Run Python scripts
+uv run python script.py
+
+# Run tests
+uv run pytest
+
+# Add new dependency
+uv add package-name
+
+# Development dependencies
+uv add --dev package-name
+```
+
+**DO NOT USE:**
+- `pip install` (will fail with externally-managed-environment)
+- `python -m venv` (UV manages the virtual environment)
+- Direct `.venv/bin/python` (use `uv run` instead)
 
 ### Development vs Production
 

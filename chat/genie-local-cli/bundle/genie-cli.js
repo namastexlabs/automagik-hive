@@ -52299,60 +52299,52 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
         }
       };
       const actualStartTime = Date.now();
-      let response;
       switch (selectedTarget.type) {
         case "agent":
-          response = await localAPIClient.invokeAgent({
-            agent_id: selectedTarget.id,
-            message,
-            session_id: sessionId
-          });
+          await localAPIClient.streamAgent(
+            {
+              agent_id: selectedTarget.id,
+              message,
+              session_id: sessionId
+            },
+            handleStreamingMessage,
+            handleStreamingError,
+            handleStreamingComplete,
+            abortControllerRef.current?.signal
+          );
           break;
         case "team":
-          response = await localAPIClient.invokeTeam({
-            team_id: selectedTarget.id,
-            message,
-            session_id: sessionId
-          });
+          await localAPIClient.streamTeam(
+            {
+              team_id: selectedTarget.id,
+              message,
+              session_id: sessionId
+            },
+            handleStreamingMessage,
+            handleStreamingError,
+            handleStreamingComplete,
+            abortControllerRef.current?.signal
+          );
           break;
         case "workflow":
-          response = await localAPIClient.executeWorkflow({
+          const workflowResponse = await localAPIClient.executeWorkflow({
             workflow_id: selectedTarget.id,
             params: { message },
             session_id: sessionId
+          });
+          if (workflowResponse.error) {
+            throw new Error(workflowResponse.error);
+          }
+          const workflowContent = workflowResponse.data?.content || "No response from workflow";
+          handleStreamingMessage({
+            content: workflowContent,
+            done: true,
+            session_id: workflowResponse.session_id
           });
           break;
         default:
           throw new Error(`Unknown target type: ${selectedTarget.type}`);
       }
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      setDebugMessage(`Processing response...`);
-      handleStreamingMessage({
-        content: "\u{1F504} Processing your request...",
-        done: false,
-        session_id: response.session_id || sessionId,
-        metadata: { type: "agent_start" }
-      });
-      setTimeout(() => {
-        const content = response.data?.content || "No response content";
-        handleStreamingMessage({
-          content,
-          done: true,
-          session_id: response.session_id || sessionId
-        });
-        const actualEndTime = Date.now();
-        const actualDuration = (actualEndTime - actualStartTime) / 1e3;
-        setTimeout(() => {
-          const stats = response.data?.metrics || null;
-          if (stats) {
-            stats.actual_time = actualDuration;
-            stats.time = [actualDuration];
-          }
-          handleStreamingComplete(stats);
-        }, 100);
-      }, 2e3);
     } catch (error) {
       console.error("Submit query error:", error);
       const errorObj = error instanceof Error ? error : new Error("Unknown error");

@@ -50,6 +50,7 @@ dependencies = [
     "isort>=6.0.1",
     "mypy>=1.16.1",
     "coverage>=7.9.2",
+    "google-genai>=1.25.0",
 ]
 
 [project.optional-dependencies]
