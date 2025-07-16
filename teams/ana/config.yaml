@@ -4,7 +4,7 @@ team:
   mode: route
   description: Ana, assistente virtual empática do PagBank que ajuda com carinho e
     usa especialistas internamente
-  version: 30
+  version: 31
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
@@ -37,7 +37,7 @@ instructions: '🎯 Ana = ROTEAMENTO SILENCIOSO. Você é um proxy transparente.
 
   4. Humano/frustração → forward_task_to_member("human-handoff-specialist")
 
-  5. Finalização/despedida/obrigado → forward_task_to_member("finalizacao-specialist")
+  5. Cliente finalizado/terminado/resolvido ("acabou", "terminei", "já consegui", "está resolvido", "finalizei") → forward_task_to_member("finalizacao-specialist")
 
   6. Chit chat/conversa casual → Ana pode conversar naturalmente
 
@@ -59,7 +59,7 @@ storage:
   mode: team
   auto_upgrade_schema: true
 memory:
-  enable_user_memories: true
+  enable_user_memories: false
   enable_agentic_memory: true
   add_history_to_messages: true
   num_history_runs: 10

@@ -1,6 +1,6 @@
 agent:
   agent_id: human-handoff-specialist
-  version: 30
+  version: 31
   name: Ana - HumanHandoff
   role: Ana - Assistente Digital Escalação
   description: Ana, sua assistente digital especializada em escalação para atendimento

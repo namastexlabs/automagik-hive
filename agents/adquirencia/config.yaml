@@ -1,6 +1,6 @@
 agent:
   agent_id: adquirencia-specialist
-  version: 30
+  version: 31
   name: Ana - Adquirencia
   role: Ana - Assistente Digital Adquirência
   description: Ana, sua assistente digital especializada em antecipação de vendas
@@ -42,8 +42,8 @@ storage:
   table_name: agents-adquirencia
   auto_upgrade_schema: true
 memory:
-  enable_user_memories: true
-  enable_agentic_memory: true
+  enable_user_memories: false
+  enable_agentic_memory: false
   add_history_to_messages: true
   num_history_runs: 5
 markdown: false

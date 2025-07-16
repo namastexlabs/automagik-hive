@@ -1,6 +1,6 @@
 agent:
   agent_id: pagbank-specialist
-  version: 30
+  version: 31
   name: Ana - PagBank
   role: Ana - Assistente Digital PagBank
   description: Ana, sua assistente digital especializada em PIX, transferências, folha
