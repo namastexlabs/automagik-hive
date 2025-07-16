@@ -1,0 +1,141 @@
+{
+  "timestamp": "2025-07-16 10:11:32.574801+00:00",
+  "version": "current",
+  "test_mode": "Full Test",
+  "mock_enabled": true,
+  "system_info": {
+    "platform": "Linux-6.6.87.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python_version": "3.12.3",
+    "hostname": "NMSTX-WORKSTATION",
+    "mock_enabled": true,
+    "cpu_count": 32,
+    "memory_total_gb": 62.75
+  },
+  "total_duration": 47.429999,
+  "tests_completed": 11,
+  "agent_tests": [
+    {
+      "agent_id": "pagbank-specialist",
+      "message": "Como fazer um PIX?",
+      "success": true,
+      "duration_seconds": 0.6844866275787354,
+      "response_length": 107,
+      "memory_usage_mb": 0.0,
+      "error_message": null
+    },
+    {
+      "agent_id": "adquirencia-specialist",
+      "message": "Como funciona a antecipa\u00e7\u00e3o?",
+      "success": true,
+      "duration_seconds": 1.2384214401245117,
+      "response_length": 111,
+      "memory_usage_mb": 0.0,
+      "error_message": null
+    },
+    {
+      "agent_id": "emissao-specialist",
+      "message": "Qual o limite do cart\u00e3o?",
+      "success": true,
+      "duration_seconds": 0.5256989002227783,
+      "response_length": 107,
+      "memory_usage_mb": 0.0,
+      "error_message": null
+    },
+    {
+      "agent_id": "human-handoff",
+      "message": "Preciso falar com um humano",
+      "success": true,
+      "duration_seconds": 1.187443494796753,
+      "response_length": 105,
+      "memory_usage_mb": 0.0,
+      "error_message": null
+    },
+    {
+      "agent_id": "finalizacao",
+      "message": "Como finalizar meu atendimento?",
+      "success": true,
+      "duration_seconds": 1.376413106918335,
+      "response_length": 111,
+      "memory_usage_mb": 0.0,
+      "error_message": null
+    }
+  ],
+  "concurrency_tests": [
+    {
+      "concurrent_requests": 3,
+      "successful_requests": 3,
+      "failed_requests": 0,
+      "success_rate": 100.0,
+      "total_duration": 1.4139165878295898,
+      "avg_response_time": 1.1130703290303547,
+      "requests_per_second": 2.1217658989382833
+    },
+    {
+      "concurrent_requests": 5,
+      "successful_requests": 5,
+      "failed_requests": 0,
+      "success_rate": 100.0,
+      "total_duration": 1.314655065536499,
+      "avg_response_time": 0.8485546588897706,
+      "requests_per_second": 3.803278997719105
+    },
+    {
+      "concurrent_requests": 10,
+      "successful_requests": 10,
+      "failed_requests": 0,
+      "success_rate": 100.0,
+      "total_duration": 1.3643221855163574,
+      "avg_response_time": 0.8922987461090088,
+      "requests_per_second": 7.329646989662696
+    },
+    {
+      "concurrent_requests": 20,
+      "successful_requests": 19,
+      "failed_requests": 1,
+      "success_rate": 95.0,
+      "total_duration": 1.4701225757598877,
+      "avg_response_time": 1.0855691558436344,
+      "requests_per_second": 13.604307783425647
+    }
+  ],
+  "stress_tests": [
+    {
+      "test_type": "sustained_load",
+      "target_rps": 1.0,
+      "actual_rps": 0.865159780598993,
+      "duration": 30.052252292633057,
+      "total_requests": 26,
+      "successful_requests": 25,
+      "failed_requests": 1,
+      "success_rate": 96.15384615384616,
+      "avg_response_time": 1.0469608398584218,
+      "min_response_time": 0.5536472797393799,
+      "max_response_time": 1.4937396049499512
+    },
+    {
+      "test_type": "memory_pressure",
+      "concurrent_requests": 5,
+      "iterations": 3,
+      "total_requests": 15,
+      "successful_requests": 15,
+      "failed_requests": 0,
+      "success_rate": 100.0
+    }
+  ],
+  "summary": {
+    "overall_score": 98.9423076923077,
+    "grade": "A",
+    "status": "EXCELLENT",
+    "agent_success_rate": 100.0,
+    "avg_agent_response_time": 1.0024927139282227,
+    "max_rps": 13.604307783425647,
+    "avg_concurrency_success": 98.75,
+    "best_concurrency_level": 20,
+    "avg_stress_success": 98.07692307692308,
+    "sustained_load_success": 96.15384615384616,
+    "memory_pressure_success": 100.0,
+    "agents_tested": 5,
+    "concurrency_tests": 4,
+    "stress_tests": 2
+  }
+}
