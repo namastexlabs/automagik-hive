@@ -41,6 +41,7 @@ export interface HistoryItem {
     // Rich event data from API
     event?: string;
     tool?: {
+      tool_call_id?: string;
       tool_name: string;
       tool_args?: any;
       tool_result?: any;
@@ -48,10 +49,20 @@ export interface HistoryItem {
         time: number;
         tokens?: number;
       };
+      created_at?: string;
+      agent_id?: string;
+      agent_name?: string;
+      run_id?: string;
+      tool_call_error?: string;
     };
     agent?: {
       agent_id: string;
       agent_name?: string;
+      run_id?: string;
+      session_id?: string;
+      team_session_id?: string;
+      model?: string;
+      model_provider?: string;
       instructions?: string;
     };
     memory?: {
@@ -67,6 +78,9 @@ export interface HistoryItem {
     team?: {
       team_id: string;
       team_name?: string;
+      run_id?: string;
+      model?: string;
+      model_provider?: string;
       mode?: string;
     };
     thinking?: {

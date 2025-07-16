@@ -141,6 +141,7 @@ export const useLocalAPIStream = (
               streaming: false,
               complete: true,
               event: data.metadata?.event,
+              eventId: data.metadata?.eventId || `${messageType}-${Date.now()}-${Math.random()}`,
               // Pass through all the rich metadata from the API
               tool: data.metadata?.tool,
               agent: data.metadata?.agent,

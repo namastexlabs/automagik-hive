@@ -406,6 +406,21 @@ export class LocalAPIClient {
                 const memoryType = event.memory_type || event.memory?.type || event.type || 'user memory';
                 const action = event.event === 'MemoryUpdateStarted' ? 'Updating' : 'Updated';
                 const memoryContent = event.memory_content || event.content || event.memory?.content || '';
+                
+                // Debug logging for memory events
+                if (appConfig.cliDebug) {
+                  console.log('[MEMORY EVENT DEBUG]:', {
+                    event: event.event,
+                    memory_type: event.memory_type,
+                    memory_content: event.memory_content,
+                    content: event.content,
+                    memory: event.memory,
+                    type: event.type,
+                    extractedType: memoryType,
+                    extractedContent: memoryContent,
+                  });
+                }
+                
                 onMessage({
                   content: `🧠 ${action} ${memoryType}${memoryContent ? '\n\nContent:\n' + memoryContent : ''}`,
                   done: false,
@@ -413,6 +428,7 @@ export class LocalAPIClient {
                   metadata: {
                     type: 'memory_update',
                     event: event.event,
+                    eventId: `${event.event}-${Date.now()}-${Math.random()}`, // Unique event ID
                     memory: event.memory || {
                       type: event.memory_type || event.type,
                       content: event.memory_content || event.content,
@@ -735,6 +751,21 @@ export class LocalAPIClient {
                 const memoryType = event.memory_type || event.memory?.type || event.type || 'user memory';
                 const action = event.event === 'MemoryUpdateStarted' ? 'Updating' : 'Updated';
                 const memoryContent = event.memory_content || event.content || event.memory?.content || '';
+                
+                // Debug logging for memory events
+                if (appConfig.cliDebug) {
+                  console.log('[MEMORY EVENT DEBUG]:', {
+                    event: event.event,
+                    memory_type: event.memory_type,
+                    memory_content: event.memory_content,
+                    content: event.content,
+                    memory: event.memory,
+                    type: event.type,
+                    extractedType: memoryType,
+                    extractedContent: memoryContent,
+                  });
+                }
+                
                 onMessage({
                   content: `🧠 ${action} ${memoryType}${memoryContent ? '\n\nContent:\n' + memoryContent : ''}`,
                   done: false,
@@ -742,6 +773,7 @@ export class LocalAPIClient {
                   metadata: {
                     type: 'memory_update',
                     event: event.event,
+                    eventId: `${event.event}-${Date.now()}-${Math.random()}`, // Unique event ID
                     memory: event.memory || {
                       type: event.memory_type || event.type,
                       content: event.memory_content || event.content,

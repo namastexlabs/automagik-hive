@@ -256,14 +256,14 @@ var require_react_development = __commonJS({
       function isValidElement(object) {
         return "object" === typeof object && null !== object && object.$$typeof === REACT_ELEMENT_TYPE;
       }
-      function escape2(key) {
+      function escape3(key) {
         var escaperLookup = { "=": "=0", ":": "=2" };
         return "$" + key.replace(/[=:]/g, function(match) {
           return escaperLookup[match];
         });
       }
       function getElementKey(element, index) {
-        return "object" === typeof element && null !== element && null != element.key ? (checkKeyStringCoercion(element.key), escape2("" + element.key)) : index.toString(36);
+        return "object" === typeof element && null !== element && null != element.key ? (checkKeyStringCoercion(element.key), escape3("" + element.key)) : index.toString(36);
       }
       function noop$1() {
       }
@@ -1417,9 +1417,9 @@ var require_scheduler_development = __commonJS({
           currentPriorityLevel = previousPriorityLevel;
         }
       };
-      exports.unstable_scheduleCallback = function(priorityLevel, callback, options) {
+      exports.unstable_scheduleCallback = function(priorityLevel, callback, options2) {
         var currentTime = exports.unstable_now();
-        "object" === typeof options && null !== options ? (options = options.delay, options = "number" === typeof options && 0 < options ? currentTime + options : currentTime) : options = currentTime;
+        "object" === typeof options2 && null !== options2 ? (options2 = options2.delay, options2 = "number" === typeof options2 && 0 < options2 ? currentTime + options2 : currentTime) : options2 = currentTime;
         switch (priorityLevel) {
           case 1:
             var timeout = -1;
@@ -1436,16 +1436,16 @@ var require_scheduler_development = __commonJS({
           default:
             timeout = 5e3;
         }
-        timeout = options + timeout;
+        timeout = options2 + timeout;
         priorityLevel = {
           id: taskIdCounter++,
           callback,
           priorityLevel,
-          startTime: options,
+          startTime: options2,
           expirationTime: timeout,
           sortIndex: -1
         };
-        options > currentTime ? (priorityLevel.sortIndex = options, push(timerQueue, priorityLevel), null === peek(taskQueue) && priorityLevel === peek(timerQueue) && (isHostTimeoutScheduled ? (localClearTimeout(taskTimeoutID), taskTimeoutID = -1) : isHostTimeoutScheduled = true, requestHostTimeout(handleTimeout, options - currentTime))) : (priorityLevel.sortIndex = timeout, push(taskQueue, priorityLevel), isHostCallbackScheduled || isPerformingWork || (isHostCallbackScheduled = true, isMessageLoopRunning || (isMessageLoopRunning = true, schedulePerformWorkUntilDeadline())));
+        options2 > currentTime ? (priorityLevel.sortIndex = options2, push(timerQueue, priorityLevel), null === peek(taskQueue) && priorityLevel === peek(timerQueue) && (isHostTimeoutScheduled ? (localClearTimeout(taskTimeoutID), taskTimeoutID = -1) : isHostTimeoutScheduled = true, requestHostTimeout(handleTimeout, options2 - currentTime))) : (priorityLevel.sortIndex = timeout, push(taskQueue, priorityLevel), isHostCallbackScheduled || isPerformingWork || (isHostCallbackScheduled = true, isMessageLoopRunning || (isMessageLoopRunning = true, schedulePerformWorkUntilDeadline())));
         return priorityLevel;
       };
       exports.unstable_shouldYield = shouldYieldToHost;
@@ -1531,8 +1531,8 @@ var require_react_reconciler_development = __commonJS({
       function shouldErrorImpl() {
         return null;
       }
-      function createFiber(tag, pendingProps, key, mode) {
-        return new FiberNode(tag, pendingProps, key, mode);
+      function createFiber(tag2, pendingProps, key, mode) {
+        return new FiberNode(tag2, pendingProps, key, mode);
       }
       function scheduleRoot(root, element) {
         root.context === emptyContextObject && (updateContainerSync(element, root, null, null), flushSyncWork());
@@ -1670,21 +1670,21 @@ var require_react_reconciler_development = __commonJS({
         return null !== parent ? findCurrentHostFiberImpl(parent) : null;
       }
       function findCurrentHostFiberImpl(node) {
-        var tag = node.tag;
-        if (5 === tag || 26 === tag || 27 === tag || 6 === tag) return node;
+        var tag2 = node.tag;
+        if (5 === tag2 || 26 === tag2 || 27 === tag2 || 6 === tag2) return node;
         for (node = node.child; null !== node; ) {
-          tag = findCurrentHostFiberImpl(node);
-          if (null !== tag) return tag;
+          tag2 = findCurrentHostFiberImpl(node);
+          if (null !== tag2) return tag2;
           node = node.sibling;
         }
         return null;
       }
       function findCurrentHostFiberWithNoPortalsImpl(node) {
-        var tag = node.tag;
-        if (5 === tag || 26 === tag || 27 === tag || 6 === tag) return node;
+        var tag2 = node.tag;
+        if (5 === tag2 || 26 === tag2 || 27 === tag2 || 6 === tag2) return node;
         for (node = node.child; null !== node; ) {
-          if (4 !== node.tag && (tag = findCurrentHostFiberWithNoPortalsImpl(node), null !== tag))
-            return tag;
+          if (4 !== node.tag && (tag2 = findCurrentHostFiberWithNoPortalsImpl(node), null !== tag2))
+            return tag2;
           node = node.sibling;
         }
         return null;
@@ -2851,10 +2851,10 @@ var require_react_reconciler_development = __commonJS({
         if (!supportsHydration || fiber !== hydrationParentFiber) return false;
         if (!isHydrating)
           return popToNextHostParent(fiber), isHydrating = true, false;
-        var tag = fiber.tag;
-        supportsSingletons ? 3 !== tag && 27 !== tag && (5 !== tag || shouldDeleteUnhydratedTailInstances(fiber.type) && !shouldSetTextContent(fiber.type, fiber.memoizedProps)) && nextHydratableInstance && (warnIfUnhydratedTailNodes(fiber), throwOnHydrationMismatch(fiber)) : 3 !== tag && (5 !== tag || shouldDeleteUnhydratedTailInstances(fiber.type) && !shouldSetTextContent(fiber.type, fiber.memoizedProps)) && nextHydratableInstance && (warnIfUnhydratedTailNodes(fiber), throwOnHydrationMismatch(fiber));
+        var tag2 = fiber.tag;
+        supportsSingletons ? 3 !== tag2 && 27 !== tag2 && (5 !== tag2 || shouldDeleteUnhydratedTailInstances(fiber.type) && !shouldSetTextContent(fiber.type, fiber.memoizedProps)) && nextHydratableInstance && (warnIfUnhydratedTailNodes(fiber), throwOnHydrationMismatch(fiber)) : 3 !== tag2 && (5 !== tag2 || shouldDeleteUnhydratedTailInstances(fiber.type) && !shouldSetTextContent(fiber.type, fiber.memoizedProps)) && nextHydratableInstance && (warnIfUnhydratedTailNodes(fiber), throwOnHydrationMismatch(fiber));
         popToNextHostParent(fiber);
-        if (13 === tag) {
+        if (13 === tag2) {
           if (!supportsHydration)
             throw Error(
               "Expected skipPastDehydratedSuspenseInstance() to never be called. This error is likely caused by a bug in React. Please file an issue."
@@ -2867,7 +2867,7 @@ var require_react_reconciler_development = __commonJS({
             );
           nextHydratableInstance = getNextHydratableInstanceAfterSuspenseInstance(fiber);
         } else
-          nextHydratableInstance = supportsSingletons && 27 === tag ? getNextHydratableSiblingAfterSingleton(
+          nextHydratableInstance = supportsSingletons && 27 === tag2 ? getNextHydratableSiblingAfterSingleton(
             fiber.type,
             nextHydratableInstance
           ) : hydrationParentFiber ? getNextHydratableSibling(fiber.stateNode) : null;
@@ -2943,27 +2943,27 @@ var require_react_reconciler_development = __commonJS({
         var fiber = workInProgress2.child;
         null !== fiber && (fiber.return = workInProgress2);
         for (; null !== fiber; ) {
-          var list = fiber.dependencies;
-          if (null !== list) {
+          var list2 = fiber.dependencies;
+          if (null !== list2) {
             var nextFiber = fiber.child;
-            list = list.firstContext;
-            a: for (; null !== list; ) {
-              var dependency = list;
-              list = fiber;
+            list2 = list2.firstContext;
+            a: for (; null !== list2; ) {
+              var dependency = list2;
+              list2 = fiber;
               for (var i2 = 0; i2 < contexts.length; i2++)
                 if (dependency.context === contexts[i2]) {
-                  list.lanes |= renderLanes2;
-                  dependency = list.alternate;
+                  list2.lanes |= renderLanes2;
+                  dependency = list2.alternate;
                   null !== dependency && (dependency.lanes |= renderLanes2);
                   scheduleContextWorkOnParentPath(
-                    list.return,
+                    list2.return,
                     renderLanes2,
                     workInProgress2
                   );
                   forcePropagateEntireTree || (nextFiber = null);
                   break a;
                 }
-              list = dependency.next;
+              list2 = dependency.next;
             }
           } else if (18 === fiber.tag) {
             nextFiber = fiber.return;
@@ -2972,8 +2972,8 @@ var require_react_reconciler_development = __commonJS({
                 "We just came from a parent so we must have had a parent. This is a bug in React."
               );
             nextFiber.lanes |= renderLanes2;
-            list = nextFiber.alternate;
-            null !== list && (list.lanes |= renderLanes2);
+            list2 = nextFiber.alternate;
+            null !== list2 && (list2.lanes |= renderLanes2);
             scheduleContextWorkOnParentPath(
               nextFiber,
               renderLanes2,
@@ -3995,7 +3995,7 @@ var require_react_reconciler_development = __commonJS({
         null === (null === workInProgressHook ? index.memoizedState : workInProgressHook.next) && (index = index.alternate, ReactSharedInternals.H = null !== index && null !== index.memoizedState ? HooksDispatcherOnUpdateInDEV : HooksDispatcherOnMountInDEV);
         return thenable;
       }
-      function use(usable) {
+      function use2(usable) {
         if (null !== usable && "object" === typeof usable) {
           if ("function" === typeof usable.then) return useThenable(usable);
           if (usable.$$typeof === REACT_CONTEXT_TYPE) return readContext(usable);
@@ -4546,9 +4546,9 @@ var require_react_reconciler_development = __commonJS({
         currentStateHook.memoizedState = action;
         return [stateHook, dispatch, false];
       }
-      function pushSimpleEffect(tag, inst, create2, createDeps) {
-        tag = {
-          tag,
+      function pushSimpleEffect(tag2, inst, create2, createDeps) {
+        tag2 = {
+          tag: tag2,
           create: create2,
           deps: createDeps,
           inst,
@@ -4557,8 +4557,8 @@ var require_react_reconciler_development = __commonJS({
         inst = currentlyRenderingFiber.updateQueue;
         null === inst && (inst = createFunctionComponentUpdateQueue(), currentlyRenderingFiber.updateQueue = inst);
         create2 = inst.lastEffect;
-        null === create2 ? inst.lastEffect = tag.next = tag : (createDeps = create2.next, create2.next = tag, tag.next = createDeps, inst.lastEffect = tag);
-        return tag;
+        null === create2 ? inst.lastEffect = tag2.next = tag2 : (createDeps = create2.next, create2.next = tag2, tag2.next = createDeps, inst.lastEffect = tag2);
+        return tag2;
       }
       function createEffectInstance() {
         return { destroy: void 0, resource: void 0 };
@@ -8328,18 +8328,18 @@ var require_react_reconciler_development = __commonJS({
         }
       }
       function insertOrAppendPlacementNodeIntoContainer(node, before, parent) {
-        var tag = node.tag;
-        if (5 === tag || 6 === tag)
+        var tag2 = node.tag;
+        if (5 === tag2 || 6 === tag2)
           node = node.stateNode, before ? insertInContainerBefore(parent, node, before) : appendChildToContainer(parent, node);
-        else if (4 !== tag && (supportsSingletons && 27 === tag && isSingletonScope(node.type) && (parent = node.stateNode, before = null), node = node.child, null !== node))
+        else if (4 !== tag2 && (supportsSingletons && 27 === tag2 && isSingletonScope(node.type) && (parent = node.stateNode, before = null), node = node.child, null !== node))
           for (insertOrAppendPlacementNodeIntoContainer(node, before, parent), node = node.sibling; null !== node; )
             insertOrAppendPlacementNodeIntoContainer(node, before, parent), node = node.sibling;
       }
       function insertOrAppendPlacementNode(node, before, parent) {
-        var tag = node.tag;
-        if (5 === tag || 6 === tag)
+        var tag2 = node.tag;
+        if (5 === tag2 || 6 === tag2)
           node = node.stateNode, before ? insertBefore(parent, node, before) : appendChild(parent, node);
-        else if (4 !== tag && (supportsSingletons && 27 === tag && isSingletonScope(node.type) && (parent = node.stateNode), node = node.child, null !== node))
+        else if (4 !== tag2 && (supportsSingletons && 27 === tag2 && isSingletonScope(node.type) && (parent = node.stateNode), node = node.child, null !== node))
           for (insertOrAppendPlacementNode(node, before, parent), node = node.sibling; null !== node; )
             insertOrAppendPlacementNode(node, before, parent), node = node.sibling;
       }
@@ -9802,7 +9802,7 @@ var require_react_reconciler_development = __commonJS({
         return hostRoot.stateNode.current;
       }
       function matchSelector(fiber$jscomp$0, selector) {
-        var tag = fiber$jscomp$0.tag;
+        var tag2 = fiber$jscomp$0.tag;
         switch (selector.$$typeof) {
           case COMPONENT_TYPE:
             if (fiber$jscomp$0.type === selector.value) return true;
@@ -9811,8 +9811,8 @@ var require_react_reconciler_development = __commonJS({
             a: {
               selector = selector.value;
               fiber$jscomp$0 = [fiber$jscomp$0, 0];
-              for (tag = 0; tag < fiber$jscomp$0.length; ) {
-                var fiber = fiber$jscomp$0[tag++], tag$jscomp$0 = fiber.tag, selectorIndex = fiber$jscomp$0[tag++], selector$jscomp$0 = selector[selectorIndex];
+              for (tag2 = 0; tag2 < fiber$jscomp$0.length; ) {
+                var fiber = fiber$jscomp$0[tag2++], tag$jscomp$0 = fiber.tag, selectorIndex = fiber$jscomp$0[tag2++], selector$jscomp$0 = selector[selectorIndex];
                 if (5 !== tag$jscomp$0 && 26 !== tag$jscomp$0 && 27 !== tag$jscomp$0 || !isHiddenSubtree(fiber)) {
                   for (; null != selector$jscomp$0 && matchSelector(fiber, selector$jscomp$0); )
                     selectorIndex++, selector$jscomp$0 = selector[selectorIndex];
@@ -9828,17 +9828,17 @@ var require_react_reconciler_development = __commonJS({
             }
             return selector;
           case ROLE_TYPE:
-            if ((5 === tag || 26 === tag || 27 === tag) && matchAccessibilityRole(fiber$jscomp$0.stateNode, selector.value))
+            if ((5 === tag2 || 26 === tag2 || 27 === tag2) && matchAccessibilityRole(fiber$jscomp$0.stateNode, selector.value))
               return true;
             break;
           case TEXT_TYPE:
-            if (5 === tag || 6 === tag || 26 === tag || 27 === tag) {
+            if (5 === tag2 || 6 === tag2 || 26 === tag2 || 27 === tag2) {
               if (fiber$jscomp$0 = getTextContent(fiber$jscomp$0), null !== fiber$jscomp$0 && 0 <= fiber$jscomp$0.indexOf(selector.value))
                 return true;
             }
             break;
           case TEST_NAME_TYPE:
-            if (5 === tag || 26 === tag || 27 === tag) {
+            if (5 === tag2 || 26 === tag2 || 27 === tag2) {
               if (fiber$jscomp$0 = fiber$jscomp$0.memoizedProps["data-testname"], "string" === typeof fiber$jscomp$0 && fiber$jscomp$0.toLowerCase() === selector.value.toLowerCase())
                 return true;
             }
@@ -9868,8 +9868,8 @@ var require_react_reconciler_development = __commonJS({
         var matchingFibers = [];
         root = [root, 0];
         for (var index = 0; index < root.length; ) {
-          var fiber = root[index++], tag = fiber.tag, selectorIndex = root[index++], selector = selectors[selectorIndex];
-          if (5 !== tag && 26 !== tag && 27 !== tag || !isHiddenSubtree(fiber)) {
+          var fiber = root[index++], tag2 = fiber.tag, selectorIndex = root[index++], selector = selectors[selectorIndex];
+          if (5 !== tag2 && 26 !== tag2 && 27 !== tag2 || !isHiddenSubtree(fiber)) {
             for (; null != selector && matchSelector(fiber, selector); )
               selectorIndex++, selector = selectors[selectorIndex];
             if (selectorIndex === selectors.length) matchingFibers.push(fiber);
@@ -9888,8 +9888,8 @@ var require_react_reconciler_development = __commonJS({
         selectors = [];
         hostRoot = Array.from(hostRoot);
         for (var index = 0; index < hostRoot.length; ) {
-          var node = hostRoot[index++], tag = node.tag;
-          if (5 === tag || 26 === tag || 27 === tag)
+          var node = hostRoot[index++], tag2 = node.tag;
+          if (5 === tag2 || 26 === tag2 || 27 === tag2)
             isHiddenSubtree(node) || selectors.push(node.stateNode);
           else
             for (node = node.child; null !== node; )
@@ -10158,10 +10158,10 @@ var require_react_reconciler_development = __commonJS({
       }
       function isRenderConsistentWithExternalStores(finishedWork) {
         for (var node = finishedWork; ; ) {
-          var tag = node.tag;
-          if ((0 === tag || 11 === tag || 15 === tag) && node.flags & 16384 && (tag = node.updateQueue, null !== tag && (tag = tag.stores, null !== tag)))
-            for (var i2 = 0; i2 < tag.length; i2++) {
-              var check = tag[i2], getSnapshot = check.getSnapshot;
+          var tag2 = node.tag;
+          if ((0 === tag2 || 11 === tag2 || 15 === tag2) && node.flags & 16384 && (tag2 = node.updateQueue, null !== tag2 && (tag2 = tag2.stores, null !== tag2)))
+            for (var i2 = 0; i2 < tag2.length; i2++) {
+              var check = tag2[i2], getSnapshot = check.getSnapshot;
               check = check.value;
               try {
                 if (!objectIs(getSnapshot(), check)) return false;
@@ -10169,9 +10169,9 @@ var require_react_reconciler_development = __commonJS({
                 return false;
               }
             }
-          tag = node.child;
-          if (node.subtreeFlags & 16384 && null !== tag)
-            tag.return = node, node = tag;
+          tag2 = node.child;
+          if (node.subtreeFlags & 16384 && null !== tag2)
+            tag2.return = node, node = tag2;
           else {
             if (node === finishedWork) break;
             for (; null === node.sibling; ) {
@@ -11056,13 +11056,13 @@ var require_react_reconciler_development = __commonJS({
       }
       function warnAboutUpdateOnNotYetMountedFiberInDEV(fiber) {
         if ((executionContext & RenderContext) === NoContext) {
-          var tag = fiber.tag;
-          if (3 === tag || 1 === tag || 0 === tag || 11 === tag || 14 === tag || 15 === tag) {
-            tag = getComponentNameFromFiber(fiber) || "ReactComponent";
+          var tag2 = fiber.tag;
+          if (3 === tag2 || 1 === tag2 || 0 === tag2 || 11 === tag2 || 14 === tag2 || 15 === tag2) {
+            tag2 = getComponentNameFromFiber(fiber) || "ReactComponent";
             if (null !== didWarnStateUpdateForNotYetMountedComponent) {
-              if (didWarnStateUpdateForNotYetMountedComponent.has(tag)) return;
-              didWarnStateUpdateForNotYetMountedComponent.add(tag);
-            } else didWarnStateUpdateForNotYetMountedComponent = /* @__PURE__ */ new Set([tag]);
+              if (didWarnStateUpdateForNotYetMountedComponent.has(tag2)) return;
+              didWarnStateUpdateForNotYetMountedComponent.add(tag2);
+            } else didWarnStateUpdateForNotYetMountedComponent = /* @__PURE__ */ new Set([tag2]);
             runWithFiberInDEV(fiber, function() {
               console.error(
                 "Can't perform a React state update on a component that hasn't mounted yet. This indicates that you have a side-effect in your render function that asynchronously later calls tries to update the component. Move this work to useEffect instead."
@@ -11126,8 +11126,8 @@ var require_react_reconciler_development = __commonJS({
         null !== resolveFamily && "function" === typeof WeakSet && (null === failedBoundaries && (failedBoundaries = /* @__PURE__ */ new WeakSet()), failedBoundaries.add(fiber));
       }
       function scheduleFibersWithFamiliesRecursively(fiber, updatedFamilies, staleFamilies) {
-        var alternate = fiber.alternate, child = fiber.child, sibling = fiber.sibling, tag = fiber.tag, type = fiber.type, candidateType = null;
-        switch (tag) {
+        var alternate = fiber.alternate, child = fiber.child, sibling = fiber.sibling, tag2 = fiber.tag, type = fiber.type, candidateType = null;
+        switch (tag2) {
           case 0:
           case 15:
           case 1:
@@ -11140,7 +11140,7 @@ var require_react_reconciler_development = __commonJS({
           throw Error("Expected resolveFamily to be set during hot reload.");
         var needsRender = false;
         type = false;
-        null !== candidateType && (candidateType = resolveFamily(candidateType), void 0 !== candidateType && (staleFamilies.has(candidateType) ? type = true : updatedFamilies.has(candidateType) && (1 === tag ? type = true : needsRender = true)));
+        null !== candidateType && (candidateType = resolveFamily(candidateType), void 0 !== candidateType && (staleFamilies.has(candidateType) ? type = true : updatedFamilies.has(candidateType) && (1 === tag2 ? type = true : needsRender = true)));
         null !== failedBoundaries && (failedBoundaries.has(fiber) || null !== alternate && failedBoundaries.has(alternate)) && (type = true);
         type && (fiber._debugNeedsRemount = true);
         if (type || needsRender)
@@ -11156,8 +11156,8 @@ var require_react_reconciler_development = __commonJS({
           staleFamilies
         );
       }
-      function FiberNode(tag, pendingProps, key, mode) {
-        this.tag = tag;
+      function FiberNode(tag2, pendingProps, key, mode) {
+        this.tag = tag2;
         this.key = key;
         this.sibling = this.child = this.return = this.stateNode = this.type = this.elementType = null;
         this.index = 0;
@@ -11343,7 +11343,7 @@ var require_react_reconciler_development = __commonJS({
         };
         return mode;
       }
-      function FiberRootNode(containerInfo, tag, hydrate, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, formState) {
+      function FiberRootNode(containerInfo, tag2, hydrate, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, formState) {
         this.tag = 1;
         this.containerInfo = containerInfo;
         this.pingCache = this.current = this.pendingChildren = null;
@@ -11365,13 +11365,13 @@ var require_react_reconciler_development = __commonJS({
         this.passiveEffectDuration = this.effectDuration = -0;
         this.memoizedUpdaters = /* @__PURE__ */ new Set();
         containerInfo = this.pendingUpdatersLaneMap = [];
-        for (tag = 0; 31 > tag; tag++) containerInfo.push(/* @__PURE__ */ new Set());
+        for (tag2 = 0; 31 > tag2; tag2++) containerInfo.push(/* @__PURE__ */ new Set());
         this._debugRootType = hydrate ? "hydrateRoot()" : "createRoot()";
       }
-      function createFiberRoot(containerInfo, tag, hydrate, initialChildren, hydrationCallbacks, isStrictMode, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, transitionCallbacks, formState) {
+      function createFiberRoot(containerInfo, tag2, hydrate, initialChildren, hydrationCallbacks, isStrictMode, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, transitionCallbacks, formState) {
         containerInfo = new FiberRootNode(
           containerInfo,
-          tag,
+          tag2,
           hydrate,
           identifierPrefix,
           onUncaughtError,
@@ -11379,20 +11379,20 @@ var require_react_reconciler_development = __commonJS({
           onRecoverableError,
           formState
         );
-        tag = 1;
-        true === isStrictMode && (tag |= 24);
-        isDevToolsPresent && (tag |= 2);
-        isStrictMode = createFiber(3, null, null, tag);
+        tag2 = 1;
+        true === isStrictMode && (tag2 |= 24);
+        isDevToolsPresent && (tag2 |= 2);
+        isStrictMode = createFiber(3, null, null, tag2);
         containerInfo.current = isStrictMode;
         isStrictMode.stateNode = containerInfo;
-        tag = createCache();
-        retainCache(tag);
-        containerInfo.pooledCache = tag;
-        retainCache(tag);
+        tag2 = createCache();
+        retainCache(tag2);
+        containerInfo.pooledCache = tag2;
+        retainCache(tag2);
         isStrictMode.memoizedState = {
           element: initialChildren,
           isDehydrated: hydrate,
-          cache: tag
+          cache: tag2
         };
         initializeUpdateQueue(isStrictMode);
         return containerInfo;
@@ -11720,7 +11720,7 @@ var require_react_reconciler_development = __commonJS({
       var didWarnAboutUseFormState = /* @__PURE__ */ new Set();
       var renderLanes = 0, currentlyRenderingFiber = null, currentHook = null, workInProgressHook = null, didScheduleRenderPhaseUpdate = false, didScheduleRenderPhaseUpdateDuringThisPass = false, shouldDoubleInvokeUserFnsInHooksDEV = false, localIdCounter = 0, thenableIndexCounter$1 = 0, thenableState$1 = null, globalClientIdCounter = 0, RE_RENDER_LIMIT = 25, currentHookNameInDev = null, hookTypesDev = null, hookTypesUpdateIndexDev = -1, ignorePreviousDependencies = false, ContextOnlyDispatcher = {
         readContext,
-        use,
+        use: use2,
         useCallback: throwInvalidHookError,
         useContext: throwInvalidHookError,
         useEffect: throwInvalidHookError,
@@ -11747,7 +11747,7 @@ var require_react_reconciler_development = __commonJS({
         readContext: function(context) {
           return readContext(context);
         },
-        use,
+        use: use2,
         useCallback: function(callback, deps) {
           currentHookNameInDev = "useCallback";
           mountHookTypesDev();
@@ -11878,7 +11878,7 @@ var require_react_reconciler_development = __commonJS({
         readContext: function(context) {
           return readContext(context);
         },
-        use,
+        use: use2,
         useCallback: function(callback, deps) {
           currentHookNameInDev = "useCallback";
           updateHookTypesDev();
@@ -12003,7 +12003,7 @@ var require_react_reconciler_development = __commonJS({
         readContext: function(context) {
           return readContext(context);
         },
-        use,
+        use: use2,
         useCallback: function(callback, deps) {
           currentHookNameInDev = "useCallback";
           updateHookTypesDev();
@@ -12128,7 +12128,7 @@ var require_react_reconciler_development = __commonJS({
         readContext: function(context) {
           return readContext(context);
         },
-        use,
+        use: use2,
         useCallback: function(callback, deps) {
           currentHookNameInDev = "useCallback";
           updateHookTypesDev();
@@ -12256,7 +12256,7 @@ var require_react_reconciler_development = __commonJS({
         },
         use: function(usable) {
           warnInvalidHookAccess();
-          return use(usable);
+          return use2(usable);
         },
         useCallback: function(callback, deps) {
           currentHookNameInDev = "useCallback";
@@ -12405,7 +12405,7 @@ var require_react_reconciler_development = __commonJS({
         },
         use: function(usable) {
           warnInvalidHookAccess();
-          return use(usable);
+          return use2(usable);
         },
         useCallback: function(callback, deps) {
           currentHookNameInDev = "useCallback";
@@ -12554,7 +12554,7 @@ var require_react_reconciler_development = __commonJS({
         },
         use: function(usable) {
           warnInvalidHookAccess();
-          return use(usable);
+          return use2(usable);
         },
         useCallback: function(callback, deps) {
           currentHookNameInDev = "useCallback";
@@ -12995,10 +12995,10 @@ var require_react_reconciler_development = __commonJS({
       exports2.createComponentSelector = function(component) {
         return { $$typeof: COMPONENT_TYPE, value: component };
       };
-      exports2.createContainer = function(containerInfo, tag, hydrationCallbacks, isStrictMode, concurrentUpdatesByDefaultOverride, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, transitionCallbacks) {
+      exports2.createContainer = function(containerInfo, tag2, hydrationCallbacks, isStrictMode, concurrentUpdatesByDefaultOverride, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, transitionCallbacks) {
         return createFiberRoot(
           containerInfo,
-          tag,
+          tag2,
           false,
           null,
           hydrationCallbacks,
@@ -13014,10 +13014,10 @@ var require_react_reconciler_development = __commonJS({
       exports2.createHasPseudoClassSelector = function(selectors) {
         return { $$typeof: HAS_PSEUDO_CLASS_TYPE, value: selectors };
       };
-      exports2.createHydrationContainer = function(initialChildren, callback, containerInfo, tag, hydrationCallbacks, isStrictMode, concurrentUpdatesByDefaultOverride, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, transitionCallbacks, formState) {
+      exports2.createHydrationContainer = function(initialChildren, callback, containerInfo, tag2, hydrationCallbacks, isStrictMode, concurrentUpdatesByDefaultOverride, identifierPrefix, onUncaughtError, onCaughtError, onRecoverableError, transitionCallbacks, formState) {
         initialChildren = createFiberRoot(
           containerInfo,
-          tag,
+          tag2,
           true,
           initialChildren,
           hydrationCallbacks,
@@ -13031,12 +13031,12 @@ var require_react_reconciler_development = __commonJS({
         );
         initialChildren.context = getContextForSubtree(null);
         containerInfo = initialChildren.current;
-        tag = requestUpdateLane(containerInfo);
-        tag = getBumpedLaneForHydrationByLane(tag);
-        hydrationCallbacks = createUpdate(tag);
+        tag2 = requestUpdateLane(containerInfo);
+        tag2 = getBumpedLaneForHydrationByLane(tag2);
+        hydrationCallbacks = createUpdate(tag2);
         hydrationCallbacks.callback = void 0 !== callback && null !== callback ? callback : null;
-        enqueueUpdate(containerInfo, hydrationCallbacks, tag);
-        callback = tag;
+        enqueueUpdate(containerInfo, hydrationCallbacks, tag2);
+        callback = tag2;
         initialChildren.current.lanes = callback;
         markRootUpdated$1(initialChildren, callback);
         ensureRootIsScheduled(initialChildren);
@@ -13210,9 +13210,9 @@ var require_react_reconciler_development = __commonJS({
         selectors = findPaths(hostRoot, selectors);
         selectors = Array.from(selectors);
         for (hostRoot = 0; hostRoot < selectors.length; ) {
-          var fiber = selectors[hostRoot++], tag = fiber.tag;
+          var fiber = selectors[hostRoot++], tag2 = fiber.tag;
           if (!isHiddenSubtree(fiber)) {
-            if ((5 === tag || 26 === tag || 27 === tag) && setFocusIfFocusable(fiber.stateNode))
+            if ((5 === tag2 || 26 === tag2 || 27 === tag2) && setFocusIfFocusable(fiber.stateNode))
               return true;
             for (fiber = fiber.child; null !== fiber; )
               selectors.push(fiber), fiber = fiber.sibling;
@@ -13226,8 +13226,8 @@ var require_react_reconciler_development = __commonJS({
         var maxSelectorIndex = 0, matchedNames = [];
         hostRoot = [findFiberRootForHostRoot(hostRoot), 0];
         for (var index = 0; index < hostRoot.length; ) {
-          var fiber = hostRoot[index++], tag = fiber.tag, selectorIndex = hostRoot[index++], selector = selectors[selectorIndex];
-          if (5 !== tag && 26 !== tag && 27 !== tag || !isHiddenSubtree(fiber)) {
+          var fiber = hostRoot[index++], tag2 = fiber.tag, selectorIndex = hostRoot[index++], selector = selectors[selectorIndex];
+          if (5 !== tag2 && 26 !== tag2 && 27 !== tag2 || !isHiddenSubtree(fiber)) {
             if (matchSelector(fiber, selector) && (matchedNames.push(selectorToString(selector)), selectorIndex++, selectorIndex > maxSelectorIndex && (maxSelectorIndex = selectorIndex)), selectorIndex < selectors.length)
               for (fiber = fiber.child; null !== fiber; )
                 hostRoot.push(fiber, selectorIndex), fiber = fiber.sibling;
@@ -13280,7 +13280,7 @@ var require_react_reconciler_development = __commonJS({
       exports2.isAlreadyRendering = function() {
         return (executionContext & (RenderContext | CommitContext)) !== NoContext;
       };
-      exports2.observeVisibleRects = function(hostRoot, selectors, callback, options) {
+      exports2.observeVisibleRects = function(hostRoot, selectors, callback, options2) {
         function commitHook() {
           var nextInstanceRoots = findAllNodes(hostRoot, selectors);
           instanceRoots.forEach(function(target) {
@@ -13293,7 +13293,7 @@ var require_react_reconciler_development = __commonJS({
         if (!supportsTestSelectors)
           throw Error("Test selector API is not supported by this renderer.");
         var instanceRoots = findAllNodes(hostRoot, selectors);
-        callback = setupIntersectionObserver(instanceRoots, callback, options);
+        callback = setupIntersectionObserver(instanceRoots, callback, options2);
         var disconnect = callback.disconnect, observe = callback.observe, unobserve = callback.unobserve;
         commitHooks.push(commitHook);
         return {
@@ -13403,13 +13403,13 @@ var require_buffer_util = __commonJS({
     "use strict";
     var { EMPTY_BUFFER } = require_constants2();
     var FastBuffer = Buffer[Symbol.species];
-    function concat(list, totalLength) {
-      if (list.length === 0) return EMPTY_BUFFER;
-      if (list.length === 1) return list[0];
+    function concat(list2, totalLength) {
+      if (list2.length === 0) return EMPTY_BUFFER;
+      if (list2.length === 1) return list2[0];
       const target = Buffer.allocUnsafe(totalLength);
       let offset = 0;
-      for (let i2 = 0; i2 < list.length; i2++) {
-        const buf = list[i2];
+      for (let i2 = 0; i2 < list2.length; i2++) {
+        const buf = list2[i2];
         target.set(buf, offset);
         offset += buf.length;
       }
@@ -13563,9 +13563,9 @@ var require_permessage_deflate = __commonJS({
        *     client mode
        * @param {Number} [maxPayload=0] The maximum allowed message length
        */
-      constructor(options, isServer, maxPayload) {
+      constructor(options2, isServer, maxPayload) {
         this._maxPayload = maxPayload | 0;
-        this._options = options || {};
+        this._options = options2 || {};
         this._threshold = this._options.threshold !== void 0 ? this._options.threshold : 1024;
         this._isServer = !!isServer;
         this._deflate = null;
@@ -14145,14 +14145,14 @@ var require_receiver = __commonJS({
        * @param {Boolean} [options.skipUTF8Validation=false] Specifies whether or
        *     not to skip UTF-8 validation for text and close messages
        */
-      constructor(options = {}) {
+      constructor(options2 = {}) {
         super();
-        this._allowSynchronousEvents = options.allowSynchronousEvents !== void 0 ? options.allowSynchronousEvents : true;
-        this._binaryType = options.binaryType || BINARY_TYPES[0];
-        this._extensions = options.extensions || {};
-        this._isServer = !!options.isServer;
-        this._maxPayload = options.maxPayload | 0;
-        this._skipUTF8Validation = !!options.skipUTF8Validation;
+        this._allowSynchronousEvents = options2.allowSynchronousEvents !== void 0 ? options2.allowSynchronousEvents : true;
+        this._binaryType = options2.binaryType || BINARY_TYPES[0];
+        this._extensions = options2.extensions || {};
+        this._isServer = !!options2.isServer;
+        this._maxPayload = options2.maxPayload | 0;
+        this._skipUTF8Validation = !!options2.skipUTF8Validation;
         this[kWebSocket] = void 0;
         this._bufferedBytes = 0;
         this._buffers = [];
@@ -14761,15 +14761,15 @@ var require_sender = __commonJS({
        * @return {(Buffer|String)[]} The framed data
        * @public
        */
-      static frame(data, options) {
+      static frame(data, options2) {
         let mask;
         let merge = false;
         let offset = 2;
         let skipMasking = false;
-        if (options.mask) {
-          mask = options.maskBuffer || maskBuffer;
-          if (options.generateMask) {
-            options.generateMask(mask);
+        if (options2.mask) {
+          mask = options2.maskBuffer || maskBuffer;
+          if (options2.generateMask) {
+            options2.generateMask(mask);
           } else {
             if (randomPoolPointer === RANDOM_POOL_SIZE) {
               if (randomPool === void 0) {
@@ -14788,15 +14788,15 @@ var require_sender = __commonJS({
         }
         let dataLength;
         if (typeof data === "string") {
-          if ((!options.mask || skipMasking) && options[kByteLength] !== void 0) {
-            dataLength = options[kByteLength];
+          if ((!options2.mask || skipMasking) && options2[kByteLength] !== void 0) {
+            dataLength = options2[kByteLength];
           } else {
             data = Buffer.from(data);
             dataLength = data.length;
           }
         } else {
           dataLength = data.length;
-          merge = options.mask && options.readOnly && !skipMasking;
+          merge = options2.mask && options2.readOnly && !skipMasking;
         }
         let payloadLength = dataLength;
         if (dataLength >= 65536) {
@@ -14807,8 +14807,8 @@ var require_sender = __commonJS({
           payloadLength = 126;
         }
         const target = Buffer.allocUnsafe(merge ? dataLength + offset : offset);
-        target[0] = options.fin ? options.opcode | 128 : options.opcode;
-        if (options.rsv1) target[0] |= 64;
+        target[0] = options2.fin ? options2.opcode | 128 : options2.opcode;
+        if (options2.rsv1) target[0] |= 64;
         target[1] = payloadLength;
         if (payloadLength === 126) {
           target.writeUInt16BE(dataLength, 2);
@@ -14816,7 +14816,7 @@ var require_sender = __commonJS({
           target[2] = target[3] = 0;
           target.writeUIntBE(dataLength, 4, 6);
         }
-        if (!options.mask) return [target, data];
+        if (!options2.mask) return [target, data];
         target[1] |= 128;
         target[offset - 4] = mask[0];
         target[offset - 3] = mask[1];
@@ -14861,7 +14861,7 @@ var require_sender = __commonJS({
             buf.set(data, 2);
           }
         }
-        const options = {
+        const options2 = {
           [kByteLength]: buf.length,
           fin: true,
           generateMask: this._generateMask,
@@ -14872,9 +14872,9 @@ var require_sender = __commonJS({
           rsv1: false
         };
         if (this._state !== DEFAULT) {
-          this.enqueue([this.dispatch, buf, false, options, cb]);
+          this.enqueue([this.dispatch, buf, false, options2, cb]);
         } else {
-          this.sendFrame(_Sender.frame(buf, options), cb);
+          this.sendFrame(_Sender.frame(buf, options2), cb);
         }
       }
       /**
@@ -14902,7 +14902,7 @@ var require_sender = __commonJS({
         if (byteLength > 125) {
           throw new RangeError("The data size must not be greater than 125 bytes");
         }
-        const options = {
+        const options2 = {
           [kByteLength]: byteLength,
           fin: true,
           generateMask: this._generateMask,
@@ -14914,14 +14914,14 @@ var require_sender = __commonJS({
         };
         if (isBlob2(data)) {
           if (this._state !== DEFAULT) {
-            this.enqueue([this.getBlobData, data, false, options, cb]);
+            this.enqueue([this.getBlobData, data, false, options2, cb]);
           } else {
-            this.getBlobData(data, false, options, cb);
+            this.getBlobData(data, false, options2, cb);
           }
         } else if (this._state !== DEFAULT) {
-          this.enqueue([this.dispatch, data, false, options, cb]);
+          this.enqueue([this.dispatch, data, false, options2, cb]);
         } else {
-          this.sendFrame(_Sender.frame(data, options), cb);
+          this.sendFrame(_Sender.frame(data, options2), cb);
         }
       }
       /**
@@ -14949,7 +14949,7 @@ var require_sender = __commonJS({
         if (byteLength > 125) {
           throw new RangeError("The data size must not be greater than 125 bytes");
         }
-        const options = {
+        const options2 = {
           [kByteLength]: byteLength,
           fin: true,
           generateMask: this._generateMask,
@@ -14961,14 +14961,14 @@ var require_sender = __commonJS({
         };
         if (isBlob2(data)) {
           if (this._state !== DEFAULT) {
-            this.enqueue([this.getBlobData, data, false, options, cb]);
+            this.enqueue([this.getBlobData, data, false, options2, cb]);
           } else {
-            this.getBlobData(data, false, options, cb);
+            this.getBlobData(data, false, options2, cb);
           }
         } else if (this._state !== DEFAULT) {
-          this.enqueue([this.dispatch, data, false, options, cb]);
+          this.enqueue([this.dispatch, data, false, options2, cb]);
         } else {
-          this.sendFrame(_Sender.frame(data, options), cb);
+          this.sendFrame(_Sender.frame(data, options2), cb);
         }
       }
       /**
@@ -14987,10 +14987,10 @@ var require_sender = __commonJS({
        * @param {Function} [cb] Callback
        * @public
        */
-      send(data, options, cb) {
+      send(data, options2, cb) {
         const perMessageDeflate = this._extensions[PerMessageDeflate.extensionName];
-        let opcode = options.binary ? 2 : 1;
-        let rsv1 = options.compress;
+        let opcode = options2.binary ? 2 : 1;
+        let rsv1 = options2.compress;
         let byteLength;
         let readOnly;
         if (typeof data === "string") {
@@ -15014,12 +15014,12 @@ var require_sender = __commonJS({
           rsv1 = false;
           opcode = 0;
         }
-        if (options.fin) this._firstFragment = true;
+        if (options2.fin) this._firstFragment = true;
         const opts = {
           [kByteLength]: byteLength,
-          fin: options.fin,
+          fin: options2.fin,
           generateMask: this._generateMask,
-          mask: options.mask,
+          mask: options2.mask,
           maskBuffer: this._maskBuffer,
           opcode,
           readOnly,
@@ -15060,8 +15060,8 @@ var require_sender = __commonJS({
        * @param {Function} [cb] Callback
        * @private
        */
-      getBlobData(blob, compress, options, cb) {
-        this._bufferedBytes += options[kByteLength];
+      getBlobData(blob, compress, options2, cb) {
+        this._bufferedBytes += options2[kByteLength];
         this._state = GET_BLOB_DATA;
         blob.arrayBuffer().then((arrayBuffer) => {
           if (this._socket.destroyed) {
@@ -15071,14 +15071,14 @@ var require_sender = __commonJS({
             process.nextTick(callCallbacks, this, err, cb);
             return;
           }
-          this._bufferedBytes -= options[kByteLength];
+          this._bufferedBytes -= options2[kByteLength];
           const data = toBuffer(arrayBuffer);
           if (!compress) {
             this._state = DEFAULT;
-            this.sendFrame(_Sender.frame(data, options), cb);
+            this.sendFrame(_Sender.frame(data, options2), cb);
             this.dequeue();
           } else {
-            this.dispatch(data, compress, options, cb);
+            this.dispatch(data, compress, options2, cb);
           }
         }).catch((err) => {
           process.nextTick(onError, this, err, cb);
@@ -15107,15 +15107,15 @@ var require_sender = __commonJS({
        * @param {Function} [cb] Callback
        * @private
        */
-      dispatch(data, compress, options, cb) {
+      dispatch(data, compress, options2, cb) {
         if (!compress) {
-          this.sendFrame(_Sender.frame(data, options), cb);
+          this.sendFrame(_Sender.frame(data, options2), cb);
           return;
         }
         const perMessageDeflate = this._extensions[PerMessageDeflate.extensionName];
-        this._bufferedBytes += options[kByteLength];
+        this._bufferedBytes += options2[kByteLength];
         this._state = DEFLATING;
-        perMessageDeflate.compress(data, options.fin, (_, buf) => {
+        perMessageDeflate.compress(data, options2.fin, (_, buf) => {
           if (this._socket.destroyed) {
             const err = new Error(
               "The socket was closed while data was being compressed"
@@ -15123,10 +15123,10 @@ var require_sender = __commonJS({
             callCallbacks(this, err, cb);
             return;
           }
-          this._bufferedBytes -= options[kByteLength];
+          this._bufferedBytes -= options2[kByteLength];
           this._state = DEFAULT;
-          options.readOnly = false;
-          this.sendFrame(_Sender.frame(buf, options), cb);
+          options2.readOnly = false;
+          this.sendFrame(_Sender.frame(buf, options2), cb);
           this.dequeue();
         });
       }
@@ -15159,14 +15159,14 @@ var require_sender = __commonJS({
        * @param {Function} [cb] Callback
        * @private
        */
-      sendFrame(list, cb) {
-        if (list.length === 2) {
+      sendFrame(list2, cb) {
+        if (list2.length === 2) {
           this._socket.cork();
-          this._socket.write(list[0]);
-          this._socket.write(list[1], cb);
+          this._socket.write(list2[0]);
+          this._socket.write(list2[1], cb);
           this._socket.uncork();
         } else {
-          this._socket.write(list[0], cb);
+          this._socket.write(list2[0], cb);
         }
       }
     };
@@ -15239,11 +15239,11 @@ var require_event_target = __commonJS({
        * @param {Boolean} [options.wasClean=false] Indicates whether or not the
        *     connection was cleanly closed
        */
-      constructor(type, options = {}) {
+      constructor(type, options2 = {}) {
         super(type);
-        this[kCode] = options.code === void 0 ? 0 : options.code;
-        this[kReason] = options.reason === void 0 ? "" : options.reason;
-        this[kWasClean] = options.wasClean === void 0 ? false : options.wasClean;
+        this[kCode] = options2.code === void 0 ? 0 : options2.code;
+        this[kReason] = options2.reason === void 0 ? "" : options2.reason;
+        this[kWasClean] = options2.wasClean === void 0 ? false : options2.wasClean;
       }
       /**
        * @type {Number}
@@ -15277,10 +15277,10 @@ var require_event_target = __commonJS({
        * @param {*} [options.error=null] The error that generated this event
        * @param {String} [options.message=''] The error message
        */
-      constructor(type, options = {}) {
+      constructor(type, options2 = {}) {
         super(type);
-        this[kError] = options.error === void 0 ? null : options.error;
-        this[kMessage] = options.message === void 0 ? "" : options.message;
+        this[kError] = options2.error === void 0 ? null : options2.error;
+        this[kMessage] = options2.message === void 0 ? "" : options2.message;
       }
       /**
        * @type {*}
@@ -15306,9 +15306,9 @@ var require_event_target = __commonJS({
        *     attributes via object members of the same name
        * @param {*} [options.data=null] The message content
        */
-      constructor(type, options = {}) {
+      constructor(type, options2 = {}) {
         super(type);
-        this[kData] = options.data === void 0 ? null : options.data;
+        this[kData] = options2.data === void 0 ? null : options2.data;
       }
       /**
        * @type {*}
@@ -15331,9 +15331,9 @@ var require_event_target = __commonJS({
        *     the listener would be automatically removed when invoked.
        * @public
        */
-      addEventListener(type, handler, options = {}) {
+      addEventListener(type, handler, options2 = {}) {
         for (const listener of this.listeners(type)) {
-          if (!options[kForOnEventAttribute] && listener[kListener] === handler && !listener[kForOnEventAttribute]) {
+          if (!options2[kForOnEventAttribute] && listener[kListener] === handler && !listener[kForOnEventAttribute]) {
             return;
           }
         }
@@ -15374,9 +15374,9 @@ var require_event_target = __commonJS({
         } else {
           return;
         }
-        wrapper[kForOnEventAttribute] = !!options[kForOnEventAttribute];
+        wrapper[kForOnEventAttribute] = !!options2[kForOnEventAttribute];
         wrapper[kListener] = handler;
-        if (options.once) {
+        if (options2.once) {
           this.once(type, wrapper);
         } else {
           this.on(type, wrapper);
@@ -15612,7 +15612,7 @@ var require_websocket = __commonJS({
        * @param {(String|String[])} [protocols] The subprotocols
        * @param {Object} [options] Connection options
        */
-      constructor(address, protocols, options) {
+      constructor(address, protocols, options2) {
         super();
         this._binaryType = BINARY_TYPES[0];
         this._closeCode = 1006;
@@ -15636,15 +15636,15 @@ var require_websocket = __commonJS({
             protocols = [];
           } else if (!Array.isArray(protocols)) {
             if (typeof protocols === "object" && protocols !== null) {
-              options = protocols;
+              options2 = protocols;
               protocols = [];
             } else {
               protocols = [protocols];
             }
           }
-          initAsClient(this, address, protocols, options);
+          initAsClient(this, address, protocols, options2);
         } else {
-          this._autoPong = options.autoPong;
+          this._autoPong = options2.autoPong;
           this._isServer = true;
         }
       }
@@ -15743,16 +15743,16 @@ var require_websocket = __commonJS({
        *     not to skip UTF-8 validation for text and close messages
        * @private
        */
-      setSocket(socket, head, options) {
+      setSocket(socket, head, options2) {
         const receiver = new Receiver2({
-          allowSynchronousEvents: options.allowSynchronousEvents,
+          allowSynchronousEvents: options2.allowSynchronousEvents,
           binaryType: this.binaryType,
           extensions: this._extensions,
           isServer: this._isServer,
-          maxPayload: options.maxPayload,
-          skipUTF8Validation: options.skipUTF8Validation
+          maxPayload: options2.maxPayload,
+          skipUTF8Validation: options2.skipUTF8Validation
         });
-        const sender = new Sender2(socket, this._extensions, options.generateMask);
+        const sender = new Sender2(socket, this._extensions, options2.generateMask);
         this._receiver = receiver;
         this._sender = sender;
         this._socket = socket;
@@ -15930,13 +15930,13 @@ var require_websocket = __commonJS({
        * @param {Function} [cb] Callback which is executed when data is written out
        * @public
        */
-      send(data, options, cb) {
+      send(data, options2, cb) {
         if (this.readyState === _WebSocket.CONNECTING) {
           throw new Error("WebSocket is not open: readyState 0 (CONNECTING)");
         }
-        if (typeof options === "function") {
-          cb = options;
-          options = {};
+        if (typeof options2 === "function") {
+          cb = options2;
+          options2 = {};
         }
         if (typeof data === "number") data = data.toString();
         if (this.readyState !== _WebSocket.OPEN) {
@@ -15948,7 +15948,7 @@ var require_websocket = __commonJS({
           mask: !this._isServer,
           compress: true,
           fin: true,
-          ...options
+          ...options2
         };
         if (!this._extensions[PerMessageDeflate.extensionName]) {
           opts.compress = false;
@@ -16042,7 +16042,7 @@ var require_websocket = __commonJS({
     WebSocket2.prototype.addEventListener = addEventListener;
     WebSocket2.prototype.removeEventListener = removeEventListener;
     module.exports = WebSocket2;
-    function initAsClient(websocket, address, protocols, options) {
+    function initAsClient(websocket, address, protocols, options2) {
       const opts = {
         allowSynchronousEvents: true,
         autoPong: true,
@@ -16052,7 +16052,7 @@ var require_websocket = __commonJS({
         perMessageDeflate: true,
         followRedirects: false,
         maxRedirects: 10,
-        ...options,
+        ...options2,
         socketPath: void 0,
         hostname: void 0,
         protocol: void 0,
@@ -16163,11 +16163,11 @@ var require_websocket = __commonJS({
           websocket._originalIpc = isIpcUrl;
           websocket._originalSecure = isSecure;
           websocket._originalHostOrSocketPath = isIpcUrl ? opts.socketPath : parsedUrl.host;
-          const headers = options && options.headers;
-          options = { ...options, headers: {} };
+          const headers = options2 && options2.headers;
+          options2 = { ...options2, headers: {} };
           if (headers) {
             for (const [key2, value] of Object.entries(headers)) {
-              options.headers[key2.toLowerCase()] = value;
+              options2.headers[key2.toLowerCase()] = value;
             }
           }
         } else if (websocket.listenerCount("redirect") === 0) {
@@ -16179,8 +16179,8 @@ var require_websocket = __commonJS({
             opts.auth = void 0;
           }
         }
-        if (opts.auth && !options.headers.authorization) {
-          options.headers.authorization = "Basic " + Buffer.from(opts.auth).toString("base64");
+        if (opts.auth && !options2.headers.authorization) {
+          options2.headers.authorization = "Basic " + Buffer.from(opts.auth).toString("base64");
         }
         req = websocket._req = request2(opts);
         if (websocket._redirects) {
@@ -16216,7 +16216,7 @@ var require_websocket = __commonJS({
             emitErrorAndClose(websocket, err);
             return;
           }
-          initAsClient(websocket, addr, protocols, options);
+          initAsClient(websocket, addr, protocols, options2);
         } else if (!websocket.emit("unexpected-response", req, res)) {
           abortHandshake(
             websocket,
@@ -16304,16 +16304,16 @@ var require_websocket = __commonJS({
       websocket.emit("error", err);
       websocket.emitClose();
     }
-    function netConnect(options) {
-      options.path = options.socketPath;
-      return net.connect(options);
+    function netConnect(options2) {
+      options2.path = options2.socketPath;
+      return net.connect(options2);
     }
-    function tlsConnect(options) {
-      options.path = void 0;
-      if (!options.servername && options.servername !== "") {
-        options.servername = net.isIP(options.host) ? "" : options.host;
+    function tlsConnect(options2) {
+      options2.path = void 0;
+      if (!options2.servername && options2.servername !== "") {
+        options2.servername = net.isIP(options2.host) ? "" : options2.host;
       }
-      return tls.connect(options);
+      return tls.connect(options2);
     }
     function abortHandshake(websocket, stream, message) {
       websocket._readyState = WebSocket2.CLOSING;
@@ -16472,10 +16472,10 @@ var require_stream = __commonJS({
         this.emit("error", err);
       }
     }
-    function createWebSocketStream2(ws, options) {
+    function createWebSocketStream2(ws, options2) {
       let terminateOnDestroy = true;
       const duplex = new Duplex({
-        ...options,
+        ...options2,
         autoDestroy: false,
         emitClose: false,
         objectMode: false,
@@ -16643,9 +16643,9 @@ var require_websocket_server = __commonJS({
        *     class to use. It must be the `WebSocket` class or class that extends it
        * @param {Function} [callback] A listener for the `listening` event
        */
-      constructor(options, callback) {
+      constructor(options2, callback) {
         super();
-        options = {
+        options2 = {
           allowSynchronousEvents: true,
           autoPong: true,
           maxPayload: 100 * 1024 * 1024,
@@ -16662,14 +16662,14 @@ var require_websocket_server = __commonJS({
           path: null,
           port: null,
           WebSocket: WebSocket2,
-          ...options
+          ...options2
         };
-        if (options.port == null && !options.server && !options.noServer || options.port != null && (options.server || options.noServer) || options.server && options.noServer) {
+        if (options2.port == null && !options2.server && !options2.noServer || options2.port != null && (options2.server || options2.noServer) || options2.server && options2.noServer) {
           throw new TypeError(
             'One and only one of the "port", "server", or "noServer" options must be specified'
           );
         }
-        if (options.port != null) {
+        if (options2.port != null) {
           this._server = http3.createServer((req, res) => {
             const body = http3.STATUS_CODES[426];
             res.writeHead(426, {
@@ -16679,13 +16679,13 @@ var require_websocket_server = __commonJS({
             res.end(body);
           });
           this._server.listen(
-            options.port,
-            options.host,
-            options.backlog,
+            options2.port,
+            options2.host,
+            options2.backlog,
             callback
           );
-        } else if (options.server) {
-          this._server = options.server;
+        } else if (options2.server) {
+          this._server = options2.server;
         }
         if (this._server) {
           const emitConnection = this.emit.bind(this, "connection");
@@ -16697,12 +16697,12 @@ var require_websocket_server = __commonJS({
             }
           });
         }
-        if (options.perMessageDeflate === true) options.perMessageDeflate = {};
-        if (options.clientTracking) {
+        if (options2.perMessageDeflate === true) options2.perMessageDeflate = {};
+        if (options2.clientTracking) {
           this.clients = /* @__PURE__ */ new Set();
           this._shouldEmitClose = false;
         }
-        this.options = options;
+        this.options = options2;
         this._state = RUNNING;
       }
       /**
@@ -17132,7 +17132,7 @@ var require_backend = __commonJS({
                   return a;
                 }
                 var A2 = {
-                  use: function use() {
+                  use: function use2() {
                     throw Error("Support for `use` not yet implemented in react-debug-tools.");
                   },
                   readContext: function readContext(a) {
@@ -17730,7 +17730,7 @@ var require_backend = __commonJS({
                 function P(a) {
                   return "object" === _typeof(a) && null !== a && a.$$typeof === l;
                 }
-                function escape2(a) {
+                function escape3(a) {
                   var b = {
                     "=": "=0",
                     ":": "=2"
@@ -17741,7 +17741,7 @@ var require_backend = __commonJS({
                 }
                 var Q = /\/+/g;
                 function R(a, b) {
-                  return "object" === _typeof(a) && null !== a && null != a.key ? escape2("" + a.key) : b.toString(36);
+                  return "object" === _typeof(a) && null !== a && null != a.key ? escape3("" + a.key) : b.toString(36);
                 }
                 function S2(a, b, c, d, e2) {
                   var f3 = _typeof(a);
@@ -18308,17 +18308,17 @@ var require_backend = __commonJS({
                 var now = function now2() {
                   return root.Date.now();
                 };
-                function debounce2(func, wait, options) {
+                function debounce2(func, wait, options2) {
                   var lastArgs, lastThis, maxWait, result, timerId, lastCallTime, lastInvokeTime = 0, leading = false, maxing = false, trailing = true;
                   if (typeof func != "function") {
                     throw new TypeError(FUNC_ERROR_TEXT);
                   }
                   wait = toNumber(wait) || 0;
-                  if (isObject(options)) {
-                    leading = !!options.leading;
-                    maxing = "maxWait" in options;
-                    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
-                    trailing = "trailing" in options ? !!options.trailing : trailing;
+                  if (isObject(options2)) {
+                    leading = !!options2.leading;
+                    maxing = "maxWait" in options2;
+                    maxWait = maxing ? nativeMax(toNumber(options2.maxWait) || 0, wait) : maxWait;
+                    trailing = "trailing" in options2 ? !!options2.trailing : trailing;
                   }
                   function invokeFunc(time) {
                     var args = lastArgs, thisArg = lastThis;
@@ -18388,14 +18388,14 @@ var require_backend = __commonJS({
                   debounced.flush = flush;
                   return debounced;
                 }
-                function throttle2(func, wait, options) {
+                function throttle2(func, wait, options2) {
                   var leading = true, trailing = true;
                   if (typeof func != "function") {
                     throw new TypeError(FUNC_ERROR_TEXT);
                   }
-                  if (isObject(options)) {
-                    leading = "leading" in options ? !!options.leading : leading;
-                    trailing = "trailing" in options ? !!options.trailing : trailing;
+                  if (isObject(options2)) {
+                    leading = "leading" in options2 ? !!options2.leading : leading;
+                    trailing = "trailing" in options2 ? !!options2.trailing : trailing;
                   }
                   return debounce2(func, wait, {
                     "leading": leading,
@@ -18421,8 +18421,8 @@ var require_backend = __commonJS({
                     return NAN;
                   }
                   if (isObject(value)) {
-                    var other = typeof value.valueOf == "function" ? value.valueOf() : value;
-                    value = isObject(other) ? other + "" : other;
+                    var other2 = typeof value.valueOf == "function" ? value.valueOf() : value;
+                    value = isObject(other2) ? other2 + "" : other2;
                   }
                   if (typeof value != "string") {
                     return value === 0 ? value : +value;
@@ -18467,31 +18467,31 @@ var require_backend = __commonJS({
                 function naiveLength() {
                   return 1;
                 }
-                function LRUCache(options) {
+                function LRUCache(options2) {
                   if (!(this instanceof LRUCache)) {
-                    return new LRUCache(options);
+                    return new LRUCache(options2);
                   }
-                  if (typeof options === "number") {
-                    options = {
-                      max: options
+                  if (typeof options2 === "number") {
+                    options2 = {
+                      max: options2
                     };
                   }
-                  if (!options) {
-                    options = {};
+                  if (!options2) {
+                    options2 = {};
                   }
-                  var max = this[MAX] = options.max;
+                  var max = this[MAX] = options2.max;
                   if (!max || !(typeof max === "number") || max <= 0) {
                     this[MAX] = Infinity;
                   }
-                  var lc = options.length || naiveLength;
+                  var lc = options2.length || naiveLength;
                   if (typeof lc !== "function") {
                     lc = naiveLength;
                   }
                   this[LENGTH_CALCULATOR] = lc;
-                  this[ALLOW_STALE] = options.stale || false;
-                  this[MAX_AGE] = options.maxAge || 0;
-                  this[DISPOSE] = options.dispose;
-                  this[NO_DISPOSE_ON_SET] = options.noDisposeOnSet || false;
+                  this[ALLOW_STALE] = options2.stale || false;
+                  this[MAX_AGE] = options2.maxAge || 0;
+                  this[DISPOSE] = options2.dispose;
+                  this[NO_DISPOSE_ON_SET] = options2.noDisposeOnSet || false;
                   this.reset();
                 }
                 Object.defineProperty(LRUCache.prototype, "max", {
@@ -19720,7 +19720,7 @@ var require_backend = __commonJS({
                 module2.exports = Yallist;
                 Yallist.Node = Node2;
                 Yallist.create = Yallist;
-                function Yallist(list) {
+                function Yallist(list2) {
                   var self2 = this;
                   if (!(self2 instanceof Yallist)) {
                     self2 = new Yallist();
@@ -19728,8 +19728,8 @@ var require_backend = __commonJS({
                   self2.tail = null;
                   self2.head = null;
                   self2.length = 0;
-                  if (list && typeof list.forEach === "function") {
-                    list.forEach(function(item) {
+                  if (list2 && typeof list2.forEach === "function") {
+                    list2.forEach(function(item) {
                       self2.push(item);
                     });
                   } else if (arguments.length > 0) {
@@ -20018,11 +20018,11 @@ var require_backend = __commonJS({
                   }
                   self2.length++;
                 }
-                function Node2(value, prev, next, list) {
+                function Node2(value, prev, next, list2) {
                   if (!(this instanceof Node2)) {
-                    return new Node2(value, prev, next, list);
+                    return new Node2(value, prev, next, list2);
                   }
-                  this.list = list;
+                  this.list = list2;
                   this.value = value;
                   if (prev) {
                     prev.next = this;
@@ -24418,13 +24418,13 @@ var require_backend = __commonJS({
                 }
               }
               function getDisplayNameForFiber(fiber) {
-                var elementType = fiber.elementType, type = fiber.type, tag = fiber.tag;
+                var elementType = fiber.elementType, type = fiber.type, tag2 = fiber.tag;
                 var resolvedType = type;
                 if (renderer_typeof(type) === "object" && type !== null) {
                   resolvedType = resolveFiberType(type);
                 }
                 var resolvedContext = null;
-                switch (tag) {
+                switch (tag2) {
                   case CacheComponent:
                     return "Cache";
                   case ClassComponent:
@@ -24708,8 +24708,8 @@ var require_backend = __commonJS({
                 flushPendingEvents();
               }
               function shouldFilterFiber(fiber) {
-                var _debugSource = fiber._debugSource, tag = fiber.tag, type = fiber.type, key = fiber.key;
-                switch (tag) {
+                var _debugSource = fiber._debugSource, tag2 = fiber.tag, type = fiber.type, key = fiber.key;
+                switch (tag2) {
                   case DehydratedSuspenseComponent:
                     return true;
                   case HostPortal:
@@ -24775,8 +24775,8 @@ var require_backend = __commonJS({
                 return false;
               }
               function getElementTypeForFiber(fiber) {
-                var type = fiber.type, tag = fiber.tag;
-                switch (tag) {
+                var type = fiber.type, tag2 = fiber.tag;
+                switch (tag2) {
                   case ClassComponent:
                   case IncompleteClassComponent:
                     return types_ElementTypeClass;
@@ -26005,8 +26005,8 @@ var require_backend = __commonJS({
                   console.warn('Could not find Fiber with id "'.concat(id, '"'));
                   return;
                 }
-                var elementType = fiber.elementType, tag = fiber.tag, type = fiber.type;
-                switch (tag) {
+                var elementType = fiber.elementType, tag2 = fiber.tag, type = fiber.type;
+                switch (tag2) {
                   case ClassComponent:
                   case IncompleteClassComponent:
                   case IndeterminateComponent:
@@ -26065,8 +26065,8 @@ var require_backend = __commonJS({
                 };
               }
               function isErrorBoundary(fiber) {
-                var tag = fiber.tag, type = fiber.type;
-                switch (tag) {
+                var tag2 = fiber.tag, type = fiber.type;
+                switch (tag2) {
                   case ClassComponent:
                   case IncompleteClassComponent:
                     var instance2 = fiber.stateNode;
@@ -26090,14 +26090,14 @@ var require_backend = __commonJS({
                 if (fiber == null) {
                   return null;
                 }
-                var _debugOwner = fiber._debugOwner, _debugSource = fiber._debugSource, stateNode = fiber.stateNode, key = fiber.key, memoizedProps = fiber.memoizedProps, memoizedState = fiber.memoizedState, dependencies = fiber.dependencies, tag = fiber.tag, type = fiber.type;
+                var _debugOwner = fiber._debugOwner, _debugSource = fiber._debugSource, stateNode = fiber.stateNode, key = fiber.key, memoizedProps = fiber.memoizedProps, memoizedState = fiber.memoizedState, dependencies = fiber.dependencies, tag2 = fiber.tag, type = fiber.type;
                 var elementType = getElementTypeForFiber(fiber);
-                var usesHooks = (tag === FunctionComponent || tag === SimpleMemoComponent || tag === ForwardRef) && (!!memoizedState || !!dependencies);
-                var showState = !usesHooks && tag !== CacheComponent;
+                var usesHooks = (tag2 === FunctionComponent || tag2 === SimpleMemoComponent || tag2 === ForwardRef) && (!!memoizedState || !!dependencies);
+                var showState = !usesHooks && tag2 !== CacheComponent;
                 var typeSymbol = getTypeSymbol(type);
                 var canViewSource = false;
                 var context = null;
-                if (tag === ClassComponent || tag === FunctionComponent || tag === IncompleteClassComponent || tag === IndeterminateComponent || tag === MemoComponent || tag === ForwardRef || tag === SimpleMemoComponent) {
+                if (tag2 === ClassComponent || tag2 === FunctionComponent || tag2 === IncompleteClassComponent || tag2 === IndeterminateComponent || tag2 === MemoComponent || tag2 === ForwardRef || tag2 === SimpleMemoComponent) {
                   canViewSource = true;
                   if (stateNode && stateNode.context != null) {
                     var shouldHideContext = elementType === types_ElementTypeClass && !(type.contextTypes || type.contextType);
@@ -26138,7 +26138,7 @@ var require_backend = __commonJS({
                     owner = owner._debugOwner || null;
                   }
                 }
-                var isTimedOutSuspense = tag === SuspenseComponent && memoizedState !== null;
+                var isTimedOutSuspense = tag2 === SuspenseComponent && memoizedState !== null;
                 var hooks = null;
                 if (usesHooks) {
                   var originalConsoleMethods = {};
@@ -26292,8 +26292,8 @@ var require_backend = __commonJS({
                   console.warn('Could not find Fiber with id "'.concat(id, '"'));
                   return;
                 }
-                var elementType = fiber.elementType, stateNode = fiber.stateNode, tag = fiber.tag, type = fiber.type;
-                switch (tag) {
+                var elementType = fiber.elementType, stateNode = fiber.stateNode, tag2 = fiber.tag, type = fiber.type;
+                switch (tag2) {
                   case ClassComponent:
                   case IncompleteClassComponent:
                   case IndeterminateComponent:
@@ -29857,11 +29857,11 @@ var require_backend = __commonJS({
                 (_console = console).log.apply(_console, ["%c[core/backend] %c".concat(methodName), "color: teal; font-weight: bold;", "font-weight: bold;"].concat(args));
               }
             }
-            function connectToDevTools(options) {
+            function connectToDevTools(options2) {
               if (hook == null) {
                 return;
               }
-              var _ref = options || {}, _ref$host = _ref.host, host = _ref$host === void 0 ? "localhost" : _ref$host, nativeStyleEditorValidAttributes = _ref.nativeStyleEditorValidAttributes, _ref$useHttps = _ref.useHttps, useHttps = _ref$useHttps === void 0 ? false : _ref$useHttps, _ref$port = _ref.port, port = _ref$port === void 0 ? 8097 : _ref$port, websocket = _ref.websocket, _ref$resolveRNStyle = _ref.resolveRNStyle, resolveRNStyle = _ref$resolveRNStyle === void 0 ? null : _ref$resolveRNStyle, _ref$retryConnectionD = _ref.retryConnectionDelay, retryConnectionDelay = _ref$retryConnectionD === void 0 ? 2e3 : _ref$retryConnectionD, _ref$isAppActive = _ref.isAppActive, isAppActive = _ref$isAppActive === void 0 ? function() {
+              var _ref = options2 || {}, _ref$host = _ref.host, host = _ref$host === void 0 ? "localhost" : _ref$host, nativeStyleEditorValidAttributes = _ref.nativeStyleEditorValidAttributes, _ref$useHttps = _ref.useHttps, useHttps = _ref$useHttps === void 0 ? false : _ref$useHttps, _ref$port = _ref.port, port = _ref$port === void 0 ? 8097 : _ref$port, websocket = _ref.websocket, _ref$resolveRNStyle = _ref.resolveRNStyle, resolveRNStyle = _ref$resolveRNStyle === void 0 ? null : _ref$resolveRNStyle, _ref$retryConnectionD = _ref.retryConnectionDelay, retryConnectionDelay = _ref$retryConnectionD === void 0 ? 2e3 : _ref$retryConnectionD, _ref$isAppActive = _ref.isAppActive, isAppActive = _ref$isAppActive === void 0 ? function() {
                 return true;
               } : _ref$isAppActive, devToolsSettingsManager = _ref.devToolsSettingsManager;
               var protocol = useHttps ? "wss" : "ws";
@@ -29869,7 +29869,7 @@ var require_backend = __commonJS({
               function scheduleRetry() {
                 if (retryTimeoutID === null) {
                   retryTimeoutID = setTimeout(function() {
-                    return connectToDevTools(options);
+                    return connectToDevTools(options2);
                   }, retryConnectionDelay);
                 }
               }
@@ -30159,7 +30159,7 @@ var require_onetime = __commonJS({
     "use strict";
     var mimicFn = require_mimic_fn();
     var calledFunctions = /* @__PURE__ */ new WeakMap();
-    var onetime2 = (function_, options = {}) => {
+    var onetime2 = (function_, options2 = {}) => {
       if (typeof function_ !== "function") {
         throw new TypeError("Expected a function");
       }
@@ -30171,7 +30171,7 @@ var require_onetime = __commonJS({
         if (callCount === 1) {
           returnValue = function_.apply(this, arguments_);
           function_ = null;
-        } else if (options.throw === true) {
+        } else if (options2.throw === true) {
           throw new Error(`Function \`${functionName}\` can only be called once`);
         }
         return returnValue;
@@ -30760,16 +30760,16 @@ var require_extend = __commonJS({
       }
       return typeof key === "undefined" || hasOwn.call(obj, key);
     };
-    var setProperty = function setProperty2(target, options) {
-      if (defineProperty && options.name === "__proto__") {
-        defineProperty(target, options.name, {
+    var setProperty = function setProperty2(target, options2) {
+      if (defineProperty && options2.name === "__proto__") {
+        defineProperty(target, options2.name, {
           enumerable: true,
           configurable: true,
-          value: options.newValue,
+          value: options2.newValue,
           writable: true
         });
       } else {
-        target[options.name] = options.newValue;
+        target[options2.name] = options2.newValue;
       }
     };
     var getProperty = function getProperty2(obj, name) {
@@ -30783,7 +30783,7 @@ var require_extend = __commonJS({
       return obj[name];
     };
     module.exports = function extend3() {
-      var options, name, src, copy, copyIsArray, clone2;
+      var options2, name, src, copy, copyIsArray, clone2;
       var target = arguments[0];
       var i2 = 1;
       var length = arguments.length;
@@ -30797,11 +30797,11 @@ var require_extend = __commonJS({
         target = {};
       }
       for (; i2 < length; ++i2) {
-        options = arguments[i2];
-        if (options != null) {
-          for (name in options) {
+        options2 = arguments[i2];
+        if (options2 != null) {
+          for (name in options2) {
             src = getProperty(target, name);
-            copy = getProperty(options, name);
+            copy = getProperty(options2, name);
             if (target !== copy) {
               if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
                 if (copyIsArray) {
@@ -30948,13 +30948,13 @@ var require_ms = __commonJS({
     var d = h2 * 24;
     var w = d * 7;
     var y = d * 365.25;
-    module.exports = function(val, options) {
-      options = options || {};
+    module.exports = function(val, options2) {
+      options2 = options2 || {};
       var type = typeof val;
       if (type === "string" && val.length > 0) {
         return parse(val);
       } else if (type === "number" && isFinite(val)) {
-        return options.long ? fmtLong(val) : fmtShort(val);
+        return options2.long ? fmtLong(val) : fmtShort(val);
       }
       throw new Error(
         "val is not a non-empty string or a valid number. val=" + JSON.stringify(val)
@@ -31821,13 +31821,13 @@ var require_dist = __commonJS({
       /**
        * Determine whether this is an `http` or `https` request.
        */
-      isSecureEndpoint(options) {
-        if (options) {
-          if (typeof options.secureEndpoint === "boolean") {
-            return options.secureEndpoint;
+      isSecureEndpoint(options2) {
+        if (options2) {
+          if (typeof options2.secureEndpoint === "boolean") {
+            return options2.secureEndpoint;
           }
-          if (typeof options.protocol === "string") {
-            return options.protocol === "https:";
+          if (typeof options2.protocol === "string") {
+            return options2.protocol === "https:";
           }
         }
         const { stack } = new Error();
@@ -31869,17 +31869,17 @@ var require_dist = __commonJS({
       }
       // In order to properly update the socket pool, we need to call `getName()` on
       // the core `https.Agent` if it is a secureEndpoint.
-      getName(options) {
-        const secureEndpoint = this.isSecureEndpoint(options);
+      getName(options2) {
+        const secureEndpoint = this.isSecureEndpoint(options2);
         if (secureEndpoint) {
-          return https_1.Agent.prototype.getName.call(this, options);
+          return https_1.Agent.prototype.getName.call(this, options2);
         }
-        return super.getName(options);
+        return super.getName(options2);
       }
-      createSocket(req, options, cb) {
+      createSocket(req, options2, cb) {
         const connectOpts = {
-          ...options,
-          secureEndpoint: this.isSecureEndpoint(options)
+          ...options2,
+          secureEndpoint: this.isSecureEndpoint(options2)
         };
         const name = this.getName(connectOpts);
         const fakeSocket = this.incrementSockets(name);
@@ -31893,7 +31893,7 @@ var require_dist = __commonJS({
             }
           }
           this[INTERNAL].currentSocket = socket;
-          super.createSocket(req, options, cb);
+          super.createSocket(req, options2, cb);
         }, (err) => {
           this.decrementSockets(name, fakeSocket);
           cb(err);
@@ -32068,14 +32068,14 @@ var require_dist2 = __commonJS({
     var url_1 = __require("url");
     var parse_proxy_response_1 = require_parse_proxy_response();
     var debug = (0, debug_1.default)("https-proxy-agent");
-    var setServernameFromNonIpHost = (options) => {
-      if (options.servername === void 0 && options.host && !net.isIP(options.host)) {
+    var setServernameFromNonIpHost = (options2) => {
+      if (options2.servername === void 0 && options2.host && !net.isIP(options2.host)) {
         return {
-          ...options,
-          servername: options.host
+          ...options2,
+          servername: options2.host
         };
       }
-      return options;
+      return options2;
     };
     var HttpsProxyAgent = class extends agent_base_1.Agent {
       constructor(proxy, opts) {
@@ -33596,9 +33596,9 @@ var require_ponyfill_es2018 = __commonJS({
       function byteStreamControllerBrandCheckException(name) {
         return new TypeError(`ReadableByteStreamController.prototype.${name} can only be used on a ReadableByteStreamController`);
       }
-      function convertReaderOptions(options, context) {
-        assertDictionary(options, context);
-        const mode = options === null || options === void 0 ? void 0 : options.mode;
+      function convertReaderOptions(options2, context) {
+        assertDictionary(options2, context);
+        const mode = options2 === null || options2 === void 0 ? void 0 : options2.mode;
         return {
           mode: mode === void 0 ? void 0 : convertReadableStreamReaderMode(mode, `${context} has member 'mode' that`)
         };
@@ -33610,10 +33610,10 @@ var require_ponyfill_es2018 = __commonJS({
         }
         return mode;
       }
-      function convertByobReadOptions(options, context) {
+      function convertByobReadOptions(options2, context) {
         var _a3;
-        assertDictionary(options, context);
-        const min = (_a3 = options === null || options === void 0 ? void 0 : options.min) !== null && _a3 !== void 0 ? _a3 : 1;
+        assertDictionary(options2, context);
+        const min = (_a3 = options2 === null || options2 === void 0 ? void 0 : options2.min) !== null && _a3 !== void 0 ? _a3 : 1;
         return {
           min: convertUnsignedLongLongWithEnforceRange(min, `${context} has member 'min' that`)
         };
@@ -33697,13 +33697,13 @@ var require_ponyfill_es2018 = __commonJS({
           if (IsDetachedBuffer(view.buffer)) {
             return promiseRejectedWith(new TypeError("view's buffer has been detached"));
           }
-          let options;
+          let options2;
           try {
-            options = convertByobReadOptions(rawOptions, "options");
+            options2 = convertByobReadOptions(rawOptions, "options");
           } catch (e2) {
             return promiseRejectedWith(e2);
           }
-          const min = options.min;
+          const min = options2.min;
           if (min === 0) {
             return promiseRejectedWith(new TypeError("options.min must be greater than 0"));
           }
@@ -35658,17 +35658,17 @@ var require_ponyfill_es2018 = __commonJS({
         }
         return type;
       }
-      function convertIteratorOptions(options, context) {
-        assertDictionary(options, context);
-        const preventCancel = options === null || options === void 0 ? void 0 : options.preventCancel;
+      function convertIteratorOptions(options2, context) {
+        assertDictionary(options2, context);
+        const preventCancel = options2 === null || options2 === void 0 ? void 0 : options2.preventCancel;
         return { preventCancel: Boolean(preventCancel) };
       }
-      function convertPipeOptions(options, context) {
-        assertDictionary(options, context);
-        const preventAbort = options === null || options === void 0 ? void 0 : options.preventAbort;
-        const preventCancel = options === null || options === void 0 ? void 0 : options.preventCancel;
-        const preventClose = options === null || options === void 0 ? void 0 : options.preventClose;
-        const signal = options === null || options === void 0 ? void 0 : options.signal;
+      function convertPipeOptions(options2, context) {
+        assertDictionary(options2, context);
+        const preventAbort = options2 === null || options2 === void 0 ? void 0 : options2.preventAbort;
+        const preventCancel = options2 === null || options2 === void 0 ? void 0 : options2.preventCancel;
+        const preventClose = options2 === null || options2 === void 0 ? void 0 : options2.preventClose;
+        const signal = options2 === null || options2 === void 0 ? void 0 : options2.signal;
         if (signal !== void 0) {
           assertAbortSignal(signal, `${context} has member 'signal' that`);
         }
@@ -35744,8 +35744,8 @@ var require_ponyfill_es2018 = __commonJS({
           if (!IsReadableStream(this)) {
             throw streamBrandCheckException$1("getReader");
           }
-          const options = convertReaderOptions(rawOptions, "First parameter");
-          if (options.mode === void 0) {
+          const options2 = convertReaderOptions(rawOptions, "First parameter");
+          if (options2.mode === void 0) {
             return AcquireReadableStreamDefaultReader(this);
           }
           return AcquireReadableStreamBYOBReader(this);
@@ -35756,14 +35756,14 @@ var require_ponyfill_es2018 = __commonJS({
           }
           assertRequiredArgument(rawTransform, 1, "pipeThrough");
           const transform = convertReadableWritablePair(rawTransform, "First parameter");
-          const options = convertPipeOptions(rawOptions, "Second parameter");
+          const options2 = convertPipeOptions(rawOptions, "Second parameter");
           if (IsReadableStreamLocked(this)) {
             throw new TypeError("ReadableStream.prototype.pipeThrough cannot be used on a locked ReadableStream");
           }
           if (IsWritableStreamLocked(transform.writable)) {
             throw new TypeError("ReadableStream.prototype.pipeThrough cannot be used on a locked WritableStream");
           }
-          const promise = ReadableStreamPipeTo(this, transform.writable, options.preventClose, options.preventAbort, options.preventCancel, options.signal);
+          const promise = ReadableStreamPipeTo(this, transform.writable, options2.preventClose, options2.preventAbort, options2.preventCancel, options2.signal);
           setPromiseIsHandledToTrue(promise);
           return transform.readable;
         }
@@ -35777,9 +35777,9 @@ var require_ponyfill_es2018 = __commonJS({
           if (!IsWritableStream(destination)) {
             return promiseRejectedWith(new TypeError(`ReadableStream.prototype.pipeTo's first argument must be a WritableStream`));
           }
-          let options;
+          let options2;
           try {
-            options = convertPipeOptions(rawOptions, "Second parameter");
+            options2 = convertPipeOptions(rawOptions, "Second parameter");
           } catch (e2) {
             return promiseRejectedWith(e2);
           }
@@ -35789,7 +35789,7 @@ var require_ponyfill_es2018 = __commonJS({
           if (IsWritableStreamLocked(destination)) {
             return promiseRejectedWith(new TypeError("ReadableStream.prototype.pipeTo cannot be used on a locked WritableStream"));
           }
-          return ReadableStreamPipeTo(this, destination, options.preventClose, options.preventAbort, options.preventCancel, options.signal);
+          return ReadableStreamPipeTo(this, destination, options2.preventClose, options2.preventAbort, options2.preventCancel, options2.signal);
         }
         /**
          * Tees this readable stream, returning a two-element array containing the two resulting branches as
@@ -35813,11 +35813,11 @@ var require_ponyfill_es2018 = __commonJS({
           if (!IsReadableStream(this)) {
             throw streamBrandCheckException$1("values");
           }
-          const options = convertIteratorOptions(rawOptions, "First parameter");
-          return AcquireReadableStreamAsyncIterator(this, options.preventCancel);
+          const options2 = convertIteratorOptions(rawOptions, "First parameter");
+          return AcquireReadableStreamAsyncIterator(this, options2.preventCancel);
         }
-        [SymbolAsyncIterator](options) {
-          return this.values(options);
+        [SymbolAsyncIterator](options2) {
+          return this.values(options2);
         }
         /**
          * Creates a new ReadableStream wrapping the provided iterable or async iterable.
@@ -35959,10 +35959,10 @@ var require_ponyfill_es2018 = __commonJS({
       };
       setFunctionName(byteLengthSizeFunction, "size");
       class ByteLengthQueuingStrategy {
-        constructor(options) {
-          assertRequiredArgument(options, 1, "ByteLengthQueuingStrategy");
-          options = convertQueuingStrategyInit(options, "First parameter");
-          this._byteLengthQueuingStrategyHighWaterMark = options.highWaterMark;
+        constructor(options2) {
+          assertRequiredArgument(options2, 1, "ByteLengthQueuingStrategy");
+          options2 = convertQueuingStrategyInit(options2, "First parameter");
+          this._byteLengthQueuingStrategyHighWaterMark = options2.highWaterMark;
         }
         /**
          * Returns the high water mark provided to the constructor.
@@ -36010,10 +36010,10 @@ var require_ponyfill_es2018 = __commonJS({
       };
       setFunctionName(countSizeFunction, "size");
       class CountQueuingStrategy {
-        constructor(options) {
-          assertRequiredArgument(options, 1, "CountQueuingStrategy");
-          options = convertQueuingStrategyInit(options, "First parameter");
-          this._countQueuingStrategyHighWaterMark = options.highWaterMark;
+        constructor(options2) {
+          assertRequiredArgument(options2, 1, "CountQueuingStrategy");
+          options2 = convertQueuingStrategyInit(options2, "First parameter");
+          this._countQueuingStrategyHighWaterMark = options2.highWaterMark;
         }
         /**
          * Returns the high water mark provided to the constructor.
@@ -36593,17 +36593,17 @@ var init_fetch_blob = __esm({
        * @param {*} blobParts
        * @param {{ type?: string, endings?: string }} [options]
        */
-      constructor(blobParts = [], options = {}) {
+      constructor(blobParts = [], options2 = {}) {
         if (typeof blobParts !== "object" || blobParts === null) {
           throw new TypeError("Failed to construct 'Blob': The provided value cannot be converted to a sequence.");
         }
         if (typeof blobParts[Symbol.iterator] !== "function") {
           throw new TypeError("Failed to construct 'Blob': The object must have a callable @@iterator property.");
         }
-        if (typeof options !== "object" && typeof options !== "function") {
+        if (typeof options2 !== "object" && typeof options2 !== "function") {
           throw new TypeError("Failed to construct 'Blob': parameter 2 cannot convert to dictionary.");
         }
-        if (options === null) options = {};
+        if (options2 === null) options2 = {};
         const encoder = new TextEncoder();
         for (const element of blobParts) {
           let part;
@@ -36619,8 +36619,8 @@ var init_fetch_blob = __esm({
           this.#size += ArrayBuffer.isView(part) ? part.byteLength : part.size;
           this.#parts.push(part);
         }
-        this.#endings = `${options.endings === void 0 ? "transparent" : options.endings}`;
-        const type = options.type === void 0 ? "" : String(options.type);
+        this.#endings = `${options2.endings === void 0 ? "transparent" : options2.endings}`;
+        const type = options2.type === void 0 ? "" : String(options2.type);
         this.#type = /^[\x20-\x7E]*$/.test(type) ? type : "";
       }
       /**
@@ -36757,13 +36757,13 @@ var init_file = __esm({
        * @param {{lastModified?: number, type?: string}} options
        */
       // @ts-ignore
-      constructor(fileBits, fileName, options = {}) {
+      constructor(fileBits, fileName, options2 = {}) {
         if (arguments.length < 2) {
           throw new TypeError(`Failed to construct 'File': 2 arguments required, but only ${arguments.length} present.`);
         }
-        super(fileBits, options);
-        if (options === null) options = {};
-        const lastModified = options.lastModified === void 0 ? Date.now() : Number(options.lastModified);
+        super(fileBits, options2);
+        if (options2 === null) options2 = {};
+        const lastModified = options2.lastModified === void 0 ? Date.now() : Number(options2.lastModified);
         if (!Number.isNaN(lastModified)) {
           this.#lastModified = lastModified;
         }
@@ -36997,11 +36997,11 @@ var init_from = __esm({
     BlobDataItem = class _BlobDataItem {
       #path;
       #start;
-      constructor(options) {
-        this.#path = options.path;
-        this.#start = options.start;
-        this.size = options.size;
-        this.lastModified = options.lastModified;
+      constructor(options2) {
+        this.#path = options2.path;
+        this.#start = options2.start;
+        this.size = options2.size;
+        this.lastModified = options2.lastModified;
       }
       /**
        * Slicing arguments is first validated and formatted
@@ -37058,7 +37058,7 @@ async function toFormData(Body2, ct) {
   if (!m2) {
     throw new TypeError("no or bad content-type header, no multipart boundary");
   }
-  const parser = new MultipartParser(m2[1] || m2[2]);
+  const parser2 = new MultipartParser(m2[1] || m2[2]);
   let headerField;
   let headerValue;
   let entryValue;
@@ -37082,9 +37082,9 @@ async function toFormData(Body2, ct) {
   };
   const decoder = new TextDecoder("utf-8");
   decoder.decode();
-  parser.onPartBegin = function() {
-    parser.onPartData = onPartData;
-    parser.onPartEnd = appendEntryToFormData;
+  parser2.onPartBegin = function() {
+    parser2.onPartData = onPartData;
+    parser2.onPartEnd = appendEntryToFormData;
     headerField = "";
     headerValue = "";
     entryValue = "";
@@ -37093,13 +37093,13 @@ async function toFormData(Body2, ct) {
     filename = null;
     entryChunks.length = 0;
   };
-  parser.onHeaderField = function(ui8a) {
+  parser2.onHeaderField = function(ui8a) {
     headerField += decoder.decode(ui8a, { stream: true });
   };
-  parser.onHeaderValue = function(ui8a) {
+  parser2.onHeaderValue = function(ui8a) {
     headerValue += decoder.decode(ui8a, { stream: true });
   };
-  parser.onHeaderEnd = function() {
+  parser2.onHeaderEnd = function() {
     headerValue += decoder.decode();
     headerField = headerField.toLowerCase();
     if (headerField === "content-disposition") {
@@ -37109,8 +37109,8 @@ async function toFormData(Body2, ct) {
       }
       filename = _fileName(headerValue);
       if (filename) {
-        parser.onPartData = appendToFile;
-        parser.onPartEnd = appendFileToFormData;
+        parser2.onPartData = appendToFile;
+        parser2.onPartEnd = appendFileToFormData;
       }
     } else if (headerField === "content-type") {
       contentType = headerValue;
@@ -37119,9 +37119,9 @@ async function toFormData(Body2, ct) {
     headerField = "";
   };
   for await (const chunk of Body2) {
-    parser.write(chunk);
+    parser2.write(chunk);
   }
-  parser.end();
+  parser2.end();
   return formData;
 }
 var s, S, f2, F, LF, CR, SPACE, HYPHEN, COLON, A, Z, lower, noop2, MultipartParser;
@@ -37863,10 +37863,10 @@ var init_response = __esm({
     init_is_redirect();
     INTERNALS2 = Symbol("Response internals");
     Response = class _Response extends Body {
-      constructor(body = null, options = {}) {
-        super(body, options);
-        const status = options.status != null ? options.status : 200;
-        const headers = new Headers2(options.headers);
+      constructor(body = null, options2 = {}) {
+        super(body, options2);
+        const status = options2.status != null ? options2.status : 200;
+        const headers = new Headers2(options2.headers);
         if (body !== null && !headers.has("Content-Type")) {
           const contentType = extractContentType(body, this);
           if (contentType) {
@@ -37875,12 +37875,12 @@ var init_response = __esm({
         }
         this[INTERNALS2] = {
           type: "default",
-          url: options.url,
+          url: options2.url,
           status,
-          statusText: options.statusText || "",
+          statusText: options2.statusText || "",
           headers,
-          counter: options.counter,
-          highWaterMark: options.highWaterMark
+          counter: options2.counter,
+          highWaterMark: options2.highWaterMark
         };
       }
       get type() {
@@ -38327,7 +38327,7 @@ var init_request = __esm({
         agent = agent(parsedURL);
       }
       const search = getSearch(parsedURL);
-      const options = {
+      const options2 = {
         // Overwrite search to retain trailing ? (issue #776)
         path: parsedURL.pathname + search,
         // The following options are not expressed in the URL
@@ -38339,7 +38339,7 @@ var init_request = __esm({
       return {
         /** @type {URL} */
         parsedURL,
-        options
+        options: options2
       };
     };
   }
@@ -38384,7 +38384,7 @@ import { Buffer as Buffer4 } from "node:buffer";
 async function fetch2(url, options_) {
   return new Promise((resolve2, reject) => {
     const request2 = new Request(url, options_);
-    const { parsedURL, options } = getNodeRequestOptions(request2);
+    const { parsedURL, options: options2 } = getNodeRequestOptions(request2);
     if (!supportedSchemas.has(parsedURL.protocol)) {
       throw new TypeError(`node-fetch cannot load ${url}. URL scheme "${parsedURL.protocol.replace(/:$/, "")}" is not supported.`);
     }
@@ -38416,7 +38416,7 @@ async function fetch2(url, options_) {
       abort();
       finalize();
     };
-    const request_ = send(parsedURL.toString(), options);
+    const request_ = send(parsedURL.toString(), options2);
     if (signal) {
       signal.addEventListener("abort", abortAndFinalize);
     }
@@ -38785,17 +38785,17 @@ var require_main = __commonJS({
       }
       return obj;
     }
-    function _parseVault(options) {
-      options = options || {};
-      const vaultPath = _vaultPath(options);
-      options.path = vaultPath;
-      const result = DotenvModule.configDotenv(options);
+    function _parseVault(options2) {
+      options2 = options2 || {};
+      const vaultPath = _vaultPath(options2);
+      options2.path = vaultPath;
+      const result = DotenvModule.configDotenv(options2);
       if (!result.parsed) {
         const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
         err.code = "MISSING_DATA";
         throw err;
       }
-      const keys = _dotenvKey(options).split(",");
+      const keys = _dotenvKey(options2).split(",");
       const length = keys.length;
       let decrypted;
       for (let i2 = 0; i2 < length; i2++) {
@@ -38821,9 +38821,9 @@ var require_main = __commonJS({
     function _log(message) {
       console.log(`[dotenv@${version2}] ${message}`);
     }
-    function _dotenvKey(options) {
-      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
-        return options.DOTENV_KEY;
+    function _dotenvKey(options2) {
+      if (options2 && options2.DOTENV_KEY && options2.DOTENV_KEY.length > 0) {
+        return options2.DOTENV_KEY;
       }
       if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
         return process.env.DOTENV_KEY;
@@ -38863,17 +38863,17 @@ var require_main = __commonJS({
       }
       return { ciphertext, key };
     }
-    function _vaultPath(options) {
+    function _vaultPath(options2) {
       let possibleVaultPath = null;
-      if (options && options.path && options.path.length > 0) {
-        if (Array.isArray(options.path)) {
-          for (const filepath of options.path) {
+      if (options2 && options2.path && options2.path.length > 0) {
+        if (Array.isArray(options2.path)) {
+          for (const filepath of options2.path) {
             if (fs4.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
         } else {
-          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
+          possibleVaultPath = options2.path.endsWith(".vault") ? options2.path : `${options2.path}.vault`;
         }
       } else {
         possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
@@ -38886,43 +38886,43 @@ var require_main = __commonJS({
     function _resolveHome(envPath) {
       return envPath[0] === "~" ? path.join(os3.homedir(), envPath.slice(1)) : envPath;
     }
-    function _configVault(options) {
-      const debug = parseBoolean(process.env.DOTENV_CONFIG_DEBUG || options && options.debug);
-      const quiet = parseBoolean(process.env.DOTENV_CONFIG_QUIET || options && options.quiet);
+    function _configVault(options2) {
+      const debug = parseBoolean(process.env.DOTENV_CONFIG_DEBUG || options2 && options2.debug);
+      const quiet = parseBoolean(process.env.DOTENV_CONFIG_QUIET || options2 && options2.quiet);
       if (debug || !quiet) {
         _log("Loading env from encrypted .env.vault");
       }
-      const parsed = DotenvModule._parseVault(options);
+      const parsed = DotenvModule._parseVault(options2);
       let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
+      if (options2 && options2.processEnv != null) {
+        processEnv = options2.processEnv;
       }
-      DotenvModule.populate(processEnv, parsed, options);
+      DotenvModule.populate(processEnv, parsed, options2);
       return { parsed };
     }
-    function configDotenv(options) {
+    function configDotenv(options2) {
       const dotenvPath = path.resolve(process.cwd(), ".env");
       let encoding = "utf8";
       let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
+      if (options2 && options2.processEnv != null) {
+        processEnv = options2.processEnv;
       }
-      let debug = parseBoolean(processEnv.DOTENV_CONFIG_DEBUG || options && options.debug);
-      let quiet = parseBoolean(processEnv.DOTENV_CONFIG_QUIET || options && options.quiet);
-      if (options && options.encoding) {
-        encoding = options.encoding;
+      let debug = parseBoolean(processEnv.DOTENV_CONFIG_DEBUG || options2 && options2.debug);
+      let quiet = parseBoolean(processEnv.DOTENV_CONFIG_QUIET || options2 && options2.quiet);
+      if (options2 && options2.encoding) {
+        encoding = options2.encoding;
       } else {
         if (debug) {
           _debug("No encoding is specified. UTF-8 is used by default");
         }
       }
       let optionPaths = [dotenvPath];
-      if (options && options.path) {
-        if (!Array.isArray(options.path)) {
-          optionPaths = [_resolveHome(options.path)];
+      if (options2 && options2.path) {
+        if (!Array.isArray(options2.path)) {
+          optionPaths = [_resolveHome(options2.path)];
         } else {
           optionPaths = [];
-          for (const filepath of options.path) {
+          for (const filepath of options2.path) {
             optionPaths.push(_resolveHome(filepath));
           }
         }
@@ -38932,7 +38932,7 @@ var require_main = __commonJS({
       for (const path2 of optionPaths) {
         try {
           const parsed = DotenvModule.parse(fs4.readFileSync(path2, { encoding }));
-          DotenvModule.populate(parsedAll, parsed, options);
+          DotenvModule.populate(parsedAll, parsed, options2);
         } catch (e2) {
           if (debug) {
             _debug(`Failed to load ${path2} ${e2.message}`);
@@ -38940,7 +38940,7 @@ var require_main = __commonJS({
           lastError = e2;
         }
       }
-      const populated = DotenvModule.populate(processEnv, parsedAll, options);
+      const populated = DotenvModule.populate(processEnv, parsedAll, options2);
       debug = parseBoolean(processEnv.DOTENV_CONFIG_DEBUG || debug);
       quiet = parseBoolean(processEnv.DOTENV_CONFIG_QUIET || quiet);
       if (debug || !quiet) {
@@ -38965,16 +38965,16 @@ var require_main = __commonJS({
         return { parsed: parsedAll };
       }
     }
-    function config2(options) {
-      if (_dotenvKey(options).length === 0) {
-        return DotenvModule.configDotenv(options);
+    function config2(options2) {
+      if (_dotenvKey(options2).length === 0) {
+        return DotenvModule.configDotenv(options2);
       }
-      const vaultPath = _vaultPath(options);
+      const vaultPath = _vaultPath(options2);
       if (!vaultPath) {
         _warn(`You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`);
-        return DotenvModule.configDotenv(options);
+        return DotenvModule.configDotenv(options2);
       }
-      return DotenvModule._configVault(options);
+      return DotenvModule._configVault(options2);
     }
     function decrypt(encrypted, keyStr) {
       const key = Buffer.from(keyStr.slice(-64), "hex");
@@ -39003,9 +39003,9 @@ var require_main = __commonJS({
         }
       }
     }
-    function populate(processEnv, parsed, options = {}) {
-      const debug = Boolean(options && options.debug);
-      const override = Boolean(options && options.override);
+    function populate(processEnv, parsed, options2 = {}) {
+      const debug = Boolean(options2 && options2.debug);
+      const override = Boolean(options2 && options2.override);
       const populated = {};
       if (typeof parsed !== "object") {
         const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
@@ -40388,8 +40388,8 @@ var require_conversions = __commonJS({
       const a = lab[1];
       const b = lab[2];
       let h2;
-      const hr = Math.atan2(b, a);
-      h2 = hr * 360 / 2 / Math.PI;
+      const hr2 = Math.atan2(b, a);
+      h2 = hr2 * 360 / 2 / Math.PI;
       if (h2 < 0) {
         h2 += 360;
       }
@@ -40400,9 +40400,9 @@ var require_conversions = __commonJS({
       const l = lch[0];
       const c = lch[1];
       const h2 = lch[2];
-      const hr = h2 / 360 * 2 * Math.PI;
-      const a = c * Math.cos(hr);
-      const b = c * Math.sin(hr);
+      const hr2 = h2 / 360 * 2 * Math.PI;
+      const a = c * Math.cos(hr2);
+      const b = c * Math.sin(hr2);
       return [l, a, b];
     };
     convert.rgb.ansi16 = function(args, saturation = null) {
@@ -40693,7 +40693,7 @@ var require_route = __commonJS({
       }
       return graph;
     }
-    function link2(from, to) {
+    function link3(from, to) {
       return function(args) {
         return to(from(args));
       };
@@ -40704,7 +40704,7 @@ var require_route = __commonJS({
       let cur = graph[toModel].parent;
       while (graph[cur].parent) {
         path.unshift(graph[cur].parent);
-        fn = link2(conversions[graph[cur].parent][cur], fn);
+        fn = link3(conversions[graph[cur].parent][cur], fn);
         cur = graph[cur].parent;
       }
       fn.conversion = path;
@@ -41009,7 +41009,7 @@ var require_templates = __commonJS({
         if (!Number.isNaN(number)) {
           results.push(number);
         } else if (matches = chunk.match(STRING_REGEX)) {
-          results.push(matches[2].replace(ESCAPE_REGEX, (m2, escape2, character) => escape2 ? unescape2(escape2) : character));
+          results.push(matches[2].replace(ESCAPE_REGEX, (m2, escape3, character) => escape3 ? unescape2(escape3) : character));
         } else {
           throw new Error(`Invalid Chalk template style argument: ${chunk} (in style '${name}')`);
         }
@@ -41101,21 +41101,21 @@ var require_source = __commonJS({
       "ansi16m"
     ];
     var styles8 = /* @__PURE__ */ Object.create(null);
-    var applyOptions2 = (object, options = {}) => {
-      if (options.level && !(Number.isInteger(options.level) && options.level >= 0 && options.level <= 3)) {
+    var applyOptions2 = (object, options2 = {}) => {
+      if (options2.level && !(Number.isInteger(options2.level) && options2.level >= 0 && options2.level <= 3)) {
         throw new Error("The `level` option should be an integer from 0 to 3");
       }
       const colorLevel = stdoutColor2 ? stdoutColor2.level : 0;
-      object.level = options.level === void 0 ? colorLevel : options.level;
+      object.level = options2.level === void 0 ? colorLevel : options2.level;
     };
     var ChalkClass = class {
-      constructor(options) {
-        return chalkFactory2(options);
+      constructor(options2) {
+        return chalkFactory2(options2);
       }
     };
-    var chalkFactory2 = (options) => {
+    var chalkFactory2 = (options2) => {
       const chalk3 = {};
-      applyOptions2(chalk3, options);
+      applyOptions2(chalk3, options2);
       chalk3.template = (...arguments_) => chalkTag(chalk3.template, ...arguments_);
       Object.setPrototypeOf(chalk3, Chalk.prototype);
       Object.setPrototypeOf(chalk3.template, chalk3);
@@ -41125,8 +41125,8 @@ var require_source = __commonJS({
       chalk3.template.Instance = ChalkClass;
       return chalk3.template;
     };
-    function Chalk(options) {
-      return chalkFactory2(options);
+    function Chalk(options2) {
+      return chalkFactory2(options2);
     }
     for (const [styleName, style] of Object.entries(ansiStyles6)) {
       styles8[styleName] = {
@@ -42547,11 +42547,11 @@ var require_gradient_string = __commonJS({
       ret.multiline = (str, opts) => multilineGradient(str ? str.toString() : "", grad, opts);
       return ret;
     }
-    var getColors = (gradient, options, count) => options.interpolation.toLowerCase() === "hsv" ? gradient.hsv(count, options.hsvSpin.toLowerCase()) : gradient.rgb(count);
+    var getColors = (gradient, options2, count) => options2.interpolation.toLowerCase() === "hsv" ? gradient.hsv(count, options2.hsvSpin.toLowerCase()) : gradient.rgb(count);
     function applyGradient(str, gradient, opts) {
-      const options = validateOptions(opts);
+      const options2 = validateOptions(opts);
       const colorsCount = Math.max(str.replace(forbiddenChars, "").length, gradient.stops.length);
-      const colors = getColors(gradient, options, colorsCount);
+      const colors = getColors(gradient, options2, colorsCount);
       let result = "";
       for (const s2 of str) {
         result += s2.match(forbiddenChars) ? s2 : chalk2.hex(colors.shift().toHex())(s2);
@@ -42559,10 +42559,10 @@ var require_gradient_string = __commonJS({
       return result;
     }
     function multilineGradient(str, gradient, opts) {
-      const options = validateOptions(opts);
+      const options2 = validateOptions(opts);
       const lines = str.split("\n");
       const maxLength = Math.max.apply(null, lines.map((l) => l.length).concat([gradient.stops.length]));
-      const colors = getColors(gradient, options, maxLength);
+      const colors = getColors(gradient, options2, maxLength);
       const results = [];
       for (const line of lines) {
         const lineColors = colors.slice(0);
@@ -42575,17 +42575,17 @@ var require_gradient_string = __commonJS({
       return results.join("\n");
     }
     function validateOptions(opts) {
-      const options = { interpolation: "rgb", hsvSpin: "short", ...opts };
+      const options2 = { interpolation: "rgb", hsvSpin: "short", ...opts };
       if (opts !== void 0 && typeof opts !== "object") {
         throw new TypeError(`Expected \`options\` to be an \`object\`, got \`${typeof opts}\``);
       }
-      if (typeof options.interpolation !== "string") {
-        throw new TypeError(`Expected \`options.interpolation\` to be a \`string\`, got \`${typeof options.interpolation}\``);
+      if (typeof options2.interpolation !== "string") {
+        throw new TypeError(`Expected \`options.interpolation\` to be a \`string\`, got \`${typeof options2.interpolation}\``);
       }
-      if (options.interpolation.toLowerCase() === "hsv" && typeof options.hsvSpin !== "string") {
-        throw new TypeError(`Expected \`options.hsvSpin\` to be a \`string\`, got \`${typeof options.hsvSpin}\``);
+      if (options2.interpolation.toLowerCase() === "hsv" && typeof options2.hsvSpin !== "string") {
+        throw new TypeError(`Expected \`options.hsvSpin\` to be a \`string\`, got \`${typeof options2.hsvSpin}\``);
       }
-      return options;
+      return options2;
     }
     var aliases = {
       atlas: { colors: ["#feac5e", "#c779d0", "#4bc0c8"], options: {} },
@@ -44267,9 +44267,9 @@ var import_react11 = __toESM(require_react(), 1);
 import process11 from "node:process";
 
 // node_modules/es-toolkit/dist/compat/function/debounce.mjs
-function debounce(func, wait = 0, options = {}) {
-  if (typeof options !== "object") {
-    options = {};
+function debounce(func, wait = 0, options2 = {}) {
+  if (typeof options2 !== "object") {
+    options2 = {};
   }
   let pendingArgs = null;
   let pendingThis = null;
@@ -44277,8 +44277,8 @@ function debounce(func, wait = 0, options = {}) {
   let debounceStartTime = 0;
   let timeoutId = null;
   let lastResult;
-  const { leading = false, trailing = true, maxWait } = options;
-  const hasMaxWait = "maxWait" in options;
+  const { leading = false, trailing = true, maxWait } = options2;
+  const hasMaxWait = "maxWait" in options2;
   const maxWaitMs = hasMaxWait ? Math.max(Number(maxWait) || 0, wait) : 0;
   const invoke = (time) => {
     if (pendingArgs !== null) {
@@ -44360,8 +44360,8 @@ function debounce(func, wait = 0, options = {}) {
 }
 
 // node_modules/es-toolkit/dist/compat/function/throttle.mjs
-function throttle(func, throttleMs = 0, options = {}) {
-  const { leading = true, trailing = true } = options;
+function throttle(func, throttleMs = 0, options2 = {}) {
+  const { leading = true, trailing = true } = options2;
   return debounce(func, throttleMs, {
     leading,
     maxWait: throttleMs,
@@ -44509,32 +44509,32 @@ var link = (text, url) => [
   SEP,
   BEL
 ].join("");
-var image = (data, options = {}) => {
+var image = (data, options2 = {}) => {
   let returnValue = `${OSC}1337;File=inline=1`;
-  if (options.width) {
-    returnValue += `;width=${options.width}`;
+  if (options2.width) {
+    returnValue += `;width=${options2.width}`;
   }
-  if (options.height) {
-    returnValue += `;height=${options.height}`;
+  if (options2.height) {
+    returnValue += `;height=${options2.height}`;
   }
-  if (options.preserveAspectRatio === false) {
+  if (options2.preserveAspectRatio === false) {
     returnValue += ";preserveAspectRatio=0";
   }
   return returnValue + ":" + Buffer.from(data).toString("base64") + BEL;
 };
 var iTerm = {
   setCwd: (cwd2 = cwdFunction()) => `${OSC}50;CurrentDir=${cwd2}${BEL}`,
-  annotation(message, options = {}) {
+  annotation(message, options2 = {}) {
     let returnValue = `${OSC}1337;`;
-    const hasX = options.x !== void 0;
-    const hasY = options.y !== void 0;
-    if ((hasX || hasY) && !(hasX && hasY && options.length !== void 0)) {
+    const hasX = options2.x !== void 0;
+    const hasY = options2.y !== void 0;
+    if ((hasX || hasY) && !(hasX && hasY && options2.length !== void 0)) {
       throw new Error("`x`, `y` and `length` must be defined when `x` or `y` is defined");
     }
     message = message.replaceAll("|", "");
-    returnValue += options.isHidden ? "AddHiddenAnnotation=" : "AddAnnotation=";
-    if (options.length > 0) {
-      returnValue += (hasX ? [message, options.length, options.x, options.y] : [options.length, message]).join("|");
+    returnValue += options2.isHidden ? "AddHiddenAnnotation=" : "AddAnnotation=";
+    if (options2.length > 0) {
+      returnValue += (hasX ? [message, options2.length, options2.x, options2.y] : [options2.length, message]).join("|");
     } else {
       returnValue += message;
     }
@@ -46225,14 +46225,14 @@ function eastAsianWidth(codePoint, { ambiguousAsWide = false } = {}) {
 var import_emoji_regex = __toESM(require_emoji_regex(), 1);
 var segmenter = new Intl.Segmenter();
 var defaultIgnorableCodePointRegex = new RegExp("^\\p{Default_Ignorable_Code_Point}$", "u");
-function stringWidth(string, options = {}) {
+function stringWidth(string, options2 = {}) {
   if (typeof string !== "string" || string.length === 0) {
     return 0;
   }
   const {
     ambiguousIsNarrow = true,
     countAnsiEscapeCodes = false
-  } = options;
+  } = options2;
   if (!countAnsiEscapeCodes) {
     string = stripAnsi(string);
   }
@@ -46552,8 +46552,8 @@ var stringVisibleTrimSpacesRight = (string) => {
   }
   return words.slice(0, last).join(" ") + words.slice(last).join("");
 };
-var exec = (string, columns, options = {}) => {
-  if (options.trim !== false && string.trim() === "") {
+var exec = (string, columns, options2 = {}) => {
+  if (options2.trim !== false && string.trim() === "") {
     return "";
   }
   let returnValue = "";
@@ -46562,21 +46562,21 @@ var exec = (string, columns, options = {}) => {
   const lengths = wordLengths(string);
   let rows = [""];
   for (const [index, word] of string.split(" ").entries()) {
-    if (options.trim !== false) {
+    if (options2.trim !== false) {
       rows[rows.length - 1] = rows.at(-1).trimStart();
     }
     let rowLength = stringWidth(rows.at(-1));
     if (index !== 0) {
-      if (rowLength >= columns && (options.wordWrap === false || options.trim === false)) {
+      if (rowLength >= columns && (options2.wordWrap === false || options2.trim === false)) {
         rows.push("");
         rowLength = 0;
       }
-      if (rowLength > 0 || options.trim === false) {
+      if (rowLength > 0 || options2.trim === false) {
         rows[rows.length - 1] += " ";
         rowLength++;
       }
     }
-    if (options.hard && lengths[index] > columns) {
+    if (options2.hard && lengths[index] > columns) {
       const remainingColumns = columns - rowLength;
       const breaksStartingThisLine = 1 + Math.floor((lengths[index] - remainingColumns - 1) / columns);
       const breaksStartingNextLine = Math.floor((lengths[index] - 1) / columns);
@@ -46587,19 +46587,19 @@ var exec = (string, columns, options = {}) => {
       continue;
     }
     if (rowLength + lengths[index] > columns && rowLength > 0 && lengths[index] > 0) {
-      if (options.wordWrap === false && rowLength < columns) {
+      if (options2.wordWrap === false && rowLength < columns) {
         wrapWord(rows, word, columns);
         continue;
       }
       rows.push("");
     }
-    if (rowLength + lengths[index] > columns && options.wordWrap === false) {
+    if (rowLength + lengths[index] > columns && options2.wordWrap === false) {
       wrapWord(rows, word, columns);
       continue;
     }
     rows[rows.length - 1] += word;
   }
-  if (options.trim !== false) {
+  if (options2.trim !== false) {
     rows = rows.map((row) => stringVisibleTrimSpacesRight(row));
   }
   const preString = rows.join("\n");
@@ -46636,8 +46636,8 @@ var exec = (string, columns, options = {}) => {
   }
   return returnValue;
 };
-function wrapAnsi(string, columns, options) {
-  return String(string).normalize().replaceAll("\r\n", "\n").split("\n").map((line) => exec(line, columns, options)).join("\n");
+function wrapAnsi(string, columns, options2) {
+  return String(string).normalize().replaceAll("\r\n", "\n").split("\n").map((line) => exec(line, columns, options2)).join("\n");
 }
 
 // node_modules/is-fullwidth-code-point/index.js
@@ -46946,13 +46946,13 @@ function getIndexOfNearestSpace(string, wantedIndex, shouldSearchRight) {
   }
   return wantedIndex;
 }
-function cliTruncate(text, columns, options = {}) {
+function cliTruncate(text, columns, options2 = {}) {
   const {
     position = "end",
     space = false,
     preferTruncationOnSpace = false
-  } = options;
-  let { truncationCharacter = "\u2026" } = options;
+  } = options2;
+  let { truncationCharacter = "\u2026" } = options2;
   if (typeof text !== "string") {
     throw new TypeError(`Expected \`input\` to be a string, got ${typeof text}`);
   }
@@ -47636,11 +47636,11 @@ var reconciler_default = (0, import_react_reconciler.default)({
 });
 
 // node_modules/indent-string/index.js
-function indentString(string, count = 1, options = {}) {
+function indentString(string, count = 1, options2 = {}) {
   const {
     indent = " ",
     includeEmptyLines = false
-  } = options;
+  } = options2;
   if (typeof string !== "string") {
     throw new TypeError(
       `Expected \`input\` to be a \`string\`, got \`${typeof string}\``
@@ -47976,10 +47976,10 @@ function _supportsColor(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
   }
   return min;
 }
-function createSupportsColor(stream, options = {}) {
+function createSupportsColor(stream, options2 = {}) {
   const level = _supportsColor(stream, {
     streamIsTTY: stream && stream.isTTY,
-    ...options
+    ...options2
   });
   return translateLevel(level);
 }
@@ -48031,21 +48031,21 @@ var levelMapping = [
   "ansi16m"
 ];
 var styles5 = /* @__PURE__ */ Object.create(null);
-var applyOptions = (object, options = {}) => {
-  if (options.level && !(Number.isInteger(options.level) && options.level >= 0 && options.level <= 3)) {
+var applyOptions = (object, options2 = {}) => {
+  if (options2.level && !(Number.isInteger(options2.level) && options2.level >= 0 && options2.level <= 3)) {
     throw new Error("The `level` option should be an integer from 0 to 3");
   }
   const colorLevel = stdoutColor ? stdoutColor.level : 0;
-  object.level = options.level === void 0 ? colorLevel : options.level;
+  object.level = options2.level === void 0 ? colorLevel : options2.level;
 };
-var chalkFactory = (options) => {
+var chalkFactory = (options2) => {
   const chalk2 = (...strings) => strings.join(" ");
-  applyOptions(chalk2, options);
+  applyOptions(chalk2, options2);
   Object.setPrototypeOf(chalk2, createChalk.prototype);
   return chalk2;
 };
-function createChalk(options) {
-  return chalkFactory(options);
+function createChalk(options2) {
+  return chalkFactory(options2);
 }
 Object.setPrototypeOf(createChalk.prototype, Function.prototype);
 for (const [styleName, style] of Object.entries(ansi_styles_default3)) {
@@ -48279,8 +48279,8 @@ var applyPaddingToText = (node, text) => {
   }
   return text;
 };
-var renderNodeToOutput = (node, output, options) => {
-  const { offsetX = 0, offsetY = 0, transformers = [], skipStaticElements } = options;
+var renderNodeToOutput = (node, output, options2) => {
+  const { offsetX = 0, offsetY = 0, transformers = [], skipStaticElements } = options2;
   if (skipStaticElements && node.internal_static) {
     return;
   }
@@ -49030,13 +49030,13 @@ var Output = class {
   width;
   height;
   operations = [];
-  constructor(options) {
-    const { width, height } = options;
+  constructor(options2) {
+    const { width, height } = options2;
     this.width = width;
     this.height = height;
   }
-  write(x2, y, text, options) {
-    const { transformers } = options;
+  write(x2, y, text, options2) {
+    const { transformers } = options2;
     if (!text) {
       return;
     }
@@ -49387,7 +49387,7 @@ var generateLineNumbers = (line, around) => {
   }
   return lineNumbers;
 };
-var codeExcerpt = (source, line, options = {}) => {
+var codeExcerpt = (source, line, options2 = {}) => {
   var _a2;
   if (typeof source !== "string") {
     throw new TypeError("Source code is missing.");
@@ -49399,7 +49399,7 @@ var codeExcerpt = (source, line, options = {}) => {
   if (line > lines.length) {
     return;
   }
-  return generateLineNumbers(line, (_a2 = options.around) !== null && _a2 !== void 0 ? _a2 : 3).filter((line2) => lines[line2 - 1] !== void 0).map((line2) => ({ line: line2, value: lines[line2 - 1] }));
+  return generateLineNumbers(line, (_a2 = options2.around) !== null && _a2 !== void 0 ? _a2 : 3).filter((line2) => lines[line2 - 1] !== void 0).map((line2) => ({ line: line2, value: lines[line2 - 1] }));
 };
 var dist_default3 = codeExcerpt;
 
@@ -49850,18 +49850,18 @@ var Ink = class {
   exitPromise;
   restoreConsole;
   unsubscribeResize;
-  constructor(options) {
+  constructor(options2) {
     autoBind(this);
-    this.options = options;
+    this.options = options2;
     this.rootNode = createNode("ink-root");
     this.rootNode.onComputeLayout = this.calculateLayout;
-    this.rootNode.onRender = options.debug ? this.onRender : throttle(this.onRender, 32, {
+    this.rootNode.onRender = options2.debug ? this.onRender : throttle(this.onRender, 32, {
       leading: true,
       trailing: true
     });
     this.rootNode.onImmediateRender = this.onRender;
-    this.log = log_update_default.create(options.stdout);
-    this.throttledLog = options.debug ? this.log : throttle(this.log, void 0, {
+    this.log = log_update_default.create(options2.stdout);
+    this.throttledLog = options2.debug ? this.log : throttle(this.log, void 0, {
       leading: true,
       trailing: true
     });
@@ -49898,13 +49898,13 @@ var Ink = class {
         rendererPackageName: "ink"
       });
     }
-    if (options.patchConsole) {
+    if (options2.patchConsole) {
       this.patchConsole();
     }
     if (!is_in_ci_default) {
-      options.stdout.on("resize", this.resized);
+      options2.stdout.on("resize", this.resized);
       this.unsubscribeResize = () => {
-        options.stdout.off("resize", this.resized);
+        options2.stdout.off("resize", this.resized);
       };
     }
   }
@@ -50063,7 +50063,7 @@ var Ink = class {
 };
 
 // node_modules/ink/build/render.js
-var render = (node, options) => {
+var render = (node, options2) => {
   const inkOptions = {
     stdout: process12.stdout,
     stdin: process12.stdin,
@@ -50071,7 +50071,7 @@ var render = (node, options) => {
     debug: false,
     exitOnCtrlC: true,
     patchConsole: true,
-    ...getOptions(options)
+    ...getOptions(options2)
   };
   const instance2 = getInstance(inkOptions.stdout, () => new Ink(inkOptions));
   instance2.render(node);
@@ -50342,19 +50342,19 @@ var useStdin = () => (0, import_react16.useContext)(StdinContext_default);
 var use_stdin_default = useStdin;
 
 // node_modules/ink/build/hooks/use-input.js
-var useInput = (inputHandler, options = {}) => {
+var useInput = (inputHandler, options2 = {}) => {
   const { stdin, setRawMode, internal_exitOnCtrlC, internal_eventEmitter } = use_stdin_default();
   (0, import_react17.useEffect)(() => {
-    if (options.isActive === false) {
+    if (options2.isActive === false) {
       return;
     }
     setRawMode(true);
     return () => {
       setRawMode(false);
     };
-  }, [options.isActive, setRawMode]);
+  }, [options2.isActive, setRawMode]);
   (0, import_react17.useEffect)(() => {
-    if (options.isActive === false) {
+    if (options2.isActive === false) {
       return;
     }
     const handleData = (data) => {
@@ -50399,7 +50399,7 @@ var useInput = (inputHandler, options = {}) => {
     return () => {
       internal_eventEmitter?.removeListener("input", handleData);
     };
-  }, [options.isActive, stdin, internal_exitOnCtrlC, inputHandler]);
+  }, [options2.isActive, stdin, internal_exitOnCtrlC, inputHandler]);
 };
 var use_input_default = useInput;
 
@@ -51011,8 +51011,8 @@ var Gaxios = class {
    *
    * @returns {Promise<GaxiosOptionsPrepared>} Promise that resolves to the set of options or response after interceptors are applied.
    */
-  async #applyRequestInterceptors(options) {
-    let promiseChain = Promise.resolve(options);
+  async #applyRequestInterceptors(options2) {
+    let promiseChain = Promise.resolve(options2);
     for (const interceptor of this.interceptors.request.values()) {
       if (interceptor) {
         promiseChain = promiseChain.then(interceptor.resolved, interceptor.rejected);
@@ -51043,10 +51043,10 @@ var Gaxios = class {
    * @param options The original options passed from the client.
    * @returns Prepared options, ready to make a request
    */
-  async #prepareRequest(options) {
+  async #prepareRequest(options2) {
     const preparedHeaders = new Headers(this.defaults.headers);
-    _a.mergeHeaders(preparedHeaders, options.headers);
-    const opts = (0, import_extend2.default)(true, {}, this.defaults, options);
+    _a.mergeHeaders(preparedHeaders, options2.headers);
+    const opts = (0, import_extend2.default)(true, {}, this.defaults, options2);
     if (!opts.url) {
       throw new Error("URL is required.");
     }
@@ -51070,11 +51070,11 @@ var Gaxios = class {
         opts.url = url;
       }
     }
-    if (typeof options.maxContentLength === "number") {
-      opts.size = options.maxContentLength;
+    if (typeof options2.maxContentLength === "number") {
+      opts.size = options2.maxContentLength;
     }
-    if (typeof options.maxRedirects === "number") {
-      opts.follow = options.maxRedirects;
+    if (typeof options2.maxRedirects === "number") {
+      opts.follow = options2.maxRedirects;
     }
     const shouldDirectlyPassData = typeof opts.data === "string" || opts.data instanceof ArrayBuffer || opts.data instanceof Blob || // Node 18 does not have a global `File` object
     globalThis.File && opts.data instanceof File || opts.data instanceof FormData || opts.data instanceof Readable || opts.data instanceof ReadableStream || opts.data instanceof String || opts.data instanceof URLSearchParams || ArrayBuffer.isView(opts.data) || // `Buffer` (Node.js), `DataView`, `TypedArray`
@@ -51326,13 +51326,13 @@ var LocalAPIClient = class {
     this.timeout = appConfig.apiTimeout;
     this.retryAttempts = appConfig.apiRetryAttempts;
   }
-  async makeRequest(endpoint, options = {}) {
+  async makeRequest(endpoint, options2 = {}) {
     const url = `${this.baseUrl}${endpoint}`;
     try {
       const response = await request({
         url,
         timeout: this.timeout,
-        ...options
+        ...options2
       });
       return {
         data: response.data,
@@ -51533,16 +51533,18 @@ var LocalAPIClient = class {
               if (event.event === "TeamRunStarted") {
                 const teamName = event.team_name || event.team_id || event.team?.team_name || event.team?.team_id || "unknown";
                 onMessage({
-                  content: `\u{1F535} Starting team: ${teamName}`,
+                  content: `\u{1F535} ${teamName}`,
                   done: false,
                   session_id: sessionId,
                   metadata: {
                     type: "team_start",
                     event: event.event,
-                    team: event.team || {
+                    team: {
                       team_id: event.team_id,
                       team_name: event.team_name,
-                      mode: event.mode
+                      run_id: event.run_id,
+                      model: event.model,
+                      model_provider: event.model_provider
                     }
                   }
                 });
@@ -51558,18 +51560,23 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "tool_start",
                     event: event.event,
-                    tool: event.tool || {
-                      tool_name: event.tool_name,
-                      tool_args: event.tool_args
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id
                     }
                   }
                 });
               }
-              if (event.event === "ToolCallCompleted") {
+              if (event.event === "ToolCallCompleted" || event.event === "TeamToolCallCompleted") {
                 const toolName = event.tool?.tool_name || event.tool_name || "unknown";
                 const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1e3).toFixed(0)}ms)` : "";
-                const toolResult = event.tool?.tool_result || event.tool_result || event.result;
-                const resultStr = toolResult ? typeof toolResult === "string" ? toolResult : JSON.stringify(toolResult, null, 2) : "";
+                const toolResult = event.tool?.result || event.tool?.tool_result || event.tool_result || event.result;
+                const resultStr = toolResult && typeof toolResult === "string" && toolResult.trim() ? toolResult.length > 500 ? toolResult.substring(0, 500) + "..." : toolResult : "";
                 onMessage({
                   content: `\u2705 ${toolName}${duration}${resultStr ? "\n\nResult:\n" + resultStr : ""}`,
                   done: false,
@@ -51577,10 +51584,17 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "tool_complete",
                     event: event.event,
-                    tool: event.tool || {
-                      tool_name: event.tool_name,
-                      tool_result: event.tool_result || event.result,
-                      metrics: event.metrics || { time: event.time }
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      tool_result: event.tool?.result || event.tool?.tool_result || event.tool_result || event.result,
+                      metrics: event.tool?.metrics || event.metrics,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                      tool_call_error: event.tool?.tool_call_error
                     }
                   }
                 });
@@ -51594,10 +51608,14 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "agent_start",
                     event: event.event,
-                    agent: event.agent || {
+                    agent: {
                       agent_id: event.agent_id,
                       agent_name: event.agent_name,
-                      instructions: event.instructions
+                      run_id: event.run_id,
+                      session_id: event.session_id,
+                      team_session_id: event.team_session_id,
+                      model: event.model,
+                      model_provider: event.model_provider
                     }
                   }
                 });
@@ -51606,6 +51624,18 @@ var LocalAPIClient = class {
                 const memoryType = event.memory_type || event.memory?.type || event.type || "user memory";
                 const action = event.event === "MemoryUpdateStarted" ? "Updating" : "Updated";
                 const memoryContent = event.memory_content || event.content || event.memory?.content || "";
+                if (appConfig.cliDebug) {
+                  console.log("[MEMORY EVENT DEBUG]:", {
+                    event: event.event,
+                    memory_type: event.memory_type,
+                    memory_content: event.memory_content,
+                    content: event.content,
+                    memory: event.memory,
+                    type: event.type,
+                    extractedType: memoryType,
+                    extractedContent: memoryContent
+                  });
+                }
                 onMessage({
                   content: `\u{1F9E0} ${action} ${memoryType}${memoryContent ? "\n\nContent:\n" + memoryContent : ""}`,
                   done: false,
@@ -51613,6 +51643,8 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "memory_update",
                     event: event.event,
+                    eventId: `${event.event}-${Date.now()}-${Math.random()}`,
+                    // Unique event ID
                     memory: event.memory || {
                       type: event.memory_type || event.type,
                       content: event.memory_content || event.content,
@@ -51797,16 +51829,18 @@ var LocalAPIClient = class {
               if (event.event === "TeamRunStarted") {
                 const teamName = event.team_name || event.team_id || event.team?.team_name || event.team?.team_id || "unknown";
                 onMessage({
-                  content: `\u{1F535} Starting team: ${teamName}`,
+                  content: `\u{1F535} ${teamName}`,
                   done: false,
                   session_id: sessionId,
                   metadata: {
                     type: "team_start",
                     event: event.event,
-                    team: event.team || {
+                    team: {
                       team_id: event.team_id,
                       team_name: event.team_name,
-                      mode: event.mode
+                      run_id: event.run_id,
+                      model: event.model,
+                      model_provider: event.model_provider
                     }
                   }
                 });
@@ -51822,18 +51856,23 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "tool_start",
                     event: event.event,
-                    tool: event.tool || {
-                      tool_name: event.tool_name,
-                      tool_args: event.tool_args
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id
                     }
                   }
                 });
               }
-              if (event.event === "ToolCallCompleted") {
+              if (event.event === "ToolCallCompleted" || event.event === "TeamToolCallCompleted") {
                 const toolName = event.tool?.tool_name || event.tool_name || "unknown";
                 const duration = event.tool?.metrics?.time ? ` (${(event.tool.metrics.time * 1e3).toFixed(0)}ms)` : "";
-                const toolResult = event.tool?.tool_result || event.tool_result || event.result;
-                const resultStr = toolResult ? typeof toolResult === "string" ? toolResult : JSON.stringify(toolResult, null, 2) : "";
+                const toolResult = event.tool?.result || event.tool?.tool_result || event.tool_result || event.result;
+                const resultStr = toolResult && typeof toolResult === "string" && toolResult.trim() ? toolResult.length > 500 ? toolResult.substring(0, 500) + "..." : toolResult : "";
                 onMessage({
                   content: `\u2705 ${toolName}${duration}${resultStr ? "\n\nResult:\n" + resultStr : ""}`,
                   done: false,
@@ -51841,10 +51880,17 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "tool_complete",
                     event: event.event,
-                    tool: event.tool || {
-                      tool_name: event.tool_name,
-                      tool_result: event.tool_result || event.result,
-                      metrics: event.metrics || { time: event.time }
+                    tool: {
+                      tool_call_id: event.tool?.tool_call_id,
+                      tool_name: event.tool?.tool_name || event.tool_name,
+                      tool_args: event.tool?.tool_args || event.tool_args,
+                      tool_result: event.tool?.result || event.tool?.tool_result || event.tool_result || event.result,
+                      metrics: event.tool?.metrics || event.metrics,
+                      created_at: event.tool?.created_at || event.created_at,
+                      agent_id: event.agent_id,
+                      agent_name: event.agent_name,
+                      run_id: event.run_id,
+                      tool_call_error: event.tool?.tool_call_error
                     }
                   }
                 });
@@ -51858,10 +51904,14 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "agent_start",
                     event: event.event,
-                    agent: event.agent || {
+                    agent: {
                       agent_id: event.agent_id,
                       agent_name: event.agent_name,
-                      instructions: event.instructions
+                      run_id: event.run_id,
+                      session_id: event.session_id,
+                      team_session_id: event.team_session_id,
+                      model: event.model,
+                      model_provider: event.model_provider
                     }
                   }
                 });
@@ -51870,6 +51920,18 @@ var LocalAPIClient = class {
                 const memoryType = event.memory_type || event.memory?.type || event.type || "user memory";
                 const action = event.event === "MemoryUpdateStarted" ? "Updating" : "Updated";
                 const memoryContent = event.memory_content || event.content || event.memory?.content || "";
+                if (appConfig.cliDebug) {
+                  console.log("[MEMORY EVENT DEBUG]:", {
+                    event: event.event,
+                    memory_type: event.memory_type,
+                    memory_content: event.memory_content,
+                    content: event.content,
+                    memory: event.memory,
+                    type: event.type,
+                    extractedType: memoryType,
+                    extractedContent: memoryContent
+                  });
+                }
                 onMessage({
                   content: `\u{1F9E0} ${action} ${memoryType}${memoryContent ? "\n\nContent:\n" + memoryContent : ""}`,
                   done: false,
@@ -51877,6 +51939,8 @@ var LocalAPIClient = class {
                   metadata: {
                     type: "memory_update",
                     event: event.event,
+                    eventId: `${event.event}-${Date.now()}-${Math.random()}`,
+                    // Unique event ID
                     memory: event.memory || {
                       type: event.memory_type || event.type,
                       content: event.memory_content || event.content,
@@ -55341,8 +55405,2243 @@ var Footer = ({
   ] });
 };
 
-// src/ui/components/HistoryItemDisplay.tsx
+// node_modules/marked/lib/marked.esm.js
+function _getDefaults() {
+  return {
+    async: false,
+    breaks: false,
+    extensions: null,
+    gfm: true,
+    hooks: null,
+    pedantic: false,
+    renderer: null,
+    silent: false,
+    tokenizer: null,
+    walkTokens: null
+  };
+}
+var _defaults = _getDefaults();
+function changeDefaults(newDefaults) {
+  _defaults = newDefaults;
+}
+var noopTest = { exec: () => null };
+function edit(regex2, opt = "") {
+  let source = typeof regex2 === "string" ? regex2 : regex2.source;
+  const obj = {
+    replace: (name, val) => {
+      let valSource = typeof val === "string" ? val : val.source;
+      valSource = valSource.replace(other.caret, "$1");
+      source = source.replace(name, valSource);
+      return obj;
+    },
+    getRegex: () => {
+      return new RegExp(source, opt);
+    }
+  };
+  return obj;
+}
+var other = {
+  codeRemoveIndent: /^(?: {1,4}| {0,3}\t)/gm,
+  outputLinkReplace: /\\([\[\]])/g,
+  indentCodeCompensation: /^(\s+)(?:```)/,
+  beginningSpace: /^\s+/,
+  endingHash: /#$/,
+  startingSpaceChar: /^ /,
+  endingSpaceChar: / $/,
+  nonSpaceChar: /[^ ]/,
+  newLineCharGlobal: /\n/g,
+  tabCharGlobal: /\t/g,
+  multipleSpaceGlobal: /\s+/g,
+  blankLine: /^[ \t]*$/,
+  doubleBlankLine: /\n[ \t]*\n[ \t]*$/,
+  blockquoteStart: /^ {0,3}>/,
+  blockquoteSetextReplace: /\n {0,3}((?:=+|-+) *)(?=\n|$)/g,
+  blockquoteSetextReplace2: /^ {0,3}>[ \t]?/gm,
+  listReplaceTabs: /^\t+/,
+  listReplaceNesting: /^ {1,4}(?=( {4})*[^ ])/g,
+  listIsTask: /^\[[ xX]\] /,
+  listReplaceTask: /^\[[ xX]\] +/,
+  anyLine: /\n.*\n/,
+  hrefBrackets: /^<(.*)>$/,
+  tableDelimiter: /[:|]/,
+  tableAlignChars: /^\||\| *$/g,
+  tableRowBlankLine: /\n[ \t]*$/,
+  tableAlignRight: /^ *-+: *$/,
+  tableAlignCenter: /^ *:-+: *$/,
+  tableAlignLeft: /^ *:-+ *$/,
+  startATag: /^<a /i,
+  endATag: /^<\/a>/i,
+  startPreScriptTag: /^<(pre|code|kbd|script)(\s|>)/i,
+  endPreScriptTag: /^<\/(pre|code|kbd|script)(\s|>)/i,
+  startAngleBracket: /^</,
+  endAngleBracket: />$/,
+  pedanticHrefTitle: /^([^'"]*[^\s])\s+(['"])(.*)\2/,
+  unicodeAlphaNumeric: /[\p{L}\p{N}]/u,
+  escapeTest: /[&<>"']/,
+  escapeReplace: /[&<>"']/g,
+  escapeTestNoEncode: /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/,
+  escapeReplaceNoEncode: /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/g,
+  unescapeTest: /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig,
+  caret: /(^|[^\[])\^/g,
+  percentDecode: /%25/g,
+  findPipe: /\|/g,
+  splitPipe: / \|/,
+  slashPipe: /\\\|/g,
+  carriageReturn: /\r\n|\r/g,
+  spaceLine: /^ +$/gm,
+  notSpaceStart: /^\S*/,
+  endingNewline: /\n$/,
+  listItemRegex: (bull) => new RegExp(`^( {0,3}${bull})((?:[	 ][^\\n]*)?(?:\\n|$))`),
+  nextBulletRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:[*+-]|\\d{1,9}[.)])((?:[ 	][^\\n]*)?(?:\\n|$))`),
+  hrRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)`),
+  fencesBeginRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:\`\`\`|~~~)`),
+  headingBeginRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}#`),
+  htmlBeginRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}<(?:[a-z].*>|!--)`, "i")
+};
+var newline = /^(?:[ \t]*(?:\n|$))+/;
+var blockCode = /^((?: {4}| {0,3}\t)[^\n]+(?:\n(?:[ \t]*(?:\n|$))*)?)+/;
+var fences = /^ {0,3}(`{3,}(?=[^`\n]*(?:\n|$))|~{3,})([^\n]*)(?:\n|$)(?:|([\s\S]*?)(?:\n|$))(?: {0,3}\1[~`]* *(?=\n|$)|$)/;
+var hr = /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/;
+var heading = /^ {0,3}(#{1,6})(?=\s|$)(.*)(?:\n+|$)/;
+var bullet = /(?:[*+-]|\d{1,9}[.)])/;
+var lheadingCore = /^(?!bull |blockCode|fences|blockquote|heading|html|table)((?:.|\n(?!\s*?\n|bull |blockCode|fences|blockquote|heading|html|table))+?)\n {0,3}(=+|-+) *(?:\n+|$)/;
+var lheading = edit(lheadingCore).replace(/bull/g, bullet).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/\|table/g, "").getRegex();
+var lheadingGfm = edit(lheadingCore).replace(/bull/g, bullet).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/table/g, / {0,3}\|?(?:[:\- ]*\|)+[\:\- ]*\n/).getRegex();
+var _paragraph = /^([^\n]+(?:\n(?!hr|heading|lheading|blockquote|fences|list|html|table| +\n)[^\n]+)*)/;
+var blockText = /^[^\n]+/;
+var _blockLabel = /(?!\s*\])(?:\\.|[^\[\]\\])+/;
+var def = edit(/^ {0,3}\[(label)\]: *(?:\n[ \t]*)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\n[ \t]*)?| *\n[ \t]*)(title))? *(?:\n+|$)/).replace("label", _blockLabel).replace("title", /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/).getRegex();
+var list = edit(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g, bullet).getRegex();
+var _tag = "address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul";
+var _comment = /<!--(?:-?>|[\s\S]*?(?:-->|$))/;
+var html = edit(
+  "^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ 	]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ 	]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ 	]*)+\\n|$))",
+  "i"
+).replace("comment", _comment).replace("tag", _tag).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
+var paragraph = edit(_paragraph).replace("hr", hr).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", _tag).getRegex();
+var blockquote = edit(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", paragraph).getRegex();
+var blockNormal = {
+  blockquote,
+  code: blockCode,
+  def,
+  fences,
+  heading,
+  hr,
+  html,
+  lheading,
+  list,
+  newline,
+  paragraph,
+  table: noopTest,
+  text: blockText
+};
+var gfmTable = edit(
+  "^ *([^\\n ].*)\\n {0,3}((?:\\| *)?:?-+:? *(?:\\| *:?-+:? *)*(?:\\| *)?)(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)"
+).replace("hr", hr).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("blockquote", " {0,3}>").replace("code", "(?: {4}| {0,3}	)[^\\n]").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", _tag).getRegex();
+var blockGfm = {
+  ...blockNormal,
+  lheading: lheadingGfm,
+  table: gfmTable,
+  paragraph: edit(_paragraph).replace("hr", hr).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", gfmTable).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", _tag).getRegex()
+};
+var blockPedantic = {
+  ...blockNormal,
+  html: edit(
+    `^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`
+  ).replace("comment", _comment).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(),
+  def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/,
+  heading: /^(#{1,6})(.*)(?:\n+|$)/,
+  fences: noopTest,
+  // fences not supported
+  lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/,
+  paragraph: edit(_paragraph).replace("hr", hr).replace("heading", " *#{1,6} *[^\n]").replace("lheading", lheading).replace("|table", "").replace("blockquote", " {0,3}>").replace("|fences", "").replace("|list", "").replace("|html", "").replace("|tag", "").getRegex()
+};
+var escape2 = /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/;
+var inlineCode = /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/;
+var br = /^( {2,}|\\)\n(?!\s*$)/;
+var inlineText = /^(`+|[^`])(?:(?= {2,}\n)|[\s\S]*?(?:(?=[\\<!\[`*_]|\b_|$)|[^ ](?= {2,}\n)))/;
+var _punctuation = /[\p{P}\p{S}]/u;
+var _punctuationOrSpace = /[\s\p{P}\p{S}]/u;
+var _notPunctuationOrSpace = /[^\s\p{P}\p{S}]/u;
+var punctuation = edit(/^((?![*_])punctSpace)/, "u").replace(/punctSpace/g, _punctuationOrSpace).getRegex();
+var _punctuationGfmStrongEm = /(?!~)[\p{P}\p{S}]/u;
+var _punctuationOrSpaceGfmStrongEm = /(?!~)[\s\p{P}\p{S}]/u;
+var _notPunctuationOrSpaceGfmStrongEm = /(?:[^\s\p{P}\p{S}]|~)/u;
+var blockSkip = /\[[^[\]]*?\]\((?:\\.|[^\\\(\)]|\((?:\\.|[^\\\(\)])*\))*\)|`[^`]*?`|<[^<>]*?>/g;
+var emStrongLDelimCore = /^(?:\*+(?:((?!\*)punct)|[^\s*]))|^_+(?:((?!_)punct)|([^\s_]))/;
+var emStrongLDelim = edit(emStrongLDelimCore, "u").replace(/punct/g, _punctuation).getRegex();
+var emStrongLDelimGfm = edit(emStrongLDelimCore, "u").replace(/punct/g, _punctuationGfmStrongEm).getRegex();
+var emStrongRDelimAstCore = "^[^_*]*?__[^_*]*?\\*[^_*]*?(?=__)|[^*]+(?=[^*])|(?!\\*)punct(\\*+)(?=[\\s]|$)|notPunctSpace(\\*+)(?!\\*)(?=punctSpace|$)|(?!\\*)punctSpace(\\*+)(?=notPunctSpace)|[\\s](\\*+)(?!\\*)(?=punct)|(?!\\*)punct(\\*+)(?!\\*)(?=punct)|notPunctSpace(\\*+)(?=notPunctSpace)";
+var emStrongRDelimAst = edit(emStrongRDelimAstCore, "gu").replace(/notPunctSpace/g, _notPunctuationOrSpace).replace(/punctSpace/g, _punctuationOrSpace).replace(/punct/g, _punctuation).getRegex();
+var emStrongRDelimAstGfm = edit(emStrongRDelimAstCore, "gu").replace(/notPunctSpace/g, _notPunctuationOrSpaceGfmStrongEm).replace(/punctSpace/g, _punctuationOrSpaceGfmStrongEm).replace(/punct/g, _punctuationGfmStrongEm).getRegex();
+var emStrongRDelimUnd = edit(
+  "^[^_*]*?\\*\\*[^_*]*?_[^_*]*?(?=\\*\\*)|[^_]+(?=[^_])|(?!_)punct(_+)(?=[\\s]|$)|notPunctSpace(_+)(?!_)(?=punctSpace|$)|(?!_)punctSpace(_+)(?=notPunctSpace)|[\\s](_+)(?!_)(?=punct)|(?!_)punct(_+)(?!_)(?=punct)",
+  "gu"
+).replace(/notPunctSpace/g, _notPunctuationOrSpace).replace(/punctSpace/g, _punctuationOrSpace).replace(/punct/g, _punctuation).getRegex();
+var anyPunctuation = edit(/\\(punct)/, "gu").replace(/punct/g, _punctuation).getRegex();
+var autolink = edit(/^<(scheme:[^\s\x00-\x1f<>]*|email)>/).replace("scheme", /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/).replace("email", /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/).getRegex();
+var _inlineComment = edit(_comment).replace("(?:-->|$)", "-->").getRegex();
+var tag = edit(
+  "^comment|^</[a-zA-Z][\\w:-]*\\s*>|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>|^<\\?[\\s\\S]*?\\?>|^<![a-zA-Z]+\\s[\\s\\S]*?>|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>"
+).replace("comment", _inlineComment).replace("attribute", /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/).getRegex();
+var _inlineLabel = /(?:\[(?:\\.|[^\[\]\\])*\]|\\.|`[^`]*`|[^\[\]\\`])*?/;
+var link2 = edit(/^!?\[(label)\]\(\s*(href)(?:(?:[ \t]*(?:\n[ \t]*)?)(title))?\s*\)/).replace("label", _inlineLabel).replace("href", /<(?:\\.|[^\n<>\\])+>|[^ \t\n\x00-\x1f]*/).replace("title", /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/).getRegex();
+var reflink = edit(/^!?\[(label)\]\[(ref)\]/).replace("label", _inlineLabel).replace("ref", _blockLabel).getRegex();
+var nolink = edit(/^!?\[(ref)\](?:\[\])?/).replace("ref", _blockLabel).getRegex();
+var reflinkSearch = edit("reflink|nolink(?!\\()", "g").replace("reflink", reflink).replace("nolink", nolink).getRegex();
+var inlineNormal = {
+  _backpedal: noopTest,
+  // only used for GFM url
+  anyPunctuation,
+  autolink,
+  blockSkip,
+  br,
+  code: inlineCode,
+  del: noopTest,
+  emStrongLDelim,
+  emStrongRDelimAst,
+  emStrongRDelimUnd,
+  escape: escape2,
+  link: link2,
+  nolink,
+  punctuation,
+  reflink,
+  reflinkSearch,
+  tag,
+  text: inlineText,
+  url: noopTest
+};
+var inlinePedantic = {
+  ...inlineNormal,
+  link: edit(/^!?\[(label)\]\((.*?)\)/).replace("label", _inlineLabel).getRegex(),
+  reflink: edit(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", _inlineLabel).getRegex()
+};
+var inlineGfm = {
+  ...inlineNormal,
+  emStrongRDelimAst: emStrongRDelimAstGfm,
+  emStrongLDelim: emStrongLDelimGfm,
+  url: edit(/^((?:ftp|https?):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/, "i").replace("email", /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(),
+  _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/,
+  del: /^(~~?)(?=[^\s~])((?:\\.|[^\\])*?(?:\\.|[^\s~\\]))\1(?=[^~]|$)/,
+  text: /^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/
+};
+var inlineBreaks = {
+  ...inlineGfm,
+  br: edit(br).replace("{2,}", "*").getRegex(),
+  text: edit(inlineGfm.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex()
+};
+var block = {
+  normal: blockNormal,
+  gfm: blockGfm,
+  pedantic: blockPedantic
+};
+var inline = {
+  normal: inlineNormal,
+  gfm: inlineGfm,
+  breaks: inlineBreaks,
+  pedantic: inlinePedantic
+};
+var escapeReplacements = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var getEscapeReplacement = (ch) => escapeReplacements[ch];
+function escape22(html2, encode) {
+  if (encode) {
+    if (other.escapeTest.test(html2)) {
+      return html2.replace(other.escapeReplace, getEscapeReplacement);
+    }
+  } else {
+    if (other.escapeTestNoEncode.test(html2)) {
+      return html2.replace(other.escapeReplaceNoEncode, getEscapeReplacement);
+    }
+  }
+  return html2;
+}
+function cleanUrl(href) {
+  try {
+    href = encodeURI(href).replace(other.percentDecode, "%");
+  } catch {
+    return null;
+  }
+  return href;
+}
+function splitCells(tableRow, count) {
+  const row = tableRow.replace(other.findPipe, (match, offset, str) => {
+    let escaped = false;
+    let curr = offset;
+    while (--curr >= 0 && str[curr] === "\\") escaped = !escaped;
+    if (escaped) {
+      return "|";
+    } else {
+      return " |";
+    }
+  }), cells = row.split(other.splitPipe);
+  let i2 = 0;
+  if (!cells[0].trim()) {
+    cells.shift();
+  }
+  if (cells.length > 0 && !cells.at(-1)?.trim()) {
+    cells.pop();
+  }
+  if (count) {
+    if (cells.length > count) {
+      cells.splice(count);
+    } else {
+      while (cells.length < count) cells.push("");
+    }
+  }
+  for (; i2 < cells.length; i2++) {
+    cells[i2] = cells[i2].trim().replace(other.slashPipe, "|");
+  }
+  return cells;
+}
+function rtrim(str, c, invert) {
+  const l = str.length;
+  if (l === 0) {
+    return "";
+  }
+  let suffLen = 0;
+  while (suffLen < l) {
+    const currChar = str.charAt(l - suffLen - 1);
+    if (currChar === c && !invert) {
+      suffLen++;
+    } else if (currChar !== c && invert) {
+      suffLen++;
+    } else {
+      break;
+    }
+  }
+  return str.slice(0, l - suffLen);
+}
+function findClosingBracket(str, b) {
+  if (str.indexOf(b[1]) === -1) {
+    return -1;
+  }
+  let level = 0;
+  for (let i2 = 0; i2 < str.length; i2++) {
+    if (str[i2] === "\\") {
+      i2++;
+    } else if (str[i2] === b[0]) {
+      level++;
+    } else if (str[i2] === b[1]) {
+      level--;
+      if (level < 0) {
+        return i2;
+      }
+    }
+  }
+  if (level > 0) {
+    return -2;
+  }
+  return -1;
+}
+function outputLink(cap, link22, raw, lexer2, rules) {
+  const href = link22.href;
+  const title = link22.title || null;
+  const text = cap[1].replace(rules.other.outputLinkReplace, "$1");
+  lexer2.state.inLink = true;
+  const token = {
+    type: cap[0].charAt(0) === "!" ? "image" : "link",
+    raw,
+    href,
+    title,
+    text,
+    tokens: lexer2.inlineTokens(text)
+  };
+  lexer2.state.inLink = false;
+  return token;
+}
+function indentCodeCompensation(raw, text, rules) {
+  const matchIndentToCode = raw.match(rules.other.indentCodeCompensation);
+  if (matchIndentToCode === null) {
+    return text;
+  }
+  const indentToCode = matchIndentToCode[1];
+  return text.split("\n").map((node) => {
+    const matchIndentInNode = node.match(rules.other.beginningSpace);
+    if (matchIndentInNode === null) {
+      return node;
+    }
+    const [indentInNode] = matchIndentInNode;
+    if (indentInNode.length >= indentToCode.length) {
+      return node.slice(indentToCode.length);
+    }
+    return node;
+  }).join("\n");
+}
+var _Tokenizer = class {
+  options;
+  rules;
+  // set by the lexer
+  lexer;
+  // set by the lexer
+  constructor(options2) {
+    this.options = options2 || _defaults;
+  }
+  space(src) {
+    const cap = this.rules.block.newline.exec(src);
+    if (cap && cap[0].length > 0) {
+      return {
+        type: "space",
+        raw: cap[0]
+      };
+    }
+  }
+  code(src) {
+    const cap = this.rules.block.code.exec(src);
+    if (cap) {
+      const text = cap[0].replace(this.rules.other.codeRemoveIndent, "");
+      return {
+        type: "code",
+        raw: cap[0],
+        codeBlockStyle: "indented",
+        text: !this.options.pedantic ? rtrim(text, "\n") : text
+      };
+    }
+  }
+  fences(src) {
+    const cap = this.rules.block.fences.exec(src);
+    if (cap) {
+      const raw = cap[0];
+      const text = indentCodeCompensation(raw, cap[3] || "", this.rules);
+      return {
+        type: "code",
+        raw,
+        lang: cap[2] ? cap[2].trim().replace(this.rules.inline.anyPunctuation, "$1") : cap[2],
+        text
+      };
+    }
+  }
+  heading(src) {
+    const cap = this.rules.block.heading.exec(src);
+    if (cap) {
+      let text = cap[2].trim();
+      if (this.rules.other.endingHash.test(text)) {
+        const trimmed = rtrim(text, "#");
+        if (this.options.pedantic) {
+          text = trimmed.trim();
+        } else if (!trimmed || this.rules.other.endingSpaceChar.test(trimmed)) {
+          text = trimmed.trim();
+        }
+      }
+      return {
+        type: "heading",
+        raw: cap[0],
+        depth: cap[1].length,
+        text,
+        tokens: this.lexer.inline(text)
+      };
+    }
+  }
+  hr(src) {
+    const cap = this.rules.block.hr.exec(src);
+    if (cap) {
+      return {
+        type: "hr",
+        raw: rtrim(cap[0], "\n")
+      };
+    }
+  }
+  blockquote(src) {
+    const cap = this.rules.block.blockquote.exec(src);
+    if (cap) {
+      let lines = rtrim(cap[0], "\n").split("\n");
+      let raw = "";
+      let text = "";
+      const tokens = [];
+      while (lines.length > 0) {
+        let inBlockquote = false;
+        const currentLines = [];
+        let i2;
+        for (i2 = 0; i2 < lines.length; i2++) {
+          if (this.rules.other.blockquoteStart.test(lines[i2])) {
+            currentLines.push(lines[i2]);
+            inBlockquote = true;
+          } else if (!inBlockquote) {
+            currentLines.push(lines[i2]);
+          } else {
+            break;
+          }
+        }
+        lines = lines.slice(i2);
+        const currentRaw = currentLines.join("\n");
+        const currentText = currentRaw.replace(this.rules.other.blockquoteSetextReplace, "\n    $1").replace(this.rules.other.blockquoteSetextReplace2, "");
+        raw = raw ? `${raw}
+${currentRaw}` : currentRaw;
+        text = text ? `${text}
+${currentText}` : currentText;
+        const top = this.lexer.state.top;
+        this.lexer.state.top = true;
+        this.lexer.blockTokens(currentText, tokens, true);
+        this.lexer.state.top = top;
+        if (lines.length === 0) {
+          break;
+        }
+        const lastToken = tokens.at(-1);
+        if (lastToken?.type === "code") {
+          break;
+        } else if (lastToken?.type === "blockquote") {
+          const oldToken = lastToken;
+          const newText = oldToken.raw + "\n" + lines.join("\n");
+          const newToken = this.blockquote(newText);
+          tokens[tokens.length - 1] = newToken;
+          raw = raw.substring(0, raw.length - oldToken.raw.length) + newToken.raw;
+          text = text.substring(0, text.length - oldToken.text.length) + newToken.text;
+          break;
+        } else if (lastToken?.type === "list") {
+          const oldToken = lastToken;
+          const newText = oldToken.raw + "\n" + lines.join("\n");
+          const newToken = this.list(newText);
+          tokens[tokens.length - 1] = newToken;
+          raw = raw.substring(0, raw.length - lastToken.raw.length) + newToken.raw;
+          text = text.substring(0, text.length - oldToken.raw.length) + newToken.raw;
+          lines = newText.substring(tokens.at(-1).raw.length).split("\n");
+          continue;
+        }
+      }
+      return {
+        type: "blockquote",
+        raw,
+        tokens,
+        text
+      };
+    }
+  }
+  list(src) {
+    let cap = this.rules.block.list.exec(src);
+    if (cap) {
+      let bull = cap[1].trim();
+      const isordered = bull.length > 1;
+      const list2 = {
+        type: "list",
+        raw: "",
+        ordered: isordered,
+        start: isordered ? +bull.slice(0, -1) : "",
+        loose: false,
+        items: []
+      };
+      bull = isordered ? `\\d{1,9}\\${bull.slice(-1)}` : `\\${bull}`;
+      if (this.options.pedantic) {
+        bull = isordered ? bull : "[*+-]";
+      }
+      const itemRegex = this.rules.other.listItemRegex(bull);
+      let endsWithBlankLine = false;
+      while (src) {
+        let endEarly = false;
+        let raw = "";
+        let itemContents = "";
+        if (!(cap = itemRegex.exec(src))) {
+          break;
+        }
+        if (this.rules.block.hr.test(src)) {
+          break;
+        }
+        raw = cap[0];
+        src = src.substring(raw.length);
+        let line = cap[2].split("\n", 1)[0].replace(this.rules.other.listReplaceTabs, (t2) => " ".repeat(3 * t2.length));
+        let nextLine = src.split("\n", 1)[0];
+        let blankLine = !line.trim();
+        let indent = 0;
+        if (this.options.pedantic) {
+          indent = 2;
+          itemContents = line.trimStart();
+        } else if (blankLine) {
+          indent = cap[1].length + 1;
+        } else {
+          indent = cap[2].search(this.rules.other.nonSpaceChar);
+          indent = indent > 4 ? 1 : indent;
+          itemContents = line.slice(indent);
+          indent += cap[1].length;
+        }
+        if (blankLine && this.rules.other.blankLine.test(nextLine)) {
+          raw += nextLine + "\n";
+          src = src.substring(nextLine.length + 1);
+          endEarly = true;
+        }
+        if (!endEarly) {
+          const nextBulletRegex = this.rules.other.nextBulletRegex(indent);
+          const hrRegex = this.rules.other.hrRegex(indent);
+          const fencesBeginRegex = this.rules.other.fencesBeginRegex(indent);
+          const headingBeginRegex = this.rules.other.headingBeginRegex(indent);
+          const htmlBeginRegex = this.rules.other.htmlBeginRegex(indent);
+          while (src) {
+            const rawLine = src.split("\n", 1)[0];
+            let nextLineWithoutTabs;
+            nextLine = rawLine;
+            if (this.options.pedantic) {
+              nextLine = nextLine.replace(this.rules.other.listReplaceNesting, "  ");
+              nextLineWithoutTabs = nextLine;
+            } else {
+              nextLineWithoutTabs = nextLine.replace(this.rules.other.tabCharGlobal, "    ");
+            }
+            if (fencesBeginRegex.test(nextLine)) {
+              break;
+            }
+            if (headingBeginRegex.test(nextLine)) {
+              break;
+            }
+            if (htmlBeginRegex.test(nextLine)) {
+              break;
+            }
+            if (nextBulletRegex.test(nextLine)) {
+              break;
+            }
+            if (hrRegex.test(nextLine)) {
+              break;
+            }
+            if (nextLineWithoutTabs.search(this.rules.other.nonSpaceChar) >= indent || !nextLine.trim()) {
+              itemContents += "\n" + nextLineWithoutTabs.slice(indent);
+            } else {
+              if (blankLine) {
+                break;
+              }
+              if (line.replace(this.rules.other.tabCharGlobal, "    ").search(this.rules.other.nonSpaceChar) >= 4) {
+                break;
+              }
+              if (fencesBeginRegex.test(line)) {
+                break;
+              }
+              if (headingBeginRegex.test(line)) {
+                break;
+              }
+              if (hrRegex.test(line)) {
+                break;
+              }
+              itemContents += "\n" + nextLine;
+            }
+            if (!blankLine && !nextLine.trim()) {
+              blankLine = true;
+            }
+            raw += rawLine + "\n";
+            src = src.substring(rawLine.length + 1);
+            line = nextLineWithoutTabs.slice(indent);
+          }
+        }
+        if (!list2.loose) {
+          if (endsWithBlankLine) {
+            list2.loose = true;
+          } else if (this.rules.other.doubleBlankLine.test(raw)) {
+            endsWithBlankLine = true;
+          }
+        }
+        let istask = null;
+        let ischecked;
+        if (this.options.gfm) {
+          istask = this.rules.other.listIsTask.exec(itemContents);
+          if (istask) {
+            ischecked = istask[0] !== "[ ] ";
+            itemContents = itemContents.replace(this.rules.other.listReplaceTask, "");
+          }
+        }
+        list2.items.push({
+          type: "list_item",
+          raw,
+          task: !!istask,
+          checked: ischecked,
+          loose: false,
+          text: itemContents,
+          tokens: []
+        });
+        list2.raw += raw;
+      }
+      const lastItem = list2.items.at(-1);
+      if (lastItem) {
+        lastItem.raw = lastItem.raw.trimEnd();
+        lastItem.text = lastItem.text.trimEnd();
+      } else {
+        return;
+      }
+      list2.raw = list2.raw.trimEnd();
+      for (let i2 = 0; i2 < list2.items.length; i2++) {
+        this.lexer.state.top = false;
+        list2.items[i2].tokens = this.lexer.blockTokens(list2.items[i2].text, []);
+        if (!list2.loose) {
+          const spacers = list2.items[i2].tokens.filter((t2) => t2.type === "space");
+          const hasMultipleLineBreaks = spacers.length > 0 && spacers.some((t2) => this.rules.other.anyLine.test(t2.raw));
+          list2.loose = hasMultipleLineBreaks;
+        }
+      }
+      if (list2.loose) {
+        for (let i2 = 0; i2 < list2.items.length; i2++) {
+          list2.items[i2].loose = true;
+        }
+      }
+      return list2;
+    }
+  }
+  html(src) {
+    const cap = this.rules.block.html.exec(src);
+    if (cap) {
+      const token = {
+        type: "html",
+        block: true,
+        raw: cap[0],
+        pre: cap[1] === "pre" || cap[1] === "script" || cap[1] === "style",
+        text: cap[0]
+      };
+      return token;
+    }
+  }
+  def(src) {
+    const cap = this.rules.block.def.exec(src);
+    if (cap) {
+      const tag2 = cap[1].toLowerCase().replace(this.rules.other.multipleSpaceGlobal, " ");
+      const href = cap[2] ? cap[2].replace(this.rules.other.hrefBrackets, "$1").replace(this.rules.inline.anyPunctuation, "$1") : "";
+      const title = cap[3] ? cap[3].substring(1, cap[3].length - 1).replace(this.rules.inline.anyPunctuation, "$1") : cap[3];
+      return {
+        type: "def",
+        tag: tag2,
+        raw: cap[0],
+        href,
+        title
+      };
+    }
+  }
+  table(src) {
+    const cap = this.rules.block.table.exec(src);
+    if (!cap) {
+      return;
+    }
+    if (!this.rules.other.tableDelimiter.test(cap[2])) {
+      return;
+    }
+    const headers = splitCells(cap[1]);
+    const aligns = cap[2].replace(this.rules.other.tableAlignChars, "").split("|");
+    const rows = cap[3]?.trim() ? cap[3].replace(this.rules.other.tableRowBlankLine, "").split("\n") : [];
+    const item = {
+      type: "table",
+      raw: cap[0],
+      header: [],
+      align: [],
+      rows: []
+    };
+    if (headers.length !== aligns.length) {
+      return;
+    }
+    for (const align of aligns) {
+      if (this.rules.other.tableAlignRight.test(align)) {
+        item.align.push("right");
+      } else if (this.rules.other.tableAlignCenter.test(align)) {
+        item.align.push("center");
+      } else if (this.rules.other.tableAlignLeft.test(align)) {
+        item.align.push("left");
+      } else {
+        item.align.push(null);
+      }
+    }
+    for (let i2 = 0; i2 < headers.length; i2++) {
+      item.header.push({
+        text: headers[i2],
+        tokens: this.lexer.inline(headers[i2]),
+        header: true,
+        align: item.align[i2]
+      });
+    }
+    for (const row of rows) {
+      item.rows.push(splitCells(row, item.header.length).map((cell, i2) => {
+        return {
+          text: cell,
+          tokens: this.lexer.inline(cell),
+          header: false,
+          align: item.align[i2]
+        };
+      }));
+    }
+    return item;
+  }
+  lheading(src) {
+    const cap = this.rules.block.lheading.exec(src);
+    if (cap) {
+      return {
+        type: "heading",
+        raw: cap[0],
+        depth: cap[2].charAt(0) === "=" ? 1 : 2,
+        text: cap[1],
+        tokens: this.lexer.inline(cap[1])
+      };
+    }
+  }
+  paragraph(src) {
+    const cap = this.rules.block.paragraph.exec(src);
+    if (cap) {
+      const text = cap[1].charAt(cap[1].length - 1) === "\n" ? cap[1].slice(0, -1) : cap[1];
+      return {
+        type: "paragraph",
+        raw: cap[0],
+        text,
+        tokens: this.lexer.inline(text)
+      };
+    }
+  }
+  text(src) {
+    const cap = this.rules.block.text.exec(src);
+    if (cap) {
+      return {
+        type: "text",
+        raw: cap[0],
+        text: cap[0],
+        tokens: this.lexer.inline(cap[0])
+      };
+    }
+  }
+  escape(src) {
+    const cap = this.rules.inline.escape.exec(src);
+    if (cap) {
+      return {
+        type: "escape",
+        raw: cap[0],
+        text: cap[1]
+      };
+    }
+  }
+  tag(src) {
+    const cap = this.rules.inline.tag.exec(src);
+    if (cap) {
+      if (!this.lexer.state.inLink && this.rules.other.startATag.test(cap[0])) {
+        this.lexer.state.inLink = true;
+      } else if (this.lexer.state.inLink && this.rules.other.endATag.test(cap[0])) {
+        this.lexer.state.inLink = false;
+      }
+      if (!this.lexer.state.inRawBlock && this.rules.other.startPreScriptTag.test(cap[0])) {
+        this.lexer.state.inRawBlock = true;
+      } else if (this.lexer.state.inRawBlock && this.rules.other.endPreScriptTag.test(cap[0])) {
+        this.lexer.state.inRawBlock = false;
+      }
+      return {
+        type: "html",
+        raw: cap[0],
+        inLink: this.lexer.state.inLink,
+        inRawBlock: this.lexer.state.inRawBlock,
+        block: false,
+        text: cap[0]
+      };
+    }
+  }
+  link(src) {
+    const cap = this.rules.inline.link.exec(src);
+    if (cap) {
+      const trimmedUrl = cap[2].trim();
+      if (!this.options.pedantic && this.rules.other.startAngleBracket.test(trimmedUrl)) {
+        if (!this.rules.other.endAngleBracket.test(trimmedUrl)) {
+          return;
+        }
+        const rtrimSlash = rtrim(trimmedUrl.slice(0, -1), "\\");
+        if ((trimmedUrl.length - rtrimSlash.length) % 2 === 0) {
+          return;
+        }
+      } else {
+        const lastParenIndex = findClosingBracket(cap[2], "()");
+        if (lastParenIndex === -2) {
+          return;
+        }
+        if (lastParenIndex > -1) {
+          const start = cap[0].indexOf("!") === 0 ? 5 : 4;
+          const linkLen = start + cap[1].length + lastParenIndex;
+          cap[2] = cap[2].substring(0, lastParenIndex);
+          cap[0] = cap[0].substring(0, linkLen).trim();
+          cap[3] = "";
+        }
+      }
+      let href = cap[2];
+      let title = "";
+      if (this.options.pedantic) {
+        const link22 = this.rules.other.pedanticHrefTitle.exec(href);
+        if (link22) {
+          href = link22[1];
+          title = link22[3];
+        }
+      } else {
+        title = cap[3] ? cap[3].slice(1, -1) : "";
+      }
+      href = href.trim();
+      if (this.rules.other.startAngleBracket.test(href)) {
+        if (this.options.pedantic && !this.rules.other.endAngleBracket.test(trimmedUrl)) {
+          href = href.slice(1);
+        } else {
+          href = href.slice(1, -1);
+        }
+      }
+      return outputLink(cap, {
+        href: href ? href.replace(this.rules.inline.anyPunctuation, "$1") : href,
+        title: title ? title.replace(this.rules.inline.anyPunctuation, "$1") : title
+      }, cap[0], this.lexer, this.rules);
+    }
+  }
+  reflink(src, links) {
+    let cap;
+    if ((cap = this.rules.inline.reflink.exec(src)) || (cap = this.rules.inline.nolink.exec(src))) {
+      const linkString = (cap[2] || cap[1]).replace(this.rules.other.multipleSpaceGlobal, " ");
+      const link22 = links[linkString.toLowerCase()];
+      if (!link22) {
+        const text = cap[0].charAt(0);
+        return {
+          type: "text",
+          raw: text,
+          text
+        };
+      }
+      return outputLink(cap, link22, cap[0], this.lexer, this.rules);
+    }
+  }
+  emStrong(src, maskedSrc, prevChar = "") {
+    let match = this.rules.inline.emStrongLDelim.exec(src);
+    if (!match) return;
+    if (match[3] && prevChar.match(this.rules.other.unicodeAlphaNumeric)) return;
+    const nextChar = match[1] || match[2] || "";
+    if (!nextChar || !prevChar || this.rules.inline.punctuation.exec(prevChar)) {
+      const lLength = [...match[0]].length - 1;
+      let rDelim, rLength, delimTotal = lLength, midDelimTotal = 0;
+      const endReg = match[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
+      endReg.lastIndex = 0;
+      maskedSrc = maskedSrc.slice(-1 * src.length + lLength);
+      while ((match = endReg.exec(maskedSrc)) != null) {
+        rDelim = match[1] || match[2] || match[3] || match[4] || match[5] || match[6];
+        if (!rDelim) continue;
+        rLength = [...rDelim].length;
+        if (match[3] || match[4]) {
+          delimTotal += rLength;
+          continue;
+        } else if (match[5] || match[6]) {
+          if (lLength % 3 && !((lLength + rLength) % 3)) {
+            midDelimTotal += rLength;
+            continue;
+          }
+        }
+        delimTotal -= rLength;
+        if (delimTotal > 0) continue;
+        rLength = Math.min(rLength, rLength + delimTotal + midDelimTotal);
+        const lastCharLength = [...match[0]][0].length;
+        const raw = src.slice(0, lLength + match.index + lastCharLength + rLength);
+        if (Math.min(lLength, rLength) % 2) {
+          const text2 = raw.slice(1, -1);
+          return {
+            type: "em",
+            raw,
+            text: text2,
+            tokens: this.lexer.inlineTokens(text2)
+          };
+        }
+        const text = raw.slice(2, -2);
+        return {
+          type: "strong",
+          raw,
+          text,
+          tokens: this.lexer.inlineTokens(text)
+        };
+      }
+    }
+  }
+  codespan(src) {
+    const cap = this.rules.inline.code.exec(src);
+    if (cap) {
+      let text = cap[2].replace(this.rules.other.newLineCharGlobal, " ");
+      const hasNonSpaceChars = this.rules.other.nonSpaceChar.test(text);
+      const hasSpaceCharsOnBothEnds = this.rules.other.startingSpaceChar.test(text) && this.rules.other.endingSpaceChar.test(text);
+      if (hasNonSpaceChars && hasSpaceCharsOnBothEnds) {
+        text = text.substring(1, text.length - 1);
+      }
+      return {
+        type: "codespan",
+        raw: cap[0],
+        text
+      };
+    }
+  }
+  br(src) {
+    const cap = this.rules.inline.br.exec(src);
+    if (cap) {
+      return {
+        type: "br",
+        raw: cap[0]
+      };
+    }
+  }
+  del(src) {
+    const cap = this.rules.inline.del.exec(src);
+    if (cap) {
+      return {
+        type: "del",
+        raw: cap[0],
+        text: cap[2],
+        tokens: this.lexer.inlineTokens(cap[2])
+      };
+    }
+  }
+  autolink(src) {
+    const cap = this.rules.inline.autolink.exec(src);
+    if (cap) {
+      let text, href;
+      if (cap[2] === "@") {
+        text = cap[1];
+        href = "mailto:" + text;
+      } else {
+        text = cap[1];
+        href = text;
+      }
+      return {
+        type: "link",
+        raw: cap[0],
+        text,
+        href,
+        tokens: [
+          {
+            type: "text",
+            raw: text,
+            text
+          }
+        ]
+      };
+    }
+  }
+  url(src) {
+    let cap;
+    if (cap = this.rules.inline.url.exec(src)) {
+      let text, href;
+      if (cap[2] === "@") {
+        text = cap[0];
+        href = "mailto:" + text;
+      } else {
+        let prevCapZero;
+        do {
+          prevCapZero = cap[0];
+          cap[0] = this.rules.inline._backpedal.exec(cap[0])?.[0] ?? "";
+        } while (prevCapZero !== cap[0]);
+        text = cap[0];
+        if (cap[1] === "www.") {
+          href = "http://" + cap[0];
+        } else {
+          href = cap[0];
+        }
+      }
+      return {
+        type: "link",
+        raw: cap[0],
+        text,
+        href,
+        tokens: [
+          {
+            type: "text",
+            raw: text,
+            text
+          }
+        ]
+      };
+    }
+  }
+  inlineText(src) {
+    const cap = this.rules.inline.text.exec(src);
+    if (cap) {
+      const escaped = this.lexer.state.inRawBlock;
+      return {
+        type: "text",
+        raw: cap[0],
+        text: cap[0],
+        escaped
+      };
+    }
+  }
+};
+var _Lexer = class __Lexer {
+  tokens;
+  options;
+  state;
+  tokenizer;
+  inlineQueue;
+  constructor(options2) {
+    this.tokens = [];
+    this.tokens.links = /* @__PURE__ */ Object.create(null);
+    this.options = options2 || _defaults;
+    this.options.tokenizer = this.options.tokenizer || new _Tokenizer();
+    this.tokenizer = this.options.tokenizer;
+    this.tokenizer.options = this.options;
+    this.tokenizer.lexer = this;
+    this.inlineQueue = [];
+    this.state = {
+      inLink: false,
+      inRawBlock: false,
+      top: true
+    };
+    const rules = {
+      other,
+      block: block.normal,
+      inline: inline.normal
+    };
+    if (this.options.pedantic) {
+      rules.block = block.pedantic;
+      rules.inline = inline.pedantic;
+    } else if (this.options.gfm) {
+      rules.block = block.gfm;
+      if (this.options.breaks) {
+        rules.inline = inline.breaks;
+      } else {
+        rules.inline = inline.gfm;
+      }
+    }
+    this.tokenizer.rules = rules;
+  }
+  /**
+   * Expose Rules
+   */
+  static get rules() {
+    return {
+      block,
+      inline
+    };
+  }
+  /**
+   * Static Lex Method
+   */
+  static lex(src, options2) {
+    const lexer2 = new __Lexer(options2);
+    return lexer2.lex(src);
+  }
+  /**
+   * Static Lex Inline Method
+   */
+  static lexInline(src, options2) {
+    const lexer2 = new __Lexer(options2);
+    return lexer2.inlineTokens(src);
+  }
+  /**
+   * Preprocessing
+   */
+  lex(src) {
+    src = src.replace(other.carriageReturn, "\n");
+    this.blockTokens(src, this.tokens);
+    for (let i2 = 0; i2 < this.inlineQueue.length; i2++) {
+      const next = this.inlineQueue[i2];
+      this.inlineTokens(next.src, next.tokens);
+    }
+    this.inlineQueue = [];
+    return this.tokens;
+  }
+  blockTokens(src, tokens = [], lastParagraphClipped = false) {
+    if (this.options.pedantic) {
+      src = src.replace(other.tabCharGlobal, "    ").replace(other.spaceLine, "");
+    }
+    while (src) {
+      let token;
+      if (this.options.extensions?.block?.some((extTokenizer) => {
+        if (token = extTokenizer.call({ lexer: this }, src, tokens)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          return true;
+        }
+        return false;
+      })) {
+        continue;
+      }
+      if (token = this.tokenizer.space(src)) {
+        src = src.substring(token.raw.length);
+        const lastToken = tokens.at(-1);
+        if (token.raw.length === 1 && lastToken !== void 0) {
+          lastToken.raw += "\n";
+        } else {
+          tokens.push(token);
+        }
+        continue;
+      }
+      if (token = this.tokenizer.code(src)) {
+        src = src.substring(token.raw.length);
+        const lastToken = tokens.at(-1);
+        if (lastToken?.type === "paragraph" || lastToken?.type === "text") {
+          lastToken.raw += "\n" + token.raw;
+          lastToken.text += "\n" + token.text;
+          this.inlineQueue.at(-1).src = lastToken.text;
+        } else {
+          tokens.push(token);
+        }
+        continue;
+      }
+      if (token = this.tokenizer.fences(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.heading(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.hr(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.blockquote(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.list(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.html(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.def(src)) {
+        src = src.substring(token.raw.length);
+        const lastToken = tokens.at(-1);
+        if (lastToken?.type === "paragraph" || lastToken?.type === "text") {
+          lastToken.raw += "\n" + token.raw;
+          lastToken.text += "\n" + token.raw;
+          this.inlineQueue.at(-1).src = lastToken.text;
+        } else if (!this.tokens.links[token.tag]) {
+          this.tokens.links[token.tag] = {
+            href: token.href,
+            title: token.title
+          };
+        }
+        continue;
+      }
+      if (token = this.tokenizer.table(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.lheading(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      let cutSrc = src;
+      if (this.options.extensions?.startBlock) {
+        let startIndex = Infinity;
+        const tempSrc = src.slice(1);
+        let tempStart;
+        this.options.extensions.startBlock.forEach((getStartIndex) => {
+          tempStart = getStartIndex.call({ lexer: this }, tempSrc);
+          if (typeof tempStart === "number" && tempStart >= 0) {
+            startIndex = Math.min(startIndex, tempStart);
+          }
+        });
+        if (startIndex < Infinity && startIndex >= 0) {
+          cutSrc = src.substring(0, startIndex + 1);
+        }
+      }
+      if (this.state.top && (token = this.tokenizer.paragraph(cutSrc))) {
+        const lastToken = tokens.at(-1);
+        if (lastParagraphClipped && lastToken?.type === "paragraph") {
+          lastToken.raw += "\n" + token.raw;
+          lastToken.text += "\n" + token.text;
+          this.inlineQueue.pop();
+          this.inlineQueue.at(-1).src = lastToken.text;
+        } else {
+          tokens.push(token);
+        }
+        lastParagraphClipped = cutSrc.length !== src.length;
+        src = src.substring(token.raw.length);
+        continue;
+      }
+      if (token = this.tokenizer.text(src)) {
+        src = src.substring(token.raw.length);
+        const lastToken = tokens.at(-1);
+        if (lastToken?.type === "text") {
+          lastToken.raw += "\n" + token.raw;
+          lastToken.text += "\n" + token.text;
+          this.inlineQueue.pop();
+          this.inlineQueue.at(-1).src = lastToken.text;
+        } else {
+          tokens.push(token);
+        }
+        continue;
+      }
+      if (src) {
+        const errMsg = "Infinite loop on byte: " + src.charCodeAt(0);
+        if (this.options.silent) {
+          console.error(errMsg);
+          break;
+        } else {
+          throw new Error(errMsg);
+        }
+      }
+    }
+    this.state.top = true;
+    return tokens;
+  }
+  inline(src, tokens = []) {
+    this.inlineQueue.push({ src, tokens });
+    return tokens;
+  }
+  /**
+   * Lexing/Compiling
+   */
+  inlineTokens(src, tokens = []) {
+    let maskedSrc = src;
+    let match = null;
+    if (this.tokens.links) {
+      const links = Object.keys(this.tokens.links);
+      if (links.length > 0) {
+        while ((match = this.tokenizer.rules.inline.reflinkSearch.exec(maskedSrc)) != null) {
+          if (links.includes(match[0].slice(match[0].lastIndexOf("[") + 1, -1))) {
+            maskedSrc = maskedSrc.slice(0, match.index) + "[" + "a".repeat(match[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.reflinkSearch.lastIndex);
+          }
+        }
+      }
+    }
+    while ((match = this.tokenizer.rules.inline.anyPunctuation.exec(maskedSrc)) != null) {
+      maskedSrc = maskedSrc.slice(0, match.index) + "++" + maskedSrc.slice(this.tokenizer.rules.inline.anyPunctuation.lastIndex);
+    }
+    while ((match = this.tokenizer.rules.inline.blockSkip.exec(maskedSrc)) != null) {
+      maskedSrc = maskedSrc.slice(0, match.index) + "[" + "a".repeat(match[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
+    }
+    let keepPrevChar = false;
+    let prevChar = "";
+    while (src) {
+      if (!keepPrevChar) {
+        prevChar = "";
+      }
+      keepPrevChar = false;
+      let token;
+      if (this.options.extensions?.inline?.some((extTokenizer) => {
+        if (token = extTokenizer.call({ lexer: this }, src, tokens)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          return true;
+        }
+        return false;
+      })) {
+        continue;
+      }
+      if (token = this.tokenizer.escape(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.tag(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.link(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.reflink(src, this.tokens.links)) {
+        src = src.substring(token.raw.length);
+        const lastToken = tokens.at(-1);
+        if (token.type === "text" && lastToken?.type === "text") {
+          lastToken.raw += token.raw;
+          lastToken.text += token.text;
+        } else {
+          tokens.push(token);
+        }
+        continue;
+      }
+      if (token = this.tokenizer.emStrong(src, maskedSrc, prevChar)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.codespan(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.br(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.del(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (token = this.tokenizer.autolink(src)) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      if (!this.state.inLink && (token = this.tokenizer.url(src))) {
+        src = src.substring(token.raw.length);
+        tokens.push(token);
+        continue;
+      }
+      let cutSrc = src;
+      if (this.options.extensions?.startInline) {
+        let startIndex = Infinity;
+        const tempSrc = src.slice(1);
+        let tempStart;
+        this.options.extensions.startInline.forEach((getStartIndex) => {
+          tempStart = getStartIndex.call({ lexer: this }, tempSrc);
+          if (typeof tempStart === "number" && tempStart >= 0) {
+            startIndex = Math.min(startIndex, tempStart);
+          }
+        });
+        if (startIndex < Infinity && startIndex >= 0) {
+          cutSrc = src.substring(0, startIndex + 1);
+        }
+      }
+      if (token = this.tokenizer.inlineText(cutSrc)) {
+        src = src.substring(token.raw.length);
+        if (token.raw.slice(-1) !== "_") {
+          prevChar = token.raw.slice(-1);
+        }
+        keepPrevChar = true;
+        const lastToken = tokens.at(-1);
+        if (lastToken?.type === "text") {
+          lastToken.raw += token.raw;
+          lastToken.text += token.text;
+        } else {
+          tokens.push(token);
+        }
+        continue;
+      }
+      if (src) {
+        const errMsg = "Infinite loop on byte: " + src.charCodeAt(0);
+        if (this.options.silent) {
+          console.error(errMsg);
+          break;
+        } else {
+          throw new Error(errMsg);
+        }
+      }
+    }
+    return tokens;
+  }
+};
+var _Renderer = class {
+  options;
+  parser;
+  // set by the parser
+  constructor(options2) {
+    this.options = options2 || _defaults;
+  }
+  space(token) {
+    return "";
+  }
+  code({ text, lang, escaped }) {
+    const langString = (lang || "").match(other.notSpaceStart)?.[0];
+    const code = text.replace(other.endingNewline, "") + "\n";
+    if (!langString) {
+      return "<pre><code>" + (escaped ? code : escape22(code, true)) + "</code></pre>\n";
+    }
+    return '<pre><code class="language-' + escape22(langString) + '">' + (escaped ? code : escape22(code, true)) + "</code></pre>\n";
+  }
+  blockquote({ tokens }) {
+    const body = this.parser.parse(tokens);
+    return `<blockquote>
+${body}</blockquote>
+`;
+  }
+  html({ text }) {
+    return text;
+  }
+  heading({ tokens, depth }) {
+    return `<h${depth}>${this.parser.parseInline(tokens)}</h${depth}>
+`;
+  }
+  hr(token) {
+    return "<hr>\n";
+  }
+  list(token) {
+    const ordered = token.ordered;
+    const start = token.start;
+    let body = "";
+    for (let j = 0; j < token.items.length; j++) {
+      const item = token.items[j];
+      body += this.listitem(item);
+    }
+    const type = ordered ? "ol" : "ul";
+    const startAttr = ordered && start !== 1 ? ' start="' + start + '"' : "";
+    return "<" + type + startAttr + ">\n" + body + "</" + type + ">\n";
+  }
+  listitem(item) {
+    let itemBody = "";
+    if (item.task) {
+      const checkbox = this.checkbox({ checked: !!item.checked });
+      if (item.loose) {
+        if (item.tokens[0]?.type === "paragraph") {
+          item.tokens[0].text = checkbox + " " + item.tokens[0].text;
+          if (item.tokens[0].tokens && item.tokens[0].tokens.length > 0 && item.tokens[0].tokens[0].type === "text") {
+            item.tokens[0].tokens[0].text = checkbox + " " + escape22(item.tokens[0].tokens[0].text);
+            item.tokens[0].tokens[0].escaped = true;
+          }
+        } else {
+          item.tokens.unshift({
+            type: "text",
+            raw: checkbox + " ",
+            text: checkbox + " ",
+            escaped: true
+          });
+        }
+      } else {
+        itemBody += checkbox + " ";
+      }
+    }
+    itemBody += this.parser.parse(item.tokens, !!item.loose);
+    return `<li>${itemBody}</li>
+`;
+  }
+  checkbox({ checked }) {
+    return "<input " + (checked ? 'checked="" ' : "") + 'disabled="" type="checkbox">';
+  }
+  paragraph({ tokens }) {
+    return `<p>${this.parser.parseInline(tokens)}</p>
+`;
+  }
+  table(token) {
+    let header = "";
+    let cell = "";
+    for (let j = 0; j < token.header.length; j++) {
+      cell += this.tablecell(token.header[j]);
+    }
+    header += this.tablerow({ text: cell });
+    let body = "";
+    for (let j = 0; j < token.rows.length; j++) {
+      const row = token.rows[j];
+      cell = "";
+      for (let k = 0; k < row.length; k++) {
+        cell += this.tablecell(row[k]);
+      }
+      body += this.tablerow({ text: cell });
+    }
+    if (body) body = `<tbody>${body}</tbody>`;
+    return "<table>\n<thead>\n" + header + "</thead>\n" + body + "</table>\n";
+  }
+  tablerow({ text }) {
+    return `<tr>
+${text}</tr>
+`;
+  }
+  tablecell(token) {
+    const content = this.parser.parseInline(token.tokens);
+    const type = token.header ? "th" : "td";
+    const tag2 = token.align ? `<${type} align="${token.align}">` : `<${type}>`;
+    return tag2 + content + `</${type}>
+`;
+  }
+  /**
+   * span level renderer
+   */
+  strong({ tokens }) {
+    return `<strong>${this.parser.parseInline(tokens)}</strong>`;
+  }
+  em({ tokens }) {
+    return `<em>${this.parser.parseInline(tokens)}</em>`;
+  }
+  codespan({ text }) {
+    return `<code>${escape22(text, true)}</code>`;
+  }
+  br(token) {
+    return "<br>";
+  }
+  del({ tokens }) {
+    return `<del>${this.parser.parseInline(tokens)}</del>`;
+  }
+  link({ href, title, tokens }) {
+    const text = this.parser.parseInline(tokens);
+    const cleanHref = cleanUrl(href);
+    if (cleanHref === null) {
+      return text;
+    }
+    href = cleanHref;
+    let out = '<a href="' + href + '"';
+    if (title) {
+      out += ' title="' + escape22(title) + '"';
+    }
+    out += ">" + text + "</a>";
+    return out;
+  }
+  image({ href, title, text, tokens }) {
+    if (tokens) {
+      text = this.parser.parseInline(tokens, this.parser.textRenderer);
+    }
+    const cleanHref = cleanUrl(href);
+    if (cleanHref === null) {
+      return escape22(text);
+    }
+    href = cleanHref;
+    let out = `<img src="${href}" alt="${text}"`;
+    if (title) {
+      out += ` title="${escape22(title)}"`;
+    }
+    out += ">";
+    return out;
+  }
+  text(token) {
+    return "tokens" in token && token.tokens ? this.parser.parseInline(token.tokens) : "escaped" in token && token.escaped ? token.text : escape22(token.text);
+  }
+};
+var _TextRenderer = class {
+  // no need for block level renderers
+  strong({ text }) {
+    return text;
+  }
+  em({ text }) {
+    return text;
+  }
+  codespan({ text }) {
+    return text;
+  }
+  del({ text }) {
+    return text;
+  }
+  html({ text }) {
+    return text;
+  }
+  text({ text }) {
+    return text;
+  }
+  link({ text }) {
+    return "" + text;
+  }
+  image({ text }) {
+    return "" + text;
+  }
+  br() {
+    return "";
+  }
+};
+var _Parser = class __Parser {
+  options;
+  renderer;
+  textRenderer;
+  constructor(options2) {
+    this.options = options2 || _defaults;
+    this.options.renderer = this.options.renderer || new _Renderer();
+    this.renderer = this.options.renderer;
+    this.renderer.options = this.options;
+    this.renderer.parser = this;
+    this.textRenderer = new _TextRenderer();
+  }
+  /**
+   * Static Parse Method
+   */
+  static parse(tokens, options2) {
+    const parser2 = new __Parser(options2);
+    return parser2.parse(tokens);
+  }
+  /**
+   * Static Parse Inline Method
+   */
+  static parseInline(tokens, options2) {
+    const parser2 = new __Parser(options2);
+    return parser2.parseInline(tokens);
+  }
+  /**
+   * Parse Loop
+   */
+  parse(tokens, top = true) {
+    let out = "";
+    for (let i2 = 0; i2 < tokens.length; i2++) {
+      const anyToken = tokens[i2];
+      if (this.options.extensions?.renderers?.[anyToken.type]) {
+        const genericToken = anyToken;
+        const ret = this.options.extensions.renderers[genericToken.type].call({ parser: this }, genericToken);
+        if (ret !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "paragraph", "text"].includes(genericToken.type)) {
+          out += ret || "";
+          continue;
+        }
+      }
+      const token = anyToken;
+      switch (token.type) {
+        case "space": {
+          out += this.renderer.space(token);
+          continue;
+        }
+        case "hr": {
+          out += this.renderer.hr(token);
+          continue;
+        }
+        case "heading": {
+          out += this.renderer.heading(token);
+          continue;
+        }
+        case "code": {
+          out += this.renderer.code(token);
+          continue;
+        }
+        case "table": {
+          out += this.renderer.table(token);
+          continue;
+        }
+        case "blockquote": {
+          out += this.renderer.blockquote(token);
+          continue;
+        }
+        case "list": {
+          out += this.renderer.list(token);
+          continue;
+        }
+        case "html": {
+          out += this.renderer.html(token);
+          continue;
+        }
+        case "paragraph": {
+          out += this.renderer.paragraph(token);
+          continue;
+        }
+        case "text": {
+          let textToken = token;
+          let body = this.renderer.text(textToken);
+          while (i2 + 1 < tokens.length && tokens[i2 + 1].type === "text") {
+            textToken = tokens[++i2];
+            body += "\n" + this.renderer.text(textToken);
+          }
+          if (top) {
+            out += this.renderer.paragraph({
+              type: "paragraph",
+              raw: body,
+              text: body,
+              tokens: [{ type: "text", raw: body, text: body, escaped: true }]
+            });
+          } else {
+            out += body;
+          }
+          continue;
+        }
+        default: {
+          const errMsg = 'Token with "' + token.type + '" type was not found.';
+          if (this.options.silent) {
+            console.error(errMsg);
+            return "";
+          } else {
+            throw new Error(errMsg);
+          }
+        }
+      }
+    }
+    return out;
+  }
+  /**
+   * Parse Inline Tokens
+   */
+  parseInline(tokens, renderer2 = this.renderer) {
+    let out = "";
+    for (let i2 = 0; i2 < tokens.length; i2++) {
+      const anyToken = tokens[i2];
+      if (this.options.extensions?.renderers?.[anyToken.type]) {
+        const ret = this.options.extensions.renderers[anyToken.type].call({ parser: this }, anyToken);
+        if (ret !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(anyToken.type)) {
+          out += ret || "";
+          continue;
+        }
+      }
+      const token = anyToken;
+      switch (token.type) {
+        case "escape": {
+          out += renderer2.text(token);
+          break;
+        }
+        case "html": {
+          out += renderer2.html(token);
+          break;
+        }
+        case "link": {
+          out += renderer2.link(token);
+          break;
+        }
+        case "image": {
+          out += renderer2.image(token);
+          break;
+        }
+        case "strong": {
+          out += renderer2.strong(token);
+          break;
+        }
+        case "em": {
+          out += renderer2.em(token);
+          break;
+        }
+        case "codespan": {
+          out += renderer2.codespan(token);
+          break;
+        }
+        case "br": {
+          out += renderer2.br(token);
+          break;
+        }
+        case "del": {
+          out += renderer2.del(token);
+          break;
+        }
+        case "text": {
+          out += renderer2.text(token);
+          break;
+        }
+        default: {
+          const errMsg = 'Token with "' + token.type + '" type was not found.';
+          if (this.options.silent) {
+            console.error(errMsg);
+            return "";
+          } else {
+            throw new Error(errMsg);
+          }
+        }
+      }
+    }
+    return out;
+  }
+};
+var _Hooks = class {
+  options;
+  block;
+  constructor(options2) {
+    this.options = options2 || _defaults;
+  }
+  static passThroughHooks = /* @__PURE__ */ new Set([
+    "preprocess",
+    "postprocess",
+    "processAllTokens"
+  ]);
+  /**
+   * Process markdown before marked
+   */
+  preprocess(markdown) {
+    return markdown;
+  }
+  /**
+   * Process HTML after marked is finished
+   */
+  postprocess(html2) {
+    return html2;
+  }
+  /**
+   * Process all tokens before walk tokens
+   */
+  processAllTokens(tokens) {
+    return tokens;
+  }
+  /**
+   * Provide function to tokenize markdown
+   */
+  provideLexer() {
+    return this.block ? _Lexer.lex : _Lexer.lexInline;
+  }
+  /**
+   * Provide function to parse tokens
+   */
+  provideParser() {
+    return this.block ? _Parser.parse : _Parser.parseInline;
+  }
+};
+var Marked = class {
+  defaults = _getDefaults();
+  options = this.setOptions;
+  parse = this.parseMarkdown(true);
+  parseInline = this.parseMarkdown(false);
+  Parser = _Parser;
+  Renderer = _Renderer;
+  TextRenderer = _TextRenderer;
+  Lexer = _Lexer;
+  Tokenizer = _Tokenizer;
+  Hooks = _Hooks;
+  constructor(...args) {
+    this.use(...args);
+  }
+  /**
+   * Run callback for every token
+   */
+  walkTokens(tokens, callback) {
+    let values = [];
+    for (const token of tokens) {
+      values = values.concat(callback.call(this, token));
+      switch (token.type) {
+        case "table": {
+          const tableToken = token;
+          for (const cell of tableToken.header) {
+            values = values.concat(this.walkTokens(cell.tokens, callback));
+          }
+          for (const row of tableToken.rows) {
+            for (const cell of row) {
+              values = values.concat(this.walkTokens(cell.tokens, callback));
+            }
+          }
+          break;
+        }
+        case "list": {
+          const listToken = token;
+          values = values.concat(this.walkTokens(listToken.items, callback));
+          break;
+        }
+        default: {
+          const genericToken = token;
+          if (this.defaults.extensions?.childTokens?.[genericToken.type]) {
+            this.defaults.extensions.childTokens[genericToken.type].forEach((childTokens) => {
+              const tokens2 = genericToken[childTokens].flat(Infinity);
+              values = values.concat(this.walkTokens(tokens2, callback));
+            });
+          } else if (genericToken.tokens) {
+            values = values.concat(this.walkTokens(genericToken.tokens, callback));
+          }
+        }
+      }
+    }
+    return values;
+  }
+  use(...args) {
+    const extensions = this.defaults.extensions || { renderers: {}, childTokens: {} };
+    args.forEach((pack) => {
+      const opts = { ...pack };
+      opts.async = this.defaults.async || opts.async || false;
+      if (pack.extensions) {
+        pack.extensions.forEach((ext) => {
+          if (!ext.name) {
+            throw new Error("extension name required");
+          }
+          if ("renderer" in ext) {
+            const prevRenderer = extensions.renderers[ext.name];
+            if (prevRenderer) {
+              extensions.renderers[ext.name] = function(...args2) {
+                let ret = ext.renderer.apply(this, args2);
+                if (ret === false) {
+                  ret = prevRenderer.apply(this, args2);
+                }
+                return ret;
+              };
+            } else {
+              extensions.renderers[ext.name] = ext.renderer;
+            }
+          }
+          if ("tokenizer" in ext) {
+            if (!ext.level || ext.level !== "block" && ext.level !== "inline") {
+              throw new Error("extension level must be 'block' or 'inline'");
+            }
+            const extLevel = extensions[ext.level];
+            if (extLevel) {
+              extLevel.unshift(ext.tokenizer);
+            } else {
+              extensions[ext.level] = [ext.tokenizer];
+            }
+            if (ext.start) {
+              if (ext.level === "block") {
+                if (extensions.startBlock) {
+                  extensions.startBlock.push(ext.start);
+                } else {
+                  extensions.startBlock = [ext.start];
+                }
+              } else if (ext.level === "inline") {
+                if (extensions.startInline) {
+                  extensions.startInline.push(ext.start);
+                } else {
+                  extensions.startInline = [ext.start];
+                }
+              }
+            }
+          }
+          if ("childTokens" in ext && ext.childTokens) {
+            extensions.childTokens[ext.name] = ext.childTokens;
+          }
+        });
+        opts.extensions = extensions;
+      }
+      if (pack.renderer) {
+        const renderer2 = this.defaults.renderer || new _Renderer(this.defaults);
+        for (const prop in pack.renderer) {
+          if (!(prop in renderer2)) {
+            throw new Error(`renderer '${prop}' does not exist`);
+          }
+          if (["options", "parser"].includes(prop)) {
+            continue;
+          }
+          const rendererProp = prop;
+          const rendererFunc = pack.renderer[rendererProp];
+          const prevRenderer = renderer2[rendererProp];
+          renderer2[rendererProp] = (...args2) => {
+            let ret = rendererFunc.apply(renderer2, args2);
+            if (ret === false) {
+              ret = prevRenderer.apply(renderer2, args2);
+            }
+            return ret || "";
+          };
+        }
+        opts.renderer = renderer2;
+      }
+      if (pack.tokenizer) {
+        const tokenizer = this.defaults.tokenizer || new _Tokenizer(this.defaults);
+        for (const prop in pack.tokenizer) {
+          if (!(prop in tokenizer)) {
+            throw new Error(`tokenizer '${prop}' does not exist`);
+          }
+          if (["options", "rules", "lexer"].includes(prop)) {
+            continue;
+          }
+          const tokenizerProp = prop;
+          const tokenizerFunc = pack.tokenizer[tokenizerProp];
+          const prevTokenizer = tokenizer[tokenizerProp];
+          tokenizer[tokenizerProp] = (...args2) => {
+            let ret = tokenizerFunc.apply(tokenizer, args2);
+            if (ret === false) {
+              ret = prevTokenizer.apply(tokenizer, args2);
+            }
+            return ret;
+          };
+        }
+        opts.tokenizer = tokenizer;
+      }
+      if (pack.hooks) {
+        const hooks = this.defaults.hooks || new _Hooks();
+        for (const prop in pack.hooks) {
+          if (!(prop in hooks)) {
+            throw new Error(`hook '${prop}' does not exist`);
+          }
+          if (["options", "block"].includes(prop)) {
+            continue;
+          }
+          const hooksProp = prop;
+          const hooksFunc = pack.hooks[hooksProp];
+          const prevHook = hooks[hooksProp];
+          if (_Hooks.passThroughHooks.has(prop)) {
+            hooks[hooksProp] = (arg) => {
+              if (this.defaults.async) {
+                return Promise.resolve(hooksFunc.call(hooks, arg)).then((ret2) => {
+                  return prevHook.call(hooks, ret2);
+                });
+              }
+              const ret = hooksFunc.call(hooks, arg);
+              return prevHook.call(hooks, ret);
+            };
+          } else {
+            hooks[hooksProp] = (...args2) => {
+              let ret = hooksFunc.apply(hooks, args2);
+              if (ret === false) {
+                ret = prevHook.apply(hooks, args2);
+              }
+              return ret;
+            };
+          }
+        }
+        opts.hooks = hooks;
+      }
+      if (pack.walkTokens) {
+        const walkTokens2 = this.defaults.walkTokens;
+        const packWalktokens = pack.walkTokens;
+        opts.walkTokens = function(token) {
+          let values = [];
+          values.push(packWalktokens.call(this, token));
+          if (walkTokens2) {
+            values = values.concat(walkTokens2.call(this, token));
+          }
+          return values;
+        };
+      }
+      this.defaults = { ...this.defaults, ...opts };
+    });
+    return this;
+  }
+  setOptions(opt) {
+    this.defaults = { ...this.defaults, ...opt };
+    return this;
+  }
+  lexer(src, options2) {
+    return _Lexer.lex(src, options2 ?? this.defaults);
+  }
+  parser(tokens, options2) {
+    return _Parser.parse(tokens, options2 ?? this.defaults);
+  }
+  parseMarkdown(blockType) {
+    const parse2 = (src, options2) => {
+      const origOpt = { ...options2 };
+      const opt = { ...this.defaults, ...origOpt };
+      const throwError = this.onError(!!opt.silent, !!opt.async);
+      if (this.defaults.async === true && origOpt.async === false) {
+        return throwError(new Error("marked(): The async option was set to true by an extension. Remove async: false from the parse options object to return a Promise."));
+      }
+      if (typeof src === "undefined" || src === null) {
+        return throwError(new Error("marked(): input parameter is undefined or null"));
+      }
+      if (typeof src !== "string") {
+        return throwError(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(src) + ", string expected"));
+      }
+      if (opt.hooks) {
+        opt.hooks.options = opt;
+        opt.hooks.block = blockType;
+      }
+      const lexer2 = opt.hooks ? opt.hooks.provideLexer() : blockType ? _Lexer.lex : _Lexer.lexInline;
+      const parser2 = opt.hooks ? opt.hooks.provideParser() : blockType ? _Parser.parse : _Parser.parseInline;
+      if (opt.async) {
+        return Promise.resolve(opt.hooks ? opt.hooks.preprocess(src) : src).then((src2) => lexer2(src2, opt)).then((tokens) => opt.hooks ? opt.hooks.processAllTokens(tokens) : tokens).then((tokens) => opt.walkTokens ? Promise.all(this.walkTokens(tokens, opt.walkTokens)).then(() => tokens) : tokens).then((tokens) => parser2(tokens, opt)).then((html2) => opt.hooks ? opt.hooks.postprocess(html2) : html2).catch(throwError);
+      }
+      try {
+        if (opt.hooks) {
+          src = opt.hooks.preprocess(src);
+        }
+        let tokens = lexer2(src, opt);
+        if (opt.hooks) {
+          tokens = opt.hooks.processAllTokens(tokens);
+        }
+        if (opt.walkTokens) {
+          this.walkTokens(tokens, opt.walkTokens);
+        }
+        let html2 = parser2(tokens, opt);
+        if (opt.hooks) {
+          html2 = opt.hooks.postprocess(html2);
+        }
+        return html2;
+      } catch (e2) {
+        return throwError(e2);
+      }
+    };
+    return parse2;
+  }
+  onError(silent, async) {
+    return (e2) => {
+      e2.message += "\nPlease report this to https://github.com/markedjs/marked.";
+      if (silent) {
+        const msg = "<p>An error occurred:</p><pre>" + escape22(e2.message + "", true) + "</pre>";
+        if (async) {
+          return Promise.resolve(msg);
+        }
+        return msg;
+      }
+      if (async) {
+        return Promise.reject(e2);
+      }
+      throw e2;
+    };
+  }
+};
+var markedInstance = new Marked();
+function marked(src, opt) {
+  return markedInstance.parse(src, opt);
+}
+marked.options = marked.setOptions = function(options2) {
+  markedInstance.setOptions(options2);
+  marked.defaults = markedInstance.defaults;
+  changeDefaults(marked.defaults);
+  return marked;
+};
+marked.getDefaults = _getDefaults;
+marked.defaults = _defaults;
+marked.use = function(...args) {
+  markedInstance.use(...args);
+  marked.defaults = markedInstance.defaults;
+  changeDefaults(marked.defaults);
+  return marked;
+};
+marked.walkTokens = function(tokens, callback) {
+  return markedInstance.walkTokens(tokens, callback);
+};
+marked.parseInline = markedInstance.parseInline;
+marked.Parser = _Parser;
+marked.parser = _Parser.parse;
+marked.Renderer = _Renderer;
+marked.TextRenderer = _TextRenderer;
+marked.Lexer = _Lexer;
+marked.lexer = _Lexer.lex;
+marked.Tokenizer = _Tokenizer;
+marked.Hooks = _Hooks;
+marked.parse = marked;
+var options = marked.options;
+var setOptions = marked.setOptions;
+var use = marked.use;
+var walkTokens = marked.walkTokens;
+var parseInline = marked.parseInline;
+var parser = _Parser.parse;
+var lexer = _Lexer.lex;
+
+// src/ui/components/MarkdownText.tsx
 var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+var MarkdownText = ({
+  children,
+  color = Colors.Foreground
+}) => {
+  try {
+    const tokens = marked.lexer(children);
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { flexDirection: "column", children: tokens.map((token, index) => renderToken(token, index, color)) });
+  } catch (error) {
+    console.warn("Markdown parsing failed:", error);
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color, children });
+  }
+};
+var renderToken = (token, index, color) => {
+  switch (token.type) {
+    case "heading":
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginY: token.depth === 1 ? 1 : 0, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+        Text,
+        {
+          color: Colors.AccentBlue,
+          bold: true,
+          underline: token.depth === 1,
+          children: [
+            "#".repeat(token.depth),
+            " ",
+            token.text
+          ]
+        }
+      ) }, index);
+    case "paragraph":
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color, children: renderInlineTokens(token.tokens || [token.text], index) }) }, index);
+    case "code":
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: Colors.AccentGreen,
+          paddingX: 1,
+          marginY: 1,
+          children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentGreen, bold: true, children: token.lang || "code" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentGreen, children: token.text })
+          ] })
+        },
+        index
+      );
+    case "list":
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { flexDirection: "column", marginY: 1, children: token.items.map((item, itemIndex) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginLeft: 2, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentYellow, children: "\u2022 " }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color, children: renderInlineTokens(item.tokens || [item.text], itemIndex) })
+      ] }, itemIndex)) }, index);
+    case "blockquote":
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginY: 1, marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: token.tokens ? renderInlineTokens(token.tokens, index) : `> ${token.text}` }) }, index);
+    case "space":
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { height: 1 }, index);
+    default:
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color, children: token.text || token.raw || "" }) }, index);
+  }
+};
+var renderInlineTokens = (tokens, parentIndex) => {
+  if (typeof tokens === "string") {
+    return [/* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { children: tokens }, `${parentIndex}-text`)];
+  }
+  return tokens.map((token, index) => {
+    const key = `${parentIndex}-${index}`;
+    switch (token.type) {
+      case "strong":
+        return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { bold: true, children: token.text }, key);
+      case "em":
+        return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { italic: true, children: token.text }, key);
+      case "codespan":
+        return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+          Text,
+          {
+            color: Colors.AccentGreen,
+            backgroundColor: Colors.Gray,
+            bold: true,
+            children: token.text
+          },
+          key
+        );
+      case "link":
+        return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+          Text,
+          {
+            color: Colors.AccentCyan,
+            underline: true,
+            children: token.text
+          },
+          key
+        );
+      case "text":
+      default:
+        return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { children: token.text || token.raw || "" }, key);
+    }
+  });
+};
+
+// src/ui/components/HistoryItemDisplay.tsx
+var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
 var HistoryItemDisplay = ({
   item,
   isPending = false,
@@ -55364,6 +57663,8 @@ var HistoryItemDisplay = ({
         return Colors.AccentGreen;
       case "agent_start" /* AGENT_START */:
         return Colors.AccentCyan;
+      case "team_start" /* TEAM_START */:
+        return Colors.AccentBlue;
       case "error" /* ERROR */:
         return Colors.AccentRed;
       case "info" /* INFO */:
@@ -55388,6 +57689,8 @@ var HistoryItemDisplay = ({
         return "\u2705 ";
       case "agent_start" /* AGENT_START */:
         return "\u{1F916} ";
+      case "team_start" /* TEAM_START */:
+        return "\u{1F535} ";
       case "error" /* ERROR */:
         return "\u274C ";
       case "info" /* INFO */:
@@ -55409,18 +57712,18 @@ var HistoryItemDisplay = ({
   const renderRichToolData = () => {
     const tool = item.metadata?.tool;
     if (!tool) return null;
-    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
-      tool.tool_args && Object.keys(tool.tool_args).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Arguments:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(tool.tool_args, null, 2) }) })
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+      tool.tool_args && Object.keys(tool.tool_args).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Arguments:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(tool.tool_args, null, 2) }) })
       ] }),
-      tool.tool_result && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentGreen, bold: true, children: "Result:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: typeof tool.tool_result === "string" ? tool.tool_result : JSON.stringify(tool.tool_result, null, 2) }) })
+      tool.tool_result && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentGreen, bold: true, children: "Result:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: typeof tool.tool_result === "string" ? /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(MarkdownText, { color: Colors.Gray, children: tool.tool_result }) : /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(tool.tool_result, null, 2) }) })
       ] }),
-      tool.metrics && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metrics:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: Colors.Gray, children: [
+      tool.metrics && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metrics:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
           tool.metrics.time ? `\u23F1\uFE0F ${(tool.metrics.time * 1e3).toFixed(0)}ms` : "",
           " ",
           tool.metrics.tokens ? `\u{1F524} ${tool.metrics.tokens} tokens` : ""
@@ -55431,72 +57734,188 @@ var HistoryItemDisplay = ({
   const renderRAGData = () => {
     const rag = item.metadata?.rag;
     if (!rag) return null;
-    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
-      rag.query && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Query:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: rag.query }) })
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+      rag.query && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Query:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: rag.query }) })
       ] }),
-      rag.results && rag.results.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentGreen, bold: true, children: "Results:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: Colors.Gray, children: [
+      rag.results && rag.results.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentGreen, bold: true, children: "Results:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
           rag.results.length,
           " matches found"
         ] }) })
       ] }),
-      rag.metadata && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(rag.metadata, null, 2) }) })
+      rag.metadata && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(rag.metadata, null, 2) }) })
       ] })
     ] });
   };
   const renderMessageContent = () => {
     if (item.type === "tool_start" /* TOOL_START */ || item.type === "tool_complete" /* TOOL_COMPLETE */) {
-      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
         Box_default,
         {
           borderStyle: "round",
           borderColor: item.type === "tool_start" /* TOOL_START */ ? Colors.AccentYellow : Colors.AccentGreen,
           paddingX: 1,
           marginY: 1,
-          children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: item.text })
+          flexDirection: "column",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: item.text }),
+            item.metadata?.tool && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, children: [
+              item.metadata.tool.tool_call_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Tool Call ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.tool.tool_call_id
+                ] })
+              ] }),
+              item.metadata.tool.agent_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Agent:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.tool.agent_name || item.metadata.tool.agent_id
+                ] })
+              ] }),
+              item.metadata.tool.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Run ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.tool.run_id
+                ] })
+              ] }),
+              item.metadata.tool.created_at && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Created:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  new Date(item.metadata.tool.created_at).toLocaleTimeString()
+                ] })
+              ] }),
+              item.metadata.tool.tool_call_error && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentRed, bold: true, children: "Error:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.AccentRed, children: [
+                  " ",
+                  item.metadata.tool.tool_call_error
+                ] })
+              ] })
+            ] }),
+            renderRichToolData()
+          ]
         }
       );
     }
     if (item.type === "agent_start" /* AGENT_START */) {
-      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
         Box_default,
         {
           borderStyle: "round",
           borderColor: Colors.AccentCyan,
           paddingX: 1,
           marginY: 1,
-          children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: item.text })
-        }
-      );
-    }
-    if (item.type === "thinking" /* THINKING */) {
-      return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
-        Box_default,
-        {
-          borderStyle: "round",
-          borderColor: Colors.AccentPurple,
-          paddingX: 1,
-          marginY: 1,
+          flexDirection: "column",
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), italic: true, children: item.text }),
-            item.metadata?.thinking && item.metadata.thinking.reasoning && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginTop: 1, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Reasoning:" }),
-              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: Colors.Gray, italic: true, children: [
-                " ",
-                item.metadata.thinking.reasoning
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: item.text }),
+            item.metadata?.agent && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, children: [
+              item.metadata.agent.agent_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Agent ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.agent.agent_id
+                ] })
+              ] }),
+              item.metadata.agent.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Run ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.agent.run_id
+                ] })
+              ] }),
+              item.metadata.agent.session_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Session ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.agent.session_id
+                ] })
+              ] }),
+              item.metadata.agent.team_session_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Team Session ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.agent.team_session_id
+                ] })
+              ] }),
+              item.metadata.agent.model && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Model:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.agent.model_provider || "unknown",
+                  "/",
+                  item.metadata.agent.model
+                ] })
               ] })
             ] })
           ]
         }
       );
     }
-    if (item.type === "memory_update" /* MEMORY_UPDATE */) {
-      return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+    if (item.type === "team_start" /* TEAM_START */) {
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: Colors.AccentBlue,
+          paddingX: 1,
+          marginY: 1,
+          flexDirection: "column",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: item.text }),
+            item.metadata?.team && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, children: [
+              item.metadata.team.team_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Team ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.team.team_id
+                ] })
+              ] }),
+              item.metadata.team.team_name && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Team Name:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.team.team_name
+                ] })
+              ] }),
+              item.metadata.team.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Run ID:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.team.run_id
+                ] })
+              ] }),
+              item.metadata.team.model && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Model:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.team.model_provider || "unknown",
+                  "/",
+                  item.metadata.team.model
+                ] })
+              ] }),
+              item.metadata.team.mode && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Mode:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
+                  " ",
+                  item.metadata.team.mode
+                ] })
+              ] })
+            ] })
+          ]
+        }
+      );
+    }
+    if (item.type === "thinking" /* THINKING */) {
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
         Box_default,
         {
           borderStyle: "round",
@@ -55504,19 +57923,38 @@ var HistoryItemDisplay = ({
           paddingX: 1,
           marginY: 1,
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), bold: true, children: item.text }),
-            item.metadata?.memory && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginTop: 1, children: [
-              item.metadata.memory.type && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Type:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: item.metadata.memory.type }) })
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), italic: true, children: item.text }),
+            item.metadata?.thinking && item.metadata.thinking.reasoning && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Reasoning:" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(MarkdownText, { color: Colors.Gray, children: item.metadata.thinking.reasoning }) })
+            ] })
+          ]
+        }
+      );
+    }
+    if (item.type === "memory_update" /* MEMORY_UPDATE */) {
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: Colors.AccentPurple,
+          paddingX: 1,
+          marginY: 1,
+          flexDirection: "column",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), bold: true, children: item.text }),
+            item.metadata?.memory && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, flexDirection: "column", children: [
+              item.metadata.memory.type && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Type:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.memory.type }) })
               ] }),
-              item.metadata.memory.content && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Content:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: item.metadata.memory.content }) })
+              item.metadata.memory.content && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Content:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(MarkdownText, { color: Colors.Gray, children: item.metadata.memory.content }) })
               ] }),
-              item.metadata.memory.metadata && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(item.metadata.memory.metadata, null, 2) }) })
+              item.metadata.memory.metadata && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(item.metadata.memory.metadata, null, 2) }) })
               ] })
             ] })
           ]
@@ -55524,12 +57962,15 @@ var HistoryItemDisplay = ({
       );
     }
     if (typeof item.text === "string") {
-      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: item.text });
+      if (item.type === "assistant" /* ASSISTANT */) {
+        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(MarkdownText, { color: getMessageColor(item.type), children: item.text });
+      }
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: item.text });
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: getMessageColor(item.type), children: JSON.stringify(item.text) });
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: JSON.stringify(item.text) });
   };
   const maxWidth = Math.floor(terminalWidth * 0.9);
-  return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
     Box_default,
     {
       flexDirection: "column",
@@ -55537,17 +57978,17 @@ var HistoryItemDisplay = ({
       width: maxWidth,
       minHeight: availableTerminalHeight ? 1 : void 0,
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { justifyContent: "space-between", marginBottom: 0, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Box_default, { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(Text, { color: getMessageColor(item.type), bold: true, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { justifyContent: "space-between", marginBottom: 0, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: getMessageColor(item.type), bold: true, children: [
               getMessagePrefix(item.type),
               item.type === "user" /* USER */ ? "You" : item.type === "assistant" /* ASSISTANT */ ? item.metadata?.target?.name || item.metadata?.target?.id || "Genie" : item.type.charAt(0).toUpperCase() + item.type.slice(1).replace("_", " ")
             ] }),
-            isPending && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.AccentYellow, italic: true, children: " (processing...)" })
+            isPending && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentYellow, italic: true, children: " (processing...)" })
           ] }),
-          item.timestamp && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, dimColor: true, children: formatTimestamp(item.timestamp) })
+          item.timestamp && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, dimColor: true, children: formatTimestamp(item.timestamp) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           Box_default,
           {
             marginLeft: 2,
@@ -55556,7 +57997,7 @@ var HistoryItemDisplay = ({
             children: renderMessageContent()
           }
         ),
-        item.type === "error" /* ERROR */ && item.details && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        item.type === "error" /* ERROR */ && item.details && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           Box_default,
           {
             marginLeft: 2,
@@ -55564,7 +58005,7 @@ var HistoryItemDisplay = ({
             borderStyle: "round",
             borderColor: Colors.AccentRed,
             paddingX: 1,
-            children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Text, { color: Colors.Gray, italic: true, children: item.details })
+            children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, italic: true, children: item.details })
           }
         )
       ]
@@ -55574,7 +58015,7 @@ var HistoryItemDisplay = ({
 
 // src/ui/components/RadioButtonSelect.tsx
 var import_react32 = __toESM(require_react(), 1);
-var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
 function RadioButtonSelect({
   items,
   initialIndex = 0,
@@ -55625,8 +58066,8 @@ function RadioButtonSelect({
     { isActive: isFocused && items.length > 0 }
   );
   const visibleItems = items.slice(scrollOffset, scrollOffset + maxItemsToShow);
-  return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { flexDirection: "column", children: [
-    showScrollArrows && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: scrollOffset > 0 ? "#ffffff" : "#666666", children: "\u25B2" }),
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Box_default, { flexDirection: "column", children: [
+    showScrollArrows && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: scrollOffset > 0 ? "#ffffff" : "#666666", children: "\u25B2" }),
     visibleItems.map((item, index) => {
       const itemIndex = scrollOffset + index;
       const isSelected = activeIndex === itemIndex;
@@ -55636,12 +58077,12 @@ function RadioButtonSelect({
       } else if (item.disabled) {
         textColor = "#666666";
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 2, flexShrink: 0, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: isSelected ? "#00ff00" : "#ffffff", children: isSelected ? "\u25CF" : "\u25CB" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: textColor, wrap: "truncate", children: item.label })
+      return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { minWidth: 2, flexShrink: 0, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: isSelected ? "#00ff00" : "#ffffff", children: isSelected ? "\u25CF" : "\u25CB" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: textColor, wrap: "truncate", children: item.label })
       ] }, item.label);
     }),
-    showScrollArrows && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+    showScrollArrows && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
       Text,
       {
         color: scrollOffset + maxItemsToShow < items.length ? "#ffffff" : "#666666",
@@ -55652,7 +58093,7 @@ function RadioButtonSelect({
 }
 
 // src/ui/components/TargetSelectionDialog.tsx
-var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
 function TargetSelectionDialog({
   targetType,
   targets,
@@ -55678,7 +58119,7 @@ function TargetSelectionDialog({
     }
   });
   const targetTypeDisplay = targetType.charAt(0).toUpperCase() + targetType.slice(1);
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
     Box_default,
     {
       borderStyle: "round",
@@ -55687,16 +58128,16 @@ function TargetSelectionDialog({
       padding: 1,
       width: "100%",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Text, { bold: true, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { bold: true, children: [
           "Select ",
           targetTypeDisplay
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Text, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { children: [
           "Choose which ",
           targetType,
           " you want to interact with:"
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
           RadioButtonSelect,
           {
             items,
@@ -55707,14 +58148,14 @@ function TargetSelectionDialog({
             maxItemsToShow: 10
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
       ]
     }
   );
 }
 
 // src/ui/components/TargetTypeDialog.tsx
-var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
 function TargetTypeDialog({
   onSelect,
   availableTargets
@@ -55739,7 +58180,7 @@ function TargetTypeDialog({
   const handleSelect = (targetType) => {
     onSelect(targetType);
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
     Box_default,
     {
       borderStyle: "round",
@@ -55748,9 +58189,9 @@ function TargetTypeDialog({
       padding: 1,
       width: "100%",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { bold: true, children: "\u{1F9DE} Welcome to Genie Local CLI" }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { children: "What would you like to interact with?" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { bold: true, children: "\u{1F9DE} Welcome to Genie Local CLI" }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { children: "What would you like to interact with?" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
           RadioButtonSelect,
           {
             items,
@@ -55759,7 +58200,7 @@ function TargetTypeDialog({
             isFocused: true
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select)" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select)" }) })
       ]
     }
   );
@@ -56512,7 +58953,7 @@ function useTextBuffer({
     },
     [isValidPath, shellModeActive]
   );
-  const newline = (0, import_react33.useCallback)(() => {
+  const newline2 = (0, import_react33.useCallback)(() => {
     dispatch({ type: "insert", payload: "\n" });
   }, []);
   const backspace = (0, import_react33.useCallback)(() => {
@@ -56584,7 +59025,7 @@ function useTextBuffer({
     (key) => {
       const { sequence: input } = key;
       if (key.name === "return" || input === "\r" || input === "\n" || input === "\\\r")
-        newline();
+        newline2();
       else if (key.name === "left" && !key.meta && !key.ctrl) move("left");
       else if (key.ctrl && key.name === "b") move("left");
       else if (key.name === "right" && !key.meta && !key.ctrl) move("right");
@@ -56612,7 +59053,7 @@ function useTextBuffer({
         insert(input);
       }
     },
-    [newline, move, deleteWordLeft, deleteWordRight, backspace, del, insert]
+    [newline2, move, deleteWordLeft, deleteWordRight, backspace, del, insert]
   );
   const renderedVisualLines = (0, import_react33.useMemo)(
     () => visualLines.slice(visualScrollRow, visualScrollRow + viewport.height),
@@ -56650,7 +59091,7 @@ function useTextBuffer({
     visualScrollRow,
     setText,
     insert,
-    newline,
+    newline: newline2,
     backspace,
     del,
     move,
@@ -56671,7 +59112,7 @@ function useTextBuffer({
 
 // src/ui/contexts/SessionContext.tsx
 var import_react34 = __toESM(require_react(), 1);
-var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
 import { resolve } from "path";
 import { writeFile, readFile, mkdir } from "fs/promises";
 import { existsSync as existsSync2 } from "fs";
@@ -56797,14 +59238,14 @@ var SessionProvider = ({ children }) => {
     createNewSession,
     listSessions
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(SessionContext.Provider, { value: contextValue, children });
+  return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SessionContext.Provider, { value: contextValue, children });
 };
 
 // src/ui/App.tsx
-var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
 var CTRL_EXIT_PROMPT_DURATION_MS = 1e3;
 var AppWrapper = (props) => {
-  return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SessionProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StreamingProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(App2, { ...props }) }) });
+  return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(SessionProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StreamingProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(App2, { ...props }) }) });
 };
 var App2 = ({ version: version2 }) => {
   const { stdout } = use_stdout_default();
@@ -56972,14 +59413,14 @@ var App2 = ({ version: version2 }) => {
   const mainAreaWidth = Math.floor(terminalWidth * 0.9);
   const staticAreaMaxItemHeight = Math.max(terminalHeight * 4, 100);
   if (connectionStatus === "error") {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
       Box_default,
       {
         borderStyle: "round",
         borderColor: Colors.AccentRed,
         paddingX: 1,
         marginY: 1,
-        children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Text, { color: Colors.AccentRed, children: [
+        children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: Colors.AccentRed, children: [
           "Failed to connect to API at ",
           appConfig.apiBaseUrl
         ] })
@@ -56987,19 +59428,19 @@ var App2 = ({ version: version2 }) => {
     ) });
   }
   if (connectionStatus === "connecting") {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Text, { children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { children: [
       "\u{1F9DE} Connecting to ",
       appConfig.apiBaseUrl,
       "..."
     ] }) });
   }
   if (uiState === "selecting_type") {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         Static,
         {
           items: [
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
               Header,
               {
                 terminalWidth,
@@ -57012,7 +59453,7 @@ var App2 = ({ version: version2 }) => {
         },
         staticKey
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         TargetTypeDialog,
         {
           onSelect: handleTargetTypeSelect,
@@ -57023,12 +59464,12 @@ var App2 = ({ version: version2 }) => {
   }
   if (uiState === "selecting_target" && selectedTargetType) {
     const targets = selectedTargetType === "agent" ? availableTargets.agents : selectedTargetType === "team" ? availableTargets.teams : availableTargets.workflows;
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         Static,
         {
           items: [
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
               Header,
               {
                 terminalWidth,
@@ -57041,7 +59482,7 @@ var App2 = ({ version: version2 }) => {
         },
         staticKey
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         TargetSelectionDialog,
         {
           targetType: selectedTargetType,
@@ -57052,12 +59493,12 @@ var App2 = ({ version: version2 }) => {
       )
     ] });
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+  return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
       Static,
       {
         items: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             Header,
             {
               terminalWidth,
@@ -57065,7 +59506,7 @@ var App2 = ({ version: version2 }) => {
               nightly: false
             }
           ) }, "header"),
-          ...history.map((h2) => /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          ...history.map((h2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             HistoryItemDisplay,
             {
               terminalWidth: mainAreaWidth,
@@ -57080,8 +59521,8 @@ var App2 = ({ version: version2 }) => {
       },
       staticKey
     ),
-    /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Box_default, { flexDirection: "column", ref: mainControlsRef, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", ref: mainControlsRef, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         LoadingIndicator,
         {
           currentLoadingPhrase,
@@ -57089,21 +59530,21 @@ var App2 = ({ version: version2 }) => {
           streamingState
         }
       ),
-      ctrlCPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+C again to exit." }) : ctrlDPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+D again to exit." }) : null,
-      initError && streamingState !== "responding" /* Responding */ && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      ctrlCPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+C again to exit." }) : ctrlDPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+D again to exit." }) : null,
+      initError && streamingState !== "responding" /* Responding */ && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         Box_default,
         {
           borderStyle: "round",
           borderColor: Colors.AccentRed,
           paddingX: 1,
           marginBottom: 1,
-          children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Text, { color: Colors.AccentRed, children: [
+          children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: Colors.AccentRed, children: [
             "Initialization Error: ",
             initError
           ] })
         }
       ),
-      isInputActive && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      isInputActive && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         InputPrompt,
         {
           buffer,
@@ -57116,7 +59557,7 @@ var App2 = ({ version: version2 }) => {
           setShellModeActive
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         Footer,
         {
           selectedTarget: selectedTarget || void 0,
