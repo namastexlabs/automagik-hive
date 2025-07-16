@@ -104,6 +104,14 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup
     try:
+        # Initialize MCP connection manager
+        from core.mcp.connection_manager import get_mcp_connection_manager
+        mcp_manager = await get_mcp_connection_manager()
+        print("✅ MCP Connection Manager initialized")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not initialize MCP Connection Manager: {e}")
+    
+    try:
         # Start monitoring system
         from api.monitoring.startup import start_monitoring
         await start_monitoring()
@@ -111,9 +119,33 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️  Warning: Could not start monitoring system: {e}")
     
+    try:
+        # Start MCP monitoring
+        from api.monitoring.mcp_monitor import start_mcp_monitoring
+        await start_mcp_monitoring()
+        print("✅ MCP monitoring started")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not start MCP monitoring: {e}")
+    
     yield
     
     # Shutdown
+    try:
+        # Stop MCP connection manager
+        from core.mcp.connection_manager import shutdown_mcp_connection_manager
+        await shutdown_mcp_connection_manager()
+        print("✅ MCP Connection Manager stopped")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not stop MCP Connection Manager: {e}")
+    
+    try:
+        # Stop MCP monitoring
+        from api.monitoring.mcp_monitor import stop_mcp_monitoring
+        await stop_mcp_monitoring()
+        print("✅ MCP monitoring stopped")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not stop MCP monitoring: {e}")
+    
     try:
         # Stop monitoring system
         from api.monitoring.startup import stop_monitoring

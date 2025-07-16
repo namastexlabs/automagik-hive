@@ -311,7 +311,39 @@ class AgentVersionFactory:
     
     def _create_mcp_tool(self, mcp_tool_name: str) -> Optional[MCPTools]:
         """
-        Create an MCP tool instance.
+        Create an MCP tool instance with connection pooling.
+        
+        Args:
+            mcp_tool_name: Name of the MCP server/tool
+            
+        Returns:
+            PooledMCPTools instance or None if creation fails
+        """
+        try:
+            # Check if server exists in catalog
+            if not self.mcp_catalog.has_server(mcp_tool_name):
+                print(f"Warning: MCP server '{mcp_tool_name}' not found in catalog")
+                return None
+            
+            # Create pooled MCP tools instance
+            from core.mcp.pooled_tools import create_pooled_mcp_tools
+            pooled_tools = create_pooled_mcp_tools(mcp_tool_name)
+            
+            print(f"✅ Created pooled MCP tools for '{mcp_tool_name}'")
+            return pooled_tools
+                
+        except Exception as e:
+            print(f"Error creating MCP tool '{mcp_tool_name}': {e}")
+            # Fallback to direct creation for backwards compatibility
+            try:
+                return self._create_direct_mcp_tool(mcp_tool_name)
+            except Exception as fallback_error:
+                print(f"Fallback creation also failed for '{mcp_tool_name}': {fallback_error}")
+                return None
+    
+    def _create_direct_mcp_tool(self, mcp_tool_name: str) -> Optional[MCPTools]:
+        """
+        Create a direct (non-pooled) MCP tool instance as fallback.
         
         Args:
             mcp_tool_name: Name of the MCP server/tool
@@ -349,7 +381,7 @@ class AgentVersionFactory:
                 return None
                 
         except Exception as e:
-            print(f"Error creating MCP tool '{mcp_tool_name}': {e}")
+            print(f"Error creating direct MCP tool '{mcp_tool_name}': {e}")
             return None
     
     # Native Agno knowledge integration - no custom knowledge search tools needed

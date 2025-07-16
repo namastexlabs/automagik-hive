@@ -42,6 +42,43 @@ class MCPConfigurationError(MCPException):
 class MCPConnectionError(MCPException):
     """Raised when MCP server connection fails"""
     
-    def __init__(self, message: str, server_name: str, url: Optional[str] = None):
+    def __init__(self, message: str, server_name: str = None, url: Optional[str] = None):
         super().__init__(message, server_name)
         self.url = url
+
+
+class MCPPoolExhaustedException(MCPException):
+    """Raised when MCP connection pool is exhausted"""
+    
+    def __init__(self, message: str, server_name: str = None):
+        super().__init__(message, server_name)
+
+
+class MCPHealthCheckError(MCPException):
+    """Raised when MCP health check fails"""
+    
+    def __init__(self, message: str, server_name: str = None):
+        super().__init__(message, server_name)
+
+
+class CircuitBreakerOpenError(MCPException):
+    """Raised when circuit breaker is open and blocking requests"""
+    
+    def __init__(self, message: str, server_name: str = None):
+        super().__init__(message, server_name)
+
+
+class MCPTimeoutError(MCPException):
+    """Raised when MCP operation times out"""
+    
+    def __init__(self, message: str, server_name: str = None, timeout: float = None):
+        super().__init__(message, server_name)
+        self.timeout = timeout
+
+
+class MCPValidationError(MCPException):
+    """Raised when MCP request/response validation fails"""
+    
+    def __init__(self, message: str, server_name: str = None, validation_details: dict = None):
+        super().__init__(message, server_name)
+        self.validation_details = validation_details or {}
