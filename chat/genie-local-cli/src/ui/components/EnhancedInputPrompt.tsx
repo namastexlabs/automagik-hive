@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Box, Text, useInput, useStdin } from 'ink';
+import { Colors } from '../colors.js';
 
 interface EnhancedInputPromptProps {
   onSubmit: (message: string) => void;
@@ -515,8 +516,8 @@ export const EnhancedInputPrompt: React.FC<EnhancedInputPromptProps> = ({
           </Text>
           
           {showHelp && (
-            <Box flexDirection="column" marginTop={1} padding={1} borderStyle="round" borderColor="blue">
-              <Text bold color="blue">Enhanced Input Controls:</Text>
+            <Box flexDirection="column" marginTop={1} padding={1} borderStyle="round" borderColor={Colors.AccentPurple}>
+              <Text bold color={Colors.AccentPurple}>Enhanced Input Controls:</Text>
               <Text>• <Text color="cyan">Enter</Text>: Send message (single-line) / New line (multi-line)</Text>
               <Text>• <Text color="cyan">Ctrl+Enter</Text>: Send message (multi-line mode)</Text>
               <Text>• <Text color="cyan">Ctrl+M</Text>: Toggle single/multi-line mode</Text>

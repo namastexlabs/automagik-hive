@@ -6,7 +6,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-// import { Colors } from '../colors.js'; // Temporarily disabled
+import { Colors } from '../colors.js';
 
 interface GeminiStyleInputProps {
   onSubmit: (message: string) => void;
@@ -58,7 +58,7 @@ export const GeminiStyleInput: React.FC<GeminiStyleInputProps> = ({
       <Box flexDirection="column" marginY={1}>
         <Box
           borderStyle="round"
-          borderColor="blue"
+          borderColor={Colors.AccentPurple}
           paddingX={1}
           flexDirection="column"
         >
@@ -91,7 +91,7 @@ export const GeminiStyleInput: React.FC<GeminiStyleInputProps> = ({
     <Box flexDirection="column" marginY={1}>
       <Box
         borderStyle="round"
-        borderColor="blue"
+        borderColor={Colors.AccentPurple}
         paddingX={1}
       >
         <Text color="magenta">{'> '}</Text>

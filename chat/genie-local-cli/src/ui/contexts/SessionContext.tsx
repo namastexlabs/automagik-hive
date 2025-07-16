@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { HistoryItem, SessionData } from '../types.js';
+import { HistoryItem, SessionData, TargetInfo } from '../types.js';
 import { appConfig } from '../../config/settings.js';
 import { resolve } from 'path';
 import { writeFile, readFile, mkdir } from 'fs/promises';
@@ -8,12 +8,17 @@ import { existsSync } from 'fs';
 interface SessionContextType {
   history: HistoryItem[];
   currentSessionId: string;
+  currentTarget: TargetInfo | null;
   addMessage: (message: Omit<HistoryItem, 'id'>) => void;
   clearHistory: () => void;
   saveSession: () => Promise<void>;
   loadSession: (sessionId: string) => Promise<void>;
-  createNewSession: () => void;
-  listSessions: () => Promise<string[]>;
+  createNewSession: (target?: TargetInfo) => void;
+  listSessions: (target?: TargetInfo) => Promise<SessionData[]>;
+  listBackendSessions: (target: TargetInfo) => Promise<any[]>;
+  deleteSession: (sessionId: string) => Promise<void>;
+  getSessionMetadata: (sessionId: string) => Promise<SessionData | null>;
+  setCurrentTarget: (target: TargetInfo | null) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -33,6 +38,7 @@ interface SessionProviderProps {
 export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>('');
+  const [currentTarget, setCurrentTarget] = useState<TargetInfo | null>(null);
   const [nextMessageId, setNextMessageId] = useState<number>(1);
 
   // Initialize session
@@ -79,7 +85,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
 
     // Auto-save if enabled
     if (appConfig.sessionAutoSave) {
-      setTimeout(() => saveSessionData(), 100); // Debounce saves
+      saveSessionData(); // No delay
     }
   }, [nextMessageId]);
 
@@ -135,14 +141,17 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
     }
   }, [getSessionFilePath]);
 
-  const createNewSession = useCallback(() => {
+  const createNewSession = useCallback((target?: TargetInfo) => {
     const newSessionId = generateSessionId();
     setCurrentSessionId(newSessionId);
     setHistory([]);
     setNextMessageId(1);
+    if (target) {
+      setCurrentTarget(target);
+    }
   }, [generateSessionId]);
 
-  const listSessions = useCallback(async (): Promise<string[]> => {
+  const listSessions = useCallback(async (target?: TargetInfo): Promise<SessionData[]> => {
     try {
       const { readdir } = await import('fs/promises');
       const sessionDir = getSessionDir();
@@ -152,25 +161,88 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
       }
       
       const files = await readdir(sessionDir);
-      return files
-        .filter(file => file.endsWith('.json'))
-        .map(file => file.replace('.json', ''))
-        .sort((a, b) => b.localeCompare(a)); // Most recent first
+      const sessionFiles = files.filter(file => file.endsWith('.json'));
+      
+      const sessions: SessionData[] = [];
+      
+      for (const file of sessionFiles) {
+        try {
+          const sessionId = file.replace('.json', '');
+          const filePath = getSessionFilePath(sessionId);
+          const data = await readFile(filePath, 'utf8');
+          const sessionData: SessionData = JSON.parse(data);
+          sessions.push(sessionData);
+        } catch (error) {
+          console.error(`Failed to load session ${file}:`, error);
+        }
+      }
+      
+      return sessions.sort((a, b) => b.updatedAt - a.updatedAt); // Most recent first
     } catch (error) {
       console.error('Failed to list sessions:', error);
       return [];
     }
-  }, [getSessionDir]);
+  }, [getSessionDir, getSessionFilePath]);
+
+  const listBackendSessions = useCallback(async (target: TargetInfo): Promise<any[]> => {
+    try {
+      const baseUrl = appConfig.apiBaseUrl || 'http://localhost:9888';
+      const endpoint = `${baseUrl}/playground/${target.type}s/${target.id}/sessions`;
+      
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sessions: ${response.statusText}`);
+      }
+      
+      const sessions = await response.json();
+      return Array.isArray(sessions) ? sessions : [];
+    } catch (error) {
+      console.error('Failed to list backend sessions:', error);
+      return [];
+    }
+  }, []);
+
+  const getSessionMetadata = useCallback(async (sessionId: string): Promise<SessionData | null> => {
+    try {
+      const filePath = getSessionFilePath(sessionId);
+      const data = await readFile(filePath, 'utf8');
+      const sessionData: SessionData = JSON.parse(data);
+      return sessionData;
+    } catch (error) {
+      console.error(`Failed to get session metadata for ${sessionId}:`, error);
+      return null;
+    }
+  }, [getSessionFilePath]);
+
+  const deleteSession = useCallback(async (sessionId: string): Promise<void> => {
+    try {
+      const filePath = getSessionFilePath(sessionId);
+      const { unlink } = await import('fs/promises');
+      await unlink(filePath);
+      
+      if (appConfig.cliDebug) {
+        console.log(`Session deleted: ${filePath}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+      throw error;
+    }
+  }, [getSessionFilePath]);
 
   const contextValue: SessionContextType = {
     history,
     currentSessionId,
+    currentTarget,
     addMessage,
     clearHistory,
     saveSession: saveSessionData,
     loadSession: loadSessionData,
     createNewSession,
     listSessions,
+    listBackendSessions,
+    deleteSession,
+    getSessionMetadata,
+    setCurrentTarget,
   };
 
   return (

@@ -19,7 +19,7 @@ const ansiLightColors: ColorsTheme = {
   AccentRed: 'red',
   Comment: 'gray',
   Gray: 'gray',
-  GradientColors: ['blue', 'green'],
+  GradientColors: ['magenta', 'cyan'],
 };
 
 export const ANSILight: Theme = new Theme(

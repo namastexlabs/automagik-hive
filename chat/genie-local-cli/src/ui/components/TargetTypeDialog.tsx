@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { RadioButtonSelect } from './RadioButtonSelect.js';
+import { Colors } from '../colors.js';
 
 interface TargetTypeDialogProps {
   onSelect: (targetType: 'agent' | 'team' | 'workflow') => void;
@@ -40,14 +41,14 @@ export function TargetTypeDialog({
   return (
     <Box
       borderStyle="round"
-      borderColor="#666666"
+      borderColor={Colors.AccentPurple}
       flexDirection="column"
       padding={1}
       width="100%"
     >
-      <Text bold>🧞 Welcome to Genie Local CLI</Text>
+      <Text bold color={Colors.AccentPurple}>🎯 Welcome to Genie Local CLI</Text>
       <Box marginTop={1}>
-        <Text>What would you like to interact with?</Text>
+        <Text color={Colors.Foreground}>What would you like to interact with?</Text>
       </Box>
       <Box marginTop={1}>
         <RadioButtonSelect
@@ -58,7 +59,7 @@ export function TargetTypeDialog({
         />
       </Box>
       <Box marginTop={1}>
-        <Text color="#666666">(Use ↑/↓ arrows and Enter to select)</Text>
+        <Text color={Colors.Gray}>(Use ↑/↓ arrows and Enter to select)</Text>
       </Box>
     </Box>
   );

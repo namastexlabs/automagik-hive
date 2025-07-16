@@ -77,11 +77,11 @@ export const Footer: React.FC<FooterProps> = ({
       >
         {selectedTarget ? (
           <Text color={Colors.AccentPurple}>
-            🧞 {selectedTarget.name} <Text color={Colors.Gray}>({selectedTarget.type})</Text>
+            🎯 {selectedTarget.name} <Text color={Colors.Gray}>({selectedTarget.type})</Text>
           </Text>
         ) : (
           <Text color={Colors.AccentYellow}>
-            🧞 genie-local-cli
+            🎯 genie-local-cli
           </Text>
         )}
       </Box>

@@ -53,7 +53,7 @@ export const HistoryItemDisplay: React.FC<HistoryItemDisplayProps> = ({
   const getMessagePrefix = (type: MessageType): string => {
     switch (type) {
       case MessageType.USER:
-        return '🧞 ';
+        return '👤 ';
       case MessageType.ASSISTANT:
         return '✨ ';
       case MessageType.THINKING:

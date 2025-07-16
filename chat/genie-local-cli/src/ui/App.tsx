@@ -26,11 +26,13 @@ import { Colors } from './colors.js';
 import { HistoryItemDisplay } from './components/HistoryItemDisplay.js';
 import { TargetSelectionDialog } from './components/TargetSelectionDialog.js';
 import { TargetTypeDialog } from './components/TargetTypeDialog.js';
+import { SessionSelectionDialog } from './components/SessionSelectionDialog.js';
 import { useTextBuffer } from './components/shared/text-buffer.js';
 import { SessionProvider, useSession } from './contexts/SessionContext.js';
 import { StreamingProvider } from './contexts/StreamingContext.js';
 import { appConfig } from '../config/settings.js';
 import { localAPIClient } from '../config/localClient.js';
+import { detectAPIServer, generateStartupGuide } from '../utils/serverDetection.js';
 import ansiEscapes from 'ansi-escapes';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
@@ -60,6 +62,11 @@ const App = ({ version }: AppProps) => {
     addMessage,
     clearHistory,
     currentSessionId,
+    createNewSession,
+    loadSession,
+    setCurrentTarget,
+    listSessions,
+    listBackendSessions,
   } = useSession();
 
   // UI state
@@ -75,10 +82,11 @@ const App = ({ version }: AppProps) => {
   const [shellModeActive, setShellModeActive] = useState<boolean>(false);
   
   // Target selection state
-  const [uiState, setUiState] = useState<'selecting_type' | 'selecting_target' | 'chatting'>('selecting_type');
+  const [uiState, setUiState] = useState<'selecting_type' | 'selecting_target' | 'selecting_session' | 'chatting'>('selecting_type');
   const [selectedTargetType, setSelectedTargetType] = useState<'agent' | 'team' | 'workflow' | null>(null);
   
   // API state
+  const [showStartupBanner, setShowStartupBanner] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [selectedTarget, setSelectedTarget] = useState<{ type: 'agent' | 'team' | 'workflow'; id: string; name: string } | null>(null);
   const [availableTargets, setAvailableTargets] = useState<{
@@ -100,13 +108,36 @@ const App = ({ version }: AppProps) => {
 
   const handleTargetSelect = useCallback((target: { type: 'agent' | 'team' | 'workflow'; id: string; name: string }) => {
     setSelectedTarget(target);
-    setUiState('chatting');
-  }, []);
+    setCurrentTarget(target);
+    setUiState('selecting_session');
+  }, [setCurrentTarget]);
 
   const handleBackToTargetSelection = useCallback(() => {
     setUiState('selecting_type');
     setSelectedTargetType(null);
   }, []);
+
+  const handleBackToTargetSelect = useCallback(() => {
+    setUiState('selecting_target');
+  }, []);
+
+  const handleSessionSelect = useCallback(async (sessionAction: 'new' | 'existing', sessionId?: string) => {
+    if (sessionAction === 'new') {
+      createNewSession(selectedTarget || undefined);
+    } else if (sessionAction === 'existing' && sessionId) {
+      try {
+        await loadSession(sessionId);
+      } catch (error) {
+        console.error('Failed to load session:', error);
+        addMessage({
+          type: MessageType.ERROR,
+          text: `Failed to load session: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          timestamp: Date.now(),
+        });
+      }
+    }
+    setUiState('chatting');
+  }, [selectedTarget, createNewSession, loadSession, addMessage]);
 
   // Local API streaming
   const {
@@ -138,10 +169,22 @@ const App = ({ version }: AppProps) => {
     shellModeActive: false,
   });
 
+  // Show startup banner for 2 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowStartupBanner(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Initialize API connection
   useEffect(() => {
     const initializeAPI = async () => {
       try {
+        // Add a small delay to ensure banner is visible
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         const healthResponse = await localAPIClient.healthCheck();
         if (healthResponse.error) {
           throw new Error(healthResponse.error);
@@ -173,9 +216,14 @@ const App = ({ version }: AppProps) => {
 
       } catch (error) {
         setConnectionStatus('error');
+        
+        // Use graceful server detection
+        const serverStatus = await detectAPIServer(appConfig.apiBaseUrl);
+        const startupGuide = generateStartupGuide(serverStatus);
+        
         addMessage({
           type: MessageType.ERROR,
-          text: `Failed to connect to API: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          text: startupGuide,
           timestamp: Date.now(),
         });
       }
@@ -228,13 +276,81 @@ const App = ({ version }: AppProps) => {
   });
 
   const handleFinalSubmit = useCallback(
-    (submittedValue: string) => {
+    async (submittedValue: string) => {
       const trimmedValue = submittedValue.trim();
+      
+      // Handle slash commands
+      if (trimmedValue.startsWith('/')) {
+        const command = trimmedValue.toLowerCase();
+        
+        if (command === '/sessions') {
+          try {
+            const sessions = await listSessions();
+            const backendSessions = selectedTarget ? await listBackendSessions(selectedTarget) : [];
+            
+            let sessionList = '📚 **Available Sessions**\n\n';
+            
+            if (sessions.length > 0) {
+              sessionList += '**Local Sessions:**\n';
+              sessions.forEach((session, index) => {
+                const date = new Date(session.updatedAt).toLocaleDateString();
+                const time = new Date(session.updatedAt).toLocaleTimeString();
+                const messageCount = session.metadata?.totalMessages || 0;
+                const target = session.metadata?.lastTarget;
+                const targetDisplay = target ? `${target.type}:${target.name || target.id}` : 'Unknown';
+                
+                sessionList += `${index + 1}. ${session.id}\n`;
+                sessionList += `   📅 ${date} ${time} | 💬 ${messageCount} messages | 🎯 ${targetDisplay}\n\n`;
+              });
+            }
+            
+            if (backendSessions.length > 0) {
+              sessionList += '**Backend Sessions:**\n';
+              backendSessions.forEach((session, index) => {
+                sessionList += `${index + 1}. ${session.id || session.name}\n`;
+                sessionList += `   📍 Backend session\n\n`;
+              });
+            }
+            
+            if (sessions.length === 0 && backendSessions.length === 0) {
+              sessionList += 'No sessions found.\n';
+            }
+            
+            sessionList += '\n💡 **Tips:**\n';
+            sessionList += '- Select a target (agent/team/workflow) to see available sessions\n';
+            sessionList += '- Use session selection dialog to continue existing sessions\n';
+            sessionList += '- Local sessions are stored in ~/.genie-cli/sessions/\n';
+            
+            addMessage({
+              type: MessageType.INFO,
+              text: sessionList,
+              timestamp: Date.now(),
+            });
+          } catch (error) {
+            addMessage({
+              type: MessageType.ERROR,
+              text: `Failed to list sessions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              timestamp: Date.now(),
+            });
+          }
+          return;
+        }
+        
+        // Handle unknown commands
+        addMessage({
+          type: MessageType.ERROR,
+          text: `Unknown command: ${trimmedValue}\n\nAvailable commands:\n- /sessions - List all available sessions`,
+          timestamp: Date.now(),
+        });
+        return;
+      }
+      
+      // Handle regular messages
       if (trimmedValue.length > 0 && selectedTarget) {
         submitQuery(trimmedValue);
       }
     },
-    [submitQuery, selectedTarget],
+    [submitQuery, selectedTarget, listSessions, listBackendSessions, addMessage],
   );
 
   const handleClearScreen = useCallback(() => {
@@ -261,19 +377,51 @@ const App = ({ version }: AppProps) => {
   const mainAreaWidth = Math.floor(terminalWidth * 0.9);
   const staticAreaMaxItemHeight = Math.max(terminalHeight * 4, 100);
 
+  // Show startup banner first
+  if (showStartupBanner) {
+    return (
+      <Box flexDirection="column" marginBottom={1} width="90%">
+        <Header
+          terminalWidth={terminalWidth}
+          version={version}
+          nightly={false}
+        />
+        <Box marginTop={2}>
+          <Text>🔗 Connecting to {appConfig.apiBaseUrl}...</Text>
+        </Box>
+      </Box>
+    );
+  }
+
   // Show connection error
   if (connectionStatus === 'error') {
     return (
       <Box flexDirection="column" marginBottom={1} width="90%">
-        <Box
-          borderStyle="round"
-          borderColor={Colors.AccentRed}
-          paddingX={1}
-          marginY={1}
+        <Static
+          key={staticKey}
+          items={[
+            <Box flexDirection="column" key="header">
+              <Header
+                terminalWidth={terminalWidth}
+                version={version}
+                nightly={false}
+              />
+            </Box>,
+          ]}
         >
-          <Text color={Colors.AccentRed}>
-            Failed to connect to API at {appConfig.apiBaseUrl}
-          </Text>
+          {() => null}
+        </Static>
+        <Box marginTop={2}>
+          <Box
+            borderStyle="round"
+            borderColor={Colors.AccentRed}
+            paddingX={1}
+            marginY={1}
+          >
+            <Text color={Colors.AccentRed}>
+              Failed to connect to API at {appConfig.apiBaseUrl}
+            </Text>
+          </Box>
         </Box>
       </Box>
     );
@@ -283,7 +431,23 @@ const App = ({ version }: AppProps) => {
   if (connectionStatus === 'connecting') {
     return (
       <Box flexDirection="column" marginBottom={1} width="90%">
-        <Text>🧞 Connecting to {appConfig.apiBaseUrl}...</Text>
+        <Static
+          key={staticKey}
+          items={[
+            <Box flexDirection="column" key="header">
+              <Header
+                terminalWidth={terminalWidth}
+                version={version}
+                nightly={false}
+              />
+            </Box>,
+          ]}
+        >
+          {() => null}
+        </Static>
+        <Box marginTop={2}>
+          <Text>🔗 Connecting to {appConfig.apiBaseUrl}...</Text>
+        </Box>
       </Box>
     );
   }
@@ -342,6 +506,32 @@ const App = ({ version }: AppProps) => {
           targets={targets}
           onSelect={handleTargetSelect}
           onBack={handleBackToTargetSelection}
+        />
+      </Box>
+    );
+  }
+
+  if (uiState === 'selecting_session' && selectedTarget) {
+    return (
+      <Box flexDirection="column" marginBottom={1} width="90%">
+        <Static
+          key={staticKey}
+          items={[
+            <Box flexDirection="column" key="header">
+              <Header
+                terminalWidth={terminalWidth}
+                version={version}
+                nightly={false}
+              />
+            </Box>,
+          ]}
+        >
+          {() => null}
+        </Static>
+        <SessionSelectionDialog
+          selectedTarget={selectedTarget}
+          onSelect={handleSessionSelect}
+          onBack={handleBackToTargetSelect}
         />
       </Box>
     );

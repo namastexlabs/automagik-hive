@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Text, Box, useInput } from 'ink';
+import { Colors } from '../colors.js';
 
 export interface RadioSelectItem<T> {
   label: string;
@@ -83,7 +84,7 @@ export function RadioButtonSelect<T>({
   return (
     <Box flexDirection="column">
       {showScrollArrows && (
-        <Text color={scrollOffset > 0 ? '#ffffff' : '#666666'}>
+        <Text color={scrollOffset > 0 ? Colors.Foreground : Colors.Gray}>
           ▲
         </Text>
       )}
@@ -91,17 +92,17 @@ export function RadioButtonSelect<T>({
         const itemIndex = scrollOffset + index;
         const isSelected = activeIndex === itemIndex;
 
-        let textColor = '#ffffff';
+        let textColor = Colors.Foreground;
         if (isSelected) {
-          textColor = '#00ff00';
+          textColor = Colors.AccentPurple;
         } else if (item.disabled) {
-          textColor = '#666666';
+          textColor = Colors.Gray;
         }
 
         return (
           <Box key={item.label}>
             <Box minWidth={2} flexShrink={0}>
-              <Text color={isSelected ? '#00ff00' : '#ffffff'}>
+              <Text color={isSelected ? Colors.AccentPurple : Colors.AccentCyan}>
                 {isSelected ? '●' : '○'}
               </Text>
             </Box>
@@ -115,8 +116,8 @@ export function RadioButtonSelect<T>({
         <Text
           color={
             scrollOffset + maxItemsToShow < items.length
-              ? '#ffffff'
-              : '#666666'
+              ? Colors.Foreground
+              : Colors.Gray
           }
         >
           ▼

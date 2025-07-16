@@ -53,7 +53,7 @@ function getEnvBoolean(key: string, defaultValue: boolean): boolean {
 export const appConfig: AppConfig = {
   // API Configuration
   apiBaseUrl: getEnvString('API_BASE_URL', 'http://localhost:9888'),
-  apiTimeout: getEnvNumber('API_TIMEOUT', 30000),
+  apiTimeout: getEnvNumber('API_TIMEOUT', 10000), // Reduced from 30s to 10s
   apiRetryAttempts: getEnvNumber('API_RETRY_ATTEMPTS', 3),
   
   // WebSocket Configuration
@@ -74,7 +74,7 @@ export const appConfig: AppConfig = {
   // Display Configuration
   enableColors: getEnvBoolean('ENABLE_COLORS', true),
   enableSpinner: getEnvBoolean('ENABLE_SPINNER', true),
-  streamDelay: getEnvNumber('STREAM_DELAY', 50),
+  streamDelay: getEnvNumber('STREAM_DELAY', 0), // Removed artificial delay
   maxDisplayWidth: getEnvNumber('MAX_DISPLAY_WIDTH', 120),
   
   // Development Configuration

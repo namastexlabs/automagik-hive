@@ -1,0 +1,107 @@
+{
+  "timestamp": "2025-07-16 09:50:58.934218+00:00",
+  "version": "v1.0",
+  "test_mode": "\ud83e\udd16 Mock LLM (Quick)",
+  "system_info": {
+    "platform": "Linux-6.6.87.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python_version": "3.12.3",
+    "cpu_count": 32,
+    "memory_total_gb": 62.75,
+    "hostname": "NMSTX-WORKSTATION",
+    "mock_enabled": true
+  },
+  "tests_completed": 9,
+  "total_duration": 10.930794,
+  "agent_tests": [
+    {
+      "agent_id": "pagbank-specialist",
+      "message": "Como fazer um PIX?",
+      "success": true,
+      "duration_seconds": 1.233149528503418,
+      "response_length": 107,
+      "error_message": null
+    },
+    {
+      "agent_id": "adquirencia-specialist",
+      "message": "Como funciona a antecipa\u00e7\u00e3o?",
+      "success": true,
+      "duration_seconds": 0.73982834815979,
+      "response_length": 111,
+      "error_message": null
+    },
+    {
+      "agent_id": "emissao-specialist",
+      "message": "Qual o limite do cart\u00e3o?",
+      "success": true,
+      "duration_seconds": 0.9823756217956543,
+      "response_length": 107,
+      "error_message": null
+    },
+    {
+      "agent_id": "human-handoff",
+      "message": "Preciso falar com um humano",
+      "success": false,
+      "duration_seconds": 1.3280580043792725,
+      "response_length": 0,
+      "error_message": "Authentication failed."
+    },
+    {
+      "agent_id": "finalizacao",
+      "message": "Como finalizar meu atendimento?",
+      "success": true,
+      "duration_seconds": 0.6138961315155029,
+      "response_length": 111,
+      "error_message": null
+    }
+  ],
+  "concurrency_tests": [
+    {
+      "concurrent_requests": 3,
+      "successful_requests": 3,
+      "failed_requests": 0,
+      "success_rate": 100.0,
+      "total_duration": 1.151313066482544,
+      "avg_response_time": 0.9443254470825195,
+      "requests_per_second": 2.605720448535781
+    },
+    {
+      "concurrent_requests": 5,
+      "successful_requests": 5,
+      "failed_requests": 0,
+      "success_rate": 100.0,
+      "total_duration": 1.4540181159973145,
+      "avg_response_time": 0.9156849384307861,
+      "requests_per_second": 3.4387467012888546
+    },
+    {
+      "concurrent_requests": 10,
+      "successful_requests": 10,
+      "failed_requests": 0,
+      "success_rate": 100.0,
+      "total_duration": 1.4813752174377441,
+      "avg_response_time": 0.9667733669281006,
+      "requests_per_second": 6.750484200280107
+    },
+    {
+      "concurrent_requests": 20,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "success_rate": 100.0,
+      "total_duration": 1.4451327323913574,
+      "avg_response_time": 1.0345162510871888,
+      "requests_per_second": 13.839559198762778
+    }
+  ],
+  "summary": {
+    "overall_score": 90.0,
+    "grade": "B",
+    "status": "GOOD",
+    "agent_success_rate": 80.0,
+    "avg_agent_response_time": 0.8923124074935913,
+    "max_rps": 13.839559198762778,
+    "avg_concurrency_success": 100.0,
+    "best_concurrency_level": 20,
+    "agents_tested": 5,
+    "concurrency_tests": 4
+  }
+}

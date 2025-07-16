@@ -18,6 +18,7 @@ import { useTerminalSize } from './hooks/useTerminalSize.js';
 import { useLocalAPIStream } from './hooks/useLocalAPIStream.js';
 import { useLoadingIndicator } from './hooks/useLoadingIndicator.js';
 import { Colors } from './colors.js';
+import { Header } from './components/Header.js';
 import { SessionProvider, useSession } from './contexts/SessionContext.js';
 import { StreamingProvider } from './contexts/StreamingContext.js';
 import { appConfig } from '../config/settings.js';
@@ -109,6 +110,9 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
   useEffect(() => {
     const initializeAPI = async () => {
       try {
+        // Add a small delay to ensure banner is visible
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         const healthResponse = await localAPIClient.healthCheck();
         if (healthResponse.error) {
           throw new Error(healthResponse.error);
@@ -243,10 +247,17 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
   if (connectionStatus === 'error') {
     return (
       <Box flexDirection="column" marginBottom={1} width="90%">
-        <Box borderStyle="round" borderColor={Colors.AccentRed} paddingX={1} marginY={1}>
-          <Text color={Colors.AccentRed}>
-            Failed to connect to API at {appConfig.apiBaseUrl}
-          </Text>
+        <Header
+          terminalWidth={terminalWidth}
+          version={version}
+          nightly={false}
+        />
+        <Box marginTop={2}>
+          <Box borderStyle="round" borderColor={Colors.AccentRed} paddingX={1} marginY={1}>
+            <Text color={Colors.AccentRed}>
+              Failed to connect to API at {appConfig.apiBaseUrl}
+            </Text>
+          </Box>
         </Box>
       </Box>
     );
@@ -256,7 +267,14 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
   if (connectionStatus === 'connecting') {
     return (
       <Box flexDirection="column" marginBottom={1} width="90%">
-        <Text>🧞 Connecting to {appConfig.apiBaseUrl}...</Text>
+        <Header
+          terminalWidth={terminalWidth}
+          version={version}
+          nightly={false}
+        />
+        <Box marginTop={2}>
+          <Text>🔗 Connecting to {appConfig.apiBaseUrl}...</Text>
+        </Box>
       </Box>
     );
   }
@@ -310,16 +328,16 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
       {/* Gemini-style header */}
       <Box 
         borderStyle="round" 
-        borderColor="blue" 
+        borderColor={Colors.AccentPurple} 
         paddingX={1} 
         marginBottom={1}
         justifyContent="space-between"
       >
         <Box>
-          <Text bold color="cyan">🧞 Genie Local CLI</Text>
+          <Text bold color="cyan">🎯 Genie Local CLI</Text>
           <Text color="gray"> v{version}</Text>
         </Box>
-        <Text color="green">● Connected</Text>
+        <Text color={Colors.AccentCyan}>● Connected</Text>
       </Box>
 
       {/* Target info banner with gemini styling */}
@@ -339,7 +357,7 @@ const GeminiApp = ({ version }: GeminiAppProps) => {
       <Static
         items={history.map((h, index) => (
           <Box key={`history-${h.id}-${index}`} marginBottom={1}>
-            <Text color={h.type === MessageType.USER ? "blue" : "white"}>
+            <Text color={h.type === MessageType.USER ? Colors.AccentPurple : "white"}>
               {h.type === MessageType.USER ? '> ' : '< '}{h.text}
             </Text>
           </Box>

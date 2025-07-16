@@ -443,21 +443,21 @@ var require_react_development = __commonJS({
         );
         actScopeDepth = prevActScopeDepth;
       }
-      function recursivelyFlushAsyncActWork(returnValue, resolve2, reject) {
+      function recursivelyFlushAsyncActWork(returnValue, resolve6, reject) {
         var queue = ReactSharedInternals.actQueue;
         if (null !== queue)
           if (0 !== queue.length)
             try {
               flushActQueue(queue);
               enqueueTask(function() {
-                return recursivelyFlushAsyncActWork(returnValue, resolve2, reject);
+                return recursivelyFlushAsyncActWork(returnValue, resolve6, reject);
               });
               return;
             } catch (error) {
               ReactSharedInternals.thrownErrors.push(error);
             }
           else ReactSharedInternals.actQueue = null;
-        0 < ReactSharedInternals.thrownErrors.length ? (queue = aggregateErrors(ReactSharedInternals.thrownErrors), ReactSharedInternals.thrownErrors.length = 0, reject(queue)) : resolve2(returnValue);
+        0 < ReactSharedInternals.thrownErrors.length ? (queue = aggregateErrors(ReactSharedInternals.thrownErrors), ReactSharedInternals.thrownErrors.length = 0, reject(queue)) : resolve6(returnValue);
       }
       function flushActQueue(queue) {
         if (!isFlushing) {
@@ -641,7 +641,7 @@ var require_react_development = __commonJS({
             ));
           });
           return {
-            then: function(resolve2, reject) {
+            then: function(resolve6, reject) {
               didAwaitActCall = true;
               thenable.then(
                 function(returnValue) {
@@ -651,7 +651,7 @@ var require_react_development = __commonJS({
                       flushActQueue(queue), enqueueTask(function() {
                         return recursivelyFlushAsyncActWork(
                           returnValue,
-                          resolve2,
+                          resolve6,
                           reject
                         );
                       });
@@ -665,7 +665,7 @@ var require_react_development = __commonJS({
                       ReactSharedInternals.thrownErrors.length = 0;
                       reject(_thrownError);
                     }
-                  } else resolve2(returnValue);
+                  } else resolve6(returnValue);
                 },
                 function(error) {
                   popActScope(prevActQueue, prevActScopeDepth);
@@ -687,15 +687,15 @@ var require_react_development = __commonJS({
         if (0 < ReactSharedInternals.thrownErrors.length)
           throw callback = aggregateErrors(ReactSharedInternals.thrownErrors), ReactSharedInternals.thrownErrors.length = 0, callback;
         return {
-          then: function(resolve2, reject) {
+          then: function(resolve6, reject) {
             didAwaitActCall = true;
             0 === prevActScopeDepth ? (ReactSharedInternals.actQueue = queue, enqueueTask(function() {
               return recursivelyFlushAsyncActWork(
                 returnValue$jscomp$0,
-                resolve2,
+                resolve6,
                 reject
               );
-            })) : resolve2(returnValue$jscomp$0);
+            })) : resolve6(returnValue$jscomp$0);
           }
         };
       };
@@ -1287,11 +1287,11 @@ var require_scheduler_development = __commonJS({
         if (last !== first) {
           heap[0] = last;
           a: for (var index = 0, length = heap.length, halfLength = length >>> 1; index < halfLength; ) {
-            var leftIndex = 2 * (index + 1) - 1, left = heap[leftIndex], rightIndex = leftIndex + 1, right = heap[rightIndex];
-            if (0 > compare(left, last))
-              rightIndex < length && 0 > compare(right, left) ? (heap[index] = right, heap[rightIndex] = last, index = rightIndex) : (heap[index] = left, heap[leftIndex] = last, index = leftIndex);
-            else if (rightIndex < length && 0 > compare(right, last))
-              heap[index] = right, heap[rightIndex] = last, index = rightIndex;
+            var leftIndex = 2 * (index + 1) - 1, left2 = heap[leftIndex], rightIndex = leftIndex + 1, right2 = heap[rightIndex];
+            if (0 > compare(left2, last))
+              rightIndex < length && 0 > compare(right2, left2) ? (heap[index] = right2, heap[rightIndex] = last, index = rightIndex) : (heap[index] = left2, heap[leftIndex] = last, index = leftIndex);
+            else if (rightIndex < length && 0 > compare(right2, last))
+              heap[index] = right2, heap[rightIndex] = last, index = rightIndex;
             else break a;
           }
         }
@@ -2334,9 +2334,9 @@ var require_react_reconciler_development = __commonJS({
               for (var i2 = debugInfo.length - 1; 0 <= i2; i2--) {
                 var entry = debugInfo[i2];
                 if ("string" === typeof entry.name) {
-                  var JSCompiler_temp_const = info, env3 = entry.env;
+                  var JSCompiler_temp_const = info, env4 = entry.env;
                   var JSCompiler_inline_result = describeBuiltInComponentFrame(
-                    entry.name + (env3 ? " [" + env3 + "]" : "")
+                    entry.name + (env4 ? " [" + env4 + "]" : "")
                   );
                   info = JSCompiler_temp_const + JSCompiler_inline_result;
                 }
@@ -3305,8 +3305,8 @@ var require_react_reconciler_development = __commonJS({
           currentEntangledActionThenable = {
             status: "pending",
             value: void 0,
-            then: function(resolve2) {
-              entangledListeners.push(resolve2);
+            then: function(resolve6) {
+              entangledListeners.push(resolve6);
             }
           };
         }
@@ -3329,8 +3329,8 @@ var require_react_reconciler_development = __commonJS({
           status: "pending",
           value: null,
           reason: null,
-          then: function(resolve2) {
-            listeners.push(resolve2);
+          then: function(resolve6) {
+            listeners.push(resolve6);
           }
         };
         thenable.then(
@@ -11467,14 +11467,14 @@ var require_react_reconciler_development = __commonJS({
       }
       var exports2 = {};
       "use strict";
-      var React17 = require_react(), Scheduler = require_scheduler(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
+      var React18 = require_react(), Scheduler = require_scheduler(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_PROVIDER_TYPE = Symbol.for("react.provider"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
       Symbol.for("react.scope");
       var REACT_ACTIVITY_TYPE = Symbol.for("react.activity");
       Symbol.for("react.legacy_hidden");
       Symbol.for("react.tracing_marker");
       var REACT_MEMO_CACHE_SENTINEL = Symbol.for("react.memo_cache_sentinel");
       Symbol.for("react.view_transition");
-      var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React17.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, rendererVersion = $$$config.rendererVersion, rendererPackageName = $$$config.rendererPackageName, extraDevToolsConfig = $$$config.extraDevToolsConfig, getPublicInstance = $$$config.getPublicInstance, getRootHostContext = $$$config.getRootHostContext, getChildHostContext = $$$config.getChildHostContext, prepareForCommit = $$$config.prepareForCommit, resetAfterCommit = $$$config.resetAfterCommit, createInstance = $$$config.createInstance;
+      var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React18.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, rendererVersion = $$$config.rendererVersion, rendererPackageName = $$$config.rendererPackageName, extraDevToolsConfig = $$$config.extraDevToolsConfig, getPublicInstance = $$$config.getPublicInstance, getRootHostContext = $$$config.getRootHostContext, getChildHostContext = $$$config.getChildHostContext, prepareForCommit = $$$config.prepareForCommit, resetAfterCommit = $$$config.resetAfterCommit, createInstance = $$$config.createInstance;
       $$$config.cloneMutableInstance;
       var appendInitialChild = $$$config.appendInitialChild, finalizeInitialChildren = $$$config.finalizeInitialChildren, shouldSetTextContent = $$$config.shouldSetTextContent, createTextInstance = $$$config.createTextInstance;
       $$$config.cloneMutableTextInstance;
@@ -15549,7 +15549,7 @@ var require_extension = __commonJS({
       }
       return offers;
     }
-    function format(extensions) {
+    function format3(extensions) {
       return Object.keys(extensions).map((extension) => {
         let configurations = extensions[extension];
         if (!Array.isArray(configurations)) configurations = [configurations];
@@ -15564,7 +15564,7 @@ var require_extension = __commonJS({
         }).join(", ");
       }).join(", ");
     }
-    module.exports = { format, parse };
+    module.exports = { format: format3, parse };
   }
 });
 
@@ -15597,7 +15597,7 @@ var require_websocket = __commonJS({
     var {
       EventTarget: { addEventListener, removeEventListener }
     } = require_event_target();
-    var { format, parse } = require_extension();
+    var { format: format3, parse } = require_extension();
     var { toBuffer } = require_buffer_util();
     var closeTimeout = 30 * 1e3;
     var kAborted = Symbol("kAborted");
@@ -16127,7 +16127,7 @@ var require_websocket = __commonJS({
           false,
           opts.maxPayload
         );
-        opts.headers["Sec-WebSocket-Extensions"] = format({
+        opts.headers["Sec-WebSocket-Extensions"] = format3({
           [PerMessageDeflate.extensionName]: perMessageDeflate.offer()
         });
       }
@@ -17166,7 +17166,7 @@ var require_backend = __commonJS({
                     });
                     return a._currentValue;
                   },
-                  useEffect: function useEffect12(a) {
+                  useEffect: function useEffect13(a) {
                     C();
                     x2.push({
                       primitive: "Effect",
@@ -17243,7 +17243,7 @@ var require_backend = __commonJS({
                     });
                     return a;
                   },
-                  useState: function useState13(a) {
+                  useState: function useState14(a) {
                     var b = C();
                     a = null !== b ? b.memoizedState : "function" === typeof a ? a() : a;
                     x2.push({
@@ -19309,7 +19309,7 @@ var require_backend = __commonJS({
                   if (!isString(f3)) {
                     var objects = [];
                     for (var i2 = 0; i2 < arguments.length; i2++) {
-                      objects.push(inspect(arguments[i2]));
+                      objects.push(inspect2(arguments[i2]));
                     }
                     return objects.join(" ");
                   }
@@ -19338,7 +19338,7 @@ var require_backend = __commonJS({
                     if (isNull(x2) || !isObject(x2)) {
                       str += " " + x2;
                     } else {
-                      str += " " + inspect(x2);
+                      str += " " + inspect2(x2);
                     }
                   }
                   return str;
@@ -19387,14 +19387,14 @@ var require_backend = __commonJS({
                   }
                   return debugs[set];
                 };
-                function inspect(obj, opts) {
+                function inspect2(obj, opts) {
                   var ctx = {
                     seen: [],
                     stylize: stylizeNoColor
                   };
                   if (arguments.length >= 3) ctx.depth = arguments[2];
                   if (arguments.length >= 4) ctx.colors = arguments[3];
-                  if (isBoolean(opts)) {
+                  if (isBoolean2(opts)) {
                     ctx.showHidden = opts;
                   } else if (opts) {
                     exports2._extend(ctx, opts);
@@ -19406,8 +19406,8 @@ var require_backend = __commonJS({
                   if (ctx.colors) ctx.stylize = stylizeWithColor;
                   return formatValue(ctx, obj, ctx.depth);
                 }
-                exports2.inspect = inspect;
-                inspect.colors = {
+                exports2.inspect = inspect2;
+                inspect2.colors = {
                   "bold": [1, 22],
                   "italic": [3, 23],
                   "underline": [4, 24],
@@ -19422,7 +19422,7 @@ var require_backend = __commonJS({
                   "red": [31, 39],
                   "yellow": [33, 39]
                 };
-                inspect.styles = {
+                inspect2.styles = {
                   "special": "cyan",
                   "number": "yellow",
                   "boolean": "yellow",
@@ -19434,9 +19434,9 @@ var require_backend = __commonJS({
                   "regexp": "red"
                 };
                 function stylizeWithColor(str, styleType) {
-                  var style = inspect.styles[styleType];
+                  var style = inspect2.styles[styleType];
                   if (style) {
-                    return "\x1B[" + inspect.colors[style][0] + "m" + str + "\x1B[" + inspect.colors[style][1] + "m";
+                    return "\x1B[" + inspect2.colors[style][0] + "m" + str + "\x1B[" + inspect2.colors[style][1] + "m";
                   } else {
                     return str;
                   }
@@ -19452,7 +19452,7 @@ var require_backend = __commonJS({
                   return hash;
                 }
                 function formatValue(ctx, value, recurseTimes) {
-                  if (ctx.customInspect && value && isFunction(value.inspect) && // Filter out the util module, it's inspect function is special
+                  if (ctx.customInspect && value && isFunction2(value.inspect) && // Filter out the util module, it's inspect function is special
                   value.inspect !== exports2.inspect && // Also filter out any prototype objects using the circular check.
                   !(value.constructor && value.constructor.prototype === value)) {
                     var ret = value.inspect(recurseTimes, ctx);
@@ -19474,7 +19474,7 @@ var require_backend = __commonJS({
                     return formatError(value);
                   }
                   if (keys.length === 0) {
-                    if (isFunction(value)) {
+                    if (isFunction2(value)) {
                       var name = value.name ? ": " + value.name : "";
                       return ctx.stylize("[Function" + name + "]", "special");
                     }
@@ -19493,7 +19493,7 @@ var require_backend = __commonJS({
                     array = true;
                     braces = ["[", "]"];
                   }
-                  if (isFunction(value)) {
+                  if (isFunction2(value)) {
                     var n = value.name ? ": " + value.name : "";
                     base = " [Function" + n + "]";
                   }
@@ -19535,7 +19535,7 @@ var require_backend = __commonJS({
                     return ctx.stylize(simple, "string");
                   }
                   if (isNumber(value)) return ctx.stylize("" + value, "number");
-                  if (isBoolean(value)) return ctx.stylize("" + value, "boolean");
+                  if (isBoolean2(value)) return ctx.stylize("" + value, "boolean");
                   if (isNull(value)) return ctx.stylize("null", "null");
                 }
                 function formatError(value) {
@@ -19629,10 +19629,10 @@ var require_backend = __commonJS({
                   return Array.isArray(ar);
                 }
                 exports2.isArray = isArray;
-                function isBoolean(arg) {
+                function isBoolean2(arg) {
                   return typeof arg === "boolean";
                 }
-                exports2.isBoolean = isBoolean;
+                exports2.isBoolean = isBoolean2;
                 function isNull(arg) {
                   return arg === null;
                 }
@@ -19673,10 +19673,10 @@ var require_backend = __commonJS({
                   return isObject(e2) && (objectToString(e2) === "[object Error]" || e2 instanceof Error);
                 }
                 exports2.isError = isError;
-                function isFunction(arg) {
+                function isFunction2(arg) {
                   return typeof arg === "function";
                 }
-                exports2.isFunction = isFunction;
+                exports2.isFunction = isFunction2;
                 function isPrimitive(arg) {
                   return arg === null || typeof arg === "boolean" || typeof arg === "number" || typeof arg === "string" || _typeof(arg) === "symbol" || // ES6 symbol
                   typeof arg === "undefined";
@@ -20536,7 +20536,7 @@ var require_backend = __commonJS({
                 }
               }, {
                 key: "inspect",
-                value: function inspect(nodes, name) {
+                value: function inspect2(nodes, name) {
                   var _this = this;
                   var elements = nodes.filter(function(node2) {
                     return node2.nodeType === Node.ELEMENT_NODE;
@@ -20602,35 +20602,35 @@ var require_backend = __commonJS({
               var tipHeight = Math.max(tipSize.height, 20);
               var tipWidth = Math.max(tipSize.width, 60);
               var margin = 5;
-              var top;
+              var top2;
               if (dims.top + dims.height + tipHeight <= bounds.top + bounds.height) {
                 if (dims.top + dims.height < bounds.top + 0) {
-                  top = bounds.top + margin;
+                  top2 = bounds.top + margin;
                 } else {
-                  top = dims.top + dims.height + margin;
+                  top2 = dims.top + dims.height + margin;
                 }
               } else if (dims.top - tipHeight <= bounds.top + bounds.height) {
                 if (dims.top - tipHeight - margin < bounds.top + margin) {
-                  top = bounds.top + margin;
+                  top2 = bounds.top + margin;
                 } else {
-                  top = dims.top - tipHeight - margin;
+                  top2 = dims.top - tipHeight - margin;
                 }
               } else {
-                top = bounds.top + bounds.height - tipHeight - margin;
+                top2 = bounds.top + bounds.height - tipHeight - margin;
               }
-              var left = dims.left + margin;
+              var left2 = dims.left + margin;
               if (dims.left < bounds.left) {
-                left = bounds.left + margin;
+                left2 = bounds.left + margin;
               }
               if (dims.left + tipWidth > bounds.left + bounds.width) {
-                left = bounds.left + bounds.width - tipWidth - margin;
+                left2 = bounds.left + bounds.width - tipWidth - margin;
               }
-              top += "px";
-              left += "px";
+              top2 += "px";
+              left2 += "px";
               return {
                 style: {
-                  top,
-                  left
+                  top: top2,
+                  left: left2
                 }
               };
             }
@@ -20868,17 +20868,17 @@ var require_backend = __commonJS({
               });
             }
             function drawBorder(context, rect, color) {
-              var height = rect.height, left = rect.left, top = rect.top, width = rect.width;
+              var height = rect.height, left2 = rect.left, top2 = rect.top, width = rect.width;
               context.lineWidth = 1;
               context.strokeStyle = OUTLINE_COLOR;
-              context.strokeRect(left - 1, top - 1, width + 2, height + 2);
+              context.strokeRect(left2 - 1, top2 - 1, width + 2, height + 2);
               context.lineWidth = 1;
               context.strokeStyle = OUTLINE_COLOR;
-              context.strokeRect(left + 1, top + 1, width - 1, height - 1);
+              context.strokeRect(left2 + 1, top2 + 1, width - 1, height - 1);
               context.strokeStyle = color;
               context.setLineDash([0]);
               context.lineWidth = 1;
-              context.strokeRect(left, top, width - 1, height - 1);
+              context.strokeRect(left2, top2, width - 1, height - 1);
               context.setLineDash([0]);
             }
             function destroy(agent2) {
@@ -22418,7 +22418,7 @@ var require_backend = __commonJS({
                 return [firstArg, style].concat(utils_toConsumableArray(inputArgs));
               }
             }
-            function format(maybeMessage) {
+            function format3(maybeMessage) {
               for (var _len = arguments.length, inputArgs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
                 inputArgs[_key - 1] = arguments[_key];
               }
@@ -23415,8 +23415,8 @@ var require_backend = __commonJS({
               function recordReactMeasureStarted(type, lanes) {
                 var depth = 0;
                 if (currentReactMeasuresStack.length > 0) {
-                  var top = currentReactMeasuresStack[currentReactMeasuresStack.length - 1];
-                  depth = top.type === "render-idle" ? top.depth : top.depth + 1;
+                  var top2 = currentReactMeasuresStack[currentReactMeasuresStack.length - 1];
+                  depth = top2.type === "render-idle" ? top2.depth : top2.depth + 1;
                 }
                 var lanesArray = laneToLanesArray(lanes);
                 var reactMeasure = {
@@ -23450,11 +23450,11 @@ var require_backend = __commonJS({
                   console.error('Unexpected type "%s" completed at %sms while currentReactMeasuresStack is empty.', type, currentTime);
                   return;
                 }
-                var top = currentReactMeasuresStack.pop();
-                if (top.type !== type) {
-                  console.error('Unexpected type "%s" completed at %sms before "%s" completed.', type, currentTime, top.type);
+                var top2 = currentReactMeasuresStack.pop();
+                if (top2.type !== type) {
+                  console.error('Unexpected type "%s" completed at %sms before "%s" completed.', type, currentTime, top2.type);
                 }
-                top.duration = currentTime - top.timestamp;
+                top2.duration = currentTime - top2.timestamp;
                 if (currentTimelineData) {
                   currentTimelineData.duration = getRelativeTime() + TIME_OFFSET;
                 }
@@ -24615,7 +24615,7 @@ var require_backend = __commonJS({
                     return;
                   }
                 }
-                var message = format.apply(void 0, renderer_toConsumableArray(args));
+                var message = format3.apply(void 0, renderer_toConsumableArray(args));
                 if (__DEBUG__) {
                   debug2("onErrorOrWarning", fiber, null, "".concat(type, ': "').concat(message, '"'));
                 }
@@ -27243,7 +27243,7 @@ var require_backend = __commonJS({
                           args[_key2] = arguments[_key2];
                         }
                         if (isNode2) {
-                          originalMethod(DIMMED_NODE_CONSOLE_COLOR, format.apply(void 0, args));
+                          originalMethod(DIMMED_NODE_CONSOLE_COLOR, format3.apply(void 0, args));
                         } else {
                           var color = getConsoleColor(method2);
                           if (color) {
@@ -29649,7 +29649,7 @@ var require_backend = __commonJS({
                 });
                 return;
               }
-              instance2.measure(function(x2, y, width, height, left, top) {
+              instance2.measure(function(x2, y, width, height, left2, top2) {
                 if (typeof x2 !== "number") {
                   bridge.send("NativeStyleEditor_styleAndLayout", {
                     id,
@@ -29667,8 +29667,8 @@ var require_backend = __commonJS({
                     y,
                     width,
                     height,
-                    left,
-                    top,
+                    left: left2,
+                    top: top2,
                     margin,
                     padding
                   },
@@ -30671,20 +30671,20 @@ var require_react_jsx_runtime_development = __commonJS({
       function validateChildKeys(node) {
         "object" === typeof node && null !== node && node.$$typeof === REACT_ELEMENT_TYPE && node._store && (node._store.validated = 1);
       }
-      var React17 = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler");
+      var React18 = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler");
       Symbol.for("react.provider");
-      var REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React17.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
+      var REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React18.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
         return null;
       };
-      React17 = {
+      React18 = {
         "react-stack-bottom-frame": function(callStackForError) {
           return callStackForError();
         }
       };
       var specialPropKeyWarningShown;
       var didWarnAboutElementRef = {};
-      var unknownOwnerDebugStack = React17["react-stack-bottom-frame"].bind(
-        React17,
+      var unknownOwnerDebugStack = React18["react-stack-bottom-frame"].bind(
+        React18,
         UnknownOwner
       )();
       var unknownOwnerDebugTask = createTask(getTaskName(UnknownOwner));
@@ -31058,7 +31058,7 @@ var require_ms = __commonJS({
 // node_modules/debug/src/common.js
 var require_common = __commonJS({
   "node_modules/debug/src/common.js"(exports, module) {
-    function setup(env3) {
+    function setup(env4) {
       createDebug.debug = createDebug;
       createDebug.default = createDebug;
       createDebug.coerce = coerce;
@@ -31067,8 +31067,8 @@ var require_common = __commonJS({
       createDebug.enabled = enabled;
       createDebug.humanize = require_ms();
       createDebug.destroy = destroy;
-      Object.keys(env3).forEach((key) => {
-        createDebug[key] = env3[key];
+      Object.keys(env4).forEach((key) => {
+        createDebug[key] = env4[key];
       });
       createDebug.names = [];
       createDebug.skips = [];
@@ -31103,12 +31103,12 @@ var require_common = __commonJS({
             args.unshift("%O");
           }
           let index = 0;
-          args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
+          args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format3) => {
             if (match === "%%") {
               return "%";
             }
             index++;
-            const formatter = createDebug.formatters[format];
+            const formatter = createDebug.formatters[format3];
             if (typeof formatter === "function") {
               const val = args[index];
               match = formatter.call(self2, val);
@@ -31406,10 +31406,10 @@ var require_browser = __commonJS({
 var require_has_flag = __commonJS({
   "node_modules/has-flag/index.js"(exports, module) {
     "use strict";
-    module.exports = (flag, argv = process.argv) => {
+    module.exports = (flag, argv2 = process.argv) => {
       const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
-      const position = argv.indexOf(prefix + flag);
-      const terminatorPosition = argv.indexOf("--");
+      const position = argv2.indexOf(prefix + flag);
+      const terminatorPosition = argv2.indexOf("--");
       return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
     };
   }
@@ -31422,20 +31422,20 @@ var require_supports_color = __commonJS({
     var os3 = __require("os");
     var tty2 = __require("tty");
     var hasFlag2 = require_has_flag();
-    var { env: env3 } = process;
+    var { env: env4 } = process;
     var forceColor;
     if (hasFlag2("no-color") || hasFlag2("no-colors") || hasFlag2("color=false") || hasFlag2("color=never")) {
       forceColor = 0;
     } else if (hasFlag2("color") || hasFlag2("colors") || hasFlag2("color=true") || hasFlag2("color=always")) {
       forceColor = 1;
     }
-    if ("FORCE_COLOR" in env3) {
-      if (env3.FORCE_COLOR === "true") {
+    if ("FORCE_COLOR" in env4) {
+      if (env4.FORCE_COLOR === "true") {
         forceColor = 1;
-      } else if (env3.FORCE_COLOR === "false") {
+      } else if (env4.FORCE_COLOR === "false") {
         forceColor = 0;
       } else {
-        forceColor = env3.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env3.FORCE_COLOR, 10), 3);
+        forceColor = env4.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env4.FORCE_COLOR, 10), 3);
       }
     }
     function translateLevel2(level) {
@@ -31463,7 +31463,7 @@ var require_supports_color = __commonJS({
         return 0;
       }
       const min = forceColor || 0;
-      if (env3.TERM === "dumb") {
+      if (env4.TERM === "dumb") {
         return min;
       }
       if (process.platform === "win32") {
@@ -31473,34 +31473,34 @@ var require_supports_color = __commonJS({
         }
         return 1;
       }
-      if ("CI" in env3) {
-        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign) => sign in env3) || env3.CI_NAME === "codeship") {
+      if ("CI" in env4) {
+        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign) => sign in env4) || env4.CI_NAME === "codeship") {
           return 1;
         }
         return min;
       }
-      if ("TEAMCITY_VERSION" in env3) {
-        return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env3.TEAMCITY_VERSION) ? 1 : 0;
+      if ("TEAMCITY_VERSION" in env4) {
+        return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env4.TEAMCITY_VERSION) ? 1 : 0;
       }
-      if (env3.COLORTERM === "truecolor") {
+      if (env4.COLORTERM === "truecolor") {
         return 3;
       }
-      if ("TERM_PROGRAM" in env3) {
-        const version2 = parseInt((env3.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
-        switch (env3.TERM_PROGRAM) {
+      if ("TERM_PROGRAM" in env4) {
+        const version2 = parseInt((env4.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+        switch (env4.TERM_PROGRAM) {
           case "iTerm.app":
             return version2 >= 3 ? 3 : 2;
           case "Apple_Terminal":
             return 2;
         }
       }
-      if (/-256(color)?$/i.test(env3.TERM)) {
+      if (/-256(color)?$/i.test(env4.TERM)) {
         return 2;
       }
-      if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env3.TERM)) {
+      if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env4.TERM)) {
         return 1;
       }
-      if ("COLORTERM" in env3) {
+      if ("COLORTERM" in env4) {
         return 1;
       }
       return min;
@@ -31762,8 +31762,8 @@ var require_helpers = __commonJS({
     function req(url, opts = {}) {
       const href = typeof url === "string" ? url : url.href;
       const req2 = (href.startsWith("https:") ? https2 : http3).request(url, opts);
-      const promise = new Promise((resolve2, reject) => {
-        req2.once("response", resolve2).once("error", reject).end();
+      const promise = new Promise((resolve6, reject) => {
+        req2.once("response", resolve6).once("error", reject).end();
       });
       req2.then = promise.then.bind(promise);
       return req2;
@@ -31940,7 +31940,7 @@ var require_parse_proxy_response = __commonJS({
     var debug_1 = __importDefault(require_src());
     var debug = (0, debug_1.default)("https-proxy-agent:parse-proxy-response");
     function parseProxyResponse(socket) {
-      return new Promise((resolve2, reject) => {
+      return new Promise((resolve6, reject) => {
         let buffersLength = 0;
         const buffers = [];
         function read() {
@@ -32006,7 +32006,7 @@ var require_parse_proxy_response = __commonJS({
           }
           debug("got proxy server response: %o %o", firstLine, headers);
           cleanup();
-          resolve2({
+          resolve6({
             connect: {
               statusCode,
               statusText,
@@ -32238,7 +32238,7 @@ var require_ponyfill_es2018 = __commonJS({
             value: name,
             configurable: true
           });
-        } catch (_a3) {
+        } catch (_a4) {
         }
       }
       const originalPromise = Promise;
@@ -32248,7 +32248,7 @@ var require_ponyfill_es2018 = __commonJS({
         return new originalPromise(executor);
       }
       function promiseResolvedWith(value) {
-        return newPromise((resolve2) => resolve2(value));
+        return newPromise((resolve6) => resolve6(value));
       }
       function promiseRejectedWith(reason) {
         return originalPromiseReject(reason);
@@ -32418,8 +32418,8 @@ var require_ponyfill_es2018 = __commonJS({
         return new TypeError("Cannot " + name + " a stream using a released reader");
       }
       function defaultReaderClosedPromiseInitialize(reader) {
-        reader._closedPromise = newPromise((resolve2, reject) => {
-          reader._closedPromise_resolve = resolve2;
+        reader._closedPromise = newPromise((resolve6, reject) => {
+          reader._closedPromise_resolve = resolve6;
           reader._closedPromise_reject = reject;
         });
       }
@@ -32593,8 +32593,8 @@ var require_ponyfill_es2018 = __commonJS({
           }
           let resolvePromise;
           let rejectPromise;
-          const promise = newPromise((resolve2, reject) => {
-            resolvePromise = resolve2;
+          const promise = newPromise((resolve6, reject) => {
+            resolvePromise = resolve6;
             rejectPromise = reject;
           });
           const readRequest = {
@@ -32699,8 +32699,8 @@ var require_ponyfill_es2018 = __commonJS({
           const reader = this._reader;
           let resolvePromise;
           let rejectPromise;
-          const promise = newPromise((resolve2, reject) => {
-            resolvePromise = resolve2;
+          const promise = newPromise((resolve6, reject) => {
+            resolvePromise = resolve6;
             rejectPromise = reject;
           });
           const readRequest = {
@@ -32770,7 +32770,7 @@ var require_ponyfill_es2018 = __commonJS({
         }
         try {
           return x2._asyncIteratorImpl instanceof ReadableStreamAsyncIteratorImpl;
-        } catch (_a3) {
+        } catch (_a4) {
           return false;
         }
       }
@@ -32780,7 +32780,7 @@ var require_ponyfill_es2018 = __commonJS({
       const NumberIsNaN = Number.isNaN || function(x2) {
         return x2 !== x2;
       };
-      var _a2, _b, _c;
+      var _a3, _b2, _c2;
       function CreateArrayFromList(elements) {
         return elements.slice();
       }
@@ -32834,7 +32834,7 @@ var require_ponyfill_es2018 = __commonJS({
         const nextMethod = asyncIterator.next;
         return { iterator: asyncIterator, nextMethod, done: false };
       }
-      const SymbolAsyncIterator = (_c = (_a2 = Symbol.asyncIterator) !== null && _a2 !== void 0 ? _a2 : (_b = Symbol.for) === null || _b === void 0 ? void 0 : _b.call(Symbol, "Symbol.asyncIterator")) !== null && _c !== void 0 ? _c : "@@asyncIterator";
+      const SymbolAsyncIterator = (_c2 = (_a3 = Symbol.asyncIterator) !== null && _a3 !== void 0 ? _a3 : (_b2 = Symbol.for) === null || _b2 === void 0 ? void 0 : _b2.call(Symbol, "Symbol.asyncIterator")) !== null && _c2 !== void 0 ? _c2 : "@@asyncIterator";
       function GetIterator(obj, hint = "sync", method) {
         if (method === void 0) {
           if (hint === "async") {
@@ -33611,9 +33611,9 @@ var require_ponyfill_es2018 = __commonJS({
         return mode;
       }
       function convertByobReadOptions(options2, context) {
-        var _a3;
+        var _a4;
         assertDictionary(options2, context);
-        const min = (_a3 = options2 === null || options2 === void 0 ? void 0 : options2.min) !== null && _a3 !== void 0 ? _a3 : 1;
+        const min = (_a4 = options2 === null || options2 === void 0 ? void 0 : options2.min) !== null && _a4 !== void 0 ? _a4 : 1;
         return {
           min: convertUnsignedLongLongWithEnforceRange(min, `${context} has member 'min' that`)
         };
@@ -33719,8 +33719,8 @@ var require_ponyfill_es2018 = __commonJS({
           }
           let resolvePromise;
           let rejectPromise;
-          const promise = newPromise((resolve2, reject) => {
-            resolvePromise = resolve2;
+          const promise = newPromise((resolve6, reject) => {
+            resolvePromise = resolve6;
             rejectPromise = reject;
           });
           const readIntoRequest = {
@@ -33870,7 +33870,7 @@ var require_ponyfill_es2018 = __commonJS({
         }
         try {
           return typeof value.aborted === "boolean";
-        } catch (_a3) {
+        } catch (_a4) {
           return false;
         }
       }
@@ -34014,12 +34014,12 @@ var require_ponyfill_es2018 = __commonJS({
         return true;
       }
       function WritableStreamAbort(stream, reason) {
-        var _a3;
+        var _a4;
         if (stream._state === "closed" || stream._state === "errored") {
           return promiseResolvedWith(void 0);
         }
         stream._writableStreamController._abortReason = reason;
-        (_a3 = stream._writableStreamController._abortController) === null || _a3 === void 0 ? void 0 : _a3.abort(reason);
+        (_a4 = stream._writableStreamController._abortController) === null || _a4 === void 0 ? void 0 : _a4.abort(reason);
         const state = stream._state;
         if (state === "closed" || state === "errored") {
           return promiseResolvedWith(void 0);
@@ -34032,10 +34032,10 @@ var require_ponyfill_es2018 = __commonJS({
           wasAlreadyErroring = true;
           reason = void 0;
         }
-        const promise = newPromise((resolve2, reject) => {
+        const promise = newPromise((resolve6, reject) => {
           stream._pendingAbortRequest = {
             _promise: void 0,
-            _resolve: resolve2,
+            _resolve: resolve6,
             _reject: reject,
             _reason: reason,
             _wasAlreadyErroring: wasAlreadyErroring
@@ -34052,9 +34052,9 @@ var require_ponyfill_es2018 = __commonJS({
         if (state === "closed" || state === "errored") {
           return promiseRejectedWith(new TypeError(`The stream (in ${state} state) is not in the writable state and cannot be closed`));
         }
-        const promise = newPromise((resolve2, reject) => {
+        const promise = newPromise((resolve6, reject) => {
           const closeRequest = {
-            _resolve: resolve2,
+            _resolve: resolve6,
             _reject: reject
           };
           stream._closeRequest = closeRequest;
@@ -34067,9 +34067,9 @@ var require_ponyfill_es2018 = __commonJS({
         return promise;
       }
       function WritableStreamAddWriteRequest(stream) {
-        const promise = newPromise((resolve2, reject) => {
+        const promise = newPromise((resolve6, reject) => {
           const writeRequest = {
-            _resolve: resolve2,
+            _resolve: resolve6,
             _reject: reject
           };
           stream._writeRequests.push(writeRequest);
@@ -34685,8 +34685,8 @@ var require_ponyfill_es2018 = __commonJS({
         return new TypeError("Cannot " + name + " a stream using a released writer");
       }
       function defaultWriterClosedPromiseInitialize(writer) {
-        writer._closedPromise = newPromise((resolve2, reject) => {
-          writer._closedPromise_resolve = resolve2;
+        writer._closedPromise = newPromise((resolve6, reject) => {
+          writer._closedPromise_resolve = resolve6;
           writer._closedPromise_reject = reject;
           writer._closedPromiseState = "pending";
         });
@@ -34722,8 +34722,8 @@ var require_ponyfill_es2018 = __commonJS({
         writer._closedPromiseState = "resolved";
       }
       function defaultWriterReadyPromiseInitialize(writer) {
-        writer._readyPromise = newPromise((resolve2, reject) => {
-          writer._readyPromise_resolve = resolve2;
+        writer._readyPromise = newPromise((resolve6, reject) => {
+          writer._readyPromise_resolve = resolve6;
           writer._readyPromise_reject = reject;
         });
         writer._readyPromiseState = "pending";
@@ -34782,7 +34782,7 @@ var require_ponyfill_es2018 = __commonJS({
         try {
           new ctor();
           return true;
-        } catch (_a3) {
+        } catch (_a4) {
           return false;
         }
       }
@@ -34810,7 +34810,7 @@ var require_ponyfill_es2018 = __commonJS({
         source._disturbed = true;
         let shuttingDown = false;
         let currentWrite = promiseResolvedWith(void 0);
-        return newPromise((resolve2, reject) => {
+        return newPromise((resolve6, reject) => {
           let abortAlgorithm;
           if (signal !== void 0) {
             abortAlgorithm = () => {
@@ -34955,7 +34955,7 @@ var require_ponyfill_es2018 = __commonJS({
             if (isError) {
               reject(error);
             } else {
-              resolve2(void 0);
+              resolve6(void 0);
             }
             return null;
           }
@@ -35236,8 +35236,8 @@ var require_ponyfill_es2018 = __commonJS({
         let branch1;
         let branch2;
         let resolveCancelPromise;
-        const cancelPromise = newPromise((resolve2) => {
-          resolveCancelPromise = resolve2;
+        const cancelPromise = newPromise((resolve6) => {
+          resolveCancelPromise = resolve6;
         });
         function pullAlgorithm() {
           if (reading) {
@@ -35328,8 +35328,8 @@ var require_ponyfill_es2018 = __commonJS({
         let branch1;
         let branch2;
         let resolveCancelPromise;
-        const cancelPromise = newPromise((resolve2) => {
-          resolveCancelPromise = resolve2;
+        const cancelPromise = newPromise((resolve6) => {
+          resolveCancelPromise = resolve6;
         });
         function forwardReaderError(thisReader) {
           uponRejection(thisReader._closedPromise, (r2) => {
@@ -36109,8 +36109,8 @@ var require_ponyfill_es2018 = __commonJS({
           const writableHighWaterMark = ExtractHighWaterMark(writableStrategy, 1);
           const writableSizeAlgorithm = ExtractSizeAlgorithm(writableStrategy);
           let startPromise_resolve;
-          const startPromise = newPromise((resolve2) => {
-            startPromise_resolve = resolve2;
+          const startPromise = newPromise((resolve6) => {
+            startPromise_resolve = resolve6;
           });
           InitializeTransformStream(this, startPromise, writableHighWaterMark, writableSizeAlgorithm, readableHighWaterMark, readableSizeAlgorithm);
           SetUpTransformStreamDefaultControllerFromTransformer(this, transformer);
@@ -36203,8 +36203,8 @@ var require_ponyfill_es2018 = __commonJS({
         if (stream._backpressureChangePromise !== void 0) {
           stream._backpressureChangePromise_resolve();
         }
-        stream._backpressureChangePromise = newPromise((resolve2) => {
-          stream._backpressureChangePromise_resolve = resolve2;
+        stream._backpressureChangePromise = newPromise((resolve6) => {
+          stream._backpressureChangePromise_resolve = resolve6;
         });
         stream._backpressure = backpressure;
       }
@@ -36372,8 +36372,8 @@ var require_ponyfill_es2018 = __commonJS({
           return controller._finishPromise;
         }
         const readable = stream._readable;
-        controller._finishPromise = newPromise((resolve2, reject) => {
-          controller._finishPromise_resolve = resolve2;
+        controller._finishPromise = newPromise((resolve6, reject) => {
+          controller._finishPromise_resolve = resolve6;
           controller._finishPromise_reject = reject;
         });
         const cancelPromise = controller._cancelAlgorithm(reason);
@@ -36399,8 +36399,8 @@ var require_ponyfill_es2018 = __commonJS({
           return controller._finishPromise;
         }
         const readable = stream._readable;
-        controller._finishPromise = newPromise((resolve2, reject) => {
-          controller._finishPromise_resolve = resolve2;
+        controller._finishPromise = newPromise((resolve6, reject) => {
+          controller._finishPromise_resolve = resolve6;
           controller._finishPromise_reject = reject;
         });
         const flushPromise = controller._flushAlgorithm();
@@ -36430,8 +36430,8 @@ var require_ponyfill_es2018 = __commonJS({
           return controller._finishPromise;
         }
         const writable = stream._writable;
-        controller._finishPromise = newPromise((resolve2, reject) => {
-          controller._finishPromise_resolve = resolve2;
+        controller._finishPromise = newPromise((resolve6, reject) => {
+          controller._finishPromise_resolve = resolve6;
           controller._finishPromise_reject = reject;
         });
         const cancelPromise = controller._cancelAlgorithm(reason);
@@ -37058,7 +37058,7 @@ async function toFormData(Body2, ct) {
   if (!m2) {
     throw new TypeError("no or bad content-type header, no multipart boundary");
   }
-  const parser2 = new MultipartParser(m2[1] || m2[2]);
+  const parser3 = new MultipartParser(m2[1] || m2[2]);
   let headerField;
   let headerValue;
   let entryValue;
@@ -37082,9 +37082,9 @@ async function toFormData(Body2, ct) {
   };
   const decoder = new TextDecoder("utf-8");
   decoder.decode();
-  parser2.onPartBegin = function() {
-    parser2.onPartData = onPartData;
-    parser2.onPartEnd = appendEntryToFormData;
+  parser3.onPartBegin = function() {
+    parser3.onPartData = onPartData;
+    parser3.onPartEnd = appendEntryToFormData;
     headerField = "";
     headerValue = "";
     entryValue = "";
@@ -37093,13 +37093,13 @@ async function toFormData(Body2, ct) {
     filename = null;
     entryChunks.length = 0;
   };
-  parser2.onHeaderField = function(ui8a) {
+  parser3.onHeaderField = function(ui8a) {
     headerField += decoder.decode(ui8a, { stream: true });
   };
-  parser2.onHeaderValue = function(ui8a) {
+  parser3.onHeaderValue = function(ui8a) {
     headerValue += decoder.decode(ui8a, { stream: true });
   };
-  parser2.onHeaderEnd = function() {
+  parser3.onHeaderEnd = function() {
     headerValue += decoder.decode();
     headerField = headerField.toLowerCase();
     if (headerField === "content-disposition") {
@@ -37109,8 +37109,8 @@ async function toFormData(Body2, ct) {
       }
       filename = _fileName(headerValue);
       if (filename) {
-        parser2.onPartData = appendToFile;
-        parser2.onPartEnd = appendFileToFormData;
+        parser3.onPartData = appendToFile;
+        parser3.onPartEnd = appendFileToFormData;
       }
     } else if (headerField === "content-type") {
       contentType = headerValue;
@@ -37119,9 +37119,9 @@ async function toFormData(Body2, ct) {
     headerField = "";
   };
   for await (const chunk of Body2) {
-    parser2.write(chunk);
+    parser3.write(chunk);
   }
-  parser2.end();
+  parser3.end();
   return formData;
 }
 var s, S, f2, F, LF, CR, SPACE, HYPHEN, COLON, A, Z, lower, noop2, MultipartParser;
@@ -38382,7 +38382,7 @@ import zlib from "node:zlib";
 import Stream3, { PassThrough as PassThrough3, pipeline as pump } from "node:stream";
 import { Buffer as Buffer4 } from "node:buffer";
 async function fetch2(url, options_) {
-  return new Promise((resolve2, reject) => {
+  return new Promise((resolve6, reject) => {
     const request2 = new Request(url, options_);
     const { parsedURL, options: options2 } = getNodeRequestOptions(request2);
     if (!supportedSchemas.has(parsedURL.protocol)) {
@@ -38391,7 +38391,7 @@ async function fetch2(url, options_) {
     if (parsedURL.protocol === "data:") {
       const data = dist_default4(request2.url);
       const response2 = new Response(data, { headers: { "Content-Type": data.typeFull } });
-      resolve2(response2);
+      resolve6(response2);
       return;
     }
     const send = (parsedURL.protocol === "https:" ? https : http2).request;
@@ -38513,7 +38513,7 @@ async function fetch2(url, options_) {
             if (responseReferrerPolicy) {
               requestOptions.referrerPolicy = responseReferrerPolicy;
             }
-            resolve2(fetch2(new Request(locationURL, requestOptions)));
+            resolve6(fetch2(new Request(locationURL, requestOptions)));
             finalize();
             return;
           }
@@ -38546,7 +38546,7 @@ async function fetch2(url, options_) {
       const codings = headers.get("Content-Encoding");
       if (!request2.compress || request2.method === "HEAD" || codings === null || response_.statusCode === 204 || response_.statusCode === 304) {
         response = new Response(body, responseOptions);
-        resolve2(response);
+        resolve6(response);
         return;
       }
       const zlibOptions = {
@@ -38560,7 +38560,7 @@ async function fetch2(url, options_) {
           }
         });
         response = new Response(body, responseOptions);
-        resolve2(response);
+        resolve6(response);
         return;
       }
       if (codings === "deflate" || codings === "x-deflate") {
@@ -38584,12 +38584,12 @@ async function fetch2(url, options_) {
             });
           }
           response = new Response(body, responseOptions);
-          resolve2(response);
+          resolve6(response);
         });
         raw.once("end", () => {
           if (!response) {
             response = new Response(body, responseOptions);
-            resolve2(response);
+            resolve6(response);
           }
         });
         return;
@@ -38601,11 +38601,11 @@ async function fetch2(url, options_) {
           }
         });
         response = new Response(body, responseOptions);
-        resolve2(response);
+        resolve6(response);
         return;
       }
       response = new Response(body, responseOptions);
-      resolve2(response);
+      resolve6(response);
     });
     writeToStream(request_, request2).catch(reject);
   });
@@ -38948,8 +38948,8 @@ var require_main = __commonJS({
         const shortPaths = [];
         for (const filePath of optionPaths) {
           try {
-            const relative = path.relative(process.cwd(), filePath);
-            shortPaths.push(relative);
+            const relative2 = path.relative(process.cwd(), filePath);
+            shortPaths.push(relative2);
           } catch (e2) {
             if (debug) {
               _debug(`Failed to load ${filePath} ${e2.message}`);
@@ -41418,43 +41418,43 @@ var require_tinycolor = __commonJS({
           }
           return "progid:DXImageTransform.Microsoft.gradient(" + gradientType + "startColorstr=" + hex8String + ",endColorstr=" + secondHex8String + ")";
         },
-        toString: function toString(format) {
-          var formatSet = !!format;
-          format = format || this._format;
+        toString: function toString(format3) {
+          var formatSet = !!format3;
+          format3 = format3 || this._format;
           var formattedString = false;
           var hasAlpha = this._a < 1 && this._a >= 0;
-          var needsAlphaFormat = !formatSet && hasAlpha && (format === "hex" || format === "hex6" || format === "hex3" || format === "hex4" || format === "hex8" || format === "name");
+          var needsAlphaFormat = !formatSet && hasAlpha && (format3 === "hex" || format3 === "hex6" || format3 === "hex3" || format3 === "hex4" || format3 === "hex8" || format3 === "name");
           if (needsAlphaFormat) {
-            if (format === "name" && this._a === 0) {
+            if (format3 === "name" && this._a === 0) {
               return this.toName();
             }
             return this.toRgbString();
           }
-          if (format === "rgb") {
+          if (format3 === "rgb") {
             formattedString = this.toRgbString();
           }
-          if (format === "prgb") {
+          if (format3 === "prgb") {
             formattedString = this.toPercentageRgbString();
           }
-          if (format === "hex" || format === "hex6") {
+          if (format3 === "hex" || format3 === "hex6") {
             formattedString = this.toHexString();
           }
-          if (format === "hex3") {
+          if (format3 === "hex3") {
             formattedString = this.toHexString(true);
           }
-          if (format === "hex4") {
+          if (format3 === "hex4") {
             formattedString = this.toHex8String(true);
           }
-          if (format === "hex8") {
+          if (format3 === "hex8") {
             formattedString = this.toHex8String();
           }
-          if (format === "name") {
+          if (format3 === "name") {
             formattedString = this.toName();
           }
-          if (format === "hsl") {
+          if (format3 === "hsl") {
             formattedString = this.toHslString();
           }
-          if (format === "hsv") {
+          if (format3 === "hsv") {
             formattedString = this.toHsvString();
           }
           return formattedString || this.toHexString();
@@ -41544,7 +41544,7 @@ var require_tinycolor = __commonJS({
         var v = null;
         var l = null;
         var ok = false;
-        var format = false;
+        var format3 = false;
         if (typeof color == "string") {
           color = stringInputToObject(color);
         }
@@ -41552,19 +41552,19 @@ var require_tinycolor = __commonJS({
           if (isValidCSSUnit(color.r) && isValidCSSUnit(color.g) && isValidCSSUnit(color.b)) {
             rgb = rgbToRgb(color.r, color.g, color.b);
             ok = true;
-            format = String(color.r).substr(-1) === "%" ? "prgb" : "rgb";
+            format3 = String(color.r).substr(-1) === "%" ? "prgb" : "rgb";
           } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.v)) {
             s2 = convertToPercentage(color.s);
             v = convertToPercentage(color.v);
             rgb = hsvToRgb(color.h, s2, v);
             ok = true;
-            format = "hsv";
+            format3 = "hsv";
           } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.l)) {
             s2 = convertToPercentage(color.s);
             l = convertToPercentage(color.l);
             rgb = hslToRgb(color.h, s2, l);
             ok = true;
-            format = "hsl";
+            format3 = "hsl";
           }
           if (color.hasOwnProperty("a")) {
             a = color.a;
@@ -41573,7 +41573,7 @@ var require_tinycolor = __commonJS({
         a = boundAlpha(a);
         return {
           ok,
-          format: color.format || format,
+          format: color.format || format3,
           r: Math.min(255, Math.max(rgb.r, 0)),
           g: Math.min(255, Math.max(rgb.g, 0)),
           b: Math.min(255, Math.max(rgb.b, 0)),
@@ -44255,8 +44255,32 @@ var require_cli_spinners = __commonJS({
   }
 });
 
+// node_modules/get-caller-file/index.js
+var require_get_caller_file = __commonJS({
+  "node_modules/get-caller-file/index.js"(exports, module) {
+    "use strict";
+    module.exports = function getCallerFile2(position) {
+      if (position === void 0) {
+        position = 2;
+      }
+      if (position >= Error.stackTraceLimit) {
+        throw new TypeError("getCallerFile(position) requires position be less then Error.stackTraceLimit but position was: `" + position + "` and Error.stackTraceLimit was: `" + Error.stackTraceLimit + "`");
+      }
+      var oldPrepareStackTrace = Error.prepareStackTrace;
+      Error.prepareStackTrace = function(_, stack2) {
+        return stack2;
+      };
+      var stack = new Error().stack;
+      Error.prepareStackTrace = oldPrepareStackTrace;
+      if (stack !== null && typeof stack === "object") {
+        return stack[position] ? stack[position].getFileName() : void 0;
+      }
+    };
+  }
+});
+
 // src/index.ts
-var import_react36 = __toESM(require_react(), 1);
+var import_react37 = __toESM(require_react(), 1);
 
 // node_modules/ink/build/render.js
 import { Stream } from "node:stream";
@@ -47867,10 +47891,10 @@ var ansi_styles_default3 = ansiStyles3;
 import process4 from "node:process";
 import os from "node:os";
 import tty from "node:tty";
-function hasFlag(flag, argv = globalThis.Deno ? globalThis.Deno.args : process4.argv) {
+function hasFlag(flag, argv2 = globalThis.Deno ? globalThis.Deno.args : process4.argv) {
   const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
-  const position = argv.indexOf(prefix + flag);
-  const terminatorPosition = argv.indexOf("--");
+  const position = argv2.indexOf(prefix + flag);
+  const terminatorPosition = argv2.indexOf("--");
   return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
 }
 var { env: env2 } = process4;
@@ -49388,7 +49412,7 @@ var generateLineNumbers = (line, around) => {
   return lineNumbers;
 };
 var codeExcerpt = (source, line, options2 = {}) => {
-  var _a2;
+  var _a3;
   if (typeof source !== "string") {
     throw new TypeError("Source code is missing.");
   }
@@ -49399,7 +49423,7 @@ var codeExcerpt = (source, line, options2 = {}) => {
   if (line > lines.length) {
     return;
   }
-  return generateLineNumbers(line, (_a2 = options2.around) !== null && _a2 !== void 0 ? _a2 : 3).filter((line2) => lines[line2 - 1] !== void 0).map((line2) => ({ line: line2, value: lines[line2 - 1] }));
+  return generateLineNumbers(line, (_a3 = options2.around) !== null && _a3 !== void 0 ? _a3 : 3).filter((line2) => lines[line2 - 1] !== void 0).map((line2) => ({ line: line2, value: lines[line2 - 1] }));
 };
 var dist_default3 = codeExcerpt;
 
@@ -50033,8 +50057,8 @@ var Ink = class {
     }
   }
   async waitUntilExit() {
-    this.exitPromise ||= new Promise((resolve2, reject) => {
-      this.resolveExitPromise = resolve2;
+    this.exitPromise ||= new Promise((resolve6, reject) => {
+      this.resolveExitPromise = resolve6;
       this.rejectExitPromise = reject;
     });
     return this.exitPromise;
@@ -50428,7 +50452,7 @@ var measureElement = (node) => ({
 var measure_element_default = measureElement;
 
 // src/ui/App.tsx
-var import_react35 = __toESM(require_react(), 1);
+var import_react36 = __toESM(require_react(), 1);
 
 // src/ui/hooks/useTerminalSize.ts
 var import_react23 = __toESM(require_react(), 1);
@@ -50756,8 +50780,8 @@ async function getRetryConfig(err) {
   }
   const delay = getNextRetryDelay(config2);
   err.config.retryConfig.currentRetryAttempt += 1;
-  const backoff = config2.retryBackoff ? config2.retryBackoff(err, delay) : new Promise((resolve2) => {
-    setTimeout(resolve2, delay);
+  const backoff = config2.retryBackoff ? config2.retryBackoff(err, delay) : new Promise((resolve6) => {
+    setTimeout(resolve6, delay);
   });
   if (config2.onRetryAttempt) {
     await config2.onRetryAttempt(err);
@@ -51291,7 +51315,8 @@ function getEnvBoolean(key, defaultValue) {
 var appConfig = {
   // API Configuration
   apiBaseUrl: getEnvString("API_BASE_URL", "http://localhost:9888"),
-  apiTimeout: getEnvNumber("API_TIMEOUT", 3e4),
+  apiTimeout: getEnvNumber("API_TIMEOUT", 1e4),
+  // Reduced from 30s to 10s
   apiRetryAttempts: getEnvNumber("API_RETRY_ATTEMPTS", 3),
   // WebSocket Configuration
   wsUrl: getEnvString("WS_URL", "ws://localhost:9888/ws"),
@@ -51308,7 +51333,8 @@ var appConfig = {
   // Display Configuration
   enableColors: getEnvBoolean("ENABLE_COLORS", true),
   enableSpinner: getEnvBoolean("ENABLE_SPINNER", true),
-  streamDelay: getEnvNumber("STREAM_DELAY", 50),
+  streamDelay: getEnvNumber("STREAM_DELAY", 0),
+  // Removed artificial delay
   maxDisplayWidth: getEnvNumber("MAX_DISPLAY_WIDTH", 120),
   // Development Configuration
   nodeEnv: getEnvString("NODE_ENV", "development"),
@@ -52111,8 +52137,8 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
     };
     addMessage(userMessage);
     const pendingAssistantMessage = {
-      id: Date.now(),
-      // Temporary ID
+      id: Date.now() + Math.random(),
+      // More unique temporary ID
       type: "assistant" /* ASSISTANT */,
       text: "",
       timestamp: Date.now(),
@@ -52168,6 +52194,7 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
               streaming: false,
               complete: true,
               event: data.metadata?.event,
+              eventId: data.metadata?.eventId || `${messageType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               // Pass through all the rich metadata from the API
               tool: data.metadata?.tool,
               agent: data.metadata?.agent,
@@ -52202,77 +52229,176 @@ var useLocalAPIStream = (addMessage, selectedTarget, sessionId, setDebugMessage)
       };
       const handleStreamingError = (error) => {
         console.error("Streaming error:", error);
-        setInitError(error.message);
+        let userFriendlyMessage = "";
+        let actionableAdvice = "";
+        if (error.message.includes("ECONNREFUSED") || error.message.includes("connect")) {
+          userFriendlyMessage = "\u{1F50C} Cannot connect to Genie API server";
+          actionableAdvice = `
+\u{1F4A1} **Quick Fix:**
+   \u2022 Check if the API server is running: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   \u2022 Start the server: \`cd /path/to/genie-agents && make dev\`
+   \u2022 Or change API_BASE_URL in .env to correct server address
+
+\u{1F527} **Troubleshooting:**
+   \u2022 Server might be starting up (wait 30 seconds)
+   \u2022 Wrong port/host in configuration
+   \u2022 Firewall blocking connection`;
+        } else if (error.message.includes("timeout")) {
+          userFriendlyMessage = "\u23F1\uFE0F Request timed out";
+          actionableAdvice = `
+\u{1F4A1} **Solutions:**
+   \u2022 Server may be overloaded, try again in a moment
+   \u2022 Check network connectivity
+   \u2022 Increase timeout in settings if needed`;
+        } else if (error.message.includes("404") || error.message.includes("Not Found")) {
+          userFriendlyMessage = "\u{1F50D} API endpoint not found";
+          actionableAdvice = `
+\u{1F4A1} **Check:**
+   \u2022 API server version compatibility
+   \u2022 Endpoint URL configuration
+   \u2022 Server running the correct version`;
+        } else {
+          userFriendlyMessage = `\u274C ${error.message}`;
+          actionableAdvice = `
+\u{1F4A1} **General troubleshooting:**
+   \u2022 Check server logs for detailed error information
+   \u2022 Verify API server is healthy: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   \u2022 Contact support if issue persists`;
+        }
+        setInitError(userFriendlyMessage);
         setPendingMessage(null);
         setStreamingState("error" /* Error */);
-        setDebugMessage(`Error: ${error.message}`);
+        setDebugMessage(userFriendlyMessage);
         addMessage({
           type: "error" /* ERROR */,
-          text: `Streaming error: ${error.message}`,
+          text: userFriendlyMessage + actionableAdvice,
           timestamp: Date.now(),
           sessionId
         });
       };
-      const handleStreamingComplete = () => {
+      const handleStreamingComplete = (stats) => {
         setStreamingState("idle" /* Idle */);
         setDebugMessage("");
+        if (stats) {
+          const timeValue = stats.actual_time || (Array.isArray(stats.time) ? stats.time[0] : stats.time);
+          const time = timeValue ? timeValue.toFixed(2) + "s" : "N/A";
+          const tokens = stats.total_tokens || 0;
+          const inputTokens = stats.input_tokens || 0;
+          const outputTokens = stats.output_tokens || 0;
+          const statsMessage = `\u{1F4CA} Stats: ${time} | ${tokens} tokens (${inputTokens}\u2191 ${outputTokens}\u2193)`;
+          addMessage({
+            type: "info" /* INFO */,
+            text: statsMessage,
+            timestamp: Date.now(),
+            sessionId,
+            metadata: {
+              target: selectedTarget,
+              isStats: true
+            }
+          });
+        }
       };
+      const actualStartTime = Date.now();
+      let response;
       switch (selectedTarget.type) {
         case "agent":
-          await localAPIClient.streamAgent(
-            {
-              agent_id: selectedTarget.id,
-              message,
-              session_id: sessionId
-            },
-            handleStreamingMessage,
-            handleStreamingError,
-            handleStreamingComplete,
-            abortControllerRef.current?.signal
-          );
+          response = await localAPIClient.invokeAgent({
+            agent_id: selectedTarget.id,
+            message,
+            session_id: sessionId
+          });
           break;
         case "team":
-          await localAPIClient.streamTeam(
-            {
-              team_id: selectedTarget.id,
-              message,
-              session_id: sessionId
-            },
-            handleStreamingMessage,
-            handleStreamingError,
-            handleStreamingComplete,
-            abortControllerRef.current?.signal
-          );
+          response = await localAPIClient.invokeTeam({
+            team_id: selectedTarget.id,
+            message,
+            session_id: sessionId
+          });
           break;
         case "workflow":
-          const workflowResponse = await localAPIClient.executeWorkflow({
+          response = await localAPIClient.executeWorkflow({
             workflow_id: selectedTarget.id,
             params: { message },
             session_id: sessionId
-          });
-          if (workflowResponse.error) {
-            throw new Error(workflowResponse.error);
-          }
-          const workflowContent = workflowResponse.data?.content || "No response from workflow";
-          handleStreamingMessage({
-            content: workflowContent,
-            done: true,
-            session_id: workflowResponse.session_id
           });
           break;
         default:
           throw new Error(`Unknown target type: ${selectedTarget.type}`);
       }
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      setDebugMessage(`Processing response...`);
+      handleStreamingMessage({
+        content: "\u{1F504} Processing your request...",
+        done: false,
+        session_id: response.session_id || sessionId,
+        metadata: { type: "agent_start" }
+      });
+      setTimeout(() => {
+        const content = response.data?.content || "No response content";
+        handleStreamingMessage({
+          content,
+          done: true,
+          session_id: response.session_id || sessionId
+        });
+        const actualEndTime = Date.now();
+        const actualDuration = (actualEndTime - actualStartTime) / 1e3;
+        setTimeout(() => {
+          const stats = response.data?.metrics || null;
+          if (stats) {
+            stats.actual_time = actualDuration;
+            stats.time = [actualDuration];
+          }
+          handleStreamingComplete(stats);
+        }, 100);
+      }, 2e3);
     } catch (error) {
       console.error("Submit query error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      setInitError(errorMessage);
+      const errorObj = error instanceof Error ? error : new Error("Unknown error");
+      let userFriendlyMessage = "";
+      let actionableAdvice = "";
+      if (errorObj.message.includes("ECONNREFUSED") || errorObj.message.includes("connect")) {
+        userFriendlyMessage = "\u{1F50C} Cannot connect to Genie API server";
+        actionableAdvice = `
+\u{1F4A1} **Quick Fix:**
+   \u2022 Check if the API server is running: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   \u2022 Start the server: \`cd /path/to/genie-agents && make dev\`
+   \u2022 Or change API_BASE_URL in .env to correct server address
+
+\u{1F527} **Troubleshooting:**
+   \u2022 Server might be starting up (wait 30 seconds)
+   \u2022 Wrong port/host in configuration
+   \u2022 Firewall blocking connection`;
+      } else if (errorObj.message.includes("timeout")) {
+        userFriendlyMessage = "\u23F1\uFE0F Request timed out";
+        actionableAdvice = `
+\u{1F4A1} **Solutions:**
+   \u2022 Server may be overloaded, try again in a moment
+   \u2022 Check network connectivity
+   \u2022 Increase timeout in settings if needed`;
+      } else if (errorObj.message.includes("404") || errorObj.message.includes("Not Found")) {
+        userFriendlyMessage = "\u{1F50D} API endpoint not found";
+        actionableAdvice = `
+\u{1F4A1} **Check:**
+   \u2022 API server version compatibility
+   \u2022 Endpoint URL configuration
+   \u2022 Server running the correct version`;
+      } else {
+        userFriendlyMessage = `\u274C ${errorObj.message}`;
+        actionableAdvice = `
+\u{1F4A1} **General troubleshooting:**
+   \u2022 Check server logs for detailed error information
+   \u2022 Verify API server is healthy: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   \u2022 Contact support if issue persists`;
+      }
+      setInitError(userFriendlyMessage);
       setPendingMessage(null);
       setStreamingState("error" /* Error */);
-      setDebugMessage(`Error: ${errorMessage}`);
+      setDebugMessage(userFriendlyMessage);
       addMessage({
         type: "error" /* ERROR */,
-        text: `Failed to send message: ${errorMessage}`,
+        text: userFriendlyMessage + actionableAdvice,
         timestamp: Date.now(),
         sessionId
       });
@@ -52408,17 +52534,21 @@ var lightTheme = {
 var darkTheme = {
   type: "dark",
   Background: "#1E1E2E",
-  Foreground: "#CDD6F4",
-  LightBlue: "#ADD8E6",
-  AccentBlue: "#89B4FA",
-  AccentPurple: "#CBA6F7",
-  AccentCyan: "#89DCEB",
+  Foreground: "#E0E0E0",
+  LightBlue: "#89DCEB",
+  AccentBlue: "#89DCEB",
+  AccentPurple: "#A855F7",
+  // Main brand color - purple
+  AccentCyan: "#06B6D4",
+  // Brand cyan
   AccentGreen: "#A6E3A1",
   AccentYellow: "#F9E2AF",
   AccentRed: "#F38BA8",
-  Comment: "#6C7086",
+  Comment: "#8B5CF6",
+  // Purple for comments
   Gray: "#6C7086",
-  GradientColors: ["#4796E4", "#847ACE", "#C3677F"]
+  GradientColors: ["#EC4899", "#A855F7", "#06B6D4"]
+  // Fuscia to Purple to Cyan
 };
 var Theme = class _Theme {
   /**
@@ -54450,7 +54580,7 @@ var ansiLightColors = {
   AccentRed: "red",
   Comment: "gray",
   Gray: "gray",
-  GradientColors: ["blue", "green"]
+  GradientColors: ["magenta", "cyan"]
 };
 var ANSILight = new Theme(
   "ANSI Light",
@@ -54790,20 +54920,20 @@ var Colors = {
 
 // src/ui/components/AsciiArt.ts
 var shortGenieAsciiLogo = `
-   \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557
-  \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D
-  \u2588\u2588\u2551  \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557  
-  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551\u255A\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  
-  \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551 \u255A\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557
-   \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D  \u255A\u2550\u2550\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D
+   \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557     \u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2557     \u2588\u2588\u2557
+  \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D    \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2551     \u2588\u2588\u2551
+  \u2588\u2588\u2551  \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557      \u2588\u2588\u2551     \u2588\u2588\u2551     \u2588\u2588\u2551
+  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551\u255A\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D      \u2588\u2588\u2551     \u2588\u2588\u2551     \u2588\u2588\u2551
+  \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551 \u255A\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557    \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551
+   \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D  \u255A\u2550\u2550\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D     \u255A\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D
 `;
 var longGenieAsciiLogo = `
-  \u2588\u2588\u2588      \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557     \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557    \u2588\u2588\u2557     \u2588\u2588\u2557
-  \u2591\u2588\u2588      \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D     \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557   \u2588\u2588\u2551     \u2588\u2588\u2551
-  \u2591\u2588\u2588      \u2588\u2588\u2551  \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557       \u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D   \u2588\u2588\u2551     \u2588\u2588\u2551
-  \u2591\u2588\u2588      \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551\u255A\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D       \u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557   \u2588\u2588\u2551     \u2588\u2588\u2551
-  \u2588\u2588       \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551 \u255A\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557     \u2588\u2588\u2551     \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2551  \u2588\u2588\u2551\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551
-  \u255A\u2550       \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D  \u255A\u2550\u2550\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D     \u255A\u2550\u255D      \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u255D  \u255A\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D
+  \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557     \u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2557     \u2588\u2588\u2557
+  \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D    \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2551     \u2588\u2588\u2551
+  \u2588\u2588\u2551  \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557      \u2588\u2588\u2551     \u2588\u2588\u2551     \u2588\u2588\u2551
+  \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551\u255A\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D      \u2588\u2588\u2551     \u2588\u2588\u2551     \u2588\u2588\u2551
+  \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551 \u255A\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557    \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2551
+   \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D  \u255A\u2550\u2550\u2550\u255D\u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D     \u255A\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u255D
 `;
 
 // src/ui/utils/textUtils.ts
@@ -54928,13 +55058,13 @@ var LoadingIndicator = ({
     }
     switch (streamingState) {
       case "connecting" /* Connecting */:
-        return "\u{1F9DE} Connecting to genie...";
+        return "\u{1F517} Connecting to genie...";
       case "waiting" /* Waiting */:
-        return "\u{1F9DE} Waiting for response...";
+        return "\u23F3 Waiting for response...";
       case "responding" /* Responding */:
-        return "\u{1F9DE} Receiving response...";
+        return "\u{1F4E5} Receiving response...";
       default:
-        return "\u{1F9DE} Thinking...";
+        return "\u{1F914} Thinking...";
     }
   };
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { marginY: 1, flexDirection: "column", children: [
@@ -55298,7 +55428,7 @@ var InputPrompt = ({
     Box_default,
     {
       borderStyle: "round",
-      borderColor: shellModeActive ? Colors.AccentYellow : Colors.AccentBlue,
+      borderColor: shellModeActive ? Colors.AccentYellow : Colors.AccentPurple,
       paddingX: 1,
       children: [
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
@@ -55387,7 +55517,7 @@ var Footer = ({
         justifyContent: "center",
         display: "flex",
         children: selectedTarget ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.AccentPurple, children: [
-          "\u{1F9DE} ",
+          "\u{1F3AF} ",
           selectedTarget.name,
           " ",
           /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.Gray, children: [
@@ -55395,7 +55525,7 @@ var Footer = ({
             selectedTarget.type,
             ")"
           ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: Colors.AccentYellow, children: "\u{1F9DE} genie-local-cli" })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: Colors.AccentYellow, children: "\u{1F3AF} genie-local-cli" })
       }
     ),
     /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { alignItems: "center", children: model ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: Colors.AccentBlue, children: model }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: Colors.AccentBlue, children: [
@@ -55874,10 +56004,10 @@ var _Tokenizer = class {
 ${currentRaw}` : currentRaw;
         text = text ? `${text}
 ${currentText}` : currentText;
-        const top = this.lexer.state.top;
+        const top2 = this.lexer.state.top;
         this.lexer.state.top = true;
         this.lexer.blockTokens(currentText, tokens, true);
-        this.lexer.state.top = top;
+        this.lexer.state.top = top2;
         if (lines.length === 0) {
           break;
         }
@@ -56122,12 +56252,12 @@ ${currentText}` : currentText;
     if (headers.length !== aligns.length) {
       return;
     }
-    for (const align of aligns) {
-      if (this.rules.other.tableAlignRight.test(align)) {
+    for (const align2 of aligns) {
+      if (this.rules.other.tableAlignRight.test(align2)) {
         item.align.push("right");
-      } else if (this.rules.other.tableAlignCenter.test(align)) {
+      } else if (this.rules.other.tableAlignCenter.test(align2)) {
         item.align.push("center");
-      } else if (this.rules.other.tableAlignLeft.test(align)) {
+      } else if (this.rules.other.tableAlignLeft.test(align2)) {
         item.align.push("left");
       } else {
         item.align.push(null);
@@ -57019,20 +57149,20 @@ var _Parser = class __Parser {
    * Static Parse Method
    */
   static parse(tokens, options2) {
-    const parser2 = new __Parser(options2);
-    return parser2.parse(tokens);
+    const parser22 = new __Parser(options2);
+    return parser22.parse(tokens);
   }
   /**
    * Static Parse Inline Method
    */
   static parseInline(tokens, options2) {
-    const parser2 = new __Parser(options2);
-    return parser2.parseInline(tokens);
+    const parser22 = new __Parser(options2);
+    return parser22.parseInline(tokens);
   }
   /**
    * Parse Loop
    */
-  parse(tokens, top = true) {
+  parse(tokens, top2 = true) {
     let out = "";
     for (let i2 = 0; i2 < tokens.length; i2++) {
       const anyToken = tokens[i2];
@@ -57089,7 +57219,7 @@ var _Parser = class __Parser {
             textToken = tokens[++i2];
             body += "\n" + this.renderer.text(textToken);
           }
-          if (top) {
+          if (top2) {
             out += this.renderer.paragraph({
               type: "paragraph",
               raw: body,
@@ -57459,9 +57589,9 @@ var Marked = class {
         opt.hooks.block = blockType;
       }
       const lexer2 = opt.hooks ? opt.hooks.provideLexer() : blockType ? _Lexer.lex : _Lexer.lexInline;
-      const parser2 = opt.hooks ? opt.hooks.provideParser() : blockType ? _Parser.parse : _Parser.parseInline;
+      const parser22 = opt.hooks ? opt.hooks.provideParser() : blockType ? _Parser.parse : _Parser.parseInline;
       if (opt.async) {
-        return Promise.resolve(opt.hooks ? opt.hooks.preprocess(src) : src).then((src2) => lexer2(src2, opt)).then((tokens) => opt.hooks ? opt.hooks.processAllTokens(tokens) : tokens).then((tokens) => opt.walkTokens ? Promise.all(this.walkTokens(tokens, opt.walkTokens)).then(() => tokens) : tokens).then((tokens) => parser2(tokens, opt)).then((html2) => opt.hooks ? opt.hooks.postprocess(html2) : html2).catch(throwError);
+        return Promise.resolve(opt.hooks ? opt.hooks.preprocess(src) : src).then((src2) => lexer2(src2, opt)).then((tokens) => opt.hooks ? opt.hooks.processAllTokens(tokens) : tokens).then((tokens) => opt.walkTokens ? Promise.all(this.walkTokens(tokens, opt.walkTokens)).then(() => tokens) : tokens).then((tokens) => parser22(tokens, opt)).then((html2) => opt.hooks ? opt.hooks.postprocess(html2) : html2).catch(throwError);
       }
       try {
         if (opt.hooks) {
@@ -57474,7 +57604,7 @@ var Marked = class {
         if (opt.walkTokens) {
           this.walkTokens(tokens, opt.walkTokens);
         }
-        let html2 = parser2(tokens, opt);
+        let html2 = parser22(tokens, opt);
         if (opt.hooks) {
           html2 = opt.hooks.postprocess(html2);
         }
@@ -57561,7 +57691,7 @@ var renderToken = (token, index, color) => {
       return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Box_default, { marginY: token.depth === 1 ? 1 : 0, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
         Text,
         {
-          color: Colors.AccentBlue,
+          color: Colors.AccentPurple,
           bold: true,
           underline: token.depth === 1,
           children: [
@@ -57678,7 +57808,7 @@ var HistoryItemDisplay = ({
   const getMessagePrefix = (type) => {
     switch (type) {
       case "user" /* USER */:
-        return "\u{1F9DE} ";
+        return "\u{1F464} ";
       case "assistant" /* ASSISTANT */:
         return "\u2728 ";
       case "thinking" /* THINKING */:
@@ -57764,41 +57894,26 @@ var HistoryItemDisplay = ({
           flexDirection: "column",
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: item.text }),
-            item.metadata?.tool && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, children: [
-              item.metadata.tool.tool_call_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Tool Call ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.tool.tool_call_id
-                ] })
+            item.metadata?.tool && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, flexDirection: "column", children: [
+              item.metadata.tool.tool_call_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Tool Call ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.tool.tool_call_id })
               ] }),
-              item.metadata.tool.agent_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Agent:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.tool.agent_name || item.metadata.tool.agent_id
-                ] })
+              item.metadata.tool.agent_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Agent:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.tool.agent_name || item.metadata.tool.agent_id })
               ] }),
-              item.metadata.tool.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Run ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.tool.run_id
-                ] })
+              item.metadata.tool.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Run ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.tool.run_id })
               ] }),
-              item.metadata.tool.created_at && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Created:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  new Date(item.metadata.tool.created_at).toLocaleTimeString()
-                ] })
+              item.metadata.tool.created_at && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Created:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: new Date(item.metadata.tool.created_at).toLocaleTimeString() })
               ] }),
-              item.metadata.tool.tool_call_error && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentRed, bold: true, children: "Error:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.AccentRed, children: [
-                  " ",
-                  item.metadata.tool.tool_call_error
-                ] })
+              item.metadata.tool.tool_call_error && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentRed, bold: true, children: "Error:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentRed, children: item.metadata.tool.tool_call_error })
               ] })
             ] }),
             renderRichToolData()
@@ -57817,39 +57932,26 @@ var HistoryItemDisplay = ({
           flexDirection: "column",
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: item.text }),
-            item.metadata?.agent && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, children: [
-              item.metadata.agent.agent_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Agent ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.agent.agent_id
-                ] })
+            item.metadata?.agent && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, flexDirection: "column", children: [
+              item.metadata.agent.agent_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 18, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Agent ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.agent.agent_id })
               ] }),
-              item.metadata.agent.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Run ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.agent.run_id
-                ] })
+              item.metadata.agent.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 18, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Run ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.agent.run_id })
               ] }),
-              item.metadata.agent.session_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Session ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.agent.session_id
-                ] })
+              item.metadata.agent.session_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 18, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Session ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.agent.session_id })
               ] }),
-              item.metadata.agent.team_session_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Team Session ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.agent.team_session_id
-                ] })
+              item.metadata.agent.team_session_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 18, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Team Session ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.agent.team_session_id })
               ] }),
-              item.metadata.agent.model && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Model:" }),
+              item.metadata.agent.model && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 18, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentCyan, bold: true, children: "Model:" }) }),
                 /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
                   item.metadata.agent.model_provider || "unknown",
                   "/",
                   item.metadata.agent.model
@@ -57871,43 +57973,30 @@ var HistoryItemDisplay = ({
           flexDirection: "column",
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), children: item.text }),
-            item.metadata?.team && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, children: [
-              item.metadata.team.team_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Team ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.team.team_id
-                ] })
+            item.metadata?.team && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, flexDirection: "column", children: [
+              item.metadata.team.team_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Team ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.team.team_id })
               ] }),
-              item.metadata.team.team_name && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Team Name:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.team.team_name
-                ] })
+              item.metadata.team.team_name && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Team Name:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.team.team_name })
               ] }),
-              item.metadata.team.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Run ID:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.team.run_id
-                ] })
+              item.metadata.team.run_id && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Run ID:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.team.run_id })
               ] }),
-              item.metadata.team.model && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Model:" }),
+              item.metadata.team.model && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Model:" }) }),
                 /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
                   item.metadata.team.model_provider || "unknown",
                   "/",
                   item.metadata.team.model
                 ] })
               ] }),
-              item.metadata.team.mode && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Mode:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text, { color: Colors.Gray, children: [
-                  " ",
-                  item.metadata.team.mode
-                ] })
+              item.metadata.team.mode && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 15, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentBlue, bold: true, children: "Mode:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.team.mode })
               ] })
             ] })
           ]
@@ -57944,16 +58033,16 @@ var HistoryItemDisplay = ({
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: getMessageColor(item.type), bold: true, children: item.text }),
             item.metadata?.memory && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginTop: 1, flexDirection: "column", children: [
-              item.metadata.memory.type && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Type:" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.memory.type }) })
+              item.metadata.memory.type && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { minWidth: 12, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Type:" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: item.metadata.memory.type })
               ] }),
-              item.metadata.memory.content && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Content:" }),
+              item.metadata.memory.content && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { marginBottom: 1, flexDirection: "column", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Content:" }) }),
                 /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(MarkdownText, { color: Colors.Gray, children: item.metadata.memory.content }) })
               ] }),
-              item.metadata.memory.metadata && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }),
+              item.metadata.memory.metadata && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Box_default, { flexDirection: "column", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginBottom: 1, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.AccentPurple, bold: true, children: "Metadata:" }) }),
                 /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Box_default, { marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text, { color: Colors.Gray, children: JSON.stringify(item.metadata.memory.metadata, null, 2) }) })
               ] })
             ] })
@@ -58067,25 +58156,25 @@ function RadioButtonSelect({
   );
   const visibleItems = items.slice(scrollOffset, scrollOffset + maxItemsToShow);
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Box_default, { flexDirection: "column", children: [
-    showScrollArrows && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: scrollOffset > 0 ? "#ffffff" : "#666666", children: "\u25B2" }),
+    showScrollArrows && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: scrollOffset > 0 ? Colors.Foreground : Colors.Gray, children: "\u25B2" }),
     visibleItems.map((item, index) => {
       const itemIndex = scrollOffset + index;
       const isSelected = activeIndex === itemIndex;
-      let textColor = "#ffffff";
+      let textColor = Colors.Foreground;
       if (isSelected) {
-        textColor = "#00ff00";
+        textColor = Colors.AccentPurple;
       } else if (item.disabled) {
-        textColor = "#666666";
+        textColor = Colors.Gray;
       }
       return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { minWidth: 2, flexShrink: 0, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: isSelected ? "#00ff00" : "#ffffff", children: isSelected ? "\u25CF" : "\u25CB" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Box_default, { minWidth: 2, flexShrink: 0, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: isSelected ? Colors.AccentPurple : Colors.AccentCyan, children: isSelected ? "\u25CF" : "\u25CB" }) }),
         /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Text, { color: textColor, wrap: "truncate", children: item.label })
       ] }, item.label);
     }),
     showScrollArrows && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
       Text,
       {
-        color: scrollOffset + maxItemsToShow < items.length ? "#ffffff" : "#666666",
+        color: scrollOffset + maxItemsToShow < items.length ? Colors.Foreground : Colors.Gray,
         children: "\u25BC"
       }
     )
@@ -58123,16 +58212,16 @@ function TargetSelectionDialog({
     Box_default,
     {
       borderStyle: "round",
-      borderColor: "#666666",
+      borderColor: Colors.AccentPurple,
       flexDirection: "column",
       padding: 1,
       width: "100%",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { bold: true, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { bold: true, color: Colors.AccentPurple, children: [
           "Select ",
           targetTypeDisplay
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(Text, { color: Colors.Foreground, children: [
           "Choose which ",
           targetType,
           " you want to interact with:"
@@ -58148,7 +58237,7 @@ function TargetSelectionDialog({
             maxItemsToShow: 10
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Text, { color: Colors.Gray, children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
       ]
     }
   );
@@ -58184,13 +58273,13 @@ function TargetTypeDialog({
     Box_default,
     {
       borderStyle: "round",
-      borderColor: "#666666",
+      borderColor: Colors.AccentPurple,
       flexDirection: "column",
       padding: 1,
       width: "100%",
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { bold: true, children: "\u{1F9DE} Welcome to Genie Local CLI" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { children: "What would you like to interact with?" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { bold: true, color: Colors.AccentPurple, children: "\u{1F3AF} Welcome to Genie Local CLI" }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { color: Colors.Foreground, children: "What would you like to interact with?" }) }),
         /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
           RadioButtonSelect,
           {
@@ -58200,14 +58289,359 @@ function TargetTypeDialog({
             isFocused: true
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { color: "#666666", children: "(Use \u2191/\u2193 arrows and Enter to select)" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Text, { color: Colors.Gray, children: "(Use \u2191/\u2193 arrows and Enter to select)" }) })
+      ]
+    }
+  );
+}
+
+// src/ui/components/SessionSelectionDialog.tsx
+var import_react34 = __toESM(require_react(), 1);
+
+// src/ui/contexts/SessionContext.tsx
+var import_react33 = __toESM(require_react(), 1);
+var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
+import { resolve } from "path";
+import { writeFile, readFile, mkdir } from "fs/promises";
+import { existsSync as existsSync2 } from "fs";
+var SessionContext = (0, import_react33.createContext)(void 0);
+var useSession = () => {
+  const context = (0, import_react33.useContext)(SessionContext);
+  if (!context) {
+    throw new Error("useSession must be used within a SessionProvider");
+  }
+  return context;
+};
+var SessionProvider = ({ children }) => {
+  const [history, setHistory] = (0, import_react33.useState)([]);
+  const [currentSessionId, setCurrentSessionId] = (0, import_react33.useState)("");
+  const [currentTarget, setCurrentTarget] = (0, import_react33.useState)(null);
+  const [nextMessageId, setNextMessageId] = (0, import_react33.useState)(1);
+  (0, import_react33.useEffect)(() => {
+    const initSession = async () => {
+      const sessionId = generateSessionId();
+      setCurrentSessionId(sessionId);
+      try {
+        const sessionDir = getSessionDir();
+        if (!existsSync2(sessionDir)) {
+          await mkdir(sessionDir, { recursive: true });
+        }
+      } catch (error) {
+        console.error("Failed to create session directory:", error);
+      }
+    };
+    initSession();
+  }, []);
+  const generateSessionId = (0, import_react33.useCallback)(() => {
+    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }, []);
+  const getSessionDir = (0, import_react33.useCallback)(() => {
+    const sessionDir = appConfig.sessionDir.replace("~", process.env.HOME || "");
+    return resolve(sessionDir);
+  }, []);
+  const getSessionFilePath = (0, import_react33.useCallback)((sessionId) => {
+    return resolve(getSessionDir(), `${sessionId}.json`);
+  }, [getSessionDir]);
+  const addMessage = (0, import_react33.useCallback)((message) => {
+    const newMessage = {
+      ...message,
+      id: nextMessageId
+    };
+    setHistory((prev) => [...prev, newMessage]);
+    setNextMessageId((prev) => prev + 1);
+    if (appConfig.sessionAutoSave) {
+      saveSessionData();
+    }
+  }, [nextMessageId]);
+  const clearHistory = (0, import_react33.useCallback)(() => {
+    setHistory([]);
+    setNextMessageId(1);
+  }, []);
+  const saveSessionData = (0, import_react33.useCallback)(async () => {
+    if (!currentSessionId || history.length === 0) {
+      return;
+    }
+    const sessionData = {
+      id: currentSessionId,
+      messages: history,
+      createdAt: history[0]?.timestamp || Date.now(),
+      updatedAt: Date.now(),
+      metadata: {
+        totalMessages: history.length,
+        lastTarget: history[history.length - 1]?.metadata?.target
+      }
+    };
+    try {
+      const filePath = getSessionFilePath(currentSessionId);
+      await writeFile(filePath, JSON.stringify(sessionData, null, 2), "utf8");
+      if (appConfig.cliDebug) {
+        console.log(`Session saved: ${filePath}`);
+      }
+    } catch (error) {
+      console.error("Failed to save session:", error);
+    }
+  }, [currentSessionId, history, getSessionFilePath]);
+  const loadSessionData = (0, import_react33.useCallback)(async (sessionId) => {
+    try {
+      const filePath = getSessionFilePath(sessionId);
+      const data = await readFile(filePath, "utf8");
+      const sessionData = JSON.parse(data);
+      setHistory(sessionData.messages);
+      setCurrentSessionId(sessionId);
+      setNextMessageId(Math.max(...sessionData.messages.map((m2) => m2.id), 0) + 1);
+      if (appConfig.cliDebug) {
+        console.log(`Session loaded: ${filePath}`);
+      }
+    } catch (error) {
+      console.error("Failed to load session:", error);
+      throw error;
+    }
+  }, [getSessionFilePath]);
+  const createNewSession = (0, import_react33.useCallback)((target) => {
+    const newSessionId = generateSessionId();
+    setCurrentSessionId(newSessionId);
+    setHistory([]);
+    setNextMessageId(1);
+    if (target) {
+      setCurrentTarget(target);
+    }
+  }, [generateSessionId]);
+  const listSessions = (0, import_react33.useCallback)(async (target) => {
+    try {
+      const { readdir } = await import("fs/promises");
+      const sessionDir = getSessionDir();
+      if (!existsSync2(sessionDir)) {
+        return [];
+      }
+      const files = await readdir(sessionDir);
+      const sessionFiles = files.filter((file) => file.endsWith(".json"));
+      const sessions = [];
+      for (const file of sessionFiles) {
+        try {
+          const sessionId = file.replace(".json", "");
+          const filePath = getSessionFilePath(sessionId);
+          const data = await readFile(filePath, "utf8");
+          const sessionData = JSON.parse(data);
+          sessions.push(sessionData);
+        } catch (error) {
+          console.error(`Failed to load session ${file}:`, error);
+        }
+      }
+      return sessions.sort((a, b) => b.updatedAt - a.updatedAt);
+    } catch (error) {
+      console.error("Failed to list sessions:", error);
+      return [];
+    }
+  }, [getSessionDir, getSessionFilePath]);
+  const listBackendSessions = (0, import_react33.useCallback)(async (target) => {
+    try {
+      const baseUrl = appConfig.apiBaseUrl || "http://localhost:9888";
+      const endpoint = `${baseUrl}/playground/${target.type}s/${target.id}/sessions`;
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sessions: ${response.statusText}`);
+      }
+      const sessions = await response.json();
+      return Array.isArray(sessions) ? sessions : [];
+    } catch (error) {
+      console.error("Failed to list backend sessions:", error);
+      return [];
+    }
+  }, []);
+  const getSessionMetadata = (0, import_react33.useCallback)(async (sessionId) => {
+    try {
+      const filePath = getSessionFilePath(sessionId);
+      const data = await readFile(filePath, "utf8");
+      const sessionData = JSON.parse(data);
+      return sessionData;
+    } catch (error) {
+      console.error(`Failed to get session metadata for ${sessionId}:`, error);
+      return null;
+    }
+  }, [getSessionFilePath]);
+  const deleteSession = (0, import_react33.useCallback)(async (sessionId) => {
+    try {
+      const filePath = getSessionFilePath(sessionId);
+      const { unlink } = await import("fs/promises");
+      await unlink(filePath);
+      if (appConfig.cliDebug) {
+        console.log(`Session deleted: ${filePath}`);
+      }
+    } catch (error) {
+      console.error("Failed to delete session:", error);
+      throw error;
+    }
+  }, [getSessionFilePath]);
+  const contextValue = {
+    history,
+    currentSessionId,
+    currentTarget,
+    addMessage,
+    clearHistory,
+    saveSession: saveSessionData,
+    loadSession: loadSessionData,
+    createNewSession,
+    listSessions,
+    listBackendSessions,
+    deleteSession,
+    getSessionMetadata,
+    setCurrentTarget
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SessionContext.Provider, { value: contextValue, children });
+};
+
+// src/ui/components/SessionSelectionDialog.tsx
+var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
+function SessionSelectionDialog({
+  selectedTarget,
+  onSelect,
+  onBack
+}) {
+  const { listSessions, listBackendSessions } = useSession();
+  const [existingSessions, setExistingSessions] = (0, import_react34.useState)([]);
+  const [backendSessions, setBackendSessions] = (0, import_react34.useState)([]);
+  const [showSessionList, setShowSessionList] = (0, import_react34.useState)(false);
+  const [loading, setLoading] = (0, import_react34.useState)(false);
+  (0, import_react34.useEffect)(() => {
+    const loadSessions = async () => {
+      setLoading(true);
+      try {
+        const [localSessions, remoteSessions] = await Promise.all([
+          listSessions(selectedTarget),
+          listBackendSessions(selectedTarget)
+        ]);
+        setExistingSessions(localSessions);
+        setBackendSessions(remoteSessions);
+      } catch (error) {
+        console.error("Failed to load sessions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSessions();
+  }, [selectedTarget, listSessions, listBackendSessions]);
+  const hasExistingSessions = existingSessions.length > 0 || backendSessions.length > 0;
+  const items = [
+    {
+      label: "Start new conversation",
+      value: "new"
+    },
+    {
+      label: hasExistingSessions ? "Continue existing session" : "Continue existing session (no sessions found)",
+      value: "existing",
+      disabled: !hasExistingSessions
+    }
+  ];
+  const handleSelect = (sessionAction) => {
+    if (sessionAction === "existing" && hasExistingSessions) {
+      setShowSessionList(true);
+    } else {
+      onSelect(sessionAction);
+    }
+  };
+  const handleSessionSelect = (sessionId) => {
+    onSelect("existing", sessionId);
+  };
+  use_input_default((input, key) => {
+    if (key.escape) {
+      if (showSessionList) {
+        setShowSessionList(false);
+      } else {
+        onBack();
+      }
+    }
+  });
+  if (showSessionList) {
+    const formatSessionTime = (timestamp) => {
+      const date = new Date(timestamp);
+      const now = /* @__PURE__ */ new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffMs / (1e3 * 60 * 60 * 24));
+      if (diffDays === 0) {
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      } else if (diffDays === 1) {
+        return "Yesterday";
+      } else if (diffDays < 7) {
+        return `${diffDays} days ago`;
+      } else {
+        return date.toLocaleDateString();
+      }
+    };
+    const sessionItems = [
+      ...existingSessions.map((session) => ({
+        label: `${formatSessionTime(session.updatedAt)} (${session.metadata?.totalMessages || 0} messages)`,
+        value: session.id
+      })),
+      ...backendSessions.map((session) => ({
+        label: `${session.name || session.id} (Backend)`,
+        value: session.id
+      }))
+    ];
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(
+      Box_default,
+      {
+        borderStyle: "round",
+        borderColor: Colors.AccentPurple,
+        flexDirection: "column",
+        padding: 1,
+        width: "100%",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { bold: true, color: Colors.AccentPurple, children: "Select Session" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.Foreground, children: "Choose a session to continue:" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+            RadioButtonSelect,
+            {
+              items: sessionItems,
+              initialIndex: 0,
+              onSelect: handleSessionSelect,
+              isFocused: true
+            }
+          ) }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.Gray, children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) })
+        ]
+      }
+    );
+  }
+  return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(
+    Box_default,
+    {
+      borderStyle: "round",
+      borderColor: Colors.AccentPurple,
+      flexDirection: "column",
+      padding: 1,
+      width: "100%",
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { bold: true, color: Colors.AccentPurple, children: "Session Options" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: Colors.Foreground, children: [
+          "Ready to chat with: ",
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.AccentCyan, children: selectedTarget.name })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.Foreground, children: "How would you like to proceed?" }) }),
+        loading && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.Gray, children: "Loading sessions..." }) }),
+        !loading && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+          RadioButtonSelect,
+          {
+            items,
+            initialIndex: 0,
+            onSelect: handleSelect,
+            isFocused: true
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.Gray, children: "(Use \u2191/\u2193 arrows and Enter to select, Esc to go back)" }) }),
+        hasExistingSessions && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: Colors.AccentGreen, children: [
+          "Found ",
+          existingSessions.length,
+          " local sessions and ",
+          backendSessions.length,
+          " backend sessions"
+        ] }) })
       ]
     }
   );
 }
 
 // src/ui/components/shared/text-buffer.ts
-var import_react33 = __toESM(require_react(), 1);
+var import_react35 = __toESM(require_react(), 1);
 import { spawnSync } from "child_process";
 import fs3 from "fs";
 import os2 from "os";
@@ -58871,7 +59305,7 @@ function useTextBuffer({
   isValidPath,
   shellModeActive = false
 }) {
-  const initialState = (0, import_react33.useMemo)(() => {
+  const initialState = (0, import_react35.useMemo)(() => {
     const lines2 = initialText.split("\n");
     const [initialCursorRow, initialCursorCol] = calculateInitialCursorPosition(
       lines2.length === 0 ? [""] : lines2,
@@ -58889,24 +59323,24 @@ function useTextBuffer({
       viewportWidth: viewport.width
     };
   }, [initialText, initialCursorOffset, viewport.width]);
-  const [state, dispatch] = (0, import_react33.useReducer)(textBufferReducer, initialState);
+  const [state, dispatch] = (0, import_react35.useReducer)(textBufferReducer, initialState);
   const { lines, cursorRow, cursorCol, preferredCol, selectionAnchor } = state;
-  const text = (0, import_react33.useMemo)(() => lines.join("\n"), [lines]);
-  const visualLayout = (0, import_react33.useMemo)(
+  const text = (0, import_react35.useMemo)(() => lines.join("\n"), [lines]);
+  const visualLayout = (0, import_react35.useMemo)(
     () => calculateVisualLayout(lines, [cursorRow, cursorCol], state.viewportWidth),
     [lines, cursorRow, cursorCol, state.viewportWidth]
   );
   const { visualLines, visualCursor } = visualLayout;
-  const [visualScrollRow, setVisualScrollRow] = (0, import_react33.useState)(0);
-  (0, import_react33.useEffect)(() => {
+  const [visualScrollRow, setVisualScrollRow] = (0, import_react35.useState)(0);
+  (0, import_react35.useEffect)(() => {
     if (onChange) {
       onChange(text);
     }
   }, [text, onChange]);
-  (0, import_react33.useEffect)(() => {
+  (0, import_react35.useEffect)(() => {
     dispatch({ type: "set_viewport_width", payload: viewport.width });
   }, [viewport.width]);
-  (0, import_react33.useEffect)(() => {
+  (0, import_react35.useEffect)(() => {
     const { height } = viewport;
     let newVisualScrollRow = visualScrollRow;
     if (visualCursor[0] < visualScrollRow) {
@@ -58918,7 +59352,7 @@ function useTextBuffer({
       setVisualScrollRow(newVisualScrollRow);
     }
   }, [visualCursor, visualScrollRow, viewport]);
-  const insert = (0, import_react33.useCallback)(
+  const insert = (0, import_react35.useCallback)(
     (ch) => {
       if (/[\n\r]/.test(ch)) {
         dispatch({ type: "insert", payload: ch });
@@ -58953,40 +59387,40 @@ function useTextBuffer({
     },
     [isValidPath, shellModeActive]
   );
-  const newline2 = (0, import_react33.useCallback)(() => {
+  const newline2 = (0, import_react35.useCallback)(() => {
     dispatch({ type: "insert", payload: "\n" });
   }, []);
-  const backspace = (0, import_react33.useCallback)(() => {
+  const backspace = (0, import_react35.useCallback)(() => {
     dispatch({ type: "backspace" });
   }, []);
-  const del = (0, import_react33.useCallback)(() => {
+  const del = (0, import_react35.useCallback)(() => {
     dispatch({ type: "delete" });
   }, []);
-  const move = (0, import_react33.useCallback)((dir) => {
+  const move = (0, import_react35.useCallback)((dir) => {
     dispatch({ type: "move", payload: { dir } });
   }, []);
-  const undo = (0, import_react33.useCallback)(() => {
+  const undo = (0, import_react35.useCallback)(() => {
     dispatch({ type: "undo" });
   }, []);
-  const redo = (0, import_react33.useCallback)(() => {
+  const redo = (0, import_react35.useCallback)(() => {
     dispatch({ type: "redo" });
   }, []);
-  const setText = (0, import_react33.useCallback)((newText) => {
+  const setText = (0, import_react35.useCallback)((newText) => {
     dispatch({ type: "set_text", payload: newText });
   }, []);
-  const deleteWordLeft = (0, import_react33.useCallback)(() => {
+  const deleteWordLeft = (0, import_react35.useCallback)(() => {
     dispatch({ type: "delete_word_left" });
   }, []);
-  const deleteWordRight = (0, import_react33.useCallback)(() => {
+  const deleteWordRight = (0, import_react35.useCallback)(() => {
     dispatch({ type: "delete_word_right" });
   }, []);
-  const killLineRight = (0, import_react33.useCallback)(() => {
+  const killLineRight = (0, import_react35.useCallback)(() => {
     dispatch({ type: "kill_line_right" });
   }, []);
-  const killLineLeft = (0, import_react33.useCallback)(() => {
+  const killLineLeft = (0, import_react35.useCallback)(() => {
     dispatch({ type: "kill_line_left" });
   }, []);
-  const openInExternalEditor = (0, import_react33.useCallback)(
+  const openInExternalEditor = (0, import_react35.useCallback)(
     async (opts = {}) => {
       const editor = opts.editor ?? process.env["VISUAL"] ?? process.env["EDITOR"] ?? (process.platform === "win32" ? "notepad" : "vi");
       const tmpDir = fs3.mkdtempSync(pathMod.join(os2.tmpdir(), "gemini-edit-"));
@@ -59021,7 +59455,7 @@ function useTextBuffer({
     },
     [text, stdin, setRawMode]
   );
-  const handleInput = (0, import_react33.useCallback)(
+  const handleInput = (0, import_react35.useCallback)(
     (key) => {
       const { sequence: input } = key;
       if (key.name === "return" || input === "\r" || input === "\n" || input === "\\\r")
@@ -59055,11 +59489,11 @@ function useTextBuffer({
     },
     [newline2, move, deleteWordLeft, deleteWordRight, backspace, del, insert]
   );
-  const renderedVisualLines = (0, import_react33.useMemo)(
+  const renderedVisualLines = (0, import_react35.useMemo)(
     () => visualLines.slice(visualScrollRow, visualScrollRow + viewport.height),
     [visualLines, visualScrollRow, viewport.height]
   );
-  const replaceRange = (0, import_react33.useCallback)(
+  const replaceRange = (0, import_react35.useCallback)(
     (startRow, startCol, endRow, endCol, text2) => {
       dispatch({
         type: "replace_range",
@@ -59068,7 +59502,7 @@ function useTextBuffer({
     },
     []
   );
-  const replaceRangeByOffset = (0, import_react33.useCallback)(
+  const replaceRangeByOffset = (0, import_react35.useCallback)(
     (startOffset, endOffset, replacementText) => {
       const [startRow, startCol] = offsetToLogicalPos(text, startOffset);
       const [endRow, endCol] = offsetToLogicalPos(text, endOffset);
@@ -59076,7 +59510,7 @@ function useTextBuffer({
     },
     [text, replaceRange]
   );
-  const moveToOffset = (0, import_react33.useCallback)((offset) => {
+  const moveToOffset = (0, import_react35.useCallback)((offset) => {
     dispatch({ type: "move_to_offset", payload: { offset } });
   }, []);
   const returnValue = {
@@ -59110,142 +59544,66 @@ function useTextBuffer({
   return returnValue;
 }
 
-// src/ui/contexts/SessionContext.tsx
-var import_react34 = __toESM(require_react(), 1);
-var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
-import { resolve } from "path";
-import { writeFile, readFile, mkdir } from "fs/promises";
-import { existsSync as existsSync2 } from "fs";
-var SessionContext = (0, import_react34.createContext)(void 0);
-var useSession = () => {
-  const context = (0, import_react34.useContext)(SessionContext);
-  if (!context) {
-    throw new Error("useSession must be used within a SessionProvider");
+// src/utils/serverDetection.ts
+async function detectAPIServer(baseUrl) {
+  try {
+    const response = await request({
+      url: `${baseUrl}/api/v1/health`,
+      method: "GET",
+      timeout: 3e3
+    });
+    return {
+      isRunning: true,
+      url: baseUrl,
+      health: response.data
+    };
+  } catch (error) {
+    return {
+      isRunning: false,
+      url: baseUrl,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
   }
-  return context;
-};
-var SessionProvider = ({ children }) => {
-  const [history, setHistory] = (0, import_react34.useState)([]);
-  const [currentSessionId, setCurrentSessionId] = (0, import_react34.useState)("");
-  const [nextMessageId, setNextMessageId] = (0, import_react34.useState)(1);
-  (0, import_react34.useEffect)(() => {
-    const initSession = async () => {
-      const sessionId = generateSessionId();
-      setCurrentSessionId(sessionId);
-      try {
-        const sessionDir = getSessionDir();
-        if (!existsSync2(sessionDir)) {
-          await mkdir(sessionDir, { recursive: true });
-        }
-      } catch (error) {
-        console.error("Failed to create session directory:", error);
-      }
-    };
-    initSession();
-  }, []);
-  const generateSessionId = (0, import_react34.useCallback)(() => {
-    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }, []);
-  const getSessionDir = (0, import_react34.useCallback)(() => {
-    const sessionDir = appConfig.sessionDir.replace("~", process.env.HOME || "");
-    return resolve(sessionDir);
-  }, []);
-  const getSessionFilePath = (0, import_react34.useCallback)((sessionId) => {
-    return resolve(getSessionDir(), `${sessionId}.json`);
-  }, [getSessionDir]);
-  const addMessage = (0, import_react34.useCallback)((message) => {
-    const newMessage = {
-      ...message,
-      id: nextMessageId
-    };
-    setHistory((prev) => [...prev, newMessage]);
-    setNextMessageId((prev) => prev + 1);
-    if (appConfig.sessionAutoSave) {
-      setTimeout(() => saveSessionData(), 100);
-    }
-  }, [nextMessageId]);
-  const clearHistory = (0, import_react34.useCallback)(() => {
-    setHistory([]);
-    setNextMessageId(1);
-  }, []);
-  const saveSessionData = (0, import_react34.useCallback)(async () => {
-    if (!currentSessionId || history.length === 0) {
-      return;
-    }
-    const sessionData = {
-      id: currentSessionId,
-      messages: history,
-      createdAt: history[0]?.timestamp || Date.now(),
-      updatedAt: Date.now(),
-      metadata: {
-        totalMessages: history.length,
-        lastTarget: history[history.length - 1]?.metadata?.target
-      }
-    };
-    try {
-      const filePath = getSessionFilePath(currentSessionId);
-      await writeFile(filePath, JSON.stringify(sessionData, null, 2), "utf8");
-      if (appConfig.cliDebug) {
-        console.log(`Session saved: ${filePath}`);
-      }
-    } catch (error) {
-      console.error("Failed to save session:", error);
-    }
-  }, [currentSessionId, history, getSessionFilePath]);
-  const loadSessionData = (0, import_react34.useCallback)(async (sessionId) => {
-    try {
-      const filePath = getSessionFilePath(sessionId);
-      const data = await readFile(filePath, "utf8");
-      const sessionData = JSON.parse(data);
-      setHistory(sessionData.messages);
-      setCurrentSessionId(sessionId);
-      setNextMessageId(Math.max(...sessionData.messages.map((m2) => m2.id), 0) + 1);
-      if (appConfig.cliDebug) {
-        console.log(`Session loaded: ${filePath}`);
-      }
-    } catch (error) {
-      console.error("Failed to load session:", error);
-      throw error;
-    }
-  }, [getSessionFilePath]);
-  const createNewSession = (0, import_react34.useCallback)(() => {
-    const newSessionId = generateSessionId();
-    setCurrentSessionId(newSessionId);
-    setHistory([]);
-    setNextMessageId(1);
-  }, [generateSessionId]);
-  const listSessions = (0, import_react34.useCallback)(async () => {
-    try {
-      const { readdir } = await import("fs/promises");
-      const sessionDir = getSessionDir();
-      if (!existsSync2(sessionDir)) {
-        return [];
-      }
-      const files = await readdir(sessionDir);
-      return files.filter((file) => file.endsWith(".json")).map((file) => file.replace(".json", "")).sort((a, b) => b.localeCompare(a));
-    } catch (error) {
-      console.error("Failed to list sessions:", error);
-      return [];
-    }
-  }, [getSessionDir]);
-  const contextValue = {
-    history,
-    currentSessionId,
-    addMessage,
-    clearHistory,
-    saveSession: saveSessionData,
-    loadSession: loadSessionData,
-    createNewSession,
-    listSessions
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SessionContext.Provider, { value: contextValue, children });
-};
+}
+function generateStartupGuide(serverStatus) {
+  if (serverStatus.isRunning) {
+    return `\u2705 **Server is running at:** ${serverStatus.url}`;
+  }
+  const guide = `
+\u{1F680} **Starting Genie API Server**
+
+\u{1F4C2} **Step 1:** Navigate to genie-agents directory
+\`\`\`bash
+cd /path/to/genie-agents
+\`\`\`
+
+\u26A1 **Step 2:** Start the server
+\`\`\`bash
+make dev
+\`\`\`
+
+\u23F3 **Step 3:** Wait for startup message
+Look for: "Sistema operacional" message
+
+\u{1F504} **Step 4:** Restart this CLI
+\`\`\`bash
+./bundle/genie-cli.js
+\`\`\`
+
+\u{1F527} **Alternative methods:**
+\u2022 Quick health check: \`curl ${serverStatus.url}/api/v1/health\`
+\u2022 Check if port is in use: \`lsof -i :9888\`
+\u2022 Update server URL in .env: \`API_BASE_URL=http://localhost:9888\`
+
+\u274C **Error details:** ${serverStatus.error}`;
+  return guide;
+}
 
 // src/ui/App.tsx
-var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
 var CTRL_EXIT_PROMPT_DURATION_MS = 1e3;
 var AppWrapper = (props) => {
-  return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(SessionProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StreamingProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(App2, { ...props }) }) });
+  return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(SessionProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(StreamingProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(App2, { ...props }) }) });
 };
 var App2 = ({ version: version2 }) => {
   const { stdout } = use_stdout_default();
@@ -59255,39 +59613,66 @@ var App2 = ({ version: version2 }) => {
     history,
     addMessage,
     clearHistory,
-    currentSessionId
+    currentSessionId,
+    createNewSession,
+    loadSession,
+    setCurrentTarget,
+    listSessions,
+    listBackendSessions
   } = useSession();
-  const [staticNeedsRefresh, setStaticNeedsRefresh] = (0, import_react35.useState)(false);
-  const [staticKey, setStaticKey] = (0, import_react35.useState)(0);
-  const [debugMessage, setDebugMessage] = (0, import_react35.useState)("");
-  const [ctrlCPressedOnce, setCtrlCPressedOnce] = (0, import_react35.useState)(false);
-  const [ctrlDPressedOnce, setCtrlDPressedOnce] = (0, import_react35.useState)(false);
-  const ctrlCTimerRef = (0, import_react35.useRef)(null);
-  const ctrlDTimerRef = (0, import_react35.useRef)(null);
-  const [constrainHeight, setConstrainHeight] = (0, import_react35.useState)(true);
-  const [footerHeight, setFooterHeight] = (0, import_react35.useState)(0);
-  const [shellModeActive, setShellModeActive] = (0, import_react35.useState)(false);
-  const [uiState, setUiState] = (0, import_react35.useState)("selecting_type");
-  const [selectedTargetType, setSelectedTargetType] = (0, import_react35.useState)(null);
-  const [connectionStatus, setConnectionStatus] = (0, import_react35.useState)("connecting");
-  const [selectedTarget, setSelectedTarget] = (0, import_react35.useState)(null);
-  const [availableTargets, setAvailableTargets] = (0, import_react35.useState)({ agents: [], teams: [], workflows: [] });
-  const refreshStatic = (0, import_react35.useCallback)(() => {
+  const [staticNeedsRefresh, setStaticNeedsRefresh] = (0, import_react36.useState)(false);
+  const [staticKey, setStaticKey] = (0, import_react36.useState)(0);
+  const [debugMessage, setDebugMessage] = (0, import_react36.useState)("");
+  const [ctrlCPressedOnce, setCtrlCPressedOnce] = (0, import_react36.useState)(false);
+  const [ctrlDPressedOnce, setCtrlDPressedOnce] = (0, import_react36.useState)(false);
+  const ctrlCTimerRef = (0, import_react36.useRef)(null);
+  const ctrlDTimerRef = (0, import_react36.useRef)(null);
+  const [constrainHeight, setConstrainHeight] = (0, import_react36.useState)(true);
+  const [footerHeight, setFooterHeight] = (0, import_react36.useState)(0);
+  const [shellModeActive, setShellModeActive] = (0, import_react36.useState)(false);
+  const [uiState, setUiState] = (0, import_react36.useState)("selecting_type");
+  const [selectedTargetType, setSelectedTargetType] = (0, import_react36.useState)(null);
+  const [showStartupBanner, setShowStartupBanner] = (0, import_react36.useState)(true);
+  const [connectionStatus, setConnectionStatus] = (0, import_react36.useState)("connecting");
+  const [selectedTarget, setSelectedTarget] = (0, import_react36.useState)(null);
+  const [availableTargets, setAvailableTargets] = (0, import_react36.useState)({ agents: [], teams: [], workflows: [] });
+  const refreshStatic = (0, import_react36.useCallback)(() => {
     stdout.write(base_exports.clearTerminal);
     setStaticKey((prev) => prev + 1);
   }, [setStaticKey, stdout]);
-  const handleTargetTypeSelect = (0, import_react35.useCallback)((targetType) => {
+  const handleTargetTypeSelect = (0, import_react36.useCallback)((targetType) => {
     setSelectedTargetType(targetType);
     setUiState("selecting_target");
   }, []);
-  const handleTargetSelect = (0, import_react35.useCallback)((target) => {
+  const handleTargetSelect = (0, import_react36.useCallback)((target) => {
     setSelectedTarget(target);
-    setUiState("chatting");
-  }, []);
-  const handleBackToTargetSelection = (0, import_react35.useCallback)(() => {
+    setCurrentTarget(target);
+    setUiState("selecting_session");
+  }, [setCurrentTarget]);
+  const handleBackToTargetSelection = (0, import_react36.useCallback)(() => {
     setUiState("selecting_type");
     setSelectedTargetType(null);
   }, []);
+  const handleBackToTargetSelect = (0, import_react36.useCallback)(() => {
+    setUiState("selecting_target");
+  }, []);
+  const handleSessionSelect = (0, import_react36.useCallback)(async (sessionAction, sessionId) => {
+    if (sessionAction === "new") {
+      createNewSession(selectedTarget || void 0);
+    } else if (sessionAction === "existing" && sessionId) {
+      try {
+        await loadSession(sessionId);
+      } catch (error) {
+        console.error("Failed to load session:", error);
+        addMessage({
+          type: "error" /* ERROR */,
+          text: `Failed to load session: ${error instanceof Error ? error.message : "Unknown error"}`,
+          timestamp: Date.now()
+        });
+      }
+    }
+    setUiState("chatting");
+  }, [selectedTarget, createNewSession, loadSession, addMessage]);
   const {
     streamingState,
     submitQuery,
@@ -59312,9 +59697,16 @@ var App2 = ({ version: version2 }) => {
     isValidPath: () => false,
     shellModeActive: false
   });
-  (0, import_react35.useEffect)(() => {
+  (0, import_react36.useEffect)(() => {
+    const timer = setTimeout(() => {
+      setShowStartupBanner(false);
+    }, 2e3);
+    return () => clearTimeout(timer);
+  }, []);
+  (0, import_react36.useEffect)(() => {
     const initializeAPI = async () => {
       try {
+        await new Promise((resolve6) => setTimeout(resolve6, 1e3));
         const healthResponse = await localAPIClient.healthCheck();
         if (healthResponse.error) {
           throw new Error(healthResponse.error);
@@ -59340,16 +59732,18 @@ var App2 = ({ version: version2 }) => {
         }
       } catch (error) {
         setConnectionStatus("error");
+        const serverStatus = await detectAPIServer(appConfig.apiBaseUrl);
+        const startupGuide = generateStartupGuide(serverStatus);
         addMessage({
           type: "error" /* ERROR */,
-          text: `Failed to connect to API: ${error instanceof Error ? error.message : "Unknown error"}`,
+          text: startupGuide,
           timestamp: Date.now()
         });
       }
     };
     initializeAPI();
   }, [addMessage]);
-  const handleExit = (0, import_react35.useCallback)(
+  const handleExit = (0, import_react36.useCallback)(
     (pressedOnce, setPressedOnce, timerRef) => {
       if (pressedOnce) {
         if (timerRef.current) {
@@ -59384,63 +59778,121 @@ var App2 = ({ version: version2 }) => {
       setConstrainHeight(false);
     }
   });
-  const handleFinalSubmit = (0, import_react35.useCallback)(
-    (submittedValue) => {
+  const handleFinalSubmit = (0, import_react36.useCallback)(
+    async (submittedValue) => {
       const trimmedValue = submittedValue.trim();
+      if (trimmedValue.startsWith("/")) {
+        const command2 = trimmedValue.toLowerCase();
+        if (command2 === "/sessions") {
+          try {
+            const sessions = await listSessions();
+            const backendSessions = selectedTarget ? await listBackendSessions(selectedTarget) : [];
+            let sessionList = "\u{1F4DA} **Available Sessions**\n\n";
+            if (sessions.length > 0) {
+              sessionList += "**Local Sessions:**\n";
+              sessions.forEach((session, index) => {
+                const date = new Date(session.updatedAt).toLocaleDateString();
+                const time = new Date(session.updatedAt).toLocaleTimeString();
+                const messageCount = session.metadata?.totalMessages || 0;
+                const target = session.metadata?.lastTarget;
+                const targetDisplay = target ? `${target.type}:${target.name || target.id}` : "Unknown";
+                sessionList += `${index + 1}. ${session.id}
+`;
+                sessionList += `   \u{1F4C5} ${date} ${time} | \u{1F4AC} ${messageCount} messages | \u{1F3AF} ${targetDisplay}
+
+`;
+              });
+            }
+            if (backendSessions.length > 0) {
+              sessionList += "**Backend Sessions:**\n";
+              backendSessions.forEach((session, index) => {
+                sessionList += `${index + 1}. ${session.id || session.name}
+`;
+                sessionList += `   \u{1F4CD} Backend session
+
+`;
+              });
+            }
+            if (sessions.length === 0 && backendSessions.length === 0) {
+              sessionList += "No sessions found.\n";
+            }
+            sessionList += "\n\u{1F4A1} **Tips:**\n";
+            sessionList += "- Select a target (agent/team/workflow) to see available sessions\n";
+            sessionList += "- Use session selection dialog to continue existing sessions\n";
+            sessionList += "- Local sessions are stored in ~/.genie-cli/sessions/\n";
+            addMessage({
+              type: "info" /* INFO */,
+              text: sessionList,
+              timestamp: Date.now()
+            });
+          } catch (error) {
+            addMessage({
+              type: "error" /* ERROR */,
+              text: `Failed to list sessions: ${error instanceof Error ? error.message : "Unknown error"}`,
+              timestamp: Date.now()
+            });
+          }
+          return;
+        }
+        addMessage({
+          type: "error" /* ERROR */,
+          text: `Unknown command: ${trimmedValue}
+
+Available commands:
+- /sessions - List all available sessions`,
+          timestamp: Date.now()
+        });
+        return;
+      }
       if (trimmedValue.length > 0 && selectedTarget) {
         submitQuery(trimmedValue);
       }
     },
-    [submitQuery, selectedTarget]
+    [submitQuery, selectedTarget, listSessions, listBackendSessions, addMessage]
   );
-  const handleClearScreen = (0, import_react35.useCallback)(() => {
+  const handleClearScreen = (0, import_react36.useCallback)(() => {
     clearHistory();
     console.clear();
     refreshStatic();
   }, [clearHistory, refreshStatic]);
-  const mainControlsRef = (0, import_react35.useRef)(null);
-  (0, import_react35.useEffect)(() => {
+  const mainControlsRef = (0, import_react36.useRef)(null);
+  (0, import_react36.useEffect)(() => {
     if (mainControlsRef.current) {
       const fullFooterMeasurement = measure_element_default(mainControlsRef.current);
       setFooterHeight(fullFooterMeasurement.height);
     }
   }, [terminalHeight]);
   const staticExtraHeight = 3;
-  const availableTerminalHeight = (0, import_react35.useMemo)(
+  const availableTerminalHeight = (0, import_react36.useMemo)(
     () => terminalHeight - footerHeight - staticExtraHeight,
     [terminalHeight, footerHeight]
   );
   const mainAreaWidth = Math.floor(terminalWidth * 0.9);
   const staticAreaMaxItemHeight = Math.max(terminalHeight * 4, 100);
+  if (showStartupBanner) {
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+        Header,
+        {
+          terminalWidth,
+          version: version2,
+          nightly: false
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { marginTop: 2, children: /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Text, { children: [
+        "\u{1F517} Connecting to ",
+        appConfig.apiBaseUrl,
+        "..."
+      ] }) })
+    ] });
+  }
   if (connectionStatus === "error") {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
-      Box_default,
-      {
-        borderStyle: "round",
-        borderColor: Colors.AccentRed,
-        paddingX: 1,
-        marginY: 1,
-        children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: Colors.AccentRed, children: [
-          "Failed to connect to API at ",
-          appConfig.apiBaseUrl
-        ] })
-      }
-    ) });
-  }
-  if (connectionStatus === "connecting") {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { children: [
-      "\u{1F9DE} Connecting to ",
-      appConfig.apiBaseUrl,
-      "..."
-    ] }) });
-  }
-  if (uiState === "selecting_type") {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         Static,
         {
           items: [
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
               Header,
               {
                 terminalWidth,
@@ -59453,7 +59905,67 @@ var App2 = ({ version: version2 }) => {
         },
         staticKey
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { marginTop: 2, children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+        Box_default,
+        {
+          borderStyle: "round",
+          borderColor: Colors.AccentRed,
+          paddingX: 1,
+          marginY: 1,
+          children: /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Text, { color: Colors.AccentRed, children: [
+            "Failed to connect to API at ",
+            appConfig.apiBaseUrl
+          ] })
+        }
+      ) })
+    ] });
+  }
+  if (connectionStatus === "connecting") {
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+        Static,
+        {
+          items: [
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+              Header,
+              {
+                terminalWidth,
+                version: version2,
+                nightly: false
+              }
+            ) }, "header")
+          ],
+          children: () => null
+        },
+        staticKey
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { marginTop: 2, children: /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Text, { children: [
+        "\u{1F517} Connecting to ",
+        appConfig.apiBaseUrl,
+        "..."
+      ] }) })
+    ] });
+  }
+  if (uiState === "selecting_type") {
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+        Static,
+        {
+          items: [
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+              Header,
+              {
+                terminalWidth,
+                version: version2,
+                nightly: false
+              }
+            ) }, "header")
+          ],
+          children: () => null
+        },
+        staticKey
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         TargetTypeDialog,
         {
           onSelect: handleTargetTypeSelect,
@@ -59464,12 +59976,12 @@ var App2 = ({ version: version2 }) => {
   }
   if (uiState === "selecting_target" && selectedTargetType) {
     const targets = selectedTargetType === "agent" ? availableTargets.agents : selectedTargetType === "team" ? availableTargets.teams : availableTargets.workflows;
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         Static,
         {
           items: [
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
               Header,
               {
                 terminalWidth,
@@ -59482,7 +59994,7 @@ var App2 = ({ version: version2 }) => {
         },
         staticKey
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         TargetSelectionDialog,
         {
           targetType: selectedTargetType,
@@ -59493,12 +60005,41 @@ var App2 = ({ version: version2 }) => {
       )
     ] });
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+  if (uiState === "selecting_session" && selectedTarget) {
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+        Static,
+        {
+          items: [
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+              Header,
+              {
+                terminalWidth,
+                version: version2,
+                nightly: false
+              }
+            ) }, "header")
+          ],
+          children: () => null
+        },
+        staticKey
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+        SessionSelectionDialog,
+        {
+          selectedTarget,
+          onSelect: handleSessionSelect,
+          onBack: handleBackToTargetSelect
+        }
+      )
+    ] });
+  }
+  return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", marginBottom: 1, width: "90%", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
       Static,
       {
         items: [
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Box_default, { flexDirection: "column", children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
             Header,
             {
               terminalWidth,
@@ -59506,7 +60047,7 @@ var App2 = ({ version: version2 }) => {
               nightly: false
             }
           ) }, "header"),
-          ...history.map((h2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+          ...history.map((h2) => /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
             HistoryItemDisplay,
             {
               terminalWidth: mainAreaWidth,
@@ -59521,8 +60062,8 @@ var App2 = ({ version: version2 }) => {
       },
       staticKey
     ),
-    /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Box_default, { flexDirection: "column", ref: mainControlsRef, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Box_default, { flexDirection: "column", ref: mainControlsRef, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         LoadingIndicator,
         {
           currentLoadingPhrase,
@@ -59530,21 +60071,21 @@ var App2 = ({ version: version2 }) => {
           streamingState
         }
       ),
-      ctrlCPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+C again to exit." }) : ctrlDPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+D again to exit." }) : null,
-      initError && streamingState !== "responding" /* Responding */ && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      ctrlCPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+C again to exit." }) : ctrlDPressedOnce ? /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Text, { color: Colors.AccentYellow, children: "Press Ctrl+D again to exit." }) : null,
+      initError && streamingState !== "responding" /* Responding */ && /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         Box_default,
         {
           borderStyle: "round",
           borderColor: Colors.AccentRed,
           paddingX: 1,
           marginBottom: 1,
-          children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Text, { color: Colors.AccentRed, children: [
+          children: /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Text, { color: Colors.AccentRed, children: [
             "Initialization Error: ",
             initError
           ] })
         }
       ),
-      isInputActive && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      isInputActive && /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         InputPrompt,
         {
           buffer,
@@ -59557,7 +60098,7 @@ var App2 = ({ version: version2 }) => {
           setShellModeActive
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         Footer,
         {
           selectedTarget: selectedTarget || void 0,
@@ -59571,20 +60112,5034 @@ var App2 = ({ version: version2 }) => {
   ] });
 };
 
+// src/headless.ts
+async function runHeadless(options2) {
+  const { prompt, target, sessionId, output } = options2;
+  try {
+    const healthResponse = await localAPIClient.healthCheck();
+    if (!healthResponse.data) {
+      return {
+        success: false,
+        error: `Cannot connect to API at ${appConfig.apiBaseUrl}. Please start the server with: cd /path/to/genie-agents && make dev`
+      };
+    }
+    const [agentsResponse, teamsResponse, workflowsResponse] = await Promise.all([
+      localAPIClient.listAgents(),
+      localAPIClient.listTeams(),
+      localAPIClient.listWorkflows()
+    ]);
+    const allTargets = [
+      ...(agentsResponse.data || []).map((a) => ({ ...a, type: "agent" })),
+      ...(teamsResponse.data || []).map((t2) => ({ ...t2, type: "team" })),
+      ...(workflowsResponse.data || []).map((w) => ({ ...w, type: "workflow" }))
+    ];
+    const targetStr = String(target).toLowerCase();
+    const targetObj = allTargets.find(
+      (t2) => t2.id === target || t2.name?.toLowerCase().includes(targetStr) || t2.team_id === target || t2.agent_id === target
+    );
+    if (!targetObj) {
+      const availableTargets = allTargets.map((t2) => `${t2.type}:${t2.id} (${t2.name})`).join(", ");
+      return {
+        success: false,
+        error: `Target "${target}" not found. Available targets: ${availableTargets}`
+      };
+    }
+    const finalSessionId = sessionId || `headless-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const startTime = Date.now();
+    let response;
+    if (targetObj.type === "agent") {
+      response = await localAPIClient.invokeAgent({
+        agent_id: targetObj.id || targetObj.agent_id,
+        message: prompt,
+        session_id: finalSessionId
+      });
+    } else if (targetObj.type === "team") {
+      response = await localAPIClient.invokeTeam({
+        team_id: targetObj.id || targetObj.team_id,
+        message: prompt,
+        session_id: finalSessionId
+      });
+    } else {
+      response = await localAPIClient.executeWorkflow({
+        workflow_id: targetObj.id || targetObj.workflow_id,
+        params: { message: prompt },
+        session_id: finalSessionId
+      });
+    }
+    if (response.error) {
+      return {
+        success: false,
+        error: response.error
+      };
+    }
+    const result = response.data?.content || "No response content";
+    const stats = response.data?.metrics || null;
+    const endTime = Date.now();
+    const actualDuration = (endTime - startTime) / 1e3;
+    if (stats) {
+      stats.actual_time = actualDuration;
+      stats.time = [actualDuration];
+    }
+    return {
+      success: true,
+      content: result,
+      stats,
+      sessionId: finalSessionId
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred"
+    };
+  }
+}
+function formatHeadlessOutput(result, format3) {
+  switch (format3) {
+    case "json":
+      return JSON.stringify(result, null, 2);
+    case "markdown":
+      if (!result.success) {
+        return `# Error
+
+${result.error}`;
+      }
+      let markdown = `# Response
+
+${result.content}
+
+`;
+      if (result.stats) {
+        markdown += `## Statistics
+
+`;
+        const timeValue = result.stats.actual_time || (Array.isArray(result.stats.time) ? result.stats.time[0] : result.stats.time);
+        markdown += `- **Total Time**: ${timeValue ? timeValue.toFixed(2) + "s" : "N/A"}
+`;
+        markdown += `- **Input Tokens**: ${result.stats.input_tokens || 0}
+`;
+        markdown += `- **Output Tokens**: ${result.stats.output_tokens || 0}
+`;
+        markdown += `- **Total Tokens**: ${result.stats.total_tokens || 0}
+`;
+        markdown += `- **Session ID**: ${result.sessionId}
+`;
+      }
+      return markdown;
+    case "text":
+    default:
+      if (!result.success) {
+        return `\u274C Error: ${result.error}`;
+      }
+      let output = result.content || "";
+      if (result.stats) {
+        const timeValue = result.stats.actual_time || (Array.isArray(result.stats.time) ? result.stats.time[0] : result.stats.time);
+        const time = timeValue ? timeValue.toFixed(2) + "s" : "N/A";
+        const tokens = result.stats.total_tokens || 0;
+        const inputTokens = result.stats.input_tokens || 0;
+        const outputTokens = result.stats.output_tokens || 0;
+        output += `
+
+\u{1F4CA} Stats: ${time} | ${tokens} tokens (${inputTokens}\u2191 ${outputTokens}\u2193)`;
+      }
+      return output;
+  }
+}
+
+// node_modules/yargs/lib/platform-shims/esm.mjs
+import { notStrictEqual, strictEqual } from "assert";
+
+// node_modules/cliui/build/lib/index.js
+var align = {
+  right: alignRight,
+  center: alignCenter
+};
+var top = 0;
+var right = 1;
+var bottom = 2;
+var left = 3;
+var UI = class {
+  constructor(opts) {
+    var _a3;
+    this.width = opts.width;
+    this.wrap = (_a3 = opts.wrap) !== null && _a3 !== void 0 ? _a3 : true;
+    this.rows = [];
+  }
+  span(...args) {
+    const cols = this.div(...args);
+    cols.span = true;
+  }
+  resetOutput() {
+    this.rows = [];
+  }
+  div(...args) {
+    if (args.length === 0) {
+      this.div("");
+    }
+    if (this.wrap && this.shouldApplyLayoutDSL(...args) && typeof args[0] === "string") {
+      return this.applyLayoutDSL(args[0]);
+    }
+    const cols = args.map((arg) => {
+      if (typeof arg === "string") {
+        return this.colFromString(arg);
+      }
+      return arg;
+    });
+    this.rows.push(cols);
+    return cols;
+  }
+  shouldApplyLayoutDSL(...args) {
+    return args.length === 1 && typeof args[0] === "string" && /[\t\n]/.test(args[0]);
+  }
+  applyLayoutDSL(str) {
+    const rows = str.split("\n").map((row) => row.split("	"));
+    let leftColumnWidth = 0;
+    rows.forEach((columns) => {
+      if (columns.length > 1 && mixin.stringWidth(columns[0]) > leftColumnWidth) {
+        leftColumnWidth = Math.min(Math.floor(this.width * 0.5), mixin.stringWidth(columns[0]));
+      }
+    });
+    rows.forEach((columns) => {
+      this.div(...columns.map((r2, i2) => {
+        return {
+          text: r2.trim(),
+          padding: this.measurePadding(r2),
+          width: i2 === 0 && columns.length > 1 ? leftColumnWidth : void 0
+        };
+      }));
+    });
+    return this.rows[this.rows.length - 1];
+  }
+  colFromString(text) {
+    return {
+      text,
+      padding: this.measurePadding(text)
+    };
+  }
+  measurePadding(str) {
+    const noAnsi = mixin.stripAnsi(str);
+    return [0, noAnsi.match(/\s*$/)[0].length, 0, noAnsi.match(/^\s*/)[0].length];
+  }
+  toString() {
+    const lines = [];
+    this.rows.forEach((row) => {
+      this.rowToString(row, lines);
+    });
+    return lines.filter((line) => !line.hidden).map((line) => line.text).join("\n");
+  }
+  rowToString(row, lines) {
+    this.rasterize(row).forEach((rrow, r2) => {
+      let str = "";
+      rrow.forEach((col, c) => {
+        const { width } = row[c];
+        const wrapWidth = this.negatePadding(row[c]);
+        let ts = col;
+        if (wrapWidth > mixin.stringWidth(col)) {
+          ts += " ".repeat(wrapWidth - mixin.stringWidth(col));
+        }
+        if (row[c].align && row[c].align !== "left" && this.wrap) {
+          const fn = align[row[c].align];
+          ts = fn(ts, wrapWidth);
+          if (mixin.stringWidth(ts) < wrapWidth) {
+            ts += " ".repeat((width || 0) - mixin.stringWidth(ts) - 1);
+          }
+        }
+        const padding = row[c].padding || [0, 0, 0, 0];
+        if (padding[left]) {
+          str += " ".repeat(padding[left]);
+        }
+        str += addBorder(row[c], ts, "| ");
+        str += ts;
+        str += addBorder(row[c], ts, " |");
+        if (padding[right]) {
+          str += " ".repeat(padding[right]);
+        }
+        if (r2 === 0 && lines.length > 0) {
+          str = this.renderInline(str, lines[lines.length - 1]);
+        }
+      });
+      lines.push({
+        text: str.replace(/ +$/, ""),
+        span: row.span
+      });
+    });
+    return lines;
+  }
+  // if the full 'source' can render in
+  // the target line, do so.
+  renderInline(source, previousLine) {
+    const match = source.match(/^ */);
+    const leadingWhitespace = match ? match[0].length : 0;
+    const target = previousLine.text;
+    const targetTextWidth = mixin.stringWidth(target.trimRight());
+    if (!previousLine.span) {
+      return source;
+    }
+    if (!this.wrap) {
+      previousLine.hidden = true;
+      return target + source;
+    }
+    if (leadingWhitespace < targetTextWidth) {
+      return source;
+    }
+    previousLine.hidden = true;
+    return target.trimRight() + " ".repeat(leadingWhitespace - targetTextWidth) + source.trimLeft();
+  }
+  rasterize(row) {
+    const rrows = [];
+    const widths = this.columnWidths(row);
+    let wrapped;
+    row.forEach((col, c) => {
+      col.width = widths[c];
+      if (this.wrap) {
+        wrapped = mixin.wrap(col.text, this.negatePadding(col), { hard: true }).split("\n");
+      } else {
+        wrapped = col.text.split("\n");
+      }
+      if (col.border) {
+        wrapped.unshift("." + "-".repeat(this.negatePadding(col) + 2) + ".");
+        wrapped.push("'" + "-".repeat(this.negatePadding(col) + 2) + "'");
+      }
+      if (col.padding) {
+        wrapped.unshift(...new Array(col.padding[top] || 0).fill(""));
+        wrapped.push(...new Array(col.padding[bottom] || 0).fill(""));
+      }
+      wrapped.forEach((str, r2) => {
+        if (!rrows[r2]) {
+          rrows.push([]);
+        }
+        const rrow = rrows[r2];
+        for (let i2 = 0; i2 < c; i2++) {
+          if (rrow[i2] === void 0) {
+            rrow.push("");
+          }
+        }
+        rrow.push(str);
+      });
+    });
+    return rrows;
+  }
+  negatePadding(col) {
+    let wrapWidth = col.width || 0;
+    if (col.padding) {
+      wrapWidth -= (col.padding[left] || 0) + (col.padding[right] || 0);
+    }
+    if (col.border) {
+      wrapWidth -= 4;
+    }
+    return wrapWidth;
+  }
+  columnWidths(row) {
+    if (!this.wrap) {
+      return row.map((col) => {
+        return col.width || mixin.stringWidth(col.text);
+      });
+    }
+    let unset = row.length;
+    let remainingWidth = this.width;
+    const widths = row.map((col) => {
+      if (col.width) {
+        unset--;
+        remainingWidth -= col.width;
+        return col.width;
+      }
+      return void 0;
+    });
+    const unsetWidth = unset ? Math.floor(remainingWidth / unset) : 0;
+    return widths.map((w, i2) => {
+      if (w === void 0) {
+        return Math.max(unsetWidth, _minWidth(row[i2]));
+      }
+      return w;
+    });
+  }
+};
+function addBorder(col, ts, style) {
+  if (col.border) {
+    if (/[.']-+[.']/.test(ts)) {
+      return "";
+    }
+    if (ts.trim().length !== 0) {
+      return style;
+    }
+    return "  ";
+  }
+  return "";
+}
+function _minWidth(col) {
+  const padding = col.padding || [];
+  const minWidth = 1 + (padding[left] || 0) + (padding[right] || 0);
+  if (col.border) {
+    return minWidth + 4;
+  }
+  return minWidth;
+}
+function getWindowWidth() {
+  if (typeof process === "object" && process.stdout && process.stdout.columns) {
+    return process.stdout.columns;
+  }
+  return 80;
+}
+function alignRight(str, width) {
+  str = str.trim();
+  const strWidth = mixin.stringWidth(str);
+  if (strWidth < width) {
+    return " ".repeat(width - strWidth) + str;
+  }
+  return str;
+}
+function alignCenter(str, width) {
+  str = str.trim();
+  const strWidth = mixin.stringWidth(str);
+  if (strWidth >= width) {
+    return str;
+  }
+  return " ".repeat(width - strWidth >> 1) + str;
+}
+var mixin;
+function cliui(opts, _mixin) {
+  mixin = _mixin;
+  return new UI({
+    width: (opts === null || opts === void 0 ? void 0 : opts.width) || getWindowWidth(),
+    wrap: opts === null || opts === void 0 ? void 0 : opts.wrap
+  });
+}
+
+// node_modules/cliui/index.mjs
+function ui(opts) {
+  return cliui(opts, {
+    stringWidth,
+    stripAnsi,
+    wrap: wrapAnsi
+  });
+}
+
+// node_modules/escalade/sync/index.mjs
+import { dirname, resolve as resolve2 } from "path";
+import { readdirSync, statSync as statSync2 } from "fs";
+function sync_default(start, callback) {
+  let dir = resolve2(".", start);
+  let tmp, stats = statSync2(dir);
+  if (!stats.isDirectory()) {
+    dir = dirname(dir);
+  }
+  while (true) {
+    tmp = callback(dir, readdirSync(dir));
+    if (tmp) return resolve2(dir, tmp);
+    dir = dirname(tmp = dir);
+    if (tmp === dir) break;
+  }
+}
+
+// node_modules/yargs/lib/platform-shims/esm.mjs
+import { inspect } from "util";
+import { fileURLToPath } from "url";
+
+// node_modules/yargs-parser/build/lib/index.js
+import { format } from "util";
+import { normalize, resolve as resolve3 } from "path";
+
+// node_modules/yargs-parser/build/lib/string-utils.js
+function camelCase(str) {
+  const isCamelCase = str !== str.toLowerCase() && str !== str.toUpperCase();
+  if (!isCamelCase) {
+    str = str.toLowerCase();
+  }
+  if (str.indexOf("-") === -1 && str.indexOf("_") === -1) {
+    return str;
+  } else {
+    let camelcase = "";
+    let nextChrUpper = false;
+    const leadingHyphens = str.match(/^-+/);
+    for (let i2 = leadingHyphens ? leadingHyphens[0].length : 0; i2 < str.length; i2++) {
+      let chr = str.charAt(i2);
+      if (nextChrUpper) {
+        nextChrUpper = false;
+        chr = chr.toUpperCase();
+      }
+      if (i2 !== 0 && (chr === "-" || chr === "_")) {
+        nextChrUpper = true;
+      } else if (chr !== "-" && chr !== "_") {
+        camelcase += chr;
+      }
+    }
+    return camelcase;
+  }
+}
+function decamelize(str, joinString) {
+  const lowercase = str.toLowerCase();
+  joinString = joinString || "-";
+  let notCamelcase = "";
+  for (let i2 = 0; i2 < str.length; i2++) {
+    const chrLower = lowercase.charAt(i2);
+    const chrString = str.charAt(i2);
+    if (chrLower !== chrString && i2 > 0) {
+      notCamelcase += `${joinString}${lowercase.charAt(i2)}`;
+    } else {
+      notCamelcase += chrString;
+    }
+  }
+  return notCamelcase;
+}
+function looksLikeNumber(x2) {
+  if (x2 === null || x2 === void 0)
+    return false;
+  if (typeof x2 === "number")
+    return true;
+  if (/^0x[0-9a-f]+$/i.test(x2))
+    return true;
+  if (/^0[^.]/.test(x2))
+    return false;
+  return /^[-]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x2);
+}
+
+// node_modules/yargs-parser/build/lib/tokenize-arg-string.js
+function tokenizeArgString(argString) {
+  if (Array.isArray(argString)) {
+    return argString.map((e2) => typeof e2 !== "string" ? e2 + "" : e2);
+  }
+  argString = argString.trim();
+  let i2 = 0;
+  let prevC = null;
+  let c = null;
+  let opening = null;
+  const args = [];
+  for (let ii = 0; ii < argString.length; ii++) {
+    prevC = c;
+    c = argString.charAt(ii);
+    if (c === " " && !opening) {
+      if (!(prevC === " ")) {
+        i2++;
+      }
+      continue;
+    }
+    if (c === opening) {
+      opening = null;
+    } else if ((c === "'" || c === '"') && !opening) {
+      opening = c;
+    }
+    if (!args[i2])
+      args[i2] = "";
+    args[i2] += c;
+  }
+  return args;
+}
+
+// node_modules/yargs-parser/build/lib/yargs-parser-types.js
+var DefaultValuesForTypeKey;
+(function(DefaultValuesForTypeKey2) {
+  DefaultValuesForTypeKey2["BOOLEAN"] = "boolean";
+  DefaultValuesForTypeKey2["STRING"] = "string";
+  DefaultValuesForTypeKey2["NUMBER"] = "number";
+  DefaultValuesForTypeKey2["ARRAY"] = "array";
+})(DefaultValuesForTypeKey || (DefaultValuesForTypeKey = {}));
+
+// node_modules/yargs-parser/build/lib/yargs-parser.js
+var mixin2;
+var YargsParser = class {
+  constructor(_mixin) {
+    mixin2 = _mixin;
+  }
+  parse(argsInput, options2) {
+    const opts = Object.assign({
+      alias: void 0,
+      array: void 0,
+      boolean: void 0,
+      config: void 0,
+      configObjects: void 0,
+      configuration: void 0,
+      coerce: void 0,
+      count: void 0,
+      default: void 0,
+      envPrefix: void 0,
+      narg: void 0,
+      normalize: void 0,
+      string: void 0,
+      number: void 0,
+      __: void 0,
+      key: void 0
+    }, options2);
+    const args = tokenizeArgString(argsInput);
+    const inputIsString = typeof argsInput === "string";
+    const aliases = combineAliases(Object.assign(/* @__PURE__ */ Object.create(null), opts.alias));
+    const configuration = Object.assign({
+      "boolean-negation": true,
+      "camel-case-expansion": true,
+      "combine-arrays": false,
+      "dot-notation": true,
+      "duplicate-arguments-array": true,
+      "flatten-duplicate-arrays": true,
+      "greedy-arrays": true,
+      "halt-at-non-option": false,
+      "nargs-eats-options": false,
+      "negation-prefix": "no-",
+      "parse-numbers": true,
+      "parse-positional-numbers": true,
+      "populate--": false,
+      "set-placeholder-key": false,
+      "short-option-groups": true,
+      "strip-aliased": false,
+      "strip-dashed": false,
+      "unknown-options-as-args": false
+    }, opts.configuration);
+    const defaults = Object.assign(/* @__PURE__ */ Object.create(null), opts.default);
+    const configObjects = opts.configObjects || [];
+    const envPrefix = opts.envPrefix;
+    const notFlagsOption = configuration["populate--"];
+    const notFlagsArgv = notFlagsOption ? "--" : "_";
+    const newAliases = /* @__PURE__ */ Object.create(null);
+    const defaulted = /* @__PURE__ */ Object.create(null);
+    const __ = opts.__ || mixin2.format;
+    const flags = {
+      aliases: /* @__PURE__ */ Object.create(null),
+      arrays: /* @__PURE__ */ Object.create(null),
+      bools: /* @__PURE__ */ Object.create(null),
+      strings: /* @__PURE__ */ Object.create(null),
+      numbers: /* @__PURE__ */ Object.create(null),
+      counts: /* @__PURE__ */ Object.create(null),
+      normalize: /* @__PURE__ */ Object.create(null),
+      configs: /* @__PURE__ */ Object.create(null),
+      nargs: /* @__PURE__ */ Object.create(null),
+      coercions: /* @__PURE__ */ Object.create(null),
+      keys: []
+    };
+    const negative = /^-([0-9]+(\.[0-9]+)?|\.[0-9]+)$/;
+    const negatedBoolean = new RegExp("^--" + configuration["negation-prefix"] + "(.+)");
+    [].concat(opts.array || []).filter(Boolean).forEach(function(opt) {
+      const key = typeof opt === "object" ? opt.key : opt;
+      const assignment = Object.keys(opt).map(function(key2) {
+        const arrayFlagKeys = {
+          boolean: "bools",
+          string: "strings",
+          number: "numbers"
+        };
+        return arrayFlagKeys[key2];
+      }).filter(Boolean).pop();
+      if (assignment) {
+        flags[assignment][key] = true;
+      }
+      flags.arrays[key] = true;
+      flags.keys.push(key);
+    });
+    [].concat(opts.boolean || []).filter(Boolean).forEach(function(key) {
+      flags.bools[key] = true;
+      flags.keys.push(key);
+    });
+    [].concat(opts.string || []).filter(Boolean).forEach(function(key) {
+      flags.strings[key] = true;
+      flags.keys.push(key);
+    });
+    [].concat(opts.number || []).filter(Boolean).forEach(function(key) {
+      flags.numbers[key] = true;
+      flags.keys.push(key);
+    });
+    [].concat(opts.count || []).filter(Boolean).forEach(function(key) {
+      flags.counts[key] = true;
+      flags.keys.push(key);
+    });
+    [].concat(opts.normalize || []).filter(Boolean).forEach(function(key) {
+      flags.normalize[key] = true;
+      flags.keys.push(key);
+    });
+    if (typeof opts.narg === "object") {
+      Object.entries(opts.narg).forEach(([key, value]) => {
+        if (typeof value === "number") {
+          flags.nargs[key] = value;
+          flags.keys.push(key);
+        }
+      });
+    }
+    if (typeof opts.coerce === "object") {
+      Object.entries(opts.coerce).forEach(([key, value]) => {
+        if (typeof value === "function") {
+          flags.coercions[key] = value;
+          flags.keys.push(key);
+        }
+      });
+    }
+    if (typeof opts.config !== "undefined") {
+      if (Array.isArray(opts.config) || typeof opts.config === "string") {
+        ;
+        [].concat(opts.config).filter(Boolean).forEach(function(key) {
+          flags.configs[key] = true;
+        });
+      } else if (typeof opts.config === "object") {
+        Object.entries(opts.config).forEach(([key, value]) => {
+          if (typeof value === "boolean" || typeof value === "function") {
+            flags.configs[key] = value;
+          }
+        });
+      }
+    }
+    extendAliases(opts.key, aliases, opts.default, flags.arrays);
+    Object.keys(defaults).forEach(function(key) {
+      (flags.aliases[key] || []).forEach(function(alias) {
+        defaults[alias] = defaults[key];
+      });
+    });
+    let error = null;
+    checkConfiguration();
+    let notFlags = [];
+    const argv2 = Object.assign(/* @__PURE__ */ Object.create(null), { _: [] });
+    const argvReturn = {};
+    for (let i2 = 0; i2 < args.length; i2++) {
+      const arg = args[i2];
+      const truncatedArg = arg.replace(/^-{3,}/, "---");
+      let broken;
+      let key;
+      let letters;
+      let m2;
+      let next;
+      let value;
+      if (arg !== "--" && /^-/.test(arg) && isUnknownOptionAsArg(arg)) {
+        pushPositional(arg);
+      } else if (truncatedArg.match(/^---+(=|$)/)) {
+        pushPositional(arg);
+        continue;
+      } else if (arg.match(/^--.+=/) || !configuration["short-option-groups"] && arg.match(/^-.+=/)) {
+        m2 = arg.match(/^--?([^=]+)=([\s\S]*)$/);
+        if (m2 !== null && Array.isArray(m2) && m2.length >= 3) {
+          if (checkAllAliases(m2[1], flags.arrays)) {
+            i2 = eatArray(i2, m2[1], args, m2[2]);
+          } else if (checkAllAliases(m2[1], flags.nargs) !== false) {
+            i2 = eatNargs(i2, m2[1], args, m2[2]);
+          } else {
+            setArg(m2[1], m2[2], true);
+          }
+        }
+      } else if (arg.match(negatedBoolean) && configuration["boolean-negation"]) {
+        m2 = arg.match(negatedBoolean);
+        if (m2 !== null && Array.isArray(m2) && m2.length >= 2) {
+          key = m2[1];
+          setArg(key, checkAllAliases(key, flags.arrays) ? [false] : false);
+        }
+      } else if (arg.match(/^--.+/) || !configuration["short-option-groups"] && arg.match(/^-[^-]+/)) {
+        m2 = arg.match(/^--?(.+)/);
+        if (m2 !== null && Array.isArray(m2) && m2.length >= 2) {
+          key = m2[1];
+          if (checkAllAliases(key, flags.arrays)) {
+            i2 = eatArray(i2, key, args);
+          } else if (checkAllAliases(key, flags.nargs) !== false) {
+            i2 = eatNargs(i2, key, args);
+          } else {
+            next = args[i2 + 1];
+            if (next !== void 0 && (!next.match(/^-/) || next.match(negative)) && !checkAllAliases(key, flags.bools) && !checkAllAliases(key, flags.counts)) {
+              setArg(key, next);
+              i2++;
+            } else if (/^(true|false)$/.test(next)) {
+              setArg(key, next);
+              i2++;
+            } else {
+              setArg(key, defaultValue(key));
+            }
+          }
+        }
+      } else if (arg.match(/^-.\..+=/)) {
+        m2 = arg.match(/^-([^=]+)=([\s\S]*)$/);
+        if (m2 !== null && Array.isArray(m2) && m2.length >= 3) {
+          setArg(m2[1], m2[2]);
+        }
+      } else if (arg.match(/^-.\..+/) && !arg.match(negative)) {
+        next = args[i2 + 1];
+        m2 = arg.match(/^-(.\..+)/);
+        if (m2 !== null && Array.isArray(m2) && m2.length >= 2) {
+          key = m2[1];
+          if (next !== void 0 && !next.match(/^-/) && !checkAllAliases(key, flags.bools) && !checkAllAliases(key, flags.counts)) {
+            setArg(key, next);
+            i2++;
+          } else {
+            setArg(key, defaultValue(key));
+          }
+        }
+      } else if (arg.match(/^-[^-]+/) && !arg.match(negative)) {
+        letters = arg.slice(1, -1).split("");
+        broken = false;
+        for (let j = 0; j < letters.length; j++) {
+          next = arg.slice(j + 2);
+          if (letters[j + 1] && letters[j + 1] === "=") {
+            value = arg.slice(j + 3);
+            key = letters[j];
+            if (checkAllAliases(key, flags.arrays)) {
+              i2 = eatArray(i2, key, args, value);
+            } else if (checkAllAliases(key, flags.nargs) !== false) {
+              i2 = eatNargs(i2, key, args, value);
+            } else {
+              setArg(key, value);
+            }
+            broken = true;
+            break;
+          }
+          if (next === "-") {
+            setArg(letters[j], next);
+            continue;
+          }
+          if (/[A-Za-z]/.test(letters[j]) && /^-?\d+(\.\d*)?(e-?\d+)?$/.test(next) && checkAllAliases(next, flags.bools) === false) {
+            setArg(letters[j], next);
+            broken = true;
+            break;
+          }
+          if (letters[j + 1] && letters[j + 1].match(/\W/)) {
+            setArg(letters[j], next);
+            broken = true;
+            break;
+          } else {
+            setArg(letters[j], defaultValue(letters[j]));
+          }
+        }
+        key = arg.slice(-1)[0];
+        if (!broken && key !== "-") {
+          if (checkAllAliases(key, flags.arrays)) {
+            i2 = eatArray(i2, key, args);
+          } else if (checkAllAliases(key, flags.nargs) !== false) {
+            i2 = eatNargs(i2, key, args);
+          } else {
+            next = args[i2 + 1];
+            if (next !== void 0 && (!/^(-|--)[^-]/.test(next) || next.match(negative)) && !checkAllAliases(key, flags.bools) && !checkAllAliases(key, flags.counts)) {
+              setArg(key, next);
+              i2++;
+            } else if (/^(true|false)$/.test(next)) {
+              setArg(key, next);
+              i2++;
+            } else {
+              setArg(key, defaultValue(key));
+            }
+          }
+        }
+      } else if (arg.match(/^-[0-9]$/) && arg.match(negative) && checkAllAliases(arg.slice(1), flags.bools)) {
+        key = arg.slice(1);
+        setArg(key, defaultValue(key));
+      } else if (arg === "--") {
+        notFlags = args.slice(i2 + 1);
+        break;
+      } else if (configuration["halt-at-non-option"]) {
+        notFlags = args.slice(i2);
+        break;
+      } else {
+        pushPositional(arg);
+      }
+    }
+    applyEnvVars(argv2, true);
+    applyEnvVars(argv2, false);
+    setConfig(argv2);
+    setConfigObjects();
+    applyDefaultsAndAliases(argv2, flags.aliases, defaults, true);
+    applyCoercions(argv2);
+    if (configuration["set-placeholder-key"])
+      setPlaceholderKeys(argv2);
+    Object.keys(flags.counts).forEach(function(key) {
+      if (!hasKey(argv2, key.split(".")))
+        setArg(key, 0);
+    });
+    if (notFlagsOption && notFlags.length)
+      argv2[notFlagsArgv] = [];
+    notFlags.forEach(function(key) {
+      argv2[notFlagsArgv].push(key);
+    });
+    if (configuration["camel-case-expansion"] && configuration["strip-dashed"]) {
+      Object.keys(argv2).filter((key) => key !== "--" && key.includes("-")).forEach((key) => {
+        delete argv2[key];
+      });
+    }
+    if (configuration["strip-aliased"]) {
+      ;
+      [].concat(...Object.keys(aliases).map((k) => aliases[k])).forEach((alias) => {
+        if (configuration["camel-case-expansion"] && alias.includes("-")) {
+          delete argv2[alias.split(".").map((prop) => camelCase(prop)).join(".")];
+        }
+        delete argv2[alias];
+      });
+    }
+    function pushPositional(arg) {
+      const maybeCoercedNumber = maybeCoerceNumber("_", arg);
+      if (typeof maybeCoercedNumber === "string" || typeof maybeCoercedNumber === "number") {
+        argv2._.push(maybeCoercedNumber);
+      }
+    }
+    function eatNargs(i2, key, args2, argAfterEqualSign) {
+      let ii;
+      let toEat = checkAllAliases(key, flags.nargs);
+      toEat = typeof toEat !== "number" || isNaN(toEat) ? 1 : toEat;
+      if (toEat === 0) {
+        if (!isUndefined(argAfterEqualSign)) {
+          error = Error(__("Argument unexpected for: %s", key));
+        }
+        setArg(key, defaultValue(key));
+        return i2;
+      }
+      let available = isUndefined(argAfterEqualSign) ? 0 : 1;
+      if (configuration["nargs-eats-options"]) {
+        if (args2.length - (i2 + 1) + available < toEat) {
+          error = Error(__("Not enough arguments following: %s", key));
+        }
+        available = toEat;
+      } else {
+        for (ii = i2 + 1; ii < args2.length; ii++) {
+          if (!args2[ii].match(/^-[^0-9]/) || args2[ii].match(negative) || isUnknownOptionAsArg(args2[ii]))
+            available++;
+          else
+            break;
+        }
+        if (available < toEat)
+          error = Error(__("Not enough arguments following: %s", key));
+      }
+      let consumed = Math.min(available, toEat);
+      if (!isUndefined(argAfterEqualSign) && consumed > 0) {
+        setArg(key, argAfterEqualSign);
+        consumed--;
+      }
+      for (ii = i2 + 1; ii < consumed + i2 + 1; ii++) {
+        setArg(key, args2[ii]);
+      }
+      return i2 + consumed;
+    }
+    function eatArray(i2, key, args2, argAfterEqualSign) {
+      let argsToSet = [];
+      let next = argAfterEqualSign || args2[i2 + 1];
+      const nargsCount = checkAllAliases(key, flags.nargs);
+      if (checkAllAliases(key, flags.bools) && !/^(true|false)$/.test(next)) {
+        argsToSet.push(true);
+      } else if (isUndefined(next) || isUndefined(argAfterEqualSign) && /^-/.test(next) && !negative.test(next) && !isUnknownOptionAsArg(next)) {
+        if (defaults[key] !== void 0) {
+          const defVal = defaults[key];
+          argsToSet = Array.isArray(defVal) ? defVal : [defVal];
+        }
+      } else {
+        if (!isUndefined(argAfterEqualSign)) {
+          argsToSet.push(processValue(key, argAfterEqualSign, true));
+        }
+        for (let ii = i2 + 1; ii < args2.length; ii++) {
+          if (!configuration["greedy-arrays"] && argsToSet.length > 0 || nargsCount && typeof nargsCount === "number" && argsToSet.length >= nargsCount)
+            break;
+          next = args2[ii];
+          if (/^-/.test(next) && !negative.test(next) && !isUnknownOptionAsArg(next))
+            break;
+          i2 = ii;
+          argsToSet.push(processValue(key, next, inputIsString));
+        }
+      }
+      if (typeof nargsCount === "number" && (nargsCount && argsToSet.length < nargsCount || isNaN(nargsCount) && argsToSet.length === 0)) {
+        error = Error(__("Not enough arguments following: %s", key));
+      }
+      setArg(key, argsToSet);
+      return i2;
+    }
+    function setArg(key, val, shouldStripQuotes = inputIsString) {
+      if (/-/.test(key) && configuration["camel-case-expansion"]) {
+        const alias = key.split(".").map(function(prop) {
+          return camelCase(prop);
+        }).join(".");
+        addNewAlias(key, alias);
+      }
+      const value = processValue(key, val, shouldStripQuotes);
+      const splitKey = key.split(".");
+      setKey(argv2, splitKey, value);
+      if (flags.aliases[key]) {
+        flags.aliases[key].forEach(function(x2) {
+          const keyProperties = x2.split(".");
+          setKey(argv2, keyProperties, value);
+        });
+      }
+      if (splitKey.length > 1 && configuration["dot-notation"]) {
+        ;
+        (flags.aliases[splitKey[0]] || []).forEach(function(x2) {
+          let keyProperties = x2.split(".");
+          const a = [].concat(splitKey);
+          a.shift();
+          keyProperties = keyProperties.concat(a);
+          if (!(flags.aliases[key] || []).includes(keyProperties.join("."))) {
+            setKey(argv2, keyProperties, value);
+          }
+        });
+      }
+      if (checkAllAliases(key, flags.normalize) && !checkAllAliases(key, flags.arrays)) {
+        const keys = [key].concat(flags.aliases[key] || []);
+        keys.forEach(function(key2) {
+          Object.defineProperty(argvReturn, key2, {
+            enumerable: true,
+            get() {
+              return val;
+            },
+            set(value2) {
+              val = typeof value2 === "string" ? mixin2.normalize(value2) : value2;
+            }
+          });
+        });
+      }
+    }
+    function addNewAlias(key, alias) {
+      if (!(flags.aliases[key] && flags.aliases[key].length)) {
+        flags.aliases[key] = [alias];
+        newAliases[alias] = true;
+      }
+      if (!(flags.aliases[alias] && flags.aliases[alias].length)) {
+        addNewAlias(alias, key);
+      }
+    }
+    function processValue(key, val, shouldStripQuotes) {
+      if (shouldStripQuotes) {
+        val = stripQuotes(val);
+      }
+      if (checkAllAliases(key, flags.bools) || checkAllAliases(key, flags.counts)) {
+        if (typeof val === "string")
+          val = val === "true";
+      }
+      let value = Array.isArray(val) ? val.map(function(v) {
+        return maybeCoerceNumber(key, v);
+      }) : maybeCoerceNumber(key, val);
+      if (checkAllAliases(key, flags.counts) && (isUndefined(value) || typeof value === "boolean")) {
+        value = increment();
+      }
+      if (checkAllAliases(key, flags.normalize) && checkAllAliases(key, flags.arrays)) {
+        if (Array.isArray(val))
+          value = val.map((val2) => {
+            return mixin2.normalize(val2);
+          });
+        else
+          value = mixin2.normalize(val);
+      }
+      return value;
+    }
+    function maybeCoerceNumber(key, value) {
+      if (!configuration["parse-positional-numbers"] && key === "_")
+        return value;
+      if (!checkAllAliases(key, flags.strings) && !checkAllAliases(key, flags.bools) && !Array.isArray(value)) {
+        const shouldCoerceNumber = looksLikeNumber(value) && configuration["parse-numbers"] && Number.isSafeInteger(Math.floor(parseFloat(`${value}`)));
+        if (shouldCoerceNumber || !isUndefined(value) && checkAllAliases(key, flags.numbers)) {
+          value = Number(value);
+        }
+      }
+      return value;
+    }
+    function setConfig(argv3) {
+      const configLookup = /* @__PURE__ */ Object.create(null);
+      applyDefaultsAndAliases(configLookup, flags.aliases, defaults);
+      Object.keys(flags.configs).forEach(function(configKey) {
+        const configPath = argv3[configKey] || configLookup[configKey];
+        if (configPath) {
+          try {
+            let config2 = null;
+            const resolvedConfigPath = mixin2.resolve(mixin2.cwd(), configPath);
+            const resolveConfig = flags.configs[configKey];
+            if (typeof resolveConfig === "function") {
+              try {
+                config2 = resolveConfig(resolvedConfigPath);
+              } catch (e2) {
+                config2 = e2;
+              }
+              if (config2 instanceof Error) {
+                error = config2;
+                return;
+              }
+            } else {
+              config2 = mixin2.require(resolvedConfigPath);
+            }
+            setConfigObject(config2);
+          } catch (ex) {
+            if (ex.name === "PermissionDenied")
+              error = ex;
+            else if (argv3[configKey])
+              error = Error(__("Invalid JSON config file: %s", configPath));
+          }
+        }
+      });
+    }
+    function setConfigObject(config2, prev) {
+      Object.keys(config2).forEach(function(key) {
+        const value = config2[key];
+        const fullKey = prev ? prev + "." + key : key;
+        if (typeof value === "object" && value !== null && !Array.isArray(value) && configuration["dot-notation"]) {
+          setConfigObject(value, fullKey);
+        } else {
+          if (!hasKey(argv2, fullKey.split(".")) || checkAllAliases(fullKey, flags.arrays) && configuration["combine-arrays"]) {
+            setArg(fullKey, value);
+          }
+        }
+      });
+    }
+    function setConfigObjects() {
+      if (typeof configObjects !== "undefined") {
+        configObjects.forEach(function(configObject) {
+          setConfigObject(configObject);
+        });
+      }
+    }
+    function applyEnvVars(argv3, configOnly) {
+      if (typeof envPrefix === "undefined")
+        return;
+      const prefix = typeof envPrefix === "string" ? envPrefix : "";
+      const env4 = mixin2.env();
+      Object.keys(env4).forEach(function(envVar) {
+        if (prefix === "" || envVar.lastIndexOf(prefix, 0) === 0) {
+          const keys = envVar.split("__").map(function(key, i2) {
+            if (i2 === 0) {
+              key = key.substring(prefix.length);
+            }
+            return camelCase(key);
+          });
+          if ((configOnly && flags.configs[keys.join(".")] || !configOnly) && !hasKey(argv3, keys)) {
+            setArg(keys.join("."), env4[envVar]);
+          }
+        }
+      });
+    }
+    function applyCoercions(argv3) {
+      let coerce;
+      const applied = /* @__PURE__ */ new Set();
+      Object.keys(argv3).forEach(function(key) {
+        if (!applied.has(key)) {
+          coerce = checkAllAliases(key, flags.coercions);
+          if (typeof coerce === "function") {
+            try {
+              const value = maybeCoerceNumber(key, coerce(argv3[key]));
+              [].concat(flags.aliases[key] || [], key).forEach((ali) => {
+                applied.add(ali);
+                argv3[ali] = value;
+              });
+            } catch (err) {
+              error = err;
+            }
+          }
+        }
+      });
+    }
+    function setPlaceholderKeys(argv3) {
+      flags.keys.forEach((key) => {
+        if (~key.indexOf("."))
+          return;
+        if (typeof argv3[key] === "undefined")
+          argv3[key] = void 0;
+      });
+      return argv3;
+    }
+    function applyDefaultsAndAliases(obj, aliases2, defaults2, canLog = false) {
+      Object.keys(defaults2).forEach(function(key) {
+        if (!hasKey(obj, key.split("."))) {
+          setKey(obj, key.split("."), defaults2[key]);
+          if (canLog)
+            defaulted[key] = true;
+          (aliases2[key] || []).forEach(function(x2) {
+            if (hasKey(obj, x2.split(".")))
+              return;
+            setKey(obj, x2.split("."), defaults2[key]);
+          });
+        }
+      });
+    }
+    function hasKey(obj, keys) {
+      let o = obj;
+      if (!configuration["dot-notation"])
+        keys = [keys.join(".")];
+      keys.slice(0, -1).forEach(function(key2) {
+        o = o[key2] || {};
+      });
+      const key = keys[keys.length - 1];
+      if (typeof o !== "object")
+        return false;
+      else
+        return key in o;
+    }
+    function setKey(obj, keys, value) {
+      let o = obj;
+      if (!configuration["dot-notation"])
+        keys = [keys.join(".")];
+      keys.slice(0, -1).forEach(function(key2) {
+        key2 = sanitizeKey(key2);
+        if (typeof o === "object" && o[key2] === void 0) {
+          o[key2] = {};
+        }
+        if (typeof o[key2] !== "object" || Array.isArray(o[key2])) {
+          if (Array.isArray(o[key2])) {
+            o[key2].push({});
+          } else {
+            o[key2] = [o[key2], {}];
+          }
+          o = o[key2][o[key2].length - 1];
+        } else {
+          o = o[key2];
+        }
+      });
+      const key = sanitizeKey(keys[keys.length - 1]);
+      const isTypeArray = checkAllAliases(keys.join("."), flags.arrays);
+      const isValueArray = Array.isArray(value);
+      let duplicate = configuration["duplicate-arguments-array"];
+      if (!duplicate && checkAllAliases(key, flags.nargs)) {
+        duplicate = true;
+        if (!isUndefined(o[key]) && flags.nargs[key] === 1 || Array.isArray(o[key]) && o[key].length === flags.nargs[key]) {
+          o[key] = void 0;
+        }
+      }
+      if (value === increment()) {
+        o[key] = increment(o[key]);
+      } else if (Array.isArray(o[key])) {
+        if (duplicate && isTypeArray && isValueArray) {
+          o[key] = configuration["flatten-duplicate-arrays"] ? o[key].concat(value) : (Array.isArray(o[key][0]) ? o[key] : [o[key]]).concat([value]);
+        } else if (!duplicate && Boolean(isTypeArray) === Boolean(isValueArray)) {
+          o[key] = value;
+        } else {
+          o[key] = o[key].concat([value]);
+        }
+      } else if (o[key] === void 0 && isTypeArray) {
+        o[key] = isValueArray ? value : [value];
+      } else if (duplicate && !(o[key] === void 0 || checkAllAliases(key, flags.counts) || checkAllAliases(key, flags.bools))) {
+        o[key] = [o[key], value];
+      } else {
+        o[key] = value;
+      }
+    }
+    function extendAliases(...args2) {
+      args2.forEach(function(obj) {
+        Object.keys(obj || {}).forEach(function(key) {
+          if (flags.aliases[key])
+            return;
+          flags.aliases[key] = [].concat(aliases[key] || []);
+          flags.aliases[key].concat(key).forEach(function(x2) {
+            if (/-/.test(x2) && configuration["camel-case-expansion"]) {
+              const c = camelCase(x2);
+              if (c !== key && flags.aliases[key].indexOf(c) === -1) {
+                flags.aliases[key].push(c);
+                newAliases[c] = true;
+              }
+            }
+          });
+          flags.aliases[key].concat(key).forEach(function(x2) {
+            if (x2.length > 1 && /[A-Z]/.test(x2) && configuration["camel-case-expansion"]) {
+              const c = decamelize(x2, "-");
+              if (c !== key && flags.aliases[key].indexOf(c) === -1) {
+                flags.aliases[key].push(c);
+                newAliases[c] = true;
+              }
+            }
+          });
+          flags.aliases[key].forEach(function(x2) {
+            flags.aliases[x2] = [key].concat(flags.aliases[key].filter(function(y) {
+              return x2 !== y;
+            }));
+          });
+        });
+      });
+    }
+    function checkAllAliases(key, flag) {
+      const toCheck = [].concat(flags.aliases[key] || [], key);
+      const keys = Object.keys(flag);
+      const setAlias = toCheck.find((key2) => keys.includes(key2));
+      return setAlias ? flag[setAlias] : false;
+    }
+    function hasAnyFlag(key) {
+      const flagsKeys = Object.keys(flags);
+      const toCheck = [].concat(flagsKeys.map((k) => flags[k]));
+      return toCheck.some(function(flag) {
+        return Array.isArray(flag) ? flag.includes(key) : flag[key];
+      });
+    }
+    function hasFlagsMatching(arg, ...patterns) {
+      const toCheck = [].concat(...patterns);
+      return toCheck.some(function(pattern) {
+        const match = arg.match(pattern);
+        return match && hasAnyFlag(match[1]);
+      });
+    }
+    function hasAllShortFlags(arg) {
+      if (arg.match(negative) || !arg.match(/^-[^-]+/)) {
+        return false;
+      }
+      let hasAllFlags = true;
+      let next;
+      const letters = arg.slice(1).split("");
+      for (let j = 0; j < letters.length; j++) {
+        next = arg.slice(j + 2);
+        if (!hasAnyFlag(letters[j])) {
+          hasAllFlags = false;
+          break;
+        }
+        if (letters[j + 1] && letters[j + 1] === "=" || next === "-" || /[A-Za-z]/.test(letters[j]) && /^-?\d+(\.\d*)?(e-?\d+)?$/.test(next) || letters[j + 1] && letters[j + 1].match(/\W/)) {
+          break;
+        }
+      }
+      return hasAllFlags;
+    }
+    function isUnknownOptionAsArg(arg) {
+      return configuration["unknown-options-as-args"] && isUnknownOption(arg);
+    }
+    function isUnknownOption(arg) {
+      arg = arg.replace(/^-{3,}/, "--");
+      if (arg.match(negative)) {
+        return false;
+      }
+      if (hasAllShortFlags(arg)) {
+        return false;
+      }
+      const flagWithEquals = /^-+([^=]+?)=[\s\S]*$/;
+      const normalFlag = /^-+([^=]+?)$/;
+      const flagEndingInHyphen = /^-+([^=]+?)-$/;
+      const flagEndingInDigits = /^-+([^=]+?\d+)$/;
+      const flagEndingInNonWordCharacters = /^-+([^=]+?)\W+.*$/;
+      return !hasFlagsMatching(arg, flagWithEquals, negatedBoolean, normalFlag, flagEndingInHyphen, flagEndingInDigits, flagEndingInNonWordCharacters);
+    }
+    function defaultValue(key) {
+      if (!checkAllAliases(key, flags.bools) && !checkAllAliases(key, flags.counts) && `${key}` in defaults) {
+        return defaults[key];
+      } else {
+        return defaultForType(guessType2(key));
+      }
+    }
+    function defaultForType(type) {
+      const def2 = {
+        [DefaultValuesForTypeKey.BOOLEAN]: true,
+        [DefaultValuesForTypeKey.STRING]: "",
+        [DefaultValuesForTypeKey.NUMBER]: void 0,
+        [DefaultValuesForTypeKey.ARRAY]: []
+      };
+      return def2[type];
+    }
+    function guessType2(key) {
+      let type = DefaultValuesForTypeKey.BOOLEAN;
+      if (checkAllAliases(key, flags.strings))
+        type = DefaultValuesForTypeKey.STRING;
+      else if (checkAllAliases(key, flags.numbers))
+        type = DefaultValuesForTypeKey.NUMBER;
+      else if (checkAllAliases(key, flags.bools))
+        type = DefaultValuesForTypeKey.BOOLEAN;
+      else if (checkAllAliases(key, flags.arrays))
+        type = DefaultValuesForTypeKey.ARRAY;
+      return type;
+    }
+    function isUndefined(num) {
+      return num === void 0;
+    }
+    function checkConfiguration() {
+      Object.keys(flags.counts).find((key) => {
+        if (checkAllAliases(key, flags.arrays)) {
+          error = Error(__("Invalid configuration: %s, opts.count excludes opts.array.", key));
+          return true;
+        } else if (checkAllAliases(key, flags.nargs)) {
+          error = Error(__("Invalid configuration: %s, opts.count excludes opts.narg.", key));
+          return true;
+        }
+        return false;
+      });
+    }
+    return {
+      aliases: Object.assign({}, flags.aliases),
+      argv: Object.assign(argvReturn, argv2),
+      configuration,
+      defaulted: Object.assign({}, defaulted),
+      error,
+      newAliases: Object.assign({}, newAliases)
+    };
+  }
+};
+function combineAliases(aliases) {
+  const aliasArrays = [];
+  const combined = /* @__PURE__ */ Object.create(null);
+  let change = true;
+  Object.keys(aliases).forEach(function(key) {
+    aliasArrays.push([].concat(aliases[key], key));
+  });
+  while (change) {
+    change = false;
+    for (let i2 = 0; i2 < aliasArrays.length; i2++) {
+      for (let ii = i2 + 1; ii < aliasArrays.length; ii++) {
+        const intersect = aliasArrays[i2].filter(function(v) {
+          return aliasArrays[ii].indexOf(v) !== -1;
+        });
+        if (intersect.length) {
+          aliasArrays[i2] = aliasArrays[i2].concat(aliasArrays[ii]);
+          aliasArrays.splice(ii, 1);
+          change = true;
+          break;
+        }
+      }
+    }
+  }
+  aliasArrays.forEach(function(aliasArray) {
+    aliasArray = aliasArray.filter(function(v, i2, self2) {
+      return self2.indexOf(v) === i2;
+    });
+    const lastAlias = aliasArray.pop();
+    if (lastAlias !== void 0 && typeof lastAlias === "string") {
+      combined[lastAlias] = aliasArray;
+    }
+  });
+  return combined;
+}
+function increment(orig) {
+  return orig !== void 0 ? orig + 1 : 1;
+}
+function sanitizeKey(key) {
+  if (key === "__proto__")
+    return "___proto___";
+  return key;
+}
+function stripQuotes(val) {
+  return typeof val === "string" && (val[0] === "'" || val[0] === '"') && val[val.length - 1] === val[0] ? val.substring(1, val.length - 1) : val;
+}
+
+// node_modules/yargs-parser/build/lib/index.js
+import { readFileSync as readFileSync2 } from "fs";
+import { createRequire } from "node:module";
+var _a2;
+var _b;
+var _c;
+var minNodeVersion = process && process.env && process.env.YARGS_MIN_NODE_VERSION ? Number(process.env.YARGS_MIN_NODE_VERSION) : 20;
+var nodeVersion = (_b = (_a2 = process === null || process === void 0 ? void 0 : process.versions) === null || _a2 === void 0 ? void 0 : _a2.node) !== null && _b !== void 0 ? _b : (_c = process === null || process === void 0 ? void 0 : process.version) === null || _c === void 0 ? void 0 : _c.slice(1);
+if (nodeVersion) {
+  const major = Number(nodeVersion.match(/^([^.]+)/)[1]);
+  if (major < minNodeVersion) {
+    throw Error(`yargs parser supports a minimum Node.js version of ${minNodeVersion}. Read our version support policy: https://github.com/yargs/yargs-parser#supported-nodejs-versions`);
+  }
+}
+var env3 = process ? process.env : {};
+var require2 = createRequire ? createRequire(import.meta.url) : void 0;
+var parser2 = new YargsParser({
+  cwd: process.cwd,
+  env: () => {
+    return env3;
+  },
+  format,
+  normalize,
+  resolve: resolve3,
+  require: (path) => {
+    if (typeof require2 !== "undefined") {
+      return require2(path);
+    } else if (path.match(/\.json$/)) {
+      return JSON.parse(readFileSync2(path, "utf8"));
+    } else {
+      throw Error("only .json config files are supported in ESM");
+    }
+  }
+});
+var yargsParser = function Parser(args, opts) {
+  const result = parser2.parse(args.slice(), opts);
+  return result.argv;
+};
+yargsParser.detailed = function(args, opts) {
+  return parser2.parse(args.slice(), opts);
+};
+yargsParser.camelCase = camelCase;
+yargsParser.decamelize = decamelize;
+yargsParser.looksLikeNumber = looksLikeNumber;
+var lib_default = yargsParser;
+
+// node_modules/yargs/lib/platform-shims/esm.mjs
+import { basename as basename2, dirname as dirname2, extname, relative, resolve as resolve5, join } from "path";
+
+// node_modules/yargs/build/lib/utils/process-argv.js
+function getProcessArgvBinIndex() {
+  if (isBundledElectronApp())
+    return 0;
+  return 1;
+}
+function isBundledElectronApp() {
+  return isElectronApp() && !process.defaultApp;
+}
+function isElectronApp() {
+  return !!process.versions.electron;
+}
+function hideBin(argv2) {
+  return argv2.slice(getProcessArgvBinIndex() + 1);
+}
+function getProcessArgvBin() {
+  return process.argv[getProcessArgvBinIndex()];
+}
+
+// node_modules/y18n/build/lib/platform-shims/node.js
+import { readFileSync as readFileSync3, statSync as statSync3, writeFile as writeFile2 } from "fs";
+import { format as format2 } from "util";
+import { resolve as resolve4 } from "path";
+var node_default = {
+  fs: {
+    readFileSync: readFileSync3,
+    writeFile: writeFile2
+  },
+  format: format2,
+  resolve: resolve4,
+  exists: (file) => {
+    try {
+      return statSync3(file).isFile();
+    } catch (err) {
+      return false;
+    }
+  }
+};
+
+// node_modules/y18n/build/lib/index.js
+var shim;
+var Y18N = class {
+  constructor(opts) {
+    opts = opts || {};
+    this.directory = opts.directory || "./locales";
+    this.updateFiles = typeof opts.updateFiles === "boolean" ? opts.updateFiles : true;
+    this.locale = opts.locale || "en";
+    this.fallbackToLanguage = typeof opts.fallbackToLanguage === "boolean" ? opts.fallbackToLanguage : true;
+    this.cache = /* @__PURE__ */ Object.create(null);
+    this.writeQueue = [];
+  }
+  __(...args) {
+    if (typeof arguments[0] !== "string") {
+      return this._taggedLiteral(arguments[0], ...arguments);
+    }
+    const str = args.shift();
+    let cb = function() {
+    };
+    if (typeof args[args.length - 1] === "function")
+      cb = args.pop();
+    cb = cb || function() {
+    };
+    if (!this.cache[this.locale])
+      this._readLocaleFile();
+    if (!this.cache[this.locale][str] && this.updateFiles) {
+      this.cache[this.locale][str] = str;
+      this._enqueueWrite({
+        directory: this.directory,
+        locale: this.locale,
+        cb
+      });
+    } else {
+      cb();
+    }
+    return shim.format.apply(shim.format, [this.cache[this.locale][str] || str].concat(args));
+  }
+  __n() {
+    const args = Array.prototype.slice.call(arguments);
+    const singular = args.shift();
+    const plural = args.shift();
+    const quantity = args.shift();
+    let cb = function() {
+    };
+    if (typeof args[args.length - 1] === "function")
+      cb = args.pop();
+    if (!this.cache[this.locale])
+      this._readLocaleFile();
+    let str = quantity === 1 ? singular : plural;
+    if (this.cache[this.locale][singular]) {
+      const entry = this.cache[this.locale][singular];
+      str = entry[quantity === 1 ? "one" : "other"];
+    }
+    if (!this.cache[this.locale][singular] && this.updateFiles) {
+      this.cache[this.locale][singular] = {
+        one: singular,
+        other: plural
+      };
+      this._enqueueWrite({
+        directory: this.directory,
+        locale: this.locale,
+        cb
+      });
+    } else {
+      cb();
+    }
+    const values = [str];
+    if (~str.indexOf("%d"))
+      values.push(quantity);
+    return shim.format.apply(shim.format, values.concat(args));
+  }
+  setLocale(locale) {
+    this.locale = locale;
+  }
+  getLocale() {
+    return this.locale;
+  }
+  updateLocale(obj) {
+    if (!this.cache[this.locale])
+      this._readLocaleFile();
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        this.cache[this.locale][key] = obj[key];
+      }
+    }
+  }
+  _taggedLiteral(parts, ...args) {
+    let str = "";
+    parts.forEach(function(part, i2) {
+      const arg = args[i2 + 1];
+      str += part;
+      if (typeof arg !== "undefined") {
+        str += "%s";
+      }
+    });
+    return this.__.apply(this, [str].concat([].slice.call(args, 1)));
+  }
+  _enqueueWrite(work) {
+    this.writeQueue.push(work);
+    if (this.writeQueue.length === 1)
+      this._processWriteQueue();
+  }
+  _processWriteQueue() {
+    const _this = this;
+    const work = this.writeQueue[0];
+    const directory = work.directory;
+    const locale = work.locale;
+    const cb = work.cb;
+    const languageFile = this._resolveLocaleFile(directory, locale);
+    const serializedLocale = JSON.stringify(this.cache[locale], null, 2);
+    shim.fs.writeFile(languageFile, serializedLocale, "utf-8", function(err) {
+      _this.writeQueue.shift();
+      if (_this.writeQueue.length > 0)
+        _this._processWriteQueue();
+      cb(err);
+    });
+  }
+  _readLocaleFile() {
+    let localeLookup = {};
+    const languageFile = this._resolveLocaleFile(this.directory, this.locale);
+    try {
+      if (shim.fs.readFileSync) {
+        localeLookup = JSON.parse(shim.fs.readFileSync(languageFile, "utf-8"));
+      }
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        err.message = "syntax error in " + languageFile;
+      }
+      if (err.code === "ENOENT")
+        localeLookup = {};
+      else
+        throw err;
+    }
+    this.cache[this.locale] = localeLookup;
+  }
+  _resolveLocaleFile(directory, locale) {
+    let file = shim.resolve(directory, "./", locale + ".json");
+    if (this.fallbackToLanguage && !this._fileExistsSync(file) && ~locale.lastIndexOf("_")) {
+      const languageFile = shim.resolve(directory, "./", locale.split("_")[0] + ".json");
+      if (this._fileExistsSync(languageFile))
+        file = languageFile;
+    }
+    return file;
+  }
+  _fileExistsSync(file) {
+    return shim.exists(file);
+  }
+};
+function y18n(opts, _shim) {
+  shim = _shim;
+  const y18n3 = new Y18N(opts);
+  return {
+    __: y18n3.__.bind(y18n3),
+    __n: y18n3.__n.bind(y18n3),
+    setLocale: y18n3.setLocale.bind(y18n3),
+    getLocale: y18n3.getLocale.bind(y18n3),
+    updateLocale: y18n3.updateLocale.bind(y18n3),
+    locale: y18n3.locale
+  };
+}
+
+// node_modules/y18n/index.mjs
+var y18n2 = (opts) => {
+  return y18n(opts, node_default);
+};
+var y18n_default = y18n2;
+
+// node_modules/yargs/lib/platform-shims/esm.mjs
+var import_get_caller_file = __toESM(require_get_caller_file(), 1);
+import { createRequire as createRequire2 } from "node:module";
+import { readFileSync as readFileSync4, readdirSync as readdirSync2 } from "node:fs";
+var __dirname = fileURLToPath(import.meta.url);
+var mainFilename = __dirname.substring(0, __dirname.lastIndexOf("node_modules"));
+var require3 = createRequire2(import.meta.url);
+var esm_default = {
+  assert: {
+    notStrictEqual,
+    strictEqual
+  },
+  cliui: ui,
+  findUp: sync_default,
+  getEnv: (key) => {
+    return process.env[key];
+  },
+  inspect,
+  getProcessArgvBin,
+  mainFilename: mainFilename || process.cwd(),
+  Parser: lib_default,
+  path: {
+    basename: basename2,
+    dirname: dirname2,
+    extname,
+    relative,
+    resolve: resolve5,
+    join
+  },
+  process: {
+    argv: () => process.argv,
+    cwd: process.cwd,
+    emitWarning: (warning, type) => process.emitWarning(warning, type),
+    execPath: () => process.execPath,
+    exit: (code) => {
+      process.exit(code);
+    },
+    nextTick: process.nextTick,
+    stdColumns: typeof process.stdout.columns !== "undefined" ? process.stdout.columns : null
+  },
+  readFileSync: readFileSync4,
+  readdirSync: readdirSync2,
+  require: require3,
+  getCallerFile: () => {
+    const callerFile = (0, import_get_caller_file.default)(3);
+    return callerFile.match(/^file:\/\//) ? fileURLToPath(callerFile) : callerFile;
+  },
+  stringWidth,
+  y18n: y18n_default({
+    directory: resolve5(__dirname, "../../../locales"),
+    updateFiles: false
+  })
+};
+
+// node_modules/yargs/build/lib/typings/common-types.js
+function assertNotStrictEqual(actual, expected, shim3, message) {
+  shim3.assert.notStrictEqual(actual, expected, message);
+}
+function assertSingleKey(actual, shim3) {
+  shim3.assert.strictEqual(typeof actual, "string");
+}
+function objectKeys(object) {
+  return Object.keys(object);
+}
+
+// node_modules/yargs/build/lib/utils/is-promise.js
+function isPromise(maybePromise) {
+  return !!maybePromise && !!maybePromise.then && typeof maybePromise.then === "function";
+}
+
+// node_modules/yargs/build/lib/yerror.js
+var YError = class _YError extends Error {
+  constructor(msg) {
+    super(msg || "yargs error");
+    this.name = "YError";
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, _YError);
+    }
+  }
+};
+
+// node_modules/yargs/build/lib/parse-command.js
+function parseCommand(cmd) {
+  const extraSpacesStrippedCommand = cmd.replace(/\s{2,}/g, " ");
+  const splitCommand = extraSpacesStrippedCommand.split(/\s+(?![^[]*]|[^<]*>)/);
+  const bregex = /\.*[\][<>]/g;
+  const firstCommand = splitCommand.shift();
+  if (!firstCommand)
+    throw new Error(`No command found in: ${cmd}`);
+  const parsedCommand = {
+    cmd: firstCommand.replace(bregex, ""),
+    demanded: [],
+    optional: []
+  };
+  splitCommand.forEach((cmd2, i2) => {
+    let variadic = false;
+    cmd2 = cmd2.replace(/\s/g, "");
+    if (/\.+[\]>]/.test(cmd2) && i2 === splitCommand.length - 1)
+      variadic = true;
+    if (/^\[/.test(cmd2)) {
+      parsedCommand.optional.push({
+        cmd: cmd2.replace(bregex, "").split("|"),
+        variadic
+      });
+    } else {
+      parsedCommand.demanded.push({
+        cmd: cmd2.replace(bregex, "").split("|"),
+        variadic
+      });
+    }
+  });
+  return parsedCommand;
+}
+
+// node_modules/yargs/build/lib/argsert.js
+var positionName = ["first", "second", "third", "fourth", "fifth", "sixth"];
+function argsert(arg1, arg2, arg3) {
+  function parseArgs() {
+    return typeof arg1 === "object" ? [{ demanded: [], optional: [] }, arg1, arg2] : [
+      parseCommand(`cmd ${arg1}`),
+      arg2,
+      arg3
+    ];
+  }
+  try {
+    let position = 0;
+    const [parsed, callerArguments, _length] = parseArgs();
+    const args = [].slice.call(callerArguments);
+    while (args.length && args[args.length - 1] === void 0)
+      args.pop();
+    const length = _length || args.length;
+    if (length < parsed.demanded.length) {
+      throw new YError(`Not enough arguments provided. Expected ${parsed.demanded.length} but received ${args.length}.`);
+    }
+    const totalCommands = parsed.demanded.length + parsed.optional.length;
+    if (length > totalCommands) {
+      throw new YError(`Too many arguments provided. Expected max ${totalCommands} but received ${length}.`);
+    }
+    parsed.demanded.forEach((demanded) => {
+      const arg = args.shift();
+      const observedType = guessType(arg);
+      const matchingTypes = demanded.cmd.filter((type) => type === observedType || type === "*");
+      if (matchingTypes.length === 0)
+        argumentTypeError(observedType, demanded.cmd, position);
+      position += 1;
+    });
+    parsed.optional.forEach((optional) => {
+      if (args.length === 0)
+        return;
+      const arg = args.shift();
+      const observedType = guessType(arg);
+      const matchingTypes = optional.cmd.filter((type) => type === observedType || type === "*");
+      if (matchingTypes.length === 0)
+        argumentTypeError(observedType, optional.cmd, position);
+      position += 1;
+    });
+  } catch (err) {
+    console.warn(err.stack);
+  }
+}
+function guessType(arg) {
+  if (Array.isArray(arg)) {
+    return "array";
+  } else if (arg === null) {
+    return "null";
+  }
+  return typeof arg;
+}
+function argumentTypeError(observedType, allowedTypes, position) {
+  throw new YError(`Invalid ${positionName[position] || "manyith"} argument. Expected ${allowedTypes.join(" or ")} but received ${observedType}.`);
+}
+
+// node_modules/yargs/build/lib/middleware.js
+var GlobalMiddleware = class {
+  constructor(yargs) {
+    this.globalMiddleware = [];
+    this.frozens = [];
+    this.yargs = yargs;
+  }
+  addMiddleware(callback, applyBeforeValidation, global2 = true, mutates = false) {
+    argsert("<array|function> [boolean] [boolean] [boolean]", [callback, applyBeforeValidation, global2], arguments.length);
+    if (Array.isArray(callback)) {
+      for (let i2 = 0; i2 < callback.length; i2++) {
+        if (typeof callback[i2] !== "function") {
+          throw Error("middleware must be a function");
+        }
+        const m2 = callback[i2];
+        m2.applyBeforeValidation = applyBeforeValidation;
+        m2.global = global2;
+      }
+      Array.prototype.push.apply(this.globalMiddleware, callback);
+    } else if (typeof callback === "function") {
+      const m2 = callback;
+      m2.applyBeforeValidation = applyBeforeValidation;
+      m2.global = global2;
+      m2.mutates = mutates;
+      this.globalMiddleware.push(callback);
+    }
+    return this.yargs;
+  }
+  addCoerceMiddleware(callback, option) {
+    const aliases = this.yargs.getAliases();
+    this.globalMiddleware = this.globalMiddleware.filter((m2) => {
+      const toCheck = [...aliases[option] || [], option];
+      if (!m2.option)
+        return true;
+      else
+        return !toCheck.includes(m2.option);
+    });
+    callback.option = option;
+    return this.addMiddleware(callback, true, true, true);
+  }
+  getMiddleware() {
+    return this.globalMiddleware;
+  }
+  freeze() {
+    this.frozens.push([...this.globalMiddleware]);
+  }
+  unfreeze() {
+    const frozen = this.frozens.pop();
+    if (frozen !== void 0)
+      this.globalMiddleware = frozen;
+  }
+  reset() {
+    this.globalMiddleware = this.globalMiddleware.filter((m2) => m2.global);
+  }
+};
+function commandMiddlewareFactory(commandMiddleware) {
+  if (!commandMiddleware)
+    return [];
+  return commandMiddleware.map((middleware) => {
+    middleware.applyBeforeValidation = false;
+    return middleware;
+  });
+}
+function applyMiddleware(argv2, yargs, middlewares, beforeValidation) {
+  return middlewares.reduce((acc, middleware) => {
+    if (middleware.applyBeforeValidation !== beforeValidation) {
+      return acc;
+    }
+    if (middleware.mutates) {
+      if (middleware.applied)
+        return acc;
+      middleware.applied = true;
+    }
+    if (isPromise(acc)) {
+      return acc.then((initialObj) => Promise.all([initialObj, middleware(initialObj, yargs)])).then(([initialObj, middlewareObj]) => Object.assign(initialObj, middlewareObj));
+    } else {
+      const result = middleware(acc, yargs);
+      return isPromise(result) ? result.then((middlewareObj) => Object.assign(acc, middlewareObj)) : Object.assign(acc, result);
+    }
+  }, argv2);
+}
+
+// node_modules/yargs/build/lib/utils/maybe-async-result.js
+function maybeAsyncResult(getResult, resultHandler, errorHandler = (err) => {
+  throw err;
+}) {
+  try {
+    const result = isFunction(getResult) ? getResult() : getResult;
+    return isPromise(result) ? result.then((result2) => resultHandler(result2)) : resultHandler(result);
+  } catch (err) {
+    return errorHandler(err);
+  }
+}
+function isFunction(arg) {
+  return typeof arg === "function";
+}
+
+// node_modules/yargs/build/lib/command.js
+var DEFAULT_MARKER = /(^\*)|(^\$0)/;
+var CommandInstance = class {
+  constructor(usage2, validation2, globalMiddleware, shim3) {
+    this.requireCache = /* @__PURE__ */ new Set();
+    this.handlers = {};
+    this.aliasMap = {};
+    this.frozens = [];
+    this.shim = shim3;
+    this.usage = usage2;
+    this.globalMiddleware = globalMiddleware;
+    this.validation = validation2;
+  }
+  addDirectory(dir, req, callerFile, opts) {
+    opts = opts || {};
+    this.requireCache.add(callerFile);
+    const fullDirPath = this.shim.path.resolve(this.shim.path.dirname(callerFile), dir);
+    const files = this.shim.readdirSync(fullDirPath, {
+      recursive: opts.recurse ? true : false
+    });
+    if (!Array.isArray(opts.extensions))
+      opts.extensions = ["js"];
+    const visit = typeof opts.visit === "function" ? opts.visit : (o) => o;
+    for (const fileb of files) {
+      const file = fileb.toString();
+      if (opts.exclude) {
+        let exclude = false;
+        if (typeof opts.exclude === "function") {
+          exclude = opts.exclude(file);
+        } else {
+          exclude = opts.exclude.test(file);
+        }
+        if (exclude)
+          continue;
+      }
+      if (opts.include) {
+        let include = false;
+        if (typeof opts.include === "function") {
+          include = opts.include(file);
+        } else {
+          include = opts.include.test(file);
+        }
+        if (!include)
+          continue;
+      }
+      let supportedExtension = false;
+      for (const ext of opts.extensions) {
+        if (file.endsWith(ext))
+          supportedExtension = true;
+      }
+      if (supportedExtension) {
+        const joined = this.shim.path.join(fullDirPath, file);
+        const module = req(joined);
+        const extendableModule = Object.create(null, Object.getOwnPropertyDescriptors({ ...module }));
+        const visited = visit(extendableModule, joined, file);
+        if (visited) {
+          if (this.requireCache.has(joined))
+            continue;
+          else
+            this.requireCache.add(joined);
+          if (!extendableModule.command) {
+            extendableModule.command = this.shim.path.basename(joined, this.shim.path.extname(joined));
+          }
+          this.addHandler(extendableModule);
+        }
+      }
+    }
+  }
+  addHandler(cmd, description, builder, handler, commandMiddleware, deprecated) {
+    let aliases = [];
+    const middlewares = commandMiddlewareFactory(commandMiddleware);
+    handler = handler || (() => {
+    });
+    if (Array.isArray(cmd)) {
+      if (isCommandAndAliases(cmd)) {
+        [cmd, ...aliases] = cmd;
+      } else {
+        for (const command2 of cmd) {
+          this.addHandler(command2);
+        }
+      }
+    } else if (isCommandHandlerDefinition(cmd)) {
+      let command2 = Array.isArray(cmd.command) || typeof cmd.command === "string" ? cmd.command : null;
+      if (command2 === null) {
+        throw new Error(`No command name given for module: ${this.shim.inspect(cmd)}`);
+      }
+      if (cmd.aliases)
+        command2 = [].concat(command2).concat(cmd.aliases);
+      this.addHandler(command2, this.extractDesc(cmd), cmd.builder, cmd.handler, cmd.middlewares, cmd.deprecated);
+      return;
+    } else if (isCommandBuilderDefinition(builder)) {
+      this.addHandler([cmd].concat(aliases), description, builder.builder, builder.handler, builder.middlewares, builder.deprecated);
+      return;
+    }
+    if (typeof cmd === "string") {
+      const parsedCommand = parseCommand(cmd);
+      aliases = aliases.map((alias) => parseCommand(alias).cmd);
+      let isDefault = false;
+      const parsedAliases = [parsedCommand.cmd].concat(aliases).filter((c) => {
+        if (DEFAULT_MARKER.test(c)) {
+          isDefault = true;
+          return false;
+        }
+        return true;
+      });
+      if (parsedAliases.length === 0 && isDefault)
+        parsedAliases.push("$0");
+      if (isDefault) {
+        parsedCommand.cmd = parsedAliases[0];
+        aliases = parsedAliases.slice(1);
+        cmd = cmd.replace(DEFAULT_MARKER, parsedCommand.cmd);
+      }
+      aliases.forEach((alias) => {
+        this.aliasMap[alias] = parsedCommand.cmd;
+      });
+      if (description !== false) {
+        this.usage.command(cmd, description, isDefault, aliases, deprecated);
+      }
+      this.handlers[parsedCommand.cmd] = {
+        original: cmd,
+        description,
+        handler,
+        builder: builder || {},
+        middlewares,
+        deprecated,
+        demanded: parsedCommand.demanded,
+        optional: parsedCommand.optional
+      };
+      if (isDefault)
+        this.defaultCommand = this.handlers[parsedCommand.cmd];
+    }
+  }
+  getCommandHandlers() {
+    return this.handlers;
+  }
+  getCommands() {
+    return Object.keys(this.handlers).concat(Object.keys(this.aliasMap));
+  }
+  hasDefaultCommand() {
+    return !!this.defaultCommand;
+  }
+  runCommand(command2, yargs, parsed, commandIndex, helpOnly, helpOrVersionSet) {
+    const commandHandler = this.handlers[command2] || this.handlers[this.aliasMap[command2]] || this.defaultCommand;
+    const currentContext = yargs.getInternalMethods().getContext();
+    const parentCommands = currentContext.commands.slice();
+    const isDefaultCommand = !command2;
+    if (command2) {
+      currentContext.commands.push(command2);
+      currentContext.fullCommands.push(commandHandler.original);
+    }
+    const builderResult = this.applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs, parsed.aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet);
+    return isPromise(builderResult) ? builderResult.then((result) => this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, result.innerArgv, currentContext, helpOnly, result.aliases, yargs)) : this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, builderResult.innerArgv, currentContext, helpOnly, builderResult.aliases, yargs);
+  }
+  applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs, aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet) {
+    const builder = commandHandler.builder;
+    let innerYargs = yargs;
+    if (isCommandBuilderCallback(builder)) {
+      yargs.getInternalMethods().getUsageInstance().freeze();
+      const builderOutput = builder(yargs.getInternalMethods().reset(aliases), helpOrVersionSet);
+      if (isPromise(builderOutput)) {
+        return builderOutput.then((output) => {
+          innerYargs = isYargsInstance(output) ? output : yargs;
+          return this.parseAndUpdateUsage(isDefaultCommand, commandHandler, innerYargs, parentCommands, commandIndex, helpOnly);
+        });
+      }
+    } else if (isCommandBuilderOptionDefinitions(builder)) {
+      yargs.getInternalMethods().getUsageInstance().freeze();
+      innerYargs = yargs.getInternalMethods().reset(aliases);
+      Object.keys(commandHandler.builder).forEach((key) => {
+        innerYargs.option(key, builder[key]);
+      });
+    }
+    return this.parseAndUpdateUsage(isDefaultCommand, commandHandler, innerYargs, parentCommands, commandIndex, helpOnly);
+  }
+  parseAndUpdateUsage(isDefaultCommand, commandHandler, innerYargs, parentCommands, commandIndex, helpOnly) {
+    if (isDefaultCommand)
+      innerYargs.getInternalMethods().getUsageInstance().unfreeze(true);
+    if (this.shouldUpdateUsage(innerYargs)) {
+      innerYargs.getInternalMethods().getUsageInstance().usage(this.usageFromParentCommandsCommandHandler(parentCommands, commandHandler), commandHandler.description);
+    }
+    const innerArgv = innerYargs.getInternalMethods().runYargsParserAndExecuteCommands(null, void 0, true, commandIndex, helpOnly);
+    return isPromise(innerArgv) ? innerArgv.then((argv2) => ({
+      aliases: innerYargs.parsed.aliases,
+      innerArgv: argv2
+    })) : {
+      aliases: innerYargs.parsed.aliases,
+      innerArgv
+    };
+  }
+  shouldUpdateUsage(yargs) {
+    return !yargs.getInternalMethods().getUsageInstance().getUsageDisabled() && yargs.getInternalMethods().getUsageInstance().getUsage().length === 0;
+  }
+  usageFromParentCommandsCommandHandler(parentCommands, commandHandler) {
+    const c = DEFAULT_MARKER.test(commandHandler.original) ? commandHandler.original.replace(DEFAULT_MARKER, "").trim() : commandHandler.original;
+    const pc = parentCommands.filter((c2) => {
+      return !DEFAULT_MARKER.test(c2);
+    });
+    pc.push(c);
+    return `$0 ${pc.join(" ")}`;
+  }
+  handleValidationAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, aliases, yargs, middlewares, positionalMap) {
+    if (!yargs.getInternalMethods().getHasOutput()) {
+      const validation2 = yargs.getInternalMethods().runValidation(aliases, positionalMap, yargs.parsed.error, isDefaultCommand);
+      innerArgv = maybeAsyncResult(innerArgv, (result) => {
+        validation2(result);
+        return result;
+      });
+    }
+    if (commandHandler.handler && !yargs.getInternalMethods().getHasOutput()) {
+      yargs.getInternalMethods().setHasOutput();
+      const populateDoubleDash = !!yargs.getOptions().configuration["populate--"];
+      yargs.getInternalMethods().postProcess(innerArgv, populateDoubleDash, false, false);
+      innerArgv = applyMiddleware(innerArgv, yargs, middlewares, false);
+      innerArgv = maybeAsyncResult(innerArgv, (result) => {
+        const handlerResult = commandHandler.handler(result);
+        return isPromise(handlerResult) ? handlerResult.then(() => result) : result;
+      });
+      if (!isDefaultCommand) {
+        yargs.getInternalMethods().getUsageInstance().cacheHelpMessage();
+      }
+      if (isPromise(innerArgv) && !yargs.getInternalMethods().hasParseCallback()) {
+        innerArgv.catch((error) => {
+          try {
+            yargs.getInternalMethods().getUsageInstance().fail(null, error);
+          } catch (_err) {
+          }
+        });
+      }
+    }
+    if (!isDefaultCommand) {
+      currentContext.commands.pop();
+      currentContext.fullCommands.pop();
+    }
+    return innerArgv;
+  }
+  applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, helpOnly, aliases, yargs) {
+    let positionalMap = {};
+    if (helpOnly)
+      return innerArgv;
+    if (!yargs.getInternalMethods().getHasOutput()) {
+      positionalMap = this.populatePositionals(commandHandler, innerArgv, currentContext, yargs);
+    }
+    const middlewares = this.globalMiddleware.getMiddleware().slice(0).concat(commandHandler.middlewares);
+    const maybePromiseArgv = applyMiddleware(innerArgv, yargs, middlewares, true);
+    return isPromise(maybePromiseArgv) ? maybePromiseArgv.then((resolvedInnerArgv) => this.handleValidationAndGetResult(isDefaultCommand, commandHandler, resolvedInnerArgv, currentContext, aliases, yargs, middlewares, positionalMap)) : this.handleValidationAndGetResult(isDefaultCommand, commandHandler, maybePromiseArgv, currentContext, aliases, yargs, middlewares, positionalMap);
+  }
+  populatePositionals(commandHandler, argv2, context, yargs) {
+    argv2._ = argv2._.slice(context.commands.length);
+    const demanded = commandHandler.demanded.slice(0);
+    const optional = commandHandler.optional.slice(0);
+    const positionalMap = {};
+    this.validation.positionalCount(demanded.length, argv2._.length);
+    while (demanded.length) {
+      const demand = demanded.shift();
+      this.populatePositional(demand, argv2, positionalMap);
+    }
+    while (optional.length) {
+      const maybe = optional.shift();
+      this.populatePositional(maybe, argv2, positionalMap);
+    }
+    argv2._ = context.commands.concat(argv2._.map((a) => "" + a));
+    this.postProcessPositionals(argv2, positionalMap, this.cmdToParseOptions(commandHandler.original), yargs);
+    return positionalMap;
+  }
+  populatePositional(positional, argv2, positionalMap) {
+    const cmd = positional.cmd[0];
+    if (positional.variadic) {
+      positionalMap[cmd] = argv2._.splice(0).map(String);
+    } else {
+      if (argv2._.length)
+        positionalMap[cmd] = [String(argv2._.shift())];
+    }
+  }
+  cmdToParseOptions(cmdString) {
+    const parseOptions = {
+      array: [],
+      default: {},
+      alias: {},
+      demand: {}
+    };
+    const parsed = parseCommand(cmdString);
+    parsed.demanded.forEach((d) => {
+      const [cmd, ...aliases] = d.cmd;
+      if (d.variadic) {
+        parseOptions.array.push(cmd);
+        parseOptions.default[cmd] = [];
+      }
+      parseOptions.alias[cmd] = aliases;
+      parseOptions.demand[cmd] = true;
+    });
+    parsed.optional.forEach((o) => {
+      const [cmd, ...aliases] = o.cmd;
+      if (o.variadic) {
+        parseOptions.array.push(cmd);
+        parseOptions.default[cmd] = [];
+      }
+      parseOptions.alias[cmd] = aliases;
+    });
+    return parseOptions;
+  }
+  postProcessPositionals(argv2, positionalMap, parseOptions, yargs) {
+    const options2 = Object.assign({}, yargs.getOptions());
+    options2.default = Object.assign(parseOptions.default, options2.default);
+    for (const key of Object.keys(parseOptions.alias)) {
+      options2.alias[key] = (options2.alias[key] || []).concat(parseOptions.alias[key]);
+    }
+    options2.array = options2.array.concat(parseOptions.array);
+    options2.config = {};
+    const unparsed = [];
+    Object.keys(positionalMap).forEach((key) => {
+      positionalMap[key].map((value) => {
+        if (options2.configuration["unknown-options-as-args"])
+          options2.key[key] = true;
+        unparsed.push(`--${key}`);
+        unparsed.push(value);
+      });
+    });
+    if (!unparsed.length)
+      return;
+    const config2 = Object.assign({}, options2.configuration, {
+      "populate--": false
+    });
+    const parsed = this.shim.Parser.detailed(unparsed, Object.assign({}, options2, {
+      configuration: config2
+    }));
+    if (parsed.error) {
+      yargs.getInternalMethods().getUsageInstance().fail(parsed.error.message, parsed.error);
+    } else {
+      const positionalKeys = Object.keys(positionalMap);
+      Object.keys(positionalMap).forEach((key) => {
+        positionalKeys.push(...parsed.aliases[key]);
+      });
+      Object.keys(parsed.argv).forEach((key) => {
+        if (positionalKeys.includes(key)) {
+          if (!positionalMap[key])
+            positionalMap[key] = parsed.argv[key];
+          if (!this.isInConfigs(yargs, key) && !this.isDefaulted(yargs, key) && Object.prototype.hasOwnProperty.call(argv2, key) && Object.prototype.hasOwnProperty.call(parsed.argv, key) && (Array.isArray(argv2[key]) || Array.isArray(parsed.argv[key]))) {
+            argv2[key] = [].concat(argv2[key], parsed.argv[key]);
+          } else {
+            argv2[key] = parsed.argv[key];
+          }
+        }
+      });
+    }
+  }
+  isDefaulted(yargs, key) {
+    const { default: defaults } = yargs.getOptions();
+    return Object.prototype.hasOwnProperty.call(defaults, key) || Object.prototype.hasOwnProperty.call(defaults, this.shim.Parser.camelCase(key));
+  }
+  isInConfigs(yargs, key) {
+    const { configObjects } = yargs.getOptions();
+    return configObjects.some((c) => Object.prototype.hasOwnProperty.call(c, key)) || configObjects.some((c) => Object.prototype.hasOwnProperty.call(c, this.shim.Parser.camelCase(key)));
+  }
+  runDefaultBuilderOn(yargs) {
+    if (!this.defaultCommand)
+      return;
+    if (this.shouldUpdateUsage(yargs)) {
+      const commandString = DEFAULT_MARKER.test(this.defaultCommand.original) ? this.defaultCommand.original : this.defaultCommand.original.replace(/^[^[\]<>]*/, "$0 ");
+      yargs.getInternalMethods().getUsageInstance().usage(commandString, this.defaultCommand.description);
+    }
+    const builder = this.defaultCommand.builder;
+    if (isCommandBuilderCallback(builder)) {
+      return builder(yargs, true);
+    } else if (!isCommandBuilderDefinition(builder)) {
+      Object.keys(builder).forEach((key) => {
+        yargs.option(key, builder[key]);
+      });
+    }
+    return void 0;
+  }
+  extractDesc({ describe, description, desc }) {
+    for (const test of [describe, description, desc]) {
+      if (typeof test === "string" || test === false)
+        return test;
+      assertNotStrictEqual(test, true, this.shim);
+    }
+    return false;
+  }
+  freeze() {
+    this.frozens.push({
+      handlers: this.handlers,
+      aliasMap: this.aliasMap,
+      defaultCommand: this.defaultCommand
+    });
+  }
+  unfreeze() {
+    const frozen = this.frozens.pop();
+    assertNotStrictEqual(frozen, void 0, this.shim);
+    ({
+      handlers: this.handlers,
+      aliasMap: this.aliasMap,
+      defaultCommand: this.defaultCommand
+    } = frozen);
+  }
+  reset() {
+    this.handlers = {};
+    this.aliasMap = {};
+    this.defaultCommand = void 0;
+    this.requireCache = /* @__PURE__ */ new Set();
+    return this;
+  }
+};
+function command(usage2, validation2, globalMiddleware, shim3) {
+  return new CommandInstance(usage2, validation2, globalMiddleware, shim3);
+}
+function isCommandBuilderDefinition(builder) {
+  return typeof builder === "object" && !!builder.builder && typeof builder.handler === "function";
+}
+function isCommandAndAliases(cmd) {
+  return cmd.every((c) => typeof c === "string");
+}
+function isCommandBuilderCallback(builder) {
+  return typeof builder === "function";
+}
+function isCommandBuilderOptionDefinitions(builder) {
+  return typeof builder === "object";
+}
+function isCommandHandlerDefinition(cmd) {
+  return typeof cmd === "object" && !Array.isArray(cmd);
+}
+
+// node_modules/yargs/build/lib/utils/obj-filter.js
+function objFilter(original = {}, filter = () => true) {
+  const obj = {};
+  objectKeys(original).forEach((key) => {
+    if (filter(key, original[key])) {
+      obj[key] = original[key];
+    }
+  });
+  return obj;
+}
+
+// node_modules/yargs/build/lib/utils/set-blocking.js
+function setBlocking(blocking) {
+  if (typeof process === "undefined")
+    return;
+  [process.stdout, process.stderr].forEach((_stream) => {
+    const stream = _stream;
+    if (stream._handle && stream.isTTY && typeof stream._handle.setBlocking === "function") {
+      stream._handle.setBlocking(blocking);
+    }
+  });
+}
+
+// node_modules/yargs/build/lib/usage.js
+function isBoolean(fail) {
+  return typeof fail === "boolean";
+}
+function usage(yargs, shim3) {
+  const __ = shim3.y18n.__;
+  const self2 = {};
+  const fails = [];
+  self2.failFn = function failFn(f3) {
+    fails.push(f3);
+  };
+  let failMessage = null;
+  let globalFailMessage = null;
+  let showHelpOnFail = true;
+  self2.showHelpOnFail = function showHelpOnFailFn(arg1 = true, arg2) {
+    const [enabled, message] = typeof arg1 === "string" ? [true, arg1] : [arg1, arg2];
+    if (yargs.getInternalMethods().isGlobalContext()) {
+      globalFailMessage = message;
+    }
+    failMessage = message;
+    showHelpOnFail = enabled;
+    return self2;
+  };
+  let failureOutput = false;
+  self2.fail = function fail(msg, err) {
+    const logger = yargs.getInternalMethods().getLoggerInstance();
+    if (fails.length) {
+      for (let i2 = fails.length - 1; i2 >= 0; --i2) {
+        const fail2 = fails[i2];
+        if (isBoolean(fail2)) {
+          if (err)
+            throw err;
+          else if (msg)
+            throw Error(msg);
+        } else {
+          fail2(msg, err, self2);
+        }
+      }
+    } else {
+      if (yargs.getExitProcess())
+        setBlocking(true);
+      if (!failureOutput) {
+        failureOutput = true;
+        if (showHelpOnFail) {
+          yargs.showHelp("error");
+          logger.error();
+        }
+        if (msg || err)
+          logger.error(msg || err);
+        const globalOrCommandFailMessage = failMessage || globalFailMessage;
+        if (globalOrCommandFailMessage) {
+          if (msg || err)
+            logger.error("");
+          logger.error(globalOrCommandFailMessage);
+        }
+      }
+      err = err || new YError(msg);
+      if (yargs.getExitProcess()) {
+        return yargs.exit(1);
+      } else if (yargs.getInternalMethods().hasParseCallback()) {
+        return yargs.exit(1, err);
+      } else {
+        throw err;
+      }
+    }
+  };
+  let usages = [];
+  let usageDisabled = false;
+  self2.usage = (msg, description) => {
+    if (msg === null) {
+      usageDisabled = true;
+      usages = [];
+      return self2;
+    }
+    usageDisabled = false;
+    usages.push([msg, description || ""]);
+    return self2;
+  };
+  self2.getUsage = () => {
+    return usages;
+  };
+  self2.getUsageDisabled = () => {
+    return usageDisabled;
+  };
+  self2.getPositionalGroupName = () => {
+    return __("Positionals:");
+  };
+  let examples = [];
+  self2.example = (cmd, description) => {
+    examples.push([cmd, description || ""]);
+  };
+  let commands = [];
+  self2.command = function command2(cmd, description, isDefault, aliases, deprecated = false) {
+    if (isDefault) {
+      commands = commands.map((cmdArray) => {
+        cmdArray[2] = false;
+        return cmdArray;
+      });
+    }
+    commands.push([cmd, description || "", isDefault, aliases, deprecated]);
+  };
+  self2.getCommands = () => commands;
+  let descriptions = {};
+  self2.describe = function describe(keyOrKeys, desc) {
+    if (Array.isArray(keyOrKeys)) {
+      keyOrKeys.forEach((k) => {
+        self2.describe(k, desc);
+      });
+    } else if (typeof keyOrKeys === "object") {
+      Object.keys(keyOrKeys).forEach((k) => {
+        self2.describe(k, keyOrKeys[k]);
+      });
+    } else {
+      descriptions[keyOrKeys] = desc;
+    }
+  };
+  self2.getDescriptions = () => descriptions;
+  let epilogs = [];
+  self2.epilog = (msg) => {
+    epilogs.push(msg);
+  };
+  let wrapSet = false;
+  let wrap;
+  self2.wrap = (cols) => {
+    wrapSet = true;
+    wrap = cols;
+  };
+  self2.getWrap = () => {
+    if (shim3.getEnv("YARGS_DISABLE_WRAP")) {
+      return null;
+    }
+    if (!wrapSet) {
+      wrap = windowWidth();
+      wrapSet = true;
+    }
+    return wrap;
+  };
+  const deferY18nLookupPrefix = "__yargsString__:";
+  self2.deferY18nLookup = (str) => deferY18nLookupPrefix + str;
+  self2.help = function help() {
+    if (cachedHelpMessage)
+      return cachedHelpMessage;
+    normalizeAliases();
+    const base$0 = yargs.customScriptName ? yargs.$0 : shim3.path.basename(yargs.$0);
+    const demandedOptions = yargs.getDemandedOptions();
+    const demandedCommands = yargs.getDemandedCommands();
+    const deprecatedOptions = yargs.getDeprecatedOptions();
+    const groups = yargs.getGroups();
+    const options2 = yargs.getOptions();
+    let keys = [];
+    keys = keys.concat(Object.keys(descriptions));
+    keys = keys.concat(Object.keys(demandedOptions));
+    keys = keys.concat(Object.keys(demandedCommands));
+    keys = keys.concat(Object.keys(options2.default));
+    keys = keys.filter(filterHiddenOptions);
+    keys = Object.keys(keys.reduce((acc, key) => {
+      if (key !== "_")
+        acc[key] = true;
+      return acc;
+    }, {}));
+    const theWrap = self2.getWrap();
+    const ui2 = shim3.cliui({
+      width: theWrap,
+      wrap: !!theWrap
+    });
+    if (!usageDisabled) {
+      if (usages.length) {
+        usages.forEach((usage2) => {
+          ui2.div({ text: `${usage2[0].replace(/\$0/g, base$0)}` });
+          if (usage2[1]) {
+            ui2.div({ text: `${usage2[1]}`, padding: [1, 0, 0, 0] });
+          }
+        });
+        ui2.div();
+      } else if (commands.length) {
+        let u = null;
+        if (demandedCommands._) {
+          u = `${base$0} <${__("command")}>
+`;
+        } else {
+          u = `${base$0} [${__("command")}]
+`;
+        }
+        ui2.div(`${u}`);
+      }
+    }
+    if (commands.length > 1 || commands.length === 1 && !commands[0][2]) {
+      ui2.div(__("Commands:"));
+      const context = yargs.getInternalMethods().getContext();
+      const parentCommands = context.commands.length ? `${context.commands.join(" ")} ` : "";
+      if (yargs.getInternalMethods().getParserConfiguration()["sort-commands"] === true) {
+        commands = commands.sort((a, b) => a[0].localeCompare(b[0]));
+      }
+      const prefix = base$0 ? `${base$0} ` : "";
+      commands.forEach((command2) => {
+        const commandString = `${prefix}${parentCommands}${command2[0].replace(/^\$0 ?/, "")}`;
+        ui2.span({
+          text: commandString,
+          padding: [0, 2, 0, 2],
+          width: maxWidth(commands, theWrap, `${base$0}${parentCommands}`) + 4
+        }, { text: command2[1] });
+        const hints = [];
+        if (command2[2])
+          hints.push(`[${__("default")}]`);
+        if (command2[3] && command2[3].length) {
+          hints.push(`[${__("aliases:")} ${command2[3].join(", ")}]`);
+        }
+        if (command2[4]) {
+          if (typeof command2[4] === "string") {
+            hints.push(`[${__("deprecated: %s", command2[4])}]`);
+          } else {
+            hints.push(`[${__("deprecated")}]`);
+          }
+        }
+        if (hints.length) {
+          ui2.div({
+            text: hints.join(" "),
+            padding: [0, 0, 0, 2],
+            align: "right"
+          });
+        } else {
+          ui2.div();
+        }
+      });
+      ui2.div();
+    }
+    const aliasKeys = (Object.keys(options2.alias) || []).concat(Object.keys(yargs.parsed.newAliases) || []);
+    keys = keys.filter((key) => !yargs.parsed.newAliases[key] && aliasKeys.every((alias) => (options2.alias[alias] || []).indexOf(key) === -1));
+    const defaultGroup = __("Options:");
+    if (!groups[defaultGroup])
+      groups[defaultGroup] = [];
+    addUngroupedKeys(keys, options2.alias, groups, defaultGroup);
+    const isLongSwitch = (sw) => /^--/.test(getText(sw));
+    const displayedGroups = Object.keys(groups).filter((groupName) => groups[groupName].length > 0).map((groupName) => {
+      const normalizedKeys = groups[groupName].filter(filterHiddenOptions).map((key) => {
+        if (aliasKeys.includes(key))
+          return key;
+        for (let i2 = 0, aliasKey; (aliasKey = aliasKeys[i2]) !== void 0; i2++) {
+          if ((options2.alias[aliasKey] || []).includes(key))
+            return aliasKey;
+        }
+        return key;
+      });
+      return { groupName, normalizedKeys };
+    }).filter(({ normalizedKeys }) => normalizedKeys.length > 0).map(({ groupName, normalizedKeys }) => {
+      const switches = normalizedKeys.reduce((acc, key) => {
+        acc[key] = [key].concat(options2.alias[key] || []).map((sw) => {
+          if (groupName === self2.getPositionalGroupName())
+            return sw;
+          else {
+            return (/^[0-9]$/.test(sw) ? options2.boolean.includes(key) ? "-" : "--" : sw.length > 1 ? "--" : "-") + sw;
+          }
+        }).sort((sw1, sw2) => isLongSwitch(sw1) === isLongSwitch(sw2) ? 0 : isLongSwitch(sw1) ? 1 : -1).join(", ");
+        return acc;
+      }, {});
+      return { groupName, normalizedKeys, switches };
+    });
+    const shortSwitchesUsed = displayedGroups.filter(({ groupName }) => groupName !== self2.getPositionalGroupName()).some(({ normalizedKeys, switches }) => !normalizedKeys.every((key) => isLongSwitch(switches[key])));
+    if (shortSwitchesUsed) {
+      displayedGroups.filter(({ groupName }) => groupName !== self2.getPositionalGroupName()).forEach(({ normalizedKeys, switches }) => {
+        normalizedKeys.forEach((key) => {
+          if (isLongSwitch(switches[key])) {
+            switches[key] = addIndentation(switches[key], "-x, ".length);
+          }
+        });
+      });
+    }
+    displayedGroups.forEach(({ groupName, normalizedKeys, switches }) => {
+      ui2.div(groupName);
+      normalizedKeys.forEach((key) => {
+        const kswitch = switches[key];
+        let desc = descriptions[key] || "";
+        let type = null;
+        if (desc.includes(deferY18nLookupPrefix))
+          desc = __(desc.substring(deferY18nLookupPrefix.length));
+        if (options2.boolean.includes(key))
+          type = `[${__("boolean")}]`;
+        if (options2.count.includes(key))
+          type = `[${__("count")}]`;
+        if (options2.string.includes(key))
+          type = `[${__("string")}]`;
+        if (options2.normalize.includes(key))
+          type = `[${__("string")}]`;
+        if (options2.array.includes(key))
+          type = `[${__("array")}]`;
+        if (options2.number.includes(key))
+          type = `[${__("number")}]`;
+        const deprecatedExtra = (deprecated) => typeof deprecated === "string" ? `[${__("deprecated: %s", deprecated)}]` : `[${__("deprecated")}]`;
+        const extra = [
+          key in deprecatedOptions ? deprecatedExtra(deprecatedOptions[key]) : null,
+          type,
+          key in demandedOptions ? `[${__("required")}]` : null,
+          options2.choices && options2.choices[key] ? `[${__("choices:")} ${self2.stringifiedValues(options2.choices[key])}]` : null,
+          defaultString(options2.default[key], options2.defaultDescription[key])
+        ].filter(Boolean).join(" ");
+        ui2.span({
+          text: getText(kswitch),
+          padding: [0, 2, 0, 2 + getIndentation(kswitch)],
+          width: maxWidth(switches, theWrap) + 4
+        }, desc);
+        const shouldHideOptionExtras = yargs.getInternalMethods().getUsageConfiguration()["hide-types"] === true;
+        if (extra && !shouldHideOptionExtras)
+          ui2.div({ text: extra, padding: [0, 0, 0, 2], align: "right" });
+        else
+          ui2.div();
+      });
+      ui2.div();
+    });
+    if (examples.length) {
+      ui2.div(__("Examples:"));
+      examples.forEach((example) => {
+        example[0] = example[0].replace(/\$0/g, base$0);
+      });
+      examples.forEach((example) => {
+        if (example[1] === "") {
+          ui2.div({
+            text: example[0],
+            padding: [0, 2, 0, 2]
+          });
+        } else {
+          ui2.div({
+            text: example[0],
+            padding: [0, 2, 0, 2],
+            width: maxWidth(examples, theWrap) + 4
+          }, {
+            text: example[1]
+          });
+        }
+      });
+      ui2.div();
+    }
+    if (epilogs.length > 0) {
+      const e2 = epilogs.map((epilog) => epilog.replace(/\$0/g, base$0)).join("\n");
+      ui2.div(`${e2}
+`);
+    }
+    return ui2.toString().replace(/\s*$/, "");
+  };
+  function maxWidth(table, theWrap, modifier) {
+    let width = 0;
+    if (!Array.isArray(table)) {
+      table = Object.values(table).map((v) => [v]);
+    }
+    table.forEach((v) => {
+      width = Math.max(shim3.stringWidth(modifier ? `${modifier} ${getText(v[0])}` : getText(v[0])) + getIndentation(v[0]), width);
+    });
+    if (theWrap)
+      width = Math.min(width, parseInt((theWrap * 0.5).toString(), 10));
+    return width;
+  }
+  function normalizeAliases() {
+    const demandedOptions = yargs.getDemandedOptions();
+    const options2 = yargs.getOptions();
+    (Object.keys(options2.alias) || []).forEach((key) => {
+      options2.alias[key].forEach((alias) => {
+        if (descriptions[alias])
+          self2.describe(key, descriptions[alias]);
+        if (alias in demandedOptions)
+          yargs.demandOption(key, demandedOptions[alias]);
+        if (options2.boolean.includes(alias))
+          yargs.boolean(key);
+        if (options2.count.includes(alias))
+          yargs.count(key);
+        if (options2.string.includes(alias))
+          yargs.string(key);
+        if (options2.normalize.includes(alias))
+          yargs.normalize(key);
+        if (options2.array.includes(alias))
+          yargs.array(key);
+        if (options2.number.includes(alias))
+          yargs.number(key);
+      });
+    });
+  }
+  let cachedHelpMessage;
+  self2.cacheHelpMessage = function() {
+    cachedHelpMessage = this.help();
+  };
+  self2.clearCachedHelpMessage = function() {
+    cachedHelpMessage = void 0;
+  };
+  self2.hasCachedHelpMessage = function() {
+    return !!cachedHelpMessage;
+  };
+  function addUngroupedKeys(keys, aliases, groups, defaultGroup) {
+    let groupedKeys = [];
+    let toCheck = null;
+    Object.keys(groups).forEach((group) => {
+      groupedKeys = groupedKeys.concat(groups[group]);
+    });
+    keys.forEach((key) => {
+      toCheck = [key].concat(aliases[key]);
+      if (!toCheck.some((k) => groupedKeys.indexOf(k) !== -1)) {
+        groups[defaultGroup].push(key);
+      }
+    });
+    return groupedKeys;
+  }
+  function filterHiddenOptions(key) {
+    return yargs.getOptions().hiddenOptions.indexOf(key) < 0 || yargs.parsed.argv[yargs.getOptions().showHiddenOpt];
+  }
+  self2.showHelp = (level) => {
+    const logger = yargs.getInternalMethods().getLoggerInstance();
+    if (!level)
+      level = "error";
+    const emit = typeof level === "function" ? level : logger[level];
+    emit(self2.help());
+  };
+  self2.functionDescription = (fn) => {
+    const description = fn.name ? shim3.Parser.decamelize(fn.name, "-") : __("generated-value");
+    return ["(", description, ")"].join("");
+  };
+  self2.stringifiedValues = function stringifiedValues(values, separator) {
+    let string = "";
+    const sep = separator || ", ";
+    const array = [].concat(values);
+    if (!values || !array.length)
+      return string;
+    array.forEach((value) => {
+      if (string.length)
+        string += sep;
+      string += JSON.stringify(value);
+    });
+    return string;
+  };
+  function defaultString(value, defaultDescription) {
+    let string = `[${__("default:")} `;
+    if (value === void 0 && !defaultDescription)
+      return null;
+    if (defaultDescription) {
+      string += defaultDescription;
+    } else {
+      switch (typeof value) {
+        case "string":
+          string += `"${value}"`;
+          break;
+        case "object":
+          string += JSON.stringify(value);
+          break;
+        default:
+          string += value;
+      }
+    }
+    return `${string}]`;
+  }
+  function windowWidth() {
+    const maxWidth2 = 80;
+    if (shim3.process.stdColumns) {
+      return Math.min(maxWidth2, shim3.process.stdColumns);
+    } else {
+      return maxWidth2;
+    }
+  }
+  let version2 = null;
+  self2.version = (ver) => {
+    version2 = ver;
+  };
+  self2.showVersion = (level) => {
+    const logger = yargs.getInternalMethods().getLoggerInstance();
+    if (!level)
+      level = "error";
+    const emit = typeof level === "function" ? level : logger[level];
+    emit(version2);
+  };
+  self2.reset = function reset(localLookup) {
+    failMessage = null;
+    failureOutput = false;
+    usages = [];
+    usageDisabled = false;
+    epilogs = [];
+    examples = [];
+    commands = [];
+    descriptions = objFilter(descriptions, (k) => !localLookup[k]);
+    return self2;
+  };
+  const frozens = [];
+  self2.freeze = function freeze() {
+    frozens.push({
+      failMessage,
+      failureOutput,
+      usages,
+      usageDisabled,
+      epilogs,
+      examples,
+      commands,
+      descriptions
+    });
+  };
+  self2.unfreeze = function unfreeze(defaultCommand = false) {
+    const frozen = frozens.pop();
+    if (!frozen)
+      return;
+    if (defaultCommand) {
+      descriptions = { ...frozen.descriptions, ...descriptions };
+      commands = [...frozen.commands, ...commands];
+      usages = [...frozen.usages, ...usages];
+      examples = [...frozen.examples, ...examples];
+      epilogs = [...frozen.epilogs, ...epilogs];
+    } else {
+      ({
+        failMessage,
+        failureOutput,
+        usages,
+        usageDisabled,
+        epilogs,
+        examples,
+        commands,
+        descriptions
+      } = frozen);
+    }
+  };
+  return self2;
+}
+function isIndentedText(text) {
+  return typeof text === "object";
+}
+function addIndentation(text, indent) {
+  return isIndentedText(text) ? { text: text.text, indentation: text.indentation + indent } : { text, indentation: indent };
+}
+function getIndentation(text) {
+  return isIndentedText(text) ? text.indentation : 0;
+}
+function getText(text) {
+  return isIndentedText(text) ? text.text : text;
+}
+
+// node_modules/yargs/build/lib/completion-templates.js
+var completionShTemplate = `###-begin-{{app_name}}-completions-###
+#
+# yargs command completion script
+#
+# Installation: {{app_path}} {{completion_command}} >> ~/.bashrc
+#    or {{app_path}} {{completion_command}} >> ~/.bash_profile on OSX.
+#
+_{{app_name}}_yargs_completions()
+{
+    local cur_word args type_list
+
+    cur_word="\${COMP_WORDS[COMP_CWORD]}"
+    args=("\${COMP_WORDS[@]}")
+
+    # ask yargs to generate completions.
+    # see https://stackoverflow.com/a/40944195/7080036 for the spaces-handling awk
+    mapfile -t type_list < <({{app_path}} --get-yargs-completions "\${args[@]}")
+    mapfile -t COMPREPLY < <(compgen -W "$( printf '%q ' "\${type_list[@]}" )" -- "\${cur_word}" |
+        awk '/ / { print "\\""$0"\\"" } /^[^ ]+$/ { print $0 }')
+
+    # if no match was found, fall back to filename completion
+    if [ \${#COMPREPLY[@]} -eq 0 ]; then
+      COMPREPLY=()
+    fi
+
+    return 0
+}
+complete -o bashdefault -o default -F _{{app_name}}_yargs_completions {{app_name}}
+###-end-{{app_name}}-completions-###
+`;
+var completionZshTemplate = `#compdef {{app_name}}
+###-begin-{{app_name}}-completions-###
+#
+# yargs command completion script
+#
+# Installation: {{app_path}} {{completion_command}} >> ~/.zshrc
+#    or {{app_path}} {{completion_command}} >> ~/.zprofile on OSX.
+#
+_{{app_name}}_yargs_completions()
+{
+  local reply
+  local si=$IFS
+  IFS=$'
+' reply=($(COMP_CWORD="$((CURRENT-1))" COMP_LINE="$BUFFER" COMP_POINT="$CURSOR" {{app_path}} --get-yargs-completions "\${words[@]}"))
+  IFS=$si
+  if [[ \${#reply} -gt 0 ]]; then
+    _describe 'values' reply
+  else
+    _default
+  fi
+}
+if [[ "'\${zsh_eval_context[-1]}" == "loadautofunc" ]]; then
+  _{{app_name}}_yargs_completions "$@"
+else
+  compdef _{{app_name}}_yargs_completions {{app_name}}
+fi
+###-end-{{app_name}}-completions-###
+`;
+
+// node_modules/yargs/build/lib/completion.js
+var Completion = class {
+  constructor(yargs, usage2, command2, shim3) {
+    var _a3, _b2, _c2;
+    this.yargs = yargs;
+    this.usage = usage2;
+    this.command = command2;
+    this.shim = shim3;
+    this.completionKey = "get-yargs-completions";
+    this.aliases = null;
+    this.customCompletionFunction = null;
+    this.indexAfterLastReset = 0;
+    this.zshShell = (_c2 = ((_a3 = this.shim.getEnv("SHELL")) === null || _a3 === void 0 ? void 0 : _a3.includes("zsh")) || ((_b2 = this.shim.getEnv("ZSH_NAME")) === null || _b2 === void 0 ? void 0 : _b2.includes("zsh"))) !== null && _c2 !== void 0 ? _c2 : false;
+  }
+  defaultCompletion(args, argv2, current, done) {
+    const handlers = this.command.getCommandHandlers();
+    for (let i2 = 0, ii = args.length; i2 < ii; ++i2) {
+      if (handlers[args[i2]] && handlers[args[i2]].builder) {
+        const builder = handlers[args[i2]].builder;
+        if (isCommandBuilderCallback(builder)) {
+          this.indexAfterLastReset = i2 + 1;
+          const y = this.yargs.getInternalMethods().reset();
+          builder(y, true);
+          return y.argv;
+        }
+      }
+    }
+    const completions = [];
+    this.commandCompletions(completions, args, current);
+    this.optionCompletions(completions, args, argv2, current);
+    this.choicesFromOptionsCompletions(completions, args, argv2, current);
+    this.choicesFromPositionalsCompletions(completions, args, argv2, current);
+    done(null, completions);
+  }
+  commandCompletions(completions, args, current) {
+    const parentCommands = this.yargs.getInternalMethods().getContext().commands;
+    if (!current.match(/^-/) && parentCommands[parentCommands.length - 1] !== current && !this.previousArgHasChoices(args)) {
+      this.usage.getCommands().forEach((usageCommand) => {
+        const commandName = parseCommand(usageCommand[0]).cmd;
+        if (args.indexOf(commandName) === -1) {
+          if (!this.zshShell) {
+            completions.push(commandName);
+          } else {
+            const desc = usageCommand[1] || "";
+            completions.push(commandName.replace(/:/g, "\\:") + ":" + desc);
+          }
+        }
+      });
+    }
+  }
+  optionCompletions(completions, args, argv2, current) {
+    if ((current.match(/^-/) || current === "" && completions.length === 0) && !this.previousArgHasChoices(args)) {
+      const options2 = this.yargs.getOptions();
+      const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
+      Object.keys(options2.key).forEach((key) => {
+        const negable = !!options2.configuration["boolean-negation"] && options2.boolean.includes(key);
+        const isPositionalKey = positionalKeys.includes(key);
+        if (!isPositionalKey && !options2.hiddenOptions.includes(key) && !this.argsContainKey(args, key, negable)) {
+          this.completeOptionKey(key, completions, current, negable && !!options2.default[key]);
+        }
+      });
+    }
+  }
+  choicesFromOptionsCompletions(completions, args, argv2, current) {
+    if (this.previousArgHasChoices(args)) {
+      const choices = this.getPreviousArgChoices(args);
+      if (choices && choices.length > 0) {
+        completions.push(...choices.map((c) => c.replace(/:/g, "\\:")));
+      }
+    }
+  }
+  choicesFromPositionalsCompletions(completions, args, argv2, current) {
+    if (current === "" && completions.length > 0 && this.previousArgHasChoices(args)) {
+      return;
+    }
+    const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
+    const offset = Math.max(this.indexAfterLastReset, this.yargs.getInternalMethods().getContext().commands.length + 1);
+    const positionalKey = positionalKeys[argv2._.length - offset - 1];
+    if (!positionalKey) {
+      return;
+    }
+    const choices = this.yargs.getOptions().choices[positionalKey] || [];
+    for (const choice of choices) {
+      if (choice.startsWith(current)) {
+        completions.push(choice.replace(/:/g, "\\:"));
+      }
+    }
+  }
+  getPreviousArgChoices(args) {
+    if (args.length < 1)
+      return;
+    let previousArg = args[args.length - 1];
+    let filter = "";
+    if (!previousArg.startsWith("-") && args.length > 1) {
+      filter = previousArg;
+      previousArg = args[args.length - 2];
+    }
+    if (!previousArg.startsWith("-"))
+      return;
+    const previousArgKey = previousArg.replace(/^-+/, "");
+    const options2 = this.yargs.getOptions();
+    const possibleAliases = [
+      previousArgKey,
+      ...this.yargs.getAliases()[previousArgKey] || []
+    ];
+    let choices;
+    for (const possibleAlias of possibleAliases) {
+      if (Object.prototype.hasOwnProperty.call(options2.key, possibleAlias) && Array.isArray(options2.choices[possibleAlias])) {
+        choices = options2.choices[possibleAlias];
+        break;
+      }
+    }
+    if (choices) {
+      return choices.filter((choice) => !filter || choice.startsWith(filter));
+    }
+  }
+  previousArgHasChoices(args) {
+    const choices = this.getPreviousArgChoices(args);
+    return choices !== void 0 && choices.length > 0;
+  }
+  argsContainKey(args, key, negable) {
+    const argsContains = (s2) => args.indexOf((/^[^0-9]$/.test(s2) ? "-" : "--") + s2) !== -1;
+    if (argsContains(key))
+      return true;
+    if (negable && argsContains(`no-${key}`))
+      return true;
+    if (this.aliases) {
+      for (const alias of this.aliases[key]) {
+        if (argsContains(alias))
+          return true;
+      }
+    }
+    return false;
+  }
+  completeOptionKey(key, completions, current, negable) {
+    var _a3, _b2, _c2, _d;
+    let keyWithDesc = key;
+    if (this.zshShell) {
+      const descs = this.usage.getDescriptions();
+      const aliasKey = (_b2 = (_a3 = this === null || this === void 0 ? void 0 : this.aliases) === null || _a3 === void 0 ? void 0 : _a3[key]) === null || _b2 === void 0 ? void 0 : _b2.find((alias) => {
+        const desc2 = descs[alias];
+        return typeof desc2 === "string" && desc2.length > 0;
+      });
+      const descFromAlias = aliasKey ? descs[aliasKey] : void 0;
+      const desc = (_d = (_c2 = descs[key]) !== null && _c2 !== void 0 ? _c2 : descFromAlias) !== null && _d !== void 0 ? _d : "";
+      keyWithDesc = `${key.replace(/:/g, "\\:")}:${desc.replace("__yargsString__:", "").replace(/(\r\n|\n|\r)/gm, " ")}`;
+    }
+    const startsByTwoDashes = (s2) => /^--/.test(s2);
+    const isShortOption = (s2) => /^[^0-9]$/.test(s2);
+    const dashes = !startsByTwoDashes(current) && isShortOption(key) ? "-" : "--";
+    completions.push(dashes + keyWithDesc);
+    if (negable) {
+      completions.push(dashes + "no-" + keyWithDesc);
+    }
+  }
+  customCompletion(args, argv2, current, done) {
+    assertNotStrictEqual(this.customCompletionFunction, null, this.shim);
+    if (isSyncCompletionFunction(this.customCompletionFunction)) {
+      const result = this.customCompletionFunction(current, argv2);
+      if (isPromise(result)) {
+        return result.then((list2) => {
+          this.shim.process.nextTick(() => {
+            done(null, list2);
+          });
+        }).catch((err) => {
+          this.shim.process.nextTick(() => {
+            done(err, void 0);
+          });
+        });
+      }
+      return done(null, result);
+    } else if (isFallbackCompletionFunction(this.customCompletionFunction)) {
+      return this.customCompletionFunction(current, argv2, (onCompleted = done) => this.defaultCompletion(args, argv2, current, onCompleted), (completions) => {
+        done(null, completions);
+      });
+    } else {
+      return this.customCompletionFunction(current, argv2, (completions) => {
+        done(null, completions);
+      });
+    }
+  }
+  getCompletion(args, done) {
+    const current = args.length ? args[args.length - 1] : "";
+    const argv2 = this.yargs.parse(args, true);
+    const completionFunction = this.customCompletionFunction ? (argv3) => this.customCompletion(args, argv3, current, done) : (argv3) => this.defaultCompletion(args, argv3, current, done);
+    return isPromise(argv2) ? argv2.then(completionFunction) : completionFunction(argv2);
+  }
+  generateCompletionScript($0, cmd) {
+    let script = this.zshShell ? completionZshTemplate : completionShTemplate;
+    const name = this.shim.path.basename($0);
+    if ($0.match(/\.js$/))
+      $0 = `./${$0}`;
+    script = script.replace(/{{app_name}}/g, name);
+    script = script.replace(/{{completion_command}}/g, cmd);
+    return script.replace(/{{app_path}}/g, $0);
+  }
+  registerFunction(fn) {
+    this.customCompletionFunction = fn;
+  }
+  setParsed(parsed) {
+    this.aliases = parsed.aliases;
+  }
+};
+function completion(yargs, usage2, command2, shim3) {
+  return new Completion(yargs, usage2, command2, shim3);
+}
+function isSyncCompletionFunction(completionFunction) {
+  return completionFunction.length < 3;
+}
+function isFallbackCompletionFunction(completionFunction) {
+  return completionFunction.length > 3;
+}
+
+// node_modules/yargs/build/lib/utils/levenshtein.js
+function levenshtein(a, b) {
+  if (a.length === 0)
+    return b.length;
+  if (b.length === 0)
+    return a.length;
+  const matrix = [];
+  let i2;
+  for (i2 = 0; i2 <= b.length; i2++) {
+    matrix[i2] = [i2];
+  }
+  let j;
+  for (j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (i2 = 1; i2 <= b.length; i2++) {
+    for (j = 1; j <= a.length; j++) {
+      if (b.charAt(i2 - 1) === a.charAt(j - 1)) {
+        matrix[i2][j] = matrix[i2 - 1][j - 1];
+      } else {
+        if (i2 > 1 && j > 1 && b.charAt(i2 - 2) === a.charAt(j - 1) && b.charAt(i2 - 1) === a.charAt(j - 2)) {
+          matrix[i2][j] = matrix[i2 - 2][j - 2] + 1;
+        } else {
+          matrix[i2][j] = Math.min(matrix[i2 - 1][j - 1] + 1, Math.min(matrix[i2][j - 1] + 1, matrix[i2 - 1][j] + 1));
+        }
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+// node_modules/yargs/build/lib/validation.js
+var specialKeys = ["$0", "--", "_"];
+function validation(yargs, usage2, shim3) {
+  const __ = shim3.y18n.__;
+  const __n = shim3.y18n.__n;
+  const self2 = {};
+  self2.nonOptionCount = function nonOptionCount(argv2) {
+    const demandedCommands = yargs.getDemandedCommands();
+    const positionalCount = argv2._.length + (argv2["--"] ? argv2["--"].length : 0);
+    const _s = positionalCount - yargs.getInternalMethods().getContext().commands.length;
+    if (demandedCommands._ && (_s < demandedCommands._.min || _s > demandedCommands._.max)) {
+      if (_s < demandedCommands._.min) {
+        if (demandedCommands._.minMsg !== void 0) {
+          usage2.fail(demandedCommands._.minMsg ? demandedCommands._.minMsg.replace(/\$0/g, _s.toString()).replace(/\$1/, demandedCommands._.min.toString()) : null);
+        } else {
+          usage2.fail(__n("Not enough non-option arguments: got %s, need at least %s", "Not enough non-option arguments: got %s, need at least %s", _s, _s.toString(), demandedCommands._.min.toString()));
+        }
+      } else if (_s > demandedCommands._.max) {
+        if (demandedCommands._.maxMsg !== void 0) {
+          usage2.fail(demandedCommands._.maxMsg ? demandedCommands._.maxMsg.replace(/\$0/g, _s.toString()).replace(/\$1/, demandedCommands._.max.toString()) : null);
+        } else {
+          usage2.fail(__n("Too many non-option arguments: got %s, maximum of %s", "Too many non-option arguments: got %s, maximum of %s", _s, _s.toString(), demandedCommands._.max.toString()));
+        }
+      }
+    }
+  };
+  self2.positionalCount = function positionalCount(required, observed) {
+    if (observed < required) {
+      usage2.fail(__n("Not enough non-option arguments: got %s, need at least %s", "Not enough non-option arguments: got %s, need at least %s", observed, observed + "", required + ""));
+    }
+  };
+  self2.requiredArguments = function requiredArguments(argv2, demandedOptions) {
+    let missing = null;
+    for (const key of Object.keys(demandedOptions)) {
+      if (!Object.prototype.hasOwnProperty.call(argv2, key) || typeof argv2[key] === "undefined") {
+        missing = missing || {};
+        missing[key] = demandedOptions[key];
+      }
+    }
+    if (missing) {
+      const customMsgs = [];
+      for (const key of Object.keys(missing)) {
+        const msg = missing[key];
+        if (msg && customMsgs.indexOf(msg) < 0) {
+          customMsgs.push(msg);
+        }
+      }
+      const customMsg = customMsgs.length ? `
+${customMsgs.join("\n")}` : "";
+      usage2.fail(__n("Missing required argument: %s", "Missing required arguments: %s", Object.keys(missing).length, Object.keys(missing).join(", ") + customMsg));
+    }
+  };
+  self2.unknownArguments = function unknownArguments(argv2, aliases, positionalMap, isDefaultCommand, checkPositionals = true) {
+    var _a3;
+    const commandKeys = yargs.getInternalMethods().getCommandInstance().getCommands();
+    const unknown = [];
+    const currentContext = yargs.getInternalMethods().getContext();
+    Object.keys(argv2).forEach((key) => {
+      if (!specialKeys.includes(key) && !Object.prototype.hasOwnProperty.call(positionalMap, key) && !Object.prototype.hasOwnProperty.call(yargs.getInternalMethods().getParseContext(), key) && !self2.isValidAndSomeAliasIsNotNew(key, aliases)) {
+        unknown.push(key);
+      }
+    });
+    if (checkPositionals && (currentContext.commands.length > 0 || commandKeys.length > 0 || isDefaultCommand)) {
+      argv2._.slice(currentContext.commands.length).forEach((key) => {
+        if (!commandKeys.includes("" + key)) {
+          unknown.push("" + key);
+        }
+      });
+    }
+    if (checkPositionals) {
+      const demandedCommands = yargs.getDemandedCommands();
+      const maxNonOptDemanded = ((_a3 = demandedCommands._) === null || _a3 === void 0 ? void 0 : _a3.max) || 0;
+      const expected = currentContext.commands.length + maxNonOptDemanded;
+      if (expected < argv2._.length) {
+        argv2._.slice(expected).forEach((key) => {
+          key = String(key);
+          if (!currentContext.commands.includes(key) && !unknown.includes(key)) {
+            unknown.push(key);
+          }
+        });
+      }
+    }
+    if (unknown.length) {
+      usage2.fail(__n("Unknown argument: %s", "Unknown arguments: %s", unknown.length, unknown.map((s2) => s2.trim() ? s2 : `"${s2}"`).join(", ")));
+    }
+  };
+  self2.unknownCommands = function unknownCommands(argv2) {
+    const commandKeys = yargs.getInternalMethods().getCommandInstance().getCommands();
+    const unknown = [];
+    const currentContext = yargs.getInternalMethods().getContext();
+    if (currentContext.commands.length > 0 || commandKeys.length > 0) {
+      argv2._.slice(currentContext.commands.length).forEach((key) => {
+        if (!commandKeys.includes("" + key)) {
+          unknown.push("" + key);
+        }
+      });
+    }
+    if (unknown.length > 0) {
+      usage2.fail(__n("Unknown command: %s", "Unknown commands: %s", unknown.length, unknown.join(", ")));
+      return true;
+    } else {
+      return false;
+    }
+  };
+  self2.isValidAndSomeAliasIsNotNew = function isValidAndSomeAliasIsNotNew(key, aliases) {
+    if (!Object.prototype.hasOwnProperty.call(aliases, key)) {
+      return false;
+    }
+    const newAliases = yargs.parsed.newAliases;
+    return [key, ...aliases[key]].some((a) => !Object.prototype.hasOwnProperty.call(newAliases, a) || !newAliases[key]);
+  };
+  self2.limitedChoices = function limitedChoices(argv2) {
+    const options2 = yargs.getOptions();
+    const invalid = {};
+    if (!Object.keys(options2.choices).length)
+      return;
+    Object.keys(argv2).forEach((key) => {
+      if (specialKeys.indexOf(key) === -1 && Object.prototype.hasOwnProperty.call(options2.choices, key)) {
+        [].concat(argv2[key]).forEach((value) => {
+          if (options2.choices[key].indexOf(value) === -1 && value !== void 0) {
+            invalid[key] = (invalid[key] || []).concat(value);
+          }
+        });
+      }
+    });
+    const invalidKeys = Object.keys(invalid);
+    if (!invalidKeys.length)
+      return;
+    let msg = __("Invalid values:");
+    invalidKeys.forEach((key) => {
+      msg += `
+  ${__("Argument: %s, Given: %s, Choices: %s", key, usage2.stringifiedValues(invalid[key]), usage2.stringifiedValues(options2.choices[key]))}`;
+    });
+    usage2.fail(msg);
+  };
+  let implied = {};
+  self2.implies = function implies(key, value) {
+    argsert("<string|object> [array|number|string]", [key, value], arguments.length);
+    if (typeof key === "object") {
+      Object.keys(key).forEach((k) => {
+        self2.implies(k, key[k]);
+      });
+    } else {
+      yargs.global(key);
+      if (!implied[key]) {
+        implied[key] = [];
+      }
+      if (Array.isArray(value)) {
+        value.forEach((i2) => self2.implies(key, i2));
+      } else {
+        assertNotStrictEqual(value, void 0, shim3);
+        implied[key].push(value);
+      }
+    }
+  };
+  self2.getImplied = function getImplied() {
+    return implied;
+  };
+  function keyExists(argv2, val) {
+    const num = Number(val);
+    val = isNaN(num) ? val : num;
+    if (typeof val === "number") {
+      val = argv2._.length >= val;
+    } else if (val.match(/^--no-.+/)) {
+      val = val.match(/^--no-(.+)/)[1];
+      val = !Object.prototype.hasOwnProperty.call(argv2, val);
+    } else {
+      val = Object.prototype.hasOwnProperty.call(argv2, val);
+    }
+    return val;
+  }
+  self2.implications = function implications(argv2) {
+    const implyFail = [];
+    Object.keys(implied).forEach((key) => {
+      const origKey = key;
+      (implied[key] || []).forEach((value) => {
+        let key2 = origKey;
+        const origValue = value;
+        key2 = keyExists(argv2, key2);
+        value = keyExists(argv2, value);
+        if (key2 && !value) {
+          implyFail.push(` ${origKey} -> ${origValue}`);
+        }
+      });
+    });
+    if (implyFail.length) {
+      let msg = `${__("Implications failed:")}
+`;
+      implyFail.forEach((value) => {
+        msg += value;
+      });
+      usage2.fail(msg);
+    }
+  };
+  let conflicting = {};
+  self2.conflicts = function conflicts(key, value) {
+    argsert("<string|object> [array|string]", [key, value], arguments.length);
+    if (typeof key === "object") {
+      Object.keys(key).forEach((k) => {
+        self2.conflicts(k, key[k]);
+      });
+    } else {
+      yargs.global(key);
+      if (!conflicting[key]) {
+        conflicting[key] = [];
+      }
+      if (Array.isArray(value)) {
+        value.forEach((i2) => self2.conflicts(key, i2));
+      } else {
+        conflicting[key].push(value);
+      }
+    }
+  };
+  self2.getConflicting = () => conflicting;
+  self2.conflicting = function conflictingFn(argv2) {
+    Object.keys(argv2).forEach((key) => {
+      if (conflicting[key]) {
+        conflicting[key].forEach((value) => {
+          if (value && argv2[key] !== void 0 && argv2[value] !== void 0) {
+            usage2.fail(__("Arguments %s and %s are mutually exclusive", key, value));
+          }
+        });
+      }
+    });
+    if (yargs.getInternalMethods().getParserConfiguration()["strip-dashed"]) {
+      Object.keys(conflicting).forEach((key) => {
+        conflicting[key].forEach((value) => {
+          if (value && argv2[shim3.Parser.camelCase(key)] !== void 0 && argv2[shim3.Parser.camelCase(value)] !== void 0) {
+            usage2.fail(__("Arguments %s and %s are mutually exclusive", key, value));
+          }
+        });
+      });
+    }
+  };
+  self2.recommendCommands = function recommendCommands(cmd, potentialCommands) {
+    const threshold = 3;
+    potentialCommands = potentialCommands.sort((a, b) => b.length - a.length);
+    let recommended = null;
+    let bestDistance = Infinity;
+    for (let i2 = 0, candidate; (candidate = potentialCommands[i2]) !== void 0; i2++) {
+      const d = levenshtein(cmd, candidate);
+      if (d <= threshold && d < bestDistance) {
+        bestDistance = d;
+        recommended = candidate;
+      }
+    }
+    if (recommended)
+      usage2.fail(__("Did you mean %s?", recommended));
+  };
+  self2.reset = function reset(localLookup) {
+    implied = objFilter(implied, (k) => !localLookup[k]);
+    conflicting = objFilter(conflicting, (k) => !localLookup[k]);
+    return self2;
+  };
+  const frozens = [];
+  self2.freeze = function freeze() {
+    frozens.push({
+      implied,
+      conflicting
+    });
+  };
+  self2.unfreeze = function unfreeze() {
+    const frozen = frozens.pop();
+    assertNotStrictEqual(frozen, void 0, shim3);
+    ({ implied, conflicting } = frozen);
+  };
+  return self2;
+}
+
+// node_modules/yargs/build/lib/utils/apply-extends.js
+var previouslyVisitedConfigs = [];
+var shim2;
+function applyExtends(config2, cwd2, mergeExtends, _shim) {
+  shim2 = _shim;
+  let defaultConfig = {};
+  if (Object.prototype.hasOwnProperty.call(config2, "extends")) {
+    if (typeof config2.extends !== "string")
+      return defaultConfig;
+    const isPath = /\.json|\..*rc$/.test(config2.extends);
+    let pathToDefault = null;
+    if (!isPath) {
+      try {
+        pathToDefault = import.meta.resolve(config2.extends);
+      } catch (_err) {
+        return config2;
+      }
+    } else {
+      pathToDefault = getPathToDefaultConfig(cwd2, config2.extends);
+    }
+    checkForCircularExtends(pathToDefault);
+    previouslyVisitedConfigs.push(pathToDefault);
+    defaultConfig = isPath ? JSON.parse(shim2.readFileSync(pathToDefault, "utf8")) : _shim.require(config2.extends);
+    delete config2.extends;
+    defaultConfig = applyExtends(defaultConfig, shim2.path.dirname(pathToDefault), mergeExtends, shim2);
+  }
+  previouslyVisitedConfigs = [];
+  return mergeExtends ? mergeDeep(defaultConfig, config2) : Object.assign({}, defaultConfig, config2);
+}
+function checkForCircularExtends(cfgPath) {
+  if (previouslyVisitedConfigs.indexOf(cfgPath) > -1) {
+    throw new YError(`Circular extended configurations: '${cfgPath}'.`);
+  }
+}
+function getPathToDefaultConfig(cwd2, pathToExtend) {
+  return shim2.path.resolve(cwd2, pathToExtend);
+}
+function mergeDeep(config1, config2) {
+  const target = {};
+  function isObject(obj) {
+    return obj && typeof obj === "object" && !Array.isArray(obj);
+  }
+  Object.assign(target, config1);
+  for (const key of Object.keys(config2)) {
+    if (isObject(config2[key]) && isObject(target[key])) {
+      target[key] = mergeDeep(config1[key], config2[key]);
+    } else {
+      target[key] = config2[key];
+    }
+  }
+  return target;
+}
+
+// node_modules/yargs/build/lib/yargs-factory.js
+var __classPrivateFieldSet = function(receiver, state, value, kind, f3) {
+  if (kind === "m") throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f3.call(receiver, value) : f3 ? f3.value = value : state.set(receiver, value), value;
+};
+var __classPrivateFieldGet = function(receiver, state, kind, f3) {
+  if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f3 : kind === "a" ? f3.call(receiver) : f3 ? f3.value : state.get(receiver);
+};
+var _YargsInstance_command;
+var _YargsInstance_cwd;
+var _YargsInstance_context;
+var _YargsInstance_completion;
+var _YargsInstance_completionCommand;
+var _YargsInstance_defaultShowHiddenOpt;
+var _YargsInstance_exitError;
+var _YargsInstance_detectLocale;
+var _YargsInstance_emittedWarnings;
+var _YargsInstance_exitProcess;
+var _YargsInstance_frozens;
+var _YargsInstance_globalMiddleware;
+var _YargsInstance_groups;
+var _YargsInstance_hasOutput;
+var _YargsInstance_helpOpt;
+var _YargsInstance_isGlobalContext;
+var _YargsInstance_logger;
+var _YargsInstance_output;
+var _YargsInstance_options;
+var _YargsInstance_parentRequire;
+var _YargsInstance_parserConfig;
+var _YargsInstance_parseFn;
+var _YargsInstance_parseContext;
+var _YargsInstance_pkgs;
+var _YargsInstance_preservedGroups;
+var _YargsInstance_processArgs;
+var _YargsInstance_recommendCommands;
+var _YargsInstance_shim;
+var _YargsInstance_strict;
+var _YargsInstance_strictCommands;
+var _YargsInstance_strictOptions;
+var _YargsInstance_usage;
+var _YargsInstance_usageConfig;
+var _YargsInstance_versionOpt;
+var _YargsInstance_validation;
+function YargsFactory(_shim) {
+  return (processArgs = [], cwd2 = _shim.process.cwd(), parentRequire) => {
+    const yargs = new YargsInstance(processArgs, cwd2, parentRequire, _shim);
+    Object.defineProperty(yargs, "argv", {
+      get: () => {
+        return yargs.parse();
+      },
+      enumerable: true
+    });
+    yargs.help();
+    yargs.version();
+    return yargs;
+  };
+}
+var kCopyDoubleDash = Symbol("copyDoubleDash");
+var kCreateLogger = Symbol("copyDoubleDash");
+var kDeleteFromParserHintObject = Symbol("deleteFromParserHintObject");
+var kEmitWarning = Symbol("emitWarning");
+var kFreeze = Symbol("freeze");
+var kGetDollarZero = Symbol("getDollarZero");
+var kGetParserConfiguration = Symbol("getParserConfiguration");
+var kGetUsageConfiguration = Symbol("getUsageConfiguration");
+var kGuessLocale = Symbol("guessLocale");
+var kGuessVersion = Symbol("guessVersion");
+var kParsePositionalNumbers = Symbol("parsePositionalNumbers");
+var kPkgUp = Symbol("pkgUp");
+var kPopulateParserHintArray = Symbol("populateParserHintArray");
+var kPopulateParserHintSingleValueDictionary = Symbol("populateParserHintSingleValueDictionary");
+var kPopulateParserHintArrayDictionary = Symbol("populateParserHintArrayDictionary");
+var kPopulateParserHintDictionary = Symbol("populateParserHintDictionary");
+var kSanitizeKey = Symbol("sanitizeKey");
+var kSetKey = Symbol("setKey");
+var kUnfreeze = Symbol("unfreeze");
+var kValidateAsync = Symbol("validateAsync");
+var kGetCommandInstance = Symbol("getCommandInstance");
+var kGetContext = Symbol("getContext");
+var kGetHasOutput = Symbol("getHasOutput");
+var kGetLoggerInstance = Symbol("getLoggerInstance");
+var kGetParseContext = Symbol("getParseContext");
+var kGetUsageInstance = Symbol("getUsageInstance");
+var kGetValidationInstance = Symbol("getValidationInstance");
+var kHasParseCallback = Symbol("hasParseCallback");
+var kIsGlobalContext = Symbol("isGlobalContext");
+var kPostProcess = Symbol("postProcess");
+var kRebase = Symbol("rebase");
+var kReset = Symbol("reset");
+var kRunYargsParserAndExecuteCommands = Symbol("runYargsParserAndExecuteCommands");
+var kRunValidation = Symbol("runValidation");
+var kSetHasOutput = Symbol("setHasOutput");
+var kTrackManuallySetKeys = Symbol("kTrackManuallySetKeys");
+var DEFAULT_LOCALE = "en_US";
+var YargsInstance = class {
+  constructor(processArgs = [], cwd2, parentRequire, shim3) {
+    this.customScriptName = false;
+    this.parsed = false;
+    _YargsInstance_command.set(this, void 0);
+    _YargsInstance_cwd.set(this, void 0);
+    _YargsInstance_context.set(this, { commands: [], fullCommands: [] });
+    _YargsInstance_completion.set(this, null);
+    _YargsInstance_completionCommand.set(this, null);
+    _YargsInstance_defaultShowHiddenOpt.set(this, "show-hidden");
+    _YargsInstance_exitError.set(this, null);
+    _YargsInstance_detectLocale.set(this, true);
+    _YargsInstance_emittedWarnings.set(this, {});
+    _YargsInstance_exitProcess.set(this, true);
+    _YargsInstance_frozens.set(this, []);
+    _YargsInstance_globalMiddleware.set(this, void 0);
+    _YargsInstance_groups.set(this, {});
+    _YargsInstance_hasOutput.set(this, false);
+    _YargsInstance_helpOpt.set(this, null);
+    _YargsInstance_isGlobalContext.set(this, true);
+    _YargsInstance_logger.set(this, void 0);
+    _YargsInstance_output.set(this, "");
+    _YargsInstance_options.set(this, void 0);
+    _YargsInstance_parentRequire.set(this, void 0);
+    _YargsInstance_parserConfig.set(this, {});
+    _YargsInstance_parseFn.set(this, null);
+    _YargsInstance_parseContext.set(this, null);
+    _YargsInstance_pkgs.set(this, {});
+    _YargsInstance_preservedGroups.set(this, {});
+    _YargsInstance_processArgs.set(this, void 0);
+    _YargsInstance_recommendCommands.set(this, false);
+    _YargsInstance_shim.set(this, void 0);
+    _YargsInstance_strict.set(this, false);
+    _YargsInstance_strictCommands.set(this, false);
+    _YargsInstance_strictOptions.set(this, false);
+    _YargsInstance_usage.set(this, void 0);
+    _YargsInstance_usageConfig.set(this, {});
+    _YargsInstance_versionOpt.set(this, null);
+    _YargsInstance_validation.set(this, void 0);
+    __classPrivateFieldSet(this, _YargsInstance_shim, shim3, "f");
+    __classPrivateFieldSet(this, _YargsInstance_processArgs, processArgs, "f");
+    __classPrivateFieldSet(this, _YargsInstance_cwd, cwd2, "f");
+    __classPrivateFieldSet(this, _YargsInstance_parentRequire, parentRequire, "f");
+    __classPrivateFieldSet(this, _YargsInstance_globalMiddleware, new GlobalMiddleware(this), "f");
+    this.$0 = this[kGetDollarZero]();
+    this[kReset]();
+    __classPrivateFieldSet(this, _YargsInstance_command, __classPrivateFieldGet(this, _YargsInstance_command, "f"), "f");
+    __classPrivateFieldSet(this, _YargsInstance_usage, __classPrivateFieldGet(this, _YargsInstance_usage, "f"), "f");
+    __classPrivateFieldSet(this, _YargsInstance_validation, __classPrivateFieldGet(this, _YargsInstance_validation, "f"), "f");
+    __classPrivateFieldSet(this, _YargsInstance_options, __classPrivateFieldGet(this, _YargsInstance_options, "f"), "f");
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").showHiddenOpt = __classPrivateFieldGet(this, _YargsInstance_defaultShowHiddenOpt, "f");
+    __classPrivateFieldSet(this, _YargsInstance_logger, this[kCreateLogger](), "f");
+    __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.setLocale(DEFAULT_LOCALE);
+  }
+  addHelpOpt(opt, msg) {
+    const defaultHelpOpt = "help";
+    argsert("[string|boolean] [string]", [opt, msg], arguments.length);
+    if (__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")) {
+      this[kDeleteFromParserHintObject](__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f"));
+      __classPrivateFieldSet(this, _YargsInstance_helpOpt, null, "f");
+    }
+    if (opt === false && msg === void 0)
+      return this;
+    __classPrivateFieldSet(this, _YargsInstance_helpOpt, typeof opt === "string" ? opt : defaultHelpOpt, "f");
+    this.boolean(__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f"));
+    this.describe(__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f"), msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup("Show help"));
+    return this;
+  }
+  help(opt, msg) {
+    return this.addHelpOpt(opt, msg);
+  }
+  addShowHiddenOpt(opt, msg) {
+    argsert("[string|boolean] [string]", [opt, msg], arguments.length);
+    if (opt === false && msg === void 0)
+      return this;
+    const showHiddenOpt = typeof opt === "string" ? opt : __classPrivateFieldGet(this, _YargsInstance_defaultShowHiddenOpt, "f");
+    this.boolean(showHiddenOpt);
+    this.describe(showHiddenOpt, msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup("Show hidden options"));
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").showHiddenOpt = showHiddenOpt;
+    return this;
+  }
+  showHidden(opt, msg) {
+    return this.addShowHiddenOpt(opt, msg);
+  }
+  alias(key, value) {
+    argsert("<object|string|array> [string|array]", [key, value], arguments.length);
+    this[kPopulateParserHintArrayDictionary](this.alias.bind(this), "alias", key, value);
+    return this;
+  }
+  array(keys) {
+    argsert("<array|string>", [keys], arguments.length);
+    this[kPopulateParserHintArray]("array", keys);
+    this[kTrackManuallySetKeys](keys);
+    return this;
+  }
+  boolean(keys) {
+    argsert("<array|string>", [keys], arguments.length);
+    this[kPopulateParserHintArray]("boolean", keys);
+    this[kTrackManuallySetKeys](keys);
+    return this;
+  }
+  check(f3, global2) {
+    argsert("<function> [boolean]", [f3, global2], arguments.length);
+    this.middleware((argv2, _yargs) => {
+      return maybeAsyncResult(() => {
+        return f3(argv2, _yargs.getOptions());
+      }, (result) => {
+        if (!result) {
+          __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(__classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.__("Argument check failed: %s", f3.toString()));
+        } else if (typeof result === "string" || result instanceof Error) {
+          __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(result.toString(), result);
+        }
+        return argv2;
+      }, (err) => {
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(err.message ? err.message : err.toString(), err);
+        return argv2;
+      });
+    }, false, global2);
+    return this;
+  }
+  choices(key, value) {
+    argsert("<object|string|array> [string|array]", [key, value], arguments.length);
+    this[kPopulateParserHintArrayDictionary](this.choices.bind(this), "choices", key, value);
+    return this;
+  }
+  coerce(keys, value) {
+    argsert("<object|string|array> [function]", [keys, value], arguments.length);
+    if (Array.isArray(keys)) {
+      if (!value) {
+        throw new YError("coerce callback must be provided");
+      }
+      for (const key of keys) {
+        this.coerce(key, value);
+      }
+      return this;
+    } else if (typeof keys === "object") {
+      for (const key of Object.keys(keys)) {
+        this.coerce(key, keys[key]);
+      }
+      return this;
+    }
+    if (!value) {
+      throw new YError("coerce callback must be provided");
+    }
+    const coerceKey = keys;
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").key[coerceKey] = true;
+    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addCoerceMiddleware((argv2, yargs) => {
+      var _a3;
+      const coerceKeyAliases = (_a3 = yargs.getAliases()[coerceKey]) !== null && _a3 !== void 0 ? _a3 : [];
+      const argvKeys = [coerceKey, ...coerceKeyAliases].filter((key) => Object.prototype.hasOwnProperty.call(argv2, key));
+      if (argvKeys.length === 0) {
+        return argv2;
+      }
+      return maybeAsyncResult(() => {
+        return value(argv2[argvKeys[0]]);
+      }, (result) => {
+        argvKeys.forEach((key) => {
+          argv2[key] = result;
+        });
+        return argv2;
+      }, (err) => {
+        throw new YError(err.message);
+      });
+    }, coerceKey);
+    return this;
+  }
+  conflicts(key1, key2) {
+    argsert("<string|object> [string|array]", [key1, key2], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_validation, "f").conflicts(key1, key2);
+    return this;
+  }
+  config(key = "config", msg, parseFn) {
+    argsert("[object|string] [string|function] [function]", [key, msg, parseFn], arguments.length);
+    if (typeof key === "object" && !Array.isArray(key)) {
+      key = applyExtends(key, __classPrivateFieldGet(this, _YargsInstance_cwd, "f"), this[kGetParserConfiguration]()["deep-merge-config"] || false, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects = (__classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects || []).concat(key);
+      return this;
+    }
+    if (typeof msg === "function") {
+      parseFn = msg;
+      msg = void 0;
+    }
+    this.describe(key, msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup("Path to JSON config file"));
+    (Array.isArray(key) ? key : [key]).forEach((k) => {
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").config[k] = parseFn || true;
+    });
+    return this;
+  }
+  completion(cmd, desc, fn) {
+    argsert("[string] [string|boolean|function] [function]", [cmd, desc, fn], arguments.length);
+    if (typeof desc === "function") {
+      fn = desc;
+      desc = void 0;
+    }
+    __classPrivateFieldSet(this, _YargsInstance_completionCommand, cmd || __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") || "completion", "f");
+    if (!desc && desc !== false) {
+      desc = "generate completion script";
+    }
+    this.command(__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f"), desc);
+    if (fn)
+      __classPrivateFieldGet(this, _YargsInstance_completion, "f").registerFunction(fn);
+    return this;
+  }
+  command(cmd, description, builder, handler, middlewares, deprecated) {
+    argsert("<string|array|object> [string|boolean] [function|object] [function] [array] [boolean|string]", [cmd, description, builder, handler, middlewares, deprecated], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_command, "f").addHandler(cmd, description, builder, handler, middlewares, deprecated);
+    return this;
+  }
+  commands(cmd, description, builder, handler, middlewares, deprecated) {
+    return this.command(cmd, description, builder, handler, middlewares, deprecated);
+  }
+  commandDir(dir, opts) {
+    argsert("<string> [object]", [dir, opts], arguments.length);
+    const req = __classPrivateFieldGet(this, _YargsInstance_parentRequire, "f") || __classPrivateFieldGet(this, _YargsInstance_shim, "f").require;
+    __classPrivateFieldGet(this, _YargsInstance_command, "f").addDirectory(dir, req, __classPrivateFieldGet(this, _YargsInstance_shim, "f").getCallerFile(), opts);
+    return this;
+  }
+  count(keys) {
+    argsert("<array|string>", [keys], arguments.length);
+    this[kPopulateParserHintArray]("count", keys);
+    this[kTrackManuallySetKeys](keys);
+    return this;
+  }
+  default(key, value, defaultDescription) {
+    argsert("<object|string|array> [*] [string]", [key, value, defaultDescription], arguments.length);
+    if (defaultDescription) {
+      assertSingleKey(key, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key] = defaultDescription;
+    }
+    if (typeof value === "function") {
+      assertSingleKey(key, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+      if (!__classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key])
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key] = __classPrivateFieldGet(this, _YargsInstance_usage, "f").functionDescription(value);
+      value = value.call();
+    }
+    this[kPopulateParserHintSingleValueDictionary](this.default.bind(this), "default", key, value);
+    return this;
+  }
+  defaults(key, value, defaultDescription) {
+    return this.default(key, value, defaultDescription);
+  }
+  demandCommand(min = 1, max, minMsg, maxMsg) {
+    argsert("[number] [number|string] [string|null|undefined] [string|null|undefined]", [min, max, minMsg, maxMsg], arguments.length);
+    if (typeof max !== "number") {
+      minMsg = max;
+      max = Infinity;
+    }
+    this.global("_", false);
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").demandedCommands._ = {
+      min,
+      max,
+      minMsg,
+      maxMsg
+    };
+    return this;
+  }
+  demand(keys, max, msg) {
+    if (Array.isArray(max)) {
+      max.forEach((key) => {
+        assertNotStrictEqual(msg, true, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+        this.demandOption(key, msg);
+      });
+      max = Infinity;
+    } else if (typeof max !== "number") {
+      msg = max;
+      max = Infinity;
+    }
+    if (typeof keys === "number") {
+      assertNotStrictEqual(msg, true, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+      this.demandCommand(keys, max, msg, msg);
+    } else if (Array.isArray(keys)) {
+      keys.forEach((key) => {
+        assertNotStrictEqual(msg, true, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+        this.demandOption(key, msg);
+      });
+    } else {
+      if (typeof msg === "string") {
+        this.demandOption(keys, msg);
+      } else if (msg === true || typeof msg === "undefined") {
+        this.demandOption(keys);
+      }
+    }
+    return this;
+  }
+  demandOption(keys, msg) {
+    argsert("<object|string|array> [string]", [keys, msg], arguments.length);
+    this[kPopulateParserHintSingleValueDictionary](this.demandOption.bind(this), "demandedOptions", keys, msg);
+    return this;
+  }
+  deprecateOption(option, message) {
+    argsert("<string> [string|boolean]", [option, message], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").deprecatedOptions[option] = message;
+    return this;
+  }
+  describe(keys, description) {
+    argsert("<object|string|array> [string]", [keys, description], arguments.length);
+    this[kSetKey](keys, true);
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").describe(keys, description);
+    return this;
+  }
+  detectLocale(detect) {
+    argsert("<boolean>", [detect], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_detectLocale, detect, "f");
+    return this;
+  }
+  env(prefix) {
+    argsert("[string|boolean]", [prefix], arguments.length);
+    if (prefix === false)
+      delete __classPrivateFieldGet(this, _YargsInstance_options, "f").envPrefix;
+    else
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").envPrefix = prefix || "";
+    return this;
+  }
+  epilogue(msg) {
+    argsert("<string>", [msg], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").epilog(msg);
+    return this;
+  }
+  epilog(msg) {
+    return this.epilogue(msg);
+  }
+  example(cmd, description) {
+    argsert("<string|array> [string]", [cmd, description], arguments.length);
+    if (Array.isArray(cmd)) {
+      cmd.forEach((exampleParams) => this.example(...exampleParams));
+    } else {
+      __classPrivateFieldGet(this, _YargsInstance_usage, "f").example(cmd, description);
+    }
+    return this;
+  }
+  exit(code, err) {
+    __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+    __classPrivateFieldSet(this, _YargsInstance_exitError, err, "f");
+    if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+      __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.exit(code);
+  }
+  exitProcess(enabled = true) {
+    argsert("[boolean]", [enabled], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_exitProcess, enabled, "f");
+    return this;
+  }
+  fail(f3) {
+    argsert("<function|boolean>", [f3], arguments.length);
+    if (typeof f3 === "boolean" && f3 !== false) {
+      throw new YError("Invalid first argument. Expected function or boolean 'false'");
+    }
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").failFn(f3);
+    return this;
+  }
+  getAliases() {
+    return this.parsed ? this.parsed.aliases : {};
+  }
+  async getCompletion(args, done) {
+    argsert("<array> [function]", [args, done], arguments.length);
+    if (!done) {
+      return new Promise((resolve6, reject) => {
+        __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(args, (err, completions) => {
+          if (err)
+            reject(err);
+          else
+            resolve6(completions);
+        });
+      });
+    } else {
+      return __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(args, done);
+    }
+  }
+  getDemandedOptions() {
+    argsert([], 0);
+    return __classPrivateFieldGet(this, _YargsInstance_options, "f").demandedOptions;
+  }
+  getDemandedCommands() {
+    argsert([], 0);
+    return __classPrivateFieldGet(this, _YargsInstance_options, "f").demandedCommands;
+  }
+  getDeprecatedOptions() {
+    argsert([], 0);
+    return __classPrivateFieldGet(this, _YargsInstance_options, "f").deprecatedOptions;
+  }
+  getDetectLocale() {
+    return __classPrivateFieldGet(this, _YargsInstance_detectLocale, "f");
+  }
+  getExitProcess() {
+    return __classPrivateFieldGet(this, _YargsInstance_exitProcess, "f");
+  }
+  getGroups() {
+    return Object.assign({}, __classPrivateFieldGet(this, _YargsInstance_groups, "f"), __classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f"));
+  }
+  getHelp() {
+    __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+    if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
+      if (!this.parsed) {
+        const parse = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
+        if (isPromise(parse)) {
+          return parse.then(() => {
+            return __classPrivateFieldGet(this, _YargsInstance_usage, "f").help();
+          });
+        }
+      }
+      const builderResponse = __classPrivateFieldGet(this, _YargsInstance_command, "f").runDefaultBuilderOn(this);
+      if (isPromise(builderResponse)) {
+        return builderResponse.then(() => {
+          return __classPrivateFieldGet(this, _YargsInstance_usage, "f").help();
+        });
+      }
+    }
+    return Promise.resolve(__classPrivateFieldGet(this, _YargsInstance_usage, "f").help());
+  }
+  getOptions() {
+    return __classPrivateFieldGet(this, _YargsInstance_options, "f");
+  }
+  getStrict() {
+    return __classPrivateFieldGet(this, _YargsInstance_strict, "f");
+  }
+  getStrictCommands() {
+    return __classPrivateFieldGet(this, _YargsInstance_strictCommands, "f");
+  }
+  getStrictOptions() {
+    return __classPrivateFieldGet(this, _YargsInstance_strictOptions, "f");
+  }
+  global(globals, global2) {
+    argsert("<string|array> [boolean]", [globals, global2], arguments.length);
+    globals = [].concat(globals);
+    if (global2 !== false) {
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").local = __classPrivateFieldGet(this, _YargsInstance_options, "f").local.filter((l) => globals.indexOf(l) === -1);
+    } else {
+      globals.forEach((g) => {
+        if (!__classPrivateFieldGet(this, _YargsInstance_options, "f").local.includes(g))
+          __classPrivateFieldGet(this, _YargsInstance_options, "f").local.push(g);
+      });
+    }
+    return this;
+  }
+  group(opts, groupName) {
+    argsert("<string|array> <string>", [opts, groupName], arguments.length);
+    const existing = __classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f")[groupName] || __classPrivateFieldGet(this, _YargsInstance_groups, "f")[groupName];
+    if (__classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f")[groupName]) {
+      delete __classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f")[groupName];
+    }
+    const seen = {};
+    __classPrivateFieldGet(this, _YargsInstance_groups, "f")[groupName] = (existing || []).concat(opts).filter((key) => {
+      if (seen[key])
+        return false;
+      return seen[key] = true;
+    });
+    return this;
+  }
+  hide(key) {
+    argsert("<string>", [key], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").hiddenOptions.push(key);
+    return this;
+  }
+  implies(key, value) {
+    argsert("<string|object> [number|string|array]", [key, value], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_validation, "f").implies(key, value);
+    return this;
+  }
+  locale(locale) {
+    argsert("[string]", [locale], arguments.length);
+    if (locale === void 0) {
+      this[kGuessLocale]();
+      return __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.getLocale();
+    }
+    __classPrivateFieldSet(this, _YargsInstance_detectLocale, false, "f");
+    __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.setLocale(locale);
+    return this;
+  }
+  middleware(callback, applyBeforeValidation, global2) {
+    return __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addMiddleware(callback, !!applyBeforeValidation, global2);
+  }
+  nargs(key, value) {
+    argsert("<string|object|array> [number]", [key, value], arguments.length);
+    this[kPopulateParserHintSingleValueDictionary](this.nargs.bind(this), "narg", key, value);
+    return this;
+  }
+  normalize(keys) {
+    argsert("<array|string>", [keys], arguments.length);
+    this[kPopulateParserHintArray]("normalize", keys);
+    return this;
+  }
+  number(keys) {
+    argsert("<array|string>", [keys], arguments.length);
+    this[kPopulateParserHintArray]("number", keys);
+    this[kTrackManuallySetKeys](keys);
+    return this;
+  }
+  option(key, opt) {
+    argsert("<string|object> [object]", [key, opt], arguments.length);
+    if (typeof key === "object") {
+      Object.keys(key).forEach((k) => {
+        this.options(k, key[k]);
+      });
+    } else {
+      if (typeof opt !== "object") {
+        opt = {};
+      }
+      this[kTrackManuallySetKeys](key);
+      if (__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f") && (key === "version" || (opt === null || opt === void 0 ? void 0 : opt.alias) === "version")) {
+        this[kEmitWarning]([
+          '"version" is a reserved word.',
+          "Please do one of the following:",
+          '- Disable version with `yargs.version(false)` if using "version" as an option',
+          "- Use the built-in `yargs.version` method instead (if applicable)",
+          "- Use a different option key",
+          "https://yargs.js.org/docs/#api-reference-version"
+        ].join("\n"), void 0, "versionWarning");
+      }
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").key[key] = true;
+      if (opt.alias)
+        this.alias(key, opt.alias);
+      const deprecate3 = opt.deprecate || opt.deprecated;
+      if (deprecate3) {
+        this.deprecateOption(key, deprecate3);
+      }
+      const demand = opt.demand || opt.required || opt.require;
+      if (demand) {
+        this.demand(key, demand);
+      }
+      if (opt.demandOption) {
+        this.demandOption(key, typeof opt.demandOption === "string" ? opt.demandOption : void 0);
+      }
+      if (opt.conflicts) {
+        this.conflicts(key, opt.conflicts);
+      }
+      if ("default" in opt) {
+        this.default(key, opt.default);
+      }
+      if (opt.implies !== void 0) {
+        this.implies(key, opt.implies);
+      }
+      if (opt.nargs !== void 0) {
+        this.nargs(key, opt.nargs);
+      }
+      if (opt.config) {
+        this.config(key, opt.configParser);
+      }
+      if (opt.normalize) {
+        this.normalize(key);
+      }
+      if (opt.choices) {
+        this.choices(key, opt.choices);
+      }
+      if (opt.coerce) {
+        this.coerce(key, opt.coerce);
+      }
+      if (opt.group) {
+        this.group(key, opt.group);
+      }
+      if (opt.boolean || opt.type === "boolean") {
+        this.boolean(key);
+        if (opt.alias)
+          this.boolean(opt.alias);
+      }
+      if (opt.array || opt.type === "array") {
+        this.array(key);
+        if (opt.alias)
+          this.array(opt.alias);
+      }
+      if (opt.number || opt.type === "number") {
+        this.number(key);
+        if (opt.alias)
+          this.number(opt.alias);
+      }
+      if (opt.string || opt.type === "string") {
+        this.string(key);
+        if (opt.alias)
+          this.string(opt.alias);
+      }
+      if (opt.count || opt.type === "count") {
+        this.count(key);
+      }
+      if (typeof opt.global === "boolean") {
+        this.global(key, opt.global);
+      }
+      if (opt.defaultDescription) {
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key] = opt.defaultDescription;
+      }
+      if (opt.skipValidation) {
+        this.skipValidation(key);
+      }
+      const desc = opt.describe || opt.description || opt.desc;
+      const descriptions = __classPrivateFieldGet(this, _YargsInstance_usage, "f").getDescriptions();
+      if (!Object.prototype.hasOwnProperty.call(descriptions, key) || typeof desc === "string") {
+        this.describe(key, desc);
+      }
+      if (opt.hidden) {
+        this.hide(key);
+      }
+      if (opt.requiresArg) {
+        this.requiresArg(key);
+      }
+    }
+    return this;
+  }
+  options(key, opt) {
+    return this.option(key, opt);
+  }
+  parse(args, shortCircuit, _parseFn) {
+    argsert("[string|array] [function|boolean|object] [function]", [args, shortCircuit, _parseFn], arguments.length);
+    this[kFreeze]();
+    if (typeof args === "undefined") {
+      args = __classPrivateFieldGet(this, _YargsInstance_processArgs, "f");
+    }
+    if (typeof shortCircuit === "object") {
+      __classPrivateFieldSet(this, _YargsInstance_parseContext, shortCircuit, "f");
+      shortCircuit = _parseFn;
+    }
+    if (typeof shortCircuit === "function") {
+      __classPrivateFieldSet(this, _YargsInstance_parseFn, shortCircuit, "f");
+      shortCircuit = false;
+    }
+    if (!shortCircuit)
+      __classPrivateFieldSet(this, _YargsInstance_processArgs, args, "f");
+    if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f"))
+      __classPrivateFieldSet(this, _YargsInstance_exitProcess, false, "f");
+    const parsed = this[kRunYargsParserAndExecuteCommands](args, !!shortCircuit);
+    const tmpParsed = this.parsed;
+    __classPrivateFieldGet(this, _YargsInstance_completion, "f").setParsed(this.parsed);
+    if (isPromise(parsed)) {
+      return parsed.then((argv2) => {
+        if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f"))
+          __classPrivateFieldGet(this, _YargsInstance_parseFn, "f").call(this, __classPrivateFieldGet(this, _YargsInstance_exitError, "f"), argv2, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
+        return argv2;
+      }).catch((err) => {
+        if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f")) {
+          __classPrivateFieldGet(this, _YargsInstance_parseFn, "f")(err, this.parsed.argv, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
+        }
+        throw err;
+      }).finally(() => {
+        this[kUnfreeze]();
+        this.parsed = tmpParsed;
+      });
+    } else {
+      if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f"))
+        __classPrivateFieldGet(this, _YargsInstance_parseFn, "f").call(this, __classPrivateFieldGet(this, _YargsInstance_exitError, "f"), parsed, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
+      this[kUnfreeze]();
+      this.parsed = tmpParsed;
+    }
+    return parsed;
+  }
+  parseAsync(args, shortCircuit, _parseFn) {
+    const maybePromise = this.parse(args, shortCircuit, _parseFn);
+    return !isPromise(maybePromise) ? Promise.resolve(maybePromise) : maybePromise;
+  }
+  parseSync(args, shortCircuit, _parseFn) {
+    const maybePromise = this.parse(args, shortCircuit, _parseFn);
+    if (isPromise(maybePromise)) {
+      throw new YError(".parseSync() must not be used with asynchronous builders, handlers, or middleware");
+    }
+    return maybePromise;
+  }
+  parserConfiguration(config2) {
+    argsert("<object>", [config2], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_parserConfig, config2, "f");
+    return this;
+  }
+  pkgConf(key, rootPath) {
+    argsert("<string> [string]", [key, rootPath], arguments.length);
+    let conf = null;
+    const obj = this[kPkgUp](rootPath || __classPrivateFieldGet(this, _YargsInstance_cwd, "f"));
+    if (obj[key] && typeof obj[key] === "object") {
+      conf = applyExtends(obj[key], rootPath || __classPrivateFieldGet(this, _YargsInstance_cwd, "f"), this[kGetParserConfiguration]()["deep-merge-config"] || false, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects = (__classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects || []).concat(conf);
+    }
+    return this;
+  }
+  positional(key, opts) {
+    argsert("<string> <object>", [key, opts], arguments.length);
+    const supportedOpts = [
+      "default",
+      "defaultDescription",
+      "implies",
+      "normalize",
+      "choices",
+      "conflicts",
+      "coerce",
+      "type",
+      "describe",
+      "desc",
+      "description",
+      "alias"
+    ];
+    opts = objFilter(opts, (k, v) => {
+      if (k === "type" && !["string", "number", "boolean"].includes(v))
+        return false;
+      return supportedOpts.includes(k);
+    });
+    const fullCommand = __classPrivateFieldGet(this, _YargsInstance_context, "f").fullCommands[__classPrivateFieldGet(this, _YargsInstance_context, "f").fullCommands.length - 1];
+    const parseOptions = fullCommand ? __classPrivateFieldGet(this, _YargsInstance_command, "f").cmdToParseOptions(fullCommand) : {
+      array: [],
+      alias: {},
+      default: {},
+      demand: {}
+    };
+    objectKeys(parseOptions).forEach((pk) => {
+      const parseOption = parseOptions[pk];
+      if (Array.isArray(parseOption)) {
+        if (parseOption.indexOf(key) !== -1)
+          opts[pk] = true;
+      } else {
+        if (parseOption[key] && !(pk in opts))
+          opts[pk] = parseOption[key];
+      }
+    });
+    this.group(key, __classPrivateFieldGet(this, _YargsInstance_usage, "f").getPositionalGroupName());
+    return this.option(key, opts);
+  }
+  recommendCommands(recommend = true) {
+    argsert("[boolean]", [recommend], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_recommendCommands, recommend, "f");
+    return this;
+  }
+  required(keys, max, msg) {
+    return this.demand(keys, max, msg);
+  }
+  require(keys, max, msg) {
+    return this.demand(keys, max, msg);
+  }
+  requiresArg(keys) {
+    argsert("<array|string|object> [number]", [keys], arguments.length);
+    if (typeof keys === "string" && __classPrivateFieldGet(this, _YargsInstance_options, "f").narg[keys]) {
+      return this;
+    } else {
+      this[kPopulateParserHintSingleValueDictionary](this.requiresArg.bind(this), "narg", keys, NaN);
+    }
+    return this;
+  }
+  showCompletionScript($0, cmd) {
+    argsert("[string] [string]", [$0, cmd], arguments.length);
+    $0 = $0 || this.$0;
+    __classPrivateFieldGet(this, _YargsInstance_logger, "f").log(__classPrivateFieldGet(this, _YargsInstance_completion, "f").generateCompletionScript($0, cmd || __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") || "completion"));
+    return this;
+  }
+  showHelp(level) {
+    argsert("[string|function]", [level], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+    if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
+      if (!this.parsed) {
+        const parse = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
+        if (isPromise(parse)) {
+          parse.then(() => {
+            __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level);
+          });
+          return this;
+        }
+      }
+      const builderResponse = __classPrivateFieldGet(this, _YargsInstance_command, "f").runDefaultBuilderOn(this);
+      if (isPromise(builderResponse)) {
+        builderResponse.then(() => {
+          __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level);
+        });
+        return this;
+      }
+    }
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level);
+    return this;
+  }
+  scriptName(scriptName) {
+    this.customScriptName = true;
+    this.$0 = scriptName;
+    return this;
+  }
+  showHelpOnFail(enabled, message) {
+    argsert("[boolean|string] [string]", [enabled, message], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelpOnFail(enabled, message);
+    return this;
+  }
+  showVersion(level) {
+    argsert("[string|function]", [level], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").showVersion(level);
+    return this;
+  }
+  skipValidation(keys) {
+    argsert("<array|string>", [keys], arguments.length);
+    this[kPopulateParserHintArray]("skipValidation", keys);
+    return this;
+  }
+  strict(enabled) {
+    argsert("[boolean]", [enabled], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_strict, enabled !== false, "f");
+    return this;
+  }
+  strictCommands(enabled) {
+    argsert("[boolean]", [enabled], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_strictCommands, enabled !== false, "f");
+    return this;
+  }
+  strictOptions(enabled) {
+    argsert("[boolean]", [enabled], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_strictOptions, enabled !== false, "f");
+    return this;
+  }
+  string(keys) {
+    argsert("<array|string>", [keys], arguments.length);
+    this[kPopulateParserHintArray]("string", keys);
+    this[kTrackManuallySetKeys](keys);
+    return this;
+  }
+  terminalWidth() {
+    argsert([], 0);
+    return __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.stdColumns;
+  }
+  updateLocale(obj) {
+    return this.updateStrings(obj);
+  }
+  updateStrings(obj) {
+    argsert("<object>", [obj], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_detectLocale, false, "f");
+    __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.updateLocale(obj);
+    return this;
+  }
+  usage(msg, description, builder, handler) {
+    argsert("<string|null|undefined> [string|boolean] [function|object] [function]", [msg, description, builder, handler], arguments.length);
+    if (description !== void 0) {
+      assertNotStrictEqual(msg, null, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+      if ((msg || "").match(/^\$0( |$)/)) {
+        return this.command(msg, description, builder, handler);
+      } else {
+        throw new YError(".usage() description must start with $0 if being used as alias for .command()");
+      }
+    } else {
+      __classPrivateFieldGet(this, _YargsInstance_usage, "f").usage(msg);
+      return this;
+    }
+  }
+  usageConfiguration(config2) {
+    argsert("<object>", [config2], arguments.length);
+    __classPrivateFieldSet(this, _YargsInstance_usageConfig, config2, "f");
+    return this;
+  }
+  version(opt, msg, ver) {
+    const defaultVersionOpt = "version";
+    argsert("[boolean|string] [string] [string]", [opt, msg, ver], arguments.length);
+    if (__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f")) {
+      this[kDeleteFromParserHintObject](__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f"));
+      __classPrivateFieldGet(this, _YargsInstance_usage, "f").version(void 0);
+      __classPrivateFieldSet(this, _YargsInstance_versionOpt, null, "f");
+    }
+    if (arguments.length === 0) {
+      ver = this[kGuessVersion]();
+      opt = defaultVersionOpt;
+    } else if (arguments.length === 1) {
+      if (opt === false) {
+        return this;
+      }
+      ver = opt;
+      opt = defaultVersionOpt;
+    } else if (arguments.length === 2) {
+      ver = msg;
+      msg = void 0;
+    }
+    __classPrivateFieldSet(this, _YargsInstance_versionOpt, typeof opt === "string" ? opt : defaultVersionOpt, "f");
+    msg = msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup("Show version number");
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").version(ver || void 0);
+    this.boolean(__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f"));
+    this.describe(__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f"), msg);
+    return this;
+  }
+  wrap(cols) {
+    argsert("<number|null|undefined>", [cols], arguments.length);
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").wrap(cols);
+    return this;
+  }
+  [(_YargsInstance_command = /* @__PURE__ */ new WeakMap(), _YargsInstance_cwd = /* @__PURE__ */ new WeakMap(), _YargsInstance_context = /* @__PURE__ */ new WeakMap(), _YargsInstance_completion = /* @__PURE__ */ new WeakMap(), _YargsInstance_completionCommand = /* @__PURE__ */ new WeakMap(), _YargsInstance_defaultShowHiddenOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_exitError = /* @__PURE__ */ new WeakMap(), _YargsInstance_detectLocale = /* @__PURE__ */ new WeakMap(), _YargsInstance_emittedWarnings = /* @__PURE__ */ new WeakMap(), _YargsInstance_exitProcess = /* @__PURE__ */ new WeakMap(), _YargsInstance_frozens = /* @__PURE__ */ new WeakMap(), _YargsInstance_globalMiddleware = /* @__PURE__ */ new WeakMap(), _YargsInstance_groups = /* @__PURE__ */ new WeakMap(), _YargsInstance_hasOutput = /* @__PURE__ */ new WeakMap(), _YargsInstance_helpOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_isGlobalContext = /* @__PURE__ */ new WeakMap(), _YargsInstance_logger = /* @__PURE__ */ new WeakMap(), _YargsInstance_output = /* @__PURE__ */ new WeakMap(), _YargsInstance_options = /* @__PURE__ */ new WeakMap(), _YargsInstance_parentRequire = /* @__PURE__ */ new WeakMap(), _YargsInstance_parserConfig = /* @__PURE__ */ new WeakMap(), _YargsInstance_parseFn = /* @__PURE__ */ new WeakMap(), _YargsInstance_parseContext = /* @__PURE__ */ new WeakMap(), _YargsInstance_pkgs = /* @__PURE__ */ new WeakMap(), _YargsInstance_preservedGroups = /* @__PURE__ */ new WeakMap(), _YargsInstance_processArgs = /* @__PURE__ */ new WeakMap(), _YargsInstance_recommendCommands = /* @__PURE__ */ new WeakMap(), _YargsInstance_shim = /* @__PURE__ */ new WeakMap(), _YargsInstance_strict = /* @__PURE__ */ new WeakMap(), _YargsInstance_strictCommands = /* @__PURE__ */ new WeakMap(), _YargsInstance_strictOptions = /* @__PURE__ */ new WeakMap(), _YargsInstance_usage = /* @__PURE__ */ new WeakMap(), _YargsInstance_usageConfig = /* @__PURE__ */ new WeakMap(), _YargsInstance_versionOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_validation = /* @__PURE__ */ new WeakMap(), kCopyDoubleDash)](argv2) {
+    if (!argv2._ || !argv2["--"])
+      return argv2;
+    argv2._.push.apply(argv2._, argv2["--"]);
+    try {
+      delete argv2["--"];
+    } catch (_err) {
+    }
+    return argv2;
+  }
+  [kCreateLogger]() {
+    return {
+      log: (...args) => {
+        if (!this[kHasParseCallback]())
+          console.log(...args);
+        __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+        if (__classPrivateFieldGet(this, _YargsInstance_output, "f").length)
+          __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + "\n", "f");
+        __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + args.join(" "), "f");
+      },
+      error: (...args) => {
+        if (!this[kHasParseCallback]())
+          console.error(...args);
+        __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+        if (__classPrivateFieldGet(this, _YargsInstance_output, "f").length)
+          __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + "\n", "f");
+        __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + args.join(" "), "f");
+      }
+    };
+  }
+  [kDeleteFromParserHintObject](optionKey) {
+    objectKeys(__classPrivateFieldGet(this, _YargsInstance_options, "f")).forEach((hintKey) => {
+      if (/* @__PURE__ */ ((key) => key === "configObjects")(hintKey))
+        return;
+      const hint = __classPrivateFieldGet(this, _YargsInstance_options, "f")[hintKey];
+      if (Array.isArray(hint)) {
+        if (hint.includes(optionKey))
+          hint.splice(hint.indexOf(optionKey), 1);
+      } else if (typeof hint === "object") {
+        delete hint[optionKey];
+      }
+    });
+    delete __classPrivateFieldGet(this, _YargsInstance_usage, "f").getDescriptions()[optionKey];
+  }
+  [kEmitWarning](warning, type, deduplicationId) {
+    if (!__classPrivateFieldGet(this, _YargsInstance_emittedWarnings, "f")[deduplicationId]) {
+      __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.emitWarning(warning, type);
+      __classPrivateFieldGet(this, _YargsInstance_emittedWarnings, "f")[deduplicationId] = true;
+    }
+  }
+  [kFreeze]() {
+    __classPrivateFieldGet(this, _YargsInstance_frozens, "f").push({
+      options: __classPrivateFieldGet(this, _YargsInstance_options, "f"),
+      configObjects: __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects.slice(0),
+      exitProcess: __classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"),
+      groups: __classPrivateFieldGet(this, _YargsInstance_groups, "f"),
+      strict: __classPrivateFieldGet(this, _YargsInstance_strict, "f"),
+      strictCommands: __classPrivateFieldGet(this, _YargsInstance_strictCommands, "f"),
+      strictOptions: __classPrivateFieldGet(this, _YargsInstance_strictOptions, "f"),
+      completionCommand: __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f"),
+      output: __classPrivateFieldGet(this, _YargsInstance_output, "f"),
+      exitError: __classPrivateFieldGet(this, _YargsInstance_exitError, "f"),
+      hasOutput: __classPrivateFieldGet(this, _YargsInstance_hasOutput, "f"),
+      parsed: this.parsed,
+      parseFn: __classPrivateFieldGet(this, _YargsInstance_parseFn, "f"),
+      parseContext: __classPrivateFieldGet(this, _YargsInstance_parseContext, "f")
+    });
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").freeze();
+    __classPrivateFieldGet(this, _YargsInstance_validation, "f").freeze();
+    __classPrivateFieldGet(this, _YargsInstance_command, "f").freeze();
+    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").freeze();
+  }
+  [kGetDollarZero]() {
+    let $0 = "";
+    let default$0;
+    if (/\b(node|iojs|electron)(\.exe)?$/.test(__classPrivateFieldGet(this, _YargsInstance_shim, "f").process.argv()[0])) {
+      default$0 = __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.argv().slice(1, 2);
+    } else {
+      default$0 = __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.argv().slice(0, 1);
+    }
+    $0 = default$0.map((x2) => {
+      const b = this[kRebase](__classPrivateFieldGet(this, _YargsInstance_cwd, "f"), x2);
+      return x2.match(/^(\/|([a-zA-Z]:)?\\)/) && b.length < x2.length ? b : x2;
+    }).join(" ").trim();
+    if (__classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv("_") && __classPrivateFieldGet(this, _YargsInstance_shim, "f").getProcessArgvBin() === __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv("_")) {
+      $0 = __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv("_").replace(`${__classPrivateFieldGet(this, _YargsInstance_shim, "f").path.dirname(__classPrivateFieldGet(this, _YargsInstance_shim, "f").process.execPath())}/`, "");
+    }
+    return $0;
+  }
+  [kGetParserConfiguration]() {
+    return __classPrivateFieldGet(this, _YargsInstance_parserConfig, "f");
+  }
+  [kGetUsageConfiguration]() {
+    return __classPrivateFieldGet(this, _YargsInstance_usageConfig, "f");
+  }
+  [kGuessLocale]() {
+    if (!__classPrivateFieldGet(this, _YargsInstance_detectLocale, "f"))
+      return;
+    const locale = __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv("LC_ALL") || __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv("LC_MESSAGES") || __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv("LANG") || __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv("LANGUAGE") || "en_US";
+    this.locale(locale.replace(/[.:].*/, ""));
+  }
+  [kGuessVersion]() {
+    const obj = this[kPkgUp]();
+    return obj.version || "unknown";
+  }
+  [kParsePositionalNumbers](argv2) {
+    const args = argv2["--"] ? argv2["--"] : argv2._;
+    for (let i2 = 0, arg; (arg = args[i2]) !== void 0; i2++) {
+      if (__classPrivateFieldGet(this, _YargsInstance_shim, "f").Parser.looksLikeNumber(arg) && Number.isSafeInteger(Math.floor(parseFloat(`${arg}`)))) {
+        args[i2] = Number(arg);
+      }
+    }
+    return argv2;
+  }
+  [kPkgUp](rootPath) {
+    const npath = rootPath || "*";
+    if (__classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath])
+      return __classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath];
+    let obj = {};
+    try {
+      let startDir = rootPath || __classPrivateFieldGet(this, _YargsInstance_shim, "f").mainFilename;
+      if (__classPrivateFieldGet(this, _YargsInstance_shim, "f").path.extname(startDir)) {
+        startDir = __classPrivateFieldGet(this, _YargsInstance_shim, "f").path.dirname(startDir);
+      }
+      const pkgJsonPath = __classPrivateFieldGet(this, _YargsInstance_shim, "f").findUp(startDir, (dir, names) => {
+        if (names.includes("package.json")) {
+          return "package.json";
+        } else {
+          return void 0;
+        }
+      });
+      assertNotStrictEqual(pkgJsonPath, void 0, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+      obj = JSON.parse(__classPrivateFieldGet(this, _YargsInstance_shim, "f").readFileSync(pkgJsonPath, "utf8"));
+    } catch (_noop) {
+    }
+    __classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath] = obj || {};
+    return __classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath];
+  }
+  [kPopulateParserHintArray](type, keys) {
+    keys = [].concat(keys);
+    keys.forEach((key) => {
+      key = this[kSanitizeKey](key);
+      __classPrivateFieldGet(this, _YargsInstance_options, "f")[type].push(key);
+    });
+  }
+  [kPopulateParserHintSingleValueDictionary](builder, type, key, value) {
+    this[kPopulateParserHintDictionary](builder, type, key, value, (type2, key2, value2) => {
+      __classPrivateFieldGet(this, _YargsInstance_options, "f")[type2][key2] = value2;
+    });
+  }
+  [kPopulateParserHintArrayDictionary](builder, type, key, value) {
+    this[kPopulateParserHintDictionary](builder, type, key, value, (type2, key2, value2) => {
+      __classPrivateFieldGet(this, _YargsInstance_options, "f")[type2][key2] = (__classPrivateFieldGet(this, _YargsInstance_options, "f")[type2][key2] || []).concat(value2);
+    });
+  }
+  [kPopulateParserHintDictionary](builder, type, key, value, singleKeyHandler) {
+    if (Array.isArray(key)) {
+      key.forEach((k) => {
+        builder(k, value);
+      });
+    } else if (/* @__PURE__ */ ((key2) => typeof key2 === "object")(key)) {
+      for (const k of objectKeys(key)) {
+        builder(k, key[k]);
+      }
+    } else {
+      singleKeyHandler(type, this[kSanitizeKey](key), value);
+    }
+  }
+  [kSanitizeKey](key) {
+    if (key === "__proto__")
+      return "___proto___";
+    return key;
+  }
+  [kSetKey](key, set) {
+    this[kPopulateParserHintSingleValueDictionary](this[kSetKey].bind(this), "key", key, set);
+    return this;
+  }
+  [kUnfreeze]() {
+    var _a3, _b2, _c2, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    const frozen = __classPrivateFieldGet(this, _YargsInstance_frozens, "f").pop();
+    assertNotStrictEqual(frozen, void 0, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+    let configObjects;
+    _a3 = this, _b2 = this, _c2 = this, _d = this, _e = this, _f = this, _g = this, _h = this, _j = this, _k = this, _l = this, _m = this, {
+      options: { set value(_o) {
+        __classPrivateFieldSet(_a3, _YargsInstance_options, _o, "f");
+      } }.value,
+      configObjects,
+      exitProcess: { set value(_o) {
+        __classPrivateFieldSet(_b2, _YargsInstance_exitProcess, _o, "f");
+      } }.value,
+      groups: { set value(_o) {
+        __classPrivateFieldSet(_c2, _YargsInstance_groups, _o, "f");
+      } }.value,
+      output: { set value(_o) {
+        __classPrivateFieldSet(_d, _YargsInstance_output, _o, "f");
+      } }.value,
+      exitError: { set value(_o) {
+        __classPrivateFieldSet(_e, _YargsInstance_exitError, _o, "f");
+      } }.value,
+      hasOutput: { set value(_o) {
+        __classPrivateFieldSet(_f, _YargsInstance_hasOutput, _o, "f");
+      } }.value,
+      parsed: this.parsed,
+      strict: { set value(_o) {
+        __classPrivateFieldSet(_g, _YargsInstance_strict, _o, "f");
+      } }.value,
+      strictCommands: { set value(_o) {
+        __classPrivateFieldSet(_h, _YargsInstance_strictCommands, _o, "f");
+      } }.value,
+      strictOptions: { set value(_o) {
+        __classPrivateFieldSet(_j, _YargsInstance_strictOptions, _o, "f");
+      } }.value,
+      completionCommand: { set value(_o) {
+        __classPrivateFieldSet(_k, _YargsInstance_completionCommand, _o, "f");
+      } }.value,
+      parseFn: { set value(_o) {
+        __classPrivateFieldSet(_l, _YargsInstance_parseFn, _o, "f");
+      } }.value,
+      parseContext: { set value(_o) {
+        __classPrivateFieldSet(_m, _YargsInstance_parseContext, _o, "f");
+      } }.value
+    } = frozen;
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects = configObjects;
+    __classPrivateFieldGet(this, _YargsInstance_usage, "f").unfreeze();
+    __classPrivateFieldGet(this, _YargsInstance_validation, "f").unfreeze();
+    __classPrivateFieldGet(this, _YargsInstance_command, "f").unfreeze();
+    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").unfreeze();
+  }
+  [kValidateAsync](validation2, argv2) {
+    return maybeAsyncResult(argv2, (result) => {
+      validation2(result);
+      return result;
+    });
+  }
+  getInternalMethods() {
+    return {
+      getCommandInstance: this[kGetCommandInstance].bind(this),
+      getContext: this[kGetContext].bind(this),
+      getHasOutput: this[kGetHasOutput].bind(this),
+      getLoggerInstance: this[kGetLoggerInstance].bind(this),
+      getParseContext: this[kGetParseContext].bind(this),
+      getParserConfiguration: this[kGetParserConfiguration].bind(this),
+      getUsageConfiguration: this[kGetUsageConfiguration].bind(this),
+      getUsageInstance: this[kGetUsageInstance].bind(this),
+      getValidationInstance: this[kGetValidationInstance].bind(this),
+      hasParseCallback: this[kHasParseCallback].bind(this),
+      isGlobalContext: this[kIsGlobalContext].bind(this),
+      postProcess: this[kPostProcess].bind(this),
+      reset: this[kReset].bind(this),
+      runValidation: this[kRunValidation].bind(this),
+      runYargsParserAndExecuteCommands: this[kRunYargsParserAndExecuteCommands].bind(this),
+      setHasOutput: this[kSetHasOutput].bind(this)
+    };
+  }
+  [kGetCommandInstance]() {
+    return __classPrivateFieldGet(this, _YargsInstance_command, "f");
+  }
+  [kGetContext]() {
+    return __classPrivateFieldGet(this, _YargsInstance_context, "f");
+  }
+  [kGetHasOutput]() {
+    return __classPrivateFieldGet(this, _YargsInstance_hasOutput, "f");
+  }
+  [kGetLoggerInstance]() {
+    return __classPrivateFieldGet(this, _YargsInstance_logger, "f");
+  }
+  [kGetParseContext]() {
+    return __classPrivateFieldGet(this, _YargsInstance_parseContext, "f") || {};
+  }
+  [kGetUsageInstance]() {
+    return __classPrivateFieldGet(this, _YargsInstance_usage, "f");
+  }
+  [kGetValidationInstance]() {
+    return __classPrivateFieldGet(this, _YargsInstance_validation, "f");
+  }
+  [kHasParseCallback]() {
+    return !!__classPrivateFieldGet(this, _YargsInstance_parseFn, "f");
+  }
+  [kIsGlobalContext]() {
+    return __classPrivateFieldGet(this, _YargsInstance_isGlobalContext, "f");
+  }
+  [kPostProcess](argv2, populateDoubleDash, calledFromCommand, runGlobalMiddleware) {
+    if (calledFromCommand)
+      return argv2;
+    if (isPromise(argv2))
+      return argv2;
+    if (!populateDoubleDash) {
+      argv2 = this[kCopyDoubleDash](argv2);
+    }
+    const parsePositionalNumbers = this[kGetParserConfiguration]()["parse-positional-numbers"] || this[kGetParserConfiguration]()["parse-positional-numbers"] === void 0;
+    if (parsePositionalNumbers) {
+      argv2 = this[kParsePositionalNumbers](argv2);
+    }
+    if (runGlobalMiddleware) {
+      argv2 = applyMiddleware(argv2, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
+    }
+    return argv2;
+  }
+  [kReset](aliases = {}) {
+    __classPrivateFieldSet(this, _YargsInstance_options, __classPrivateFieldGet(this, _YargsInstance_options, "f") || {}, "f");
+    const tmpOptions = {};
+    tmpOptions.local = __classPrivateFieldGet(this, _YargsInstance_options, "f").local || [];
+    tmpOptions.configObjects = __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects || [];
+    const localLookup = {};
+    tmpOptions.local.forEach((l) => {
+      localLookup[l] = true;
+      (aliases[l] || []).forEach((a) => {
+        localLookup[a] = true;
+      });
+    });
+    Object.assign(__classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f"), Object.keys(__classPrivateFieldGet(this, _YargsInstance_groups, "f")).reduce((acc, groupName) => {
+      const keys = __classPrivateFieldGet(this, _YargsInstance_groups, "f")[groupName].filter((key) => !(key in localLookup));
+      if (keys.length > 0) {
+        acc[groupName] = keys;
+      }
+      return acc;
+    }, {}));
+    __classPrivateFieldSet(this, _YargsInstance_groups, {}, "f");
+    const arrayOptions = [
+      "array",
+      "boolean",
+      "string",
+      "skipValidation",
+      "count",
+      "normalize",
+      "number",
+      "hiddenOptions"
+    ];
+    const objectOptions = [
+      "narg",
+      "key",
+      "alias",
+      "default",
+      "defaultDescription",
+      "config",
+      "choices",
+      "demandedOptions",
+      "demandedCommands",
+      "deprecatedOptions"
+    ];
+    arrayOptions.forEach((k) => {
+      tmpOptions[k] = (__classPrivateFieldGet(this, _YargsInstance_options, "f")[k] || []).filter((k2) => !localLookup[k2]);
+    });
+    objectOptions.forEach((k) => {
+      tmpOptions[k] = objFilter(__classPrivateFieldGet(this, _YargsInstance_options, "f")[k], (k2) => !localLookup[k2]);
+    });
+    tmpOptions.envPrefix = __classPrivateFieldGet(this, _YargsInstance_options, "f").envPrefix;
+    __classPrivateFieldSet(this, _YargsInstance_options, tmpOptions, "f");
+    __classPrivateFieldSet(this, _YargsInstance_usage, __classPrivateFieldGet(this, _YargsInstance_usage, "f") ? __classPrivateFieldGet(this, _YargsInstance_usage, "f").reset(localLookup) : usage(this, __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+    __classPrivateFieldSet(this, _YargsInstance_validation, __classPrivateFieldGet(this, _YargsInstance_validation, "f") ? __classPrivateFieldGet(this, _YargsInstance_validation, "f").reset(localLookup) : validation(this, __classPrivateFieldGet(this, _YargsInstance_usage, "f"), __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+    __classPrivateFieldSet(this, _YargsInstance_command, __classPrivateFieldGet(this, _YargsInstance_command, "f") ? __classPrivateFieldGet(this, _YargsInstance_command, "f").reset() : command(__classPrivateFieldGet(this, _YargsInstance_usage, "f"), __classPrivateFieldGet(this, _YargsInstance_validation, "f"), __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f"), __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+    if (!__classPrivateFieldGet(this, _YargsInstance_completion, "f"))
+      __classPrivateFieldSet(this, _YargsInstance_completion, completion(this, __classPrivateFieldGet(this, _YargsInstance_usage, "f"), __classPrivateFieldGet(this, _YargsInstance_command, "f"), __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").reset();
+    __classPrivateFieldSet(this, _YargsInstance_completionCommand, null, "f");
+    __classPrivateFieldSet(this, _YargsInstance_output, "", "f");
+    __classPrivateFieldSet(this, _YargsInstance_exitError, null, "f");
+    __classPrivateFieldSet(this, _YargsInstance_hasOutput, false, "f");
+    this.parsed = false;
+    return this;
+  }
+  [kRebase](base, dir) {
+    return __classPrivateFieldGet(this, _YargsInstance_shim, "f").path.relative(base, dir);
+  }
+  [kRunYargsParserAndExecuteCommands](args, shortCircuit, calledFromCommand, commandIndex = 0, helpOnly = false) {
+    var _a3, _b2, _c2, _d;
+    let skipValidation = !!calledFromCommand || helpOnly;
+    args = args || __classPrivateFieldGet(this, _YargsInstance_processArgs, "f");
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").__ = __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.__;
+    __classPrivateFieldGet(this, _YargsInstance_options, "f").configuration = this[kGetParserConfiguration]();
+    const populateDoubleDash = !!__classPrivateFieldGet(this, _YargsInstance_options, "f").configuration["populate--"];
+    const config2 = Object.assign({}, __classPrivateFieldGet(this, _YargsInstance_options, "f").configuration, {
+      "populate--": true
+    });
+    const parsed = __classPrivateFieldGet(this, _YargsInstance_shim, "f").Parser.detailed(args, Object.assign({}, __classPrivateFieldGet(this, _YargsInstance_options, "f"), {
+      configuration: { "parse-positional-numbers": false, ...config2 }
+    }));
+    const argv2 = Object.assign(parsed.argv, __classPrivateFieldGet(this, _YargsInstance_parseContext, "f"));
+    let argvPromise = void 0;
+    const aliases = parsed.aliases;
+    let helpOptSet = false;
+    let versionOptSet = false;
+    Object.keys(argv2).forEach((key) => {
+      if (key === __classPrivateFieldGet(this, _YargsInstance_helpOpt, "f") && argv2[key]) {
+        helpOptSet = true;
+      } else if (key === __classPrivateFieldGet(this, _YargsInstance_versionOpt, "f") && argv2[key]) {
+        versionOptSet = true;
+      }
+    });
+    argv2.$0 = this.$0;
+    this.parsed = parsed;
+    if (commandIndex === 0) {
+      __classPrivateFieldGet(this, _YargsInstance_usage, "f").clearCachedHelpMessage();
+    }
+    try {
+      this[kGuessLocale]();
+      if (shortCircuit) {
+        return this[kPostProcess](argv2, populateDoubleDash, !!calledFromCommand, false);
+      }
+      if (__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")) {
+        const helpCmds = [__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")].concat(aliases[__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")] || []).filter((k) => k.length > 1);
+        if (helpCmds.includes("" + argv2._[argv2._.length - 1])) {
+          argv2._.pop();
+          helpOptSet = true;
+        }
+      }
+      __classPrivateFieldSet(this, _YargsInstance_isGlobalContext, false, "f");
+      const handlerKeys = __classPrivateFieldGet(this, _YargsInstance_command, "f").getCommands();
+      const requestCompletions = ((_a3 = __classPrivateFieldGet(this, _YargsInstance_completion, "f")) === null || _a3 === void 0 ? void 0 : _a3.completionKey) ? [
+        (_b2 = __classPrivateFieldGet(this, _YargsInstance_completion, "f")) === null || _b2 === void 0 ? void 0 : _b2.completionKey,
+        ...(_d = this.getAliases()[(_c2 = __classPrivateFieldGet(this, _YargsInstance_completion, "f")) === null || _c2 === void 0 ? void 0 : _c2.completionKey]) !== null && _d !== void 0 ? _d : []
+      ].some((key) => Object.prototype.hasOwnProperty.call(argv2, key)) : false;
+      const skipRecommendation = helpOptSet || requestCompletions || helpOnly;
+      if (argv2._.length) {
+        if (handlerKeys.length) {
+          let firstUnknownCommand;
+          for (let i2 = commandIndex || 0, cmd; argv2._[i2] !== void 0; i2++) {
+            cmd = String(argv2._[i2]);
+            if (handlerKeys.includes(cmd) && cmd !== __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) {
+              const innerArgv = __classPrivateFieldGet(this, _YargsInstance_command, "f").runCommand(cmd, this, parsed, i2 + 1, helpOnly, helpOptSet || versionOptSet || helpOnly);
+              return this[kPostProcess](innerArgv, populateDoubleDash, !!calledFromCommand, false);
+            } else if (!firstUnknownCommand && cmd !== __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) {
+              firstUnknownCommand = cmd;
+              break;
+            }
+          }
+          if (!__classPrivateFieldGet(this, _YargsInstance_command, "f").hasDefaultCommand() && __classPrivateFieldGet(this, _YargsInstance_recommendCommands, "f") && firstUnknownCommand && !skipRecommendation) {
+            __classPrivateFieldGet(this, _YargsInstance_validation, "f").recommendCommands(firstUnknownCommand, handlerKeys);
+          }
+        }
+        if (__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") && argv2._.includes(__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) && !requestCompletions) {
+          if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+            setBlocking(true);
+          this.showCompletionScript();
+          this.exit(0);
+        }
+      }
+      if (__classPrivateFieldGet(this, _YargsInstance_command, "f").hasDefaultCommand() && !skipRecommendation) {
+        const innerArgv = __classPrivateFieldGet(this, _YargsInstance_command, "f").runCommand(null, this, parsed, 0, helpOnly, helpOptSet || versionOptSet || helpOnly);
+        return this[kPostProcess](innerArgv, populateDoubleDash, !!calledFromCommand, false);
+      }
+      if (requestCompletions) {
+        if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+          setBlocking(true);
+        args = [].concat(args);
+        const completionArgs = args.slice(args.indexOf(`--${__classPrivateFieldGet(this, _YargsInstance_completion, "f").completionKey}`) + 1);
+        __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(completionArgs, (err, completions) => {
+          if (err)
+            throw new YError(err.message);
+          (completions || []).forEach((completion2) => {
+            __classPrivateFieldGet(this, _YargsInstance_logger, "f").log(completion2);
+          });
+          this.exit(0);
+        });
+        return this[kPostProcess](argv2, !populateDoubleDash, !!calledFromCommand, false);
+      }
+      if (!__classPrivateFieldGet(this, _YargsInstance_hasOutput, "f")) {
+        if (helpOptSet) {
+          if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+            setBlocking(true);
+          skipValidation = true;
+          this.showHelp((message) => {
+            __classPrivateFieldGet(this, _YargsInstance_logger, "f").log(message);
+            this.exit(0);
+          });
+        } else if (versionOptSet) {
+          if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+            setBlocking(true);
+          skipValidation = true;
+          __classPrivateFieldGet(this, _YargsInstance_usage, "f").showVersion("log");
+          this.exit(0);
+        }
+      }
+      if (!skipValidation && __classPrivateFieldGet(this, _YargsInstance_options, "f").skipValidation.length > 0) {
+        skipValidation = Object.keys(argv2).some((key) => __classPrivateFieldGet(this, _YargsInstance_options, "f").skipValidation.indexOf(key) >= 0 && argv2[key] === true);
+      }
+      if (!skipValidation) {
+        if (parsed.error)
+          throw new YError(parsed.error.message);
+        if (!requestCompletions) {
+          const validation2 = this[kRunValidation](aliases, {}, parsed.error);
+          if (!calledFromCommand) {
+            argvPromise = applyMiddleware(argv2, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), true);
+          }
+          argvPromise = this[kValidateAsync](validation2, argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv2);
+          if (isPromise(argvPromise) && !calledFromCommand) {
+            argvPromise = argvPromise.then(() => {
+              return applyMiddleware(argv2, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
+            });
+          }
+        }
+      }
+    } catch (err) {
+      if (err instanceof YError)
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(err.message, err);
+      else
+        throw err;
+    }
+    return this[kPostProcess](argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv2, populateDoubleDash, !!calledFromCommand, true);
+  }
+  [kRunValidation](aliases, positionalMap, parseErrors, isDefaultCommand) {
+    const demandedOptions = { ...this.getDemandedOptions() };
+    return (argv2) => {
+      if (parseErrors)
+        throw new YError(parseErrors.message);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").nonOptionCount(argv2);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").requiredArguments(argv2, demandedOptions);
+      let failedStrictCommands = false;
+      if (__classPrivateFieldGet(this, _YargsInstance_strictCommands, "f")) {
+        failedStrictCommands = __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownCommands(argv2);
+      }
+      if (__classPrivateFieldGet(this, _YargsInstance_strict, "f") && !failedStrictCommands) {
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv2, aliases, positionalMap, !!isDefaultCommand);
+      } else if (__classPrivateFieldGet(this, _YargsInstance_strictOptions, "f")) {
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv2, aliases, {}, false, false);
+      }
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").limitedChoices(argv2);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").implications(argv2);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").conflicting(argv2);
+    };
+  }
+  [kSetHasOutput]() {
+    __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+  }
+  [kTrackManuallySetKeys](keys) {
+    if (typeof keys === "string") {
+      __classPrivateFieldGet(this, _YargsInstance_options, "f").key[keys] = true;
+    } else {
+      for (const k of keys) {
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").key[k] = true;
+      }
+    }
+  }
+};
+function isYargsInstance(y) {
+  return !!y && typeof y.getInternalMethods === "function";
+}
+
+// node_modules/yargs/index.mjs
+var Yargs = YargsFactory(esm_default);
+var yargs_default = Yargs;
+
 // src/index.ts
 var version = "0.1.0";
+var argv = yargs_default(hideBin(process.argv)).option("prompt", {
+  alias: "p",
+  type: "string",
+  describe: "Run in headless mode with this prompt"
+}).option("target", {
+  alias: "t",
+  type: "string",
+  describe: "Target to use (agent/team/workflow ID or name)"
+}).option("session", {
+  alias: "s",
+  type: "string",
+  describe: "Session ID to use (optional)"
+}).option("output", {
+  alias: "o",
+  type: "string",
+  choices: ["json", "text", "markdown"],
+  default: "text",
+  describe: "Output format for headless mode"
+}).help().argv;
 var main = async () => {
+  if (argv.prompt && argv.target) {
+    const result = await runHeadless({
+      prompt: argv.prompt,
+      target: argv.target,
+      sessionId: argv.session,
+      output: argv.output
+    });
+    const formattedOutput = formatHeadlessOutput(result, argv.output);
+    console.log(formattedOutput);
+    process.exit(result.success ? 0 : 1);
+  }
   if (appConfig.cliDebug) {
-    console.log("\u{1F9DE} Genie Local CLI starting...");
+    console.log("\u{1F3AF} Genie Local CLI starting...");
     console.log(`API Base URL: ${appConfig.apiBaseUrl}`);
     console.log(`Session Directory: ${appConfig.sessionDir}`);
     console.log(`Debug Mode: ${appConfig.cliDebug}`);
     console.log("---");
   }
-  const { unmount } = render_default(import_react36.default.createElement(AppWrapper, { version }));
+  const { unmount } = render_default(import_react37.default.createElement(AppWrapper, { version }));
   const cleanup = () => {
     if (appConfig.cliDebug) {
-      console.log("\\n\u{1F9DE} Genie Local CLI shutting down...");
+      console.log("\\n\u{1F3AF} Genie Local CLI shutting down...");
     }
     unmount();
     process.exit(0);
@@ -59731,5 +65286,24 @@ object-assign/index.js:
   (c) Sindre Sorhus
   @license MIT
   *)
+
+yargs-parser/build/lib/string-utils.js:
+yargs-parser/build/lib/tokenize-arg-string.js:
+yargs-parser/build/lib/yargs-parser-types.js:
+yargs-parser/build/lib/yargs-parser.js:
+  (**
+   * @license
+   * Copyright (c) 2016, Contributors
+   * SPDX-License-Identifier: ISC
+   *)
+
+yargs-parser/build/lib/index.js:
+  (**
+   * @fileoverview Main entrypoint for libraries using yargs-parser in Node.js
+   *
+   * @license
+   * Copyright (c) 2016, Contributors
+   * SPDX-License-Identifier: ISC
+   *)
 */
 //# sourceMappingURL=genie-cli.js.map

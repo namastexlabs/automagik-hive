@@ -43,17 +43,17 @@ export const lightTheme: ColorsTheme = {
 export const darkTheme: ColorsTheme = {
   type: 'dark',
   Background: '#1E1E2E',
-  Foreground: '#CDD6F4',
-  LightBlue: '#ADD8E6',
-  AccentBlue: '#89B4FA',
-  AccentPurple: '#CBA6F7',
-  AccentCyan: '#89DCEB',
+  Foreground: '#E0E0E0',
+  LightBlue: '#89DCEB',
+  AccentBlue: '#89DCEB',
+  AccentPurple: '#A855F7',  // Main brand color - purple
+  AccentCyan: '#06B6D4',    // Brand cyan
   AccentGreen: '#A6E3A1',
   AccentYellow: '#F9E2AF',
   AccentRed: '#F38BA8',
-  Comment: '#6C7086',
+  Comment: '#8B5CF6',       // Purple for comments
   Gray: '#6C7086',
-  GradientColors: ['#4796E4', '#847ACE', '#C3677F'],
+  GradientColors: ['#EC4899', '#A855F7', '#06B6D4'],  // Fuscia to Purple to Cyan
 };
 
 export const ansiTheme: ColorsTheme = {

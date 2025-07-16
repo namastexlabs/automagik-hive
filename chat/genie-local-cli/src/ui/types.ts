@@ -40,6 +40,7 @@ export interface HistoryItem {
     complete?: boolean;
     // Rich event data from API
     event?: string;
+    eventId?: string;
     tool?: {
       tool_call_id?: string;
       tool_name: string;
@@ -92,6 +93,7 @@ export interface HistoryItem {
       results?: any[];
       metadata?: any;
     };
+    isStats?: boolean;
   };
 }
 

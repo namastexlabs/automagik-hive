@@ -46,8 +46,7 @@ def trigger_conversation_typification_workflow(
         
         # Execute workflow with conversation data
         results = list(workflow.run(
-            conversation_history=conversation_history,
-            customer_message=customer_message,
+            conversation_text=conversation_history,
             session_id=session_id,
             customer_id=customer_id
         ))

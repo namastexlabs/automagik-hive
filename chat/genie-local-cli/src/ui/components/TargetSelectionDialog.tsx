@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
 import { RadioButtonSelect } from './RadioButtonSelect.js';
+import { Colors } from '../colors.js';
 
 interface TargetSelectionDialogProps {
   targetType: 'agent' | 'team' | 'workflow';
@@ -41,14 +42,14 @@ export function TargetSelectionDialog({
   return (
     <Box
       borderStyle="round"
-      borderColor="#666666"
+      borderColor={Colors.AccentPurple}
       flexDirection="column"
       padding={1}
       width="100%"
     >
-      <Text bold>Select {targetTypeDisplay}</Text>
+      <Text bold color={Colors.AccentPurple}>Select {targetTypeDisplay}</Text>
       <Box marginTop={1}>
-        <Text>Choose which {targetType} you want to interact with:</Text>
+        <Text color={Colors.Foreground}>Choose which {targetType} you want to interact with:</Text>
       </Box>
       <Box marginTop={1}>
         <RadioButtonSelect
@@ -61,7 +62,7 @@ export function TargetSelectionDialog({
         />
       </Box>
       <Box marginTop={1}>
-        <Text color="#666666">(Use ↑/↓ arrows and Enter to select, Esc to go back)</Text>
+        <Text color={Colors.Gray}>(Use ↑/↓ arrows and Enter to select, Esc to go back)</Text>
       </Box>
     </Box>
   );

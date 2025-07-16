@@ -1,0 +1,86 @@
+# Genie Speed Optimization Framework Configuration
+
+# Performance thresholds
+thresholds:
+  minimum_improvement: 10.0        # Minimum % improvement required
+  noise_floor: 5.0                # Measurement noise tolerance
+  timeout_seconds: 300            # Maximum benchmark runtime
+  statistical_confidence: 0.95    # Statistical confidence level
+
+# Benchmarking settings
+benchmarking:
+  warmup_runs: 3                  # Number of warmup runs
+  measurement_runs: 50            # Number of measurement runs
+  statistical_method: "minimum"   # minimum, median, mean
+  max_input_size: 10000          # Maximum input size for testing
+  memory_limit_mb: 1024          # Memory limit for benchmarking
+
+# AI model configuration
+models:
+  consensus_required: true        # Require consensus for complex optimizations
+  consensus_threshold: 0.7       # Minimum consensus agreement (70%)
+  models:
+    - name: "grok-4-0709"
+      provider: "xai"
+      weight: 1.0
+      max_tokens: 4000
+      temperature: 0.3
+    - name: "gemini-2.5-pro" 
+      provider: "google"
+      weight: 1.0
+      max_tokens: 4000
+      temperature: 0.3
+    - name: "o3"
+      provider: "openai"
+      weight: 1.0
+      max_tokens: 4000
+      temperature: 0.3
+
+# Git automation
+git:
+  auto_commit: true               # Auto-commit successful optimizations
+  auto_revert: true               # Auto-revert failed optimizations
+  branch_prefix: "speed-opt"      # Branch prefix for optimization attempts
+  commit_message_template: "perf: optimize {function_name} (+{improvement}%)"
+  preserve_logs: true             # Preserve logs during revert
+
+# Optimization targets
+targets:
+  function_complexity_threshold: 10  # Minimum complexity for optimization
+  module_optimization_enabled: true # Enable module-wide optimization
+  commit_optimization_enabled: true # Enable commit-based optimization
+  excluded_patterns:              # Patterns to exclude from optimization
+    - "test_*"
+    - "*_test.py"
+    - "conftest.py"
+    - "setup.py"
+
+# Safety settings
+safety:
+  max_attempts: 3                 # Maximum optimization attempts
+  rollback_on_failure: true      # Rollback on optimization failure
+  test_coverage_threshold: 0.8   # Minimum test coverage required
+  performance_regression_threshold: 0.05  # 5% regression threshold
+
+# Monitoring and reporting
+monitoring:
+  metrics_collection: true       # Enable metrics collection
+  performance_tracking: true     # Enable performance tracking
+  regression_detection: true     # Enable regression detection
+  alert_on_regression: true      # Send alerts on regression
+  
+reporting:
+  generate_charts: true          # Generate performance charts
+  include_code_diffs: true       # Include code differences in reports
+  format_options:               # Available report formats
+    - "markdown"
+    - "html"
+    - "json"
+    - "pdf"
+
+# Framework integration
+integration:
+  agno_framework: true           # Enable Agno framework integration
+  zen_consensus: true            # Enable zen consensus integration
+  mcp_servers: true             # Enable MCP server integration
+  prometheus_metrics: true      # Enable Prometheus metrics export

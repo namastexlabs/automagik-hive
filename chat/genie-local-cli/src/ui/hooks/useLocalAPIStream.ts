@@ -1,7 +1,8 @@
 import { useCallback, useState, useRef } from 'react';
 import { StreamingState, MessageType, HistoryItem, APITarget } from '../types.js';
 import { useStreamingContext } from '../contexts/StreamingContext.js';
-import { localAPIClient, StreamingResponse } from '../../config/localClient.js';
+import { StreamingResponse } from '../../config/localClient.js';
+import { localAPIClient } from '../../config/localClient.js';
 import { appConfig } from '../../config/settings.js';
 
 interface UseLocalAPIStreamResult {
@@ -74,7 +75,7 @@ export const useLocalAPIStream = (
 
     // Create pending assistant message
     const pendingAssistantMessage: HistoryItem = {
-      id: Date.now(), // Temporary ID
+      id: Date.now() + Math.random(), // More unique temporary ID
       type: MessageType.ASSISTANT,
       text: '',
       timestamp: Date.now(),
@@ -141,7 +142,7 @@ export const useLocalAPIStream = (
               streaming: false,
               complete: true,
               event: data.metadata?.event,
-              eventId: data.metadata?.eventId || `${messageType}-${Date.now()}-${Math.random()}`,
+              eventId: data.metadata?.eventId || `${messageType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               // Pass through all the rich metadata from the API
               tool: data.metadata?.tool,
               agent: data.metadata?.agent,
@@ -181,92 +182,215 @@ export const useLocalAPIStream = (
 
       const handleStreamingError = (error: Error) => {
         console.error('Streaming error:', error);
-        setInitError(error.message);
+        
+        // Graceful error handling based on error type
+        let userFriendlyMessage = '';
+        let actionableAdvice = '';
+        
+        if (error.message.includes('ECONNREFUSED') || error.message.includes('connect')) {
+          userFriendlyMessage = '🔌 Cannot connect to Genie API server';
+          actionableAdvice = `
+💡 **Quick Fix:**
+   • Check if the API server is running: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   • Start the server: \`cd /path/to/genie-agents && make dev\`
+   • Or change API_BASE_URL in .env to correct server address
+
+🔧 **Troubleshooting:**
+   • Server might be starting up (wait 30 seconds)
+   • Wrong port/host in configuration
+   • Firewall blocking connection`;
+        } else if (error.message.includes('timeout')) {
+          userFriendlyMessage = '⏱️ Request timed out';
+          actionableAdvice = `
+💡 **Solutions:**
+   • Server may be overloaded, try again in a moment
+   • Check network connectivity
+   • Increase timeout in settings if needed`;
+        } else if (error.message.includes('404') || error.message.includes('Not Found')) {
+          userFriendlyMessage = '🔍 API endpoint not found';
+          actionableAdvice = `
+💡 **Check:**
+   • API server version compatibility
+   • Endpoint URL configuration
+   • Server running the correct version`;
+        } else {
+          userFriendlyMessage = `❌ ${error.message}`;
+          actionableAdvice = `
+💡 **General troubleshooting:**
+   • Check server logs for detailed error information
+   • Verify API server is healthy: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   • Contact support if issue persists`;
+        }
+        
+        setInitError(userFriendlyMessage);
         setPendingMessage(null);
         setStreamingState(StreamingState.Error);
-        setDebugMessage(`Error: ${error.message}`);
+        setDebugMessage(userFriendlyMessage);
         
-        // Add error message
+        // Add graceful error message
         addMessage({
           type: MessageType.ERROR,
-          text: `Streaming error: ${error.message}`,
+          text: userFriendlyMessage + actionableAdvice,
           timestamp: Date.now(),
           sessionId,
         });
       };
 
-      const handleStreamingComplete = () => {
+      const handleStreamingComplete = (stats?: any) => {
         setStreamingState(StreamingState.Idle);
         setDebugMessage('');
+        
+        // Display run statistics if available
+        if (stats) {
+          // Use actual measured time if available, otherwise fall back to API time
+          const timeValue = stats.actual_time || (Array.isArray(stats.time) ? stats.time[0] : stats.time);
+          const time = timeValue ? timeValue.toFixed(2) + 's' : 'N/A';
+          const tokens = stats.total_tokens || 0;
+          const inputTokens = stats.input_tokens || 0;
+          const outputTokens = stats.output_tokens || 0;
+          
+          const statsMessage = `📊 Stats: ${time} | ${tokens} tokens (${inputTokens}↑ ${outputTokens}↓)`;
+          
+          addMessage({
+            type: MessageType.INFO,
+            text: statsMessage,
+            timestamp: Date.now(),
+            sessionId,
+            metadata: {
+              target: selectedTarget,
+              isStats: true,
+            },
+          });
+        }
       };
 
-      // Start streaming based on target type
+      // Track actual start time
+      const actualStartTime = Date.now();
+      
+      // Execute based on target type using non-streaming API
+      let response: any;
+      
       switch (selectedTarget.type) {
         case 'agent':
-          await localAPIClient.streamAgent(
-            {
-              agent_id: selectedTarget.id,
-              message,
-              session_id: sessionId,
-            },
-            handleStreamingMessage,
-            handleStreamingError,
-            handleStreamingComplete,
-            abortControllerRef.current?.signal
-          );
+          response = await localAPIClient.invokeAgent({
+            agent_id: selectedTarget.id,
+            message,
+            session_id: sessionId,
+          });
           break;
 
         case 'team':
-          await localAPIClient.streamTeam(
-            {
-              team_id: selectedTarget.id,
-              message,
-              session_id: sessionId,
-            },
-            handleStreamingMessage,
-            handleStreamingError,
-            handleStreamingComplete,
-            abortControllerRef.current?.signal
-          );
+          response = await localAPIClient.invokeTeam({
+            team_id: selectedTarget.id,
+            message,
+            session_id: sessionId,
+          });
           break;
 
         case 'workflow':
-          // For now, use non-streaming fallback for workflows
-          const workflowResponse = await localAPIClient.executeWorkflow({
+          response = await localAPIClient.executeWorkflow({
             workflow_id: selectedTarget.id,
             params: { message },
             session_id: sessionId,
-          });
-          
-          if (workflowResponse.error) {
-            throw new Error(workflowResponse.error);
-          }
-          
-          // Simulate streaming for workflows
-          const workflowContent = workflowResponse.data?.content || 'No response from workflow';
-          handleStreamingMessage({
-            content: workflowContent,
-            done: true,
-            session_id: workflowResponse.session_id,
           });
           break;
 
         default:
           throw new Error(`Unknown target type: ${selectedTarget.type}`);
       }
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
+      // Simulate streaming by showing intermediate steps, then complete response
+      setDebugMessage(`Processing response...`);
+      
+      // Add a processing message
+      handleStreamingMessage({
+        content: '🔄 Processing your request...',
+        done: false,
+        session_id: response.session_id || sessionId,
+        metadata: { type: 'agent_start' }
+      });
+      
+      // Show processing step for a meaningful duration (2 seconds)
+      setTimeout(() => {
+        const content = response.data?.content || 'No response content';
+        handleStreamingMessage({
+          content,
+          done: true,
+          session_id: response.session_id || sessionId,
+        });
+        
+        // Calculate actual elapsed time and fix stats
+        const actualEndTime = Date.now();
+        const actualDuration = (actualEndTime - actualStartTime) / 1000;
+        
+        // Handle completion with corrected stats
+        setTimeout(() => {
+          const stats = response.data?.metrics || null;
+          if (stats) {
+            // Override the API's timing with our actual measurement
+            stats.actual_time = actualDuration;
+            stats.time = [actualDuration]; // Override time array
+          }
+          handleStreamingComplete(stats);
+        }, 100);
+      }, 2000); // Show processing for 2 seconds
 
     } catch (error) {
       console.error('Submit query error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setInitError(errorMessage);
+      
+      // Graceful error handling (same logic as handleStreamingError)
+      const errorObj = error instanceof Error ? error : new Error('Unknown error');
+      let userFriendlyMessage = '';
+      let actionableAdvice = '';
+      
+      if (errorObj.message.includes('ECONNREFUSED') || errorObj.message.includes('connect')) {
+        userFriendlyMessage = '🔌 Cannot connect to Genie API server';
+        actionableAdvice = `
+💡 **Quick Fix:**
+   • Check if the API server is running: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   • Start the server: \`cd /path/to/genie-agents && make dev\`
+   • Or change API_BASE_URL in .env to correct server address
+
+🔧 **Troubleshooting:**
+   • Server might be starting up (wait 30 seconds)
+   • Wrong port/host in configuration
+   • Firewall blocking connection`;
+      } else if (errorObj.message.includes('timeout')) {
+        userFriendlyMessage = '⏱️ Request timed out';
+        actionableAdvice = `
+💡 **Solutions:**
+   • Server may be overloaded, try again in a moment
+   • Check network connectivity
+   • Increase timeout in settings if needed`;
+      } else if (errorObj.message.includes('404') || errorObj.message.includes('Not Found')) {
+        userFriendlyMessage = '🔍 API endpoint not found';
+        actionableAdvice = `
+💡 **Check:**
+   • API server version compatibility
+   • Endpoint URL configuration
+   • Server running the correct version`;
+      } else {
+        userFriendlyMessage = `❌ ${errorObj.message}`;
+        actionableAdvice = `
+💡 **General troubleshooting:**
+   • Check server logs for detailed error information
+   • Verify API server is healthy: \`curl ${appConfig.apiBaseUrl}/api/v1/health\`
+   • Contact support if issue persists`;
+      }
+      
+      setInitError(userFriendlyMessage);
       setPendingMessage(null);
       setStreamingState(StreamingState.Error);
-      setDebugMessage(`Error: ${errorMessage}`);
+      setDebugMessage(userFriendlyMessage);
       
-      // Add error message to history
+      // Add graceful error message
       addMessage({
         type: MessageType.ERROR,
-        text: `Failed to send message: ${errorMessage}`,
+        text: userFriendlyMessage + actionableAdvice,
         timestamp: Date.now(),
         sessionId,
       });

@@ -42,7 +42,7 @@ const renderToken = (token: any, index: number, color: string): React.ReactEleme
       return (
         <Box key={index} marginY={token.depth === 1 ? 1 : 0}>
           <Text 
-            color={Colors.AccentBlue} 
+            color={Colors.AccentPurple} 
             bold={true}
             underline={token.depth === 1}
           >

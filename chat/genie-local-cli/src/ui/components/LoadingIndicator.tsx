@@ -47,13 +47,13 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     
     switch (streamingState) {
       case StreamingState.Connecting:
-        return '🧞 Connecting to genie...';
+        return '🔗 Connecting to genie...';
       case StreamingState.Waiting:
-        return '🧞 Waiting for response...';
+        return '⏳ Waiting for response...';
       case StreamingState.Responding:
-        return '🧞 Receiving response...';
+        return '📥 Receiving response...';
       default:
-        return '🧞 Thinking...';
+        return '🤔 Thinking...';
     }
   };
 

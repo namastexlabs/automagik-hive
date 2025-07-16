@@ -1,0 +1,183 @@
+# Genie Speed Optimization Framework - Zen Consensus Configuration
+
+# Consensus requirements
+consensus:
+  # When consensus is required
+  required_for:
+    complex_functions: true          # Functions > 50 LOC
+    critical_paths: true            # Functions in performance-critical modules
+    external_apis: true             # Functions with external dependencies
+    async_functions: false          # Currently not supported
+    high_complexity: true           # Functions with cyclomatic complexity > 10
+    unsafe_patterns: true           # Functions with potentially unsafe patterns
+    
+  # Voting weights for different criteria
+  voting_weights:
+    correctness: 0.4               # Behavioral correctness preservation
+    performance: 0.3               # Performance improvement measurement
+    maintainability: 0.2           # Code maintainability and readability
+    security: 0.1                  # Security considerations
+    
+  # Consensus thresholds
+  minimum_agreement: 0.7           # 70% consensus required
+  tie_breaking: "conservative"     # conservative, aggressive, manual
+  timeout_seconds: 300             # Consensus timeout
+  
+  # Model-specific configurations
+  models:
+    grok-4-0709:
+      specialization: "algorithm_analysis"
+      weight_multiplier: 1.0
+      confidence_threshold: 0.8
+    
+    gemini-2.5-pro:
+      specialization: "correctness_verification"
+      weight_multiplier: 1.0
+      confidence_threshold: 0.8
+    
+    o3:
+      specialization: "performance_optimization"
+      weight_multiplier: 1.0
+      confidence_threshold: 0.8
+
+# Optimization evaluation criteria
+evaluation:
+  # Technical merit evaluation
+  technical_merit:
+    weight: 0.4
+    criteria:
+      - algorithm_correctness
+      - implementation_quality
+      - performance_methodology
+      - edge_case_handling
+      
+  # Performance impact evaluation
+  performance_impact:
+    weight: 0.3
+    criteria:
+      - measurable_improvement
+      - statistical_significance
+      - scalability_analysis
+      - resource_efficiency
+      
+  # Safety and correctness evaluation
+  safety_correctness:
+    weight: 0.2
+    criteria:
+      - behavioral_equivalence
+      - test_coverage
+      - error_handling
+      - rollback_safety
+      
+  # Strategic value evaluation
+  strategic_value:
+    weight: 0.1
+    criteria:
+      - project_alignment
+      - maintainability_impact
+      - workflow_integration
+      - knowledge_transfer
+
+# Decision criteria
+decision:
+  # Approval criteria
+  approve_if:
+    - technical_score: ">= 0.8"
+    - performance_score: ">= 0.7"
+    - safety_score: ">= 0.9"
+    - consensus_agreement: ">= 0.7"
+    
+  # Rejection criteria
+  reject_if:
+    - technical_score: "< 0.6"
+    - performance_score: "< 0.5"
+    - safety_score: "< 0.7"
+    - consensus_agreement: "< 0.5"
+    
+  # Clarification criteria
+  clarify_if:
+    - technical_score: "0.6 <= x < 0.8"
+    - performance_score: "0.5 <= x < 0.7"
+    - safety_score: "0.7 <= x < 0.9"
+    - consensus_agreement: "0.5 <= x < 0.7"
+
+# Consensus workflow
+workflow:
+  # Optimization generation phase
+  generation:
+    parallel_generation: true      # Generate optimizations in parallel
+    max_candidates: 5             # Maximum optimization candidates
+    diversity_threshold: 0.3      # Minimum diversity between candidates
+    
+  # Evaluation phase
+  evaluation:
+    parallel_evaluation: true     # Evaluate candidates in parallel
+    detailed_analysis: true       # Include detailed analysis
+    comparative_ranking: true     # Rank candidates comparatively
+    
+  # Decision phase
+  decision:
+    weighted_voting: true         # Use weighted voting
+    conflict_resolution: true     # Enable conflict resolution
+    explanation_required: true    # Require decision explanation
+    
+  # Validation phase
+  validation:
+    cross_validation: true        # Cross-validate with other models
+    final_review: true           # Final review before implementation
+    rollback_preparation: true   # Prepare rollback strategy
+
+# Integration settings
+integration:
+  # Zen framework integration
+  zen_framework:
+    enabled: true
+    tools:
+      - "mcp__zen__consensus"
+      - "mcp__zen__thinkdeep"
+      - "mcp__zen__analyze"
+      
+  # MCP server integration  
+  mcp_servers:
+    enabled: true
+    servers:
+      - "gemini-consultation"
+      - "search-repo-docs"
+      - "ask-repo-agent"
+      
+  # Memory integration
+  memory:
+    enabled: true
+    search_patterns:
+      - "optimization consensus"
+      - "performance improvement"
+      - "algorithm optimization"
+      - "speed framework"
+
+# Logging and monitoring
+logging:
+  log_level: "INFO"
+  log_file: "logs/consensus.log"
+  log_consensus_decisions: true
+  log_model_responses: true
+  log_performance_metrics: true
+  
+monitoring:
+  track_consensus_accuracy: true
+  track_model_performance: true
+  track_decision_quality: true
+  alert_on_low_consensus: true
+
+# Advanced settings
+advanced:
+  # Consensus algorithms
+  consensus_algorithm: "weighted_majority"  # weighted_majority, unanimous, threshold
+  
+  # Optimization strategies
+  optimization_strategy: "incremental"      # incremental, comprehensive, adaptive
+  
+  # Risk management
+  risk_management: "conservative"           # conservative, balanced, aggressive
+  
+  # Quality assurance
+  quality_assurance: "strict"              # strict, balanced, permissive
