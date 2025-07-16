@@ -1,6 +1,6 @@
 agent:
   agent_id: human-handoff-specialist
-  version: 31
+  version: 33
   name: Ana - HumanHandoff
   role: Ana - Assistente Digital Escalação
   description: Ana, sua assistente digital especializada em escalação para atendimento
@@ -30,7 +30,7 @@ tools:
 - trigger_human_handoff_workflow
 storage:
   type: postgres
-  table_name: agents-human-handoff
+  table_name: agents_human_handoff
   auto_upgrade_schema: true
 memory:
   add_history_to_messages: true

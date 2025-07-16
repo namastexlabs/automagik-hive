@@ -453,9 +453,10 @@ class ConversationTypificationWorkflow(Workflow):
             )
             
             # Send WhatsApp notification if enabled
-            notification_result = self._send_whatsapp_notification_sync(
+            import asyncio
+            notification_result = asyncio.run(self._send_whatsapp_notification_sync(
                 final_report, final_typification
-            )
+            ))
             
             # Save to session state
             self._save_typification_result(complete_typification)
@@ -706,51 +707,76 @@ class ConversationTypificationWorkflow(Workflow):
         
         return "; ".join(impacts) if impacts else "Impacto padrão no atendimento"
     
-    def _send_whatsapp_notification_sync(
+    def _get_target_team(self, typification: HierarchicalTypification) -> str:
+        """Get target team based on business unit"""
+        team_mapping = {
+            "Adquirência Web": "adquirencia_team",
+            "Adquirência Web / Adquirência Presencial": "adquirencia_team", 
+            "Emissão": "emissao_team",
+            "PagBank": "pagbank_team"
+        }
+        return team_mapping.get(typification.unidade_negocio.value, "general_team")
+    
+    async def _send_whatsapp_notification_sync(
         self, 
         final_report: FinalReport,
         typification: HierarchicalTypification
     ) -> Dict:
-        """Send WhatsApp notification with final report summary"""
+        """Send WhatsApp notification with final report summary using Evolution API via MCP"""
         
         try:
-            # Determine target team
-            team_mapping = {
-                "Adquirência Web": "adquirencia_team",
-                "Adquirência Web / Adquirência Presencial": "adquirencia_team", 
-                "Emissão": "emissao_team",
-                "PagBank": "pagbank_team"
+            # Import the WhatsApp notification service
+            from workflows.shared.whatsapp_notification import get_whatsapp_notification_service
+            
+            # Get the WhatsApp service
+            whatsapp_service = get_whatsapp_notification_service(debug_mode=self.debug_mode)
+            
+            # Prepare report data for WhatsApp formatting
+            report_data = {
+                "report_id": final_report.report_id,
+                "session_id": final_report.session_id,
+                "typification": final_report.typification.model_dump(mode="json"),
+                "satisfaction_data": final_report.satisfaction_data.model_dump(mode="json"),
+                "metrics": final_report.metrics.model_dump(mode="json"),
+                "executive_summary": final_report.executive_summary
             }
             
-            target_team = team_mapping.get(typification.unidade_negocio.value, "general_team")
+            # Send via WhatsApp service using Evolution API
+            notification_result = await whatsapp_service.send_typification_report(report_data)
             
-            # Format notification message
-            message = self._format_report_notification(final_report, target_team)
-            
-            # Create notification data
-            notification_data = WhatsAppNotificationData(
-                notification_id=f"NOT-{final_report.report_id}",
-                target_team=target_team,
-                priority="medium",
-                message_template="final_report_template",
-                formatted_message=message
-            )
-            
-            # Simulate WhatsApp sending (in production, use actual MCP tools)
-            logger.info(f"📱 WhatsApp notification prepared for {target_team}")
-            logger.info(f"📄 Message: {message[:100]}...")
-            
-            return {
-                "success": True,
-                "notification_data": notification_data.model_dump(mode="json"),
-                "message": "Notification prepared successfully"
-            }
+            if notification_result["success"]:
+                logger.info(f"📱 WhatsApp typification report sent successfully")
+                
+                # Create notification data for compatibility
+                notification_data = WhatsAppNotificationData(
+                    notification_id=f"NOT-{final_report.report_id}",
+                    target_team=self._get_target_team(typification),
+                    priority="medium",
+                    message_template="final_report_template",
+                    formatted_message=notification_result.get("agent_response", "Report sent")
+                )
+                
+                return {
+                    "success": True,
+                    "notification_data": notification_data.model_dump(mode="json"),
+                    "message": "WhatsApp notification sent successfully",
+                    "agent_response": notification_result.get("agent_response"),
+                    "method": "agno_whatsapp_tools"
+                }
+            else:
+                logger.error(f"WhatsApp notification failed: {notification_result.get('error')}")
+                return {
+                    "success": False,
+                    "error": notification_result.get("error"),
+                    "method": "agno_whatsapp_tools"
+                }
             
         except Exception as e:
             logger.error(f"WhatsApp notification error: {str(e)}")
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(e),
+                "method": "agno_whatsapp_tools"
             }
     
     def _format_report_notification(self, report: FinalReport, target_team: str) -> str:

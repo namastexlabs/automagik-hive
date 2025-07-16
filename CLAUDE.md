@@ -30,6 +30,7 @@ Genie Agents follows a Clean V2 Architecture pattern with YAML-driven agent conf
 
 ### Genie Agents Specific Instructions
 - **Agent Development**: Always use YAML configuration files for new agents following the V2 architecture pattern
+- **Agent Versioning**: **CRITICAL** - Whenever an agent is changed (code, config, tools, instructions), the version MUST be bumped in the agent's config.yaml file
 - **Team Routing**: Utilize Agno's Team(mode="route") for intelligent agent selection with confidence scoring
 - **Database Operations**: Use SQLAlchemy ORM for all database interactions, raw SQL only for complex queries
 - **Monitoring**: Include metrics collection for all new endpoints and agent interactions

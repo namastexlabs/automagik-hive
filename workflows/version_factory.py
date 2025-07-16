@@ -70,8 +70,9 @@ def create_versioned_workflow(
             from workflows.human_handoff.workflow import HumanHandoffWorkflow
             workflow_class = HumanHandoffWorkflow
         elif workflow_id == "conversation-typification":
-            from workflows.conversation_typification import ConversationTypificationWorkflow
-            workflow_class = ConversationTypificationWorkflow
+            from workflows.conversation_typification.workflow import get_conversation_typification_workflow
+            # Use factory function instead of direct instantiation
+            return get_conversation_typification_workflow(debug_mode=debug_mode)
         else:
             raise ValueError(f"Unknown workflow type: {workflow_id}")
         

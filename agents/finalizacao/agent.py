@@ -60,7 +60,7 @@ def get_finalizacao_agent(
     
     logger.info(f"🎯 Creating finalizacao specialist agent v{config['agent']['version']}")
     
-    # Create agent tools
+    # Create agent tools - use the already imported tool object
     tools = [
         finalize_conversation
     ]

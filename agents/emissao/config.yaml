@@ -1,6 +1,6 @@
 agent:
   agent_id: emissao-specialist
-  version: 31
+  version: 33
   name: Ana - Emissao
   role: Ana - Assistente Digital Emissão
   description: Ana, sua assistente digital especializada em cartões de crédito e débito,
@@ -41,7 +41,7 @@ knowledge:
   - typification
 storage:
   type: postgres
-  table_name: agents-emissao
+  table_name: agents_emissao
   auto_upgrade_schema: true
 memory:
   enable_user_memories: false

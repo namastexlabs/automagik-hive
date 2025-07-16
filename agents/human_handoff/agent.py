@@ -121,6 +121,6 @@ def get_human_handoff_agent_latest(session_id: Optional[str] = None, debug_mode:
     return get_human_handoff_agent(session_id=session_id, debug_mode=debug_mode)
 
 
-def get_human_handoff_agent_v27(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
-    """Get specific v27 of Human Handoff agent for testing/rollback"""
-    return get_human_handoff_agent(version=27, session_id=session_id, debug_mode=debug_mode)
+def get_human_handoff_agent_v32(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
+    """Get specific v32 of Human Handoff agent for testing/rollback"""
+    return get_human_handoff_agent(version=32, session_id=session_id, debug_mode=debug_mode)

@@ -2,7 +2,7 @@ workflow:
   workflow_id: conversation-typification
   name: Tipificação Automática de Atendimento
   description: Análise hierárquica da conversa seguindo padrão PagBank de 5 níveis
-  version: 30
+  version: 33
 storage:
   type: postgres
   table_name: workflows-conversation-typification
@@ -14,7 +14,7 @@ agents:
     name: Business Unit Classifier
     model:
       provider: anthropic
-      id: claude-haiku-4-20250514
+      id: claude-sonnet-4-20250514
       max_tokens: 300
       temperature: 0.1
     description: Especialista em classificação de unidades de negócio PagBank
@@ -24,7 +24,7 @@ agents:
     name: Product Classifier
     model:
       provider: anthropic
-      id: claude-haiku-4-20250514
+      id: claude-sonnet-4-20250514
       max_tokens: 300
       temperature: 0.1
     description: Especialista em produtos por unidade de negócio
@@ -34,7 +34,7 @@ agents:
     name: Motive Classifier
     model:
       provider: anthropic
-      id: claude-haiku-4-20250514
+      id: claude-sonnet-4-20250514
       max_tokens: 400
       temperature: 0.1
     description: Especialista em motivos por produto
@@ -54,7 +54,7 @@ agents:
     name: Ticket Generator
     model:
       provider: anthropic
-      id: claude-haiku-4-20250514
+      id: claude-sonnet-4-20250514
       max_tokens: 300
       temperature: 0.0
     description: Gerador de tickets com tipificação completa

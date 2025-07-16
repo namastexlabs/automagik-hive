@@ -267,77 +267,60 @@ export const useLocalAPIStream = (
       // Track actual start time
       const actualStartTime = Date.now();
       
-      // Execute based on target type using non-streaming API
-      let response: any;
-      
+      // Start streaming based on target type
       switch (selectedTarget.type) {
         case 'agent':
-          response = await localAPIClient.invokeAgent({
-            agent_id: selectedTarget.id,
-            message,
-            session_id: sessionId,
-          });
+          await localAPIClient.streamAgent(
+            {
+              agent_id: selectedTarget.id,
+              message,
+              session_id: sessionId,
+            },
+            handleStreamingMessage,
+            handleStreamingError,
+            handleStreamingComplete,
+            abortControllerRef.current?.signal
+          );
           break;
 
         case 'team':
-          response = await localAPIClient.invokeTeam({
-            team_id: selectedTarget.id,
-            message,
-            session_id: sessionId,
-          });
+          await localAPIClient.streamTeam(
+            {
+              team_id: selectedTarget.id,
+              message,
+              session_id: sessionId,
+            },
+            handleStreamingMessage,
+            handleStreamingError,
+            handleStreamingComplete,
+            abortControllerRef.current?.signal
+          );
           break;
 
         case 'workflow':
-          response = await localAPIClient.executeWorkflow({
+          // For now, use non-streaming fallback for workflows
+          const workflowResponse = await localAPIClient.executeWorkflow({
             workflow_id: selectedTarget.id,
             params: { message },
             session_id: sessionId,
+          });
+          
+          if (workflowResponse.error) {
+            throw new Error(workflowResponse.error);
+          }
+          
+          // Simulate streaming for workflows
+          const workflowContent = workflowResponse.data?.content || 'No response from workflow';
+          handleStreamingMessage({
+            content: workflowContent,
+            done: true,
+            session_id: workflowResponse.session_id,
           });
           break;
 
         default:
           throw new Error(`Unknown target type: ${selectedTarget.type}`);
       }
-      
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      
-      // Simulate streaming by showing intermediate steps, then complete response
-      setDebugMessage(`Processing response...`);
-      
-      // Add a processing message
-      handleStreamingMessage({
-        content: '🔄 Processing your request...',
-        done: false,
-        session_id: response.session_id || sessionId,
-        metadata: { type: 'agent_start' }
-      });
-      
-      // Show processing step for a meaningful duration (2 seconds)
-      setTimeout(() => {
-        const content = response.data?.content || 'No response content';
-        handleStreamingMessage({
-          content,
-          done: true,
-          session_id: response.session_id || sessionId,
-        });
-        
-        // Calculate actual elapsed time and fix stats
-        const actualEndTime = Date.now();
-        const actualDuration = (actualEndTime - actualStartTime) / 1000;
-        
-        // Handle completion with corrected stats
-        setTimeout(() => {
-          const stats = response.data?.metrics || null;
-          if (stats) {
-            // Override the API's timing with our actual measurement
-            stats.actual_time = actualDuration;
-            stats.time = [actualDuration]; // Override time array
-          }
-          handleStreamingComplete(stats);
-        }, 100);
-      }, 2000); // Show processing for 2 seconds
 
     } catch (error) {
       console.error('Submit query error:', error);

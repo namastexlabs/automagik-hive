@@ -12,7 +12,7 @@ from workflows.shared.protocol_generator import (
 )
 
 # Import existing workflow
-from workflows.conversation_typification.workflow import ConversationTypificationWorkflow
+from workflows.conversation_typification.workflow import get_conversation_typification_workflow
 
 
 @tool
@@ -41,8 +41,8 @@ def trigger_conversation_typification_workflow(
     logger.info(f"🎯 Triggering conversation typification for session {session_id}")
     
     try:
-        # Create and run typification workflow
-        workflow = ConversationTypificationWorkflow()
+        # Create and run typification workflow using factory function
+        workflow = get_conversation_typification_workflow()
         
         # Execute workflow with conversation data
         results = list(workflow.run(

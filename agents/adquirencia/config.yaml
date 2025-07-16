@@ -1,6 +1,6 @@
 agent:
   agent_id: adquirencia-specialist
-  version: 31
+  version: 33
   name: Ana - Adquirencia
   role: Ana - Assistente Digital Adquirência
   description: Ana, sua assistente digital especializada em antecipação de vendas
@@ -39,7 +39,7 @@ knowledge:
   - typification
 storage:
   type: postgres
-  table_name: agents-adquirencia
+  table_name: agents_adquirencia
   auto_upgrade_schema: true
 memory:
   enable_user_memories: false

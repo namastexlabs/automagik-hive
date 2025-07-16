@@ -125,6 +125,6 @@ def get_emissao_agent_latest(session_id: Optional[str] = None, debug_mode: bool 
     return get_emissao_agent(session_id=session_id, debug_mode=debug_mode)
 
 
-def get_emissao_agent_v28(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
-    """Get specific v28 of Emissão agent for testing/rollback"""
-    return get_emissao_agent(version=28, session_id=session_id, debug_mode=debug_mode)
+def get_emissao_agent_v32(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
+    """Get specific v32 of Emissão agent for testing/rollback"""
+    return get_emissao_agent(version=32, session_id=session_id, debug_mode=debug_mode)

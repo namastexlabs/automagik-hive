@@ -2,7 +2,7 @@ workflow:
   workflow_id: human-handoff
   name: Human Handoff Workflow
   description: Simplified escalation workflow for Ana team handoffs
-  version: 30
+  version: 33
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
@@ -34,7 +34,7 @@ whatsapp:
     '
 storage:
   type: postgres
-  table_name: workflows-human-handoff
+  table_name: human_handoff_workflows
   mode: workflow
   auto_upgrade_schema: true
 workflow_settings:

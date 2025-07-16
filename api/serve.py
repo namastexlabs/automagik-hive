@@ -12,6 +12,11 @@ from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+# ✅ PATCH AGNO STREAMING DEFAULT BEHAVIOR
+# This must be imported before creating the playground to patch the router
+from api.streaming_patch import patch_agno_streaming_default
+patch_agno_streaming_default()
+
 # Add project root to path to import common module
 project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
@@ -357,6 +362,7 @@ def create_pagbank_api():
         )
         
         # Get the unified router - this provides all endpoints including workflows
+        # Note: The router has been patched to use stream=true as default
         unified_router = playground.get_async_router()
         app.include_router(unified_router)
             

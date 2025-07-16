@@ -125,6 +125,6 @@ def get_adquirencia_agent_latest(session_id: Optional[str] = None, debug_mode: b
     return get_adquirencia_agent(session_id=session_id, debug_mode=debug_mode)
 
 
-def get_adquirencia_agent_v27(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
-    """Get specific v27 of Adquirência agent for testing/rollback"""
-    return get_adquirencia_agent(version=27, session_id=session_id, debug_mode=debug_mode)
+def get_adquirencia_agent_v32(session_id: Optional[str] = None, debug_mode: bool = False) -> Agent:
+    """Get specific v32 of Adquirência agent for testing/rollback"""
+    return get_adquirencia_agent(version=32, session_id=session_id, debug_mode=debug_mode)

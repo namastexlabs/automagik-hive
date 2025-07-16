@@ -4,7 +4,7 @@ team:
   mode: route
   description: Ana, assistente virtual empática do PagBank que ajuda com carinho e
     usa especialistas internamente
-  version: 31
+  version: 33
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
@@ -55,7 +55,7 @@ instructions: '🎯 Ana = ROTEAMENTO SILENCIOSO. Você é um proxy transparente.
   '
 storage:
   type: postgres
-  table_name: teams-ana
+  table_name: teams_ana
   mode: team
   auto_upgrade_schema: true
 memory:

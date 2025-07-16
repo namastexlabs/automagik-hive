@@ -10,7 +10,7 @@ Uses shared protocol generator for consistent protocol format.
 import uuid
 from datetime import datetime
 from textwrap import dedent
-from typing import Iterator, Dict, Optional
+from typing import Iterator, Dict, Optional, AsyncIterator
 
 from agno.agent import Agent
 from agno.models.anthropic import Claude
@@ -60,6 +60,79 @@ class HumanHandoffWorkflow(Workflow):
         logger.info(f"📱 Human handoff workflow initialized (WhatsApp: {self.whatsapp_enabled})")
     
     def run(
+        self,
+        # Main parameters
+        customer_message: Optional[str] = None,
+        escalation_reason: Optional[str] = None,
+        conversation_history: Optional[str] = None,
+        urgency_level: str = "medium",
+        business_unit: Optional[str] = None,
+        session_id: Optional[str] = None,
+        customer_id: Optional[str] = None,
+        # Alternative parameter names for compatibility
+        customer_query: Optional[str] = None,
+        # User data parameters - NEW
+        user_id: Optional[str] = None,
+        user_name: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        cpf: Optional[str] = None,
+        **kwargs
+    ) -> Iterator[WorkflowCompletedEvent]:
+        """Execute the simplified human handoff workflow synchronously."""
+        yield from self._execute_workflow(
+            customer_message=customer_message,
+            escalation_reason=escalation_reason,
+            conversation_history=conversation_history,
+            urgency_level=urgency_level,
+            business_unit=business_unit,
+            session_id=session_id,
+            customer_id=customer_id,
+            customer_query=customer_query,
+            user_id=user_id,
+            user_name=user_name,
+            phone_number=phone_number,
+            cpf=cpf,
+            **kwargs
+        )
+    
+    async def arun(
+        self,
+        # Main parameters
+        customer_message: Optional[str] = None,
+        escalation_reason: Optional[str] = None,
+        conversation_history: Optional[str] = None,
+        urgency_level: str = "medium",
+        business_unit: Optional[str] = None,
+        session_id: Optional[str] = None,
+        customer_id: Optional[str] = None,
+        # Alternative parameter names for compatibility
+        customer_query: Optional[str] = None,
+        # User data parameters - NEW
+        user_id: Optional[str] = None,
+        user_name: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        cpf: Optional[str] = None,
+        **kwargs
+    ) -> AsyncIterator[WorkflowCompletedEvent]:
+        """Execute the simplified human handoff workflow asynchronously."""
+        for result in self._execute_workflow(
+            customer_message=customer_message,
+            escalation_reason=escalation_reason,
+            conversation_history=conversation_history,
+            urgency_level=urgency_level,
+            business_unit=business_unit,
+            session_id=session_id,
+            customer_id=customer_id,
+            customer_query=customer_query,
+            user_id=user_id,
+            user_name=user_name,
+            phone_number=phone_number,
+            cpf=cpf,
+            **kwargs
+        ):
+            yield result
+    
+    def _execute_workflow(
         self,
         # Main parameters
         customer_message: Optional[str] = None,
@@ -235,30 +308,48 @@ Obrigado pela paciência!"""
             yield error_workflow_event
     
     def _send_whatsapp_notification(self, protocol: EscalationProtocol) -> Dict:
-        """Send WhatsApp notification - simplified version for sync workflow."""
+        """Send WhatsApp notification using Evolution API via MCP."""
         
         try:
-            # Format notification message
-            message = self._format_notification_message(protocol)
+            # Import the WhatsApp notification service
+            from workflows.shared.whatsapp_notification import get_whatsapp_notification_service
+            import asyncio
             
-            logger.info("📱 WhatsApp notification prepared (async features disabled in sync workflow)")
-            logger.info(f"📱 Notification message preview: {message[:100]}...")
+            # Get the WhatsApp service
+            whatsapp_service = get_whatsapp_notification_service(debug_mode=self.debug_mode)
             
-            # In sync mode, we'll just log the notification and return success
-            # TODO: Implement sync WhatsApp notification via API call
-            return {
-                "success": True,
-                "message": "Notification prepared successfully (sync mode)",
-                "method": "sync_mode_placeholder",
-                "notification_content": message
+            # Prepare handoff data for WhatsApp formatting
+            handoff_data = {
+                "protocol_id": protocol.protocol_id,
+                "escalation_analysis": protocol.escalation_analysis.model_dump(mode="json")
             }
+            
+            # Send via WhatsApp service using async call
+            notification_result = asyncio.run(whatsapp_service.send_human_handoff_notification(handoff_data))
+            
+            if notification_result["success"]:
+                logger.info(f"📱 WhatsApp human handoff notification sent successfully")
+                return {
+                    "success": True,
+                    "message": "WhatsApp notification sent successfully via Evolution API",
+                    "method": "evolution_api_mcp",
+                    "agent_response": notification_result.get("agent_response"),
+                    "notification_content": notification_result.get("agent_response", "Notification sent")
+                }
+            else:
+                logger.error(f"WhatsApp notification failed: {notification_result.get('error')}")
+                return {
+                    "success": False,
+                    "error": notification_result.get("error"),
+                    "method": "evolution_api_mcp"
+                }
                 
         except Exception as e:
-            logger.error(f"WhatsApp notification preparation failed: {str(e)}")
+            logger.error(f"WhatsApp notification error: {str(e)}")
             return {
                 "success": False,
-                "error": f"Notification preparation error: {str(e)}",
-                "method": "sync_mode_placeholder"
+                "error": f"WhatsApp notification error: {str(e)}",
+                "method": "evolution_api_mcp"
             }
     
     def _format_notification_message(self, protocol: EscalationProtocol) -> str:

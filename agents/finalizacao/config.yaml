@@ -1,6 +1,6 @@
 agent:
   agent_id: finalizacao-specialist
-  version: 31
+  version: 33
   name: Ana - Finalizacao
   role: Ana - Especialista em Finalização
   description: Ana, sua assistente digital especializada em finalizar atendimentos,
@@ -28,7 +28,7 @@ tools:
 - finalize_conversation
 storage:
   type: postgres
-  table_name: agents-finalizacao
+  table_name: agents_finalizacao
   auto_upgrade_schema: true
 memory:
   add_history_to_messages: true

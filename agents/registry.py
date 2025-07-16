@@ -30,7 +30,9 @@ def _import_agent_factory(agent_name: str):
     try:
         module_path = _agent_modules[agent_name]
         module = __import__(module_path, fromlist=[f"get_{agent_name}_agent"])
-        factory = getattr(module, f"get_{agent_name}_agent")
+        # Normalize hyphens to underscores for factory function names
+        safe_name = agent_name.replace('-', '_')
+        factory = getattr(module, f"get_{safe_name}_agent")
         _imported_factories[agent_name] = factory
         return factory
     except (ImportError, AttributeError) as e:
