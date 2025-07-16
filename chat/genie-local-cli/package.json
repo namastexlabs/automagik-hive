@@ -1,7 +1,7 @@
 {
-  "name": "@genie/local-cli",
+  "name": "genie-cli",
   "version": "0.1.0",
-  "description": "Genie Local CLI - Chat interface for local multi-agent API",
+  "description": "Genie CLI - A powerful command-line interface for interacting with multi-agent AI systems",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -47,14 +47,12 @@
     "string-width": "^7.2.0",
     "strip-ansi": "^7.1.0",
     "update-notifier": "^7.3.1",
-    "ws": "^8.18.0",
     "yargs": "^18.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",
     "@types/react": "^19.1.8",
     "@types/stream-json": "^1.7.8",
-    "@types/ws": "^8.5.10",
     "@types/yargs": "^17.0.32",
     "cross-env": "^7.0.3",
     "esbuild": "^0.25.0",
@@ -66,5 +64,24 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/namastexlabs/genie-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/namastexlabs/genie-cli/issues"
+  },
+  "homepage": "https://github.com/namastexlabs/genie-cli#readme",
+  "keywords": [
+    "cli",
+    "ai",
+    "multi-agent",
+    "genie",
+    "chat",
+    "terminal",
+    "typescript"
+  ],
+  "author": "Namastex Labs",
+  "license": "MIT"
 }

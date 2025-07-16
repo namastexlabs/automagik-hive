@@ -1,6 +1,6 @@
-# Genie Local CLI
+# Genie CLI
 
-A TypeScript-based CLI chat application for interacting with local multi-agent APIs, built using the Gemini CLI as a boilerplate and stripped down to focus on local API integration.
+A powerful TypeScript-based CLI chat application for interacting with multi-agent AI systems. Built with React and designed for seamless integration with local and remote APIs.
 
 ## Features
 
@@ -19,8 +19,9 @@ A TypeScript-based CLI chat application for interacting with local multi-agent A
 ## Installation
 
 ```bash
-# Clone or navigate to the project
-cd /path/to/genie-agents/chat/genie-local-cli
+# Clone the repository
+git clone https://github.com/namastexlabs/genie-cli.git
+cd genie-cli
 
 # Install dependencies
 npm install
@@ -42,11 +43,6 @@ API_BASE_URL=http://localhost:9888
 API_TIMEOUT=30000
 API_RETRY_ATTEMPTS=3
 
-# WebSocket Configuration
-WS_URL=ws://localhost:9888/ws
-WS_RECONNECT_ATTEMPTS=5
-WS_RECONNECT_DELAY=1000
-
 # CLI Configuration
 CLI_NAME=genie-cli
 CLI_VERSION=0.1.0
@@ -60,7 +56,6 @@ SESSION_AUTO_SAVE=true
 # Display Configuration
 ENABLE_COLORS=true
 ENABLE_SPINNER=true
-STREAM_DELAY=50
 MAX_DISPLAY_WIDTH=120
 ```
 
@@ -192,7 +187,7 @@ npm run build
 
 3. **Streaming Issues**
    - Verify API supports streaming responses
-   - Check WebSocket URL configuration
+   - Check API connectivity
    - Enable debug mode for detailed logs
 
 ### Debug Mode

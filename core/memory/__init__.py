@@ -1,0 +1,1 @@
+"""PagBank Memory Module - Session state and memory management."""

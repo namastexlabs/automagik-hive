@@ -5,16 +5,19 @@ This module provides database-driven agent creation with version support.
 Replaces file-based configuration with dynamic database loading.
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 import yaml
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 from agno.tools import Function
+from agno.tools.mcp import MCPTools
 
 from db.services.component_version_service import ComponentVersionService
 from db.session import get_db
+from core.config.yaml_parser import YAMLConfigParser
+from core.mcp.catalog import MCPCatalog
 # Native Agno knowledge integration - no custom tools needed
 
 
@@ -34,6 +37,9 @@ class AgentVersionFactory:
         """Initialize with optional database session."""
         self.db_session = db_session or next(get_db())
         self.version_service = ComponentVersionService(self.db_session)
+        # MCP integration
+        self.mcp_catalog = MCPCatalog()
+        self.yaml_parser = YAMLConfigParser(self.mcp_catalog)
     
     def create_agent(
         self,
@@ -265,23 +271,86 @@ class AgentVersionFactory:
     
     def _create_tools(self, config: Dict[str, Any]) -> list:
         """
-        Create tools from configuration.
+        Create tools from configuration with MCP support.
         
         Args:
             config: Full agent configuration
             
         Returns:
-            List of configured tools
+            List of configured tools (regular + MCP)
         """
         tools = []
         
         # Get configured tools
         configured_tools = config.get("tools", [])
         
-        # Native Agno knowledge integration - no custom tools needed
-        # Knowledge search is handled by Agno's native capabilities
+        # Parse tools into regular and MCP tools
+        regular_tools = []
+        mcp_tool_names = []
+        
+        for tool in configured_tools:
+            if isinstance(tool, str) and tool.startswith("mcp."):
+                # MCP tool format: mcp.toolname
+                mcp_tool_names.append(tool[4:])  # Remove "mcp." prefix
+            else:
+                regular_tools.append(tool)
+        
+        # Load regular tools
+        for tool_name in regular_tools:
+            # Native Agno knowledge integration - no custom tools needed
+            # Knowledge search is handled by Agno's native capabilities
+            pass
+        
+        # Load MCP tools
+        for mcp_tool_name in mcp_tool_names:
+            mcp_tool = self._create_mcp_tool(mcp_tool_name)
+            if mcp_tool:
+                tools.append(mcp_tool)
         
         return tools
+    
+    def _create_mcp_tool(self, mcp_tool_name: str) -> Optional[MCPTools]:
+        """
+        Create an MCP tool instance.
+        
+        Args:
+            mcp_tool_name: Name of the MCP server/tool
+            
+        Returns:
+            MCPTools instance or None if creation fails
+        """
+        try:
+            # Get server configuration from catalog
+            server_config = self.mcp_catalog.get_server_config(mcp_tool_name)
+            if not server_config:
+                print(f"Warning: MCP server '{mcp_tool_name}' not found in catalog")
+                return None
+            
+            # Create MCPTools instance based on server type
+            if server_config.is_sse_server:
+                return MCPTools(
+                    url=server_config.url,
+                    transport="sse",
+                    env=server_config.env or {}
+                )
+            elif server_config.is_command_server:
+                # For command servers, build command with args
+                command_parts = [server_config.command]
+                if server_config.args:
+                    command_parts.extend(server_config.args)
+                
+                return MCPTools(
+                    command=" ".join(command_parts),
+                    transport="stdio",
+                    env=server_config.env or {}
+                )
+            else:
+                print(f"Warning: Unknown server type for MCP tool '{mcp_tool_name}'")
+                return None
+                
+        except Exception as e:
+            print(f"Error creating MCP tool '{mcp_tool_name}': {e}")
+            return None
     
     # Native Agno knowledge integration - no custom knowledge search tools needed
     

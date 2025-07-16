@@ -1,5 +1,4 @@
 import { request as gaxiosRequest, GaxiosOptions, GaxiosResponse } from 'gaxios';
-import WebSocket from 'ws';
 import { appConfig } from './settings.js';
 
 export interface LocalAPIResponse<T = any> {
@@ -186,29 +185,6 @@ export class LocalAPIClient {
         cpf: request.cpf,
       },
     });
-  }
-
-  // Create streaming connection
-  createStreamingConnection(
-    onMessage: (data: StreamingResponse) => void,
-    onError: (error: Error) => void,
-    onClose: () => void
-  ): WebSocket {
-    const ws = new WebSocket(appConfig.wsUrl);
-
-    ws.on('message', (data) => {
-      try {
-        const parsed = JSON.parse(data.toString()) as StreamingResponse;
-        onMessage(parsed);
-      } catch (error) {
-        onError(new Error('Failed to parse streaming response'));
-      }
-    });
-
-    ws.on('error', onError);
-    ws.on('close', onClose);
-
-    return ws;
   }
 
   // Stream agent response with real API streaming

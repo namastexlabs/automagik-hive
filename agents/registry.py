@@ -5,6 +5,7 @@ from typing import Dict, Optional, Any
 from agno.agent import Agent
 import os
 from .version_factory import create_versioned_agent
+from core.mcp.catalog import MCPCatalog
 
 # Dynamic import system for agent discovery
 _agent_modules = {
@@ -45,7 +46,17 @@ class AgentRegistry:
     """
     Generic registry for managing agent creation and versioning.
     Supports any agent system, not just PagBank.
+    Includes MCP (Model Context Protocol) integration.
     """
+    
+    _mcp_catalog = None
+    
+    @classmethod
+    def get_mcp_catalog(cls) -> MCPCatalog:
+        """Get or create MCP catalog instance."""
+        if cls._mcp_catalog is None:
+            cls._mcp_catalog = MCPCatalog()
+        return cls._mcp_catalog
     
     @classmethod
     def _get_available_agents(cls) -> Dict[str, callable]:
@@ -194,6 +205,21 @@ class AgentRegistry:
             module_path: Import path to agent module
         """
         _agent_modules[agent_name] = module_path
+    
+    @classmethod
+    def list_mcp_servers(cls) -> list[str]:
+        """List all available MCP servers."""
+        return cls.get_mcp_catalog().list_servers()
+    
+    @classmethod
+    def get_mcp_server_info(cls, server_name: str) -> Dict[str, Any]:
+        """Get information about an MCP server."""
+        return cls.get_mcp_catalog().get_server_info(server_name)
+    
+    @classmethod
+    def reload_mcp_catalog(cls) -> None:
+        """Reload the MCP catalog from configuration."""
+        cls._mcp_catalog = None  # Force reload on next access
 
 
 # Generic factory function - main entry point
@@ -282,3 +308,19 @@ def get_team_agents(
         )
         for name in agent_names
     ]
+
+
+# MCP convenience functions
+def list_mcp_servers() -> list[str]:
+    """List all available MCP servers."""
+    return AgentRegistry.list_mcp_servers()
+
+
+def get_mcp_server_info(server_name: str) -> Dict[str, Any]:
+    """Get information about an MCP server."""
+    return AgentRegistry.get_mcp_server_info(server_name)
+
+
+def reload_mcp_catalog() -> None:
+    """Reload the MCP catalog from configuration."""
+    AgentRegistry.reload_mcp_catalog()

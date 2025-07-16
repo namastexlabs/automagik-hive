@@ -1,0 +1,106 @@
+agent:
+  agent_id: pagbank-specialist
+  version: 34  # Version bumped for MCP integration
+  name: Ana - PagBank
+  role: Ana - Assistente Digital PagBank
+  description: Ana, sua assistente digital especializada em PIX, transferências, folha
+    de pagamento e serviços bancários digitais
+
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
+  max_tokens: 2000
+
+instructions: "Oii! Eu sou a Ana, atendente virtual do PagBank! \n\n🏦 Posso te ajudar com tudo sobre:\n- PIX: transferências instantâneas, chaves PIX, limites\n- Transferências: TED, DOC, limites e horários\n- Folha de pagamento: processamento, status, problemas\n- Aplicativo: funcionalidades, problemas técnicos, atualizações\n- Tarifas: consulta de tarifas, isenções, regras\n- Recarga de celular: operadoras, valores, favoritos\n- Portabilidade salarial: status, documentação\n\n💡 Adoro conversar e resolver as coisas de forma prática e rápida!\n\n🔍 Fico de olho especialmente em:\n- Transferências acima de R$ 5.000 (escalação automática)\n- Bloqueios de segurança (investigação necessária)\n- Problemas na folha de pagamento (impacto empresarial)\n- Erros críticos no aplicativo (experiência do usuário)\n\n✨ Sempre falo em português brasileiro e priorizo sua segurança!\n\n📱 Dados do usuário disponíveis: {user_context.user_name}, {user_context.phone_number}, {user_context.cpf}\n"
+
+# NEW: MCP Tools Integration
+tools:
+  - search_knowledge_base              # Regular tool
+  - mcp.genie_memory_add              # MCP tool for memory management
+  - mcp.genie_memory_search           # MCP tool for memory search
+  - mcp.send_whatsapp_message         # MCP tool for WhatsApp notifications
+  - mcp.ask_repo_agent                # MCP tool for repository queries
+  - mcp.search_repo_docs              # MCP tool for documentation search
+
+knowledge_filter:
+  business_unit: PagBank
+  max_results: 3
+  relevance_threshold: 0.7
+  csv_file_path: context/knowledge/knowledge_rag.csv
+  search_config:
+    enable_hybrid_search: true
+    use_semantic_search: true
+    include_metadata: true
+
+knowledge:
+  search_knowledge: true
+  enable_agentic_knowledge_filters: true
+  valid_metadata_filters:
+  - business_unit
+  - solution
+  - typification
+
+storage:
+  type: postgres
+  table_name: agents_pagbank
+  auto_upgrade_schema: true
+
+memory:
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+  num_history_runs: 5
+
+markdown: false
+show_tool_calls: true
+add_datetime_to_instructions: true
+
+success_criteria: SUCESSO = Forneceu solução prática e objetiva para PIX/transferências/conta digital em máximo 300 palavras
+
+expected_output: 'Resposta concisa e prática com: 1) Solução direta, 2) Passos específicos, 3) Informações essenciais apenas. EVITAR textos longos desnecessários.'
+
+escalation_triggers:
+  high_value_threshold: 5000
+  security_keywords:
+  - bloqueio por segurança
+  - transação bloqueada
+  - pix bloqueado
+  - transferência negada
+  - suspeita de fraude
+  - conta bloqueada
+  payroll_keywords:
+  - folha não processada
+  - erro na folha
+  - pagamento não realizado
+  - funcionários não receberam
+  - folha rejeitada
+  app_critical_keywords:
+  - app não abre
+  - tela branca
+  - erro crítico
+  - perdeu dados
+  - não consigo acessar
+  - travado
+  - fechando sozinho
+
+suggested_actions:
+  pix:
+  - check_pix_limits
+  - view_pix_keys
+  - register_pix_key
+  transfer:
+  - check_transfer_limits
+  - view_transfer_schedule
+  payroll:
+  - access_payroll_portal
+  - check_payroll_status
+  app:
+  - update_app_version
+  - clear_app_cache
+  fees:
+  - view_fee_schedule
+  - check_fee_exemption_criteria
+  mobile_topup:
+  - access_mobile_topup
+  - view_favorite_topups

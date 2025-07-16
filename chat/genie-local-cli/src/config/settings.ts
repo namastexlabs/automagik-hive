@@ -9,10 +9,6 @@ export interface AppConfig {
   apiTimeout: number;
   apiRetryAttempts: number;
   
-  // WebSocket Configuration
-  wsUrl: string;
-  wsReconnectAttempts: number;
-  wsReconnectDelay: number;
   
   // CLI Configuration
   cliName: string;
@@ -27,7 +23,6 @@ export interface AppConfig {
   // Display Configuration
   enableColors: boolean;
   enableSpinner: boolean;
-  streamDelay: number;
   maxDisplayWidth: number;
   
   // Development Configuration
@@ -56,11 +51,6 @@ export const appConfig: AppConfig = {
   apiTimeout: getEnvNumber('API_TIMEOUT', 10000), // Reduced from 30s to 10s
   apiRetryAttempts: getEnvNumber('API_RETRY_ATTEMPTS', 3),
   
-  // WebSocket Configuration
-  wsUrl: getEnvString('WS_URL', 'ws://localhost:9888/ws'),
-  wsReconnectAttempts: getEnvNumber('WS_RECONNECT_ATTEMPTS', 5),
-  wsReconnectDelay: getEnvNumber('WS_RECONNECT_DELAY', 1000),
-  
   // CLI Configuration
   cliName: getEnvString('CLI_NAME', 'genie-cli'),
   cliVersion: getEnvString('CLI_VERSION', '0.1.0'),
@@ -74,7 +64,6 @@ export const appConfig: AppConfig = {
   // Display Configuration
   enableColors: getEnvBoolean('ENABLE_COLORS', true),
   enableSpinner: getEnvBoolean('ENABLE_SPINNER', true),
-  streamDelay: getEnvNumber('STREAM_DELAY', 0), // Removed artificial delay
   maxDisplayWidth: getEnvNumber('MAX_DISPLAY_WIDTH', 120),
   
   // Development Configuration
