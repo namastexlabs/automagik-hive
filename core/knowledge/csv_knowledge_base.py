@@ -271,35 +271,3 @@ def create_pagbank_knowledge_base() -> PagBankCSVKnowledgeBase:
     return kb
 
 
-if __name__ == '__main__':
-    # Test the knowledge base
-    kb = create_pagbank_knowledge_base()
-    
-    # Load knowledge base
-    kb.load_knowledge_base(recreate=True)
-    
-    # Validate
-    validation = kb.validate_knowledge_base()
-    print(f"Validation results: {validation}")
-    
-    # Get statistics
-    stats = kb.get_knowledge_statistics()
-    print(f"Knowledge base statistics: {stats}")
-    
-    # Test team searches
-    print("\n--- Testing Team Searches ---")
-    for team in ['adquirencia', 'emissao', 'pagbank']:
-        results = kb.get_team_knowledge(team, max_results=3)
-        print(f"{team}: {len(results)} results")
-        
-        if results:
-            print(f"  Sample: {results[0]['content'][:100]}...")
-    
-    # Test search with filters
-    print("\n--- Testing Filtered Search ---")
-    results = kb.search_with_filters("como solicitar cartão", team="emissao", max_results=2)
-    print(f"Filtered search: {len(results)} results")
-    
-    # Create agentic filters
-    filters = kb.create_agentic_filters()
-    print(f"\nAgentic filters created for {len(filters)} teams")

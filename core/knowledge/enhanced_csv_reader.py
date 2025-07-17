@@ -192,31 +192,3 @@ def create_enhanced_csv_reader_for_pagbank() -> EnhancedCSVReader:
     )
 
 
-if __name__ == "__main__":
-    # Test the enhanced CSV reader
-    from pathlib import Path
-    
-    csv_path = Path("knowledge_rag.csv")
-    reader = create_enhanced_csv_reader_for_pagbank()
-    
-    print("🔍 Testing Enhanced CSV Reader")
-    print("=" * 50)
-    
-    # Get metadata info
-    info = reader.get_metadata_info(csv_path)
-    print("📊 CSV Analysis:")
-    for key, value in info.items():
-        print(f"   {key}: {value}")
-    
-    if csv_path.exists():
-        print("\n📚 Reading documents...")
-        documents = list(reader.read(csv_path))
-        print(f"   Created {len(documents)} documents")
-        
-        if documents:
-            print("\n🔍 Sample Document:")
-            doc = documents[0]
-            print(f"   Content: {doc.content[:100]}...")
-            print(f"   Metadata: {doc.meta_data}")
-    else:
-        print(f"⚠️  CSV file not found: {csv_path}")
