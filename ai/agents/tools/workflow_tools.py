@@ -54,9 +54,6 @@ def trigger_human_handoff_workflow(
     logger.info(f"🚨 Human handoff workflow triggered: {escalation_reason}")
     
     # Auto-extract user context from session_state if not provided
-    # Note: Future enhancement - tools could access current agent context
-    # For now, user context flows through agent instructions via session_state
-    # and agents can pass the context explicitly or via session_state access
     
     # Log current user context for debugging
     user_context_provided = {
@@ -66,9 +63,6 @@ def trigger_human_handoff_workflow(
         'cpf': bool(cpf)
     }
     logger.info(f"📝 User context provided: {user_context_provided}")
-    
-    # Future enhancement: Auto-extract from agent session_state
-    # This would eliminate the need for agents to pass user context explicitly
     
     try:
         # Execute workflow - Use synchronous execution to avoid event loop issues

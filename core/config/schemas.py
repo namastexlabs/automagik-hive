@@ -63,27 +63,6 @@ class AgentConfig(BaseModel):
     # Memory configuration
     memory: Optional[Dict[str, Any]] = Field(None, description="Memory configuration")
     
-    # Convenience properties for backward compatibility
-    @property
-    def agent_id(self) -> str:
-        return self.agent.agent_id
-    
-    @property
-    def version(self) -> int:
-        return self.agent.version
-    
-    @property
-    def name(self) -> str:
-        return self.agent.name
-    
-    @property
-    def role(self) -> Optional[str]:
-        return self.agent.role
-    
-    @property
-    def description(self) -> Optional[str]:
-        return self.agent.description
-    
     @field_validator('tools')
     @classmethod
     def validate_tools(cls, v):

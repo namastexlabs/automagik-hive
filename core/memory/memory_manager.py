@@ -14,7 +14,6 @@ from agno.models.anthropic import Claude
 
 from .memory_config import MemoryConfig, get_memory_config
 from .pattern_detector import create_pattern_detector
-# Session manager removed - using PostgreSQL-only approach
 
 
 class MemoryManager:

@@ -1,5 +1,3 @@
-# Shared Protocol Generator
-# Single source of truth for protocol generation across all workflows
 
 from typing import Dict, Any, Optional
 from datetime import datetime

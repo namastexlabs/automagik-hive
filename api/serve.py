@@ -27,8 +27,6 @@ try:
 except ImportError:
     print("⚠️ python-dotenv not installed, using system environment variables")
 
-# Add current directory to Python path for module imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Apply global demo patches immediately after loading environment variables
 # This must be done before any other imports that might use agno.Team
@@ -81,8 +79,6 @@ def setup_demo_logging():
 # Setup logging immediately
 setup_demo_logging()
 
-# Add current directory to Python path for module imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import V2 Ana team (replaces orchestrator)
 from ai.teams.ana.team import get_ana_team
@@ -107,21 +103,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️  Warning: Could not initialize MCP Connection Manager: {e}")
     
-    try:
-        # Start monitoring system
-        from api.monitoring.startup import start_monitoring
-        await start_monitoring()
-        print("✅ Monitoring system started")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not start monitoring system: {e}")
-    
-    try:
-        # Start MCP monitoring
-        from api.monitoring.mcp_monitor import start_mcp_monitoring
-        await start_mcp_monitoring()
-        print("✅ MCP monitoring started")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not start MCP monitoring: {e}")
     
     yield
     
@@ -134,23 +115,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️  Warning: Could not stop MCP Connection Manager: {e}")
     
-    try:
-        # Stop MCP monitoring
-        from api.monitoring.mcp_monitor import stop_mcp_monitoring
-        await stop_mcp_monitoring()
-        print("✅ MCP monitoring stopped")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not stop MCP monitoring: {e}")
     
-    try:
-        # Stop monitoring system
-        from api.monitoring.startup import stop_monitoring
-        await stop_monitoring()
-        print("✅ Monitoring system stopped")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not stop monitoring system: {e}")
-    
-    # No cleanup needed anymore
 
 
 def create_pagbank_api():
@@ -496,7 +461,6 @@ if __name__ != "__main__":
 if __name__ == "__main__":
     import uvicorn
     
-    # No cleanup needed anymore
     
     # Get server configuration from environment variables
     host = os.getenv("PB_AGENTS_HOST", "0.0.0.0")

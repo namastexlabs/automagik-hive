@@ -72,10 +72,9 @@ class HumanHandoffWorkflow(Workflow):
         # Alternative parameter names for compatibility
         customer_query: Optional[str] = None,
         # User data parameters - NEW
-        user_id: Optional[str] = None,
-        user_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        cpf: Optional[str] = None,
+        user_id: Optional[str] = None,        # Agno native parameter for team shared context
+        pb_phone_number: Optional[str] = None, # PagBank business parameter
+        pb_cpf: Optional[str] = None,         # PagBank business parameter
         **kwargs
     ) -> Iterator[WorkflowCompletedEvent]:
         """Execute the simplified human handoff workflow synchronously."""
@@ -89,9 +88,8 @@ class HumanHandoffWorkflow(Workflow):
             customer_id=customer_id,
             customer_query=customer_query,
             user_id=user_id,
-            user_name=user_name,
-            phone_number=phone_number,
-            cpf=cpf,
+            pb_phone_number=pb_phone_number,
+            pb_cpf=pb_cpf,
             **kwargs
         )
     
@@ -108,10 +106,9 @@ class HumanHandoffWorkflow(Workflow):
         # Alternative parameter names for compatibility
         customer_query: Optional[str] = None,
         # User data parameters - NEW
-        user_id: Optional[str] = None,
-        user_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        cpf: Optional[str] = None,
+        user_id: Optional[str] = None,        # Agno native parameter for team shared context
+        pb_phone_number: Optional[str] = None, # PagBank business parameter
+        pb_cpf: Optional[str] = None,         # PagBank business parameter
         **kwargs
     ) -> AsyncIterator[WorkflowCompletedEvent]:
         """Execute the simplified human handoff workflow asynchronously."""
@@ -125,9 +122,8 @@ class HumanHandoffWorkflow(Workflow):
             customer_id=customer_id,
             customer_query=customer_query,
             user_id=user_id,
-            user_name=user_name,
-            phone_number=phone_number,
-            cpf=cpf,
+            pb_phone_number=pb_phone_number,
+            pb_cpf=pb_cpf,
             **kwargs
         ):
             yield result
@@ -145,10 +141,9 @@ class HumanHandoffWorkflow(Workflow):
         # Alternative parameter names for compatibility
         customer_query: Optional[str] = None,
         # User data parameters - NEW
-        user_id: Optional[str] = None,
-        user_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        cpf: Optional[str] = None,
+        user_id: Optional[str] = None,        # Agno native parameter for team shared context
+        pb_phone_number: Optional[str] = None, # PagBank business parameter
+        pb_cpf: Optional[str] = None,         # PagBank business parameter
         **kwargs
     ) -> Iterator[WorkflowCompletedEvent]:
         """Execute the simplified human handoff workflow."""
@@ -161,9 +156,9 @@ class HumanHandoffWorkflow(Workflow):
         
         # Extract user data parameters - NEW
         final_user_id = user_id or customer_id or "unknown"
-        final_user_name = user_name or kwargs.get('customer_name')
-        final_phone_number = phone_number or kwargs.get('customer_phone')
-        final_cpf = cpf or kwargs.get('customer_cpf')
+        final_user_name = kwargs.get('customer_name')  # Remove pb_user_name reference
+        final_phone_number = pb_phone_number or kwargs.get('customer_phone')
+        final_cpf = pb_cpf or kwargs.get('customer_cpf')
         
         logger.info(f"🚀 Starting human handoff for session {session_id}")
         

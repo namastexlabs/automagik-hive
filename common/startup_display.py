@@ -175,9 +175,9 @@ class StartupDisplay:
         
         # Map component types to directory patterns
         patterns = {
-            'agent': f'agents/*/config.yaml',
-            'team': f'teams/*/config.yaml', 
-            'workflow': f'workflows/*/config.yaml'
+            'agent': f'ai/agents/*/config.yaml',
+            'team': f'ai/teams/*/config.yaml', 
+            'workflow': f'ai/workflows/*/config.yaml'
         }
         
         pattern = patterns.get(component_type)

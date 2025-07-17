@@ -1,0 +1,151 @@
+# workflows/wish_management/workflow.py
+
+from typing import Dict, Any, Iterator
+from agno import Workflow, RunResponse
+from pathlib import Path
+import os
+
+
+class WishManagementWorkflow(Workflow):
+    """
+    Manages wish documents and folder structure.
+    
+    This workflow handles:
+    - Creating wish folder structure
+    - Moving wishes between stages (backlog → in_progress → review → completed)
+    - Updating wish status
+    """
+    
+    def __init__(self):
+        super().__init__(
+            workflow_id="wish-management",
+            name="Wish Management Workflow"
+        )
+        self.genie_root = Path("genie")
+        
+    def run(self, params: Dict[str, Any]) -> Iterator[RunResponse]:
+        """
+        Execute wish management operations.
+        """
+        action = params.get("action")
+        wish_id = params.get("wish_id")
+        
+        if action == "create_structure":
+            yield from self.create_wish_structure(wish_id)
+            
+        elif action == "move_stage":
+            from_stage = params.get("from_stage", "backlog")
+            to_stage = params.get("to_stage", "in_progress")
+            yield from self.move_wish_stage(wish_id, from_stage, to_stage)
+            
+        elif action == "update_status":
+            status = params.get("status")
+            yield from self.update_wish_status(wish_id, status)
+            
+        else:
+            yield RunResponse(
+                content=f"Unknown action: {action}",
+                error=True
+            )
+    
+    def create_wish_structure(self, wish_id: str) -> Iterator[RunResponse]:
+        """
+        Create folder structure for new wish.
+        """
+        yield RunResponse(content=f"Creating structure for {wish_id}")
+        
+        # Create wish folder in backlog
+        wish_path = self.genie_root / "wishes" / "backlog" / wish_id
+        
+        # Create directories
+        os.makedirs(wish_path, exist_ok=True)
+        os.makedirs(wish_path / "tasks", exist_ok=True)
+        
+        # Create initial files
+        (wish_path / "wish.md").touch()
+        (wish_path / "analysis.md").touch()
+        (wish_path / "plan.md").touch()
+        
+        yield RunResponse(
+            content=f"Created wish structure at genie/wishes/backlog/{wish_id}",
+            metadata={
+                "wish_id": wish_id,
+                "path": str(wish_path),
+                "files_created": ["wish.md", "analysis.md", "plan.md", "tasks/"]
+            }
+        )
+    
+    def move_wish_stage(self, wish_id: str, from_stage: str, to_stage: str) -> Iterator[RunResponse]:
+        """
+        Move wish between kanban stages.
+        """
+        yield RunResponse(content=f"Moving {wish_id} from {from_stage} to {to_stage}")
+        
+        from_path = self.genie_root / "wishes" / from_stage / wish_id
+        to_path = self.genie_root / "wishes" / to_stage / wish_id
+        
+        if not from_path.exists():
+            yield RunResponse(
+                content=f"Wish {wish_id} not found in {from_stage}",
+                error=True
+            )
+            return
+        
+        # Create destination directory
+        to_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Move the entire wish folder
+        from_path.rename(to_path)
+        
+        yield RunResponse(
+            content=f"Moved wish {wish_id} to {to_stage}",
+            metadata={
+                "wish_id": wish_id,
+                "from_stage": from_stage,
+                "to_stage": to_stage,
+                "new_path": str(to_path)
+            }
+        )
+    
+    def update_wish_status(self, wish_id: str, status: str) -> Iterator[RunResponse]:
+        """
+        Update wish status in its document.
+        """
+        yield RunResponse(content=f"Updating {wish_id} status to {status}")
+        
+        # Find wish in any stage
+        wish_path = None
+        for stage in ["backlog", "in_progress", "review", "completed"]:
+            potential_path = self.genie_root / "wishes" / stage / wish_id
+            if potential_path.exists():
+                wish_path = potential_path
+                break
+        
+        if not wish_path:
+            yield RunResponse(
+                content=f"Wish {wish_id} not found",
+                error=True
+            )
+            return
+        
+        # Update wish.md with new status
+        wish_file = wish_path / "wish.md"
+        if wish_file.exists():
+            content = wish_file.read_text()
+            # Update status line
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if line.startswith("**Status**:"):
+                    lines[i] = f"**Status**: {status}"
+                    break
+            
+            wish_file.write_text('\n'.join(lines))
+        
+        yield RunResponse(
+            content=f"Updated wish {wish_id} status to {status}",
+            metadata={
+                "wish_id": wish_id,
+                "status": status,
+                "path": str(wish_path)
+            }
+        )

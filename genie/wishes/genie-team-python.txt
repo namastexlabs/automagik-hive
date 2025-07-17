@@ -1,0 +1,306 @@
+# teams/genie/team.py
+
+from typing import Dict, Any, Optional, List
+from agno import Team, Agent
+from agno.models import Message
+from pathlib import Path
+import json
+
+
+class GenieTeam(Team):
+    """
+    Genie - The Wish Fulfillment System
+    
+    Orchestrates wish fulfillment through file-based context sharing.
+    All state is maintained in genie/ folder for stateless operation.
+    """
+    
+    def __init__(self):
+        super().__init__(
+            name="Genie - Wish Fulfillment System",
+            team_id="genie-wish-system",
+            mode="coordinate"
+        )
+        self.genie_root = Path("genie")
+        
+    async def on_message(self, message: Message) -> Message:
+        """
+        Process incoming wishes through file-based coordination.
+        """
+        # Start with magical greeting
+        await self.send_message("✨ Your wish is my command! Let me understand what you need...")
+        
+        # Create wish structure
+        wish_id = await self.create_wish_structure(message.content)
+        
+        # Analyze complexity
+        complexity = await self.analyze_wish_complexity(message.content)
+        
+        # Write initial wish document
+        await self.write_wish_document(wish_id, message.content, complexity)
+        
+        # Delegate to specialists
+        specialists = await self.determine_specialists(message.content, complexity)
+        
+        # Coordinate analysis and planning
+        await self.coordinate_analysis(wish_id, specialists, complexity)
+        
+        # Present plan for review
+        plan_path = f"@genie/wishes/{wish_id}/plan.md"
+        await self.send_message(
+            f"📋 I've created a technical plan for your wish!\n\n"
+            f"Review it here: `{plan_path}`\n\n"
+            f"Would you like to change anything? You can:\n"
+            f"- Edit the file directly\n"
+            f"- Tell me what to modify\n"
+            f"- Say 'approved' to proceed"
+        )
+        
+        # Wait for user response
+        return Message(
+            content=f"Wish {wish_id} is ready for your review. "
+            f"The plan is in {plan_path}"
+        )
+    
+    async def create_wish_structure(self, wish_text: str) -> str:
+        """
+        Create folder structure for new wish.
+        """
+        # Generate wish ID
+        timestamp = self.get_timestamp()
+        wish_summary = wish_text[:20].replace(" ", "-").lower()
+        wish_id = f"wish-{wish_summary}-{timestamp}"
+        
+        # Create folders via wish management workflow
+        await self.trigger_workflow("wish_management", {
+            "action": "create_structure",
+            "wish_id": wish_id
+        })
+        
+        return wish_id
+    
+    async def write_wish_document(self, wish_id: str, wish_text: str, complexity: str):
+        """
+        Write initial wish document.
+        """
+        wish_content = f"""# Wish: {wish_text}
+
+**ID**: {wish_id}  
+**Status**: analyzing  
+**Complexity**: {complexity}  
+**Created**: {self.get_timestamp()}
+
+## Original Request
+{wish_text}
+
+## Analysis
+*In progress...*
+
+## Tasks
+*Being created...*
+
+## Plan
+*Being generated...*
+"""
+        
+        await self.write_file(f"@genie/wishes/{wish_id}/wish.md", wish_content)
+    
+    async def analyze_wish_complexity(self, wish_text: str) -> str:
+        """
+        Determine complexity level for progressive enhancement.
+        """
+        wish_lower = wish_text.lower()
+        
+        # Simple fixes and small changes
+        if any(word in wish_lower for word in ["typo", "rename", "small", "quick"]):
+            return "simple"
+            
+        # Complex system changes
+        if any(word in wish_lower for word in ["redesign", "architecture", "system", "integrate"]):
+            return "complex"
+            
+        # Default to moderate
+        return "moderate"
+    
+    async def determine_specialists(self, wish_text: str, complexity: str) -> List[str]:
+        """
+        Determine which specialists to engage.
+        """
+        specialists = []
+        wish_lower = wish_text.lower()
+        
+        # Always include planning for non-simple wishes
+        if complexity != "simple":
+            specialists.append("genie-planning")
+        
+        # Add specialists based on content
+        if any(word in wish_lower for word in ["bug", "fix", "error", "debug", "slow"]):
+            specialists.append("genie-analysis")
+            
+        if any(word in wish_lower for word in ["build", "create", "implement", "add"]):
+            specialists.append("genie-implementation")
+            
+        if any(word in wish_lower for word in ["design", "architecture", "structure"]):
+            specialists.append("genie-architecture")
+            
+        # For complex wishes, add task management
+        if complexity == "complex":
+            specialists.append("genie-tasks")
+            
+        return specialists
+    
+    async def coordinate_analysis(self, wish_id: str, specialists: List[str], complexity: str):
+        """
+        Coordinate specialist analysis based on complexity.
+        """
+        wish_path = f"@genie/wishes/{wish_id}"
+        
+        if complexity == "simple":
+            # Direct execution by first specialist
+            if specialists:
+                specialist = specialists[0]
+                await self.send_message(f"🔍 Consulting {self.get_specialist_name(specialist)}...")
+                
+                await self.forward_to_member(specialist, {
+                    "action": "analyze_and_plan",
+                    "wish_id": wish_id,
+                    "wish_path": wish_path,
+                    "complexity": complexity
+                })
+                
+        elif complexity == "moderate":
+            # Sequential specialist consultation
+            for specialist in specialists:
+                await self.send_message(f"🔍 Consulting {self.get_specialist_name(specialist)}...")
+                
+                await self.forward_to_member(specialist, {
+                    "action": "analyze",
+                    "wish_id": wish_id,
+                    "wish_path": wish_path,
+                    "previous_analysis": f"{wish_path}/analysis.md"
+                })
+                
+            # Generate consolidated plan
+            await self.forward_to_member("genie-planning", {
+                "action": "generate_plan",
+                "wish_id": wish_id,
+                "wish_path": wish_path
+            })
+            
+        else:  # complex
+            # Trigger advanced analysis workflow
+            await self.send_message("🚀 This requires deep analysis. Engaging advanced capabilities...")
+            
+            await self.trigger_workflow("advanced_analysis", {
+                "wish_id": wish_id,
+                "wish_path": wish_path,
+                "specialists": specialists
+            })
+    
+    async def handle_plan_review(self, wish_id: str, user_response: str):
+        """
+        Handle user's response to plan review.
+        """
+        response_lower = user_response.lower()
+        
+        if "approved" in response_lower or "looks good" in response_lower:
+            # Update wish status
+            await self.update_wish_status(wish_id, "approved")
+            
+            # Begin execution
+            await self.send_message("✅ Plan approved! Beginning execution...")
+            await self.execute_wish_tasks(wish_id)
+            
+        elif "change" in response_lower or "modify" in response_lower:
+            # Handle modification request
+            await self.send_message("📝 I'll help you modify the plan. What changes would you like?")
+            
+            # Delegate to planning specialist for updates
+            await self.forward_to_member("genie-planning", {
+                "action": "modify_plan",
+                "wish_id": wish_id,
+                "modifications": user_response
+            })
+            
+        else:
+            # Unclear response
+            await self.send_message(
+                "I'm not sure what you'd like to do. You can:\n"
+                "- Say 'approved' to proceed\n"
+                "- Describe what changes you want\n"
+                "- Edit the plan.md file directly"
+            )
+    
+    async def execute_wish_tasks(self, wish_id: str):
+        """
+        Coordinate task execution after plan approval.
+        """
+        # Read task files
+        tasks_path = f"@genie/wishes/{wish_id}/tasks"
+        task_files = await self.list_files(tasks_path)
+        
+        # Parse tasks and identify execution order
+        parallel_tasks = []
+        sequential_tasks = []
+        waiting_tasks = {}
+        
+        for task_file in task_files:
+            task_content = await self.read_file(f"{tasks_path}/{task_file}")
+            task_type = self.extract_task_type(task_content)
+            task_id = task_file.replace(".md", "")
+            
+            if task_type == "[P]":
+                parallel_tasks.append(task_id)
+            elif task_type == "[S]":
+                sequential_tasks.append(task_id)
+            elif task_type.startswith("[W:"):
+                deps = task_type[3:-1].split(",")
+                waiting_tasks[task_id] = deps
+        
+        # Execute parallel tasks
+        if parallel_tasks:
+            await self.send_message(f"🚀 Executing {len(parallel_tasks)} tasks in parallel...")
+            
+            # Agents use Task tool directly for parallel execution
+            for task_id in parallel_tasks:
+                specialist = await self.determine_task_specialist(wish_id, task_id)
+                await self.forward_to_member(specialist, {
+                    "action": "execute_task",
+                    "wish_id": wish_id,
+                    "task_id": task_id,
+                    "parallel": True
+                })
+        
+        # Handle dependencies and sequential tasks
+        # (Implementation continues...)
+    
+    async def update_wish_status(self, wish_id: str, status: str):
+        """
+        Update wish status in document.
+        """
+        wish_path = f"@genie/wishes/{wish_id}/wish.md"
+        content = await self.read_file(wish_path)
+        
+        # Update status line
+        updated_content = content.replace(
+            f"**Status**: analyzing",
+            f"**Status**: {status}"
+        )
+        
+        await self.write_file(wish_path, updated_content)
+    
+    def get_specialist_name(self, agent_id: str) -> str:
+        """
+        Get friendly name for specialist.
+        """
+        names = {
+            "genie-planning": "Planning & Requirements Specialist",
+            "genie-analysis": "Analysis & Debugging Specialist",
+            "genie-implementation": "Implementation Specialist",
+            "genie-architecture": "Architecture Specialist",
+            "genie-tasks": "Task Management Specialist",
+            "genie-memory": "Memory & Knowledge Specialist",
+            "genie-tools": "Tools & Integration Specialist",
+            "genie-config": "Configuration Specialist"
+        }
+        return names.get(agent_id, agent_id)

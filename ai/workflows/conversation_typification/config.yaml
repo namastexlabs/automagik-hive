@@ -103,7 +103,7 @@ settings:
   debug_mode: false
 validation:
   enable_hierarchy_validation: true
-  hierarchy_file: ai/workflows/conversation_typification/hierarchy.json
+  hierarchy_file: workflows/conversation_typification/hierarchy.json
   min_confidence_threshold: 0.7
   enable_quality_checks: true
 integration:

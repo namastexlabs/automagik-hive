@@ -1,5 +1,5 @@
 """
-Unified Version Factory - Single Implementation for All Component Types
+Version Factory - Single Implementation for All Component Types
 
 Consolidates ALL features from agents/teams/workflows version factories.
 Eliminates 80%+ code duplication across component-specific implementations.
@@ -31,7 +31,7 @@ from core.config.yaml_parser import YAMLConfigParser
 from core.mcp.catalog import MCPCatalog
 
 
-class UnifiedVersionFactory:
+class VersionFactory:
     """
     Single factory for creating versioned components of any type.
     Eliminates code duplication across agent/team/workflow factories.
@@ -60,12 +60,11 @@ class UnifiedVersionFactory:
         version: Optional[int] = None,
         session_id: Optional[str] = None,
         debug_mode: bool = False,
-        # User context parameters
-        user_id: Optional[str] = None,
-        user_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        cpf: Optional[str] = None,
-        **kwargs
+        user_id: Optional[str] = None,  # Agno native parameter
+        pb_phone_number: Optional[str] = None,  # PagBank business parameter
+        pb_cpf: Optional[str] = None,  # PagBank business parameter
+        memory: Optional[Any] = None,
+        db_url: Optional[str] = None
     ) -> Union[Agent, Team, Workflow]:
         """
         Create any component type with version support.
@@ -76,7 +75,8 @@ class UnifiedVersionFactory:
             version: Version number (None for active)
             session_id: Session ID for tracking
             debug_mode: Enable debug mode
-            user_id, user_name, phone_number, cpf: User context
+            user_id: Agno native user identifier for shared team context
+            pb_phone_number, pb_cpf: PagBank business parameters
             
         Returns:
             Configured component instance
@@ -98,31 +98,61 @@ class UnifiedVersionFactory:
         if version_record.component_type != component_type:
             raise ValueError(f"Component {component_id} is type {version_record.component_type}, not {component_type}")
         
+        # Ensure db_url is available
+        if db_url is None:
+            db_url = globals().get('db_url')  # Use imported db_url as default
+        
         # Create component based on type
         if component_type == "agent":
-            return self._create_agent(component_id, config, session_id, debug_mode, 
-                                    user_id, user_name, phone_number, cpf, **kwargs)
+            return self._create_agent(
+                component_id=component_id,
+                config=config,
+                session_id=session_id,
+                debug_mode=debug_mode,
+                user_id=user_id,
+                pb_phone_number=pb_phone_number,
+                pb_cpf=pb_cpf,
+                memory=memory,
+                db_url=db_url
+            )
         elif component_type == "team":
-            return self._create_team(component_id, config, session_id, debug_mode,
-                                   user_id, user_name, phone_number, cpf, **kwargs)
+            return self._create_team(
+                component_id=component_id,
+                config=config,
+                session_id=session_id,
+                debug_mode=debug_mode,
+                user_id=user_id,
+                pb_phone_number=pb_phone_number,
+                pb_cpf=pb_cpf,
+                memory=memory,
+                db_url=db_url
+            )
         elif component_type == "workflow":
-            return self._create_workflow(component_id, config, session_id, debug_mode,
-                                       user_id, user_name, phone_number, cpf, **kwargs)
+            return self._create_workflow(
+                component_id=component_id,
+                config=config,
+                session_id=session_id,
+                debug_mode=debug_mode,
+                user_id=user_id,
+                pb_phone_number=pb_phone_number,
+                pb_cpf=pb_cpf,
+                memory=memory,
+                db_url=db_url
+            )
         else:
             raise ValueError(f"Unsupported component type: {component_type}")
     
     def _create_agent(self, component_id: str, config: Dict[str, Any], 
                      session_id: Optional[str], debug_mode: bool,
-                     user_id: Optional[str], user_name: Optional[str],
-                     phone_number: Optional[str], cpf: Optional[str],
-                     **kwargs) -> Agent:
+                     user_id: Optional[str],
+                     pb_phone_number: Optional[str], pb_cpf: Optional[str],
+                     memory: Optional[Any], db_url: Optional[str]) -> Agent:
         """Create versioned agent with advanced features."""
         
         # Import memory system
         from core.memory.memory_manager import create_memory_manager
         
         # Initialize memory
-        memory = kwargs.get("memory")
         if memory is None:
             try:
                 memory_manager = create_memory_manager()
@@ -188,10 +218,8 @@ class UnifiedVersionFactory:
         )
         
         # Add version metadata (from agents factory)
-        actual_version = kwargs.get("version")
-        if actual_version is None and config.get("agent", {}).get("version"):
-            actual_version = config["agent"]["version"]
-        elif actual_version is None:
+        actual_version = config.get("agent", {}).get("version")
+        if actual_version is None:
             try:
                 active_version = self.component_service.get_active_version(component_id)
                 actual_version = active_version.version if active_version else 1
@@ -200,7 +228,7 @@ class UnifiedVersionFactory:
         
         agent.metadata = {
             "version": actual_version,
-            "loaded_from": "database" if kwargs.get("version") is not None else "file",
+            "loaded_from": "database",
             "agent_id": component_id
         }
         
@@ -208,9 +236,9 @@ class UnifiedVersionFactory:
     
     def _create_team(self, component_id: str, config: Dict[str, Any],
                     session_id: Optional[str], debug_mode: bool,
-                    user_id: Optional[str], user_name: Optional[str], 
-                    phone_number: Optional[str], cpf: Optional[str],
-                    **kwargs) -> Team:
+                    user_id: Optional[str], 
+                    pb_phone_number: Optional[str], pb_cpf: Optional[str],
+                    memory: Optional[Any], db_url: Optional[str]) -> Team:
         """Create versioned team with enhanced parameters."""
         
         # Import dependencies
@@ -219,7 +247,6 @@ class UnifiedVersionFactory:
         from core.utils.user_context_helper import create_user_context_state
         
         # Initialize memory system
-        memory = kwargs.get("memory")
         if memory is None and config.get("memory"):
             try:
                 memory_manager = create_memory_manager()
@@ -232,8 +259,7 @@ class UnifiedVersionFactory:
             user_id=user_id,
             user_name=user_name,
             phone_number=phone_number,
-            cpf=cpf,
-            **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
+            cpf=cpf
         )
         
         # Get agent names from config or use defaults
@@ -302,9 +328,9 @@ class UnifiedVersionFactory:
     
     def _create_workflow(self, component_id: str, config: Dict[str, Any],
                         session_id: Optional[str], debug_mode: bool,
-                        user_id: Optional[str], user_name: Optional[str],
-                        phone_number: Optional[str], cpf: Optional[str],
-                        **kwargs) -> Workflow:
+                        user_id: Optional[str],
+                        pb_phone_number: Optional[str], pb_cpf: Optional[str],
+                        memory: Optional[Any], db_url: Optional[str]) -> Workflow:
         """Create versioned workflow with specialized routing."""
         
         # Import specific workflow class based on workflow_id (from workflows factory)
@@ -329,12 +355,10 @@ class UnifiedVersionFactory:
                 table_name=config.get("storage", {}).get("table_name", f"{component_id}_workflows"),
                 db_url=db_url,
                 auto_upgrade_schema=config.get("storage", {}).get("auto_upgrade_schema", True),
-            ),
-            # Workflow-specific parameters from config
-            **{k: v for k, v in config.items() if k not in ["workflow", "storage", "model"]}
+            )
         )
         
-        logger.info(f"✅ Created workflow {component_id} version {kwargs.get('version', 'active')}")
+        logger.info(f"✅ Created workflow {component_id} version {config.get('workflow', {}).get('version', 'active')}")
         return workflow
     
     def _create_model(self, model_config: Dict[str, Any]) -> Claude:
@@ -366,6 +390,10 @@ class UnifiedVersionFactory:
         """
         storage_config = config.get("storage", {})
         
+        # Ensure db_url is available
+        if not db_url:
+            db_url = globals().get('db_url')  # Use imported db_url as default
+            
         return PostgresStorage(
             table_name=storage_config.get("table_name", "component_conversations"),
             db_url=db_url,
@@ -437,12 +465,7 @@ class UnifiedVersionFactory:
                 
         except Exception as e:
             print(f"Error creating MCP tool '{mcp_tool_name}': {e}")
-            # Fallback to direct creation for backwards compatibility
-            try:
-                return self._create_direct_mcp_tool(mcp_tool_name)
-            except Exception as fallback_error:
-                print(f"Fallback creation also failed for '{mcp_tool_name}': {fallback_error}")
-                return None
+            return None
     
     def _create_direct_mcp_tool(self, mcp_tool_name: str) -> Optional[MCPTools]:
         """
@@ -488,8 +511,8 @@ class UnifiedVersionFactory:
             return None
 
 
-# Enhanced UnifiedVersionFactory for agent features (from agents factory)
-class EnhancedAgentVersionFactory(UnifiedVersionFactory):
+# Enhanced VersionFactory for agent features (from agents factory)
+class EnhancedAgentVersionFactory(VersionFactory):
     """
     Enhanced factory with agent-specific capabilities from agents factory.
     Includes fallback to file configuration, migration, and discovery.
@@ -504,7 +527,10 @@ class EnhancedAgentVersionFactory(UnifiedVersionFactory):
         db_url: Optional[str] = None,
         fallback_to_file: bool = True,
         memory: Optional[Any] = None,
-        **kwargs
+        user_id: Optional[str] = None,
+        user_name: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        cpf: Optional[str] = None
     ) -> Agent:
         """
         Create an agent with version support and file fallback (from agents factory).
@@ -535,12 +561,18 @@ class EnhancedAgentVersionFactory(UnifiedVersionFactory):
         elif config is None:
             raise ValueError(f"Agent '{agent_id}' version {version} not found in database")
         
-        # Use enhanced agent creation
+        # Use enhanced agent creation with explicit parameter passing
         return self._create_agent(
-            agent_id, config, session_id, debug_mode,
-            kwargs.get("user_id"), kwargs.get("user_name"),
-            kwargs.get("phone_number"), kwargs.get("cpf"),
-            memory=memory, version=version, **kwargs
+            component_id=agent_id,
+            config=config,
+            session_id=session_id,
+            debug_mode=debug_mode,
+            user_id=user_id,
+            user_name=user_name,
+            phone_number=phone_number,
+            cpf=cpf,
+            memory=memory,
+            db_url=db_url
         )
     
     def _load_config_from_db(self, agent_id: str, version: Optional[int] = None) -> Optional[Dict[str, Any]]:
@@ -890,14 +922,14 @@ def create_versioned_agent(agent_id: str, version: Optional[int] = None, **kwarg
 
 
 def create_versioned_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
-    """Create versioned team using unified factory."""
-    factory = UnifiedVersionFactory()
+    """Create versioned team using version factory."""
+    factory = VersionFactory()
     return factory.create_versioned_component(team_id, "team", version, **kwargs)
 
 
 def create_versioned_workflow(workflow_id: str, version: Optional[int] = None, **kwargs) -> Workflow:
-    """Create versioned workflow using unified factory."""
-    factory = UnifiedVersionFactory()
+    """Create versioned workflow using version factory."""
+    factory = VersionFactory()
     return factory.create_versioned_component(workflow_id, "workflow", version, **kwargs)
 
 

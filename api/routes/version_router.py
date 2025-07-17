@@ -76,8 +76,8 @@ async def execute_versioned_component(
     component_type = version_record.component_type
     
     # Create versioned component using factory
-    from common.version_factory import UnifiedVersionFactory
-    factory = UnifiedVersionFactory()
+    from common.version_factory import VersionFactory
+    factory = VersionFactory()
     
     component = factory.create_versioned_component(
         component_id=request.component_id,

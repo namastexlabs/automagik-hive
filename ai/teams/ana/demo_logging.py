@@ -24,7 +24,6 @@ def apply_team_demo_patches():
     if _patched or os.getenv("DEMO_MODE", "false").lower() != "true":
         return
 
-    # Simple one-line confirmation instead of redundant banners
     logger.info("🎬 DEMO MODE: Global Team class patching applied")
 
     # Store original methods before patching
@@ -109,14 +108,6 @@ def _log_query_complete(team_instance, result):
 
 
 
-class DemoAnaTeam(Team):
-    """
-    DEPRECATED: This subclass approach is no longer used.
-    Use global patching instead.
-    """
-    def __init__(self, *args, **kwargs):
-        print("WARNING: Using deprecated DemoAnaTeam subclass. Use global patching instead.")
-        super().__init__(*args, **kwargs)
 
 
 def log_behind_the_scenes_activity(activity_type: str, details: dict):

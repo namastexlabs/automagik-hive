@@ -27,7 +27,7 @@ knowledge_filter:
   business_unit: Emissão
   max_results: 3
   relevance_threshold: 0.7
-  csv_file_path: core/knowledge/knowledge_rag.csv
+  csv_file_path: context/knowledge/knowledge_rag.csv
   search_config:
     enable_hybrid_search: true
     use_semantic_search: true

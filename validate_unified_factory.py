@@ -15,7 +15,7 @@ def test_unified_factory():
         # Test imports
         print("\n1. Testing imports...")
         from common.version_factory import (
-            UnifiedVersionFactory,
+            VersionFactory,
             EnhancedAgentVersionFactory,
             create_versioned_agent,
             create_versioned_team,
@@ -30,7 +30,7 @@ def test_unified_factory():
         
         # Test factory instantiation
         print("\n2. Testing factory instantiation...")
-        unified_factory = UnifiedVersionFactory()
+        version_factory = VersionFactory()
         enhanced_agent_factory = EnhancedAgentVersionFactory()
         print("✅ Factory instances created successfully")
         

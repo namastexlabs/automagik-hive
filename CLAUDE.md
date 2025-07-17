@@ -1,10 +1,10 @@
 # Genie Agents - Enterprise Multi-Agent System (claude-master)
 
 ## 1. Project Overview
-- **Vision:** Production-ready enterprise boilerplate for building sophisticated multi-agent AI systems with intelligent routing, comprehensive monitoring, and enterprise-grade deployment capabilities
-- **Current Phase:** Enterprise-ready deployment with full monitoring, security, and CI/CD integration
+- **Vision:** Production-ready enterprise boilerplate for building sophisticated multi-agent AI systems with intelligent routing and enterprise-grade deployment capabilities
+- **Current Phase:** Enterprise-ready deployment with security and CI/CD integration
 - **Key Architecture:** Clean V2 Architecture with YAML-driven agent configuration, Agno Framework integration for intelligent routing, PostgreSQL backend with auto-migrations
-- **Development Strategy:** Microservices-ready architecture with Docker containerization, real-time monitoring via Prometheus/Grafana, and enterprise security layers
+- **Development Strategy:** Microservices-ready architecture with Docker containerization and enterprise security layers
 
 ## 2. Project Structure
 
@@ -35,7 +35,6 @@ Genie Agents follows a Clean V2 Architecture pattern with YAML-driven agent conf
 - **Agent Versioning**: **CRITICAL** - Whenever an agent is changed (code, config, tools, instructions), the version MUST be bumped in the agent's config.yaml file
 - **Team Routing**: Utilize Agno's Team(mode="route") for intelligent agent selection with confidence scoring
 - **Database Operations**: Use SQLAlchemy ORM for all database interactions, raw SQL only for complex queries
-- **Monitoring**: Include metrics collection for all new endpoints and agent interactions
 - **Security**: All agent responses must be sanitized, never expose internal system details
 - **Testing**: Every new agent must have corresponding unit and integration tests
 - **Knowledge Base**: Use the CSV-based RAG system with hot reload for context-aware responses
@@ -353,24 +352,6 @@ RESEND_API_KEY=your-resend-key
 EMAIL_RECIPIENT=admin@yourcompany.com
 ```
 
-**Monitoring System:**
-```bash
-# Feature toggles
-MONITORING_METRICS_ENABLED=true
-MONITORING_ALERTING_ENABLED=true
-MONITORING_ANALYTICS_ENABLED=true
-
-# Thresholds
-MONITORING_RESPONSE_TIME_WARNING=2.0
-MONITORING_RESPONSE_TIME_CRITICAL=5.0
-MONITORING_SUCCESS_RATE_WARNING=95.0
-MONITORING_SUCCESS_RATE_CRITICAL=90.0
-
-# Storage paths
-MONITORING_METRICS_STORAGE=logs/metrics
-MONITORING_ALERT_STORAGE=logs/alerts
-MONITORING_ANALYTICS_STORAGE=logs/analytics
-```
 
 ### YAML Configuration Pattern
 
@@ -571,7 +552,6 @@ uv add --dev package-name
 - Docker containerized
 - Optimized logging
 - Restricted CORS
-- Monitoring enabled
 - Auto-scaling ready
 
 ### Server Access Points
@@ -581,13 +561,10 @@ uv add --dev package-name
 - **Alternative API Docs**: http://localhost:9888/redoc (ReDoc)
 - **Main API Endpoint**: http://localhost:9888
 - **Health Check**: http://localhost:9888/api/v1/health
-- **Monitoring Dashboard**: http://localhost:9888/api/v1/monitoring/dashboard
 
 **Production Server:**
 - **Main API**: http://localhost:9888 (or configured port)
 - **Health Check**: http://localhost:9888/api/v1/health
-- **Monitoring**: http://localhost:9888/api/v1/monitoring/*
-- **WebSocket**: ws://localhost:9888/api/v1/monitoring/ws/realtime
 
 ### Knowledge Base Hot Reload
 
@@ -629,9 +606,7 @@ CSV_FILE_PATH=core/knowledge/knowledge_rag.csv
 **Custom Business Endpoints:**
 ```
 /api/v1/health           # Health checks
-/api/v1/monitoring/*     # Monitoring system
 /api/v1/agents/*         # Agent versioning
-/api/v1/monitoring/ws/realtime  # WebSocket monitoring
 ```
 
 ## 8. Post-Task Completion Protocol

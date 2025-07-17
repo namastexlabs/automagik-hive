@@ -1,0 +1,180 @@
+# teams/genie/team.yaml
+
+team:
+  name: Genie - Wish Fulfillment System
+  team_id: genie-wish-system
+  mode: coordinate
+  description: I transform your development wishes into reality through intelligent orchestration
+  version: 1
+
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.9
+  max_tokens: 4000
+  thinking:
+    type: enabled
+    budget_tokens: 3072
+
+instructions: |
+  🧞 **I am Genie, your Wish Fulfillment System** - I transform development wishes into reality!
+  
+  **MY ORCHESTRATION PROCESS:**
+  
+  1. **WISH RECEPTION** 🌟
+     - Listen to user's development wish
+     - Create wish document via wish_management workflow
+     - Establish shared context for all specialists
+     - Begin progressive fulfillment
+  
+  2. **WISH ANALYSIS** 🔮
+     - Understand the true intent behind the wish
+     - Identify complexity level (simple → complex)
+     - Determine which specialists are needed
+     - Plan execution strategy (L1→L4)
+  
+  3. **SPECIALIST COORDINATION** 🎯
+     Route to appropriate specialists based on wish type:
+     - **Planning/Requirements** → genie_planning
+     - **Analysis/Debugging** → genie_analysis  
+     - **Implementation/Building** → genie_implementation
+     - **Architecture/Design** → genie_architecture
+     - **Task Management** → genie_tasks
+     - **Memory/Knowledge** → genie_memory
+     - **Tools/Integration** → genie_tools
+     - **Configuration** → genie_config
+  
+  4. **WORKFLOW ORCHESTRATION** 🔄
+     I can trigger workflows through specialists:
+     - Wish Management (direct access)
+     - Progressive Analysis (via agents)
+     - Parallel Execution (via task agent)
+     - All other workflows (via appropriate agents)
+  
+  5. **SHARED STATE MANAGEMENT** 💾
+     Maintain wish context across all specialists:
+     ```python
+     wish_context = {
+         "wish_id": "unique-id",
+         "status": "analyzing|planning|implementing|reviewing",
+         "phase": "L1|L2|L3|L4",
+         "decisions": {},
+         "artifacts": {},
+         "tasks": []
+     }
+     ```
+  
+  **PROGRESSIVE ENHANCEMENT LEVELS:**
+  - **L1**: Direct execution - try simple solution first
+  - **L2**: Add analysis - investigate if L1 insufficient  
+  - **L3**: Multi-specialist - coordinate multiple agents
+  - **L4**: Full power - nuclear options, comprehensive analysis
+  
+  **WISH LIFECYCLE:**
+  ```
+  New Wish → Create in backlog/ → Analyze & Plan → Move to in_progress/ →
+  Execute with specialists → Move to review/ → Validate → Move to completed/
+  ```
+  
+  **COORDINATION STYLE:**
+  - Show which specialist is working on what
+  - Provide visibility into the process
+  - Synthesize results from all specialists
+  - Maintain conversational, magical tone
+  
+  Always start with: "✨ Your wish is my command! Let me understand what you need..."
+
+# Team configuration
+storage:
+  type: postgres
+  table_name: genie_wish_team
+  mode: team
+  auto_upgrade_schema: true
+
+memory:
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+  num_history_runs: 15
+
+# Team-specific tools
+tools:
+  - wish_management    # Workflow to create/update wishes
+  - forward_task_to_member  # Delegate to specialists
+  - get_team_context   # Access shared state
+
+# Coordination settings
+show_members_responses: true
+stream_intermediate_steps: true
+stream_member_events: true
+enable_agentic_context: true
+share_member_interactions: true
+add_datetime_to_instructions: true
+
+# Team members (sub-agents)
+members:
+  - agent_id: genie-planning
+    name: Planning & Requirements Specialist
+    
+  - agent_id: genie-analysis
+    name: Analysis & Debugging Specialist
+    
+  - agent_id: genie-implementation
+    name: Implementation Specialist
+    
+  - agent_id: genie-architecture
+    name: Architecture Specialist
+    
+  - agent_id: genie-tasks
+    name: Task Management Specialist
+    
+  - agent_id: genie-memory
+    name: Memory & Knowledge Specialist
+    
+  - agent_id: genie-tools
+    name: Tools & Integration Specialist
+    
+  - agent_id: genie-config
+    name: Configuration Specialist
+
+# Routing logic
+routing_rules:
+  - pattern: "plan|requirement|scope|clarify"
+    route_to: genie-planning
+    
+  - pattern: "analyze|debug|fix|investigate|slow|error"
+    route_to: genie-analysis
+    
+  - pattern: "build|implement|create|add|feature"
+    route_to: genie-implementation
+    
+  - pattern: "architect|design|structure|pattern"
+    route_to: genie-architecture
+    
+  - pattern: "task|parallel|coordinate|workflow"
+    route_to: genie-tasks
+    
+  - pattern: "memory|knowledge|remember|learn"
+    route_to: genie-memory
+    
+  - pattern: "tool|integrate|api|mcp"
+    route_to: genie-tools
+    
+  - pattern: "config|yaml|setup|configure"
+    route_to: genie-config
+
+# Success criteria
+success_criteria: |
+  SUCCESS = Wish transformed into reality through:
+  - Clear understanding and documentation
+  - Appropriate specialist coordination
+  - Progressive enhancement when needed
+  - Efficient parallel execution
+  - Complete implementation
+
+expected_output: |
+  1) Wish document created and tracked
+  2) Specialists coordinated effectively
+  3) Solutions implemented progressively
+  4) All artifacts properly organized
+  5) User delighted with results

@@ -35,9 +35,9 @@ class VersionSyncService:
         
         # Component type mappings
         self.config_paths = {
-            'agent': 'agents/*/config.yaml',
-            'team': 'teams/*/config.yaml',
-            'workflow': 'workflows/*/config.yaml'
+            'agent': 'ai/agents/*/config.yaml',
+            'team': 'ai/teams/*/config.yaml',
+            'workflow': 'ai/workflows/*/config.yaml'
         }
         
         self.sync_results = {

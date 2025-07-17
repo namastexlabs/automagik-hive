@@ -1,5 +1,3 @@
-# Finalizacao Specialist Agent Factory
-# Handles conversation finalization with protocol and farewell messages
 
 from typing import Optional
 import yaml
@@ -25,10 +23,9 @@ def get_finalizacao_agent(
     db_url: Optional[str] = None,
     memory=None,
     # User context parameters
-    user_id: Optional[str] = None,
-    user_name: Optional[str] = None,
-    phone_number: Optional[str] = None,
-    cpf: Optional[str] = None,
+    user_id: Optional[str] = None,        # Agno native parameter for team shared context
+    pb_phone_number: Optional[str] = None, # PagBank business parameter
+    pb_cpf: Optional[str] = None,         # PagBank business parameter
     **kwargs
 ) -> Agent:
     """
@@ -76,11 +73,11 @@ def get_finalizacao_agent(
     
     # Create user context session_state (Agno's built-in way)
     user_context_state = create_user_context_state(
-        user_id=user_id,
-        user_name=user_name,
-        phone_number=phone_number,
-        cpf=cpf,
-        **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
+        user_id=user_id,  # Agno native parameter
+        user_name=None,  # No longer using pb_user_name parameter
+        phone_number=pb_phone_number,  # PagBank business parameter
+        cpf=pb_cpf,  # PagBank business parameter
+        **{k: v for k, v in kwargs.items() if k.startswith('pb_') or k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
     )
     
     # Create agent

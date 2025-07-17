@@ -10,7 +10,6 @@ from typing import Dict, Any, List, Optional
 import logging
 
 from core.mcp.connection_manager import get_mcp_connection_manager, MCPConnectionManager
-from api.monitoring.mcp_monitor import get_mcp_health_monitor, MCPHealthMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -22,20 +21,16 @@ async def get_mcp_status(
     manager: MCPConnectionManager = Depends(get_mcp_connection_manager)
 ) -> Dict[str, Any]:
     """
-    Get overall MCP system status and health summary.
+    Get overall MCP system status.
     
     Returns:
-        System status with pool counts, health metrics, and recent alerts
+        System status with available servers
     """
     try:
-        health_monitor = await get_mcp_health_monitor()
-        health_summary = health_monitor.get_health_summary()
-        
         return {
             "status": "ok",
-            "mcp_health": health_summary,
             "available_servers": manager.list_available_servers(),
-            "timestamp": health_summary.get("last_check")
+            "timestamp": None
         }
     except Exception as e:
         logger.error(f"Error getting MCP status: {e}")
@@ -86,15 +81,10 @@ async def get_pool_details(
         if not pool_metrics:
             raise HTTPException(status_code=404, detail=f"Pool {server_name} not found")
         
-        # Get health information
-        health_monitor = await get_mcp_health_monitor()
-        health_info = health_monitor.get_pool_health(server_name)
-        
         return {
             "status": "ok",
             "server_name": server_name,
-            "metrics": pool_metrics,
-            "health": health_info
+            "metrics": pool_metrics
         }
     except HTTPException:
         raise
@@ -109,28 +99,17 @@ async def get_mcp_alerts(
     limit: int = Query(50, ge=1, le=200, description="Maximum number of alerts to return")
 ) -> Dict[str, Any]:
     """
-    Get recent MCP alerts.
+    Get recent MCP alerts (monitoring removed).
     
-    Args:
-        severity: Optional severity filter (warning, critical)
-        limit: Maximum number of alerts to return
-        
     Returns:
-        List of recent alerts with details
+        Empty alerts list as monitoring system was removed
     """
-    try:
-        health_monitor = await get_mcp_health_monitor()
-        alerts = health_monitor.get_recent_alerts(severity=severity, limit=limit)
-        
-        return {
-            "status": "ok",
-            "alerts": alerts,
-            "total_alerts": len(alerts),
-            "filtered_by_severity": severity
-        }
-    except Exception as e:
-        logger.error(f"Error getting MCP alerts: {e}")
-        raise HTTPException(status_code=500, detail=f"Error getting alerts: {e}")
+    return {
+        "status": "ok",
+        "alerts": [],
+        "total_alerts": 0,
+        "message": "Monitoring system removed - no alerts available"
+    }
 
 
 @router.get("/servers")
@@ -194,17 +173,11 @@ async def trigger_health_check(
         if not pool_metrics:
             raise HTTPException(status_code=404, detail=f"Pool {server_name} not found")
         
-        # Trigger health check via monitor
-        health_monitor = await get_mcp_health_monitor()
-        
-        # Force a health check by getting current health
-        health_info = health_monitor.get_pool_health(server_name)
-        
         return {
             "status": "ok",
             "server_name": server_name,
             "health_check_triggered": True,
-            "current_health": health_info
+            "message": "Monitoring system removed - basic pool metrics available only"
         }
     except HTTPException:
         raise

@@ -9,25 +9,10 @@ from api.routes.v1_router import v1_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
-    # Startup
-    try:
-        # Start monitoring system
-        from api.monitoring.startup import start_monitoring
-        await start_monitoring()
-        print("✅ Monitoring system started")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not start monitoring system: {e}")
-    
+    # Startup - monitoring removed
     yield
     
-    # Shutdown
-    try:
-        # Stop monitoring system
-        from api.monitoring.startup import stop_monitoring
-        await stop_monitoring()
-        print("✅ Monitoring system stopped")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not stop monitoring system: {e}")
+    # Shutdown - monitoring removed
 
 
 def create_app() -> FastAPI:

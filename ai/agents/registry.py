@@ -7,13 +7,12 @@ import os
 from common.version_factory import create_versioned_agent
 from core.mcp.catalog import MCPCatalog
 
-# Dynamic import system for agent discovery
 _agent_modules = {
-    "pagbank": "agents.pagbank.agent",
-    "adquirencia": "agents.adquirencia.agent", 
-    "emissao": "agents.emissao.agent",
-    "human-handoff": "agents.human_handoff.agent",
-    "finalizacao": "agents.finalizacao.agent"
+    "pagbank": "ai.agents.pagbank.agent",
+    "adquirencia": "ai.agents.adquirencia.agent", 
+    "emissao": "ai.agents.emissao.agent",
+    "human-handoff": "ai.agents.human_handoff.agent",
+    "finalizacao": "ai.agents.finalizacao.agent"
 }
 
 # Cache for imported agent factories
@@ -81,12 +80,9 @@ class AgentRegistry:
         debug_mode: bool = False,
         db_url: Optional[str] = None,
         memory: Optional[Any] = None,
-        # User context parameters - forwarded to agent factories
-        user_id: Optional[str] = None,
-        user_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        cpf: Optional[str] = None,
-        **kwargs
+        user_id: Optional[str] = None,  # Agno native parameter
+        pb_phone_number: Optional[str] = None,  # PagBank business parameter
+        pb_cpf: Optional[str] = None  # PagBank business parameter
     ) -> Agent:
         """
         Get agent instance by ID - Generic factory pattern with versioning support.
@@ -97,10 +93,9 @@ class AgentRegistry:
             session_id: Session ID for conversation tracking
             debug_mode: Enable debug mode
             db_url: Database URL override
-            user_id: User identifier for session state
-            user_name: User name for session state
-            phone_number: User phone for session state
-            cpf: User CPF for session state
+            user_id: Agno native user identifier for shared team context
+            pb_phone_number: PagBank business parameter - phone number
+            pb_cpf: PagBank business parameter - CPF document
             
         Returns:
             Configured Agent instance
@@ -117,12 +112,9 @@ class AgentRegistry:
                 debug_mode=debug_mode,
                 db_url=db_url,
                 memory=memory,
-                # Forward user context parameters
                 user_id=user_id,
-                user_name=user_name,
-                phone_number=phone_number,
-                cpf=cpf,
-                **kwargs
+                pb_phone_number=pb_phone_number,
+                pb_cpf=pb_cpf
             )
         except ValueError:
             # Fall back to agent factories if versioning fails
@@ -144,12 +136,9 @@ class AgentRegistry:
                 debug_mode=debug_mode,
                 db_url=db_url,
                 memory=memory,
-                # Forward user context parameters
                 user_id=user_id,
-                user_name=user_name,
-                phone_number=phone_number,
-                cpf=cpf,
-                **kwargs
+                pb_phone_number=pb_phone_number,
+                pb_cpf=pb_cpf
             )
     
     @classmethod
@@ -230,12 +219,10 @@ def get_agent(
     debug_mode: bool = False,
     db_url: Optional[str] = None,
     memory: Optional[Any] = None,
-    # User context parameters - forwarded to agent factories
-    user_id: Optional[str] = None,
-    user_name: Optional[str] = None,
-    phone_number: Optional[str] = None,
-    cpf: Optional[str] = None,
-    **kwargs
+    user_id: Optional[str] = None,  # Agno native parameter
+    pb_user_name: Optional[str] = None,  # PagBank business parameter
+    pb_phone_number: Optional[str] = None,  # PagBank business parameter
+    pb_cpf: Optional[str] = None  # PagBank business parameter
 ) -> Agent:
     """
     Generic agent factory - main entry point for any agent system.
@@ -257,12 +244,10 @@ def get_agent(
         debug_mode=debug_mode,
         db_url=db_url,
         memory=memory,
-        # Forward user context parameters
         user_id=user_id,
-        user_name=user_name,
-        phone_number=phone_number,
-        cpf=cpf,
-        **kwargs
+        pb_user_name=pb_user_name,
+        pb_phone_number=pb_phone_number,
+        pb_cpf=pb_cpf
     )
 
 
@@ -273,12 +258,10 @@ def get_team_agents(
     debug_mode: bool = False,
     db_url: Optional[str] = None,
     memory: Optional[Any] = None,
-    # User context parameters - forwarded to agent factories
-    user_id: Optional[str] = None,
-    user_name: Optional[str] = None,
-    phone_number: Optional[str] = None,
-    cpf: Optional[str] = None,
-    **kwargs
+    user_id: Optional[str] = None,  # Agno native parameter
+    pb_user_name: Optional[str] = None,  # PagBank business parameter
+    pb_phone_number: Optional[str] = None,  # PagBank business parameter
+    pb_cpf: Optional[str] = None  # PagBank business parameter
 ) -> list[Agent]:
     """
     Get multiple agents for team composition.
@@ -299,12 +282,10 @@ def get_team_agents(
             debug_mode=debug_mode, 
             db_url=db_url, 
             memory=memory,
-            # Forward user context parameters
             user_id=user_id,
-            user_name=user_name,
-            phone_number=phone_number,
-            cpf=cpf,
-            **kwargs
+            pb_user_name=pb_user_name,
+            pb_phone_number=pb_phone_number,
+            pb_cpf=pb_cpf
         )
         for name in agent_names
     ]
