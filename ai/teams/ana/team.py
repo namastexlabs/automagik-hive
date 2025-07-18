@@ -15,6 +15,16 @@ from .models import UserContext
 import os
 
 
+def _create_team_memory(config: dict, db_url: str):
+    """Create Memory instance for team if enabled."""
+    memory_config = config.get("memory", {})
+    if memory_config.get("enable_user_memories", False):
+        from lib.memory.memory_factory import create_team_memory
+        team_id = config["team"]["team_id"]
+        return create_team_memory(team_id, db_url)
+    return None
+
+
 def get_ana_team(
     user_context: Optional[Union[UserContext, dict]] = None,
     session_id: Optional[str] = None,
@@ -88,8 +98,13 @@ def get_ana_team(
         session_id=session_id,
         user_id=user_id,
         
+        # Memory instance (create if enabled)
+        memory=_create_team_memory(config, db_url),
+        
         # Memory configuration
-        **config["memory"],
+        **{k: v for k, v in config["memory"].items() if k not in ["enable_user_memories", "enable_agentic_memory"]},
+        enable_user_memories=config["memory"].get("enable_user_memories", False),
+        enable_agentic_memory=config["memory"].get("enable_agentic_memory", False),
         
         # Streaming configuration
         **config["streaming"],

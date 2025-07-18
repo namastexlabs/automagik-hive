@@ -158,6 +158,13 @@ class VersionFactory:
             auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
         )
         
+        # Create memory if enabled
+        memory = None
+        memory_config = config.get("memory", {})
+        if memory_config.get("enable_user_memories", False):
+            from lib.memory.memory_factory import create_agent_memory
+            memory = create_agent_memory(component_id, self.db_url)
+        
         # Create knowledge base from configuration (global + agent overrides)
         knowledge_base = None
         
@@ -191,12 +198,15 @@ class VersionFactory:
             instructions=config.get("instructions", "You are a helpful assistant."),
             model=model,
             storage=storage,
+            memory=memory,
             knowledge=knowledge_base,  # Add knowledge base to agent
             session_id=session_id,
             user_id=user_id,
             debug_mode=debug_mode,
             add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
-            num_history_runs=config.get("memory", {}).get("num_history_runs", 5)
+            num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
+            enable_user_memories=memory_config.get("enable_user_memories", False),
+            enable_agentic_memory=memory_config.get("enable_agentic_memory", False)
         )
         
         # Add metadata
