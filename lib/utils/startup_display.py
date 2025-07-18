@@ -210,7 +210,8 @@ class StartupDisplay:
                     )
                     
                     # If this is the component we're looking for
-                    if found_component_id == component_id:
+                    # Handle both dash and underscore formats for workflow IDs
+                    if found_component_id == component_id or found_component_id == component_id.replace('_', '-'):
                         version = component_section.get('version')
                         if version:
                             return f"{version} 📄"  # Add indicator that this is from YAML fallback

@@ -1,8 +1,8 @@
 agent:
   name: Human Handoff Specialist
   role: Escalation and Human Handoff Agent
-  version: 35
-  agent_id: human-handoff-specialist
+  version: 36
+  agent_id: human-handoff
   description: Specialized agent for handling escalations and human handoff workflows
 model:
   id: claude-sonnet-4-20250514

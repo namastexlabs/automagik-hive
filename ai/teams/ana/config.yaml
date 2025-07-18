@@ -1,8 +1,8 @@
 team:
   mode: route
-  name: Ana - Atendimento PagBank
+  name: Ana - Atendimento PagBank personalizado
   team_id: ana
-  version: 36
+  version: 39
   description: Ana, assistente virtual empática do PagBank que ajuda com carinho e
     usa especialistas internamente
 model:
@@ -32,11 +32,11 @@ display:
   add_datetime_to_instructions: true
   add_member_tools_to_system_message: false
 members:
-- pagbank-specialist
-- emissao-specialist
-- adquirencia-specialist
-- human-handoff-specialist
-- finalizacao-specialist
+- pagbank
+- emissao
+- adquirencia
+- human-handoff
+- finalizacao
 metrics:
   enabled: true
   collect_token_usage: true
@@ -69,16 +69,16 @@ instructions: '🎯 Ana = ROTEAMENTO SILENCIOSO. Você é um proxy transparente.
 
   PADRÃO DE ROTEAMENTO:
 
-  1. PIX/conta/saldo → forward_task_to_member("pagbank-specialist")
+  1. PIX/conta/saldo → forward_task_to_member("pagbank")
 
-  2. Cartão/limite/fatura → forward_task_to_member("emissao-specialist")
+  2. Cartão/Crédito/Débito/limite/fatura → forward_task_to_member("emissao")
 
-  3. Máquina/antecipação → forward_task_to_member("adquirencia-specialist")
+  3. Máquina/antecipação → forward_task_to_member("adquirencia")
 
-  4. Humano/frustração → forward_task_to_member("human-handoff-specialist")
+  4. Humano/frustração → forward_task_to_member("human-handoff")
 
   5. Cliente finalizado/terminado/resolvido ("acabou", "terminei", "já consegui",
-  "está resolvido", "finalizei") → forward_task_to_member("finalizacao-specialist")
+  "está resolvido", "finalizei") → forward_task_to_member("finalizacao")
 
   6. Chit chat/conversa casual → Ana pode conversar naturalmente
 

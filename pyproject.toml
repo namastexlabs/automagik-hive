@@ -5,7 +5,7 @@ description = "Automagik Multi-Agent Framework - Extensible Agent Creation Syste
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "agno>=1.7.4",
+    "agno==1.7.5",
     "psycopg2-binary>=2.9.9",
     "sqlalchemy>=2.0.0",
     "asyncpg>=0.29.0",

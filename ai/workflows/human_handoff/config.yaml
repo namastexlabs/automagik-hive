@@ -1,3 +1,9 @@
+agent:
+  name: Human Handoff Specialist
+  role: Escalation and Human Handoff Agent
+  version: 36
+  agent_id: human-handoff
+  description: Specialized agent for handling escalations and human handoff workflows
 model:
   id: claude-sonnet-4-20250514
   provider: anthropic
@@ -34,7 +40,7 @@ whatsapp:
     '
 workflow:
   name: Human Handoff Workflow
-  version: 34
+  version: 35
   description: Simplified escalation workflow for Ana team handoffs
   workflow_id: human-handoff
 execution:

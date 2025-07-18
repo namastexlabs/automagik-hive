@@ -60,11 +60,11 @@ team = get_ana_team(
 ## Routing Logic
 
 Ana routes users to appropriate specialists:
-1. **PIX/conta/saldo** → pagbank-specialist
-2. **Cartão/limite/fatura** → emissao-specialist  
-3. **Máquina/antecipação** → adquirencia-specialist
-4. **Humano/frustração** → human-handoff-specialist
-5. **Finalização** → finalizacao-specialist
+1. **PIX/conta/saldo** → pagbank
+2. **Cartão/limite/fatura** → emissao  
+3. **Máquina/antecipação** → adquirencia
+4. **Humano/frustração** → human-handoff
+5. **Finalização** → finalizacao
 
 ## Testing
 
