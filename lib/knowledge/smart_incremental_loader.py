@@ -11,8 +11,9 @@ from pathlib import Path
 from typing import Dict, Any, List, Set
 import os
 from sqlalchemy import create_engine, text
+import yaml
 
-from lib.knowledge.knowledge_factory import create_knowledge_base
+from lib.knowledge.knowledge_factory import create_knowledge_base, get_knowledge_base
 
 
 class SmartIncrementalLoader:
@@ -28,11 +29,25 @@ class SmartIncrementalLoader:
     
     def __init__(self, csv_path: str = "core/knowledge/knowledge_rag.csv"):
         self.csv_path = Path(csv_path)
-        self.kb = create_knowledge_base()
+        self.kb = get_knowledge_base()  # Use singleton pattern
         self.db_url = os.getenv("DATABASE_URL")
+        
+        # Load configuration to get table name
+        self.config = self._load_config()
+        self.table_name = self.config.get('knowledge', {}).get('vector_db', {}).get('table_name', 'knowledge_base')
         
         if not self.db_url:
             raise RuntimeError("DATABASE_URL required for vector database checks")
+    
+    def _load_config(self) -> Dict[str, Any]:
+        """Load knowledge configuration from YAML file"""
+        try:
+            config_path = Path(__file__).parent / "config.yaml"
+            with open(config_path, 'r', encoding='utf-8') as file:
+                return yaml.safe_load(file)
+        except Exception as e:
+            print(f"⚠️ Could not load config: {e}")
+            return {}
     
     def _hash_row(self, row: pd.Series) -> str:
         """Create a unique hash for a CSV row based on its content"""
@@ -49,8 +64,8 @@ class SmartIncrementalLoader:
                 result = conn.execute(text("""
                     SELECT COUNT(*) as count 
                     FROM information_schema.tables 
-                    WHERE table_name = 'pagbank_knowledge'
-                """))
+                    WHERE table_name = :table_name
+                """), {'table_name': self.table_name})
                 table_exists = result.fetchone()[0] > 0
                 
                 if not table_exists:
@@ -60,8 +75,8 @@ class SmartIncrementalLoader:
                 result = conn.execute(text("""
                     SELECT COUNT(*) as count 
                     FROM information_schema.columns 
-                    WHERE table_name = 'pagbank_knowledge' AND column_name = 'content_hash'
-                """))
+                    WHERE table_name = :table_name AND column_name = 'content_hash'
+                """), {'table_name': self.table_name})
                 hash_column_exists = result.fetchone()[0] > 0
                 
                 if not hash_column_exists:
@@ -70,7 +85,7 @@ class SmartIncrementalLoader:
                     return set()
                 
                 # Get existing content hashes
-                result = conn.execute(text("SELECT DISTINCT content_hash FROM pagbank_knowledge WHERE content_hash IS NOT NULL"))
+                result = conn.execute(text(f"SELECT DISTINCT content_hash FROM {self.table_name} WHERE content_hash IS NOT NULL"))
                 existing_hashes = {row[0] for row in result.fetchall()}
                 return existing_hashes
                 
@@ -107,8 +122,8 @@ class SmartIncrementalLoader:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
                 # Add content_hash column if it doesn't exist
-                conn.execute(text("""
-                    ALTER TABLE pagbank_knowledge 
+                conn.execute(text(f"""
+                    ALTER TABLE {self.table_name} 
                     ADD COLUMN IF NOT EXISTS content_hash VARCHAR(32)
                 """))
                 conn.commit()
@@ -137,7 +152,7 @@ class SmartIncrementalLoader:
                     
                     # Check if this content already exists in database
                     result = conn.execute(text(
-                        "SELECT COUNT(*) FROM pagbank_knowledge WHERE content LIKE :pattern"
+                        f"SELECT COUNT(*) FROM {self.table_name} WHERE content LIKE :pattern"
                     ), {'pattern': f"%{problem}%"})
                     
                     exists = result.fetchone()[0] > 0
@@ -304,8 +319,8 @@ class SmartIncrementalLoader:
             df.to_csv(temp_csv_path, index=False)
             
             try:
-                # Create temporary knowledge base for this single row using generic factory
-                temp_kb = create_knowledge_base(csv_path=str(temp_csv_path))
+                # Create temporary knowledge base for this single row using singleton
+                temp_kb = get_knowledge_base(csv_path=str(temp_csv_path))
                 
                 # Load just this row (upsert mode - no recreate)
                 temp_kb.load(recreate=False, upsert=True)
@@ -333,8 +348,8 @@ class SmartIncrementalLoader:
                 problem = row_data.get('problem', '')
                 
                 # Update the hash for rows matching this content (use content column, not document)
-                conn.execute(text("""
-                    UPDATE pagbank_knowledge 
+                conn.execute(text(f"""
+                    UPDATE {self.table_name} 
                     SET content_hash = :hash 
                     WHERE content LIKE :problem_pattern
                     AND content_hash IS NULL
@@ -378,7 +393,7 @@ class SmartIncrementalLoader:
             with engine.connect() as conn:
                 # Delete rows with these hashes
                 for hash_to_remove in removed_hashes:
-                    conn.execute(text("DELETE FROM pagbank_knowledge WHERE content_hash = :hash"), {'hash': hash_to_remove})
+                    conn.execute(text(f"DELETE FROM {self.table_name} WHERE content_hash = :hash"), {'hash': hash_to_remove})
                 
                 conn.commit()
                 print(f"🗑️ Removed {len(removed_hashes)} obsolete rows")

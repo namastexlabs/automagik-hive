@@ -125,9 +125,7 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
         logger.info("Shared knowledge base connected successfully")
     else:
         logger.info("Creating shared knowledge base instance")
-        print("Creating shared knowledge base instance")
         logger.info("Loading shared knowledge base (this happens only once)")
-        print("Loading shared knowledge base (this happens only once)")
         # First time - create and load data
         _shared_kb.load(recreate=False, upsert=True)
         logger.info("Shared knowledge base loaded successfully")

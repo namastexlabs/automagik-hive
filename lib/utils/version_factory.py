@@ -178,9 +178,9 @@ class VersionFactory:
                     num_documents=max_results,
                     csv_path=csv_path
                 )
-                logger.info("Knowledge base loaded for agent %s: %s", component_id, csv_path)
+                logger.info(f"Knowledge base loaded for agent {component_id}: {csv_path}")
             except Exception as e:
-                logger.error("Failed to load knowledge base for agent %s: %s", component_id, e)
+                logger.error(f"Failed to load knowledge base for agent {component_id}: {e}")
         
         # Create agent
         agent_config = config.get("agent", {})
@@ -255,9 +255,9 @@ class VersionFactory:
                     num_documents=max_results,
                     csv_path=csv_path
                 )
-                logger.info("Team knowledge base loaded for team %s: %s", component_id, csv_path)
+                logger.info(f"Team knowledge base loaded for team {component_id}: {csv_path}")
             except Exception as e:
-                logger.error("Failed to load team knowledge base for team %s: %s", component_id, e)
+                logger.error(f"Failed to load team knowledge base for team {component_id}: {e}")
         
         # Load member agents (simplified)
         members = []
