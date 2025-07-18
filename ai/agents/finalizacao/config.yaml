@@ -1,6 +1,6 @@
 agent:
   agent_id: finalizacao
-  version: 34
+  version: 35
   name: Ana - Finalizacao
   role: Especialista em Finalização
   description: Ana, sua assistente digital especializada em finalizar atendimentos,

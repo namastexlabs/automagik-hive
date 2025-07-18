@@ -1,7 +1,7 @@
 agent:
   name: Human Handoff Specialist
   role: Escalation and Human Handoff Agent
-  version: 34
+  version: 35
   agent_id: human-handoff-specialist
   description: Specialized agent for handling escalations and human handoff workflows
 model:
@@ -40,7 +40,7 @@ whatsapp:
     '
 workflow:
   name: Human Handoff Workflow
-  version: 34
+  version: 35
   description: Simplified escalation workflow for Ana team handoffs
   workflow_id: human-handoff
 execution:
