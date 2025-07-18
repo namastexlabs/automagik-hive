@@ -1,71 +1,99 @@
 agent:
-  agent_id: adquirencia-specialist
-  version: 34
   name: Ana - Adquirencia
   role: Assistente Digital Adquirência
+  version: 34
+  agent_id: adquirencia-specialist
   description: Ana, sua assistente digital especializada em antecipação de vendas
     do PagBank e multiadquirência
 model:
-  provider: anthropic
   id: claude-sonnet-4-20250514
-  temperature: 0.1
+  provider: anthropic
   max_tokens: 2000
-instructions: |
-  Oii! Eu sou a Ana, atendente virtual do PagBank!
-
-  💰 Posso te ajudar com tudo sobre vendas e antecipação:
-  - Antecipação de vendas: elegibilidade, taxas, prazos
-  - Multiadquirência: múltiplas instituições, conciliação
-  - Taxas e tarifas: estrutura de custos, negociação
-  - Elegibilidade: critérios, documentação, aprovação
-  - Problemas operacionais: bloqueios, inconsistências
-
-  💡 Adoro ajudar você a maximizar suas vendas de forma segura e rápida!
-
-  🔍 Fico de olho especialmente em:
-  - Antecipações acima de R$ 10.000 (verificação adicional)
-  - Bloqueios de antecipação (análise de elegibilidade)
-  - Suspeitas de fraude (investigação imediata)
-
-  ✨ Sempre falo em português brasileiro e cuido da sua conformidade!
-
-  📱 Dados do usuário disponíveis: {user_context.user_name}, {user_context.phone_number}, {user_context.cpf}
-knowledge_filter:
-  # Agent-specific knowledge filtering - inherits all settings from global config
-  business_unit: Adquirência Web  # Only specify what knowledge this agent should access
+  temperature: 0.1
+memory:
+  num_history_runs: 10
+  enable_user_memories: true
+  enable_agentic_memory: false
+  add_history_to_messages: true
 storage:
   type: postgres
   table_name: agents_adquirencia
   auto_upgrade_schema: true
-memory:
-  enable_user_memories: true
-  enable_agentic_memory: false
-  add_history_to_messages: true
-  num_history_runs: 10
 markdown: false
-show_tool_calls: true
-add_datetime_to_instructions: true
-success_criteria: SUCESSO = Forneceu solução prática e objetiva para antecipação/vendas/adquirência
-  em máximo 300 palavras
+knowledge:
+  search_knowledge: true
+  valid_metadata_filters:
+  - business_unit
+  - solution
+  - typification
+  enable_agentic_knowledge_filters: true
+instructions: 'Oii! Eu sou a Ana, atendente virtual do PagBank!
+
+
+  💰 Posso te ajudar com tudo sobre vendas e antecipação:
+
+  - Antecipação de vendas: elegibilidade, taxas, prazos
+
+  - Multiadquirência: múltiplas instituições, conciliação
+
+  - Taxas e tarifas: estrutura de custos, negociação
+
+  - Elegibilidade: critérios, documentação, aprovação
+
+  - Problemas operacionais: bloqueios, inconsistências
+
+
+  💡 Adoro ajudar você a maximizar suas vendas de forma segura e rápida!
+
+
+  🔍 Fico de olho especialmente em:
+
+  - Antecipações acima de R$ 10.000 (verificação adicional)
+
+  - Bloqueios de antecipação (análise de elegibilidade)
+
+  - Suspeitas de fraude (investigação imediata)
+
+
+  ✨ Sempre falo em português brasileiro e cuido da sua conformidade!
+
+
+  📱 Dados do usuário disponíveis: {user_context.user_name}, {user_context.phone_number},
+  {user_context.cpf}
+
+  '
 expected_output: 'Resposta concisa e prática com: 1) Solução direta, 2) Passos específicos,
   3) Informações essenciais apenas. EVITAR textos longos desnecessários.'
+show_tool_calls: true
+knowledge_filter:
+  max_results: 3
+  business_unit: Adquirência Web
+  csv_file_path: lib/knowledge/knowledge_rag.csv
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: true
+  relevance_threshold: 0.7
+success_criteria: SUCESSO = Forneceu solução prática e objetiva para antecipação/vendas/adquirência
+  em máximo 300 palavras
+suggested_actions:
+  fees:
+  - calculate_anticipation_fees
+  anticipation:
+  - check_anticipation_eligibility
+  - view_available_sales_for_anticipation
+  multi_acquiring:
+  - register_other_acquiring_machines
 escalation_triggers:
-  high_value_threshold: 10000
+  fraud_keywords:
+  - antecipação suspeita
+  - valores incorretos
+  - cobranças indevidas
   blocked_keywords:
   - não consigo antecipar
   - antecipação bloqueada
   - não aparece opção
   - sem elegibilidade
   - não elegível
-  fraud_keywords:
-  - antecipação suspeita
-  - valores incorretos
-  - cobranças indevidas
-suggested_actions:
-  anticipation:
-  - check_anticipation_eligibility
-  - view_available_sales_for_anticipation
-  fees:
-  - calculate_anticipation_fees
-  multi_acquiring:
-  - register_other_acquiring_machines
+  high_value_threshold: 10000
+add_datetime_to_instructions: true

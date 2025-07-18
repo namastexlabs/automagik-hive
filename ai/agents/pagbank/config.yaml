@@ -1,7 +1,7 @@
 agent:
   name: Ana - PagBank
   role: Assistente Digital PagBank
-  version: 34
+  version: 35
   agent_id: pagbank-specialist
   description: Ana, sua assistente digital especializada em PIX, transferências, folha
     de pagamento e serviços bancários digitais
@@ -44,8 +44,14 @@ expected_output: 'Resposta concisa e prática com: 1) Solução direta, 2) Passo
   3) Informações essenciais apenas. EVITAR textos longos desnecessários.'
 show_tool_calls: true
 knowledge_filter:
-  # Agent-specific knowledge filtering - inherits all settings from global config
-  business_unit: PagBank  # Only specify what knowledge this agent should access
+  max_results: 3
+  business_unit: PagBank
+  csv_file_path: lib/knowledge/knowledge_rag.csv
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: true
+  relevance_threshold: 0.7
 success_criteria: SUCESSO = Forneceu solução prática e objetiva para PIX/transferências/conta
   digital em máximo 300 palavras
 suggested_actions:

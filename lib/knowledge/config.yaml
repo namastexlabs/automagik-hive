@@ -1,0 +1,201 @@
+# Global Knowledge Configuration
+# Generic RAG configuration for any knowledge base implementation
+# Co-located with knowledge components for better modularity
+
+knowledge:
+  # CSV file path (relative to this config file)
+  csv_file_path: "knowledge_rag.csv"
+  
+  # Business unit mappings and configurations
+  business_units:
+    pagbank:
+      name: "PagBank"
+      description: "Especialista em conta digital e serviços bancários"
+      expertise:
+        - "PIX e transferências"
+        - "Conta PagBank e tarifa administrativa"
+        - "Folha de pagamento"
+        - "Recarga de celular"
+        - "Portabilidade de salário"
+        - "Aplicativo PagBank"
+        - "Contatos seguros"
+        - "Informe de rendimentos"
+      common_issues:
+        - "Bloqueio de transação por segurança"
+        - "Erro no aplicativo"
+        - "Devolução de PIX"
+        - "Cadastro de chave PIX"
+        - "Agendamento de pagamentos"
+      keywords:
+        - "pix"
+        - "transferência"
+        - "transferencia"
+        - "pagamento"
+        - "recarga"
+        - "portabilidade"
+        - "saldo"
+        - "conta"
+        - "ted"
+        - "doc"
+        - "folha de pagamento"
+        - "aplicativo"
+        - "app"
+        - "tarifa"
+        - "administrativa"
+        - "informe de rendimentos"
+        - "contatos seguros"
+        - "qr code"
+        - "chave pix"
+        - "devolução"
+        - "devoluçao"
+        - "bloqueio"
+        - "segurança"
+        - "seguranca"
+        - "erro no app"
+        - "atualizar"
+        - "versão"
+        - "versao"
+        - "exportar"
+        - "baixar"
+        - "agendamento"
+    
+    adquirencia:
+      name: "Adquirência Web"
+      description: "Especialista em antecipação de vendas e serviços de adquirência"
+      expertise:
+        - "Antecipação de vendas do PagBank"
+        - "Antecipação de vendas de outras máquinas (multiadquirência)"
+        - "Antecipação agendada"
+        - "Critérios de elegibilidade"
+        - "Comprometimento de agenda"
+        - "Taxas e prazos de antecipação"
+      common_issues:
+        - "Cliente não consegue antecipar vendas"
+        - "Dúvidas sobre elegibilidade"
+        - "Limite de antecipação"
+        - "Vendas não disponíveis para antecipação"
+      keywords:
+        - "antecipação"
+        - "antecipacao"
+        - "antecipar"
+        - "vendas"
+        - "adquirência"
+        - "adquirencia"
+        - "máquina"
+        - "maquina"
+        - "maquininha"
+        - "comprometimento"
+        - "multiadquirência"
+        - "multiadquirencia"
+        - "outras máquinas"
+        - "outras maquinas"
+        - "antecipação agendada"
+        - "antecipacao agendada"
+        - "web payment"
+    
+    emissao:
+      name: "Emissão"
+      description: "Especialista em cartões e produtos de emissão"
+      expertise:
+        - "Cartões de crédito, débito e pré-pago"
+        - "Cartão múltiplo PagBank"
+        - "Limites e anuidades"
+        - "Programas de benefícios (Mastercard Surpreenda, Vai de Visa)"
+        - "Compras internacionais e IOF"
+        - "Entrega e ativação de cartões"
+      common_issues:
+        - "Cartão não recebido"
+        - "Cobrança de mensalidade"
+        - "Dúvidas sobre função crédito"
+        - "Participação em promoções de bandeira"
+      keywords:
+        - "cartão"
+        - "cartao"
+        - "limite"
+        - "crédito"
+        - "credito"
+        - "débito"
+        - "debito"
+        - "pré-pago"
+        - "pre-pago"
+        - "prepago"
+        - "anuidade"
+        - "fatura"
+        - "mastercard"
+        - "visa"
+        - "múltiplo"
+        - "multiplo"
+        - "internacional"
+        - "iof"
+        - "cobrança"
+        - "cobranca"
+        - "mensalidade"
+        - "bandeira"
+        - "virtual"
+        - "entrega do cartão"
+        - "entrega do cartao"
+        - "recebimento do cartão"
+        - "recebimento do cartao"
+  
+  # Generic filter configuration
+  filters:
+    # Valid metadata fields for filtering
+    valid_metadata_fields:
+      - "business_unit"
+      - "solution"
+      - "typification"
+      - "problem"
+    
+    # Manual filtering settings
+    manual_filtering:
+      enabled: true
+      default_field: "business_unit"
+      inheritance: "override"  # Agent settings override global
+    
+    # Agentic filtering settings
+    agentic_filtering:
+      enabled: true
+      extraction_fields:
+        - "business_unit"
+        - "typification"
+      confidence_threshold: 0.5
+      keyword_matching: true
+  
+  # Search configuration
+  search_config:
+    max_results: 3
+    relevance_threshold: 0.7
+    enable_hybrid_search: true
+    use_semantic_search: true
+    include_metadata: true
+    search_knowledge: true
+    enable_agentic_knowledge_filters: true
+  
+  # Hot reload manager configuration
+  hot_reload:
+    enabled: true
+    watch_interval: 1  # seconds
+    
+  # Vector database configuration
+  vector_db:
+    table_name: "knowledge_base"  # Generic table name
+    search_type: "hybrid"
+    distance: "cosine"
+    embedder: "text-embedding-3-small"
+    vector_index:
+      type: "HNSW"
+    
+  # CSV reader configuration
+  csv_reader:
+    content_column: "problem"
+    metadata_columns:
+      - "business_unit"
+      - "solution"
+      - "typification"
+    encoding: "utf-8"
+    
+  # Performance settings
+  performance:
+    cache_ttl: 300
+    enable_caching: true
+    cache_max_size: 1000
