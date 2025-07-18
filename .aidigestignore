@@ -283,5 +283,8 @@ dist/
 
 # Genie archive (completed/obsolete development artifacts)
 genie/archive/
-codebase.md
+uv.lock 
 
+genie/wishes/
+docs/
+.claude/
