@@ -20,6 +20,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from lib.utils.startup_display import create_startup_display, display_simple_status
+from lib.config.server_config import get_server_config
 
 # Load environment variables
 try:
@@ -195,8 +196,22 @@ def create_pagbank_api():
     if (demo_mode or is_development) and not is_reloader:
         print("✅ Database: Using Agno storage abstractions (auto-initialized)")
     
-    # Initialize CSV hot reload manager for lazy loading
-    csv_path = Path(__file__).parent.parent / "lib/knowledge/knowledge_rag.csv"
+    # Initialize CSV hot reload manager using global knowledge configuration
+    # Get CSV path from global knowledge config
+    try:
+        import yaml
+        global_config_path = Path(__file__).parent.parent / "lib/knowledge/config.yaml"
+        with open(global_config_path) as f:
+            global_config = yaml.safe_load(f)
+        csv_path = global_config.get("knowledge", {}).get("csv_file_path", "knowledge_rag.csv")
+        # Convert to absolute path (relative to config file location)
+        config_dir = Path(__file__).parent.parent / "lib/knowledge"
+        csv_path = config_dir / csv_path
+        print(f"📋 Using global knowledge configuration: {csv_path}")
+    except Exception as e:
+        # Fallback to default if config reading fails
+        csv_path = Path(__file__).parent.parent / "lib/knowledge/knowledge_rag.csv"
+        print(f"⚠️ Could not read global knowledge config, using default: {e}")
     if (demo_mode or is_development) and not is_reloader:
         print(f"🔍 CSV hot reload manager configured: {csv_path}")
         
@@ -479,7 +494,7 @@ def create_pagbank_api():
         
         if (demo_mode or is_development) and not is_reloader:
             # Add development URLs
-            port = int(os.getenv("PB_AGENTS_PORT", "9888"))
+            port = get_server_config().port
             from rich.console import Console
             from rich.table import Table
             
@@ -538,9 +553,10 @@ if __name__ == "__main__":
     import uvicorn
     
     
-    # Get server configuration from environment variables
-    host = os.getenv("PB_AGENTS_HOST", "0.0.0.0")
-    port = int(os.getenv("PB_AGENTS_PORT", "7777"))
+    # Get server configuration from unified config
+    config = get_server_config()
+    host = config.host
+    port = config.port
     environment = os.getenv("ENVIRONMENT", "production")
     
     # Auto-reload configuration: can be controlled via environment variable

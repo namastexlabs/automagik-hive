@@ -40,10 +40,12 @@ def _build_startup_message(startup_display=None):
     """Build rich startup notification message"""
     import os
     from datetime import datetime
+    from lib.config.server_config import get_server_config
     
     # Basic system info
-    environment = os.getenv("ENVIRONMENT", "unknown")
-    port = os.getenv("PB_AGENTS_PORT", "9888")
+    config = get_server_config()
+    environment = config.environment
+    port = config.port
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     message_parts = [

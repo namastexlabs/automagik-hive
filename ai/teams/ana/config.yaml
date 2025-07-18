@@ -59,6 +59,13 @@ storage:
   mode: "team"
   auto_upgrade_schema: true
 
+# Knowledge base configuration - inherits from global config
+# Only team-specific overrides here
+knowledge:
+  # All settings inherited from config/knowledge.yaml
+  # Only override if this team needs different behavior
+  # csv_file_path: "lib/knowledge/ana_team_knowledge.csv"  # Uncomment for team-specific CSV
+
 # Member agents - loaded from registry
 members:
   - "pagbank-specialist"

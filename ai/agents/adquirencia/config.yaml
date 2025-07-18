@@ -31,21 +31,8 @@ instructions: |
 
   📱 Dados do usuário disponíveis: {user_context.user_name}, {user_context.phone_number}, {user_context.cpf}
 knowledge_filter:
-  business_unit: Adquirência Web
-  max_results: 3
-  relevance_threshold: 0.7
-  csv_file_path: lib/knowledge/knowledge_rag.csv
-  search_config:
-    enable_hybrid_search: true
-    use_semantic_search: true
-    include_metadata: true
-knowledge:
-  search_knowledge: true
-  enable_agentic_knowledge_filters: true
-  valid_metadata_filters:
-  - business_unit
-  - solution
-  - typification
+  # Agent-specific knowledge filtering - inherits all settings from global config
+  business_unit: Adquirência Web  # Only specify what knowledge this agent should access
 storage:
   type: postgres
   table_name: agents_adquirencia

@@ -176,13 +176,16 @@ Genie Agents uses a layered configuration approach:
 
 ### Configuration Files Structure
 ```
-├── .env                           # Main environment variables (required)
-├── .env.example                   # Template with all available options
-├── config/settings.py             # General application settings
-├── api/settings.py                # API-specific settings
-├── ai/agents/settings.py             # Agent-specific settings
-├── ai/agents/{agent}/config.yaml     # Individual agent configurations
-└── ai/teams/{team}/config.yaml       # Team routing configurations
+├── .env                                    # Main environment variables (required)
+├── .env.example                            # Template with all available options  
+├── .envrc                                  # Direnv configuration
+├── lib/config/settings.py                  # General application settings
+├── lib/config/database.py                  # Database configuration
+├── lib/config/postgres_config.py           # PostgreSQL settings
+├── api/settings.py                         # API-specific settings
+├── ai/agents/{agent}/config.yaml           # Individual agent configurations
+├── ai/teams/{team}/config.yaml             # Team routing configurations
+└── ai/workflows/{workflow}/config.yaml     # Workflow configurations
 ```
 
 ## 7. Development Server Configuration
@@ -259,41 +262,53 @@ CSV_FILE_PATH=lib/knowledge/knowledge_rag.csv
 
 ### API Endpoints Structure
 
-**Unified Agno Framework Endpoints:**
+**Playground API Endpoints:**
 ```
-/runs                     # Core execution (agents/teams/workflows)
-/sessions                 # Session management
-/agents                   # Agent management
-/agents/{id}/runs         # Agent-specific execution
-/agents/{id}/sessions     # Agent sessions
-/agents/{id}/memories     # Agent memory
-/teams                    # Team management
-/teams/{id}/runs          # Team execution
-/teams/{id}/sessions      # Team sessions
-/teams/{id}/memories      # Team memory
-/workflows                # Workflow management
-/workflows/{id}/runs      # Workflow execution
-/status                   # System status
+# System Status
+GET /playground/status                     # Playground status (optional app_id)
+
+# Agent Management
+GET /playground/agents                     # List all agents
+POST /playground/agents/{agent_id}/runs    # Create agent run (multipart/form-data)
+POST /playground/agents/{agent_id}/runs/{run_id}/continue  # Continue agent run
+
+# Agent Sessions
+GET /playground/agents/{agent_id}/sessions                 # Get agent sessions (optional user_id)
+GET /playground/agents/{agent_id}/sessions/{session_id}    # Get specific agent session
+DELETE /playground/agents/{agent_id}/sessions/{session_id} # Delete agent session
+POST /playground/agents/{agent_id}/sessions/{session_id}/rename  # Rename agent session
+
+# Agent Memory
+GET /playground/agents/{agent_id}/memories  # Get agent memories (required user_id)
+
+# Workflow Management
+GET /playground/workflows                   # List all workflows
+GET /playground/workflows/{workflow_id}     # Get specific workflow
+POST /playground/workflows/{workflow_id}/runs  # Create workflow run (JSON)
+
+# Workflow Sessions
+GET /playground/workflows/{workflow_id}/sessions                 # Get workflow sessions (optional user_id)
+GET /playground/workflows/{workflow_id}/sessions/{session_id}    # Get specific workflow session
+DELETE /playground/workflows/{workflow_id}/sessions/{session_id} # Delete workflow session
+POST /playground/workflows/{workflow_id}/sessions/{session_id}/rename  # Rename workflow session
+
+# Team Management
+GET /playground/teams                       # List all teams
+GET /playground/teams/{team_id}             # Get specific team
+POST /playground/teams/{team_id}/runs       # Create team run (multipart/form-data)
+
+# Team Sessions
+GET /playground/teams/{team_id}/sessions                 # Get team sessions (optional user_id)
+GET /playground/teams/{team_id}/sessions/{session_id}    # Get specific team session
+DELETE /playground/teams/{team_id}/sessions/{session_id} # Delete team session
+POST /playground/teams/{team_id}/sessions/{session_id}/rename  # Rename team session
 ```
 
-**Custom Business Endpoints:**
-```
-/api/v1/health           # Health checks
-/api/v1/agents/*         # Agent versioning
-```
+**API Documentation:**
+- **Swagger UI**: http://localhost:9888/docs
+- **OpenAPI Spec**: http://localhost:9888/openapi.json
+- **Base URL**: http://localhost:9888
 
-## 8. Post-Task Completion Protocol
-After completing any coding task, follow this checklist:
-
-### 1. Type Safety & Quality Checks
-Run the appropriate commands based on what was modified:
-- **Python projects**: Run mypy type checking
-- **TypeScript projects**: Run tsc --noEmit
-- **Other languages**: Run appropriate linting/type checking tools
-
-### 2. Verification
-- Ensure all type checks pass before considering the task complete
-- If type errors are found, fix them before marking the task as done
 
 ## 9. 🚫 ABSOLUTE BACKWARD COMPATIBILITY PROHIBITION
 
@@ -363,9 +378,6 @@ git commit -m "BREAKING: Remove legacy XYZ, implement clean ABC
 Replaces old XYZ system with modern ABC implementation.
 Breaking change: Old API no longer supported.
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 Co-Authored-By: Automagik Genie <genie@namastex.ai>"
 ```
 

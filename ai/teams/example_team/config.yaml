@@ -1,0 +1,49 @@
+# Example Team Configuration - Shows how to add new teams
+# This demonstrates the multi-team knowledge configuration pattern
+
+# Team configuration
+team:
+  name: "Example Team"
+  team_id: "example-team"
+  mode: "route"
+  description: "Example team showing knowledge configuration patterns"
+  version: 1
+
+# Model configuration
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 0.7
+  max_tokens: 2000
+
+# Storage configuration
+storage:
+  type: "postgres"
+  table_name: "teams_example"
+  mode: "team"
+  auto_upgrade_schema: true
+
+# Knowledge base configuration - inherits from global config  
+knowledge:
+  # OPTION 1: Inherit from global config (recommended)
+  # All settings inherited from config/knowledge.yaml automatically
+  
+  # OPTION 2: Override with team-specific knowledge (if needed)
+  # csv_file_path: "lib/knowledge/example_team_knowledge.csv"  # Uncomment for team-specific CSV
+  
+  # OPTION 3: Override specific settings (if needed)
+  # max_results: 15  # Override global default of 3
+
+# Member agents - loaded from registry
+members:
+  - "example-agent"
+  - "another-agent"
+
+# Team instructions
+instructions: |
+  You are an example team that demonstrates the multi-team knowledge configuration pattern.
+  
+  This team shows how to:
+  - Inherit from global knowledge configuration
+  - Override with team-specific knowledge when needed
+  - Configure team-specific settings like max_results
