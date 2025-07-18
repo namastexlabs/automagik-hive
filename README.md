@@ -250,7 +250,6 @@ Escalação Detectada → trigger_human_handoff_workflow → MCP WhatsApp Tool
 
 ### Integração & Comunicação
 - **📱 Evolution API**: WhatsApp Business integration
-- **📧 Resend SMTP**: Email notifications
 - **🔌 MCP Protocol**: Enhanced agent capabilities
 - **⚡ WebSocket**: Real-time monitoring
 
@@ -349,7 +348,6 @@ DATABASE_URL=postgresql+psycopg://ai:ai@localhost:5532/ai
 
 # Integrações opcionais
 EVOLUTION_API_BASE_URL=http://localhost:8080
-RESEND_API_KEY=your-resend-key
 ```
 
 ### Comandos de Desenvolvimento

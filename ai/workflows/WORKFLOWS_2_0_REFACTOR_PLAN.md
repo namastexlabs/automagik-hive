@@ -124,7 +124,6 @@ class HumanHandoffWorkflow(StepBasedWorkflow):
                 name="notifications",
                 steps=[
                     WhatsAppNotificationStep(),
-                    EmailNotificationStep(),
                     SlackNotificationStep()
                 ]
             )
@@ -201,7 +200,6 @@ parallel_steps = [
         "name": "multi_channel_notifications",
         "parallel_agents": [
             "whatsapp_notification_agent",
-            "email_notification_agent",
             "slack_notification_agent"
         ],
         "aggregation_strategy": "best_effort"
