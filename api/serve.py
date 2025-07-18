@@ -6,6 +6,7 @@ Production-ready API endpoint using V2 Ana Team architecture
 import os
 import sys
 import logging
+import asyncio
 from pathlib import Path
 from agno.playground import Playground
 from starlette.middleware.cors import CORSMiddleware
@@ -18,9 +19,9 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from common.startup_display import create_startup_display, display_simple_status
+from lib.utils.startup_display import create_startup_display, display_simple_status
 
-# Load environment variables first (optional)
+# Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -28,21 +29,15 @@ except ImportError:
     print("⚠️ python-dotenv not installed, using system environment variables")
 
 
-# Apply global demo patches immediately after loading environment variables
-# This must be done before any other imports that might use agno.Team
-from ai.teams.ana.demo_logging import apply_team_demo_patches
-apply_team_demo_patches()
+# Initialize execution tracing system
+from lib.execution_tracer.setup import setup_execution_tracing
+setup_execution_tracing()
 
 # Configure logging levels based on environment
 def setup_demo_logging():
     """Setup logging for demo presentation"""
-    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+    debug_mode = os.getenv("DEBUG_MODE", "false").lower() == "true"
     demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "warning").upper()
-    
-    # Set Agno framework logging level
-    agno_level = getattr(logging, agno_log_level, logging.WARNING)
-    logging.getLogger("agno").setLevel(agno_level)
     
     # Configure logging for demo mode
     if demo_mode:
@@ -74,46 +69,92 @@ def setup_demo_logging():
         if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
             root_logger.addHandler(console_handler)
     
+    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "warning").upper()
+    
+    # Set Agno framework logging level - be more aggressive
+    agno_level = getattr(logging, agno_log_level, logging.WARNING)
+    
+    # Set multiple possible Agno logger names
+    for logger_name in ["agno", "agno.agent", "agno.team", "agno.utils", "agno.utils.log"]:
+        logging.getLogger(logger_name).setLevel(agno_level)
+    
+    # Also set the root logger if we're not in debug mode and agno level is higher than debug
+    if agno_level > logging.DEBUG and not debug_mode:
+        logging.getLogger().setLevel(logging.INFO)
+    
     print(f"🎯 Demo mode: {'ON' if demo_mode else 'OFF'} | Debug: {'ON' if debug_mode else 'OFF'} | Agno: {agno_log_level}")
 
 # Setup logging immediately
 setup_demo_logging()
 
 
-# Import V2 Ana team (replaces orchestrator)
+# Import V2 Ana team
 from ai.teams.ana.team import get_ana_team
 
-# Import workflows
-from ai.workflows.conversation_typification import get_conversation_typification_workflow
-from ai.workflows.human_handoff.workflow import get_human_handoff_workflow
+# Import workflow registry for dynamic loading
+from ai.workflows.registry import list_available_workflows, get_workflow
 
 # Import CSV hot reload manager
-from core.knowledge.csv_hot_reload import CSVHotReloadManager
+from lib.knowledge.csv_hot_reload import CSVHotReloadManager
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan manager"""
-    # Startup
-    try:
-        # Initialize MCP connection manager
-        from core.mcp.connection_manager import get_mcp_connection_manager
-        mcp_manager = await get_mcp_connection_manager()
-        print("✅ MCP Connection Manager initialized")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not initialize MCP Connection Manager: {e}")
+def create_lifespan(startup_display=None):
+    """Create lifespan context manager with startup_display access"""
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        """Application lifespan manager"""
+        # Startup
+        try:
+            # Initialize MCP catalog
+            from lib.mcp import MCPCatalog
+            catalog = MCPCatalog()
+            servers = catalog.list_servers()
+            print(f"✅ MCP system initialized with {len(servers)} servers")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not initialize MCP Connection Manager: {e}")
+        
+        # Send startup notification with rich component information (production only)
+        environment = os.getenv("ENVIRONMENT", "development").lower()
+        if environment == "production":
+            async def _send_startup_notification():
+                try:
+                    await asyncio.sleep(2)  # Give MCP manager time to fully initialize
+                    from common.startup_notifications import send_startup_notification
+                    # Pass startup_display for rich notification content
+                    await send_startup_notification(startup_display)
+                    print("✅ Startup notification sent")
+                except Exception as e:
+                    print(f"⚠️  Warning: Could not send startup notification: {e}")
+            
+            try:
+                asyncio.create_task(_send_startup_notification())
+                print("✅ Startup notification scheduled")
+            except Exception as e:
+                print(f"⚠️  Warning: Could not schedule startup notification: {e}")
+        else:
+            print("ℹ️  Startup notifications disabled in development mode")
+        
+        yield
+        
+        # Shutdown
+        async def _send_shutdown_notification():
+            try:
+                from common.startup_notifications import send_shutdown_notification
+                await send_shutdown_notification()
+                print("✅ Shutdown notification sent")
+            except Exception as e:
+                print(f"⚠️  Warning: Could not send shutdown notification: {e}")
+        
+        try:
+            asyncio.create_task(_send_shutdown_notification())
+            print("✅ Shutdown notification scheduled")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not schedule shutdown notification: {e}")
+        
+        # MCP system has no resources to cleanup in simplified implementation
+        print("✅ MCP system cleanup completed")
     
-    
-    yield
-    
-    # Shutdown
-    try:
-        # Stop MCP connection manager
-        from core.mcp.connection_manager import shutdown_mcp_connection_manager
-        await shutdown_mcp_connection_manager()
-        print("✅ MCP Connection Manager stopped")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not stop MCP Connection Manager: {e}")
+    return lifespan
     
     
 
@@ -128,32 +169,40 @@ def create_pagbank_api():
     
     # Check if we're in uvicorn reload process to prevent duplicate output
     import sys
-    is_reloader = any("reloader" in str(arg) for arg in sys.argv) or "StatReload" in str(sys.modules.get("uvicorn", ""))
     
-    # Show environment info in demo/development mode (but not in reloader)
+    # More precise reloader detection - only block for actual reloader processes
+    # Check if this is the reloader master process (not the worker process)
+    is_reloader = (
+        any("reloader" in str(arg) for arg in sys.argv) and 
+        os.getenv("RUN_MAIN") != "true"  # This is the key - worker processes have RUN_MAIN=true
+    )
+    
+    # Debug logging for reloader detection in demo/development mode
+    if (demo_mode or is_development):
+        print(f"🔍 Reloader detection: is_reloader={is_reloader}")
+        if is_reloader:
+            print(f"   - sys.argv: {sys.argv}")
+            uvicorn_module = sys.modules.get("uvicorn")
+            if uvicorn_module:
+                print(f"   - uvicorn module: {str(uvicorn_module)}")
+    
+    # Show environment info in demo/development mode
     if (demo_mode or is_development) and not is_reloader:
         print(f"🌍 Environment: {environment}")
         print(f"🔧 Development features: {'ENABLED' if is_development else 'DISABLED'}")
     
-    # Initialize database automatically
-    try:
-        from db.session import init_database
-        init_database()
-        if (demo_mode or is_development) and not is_reloader:
-            print("✅ Database initialized successfully")
-    except Exception as e:
-        if (demo_mode or is_development) and not is_reloader:
-            print(f"⚠️ Database initialization warning: {e}")
-            print("📝 Note: Some features may be limited without database tables")
+    # Database initialization is now handled by Agno storage automatically
+    if (demo_mode or is_development) and not is_reloader:
+        print("✅ Database: Using Agno storage abstractions (auto-initialized)")
     
     # Initialize CSV hot reload manager for lazy loading
-    csv_path = Path(__file__).parent.parent / "core/knowledge/knowledge_rag.csv"
+    csv_path = Path(__file__).parent.parent / "lib/knowledge/knowledge_rag.csv"
     if (demo_mode or is_development) and not is_reloader:
         print(f"🔍 CSV hot reload manager configured: {csv_path}")
         
         # Start CSV hot reload manager immediately in demo/development mode
         try:
-            from core.knowledge.csv_hot_reload import CSVHotReloadManager
+            from lib.knowledge.csv_hot_reload import CSVHotReloadManager
             csv_manager = CSVHotReloadManager(str(csv_path))
             csv_manager.start_watching()
             print("📄 CSV hot reload manager: ACTIVE (watching for changes)")
@@ -161,33 +210,23 @@ def create_pagbank_api():
             print(f"⚠️ Could not start CSV hot reload manager: {e}")
             print("📄 CSV hot reload manager: CONFIGURED (will start on first use)")
     
-    # Initialize global memory manager for consistent memory across all components
-    global_memory = None
-    try:
-        from core.memory.memory_manager import create_memory_manager
-        memory_manager = create_memory_manager()
-        global_memory = memory_manager.memory
-        if (demo_mode or is_development) and not is_reloader:
-            print("✅ Global memory manager initialized successfully")
-    except Exception as e:
-        if (demo_mode or is_development) and not is_reloader:
-            print(f"⚠️ Memory manager initialization warning: {e}")
-            print("📝 Note: Teams/agents will create fallback memory instances")
+    # V2 Architecture: Agno framework handles memory internally
+    # No need for global memory manager - removed legacy memory system
+    if (demo_mode or is_development) and not is_reloader:
+        print("✅ Memory system: CONFIGURED (agno handles memory internally)")
     
-    # Create the Ana routing team (V2 architecture) - simplified for debugging
+    # Create the Ana routing team
     try:
         ana_team = get_ana_team(
             debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true"),
-            session_id=None,  # Will be set per request
-            memory=global_memory  # Pass initialized memory to prevent fallback warnings
+            session_id=None  # Will be set per request
         )
         
         # Get all agents for comprehensive endpoint generation
         from ai.agents.registry import AgentRegistry
         agent_registry = AgentRegistry()
         available_agents = agent_registry.get_all_agents(
-            debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true"),
-            memory=global_memory  # Pass global memory to agents too
+            debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true")
         )
     except Exception as e:
         if (demo_mode or is_development) and not is_reloader:
@@ -202,21 +241,31 @@ def create_pagbank_api():
     # Initialize component version sync and capture results for startup display
     sync_results = None
     try:
-        from services.version_sync_service import VersionSyncService
+        from lib.services.version_sync_service import AgnoVersionSyncService
         
         # Create custom sync service to capture logs
-        class StartupVersionSync(VersionSyncService):
+        class StartupVersionSync(AgnoVersionSyncService):
             def __init__(self, startup_display):
                 super().__init__()
                 self.startup_display = startup_display
             
             def sync_on_startup(self):
-                """Override to capture logs for startup display."""
-                self.startup_display.add_version_sync_log("🔄 Starting component version sync...")
+                """Enhanced version sync with detailed status reporting."""
+                # Get actual component counts from filesystem
+                import glob
+                agent_files = glob.glob('ai/agents/*/config.yaml')
+                team_files = glob.glob('ai/teams/*/config.yaml')
+                workflow_files = glob.glob('ai/workflows/*/config.yaml')
+                
+                total_components = len(agent_files) + len(team_files) + len(workflow_files)
+                
+                self.startup_display.add_version_sync_log(f"🔍 Scanning {total_components} components ({len(agent_files)} agents, {len(team_files)} teams, {len(workflow_files)} workflows)")
                 
                 total_synced = 0
                 yaml_to_db_count = 0
                 db_to_yaml_count = 0
+                no_change_count = 0
+                updated_components = []
                 
                 for component_type in ['agent', 'team', 'workflow']:
                     try:
@@ -225,45 +274,41 @@ def create_pagbank_api():
                         total_synced += len(results)
                         
                         if results:
-                            # Count different sync directions
-                            type_yaml_to_db = 0
-                            type_db_to_yaml = 0
                             for result in results:
                                 if isinstance(result, dict):
+                                    component_id = result.get("component_id", "unknown")
                                     action = result.get("action", "")
-                                    if action in ["db_updated", "created"]:
-                                        type_yaml_to_db += 1
+                                    yaml_version = result.get("yaml_version")
+                                    agno_version = result.get("agno_version")
+                                    
+                                    if action in ["created", "updated"]:
                                         yaml_to_db_count += 1
+                                        updated_components.append(f"{component_id} v{yaml_version}")
                                     elif action in ["yaml_updated", "yaml_corrected"]:
-                                        type_db_to_yaml += 1
                                         db_to_yaml_count += 1
-                            
-                            # Show sync direction summary
-                            sync_summary = f"✅ Synced {len(results)} {component_type}(s)"
-                            if type_yaml_to_db > 0 or type_db_to_yaml > 0:
-                                directions = []
-                                if type_yaml_to_db > 0:
-                                    directions.append(f"{type_yaml_to_db} YAML→DB")
-                                if type_db_to_yaml > 0:
-                                    directions.append(f"{type_db_to_yaml} DB→YAML")
-                                sync_summary += f" ({', '.join(directions)})"
-                            
-                            self.startup_display.add_version_sync_log(sync_summary)
+                                        updated_components.append(f"{component_id} v{agno_version}")
+                                    else:  # no_change or other stable states
+                                        no_change_count += 1
+                                        
                     except Exception as e:
                         self.startup_display.add_version_sync_log(f"❌ Error syncing {component_type}s: {e}")
                         self.sync_results[component_type + 's'] = {"error": str(e)}
                 
-                # Final summary with direction totals
-                summary_parts = [f"🎉 Version sync completed: {total_synced} components processed"]
-                if yaml_to_db_count > 0 or db_to_yaml_count > 0:
-                    direction_parts = []
+                # Generate enhanced summary
+                if yaml_to_db_count == 0 and db_to_yaml_count == 0:
+                    self.startup_display.add_version_sync_log(f"✅ All {total_synced} components in sync (no changes needed)")
+                    self.startup_display.add_version_sync_log("🎉 All components up-to-date")
+                else:
                     if yaml_to_db_count > 0:
-                        direction_parts.append(f"{yaml_to_db_count} YAML→DB")
+                        self.startup_display.add_version_sync_log(f"⬆️ {yaml_to_db_count} components updated: YAML→DB")
                     if db_to_yaml_count > 0:
-                        direction_parts.append(f"{db_to_yaml_count} DB→YAML")
-                    summary_parts.append(f"({', '.join(direction_parts)})")
+                        self.startup_display.add_version_sync_log(f"⬇️ {db_to_yaml_count} components updated: DB→YAML")
+                    if no_change_count > 0:
+                        self.startup_display.add_version_sync_log(f"✅ {no_change_count} components in sync")
+                    
+                    total_updates = yaml_to_db_count + db_to_yaml_count
+                    self.startup_display.add_version_sync_log(f"🎉 Sync completed: {total_updates} updates applied")
                 
-                self.startup_display.add_version_sync_log(" ".join(summary_parts))
                 return self.sync_results
         
         sync_service = StartupVersionSync(startup_display)
@@ -273,20 +318,32 @@ def create_pagbank_api():
     except Exception as e:
         startup_display.add_error("Version Sync", f"Component version sync failed: {e}")
     
-    # Collect component information
+    # Collect component information for display (remove redundant debug logs)
     if ana_team and available_agents:
+        # Extract version from team metadata if available
+        team_version = None
+        if hasattr(ana_team, 'metadata') and ana_team.metadata:
+            team_version = ana_team.metadata.get('version')
+        
         startup_display.add_team(
             ana_team.team_id, 
             ana_team.name, 
-            len(available_agents), 
-            "✅"
+            len(available_agents),
+            version=team_version,
+            status="✅"
         )
         
-        # Add individual agents
+        # Add individual agents with version information (no redundant logging)
         for agent_id, agent in available_agents.items():
-            # Use the actual agent component ID (with hyphens) instead of registry key (with underscores)
+            # Use the actual agent component ID
             actual_component_id = getattr(agent, 'agent_id', agent_id)
-            startup_display.add_agent(actual_component_id, agent.name or agent_id, status="✅")
+            
+            # Extract version from agent metadata if available
+            version = None
+            if hasattr(agent, 'metadata') and agent.metadata:
+                version = agent.metadata.get('version')
+            
+            startup_display.add_agent(actual_component_id, agent.name or agent_id, version=version, status="✅")
     elif not ana_team or not available_agents:
         startup_display.add_error("System", "No team or agents loaded - running with minimal configuration")
     
@@ -302,15 +359,31 @@ def create_pagbank_api():
         dummy_agent = Agent(name="Test Agent", model=Claude(id="claude-sonnet-4-20250514"))
         agents_list = [dummy_agent]
     
-    # Create workflow instances
+    # Create workflow instances dynamically
     try:
-        workflows_list = [
-            get_conversation_typification_workflow(debug_mode=is_development),
-            get_human_handoff_workflow()
-        ]
-        # Add workflows to startup display
-        startup_display.add_workflow("conversation-typification", "Conversation Typification", "✅")
-        startup_display.add_workflow("human-handoff", "Human Handoff", "✅")
+        workflows_list = []
+        available_workflows = list_available_workflows()
+        
+        for workflow_id in available_workflows:
+            try:
+                workflow = get_workflow(workflow_id, debug_mode=is_development)
+                workflows_list.append(workflow)
+            except Exception as e:
+                print(f"⚠️ Failed to load workflow {workflow_id}: {e}")
+                continue
+        # Add workflows to startup display dynamically with version information
+        for workflow_id in available_workflows:
+            workflow_name = workflow_id.replace('-', ' ').title()
+            
+            # Try to get version from the workflow instance if available
+            workflow_version = None
+            for workflow in workflows_list:
+                if hasattr(workflow, 'workflow_id') and workflow.workflow_id == workflow_id:
+                    if hasattr(workflow, 'metadata') and workflow.metadata:
+                        workflow_version = workflow.metadata.get('version')
+                    break
+            
+            startup_display.add_workflow(workflow_id, workflow_name, version=workflow_version, status="✅")
     except Exception as e:
         startup_display.add_error("Workflows", f"Could not load workflows: {e}")
         workflows_list = []
@@ -332,7 +405,7 @@ def create_pagbank_api():
     app.description = "Sistema multi-agente de atendimento ao cliente PagBank com Ana como assistente unificada"
     
     # Set lifespan for monitoring
-    app.router.lifespan_context = lifespan
+    app.router.lifespan_context = create_lifespan(startup_display)
     
     # ✅ UNIFIED API - Single set of endpoints for both production and playground
     # Use Playground as the primary router since it provides comprehensive CRUD operations
@@ -340,12 +413,12 @@ def create_pagbank_api():
         # Try to import workflow trigger handler safely
         external_handler = None
         try:
-            from ai.agents.tools.workflow_tools import handle_workflow_trigger_external
-            external_handler = handle_workflow_trigger_external
+            from ai.agents.tools.finishing_tools import trigger_conversation_typification_workflow
+            external_handler = trigger_conversation_typification_workflow
         except ImportError as e:
             startup_display.add_error("Workflow Handler", f"Could not load handler: {e}")
         
-        # Create playground (external_execution_handler not supported in current Agno version)
+        # Create playground
         playground = Playground(
             agents=agents_list,
             teams=teams_list,
@@ -382,20 +455,29 @@ def create_pagbank_api():
         app.redoc_url = None
         app.openapi_url = None
     
-    # ✅ ADD CUSTOM BUSINESS ENDPOINTS (both environments)
-    # This includes health, monitoring, agent versioning, etc.
+    # Always display startup summary with component table (core feature) - moved outside try-catch
+    if not is_reloader:
+        try:
+            startup_display.display_summary()
+        except Exception as e:
+            print(f"⚠️ Warning: Could not display startup summary table: {e}")
+            # Try fallback simple display
+            try:
+                from lib.utils.startup_display import display_simple_status
+                display_simple_status("Ana Team", "ana", len(available_agents) if available_agents else 0)
+            except Exception:
+                print("📊 System components loaded successfully (table display unavailable)")
+    
+    # Add custom business endpoints
     try:
         from api.routes.v1_router import v1_router
         app.include_router(v1_router)
         
-        # ✅ ADD VERSION ROUTER (API Architecture Cleanup - T-005)
-        # Provides lightweight version handling endpoints to replace heavy middleware operations
+        # Add version router
         from api.routes.version_router import version_router
         app.include_router(version_router)
+        
         if (demo_mode or is_development) and not is_reloader:
-            # Display startup summary
-            startup_display.display_summary()
-            
             # Add development URLs
             port = int(os.getenv("PB_AGENTS_PORT", "9888"))
             from rich.console import Console
@@ -426,19 +508,13 @@ def create_pagbank_api():
     except Exception as e:
         startup_display.add_error("Business Endpoints", f"Could not register custom business endpoints: {e}")
     
-    # ✅ ADD AGNO MESSAGE VALIDATION MIDDLEWARE
-    # Validates messages for Agno Playground endpoints (before version middleware)
-    try:
-        from api.middleware.agno_validation_middleware import AgnoValidationMiddleware
-        app.add_middleware(AgnoValidationMiddleware)
-    except Exception as e:
-        startup_display.add_error("Middleware", f"Could not add Agno validation middleware: {e}")
+    # Add Agno message validation middleware (optional, removed in v2 cleanup)
+    # Note: Agno validation middleware was removed in v2 architecture cleanup
+    # Validation is now handled by Agno's built-in request validation
     
-    # ✅ VERSION SUPPORT VIA ROUTER (T-006: Single Extension Mechanism)
-    # Version support is now handled via /api/v1/version/* endpoints in version_router
-    # This follows pure Agno patterns using FastAPI routers instead of blocking middleware
+    # Version support handled via router endpoints
     
-    # ✅ ADD CORS MIDDLEWARE (unified from main.py)
+    # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=api_settings.cors_origin_list if api_settings.cors_origin_list else ["*"],
@@ -453,7 +529,7 @@ def create_pagbank_api():
 # Lazy app creation - only create when imported by uvicorn, not when running as script
 app = None
 
-# Only create app if being imported (not run as script)
+# Only create app when imported
 if __name__ != "__main__":
     app = create_pagbank_api()
 
@@ -467,8 +543,12 @@ if __name__ == "__main__":
     port = int(os.getenv("PB_AGENTS_PORT", "7777"))
     environment = os.getenv("ENVIRONMENT", "production")
     
-    # Auto-reload based on environment: enabled for development, disabled for production
-    reload = environment == "development"
+    # Auto-reload configuration: can be controlled via environment variable
+    # Set DISABLE_RELOAD=true to disable auto-reload even in development
+    reload = (
+        environment == "development" and 
+        os.getenv("DISABLE_RELOAD", "false").lower() != "true"
+    )
     
     # Show startup info in demo/development mode
     demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"

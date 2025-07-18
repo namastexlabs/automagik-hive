@@ -1,25 +1,22 @@
 """
-MCP Connection Management API Routes
+MCP Status API Routes
 
-Provides REST endpoints for monitoring and managing MCP connection pools.
-Integrates with the existing monitoring system and provides real-time visibility.
+Simple REST endpoints for MCP server status information.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, List
 import logging
 
-from core.mcp.connection_manager import get_mcp_connection_manager, MCPConnectionManager
+from lib.mcp import MCPCatalog, get_mcp_tools
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/mcp", tags=["MCP Management"])
+router = APIRouter(prefix="/api/v1/mcp", tags=["MCP Status"])
 
 
 @router.get("/status")
-async def get_mcp_status(
-    manager: MCPConnectionManager = Depends(get_mcp_connection_manager)
-) -> Dict[str, Any]:
+async def get_mcp_status() -> Dict[str, Any]:
     """
     Get overall MCP system status.
     
@@ -27,9 +24,13 @@ async def get_mcp_status(
         System status with available servers
     """
     try:
+        catalog = MCPCatalog()
+        servers = catalog.list_servers()
+        
         return {
             "status": "ok",
-            "available_servers": manager.list_available_servers(),
+            "available_servers": servers,
+            "total_servers": len(servers),
             "timestamp": None
         }
     except Exception as e:
@@ -37,85 +38,8 @@ async def get_mcp_status(
         raise HTTPException(status_code=500, detail=f"Error getting MCP status: {e}")
 
 
-@router.get("/pools")
-async def list_connection_pools(
-    manager: MCPConnectionManager = Depends(get_mcp_connection_manager)
-) -> Dict[str, Any]:
-    """
-    List all MCP connection pools with their current metrics.
-    
-    Returns:
-        Dictionary of pool metrics by server name
-    """
-    try:
-        metrics = manager.get_pool_metrics()
-        return {
-            "status": "ok",
-            "pools": metrics.get("pools", {}),
-            "global_metrics": metrics.get("global_metrics", {}),
-            "total_pools": len(metrics.get("pools", {}))
-        }
-    except Exception as e:
-        logger.error(f"Error listing connection pools: {e}")
-        raise HTTPException(status_code=500, detail=f"Error listing pools: {e}")
-
-
-@router.get("/pools/{server_name}")
-async def get_pool_details(
-    server_name: str,
-    manager: MCPConnectionManager = Depends(get_mcp_connection_manager)
-) -> Dict[str, Any]:
-    """
-    Get detailed metrics and health information for a specific pool.
-    
-    Args:
-        server_name: Name of the MCP server
-        
-    Returns:
-        Detailed pool metrics and health history
-    """
-    try:
-        # Get pool metrics
-        pool_metrics = manager.get_pool_metrics(server_name)
-        
-        if not pool_metrics:
-            raise HTTPException(status_code=404, detail=f"Pool {server_name} not found")
-        
-        return {
-            "status": "ok",
-            "server_name": server_name,
-            "metrics": pool_metrics
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting pool details for {server_name}: {e}")
-        raise HTTPException(status_code=500, detail=f"Error getting pool details: {e}")
-
-
-@router.get("/alerts")
-async def get_mcp_alerts(
-    severity: Optional[str] = Query(None, description="Filter by severity (warning, critical)"),
-    limit: int = Query(50, ge=1, le=200, description="Maximum number of alerts to return")
-) -> Dict[str, Any]:
-    """
-    Get recent MCP alerts (monitoring removed).
-    
-    Returns:
-        Empty alerts list as monitoring system was removed
-    """
-    return {
-        "status": "ok",
-        "alerts": [],
-        "total_alerts": 0,
-        "message": "Monitoring system removed - no alerts available"
-    }
-
-
 @router.get("/servers")
-async def list_available_servers(
-    manager: MCPConnectionManager = Depends(get_mcp_connection_manager)
-) -> Dict[str, Any]:
+async def list_available_servers() -> Dict[str, Any]:
     """
     List all available MCP servers.
     
@@ -123,18 +47,19 @@ async def list_available_servers(
         List of available server names and their basic information
     """
     try:
-        servers = manager.list_available_servers()
+        catalog = MCPCatalog()
+        servers = catalog.list_servers()
         
         # Get additional server information
         server_details = {}
         for server_name in servers:
             try:
-                pool_metrics = manager.get_pool_metrics(server_name)
+                server_info = catalog.get_server_info(server_name)
                 server_details[server_name] = {
                     "available": True,
-                    "total_connections": pool_metrics.get("total_connections", 0),
-                    "available_connections": pool_metrics.get("available_connections", 0),
-                    "circuit_breaker_state": pool_metrics.get("circuit_breaker_state", "unknown")
+                    "type": server_info.get("type"),
+                    "is_sse_server": server_info.get("is_sse_server"),
+                    "is_command_server": server_info.get("is_command_server"),
                 }
             except Exception as e:
                 server_details[server_name] = {
@@ -153,93 +78,44 @@ async def list_available_servers(
         raise HTTPException(status_code=500, detail=f"Error listing servers: {e}")
 
 
-@router.post("/pools/{server_name}/health-check")
-async def trigger_health_check(
-    server_name: str,
-    manager: MCPConnectionManager = Depends(get_mcp_connection_manager)
-) -> Dict[str, Any]:
+@router.get("/servers/{server_name}/test")
+async def test_server_connection(server_name: str) -> Dict[str, Any]:
     """
-    Trigger a manual health check for a specific pool.
+    Test connection to a specific MCP server.
     
     Args:
         server_name: Name of the MCP server
         
     Returns:
-        Health check results
+        Connection test results
     """
     try:
-        # Verify pool exists
-        pool_metrics = manager.get_pool_metrics(server_name)
-        if not pool_metrics:
-            raise HTTPException(status_code=404, detail=f"Pool {server_name} not found")
-        
-        return {
-            "status": "ok",
-            "server_name": server_name,
-            "health_check_triggered": True,
-            "message": "Monitoring system removed - basic pool metrics available only"
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error triggering health check for {server_name}: {e}")
-        raise HTTPException(status_code=500, detail=f"Error triggering health check: {e}")
-
-
-@router.get("/metrics/summary")
-async def get_metrics_summary(
-    manager: MCPConnectionManager = Depends(get_mcp_connection_manager)
-) -> Dict[str, Any]:
-    """
-    Get aggregated metrics summary across all pools.
-    
-    Returns:
-        Aggregated metrics and performance statistics
-    """
-    try:
-        all_metrics = manager.get_pool_metrics()
-        pools = all_metrics.get("pools", {})
-        global_metrics = all_metrics.get("global_metrics", {})
-        
-        # Calculate aggregated statistics
-        total_connections = sum(pool.get("total_connections", 0) for pool in pools.values())
-        total_available = sum(pool.get("available_connections", 0) for pool in pools.values())
-        total_hits = sum(pool.get("pool_hits", 0) for pool in pools.values())
-        total_misses = sum(pool.get("pool_misses", 0) for pool in pools.values())
-        total_errors = sum(pool.get("connection_errors", 0) for pool in pools.values())
-        
-        # Calculate rates
-        hit_rate = total_hits / (total_hits + total_misses) if (total_hits + total_misses) > 0 else 0
-        utilization = 1 - (total_available / total_connections) if total_connections > 0 else 0
-        
-        # Count circuit breaker states
-        circuit_breaker_states = {}
-        for pool in pools.values():
-            state = pool.get("circuit_breaker_state", "unknown")
-            circuit_breaker_states[state] = circuit_breaker_states.get(state, 0) + 1
-        
-        return {
-            "status": "ok",
-            "summary": {
-                "total_pools": len(pools),
-                "total_connections": total_connections,
-                "total_available_connections": total_available,
-                "overall_utilization": utilization,
-                "cache_hit_rate": hit_rate,
-                "total_errors": total_errors,
-                "circuit_breaker_states": circuit_breaker_states
-            },
-            "global_metrics": global_metrics,
-            "performance": {
-                "pool_hits": total_hits,
-                "pool_misses": total_misses,
-                "hit_rate_percentage": hit_rate * 100,
-                "utilization_percentage": utilization * 100
+        # Test connection by creating MCP tools
+        async with get_mcp_tools(server_name) as tools:
+            # Try to list tools to verify connection
+            available_tools = []
+            if hasattr(tools, 'list_tools'):
+                try:
+                    available_tools = tools.list_tools()
+                except Exception as e:
+                    logger.warning(f"Could not list tools for {server_name}: {e}")
+            
+            return {
+                "status": "ok",
+                "server_name": server_name,
+                "connection_test": "success",
+                "available_tools": len(available_tools),
+                "tools": available_tools if available_tools else []
             }
-        }
+            
     except Exception as e:
-        logger.error(f"Error getting metrics summary: {e}")
-        raise HTTPException(status_code=500, detail=f"Error getting metrics summary: {e}")
+        logger.error(f"Connection test failed for {server_name}: {e}")
+        return {
+            "status": "error",
+            "server_name": server_name,
+            "connection_test": "failed",
+            "error": str(e)
+        }
 
 
 @router.get("/config")
@@ -251,8 +127,6 @@ async def get_mcp_configuration() -> Dict[str, Any]:
         Configuration details and available servers from catalog
     """
     try:
-        from core.mcp.catalog import MCPCatalog
-        
         catalog = MCPCatalog()
         servers = catalog.list_servers()
         
@@ -281,7 +155,7 @@ async def get_mcp_configuration() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Error getting configuration: {e}")
 
 
-# Add router to the main application
+# Add router to the main application  
 def register_mcp_routes(app):
     """Register MCP routes with the FastAPI application"""
     app.include_router(router)

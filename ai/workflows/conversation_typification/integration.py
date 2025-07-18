@@ -66,7 +66,7 @@ class TypificationIntegration:
                 logger.warning(f"No results from typification workflow for session {session_id}")
                 return None
             
-            # Get the last result (should be WorkflowCompletedEvent)
+            # Get the last result (should be RunResponse with workflow_completed event)
             result = results[-1]
             
             if hasattr(result, 'content') and result.content.get('status') == 'completed':

@@ -89,4 +89,4 @@ ARG PB_AGENTS_PORT=7777
 EXPOSE ${PB_AGENTS_PORT}
 
 # Production startup command with proper process management
-CMD ["sh", "-c", "python -m uvicorn api.serve:app --host 0.0.0.0 --port ${PB_AGENTS_PORT:-7777} --workers 4 --worker-class uvicorn.workers.UvicornWorker --log-level info --access-log --no-server-header"]
+CMD ["/opt/venv/bin/python", "-m", "uvicorn", "api.serve:app", "--host", "0.0.0.0", "--port", "7777", "--log-level", "info", "--access-log"]

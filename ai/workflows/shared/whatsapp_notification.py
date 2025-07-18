@@ -48,14 +48,11 @@ class WhatsAppNotificationService:
             logger.warning(f"Missing Evolution API environment variables: {missing_vars}")
             logger.warning("WhatsApp notifications will be simulated")
     
-    async def _get_mcp_tools(self) -> MCPTools:
-        """Get or create MCP tools for Evolution API access."""
-        if self._mcp_tools is None:
-            # Use the MCP server configuration from .mcp.json
-            command = "uvx"
-            args = ["automagik-tools@0.8.11", "tool", "evolution-api"]
-            self._mcp_tools = MCPTools(command=f"{command} {' '.join(args)}")
-        return self._mcp_tools
+    async def _get_mcp_tools(self):
+        """Get simple MCP tools for Evolution API access."""
+        # Simple implementation - no pooling needed
+        from lib.mcp import get_mcp_tools
+        return get_mcp_tools
     
     async def _get_agent(self) -> Agent:
         """Get or create the WhatsApp notification agent with MCP tools."""
@@ -112,15 +109,27 @@ class WhatsAppNotificationService:
             # Send via WhatsApp agent using MCP tools
             logger.info(f"📱 Sending typification report via Evolution API")
             
-            # Use the MCP tools context manager pattern
-            mcp_tools = await self._get_mcp_tools()
-            async with mcp_tools:
-                response = await agent.arun(instruction)
+            # Use simple MCP tools
+            get_mcp_tools = await self._get_mcp_tools()
+            async with get_mcp_tools("whatsapp_notifications") as tools:
+                # Use MCP tools (agno pattern) - get the tool from functions dict
+                if "send_text_message" in tools.functions:
+                    tool_function = tools.functions["send_text_message"]
+                    # Call the MCP tool entrypoint with proper parameters
+                    # The tool_name is already bound via partial, so we only pass agent and kwargs
+                    result = await tool_function.entrypoint(None, 
+                        instance="SofIA",
+                        message=message,
+                        number=recipient_number or os.getenv("EVOLUTION_API_FIXED_RECIPIENT")
+                    )
+                else:
+                    available_tools = list(tools.functions.keys())
+                    raise ValueError(f"send_text_message tool not available. Available tools: {available_tools}")
                 
                 return {
                     "success": True,
                     "message": "Typification report sent successfully via Evolution API",
-                    "agent_response": response.content,
+                    "api_response": result,
                     "notification_type": "typification_report"
                 }
             
@@ -164,15 +173,27 @@ class WhatsAppNotificationService:
             # Send via WhatsApp agent using MCP tools
             logger.info(f"📱 Sending human handoff notification via Evolution API")
             
-            # Use the MCP tools context manager pattern
-            mcp_tools = await self._get_mcp_tools()
-            async with mcp_tools:
-                response = await agent.arun(instruction)
+            # Use simple MCP tools
+            get_mcp_tools = await self._get_mcp_tools()
+            async with get_mcp_tools("whatsapp_notifications") as tools:
+                # Use MCP tools (agno pattern) - get the tool from functions dict
+                if "send_text_message" in tools.functions:
+                    tool_function = tools.functions["send_text_message"]
+                    # Call the MCP tool entrypoint with proper parameters
+                    # The tool_name is already bound via partial, so we only pass agent and kwargs
+                    result = await tool_function.entrypoint(None, 
+                        instance="SofIA",
+                        message=message,
+                        number=recipient_number or os.getenv("EVOLUTION_API_FIXED_RECIPIENT")
+                    )
+                else:
+                    available_tools = list(tools.functions.keys())
+                    raise ValueError(f"send_text_message tool not available. Available tools: {available_tools}")
                 
                 return {
                     "success": True,
                     "message": "Human handoff notification sent successfully via Evolution API",
-                    "agent_response": response.content,
+                    "api_response": result,
                     "notification_type": "human_handoff"
                 }
             
@@ -359,15 +380,27 @@ Please send this message now using the send_whatsapp_message tool and confirm de
             # Send via WhatsApp agent using MCP tools
             logger.info(f"📱 Sending custom WhatsApp message via Evolution API")
             
-            # Use the MCP tools context manager pattern
-            mcp_tools = await self._get_mcp_tools()
-            async with mcp_tools:
-                response = await agent.arun(instruction)
+            # Use simple MCP tools
+            get_mcp_tools = await self._get_mcp_tools()
+            async with get_mcp_tools("whatsapp_notifications") as tools:
+                # Use MCP tools (agno pattern) - get the tool from functions dict
+                if "send_text_message" in tools.functions:
+                    tool_function = tools.functions["send_text_message"]
+                    # Call the MCP tool entrypoint with proper parameters
+                    # The tool_name is already bound via partial, so we only pass agent and kwargs
+                    result = await tool_function.entrypoint(None, 
+                        instance="SofIA",
+                        message=message,
+                        number=recipient_number or os.getenv("EVOLUTION_API_FIXED_RECIPIENT")
+                    )
+                else:
+                    available_tools = list(tools.functions.keys())
+                    raise ValueError(f"send_text_message tool not available. Available tools: {available_tools}")
                 
                 return {
                     "success": True,
                     "message": "Custom message sent successfully via Evolution API",
-                    "agent_response": response.content,
+                    "api_response": result,
                     "notification_type": message_type
                 }
             

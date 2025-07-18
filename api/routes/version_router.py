@@ -1,22 +1,17 @@
 """
-Lightweight Version Router for API Architecture Cleanup
+Clean Version Router using Agno Storage
 
-This router provides version-handling endpoints that replace the heavy operations
-currently performed in the middleware layer. This is part of the architectural
-cleanup to move blocking operations out of middleware and into proper FastAPI
-router endpoints.
-
-Part of Epic: api-architecture-cleanup, Task T-005
+Modern versioning endpoints using Agno storage abstractions.
+No backward compatibility - clean implementation only.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from typing import Optional, Dict, Any, List
 import json
 from pydantic import BaseModel
+import os
 
-from db.session import get_db
-from db.services.component_version_service import ComponentVersionService
+from lib.versioning import AgnoVersionService, VersionInfo, VersionHistory
 
 
 router = APIRouter(prefix="/api/v1/version", tags=["versioning"])
@@ -45,25 +40,49 @@ class VersionedExecutionResponse(BaseModel):
     metadata: Dict[str, Any]
 
 
+class VersionCreateRequest(BaseModel):
+    """Request model for creating a new version."""
+    component_type: str
+    version: int
+    config: Dict[str, Any]
+    description: Optional[str] = None
+    is_active: bool = False
+
+
+class VersionUpdateRequest(BaseModel):
+    """Request model for updating a version."""
+    config: Dict[str, Any]
+    reason: Optional[str] = None
+
+
+def get_version_service() -> AgnoVersionService:
+    """Get version service instance."""
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise HTTPException(
+            status_code=500,
+            detail="DATABASE_URL not configured"
+        )
+    return AgnoVersionService(db_url)
+
+
 @router.post("/execute", response_model=VersionedExecutionResponse)
 async def execute_versioned_component(
     request: VersionedExecutionRequest,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    background_tasks: BackgroundTasks
 ):
     """
-    Execute a versioned component with proper async handling.
+    Execute a versioned component using Agno storage.
     
-    This endpoint replaces the heavy operations currently performed in middleware,
-    providing better performance by moving blocking operations to router level.
+    This endpoint uses the new AgnoVersionService for clean execution.
     """
     
     # Validate message content before processing
-    from utils.message_validation import validate_agent_message
+    from lib.utils.message_validation import validate_agent_message
     validate_agent_message(request.message, "versioned component execution")
     
-    # Get the specific version from database
-    service = ComponentVersionService(db)
+    # Get the specific version from Agno storage
+    service = get_version_service()
     version_record = service.get_version(request.component_id, request.version)
     
     if not version_record:
@@ -76,7 +95,7 @@ async def execute_versioned_component(
     component_type = version_record.component_type
     
     # Create versioned component using factory
-    from common.version_factory import VersionFactory
+    from lib.utils.version_factory import VersionFactory
     factory = VersionFactory()
     
     component = factory.create_versioned_component(
@@ -92,7 +111,7 @@ async def execute_versioned_component(
     )
     
     # Execute component with validation
-    from utils.message_validation import safe_agent_run
+    from lib.utils.message_validation import safe_agent_run
     response = safe_agent_run(
         component, 
         request.message, 
@@ -112,14 +131,44 @@ async def execute_versioned_component(
     return result
 
 
-@router.get("/components/{component_id}/versions")
-async def list_component_versions(
+@router.post("/components/{component_id}/versions")
+async def create_component_version(
     component_id: str,
-    db: Session = Depends(get_db)
+    request: VersionCreateRequest
 ):
+    """Create a new component version."""
+    
+    service = get_version_service()
+    
+    try:
+        version_info = service.create_version(
+            component_id=component_id,
+            component_type=request.component_type,
+            version=request.version,
+            config=request.config,
+            created_by="api",
+            description=request.description,
+            is_active=request.is_active
+        )
+        
+        return {
+            "component_id": version_info.component_id,
+            "version": version_info.version,
+            "component_type": version_info.component_type,
+            "created_at": version_info.created_at,
+            "is_active": version_info.is_active,
+            "description": version_info.description
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/components/{component_id}/versions")
+async def list_component_versions(component_id: str):
     """List all versions for a component."""
     
-    service = ComponentVersionService(db)
+    service = get_version_service()
     versions = service.list_versions(component_id)
     
     return {
@@ -128,8 +177,9 @@ async def list_component_versions(
             {
                 "version": v.version,
                 "component_type": v.component_type,
-                "created_at": v.created_at.isoformat() if v.created_at else None,
-                "is_active": v.is_active
+                "created_at": v.created_at,
+                "is_active": v.is_active,
+                "description": v.description
             }
             for v in versions
         ]
@@ -139,12 +189,11 @@ async def list_component_versions(
 @router.get("/components/{component_id}/versions/{version}")
 async def get_component_version(
     component_id: str,
-    version: int,
-    db: Session = Depends(get_db)
+    version: int
 ):
     """Get details for a specific component version."""
     
-    service = ComponentVersionService(db)
+    service = get_version_service()
     version_record = service.get_version(component_id, version)
     
     if not version_record:
@@ -154,16 +203,177 @@ async def get_component_version(
         )
     
     return {
-        "component_id": component_id,
+        "component_id": version_record.component_id,
         "version": version_record.version,
         "component_type": version_record.component_type,
         "config": version_record.config,
-        "created_at": version_record.created_at.isoformat() if version_record.created_at else None,
-        "is_active": version_record.is_active
+        "created_at": version_record.created_at,
+        "is_active": version_record.is_active,
+        "description": version_record.description
     }
 
 
-# SimplifiedVersionMiddleware removed - using pure router approach instead
+@router.put("/components/{component_id}/versions/{version}")
+async def update_component_version(
+    component_id: str,
+    version: int,
+    request: VersionUpdateRequest
+):
+    """Update configuration for a specific version."""
+    
+    service = get_version_service()
+    
+    try:
+        version_info = service.update_config(
+            component_id=component_id,
+            version=version,
+            config=request.config,
+            changed_by="api",
+            reason=request.reason
+        )
+        
+        return {
+            "component_id": version_info.component_id,
+            "version": version_info.version,
+            "component_type": version_info.component_type,
+            "config": version_info.config,
+            "created_at": version_info.created_at,
+            "is_active": version_info.is_active
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/components/{component_id}/versions/{version}/activate")
+async def activate_component_version(
+    component_id: str,
+    version: int,
+    reason: Optional[str] = None
+):
+    """Activate a specific version."""
+    
+    service = get_version_service()
+    
+    try:
+        version_info = service.activate_version(
+            component_id=component_id,
+            version=version,
+            changed_by="api",
+            reason=reason
+        )
+        
+        return {
+            "component_id": version_info.component_id,
+            "version": version_info.version,
+            "component_type": version_info.component_type,
+            "is_active": version_info.is_active,
+            "message": f"Version {version} activated successfully"
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/components/{component_id}/versions/{version}")
+async def delete_component_version(
+    component_id: str,
+    version: int
+):
+    """Delete a specific version."""
+    
+    service = get_version_service()
+    
+    try:
+        success = service.delete_version(
+            component_id=component_id,
+            version=version,
+            changed_by="api"
+        )
+        
+        if success:
+            return {
+                "component_id": component_id,
+                "version": version,
+                "message": f"Version {version} deleted successfully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Version {version} not found for component {component_id}"
+            )
+            
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/components/{component_id}/history")
+async def get_component_history(
+    component_id: str,
+    limit: int = 50
+):
+    """Get version history for a component."""
+    
+    service = get_version_service()
+    history = service.get_history(component_id, limit)
+    
+    return {
+        "component_id": component_id,
+        "history": [
+            {
+                "version": h.version,
+                "action": h.action,
+                "timestamp": h.timestamp,
+                "changed_by": h.changed_by,
+                "reason": h.reason
+            }
+            for h in history
+        ]
+    }
+
+
+@router.get("/components")
+async def list_all_components():
+    """List all components with versions."""
+    
+    service = get_version_service()
+    components = service.get_all_components()
+    
+    result = []
+    for component_id in components:
+        active_version = service.get_active_version(component_id)
+        if active_version:
+            result.append({
+                "component_id": component_id,
+                "component_type": active_version.component_type,
+                "active_version": active_version.version,
+                "description": active_version.description
+            })
+    
+    return {"components": result}
+
+
+@router.get("/components/by-type/{component_type}")
+async def list_components_by_type(component_type: str):
+    """List components by type."""
+    
+    service = get_version_service()
+    components = service.get_components_by_type(component_type)
+    
+    result = []
+    for component_id in components:
+        active_version = service.get_active_version(component_id)
+        if active_version:
+            result.append({
+                "component_id": component_id,
+                "active_version": active_version.version,
+                "description": active_version.description
+            })
+    
+    return {
+        "component_type": component_type,
+        "components": result
+    }
 
 
 # Export router for inclusion in main app

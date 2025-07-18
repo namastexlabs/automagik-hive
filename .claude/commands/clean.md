@@ -7,26 +7,6 @@ description: Safely identify and remove dead code, unused files, and obsolete ar
 
 Comprehensive dead code detection with triple-verification safety system using multiple expert agents and LLM consultation.
 
-## Auto-Loaded Project Context:
-@/CLAUDE.md
-@/docs/ai-context/project-structure.md
-@/docs/ai-context/docs-overview.md
-
-## Usage
-
-```bash
-# Full codebase cleanup
-/clean "Find all dead code and unused files"
-
-# Specific directory cleanup
-/clean "Clean unused files in agents/ directory"
-
-# Target specific patterns
-/clean "Remove old migration files and backups"
-
-# Focus on specific file types
-/clean "Find unused TypeScript interfaces and types"
-```
 
 ## ⚠️ CRITICAL SAFETY NOTICE
 

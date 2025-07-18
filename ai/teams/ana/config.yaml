@@ -1,79 +1,105 @@
+# Ana Team Configuration - Agno Framework Best Practices
+# Clean YAML configuration following Agno team patterns
+
+# Team configuration
 team:
-  name: Ana - Atendimento PagBank
-  team_id: ana-pagbank-assistant
-  mode: route
-  description: Ana, assistente virtual empática do PagBank que ajuda com carinho e
-    usa especialistas internamente
-  version: 33
+  name: "Ana - Atendimento PagBank"
+  team_id: "ana"
+  mode: "route"  # Critical: Agno automatic routing
+  description: "Ana, assistente virtual empática do PagBank que ajuda com carinho e usa especialistas internamente"
+  version: 36
+
+# Model configuration with reasoning
 model:
-  provider: anthropic
-  id: claude-sonnet-4-20250514
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
   temperature: 1.0
   max_tokens: 2000
   thinking:
-    type: enabled
+    type: "enabled"
     budget_tokens: 1024
-instructions: '🎯 Ana = ROTEAMENTO SILENCIOSO. Você é um proxy transparente.
 
+# Memory configuration - comprehensive settings
+memory:
+  enable_user_memories: true
+  enable_agentic_memory: false  # Ana doesn't need to remember across sessions
+  add_history_to_messages: true
+  num_history_runs: 10  # Keep last 10 interactions
+  enable_session_summaries: true
 
-  IMPORTANTE: Você tem acesso aos dados do usuário através do session_state:
+# Streaming configuration - real-time responses
+streaming:
+  stream: true
+  stream_intermediate_steps: true
+  stream_member_events: true
+  show_members_responses: true
 
-  - Nome: {user_context.user_name}
+# Event storage - comprehensive tracking
+events:
+  store_events: true  # Store all events for metrics
+  events_to_skip: []  # Store everything
 
-  - Telefone: {user_context.phone_number}
+# Context sharing - team collaboration
+context:
+  enable_agentic_context: true
+  share_member_interactions: true
+  add_state_in_messages: true  # Allow {user_context.x} in instructions
 
-  - CPF: {user_context.cpf}
+# Display configuration
+display:
+  markdown: false  # Ana uses plain text
+  show_tool_calls: true
+  add_datetime_to_instructions: true
+  add_member_tools_to_system_message: false  # Ana doesn't need to see member tools
 
+# Storage configuration - PostgreSQL
+storage:
+  type: "postgres"
+  table_name: "teams_ana"
+  mode: "team"
+  auto_upgrade_schema: true
+
+# Member agents - loaded from registry
+members:
+  - "pagbank-specialist"
+  - "emissao-specialist"
+  - "adquirencia-specialist"
+  - "human-handoff-specialist"
+  - "finalizacao-specialist"
+
+# Routing instructions - Ana's core logic
+instructions: |
+  🎯 Ana = ROTEAMENTO SILENCIOSO. Você é um proxy transparente.
+
+  IMPORTANTE: Você tem acesso aos dados do usuário através do structured input UserContext:
+  - Nome: {user_context.pb_user_name}
+  - Telefone: {user_context.pb_phone_number}
+  - CPF: {user_context.pb_user_cpf}
   - ID: {user_context.user_id}
 
-
-  PADRÃO DE ROTEAMENTO (SILENCIOSO):
-
+  PADRÃO DE ROTEAMENTO:
   1. PIX/conta/saldo → forward_task_to_member("pagbank-specialist")
-
   2. Cartão/limite/fatura → forward_task_to_member("emissao-specialist")
-
   3. Máquina/antecipação → forward_task_to_member("adquirencia-specialist")
-
   4. Humano/frustração → forward_task_to_member("human-handoff-specialist")
-
   5. Cliente finalizado/terminado/resolvido ("acabou", "terminei", "já consegui", "está resolvido", "finalizei") → forward_task_to_member("finalizacao-specialist")
-
   6. Chit chat/conversa casual → Ana pode conversar naturalmente
 
+  🚫 PROIBIDO: Qualquer mensagem de confirmação, explicações, textos (EXCETO final de atendimento e chit chat)
+  ✅ PERMITIDO: Apenas forward_task_to_member() - SEM texto adicional (EXCETO final de atendimento e chit chat)
 
-  🚫 PROIBIDO: Qualquer mensagem de confirmação, explicações, textos (EXCETO final
-  de atendimento e chit chat)
+  RESPOSTA: APENAS forward_task_to_member() - ZERO palavras para o usuário (EXCETO final de atendimento e chit chat)
 
-  ✅ PERMITIDO: Apenas forward_task_to_member() - SEM texto adicional (EXCETO final
-  de atendimento e chit chat)
+# Success criteria for validation
+success_criteria: "SUCESSO = Ana disse MÁXIMO 15 palavras + chamou forward_task_to_member. Ana NÃO explicou NADA."
 
+# Expected output format
+expected_output: "RESPOSTA: forward_task_to_member() SEM NENHUMA mensagem para o usuário. (EXCETO final de atendimento e chit chat)"
 
-  RESPOSTA: APENAS forward_task_to_member() - ZERO palavras para o usuário (EXCETO
-  final de atendimento e chit chat)
-
-  '
-storage:
-  type: postgres
-  table_name: teams_ana
-  mode: team
-  auto_upgrade_schema: true
-memory:
-  enable_user_memories: false
-  enable_agentic_memory: true
-  add_history_to_messages: true
-  num_history_runs: 10
-markdown: true
-show_tool_calls: true
-show_members_responses: true
-stream_intermediate_steps: true
-stream_member_events: true
-store_events: true
-enable_agentic_context: true
-share_member_interactions: true
-add_datetime_to_instructions: true
-add_member_tools_to_system_message: false
-success_criteria: SUCESSO = Ana disse MÁXIMO 15 palavras + chamou forward_task_to_member.
-  Ana NÃO explicou NADA.
-expected_output: 'RESPOSTA: forward_task_to_member() SEM NENHUMA mensagem para o usuário.
-  (EXCETO final de atendimento e chit chat)'
+# Metrics configuration
+metrics:
+  enabled: true  # Enable all metrics collection
+  collect_token_usage: true
+  collect_timing_metrics: true
+  collect_tool_metrics: true
+  collect_reasoning_metrics: true

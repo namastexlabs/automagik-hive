@@ -1,44 +1,37 @@
 # Generic Agent Registry for Multi-Agent Systems
-# Dynamic agent loading from factory functions
+# Database-driven agent loading via version factory
 
 from typing import Dict, Optional, Any
 from agno.agent import Agent
 import os
-from common.version_factory import create_versioned_agent
-from core.mcp.catalog import MCPCatalog
-
-_agent_modules = {
-    "pagbank": "ai.agents.pagbank.agent",
-    "adquirencia": "ai.agents.adquirencia.agent", 
-    "emissao": "ai.agents.emissao.agent",
-    "human-handoff": "ai.agents.human_handoff.agent",
-    "finalizacao": "ai.agents.finalizacao.agent"
-}
-
-# Cache for imported agent factories
-_imported_factories = {}
+from pathlib import Path
+from lib.utils.version_factory import create_versioned_agent
+from lib.mcp.catalog import MCPCatalog
 
 
-def _import_agent_factory(agent_name: str):
-    """Dynamically import agent factory function"""
-    if agent_name in _imported_factories:
-        return _imported_factories[agent_name]
+def _discover_agents() -> list[str]:
+    """Dynamically discover available agents from filesystem"""
+    import yaml
     
-    if agent_name not in _agent_modules:
-        return None
-        
-    try:
-        module_path = _agent_modules[agent_name]
-        module = __import__(module_path, fromlist=[f"get_{agent_name}_agent"])
-        # Normalize hyphens to underscores for factory function names
-        safe_name = agent_name.replace('-', '_')
-        factory = getattr(module, f"get_{safe_name}_agent")
-        _imported_factories[agent_name] = factory
-        return factory
-    except (ImportError, AttributeError) as e:
-        print(f"⚠️ {agent_name.title()} agent not found: {e}")
-        _imported_factories[agent_name] = None
-        return None
+    agents_dir = Path("ai/agents")
+    if not agents_dir.exists():
+        return []
+    
+    agent_ids = []
+    for agent_path in agents_dir.iterdir():
+        config_file = agent_path / "config.yaml"
+        if agent_path.is_dir() and config_file.exists():
+            try:
+                with open(config_file, 'r') as f:
+                    config = yaml.safe_load(f)
+                    agent_id = config.get('agent', {}).get('agent_id')
+                    if agent_id:
+                        agent_ids.append(agent_id)
+            except Exception as e:
+                print(f"⚠️ Failed to load agent config {agent_path.name}: {e}")
+                continue
+    
+    return sorted(agent_ids)
 
 
 class AgentRegistry:
@@ -58,18 +51,9 @@ class AgentRegistry:
         return cls._mcp_catalog
     
     @classmethod
-    def _get_available_agents(cls) -> Dict[str, callable]:
-        """Get all available agent factories"""
-        factories = {}
-        
-        for agent_name in _agent_modules.keys():
-            factory = _import_agent_factory(agent_name)
-            if factory:
-                # Register both full name and alias
-                factories[f"{agent_name}_specialist"] = factory
-                factories[agent_name] = factory
-                
-        return factories
+    def _get_available_agents(cls) -> list[str]:
+        """Get all available agent IDs"""
+        return _discover_agents()
     
     @classmethod
     def get_agent(
@@ -103,43 +87,21 @@ class AgentRegistry:
         Raises:
             KeyError: If agent_id not found
         """
-        # Try database-driven versioning first (includes knowledge base and auto-update)
-        try:
-            return create_versioned_agent(
-                agent_id=f"{agent_id}-specialist" if not agent_id.endswith("-specialist") else agent_id,
-                version=version,
-                session_id=session_id,
-                debug_mode=debug_mode,
-                db_url=db_url,
-                memory=memory,
-                user_id=user_id,
-                pb_phone_number=pb_phone_number,
-                pb_cpf=pb_cpf
-            )
-        except ValueError:
-            # Fall back to agent factories if versioning fails
-            available_factories = cls._get_available_agents()
-            
-            if agent_id not in available_factories:
-                available_agents = list(available_factories.keys())
-                raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
-            
-            factory = available_factories[agent_id]
-            
-            # Use environment database URL if not provided
-            if db_url is None:
-                db_url = os.getenv("DATABASE_URL")
-            
-            return factory(
-                version=version,
-                session_id=session_id,
-                debug_mode=debug_mode,
-                db_url=db_url,
-                memory=memory,
-                user_id=user_id,
-                pb_phone_number=pb_phone_number,
-                pb_cpf=pb_cpf
-            )
+        # Database-driven agent creation
+        available_agents = cls._get_available_agents()
+        
+        if agent_id not in available_agents:
+            raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
+        
+        return create_versioned_agent(
+            agent_id=agent_id,
+            version=version,
+            session_id=session_id,
+            debug_mode=debug_mode,
+            user_id=user_id,
+            phone_number=pb_phone_number,
+            cpf=pb_cpf
+        )
     
     @classmethod
     def get_all_agents(
@@ -156,15 +118,9 @@ class AgentRegistry:
             Dictionary mapping agent_id to Agent instance
         """
         agents = {}
-        available_factories = cls._get_available_agents()
+        available_agents = cls._get_available_agents()
         
-        # Get unique agent names (no duplicates for aliases)
-        unique_agents = set()
-        for agent_name in _agent_modules.keys():
-            if f"{agent_name}_specialist" in available_factories:
-                unique_agents.add(f"{agent_name}_specialist")
-        
-        for agent_id in unique_agents:
+        for agent_id in available_agents:
             try:
                 agents[agent_id] = cls.get_agent(
                     agent_id=agent_id,
@@ -182,18 +138,8 @@ class AgentRegistry:
     @classmethod
     def list_available_agents(cls) -> list[str]:
         """Get list of available agent IDs."""
-        return list(cls._get_available_agents().keys())
+        return cls._get_available_agents()
     
-    @classmethod
-    def register_agent(cls, agent_name: str, module_path: str):
-        """
-        Register a new agent module.
-        
-        Args:
-            agent_name: Agent name (e.g., 'pagbank')
-            module_path: Import path to agent module
-        """
-        _agent_modules[agent_name] = module_path
     
     @classmethod
     def list_mcp_servers(cls) -> list[str]:
@@ -220,7 +166,6 @@ def get_agent(
     db_url: Optional[str] = None,
     memory: Optional[Any] = None,
     user_id: Optional[str] = None,  # Agno native parameter
-    pb_user_name: Optional[str] = None,  # PagBank business parameter
     pb_phone_number: Optional[str] = None,  # PagBank business parameter
     pb_cpf: Optional[str] = None  # PagBank business parameter
 ) -> Agent:
@@ -245,7 +190,6 @@ def get_agent(
         db_url=db_url,
         memory=memory,
         user_id=user_id,
-        pb_user_name=pb_user_name,
         pb_phone_number=pb_phone_number,
         pb_cpf=pb_cpf
     )
@@ -259,7 +203,6 @@ def get_team_agents(
     db_url: Optional[str] = None,
     memory: Optional[Any] = None,
     user_id: Optional[str] = None,  # Agno native parameter
-    pb_user_name: Optional[str] = None,  # PagBank business parameter
     pb_phone_number: Optional[str] = None,  # PagBank business parameter
     pb_cpf: Optional[str] = None  # PagBank business parameter
 ) -> list[Agent]:
@@ -283,7 +226,6 @@ def get_team_agents(
             db_url=db_url, 
             memory=memory,
             user_id=user_id,
-            pb_user_name=pb_user_name,
             pb_phone_number=pb_phone_number,
             pb_cpf=pb_cpf
         )

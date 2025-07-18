@@ -11,12 +11,12 @@ services:
       dockerfile: Dockerfile
       args:
         BUILD_VERSION: ${BUILD_VERSION:-latest}
-        BUILD_DATE: ${BUILD_DATE}
-        GIT_SHA: ${GIT_SHA}
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
+        GIT_SHA: ${GIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo "unknown")}
     container_name: pagbank-agents
     restart: unless-stopped
     ports:
-      - "${PB_AGENTS_PORT:-7777}:${PB_AGENTS_PORT:-7777}"
+      - "${PB_AGENTS_PORT:-7777}:7777"
     environment:
       - DATABASE_URL=postgresql://ai:ai@postgres:5432/ai
       - RUNTIME_ENV=prd
@@ -31,7 +31,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PB_AGENTS_PORT:-7777}/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7777/health"]
       interval: 30s
       timeout: 10s
       retries: 3

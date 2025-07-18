@@ -18,7 +18,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - Allow lib directory for Python package
 lib64/
 parts/
 sdist/
@@ -106,5 +106,5 @@ package-lock.json
 # Claude development files
 CLAUDE.md
 *.analysis.md
-README.md
+# README.md - Allow README for Python package
 TODO.md

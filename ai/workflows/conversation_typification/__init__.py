@@ -26,7 +26,6 @@ from .models import (
 )
 
 from .workflow import (
-    ConversationTypificationWorkflow,
     get_conversation_typification_workflow,
 )
 
@@ -38,6 +37,5 @@ __all__ = [
     "HierarchicalTypification",
     "ConversationTypification",
     "TicketCreationResult",
-    "ConversationTypificationWorkflow",
     "get_conversation_typification_workflow",
 ]

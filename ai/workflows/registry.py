@@ -1,17 +1,53 @@
 """Workflow registry for dynamic loading of workflow instances."""
 
 from typing import Dict, Callable, Optional, Any
-from agno import Workflow
+from agno.workflow import Workflow
+from pathlib import Path
+import importlib.util
 
-from ai.workflows.conversation_typification.workflow import get_conversation_typification_workflow
-from ai.workflows.human_handoff.workflow import get_human_handoff_workflow
+
+def _discover_workflows() -> Dict[str, Callable[..., Workflow]]:
+    """Dynamically discover workflows from filesystem"""
+    workflows_dir = Path("ai/workflows")
+    registry = {}
+    
+    if not workflows_dir.exists():
+        return registry
+    
+    for workflow_path in workflows_dir.iterdir():
+        if not workflow_path.is_dir() or workflow_path.name.startswith('_'):
+            continue
+            
+        config_file = workflow_path / "config.yaml"
+        workflow_file = workflow_path / "workflow.py"
+        
+        if config_file.exists() and workflow_file.exists():
+            workflow_name = workflow_path.name
+            
+            try:
+                # Load the workflow module dynamically
+                spec = importlib.util.spec_from_file_location(
+                    f"ai.workflows.{workflow_name}.workflow",
+                    workflow_file
+                )
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                
+                # Look for the factory function
+                factory_func_name = f"get_{workflow_name.replace('-', '_')}_workflow"
+                if hasattr(module, factory_func_name):
+                    factory_func = getattr(module, factory_func_name)
+                    registry[workflow_name] = factory_func
+                    
+            except Exception as e:
+                print(f"⚠️ Failed to load workflow {workflow_name}: {e}")
+                continue
+    
+    return registry
 
 
-# Registry mapping workflow IDs to their factory functions
-WORKFLOW_REGISTRY: Dict[str, Callable[..., Workflow]] = {
-    "conversation-typification": get_conversation_typification_workflow,
-    "human-handoff": get_human_handoff_workflow,
-}
+# Dynamic workflow registry - no hardcoded imports
+WORKFLOW_REGISTRY: Dict[str, Callable[..., Workflow]] = _discover_workflows()
 
 
 def get_workflow(workflow_id: str, version: Optional[int] = None, **kwargs) -> Workflow:
@@ -29,6 +65,10 @@ def get_workflow(workflow_id: str, version: Optional[int] = None, **kwargs) -> W
     Raises:
         ValueError: If the workflow_id is not found in the registry
     """
+    # Refresh registry to pick up new workflows
+    global WORKFLOW_REGISTRY
+    WORKFLOW_REGISTRY = _discover_workflows()
+    
     if workflow_id not in WORKFLOW_REGISTRY:
         available_workflows = ", ".join(sorted(WORKFLOW_REGISTRY.keys()))
         raise ValueError(
@@ -54,6 +94,9 @@ def list_available_workflows() -> list[str]:
     Returns:
         list[str]: Sorted list of workflow IDs
     """
+    # Refresh registry to pick up new workflows
+    global WORKFLOW_REGISTRY
+    WORKFLOW_REGISTRY = _discover_workflows()
     return sorted(WORKFLOW_REGISTRY.keys())
 
 
@@ -67,4 +110,7 @@ def is_workflow_registered(workflow_id: str) -> bool:
     Returns:
         bool: True if the workflow is registered, False otherwise
     """
+    # Refresh registry to pick up new workflows
+    global WORKFLOW_REGISTRY
+    WORKFLOW_REGISTRY = _discover_workflows()
     return workflow_id in WORKFLOW_REGISTRY

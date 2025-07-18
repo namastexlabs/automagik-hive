@@ -1,276 +1,124 @@
-# Ana Team Factory - Generic Multi-Agent Router
-# Based on Agno Team(mode="route") pattern
-# Generic implementation for any agent system
+"""Ana Team Factory - Clean Agno Implementation
 
-import os
-from typing import Optional, Union, Any
+Minimal team implementation following Agno framework best practices.
+Based on the multi-language team pattern from Agno documentation.
+"""
+
+from typing import Optional, Union
 import yaml
 from pathlib import Path
 from agno.team import Team
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
-from agno.utils.log import logger
-
-# V2 Database infrastructure (from agno-demo-app pattern)
-from db.session import db_url
-
-# Import generic agent factory
 from ai.agents.registry import get_agent
-
-# Memory system integration
-from core.memory.memory_manager import create_memory_manager
-
-# User context management - simple helper for session_state
-from core.utils.user_context_helper import create_user_context_state
-
-# Demo logging is now handled by global patching in serve.py
+from .models import UserContext
+import os
 
 
 def get_ana_team(
-    model_id: Optional[str] = None,
-    user_id: Optional[str] = None,
+    user_context: Optional[Union[UserContext, dict]] = None,
     session_id: Optional[str] = None,
-    debug_mode: bool = True,
-    agent_names: Optional[list[str]] = None,
-    # Memory parameter from startup to prevent fallback warnings
-    memory: Optional[Any] = None,
-    # User context parameters - will be stored in session_state
-    user_name: Optional[str] = None,
-    phone_number: Optional[str] = None,
-    cpf: Optional[str] = None,
-    **kwargs
+    user_id: Optional[str] = None,
+    debug_mode: bool = False
 ) -> Team:
-    """
-    Ana Team factory - Generic Agno Team(mode="route") implementation.
-    Demo logging is handled by global patching in serve.py.
+    """Create Ana team with clean Agno implementation.
     
     Args:
-        model_id: Override model configuration
-        user_id: User ID for session tracking
-        session_id: Session ID for conversation tracking
-        debug_mode: Enable debug mode
-        agent_names: List of agent names to include (defaults to config)
+        user_context: User context data (UserContext model or dict)
+        session_id: Optional session ID for conversation tracking
+        user_id: Optional user ID for session management
+        debug_mode: Enable debug mode for development
         
     Returns:
         Configured Team instance with route mode
     """
     
-    # Load static config from YAML (agno-demo-app pattern)
+    # Load configuration
     config_path = Path(__file__).parent / "config.yaml"
     with open(config_path) as f:
         config = yaml.safe_load(f)
     
-    # Use provided agent names or default from config/system
-    if agent_names is None:
-        agent_names = ["adquirencia", "emissao", "pagbank", "human_handoff", "finalizacao"]  # Added finalizacao for conversation closure
+    # Convert user_context dict to UserContext model if needed
+    if isinstance(user_context, dict):
+        user_context = UserContext(**user_context)
     
-    # Use model override if provided (agno-demo-app pattern)
-    model_id = model_id or config["model"]["id"]
+    # Get database URL from environment
+    db_url = os.getenv("DATABASE_URL", "postgresql://localhost/genie_agents")
     
-    # Create user context session_state (Agno's built-in way)
-    user_context_state = create_user_context_state(
-        user_id=user_id,
-        user_name=user_name,
-        phone_number=phone_number,
-        cpf=cpf,
-        **{k: v for k, v in kwargs.items() if k.startswith('user_') or k in ['customer_name', 'customer_phone', 'customer_cpf']}
-    )
-    
-    # Use provided memory or initialize from YAML config - use Agno Memory V2 correctly
-    memory_manager = None
-    if memory is None and config.get("memory"):
-        try:
-            memory_manager = create_memory_manager()
-            # Get the shared memory instance for both team and agents
-            memory = memory_manager.memory
-        except Exception as e:
-            print(f"⚠️ Memory system initialization failed: {e}")
-            print("Continuing without memory system...")
-    
-    # Load member agents using generic get_agent factory
-    members = [
-        get_agent(
-            name, 
-            session_id=session_id, 
-            debug_mode=debug_mode, 
-            db_url=db_url, 
-            memory=memory,
-            # Pass user context parameters to member agents
+    # Load member agents from registry
+    members = []
+    for agent_name in config["members"]:
+        agent = get_agent(
+            agent_name,
+            session_id=session_id,
+            debug_mode=debug_mode,
+            db_url=db_url,
+            # Pass user context to agents if available
             user_id=user_id,
-            user_name=user_name,
-            phone_number=phone_number,
-            cpf=cpf
+            pb_phone_number=user_context.pb_phone_number if user_context else None,
+            pb_cpf=user_context.pb_cpf if user_context else None
         )
-        for name in agent_names
-    ]
+        members.append(agent)
     
-    # Ana team only routes - no tools needed (tools are in specialist agents)
-    
-    # Create Team with route mode (Agno docs pattern)
-    # Demo logging is handled by global patching
-    return Team(
-        name=config["team"]["name"],                    # From YAML
-        team_id=config["team"]["team_id"],              # From YAML  
-        mode="route",                                   # Key Agno pattern
-        members=members,                                # Generic agent loading
-        instructions=config["instructions"],            # From YAML (routing logic)
-        session_id=session_id,
-        user_id=user_id,
+    # Create team with all Agno parameters from config
+    team = Team(
+        # Core team settings
+        name=config["team"]["name"],
+        team_id=config["team"]["team_id"],
+        mode=config["team"]["mode"],
         description=config["team"]["description"],
+        
+        # Model configuration
         model=Claude(
-            id=model_id,
-            max_tokens=config["model"]["max_tokens"],
+            id=config["model"]["id"],
             temperature=config["model"]["temperature"],
+            max_tokens=config["model"]["max_tokens"],
             thinking=config["model"]["thinking"]
         ),
-        success_criteria=config.get("success_criteria"),
-        expected_output=config.get("expected_output"),
-        # CRITICAL: Team-specific parameters (VERIFIED from Agno docs - dynamically configured)
-        show_members_responses=config.get("show_members_responses", True),  # Show specialist responses
-        stream_intermediate_steps=config.get("stream_intermediate_steps", True),  # Stream routing process
-        stream_member_events=config.get("stream_member_events", True),  # Stream member events
-        store_events=config.get("store_events", False),  # Don't store streaming events
-        enable_agentic_context=config.get("enable_agentic_context", True),
-        share_member_interactions=config.get("share_member_interactions", True),
-        markdown=config.get("markdown", True),
-        show_tool_calls=config.get("show_tool_calls", True),
-        add_datetime_to_instructions=config.get("add_datetime_to_instructions", True),
-        add_member_tools_to_system_message=config.get("add_member_tools_to_system_message", True),
-        # User context stored in session_state (Agno's built-in persistence)
-        session_state=user_context_state if user_context_state.get('user_context') else None,
-        # Make user context available in instructions
-        add_state_in_messages=config.get("add_state_in_messages", True),  # This allows {user_name}, {user_id}, etc. in instructions
+        
+        # Members
+        members=members,
+        
+        # Instructions and criteria
+        instructions=config["instructions"],
+        success_criteria=config["success_criteria"],
+        expected_output=config["expected_output"],
+        
+        # Session management
+        session_id=session_id,
+        user_id=user_id,
+        
+        # Memory configuration
+        **config["memory"],
+        
+        # Streaming configuration
+        **config["streaming"],
+        
+        # Event configuration
+        **config["events"],
+        
+        # Context configuration
+        **config["context"],
+        
+        # Display configuration
+        **config["display"],
+        
+        # Storage configuration
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             db_url=db_url,
             mode=config["storage"]["mode"],
-            auto_upgrade_schema=config["storage"]["auto_upgrade_schema"],
+            auto_upgrade_schema=config["storage"]["auto_upgrade_schema"]
         ),
-        # Agno Memory V2 configuration - provide Memory object for team
-        memory=memory,  # Team needs the Memory object, not the memory database
-        # Memory configuration from YAML
-        enable_user_memories=config.get("memory", {}).get("enable_user_memories", True),
-        enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
-        add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
-        num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
-        debug_mode=debug_mode,
-    )
-
-
-# Convenience functions following agno-demo-app patterns
-def get_ana_team_latest(
-    user_id: Optional[str] = None,
-    session_id: Optional[str] = None, 
-    debug_mode: bool = False,
-    agent_names: Optional[list[str]] = None
-) -> Team:
-    """Get latest Ana team configuration with generic agent support"""
-    return get_ana_team(
-        user_id=user_id, 
-        session_id=session_id, 
-        debug_mode=debug_mode,
-        agent_names=agent_names
-    )
-
-
-def get_ana_team_development(
-    user_id: Optional[str] = None,
-    session_id: Optional[str] = None,
-    agent_names: Optional[list[str]] = None
-) -> Team:
-    """Get Ana team with development settings and generic agent support"""
-    return get_ana_team(
-        user_id=user_id, 
-        session_id=session_id, 
-        debug_mode=True,
-        model_id="claude-sonnet-4-20250514",  # Force specific model for development
-        agent_names=agent_names
-    )
-
-
-def get_custom_team(
-    team_name: str,
-    agent_names: list[str],
-    instructions: str,
-    user_id: Optional[str] = None,
-    session_id: Optional[str] = None,
-    debug_mode: bool = False,
-    memory: Optional[Any] = None
-) -> Team:
-    """
-    Create a custom team with any agents - fully generic implementation.
-    
-    Args:
-        team_name: Name for the team
-        agent_names: List of agent names to include
-        instructions: Routing/coordination instructions
-        user_id: User ID for session tracking
-        session_id: Session ID for conversation tracking
-        debug_mode: Enable debug mode
         
-    Returns:
-        Configured Team instance with route mode
-    """
-    
-    # Load base config for storage/model settings
-    config_path = Path(__file__).parent / "config.yaml"
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
-    
-    # Use provided memory or initialize for custom team - use Agno Memory V2 correctly  
-    memory_manager = None
-    if memory is None:
-        try:
-            memory_manager = create_memory_manager()
-            # Get the shared memory instance for both team and agents
-            memory = memory_manager.memory
-        except Exception as e:
-            print(f"⚠️ Memory system initialization failed: {e}")
-            print("Continuing without memory system...")
-    
-    # Load member agents using generic get_agent factory
-    members = [
-        get_agent(
-            name, 
-            session_id=session_id, 
-            debug_mode=debug_mode, 
-            db_url=db_url, 
-            memory=memory,
-            # Note: Custom team doesn't receive user context parameters
-            # If needed, extend this function to accept user context parameters
-        )
-        for name in agent_names
-    ]
-    
-    return Team(
-        name=team_name,
-        team_id=f"{team_name.lower().replace(' ', '-')}-team",
-        mode="route",                                   # Key Agno pattern
-        members=members,                                # Generic agent loading
-        instructions=instructions,                      # Custom routing logic
-        session_id=session_id,
-        user_id=user_id,
-        description=f"Custom {team_name} team with {len(agent_names)} specialists",
-        model=Claude(
-            id=config["model"]["id"],
-            max_tokens=config["model"]["max_tokens"],
-            temperature=config["model"]["temperature"],
-            thinking=config["model"]["thinking"]
-        ),
-        storage=PostgresStorage(
-            table_name=f"{team_name.lower().replace(' ', '_')}_team",
-            db_url=db_url,
-            mode=config["storage"]["mode"],
-            auto_upgrade_schema=config["storage"]["auto_upgrade_schema"],
-        ),
-        # Agno Memory V2 configuration - provide Memory object for team
-        memory=memory,  # Team needs the Memory object, not the memory database
-        # Memory configuration from YAML
-        enable_user_memories=config.get("memory", {}).get("enable_user_memories", True),
-        enable_agentic_memory=config.get("memory", {}).get("enable_agentic_memory", True),
-        add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
-        num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
-        # Additional behavioral parameters from YAML config
-        add_state_in_messages=config.get("add_state_in_messages", True),
-        debug_mode=debug_mode,
+        # Debug mode
+        debug_mode=debug_mode
     )
+    
+    return team
+
+
+# Simple convenience function for latest configuration
+def get_ana_team_latest(**kwargs) -> Team:
+    """Get Ana team with latest configuration."""
+    return get_ana_team(**kwargs)

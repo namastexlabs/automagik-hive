@@ -1,4 +1,0 @@
-=== ACTUAL CONTEXT FOLDER IMPORTS ===
-
-Total actual context folder imports:
-0

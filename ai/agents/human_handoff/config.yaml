@@ -1,77 +1,117 @@
 agent:
+  name: Human Handoff Specialist
+  role: Escalation and Human Handoff Agent
+  version: 34
   agent_id: human-handoff-specialist
-  version: 33
-  name: Ana - HumanHandoff
-  role: Ana - Assistente Digital Escalação
-  description: Ana, sua assistente digital especializada em escalação para atendimento
-    humano e gestão de frustrações
+  description: Specialized agent for handling escalations and human handoff workflows
 model:
-  provider: anthropic
   id: claude-sonnet-4-20250514
+  provider: anthropic
+  max_tokens: 2000
   temperature: 0.8
-  max_tokens: 1500
-instructions: "Oii! Eu sou a Ana, atendente virtual do PagBank! \n\n\U0001F464 Quando\
-  \ vejo que você precisa de atendimento humano, cuido de tudo para você:\n\n\U0001F504\
-  \ MEU PROCESSO DE ESCALAÇÃO:\n1. Uso IMEDIATAMENTE a ferramenta trigger_human_handoff_workflow\n\
-  2. A ferramenta executa o workflow completo e gera o protocolo\n3. Respondo com\
-  \ as informações do protocolo\n4. FINALIZO o atendimento com confirmação de transferência\n\
-  \n\U0001F4DC PARÂMETROS PARA trigger_human_handoff_workflow:\n- customer_message:\
-  \ mensagem atual do cliente\n- escalation_reason: \"explicit_request\" ou \"frustration_detected\"\
-  \ \n- conversation_history: todo o histórico da conversa\n- urgency_level: \"medium\"\
-  \ (padrão) ou \"high\" se urgente\n\n✨ IMPORTANTE:\n- Uso a ferramenta SEMPRE que\
-  \ houver escalação\n- A ferramenta executa o workflow completo (protocolo + WhatsApp)\n\
-  - Processo o resultado e forneço resposta final ao cliente\n- Sou empática e concluo\
-  \ o atendimento adequadamente\n\n\U0001F4F1 Dados do usuário disponíveis: {user_context.user_name},\
-  \ {user_context.phone_number}, {user_context.cpf}\n\n\U0001F4AC Sempre falo em português\
-  \ brasileiro com muito carinho!\n"
-knowledge_filter:
-  business_unit: Human Handoff
-tools:
-- trigger_human_handoff_workflow
 storage:
+  mode: workflow
   type: postgres
-  table_name: agents_human_handoff
+  table_name: human_handoff_workflows
   auto_upgrade_schema: true
-memory:
-  add_history_to_messages: true
-  num_history_runs: 10
-markdown: false
-show_tool_calls: true
-success_criteria: SUCESSO = Processou transferência humana de forma empática e eficiente
-  em máximo 200 palavras
-expected_output: 'Resposta concisa e empática com: 1) Confirmação da transferência,
-  2) Protocolo gerado, 3) Expectativas claras. EVITAR textos longos desnecessários.'
-escalation_triggers:
-  frustration_indicators:
-  - droga
-  - merda
-  - porra
-  - caralho
-  - desgraça
-  - bosta
-  - inferno
-  - puta
-  - cacete
-  - foda
-  explicit_requests:
-  - quero falar com humano
-  - quero atendente
-  - falar com pessoa
-  - atendimento humano
-  - me transfere
-  - pessoa real
-  - não quero robô
-  - chega de robô
-  caps_threshold: 0.7
-protocol_fields:
-- customer_name
-- customer_cpf
-- issue_description
-- previous_attempts
-- urgency_level
-- customer_emotion
-- recommended_action
 whatsapp:
   enabled: true
-  instance: pagbank_support
-  agent: whatsapp-notifier
+  instance: SofIA
+  notification_template: '🚨 *Escalação para Atendimento Humano*
+
+
+    📋 *Protocolo:* {protocol_id}
+
+    👤 *Cliente:* {customer_name}
+
+    📱 *CPF:* {customer_cpf}
+
+    ⚠️ *Motivo:* {escalation_reason}
+
+    🕐 *Horário:* {timestamp}
+
+
+    📝 *Descrição:* {issue_description}
+
+    💬 *Resumo:* {conversation_summary}
+
+    🎯 *Ação:* {recommended_action}
+
+    '
+workflow:
+  name: Human Handoff Workflow
+  version: 34
+  description: Simplified escalation workflow for Ana team handoffs
+  workflow_id: human-handoff
+execution:
+  max_retries: 2
+  timeout_minutes: 30
+  notify_completion: true
+  retry_delay_seconds: 3
+  enable_context_preservation: true
+escalation:
+  emotion_detection:
+    angry_indicators:
+    - indignado
+    - revoltado
+    - absurdo
+    - inadmissível
+    - péssimo
+    urgent_indicators:
+    - urgente
+    - emergência
+    - rápido
+    - imediato
+    - agora
+    frustrated_indicators:
+    - frustrado
+    - chateado
+    - irritado
+    - não resolve
+    - já tentei
+  confidence_threshold: 0.8
+monitoring:
+  alerts:
+    high_volume_threshold: 10
+    failure_rate_threshold: 0.05
+    response_time_threshold: 900
+  enable_metrics: true
+  track_response_times: true
+  track_escalation_reasons: true
+  track_resolution_success: true
+development:
+  demo_mode: false
+  debug_mode: false
+  enable_cache: false
+integrations:
+  ana_team: true
+  ticket_system: true
+  protocol_generator: true
+  whatsapp_notifications: true
+business_rules:
+  team_routing:
+    emissao: emissao_team
+    general: general_team
+    pagbank: pagbank_team
+    adquirencia: adquirencia_team
+  urgency_mapping:
+    low_keywords:
+    - consulta
+    - verificação
+    - confirmação
+    high_keywords:
+    - urgente
+    - problema
+    - não funciona
+    - erro
+    medium_keywords:
+    - dúvida
+    - ajuda
+    - orientação
+    - informação
+    critical_keywords:
+    - bloqueio
+    - fraude
+    - perda
+    - roubo
+    - crítico

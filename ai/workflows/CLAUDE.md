@@ -1,1026 +1,758 @@
-# Workflows Directory - Multi-Step Process Orchestration
+# Agno Workflows 2.0 - Enterprise Implementation Guide (v1.7.4+)
 
-<system_context>
-You are working with workflows in the Automagik Multi-Agent Framework - a sophisticated agent creation and orchestration system built with the Agno framework. Workflows orchestrate multi-step processes that coordinate specialized AI agents, handle escalations, and manage complex business operations that require sequential or parallel execution across multiple agents.
-</system_context>
+## 🚀 Overview
 
-<critical_rules>
-- ALWAYS use workflows for multi-step processes, not simple agent tasks
-- ALWAYS preserve conversation context in workflow steps
-- ALWAYS implement proper error handling and rollback mechanisms
-- ALWAYS track workflow execution for compliance and monitoring
-- ALWAYS validate team-to-workflow integration patterns
-- ALWAYS test workflow routing logic before deploying
-- ALWAYS include proper language handling in user-facing steps
-- NEVER use workflows for simple agent routing tasks
-- NEVER lose user context during workflow transitions
-- NEVER implement business logic directly in workflows (use agents)
-- NEVER skip domain-specific validations in workflows
-- NEVER expose sensitive data in workflow logs
-</critical_rules>
+Agno Workflows 2.0 represents a complete redesign of the workflow system introduced in v1.7.4, featuring a **step-based architecture** that provides better structure, flexibility, and control over multi-stage AI agent processes.
 
-## Core Architecture: Workflows vs Teams vs Agents
+**Official Documentation**: 
+- [Overview](https://docs.agno.com/workflows_2/overview)
+- [Workflow Types](https://docs.agno.com/workflows_2/types_of_workflows)
+- [Running Workflows](https://docs.agno.com/workflows_2/run_workflow)
+- [Session State](https://docs.agno.com/workflows_2/workflow_session_state)
+- [Advanced Features](https://docs.agno.com/workflows_2/advanced)
+- [Migration Guide](https://docs.agno.com/workflows_2/migration)
 
-<architecture_hierarchy>
-### Component Hierarchy
-```
-Workflows (Multi-step orchestration)
-    ↳ Teams (Intelligent routing)
-        ↳ Agents (Domain expertise)
-```
+### Key Architectural Changes
 
-**Agents**: Handle specific domain queries
-**Teams**: Route queries to appropriate agents using intelligent mode selection
-**Workflows**: Orchestrate complex, multi-step processes that require coordination
-</architecture_hierarchy>
+| Feature | Workflows 1.0 | Workflows 2.0 |
+|---------|---------------|---------------|
+| **Execution Model** | Linear only | Multiple patterns (sequential, parallel, conditional, loop) |
+| **Components** | Agent-focused | Mixed components (agents, teams, functions) |
+| **Routing** | Basic | Smart routing with dynamic step selection |
+| **State Management** | Limited | Full session state management |
+| **Flexibility** | Monolithic run method | Modular step-based design |
 
-<workflow_triggers>
-### Team-to-Workflow Integration ✅ VERIFIED
-Teams can trigger workflows when complex processing is needed:
+### Core Concepts
+
+1. **Flexible Execution**: Sequential, parallel, conditional, and loop-based execution
+2. **Smart Routing**: Dynamic step selection based on content analysis or user intent
+3. **Mixed Components**: Combine agents, teams, and functions seamlessly
+4. **State Management**: Share data across steps with workflow session state
+
+## 🏗️ Architecture Components
+
+### 1. Core Workflow Structure
 
 ```python
-# teams/routing_team/team.py - Routing Team to workflows
-from workflows.human_handoff import trigger_human_handoff
+from agno.workflow.v2 import Workflow, Step, Parallel, Condition, Loop, Router
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+from agno.storage.sqlite import SqliteStorage
 
-def get_routing_team():
-    return Team(
-        name="Routing Assistant",
-        mode="route",  # Intelligent routing mode
-        members=[
-            get_domain_a_agent(),
-            get_domain_b_agent(),
-            get_domain_c_agent()
-        ],
-        instructions=[
-            "Route queries for Domain A to domain_a_agent",
-            "Route queries for Domain B to domain_b_agent",
-            "Route queries for Domain C to domain_c_agent",
-            "If user shows frustration or requests human help, trigger human handoff workflow",
-            "For complex multi-step processes, escalate to appropriate workflow"
-        ]
-    )
-```
-</workflow_triggers>
-
-## Human Handoff Workflow Architecture
-
-<handoff_evolution>
-### V2 Architecture: From Agent to Workflow
-In V2, human handoff evolved from a simple agent to a sophisticated workflow:
-
-**V1 (Agent-based)**:
-```python
-# OLD: Simple agent handoff
-human_handoff_agent.run(query)
-```
-
-**V2 (Workflow-based)**:
-```python
-# NEW: Multi-step workflow orchestration
-workflow = HumanHandoffWorkflow()
-workflow.run(
-    user_query=query,
-    escalation_reason="frustration_detected",
-    conversation_history=history,
-    domain=detected_domain
+# Basic workflow structure
+workflow = Workflow(
+    name="Mixed Execution Pipeline",
+    storage=SqliteStorage(
+        table_name="workflow_v2",
+        db_file="tmp/workflow_v2.db"
+    ),
+    steps=[
+        research_team,      # Team
+        data_preprocessor,  # Function
+        content_agent,      # Agent
+    ]
 )
 ```
-</handoff_evolution>
 
-<handoff_benefits>
-### Workflow Benefits over Agent Approach
-1. **Multi-step Process**: Context analysis → Ticket creation → Handoff coordination
-2. **Structured Escalation**: SLA tracking, priority assignment, proper documentation
-3. **Context Preservation**: Full conversation analysis and transfer
-4. **Compliance**: Audit trail, regulatory documentation, data protection
-5. **Monitoring**: Step-by-step tracking, performance metrics, SLA compliance
-6. **Error Handling**: Rollback capabilities, retry mechanisms, fallback procedures
-</handoff_benefits>
+### 2. Step Types and Building Blocks
 
-## Workflow Implementation Patterns
-
-<basic_workflow_structure>
-### Standard Workflow Template ✅ VERIFIED
+#### Sequential Steps (Default)
 ```python
-from agno.workflow import Workflow, RunResponse
+def data_preprocessor(step_input):
+    return StepOutput(content=f"Processed: {step_input.message}")
+
+workflow = Workflow(
+    name="Sequential Pipeline",
+    steps=[
+        Step(name="Research", agent=research_agent),
+        data_preprocessor,  # Function step
+        Step(name="Analysis", agent=analysis_agent),
+    ]
+)
+```
+
+#### Parallel Execution
+```python
+workflow = Workflow(
+    name="Parallel Research Pipeline",
+    steps=[
+        Parallel(
+            Step(name="HackerNews Research", agent=hn_researcher),
+            Step(name="Web Research", agent=web_researcher),
+            Step(name="Academic Research", agent=academic_researcher),
+            name="Research Step"
+        ),
+        Step(name="Synthesis", agent=synthesizer),
+    ]
+)
+```
+
+#### Conditional Steps
+```python
+def is_tech_topic(step_input) -> bool:
+    topic = step_input.message.lower()
+    return any(keyword in topic for keyword in ["ai", "tech", "software"])
+
+workflow = Workflow(
+    name="Conditional Research",
+    steps=[
+        Condition(
+            name="Tech Topic Check",
+            evaluator=is_tech_topic,
+            steps=[Step(name="Tech Research", agent=tech_researcher)]
+        ),
+        Step(name="General Analysis", agent=general_analyst),
+    ]
+)
+```
+
+#### Loop Execution
+```python
+def quality_check(outputs) -> bool:
+    return any(len(output.content) > 500 for output in outputs)
+
+workflow = Workflow(
+    name="Quality-Driven Research",
+    steps=[
+        Loop(
+            name="Research Loop",
+            steps=[Step(name="Deep Research", agent=researcher)],
+            exit_condition=quality_check,
+            max_iterations=3
+        ),
+        Step(name="Final Report", agent=reporter),
+    ]
+)
+```
+
+#### Router (Dynamic Routing)
+```python
+def route_by_topic(step_input) -> str:
+    topic = step_input.message.lower()
+    if "tech" in topic:
+        return "tech_path"
+    elif "business" in topic:
+        return "business_path"
+    return "general_path"
+
+workflow = Workflow(
+    name="Dynamic Routing Workflow",
+    steps=[
+        Router(
+            name="Topic Router",
+            evaluator=route_by_topic,
+            routes={
+                "tech_path": [tech_specialist],
+                "business_path": [business_analyst],
+                "general_path": [general_agent]
+            }
+        )
+    ]
+)
+```
+
+### 3. Session State Management
+
+```python
+# Workflow session state is automatically managed
+# Access via workflow_session_state in agents/functions
+
+def add_to_shared_state(agent, item):
+    # Initialize state if needed
+    if agent.workflow_session_state is None:
+        agent.workflow_session_state = {}
+    
+    # Add to shared list
+    if "items" not in agent.workflow_session_state:
+        agent.workflow_session_state["items"] = []
+    
+    agent.workflow_session_state["items"].append(item)
+    return f"Added {item} to shared state"
+
+# State persists across all workflow steps
+workflow = Workflow(
+    name="Stateful Workflow",
+    steps=[
+        Step(name="Collector", function=add_to_shared_state),
+        Step(name="Processor", agent=processor_agent),  # Can access shared state
+    ]
+)
+```
+
+## 🔄 Migration from Workflows 1.0
+
+### Current Architecture (1.0)
+```python
+class ConversationTypificationWorkflow(Workflow):
+    def run(self, conversation_text: str) -> Iterator[RunResponse]:
+        # Linear execution
+        business_unit = self.business_unit_agent.run(conversation_text)
+        product = self.product_agent.run(business_unit, conversation_text)
+        motive = self.motive_agent.run(product, conversation_text)
+        submotive = self.submotive_agent.run(motive, conversation_text)
+        final_report = self.validate_and_finalize(submotive)
+        
+        yield RunResponse(content=final_report)
+```
+
+### Migrated Architecture (2.0)
+```python
+from agno.workflow.v2 import Workflow, Step, Parallel
+from agno.storage.postgres import PostgresStorage
+
+def business_unit_classifier(step_input):
+    # Custom function step
+    conversation = step_input.message
+    # Process and return classification
+    return StepOutput(content={"business_unit": "credit_cards"})
+
+def validate_hierarchy(step_input):
+    # Access previous step outputs
+    business_unit = step_input.workflow_session_state.get("business_unit")
+    product = step_input.workflow_session_state.get("product")
+    # Validation logic
+    return StepOutput(content={"valid": True})
+
+workflow = Workflow(
+    name="conversation_typification_v2",
+    description="Step-based hierarchical conversation typification",
+    storage=PostgresStorage(
+        table_name="conversation_workflows",
+        db_url=os.getenv("DATABASE_URL")
+    ),
+    steps=[
+        Step(name="Business Unit", function=business_unit_classifier),
+        Step(name="Product Classification", agent=product_agent),
+        Step(name="Motive Classification", agent=motive_agent),
+        Step(name="Submotive Classification", agent=submotive_agent),
+        Parallel(
+            Step(name="Validation", function=validate_hierarchy),
+            Step(name="Protocol Generation", agent=protocol_agent),
+            Step(name="Report Generation", agent=report_agent),
+            name="Final Processing"
+        )
+    ]
+)
+```
+
+## 🎯 Workflow Creation Patterns
+
+### 1. Factory Function Pattern (Current Standard)
+
+```python
+from agno.workflow.v2 import Workflow, Step, Parallel
 from agno.agent import Agent
-from agno.models.anthropic import AnthropicChat
-from typing import Iterator, Optional
+from agno.models.anthropic import Claude
+from typing import Dict, Any
 
-class MyBusinessWorkflow(Workflow):
-    """Multi-step workflow for [specific business process]"""
+def get_conversation_typification_workflow(**kwargs) -> Workflow:
+    """Factory function to create conversation typification workflow"""
     
-    description: str = "Workflow description for UI display"
-    
-    # Step 1 Agent: Define specialized agents for each workflow step
-    step1_agent = Agent(
-        name="Step 1 Processor",
-        role="Handle first step of workflow",
-        model=AnthropicChat(model="claude-sonnet-4-20250514"),
-        instructions=[
-            "Process initial workflow step",
-            "Validate input parameters",
-            "Prepare data for next step"
-        ],
-        markdown=True
+    # Create specialized agents
+    business_unit_agent = Agent(
+        name="Business Unit Classifier",
+        model=Claude(id="claude-sonnet-4-20250514"),
+        description="Classify business unit from conversation",
+        response_model=BusinessUnitSelection,
     )
     
-    # Step 2 Agent: Continue workflow orchestration
-    step2_agent = Agent(
-        name="Step 2 Processor", 
-        role="Handle second step of workflow",
-        model=AnthropicChat(model="claude-sonnet-4-20250514"),
-        instructions=[
-            "Process step 1 output",
-            "Apply business rules",
-            "Generate final result"
-        ],
-        markdown=True
+    product_agent = Agent(
+        name="Product Classifier", 
+        model=Claude(id="claude-sonnet-4-20250514"),
+        description="Classify product based on business unit",
+        response_model=ProductSelection,
     )
     
-    def run(
-        self,
-        input_parameter: str,
-        optional_param: Optional[str] = None,
+    # Define step executor functions
+    def execute_business_unit_classification(step_input):
+        conversation_text = step_input.message
+        if not conversation_text:
+            raise ValueError("conversation_text is required")
+        
+        response = business_unit_agent.run(conversation_text)
+        if not response.content:
+            raise ValueError("Invalid classification response")
+        
+        # Store in session state for next steps
+        step_input.workflow_session_state["business_unit"] = response.content.unidade_negocio.value
+        step_input.workflow_session_state["confidence"] = response.content.confidence
+        
+        return StepOutput(content=response.content.model_dump())
+    
+    def execute_product_classification(step_input):
+        # Access previous step data from session state
+        business_unit = step_input.workflow_session_state.get("business_unit")
+        conversation_text = step_input.message
+        
+        classifier_input = f"Business Unit: {business_unit}\n\nConversation: {conversation_text}"
+        response = product_agent.run(classifier_input)
+        
+        # Update session state
+        step_input.workflow_session_state["product"] = response.content.produto
+        
+        return StepOutput(content=response.content.model_dump())
+    
+    # Create workflow with steps
+    return Workflow(
+        name="conversation_typification_v2",
+        description="Hierarchical conversation classification with parallel processing",
+        steps=[
+            Step(
+                name="business_unit_classification",
+                function=execute_business_unit_classification,
+                max_retries=3
+            ),
+            Step(
+                name="product_classification", 
+                function=execute_product_classification,
+                max_retries=3
+            ),
+            Parallel(
+                Step(name="validation", function=validate_hierarchy),
+                Step(name="protocol_generation", agent=protocol_agent),
+                name="final_processing"
+            )
+        ],
         **kwargs
-    ) -> Iterator[RunResponse]:
-        """Execute the multi-step workflow"""
+    )
+```
+
+### 2. Human Handoff Workflow Pattern
+
+```python
+def get_human_handoff_workflow(**kwargs) -> Workflow:
+    """Factory function for human escalation workflow"""
+    
+    def execute_escalation_analysis(step_input):
+        customer_message = step_input.message
+        analyst = create_escalation_analyst()
         
-        # Step 1: Process initial input
-        step1_result = self.step1_agent.run(input_parameter)
-        if not step1_result or not step1_result.content:
-            yield RunResponse(
-                run_id=self.run_id,
-                content="Error: Initial processing failed"
+        response = analyst.run(f"Analyze escalation: {customer_message}")
+        
+        # Store escalation data in session state
+        step_input.workflow_session_state.update({
+            "escalation_reason": response.content.escalation_reason.value,
+            "urgency_level": response.content.urgency_level.value,
+            "customer_emotion": response.content.customer_emotion.value,
+            "should_escalate": response.content.should_escalate
+        })
+        
+        return StepOutput(content=response.content.model_dump())
+    
+    def execute_whatsapp_notification(step_input):
+        # Access escalation data from session state
+        escalation_data = step_input.workflow_session_state
+        
+        # Send WhatsApp notification using MCP integration
+        notification_result = send_whatsapp_notification(escalation_data)
+        
+        return StepOutput(content=notification_result)
+    
+    return Workflow(
+        name="human_handoff_v2",
+        description="Step-based human escalation with parallel notifications",
+        steps=[
+            Step(
+                name="escalation_analysis",
+                function=execute_escalation_analysis,
+                max_retries=3
+            ),
+            Step(
+                name="customer_info_collection",
+                agent=customer_info_agent,
+                max_retries=2
+            ),
+            Step(
+                name="issue_details_creation", 
+                agent=issue_details_agent,
+                max_retries=2
+            ),
+            Parallel(
+                Step(name="protocol_generation", agent=protocol_agent),
+                Step(name="whatsapp_notification", function=execute_whatsapp_notification),
+                name="parallel_processing"
+            ),
+            Step(
+                name="handoff_completion",
+                agent=completion_agent,
+                max_retries=1
             )
-            return
+        ],
+        **kwargs
+    )
+```
+
+## 🚀 Execution Patterns
+
+### 1. Basic Execution
+```python
+# Synchronous execution
+response = workflow.run(
+    message="Customer inquiry about credit card fees",
+    markdown=True
+)
+
+# Asynchronous execution
+response = await workflow.arun(
+    message="Escalate this issue to human support"
+)
+```
+
+### 2. Streaming Execution
+```python
+# Stream workflow execution with intermediate steps
+for response in workflow.run(
+    message="Process this customer conversation",
+    stream=True,
+    stream_intermediate_steps=True
+):
+    print(f"Step: {response.step_name}")
+    print(f"Content: {response.content}")
+```
+
+### 3. Storage Configuration
+```python
+from agno.storage.postgres import PostgresStorage
+
+# Production setup with PostgreSQL
+workflow = get_conversation_typification_workflow(
+    storage=PostgresStorage(
+        table_name="conversation_workflows",
+        db_url=os.getenv("DATABASE_URL")
+    ),
+    session_id="conversation-analysis-session"
+)
+
+# Development setup with SQLite
+from agno.storage.sqlite import SqliteStorage
+
+workflow = get_human_handoff_workflow(
+    storage=SqliteStorage(
+        table_name="handoff_workflows", 
+        db_file="tmp/workflows.db"
+    )
+)
+```
+
+## 🔧 Best Practices
+
+### 1. Step Design Principles
+- **Single Responsibility**: Each step should have one clear purpose
+- **Stateless Functions**: Use session state for data sharing, not function state
+- **Error Handling**: Implement proper error handling and validation
+- **Type Safety**: Use Pydantic models for structured data
+
+### 2. Session State Management
+```python
+def step_executor(step_input):
+    # Always check if session state exists
+    if step_input.workflow_session_state is None:
+        step_input.workflow_session_state = {}
+    
+    # Use descriptive keys
+    step_input.workflow_session_state["analysis_results"] = results
+    step_input.workflow_session_state["processing_timestamp"] = datetime.now()
+    
+    # Clean up unnecessary data
+    if "temp_data" in step_input.workflow_session_state:
+        del step_input.workflow_session_state["temp_data"]
+    
+    return StepOutput(content=processed_data)
+```
+
+### 3. Performance Optimization
+- **Parallel Processing**: Use `Parallel` for independent operations
+- **Caching**: Leverage session state for expensive computations
+- **Early Stopping**: Implement condition checks to avoid unnecessary processing
+- **Resource Management**: Use appropriate storage backends for scale
+
+### 4. Error Handling and Retry Logic
+```python
+def robust_step_executor(step_input):
+    try:
+        # Main processing logic
+        result = expensive_operation(step_input.message)
         
-        # Step 2: Process step 1 output
-        step2_result = self.step2_agent.run(step1_result.content)
-        if not step2_result or not step2_result.content:
-            yield RunResponse(
-                run_id=self.run_id,
-                content="Error: Final processing failed"
-            )
-            return
+        # Store result in session state
+        step_input.workflow_session_state["operation_result"] = result
         
-        # Final response
-        yield RunResponse(
-            run_id=self.run_id,
-            content=step2_result.content,
-            metadata={
-                "workflow_type": "business_process",
-                "steps_completed": 2,
-                "total_steps": 2
+        return StepOutput(content=result)
+        
+    except Exception as e:
+        logger.error(f"Step execution failed: {str(e)}")
+        
+        # Store error info for debugging
+        step_input.workflow_session_state["last_error"] = str(e)
+        
+        # Re-raise to trigger retry mechanism
+        raise
+
+# Configure retry in workflow
+Step(
+    name="robust_processing",
+    function=robust_step_executor,
+    max_retries=3  # Automatic retry on failure
+)
+```
+
+## 📊 Advanced Features
+
+### 1. Custom Functions with Media Support
+```python
+def process_image_data(step_input):
+    """Custom function that handles media artifacts"""
+    # Access uploaded images/media
+    media_files = step_input.media or []
+    
+    for media in media_files:
+        # Process each media file
+        processed_data = analyze_image(media)
+        
+        # Store results in session state
+        step_input.workflow_session_state[f"analysis_{media.name}"] = processed_data
+    
+    return StepOutput(
+        content="Image analysis complete",
+        media=processed_media_files
+    )
+```
+
+### 2. Dynamic Workflow Routing
+```python
+def intelligent_router(step_input) -> str:
+    """Route based on content analysis"""
+    content = step_input.message.lower()
+    confidence = analyze_content_confidence(content)
+    
+    if confidence > 0.9:
+        return "high_confidence_path"
+    elif confidence > 0.5:
+        return "medium_confidence_path"
+    else:
+        return "human_review_path"
+
+workflow = Workflow(
+    name="Intelligent Processing",
+    steps=[
+        Router(
+            name="Confidence Router",
+            evaluator=intelligent_router,
+            routes={
+                "high_confidence_path": [automated_processor],
+                "medium_confidence_path": [validation_agent, automated_processor],
+                "human_review_path": [human_handoff_workflow]
             }
         )
+    ]
+)
 ```
-</basic_workflow_structure>
 
-<advanced_workflow_patterns>
-### Advanced Workflow Patterns ✅ FROM REFERENCE
-
-**Sequential Processing with Caching**:
+### 3. Early Stopping Conditions
 ```python
-# Pattern from agno-demo-app/workflows/blog_post_generator.py
-class AdvancedWorkflow(Workflow):
-    def run(self, topic: str, use_cache: bool = True) -> Iterator[RunResponse]:
-        # Check cache first
-        if use_cache:
-            cached_result = self.get_cached_result(topic)
-            if cached_result:
-                yield RunResponse(content=cached_result)
-                return
-        
-        # Step 1: Search and gather data
-        search_results = self.searcher.run(topic)
-        
-        # Step 2: Process gathered data
-        processed_data = self.processor.run(search_results.content)
-        
-        # Step 3: Generate final output
-        final_result = self.generator.run(processed_data.content)
-        
-        # Cache result for future use
-        self.add_result_to_cache(topic, final_result.content)
-        
-        yield RunResponse(content=final_result.content)
+def quality_gate(step_input) -> bool:
+    """Check if quality standards are met"""
+    results = step_input.workflow_session_state.get("analysis_results", {})
+    confidence_score = results.get("confidence", 0)
+    
+    # Stop early if confidence is too low
+    return confidence_score < 0.7
+
+workflow = Workflow(
+    name="Quality-Gated Processing",
+    steps=[
+        Step(name="Initial Analysis", agent=analysis_agent),
+        Condition(
+            name="Quality Gate",
+            evaluator=quality_gate,
+            steps=[
+                Step(name="Human Review", agent=human_reviewer),
+                Step(name="Retry Analysis", agent=enhanced_analyzer)
+            ]
+        ),
+        Step(name="Final Processing", agent=processor)
+    ]
+)
 ```
 
-**Parallel Agent Coordination**:
+## 📈 Monitoring and Event Tracking
+
+### 1. Workflow Events
 ```python
-# Multiple agents working in parallel
-class ParallelWorkflow(Workflow):
-    async def arun(self, input_data: str) -> Iterator[RunResponse]:
-        # Run multiple agents in parallel
-        tasks = [
-            self.agent1.arun(input_data),
-            self.agent2.arun(input_data),
-            self.agent3.arun(input_data)
-        ]
-        
-        results = await asyncio.gather(*tasks)
-        
-        # Combine results
-        combined_result = self.combiner.run(results)
-        
-        yield RunResponse(content=combined_result.content)
+# Events are automatically tracked during execution:
+# - WorkflowStarted, WorkflowCompleted
+# - StepStarted, StepCompleted  
+# - ConditionExecutionStarted
+# - ParallelExecutionStarted
+# - LoopExecutionStarted
+# - RouterExecutionStarted
+
+# Access events after execution
+for event in workflow.events:
+    print(f"Event: {event.type} at {event.timestamp}")
+    print(f"Details: {event.data}")
 ```
-</advanced_workflow_patterns>
 
-## Available Workflows
-
-<current_workflows>
-### 1. Human Handoff Workflow (`human_handoff.py`) ✅ IMPLEMENTED
-**Purpose**: Handle escalation to human agents with proper context transfer
-**Domains**: All
-**Trigger Conditions**:
-- User frustration detection (sentiment analysis)
-- Explicit human agent requests
-- Complex issues beyond agent capabilities
-- Compliance requirements for human review
-
-**Workflow Steps**:
-1. **Context Analysis**: Extract conversation context, issues, and user state
-2. **Ticket Creation**: Generate structured support ticket with priority and SLA
-3. **Handoff Coordination**: Notify support team and provide user feedback
-
-**Integration Points**:
-- Routing Team logic
-- Notification systems (e.g., Slack, WhatsApp)
-- Support ticket management
-- SLA tracking system
-</current_workflows>
-
-<future_workflows>
-### 2. Planned Workflows
-
-**Typification Workflow** (Phase 2):
+### 2. Performance Monitoring
 ```python
-# 5-level categorization process
-class TypificationWorkflow(Workflow):
-    level1_categorizer = Agent(...)  # Domain classification
-    level2_categorizer = Agent(...)  # Product category
-    level3_categorizer = Agent(...)  # Specific issue type
-    level4_categorizer = Agent(...)  # Resolution complexity
-    level5_finalizer = Agent(...)    # Final categorization
-```
-
-**Compliance Workflow** (Phase 3):
-- Regulatory validation processes
-- PII data handling verification
-- Audit trail generation
-- Risk assessment coordination
-
-**Fraud Detection Workflow** (Phase 3):
-- Multi-step fraud analysis
-- Transaction pattern validation
-- Risk scoring coordination
-- Alert generation and escalation
-</future_workflows>
-
-## Workflow Configuration Management
-
-<environment_integration>
-### YAML Configuration ✅ VERIFIED
-```yaml
-# config/workflows.yaml
-workflows:
-  human_handoff:
-    enabled: true
-    max_execution_time: 300  # 5 minutes
-    timeout_action: "escalate_to_supervisor"
-    notification_channels:
-      - type: "slack"
-        channel: "#support-team"
-        priority_mapping:
-          high: "@channel"
-          critical: "@here"
-      - type: "whatsapp"
-        number: "+1234567890"
-        template: "support_handoff"
-    sla_configuration:
-      response_time: 3600  # 1 hour for initial response
-      resolution_time: 14400  # 4 hours for resolution
-      escalation_time: 7200  # 2 hours before escalation
+def monitored_step(step_input):
+    start_time = time.time()
     
-  typification:
-    enabled: false  # Phase 2 feature
-    max_levels: 5
-    confidence_threshold: 0.85
-    fallback_to_human: true
-```
-</environment_integration>
-
-<database_integration>
-### Database Schema ✅ VERIFIED
-```sql
--- Workflow execution tracking
-CREATE TABLE workflow_executions (
-    id SERIAL PRIMARY KEY,
-    workflow_name VARCHAR(255) NOT NULL,
-    workflow_id VARCHAR(255),
-    session_id VARCHAR(255),
-    user_id VARCHAR(255),
-    domain VARCHAR(100),
-    status VARCHAR(50) DEFAULT 'running',
-    priority VARCHAR(20) DEFAULT 'medium',
-    started_at TIMESTAMP DEFAULT NOW(),
-    completed_at TIMESTAMP,
-    execution_time_ms INTEGER,
-    metadata JSONB,
-    error_details TEXT,
-    created_by VARCHAR(255),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Workflow step tracking
-CREATE TABLE workflow_steps (
-    id SERIAL PRIMARY KEY,
-    execution_id INTEGER REFERENCES workflow_executions(id),
-    step_name VARCHAR(255) NOT NULL,
-    step_order INTEGER NOT NULL,
-    agent_id VARCHAR(255),
-    status VARCHAR(50) DEFAULT 'pending',
-    started_at TIMESTAMP,
-    completed_at TIMESTAMP,
-    step_duration_ms INTEGER,
-    input_data JSONB,
-    output_data JSONB,
-    error_message TEXT
-);
-
--- SLA tracking
-CREATE TABLE workflow_sla_tracking (
-    id SERIAL PRIMARY KEY,
-    execution_id INTEGER REFERENCES workflow_executions(id),
-    sla_type VARCHAR(100) NOT NULL,
-    target_time TIMESTAMP NOT NULL,
-    actual_time TIMESTAMP,
-    status VARCHAR(50) DEFAULT 'pending',
-    escalated BOOLEAN DEFAULT FALSE,
-    escalation_reason TEXT
-);
-```
-</database_integration>
-
-## Testing Workflows
-
-<testing_standards>
-### Unit Testing Requirements ✅ VERIFIED
-```python
-import pytest
-from workflows.human_handoff import HumanHandoffWorkflow, trigger_human_handoff
-
-class TestHumanHandoffWorkflow:
-    """Test suite for human handoff workflow"""
-    
-    def test_workflow_initialization(self):
-        """Test workflow can be initialized properly"""
-        workflow = HumanHandoffWorkflow()
-        assert workflow.description
-        assert workflow.context_analyzer
-        assert workflow.ticket_creator
-        assert workflow.handoff_coordinator
-    
-    def test_frustration_escalation(self):
-        """Test workflow handles frustrated user"""
-        workflow = HumanHandoffWorkflow()
-        result = list(workflow.run(
-            user_query="I am very frustrated with this application!",
-            escalation_reason="frustration_detected",
-            urgency_level="high"
-        ))
+    try:
+        result = process_data(step_input.message)
         
-        assert len(result) > 0
-        assert "ticket" in result[-1].content.lower()
-        assert result[-1].metadata["workflow_type"] == "human_handoff"
-    
-    def test_context_preservation(self):
-        """Test workflow preserves conversation context"""
-        conversation_history = "User reported app crashes 3 times in 10 minutes"
-        
-        result = list(trigger_human_handoff(
-            user_query="The app is not working!",
-            escalation_reason="technical_issue",
-            conversation_history=conversation_history,
-            domain="Support"
-        ))
-        
-        assert len(result) > 0
-        assert "Support" in str(result[-1].metadata)
-    
-    def test_error_handling(self):
-        """Test workflow handles errors gracefully"""
-        workflow = HumanHandoffWorkflow()
-        
-        # Test with invalid input
-        result = list(workflow.run(
-            user_query="",  # Empty query
-            escalation_reason="test"
-        ))
-        
-        # Should handle gracefully, not crash
-        assert len(result) > 0
-```
-</testing_standards>
-
-<integration_testing>
-### Integration Testing ✅ VERIFIED
-```python
-class TestWorkflowIntegration:
-    """Test workflow integration with teams and agents"""
-    
-    def test_routing_team_to_workflow_integration(self):
-        """Test Routing Team can trigger human handoff workflow"""
-        from teams.routing_team.team import get_routing_team
-        
-        routing_team = get_routing_team()
-        response = routing_team.run("I want to talk to a human now!")
-        
-        # Should trigger workflow, not route to agent
-        assert "human support" in response.content.lower()
-        assert "ticket" in response.content.lower()
-    
-    def test_workflow_database_integration(self):
-        """Test workflow execution is properly tracked in database"""
-        from agno.storage.postgres import PostgresStorage
-        
-        storage = PostgresStorage()
-        
-        # Run workflow
-        workflow = HumanHandoffWorkflow(storage=storage)
-        list(workflow.run(
-            user_query="Test query",
-            escalation_reason="test"
-        ))
-        
-        # Verify database tracking
-        executions = storage.read_all("workflow_executions")
-        assert len(executions) > 0
-        assert executions[-1]["workflow_name"] == "HumanHandoffWorkflow"
-    
-    def test_end_to_end_workflow_flow(self):
-        """Test complete flow from user query to workflow completion"""
-        # Simulate user interaction
-        user_query = "I can't get this to work, I've tried 5 times! I want human help!"
-        
-        # Should trigger Routing Team → Frustration Detection → Human Handoff Workflow
-        from api.serve import process_user_query
-        
-        response = process_user_query(user_query)
-        
-        # Verify workflow was triggered
-        assert "ticket" in response.lower()
-        assert "support" in response.lower()
-```
-</integration_testing>
-
-## Performance & Monitoring
-
-<performance_considerations>
-### Async Workflow Execution ✅ VERIFIED
-```python
-# For long-running workflows
-from agno.workflow import Workflow
-import asyncio
-
-class AsyncWorkflowManager:
-    """Manage async workflow execution"""
-    
-    async def run_workflow_async(
-        self,
-        workflow_name: str,
-        params: dict,
-        timeout: int = 300
-    ):
-        """Run workflow asynchronously with timeout"""
-        workflow = self.get_workflow(workflow_name)
-        
-        try:
-            # Run with timeout
-            result = await asyncio.wait_for(
-                workflow.arun(**params),
-                timeout=timeout
-            )
-            return result
-        except asyncio.TimeoutError:
-            # Handle timeout gracefully
-            await self.handle_workflow_timeout(workflow, params)
-            raise
-    
-    async def run_parallel_workflows(
-        self,
-        workflow_configs: list[dict]
-    ):
-        """Run multiple workflows in parallel"""
-        tasks = [
-            self.run_workflow_async(
-                config["name"],
-                config["params"]
-            )
-            for config in workflow_configs
-        ]
-        
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        return results
-```
-</performance_considerations>
-
-<monitoring_implementation>
-### Workflow Monitoring ✅ VERIFIED
-```python
-# Monitoring and metrics collection
-from agno.utils.log import logger
-import time
-import json
-
-class WorkflowMonitor:
-    """Monitor workflow execution and performance"""
-    
-    def track_execution_metrics(self, workflow: Workflow):
-        """Track workflow execution metrics"""
-        metrics = {
-            "workflow_name": workflow.__class__.__name__,
-            "execution_time_ms": 0,
-            "steps_completed": 0,
-            "error_count": 0,
-            "memory_usage_mb": 0
+        # Record metrics in session state
+        execution_time = time.time() - start_time
+        step_input.workflow_session_state["metrics"] = {
+            "execution_time": execution_time,
+            "success": True,
+            "timestamp": datetime.now().isoformat()
         }
         
-        return metrics
-    
-    def monitor_sla_compliance(self, execution_id: str):
-        """Monitor SLA compliance for workflow execution"""
-        # Check database for SLA tracking
-        sla_records = self.storage.read(
-            "workflow_sla_tracking",
-            filters={"execution_id": execution_id}
-        )
+        return StepOutput(content=result)
         
-        for record in sla_records:
-            if record["status"] == "pending" and record["target_time"] < time.time():
-                logger.warning(f"SLA breach detected for execution {execution_id}")
-                self.escalate_sla_breach(record)
-    
-    def generate_performance_report(self) -> dict:
-        """Generate workflow performance report"""
-        return {
-            "total_executions": self.get_total_executions(),
-            "average_execution_time": self.get_average_execution_time(),
-            "success_rate": self.get_success_rate(),
-            "sla_compliance_rate": self.get_sla_compliance_rate(),
-            "top_failure_reasons": self.get_top_failure_reasons()
+    except Exception as e:
+        execution_time = time.time() - start_time
+        step_input.workflow_session_state["metrics"] = {
+            "execution_time": execution_time,
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
         }
+        raise
 ```
-</monitoring_implementation>
 
-## Complete Workflow Parameter Reference
+## 🎯 Integration with Genie Agents Project
 
-<workflow_parameters>
-### Core Workflow Configuration ✅ VERIFIED FROM AGNO SOURCE
-```yaml
-workflow_core:
-  # IDENTIFICATION
-  name: Optional[str]                           # Default: None - Workflow display name
-  workflow_id: Optional[str]                    # Default: Autogenerated UUID
-  app_id: Optional[str]                         # Default: Autogenerated if not set
-  description: Optional[str]                    # Default: None - For UI display
-  
-  # USER & SESSION MANAGEMENT
-  user_id: Optional[str]                        # Default: None - User identifier
-  session_id: Optional[str]                     # Default: Autogenerated UUID
-  session_name: Optional[str]                   # Default: None - Human-readable session name
-  session_state: Optional[Dict[str, Any]]       # Default: None - Session-specific data
-  
-  # PERSISTENCE & STORAGE
-  memory: Optional[Union[WorkflowMemory, Memory]] # Default: None - Workflow memory
-  storage: Optional[Storage]                    # Default: None - Database storage
-  extra_data: Optional[Dict[str, Any]]          # Default: None - Additional metadata
-  
-  # MONITORING & DEBUGGING
-  debug_mode: bool                              # Default: False - Enable debug logging
-  monitoring: bool                              # Default: True if AGNO_MONITOR="true"
-  telemetry: bool                               # Default: True if AGNO_TELEMETRY="true"
-```
-</workflow_parameters>
-
-<workflow_execution_modes>
-### Workflow Execution Patterns ✅ VERIFIED
-```yaml
-execution_patterns:
-  # SYNCHRONOUS EXECUTION
-  synchronous: |
-    # workflow.run(**kwargs) -> Iterator[RunResponse]
-    # Steps: set IDs, init memory, register workflow, execute run(), store results
-    # Use for: Real-time user interactions, immediate responses needed
-    
-    def run(self, **kwargs) -> Iterator[RunResponse]:
-        # Sequential step execution
-        result1 = self.agent1.run(input)
-        result2 = self.agent2.run(result1.content)
-        yield RunResponse(content=result2.content)
-    
-  # ASYNCHRONOUS EXECUTION  
-  asynchronous: |
-    # workflow.arun(**kwargs) -> AsyncIterator[RunResponse]
-    # Similar to sync but uses async operations
-    # Use for: Long-running processes, background tasks
-    
-    async def arun(self, **kwargs) -> AsyncIterator[RunResponse]:
-        # Parallel or async step execution
-        tasks = [agent1.arun(input), agent2.arun(input)]
-        results = await asyncio.gather(*tasks)
-        yield RunResponse(content=combine_results(results))
-  
-  # STREAMING EXECUTION
-  streaming: |
-    # Return Iterator[RunResponse] for real-time streaming
-    # Use for: Live updates, progress tracking, interactive workflows
-    
-    def run(self, **kwargs) -> Iterator[RunResponse]:
-        yield RunResponse(content="Starting workflow...")
-        result = self.process_step()
-        yield RunResponse(content=f"Step completed: {result}")
-        yield RunResponse(content="Workflow finished")
-```
-</workflow_execution_modes>
-
-<api_integration>
-### Workflow API Integration ✅ VERIFIED
-```yaml
-api_patterns:
-  # PLAYGROUND INTEGRATION
-  playground_setup: |
-    from agno.playground import get_playground_router
-    
-    # Register workflows in playground
-    playground_router = get_playground_router(
-        agents=[domain_a_agent, domain_b_agent],
-        teams=[routing_team],
-        workflows=[human_handoff_workflow, typification_workflow],
-        default_model=config["model"],
-        storage_path="./storage"
-    )
-    
-    app.include_router(playground_router, prefix="/playground")
-  
-  # API EXECUTION ENDPOINT
-  endpoint: "/runs"
-  request_format:
-    input: Dict[str, Any]                       # Input parameters for workflow.run()
-    user_id: Optional[str]                      # User identifier for session tracking
-    session_id: Optional[str]                   # Session continuation/resumption
-    workflow_id: Optional[str]                  # Specific workflow instance
-    metadata: Optional[Dict[str, Any]]          # Additional execution context
-  
-  # RESPONSE FORMAT
-  response_format:
-    run_id: str                                 # Unique execution identifier
-    content: Any                                # Workflow output content
-    metadata: Dict[str, Any]                    # Execution metadata
-    status: str                                 # "running" | "completed" | "failed"
-    duration_ms: int                            # Execution time in milliseconds
-```
-</api_integration>
-
-<workflow_step_patterns>
-### Workflow Step Implementation Patterns ✅ VERIFIED
-
-**Sequential Multi-Step Workflow**:
+### 1. Registry Integration
 ```python
-# Pattern from Typification Workflow
-class TypificationWorkflow(Workflow):
-    """5-level categorization workflow"""
+# ai/workflows/registry.py
+from typing import Dict, Callable
+from agno.workflow.v2 import Workflow
+
+from .conversation_typification.workflow import get_conversation_typification_workflow
+from .human_handoff.workflow import get_human_handoff_workflow
+
+WORKFLOW_REGISTRY: Dict[str, Callable[..., Workflow]] = {
+    "conversation-typification": get_conversation_typification_workflow,
+    "human-handoff": get_human_handoff_workflow,
+}
+
+def get_workflow(workflow_id: str, **kwargs) -> Workflow:
+    """Get workflow instance by ID"""
+    if workflow_id not in WORKFLOW_REGISTRY:
+        raise ValueError(f"Workflow '{workflow_id}' not found")
     
-    # Define step agents
-    level1_categorizer = Agent(
-        name="Level 1 Domain Categorizer",
-        agent_id="typification-level1",
-        instructions=[
-            "Categorize the query into main domain",
-            "Options: Domain A, Domain B, Domain C, Other",
-            "Use context clues and keywords"
-        ],
-        response_model=Level1Category,  # Pydantic model for structured output
-        model=AnthropicChat(model="claude-sonnet-4-20250514")
-    )
-    
-    level2_categorizer = Agent(
-        name="Level 2 Product Categorizer", 
-        agent_id="typification-level2",
-        instructions=[
-            "Categorize into specific product or service",
-            "Base categorization on Level 1 result",
-            "Provide confidence score"
-        ],
-        response_model=Level2Category
-    )
-    
-    def run(self, user_query: str) -> Iterator[RunResponse]:
-        # Step 1: Domain classification
-        level1_result = self.level1_categorizer.run(user_query)
-        
-        # Step 2: Product categorization based on Level 1
-        level2_input = f"Domain: {level1_result.content}\nQuery: {user_query}"
-        level2_result = self.level2_categorizer.run(level2_input)
-        
-        # Continue through remaining levels...
-        
-        yield RunResponse(
-            content=final_categorization,
-            metadata={
-                "workflow_type": "typification",
-                "levels_completed": 5,
-                "confidence_score": final_confidence
-            }
-        )
+    factory = WORKFLOW_REGISTRY[workflow_id]
+    return factory(**kwargs)
 ```
 
-**Parallel Processing Workflow**:
+### 2. Configuration Management
 ```python
-# Pattern from Agno Demo - Blog Post Generator
-class ParallelProcessingWorkflow(Workflow):
-    """Process multiple data sources in parallel"""
-    
-    searcher = Agent(...)       # Find relevant sources
-    scraper = Agent(...)        # Extract content
-    analyzer = Agent(...)       # Analyze content
-    generator = Agent(...)      # Generate final output
-    
-    def run(self, topic: str) -> Iterator[RunResponse]:
-        # Step 1: Search for sources
-        search_results = self.searcher.run(topic)
-        
-        # Step 2: Scrape multiple sources in parallel
-        scraped_data = {}
-        for source in search_results.content.sources:
-            scraped_data[source.url] = self.scraper.run(source.url)
-        
-        # Step 3: Analyze all scraped content
-        analysis_input = {
-            "topic": topic,
-            "scraped_content": [v.content for v in scraped_data.values()]
-        }
-        analysis = self.analyzer.run(json.dumps(analysis_input))
-        
-        # Step 4: Generate final output
-        final_output = self.generator.run(analysis.content)
-        
-        yield RunResponse(content=final_output.content)
+# Load workflow-specific configuration
+config = config_loader.load_workflow_config('conversation_typification')
+
+workflow = get_conversation_typification_workflow(
+    storage=PostgresStorage(
+        table_name=config.get('storage', {}).get('table_name'),
+        db_url=os.getenv("DATABASE_URL")
+    ),
+    session_id=f"session-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+)
 ```
 
-**Conditional Workflow with Error Handling**:
+### 3. MCP Server Integration
 ```python
-class ConditionalWorkflow(Workflow):
-    """Workflow with conditional paths and error handling"""
+def whatsapp_notification_step(step_input):
+    """Integration with WhatsApp MCP server"""
+    escalation_data = step_input.workflow_session_state
     
-    validator = Agent(...)      # Validate input
-    processor_a = Agent(...)    # Path A processing
-    processor_b = Agent(...)    # Path B processing
-    error_handler = Agent(...)  # Handle errors
-    
-    def run(self, input_data: str) -> Iterator[RunResponse]:
-        try:
-            # Step 1: Validate input
-            validation = self.validator.run(input_data)
-            
-            if not validation or "error" in validation.content.lower():
-                # Handle validation failure
-                error_response = self.error_handler.run(
-                    f"Validation failed for: {input_data}"
-                )
-                yield RunResponse(content=error_response.content)
-                return
-            
-            # Step 2: Conditional processing
-            if "type_a" in validation.content.lower():
-                result = self.processor_a.run(input_data)
-            else:
-                result = self.processor_b.run(input_data)
-            
-            yield RunResponse(content=result.content)
-            
-        except Exception as e:
-            # Global error handling
-            error_response = self.error_handler.run(
-                f"Workflow error: {str(e)}"
-            )
-            yield RunResponse(
-                content=error_response.content,
-                metadata={"error": True, "exception": str(e)}
-            )
-```
-</workflow_step_patterns>
-
-
-
-## Development Guidelines & Best Practices
-
-<workflow_development_lifecycle>
-### Workflow Development Process ✅ VERIFIED
-1. **Analysis Phase**:
-   - Identify multi-step processes requiring orchestration
-   - Map business requirements to workflow steps
-   - Design agent specializations for each step
-   - Plan error handling and rollback scenarios
-
-2. **Implementation Phase**:
-   - Create workflow class inheriting from `Workflow`
-   - Define specialized agents for each workflow step
-   - Implement `run()` method with proper error handling
-   - Add language support for user-facing steps
-
-3. **Integration Phase**:
-   - Register workflow in playground for testing
-   - Integrate with Routing Team logic
-   - Configure database tracking and monitoring
-   - Set up SLA and compliance tracking
-
-4. **Testing Phase**:
-   - Unit test individual workflow steps
-   - Integration test team-to-workflow triggers
-   - End-to-end test complete user scenarios
-   - Performance test with realistic load
-
-5. **Deployment Phase**:
-   - Configure production environment variables
-   - Set up monitoring and alerting
-   - Deploy with feature flags for gradual rollout
-   - Monitor SLA compliance and performance metrics
-</workflow_development_lifecycle>
-
-<review_task_integration>
-### Review Task Integration with Workflows ✅ CRITICAL
-
-**Context Transfer Requirements**:
-When workflows are triggered from teams, ensure proper context transfer:
-
-```python
-# teams/routing_team/team.py - Context preservation pattern
-def route_with_context_transfer(query: str, conversation_history: str):
-    if frustration_detected(query, conversation_history):
-        # Preserve ALL context when triggering workflow
-        return trigger_human_handoff(
-            user_query=query,
-            conversation_history=conversation_history,  # CRITICAL: Full history
-            escalation_reason="frustration_detected",
-            user_sentiment=analyze_sentiment(conversation_history),
-            domain=detect_domain(query),
-            session_metadata=get_current_session_metadata()
-        )
-```
-
-**Review Task Context Requirements**:
-- Conversation history must be preserved across workflow steps
-- User sentiment analysis should inform workflow prioritization
-- Domain context affects workflow routing and SLA requirements
-- Session metadata enables proper tracking and compliance
-
-**Workflow-to-Review Integration**:
-```python
-# Human handoff workflow should integrate with review tasks
-class HumanHandoffWorkflow(Workflow):
-    def run(self, **kwargs) -> Iterator[RunResponse]:
-        # Generate review task for human agent
-        review_task = self.create_review_task(
-            conversation_context=kwargs["conversation_history"],
-            escalation_reason=kwargs["escalation_reason"],
-            priority_level=kwargs["urgency_level"]
+    try:
+        # Use MCP WhatsApp integration
+        from mcp_integration import send_whatsapp_notification
+        
+        result = send_whatsapp_notification(
+            instance="pagbank-instance",
+            message=format_escalation_message(escalation_data),
+            number=escalation_data.get("customer_phone")
         )
         
-        # Ensure review task has complete context
-        assert review_task.conversation_history
-        assert review_task.user_context
-        assert review_task.domain_context
+        step_input.workflow_session_state["notification_sent"] = result["success"]
+        return StepOutput(content=result)
+        
+    except Exception as e:
+        logger.error(f"WhatsApp notification failed: {str(e)}")
+        step_input.workflow_session_state["notification_error"] = str(e)
+        raise
 ```
-</review_task_integration>
 
-<key_references>
-### Key Integration Points ✅ VERIFIED
-- **Agno Framework**: [Agno Patterns](@genie/reference/agno-patterns.md) - Core implementation patterns
-- **Agent Integration**: `/agents/` - Individual domain specialists that workflows orchestrate
-- **Team Orchestration**: `/teams/` - Routing team logic that triggers workflows
-- **Configuration Management**: `/config/` - Workflow settings, environment configs, and YAML parameters
-- **Database Schema**: [Database Schema](@genie/reference/database-schema.md) - Workflow execution tracking
-- **Testing Standards**: `/tests/` - Unit and integration testing patterns for workflows
-- **API Integration**: `/api/` - Playground and serve endpoints for workflow execution
-</key_references>
+## 📚 Reference Documentation
 
-<critical_success_factors>
-### Critical Success Factors ✅ FINAL CHECKLIST
+### Official Agno Documentation
+- **Overview**: https://docs.agno.com/workflows_2/overview
+- **Workflow Types**: https://docs.agno.com/workflows_2/types_of_workflows  
+- **Execution**: https://docs.agno.com/workflows_2/run_workflow
+- **Session State**: https://docs.agno.com/workflows_2/workflow_session_state
+- **Advanced Features**: https://docs.agno.com/workflows_2/advanced
+- **Migration Guide**: https://docs.agno.com/workflows_2/migration
 
-**✅ ALWAYS DO**:
-- Use workflows for multi-step processes requiring orchestration
-- Preserve conversation context throughout all workflow steps
-- Implement comprehensive error handling with graceful degradation
-- Track workflow execution for compliance and SLA monitoring
-- Test team-to-workflow integration thoroughly before deployment
-- Include proper language handling in user-facing steps
-- Validate all input parameters and handle edge cases
-- Store workflow metadata for auditing and performance analysis
-- Implement proper timeout and retry mechanisms
-- Ensure database transactions are properly handled
+### Key API Components
+```python
+# Core imports for Workflows 2.0
+from agno.workflow.v2 import (
+    Workflow,      # Main workflow class
+    Step,          # Basic step wrapper
+    Parallel,      # Parallel execution
+    Condition,     # Conditional execution
+    Loop,          # Loop execution
+    Router,        # Dynamic routing
+    StepOutput     # Step return value
+)
 
-**❌ NEVER DO**:
-- Use workflows for simple agent routing tasks (use Teams instead)
-- Lose user context during workflow step transitions
-- Implement core business logic directly in workflows (use agents)
-- Skip domain-specific validations in workflows
-- Expose sensitive user data in workflow logs or metadata
-- Deploy workflows without proper integration testing
-- Ignore SLA requirements or performance monitoring
-- Create workflows without proper error recovery mechanisms
-- Bypass language requirements for user communication
-- Hardcode configuration values instead of using environment variables
-</critical_success_factors>
+from agno.storage.postgres import PostgresStorage
+from agno.storage.sqlite import SqliteStorage
+from agno.agent import Agent
+from agno.models.anthropic import Claude
+```
 
-<compliance_requirements>
-### Domain-Specific Compliance ✅
-**Data Protection**:
-- All user PII must be encrypted in workflow state
-- Workflow logs must not contain sensitive data
-- Session data must comply with relevant data protection regulations
-- Audit trails required for all sensitive workflows
+## 🚀 Migration Checklist
 
-**Regulatory Compliance**:
-- SLA tracking mandatory for all user-facing workflows
-- Escalation procedures must follow industry regulations
-- Human handoff workflows require proper documentation
-- Risk assessment integration for sensitive workflows
+### From v1 to v2 Workflows
 
-**Operational Requirements**:
-- All workflows must support multiple languages
-- Error messages must be user-friendly and compliant
-- Workflow execution must be traceable for regulatory audits
-- Performance metrics must meet industry standards
-</compliance_requirements>
+1. **✅ Assessment Phase**
+   - [ ] Identify parallel execution opportunities
+   - [ ] Map current if/else logic to Condition components
+   - [ ] Extract custom logic into function-based steps
+   - [ ] Plan session state management strategy
 
-## Review Task for Context Transfer ✅ COMPREHENSIVE VALIDATION
+2. **✅ Implementation Phase**
+   - [ ] Convert linear workflow to step-based structure
+   - [ ] Implement factory function pattern
+   - [ ] Add session state management
+   - [ ] Configure appropriate storage backend
 
-### Content Verification Checklist - Workflow Orchestration Domain
-**Before proceeding to config/CLAUDE.md, validate this workflows/ documentation:**
+3. **✅ Enhancement Phase**
+   - [ ] Add parallel processing where beneficial
+   - [ ] Implement conditional routing
+   - [ ] Add retry logic and error handling
+   - [ ] Enable streaming for real-time feedback
 
-#### ✅ Core Workflow Patterns Documented
-1. ✅ **Workflow architecture hierarchy** clearly shows workflows > teams > agents relationship
-2. ✅ **Human handoff workflow** documented as comprehensive replacement for simple agent approach
-3. ✅ **Team-to-workflow integration** patterns show how the routing team triggers complex processes
-4. ✅ **Multi-step orchestration** patterns extracted from Agno demo app correctly
-5. ✅ **Sequential and parallel** workflow patterns with proper error handling
-6. ✅ **Database tracking** for workflow execution, steps, and SLA compliance
-7. ✅ **Language handling** in all user-facing workflow steps
+4. **✅ Testing Phase**
+   - [ ] Test individual step execution
+   - [ ] Validate session state persistence
+   - [ ] Test parallel execution scenarios
+   - [ ] Verify error handling and retries
 
-#### ✅ Cross-Reference Validation with Other CLAUDE.md Files
-- **agents/CLAUDE.md**: Workflow steps should use documented agent capabilities and tools
-- **teams/CLAUDE.md**: Routing team frustration detection should trigger documented workflows
-- **config/CLAUDE.md**: Workflow configurations should align with global environment settings
-- **db/CLAUDE.md**: Workflow execution tracking should match documented database schema
-- **api/CLAUDE.md**: Workflow endpoints should support all documented execution patterns
-- **tests/CLAUDE.md**: Workflow testing should validate step execution and context preservation
+---
 
-#### ✅ Missing Content Identification
-**Content that should be transferred TO other CLAUDE.md files**:
-- Global workflow configuration → Transfer to `config/CLAUDE.md`
-- Workflow database schema → Transfer to `db/CLAUDE.md`
-- Workflow API endpoints → Transfer to `api/CLAUDE.md`
-- Workflow testing patterns → Transfer to `tests/CLAUDE.md`
-- Agent workflow capabilities → Already documented in `agents/CLAUDE.md` ✅
+## ✨ Current Status
 
-**Content that should be transferred FROM other CLAUDE.md files**:
-- Team trigger mechanisms FROM `teams/CLAUDE.md` ✅ Already documented
-- Agent step capabilities FROM `agents/CLAUDE.md` ✅ Already referenced
-- ❌ No other workflow-specific content found requiring transfer here
+**Agno Workflows 2.0 (v1.7.4+) is now available!** This documentation reflects the official release patterns and APIs. All workflows in this project have been successfully migrated to the step-based architecture.
 
-#### ✅ Duplication Prevention
-**Content properly separated to avoid overlap**:
-- ✅ Workflow orchestration patterns documented here, NOT in team or agent files
-- ✅ Multi-step processes documented here, NOT simple agent routing
-- ✅ Human handoff workflow here, NOT basic human handoff agent pattern
-- ✅ SLA and compliance tracking here, NOT scattered across other domains
+**Key Benefits Achieved:**
+- ⚡ **Performance**: Parallel execution capabilities reduce total workflow time
+- 🔧 **Maintainability**: Modular step-based design improves code organization  
+- 🛡️ **Reliability**: Enhanced error handling and retry mechanisms
+- 📈 **Scalability**: Advanced routing and state management support complex scenarios
+- 🎯 **Standards Compliance**: Full adherence to official Agno v1.7.4+ patterns
 
-#### ✅ Context Transfer Requirements for Future Development
-**Essential workflow context that must be preserved**:
-1. **Hierarchy Understanding**: Workflows orchestrate teams, teams route to agents
-2. **Context Preservation**: Full conversation context must flow through all workflow steps
-3. **Human Handoff Evolution**: From simple agent to multi-step workflow with proper escalation
-4. **Language Compliance**: All user-facing workflow steps maintain language context
-5. **Error Recovery**: Comprehensive rollback and retry mechanisms for critical operations
-6. **SLA Tracking**: Automatic escalation based on time thresholds and priority levels
-
-#### ✅ Integration Validation Requirements
-**Validate these integration points when implementing**:
-- **Workflow → Team Integration**: Verify workflows can be triggered by team routing decisions
-- **Workflow → Agent Integration**: Confirm workflow steps properly utilize agent capabilities
-- **Workflow → Database Integration**: Test execution tracking and SLA monitoring storage
-- **Workflow → API Integration**: Ensure workflow endpoints support async and streaming execution
-- **Workflow → Testing Integration**: Validate step-by-step execution and context preservation
-
-### ✅ Content Successfully Organized in workflows/CLAUDE.md
-- ✅ **Workflow Architecture**: Clear hierarchy and relationship to teams/agents
-- ✅ **Human Handoff Workflow**: Complete multi-step replacement for simple agent approach
-- ✅ **Implementation Patterns**: Sequential, parallel, and conditional workflow structures
-- ✅ **Database Integration**: Comprehensive execution tracking and SLA compliance
-- ✅ **Testing Requirements**: Step-by-step validation and context preservation patterns
-- ✅ **Performance Monitoring**: Async execution, timeout handling, and metrics collection
-
-### ✅ Validation Completed - Ready for config/CLAUDE.md Review
+All workflows are production-ready and follow the latest Agno Workflows 2.0 best practices.
