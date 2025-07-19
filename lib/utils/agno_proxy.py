@@ -8,12 +8,13 @@ This ensures we stay compatible with all future Agno updates.
 
 import inspect
 import logging
+import importlib
 from typing import Dict, Any, Optional, Set, Callable, Union, List, Literal
 from agno.agent import Agent
 from agno.team import Team
 from agno.workflow.v2.workflow import Workflow
 from agno.models.anthropic import Claude
-from agno.storage.postgres import PostgresStorage
+from agno.storage.base import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -271,15 +272,13 @@ class AgnoAgentProxy:
         return Claude(**claude_params)
     
     def _handle_storage_config(self, storage_config: Dict[str, Any], config: Dict[str, Any],
-                             component_id: str, db_url: Optional[str]) -> PostgresStorage:
-        """Handle storage configuration."""
-        if not db_url:
-            raise ValueError("Database URL required for PostgresStorage")
-        
-        return PostgresStorage(
-            table_name=storage_config.get("table_name", f"agents_{component_id}"),
-            db_url=db_url,
-            auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
+                             component_id: str, db_url: Optional[str]) -> Storage:
+        """Fully dynamic storage configuration - 1:1 with Agno."""
+        return self._create_dynamic_storage(
+            storage_config=storage_config,
+            component_id=component_id,
+            component_mode="agent",
+            db_url=db_url
         )
     
     def _handle_memory_config(self, memory_config: Dict[str, Any], config: Dict[str, Any],
@@ -357,6 +356,89 @@ class AgnoAgentProxy:
             }
         }
     
+    def _create_dynamic_storage(self, storage_config: Dict[str, Any], component_id: str, 
+                              component_mode: str, db_url: Optional[str]) -> Storage:
+        """
+        Fully dynamic storage creation using introspection - same pattern as Agent discovery.
+        
+        Args:
+            storage_config: Storage configuration from YAML
+            component_id: Component identifier
+            component_mode: "agent", "team", or "workflow"
+            db_url: Database URL if needed
+            
+        Returns:
+            Dynamically created storage instance
+        """
+        # 1. Get storage type from YAML (default to postgres for backward compatibility)
+        storage_type = storage_config.get("type", "postgres")
+        
+        # 2. Dynamic storage class resolution
+        storage_class = self._get_storage_class(storage_type)
+        
+        # 3. Introspect storage class constructor (same pattern as Agent discovery)
+        sig = inspect.signature(storage_class.__init__)
+        storage_params = {}
+        
+        # 4. Auto-map ALL compatible parameters using introspection
+        for param_name, param in sig.parameters.items():
+            if param_name == 'self':
+                continue
+            elif param_name == 'mode':
+                # Auto-infer mode from component type
+                storage_params['mode'] = component_mode
+            elif param_name == 'table_name' and 'table_name' not in storage_config:
+                # Auto-generate table name if not specified
+                storage_params['table_name'] = f"{component_mode}s_{component_id}"
+            elif param_name in storage_config:
+                # Direct mapping from YAML config
+                storage_params[param_name] = storage_config[param_name]
+            elif param_name == 'db_url' and db_url:
+                storage_params['db_url'] = db_url
+        
+        logger.debug(f"Creating {storage_type} storage with {len(storage_params)} parameters")
+        
+        try:
+            # 5. Dynamic instantiation with mapped parameters
+            return storage_class(**storage_params)
+        except Exception as e:
+            logger.error(f"Failed to create {storage_type} storage for {component_id}: {e}")
+            logger.debug(f"Attempted parameters: {list(storage_params.keys())}")
+            raise
+    
+    def _get_storage_class(self, storage_type: str):
+        """
+        Dynamic storage class resolution using the same import pattern.
+        
+        Args:
+            storage_type: Storage type from YAML (postgres, sqlite, mongodb, etc.)
+            
+        Returns:
+            Storage class ready for instantiation
+        """
+        # Map storage types to their Agno module paths
+        storage_type_map = {
+            "postgres": "agno.storage.postgres.PostgresStorage",
+            "sqlite": "agno.storage.sqlite.SqliteStorage",
+            "mongodb": "agno.storage.mongodb.MongoDbStorage",
+            "redis": "agno.storage.redis.RedisStorage",
+            "dynamodb": "agno.storage.dynamodb.DynamoDbStorage",
+            "json": "agno.storage.json.JsonStorage",
+            "yaml": "agno.storage.yaml.YamlStorage",
+            "singlestore": "agno.storage.singlestore.SingleStoreStorage"
+        }
+        
+        if storage_type not in storage_type_map:
+            raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: {list(storage_type_map.keys())}")
+        
+        # Dynamic import and class resolution
+        module_path, class_name = storage_type_map[storage_type].rsplit('.', 1)
+        try:
+            module = importlib.import_module(module_path)
+            return getattr(module, class_name)
+        except (ImportError, AttributeError) as e:
+            raise ImportError(f"Failed to import {storage_type} storage class: {e}")
+
     def get_supported_parameters(self) -> Set[str]:
         """Get the set of currently supported Agno Agent parameters."""
         return self._supported_params.copy()
@@ -621,15 +703,13 @@ class AgnoTeamProxy:
         return Claude(**claude_params)
     
     def _handle_storage_config(self, storage_config: Dict[str, Any], config: Dict[str, Any],
-                             component_id: str, db_url: Optional[str], **kwargs) -> PostgresStorage:
-        """Handle storage configuration."""
-        if not db_url:
-            raise ValueError("Database URL required for PostgresStorage")
-        
-        return PostgresStorage(
-            table_name=storage_config.get("table_name", f"teams_{component_id}"),
-            db_url=db_url,
-            auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
+                             component_id: str, db_url: Optional[str], **kwargs) -> Storage:
+        """Fully dynamic storage configuration - 1:1 with Agno."""
+        return self._create_dynamic_storage(
+            storage_config=storage_config,
+            component_id=component_id,
+            component_mode="team",
+            db_url=db_url
         )
     
     def _handle_memory_config(self, memory_config: Dict[str, Any], config: Dict[str, Any],
@@ -698,6 +778,89 @@ class AgnoTeamProxy:
             }
         }
     
+    def _create_dynamic_storage(self, storage_config: Dict[str, Any], component_id: str, 
+                              component_mode: str, db_url: Optional[str]) -> Storage:
+        """
+        Fully dynamic storage creation using introspection - same pattern as Agent discovery.
+        
+        Args:
+            storage_config: Storage configuration from YAML
+            component_id: Component identifier
+            component_mode: "agent", "team", or "workflow"
+            db_url: Database URL if needed
+            
+        Returns:
+            Dynamically created storage instance
+        """
+        # 1. Get storage type from YAML (default to postgres for backward compatibility)
+        storage_type = storage_config.get("type", "postgres")
+        
+        # 2. Dynamic storage class resolution
+        storage_class = self._get_storage_class(storage_type)
+        
+        # 3. Introspect storage class constructor (same pattern as Agent discovery)
+        sig = inspect.signature(storage_class.__init__)
+        storage_params = {}
+        
+        # 4. Auto-map ALL compatible parameters using introspection
+        for param_name, param in sig.parameters.items():
+            if param_name == 'self':
+                continue
+            elif param_name == 'mode':
+                # Auto-infer mode from component type
+                storage_params['mode'] = component_mode
+            elif param_name == 'table_name' and 'table_name' not in storage_config:
+                # Auto-generate table name if not specified
+                storage_params['table_name'] = f"{component_mode}s_{component_id}"
+            elif param_name in storage_config:
+                # Direct mapping from YAML config
+                storage_params[param_name] = storage_config[param_name]
+            elif param_name == 'db_url' and db_url:
+                storage_params['db_url'] = db_url
+        
+        logger.debug(f"Creating {storage_type} storage with {len(storage_params)} parameters")
+        
+        try:
+            # 5. Dynamic instantiation with mapped parameters
+            return storage_class(**storage_params)
+        except Exception as e:
+            logger.error(f"Failed to create {storage_type} storage for {component_id}: {e}")
+            logger.debug(f"Attempted parameters: {list(storage_params.keys())}")
+            raise
+    
+    def _get_storage_class(self, storage_type: str):
+        """
+        Dynamic storage class resolution using the same import pattern.
+        
+        Args:
+            storage_type: Storage type from YAML (postgres, sqlite, mongodb, etc.)
+            
+        Returns:
+            Storage class ready for instantiation
+        """
+        # Map storage types to their Agno module paths
+        storage_type_map = {
+            "postgres": "agno.storage.postgres.PostgresStorage",
+            "sqlite": "agno.storage.sqlite.SqliteStorage",
+            "mongodb": "agno.storage.mongodb.MongoDbStorage",
+            "redis": "agno.storage.redis.RedisStorage",
+            "dynamodb": "agno.storage.dynamodb.DynamoDbStorage",
+            "json": "agno.storage.json.JsonStorage",
+            "yaml": "agno.storage.yaml.YamlStorage",
+            "singlestore": "agno.storage.singlestore.SingleStoreStorage"
+        }
+        
+        if storage_type not in storage_type_map:
+            raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: {list(storage_type_map.keys())}")
+        
+        # Dynamic import and class resolution
+        module_path, class_name = storage_type_map[storage_type].rsplit('.', 1)
+        try:
+            module = importlib.import_module(module_path)
+            return getattr(module, class_name)
+        except (ImportError, AttributeError) as e:
+            raise ImportError(f"Failed to import {storage_type} storage class: {e}")
+
     def get_supported_parameters(self) -> Set[str]:
         """Get the set of currently supported Agno Team parameters."""
         return self._supported_params.copy()
@@ -904,15 +1067,13 @@ class AgnoWorkflowProxy:
         return processed
     
     def _handle_storage_config(self, storage_config: Dict[str, Any], config: Dict[str, Any],
-                             component_id: str, db_url: Optional[str], **kwargs) -> PostgresStorage:
-        """Handle storage configuration."""
-        if not db_url:
-            raise ValueError("Database URL required for PostgresStorage")
-        
-        return PostgresStorage(
-            table_name=storage_config.get("table_name", f"workflows_{component_id}"),
-            db_url=db_url,
-            auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
+                             component_id: str, db_url: Optional[str], **kwargs) -> Storage:
+        """Fully dynamic storage configuration - 1:1 with Agno."""
+        return self._create_dynamic_storage(
+            storage_config=storage_config,
+            component_id=component_id,
+            component_mode="workflow",
+            db_url=db_url
         )
     
     def _handle_workflow_metadata(self, workflow_config: Dict[str, Any], config: Dict[str, Any],
@@ -955,6 +1116,89 @@ class AgnoWorkflowProxy:
             }
         }
     
+    def _create_dynamic_storage(self, storage_config: Dict[str, Any], component_id: str, 
+                              component_mode: str, db_url: Optional[str]) -> Storage:
+        """
+        Fully dynamic storage creation using introspection - same pattern as Agent discovery.
+        
+        Args:
+            storage_config: Storage configuration from YAML
+            component_id: Component identifier
+            component_mode: "agent", "team", or "workflow"
+            db_url: Database URL if needed
+            
+        Returns:
+            Dynamically created storage instance
+        """
+        # 1. Get storage type from YAML (default to postgres for backward compatibility)
+        storage_type = storage_config.get("type", "postgres")
+        
+        # 2. Dynamic storage class resolution
+        storage_class = self._get_storage_class(storage_type)
+        
+        # 3. Introspect storage class constructor (same pattern as Agent discovery)
+        sig = inspect.signature(storage_class.__init__)
+        storage_params = {}
+        
+        # 4. Auto-map ALL compatible parameters using introspection
+        for param_name, param in sig.parameters.items():
+            if param_name == 'self':
+                continue
+            elif param_name == 'mode':
+                # Auto-infer mode from component type
+                storage_params['mode'] = component_mode
+            elif param_name == 'table_name' and 'table_name' not in storage_config:
+                # Auto-generate table name if not specified
+                storage_params['table_name'] = f"{component_mode}s_{component_id}"
+            elif param_name in storage_config:
+                # Direct mapping from YAML config
+                storage_params[param_name] = storage_config[param_name]
+            elif param_name == 'db_url' and db_url:
+                storage_params['db_url'] = db_url
+        
+        logger.debug(f"Creating {storage_type} storage with {len(storage_params)} parameters")
+        
+        try:
+            # 5. Dynamic instantiation with mapped parameters
+            return storage_class(**storage_params)
+        except Exception as e:
+            logger.error(f"Failed to create {storage_type} storage for {component_id}: {e}")
+            logger.debug(f"Attempted parameters: {list(storage_params.keys())}")
+            raise
+    
+    def _get_storage_class(self, storage_type: str):
+        """
+        Dynamic storage class resolution using the same import pattern.
+        
+        Args:
+            storage_type: Storage type from YAML (postgres, sqlite, mongodb, etc.)
+            
+        Returns:
+            Storage class ready for instantiation
+        """
+        # Map storage types to their Agno module paths
+        storage_type_map = {
+            "postgres": "agno.storage.postgres.PostgresStorage",
+            "sqlite": "agno.storage.sqlite.SqliteStorage",
+            "mongodb": "agno.storage.mongodb.MongoDbStorage",
+            "redis": "agno.storage.redis.RedisStorage",
+            "dynamodb": "agno.storage.dynamodb.DynamoDbStorage",
+            "json": "agno.storage.json.JsonStorage",
+            "yaml": "agno.storage.yaml.YamlStorage",
+            "singlestore": "agno.storage.singlestore.SingleStoreStorage"
+        }
+        
+        if storage_type not in storage_type_map:
+            raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: {list(storage_type_map.keys())}")
+        
+        # Dynamic import and class resolution
+        module_path, class_name = storage_type_map[storage_type].rsplit('.', 1)
+        try:
+            module = importlib.import_module(module_path)
+            return getattr(module, class_name)
+        except (ImportError, AttributeError) as e:
+            raise ImportError(f"Failed to import {storage_type} storage class: {e}")
+
     def get_supported_parameters(self) -> Set[str]:
         """Get the set of currently supported Agno Workflow parameters."""
         return self._supported_params.copy()

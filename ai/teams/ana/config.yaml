@@ -44,7 +44,6 @@ metrics:
   collect_timing_metrics: true
   collect_reasoning_metrics: true
 storage:
-  mode: team
   type: postgres
   table_name: teams_ana
   auto_upgrade_schema: true
