@@ -158,5 +158,22 @@ def format_protocol_for_user(protocol_data: Dict[str, Any]) -> str:
         return f"Sua solicitação foi registrada e tipificada. Protocolo: {protocol_id}"
     elif protocol_type == "finalization":
         return f"Seu atendimento foi finalizado com sucesso. Protocolo: {protocol_id}"
+    elif protocol_type == "finalization_with_typification":
+        return f"Seu atendimento foi finalizado e tipificado automaticamente. Protocolo: {protocol_id}"
     else:
         return f"Protocolo gerado: {protocol_id}"
+
+
+def generate_protocol_id(session_id: str, protocol_type: str) -> str:
+    """
+    Generate a simple protocol ID for quick use.
+    
+    Args:
+        session_id: Session identifier
+        protocol_type: Type of protocol
+        
+    Returns:
+        Generated protocol ID
+    """
+    timestamp = datetime.now()
+    return f"PROTO-{session_id}-{timestamp.strftime('%Y%m%d%H%M%S')}"

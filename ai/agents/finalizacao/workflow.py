@@ -1,5 +1,5 @@
 """
-Human Handoff Workflow - Native Agno Integration Pattern
+Finalizacao Workflow - Native Agno Integration Pattern
 Uses custom execution function to call typification workflow directly
 """
 
@@ -19,13 +19,13 @@ from ai.workflows.conversation_typification.workflow import get_conversation_typ
 from ai.workflows.shared.protocol_generator import generate_protocol_id, format_protocol_for_user
 
 
-async def human_handoff_execution(
+async def finalizacao_execution(
     workflow: Workflow,
     execution_input: WorkflowExecutionInput,
     **kwargs: Any
 ) -> str:
     """
-    Execute human handoff workflow with native typification integration.
+    Execute finalizacao workflow with native typification integration.
     
     Uses Agno native patterns:
     - WorkflowExecutionInput for structured input
@@ -34,7 +34,7 @@ async def human_handoff_execution(
     """
     
     try:
-        logger.info("🚨 Iniciando escalação para atendimento humano com tipificação integrada")
+        logger.info("🎯 Iniciando finalização com tipificação integrada")
         
         # Extract team context from workflow session state
         team_session = workflow.workflow_session_state or {}
@@ -49,10 +49,10 @@ async def human_handoff_execution(
         
         if not conversation_history:
             logger.warning("⚠️ Nenhum histórico de conversa fornecido")
-            return "❌ Erro: Histórico de conversa não encontrado para escalação"
+            return "❌ Erro: Histórico de conversa não encontrado para tipificação"
         
         # Call typification workflow directly using native Agno pattern
-        logger.info("🔄 Chamando workflow de tipificação para escalação...")
+        logger.info("🔄 Chamando workflow de tipificação...")
         
         typification_workflow = get_conversation_typification_workflow()
         typification_result = await typification_workflow.arun(
@@ -61,13 +61,12 @@ async def human_handoff_execution(
             additional_data={
                 "customer_context": customer_context,
                 "session_metadata": team_session,
-                "workflow_caller": "human_handoff",
-                "escalation_triggered": True,
+                "workflow_caller": "finalizacao",
                 "timestamp": datetime.now().isoformat()
             }
         )
         
-        logger.info("✅ Tipificação para escalação concluída com sucesso")
+        logger.info("✅ Tipificação concluída com sucesso")
         
         # Extract typification results
         if hasattr(typification_result, 'content'):
@@ -85,53 +84,46 @@ async def human_handoff_execution(
                 result_data = typification_data
                 
             typification_info = result_data.get('typification', {})
-            hierarchy_path = result_data.get('hierarchy_path', 'Escalação registrada')
+            hierarchy_path = result_data.get('hierarchy_path', 'Tipificação realizada')
             retry_used = result_data.get('retry_used', False)
             
         except (json.JSONDecodeError, Exception) as e:
             logger.warning(f"⚠️ Erro ao processar resultado da tipificação: {str(e)}")
             # Use default values if parsing fails
-            typification_info = {"hierarchy_path": "Escalação registrada"}
-            hierarchy_path = "Escalação registrada"
+            typification_info = {"hierarchy_path": "Tipificação realizada"}
+            hierarchy_path = "Tipificação realizada"
             retry_used = False
         
-        # Generate protocol for human handoff
-        protocol_id = generate_protocol_id(session_id, "human_handoff")
+        # Generate protocol
+        protocol_id = generate_protocol_id(session_id, "typification")
         protocol_message = format_protocol_for_user({
             "protocol_id": protocol_id,
-            "protocol_type": "human_handoff_with_typification",
+            "protocol_type": "finalization_with_typification",
             "typification_path": hierarchy_path,
             "customer_context": customer_context,
-            "escalation_reason": "Solicitação de atendimento humano",
             "timestamp": datetime.now().isoformat()
         })
         
-        # Create escalation message with protocol and typification info
+        # Create farewell message with protocol and typification info
         customer_name = customer_context.get("customer_name") or customer_context.get("pb_user_name") or "cliente"
         
-        escalation_message = f"""🚨 Solicitação de Atendimento Humano
+        farewell_message = f"""Obrigada por entrar em contato, {customer_name}! 
 
-Olá {customer_name}! 
-
-Entendi que você precisa de atendimento humano especializado. Já registrei sua solicitação e um de nossos atendentes entrará em contato em breve.
+✅ Seu atendimento foi finalizado com sucesso!
 
 📋 {protocol_message}
 
 🎯 Tipificação: {hierarchy_path}
 {f"🔄 Classificação ajustada automaticamente" if retry_used else ""}
 
-⏰ Tempo estimado de resposta: 15-30 minutos
-📞 Equipe: Atendimento especializado
-
-Obrigada pela paciência! 💙"""
+Tenha um ótimo dia! 💙"""
         
-        logger.info(f"📞 Mensagem de escalação criada: {protocol_id}")
+        logger.info(f"💬 Mensagem de despedida criada: {protocol_id}")
         
         # Store results in workflow session state for future reference
         workflow.workflow_session_state.update({
-            "human_handoff_completed": True,
+            "finalization_completed": True,
             "protocol_id": protocol_id,
-            "escalation_reason": "Solicitação explícita de atendimento humano",
             "typification_result": {
                 "hierarchy_path": hierarchy_path,
                 "retry_used": retry_used,
@@ -144,26 +136,25 @@ Obrigada pela paciência! 💙"""
             from common.notifications import send_notification, NotificationLevel
             
             # Format notification message
-            notification_message = f"""🚨 *Escalação para Atendimento Humano*
+            notification_message = f"""🎯 *Atendimento Finalizado com Tipificação*
 
 📋 Protocolo: {protocol_id}
 👤 Cliente: {customer_name}
 🎯 Tipificação: {hierarchy_path}
 {f"🔄 Classificação ajustada automaticamente" if retry_used else ""}
 
-📞 Motivo: Solicitação explícita de atendimento humano
-⏰ Escalado em: {datetime.now().strftime('%H:%M:%S')}
+⏰ Processado em: {datetime.now().strftime('%H:%M:%S')}
 🆔 Sessão: {session_id}
 
-🚨 Cliente aguarda atendimento especializado"""
+✅ Atendimento concluído com sucesso"""
             
             # Send notification using exact same pattern as startup
-            logger.info("📱 Sending WhatsApp notification for human handoff")
+            logger.info("📱 Sending WhatsApp notification for typification report")
             notification_sent = await send_notification(
-                title="🚨 Escalação para Atendimento Humano",
+                title="🎯 Tipificação Concluída",
                 message=notification_message,
-                source="human-handoff-escalation",
-                level=NotificationLevel.CRITICAL
+                source="finalizacao-typification",
+                level=NotificationLevel.INFO
             )
             
             if notification_sent:
@@ -175,84 +166,80 @@ Obrigada pela paciência! 💙"""
             logger.error(f"❌ Failed to send WhatsApp notification: {str(e)}")
             # Don't fail the entire workflow for notification issues
         
-        return escalation_message
+        return farewell_message
         
     except Exception as e:
-        logger.error(f"❌ Erro na escalação: {str(e)}")
+        logger.error(f"❌ Erro na finalização: {str(e)}")
         
-        # Graceful fallback - still provide escalation even if typification fails
+        # Graceful fallback - still provide farewell even if typification fails
         protocol_id = generate_protocol_id(
             team_session.get("session_id", "fallback"), 
-            "human_handoff_fallback"
+            "finalization_fallback"
         )
         
-        fallback_message = f"""🚨 Solicitação de Atendimento Humano
+        fallback_message = f"""Obrigada por entrar em contato! 
 
-Olá! 
-
-Registrei sua solicitação de atendimento humano. Um de nossos especialistas entrará em contato em breve.
+✅ Seu atendimento foi finalizado.
 
 📋 Protocolo: {protocol_id}
 
-⚠️ Nota: Houve um problema na tipificação automática, mas sua escalação foi registrada com sucesso.
+⚠️ Nota: Houve um problema na tipificação automática, mas seu atendimento foi registrado com sucesso.
 
-⏰ Tempo estimado: 15-30 minutos
-
-Obrigada pela paciência! 💙"""
+Tenha um ótimo dia! 💙"""
         
         return fallback_message
 
 
 # Create workflow instance using native Agno pattern
-def get_human_handoff_workflow(**kwargs) -> Workflow:
-    """Factory function to create human handoff workflow"""
+def get_finalizacao_workflow(**kwargs) -> Workflow:
+    """Factory function to create finalizacao workflow"""
     
     return Workflow(
-        name="Human Handoff com Tipificação",
-        description="Workflow de escalação que integra tipificação automaticamente",
-        steps=human_handoff_execution,  # Use custom execution function
+        name="Finalizacao com Tipificação",
+        description="Workflow de finalização que integra tipificação automaticamente",
+        steps=finalizacao_execution,  # Use custom execution function
         workflow_session_state={},   # Initialize empty session state
         **kwargs
     )
 
 
 # For backward compatibility and direct testing
-human_handoff_workflow = get_human_handoff_workflow()
+finalizacao_workflow = get_finalizacao_workflow()
 
 
 if __name__ == "__main__":
     # Test the workflow
     import asyncio
     
-    async def test_human_handoff():
-        """Test human handoff workflow"""
+    async def test_finalizacao():
+        """Test finalizacao workflow"""
         
         # Simulate team session context
         test_session_state = {
-            "session_id": "test-handoff-123",
+            "session_id": "test-session-123",
             "customer_context": {
-                "customer_name": "Maria Santos",
-                "pb_user_name": "Maria Santos", 
-                "pb_phone_number": "+5511888888888",
-                "pb_user_cpf": "987.654.321-00",
-                "user_id": "user-456"
+                "customer_name": "João Silva",
+                "pb_user_name": "João Silva", 
+                "pb_phone_number": "+5511999999999",
+                "pb_user_cpf": "123.456.789-10",
+                "user_id": "user-123"
             }
         }
         
-        # Test conversation requiring human handoff
+        # Test conversation about card blocking
         test_conversation = """
-        Cliente: Oi, estou com um problema muito complexo no meu cartão que ninguém conseguiu resolver.
-        Atendente: Entendo sua frustração. Vou verificar as opções disponíveis.
-        Cliente: Já tentei várias vezes e nada resolve. Preciso falar com uma pessoa mesmo, não com robô.
-        Atendente: Compreendo perfeitamente. Vou escalar para nossa equipe especializada.
-        Cliente: Por favor, preciso resolver isso hoje mesmo!
+        Cliente: Oi, preciso bloquear meu cartão porque perdi ele.
+        Atendente: Olá! Vou te ajudar com o bloqueio do cartão. Pode me confirmar seus dados?
+        Cliente: Sim, meu CPF é 123.456.789-10 e meu nome é João Silva.
+        Atendente: Perfeito João! Seu cartão foi bloqueado com sucesso por motivo de perda. Você receberá um novo cartão em até 7 dias úteis.
+        Cliente: Obrigado! Está resolvido então.
         """
         
         # Create workflow with test session state
-        workflow = get_human_handoff_workflow()
+        workflow = get_finalizacao_workflow()
         workflow.workflow_session_state = test_session_state
         
-        print("🧪 Testando workflow de escalação humana...")
+        print("🧪 Testando workflow de finalização...")
         print(f"📋 Session ID: {test_session_state['session_id']}")
         print(f"👤 Cliente: {test_session_state['customer_context']['customer_name']}")
         print()
@@ -260,8 +247,8 @@ if __name__ == "__main__":
         # Run workflow
         result = await workflow.arun(message=test_conversation)
         
-        print("✅ Resultado da escalação:")
+        print("✅ Resultado da finalização:")
         print(result.content if hasattr(result, 'content') else result)
         
     # Run test
-    asyncio.run(test_human_handoff())
+    asyncio.run(test_finalizacao())

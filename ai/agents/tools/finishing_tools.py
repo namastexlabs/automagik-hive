@@ -44,9 +44,9 @@ def trigger_conversation_typification_workflow(
         # Create and run typification workflow using factory function
         workflow = get_conversation_typification_workflow()
         
-        # Execute workflow with conversation data
+        # Execute workflow with proper input format for Agno Workflows 2.0
         results = list(workflow.run(
-            conversation_text=conversation_history,
+            message=conversation_history,
             session_id=session_id,
             customer_id=customer_id
         ))

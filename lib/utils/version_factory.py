@@ -189,6 +189,9 @@ class VersionFactory:
             except Exception as e:
                 logger.error(f"Failed to load knowledge base for agent {component_id}: {e}")
         
+        # Load custom tools if they exist
+        tools = self._load_agent_tools(component_id, config)
+        
         # Create agent
         agent_config = config.get("agent", {})
         agent = Agent(
@@ -200,6 +203,7 @@ class VersionFactory:
             storage=storage,
             memory=memory,
             knowledge=knowledge_base,  # Add knowledge base to agent
+            tools=tools,  # Add custom tools
             session_id=session_id,
             user_id=user_id,
             debug_mode=debug_mode,
@@ -217,6 +221,46 @@ class VersionFactory:
         }
         
         return agent
+    
+    def _load_agent_tools(self, component_id: str, config: Dict[str, Any]) -> list:
+        """Load custom tools for an agent from its tools.py file."""
+        tools = []
+        
+        try:
+            # Convert hyphenated agent ID to underscore for Python module path
+            module_name = component_id.replace("-", "_")
+            tools_module_path = f"ai.agents.{module_name}.tools"
+            
+            import importlib
+            tools_module = importlib.import_module(tools_module_path)
+            
+            # Get tool names from config
+            tool_names = config.get("tools", [])
+            
+            if tool_names:
+                for tool_name in tool_names:
+                    if hasattr(tools_module, tool_name):
+                        tool_function = getattr(tools_module, tool_name)
+                        tools.append(tool_function)
+                        logger.info(f"Loaded tool '{tool_name}' for agent {component_id}")
+                    else:
+                        logger.warning(f"Tool '{tool_name}' not found in {tools_module_path}")
+            else:
+                # Fallback: load all tools from module's __all__ if no specific tools configured
+                if hasattr(tools_module, '__all__'):
+                    for tool_name in tools_module.__all__:
+                        if hasattr(tools_module, tool_name):
+                            tool_function = getattr(tools_module, tool_name)
+                            tools.append(tool_function)
+                            logger.info(f"Auto-loaded tool '{tool_name}' for agent {component_id}")
+                            
+        except ImportError:
+            # No tools.py file - that's okay, just use default tools
+            logger.debug(f"No custom tools found for agent {component_id}")
+        except Exception as e:
+            logger.error(f"Error loading tools for agent {component_id}: {e}")
+        
+        return tools
     
     def _create_team(
         self,
@@ -429,11 +473,14 @@ def get_version_factory() -> VersionFactory:
 
 
 # Convenience functions for backward compatibility
-def create_versioned_agent(agent_id: str, version: Optional[int] = None, **kwargs) -> Agent:
-    """Create versioned agent using Agno storage."""
+def create_agent(agent_id: str, version: Optional[int] = None, **kwargs) -> Agent:
+    """Create agent using Agno storage and configuration."""
     return get_version_factory().create_versioned_component(
         agent_id, "agent", version, **kwargs
     )
+
+# Backwards compatibility alias
+create_versioned_agent = create_agent
 
 
 def create_versioned_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:

@@ -31,6 +31,7 @@ from .models import (
     get_valid_submotives,
     validate_typification_path,
 )
+from .models.validation import validate_with_llm_retry
 
 # Import configuration loader
 from ..shared.config_loader import config_loader
@@ -265,7 +266,7 @@ def execute_submotive_classification(step_input: StepInput) -> StepOutput:
     return StepOutput(content=json.dumps(result))
 
 def execute_validation_and_final_report(step_input: StepInput) -> StepOutput:
-    """Execute validation and final report generation step"""
+    """Execute validation and final report generation step with fallback"""
     # Get data from previous step
     previous_output = step_input.get_step_output("submotive_classification")
     if not previous_output:
@@ -276,35 +277,55 @@ def execute_validation_and_final_report(step_input: StepInput) -> StepOutput:
     product = previous_data["product"]
     motive = previous_data["motive"]
     submotive = previous_data["submotive"]
+    conversation_text = previous_data.get("conversation_text", "")
+    original_confidence = previous_data.get("confidence", 0.0)
     
     logger.info("Executing validation and final report generation...")
     
-    # Validate hierarchy
-    validation_result = validate_typification_path(
-        business_unit, product, motive, submotive
+    # Use LLM-based validation with retry
+    validation_result, final_classification = validate_with_llm_retry(
+        business_unit, product, motive, submotive, conversation_text
     )
     
-    if not validation_result.valid:
-        logger.warning(f"Hierarchy validation failed: {validation_result.error_message}")
+    # Extract final classification values
+    final_business_unit = final_classification["business_unit"]
+    final_product = final_classification["product"]
+    final_motive = final_classification["motive"]
+    final_submotive = final_classification["submotive"]
+    
+    # Determine confidence based on retry usage
+    if final_classification.get("retry_used"):
+        final_confidence = max(0.6, original_confidence * 0.8)  # Reduced confidence for retry
+        logger.info(f"LLM correction applied")
+        logger.info(f"Original: {business_unit} → {product} → {motive} → {submotive}")
+        logger.info(f"Corrected: {final_business_unit} → {final_product} → {final_motive} → {final_submotive}")
+    else:
+        final_confidence = original_confidence
+        
+        if not validation_result.valid:
+            logger.warning(f"Validation failed: {validation_result.error_message}")
     
     # Create final typification
     final_typification = HierarchicalTypification(
-        unidade_negocio=UnidadeNegocio(business_unit),
-        produto=product,
-        motivo=motive,
-        submotivo=submotive,
-        hierarchy_path=f"{business_unit} → {product} → {motive} → {submotive}",
-        confidence_score=previous_data["confidence"],
+        unidade_negocio=UnidadeNegocio(final_business_unit),
+        produto=final_product,
+        motivo=final_motive,
+        submotivo=final_submotive,
+        hierarchy_path=f"{final_business_unit} → {final_product} → {final_motive} → {final_submotive}",
+        confidence_score=final_confidence,
         validation_status=validation_result.valid
     )
     
     logger.info(f"Final typification completed: {final_typification.hierarchy_path}")
     
+    # Prepare comprehensive result
     result = {
         "typification": final_typification.model_dump(),
         "validation_result": validation_result.model_dump(),
         "success": True,
-        "hierarchy_path": final_typification.hierarchy_path
+        "hierarchy_path": final_typification.hierarchy_path,
+        "retry_used": final_classification.get("retry_used", False),
+        "correction_info": final_classification.get("original_classification") if final_classification.get("retry_used") else None
     }
     
     return StepOutput(content=json.dumps(result))

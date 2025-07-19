@@ -1,117 +1,40 @@
 agent:
-  name: Human Handoff Specialist
-  role: Escalation and Human Handoff Agent
-  version: 36
+  name: Ana - Human Handoff
+  version: 39
   agent_id: human-handoff
-  description: Specialized agent for handling escalations and human handoff workflows
 model:
   id: claude-sonnet-4-20250514
   provider: anthropic
   max_tokens: 2000
-  temperature: 0.8
+  temperature: 0.7
+tools:
+- escalate_to_human
 storage:
-  mode: workflow
-  type: postgres
-  table_name: human_handoff_workflows
+  table_name: human_handoff_agent
   auto_upgrade_schema: true
-whatsapp:
-  enabled: true
-  instance: SofIA
-  notification_template: '🚨 *Escalação para Atendimento Humano*
+instructions: 'Você é o agente de escalação para atendimento humano do PagBank.
 
 
-    📋 *Protocolo:* {protocol_id}
-
-    👤 *Cliente:* {customer_name}
-
-    📱 *CPF:* {customer_cpf}
-
-    ⚠️ *Motivo:* {escalation_reason}
-
-    🕐 *Horário:* {timestamp}
+  Sua função é processar solicitações de escalação e registrar protocolos para atendimento
+  especializado.
 
 
-    📝 *Descrição:* {issue_description}
+  Quando receber uma solicitação, use imediatamente a ferramenta escalate_to_human
+  para:
 
-    💬 *Resumo:* {conversation_summary}
+  - Registrar a escalação com tipificação automática
 
-    🎯 *Ação:* {recommended_action}
+  - Gerar protocolo de atendimento
 
-    '
-workflow:
-  name: Human Handoff Workflow
-  version: 35
-  description: Simplified escalation workflow for Ana team handoffs
-  workflow_id: human-handoff
-execution:
-  max_retries: 2
-  timeout_minutes: 30
-  notify_completion: true
-  retry_delay_seconds: 3
-  enable_context_preservation: true
-escalation:
-  emotion_detection:
-    angry_indicators:
-    - indignado
-    - revoltado
-    - absurdo
-    - inadmissível
-    - péssimo
-    urgent_indicators:
-    - urgente
-    - emergência
-    - rápido
-    - imediato
-    - agora
-    frustrated_indicators:
-    - frustrado
-    - chateado
-    - irritado
-    - não resolve
-    - já tentei
-  confidence_threshold: 0.8
-monitoring:
-  alerts:
-    high_volume_threshold: 10
-    failure_rate_threshold: 0.05
-    response_time_threshold: 900
-  enable_metrics: true
-  track_response_times: true
-  track_escalation_reasons: true
-  track_resolution_success: true
-development:
-  demo_mode: false
-  debug_mode: false
-  enable_cache: false
-integrations:
-  ana_team: true
-  ticket_system: true
-  protocol_generator: true
-  whatsapp_notifications: true
-business_rules:
-  team_routing:
-    emissao: emissao_team
-    general: general_team
-    pagbank: pagbank_team
-    adquirencia: adquirencia_team
-  urgency_mapping:
-    low_keywords:
-    - consulta
-    - verificação
-    - confirmação
-    high_keywords:
-    - urgente
-    - problema
-    - não funciona
-    - erro
-    medium_keywords:
-    - dúvida
-    - ajuda
-    - orientação
-    - informação
-    critical_keywords:
-    - bloqueio
-    - fraude
-    - perda
-    - roubo
-    - crítico
+  - Enviar notificações WhatsApp para a equipe
+
+  - Fornecer tempo estimado de resposta ao cliente
+
+
+  SEMPRE execute o escalate_to_human imediatamente ao receber uma solicitação.
+
+
+  Seja empático e transmita confiança de que o problema será resolvido pela equipe
+  especializada.
+
+  '

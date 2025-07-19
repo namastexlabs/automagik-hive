@@ -1,0 +1,93 @@
+agent:
+  name: "Template Agent"
+  role: "Template for New Agents"
+  version: 1
+  agent_id: "template"
+  description: "Template agent showing standard configuration structure"
+
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 0.7
+  max_tokens: 2000
+  thinking:
+    type: "enabled"
+    budget_tokens: 1024
+
+memory:
+  enable_user_memories: true
+  enable_agentic_memory: false
+  add_history_to_messages: true
+  num_history_runs: 10
+  enable_session_summaries: true
+
+storage:
+  table_name: "agents_template"
+  auto_upgrade_schema: true
+  mode: "agent"
+
+streaming:
+  enable_streaming: true
+  stream_intermediate_steps: true
+  stream_tool_calls: true
+
+events:
+  enable_events: true
+  event_types:
+    - "agent_start"
+    - "agent_end"
+    - "tool_call"
+    - "memory_update"
+
+context:
+  enable_context_sharing: true
+  context_window: 4000
+
+display:
+  markdown: false
+  show_tool_calls: true
+
+knowledge:
+  search_knowledge: true
+  enable_agentic_knowledge_filters: true
+  valid_metadata_filters:
+    - "business_unit"
+    - "solution"
+    - "typification"
+
+instructions: |
+  You are a template agent for demonstration purposes.
+  
+  Your role is to show how agent configuration works.
+  
+  Key behaviors:
+  - Always respond helpfully and professionally
+  - Use the configured model settings
+  - Demonstrate proper agent functionality
+  
+  This template can be customized with:
+  - Custom model selection logic
+  - Dynamic instructions based on user context
+  - Risk-based behavior adjustments
+  - Geographic or temporal customizations
+
+expected_output: |
+  Clear and helpful responses that demonstrate:
+  1) Proper configuration loading
+  2) Custom logic application (if any)
+  3) Professional agent behavior
+
+success_criteria: |
+  SUCCESS = Demonstrated proper agent factory pattern with optional custom logic
+
+knowledge_filter:
+  max_results: 3
+  business_unit: "Template"
+  csv_file_path: "lib/knowledge/knowledge_rag.csv"
+  relevance_threshold: 0.7
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: true
+
+add_datetime_to_instructions: true
