@@ -1,10 +1,156 @@
-agent:
-  name: "Template Agent"
-  role: "Template for New Agents"
-  version: 2
-  agent_id: "template"
-  description: "Template agent showing standard configuration structure"
+# COMPLETE AGENT TEMPLATE - ALL 88 AGNO AGENT PARAMETERS
+# This template includes EVERY parameter supported by Agno Agent class
+# Use this as the definitive reference for agent configuration
+# Generated from Agno 1.7.5 introspection
 
+# ====================================================================
+# AGENT METADATA SECTION (Custom - not part of Agno Agent class)
+# ====================================================================
+agent:
+  name: "Complete Agent Template"
+  role: "Template demonstrating all 88 Agno Agent parameters"
+  version: 1
+  agent_id: "agent-template"
+  description: "Comprehensive template showing ALL supported Agno Agent parameters"
+
+# ====================================================================
+# ALL 88 AGNO AGENT PARAMETERS (alphabetical order)
+# ====================================================================
+
+# 1. add_context: bool - Add context to user prompt
+add_context: false
+
+# 2. add_datetime_to_instructions: bool - Add current datetime to instructions
+add_datetime_to_instructions: true
+
+# 3. add_history_to_messages: bool - Add chat history to messages
+add_history_to_messages: true
+
+# 4. add_location_to_instructions: bool - Add current location to instructions
+add_location_to_instructions: false
+
+# 5. add_memory_references: Optional[bool] - Add memory references to response
+add_memory_references: null
+
+# 6. add_messages: Optional[List[Message]] - Additional messages (typically set programmatically)
+add_messages: null
+
+# 7. add_name_to_instructions: bool - Add agent name to instructions
+add_name_to_instructions: false
+
+# 8. add_references: bool - Add knowledge references to response
+add_references: false
+
+# 9. add_session_summary_references: Optional[bool] - Add session summary references
+add_session_summary_references: null
+
+# 10. add_state_in_messages: bool - Add session state to messages
+add_state_in_messages: false
+
+# 11. add_transfer_instructions: bool - Add transfer instructions for teams
+add_transfer_instructions: true
+
+# 12. additional_context: Optional[str] - Additional context for system message
+additional_context: "This agent demonstrates comprehensive Agno parameter usage."
+
+# 13. agent_id: Optional[str] - Agent identifier (typically set by factory)
+agent_id: "agent-template"
+
+# 14. cache_session: bool - Cache session in memory
+cache_session: true
+
+# 15. context: Optional[Dict[str, Any]] - Context for tools and functions
+context: {}
+
+# 16. create_default_system_message: bool - Create default system message
+create_default_system_message: true
+
+# 17. create_default_user_message: bool - Create default user message
+create_default_user_message: true
+
+# 18. debug_level: Literal[1, 2] - Debug verbosity level
+debug_level: 1
+
+# 19. debug_mode: bool - Enable debug mode (typically set by factory)
+debug_mode: false
+
+# 20. delay_between_retries: int - Delay between retry attempts (seconds)
+delay_between_retries: 1
+
+# 21. description: Optional[str] - Agent description for system message
+description: "A comprehensive template agent showcasing all 88 Agno Agent parameters and their proper usage patterns."
+
+# 22. enable_agentic_knowledge_filters: Optional[bool] - Let agent choose knowledge filters
+enable_agentic_knowledge_filters: true
+
+# 23. enable_agentic_memory: bool - Enable agent memory management
+enable_agentic_memory: false
+
+# 24. enable_session_summaries: bool - Enable session summary creation
+enable_session_summaries: true
+
+# 25. enable_user_memories: bool - Enable user memory management
+enable_user_memories: true
+
+# 26. events_to_skip: Optional[List[RunEvent]] - Events to skip (typically set programmatically)
+events_to_skip: null
+
+# 27. expected_output: Optional[str] - Expected output format
+expected_output: |
+  Professional responses demonstrating:
+  1. Proper parameter configuration loading
+  2. Effective use of all Agno capabilities
+  3. Clear communication with comprehensive features
+  4. Consistent behavior across all parameter settings
+
+# 28. exponential_backoff: bool - Use exponential backoff for retries
+exponential_backoff: false
+
+# 29. extra_data: Optional[Dict[str, Any]] - Additional data stored with agent
+extra_data: {}
+
+# 30. goal: Optional[str] - Goal of the agent
+goal: "Demonstrate comprehensive usage of all 88 available Agno Agent parameters in a production-ready configuration."
+
+# 31. instructions: Optional[Union[str, List[str], Callable]] - Agent instructions
+instructions: |
+  You are a comprehensive template agent designed to showcase all 88 Agno Agent parameters.
+  
+  Your primary functions:
+  1. Demonstrate proper configuration of all Agno framework capabilities
+  2. Serve as the definitive reference implementation for agent development
+  3. Validate that all parameters work correctly together
+  4. Provide examples of best practices for each parameter type
+  
+  Key capabilities you have access to:
+  - Complete model configuration with thinking support
+  - Full memory and history management (user memories, session summaries)
+  - Comprehensive knowledge base integration with filtering
+  - Advanced tool integration and management capabilities
+  - Session and context handling with state management
+  - Response processing with retries and structured outputs
+  - Event handling and comprehensive monitoring
+  - Team integration and collaboration features
+  - Streaming and real-time response capabilities
+  
+  Always respond professionally while demonstrating these extensive capabilities.
+
+# 32. introduction: Optional[str] - Agent introduction added to message history
+introduction: "Hello! I'm your comprehensive template agent with access to all 88 Agno Agent parameters. I'm here to demonstrate the full capabilities of the Agno framework."
+
+# 33. knowledge: Optional[AgentKnowledge] - Knowledge base (typically created by factory)
+knowledge: null
+
+# 34. knowledge_filters: Optional[Dict[str, Any]] - Knowledge filtering parameters
+knowledge_filters: {}
+
+# 35. markdown: bool - Format output using markdown
+markdown: false
+
+# 36. memory: Optional[Union[AgentMemory, Memory]] - Memory system (typically created by factory)
+memory: null
+
+# 37. model: Optional[Model] - AI model (created by factory)
 model:
   provider: "anthropic"
   id: "claude-sonnet-4-20250514"
@@ -12,76 +158,170 @@ model:
   max_tokens: 2000
   thinking:
     type: "enabled"
-    budget_tokens: 1024
 
-memory:
-  enable_user_memories: true
-  enable_agentic_memory: false
-  add_history_to_messages: true
-  num_history_runs: 10
-  enable_session_summaries: true
+# 38. monitoring: bool - Enable monitoring
+monitoring: false
 
+# 39. name: Optional[str] - Agent name (typically mapped from agent.name)
+name: "Complete Agent Template"
+
+# 40. num_history_responses: Optional[int] - Number of historical responses (deprecated)
+num_history_responses: null
+
+# 41. num_history_runs: int - Number of historical runs to include
+num_history_runs: 5
+
+# 42. num_history_sessions: Optional[int] - Number of historical sessions
+num_history_sessions: null
+
+# 43. parse_response: bool - Parse the response
+parse_response: true
+
+# 44. parser_model: Optional[Model] - Model for parsing (typically set programmatically)
+parser_model: null
+
+# 45. parser_model_prompt: Optional[str] - Prompt for parser model
+parser_model_prompt: null
+
+# 46. read_chat_history: bool - Add tool to read chat history
+read_chat_history: false
+
+# 47. read_tool_call_history: bool - Add tool to read tool call history
+read_tool_call_history: false
+
+# 48. reasoning: bool - Enable step-by-step reasoning
+reasoning: false
+
+# 49. reasoning_agent: Optional[Agent] - Agent for reasoning (typically set programmatically)
+reasoning_agent: null
+
+# 50. reasoning_max_steps: int - Maximum reasoning steps
+reasoning_max_steps: 10
+
+# 51. reasoning_min_steps: int - Minimum reasoning steps
+reasoning_min_steps: 1
+
+# 52. reasoning_model: Optional[Model] - Model for reasoning (typically set programmatically)
+reasoning_model: null
+
+# 53. references_format: Literal["json", "yaml"] - Format for knowledge references
+references_format: "json"
+
+# 54. resolve_context: bool - Resolve context before running
+resolve_context: true
+
+# 55. respond_directly: bool - Respond directly in team settings
+respond_directly: false
+
+# 56. response_model: Optional[Type[BaseModel]] - Response model (typically set programmatically)
+response_model: null
+
+# 57. retries: int - Number of retry attempts
+retries: 0
+
+# 58. retriever: Optional[Callable] - Custom retrieval function (typically set programmatically)
+retriever: null
+
+# 59. role: Optional[str] - Agent role (typically mapped from agent.role)
+role: "Template demonstrating all 88 Agno Agent parameters"
+
+# 60. save_response_to_file: Optional[str] - File to save response to
+save_response_to_file: null
+
+# 61. search_knowledge: bool - Add tool to search knowledge base
+search_knowledge: true
+
+# 62. search_previous_sessions_history: Optional[bool] - Search previous sessions
+search_previous_sessions_history: false
+
+# 63. session_id: Optional[str] - Session identifier (typically set by factory)
+session_id: null
+
+# 64. session_name: Optional[str] - Session name
+session_name: "Complete Agent Template Session"
+
+# 65. session_state: Optional[Dict[str, Any]] - Session state
+session_state: {}
+
+# 66. show_tool_calls: bool - Show tool calls in response
+show_tool_calls: true
+
+# 67. storage: Optional[Storage] - Storage system (created by factory)
 storage:
-  table_name: "agents_template"
+  table_name: "agents_template_complete"
   auto_upgrade_schema: true
-  mode: "agent"
 
-streaming:
-  enable_streaming: true
-  stream_intermediate_steps: true
-  stream_tool_calls: true
+# 68. store_events: bool - Store events
+store_events: false
 
-events:
-  enable_events: true
-  event_types:
-    - "agent_start"
-    - "agent_end"
-    - "tool_call"
-    - "memory_update"
+# 69. stream: Optional[bool] - Enable streaming
+stream: null
 
-context:
-  enable_context_sharing: true
-  context_window: 4000
+# 70. stream_intermediate_steps: bool - Stream intermediate steps
+stream_intermediate_steps: false
 
-display:
-  markdown: false
-  show_tool_calls: true
+# 71. structured_outputs: Optional[bool] - Use structured outputs
+structured_outputs: null
 
-knowledge:
-  search_knowledge: true
-  enable_agentic_knowledge_filters: true
-  valid_metadata_filters:
-    - "business_unit"
-    - "solution"
-    - "typification"
+# 72. success_criteria: Optional[str] - Success criteria
+success_criteria: "Successfully demonstrates all 88 Agno Agent parameters working together in harmony, providing comprehensive AI agent capabilities."
 
-instructions: |
-  You are a template agent for demonstration purposes.
-  
-  Your role is to show how agent configuration works.
-  
-  Key behaviors:
-  - Always respond helpfully and professionally
-  - Use the configured model settings
-  - Demonstrate proper agent functionality
-  
-  This template can be customized with:
-  - Custom model selection logic
-  - Dynamic instructions based on user context
-  - Risk-based behavior adjustments
-  - Geographic or temporal customizations
+# 73. system_message: Optional[Union[str, Callable, Message]] - Custom system message
+system_message: null
 
-expected_output: |
-  Clear and helpful responses that demonstrate:
-  1) Proper configuration loading
-  2) Custom logic application (if any)
-  3) Professional agent behavior
+# 74. system_message_role: str - Role for system message
+system_message_role: "system"
 
-success_criteria: |
-  SUCCESS = Demonstrated proper agent factory pattern with optional custom logic
+# 75. team: Optional[List[Agent]] - Team members (typically set programmatically)
+team: null
 
+# 76. team_data: Optional[Dict[str, Any]] - Team data
+team_data: {}
+
+# 77. team_response_separator: str - Separator for team responses
+team_response_separator: "\n"
+
+# 78. telemetry: bool - Enable telemetry
+telemetry: true
+
+# 79. timezone_identifier: Optional[str] - Timezone for datetime instructions
+timezone_identifier: null
+
+# 80. tool_call_limit: Optional[int] - Maximum tool calls allowed
+tool_call_limit: null
+
+# 81. tool_choice: Optional[Union[str, Dict[str, Any]]] - Tool choice control
+tool_choice: null
+
+# 82. tool_hooks: Optional[List[Callable]] - Tool middleware (typically set programmatically)
+tool_hooks: null
+
+# 83. tools: Optional[List] - Tools (typically loaded by factory from tools.py)
+tools: null
+
+# 84. update_knowledge: bool - Add tool to update knowledge base
+update_knowledge: false
+
+# 85. use_json_mode: bool - Use JSON mode
+use_json_mode: false
+
+# 86. user_id: Optional[str] - User identifier (typically set by factory)
+user_id: null
+
+# 87. user_message: Optional[Union[List, Dict, str, Callable, Message]] - Custom user message
+user_message: null
+
+# 88. user_message_role: str - Role for user message
+user_message_role: "user"
+
+# ====================================================================
+# CUSTOM PARAMETERS (Not part of Agno Agent class)
+# These are handled separately by the version_factory
+# ====================================================================
+
+# Custom Knowledge Filter (CSV-based RAG system)
 knowledge_filter:
-  max_results: 3
+  max_results: 5
   business_unit: "Template"
   csv_file_path: "lib/knowledge/knowledge_rag.csv"
   relevance_threshold: 0.7
@@ -90,4 +330,44 @@ knowledge_filter:
     use_semantic_search: true
     enable_hybrid_search: true
 
-add_datetime_to_instructions: true
+# Custom Action System
+suggested_actions:
+  general:
+    - "show_all_parameters"
+    - "demonstrate_capabilities"
+    - "validate_configuration"
+  testing:
+    - "test_all_features"
+    - "verify_parameter_loading"
+    - "check_compatibility"
+
+# Custom Escalation System
+escalation_triggers:
+  test_keywords:
+    - "parameter error"
+    - "configuration issue"
+    - "compatibility problem"
+  complexity_threshold: 1000
+
+# Custom Configuration Sections
+streaming_config:
+  enable_streaming: true
+  stream_intermediate_steps: false
+  stream_tool_calls: true
+
+events_config:
+  enable_events: true
+  event_types:
+    - "agent_start"
+    - "agent_end"
+    - "tool_call"
+    - "memory_update"
+    - "parameter_validation"
+
+context_config:
+  enable_context_sharing: true
+  context_window: 4000
+
+display_config:
+  markdown: false
+  show_tool_calls: true

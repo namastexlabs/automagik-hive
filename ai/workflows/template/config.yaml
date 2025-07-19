@@ -1,0 +1,127 @@
+# COMPLETE WORKFLOW TEMPLATE - ALL 14 AGNO WORKFLOW PARAMETERS
+# This template includes EVERY parameter supported by Agno Workflow class
+# Use this as the definitive reference for workflow configuration
+# Generated from Agno 1.7.5 introspection
+
+# ====================================================================
+# WORKFLOW METADATA SECTION (Custom - not part of Agno Workflow class)
+# ====================================================================
+workflow:
+  name: "Complete Workflow Template"
+  role: "Template demonstrating all 14 Agno Workflow parameters"
+  version: 1
+  workflow_id: "workflow-template"
+  description: "Comprehensive template showing ALL supported Agno Workflow parameters"
+
+# ====================================================================
+# ALL 14 AGNO WORKFLOW PARAMETERS (alphabetical order)
+# ====================================================================
+
+# 1. debug_mode: bool - Enable debug mode (typically set by factory)
+debug_mode: false
+
+# 2. description: Optional[str] - Workflow description
+description: "A comprehensive template workflow showcasing all 14 Agno Workflow parameters and step-based processing capabilities."
+
+# 3. events_to_skip: Optional[List[Union[RunEvent, WorkflowEvent]]] - Events to skip (typically set programmatically)
+events_to_skip: null
+
+# 4. name: Optional[str] - Workflow name (typically mapped from workflow.name)
+name: "Complete Workflow Template"
+
+# 5. session_id: Optional[str] - Session identifier (typically set by factory)
+session_id: null
+
+# 6. session_name: Optional[str] - Session name
+session_name: "Complete Workflow Template Session"
+
+# 7. steps: Optional[List[WorkflowStep]] - Workflow steps definition
+steps:
+  - name: "validation_step"
+    description: "Validate input parameters and workflow configuration"
+    agent_id: "validator"
+    expected_output: "Validation results with parameter verification"
+    
+  - name: "processing_step"
+    description: "Process the main workflow logic with all parameters"
+    agent_id: "processor"
+    expected_output: "Processing results demonstrating workflow capabilities"
+    
+  - name: "completion_step"
+    description: "Complete workflow execution and provide final results"
+    agent_id: "finalizer"
+    expected_output: "Final workflow results with comprehensive summary"
+
+# 8. storage: Optional[Storage] - Storage system (created by factory)
+storage:
+  table_name: "workflows_template_complete"
+  auto_upgrade_schema: true
+
+# 9. store_events: bool - Store workflow events
+store_events: false
+
+# 10. stream: Optional[bool] - Enable streaming
+stream: null
+
+# 11. stream_intermediate_steps: bool - Stream intermediate workflow steps
+stream_intermediate_steps: true
+
+# 12. user_id: Optional[str] - User identifier (typically set by factory)
+user_id: null
+
+# 13. workflow_id: Optional[str] - Workflow identifier (typically set by factory)
+workflow_id: "workflow-template"
+
+# 14. workflow_session_state: Optional[Dict[str, Any]] - Workflow session state
+workflow_session_state: {}
+
+# ====================================================================
+# CUSTOM PARAMETERS (Not part of Agno Workflow class)
+# These are handled separately by the version_factory
+# ====================================================================
+
+# Custom Action System
+suggested_actions:
+  workflow_management:
+    - "start_workflow"
+    - "pause_workflow"
+    - "resume_workflow"
+    - "complete_workflow"
+  step_control:
+    - "skip_step"
+    - "retry_step"
+    - "validate_step"
+    - "monitor_progress"
+
+# Custom Escalation System
+escalation_triggers:
+  workflow_failure_keywords:
+    - "step failed"
+    - "workflow error"
+    - "execution timeout"
+    - "validation failure"
+  complexity_threshold: 3000
+  max_retries: 3
+
+# Custom Configuration Sections
+streaming_config:
+  enable_streaming: true
+  stream_intermediate_steps: true
+  stream_step_results: true
+  show_step_details: true
+
+events_config:
+  enable_events: true
+  event_types:
+    - "workflow_start"
+    - "workflow_end"
+    - "step_start"
+    - "step_complete"
+    - "step_error"
+    - "workflow_pause"
+    - "workflow_resume"
+
+display_config:
+  show_step_progress: true
+  show_intermediate_results: true
+  markdown_output: false
