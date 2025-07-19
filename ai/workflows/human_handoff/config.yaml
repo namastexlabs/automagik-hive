@@ -1,6 +1,6 @@
 agent:
   name: Ana - Human Handoff
-  version: 39
+  version: dev
   agent_id: human-handoff
 model:
   id: claude-sonnet-4-20250514

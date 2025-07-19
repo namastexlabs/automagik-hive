@@ -5,7 +5,7 @@ Clean implementation that uses Agno's storage abstractions exclusively.
 Replaces the old ComponentVersionService with modern patterns.
 """
 
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Union
 from datetime import datetime
 import json
 import os
@@ -21,7 +21,7 @@ class VersionInfo(BaseModel):
     """Version information model"""
     component_id: str
     component_type: str
-    version: int
+    version: Union[int, str]  # Allow both int and "dev" string
     config: Dict[str, Any]
     created_at: str
     created_by: str

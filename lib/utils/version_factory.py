@@ -58,9 +58,7 @@ class VersionFactory:
         session_id: Optional[str] = None,
         debug_mode: bool = False,
         user_id: Optional[str] = None,
-        user_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        cpf: Optional[str] = None
+        **kwargs
     ) -> Union[Agent, Team, Workflow]:
         """
         Create any component type with version support.
@@ -72,31 +70,35 @@ class VersionFactory:
             session_id: Session ID for tracking
             debug_mode: Enable debug mode
             user_id: User identifier
-            user_name: User name
-            phone_number: Phone number
-            cpf: CPF
+            **kwargs: Additional parameters
             
         Returns:
             Configured component instance
         """
         
-        # Get version configuration
-        if version is not None:
-            version_record = self.version_service.get_version(component_id, version)
-            if not version_record:
-                raise ValueError(f"Version {version} not found for {component_id}")
+        # FIRST: Check if this is a dev version by reading YAML directly
+        dev_version_record = self._check_for_dev_version(component_id, component_type)
+        if dev_version_record:
+            print(f"🔧 DEV MODE: Loading {component_id} directly from YAML (bypassing database)")
+            version_record = dev_version_record
         else:
-            version_record = self.version_service.get_active_version(component_id)
-            if not version_record:
-                # Fallback: Try to sync from YAML if no active version found
-                print(f"⚠️ No active version found for {component_id}, attempting YAML fallback...")
-                try:
-                    version_record = self._sync_from_yaml_fallback(component_id, component_type)
-                    if not version_record:
-                        raise ValueError(f"No active version found for {component_id} and YAML fallback failed")
-                    print(f"✅ Loaded {component_id} from YAML fallback (version {version_record.version})")
-                except Exception as e:
-                    raise ValueError(f"No active version found for {component_id} and YAML fallback failed: {e}")
+            # Normal database lookup logic
+            if version is not None:
+                version_record = self.version_service.get_version(component_id, version)
+                if not version_record:
+                    raise ValueError(f"Version {version} not found for {component_id}")
+            else:
+                version_record = self.version_service.get_active_version(component_id)
+                if not version_record:
+                    # Fallback: Try to sync from YAML if no active version found
+                    print(f"⚠️ No active version found for {component_id}, attempting YAML fallback...")
+                    try:
+                        version_record = self._sync_from_yaml_fallback(component_id, component_type)
+                        if not version_record:
+                            raise ValueError(f"No active version found for {component_id} and YAML fallback failed")
+                        print(f"✅ Loaded {component_id} from YAML fallback (version {version_record.version})")
+                    except Exception as e:
+                        raise ValueError(f"No active version found for {component_id} and YAML fallback failed: {e}")
         
         config = version_record.config
         
@@ -104,7 +106,7 @@ class VersionFactory:
         if version_record.component_type != component_type:
             raise ValueError(f"Component {component_id} is type {version_record.component_type}, not {component_type}")
         
-        # Create component based on type
+        # Create component based on type using appropriate Agno proxy
         if component_type == "agent":
             return self._create_agent(
                 component_id=component_id,
@@ -119,7 +121,8 @@ class VersionFactory:
                 config=config,
                 session_id=session_id,
                 debug_mode=debug_mode,
-                user_id=user_id
+                user_id=user_id,
+                **kwargs
             )
         elif component_type == "workflow":
             return self._create_workflow(
@@ -127,7 +130,8 @@ class VersionFactory:
                 config=config,
                 session_id=session_id,
                 debug_mode=debug_mode,
-                user_id=user_id
+                user_id=user_id,
+                **kwargs
             )
         else:
             raise ValueError(f"Unsupported component type: {component_type}")
@@ -140,85 +144,32 @@ class VersionFactory:
         debug_mode: bool,
         user_id: Optional[str]
     ) -> Agent:
-        """Create versioned agent with clean configuration."""
+        """Create versioned agent using dynamic Agno proxy for future compatibility."""
         
-        # Create model
-        model_config = config.get("model", {})
-        model = Claude(
-            id=model_config.get("id", "claude-sonnet-4-20250514"),
-            temperature=model_config.get("temperature", 0.7),
-            max_tokens=model_config.get("max_tokens", 2000)
-        )
+        # Use the dynamic proxy system for automatic Agno compatibility
+        from lib.utils.agno_proxy import get_agno_proxy
         
-        # Create storage
-        storage_config = config.get("storage", {})
-        storage = PostgresStorage(
-            table_name=storage_config.get("table_name", "agent_sessions"),
-            db_url=self.db_url,
-            auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
-        )
+        proxy = get_agno_proxy()
         
-        # Create memory if enabled
-        memory = None
-        memory_config = config.get("memory", {})
-        if memory_config.get("enable_user_memories", False):
-            from lib.memory.memory_factory import create_agent_memory
-            memory = create_agent_memory(component_id, self.db_url)
-        
-        # Create knowledge base from configuration (global + agent overrides)
-        knowledge_base = None
-        
-        # Load global knowledge config first
-        global_knowledge = load_global_knowledge_config()
-        
-        # Get agent-specific knowledge config
-        agent_knowledge = config.get("knowledge_filter", {})
-        
-        # Agent config overrides global config
-        csv_path = agent_knowledge.get("csv_file_path") or global_knowledge.get("csv_file_path")
-        max_results = agent_knowledge.get("max_results", global_knowledge.get("max_results", 10))
-        
-        if csv_path:
-            try:
-                knowledge_base = get_knowledge_base(
-                    db_url=self.db_url,
-                    num_documents=max_results,
-                    csv_path=csv_path
-                )
-                logger.info(f"Knowledge base loaded for agent {component_id}: {csv_path}")
-            except Exception as e:
-                logger.error(f"Failed to load knowledge base for agent {component_id}: {e}")
-        
-        # Load custom tools if they exist
+        # Load custom tools
         tools = self._load_agent_tools(component_id, config)
         
-        # Create agent
-        agent_config = config.get("agent", {})
-        agent = Agent(
-            name=agent_config.get("name", f"Agent {component_id}"),
-            agent_id=component_id,
-            role=agent_config.get("role"),
-            instructions=config.get("instructions", "You are a helpful assistant."),
-            model=model,
-            storage=storage,
-            memory=memory,
-            knowledge=knowledge_base,  # Add knowledge base to agent
-            tools=tools,  # Add custom tools
+        # Add tools to config for proxy processing
+        if tools:
+            config = config.copy()  # Don't modify original
+            config["tools"] = tools
+        
+        # Create agent using dynamic proxy
+        agent = proxy.create_agent(
+            component_id=component_id,
+            config=config,
             session_id=session_id,
-            user_id=user_id,
             debug_mode=debug_mode,
-            add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
-            num_history_runs=config.get("memory", {}).get("num_history_runs", 5),
-            enable_user_memories=memory_config.get("enable_user_memories", False),
-            enable_agentic_memory=memory_config.get("enable_agentic_memory", False)
+            user_id=user_id,
+            db_url=self.db_url
         )
         
-        # Add metadata
-        agent.metadata = {
-            "version": agent_config.get("version", 1),
-            "loaded_from": "agno_storage",
-            "agent_id": component_id
-        }
+        logger.info(f"Agent {component_id} created with {len(proxy.get_supported_parameters())} available Agno parameters")
         
         return agent
     
@@ -268,93 +219,28 @@ class VersionFactory:
         config: Dict[str, Any],
         session_id: Optional[str],
         debug_mode: bool,
-        user_id: Optional[str]
+        user_id: Optional[str],
+        **kwargs
     ) -> Team:
-        """Create versioned team with clean configuration."""
+        """Create team using dynamic Agno Team proxy for future compatibility."""
         
-        # Create model
-        model_config = config.get("model", {})
-        model = Claude(
-            id=model_config.get("id", "claude-sonnet-4-20250514"),
-            temperature=model_config.get("temperature", 1.0),
-            max_tokens=model_config.get("max_tokens", 2000)
-        )
+        # Use the dynamic team proxy system for automatic Agno compatibility
+        from lib.utils.agno_proxy import get_agno_team_proxy
         
-        # Create storage
-        storage_config = config.get("storage", {})
-        storage = PostgresStorage(
-            table_name=storage_config.get("table_name", "team_sessions"),
-            db_url=self.db_url,
-            mode=storage_config.get("mode", "team"),
-            auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
-        )
+        proxy = get_agno_team_proxy()
         
-        # Create team knowledge base from configuration (global + team overrides)
-        team_knowledge_base = None
-        
-        # Load global knowledge config first
-        global_knowledge = load_global_knowledge_config()
-        
-        # Get team-specific knowledge config
-        team_knowledge = config.get("knowledge", {})
-        
-        # Team config overrides global config
-        csv_path = team_knowledge.get("csv_file_path") or global_knowledge.get("csv_file_path")
-        max_results = team_knowledge.get("max_results", global_knowledge.get("max_results", 10))
-        
-        if csv_path:
-            try:
-                team_knowledge_base = get_knowledge_base(
-                    db_url=self.db_url,
-                    num_documents=max_results,
-                    csv_path=csv_path
-                )
-                logger.info(f"Team knowledge base loaded for team {component_id}: {csv_path}")
-            except Exception as e:
-                logger.error(f"Failed to load team knowledge base for team {component_id}: {e}")
-        
-        # Load member agents (simplified)
-        members = []
-        member_names = config.get("members", [])
-        
-        for member_name in member_names:
-            try:
-                # Try to get agent using registry
-                from ai.agents.registry import get_agent
-                member_agent = get_agent(
-                    member_name,
-                    session_id=session_id,
-                    debug_mode=debug_mode,
-                    user_id=user_id
-                )
-                members.append(member_agent)
-            except Exception as e:
-                logger.warning(f"Could not load team member {member_name}: {e}")
-        
-        # Create team
-        team_config = config.get("team", {})
-        team = Team(
-            name=team_config.get("name", f"Team {component_id}"),
-            team_id=component_id,
-            mode=team_config.get("mode", "route"),
-            members=members,
-            instructions=config.get("instructions", "You are a helpful team."),
-            model=model,
-            storage=storage,
-            knowledge_base=team_knowledge_base,  # Add team knowledge base
+        # Create team using dynamic proxy
+        team = proxy.create_team(
+            component_id=component_id,
+            config=config,
             session_id=session_id,
-            user_id=user_id,
             debug_mode=debug_mode,
-            add_history_to_messages=config.get("memory", {}).get("add_history_to_messages", True),
-            num_history_runs=config.get("memory", {}).get("num_history_runs", 5)
+            user_id=user_id,
+            db_url=self.db_url,
+            **kwargs
         )
         
-        # Add metadata
-        team.metadata = {
-            "version": team_config.get("version", 1),
-            "loaded_from": "agno_storage",
-            "team_id": component_id
-        }
+        logger.info(f"Team {component_id} created with {len(proxy.get_supported_parameters())} available Agno Team parameters")
         
         return team
     
@@ -364,40 +250,28 @@ class VersionFactory:
         config: Dict[str, Any],
         session_id: Optional[str],
         debug_mode: bool,
-        user_id: Optional[str]
+        user_id: Optional[str],
+        **kwargs
     ) -> Workflow:
-        """Create versioned workflow with clean configuration."""
+        """Create workflow using dynamic Agno Workflow proxy for future compatibility."""
         
-        # Create storage
-        storage_config = config.get("storage", {})
-        storage = PostgresStorage(
-            table_name=storage_config.get("table_name", f"{component_id}_workflows"),
+        # Use the dynamic workflow proxy system for automatic Agno compatibility
+        from lib.utils.agno_proxy import get_agno_workflow_proxy
+        
+        proxy = get_agno_workflow_proxy()
+        
+        # Create workflow using dynamic proxy
+        workflow = proxy.create_workflow(
+            component_id=component_id,
+            config=config,
+            session_id=session_id,
+            debug_mode=debug_mode,
+            user_id=user_id,
             db_url=self.db_url,
-            auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True)
+            **kwargs
         )
         
-        # Import specific workflow class
-        if component_id == "human-handoff":
-            from ai.workflows.human_handoff.workflow import get_human_handoff_workflow
-            workflow = get_human_handoff_workflow(
-                session_id=session_id,
-                user_id=user_id,
-                debug_mode=debug_mode,
-                storage=storage
-            )
-        elif component_id == "conversation-typification":
-            from ai.workflows.conversation_typification.workflow import get_conversation_typification_workflow
-            workflow = get_conversation_typification_workflow(debug_mode=debug_mode)
-        else:
-            raise ValueError(f"Unknown workflow type: {component_id}")
-        
-        # Add metadata
-        workflow_config = config.get("workflow", {})
-        workflow.metadata = {
-            "version": workflow_config.get("version", 1),
-            "loaded_from": "agno_storage",
-            "workflow_id": component_id
-        }
+        logger.info(f"Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters")
         
         return workflow
     
@@ -459,6 +333,61 @@ class VersionFactory:
                 continue
         
         return None
+    
+    def _check_for_dev_version(self, component_id: str, component_type: str):
+        """Check if YAML has version: 'dev' and return direct YAML load"""
+        import yaml
+        import glob
+        
+        # Map component types to file patterns
+        type_patterns = {
+            "agent": f"ai/agents/*/config.yaml",
+            "team": f"ai/teams/*/config.yaml", 
+            "workflow": f"ai/workflows/*/config.yaml"
+        }
+        
+        if component_type not in type_patterns:
+            return None
+            
+        pattern = type_patterns[component_type]
+        
+        for config_file in glob.glob(pattern):
+            try:
+                with open(config_file, 'r') as f:
+                    yaml_config = yaml.safe_load(f)
+                
+                if not yaml_config or component_type not in yaml_config:
+                    continue
+                
+                component_section = yaml_config[component_type]
+                yaml_component_id = (
+                    component_section.get('agent_id') or
+                    component_section.get('team_id') or
+                    component_section.get('workflow_id') or
+                    component_section.get('component_id')
+                )
+                
+                if yaml_component_id == component_id:
+                    version = component_section.get('version')
+                    
+                    # Check if version is "dev"
+                    if version == "dev":
+                        from lib.versioning.agno_version_service import VersionInfo
+                        return VersionInfo(
+                            component_id=component_id,
+                            component_type=component_type,
+                            version="dev",
+                            config=yaml_config,
+                            created_at="dev-mode",
+                            created_by="dev-mode",
+                            description=f"DEV MODE: Always load from YAML {config_file}",
+                            is_active=True
+                        )
+                        
+            except Exception as e:
+                continue
+        
+        return None
 
 
 # Global factory instance - lazy initialization
@@ -472,19 +401,16 @@ def get_version_factory() -> VersionFactory:
     return _version_factory
 
 
-# Convenience functions for backward compatibility
+# Clean factory functions
 def create_agent(agent_id: str, version: Optional[int] = None, **kwargs) -> Agent:
-    """Create agent using Agno storage and configuration."""
+    """Create agent using factory pattern."""
     return get_version_factory().create_versioned_component(
         agent_id, "agent", version, **kwargs
     )
 
-# Backwards compatibility alias
-create_versioned_agent = create_agent
 
-
-def create_versioned_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
-    """Create versioned team using Agno storage."""
+def create_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
+    """Create team using factory pattern (unified with agents)."""
     return get_version_factory().create_versioned_component(
         team_id, "team", version, **kwargs
     )

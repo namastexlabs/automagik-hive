@@ -5,7 +5,7 @@ from typing import Dict, Optional, Any
 from agno.agent import Agent
 import os
 from pathlib import Path
-from lib.utils.version_factory import create_versioned_agent
+from lib.utils.version_factory import create_agent
 from lib.mcp.catalog import MCPCatalog
 
 
@@ -93,14 +93,12 @@ class AgentRegistry:
         if agent_id not in available_agents:
             raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
         
-        return create_versioned_agent(
+        return create_agent(
             agent_id=agent_id,
             version=version,
             session_id=session_id,
             debug_mode=debug_mode,
-            user_id=user_id,
-            phone_number=pb_phone_number,
-            cpf=pb_cpf
+            user_id=user_id
         )
     
     @classmethod

@@ -1,7 +1,7 @@
 agent:
   name: "Template Agent"
   role: "Template for New Agents"
-  version: 1
+  version: 2
   agent_id: "template"
   description: "Template agent showing standard configuration structure"
 

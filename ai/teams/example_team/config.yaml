@@ -7,7 +7,7 @@ team:
   team_id: "example-team"
   mode: "route"
   description: "Example team showing knowledge configuration patterns"
-  version: 1
+  version: 2
 
 # Model configuration
 model:

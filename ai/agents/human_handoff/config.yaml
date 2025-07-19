@@ -1,7 +1,7 @@
 agent:
   agent_id: human-handoff
   name: Ana - Human Handoff
-  version: 39
+  version: dev
 
 model:
   provider: anthropic

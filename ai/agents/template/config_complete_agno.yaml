@@ -1,0 +1,240 @@
+# COMPREHENSIVE AGNO AGENT CONFIGURATION TEMPLATE
+# This template includes ALL officially supported Agno Agent parameters
+# Use this as the base for creating new agents with full framework support
+# Version: Based on Agno 1.7.5
+
+# ====================================================================
+# AGENT METADATA SECTION (Custom - not part of Agno Agent class)
+# ====================================================================
+agent:
+  name: "Complete Template Agent"
+  role: "Comprehensive Template for Full Agno Support"
+  version: 1
+  agent_id: "template"
+  description: "Complete template showing ALL supported Agno Agent parameters"
+
+# ====================================================================
+# MODEL CONFIGURATION (Agno Agent: model parameter)
+# ====================================================================
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-20250514"
+  temperature: 0.7
+  max_tokens: 2000
+  # Note: thinking.budget_tokens is NOT supported by Agno's Claude class
+  thinking:
+    type: "enabled"
+
+# ====================================================================
+# CORE AGNO AGENT PARAMETERS
+# ====================================================================
+
+# --- Agent Settings ---
+# name: str - Agent name (mapped from agent.name above)
+# agent_id: str - Agent identifier (mapped from agent.agent_id above)
+# introduction: Optional[str] - Agent introduction added to message history
+introduction: "Hello! I'm your comprehensive template agent demonstrating full Agno capabilities."
+
+# --- User Settings ---
+# user_id: Optional[str] - Default user ID (set at runtime)
+
+# --- Session Settings ---
+# session_id: Optional[str] - Default session ID (set at runtime)
+session_name: "Template Agent Session"
+session_state: {}
+search_previous_sessions_history: false
+num_history_sessions: null
+cache_session: true
+
+# --- Agent Context ---
+context: {}
+add_context: false
+resolve_context: true
+
+# --- Agent Memory ---
+memory:
+  enable_agentic_memory: false
+  enable_user_memories: true
+  add_memory_references: null
+  enable_session_summaries: true
+  add_session_summary_references: null
+  add_history_to_messages: true
+  num_history_responses: null  # Deprecated in favor of num_history_runs
+  num_history_runs: 5
+
+# --- Agent Knowledge ---
+# knowledge: AgentKnowledge object (created by version_factory from knowledge_filter)
+knowledge_filters: {}  # Standard Agno parameter (note: plural)
+enable_agentic_knowledge_filters: true
+add_references: false
+# retriever: function (not configurable via YAML)
+references_format: "json"  # or "yaml"
+
+# --- Agent Storage ---
+storage:
+  table_name: "agents_template"
+  auto_upgrade_schema: true
+  # mode: custom parameter, not part of Agno Storage
+
+# extra_data: Optional[Dict] - Additional data stored with agent
+extra_data: {}
+
+# --- Agent Tools ---
+# tools: List - Custom tools (loaded by version_factory from tools.py)
+show_tool_calls: true
+tool_call_limit: null
+tool_choice: null  # "none", "auto", or {"type": "function", "function": {"name": "func_name"}}
+# tool_hooks: List[Callable] - Not configurable via YAML
+
+# --- Agent Reasoning ---
+reasoning: false
+# reasoning_model: Model object - Not typically configured via YAML
+# reasoning_agent: Agent object - Not typically configured via YAML
+reasoning_min_steps: 1
+reasoning_max_steps: 10
+
+# --- Default Tools ---
+read_chat_history: false
+search_knowledge: true
+update_knowledge: false
+read_tool_call_history: false
+
+# --- System Message Settings ---
+# system_message: str|function|Message - Custom system message
+system_message_role: "system"
+create_default_system_message: true
+
+# --- System Message Content ---
+description: "A comprehensive template agent showcasing all Agno framework capabilities and parameters."
+goal: "Demonstrate proper configuration and usage of all available Agno Agent parameters."
+success_criteria: "Successfully loads with all parameters properly configured and functions as expected."
+instructions: |
+  You are a comprehensive template agent designed to demonstrate all available Agno framework capabilities.
+  
+  Your primary purposes:
+  1. Serve as a complete reference for agent configuration
+  2. Demonstrate proper parameter usage across all Agno features
+  3. Provide a solid foundation for creating new specialized agents
+  
+  Key capabilities you demonstrate:
+  - Full model configuration with thinking support
+  - Comprehensive memory and history management
+  - Knowledge base integration with filtering
+  - Tool integration and management
+  - Session and context handling
+  - Response processing and streaming
+  - Event handling and monitoring
+  
+  Always respond professionally and helpfully while showcasing these capabilities.
+
+expected_output: |
+  Professional responses that demonstrate:
+  1. Proper loading of all configuration parameters
+  2. Effective use of knowledge base and memory systems
+  3. Clear communication with appropriate tool usage
+  4. Consistent behavior aligned with configured settings
+
+additional_context: "This agent serves as the gold standard template for all other agents in the system."
+
+# --- Display and Formatting ---
+markdown: false
+add_name_to_instructions: false
+add_datetime_to_instructions: true
+add_location_to_instructions: false
+timezone_identifier: null  # e.g., "America/Sao_Paulo", "Etc/UTC"
+add_state_in_messages: false
+
+# --- Extra Messages ---
+# add_messages: List[Message] - Additional messages (not typically configured via YAML)
+# user_message: str|function|Message - Custom user message
+user_message_role: "user"
+create_default_user_message: true
+
+# --- Response Processing ---
+retries: 0
+delay_between_retries: 1
+exponential_backoff: false
+# parser_model: Model object - Not typically configured via YAML
+parser_model_prompt: null
+# response_model: BaseModel class - Not configurable via YAML
+parse_response: true
+structured_outputs: null
+use_json_mode: false
+save_response_to_file: null
+
+# --- Streaming ---
+stream: null  # null = use default, true/false = override
+stream_intermediate_steps: false
+
+# --- Events ---
+store_events: false
+# events_to_skip: List[RunEvent] - Not typically configured via YAML
+
+# --- Team Settings ---
+# team: List[Agent] - Other agents (not configurable via YAML)
+team_data: {}
+role: null  # Role within a team
+respond_directly: false
+add_transfer_instructions: true
+team_response_separator: "\n"
+
+# --- Debug and Monitoring ---
+debug_mode: false
+debug_level: 1  # 1 or 2
+monitoring: false
+telemetry: true
+
+# ====================================================================
+# CUSTOM PARAMETERS (Not part of Agno Agent class)
+# These are handled separately by the version_factory
+# ====================================================================
+
+# Custom Knowledge Filter (our CSV-based system)
+knowledge_filter:
+  max_results: 5
+  business_unit: "Template"
+  csv_file_path: "lib/knowledge/knowledge_rag.csv"
+  relevance_threshold: 0.7
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: true
+
+# Custom Action System (business-specific)
+suggested_actions:
+  general:
+    - "show_configuration"
+    - "demonstrate_capabilities"
+  testing:
+    - "validate_parameters"
+    - "test_knowledge_retrieval"
+
+# Custom Escalation System (business-specific)  
+escalation_triggers:
+  test_keywords:
+    - "critical error"
+    - "system failure"
+    - "urgent assistance"
+  value_threshold: 1000
+
+# Custom Configuration Sections
+streaming_config:
+  enable_streaming: true
+  stream_intermediate_steps: true
+  stream_tool_calls: true
+
+events_config:
+  enable_events: true
+  event_types:
+    - "agent_start"
+    - "agent_end"
+    - "tool_call"
+    - "memory_update"
+
+context_config:
+  enable_context_sharing: true
+  context_window: 4000
+
+display_config:
+  markdown: false
+  show_tool_calls: true
