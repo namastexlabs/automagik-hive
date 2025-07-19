@@ -156,6 +156,7 @@ class AgnoTeamProxy:
         debug_mode: bool = False,
         user_id: Optional[str] = None,
         db_url: Optional[str] = None,
+        metrics_service: Optional[object] = None,
         **kwargs
     ) -> Team:
         """
@@ -168,6 +169,7 @@ class AgnoTeamProxy:
             debug_mode: Debug mode flag
             user_id: User ID
             db_url: Database URL for storage
+            metrics_service: Optional metrics collection service
             **kwargs: Additional parameters
             
         Returns:
@@ -198,6 +200,14 @@ class AgnoTeamProxy:
             
             # Add custom metadata
             team.metadata = self._create_metadata(config, component_id)
+            
+            # Store metrics service for later use
+            if metrics_service:
+                team.metadata["metrics_service"] = metrics_service
+            
+            # Wrap team.run() method for metrics collection
+            if metrics_service and hasattr(metrics_service, 'collect_from_response'):
+                team = self._wrap_team_with_metrics(team, component_id, config, metrics_service)
             
             return team
             
@@ -259,7 +269,7 @@ class AgnoTeamProxy:
     def _handle_memory_config(self, memory_config: Dict[str, Any], config: Dict[str, Any],
                             component_id: str, db_url: Optional[str], **kwargs) -> Optional[object]:
         """Handle memory configuration."""
-        if memory_config.get("enable_user_memories", False):
+        if memory_config is not None and memory_config.get("enable_user_memories", False):
             try:
                 from lib.memory.memory_factory import create_team_memory
                 return create_team_memory(component_id, db_url)
@@ -326,6 +336,75 @@ class AgnoTeamProxy:
             }
         }
     
+    def _wrap_team_with_metrics(self, team: Team, component_id: str, 
+                              config: Dict[str, Any], metrics_service: object) -> Team:
+        """
+        Wrap team.run() method to automatically collect metrics after execution.
+        
+        Args:
+            team: The Agno Team instance
+            component_id: Team identifier 
+            config: Team configuration
+            metrics_service: Metrics collection service
+            
+        Returns:
+            Team with wrapped run() method
+        """
+        # Store original run method
+        original_run = team.run
+        
+        def wrapped_run(*args, **kwargs):
+            """Wrapped run method that collects metrics after execution"""
+            try:
+                # Execute original run method
+                response = original_run(*args, **kwargs)
+                
+                # Extract YAML overrides for metrics
+                yaml_overrides = self._extract_metrics_overrides(config)
+                
+                # Collect metrics from response
+                if hasattr(metrics_service, 'collect_from_response'):
+                    metrics_service.collect_from_response(
+                        response=response,
+                        agent_name=component_id,
+                        execution_type="team",
+                        yaml_overrides=yaml_overrides
+                    )
+                
+                return response
+                
+            except Exception as e:
+                # Don't let metrics collection failures break team execution
+                logger.warning(f"Metrics collection failed for team {component_id}: {e}")
+                raise e  # Re-raise the original exception
+        
+        # Replace the run method
+        team.run = wrapped_run
+        return team
+    
+    def _extract_metrics_overrides(self, config: Dict[str, Any]) -> Dict[str, bool]:
+        """
+        Extract metrics-related overrides from team config.
+        
+        Args:
+            config: Team configuration dictionary
+            
+        Returns:
+            Dictionary with metrics overrides
+        """
+        overrides = {}
+        
+        # Check for metrics_enabled in various config sections
+        if "metrics_enabled" in config:
+            overrides["metrics_enabled"] = config["metrics_enabled"]
+        
+        # Check team section
+        team_config = config.get("team", {})
+        if "metrics_enabled" in team_config:
+            overrides["metrics_enabled"] = team_config["metrics_enabled"]
+        
+        return overrides
+
     def get_supported_parameters(self) -> Set[str]:
         """Get the set of currently supported Agno Team parameters."""
         return self._supported_params.copy()

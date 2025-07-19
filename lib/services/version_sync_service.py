@@ -140,7 +140,12 @@ class AgnoVersionSyncService:
                 )
                 print(f"📝 Created {component_type} {component_id} v{yaml_version} in Agno storage")
             
-            elif yaml_version > agno_version.version:
+            elif yaml_version == "dev":
+                # Dev versions skip sync entirely
+                action_taken = "dev_skip"
+                print(f"🔧 Skipped sync for {component_type} {component_id} (dev version)")
+            
+            elif isinstance(yaml_version, int) and isinstance(agno_version.version, int) and yaml_version > agno_version.version:
                 # YAML is newer - update Agno storage
                 _, action_taken = self.version_service.sync_from_yaml(
                     component_id=component_id,
@@ -150,7 +155,7 @@ class AgnoVersionSyncService:
                 )
                 print(f"⬆️ Updated {component_type} {component_id} Agno: v{agno_version.version} → v{yaml_version}")
             
-            elif agno_version.version > yaml_version:
+            elif isinstance(yaml_version, int) and isinstance(agno_version.version, int) and agno_version.version > yaml_version:
                 # Agno is newer - update YAML
                 self.update_yaml_from_agno(config_file, component_id, component_type)
                 action_taken = "yaml_updated"

@@ -9,8 +9,8 @@
 agent:
   name: "Complete Agent Template"
   role: "Template demonstrating all 88 Agno Agent parameters"
-  version: 1
-  agent_id: "agent-template"
+  version: "dev"
+  agent_id: "template"
   description: "Comprehensive template showing ALL supported Agno Agent parameters"
 
 # ====================================================================
@@ -54,7 +54,7 @@ add_transfer_instructions: true
 additional_context: "This agent demonstrates comprehensive Agno parameter usage."
 
 # 13. agent_id: Optional[str] - Agent identifier (typically set by factory)
-agent_id: "agent-template"
+agent_id: "template"
 
 # 14. cache_session: bool - Cache session in memory
 cache_session: true

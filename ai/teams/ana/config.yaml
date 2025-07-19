@@ -37,12 +37,6 @@ members:
 - adquirencia
 - human-handoff
 - finalizacao
-metrics:
-  enabled: true
-  collect_token_usage: true
-  collect_tool_metrics: true
-  collect_timing_metrics: true
-  collect_reasoning_metrics: true
 storage:
   type: postgres
   table_name: teams_ana

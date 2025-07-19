@@ -169,7 +169,8 @@ class AgnoAgentProxy:
         session_id: Optional[str] = None,
         debug_mode: bool = False,
         user_id: Optional[str] = None,
-        db_url: Optional[str] = None
+        db_url: Optional[str] = None,
+        metrics_service: Optional[object] = None
     ) -> Agent:
         """
         Create an Agno Agent with dynamic parameter mapping.
@@ -181,6 +182,7 @@ class AgnoAgentProxy:
             debug_mode: Debug mode flag
             user_id: User ID
             db_url: Database URL for storage
+            metrics_service: Optional metrics collection service
             
         Returns:
             Configured Agno Agent instance
@@ -211,6 +213,14 @@ class AgnoAgentProxy:
             # Add custom metadata
             agent.metadata = self._create_metadata(config, component_id)
             
+            # Store metrics service for later use
+            if metrics_service:
+                agent.metadata["metrics_service"] = metrics_service
+            
+            # Wrap agent.run() method for metrics collection
+            if metrics_service and hasattr(metrics_service, 'collect_from_response'):
+                agent = self._wrap_agent_with_metrics(agent, component_id, config, metrics_service)
+            
             return agent
             
         except Exception as e:
@@ -230,6 +240,9 @@ class AgnoAgentProxy:
         Returns:
             Dictionary of processed parameters for Agent constructor
         """
+        if config is None:
+            raise ValueError(f"Config is None for agent {component_id}")
+        
         processed = {}
         
         # Process each configuration section
@@ -282,7 +295,7 @@ class AgnoAgentProxy:
     def _handle_memory_config(self, memory_config: Dict[str, Any], config: Dict[str, Any],
                             component_id: str, db_url: Optional[str]) -> Optional[object]:
         """Handle memory configuration."""
-        if memory_config.get("enable_user_memories", False):
+        if memory_config is not None and memory_config.get("enable_user_memories", False):
             try:
                 from lib.memory.memory_factory import create_agent_memory
                 return create_agent_memory(component_id, db_url)
@@ -354,6 +367,75 @@ class AgnoAgentProxy:
             }
         }
     
+    def _wrap_agent_with_metrics(self, agent: Agent, component_id: str, 
+                               config: Dict[str, Any], metrics_service: object) -> Agent:
+        """
+        Wrap agent.run() method to automatically collect metrics after execution.
+        
+        Args:
+            agent: The Agno Agent instance
+            component_id: Agent identifier 
+            config: Agent configuration
+            metrics_service: Metrics collection service
+            
+        Returns:
+            Agent with wrapped run() method
+        """
+        # Store original run method
+        original_run = agent.run
+        
+        def wrapped_run(*args, **kwargs):
+            """Wrapped run method that collects metrics after execution"""
+            try:
+                # Execute original run method
+                response = original_run(*args, **kwargs)
+                
+                # Extract YAML overrides for metrics
+                yaml_overrides = self._extract_metrics_overrides(config)
+                
+                # Collect metrics from response
+                if hasattr(metrics_service, 'collect_from_response'):
+                    metrics_service.collect_from_response(
+                        response=response,
+                        agent_name=component_id,
+                        execution_type="agent",
+                        yaml_overrides=yaml_overrides
+                    )
+                
+                return response
+                
+            except Exception as e:
+                # Don't let metrics collection failures break agent execution
+                logger.warning(f"Metrics collection failed for agent {component_id}: {e}")
+                raise e  # Re-raise the original exception
+        
+        # Replace the run method
+        agent.run = wrapped_run
+        return agent
+    
+    def _extract_metrics_overrides(self, config: Dict[str, Any]) -> Dict[str, bool]:
+        """
+        Extract metrics-related overrides from agent config.
+        
+        Args:
+            config: Agent configuration dictionary
+            
+        Returns:
+            Dictionary with metrics overrides
+        """
+        overrides = {}
+        
+        # Check for metrics_enabled in various config sections
+        if "metrics_enabled" in config:
+            overrides["metrics_enabled"] = config["metrics_enabled"]
+        
+        # Check agent section
+        agent_config = config.get("agent", {})
+        if "metrics_enabled" in agent_config:
+            overrides["metrics_enabled"] = agent_config["metrics_enabled"]
+        
+        return overrides
+
     def get_supported_parameters(self) -> Set[str]:
         """Get the set of currently supported Agno Agent parameters."""
         return self._supported_params.copy()

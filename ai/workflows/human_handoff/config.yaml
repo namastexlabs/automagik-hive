@@ -1,7 +1,8 @@
-agent:
+workflow:
+  workflow_id: human-handoff
   name: Ana - Human Handoff
   version: dev
-  agent_id: human-handoff
+  description: "Human escalation workflow with WhatsApp notifications and protocol generation"
 model:
   id: claude-sonnet-4-20250514
   provider: anthropic

@@ -9,8 +9,8 @@
 workflow:
   name: "Complete Workflow Template"
   role: "Template demonstrating all 14 Agno Workflow parameters"
-  version: 1
-  workflow_id: "workflow-template"
+  version: "dev"
+  workflow_id: "template"
   description: "Comprehensive template showing ALL supported Agno Workflow parameters"
 
 # ====================================================================
@@ -70,7 +70,7 @@ stream_intermediate_steps: true
 user_id: null
 
 # 13. workflow_id: Optional[str] - Workflow identifier (typically set by factory)
-workflow_id: "workflow-template"
+workflow_id: "template"
 
 # 14. workflow_session_state: Optional[Dict[str, Any]] - Workflow session state
 workflow_session_state: {}

@@ -213,13 +213,8 @@ class AgnoVersionService:
             if session.session_data:
                 versions.append(VersionInfo(**session.session_data))
         
-        # Sort by version number descending (handle "dev" versions)
-        def version_sort_key(v):
-            if v.version == "dev":
-                return float('inf')  # "dev" versions sort last
-            return v.version if isinstance(v.version, int) else 0
-        
-        return sorted(versions, key=version_sort_key, reverse=True)
+        # Sort by version number descending
+        return sorted(versions, key=lambda v: v.version, reverse=True)
     
     def activate_version(
         self,
@@ -359,10 +354,6 @@ class AgnoVersionService:
         yaml_version = yaml_config.get(component_type, {}).get("version")
         if not yaml_version:
             raise ValueError(f"No version found in YAML config for {component_type} {component_id}")
-        
-        # Skip version sync for "dev" versions - they bypass the system
-        if yaml_version == "dev":
-            return None, "dev_skip"
         
         # Get current active version
         current_version = self.get_active_version(component_id)

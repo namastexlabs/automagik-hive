@@ -317,6 +317,7 @@ class VersionFactory:
                     
                     version = component_section.get('version', 1)
                     
+                    
                     return VersionInfo(
                         component_id=component_id,
                         component_type=component_type,

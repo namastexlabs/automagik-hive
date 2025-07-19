@@ -95,6 +95,9 @@ from ai.teams.ana.team import get_ana_team
 # Import workflow registry for dynamic loading
 from ai.workflows.registry import list_available_workflows, get_workflow
 
+# Import team registry for dynamic loading
+from ai.teams.registry import list_available_teams, get_team
+
 # Import CSV hot reload manager
 from lib.knowledge.csv_hot_reload import CSVHotReloadManager
 
@@ -402,6 +405,30 @@ def create_pagbank_api():
     except Exception as e:
         startup_display.add_error("Workflows", f"Could not load workflows: {e}")
         workflows_list = []
+    
+    # Discover and add additional teams to startup display dynamically
+    try:
+        available_teams = list_available_teams()
+        
+        for team_id in available_teams:
+            team_name = team_id.replace('-', ' ').title()
+            
+            # Try to get version and member count from the team instance if available
+            team_version = None
+            member_count = 0
+            try:
+                team = get_team(team_id, debug_mode=is_development)
+                if hasattr(team, 'metadata') and team.metadata:
+                    team_version = team.metadata.get('version')
+                if hasattr(team, 'members') and team.members:
+                    member_count = len(team.members)
+            except Exception as e:
+                print(f"⚠️ Failed to load team {team_id} for metadata: {e}")
+                continue
+            
+            startup_display.add_team(team_id, team_name, member_count, version=team_version, status="✅")
+    except Exception as e:
+        startup_display.add_error("Teams", f"Could not load additional teams: {e}")
     
     # Create base FastAPI app for configuration
     

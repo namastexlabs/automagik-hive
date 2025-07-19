@@ -9,8 +9,8 @@
 team:
   name: "Complete Team Template"
   role: "Template demonstrating all 74 Agno Team parameters"
-  version: 1
-  team_id: "team-template"
+  version: "dev"
+  team_id: "template"
   description: "Comprehensive template showing ALL supported Agno Team parameters"
 
 # ====================================================================
@@ -245,7 +245,7 @@ system_message: null
 system_message_role: "system"
 
 # 65. team_id: Optional[str] - Team identifier (typically set by factory)
-team_id: "team-template"
+team_id: "template"
 
 # 66. team_session_state: Optional[Dict[str, Any]] - Team session state
 team_session_state: {}
