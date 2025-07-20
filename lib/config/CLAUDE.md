@@ -31,8 +31,6 @@ You are working with the Automagik Multi-Agent Framework's global configuration 
 ```
 config/
 ├── settings.py              # Main application settings
-├── database.py             # Database connection configuration
-├── postgres_config.py      # PostgreSQL-specific settings
 ├── models.py               # Model configuration patterns
 ├── environments/           # Environment-specific configs
 │   └── CLAUDE.md          # Environment configuration guide
@@ -80,7 +78,7 @@ class EnvironmentConfig:
     AUTOMAGIK_AGENTS_HOST = os.getenv("AUTOMAGIK_AGENTS_HOST")          # Optional: Agno defaults to localhost
     AUTOMAGIK_AGENTS_PORT = os.getenv("AUTOMAGIK_AGENTS_PORT")          # Optional: Agno defaults to 7777
     
-    # Database (from config/database.py pattern)
+    # Database (Agno handles database configuration automatically)
     DATABASE_URL = os.getenv("DATABASE_URL")               # Optional: Auto-fallback to SQLite
     
     # LLM API Keys (required)
@@ -97,7 +95,7 @@ class EnvironmentConfig:
     EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY")
 ```
 
-## Database Configuration Pattern (From config/database.py)
+## Database Configuration Pattern (Using Agno Storage)
 
 ### PostgreSQL with Automatic Fallback
 ```python

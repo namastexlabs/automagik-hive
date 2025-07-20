@@ -316,7 +316,9 @@ class AgnoAgentProxy:
                                component_id: str, db_url: Optional[str]) -> Optional[object]:
         """Handle custom knowledge filter system."""
         try:
-            from lib.knowledge.knowledge_factory import get_knowledge_base
+            # Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
+            from agno.knowledge.csv import CSVKnowledgeBase
+            from agno.vectordb.pgvector import PgVector
             
             # Load global knowledge config first
             try:
@@ -330,11 +332,24 @@ class AgnoAgentProxy:
             max_results = knowledge_filter.get("max_results", global_knowledge.get("max_results", 10))
             
             if csv_path and db_url:
-                return get_knowledge_base(
-                    db_url=db_url,
-                    num_documents=max_results,
-                    csv_path=csv_path
+                # Create knowledge base using pure Agno abstractions
+                vector_db = PgVector(
+                    table_name="knowledge_base",
+                    db_url=db_url
                 )
+                
+                knowledge_base = CSVKnowledgeBase(
+                    path=csv_path,
+                    vector_db=vector_db
+                )
+                
+                # Load using Agno's native incremental loading
+                try:
+                    knowledge_base.load(recreate=False, skip_existing=True)
+                except Exception as e:
+                    logger.warning(f"Failed to load knowledge base: {e}")
+                
+                return knowledge_base
         except Exception as e:
             logger.warning(f"Failed to create knowledge base for {component_id}: {e}")
         

@@ -39,6 +39,13 @@ from .config import (
 
 from .collection_service import MetricsCollectionService
 
+from .async_metrics_service import (
+    AsyncMetricsService,
+    get_metrics_service,
+    initialize_metrics_service,
+    shutdown_metrics_service
+)
+
 from .storage import (
     MetricsStorage,
     StorageError,
@@ -56,6 +63,12 @@ __all__ = [
     
     # Collection Service
     "MetricsCollectionService",
+    
+    # Async Service
+    "AsyncMetricsService",
+    "get_metrics_service",
+    "initialize_metrics_service", 
+    "shutdown_metrics_service",
     
     # Storage
     "MetricsStorage",

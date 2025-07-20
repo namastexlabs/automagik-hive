@@ -17,7 +17,7 @@ from agno.storage.postgres import PostgresStorage
 from agno.utils.log import logger
 
 from lib.versioning import AgnoVersionService
-from lib.knowledge.knowledge_factory import get_knowledge_base
+# Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
 
 
 def load_global_knowledge_config():
