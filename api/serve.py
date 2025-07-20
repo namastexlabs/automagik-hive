@@ -252,7 +252,7 @@ def create_automagik_api():
         from ai.agents.registry import AgentRegistry
         agent_registry = AgentRegistry()
         available_agents = agent_registry.get_all_agents(
-            debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true")
+            debug_mode=bool(os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true")
         )
     except Exception as e:
         if (demo_mode or is_development) and not is_reloader:

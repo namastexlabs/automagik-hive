@@ -27,7 +27,7 @@ class ServerConfig:
         """Initialize server configuration with environment variables."""
         # Server host and port configuration
         self.host = os.getenv("HIVE_API_HOST", "0.0.0.0")
-        self.port = int(os.getenv("HIVE_API_PORT", "9888"))
+        self.port = int(os.getenv("HIVE_API_PORT", "8886"))
         self.workers = int(os.getenv("HIVE_API_WORKERS", "4"))
         
         # Environment settings

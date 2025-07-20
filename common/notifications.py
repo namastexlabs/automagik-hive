@@ -66,6 +66,12 @@ class WhatsAppProvider(NotificationProvider):
     
     async def send(self, notification: NotificationMessage) -> bool:
         """Send notification via WhatsApp using pooled MCP connections"""
+        # Check if WhatsApp notifications are enabled
+        enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
+        if not enabled:
+            logger.debug("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
+            return False
+        
         try:
             # Check cooldown to prevent spam
             cooldown_key = f"{notification.source}:{notification.level}:{notification.title}"

@@ -33,20 +33,16 @@ class WhatsAppNotificationService:
         self.debug_mode = debug_mode
         self._agent = None
         self._mcp_tools = None
-        self._validate_environment()
+        # Environment validation moved to notification methods
     
-    def _validate_environment(self) -> None:
-        """Validate required Evolution API environment variables."""
-        required_vars = [
-            'EVOLUTION_API_BASE_URL',
-            'EVOLUTION_API_API_KEY',
-            'EVOLUTION_API_INSTANCE'
-        ]
-        
-        missing_vars = [var for var in required_vars if not os.getenv(var)]
-        if missing_vars:
-            logger.warning(f"Missing Evolution API environment variables: {missing_vars}")
-            logger.warning("WhatsApp notifications will be simulated")
+    def _check_notifications_enabled(self) -> bool:
+        """Check if WhatsApp notifications are enabled via environment variable."""
+        enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
+        if not enabled:
+            if self.debug_mode:
+                logger.info("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
+            return False
+        return True
     
     async def _get_mcp_tools(self):
         """Get simple MCP tools for Evolution API access."""
@@ -366,6 +362,15 @@ Please send this message now using the send_whatsapp_message tool and confirm de
         Returns:
             Dict with success status and message details
         """
+        # Check if WhatsApp notifications are enabled
+        if not self._check_notifications_enabled():
+            return {
+                "success": False,
+                "message": "WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED",
+                "notification_type": message_type,
+                "status": "disabled"
+            }
+        
         try:
             # Get the agent with MCP tools
             agent = await self._get_agent()
@@ -442,6 +447,16 @@ async def send_workflow_notification(
     Returns:
         Dict with success status and message details
     """
+    # Check if WhatsApp notifications are enabled
+    enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
+    if not enabled:
+        return {
+            "success": False,
+            "message": "WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED",
+            "notification_type": notification_type,
+            "status": "disabled"
+        }
+    
     service = get_whatsapp_notification_service()
     
     if notification_type == "typification_report":
