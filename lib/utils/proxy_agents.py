@@ -335,6 +335,7 @@ class AgnoAgentProxy:
                 # Create knowledge base using pure Agno abstractions
                 vector_db = PgVector(
                     table_name="knowledge_base",
+                    schema="agno",  # Use agno schema for Agno framework tables
                     db_url=db_url
                 )
                 

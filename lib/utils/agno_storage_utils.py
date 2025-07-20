@@ -116,6 +116,9 @@ def create_dynamic_storage(
         elif param_name == 'mode':
             # Auto-infer mode from component type
             storage_params['mode'] = component_mode
+        elif param_name == 'schema' and param_name not in storage_config:
+            # Always use agno schema for Agno framework tables
+            storage_params['schema'] = 'agno'
         elif param_name == 'table_name' and 'table_name' not in storage_config:
             # Auto-generate table name if not specified
             storage_params['table_name'] = f"{component_mode}s_{component_id}"

@@ -1,7 +1,7 @@
 """
-Agno-based versioning system
+Versioning system
 
-Clean, modern versioning implementation using Agno storage abstractions.
+Component versioning using hive schema with psycopg3.
 """
 
 from .agno_version_service import (

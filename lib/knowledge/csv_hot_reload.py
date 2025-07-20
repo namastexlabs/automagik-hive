@@ -78,9 +78,10 @@ class CSVHotReloadManager:
             # Get database URL from environment or config
             db_url = os.getenv("HIVE_DATABASE_URL", "postgresql+psycopg://ai:ai@localhost:5532/ai")
             
-            # Create PgVector instance
+            # Create PgVector instance  
             vector_db = PgVector(
                 table_name="knowledge_base",
+                schema="agno",  # Use agno schema for Agno framework tables
                 db_url=db_url
             )
             

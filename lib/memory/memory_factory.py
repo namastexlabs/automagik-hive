@@ -38,7 +38,8 @@ def create_memory_instance(
     try:
         memory_db = PostgresMemoryDb(
             table_name=table_name,
-            db_url=db_url
+            db_url=db_url,
+            schema="agno"  # Use agno schema for Agno framework tables
         )
         
         return Memory(
