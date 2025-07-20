@@ -111,12 +111,7 @@ define generate_postgres_credentials
     POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
     POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
     POSTGRES_DB="hive"; \
-    echo "" >> .env; \
-    echo "# PostgreSQL credentials (auto-generated)" >> .env; \
-    echo "POSTGRES_USER=$$POSTGRES_USER" >> .env; \
-    echo "POSTGRES_PASSWORD=$$POSTGRES_PASS" >> .env; \
-    echo "POSTGRES_DB=$$POSTGRES_DB" >> .env; \
-    echo "HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB" >> .env; \
+    sed -i "s|HIVE_DATABASE_URL=postgresql+psycopg://hive_user:your-secure-password-here@localhost:5532/hive|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
     $(call print_success,PostgreSQL credentials generated and saved to .env); \
     echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
     echo -e "  User: $$POSTGRES_USER"; \
@@ -395,7 +390,7 @@ uninstall: ## 🗑️ Uninstall with data options
 		echo -e "$(FONT_PURPLE)Database location: ./data/postgres/$(FONT_RESET)"; \
 		echo ""; \
 	fi
-	@read -p "Enter choice (1-4): " CHOICE; \
+	@read -p "Enter choice (1-4): " CHOICE < /dev/tty; \
 	case "$$CHOICE" in \
 		1) $(MAKE) uninstall-containers-only ;; \
 		2) $(MAKE) uninstall-clean ;; \
@@ -418,7 +413,7 @@ uninstall-containers-only: ## 🗑️ Remove containers only
 uninstall-clean: ## 🗑️ Remove containers and venv
 	@$(call print_status,Removing containers and virtual environment...)
 	@echo -e "$(FONT_YELLOW)This will remove containers and .venv but keep your database data$(FONT_RESET)"
-	@read -p "Type 'yes' to confirm: " CONFIRM; \
+	@read -p "Type 'yes' to confirm: " CONFIRM < /dev/tty; \
 	if [ "$$CONFIRM" = "yes" ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
 		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
@@ -440,7 +435,7 @@ uninstall-purge: ## 🗑️ Full purge including data
 		echo -e "$(FONT_RED)Database size to be deleted: $$DATA_SIZE$(FONT_RESET)"; \
 	fi
 	@echo -e "$(FONT_YELLOW)Type 'DELETE EVERYTHING' to confirm full purge:$(FONT_RESET)"
-	@read -r CONFIRM; \
+	@read -r CONFIRM < /dev/tty; \
 	if [ "$$CONFIRM" = "DELETE EVERYTHING" ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
 		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
