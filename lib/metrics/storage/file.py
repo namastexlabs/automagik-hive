@@ -34,7 +34,7 @@ class FileMetricsStorage(MetricsStorage):
             ConfigurationError: If path is invalid or outside allowed directory
         """
         # Define the allowed root directory for metrics storage
-        metrics_root = Path(os.getenv("METRICS_ROOT", "./logs")).resolve()
+        metrics_root = Path(os.getenv("HIVE_METRICS_ROOT", "./logs")).resolve()
         
         # Resolve the requested path
         try:

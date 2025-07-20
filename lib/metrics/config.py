@@ -37,16 +37,16 @@ class MetricsConfig:
             return value.lower() in ("true", "1", "yes", "on")
         
         # Core metrics collection
-        collect_tokens = parse_bool(os.getenv("METRICS_COLLECT_TOKENS", "true"), True)
-        collect_time = parse_bool(os.getenv("METRICS_COLLECT_TIME", "true"), True)
-        collect_tools = parse_bool(os.getenv("METRICS_COLLECT_TOOLS", "true"), True)
-        collect_events = parse_bool(os.getenv("METRICS_COLLECT_EVENTS", "true"), True)
-        collect_content = parse_bool(os.getenv("METRICS_COLLECT_CONTENT", "true"), True)
+        collect_tokens = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TOKENS", "true"), True)
+        collect_time = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TIME", "true"), True)
+        collect_tools = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TOOLS", "true"), True)
+        collect_events = parse_bool(os.getenv("HIVE_METRICS_COLLECT_EVENTS", "true"), True)
+        collect_content = parse_bool(os.getenv("HIVE_METRICS_COLLECT_CONTENT", "true"), True)
         
         # Storage & configuration
-        storage_backend = os.getenv("METRICS_STORAGE_BACKEND", "file")
-        storage_path = os.getenv("METRICS_STORAGE_PATH", "./logs/metrics.log")
-        agno_monitor = parse_bool(os.getenv("AGNO_MONITOR", "false"), False)
+        storage_backend = os.getenv("HIVE_METRICS_STORAGE_BACKEND", "file")
+        storage_path = os.getenv("HIVE_METRICS_STORAGE_PATH", "./logs/metrics.log")
+        agno_monitor = parse_bool(os.getenv("HIVE_AGNO_MONITOR", "false"), False)
         
         # Validate storage backend
         valid_backends = {"file", "console", "postgres"}
@@ -123,7 +123,7 @@ def validate_environment_config() -> Optional[str]:
         elif config.storage_backend == "postgres":
             # Check if required environment variables exist for PostgreSQL
             import os
-            postgres_vars = ["DATABASE_URL"]  # Reuse existing database URL
+            postgres_vars = ["HIVE_DATABASE_URL"]  # Reuse existing database URL
             missing_vars = [var for var in postgres_vars if not os.getenv(var)]
             if missing_vars:
                 return f"PostgreSQL backend requires environment variables: {missing_vars}"

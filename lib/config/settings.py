@@ -25,37 +25,37 @@ class Settings:
         # Application settings
         self.app_name = "PagBank Multi-Agent System"
         self.version = "0.1.0"
-        self.environment = os.getenv("ENVIRONMENT", "development")
-        self.debug = os.getenv("DEBUG", "false").lower() == "true"
+        self.environment = os.getenv("HIVE_ENVIRONMENT", "development")
+        # Debug mode is now handled by server_config.py using DEBUG_MODE
         
         # API settings now handled by ServerConfig - see lib/config/server_config.py
         
         # Logging settings
-        self.log_level = os.getenv("LOG_LEVEL", "INFO")
+        self.log_level = os.getenv("HIVE_LOG_LEVEL", "INFO")
         self.log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         self.log_file = self.logs_dir / "pagbank.log"
         
         # Agent settings
-        self.max_conversation_turns = int(os.getenv("MAX_CONVERSATION_TURNS", "20"))
-        self.session_timeout = int(os.getenv("SESSION_TIMEOUT", "1800"))  # 30 minutes
-        self.max_concurrent_users = int(os.getenv("MAX_CONCURRENT_USERS", "100"))
+        self.max_conversation_turns = int(os.getenv("HIVE_MAX_CONVERSATION_TURNS", "20"))
+        self.session_timeout = int(os.getenv("HIVE_SESSION_TIMEOUT", "1800"))  # 30 minutes
+        self.max_concurrent_users = int(os.getenv("HIVE_MAX_CONCURRENT_USERS", "100"))
         
         # Memory settings
-        self.memory_retention_days = int(os.getenv("MEMORY_RETENTION_DAYS", "30"))
-        self.max_memory_entries = int(os.getenv("MAX_MEMORY_ENTRIES", "1000"))
+        self.memory_retention_days = int(os.getenv("HIVE_MEMORY_RETENTION_DAYS", "30"))
+        self.max_memory_entries = int(os.getenv("HIVE_MAX_MEMORY_ENTRIES", "1000"))
         
         # Knowledge base settings
         self.knowledge_file = self.project_root / "core/knowledge/knowledge_rag.csv"
         self.max_knowledge_results = int(os.getenv("MAX_KNOWLEDGE_RESULTS", "10"))
         
         # Security settings
-        self.max_request_size = int(os.getenv("MAX_REQUEST_SIZE", "10485760"))  # 10MB
-        self.rate_limit_requests = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
-        self.rate_limit_period = int(os.getenv("RATE_LIMIT_PERIOD", "60"))  # 1 minute
+        self.max_request_size = int(os.getenv("HIVE_MAX_REQUEST_SIZE", "10485760"))  # 10MB
+        self.rate_limit_requests = int(os.getenv("HIVE_RATE_LIMIT_REQUESTS", "100"))
+        self.rate_limit_period = int(os.getenv("HIVE_RATE_LIMIT_PERIOD", "60"))  # 1 minute
         
         # Team routing settings
-        self.team_routing_timeout = int(os.getenv("TEAM_ROUTING_TIMEOUT", "30"))
-        self.max_team_switches = int(os.getenv("MAX_TEAM_SWITCHES", "3"))
+        self.team_routing_timeout = int(os.getenv("HIVE_TEAM_ROUTING_TIMEOUT", "30"))
+        self.max_team_switches = int(os.getenv("HIVE_MAX_TEAM_SWITCHES", "3"))
         
         # Human handoff thresholds are configured in Ana team YAML, not environment variables
         
@@ -70,8 +70,8 @@ class Settings:
         self.metrics_interval = int(os.getenv("METRICS_INTERVAL", "60"))  # 1 minute
         
         # Cache settings
-        self.cache_ttl = int(os.getenv("CACHE_TTL", "300"))  # 5 minutes
-        self.cache_max_size = int(os.getenv("CACHE_MAX_SIZE", "1000"))
+        self.cache_ttl = int(os.getenv("HIVE_CACHE_TTL", "300"))  # 5 minutes
+        self.cache_max_size = int(os.getenv("HIVE_CACHE_MAX_SIZE", "1000"))
     
     def is_production(self) -> bool:
         """Check if running in production environment."""

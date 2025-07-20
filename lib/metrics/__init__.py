@@ -12,13 +12,13 @@ Key Features:
 - YAML-level overrides for metrics_enabled
 - Security hardened against SQL injection and path traversal
 - File storage default to ./logs/metrics.log
-- Disables Agno platform telemetry (AGNO_MONITOR=false)
+- Disables Agno platform telemetry (HIVE_AGNO_MONITOR=false)
 
 Usage:
     # Environment configuration
-    METRICS_COLLECT_TOKENS=true
-    METRICS_STORAGE_BACKEND=file
-    AGNO_MONITOR=false
+    HIVE_METRICS_COLLECT_TOKENS=true
+    HIVE_METRICS_STORAGE_BACKEND=file
+    HIVE_AGNO_MONITOR=false
     
     # Automatic integration via proxies
     from lib.utils.agno_proxy import create_agent
