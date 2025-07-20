@@ -27,9 +27,9 @@ class AgnoVersionSyncService:
     
     def __init__(self, db_url: str = None):
         """Initialize with database URL"""
-        self.db_url = db_url or os.getenv("DATABASE_URL")
+        self.db_url = db_url or os.getenv("HIVE_DATABASE_URL")
         if not self.db_url:
-            raise ValueError("DATABASE_URL required")
+            raise ValueError("HIVE_DATABASE_URL required")
         
         self.version_service = AgnoVersionService(self.db_url)
         

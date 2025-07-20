@@ -1,1 +1,1 @@
-"""PagBank Utils Module - Common utilities and helper functions."""
+"""Automagik Hive Utils Module - Common utilities and helper functions."""

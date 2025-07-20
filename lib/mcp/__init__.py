@@ -1,7 +1,7 @@
 """
 MCP (Model Context Protocol) Integration Package
 
-Simple, clean MCP integration for the Genie Agents system.
+Simple, clean MCP integration for the Automagik Hive system.
 KISS principle - no overengineering, just what's needed.
 """
 

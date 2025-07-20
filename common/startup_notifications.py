@@ -23,7 +23,7 @@ async def send_startup_notification(startup_display=None):
         # Use asyncio.create_task to isolate the notification sending
         async def isolated_send():
             await send_notification(
-                title="🚀 Genie Agents Server Started",
+                title="🚀 Automagik Hive Server Started",
                 message=message,
                 source="server-startup",
                 level=NotificationLevel.INFO
@@ -49,7 +49,7 @@ def _build_startup_message(startup_display=None):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     message_parts = [
-        "🎯 *Genie Agents Multi-Agent System*",
+        "🎯 *Automagik Hive Multi-Agent System*",
         f"📅 Started: {timestamp}",
         f"🌍 Environment: {environment.upper()}",
         f"🌐 Port: {port}",
@@ -130,8 +130,8 @@ async def send_shutdown_notification():
         # Use asyncio.create_task to isolate the notification sending
         async def isolated_send():
             await send_notification(
-                title="Genie Agents Server Shutdown",
-                message="The genie-agents server is shutting down.",
+                title="Automagik Hive Server Shutdown",
+                message="The automagik-hive server is shutting down.",
                 source="server-shutdown",
                 level=NotificationLevel.WARNING
             )
@@ -147,7 +147,7 @@ async def send_error_notification(error_message: str, source: str = "server-erro
     """Send notification when server encounters an error"""
     try:
         await send_notification(
-            title="Genie Agents Server Error",
+            title="Automagik Hive Server Error",
             message=f"Server error occurred: {error_message}",
             source=source,
             level=NotificationLevel.ERROR

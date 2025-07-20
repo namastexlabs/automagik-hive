@@ -1,5 +1,5 @@
 """
-Concise startup display utility for Genie Agents system.
+Concise startup display utility for Hive Agents system.
 Replaces verbose startup logs with clean table format.
 """
 
@@ -75,7 +75,7 @@ class StartupDisplay:
             console.print()
         
         # Create main components table
-        table = Table(title="🚀 Genie Agents System Status", show_header=True, header_style="bold magenta")
+        table = Table(title="🚀 Hive Agents System Status", show_header=True, header_style="bold magenta")
         table.add_column("Type", style="cyan", width=14)
         table.add_column("ID", style="yellow", width=30)
         table.add_column("Name", style="green", width=45)

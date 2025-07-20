@@ -1,7 +1,7 @@
 """
 Configuration Management Package
 
-Provides configuration loading, validation, and management for the Genie Agents system.
+Provides configuration loading, validation, and management for the Automagik Hive system.
 Includes support for YAML configuration files with MCP tool parsing.
 """
 

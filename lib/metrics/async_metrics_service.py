@@ -2,7 +2,7 @@
 Async Metrics Service with Queue Architecture
 
 High-performance async metrics collection designed for <0.1ms agent latency impact.
-Uses background queue processing with psycopg2 connection pooling.
+Uses background queue processing with psycopg connection pooling.
 """
 
 import asyncio
@@ -71,21 +71,21 @@ class AsyncMetricsService:
     def _get_database_url(self) -> str:
         """Get database URL from config or environment."""
         return (self.config.get("database_url") or 
-                os.getenv("DATABASE_URL", 
+                os.getenv("HIVE_DATABASE_URL", 
                          "postgresql+psycopg://ai:ai@localhost:5532/ai"))
     
     def _initialize(self):
         """Initialize connection pool and create table."""
         try:
-            # Import psycopg2 when needed
-            import psycopg2
-            from psycopg2 import pool
+            # Import psycopg when needed
+            import psycopg
+            from psycopg_pool import ConnectionPool
             
             # Create connection pool
-            self.connection_pool = pool.ThreadedConnectionPool(
-                minconn=1,
-                maxconn=5,
-                dsn=self.database_url
+            self.connection_pool = ConnectionPool(
+                conninfo=self.database_url,
+                min_size=1,
+                max_size=5
             )
             
             # Create table if needed
@@ -97,7 +97,7 @@ class AsyncMetricsService:
             logger.info("AsyncMetricsService initialized successfully")
             
         except ImportError:
-            logger.warning("psycopg2 not available - AsyncMetricsService will be disabled")
+            logger.warning("psycopg not available - AsyncMetricsService will be disabled")
             self.connection_pool = None
         except Exception as e:
             logger.error(f"Failed to initialize AsyncMetricsService: {e}")
@@ -106,37 +106,31 @@ class AsyncMetricsService:
     def _create_table_if_not_exists(self):
         """Create metrics table if it doesn't exist."""
         try:
-            conn = self.connection_pool.getconn()
-            
-            create_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.table_name} (
-                id SERIAL PRIMARY KEY,
-                timestamp TIMESTAMPTZ NOT NULL,
-                agent_name VARCHAR(255) NOT NULL,
-                execution_type VARCHAR(50) NOT NULL,
-                metrics JSONB NOT NULL,
-                version VARCHAR(10) NOT NULL DEFAULT '1.0',
-                created_at TIMESTAMPTZ DEFAULT NOW()
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_{self.table_name}_timestamp 
-            ON {self.table_name}(timestamp);
-            
-            CREATE INDEX IF NOT EXISTS idx_{self.table_name}_agent_name 
-            ON {self.table_name}(agent_name);
-            """
-            
-            with conn.cursor() as cursor:
-                cursor.execute(create_table_sql)
-            conn.commit()
-            
+            with self.connection_pool.connection() as conn:
+                create_table_sql = f"""
+                CREATE TABLE IF NOT EXISTS {self.table_name} (
+                    id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMPTZ NOT NULL,
+                    agent_name VARCHAR(255) NOT NULL,
+                    execution_type VARCHAR(50) NOT NULL,
+                    metrics JSONB NOT NULL,
+                    version VARCHAR(10) NOT NULL DEFAULT '1.0',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_{self.table_name}_timestamp 
+                ON {self.table_name}(timestamp);
+                
+                CREATE INDEX IF NOT EXISTS idx_{self.table_name}_agent_name 
+                ON {self.table_name}(agent_name);
+                """
+                
+                with conn.cursor() as cursor:
+                    cursor.execute(create_table_sql)
+                conn.commit()
+                
         except Exception as e:
             logger.error(f"Failed to create metrics table: {e}")
-            if conn:
-                conn.rollback()
-        finally:
-            if conn:
-                self.connection_pool.putconn(conn)
     
     def _start_background_processing(self):
         """Start background thread for processing metrics queue."""
@@ -197,54 +191,39 @@ class AsyncMetricsService:
         if not batch:
             return
             
-        conn = None
         try:
-            conn = self.connection_pool.getconn()
-            
-            # Prepare batch insert
-            insert_sql = f"""
-            INSERT INTO {self.table_name} 
-            (timestamp, agent_name, execution_type, metrics, version)
-            VALUES %s
-            """
-            
-            # Convert batch to values tuple
-            values = []
-            for entry in batch:
-                values.append((
-                    entry.timestamp,
-                    entry.agent_name,
-                    entry.execution_type,
-                    json.dumps(entry.metrics),
-                    entry.version
-                ))
-            
-            # Execute batch insert  
-            try:
-                from psycopg2.extras import execute_values
-            except ImportError:
-                logger.error("psycopg2.extras not available for batch insert")
-                return
-            with conn.cursor() as cursor:
-                execute_values(
-                    cursor, insert_sql, values,
-                    template=None, page_size=len(values)
-                )
-            conn.commit()
-            
-            # Update stats
-            self.stats["total_stored"] += len(batch)
-            
-            logger.debug(f"Stored batch of {len(batch)} metrics entries")
-            
+            with self.connection_pool.connection() as conn:
+                # Prepare batch insert using psycopg3 syntax
+                insert_sql = f"""
+                INSERT INTO {self.table_name} 
+                (timestamp, agent_name, execution_type, metrics, version)
+                VALUES (%s, %s, %s, %s, %s)
+                """
+                
+                # Convert batch to values tuple
+                values = []
+                for entry in batch:
+                    values.append((
+                        entry.timestamp,
+                        entry.agent_name,
+                        entry.execution_type,
+                        json.dumps(entry.metrics),
+                        entry.version
+                    ))
+                
+                # Execute batch insert using executemany
+                with conn.cursor() as cursor:
+                    cursor.executemany(insert_sql, values)
+                conn.commit()
+                
+                # Update stats
+                self.stats["total_stored"] += len(batch)
+                
+                logger.debug(f"Stored batch of {len(batch)} metrics entries")
+                
         except Exception as e:
             self.stats["storage_errors"] += 1
             logger.error(f"Failed to store metrics batch: {e}")
-            if conn:
-                conn.rollback()
-        finally:
-            if conn:
-                self.connection_pool.putconn(conn)
     
     async def collect_metrics(self, 
                             agent_name: str,
@@ -365,7 +344,7 @@ class AsyncMetricsService:
         return {
             **self.stats,
             "queue_size": self.metrics_queue.qsize(),
-            "connection_pool_size": len(self.connection_pool._pool) if self.connection_pool else 0,
+            "connection_pool_size": self.connection_pool.get_stats()["pool_size"] if self.connection_pool else 0,
             "is_processing": self.processing_thread.is_alive() if self.processing_thread else False
         }
     
@@ -403,7 +382,7 @@ class AsyncMetricsService:
             self.processing_thread.join(timeout=5.0)
         
         if self.connection_pool:
-            self.connection_pool.closeall()
+            self.connection_pool.close()
         
         logger.info("AsyncMetricsService closed")
 

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# Genie Agents - Enterprise Multi-Agent System (claude-master)
+# Automagik Hive - Enterprise Multi-Agent System
 
 ## 1. Project Overview
 - **Vision:** Production-ready enterprise boilerplate for building sophisticated multi-agent AI systems with intelligent routing and enterprise-grade deployment capabilities
@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **🚫 ABSOLUTE RULE: NEVER IMPLEMENT BACKWARD COMPATIBILITY** - It is forbidden and will be rejected. Always break compatibility in favor of clean, modern implementations.
 - **📧 Git Commits**: ALWAYS co-author commits with Automagik Genie using: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
 
-### Genie Agents Specific Instructions
+### Automagik Hive Specific Instructions
 - **Agent Development**: Always use YAML configuration files for new agents following the exiating architecture pattern
 - **Agent Versioning**: **CRITICAL** - Whenever an agent is changed (code, config, tools, instructions), the version MUST be bumped in the agent's config.yaml file
 - **Testing**: Every new agent must have corresponding unit and integration tests

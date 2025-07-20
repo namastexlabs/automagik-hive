@@ -44,9 +44,9 @@ class VersionFactory:
     
     def __init__(self):
         """Initialize with database URL from environment."""
-        self.db_url = os.getenv("DATABASE_URL")
+        self.db_url = os.getenv("HIVE_DATABASE_URL")
         if not self.db_url:
-            raise ValueError("DATABASE_URL environment variable required")
+            raise ValueError("HIVE_DATABASE_URL environment variable required")
         
         self.version_service = AgnoVersionService(self.db_url)
     

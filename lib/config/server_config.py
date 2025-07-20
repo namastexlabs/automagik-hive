@@ -26,14 +26,14 @@ class ServerConfig:
     def __init__(self):
         """Initialize server configuration with environment variables."""
         # Server host and port configuration
-        self.host = os.getenv("API_HOST", "0.0.0.0")
-        self.port = int(os.getenv("API_PORT", "9888"))
-        self.workers = int(os.getenv("API_WORKERS", "4"))
+        self.host = os.getenv("HIVE_API_HOST", "0.0.0.0")
+        self.port = int(os.getenv("HIVE_API_PORT", "9888"))
+        self.workers = int(os.getenv("HIVE_API_WORKERS", "4"))
         
         # Environment settings
-        self.environment = os.getenv("ENVIRONMENT", "development")
-        self.debug_mode = os.getenv("DEBUG_MODE", "false").lower() == "true"
-        self.demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+        self.environment = os.getenv("HIVE_ENVIRONMENT", "development")
+        self.debug_mode = os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"
+        self.demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
         
         # Validation
         self._validate_config()

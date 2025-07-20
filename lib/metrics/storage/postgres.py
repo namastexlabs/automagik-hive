@@ -21,7 +21,7 @@ class PostgresMetricsStorage(MetricsStorage):
     def _validate_config(self) -> None:
         """Validate PostgreSQL configuration"""
         # Use DATABASE_URL if provided, otherwise fall back to individual fields
-        database_url = self.config.get("database_url") or os.getenv("DATABASE_URL")
+        database_url = self.config.get("database_url") or os.getenv("HIVE_DATABASE_URL")
         
         if database_url:
             # Parse DATABASE_URL
@@ -52,14 +52,14 @@ class PostgresMetricsStorage(MetricsStorage):
         """Get or create database connection"""
         if self.connection is None:
             try:
-                import psycopg2
+                import psycopg
                 
                 if self.database_url:
                     # Use DATABASE_URL
-                    self.connection = psycopg2.connect(self.database_url)
+                    self.connection = psycopg.connect(self.database_url)
                 else:
                     # Use individual fields
-                    self.connection = psycopg2.connect(
+                    self.connection = psycopg.connect(
                         host=self.config["host"],
                         port=self.config.get("port", 5432),
                         database=self.config["database"],
@@ -71,16 +71,16 @@ class PostgresMetricsStorage(MetricsStorage):
                 self._create_table_if_not_exists()
                 
             except ImportError:
-                raise ConfigurationError("psycopg2 is required for PostgreSQL storage. Install with: pip install psycopg2-binary")
+                raise ConfigurationError("psycopg is required for PostgreSQL storage. Install with: pip install psycopg[binary]")
         
         return self.connection
     
     def _create_table_if_not_exists(self) -> None:
         """Create metrics table if it doesn't exist"""
         try:
-            from psycopg2 import sql
+            from psycopg import sql
         except ImportError:
-            raise ConfigurationError("psycopg2.sql module required for safe SQL operations")
+            raise ConfigurationError("psycopg.sql module required for safe SQL operations")
         
         # Use parameterized queries to prevent SQL injection
         create_table_query = sql.SQL("""
@@ -129,7 +129,7 @@ class PostgresMetricsStorage(MetricsStorage):
             bool: True if storage successful, False otherwise
         """
         try:
-            from psycopg2 import sql
+            from psycopg import sql
             connection = self._get_connection()
             
             # Use parameterized query to prevent SQL injection

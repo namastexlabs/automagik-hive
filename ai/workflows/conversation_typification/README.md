@@ -274,7 +274,7 @@ ValidationResult(
 uv sync
 
 # Set up database
-export DATABASE_URL="postgresql://user:pass@localhost/db"
+export HIVE_DATABASE_URL="postgresql://user:pass@localhost/db"
 
 # Configure Claude API
 export ANTHROPIC_API_KEY="your_api_key"

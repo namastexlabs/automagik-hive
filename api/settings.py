@@ -6,13 +6,13 @@ from pydantic_core.core_schema import FieldValidationInfo
 
 
 class ApiSettings(BaseSettings):
-    """API settings para PagBank Multi-Agent System.
+    """API settings for Automagik Hive Multi-Agent System.
 
     Reference: https://pydantic-docs.helpmanual.io/usage/settings/
     """
 
     # Api title and version
-    title: str = "PagBank Multi-Agent System"
+    title: str = "Automagik Hive Multi-Agent System"
     version: str = "2.0"
 
     # Application environment derived from the `ENVIRONMENT` environment variable.
@@ -53,11 +53,10 @@ class ApiSettings(BaseSettings):
                 "*"
             ])
         elif environment == "production":
-            # Production: Only allow specific PagBank domains
+            # Production: Add your domain(s) here
             valid_cors.extend([
-                "https://app.pagbank.com.br",
-                "https://pagbank.com.br",
-                "https://www.pagbank.com.br"
+                "https://your-domain.com",
+                "https://app.your-domain.com"
             ])
 
         # Remove None values and duplicates

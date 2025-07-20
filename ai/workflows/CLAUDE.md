@@ -10,7 +10,6 @@ Agno Workflows 2.0 represents a complete redesign of the workflow system introdu
 - [Running Workflows](https://docs.agno.com/workflows_2/run_workflow)
 - [Session State](https://docs.agno.com/workflows_2/workflow_session_state)
 - [Advanced Features](https://docs.agno.com/workflows_2/advanced)
-- [Migration Guide](https://docs.agno.com/workflows_2/migration)
 
 ### Key Architectural Changes
 
@@ -621,7 +620,7 @@ def monitored_step(step_input):
         raise
 ```
 
-## 🎯 Integration with Genie Agents Project
+## 🎯 Integration with Automagik Hive Project
 
 ### 1. Registry Integration
 ```python

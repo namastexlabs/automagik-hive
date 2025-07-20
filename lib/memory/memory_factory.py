@@ -29,10 +29,10 @@ def create_memory_instance(
         Memory instance or None if creation fails
     """
     if not db_url:
-        db_url = os.getenv("DATABASE_URL")
+        db_url = os.getenv("HIVE_DATABASE_URL")
     
     if not db_url:
-        print("Warning: No DATABASE_URL provided for memory creation")
+        print("Warning: No HIVE_DATABASE_URL provided for memory creation")
         return None
     
     try:

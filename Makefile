@@ -1,5 +1,5 @@
 # ===========================================
-# 🏦 PagBank Multi-Agent System - Simplified Makefile
+# 🐝 Automagik Hive Multi-Agent System - Simplified Makefile
 # ===========================================
 
 .DEFAULT_GOAL := help
@@ -22,7 +22,7 @@ FONT_RESET := $(shell tput sgr0)
 CHECKMARK := ✅
 WARNING := ⚠️
 ERROR := ❌
-MAGIC := 🏦
+MAGIC := 🐝
 
 # ===========================================
 # 📁 Paths & Configuration
@@ -39,16 +39,16 @@ DOCKER_COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then ech
 UV := uv
 
 # Load port from .env file
-PB_AGENTS_PORT := $(shell grep -E '^PB_AGENTS_PORT=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
-ifeq ($(PB_AGENTS_PORT),)
-    PB_AGENTS_PORT := 7777
+HIVE_PORT := $(shell grep -E '^HIVE_PORT=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
+ifeq ($(HIVE_PORT),)
+    HIVE_PORT := 7777
 endif
 
 # ===========================================
 # 🛠️ Utility Functions
 # ===========================================
 define print_status
-    echo -e "$(FONT_PURPLE)🏦 $(1)$(FONT_RESET)"
+    echo -e "$(FONT_PURPLE)🐝 $(1)$(FONT_RESET)"
 endef
 
 define print_success
@@ -63,29 +63,22 @@ define print_error
     echo -e "$(FONT_RED)$(ERROR) $(1)$(FONT_RESET)"
 endef
 
-define show_pagbank_logo
-    if [ -z "$${PAGBANK_QUIET_LOGO}" ]; then \
+define show_hive_logo
+    if [ -z "$${HIVE_QUIET_LOGO}" ]; then \
         echo ""; \
-        echo -e "$(FONT_PURPLE)           @@@@@]^^}@@@@@@                                                                                                                        $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)       @@@*++++++++++++)@@@                                                                                                                      $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    @@@@+++++++++++++++++*@@@                                                                                                                    $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)   @@@++++++++++++++++++++++@@@                                                                                                                  $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  @@@++++****^>>****+++++++++@@@                                                                               @@@@                              $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE) @@@++**>@@@%()(%@@@#**++++++*@@%         @%%@%@@@@                         @%%%%%%@@@                         @@@@                              $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)#@@^+*%@(...........(@@*++++++@@@        %@@@%%@@@@@     @%%%@      @@#@@   @@@@  %@@@      @%%%@       @#@   @@@@                               $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)@@@**@................(@@<^*+=#@@@       @@@@   %@@% @@@@@%@@@@  %@@@@%@@%  @@@  @@@@@  @@@@@%@@@@ @@@%@@@@@  @@@@ %@@%%                         $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)@@@>@..............@@>**+++*@@@@@@      @@@@@@@@@@@ @@@@@  @@@ @@@@%  %@@% %@@@%@@@@%  @@@@@  @@% @@@@@  @@@  @@@%@@@@                           $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)@@@@..............@>*+++++*+++@@@@      @@@@@@@@%  %@@@   @@@% @@@@   @@@  @@@   @@@@ @@@@   @@@% @@@%  @@@@ #@@@@@@                             $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)@@@=.............@>**++++++++++@@%      @@@        @@@%  %@@@ @@@@  @@@@@ @@@@   @@@@ @@@%  %@@@  @@@   @@@% @@@@@@@@                            $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)#@@..............@**+++++++++++#@      %@@@        %@@@%@@@@@  @@@@@@@@@@ @@@@@@@@@@@ %@@@%@@@@@ @@@@   @@@ @@@@  @@@@                           $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE) @@@.............@>**++++++++++@@      @%%@         @%%@  %#@   @%%@@@@@  @%%%%%%@     @%%@  %%@ @#%@   #%@ @##@   @%#                           $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)  @@..............@>*+++++*+++@@                              @@@@@@@@@                                                                          $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)   @@..............@@>*++++~@@@                               %@@@@@@@                                                                           $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    @@@..............+%@@@@@@                                                                                                                    $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)      @@@=.........^%@@@@@@                                                                                                                      $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)         @@@@@@@@@@@@@@@                                                                                                                         $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)                                                                                                                                                  $(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)                    Multi-Agent AI System                                                                                                         $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    ╭─────────────────────────────────────────────────────────╮$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │  🐝 ⚡ 🤖  AUTOMAGIK HIVE  🤖 ⚡ 🐝                       │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │        Enterprise Multi-Agent AI Framework             │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │  • Intelligent Agent Coordination & Routing           │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │  • Real-time Knowledge Base with Hot Reload            │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │  • Enterprise-grade PostgreSQL Memory System           │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │  • WhatsApp Integration via Evolution API              │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │  • Production-ready with Docker & FastAPI              │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)    ╰─────────────────────────────────────────────────────────╯$(FONT_RESET)"; \
         echo ""; \
     fi
 endef
@@ -110,6 +103,41 @@ define check_env_file
         cp .env.example .env; \
         $(call print_success,.env created from example); \
         echo -e "$(FONT_YELLOW)💡 Edit .env and add your API keys$(FONT_RESET)"; \
+    fi
+endef
+
+define generate_postgres_credentials
+    $(call print_status,Generating secure PostgreSQL credentials...); \
+    POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+    POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+    POSTGRES_DB="hive"; \
+    echo "" >> .env; \
+    echo "# PostgreSQL credentials (auto-generated)" >> .env; \
+    echo "POSTGRES_USER=$$POSTGRES_USER" >> .env; \
+    echo "POSTGRES_PASSWORD=$$POSTGRES_PASS" >> .env; \
+    echo "POSTGRES_DB=$$POSTGRES_DB" >> .env; \
+    echo "HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB" >> .env; \
+    $(call print_success,PostgreSQL credentials generated and saved to .env); \
+    echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
+    echo -e "  User: $$POSTGRES_USER"; \
+    echo -e "  Password: $$POSTGRES_PASS"; \
+    echo -e "  Database: $$POSTGRES_DB"
+endef
+
+define setup_docker_postgres
+    echo ""; \
+    echo -e "$(FONT_PURPLE)🐳 Optional Docker PostgreSQL Setup$(FONT_RESET)"; \
+    echo -e "$(FONT_CYAN)Would you like to set up Docker PostgreSQL with secure credentials? (y/N)$(FONT_RESET)"; \
+    read -r REPLY; \
+    if [ "$$REPLY" = "y" ] || [ "$$REPLY" = "Y" ]; then \
+        $(call check_docker); \
+        $(call generate_postgres_credentials); \
+        echo -e "$(FONT_CYAN)🐳 Starting PostgreSQL container...$(FONT_RESET)"; \
+        $(DOCKER_COMPOSE) up -d postgres; \
+        echo -e "$(FONT_GREEN)$(CHECKMARK) PostgreSQL container started with secure credentials!$(FONT_RESET)"; \
+        echo -e "$(FONT_YELLOW)💡 Run 'make prod' to start the full production stack$(FONT_RESET)"; \
+    else \
+        echo -e "$(FONT_GRAY)Skipping Docker PostgreSQL setup$(FONT_RESET)"; \
     fi
 endef
 
@@ -157,11 +185,11 @@ endef
 # 📋 Help System
 # ===========================================
 .PHONY: help
-help: ## 🏦 Show this help message
-	@$(call show_pagbank_logo)
-	@echo -e "$(FONT_BOLD)$(FONT_CYAN)PagBank Multi-Agent System$(FONT_RESET) - $(FONT_GRAY)AI Customer Service Agents$(FONT_RESET)"
+help: ## 🐝 Show this help message
+	@$(call show_hive_logo)
+	@echo -e "$(FONT_BOLD)$(FONT_CYAN)Automagik Hive Multi-Agent System$(FONT_RESET) - $(FONT_GRAY)Enterprise AI Framework$(FONT_RESET)"
 	@echo ""
-	@echo -e "$(FONT_PURPLE)🏦 Simple & Powerful - From Development to Production$(FONT_RESET)"
+	@echo -e "$(FONT_PURPLE)🐝 Simple & Powerful - From Development to Production$(FONT_RESET)"
 	@echo ""
 	@echo -e "$(FONT_CYAN)🚀 Quick Start:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install development environment (uv sync)"
@@ -189,23 +217,28 @@ help: ## 🏦 Show this help message
 # ===========================================
 # 🚀 Installation
 # ===========================================
-.PHONY: install
-install: ## 🛠️ Install development environment
+.PHONY: install-local
+install-local: ## 🛠️ Install development environment (local only)
 	@$(call print_status,Installing development environment...)
 	@$(call check_prerequisites)
 	@$(call setup_python_env)
 	@$(call check_env_file)
-	@$(call show_pagbank_logo)
+	@$(call show_hive_logo)
 	@$(call print_success,Development environment ready!)
 	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
+
+.PHONY: install
+install: ## 🛠️ Install with optional Docker PostgreSQL setup
+	@$(MAKE) install-local
+	@$(call setup_docker_postgres)
 
 # ===========================================
 # 🎛️ Service Management
 # ===========================================
 .PHONY: dev
-dev: ## 🛠️ Start development server with hot reload )
-	@$(call show_pagbank_logo)
-	@$(call print_status,Starting PagBank development server...)
+dev: ## 🛠️ Start development server with hot reload
+	@$(call show_hive_logo)
+	@$(call print_status,Starting Automagik Hive development server...)
 	@$(call check_env_file)
 	@if [ ! -d "$(VENV_PATH)" ]; then \
 		$(call print_error,Virtual environment not found); \
@@ -223,9 +256,9 @@ prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
 	@$(call check_env_file)
 	@echo -e "$(FONT_CYAN)🐳 Building and starting containers...$(FONT_RESET)"
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
-	@$(call show_pagbank_logo)
+	@$(call show_hive_logo)
 	@$(call print_success,Production stack started!)
-	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(PB_AGENTS_PORT)$(FONT_RESET)"
+	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
 	@echo -e "$(FONT_CYAN)💡 Check status with 'make status'$(FONT_RESET)"
 
 .PHONY: stop
@@ -242,19 +275,19 @@ status: ## 📊 Show service status
 	@echo -e "$(FONT_PURPLE)┌─────────────────────────┬──────────┬─────────┬──────────┐$(FONT_RESET)"
 	@echo -e "$(FONT_PURPLE)│ Service                 │ Status   │ Port    │ Container│$(FONT_RESET)"
 	@echo -e "$(FONT_PURPLE)├─────────────────────────┼──────────┼─────────┼──────────┤$(FONT_RESET)"
-	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
+	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
 		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"pagbank-agents" "running" "$(PB_AGENTS_PORT)" "$(shell docker ps --filter 'name=pagbank-agents' --format '{{.ID}}' | head -c 6)"; \
+			"hive-agents" "running" "$(HIVE_PORT)" "$(shell docker ps --filter 'name=hive-agents' --format '{{.ID}}' | head -c 6)"; \
 	else \
 		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"pagbank-agents" "stopped" "-" "-"; \
+			"hive-agents" "stopped" "-" "-"; \
 	fi
-	@if docker ps --filter "name=pagbank-pgvector" --format "{{.Names}}" | grep -q pagbank-pgvector; then \
+	@if docker ps --filter "name=hive-postgres" --format "{{.Names}}" | grep -q hive-postgres; then \
 		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"pagbank-pgvector" "running" "5432" "$(shell docker ps --filter 'name=pagbank-pgvector' --format '{{.ID}}' | head -c 6)"; \
+			"hive-postgres" "running" "5432" "$(shell docker ps --filter 'name=hive-postgres' --format '{{.ID}}' | head -c 6)"; \
 	else \
 		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"pagbank-pgvector" "stopped" "-" "-"; \
+			"hive-postgres" "stopped" "-" "-"; \
 	fi
 	@if pgrep -f "python.*api/serve.py" > /dev/null 2>&1; then \
 		pid=$(pgrep -f "python.*api/serve.py"); \
@@ -268,10 +301,10 @@ status: ## 📊 Show service status
 # ===========================================
 .PHONY: logs
 logs: ## 📄 Show logs (container or local development)
-	@echo -e "$(FONT_PURPLE)🏦 Application Logs$(FONT_RESET)"
-	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
-		echo -e "$(FONT_CYAN)=== PagBank Agents Container Logs ====$(FONT_RESET)"; \
-		docker logs --tail=50 pagbank-agents; \
+	@echo -e "$(FONT_PURPLE)🐝 Application Logs$(FONT_RESET)"
+	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
+		echo -e "$(FONT_CYAN)=== Hive Agents Container Logs ====$(FONT_RESET)"; \
+		docker logs --tail=50 hive-agents; \
 	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
 		echo -e "$(FONT_CYAN)=== Local Development Server Logs ====$(FONT_RESET)"; \
 		echo -e "$(FONT_YELLOW)💡 Local development server is running (PID: $$(pgrep -f 'python.*api/serve.py'))$(FONT_RESET)"; \
@@ -293,11 +326,11 @@ logs: ## 📄 Show logs (container or local development)
 
 .PHONY: logs-live
 logs-live: ## 📄 Follow logs in real-time
-	@echo -e "$(FONT_PURPLE)🏦 Live Application Logs$(FONT_RESET)"
-	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
-		echo -e "$(FONT_CYAN)=== Following PagBank Agents Container Logs ====$(FONT_RESET)"; \
+	@echo -e "$(FONT_PURPLE)🐝 Live Application Logs$(FONT_RESET)"
+	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
+		echo -e "$(FONT_CYAN)=== Following Hive Agents Container Logs ====$(FONT_RESET)"; \
 		echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
-		docker logs -f pagbank-agents; \
+		docker logs -f hive-agents; \
 	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
 		echo -e "$(FONT_CYAN)=== Following Local Development Logs ====$(FONT_RESET)"; \
 		if [ -f "logs/app.log" ]; then \
@@ -318,8 +351,8 @@ logs-live: ## 📄 Follow logs in real-time
 .PHONY: health
 health: ## 💊 Check service health
 	@$(call print_status,Health Check)
-	@if docker ps --filter "name=pagbank-agents" --format "{{.Names}}" | grep -q pagbank-agents; then \
-		if curl -s http://localhost:$(PB_AGENTS_PORT)/health >/dev/null 2>&1; then \
+	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
+		if curl -s http://localhost:$(HIVE_PORT)/health >/dev/null 2>&1; then \
 			echo -e "$(FONT_GREEN)$(CHECKMARK) API health check: passed$(FONT_RESET)"; \
 		else \
 			echo -e "$(FONT_YELLOW)$(WARNING) API health check: failed$(FONT_RESET)"; \
@@ -327,14 +360,14 @@ health: ## 💊 Check service health
 	else \
 		echo -e "$(FONT_YELLOW)$(WARNING) Docker containers not running$(FONT_RESET)"; \
 	fi
-	@if curl -s http://localhost:$(PB_AGENTS_PORT)/health >/dev/null 2>&1; then \
+	@if curl -s http://localhost:$(HIVE_PORT)/health >/dev/null 2>&1; then \
 		echo -e "$(FONT_GREEN)$(CHECKMARK) Development server: healthy$(FONT_RESET)"; \
 	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
 		echo -e "$(FONT_YELLOW)$(WARNING) Development server running but health check failed$(FONT_RESET)"; \
 	fi
 
 # ===========================================
-# 🔄 Maintenance
+# 🔄 Maintenance & Data Management
 # ===========================================
 .PHONY: clean
 clean: ## 🧹 Clean temporary files
@@ -344,6 +377,80 @@ clean: ## 🧹 Clean temporary files
 	@find . -name "*.pyc" -type f -delete 2>/dev/null || true
 	@find . -name "*.pyo" -type f -delete 2>/dev/null || true
 	@$(call print_success,Cleanup complete!)
+
+
+.PHONY: uninstall
+uninstall: ## 🗑️ Uninstall with data options
+	@$(call print_status,Automagik Hive Uninstall)
+	@echo ""
+	@echo -e "$(FONT_YELLOW)Choose uninstall option:$(FONT_RESET)"
+	@echo -e "  $(FONT_CYAN)1)$(FONT_RESET) Remove containers only (keep data + venv)"
+	@echo -e "  $(FONT_CYAN)2)$(FONT_RESET) Remove containers + venv (keep data)"
+	@echo -e "  $(FONT_CYAN)3)$(FONT_RESET) Full purge (remove everything including data)"
+	@echo -e "  $(FONT_CYAN)4)$(FONT_RESET) Cancel"
+	@echo ""
+	@if [ -d "./data/postgres" ]; then \
+		DATA_SIZE=$$(du -sh ./data/postgres 2>/dev/null | cut -f1 || echo "unknown"); \
+		echo -e "$(FONT_PURPLE)Current database size: $$DATA_SIZE$(FONT_RESET)"; \
+		echo -e "$(FONT_PURPLE)Database location: ./data/postgres/$(FONT_RESET)"; \
+		echo ""; \
+	fi
+	@read -p "Enter choice (1-4): " CHOICE; \
+	case "$$CHOICE" in \
+		1) $(MAKE) uninstall-containers-only ;; \
+		2) $(MAKE) uninstall-clean ;; \
+		3) $(MAKE) uninstall-purge ;; \
+		4) echo -e "$(FONT_CYAN)Uninstall cancelled$(FONT_RESET)" ;; \
+		*) echo -e "$(FONT_RED)Invalid choice$(FONT_RESET)" ;; \
+	esac
+
+.PHONY: uninstall-containers-only
+uninstall-containers-only: ## 🗑️ Remove containers only
+	@$(call print_status,Removing containers only...)
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
+	@docker container rm hive-agents hive-postgres 2>/dev/null || true
+	@pkill -f "python.*api/serve.py" 2>/dev/null || true
+	@$(call print_success,Containers removed)
+	@echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"
+	@echo -e "$(FONT_GREEN)✓ Kept: Virtual environment (.venv/)$(FONT_RESET)"
+
+.PHONY: uninstall-clean
+uninstall-clean: ## 🗑️ Remove containers and venv
+	@$(call print_status,Removing containers and virtual environment...)
+	@echo -e "$(FONT_YELLOW)This will remove containers and .venv but keep your database data$(FONT_RESET)"
+	@read -p "Type 'yes' to confirm: " CONFIRM; \
+	if [ "$$CONFIRM" = "yes" ]; then \
+		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
+		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
+		pkill -f "python.*api/serve.py" 2>/dev/null || true; \
+		rm -rf .venv/ 2>/dev/null || true; \
+		$(call print_success,Clean uninstall complete); \
+		echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"; \
+		echo -e "$(FONT_RED)✗ Removed: Virtual environment$(FONT_RESET)"; \
+	else \
+		echo -e "$(FONT_CYAN)Uninstall cancelled$(FONT_RESET)"; \
+	fi
+
+.PHONY: uninstall-purge
+uninstall-purge: ## 🗑️ Full purge including data
+	@$(call print_status,Full purge - DANGER!)
+	@echo -e "$(FONT_RED)⚠️  WARNING: This will permanently delete ALL data including databases!$(FONT_RESET)"
+	@if [ -d "./data/postgres" ]; then \
+		DATA_SIZE=$$(du -sh ./data/postgres 2>/dev/null | cut -f1 || echo "unknown"); \
+		echo -e "$(FONT_RED)Database size to be deleted: $$DATA_SIZE$(FONT_RESET)"; \
+	fi
+	@echo -e "$(FONT_YELLOW)Type 'DELETE EVERYTHING' to confirm full purge:$(FONT_RESET)"
+	@read -r CONFIRM; \
+	if [ "$$CONFIRM" = "DELETE EVERYTHING" ]; then \
+		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
+		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
+		docker volume rm $$(docker volume ls -q | grep -E "(postgres|hive)" 2>/dev/null) 2>/dev/null || true; \
+		pkill -f "python.*api/serve.py" 2>/dev/null || true; \
+		rm -rf .venv/ ./data/ logs/ 2>/dev/null || true; \
+		$(call print_success,Full purge complete - all data deleted); \
+	else \
+		echo -e "$(FONT_CYAN)Purge cancelled$(FONT_RESET)"; \
+	fi
 
 .PHONY: test
 test: ## 🧪 Run test suite
@@ -358,4 +465,4 @@ test: ## 🧪 Run test suite
 # ===========================================
 # 🧹 Phony Targets
 # ===========================================
-.PHONY: help install dev prod stop status logs logs-live health clean test
+.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall uninstall-containers-only uninstall-clean uninstall-purge

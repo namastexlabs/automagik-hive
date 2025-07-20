@@ -57,11 +57,11 @@ class VersionUpdateRequest(BaseModel):
 
 def get_version_service() -> AgnoVersionService:
     """Get version service instance."""
-    db_url = os.getenv("DATABASE_URL")
+    db_url = os.getenv("HIVE_DATABASE_URL")
     if not db_url:
         raise HTTPException(
             status_code=500,
-            detail="DATABASE_URL not configured"
+            detail="HIVE_DATABASE_URL not configured"
         )
     return AgnoVersionService(db_url)
 

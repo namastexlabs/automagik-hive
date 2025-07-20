@@ -177,6 +177,10 @@ Thumbs.db
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+
+# Local data directories (PostgreSQL data)
+/data/postgres/
+
 tmp/
 
 # Logs

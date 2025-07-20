@@ -369,10 +369,10 @@ content_team = Team(
 ### ✅ Validation Completed - Ready for workflows/CLAUDE.md Review
 
 ## Key References
-- **Demo Pattern**: `@genie/agno-demo-app/teams/finance_researcher.py`
+- **Demo Pattern**: `@automagik_hive/agno-demo-app/teams/finance_researcher.py`
 - **Current Orchestrator**: `agents/orchestrator/main_orchestrator.py` - For replacement reference
 - **Team Parameters**: Agno Components Parameters (extracted above)
-- **Implementation Plan**: `@genie/active/phase1-review-and-refinement.md`
+- **Implementation Plan**: `@automagik_hive/active/phase1-review-and-refinement.md`
 
 ## Critical Rules
 - ✅ Copy a generic routing pattern for the Routing Team

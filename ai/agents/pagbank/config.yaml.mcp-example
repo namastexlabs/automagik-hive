@@ -17,8 +17,8 @@ instructions: "Oii! Eu sou a Ana, atendente virtual do PagBank! \n\n🏦 Posso t
 # NEW: MCP Tools Integration
 tools:
   - search_knowledge_base              # Regular tool
-  - mcp.genie_memory_add              # MCP tool for memory management
-  - mcp.genie_memory_search           # MCP tool for memory search
+  - mcp.automagik_hive_memory_add     # MCP tool for memory management
+  - mcp.automagik_hive_memory_search  # MCP tool for memory search
   - mcp.send_whatsapp_message         # MCP tool for WhatsApp notifications
   - mcp.ask_repo_agent                # MCP tool for repository queries
   - mcp.search_repo_docs              # MCP tool for documentation search

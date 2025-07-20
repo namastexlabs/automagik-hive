@@ -146,5 +146,5 @@ def create_workflow(*args, **kwargs):
 
 # Module metadata for introspection
 __version__ = "2.0.0"
-__author__ = "Genie Agents System"
+__author__ = "Automagik Hive System"
 __description__ = "Modular Agno proxy system with eliminated code duplication"

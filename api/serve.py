@@ -1,5 +1,5 @@
 """
-FastAPI server for PagBank Multi-Agent System
+FastAPI server for Automagik Hive Multi-Agent System
 Production-ready API endpoint using V2 Ana Team architecture
 """
 
@@ -21,6 +21,7 @@ if str(project_root) not in sys.path:
 
 from lib.utils.startup_display import create_startup_display, display_simple_status
 from lib.config.server_config import get_server_config
+from lib.auth.dependencies import get_auth_service
 
 # Load environment variables
 try:
@@ -31,14 +32,13 @@ except ImportError:
 
 
 # Initialize execution tracing system
-from lib.execution_tracer.setup import setup_execution_tracing
-setup_execution_tracing()
+# Execution tracing removed - was unused bloat that duplicated metrics system
 
 # Configure logging levels based on environment
 def setup_demo_logging():
     """Setup logging for demo presentation"""
-    debug_mode = os.getenv("DEBUG_MODE", "false").lower() == "true"
-    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    debug_mode = os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"
+    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
     
     # Configure logging for demo mode
     if demo_mode:
@@ -118,7 +118,7 @@ def create_lifespan(startup_display=None):
             print(f"⚠️  Warning: Could not initialize MCP Connection Manager: {e}")
         
         # Send startup notification with rich component information (production only)
-        environment = os.getenv("ENVIRONMENT", "development").lower()
+        environment = os.getenv("HIVE_ENVIRONMENT", "development").lower()
         if environment == "production":
             async def _send_startup_notification():
                 try:
@@ -163,13 +163,13 @@ def create_lifespan(startup_display=None):
     
 
 
-def create_pagbank_api():
+def create_automagik_api():
     """Create unified FastAPI app with environment-based features"""
     
     # Get environment settings
-    environment = os.getenv("ENVIRONMENT", "production")
+    environment = os.getenv("HIVE_ENVIRONMENT", "production")
     is_development = environment == "development"
-    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
     
     # Check if we're in uvicorn reload process to prevent duplicate output
     import sys
@@ -190,9 +190,17 @@ def create_pagbank_api():
             if uvicorn_module:
                 print(f"   - uvicorn module: {str(uvicorn_module)}")
     
+    # Initialize authentication system
+    auth_service = get_auth_service()
+    
     # Show environment info in demo/development mode
     if (demo_mode or is_development) and not is_reloader:
         print(f"🌍 Environment: {environment}")
+        print(f"🔐 Authentication: {'Enabled' if auth_service.is_auth_enabled() else 'Disabled (Development Mode)'}")
+        print(f"📖 Public Docs: http://localhost:9888/docs (no auth required)")
+        if auth_service.is_auth_enabled():
+            print(f"🔑 API Key: {auth_service.get_current_key()}")
+            print(f"📝 Usage: curl -H \"x-api-key: {auth_service.get_current_key()}\" http://localhost:9888/playground/status")
         print(f"🔧 Development features: {'ENABLED' if is_development else 'DISABLED'}")
     
     # Database initialization is now handled by Agno storage automatically
@@ -236,7 +244,7 @@ def create_pagbank_api():
     # Create the Ana routing team
     try:
         ana_team = get_ana_team(
-            debug_mode=bool(os.getenv("DEBUG_MODE", "false").lower() == "true"),
+            debug_mode=bool(os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"),
             session_id=None  # Will be set per request
         )
         
@@ -465,13 +473,25 @@ def create_pagbank_api():
             agents=agents_list,
             teams=teams_list,
             workflows=workflows_list,
-            name="PagBank Multi-Agent System",
-            app_id="pagbank_multiagent"
+            name="Automagik Hive Multi-Agent System",
+            app_id="automagik_hive"
         )
         
         # Get the unified router - this provides all endpoints including workflows
         unified_router = playground.get_async_router()
-        app.include_router(unified_router)
+        
+        # Add authentication protection to playground routes if auth is enabled
+        if auth_service.is_auth_enabled():
+            from fastapi import APIRouter, Depends
+            from lib.auth.dependencies import require_api_key
+            
+            # Create protected wrapper for playground routes
+            protected_router = APIRouter(dependencies=[Depends(require_api_key)])
+            protected_router.include_router(unified_router)
+            app.include_router(protected_router)
+        else:
+            # Development mode - no auth protection
+            app.include_router(unified_router)
             
     except Exception as e:
         startup_display.add_error("API Endpoints", f"Could not register unified API endpoints: {e}")
@@ -539,12 +559,12 @@ def create_pagbank_api():
             
             # Add MCP Integration Config
             print(f"\n🔧 MCP Integration Config (for playground testing of agents, teams, and workflows):")
-            print(f'"genie-agents": {{')
+            print(f'"automagik-hive": {{')
             print(f'  "command": "uvx",')
-            print(f'  "args": ["automagik-tools", "tool", "genie-agents"],')
+            print(f'  "args": ["automagik-tools", "tool", "automagik-hive"],')
             print(f'  "env": {{')
-            print(f'    "GENIE_AGENTS_API_BASE_URL": "http://localhost:{port}",')
-            print(f'    "GENIE_AGENTS_TIMEOUT": "300"')
+            print(f'    "AUTOMAGIK_HIVE_API_BASE_URL": "http://localhost:{port}",')
+            print(f'    "AUTOMAGIK_HIVE_TIMEOUT": "300"')
             print(f'  }}')
             print(f'}}')
     except Exception as e:
@@ -573,7 +593,7 @@ app = None
 
 # Only create app when imported
 if __name__ != "__main__":
-    app = create_pagbank_api()
+    app = create_automagik_api()
 
 
 if __name__ == "__main__":
@@ -584,7 +604,7 @@ if __name__ == "__main__":
     config = get_server_config()
     host = config.host
     port = config.port
-    environment = os.getenv("ENVIRONMENT", "production")
+    environment = os.getenv("HIVE_ENVIRONMENT", "production")
     
     # Auto-reload configuration: can be controlled via environment variable
     # Set DISABLE_RELOAD=true to disable auto-reload even in development
@@ -594,7 +614,7 @@ if __name__ == "__main__":
     )
     
     # Show startup info in demo/development mode
-    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
     is_development = environment == "development"
     if demo_mode or is_development:
         print(f"🌐 Using host: {host}")

@@ -169,10 +169,10 @@ instructions: |
   # Environment variables
   environment:
     required:
-      - DATABASE_URL
+      - HIVE_DATABASE_URL
       - API_KEY
     optional:
-      - LOG_LEVEL: "info"
+      - HIVE_LOG_LEVEL: "info"
       - MAX_RETRIES: 3
       
   # Storage configuration

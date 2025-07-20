@@ -22,9 +22,9 @@ load_dotenv()
 # Configure logging based on environment variables
 def setup_logging():
     """Configure logging levels based on environment variables"""
-    # Get environment settings (using existing variable names)
-    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
-    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    # Get environment settings (consolidated debug mode)
+    debug_mode = os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"
+    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
     agno_log_level = os.getenv("AGNO_LOG_LEVEL", "warning").upper()
     
     # Set Agno framework logging level
@@ -62,8 +62,8 @@ class CSVHotReloadManager:
         self.knowledge_base = None
         
         # Show initialization messages in demo/development mode
-        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
         if demo_mode or is_development:
             print("📄 CSV Hot Reload Manager initialized (AGNO-NATIVE)")
             print(f"   Watching: {self.csv_path}")
@@ -76,7 +76,7 @@ class CSVHotReloadManager:
         """Initialize the Agno knowledge base."""
         try:
             # Get database URL from environment or config
-            db_url = os.getenv("DATABASE_URL", "postgresql+psycopg://ai:ai@localhost:5532/ai")
+            db_url = os.getenv("HIVE_DATABASE_URL", "postgresql+psycopg://ai:ai@localhost:5532/ai")
             
             # Create PgVector instance
             vector_db = PgVector(
@@ -104,8 +104,8 @@ class CSVHotReloadManager:
         
         self.is_running = True
         
-        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
         should_print = demo_mode or is_development
         
         if should_print:
@@ -154,8 +154,8 @@ class CSVHotReloadManager:
         
         self.is_running = False
         
-        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
         if demo_mode or is_development:
             print("⏹️  Stopped watching CSV file")
     
@@ -168,14 +168,14 @@ class CSVHotReloadManager:
             # Use Agno's native incremental loading
             self.knowledge_base.load(recreate=False, skip_existing=True)
             
-            demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-            is_development = os.getenv("ENVIRONMENT", "production") == "development"
+            demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+            is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
             if demo_mode or is_development:
                 print("✅ Knowledge base reloaded using Agno incremental loading")
         
         except Exception as e:
-            demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-            is_development = os.getenv("ENVIRONMENT", "production") == "development"
+            demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+            is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
             if demo_mode or is_development:
                 print(f"❌ Knowledge base reload failed: {e}")
     
@@ -190,8 +190,8 @@ class CSVHotReloadManager:
     
     def force_reload(self):
         """Manually force a reload."""
-        demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("ENVIRONMENT", "production") == "development"
+        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
         should_print = demo_mode or is_development
         
         if should_print:

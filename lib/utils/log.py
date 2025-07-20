@@ -26,4 +26,4 @@ def get_logger(logger_name: str) -> logging.Logger:
     return _logger
 
 
-logger: logging.Logger = get_logger("pagbank-multiagents")
+logger: logging.Logger = get_logger("automagik-hive")
