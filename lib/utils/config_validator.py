@@ -422,20 +422,20 @@ def validate_configurations(base_path: str = "ai", verbose: bool = False) -> Val
     if result.errors:
         logger.error(f"❌ Validation failed with {len(result.errors)} errors:")
         for error in result.errors:
-            logger.error(f"   • {error}")
+            logger.error(f"🚨    • {error}")
     
     if result.warnings:
         logger.warning(f"⚠️  {len(result.warnings)} warnings found:")
         for warning in result.warnings:
-            logger.warning(f"   • {warning}")
+            logger.warning(f"⚠️    • {warning}")
     
     if result.suggestions and verbose:
-        logger.info(f"💡 {len(result.suggestions)} suggestions:")
+        logger.info(f"🔧 💡 {len(result.suggestions)} suggestions:")
         for suggestion in result.suggestions:
-            logger.info(f"   • {suggestion}")
+            logger.info(f"🔧    • {suggestion}")
     
     if result.drift_detected:
-        logger.warning("🌊 Configuration drift detected - consider standardization")
+        logger.warning("⚠️ 🌊 Configuration drift detected - consider standardization")
     
     if result.is_valid and not result.warnings:
         logger.info("✅ All configurations valid!")

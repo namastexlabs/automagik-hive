@@ -261,13 +261,13 @@ def load_team_with_inheritance(team_id: str, base_path: str = "ai") -> Dict[str,
     # Validate
     errors = manager.validate_configuration(team_config, enhanced_configs)
     if errors:
-        logger.warning(f"Configuration validation errors for team {team_id}:")
+        logger.warning(f"⚠️ Configuration validation errors for team {team_id}:")
         for error in errors:
             logger.warning(f"  ⚠️  {error}")
     
     # Generate report
     report = manager.generate_inheritance_report(team_config, agent_configs, enhanced_configs)
-    logger.info(report)
+    logger.info(f"🔧 {report}")
     
     return {
         'team_config': team_config,

@@ -2,18 +2,19 @@
 
 from agno.agent import Agent
 import inspect
+from lib.logging import logger
 
 sig = inspect.signature(Agent.__init__)
-print('Agent.__init__ parameters:')
+logger.info('🤖 Agent.__init__ parameters:')
 for name, param in sig.parameters.items():
     if name != 'self':
-        print(f'  {name}: {param.annotation}')
+        logger.info(f'🔧   {name}: {param.annotation}')
 
-print('\nParameters with defaults:')
+logger.info('🔧 Parameters with defaults:')
 for name, param in sig.parameters.items():
     if name != 'self' and param.default != param.empty:
-        print(f'  {name} = {param.default}')
+        logger.info(f'🔧   {name} = {param.default}')
 
 # Check specifically for context-related parameters
 context_params = [name for name in sig.parameters.keys() if 'context' in name.lower()]
-print(f'\nContext-related parameters: {context_params}')
+logger.info(f'🔧 Context-related parameters: {context_params}')

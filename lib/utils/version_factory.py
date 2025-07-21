@@ -234,7 +234,7 @@ class VersionFactory:
             # Generate inheritance report
             report = manager.generate_inheritance_report(team_config, agent_configs, enhanced_configs)
             logger.debug(f"🔧 Inheritance applied for agent {agent_id} in team {team_id}")
-            logger.debug(report)
+            logger.debug(f"🐛 {report}")
             
             return enhanced_configs[agent_id]
             
@@ -353,7 +353,7 @@ class VersionFactory:
             enhanced_agent_configs = manager.apply_inheritance(config, agent_configs)
             report = manager.generate_inheritance_report(config, agent_configs, enhanced_agent_configs)
             logger.info(f"🔧 Team {team_id} inheritance preview:")
-            logger.info(report)
+            logger.info(f"🔧 {report}")
             
             return config
             

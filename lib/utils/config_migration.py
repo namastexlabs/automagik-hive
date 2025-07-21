@@ -57,7 +57,7 @@ class AGNOConfigMigrator:
                 results['errors'].append(error_msg)
                 logger.error(f"❌ {error_msg}")
         
-        logger.info(f"🎉 Migration complete: {results}")
+        logger.info(f"🔧 🎉 Migration complete: {results}")
         return results
     
     def migrate_team(self, team_id: str) -> Dict[str, Any]:
@@ -226,7 +226,7 @@ class AGNOConfigMigrator:
     
     def _create_backup(self) -> None:
         """Create backup of all configurations before migration."""
-        logger.info(f"📦 Creating backup at {self.backup_dir}")
+        logger.info(f"🔧 📦 Creating backup at {self.backup_dir}")
         
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         
@@ -345,11 +345,11 @@ def migrate_configurations(
     
     # Generate and display report
     report = migrator.generate_migration_report()
-    logger.info(report)
+    logger.info(f"🔧 {report}")
     
     if not dry_run and not result['errors']:
         logger.info("✅ Migration completed successfully!")
-        logger.info("📦 Backup created for rollback if needed")
+        logger.info("🔧 📦 Backup created for rollback if needed")
     elif result['errors']:
         logger.error(f"❌ Migration completed with {len(result['errors'])} errors")
     
