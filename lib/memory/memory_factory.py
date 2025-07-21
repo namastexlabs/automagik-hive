@@ -5,57 +5,99 @@ Creates Memory instances with PostgresMemoryDb backends for user memory storage.
 Clean implementation following Agno patterns.
 """
 
-from typing import Optional
+from typing import Dict, Any
 import os
+import yaml
+from pathlib import Path
 from agno.memory.v2.memory import Memory
 from agno.memory.v2.db.postgres import PostgresMemoryDb
-from agno.models.anthropic import Claude
+from lib.logging import logger
+from lib.exceptions import MemoryFactoryError
+from lib.config.models import resolve_model, get_default_model_id
+
+
+def _load_memory_config() -> Dict[str, Any]:
+    """Load memory configuration from YAML file."""
+    config_path = Path(__file__).parent / "config.yaml"
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        return config.get('memory', {})
+    except Exception as e:
+        logger.warning("Could not load memory config, using defaults", error=str(e))
+        return {
+            'model': {
+                'id': get_default_model_id(),
+                'provider': 'auto'  # Will be detected by resolver
+            },
+            'database': {
+                'schema': 'agno'
+            }
+        }
 
 
 def create_memory_instance(
     table_name: str,
-    db_url: Optional[str] = None,
-    model_id: str = "claude-sonnet-4-20250514"
-) -> Optional[Memory]:
+    db_url: str = None,
+    model_id: str = None
+) -> Memory:
     """
     Create Memory instance with PostgresMemoryDb backend.
     
     Args:
         table_name: Database table name for memories
         db_url: Database connection string (defaults to DATABASE_URL env var)
-        model_id: Model ID for memory operations
+        model_id: Model ID for memory operations (defaults to config)
         
     Returns:
-        Memory instance or None if creation fails
+        Memory instance
+        
+    Raises:
+        MemoryFactoryError: If memory instance creation fails
     """
+    # Load configuration
+    config = _load_memory_config()
+    
+    # Use provided model_id or fall back to config or resolver default
+    if model_id is None:
+        model_id = config.get('model', {}).get('id') or get_default_model_id()
+    
+    # Get database URL
     if not db_url:
         db_url = os.getenv("HIVE_DATABASE_URL")
     
     if not db_url:
-        print("Warning: No HIVE_DATABASE_URL provided for memory creation")
-        return None
+        logger.error("🔧 Memory creation failed: No database URL provided", table_name=table_name)
+        raise MemoryFactoryError(f"No HIVE_DATABASE_URL provided for memory table '{table_name}'")
     
     try:
+        # Get schema from config
+        schema = config.get('database', {}).get('schema', 'agno')
+        
         memory_db = PostgresMemoryDb(
             table_name=table_name,
             db_url=db_url,
-            schema="agno"  # Use agno schema for Agno framework tables
+            schema=schema
         )
+        
+        # Use ModelResolver to create model instance
+        model = resolve_model(model_id)
         
         return Memory(
             db=memory_db,
-            model=Claude(id=model_id)
+            model=model
         )
     except Exception as e:
-        print(f"Warning: Could not create Memory instance: {e}")
-        return None
+        logger.error("🔧 Memory creation failed: Database connection error", 
+                    table_name=table_name, error=str(e), error_type=type(e).__name__)
+        raise MemoryFactoryError(f"Memory creation failed for table '{table_name}': {e}") from e
 
 
-def create_agent_memory(agent_id: str, db_url: Optional[str] = None) -> Optional[Memory]:
+def create_agent_memory(agent_id: str, db_url: str = None) -> Memory:
     """Create Memory instance for an agent."""
     return create_memory_instance(f"agent_memories_{agent_id}", db_url)
 
 
-def create_team_memory(team_id: str, db_url: Optional[str] = None) -> Optional[Memory]:
+def create_team_memory(team_id: str, db_url: str = None) -> Memory:
     """Create Memory instance for a team."""
     return create_memory_instance(f"team_memories_{team_id}", db_url)

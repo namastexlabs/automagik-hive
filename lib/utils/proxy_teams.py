@@ -243,18 +243,19 @@ class AgnoTeamProxy:
         """Handle model configuration with thinking support."""
         thinking_config = model_config.get("thinking", {})
         
-        # Base Claude model parameters
-        claude_params = {
-            "id": model_config.get("id", "claude-sonnet-4-20250514"),
+        # Base model parameters using resolver for fallback
+        from lib.config.models import get_default_model_id
+        model_params = {
+            "id": model_config.get("id") or get_default_model_id(),
             "temperature": model_config.get("temperature", 1.0),  # Teams often use higher temp
             "max_tokens": model_config.get("max_tokens", 2000)
         }
         
         # Add thinking support if enabled
         if thinking_config.get("type") == "enabled":
-            claude_params["thinking"] = True
+            model_params["thinking"] = True
         
-        return Claude(**claude_params)
+        return Claude(**model_params)
     
     def _handle_storage_config(self, storage_config: Dict[str, Any], config: Dict[str, Any],
                              component_id: str, db_url: Optional[str], **kwargs):
@@ -270,11 +271,9 @@ class AgnoTeamProxy:
                             component_id: str, db_url: Optional[str], **kwargs) -> Optional[object]:
         """Handle memory configuration."""
         if memory_config is not None and memory_config.get("enable_user_memories", False):
-            try:
-                from lib.memory.memory_factory import create_team_memory
-                return create_team_memory(component_id, db_url)
-            except Exception as e:
-                logger.warning(f"Failed to create memory for team {component_id}: {e}")
+            from lib.memory.memory_factory import create_team_memory
+            # Let MemoryFactoryError bubble up - no silent failures
+            return create_team_memory(component_id, db_url)
         return None
     
     def _handle_team_metadata(self, team_config: Dict[str, Any], config: Dict[str, Any],

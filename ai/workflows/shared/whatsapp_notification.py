@@ -8,11 +8,47 @@ reports, human handoff notifications, and other workflow-generated messages.
 """
 
 import os
+import yaml
 from typing import Dict, Any, Optional
+from pathlib import Path
 from agno.agent import Agent
-from agno.models.google import Gemini
 from agno.tools.mcp import MCPTools
-from agno.utils.log import logger
+from lib.logging import logger
+from lib.exceptions import NotificationError
+from lib.config.models import resolve_model, get_default_model_id
+
+
+def _load_whatsapp_config() -> Dict[str, Any]:
+    """Load WhatsApp notification configuration from YAML file."""
+    config_path = Path(__file__).parent / "config.yaml"
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        return config.get('whatsapp_notification', {})
+    except Exception as e:
+        logger.warning("Could not load WhatsApp config, using defaults", error=str(e))
+        return {
+            'model': {
+                'id': get_default_model_id(),
+                'provider': 'auto'  # Will be detected by resolver
+            },
+            'agent': {
+                'name': 'WhatsApp Notification Agent',
+                'instructions': [
+                    "You are a WhatsApp notification agent for the PagBank support system.",
+                    "Send professional, concise WhatsApp messages in Portuguese.",
+                    "Use the send_whatsapp_message MCP tool to send messages.",
+                    "Always include relevant protocol information and next steps.",
+                    "Use appropriate emojis for visual clarity.",
+                    "Keep messages under 300 words for readability.",
+                    "Format messages with proper line breaks and sections."
+                ]
+            },
+            'display': {
+                'markdown': True,
+                'show_tool_calls': True
+            }
+        }
 
 
 class WhatsAppNotificationService:
@@ -23,24 +59,17 @@ class WhatsAppNotificationService:
     for workflow notifications using the Evolution API via MCP integration.
     """
     
-    def __init__(self, debug_mode: bool = False):
-        """
-        Initialize WhatsApp notification service.
-        
-        Args:
-            debug_mode: Enable debug logging for WhatsApp operations
-        """
-        self.debug_mode = debug_mode
+    def __init__(self):
+        """Initialize WhatsApp notification service."""
         self._agent = None
         self._mcp_tools = None
-        # Environment validation moved to notification methods
+        logger.debug("WhatsApp notification service initialized")
     
     def _check_notifications_enabled(self) -> bool:
         """Check if WhatsApp notifications are enabled via environment variable."""
         enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
         if not enabled:
-            if self.debug_mode:
-                logger.info("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
+            logger.debug("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
             return False
         return True
     
@@ -53,23 +82,30 @@ class WhatsAppNotificationService:
     async def _get_agent(self) -> Agent:
         """Get or create the WhatsApp notification agent with MCP tools."""
         if self._agent is None:
+            # Load configuration
+            config = _load_whatsapp_config()
+            
+            # Extract configuration values
+            model_config = config.get('model', {})
+            agent_config = config.get('agent', {})
+            display_config = config.get('display', {})
+            
             mcp_tools = await self._get_mcp_tools()
+            
+            # Use ModelResolver to create model instance
+            model_id = model_config.get('id') or get_default_model_id()
+            model = resolve_model(model_id)
+            
             self._agent = Agent(
-                name="WhatsApp Notification Agent",
-                model=Gemini(id="gemini-2.0-flash"),
+                name=agent_config.get('name', 'WhatsApp Notification Agent'),
+                model=model,
                 tools=[mcp_tools],
-                instructions=[
+                instructions=agent_config.get('instructions', [
                     "You are a WhatsApp notification agent for the PagBank support system.",
-                    "Send professional, concise WhatsApp messages in Portuguese.",
-                    "Use the send_whatsapp_message MCP tool to send messages.",
-                    "Always include relevant protocol information and next steps.",
-                    "Use appropriate emojis for visual clarity.",
-                    "Keep messages under 300 words for readability.",
-                    "Format messages with proper line breaks and sections."
-                ],
-                markdown=True,
-                show_tool_calls=True,
-                debug_mode=self.debug_mode
+                    "Send professional, concise WhatsApp messages in Portuguese."
+                ]),
+                markdown=display_config.get('markdown', True),
+                show_tool_calls=display_config.get('show_tool_calls', True)
             )
         return self._agent
     
@@ -77,7 +113,7 @@ class WhatsAppNotificationService:
         self,
         report_data: Dict[str, Any],
         recipient_number: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> None:
         """
         Send final typification report via WhatsApp using Evolution API.
         
@@ -85,8 +121,8 @@ class WhatsAppNotificationService:
             report_data: Complete typification report data
             recipient_number: WhatsApp number (optional if env var set)
             
-        Returns:
-            Dict with success status and message details
+        Raises:
+            NotificationError: If message delivery fails
         """
         try:
             # Format the report message
@@ -103,7 +139,8 @@ class WhatsAppNotificationService:
             )
             
             # Send via WhatsApp agent using MCP tools
-            logger.info(f"📱 Sending typification report via Evolution API")
+            logger.info("📱 Sending typification report via Evolution API", 
+                       report_id=report_data.get("report_id"))
             
             # Use simple MCP tools
             get_mcp_tools = await self._get_mcp_tools()
@@ -112,36 +149,27 @@ class WhatsAppNotificationService:
                 if "send_text_message" in tools.functions:
                     tool_function = tools.functions["send_text_message"]
                     # Call the MCP tool entrypoint with proper parameters
-                    # The tool_name is already bound via partial, so we only pass agent and kwargs
                     result = await tool_function.entrypoint(None, 
                         instance="SofIA",
                         message=message,
                         number=recipient_number or os.getenv("EVOLUTION_API_FIXED_RECIPIENT")
                     )
+                    logger.info("📱 Typification report delivered successfully", 
+                               report_id=report_data.get("report_id"))
                 else:
                     available_tools = list(tools.functions.keys())
-                    raise ValueError(f"send_text_message tool not available. Available tools: {available_tools}")
-                
-                return {
-                    "success": True,
-                    "message": "Typification report sent successfully via Evolution API",
-                    "api_response": result,
-                    "notification_type": "typification_report"
-                }
+                    raise NotificationError(f"send_text_message tool not available. Available tools: {available_tools}")
             
         except Exception as e:
-            logger.error(f"Failed to send typification report: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "notification_type": "typification_report"
-            }
+            logger.error("📱 Critical: Typification report delivery failed", 
+                        report_id=report_data.get("report_id"), error=str(e), error_type=type(e).__name__)
+            raise NotificationError(f"Typification report delivery failed: {e}") from e
     
     async def send_human_handoff_notification(
         self,
         handoff_data: Dict[str, Any],
         recipient_number: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> None:
         """
         Send human handoff notification via WhatsApp using Evolution API.
         
@@ -149,8 +177,8 @@ class WhatsAppNotificationService:
             handoff_data: Human handoff protocol data
             recipient_number: WhatsApp number (optional if env var set)
             
-        Returns:
-            Dict with success status and message details
+        Raises:
+            NotificationError: If message delivery fails
         """
         try:
             # Format the handoff message
@@ -167,7 +195,8 @@ class WhatsAppNotificationService:
             )
             
             # Send via WhatsApp agent using MCP tools
-            logger.info(f"📱 Sending human handoff notification via Evolution API")
+            logger.info("📱 Sending human handoff notification via Evolution API",
+                       protocol_id=handoff_data.get("protocol_id"))
             
             # Use simple MCP tools
             get_mcp_tools = await self._get_mcp_tools()
@@ -176,30 +205,21 @@ class WhatsAppNotificationService:
                 if "send_text_message" in tools.functions:
                     tool_function = tools.functions["send_text_message"]
                     # Call the MCP tool entrypoint with proper parameters
-                    # The tool_name is already bound via partial, so we only pass agent and kwargs
                     result = await tool_function.entrypoint(None, 
                         instance="SofIA",
                         message=message,
                         number=recipient_number or os.getenv("EVOLUTION_API_FIXED_RECIPIENT")
                     )
+                    logger.info("📱 Human handoff notification delivered successfully", 
+                               protocol_id=handoff_data.get("protocol_id"))
                 else:
                     available_tools = list(tools.functions.keys())
-                    raise ValueError(f"send_text_message tool not available. Available tools: {available_tools}")
-                
-                return {
-                    "success": True,
-                    "message": "Human handoff notification sent successfully via Evolution API",
-                    "api_response": result,
-                    "notification_type": "human_handoff"
-                }
+                    raise NotificationError(f"send_text_message tool not available. Available tools: {available_tools}")
             
         except Exception as e:
-            logger.error(f"Failed to send human handoff notification: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "notification_type": "human_handoff"
-            }
+            logger.error("📱 Critical: Human handoff notification delivery failed", 
+                        protocol_id=handoff_data.get("protocol_id"), error=str(e), error_type=type(e).__name__)
+            raise NotificationError(f"Human handoff notification delivery failed: {e}") from e
     
     def _format_typification_message(self, report_data: Dict[str, Any]) -> str:
         """Format typification report for WhatsApp."""
@@ -350,7 +370,7 @@ Please send this message now using the send_whatsapp_message tool and confirm de
         message: str,
         recipient_number: Optional[str] = None,
         message_type: str = "custom"
-    ) -> Dict[str, Any]:
+    ) -> None:
         """
         Send custom WhatsApp message using Evolution API.
         
@@ -359,17 +379,13 @@ Please send this message now using the send_whatsapp_message tool and confirm de
             recipient_number: WhatsApp number (optional if env var set)
             message_type: Type of message for logging
             
-        Returns:
-            Dict with success status and message details
+        Raises:
+            NotificationError: If message delivery fails or notifications disabled
         """
         # Check if WhatsApp notifications are enabled
         if not self._check_notifications_enabled():
-            return {
-                "success": False,
-                "message": "WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED",
-                "notification_type": message_type,
-                "status": "disabled"
-            }
+            logger.warning("📱 WhatsApp notifications disabled", message_type=message_type)
+            raise NotificationError("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
         
         try:
             # Get the agent with MCP tools
@@ -383,7 +399,8 @@ Please send this message now using the send_whatsapp_message tool and confirm de
             )
             
             # Send via WhatsApp agent using MCP tools
-            logger.info(f"📱 Sending custom WhatsApp message via Evolution API")
+            logger.info("📱 Sending custom WhatsApp message via Evolution API",
+                       message_type=message_type)
             
             # Use simple MCP tools
             get_mcp_tools = await self._get_mcp_tools()
@@ -392,41 +409,31 @@ Please send this message now using the send_whatsapp_message tool and confirm de
                 if "send_text_message" in tools.functions:
                     tool_function = tools.functions["send_text_message"]
                     # Call the MCP tool entrypoint with proper parameters
-                    # The tool_name is already bound via partial, so we only pass agent and kwargs
                     result = await tool_function.entrypoint(None, 
                         instance="SofIA",
                         message=message,
                         number=recipient_number or os.getenv("EVOLUTION_API_FIXED_RECIPIENT")
                     )
+                    logger.info("📱 Custom message delivered successfully", message_type=message_type)
                 else:
                     available_tools = list(tools.functions.keys())
-                    raise ValueError(f"send_text_message tool not available. Available tools: {available_tools}")
-                
-                return {
-                    "success": True,
-                    "message": "Custom message sent successfully via Evolution API",
-                    "api_response": result,
-                    "notification_type": message_type
-                }
+                    raise NotificationError(f"send_text_message tool not available. Available tools: {available_tools}")
             
         except Exception as e:
-            logger.error(f"Failed to send custom message: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "notification_type": message_type
-            }
+            logger.error("📱 Critical: Custom message delivery failed", 
+                        message_type=message_type, error=str(e), error_type=type(e).__name__)
+            raise NotificationError(f"Custom message delivery failed: {e}") from e
 
 
 # Global instance for easy access
 _whatsapp_service = None
 
-def get_whatsapp_notification_service(debug_mode: bool = False) -> WhatsAppNotificationService:
+def get_whatsapp_notification_service() -> WhatsAppNotificationService:
     """Get or create the global WhatsApp notification service."""
     global _whatsapp_service
     
     if _whatsapp_service is None:
-        _whatsapp_service = WhatsAppNotificationService(debug_mode=debug_mode)
+        _whatsapp_service = WhatsAppNotificationService()
     
     return _whatsapp_service
 
@@ -435,7 +442,7 @@ async def send_workflow_notification(
     notification_type: str,
     data: Dict[str, Any],
     recipient_number: Optional[str] = None
-) -> Dict[str, Any]:
+) -> None:
     """
     Convenience function to send workflow notifications via WhatsApp using Evolution API.
     
@@ -444,34 +451,27 @@ async def send_workflow_notification(
         data: Notification data
         recipient_number: Optional WhatsApp number
         
-    Returns:
-        Dict with success status and message details
+    Raises:
+        NotificationError: If notification delivery fails or unknown type
     """
     # Check if WhatsApp notifications are enabled
     enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
     if not enabled:
-        return {
-            "success": False,
-            "message": "WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED",
-            "notification_type": notification_type,
-            "status": "disabled"
-        }
+        logger.warning("📱 WhatsApp notifications disabled globally", notification_type=notification_type)
+        raise NotificationError("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
     
     service = get_whatsapp_notification_service()
     
     if notification_type == "typification_report":
-        return await service.send_typification_report(data, recipient_number)
+        await service.send_typification_report(data, recipient_number)
     elif notification_type == "human_handoff":
-        return await service.send_human_handoff_notification(data, recipient_number)
+        await service.send_human_handoff_notification(data, recipient_number)
     elif notification_type == "custom":
-        return await service.send_custom_message(
+        await service.send_custom_message(
             data.get("message", ""),
             recipient_number,
             data.get("message_type", "custom")
         )
     else:
-        return {
-            "success": False,
-            "error": f"Unknown notification type: {notification_type}",
-            "notification_type": notification_type
-        }
+        logger.error("📱 Unknown notification type requested", notification_type=notification_type)
+        raise NotificationError(f"Unknown notification type: {notification_type}")

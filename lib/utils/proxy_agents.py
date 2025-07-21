@@ -268,19 +268,20 @@ class AgnoAgentProxy:
         """Handle model configuration with thinking support."""
         thinking_config = model_config.get("thinking", {})
         
-        # Base Claude model parameters
-        claude_params = {
-            "id": model_config.get("id", "claude-sonnet-4-20250514"),
+        # Base model parameters using resolver for fallback
+        from lib.config.models import get_default_model_id
+        model_params = {
+            "id": model_config.get("id") or get_default_model_id(),
             "temperature": model_config.get("temperature", 0.7),
             "max_tokens": model_config.get("max_tokens", 2000)
         }
         
         # Add thinking support if enabled
         if thinking_config.get("type") == "enabled":
-            claude_params["thinking"] = True
+            model_params["thinking"] = True
             # Note: budget_tokens parameter is not supported by Agno's Claude class
         
-        return Claude(**claude_params)
+        return Claude(**model_params)
     
     def _handle_storage_config(self, storage_config: Dict[str, Any], config: Dict[str, Any],
                              component_id: str, db_url: Optional[str]):
@@ -296,11 +297,9 @@ class AgnoAgentProxy:
                             component_id: str, db_url: Optional[str]) -> Optional[object]:
         """Handle memory configuration."""
         if memory_config is not None and memory_config.get("enable_user_memories", False):
-            try:
-                from lib.memory.memory_factory import create_agent_memory
-                return create_agent_memory(component_id, db_url)
-            except Exception as e:
-                logger.warning(f"Failed to create memory for {component_id}: {e}")
+            from lib.memory.memory_factory import create_agent_memory
+            # Let MemoryFactoryError bubble up - no silent failures
+            return create_agent_memory(component_id, db_url)
         return None
     
     def _handle_agent_metadata(self, agent_config: Dict[str, Any], config: Dict[str, Any],

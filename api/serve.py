@@ -22,71 +22,30 @@ if str(project_root) not in sys.path:
 from lib.utils.startup_display import create_startup_display, display_simple_status
 from lib.config.server_config import get_server_config
 from lib.auth.dependencies import get_auth_service
+from lib.exceptions import ComponentLoadingError
 
 # Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    print("⚠️ python-dotenv not installed, using system environment variables")
+    logger.warning("python-dotenv not installed, using system environment variables")
 
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
 
-# Configure logging levels based on environment
-def setup_demo_logging():
-    """Setup logging for demo presentation"""
-    debug_mode = os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"
-    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-    
-    # Configure logging for demo mode
-    if demo_mode:
-        # Keep INFO level for demo logging but suppress noisy framework loggers
-        logging.getLogger().setLevel(logging.INFO)
-        
-        # Suppress specific noisy loggers only
-        logging.getLogger("uvicorn").setLevel(logging.ERROR)
-        logging.getLogger("fastapi").setLevel(logging.ERROR)
-        logging.getLogger("sqlalchemy").setLevel(logging.ERROR)
-        logging.getLogger("alembic").setLevel(logging.ERROR)
-        
-        # Force all known noisy loggers to ERROR level
-        for logger_name in ["openai", "httpx", "httpcore", "urllib3"]:
-            logging.getLogger(logger_name).setLevel(logging.ERROR)
-        
-        # Enable demo logging specifically
-        logging.getLogger("teams.ana.demo_logging").setLevel(logging.INFO)
-        logging.getLogger("teams.ana.team").setLevel(logging.INFO)
-        
-        # Set console handler to INFO level
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(message)s')
-        console_handler.setFormatter(formatter)
-        
-        # Add handler to root logger if not already present
-        root_logger = logging.getLogger()
-        if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
-            root_logger.addHandler(console_handler)
-    
-    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "warning").upper()
-    
-    # Set Agno framework logging level - be more aggressive
-    agno_level = getattr(logging, agno_log_level, logging.WARNING)
-    
-    # Set multiple possible Agno logger names
-    for logger_name in ["agno", "agno.agent", "agno.team", "agno.utils", "agno.utils.log"]:
-        logging.getLogger(logger_name).setLevel(agno_level)
-    
-    # Also set the root logger if we're not in debug mode and agno level is higher than debug
-    if agno_level > logging.DEBUG and not debug_mode:
-        logging.getLogger().setLevel(logging.INFO)
-    
-    print(f"🎯 Demo mode: {'ON' if demo_mode else 'OFF'} | Debug: {'ON' if debug_mode else 'OFF'} | Agno: {agno_log_level}")
+# Configure unified logging system
+from lib.logging import setup_logging, logger
 
 # Setup logging immediately
-setup_demo_logging()
+setup_logging()
+
+# Log startup message at INFO level (replaces old demo mode print)
+log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
+agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
+logger.info("Automagik Hive logging initialized", 
+           log_level=log_level, agno_level=agno_log_level)
 
 
 # Import V2 Ana team
@@ -113,9 +72,9 @@ def create_lifespan(startup_display=None):
             from lib.mcp import MCPCatalog
             catalog = MCPCatalog()
             servers = catalog.list_servers()
-            print(f"✅ MCP system initialized with {len(servers)} servers")
+            logger.info("MCP system initialized", server_count=len(servers))
         except Exception as e:
-            print(f"⚠️  Warning: Could not initialize MCP Connection Manager: {e}")
+            logger.warning("Could not initialize MCP Connection Manager", error=str(e))
         
         # Send startup notification with rich component information (production only)
         environment = os.getenv("HIVE_ENVIRONMENT", "development").lower()
@@ -126,17 +85,17 @@ def create_lifespan(startup_display=None):
                     from common.startup_notifications import send_startup_notification
                     # Pass startup_display for rich notification content
                     await send_startup_notification(startup_display)
-                    print("✅ Startup notification sent")
+                    logger.info("Startup notification sent successfully")
                 except Exception as e:
-                    print(f"⚠️  Warning: Could not send startup notification: {e}")
+                    logger.warning("Could not send startup notification", error=str(e))
             
             try:
                 asyncio.create_task(_send_startup_notification())
-                print("✅ Startup notification scheduled")
+                logger.info("Startup notification scheduled")
             except Exception as e:
-                print(f"⚠️  Warning: Could not schedule startup notification: {e}")
+                logger.warning("Could not schedule startup notification", error=str(e))
         else:
-            print("ℹ️  Startup notifications disabled in development mode")
+            logger.info("Startup notifications disabled in development mode")
         
         yield
         
@@ -145,18 +104,18 @@ def create_lifespan(startup_display=None):
             try:
                 from common.startup_notifications import send_shutdown_notification
                 await send_shutdown_notification()
-                print("✅ Shutdown notification sent")
+                logger.info("Shutdown notification sent successfully")
             except Exception as e:
-                print(f"⚠️  Warning: Could not send shutdown notification: {e}")
+                logger.warning("Could not send shutdown notification", error=str(e))
         
         try:
             asyncio.create_task(_send_shutdown_notification())
-            print("✅ Shutdown notification scheduled")
+            logger.info("Shutdown notification scheduled")
         except Exception as e:
-            print(f"⚠️  Warning: Could not schedule shutdown notification: {e}")
+            logger.warning("Could not schedule shutdown notification", error=str(e))
         
         # MCP system has no resources to cleanup in simplified implementation
-        print("✅ MCP system cleanup completed")
+        logger.info("MCP system cleanup completed")
     
     return lifespan
     
@@ -169,7 +128,7 @@ def create_automagik_api():
     # Get environment settings
     environment = os.getenv("HIVE_ENVIRONMENT", "production")
     is_development = environment == "development"
-    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+    log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
     
     # Check if we're in uvicorn reload process to prevent duplicate output
     import sys
@@ -181,31 +140,33 @@ def create_automagik_api():
         os.getenv("RUN_MAIN") != "true"  # This is the key - worker processes have RUN_MAIN=true
     )
     
-    # Debug logging for reloader detection in demo/development mode
-    if (demo_mode or is_development):
-        print(f"🔍 Reloader detection: is_reloader={is_reloader}")
+    # Debug logging for reloader detection in development mode
+    if is_development:
+        logger.debug("Reloader detection", is_reloader=is_reloader)
         if is_reloader:
-            print(f"   - sys.argv: {sys.argv}")
+            logger.debug("Reloader details", sys_argv=str(sys.argv))
             uvicorn_module = sys.modules.get("uvicorn")
             if uvicorn_module:
-                print(f"   - uvicorn module: {str(uvicorn_module)}")
+                logger.debug("Uvicorn module info", module=str(uvicorn_module))
     
     # Initialize authentication system
     auth_service = get_auth_service()
     
-    # Show environment info in demo/development mode
-    if (demo_mode or is_development) and not is_reloader:
-        print(f"🌍 Environment: {environment}")
-        print(f"🔐 Authentication: {'Enabled' if auth_service.is_auth_enabled() else 'Disabled (Development Mode)'}")
-        print(f"📖 Public Docs: http://localhost:9888/docs (no auth required)")
+    # Show environment info in development mode
+    if is_development and not is_reloader:
+        logger.info("Environment configuration", 
+                   environment=environment,
+                   auth_enabled=auth_service.is_auth_enabled(),
+                   docs_url="http://localhost:9888/docs")
         if auth_service.is_auth_enabled():
-            print(f"🔑 API Key: {auth_service.get_current_key()}")
-            print(f"📝 Usage: curl -H \"x-api-key: {auth_service.get_current_key()}\" http://localhost:9888/playground/status")
-        print(f"🔧 Development features: {'ENABLED' if is_development else 'DISABLED'}")
+            logger.info("API authentication details",
+                       api_key=auth_service.get_current_key(),
+                       usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:9888/playground/status')
+        logger.info("Development features status", enabled=is_development)
     
     # Database initialization is now handled by Agno storage automatically
-    if (demo_mode or is_development) and not is_reloader:
-        print("✅ Database: Using Agno storage abstractions (auto-initialized)")
+    if is_development and not is_reloader:
+        logger.info("Database initialization", method="agno_storage_abstractions", status="auto_initialized")
     
     # Initialize CSV hot reload manager using global knowledge configuration
     # Get CSV path from global knowledge config
@@ -218,48 +179,47 @@ def create_automagik_api():
         # Convert to absolute path (relative to config file location)
         config_dir = Path(__file__).parent.parent / "lib/knowledge"
         csv_path = config_dir / csv_path
-        print(f"📋 Using global knowledge configuration: {csv_path}")
+        logger.info("Global knowledge configuration loaded", csv_path=str(csv_path))
     except Exception as e:
         # Fallback to default if config reading fails
         csv_path = Path(__file__).parent.parent / "lib/knowledge/knowledge_rag.csv"
-        print(f"⚠️ Could not read global knowledge config, using default: {e}")
-    if (demo_mode or is_development) and not is_reloader:
-        print(f"🔍 CSV hot reload manager configured: {csv_path}")
+        logger.warning("Could not read global knowledge config, using default", error=str(e), fallback_path=str(csv_path))
+    if is_development and not is_reloader:
+        logger.info("CSV hot reload manager configured", csv_path=str(csv_path))
         
         # Start CSV hot reload manager immediately in demo/development mode
         try:
             from lib.knowledge.csv_hot_reload import CSVHotReloadManager
             csv_manager = CSVHotReloadManager(str(csv_path))
             csv_manager.start_watching()
-            print("📄 CSV hot reload manager: ACTIVE (watching for changes)")
+            logger.info("CSV hot reload manager activated", status="watching_for_changes")
         except Exception as e:
-            print(f"⚠️ Could not start CSV hot reload manager: {e}")
-            print("📄 CSV hot reload manager: CONFIGURED (will start on first use)")
+            logger.warning("Could not start CSV hot reload manager", error=str(e))
+            logger.info("CSV hot reload manager configured", status="will_start_on_first_use")
     
     # V2 Architecture: Agno framework handles memory internally
     # No need for global memory manager - removed legacy memory system
-    if (demo_mode or is_development) and not is_reloader:
-        print("✅ Memory system: CONFIGURED (agno handles memory internally)")
+    if is_development and not is_reloader:
+        logger.info("Memory system configured", method="agno_internal_handling")
     
     # Create the Ana routing team
-    try:
-        ana_team = get_ana_team(
-            debug_mode=bool(os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"),
-            session_id=None  # Will be set per request
-        )
-        
-        # Get all agents for comprehensive endpoint generation
-        from ai.agents.registry import AgentRegistry
-        agent_registry = AgentRegistry()
-        available_agents = agent_registry.get_all_agents(
-            debug_mode=bool(os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true")
-        )
-    except Exception as e:
-        if (demo_mode or is_development) and not is_reloader:
-            print(f"⚠️ Agent/Team loading error: {e}")
-        # Fallback: create minimal setup
-        ana_team = None
-        available_agents = {}
+    ana_team = get_ana_team(
+        session_id=None  # Will be set per request
+    )
+    
+    # Get all agents for comprehensive endpoint generation
+    from ai.agents.registry import AgentRegistry
+    agent_registry = AgentRegistry()
+    available_agents = agent_registry.get_all_agents()
+    
+    # Validate critical components loaded successfully
+    if not ana_team:
+        logger.error("🔧 Critical: Ana routing team failed to load")
+        raise ComponentLoadingError("Ana routing team is required but failed to load")
+    
+    if not available_agents:
+        logger.error("🔧 Critical: No agents loaded from registry")
+        raise ComponentLoadingError("At least one agent is required but none were loaded")
     
     # Initialize startup display
     startup_display = create_startup_display()
@@ -381,22 +341,24 @@ def create_automagik_api():
     if not teams_list and not agents_list:
         # Create a minimal dummy agent for testing
         from agno.agent import Agent
-        from agno.models.anthropic import Claude
-        dummy_agent = Agent(name="Test Agent", model=Claude(id="claude-sonnet-4-20250514"))
+        from lib.config.models import resolve_model
+        dummy_agent = Agent(name="Test Agent", model=resolve_model())
         agents_list = [dummy_agent]
     
     # Create workflow instances dynamically
-    try:
-        workflows_list = []
-        available_workflows = list_available_workflows()
-        
-        for workflow_id in available_workflows:
-            try:
-                workflow = get_workflow(workflow_id, debug_mode=is_development)
-                workflows_list.append(workflow)
-            except Exception as e:
-                print(f"⚠️ Failed to load workflow {workflow_id}: {e}")
-                continue
+    workflows_list = []
+    available_workflows = list_available_workflows()
+    
+    for workflow_id in available_workflows:
+        try:
+            workflow = get_workflow(workflow_id, debug_mode=is_development)
+            workflows_list.append(workflow)
+            logger.info("🔧 Workflow loaded successfully", workflow_id=workflow_id)
+        except Exception as e:
+            logger.error("🔧 Workflow loading failed", 
+                        workflow_id=workflow_id, error=str(e), error_type=type(e).__name__)
+            # Don't fail server startup for workflow loading issues
+            continue
         # Add workflows to startup display dynamically with version information
         for workflow_id in available_workflows:
             workflow_name = workflow_id.replace('-', ' ').title()
@@ -410,33 +372,30 @@ def create_automagik_api():
                     break
             
             startup_display.add_workflow(workflow_id, workflow_name, version=workflow_version, status="✅")
-    except Exception as e:
-        startup_display.add_error("Workflows", f"Could not load workflows: {e}")
-        workflows_list = []
     
     # Discover and add additional teams to startup display dynamically
-    try:
-        available_teams = list_available_teams()
+    available_teams = list_available_teams()
+    
+    for team_id in available_teams:
+        team_name = team_id.replace('-', ' ').title()
         
-        for team_id in available_teams:
-            team_name = team_id.replace('-', ' ').title()
-            
-            # Try to get version and member count from the team instance if available
-            team_version = None
-            member_count = 0
-            try:
-                team = get_team(team_id, debug_mode=is_development)
-                if hasattr(team, 'metadata') and team.metadata:
-                    team_version = team.metadata.get('version')
-                if hasattr(team, 'members') and team.members:
-                    member_count = len(team.members)
-            except Exception as e:
-                print(f"⚠️ Failed to load team {team_id} for metadata: {e}")
-                continue
-            
-            startup_display.add_team(team_id, team_name, member_count, version=team_version, status="✅")
-    except Exception as e:
-        startup_display.add_error("Teams", f"Could not load additional teams: {e}")
+        # Try to get version and member count from the team instance if available
+        team_version = None
+        member_count = 0
+        try:
+            team = get_team(team_id, debug_mode=is_development)
+            if hasattr(team, 'metadata') and team.metadata:
+                team_version = team.metadata.get('version')
+            if hasattr(team, 'members') and team.members:
+                member_count = len(team.members)
+            logger.info("🔧 Team loaded successfully", team_id=team_id)
+        except Exception as e:
+            logger.error("🔧 Team loading failed", 
+                        team_id=team_id, error=str(e), error_type=type(e).__name__)
+            # Don't fail server startup for additional teams
+            continue
+        
+        startup_display.add_team(team_id, team_name, member_count, version=team_version, status="✅")
     
     # Create base FastAPI app for configuration
     
@@ -459,51 +418,42 @@ def create_automagik_api():
     
     # ✅ UNIFIED API - Single set of endpoints for both production and playground
     # Use Playground as the primary router since it provides comprehensive CRUD operations
+    
+    # Try to import workflow trigger handler safely
+    external_handler = None
     try:
-        # Try to import workflow trigger handler safely
-        external_handler = None
-        try:
-            from ai.agents.tools.finishing_tools import trigger_conversation_typification_workflow
-            external_handler = trigger_conversation_typification_workflow
-        except ImportError as e:
-            startup_display.add_error("Workflow Handler", f"Could not load handler: {e}")
+        from ai.agents.tools.finishing_tools import trigger_conversation_typification_workflow
+        external_handler = trigger_conversation_typification_workflow
+        logger.info("🔧 Workflow handler loaded successfully")
+    except ImportError as e:
+        logger.warning("🔧 Workflow handler not available", error=str(e))
+    
+    # Create playground
+    playground = Playground(
+        agents=agents_list,
+        teams=teams_list,
+        workflows=workflows_list,
+        name="Automagik Hive Multi-Agent System",
+        app_id="automagik_hive"
+    )
+    
+    # Get the unified router - this provides all endpoints including workflows
+    unified_router = playground.get_async_router()
+    
+    # Add authentication protection to playground routes if auth is enabled
+    if auth_service.is_auth_enabled():
+        from fastapi import APIRouter, Depends
+        from lib.auth.dependencies import require_api_key
         
-        # Create playground
-        playground = Playground(
-            agents=agents_list,
-            teams=teams_list,
-            workflows=workflows_list,
-            name="Automagik Hive Multi-Agent System",
-            app_id="automagik_hive"
-        )
+        # Create protected wrapper for playground routes
+        protected_router = APIRouter(dependencies=[Depends(require_api_key)])
+        protected_router.include_router(unified_router)
+        app.include_router(protected_router)
+    else:
+        # Development mode - no auth protection
+        app.include_router(unified_router)
         
-        # Get the unified router - this provides all endpoints including workflows
-        unified_router = playground.get_async_router()
-        
-        # Add authentication protection to playground routes if auth is enabled
-        if auth_service.is_auth_enabled():
-            from fastapi import APIRouter, Depends
-            from lib.auth.dependencies import require_api_key
-            
-            # Create protected wrapper for playground routes
-            protected_router = APIRouter(dependencies=[Depends(require_api_key)])
-            protected_router.include_router(unified_router)
-            app.include_router(protected_router)
-        else:
-            # Development mode - no auth protection
-            app.include_router(unified_router)
-            
-    except Exception as e:
-        startup_display.add_error("API Endpoints", f"Could not register unified API endpoints: {e}")
-        # Fallback: create minimal endpoints if Playground fails
-        
-        @app.get("/status")
-        async def status():
-            return {"status": "ok", "message": "PagBank Multi-Agent System"}
-        
-        @app.post("/runs")
-        async def minimal_runs():
-            return {"error": "Playground initialization failed - limited functionality"}
+    logger.info("🔧 Unified API endpoints registered successfully")
     
     # Configure docs based on settings and environment
     if is_development or api_settings.docs_enabled:
@@ -522,13 +472,13 @@ def create_automagik_api():
         try:
             startup_display.display_summary()
         except Exception as e:
-            print(f"⚠️ Warning: Could not display startup summary table: {e}")
+            logger.warning("Could not display startup summary table", error=str(e))
             # Try fallback simple display
             try:
                 from lib.utils.startup_display import display_simple_status
                 display_simple_status("Ana Team", "ana", len(available_agents) if available_agents else 0)
             except Exception:
-                print("📊 System components loaded successfully (table display unavailable)")
+                logger.info("System components loaded successfully", display_status="table_unavailable")
     
     # Add custom business endpoints
     try:
@@ -558,15 +508,17 @@ def create_automagik_api():
             console.print(table)
             
             # Add MCP Integration Config
-            print(f"\n🔧 MCP Integration Config (for playground testing of agents, teams, and workflows):")
-            print(f'"automagik-hive": {{')
-            print(f'  "command": "uvx",')
-            print(f'  "args": ["automagik-tools", "tool", "automagik-hive"],')
-            print(f'  "env": {{')
-            print(f'    "AUTOMAGIK_HIVE_API_BASE_URL": "http://localhost:{port}",')
-            print(f'    "AUTOMAGIK_HIVE_TIMEOUT": "300"')
-            print(f'  }}')
-            print(f'}}')
+            logger.info("MCP Integration Config for playground testing",
+                       config={
+                           "automagik-hive": {
+                               "command": "uvx",
+                               "args": ["automagik-tools", "tool", "automagik-hive"],
+                               "env": {
+                                   "AUTOMAGIK_HIVE_API_BASE_URL": f"http://localhost:{port}",
+                                   "AUTOMAGIK_HIVE_TIMEOUT": "300"
+                               }
+                           }
+                       })
     except Exception as e:
         startup_display.add_error("Business Endpoints", f"Could not register custom business endpoints: {e}")
     
@@ -579,9 +531,9 @@ def create_automagik_api():
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=api_settings.cors_origin_list if api_settings.cors_origin_list else ["*"],
+        allow_origins=api_settings.cors_origin_list,  # No ["*"] fallback
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
     
@@ -613,14 +565,11 @@ if __name__ == "__main__":
         os.getenv("DISABLE_RELOAD", "false").lower() != "true"
     )
     
-    # Show startup info in demo/development mode
-    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+    # Show startup info in development mode
     is_development = environment == "development"
-    if demo_mode or is_development:
-        print(f"🌐 Using host: {host}")
-        print(f"🔧 Using port: {port}")
-        print(f"🔄 Auto-reload: {reload} ({'development' if reload else 'production'} mode)")
-        print("🚀 Starting PagBank API...")
+    if is_development:
+        logger.info("Starting Automagik Hive API", 
+                   host=host, port=port, reload=reload, mode="development" if reload else "production")
     
     # Use uvicorn directly with import string for reload/workers support
     uvicorn.run(
