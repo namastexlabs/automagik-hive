@@ -3,7 +3,7 @@ Performance-First Logging System for Automagik Hive
 ==================================================
 
 Unified logging configuration using Loguru with zero performance impact.
-Replaces HIVE_DEMO_MODE and HIVE_DEBUG_MODE with standard logging levels.
+Uses standard logging levels for consistent behavior.
 
 Environment Variables:
 - HIVE_LOG_LEVEL: DEBUG, INFO, WARN, ERROR (default: INFO)

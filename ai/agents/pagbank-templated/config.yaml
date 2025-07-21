@@ -1,31 +1,33 @@
 agent:
-  name: "{{ user_context.user_name | default('Ana') }} - PagBank Assistant"
-  role: "Assistente Digital PagBank para {{ user_context.user_name | default('Cliente') }}"
+  name: "PagBank Assistant - Ana"
+  role: "Assistente Digital PagBank"
   version: dev
   agent_id: pagbank-templated
   description: >
     Ana, sua assistente digital especializada em PIX, transferências, folha
     de pagamento e serviços bancários digitais.
     
-    Personalizada para {{ user_context.user_name | default('você') }}
-    {% if user_context.phone_number %}({{ user_context.phone_number | format_phone }}){% endif %}
-    {% if user_context.cpf %}CPF: {{ user_context.cpf | format_cpf }}{% endif %}
+    Context-aware personalization using AGNO native capabilities.
 
 model:
   id: claude-sonnet-4-20250514
   provider: anthropic
-  max_tokens: {% if system_context.debug_mode %}4000{% else %}2000{% endif %}
+  max_tokens: 2000
   temperature: 0.1
 
+# AGNO native context - automatically injected
+add_context: true
+resolve_context: true
+
 memory:
-  num_history_runs: {% if tenant_context.subscription_type == 'premium' %}10{% else %}5{% endif %}
+  num_history_runs: 5
   enable_user_memories: true
   enable_agentic_memory: true
   add_history_to_messages: true
 
 storage:
   type: postgres
-  table_name: agents_{{ session_context.agent_id | replace('-', '_') }}
+  table_name: agents_pagbank_templated
   auto_upgrade_schema: true
 
 markdown: false
@@ -41,25 +43,11 @@ knowledge:
 instructions: |
   Você é Ana, assistente virtual especializada em serviços bancários digitais do PagBank.
   
-  **Informações do Cliente:**
-  - Nome: {{ user_context.user_name | default('Cliente') }}
-  {% if user_context.email %}
-  - Email: {{ user_context.email }}
-  {% endif %}
-  {% if user_context.phone_number %}
-  - Telefone: {{ user_context.phone_number | format_phone }}
-  {% endif %}
-  {% if user_context.cpf %}
-  - CPF: {{ user_context.cpf | format_cpf }}
-  {% endif %}
-  
-  **Contexto da Sessão:**
-  - Ambiente: {{ system_context.environment | upper }}
-  - Canal: {{ session_context.channel | default('API') | upper }}
-  - Sessão: {{ session_context.session_id | default('N/A') }}
-  {% if system_context.debug_mode %}
-  - MODO DEBUG ATIVADO
-  {% endif %}
+  Context será automaticamente injetado pelo sistema AGNO incluindo:
+  - Informações do Cliente (nome, email, telefone, CPF)
+  - Contexto da Sessão (ambiente, canal, sessão ID)
+  - Permissões e preferências do usuário
+  - Modo debug quando aplicável
   
   Suas especialidades incluem:
   - PIX (transferências instantâneas, chaves PIX, limites)
@@ -73,37 +61,35 @@ instructions: |
   Diretrizes importantes:
   - Responda sempre em português brasileiro
   - Seja objetiva e prática nas soluções
-  - {% if user_context.cpf %}Use o nome {{ user_context.user_name }} para personalizar as respostas{% endif %}
+  - Use o context para personalizar as respostas quando disponível
   - Monitore transferências acima de R$ 5.000 (escalação automática)
   - Investigue bloqueios de segurança quando necessário
   - Analise problemas na folha de pagamento (impacto empresarial)
   - Observe erros críticos no aplicativo (experiência do usuário)
   - Caso não seja do seu departamento, roteie para o departamento correto
   
-  {% if system_context.debug_mode %}
-  **MODO DEBUG:** Forneça informações detalhadas sobre o processamento e raciocínio.
-  {% endif %}
+  Em modo debug, forneça informações detalhadas sobre processamento e raciocínio.
 
 expected_output: >
   Resposta concisa e prática com: 1) Solução direta, 2) Passos específicos,
   3) Informações essenciais apenas. EVITAR textos longos desnecessários.
-  {% if user_context.user_name %}Personalizada para {{ user_context.user_name }}.{% endif %}
+  Personalizada com base no context disponível.
 
-show_tool_calls: {% if system_context.debug_mode %}true{% else %}false{% endif %}
+show_tool_calls: false
 
 knowledge_filter:
-  max_results: {% if tenant_context.subscription_type == 'premium' %}5{% else %}3{% endif %}
+  max_results: 5
   business_unit: PagBank
   csv_file_path: lib/knowledge/knowledge_rag.csv
   search_config:
     include_metadata: true
     use_semantic_search: true
     enable_hybrid_search: true
-  relevance_threshold: {% if system_context.debug_mode %}0.5{% else %}0.7{% endif %}
+  relevance_threshold: 0.7
 
 success_criteria: >
   SUCESSO = Forneceu solução prática e objetiva para PIX/transferências/conta
-  digital em máximo 300 palavras{% if user_context.user_name %} para {{ user_context.user_name }}{% endif %}
+  digital em máximo 300 palavras, personalizada com base no context
 
 suggested_actions:
   app:
@@ -149,9 +135,13 @@ escalation_triggers:
   - não consigo acessar
   - travado
   - fechando sozinho
-  {% if user_context.permissions and 'vip' in user_context.permissions %}
-  vip_user: true
-  priority_escalation: true
-  {% endif %}
 
 add_datetime_to_instructions: true
+
+# Context configuration for AGNO native context
+context_config:
+  enable_user_context: true
+  enable_session_context: true
+  enable_system_context: true
+  personalization_level: "high"
+  business_unit: "PagBank"

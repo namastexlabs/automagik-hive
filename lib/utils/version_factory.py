@@ -19,6 +19,9 @@ from agno.utils.log import logger
 from lib.versioning import AgnoVersionService
 # Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
 
+from datetime import datetime
+from typing import Callable
+
 
 def load_global_knowledge_config():
     """Load global knowledge configuration with fallback"""
@@ -49,6 +52,95 @@ class VersionFactory:
             raise ValueError("HIVE_DATABASE_URL environment variable required")
         
         self.version_service = AgnoVersionService(self.db_url)
+    
+    def _create_context_functions(self, user_id: Optional[str] = None, session_id: Optional[str] = None, 
+                                debug_mode: bool = False, **context_kwargs) -> Dict[str, Callable]:
+        """Create AGNO native context functions to replace templating variables"""
+        context = {}
+        
+        # User context function
+        if user_id:
+            def get_user_context():
+                # In a real implementation, this would fetch from database/service
+                return {
+                    "user_name": context_kwargs.get("user_name", "User"),
+                    "email": context_kwargs.get("email"),
+                    "phone_number": context_kwargs.get("phone_number"),
+                    "cpf": context_kwargs.get("cpf"),
+                    "permissions": context_kwargs.get("permissions", []),
+                    "subscription_type": context_kwargs.get("subscription_type", "basic"),
+                    "language": context_kwargs.get("language", "pt-BR"),
+                    "timezone": context_kwargs.get("timezone", "America/Sao_Paulo"),
+                    "business_units": context_kwargs.get("business_units", []),
+                    "preferences": context_kwargs.get("preferences", {}),
+                    "is_vip": "vip" in context_kwargs.get("permissions", [])
+                }
+            context["user_data"] = get_user_context
+        
+        # Session context function  
+        if session_id:
+            def get_session_context():
+                return {
+                    "session_id": session_id,
+                    "channel": context_kwargs.get("channel", "API"),
+                    "timestamp": datetime.now().isoformat()
+                }
+            context["session_data"] = get_session_context
+        
+        # System context function
+        def get_system_context():
+            return {
+                "environment": os.getenv("HIVE_ENVIRONMENT", "production"),
+                "debug_mode": debug_mode,
+                "timestamp": datetime.now().isoformat()
+            }
+        context["system_data"] = get_system_context
+        
+        # Tenant context function
+        if context_kwargs.get("tenant_id"):
+            def get_tenant_context():
+                return {
+                    "tenant_id": context_kwargs.get("tenant_id"),
+                    "tenant_name": context_kwargs.get("tenant_name", "Organization"),
+                    "subscription_type": context_kwargs.get("subscription_type", "basic"),
+                    "enabled_features": context_kwargs.get("enabled_features", []),
+                    "features": context_kwargs.get("features", [])
+                }
+            context["tenant_data"] = get_tenant_context
+        
+        return context
+    
+    def _build_dynamic_instructions(self, base_instructions: str, context_functions: Dict[str, Callable], 
+                                   user_id: Optional[str] = None, debug_mode: bool = False) -> Callable:
+        """Build dynamic instructions function that replaces templated instructions"""
+        def generate_instructions():
+            # Start with base instructions
+            instructions = base_instructions
+            
+            # Add personalized greeting if user context available
+            if user_id and "user_data" in context_functions:
+                user_data = context_functions["user_data"]()
+                user_name = user_data.get("user_name", "User")
+                instructions = f"Hello {user_name}!\n\n{instructions}"
+                
+                # Add user-specific context
+                if user_data.get("permissions"):
+                    permissions = ", ".join(user_data["permissions"])
+                    instructions += f"\n\nYour permissions: {permissions}"
+            
+            # Add debug information if debug mode
+            if debug_mode:
+                instructions += "\n\n🐛 DEBUG MODE ACTIVE - Enhanced logging enabled"
+                
+            # Add environment context
+            if "system_data" in context_functions:
+                system_data = context_functions["system_data"]()
+                env = system_data.get("environment", "production").upper()
+                instructions += f"\n\nEnvironment: {env}"
+            
+            return instructions
+        
+        return generate_instructions
     
     def create_versioned_component(
         self,
@@ -113,7 +205,8 @@ class VersionFactory:
                 config=config,
                 session_id=session_id,
                 debug_mode=debug_mode,
-                user_id=user_id
+                user_id=user_id,
+                **kwargs
             )
         elif component_type == "team":
             return self._create_team(
@@ -142,9 +235,18 @@ class VersionFactory:
         config: Dict[str, Any],
         session_id: Optional[str],
         debug_mode: bool,
-        user_id: Optional[str]
+        user_id: Optional[str],
+        **context_kwargs
     ) -> Agent:
         """Create versioned agent using dynamic Agno proxy for future compatibility."""
+        
+        # Create AGNO native context functions to replace templating
+        context_functions = self._create_context_functions(
+            user_id=user_id,
+            session_id=session_id,
+            debug_mode=debug_mode,
+            **context_kwargs
+        )
         
         # Use the dynamic proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_proxy
@@ -154,22 +256,36 @@ class VersionFactory:
         # Load custom tools
         tools = self._load_agent_tools(component_id, config)
         
-        # Add tools to config for proxy processing
+        # Prepare config with AGNO native context support
+        enhanced_config = config.copy()
         if tools:
-            config = config.copy()  # Don't modify original
-            config["tools"] = tools
+            enhanced_config["tools"] = tools
         
-        # Create agent using dynamic proxy
+        # Add AGNO native context parameters
+        enhanced_config["context"] = context_functions
+        enhanced_config["add_context"] = True  # Automatically inject context into messages
+        enhanced_config["resolve_context"] = True  # Resolve context functions when needed
+        
+        # Convert templated instructions to dynamic instructions if needed
+        base_instructions = enhanced_config.get("instructions", "")
+        if base_instructions and ("{{" in base_instructions or "{%" in base_instructions):
+            # This config still has templating - convert to dynamic instructions
+            logger.warning(f"🔧 Converting templated instructions for {component_id} to AGNO native context")
+            enhanced_config["instructions"] = self._build_dynamic_instructions(
+                base_instructions, context_functions, user_id, debug_mode
+            )
+        
+        # Create agent using dynamic proxy with native context
         agent = proxy.create_agent(
             component_id=component_id,
-            config=config,
+            config=enhanced_config,
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
             db_url=self.db_url
         )
         
-        logger.info(f"🤖 Agent {component_id} created with {len(proxy.get_supported_parameters())} available Agno parameters")
+        logger.info(f"🤖 Agent {component_id} created with AGNO native context and {len(proxy.get_supported_parameters())} available parameters")
         
         return agent
     

@@ -1,58 +1,101 @@
 agent:
-  agent_id: "template_example"
-  name: "{{ user_context.user_name | default('Anonymous') }} - Template Demo Agent"
+  name: "Template Example - Context-Aware Agent"
+  role: "Personalized Assistant"
   version: "dev"
-  
+  agent_id: "template_example"
+  description: >
+    Dynamic agent showcasing AGNO native context capabilities.
+    Demonstrates context-aware personalization without complex templating.
+
 model:
-  id: "claude-sonnet-4-20250514"
-  temperature: {% if system_context.debug_mode %}0.9{% else %}0.7{% endif %}
-  max_tokens: {% if user_context.is_vip %}4000{% else %}2000{% endif %}
+  id: claude-sonnet-4-20250514
+  provider: anthropic
+  max_tokens: 2000
+  temperature: 0.1
 
-instructions: |
-  You are a demonstration agent showcasing YAML templating capabilities.
-  
-  Hello {{ user_context.user_name | default('there') }}!
-  
-  Current context:
-  - Environment: {{ system_context.environment | upper }}
-  - Session: {{ session_context.session_id }}
-  - Channel: {{ session_context.channel | default('API') }}
-  
-  {% if user_context.phone_number %}
-  Your contact: {{ user_context.phone_number | format_phone }}
-  {% endif %}
-  
-  {% if user_context.permissions %}
-  Your permissions:
-  {% for permission in user_context.permissions %}
-  - {{ permission }}
-  {% endfor %}
-  {% endif %}
-  
-  {% if system_context.debug_mode %}
-  🐛 DEBUG MODE ACTIVE - Enhanced logging enabled
-  {% endif %}
-  
-  I'm configured to provide personalized assistance based on your:
-  - Subscription: {{ user_context.subscription_type | default('basic') }}
-  - Language: {{ user_context.language | default('pt-BR') }}
-  - Timezone: {{ user_context.timezone | default('America/Sao_Paulo') }}
-  
-  {% if tenant_context.enabled_features %}
-  Available features for {{ tenant_context.tenant_name | default('your organization') }}:
-  {% for feature in tenant_context.enabled_features %}
-  - {{ feature }}
-  {% endfor %}
-  {% endif %}
+# AGNO native context - automatically injected via context functions
+add_context: true
+resolve_context: true
 
-tools: []
-
-knowledge:
-  sources: []
+memory:
+  num_history_runs: 5
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
 
 storage:
-  type: "memory"
+  type: postgres
+  table_name: agents_template_example
+  auto_upgrade_schema: true
+
+markdown: false
+
+knowledge:
+  search_knowledge: true
+  valid_metadata_filters:
+  - business_unit
+  - solution
+  - typification
+  enable_agentic_knowledge_filters: true
+
+instructions: |
+  You are a demonstration agent showcasing AGNO native context capabilities.
   
-monitoring:
-  enabled: {{ system_context.debug_mode | default(false) }}
-  log_level: {% if system_context.debug_mode %}"DEBUG"{% else %}"INFO"{% endif %}
+  Your instructions will be dynamically enhanced with user context:
+  - User information (name, email, phone, permissions)
+  - Session details (session ID, channel, timestamp)
+  - System context (environment, debug mode)
+  - Organization details (tenant, subscription, features)
+  
+  Context is automatically available through AGNO's native context system.
+  No templating required - context is resolved dynamically when needed.
+  
+  Guidelines:
+  - Address users by name when context provides it
+  - Adapt responses based on environment (more formal in production)
+  - Consider user permissions for specialized advice
+  - Provide detailed debugging information in debug mode
+  - Use context to personalize responses appropriately
+
+expected_output: |
+  Context-aware personalized responses that adapt to user information,
+  session details, and system environment without requiring templating.
+
+show_tool_calls: false
+
+knowledge_filter:
+  max_results: 5
+  csv_file_path: lib/knowledge/knowledge_rag.csv
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: true
+  relevance_threshold: 0.7
+
+success_criteria: >
+  SUCESSO = Provided personalized assistance using AGNO native context
+  with dynamic user-aware responses in current environment
+
+suggested_actions:
+  general:
+  - get_help
+  - contact_support
+  - view_profile
+  - update_preferences
+
+escalation_triggers:
+  error_keywords:
+  - critical error
+  - system failure
+  - data loss
+
+add_datetime_to_instructions: true
+
+# Context configuration for AGNO native context
+context_config:
+  enable_user_context: true
+  enable_session_context: true
+  enable_system_context: true
+  enable_tenant_context: true
+  personalization_level: "standard"
+  user_segment: "general"

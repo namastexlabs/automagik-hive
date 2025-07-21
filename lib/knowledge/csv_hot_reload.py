@@ -33,7 +33,7 @@ class CSVHotReloadManager:
     incremental loading capabilities.
     """
     
-    def __init__(self, csv_path: str = "core/knowledge/knowledge_rag.csv"):
+    def __init__(self, csv_path: str = "lib/knowledge/knowledge_rag.csv"):
         """Initialize with backward-compatible interface."""
         self.csv_path = Path(csv_path)
         self.is_running = False
@@ -51,7 +51,9 @@ class CSVHotReloadManager:
         """Initialize the Agno knowledge base."""
         try:
             # Get database URL from environment or config
-            db_url = os.getenv("HIVE_DATABASE_URL", "postgresql+psycopg://ai:ai@localhost:5532/ai")
+            db_url = os.getenv("HIVE_DATABASE_URL")
+            if not db_url:
+                raise ValueError("HIVE_DATABASE_URL environment variable is required")
             
             # Create PgVector instance  
             vector_db = PgVector(

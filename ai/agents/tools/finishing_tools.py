@@ -78,37 +78,6 @@ def trigger_conversation_typification_workflow(
         return f"❌ Erro na tipificação: {str(e)}"
 
 
-@tool
-def get_protocol_from_session_state(
-    session_id: str,
-    protocol_id: Optional[str] = None
-) -> str:
-    """
-    Retrieve protocol information from session state.
-    
-    Args:
-        session_id: Session identifier
-        protocol_id: Specific protocol ID to retrieve (optional, defaults to latest)
-        
-    Returns:
-        Protocol information or error message
-    """
-    
-    logger.info(f"🔍 Retrieving protocol from session state for session {session_id}")
-    
-    try:
-        # Note: In a real implementation, this would access the agent's session_state
-        # For now, we'll return a placeholder response
-        # The actual implementation would be:
-        # protocol_data = get_protocol_from_session_state(self.session_state, protocol_id)
-        
-        # Placeholder implementation
-        logger.info("🤖 Protocol retrieval from session state - placeholder implementation")
-        return "📋 Protocolo disponível na sessão (implementação será finalizada na integração)"
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to retrieve protocol: {str(e)}")
-        return f"❌ Erro ao recuperar protocolo: {str(e)}"
 
 
 @tool

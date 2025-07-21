@@ -14,7 +14,7 @@ class Settings:
     
     def __init__(self):
         # Project paths
-        self.project_root = Path(__file__).parent.parent
+        self.project_root = Path(__file__).parent.parent.parent
         self.data_dir = self.project_root / "data"
         self.logs_dir = self.project_root / "logs"
         
@@ -45,7 +45,7 @@ class Settings:
         self.max_memory_entries = int(os.getenv("HIVE_MAX_MEMORY_ENTRIES", "1000"))
         
         # Knowledge base settings
-        self.knowledge_file = self.project_root / "core/knowledge/knowledge_rag.csv"
+        self.knowledge_file = self.project_root / "lib/knowledge/knowledge_rag.csv"
         self.max_knowledge_results = int(os.getenv("HIVE_MAX_KNOWLEDGE_RESULTS", "10"))
         
         # Security settings
