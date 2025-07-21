@@ -1,8 +1,8 @@
-agent:
-  agent_id: human-handoff
+workflow:
+  workflow_id: human-handoff
   name: Ana - Human Handoff
   version: 1
-  description: Agent for human handoff escalation
+  description: Workflow for human handoff escalation
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514

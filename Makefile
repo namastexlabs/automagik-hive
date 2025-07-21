@@ -66,19 +66,49 @@ endef
 define show_hive_logo
     if [ -z "$${HIVE_QUIET_LOGO}" ]; then \
         echo ""; \
-        echo -e "$(FONT_PURPLE)    ╭─────────────────────────────────────────────────────────╮$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │  🐝 ⚡ 🤖  AUTOMAGIK HIVE  🤖 ⚡ 🐝                       │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │        Enterprise Multi-Agent AI Framework             │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │  • Intelligent Agent Coordination & Routing           │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │  • Real-time Knowledge Base with Hot Reload            │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │  • Enterprise-grade PostgreSQL Memory System           │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │  • WhatsApp Integration via Evolution API              │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │  • Production-ready with Docker & FastAPI              │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    │                                                         │$(FONT_RESET)"; \
-        echo -e "$(FONT_PURPLE)    ╰─────────────────────────────────────────────────────────╯$(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                   @@     @@                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                @@@-.@@@@@  @@@                     $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                @      @      @:                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                @      @      @-                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                               )@@@@@ -@@@@@ (@@@@@)*@@@@@(=@@@                     $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                              @{     @@     @#     @@     @@                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                              @      *#     @       @     .@                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                              @@+   @@@~   )@@@   @@@@   #@@                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                @@@@   +@@@    @@@    @@@                           $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                  @      #      @      @                            $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                  @     >@.     @:     @]                           $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                   @@@@@@ @@@@@@ {@@@@@ (@@]                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                            @.      @      @                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                            @=      @      @                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                            +@@@ {@@@@@.[@@^                        $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                @.     @~                           $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      +{>>>({             @>>>((     @>>>>#=    @%<>>)+         @      @  ]>>>>>>>>>>>>>[)          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      @@@@@@@             @@@@@@     @@@@@@@     @@@@@@]        @@^   @@ @@@@@@@@@@@@@@@@@          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###@@             @###@@     @####@)     [@%##@@          [@@@   #@####@@@@@@@@@@@          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###@@             @###@@     @####@)      @@##@@{                %@###@@@@@@@@@@@@          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###@@             @###@@     @####@)       @@##@@~       @@@@@@@ %@###@{                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###@@             @###@@     @####@)        @@##@@       @@##@@  %@###@@                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###@@             @###@@     @####@)        @@%#%@)     @@##@@.  @@###@@                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      @@@@@@@             @###@@     @####@)         @@##@@    @@%#@@{   @@###@}                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      =}^^^){             @###@@     @####@)          @@##@@   @@##@@    @@###@@@@@@@@@@@@@@@@      $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                          @###@@     @####@)           @@#%@* @@##@@+    @@#################@#      $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                          @###@@     @####@)           @@%#@@{@##@@%     @@###%@@@@@@@@@@@@@@@      $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                          @###@@     @####@)            @@##%%%#%@@      @@###@@                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      @@@@@@@@@@@@@@@@@@@@@###@@     @####@)            =@@#####@@       @@###@@                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@######################@@     @####@)             }@@###@@@       @@###@@                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###%@@@@@@@@@@@@@@@###@@     @####@)              @@###@@        @@###@@                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###@@ >>>>>>>>>>~+@###@@     @####@+              *@@#@@         @@###@@-~*****^))          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      ]@###@@             @###@@ @@@@@####@@@@@~           @@@@          @@###%@@@@@@@@@@@          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      {@@@@@@             @@@@@@ ]@@@@@@@@@@@@@             @@@          @@@@@@@@@@@@@@@@@          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)      @@@@@@@             @@@@@@ @@@@@@@@@@@@@@-            -@           @@@@@@@@@@@@@@@@@          $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
+        echo -e "$(FONT_PURPLE)                                                                                                    $(FONT_RESET)"; \
         echo ""; \
     fi
 endef
