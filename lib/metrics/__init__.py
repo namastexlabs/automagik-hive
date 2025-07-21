@@ -1,23 +1,22 @@
 """
 Unified Metrics System
 
-A secure, production-ready metrics collection system for Agno framework integration.
-Extracts metrics from RunResponse objects and stores them in configurable backends.
+High-performance PostgreSQL-only metrics collection system for Agno framework integration.
+Uses AsyncMetricsService with queue-based processing for <0.1ms latency impact.
 
 Key Features:
-- Extracts from Agno's native RunResponse.metrics (no custom metrics creation)
-- 8 environment variables for configuration (5 core + 3 storage)
-- 3 storage backends: file (default), console, PostgreSQL
+- High-performance async metrics collection with psycopg3
+- PostgreSQL-only storage using hive.agent_metrics table
+- Queue-based background processing for minimal latency impact
+- Environment variables for metrics collection control
 - Automatic integration with agent/team proxies
 - YAML-level overrides for metrics_enabled
-- Security hardened against SQL injection and path traversal
-- File storage default to ./logs/metrics.log
-- Disables Agno platform telemetry (HIVE_AGNO_MONITOR=false)
+- Uses established DatabaseService architecture
 
 Usage:
     # Environment configuration
     HIVE_METRICS_COLLECT_TOKENS=true
-    HIVE_METRICS_STORAGE_BACKEND=file
+    HIVE_DATABASE_URL=postgresql+psycopg://user:pass@host:port/database
     HIVE_AGNO_MONITOR=false
     
     # Automatic integration via proxies
@@ -25,9 +24,9 @@ Usage:
     agent = create_agent("my-agent", config)  # Metrics automatically collected
     
     # Manual usage
-    from lib.metrics import MetricsCollectionService
-    service = MetricsCollectionService()
-    service.collect_from_response(response, "agent-name")
+    from lib.metrics import AsyncMetricsService
+    service = AsyncMetricsService()
+    await service.collect_metrics("agent-name", "agent", metrics_dict)
 """
 
 from .config import (
@@ -37,20 +36,11 @@ from .config import (
     get_configuration_summary
 )
 
-from .collection_service import MetricsCollectionService
-
 from .async_metrics_service import (
     AsyncMetricsService,
     get_metrics_service,
     initialize_metrics_service,
     shutdown_metrics_service
-)
-
-from .storage import (
-    MetricsStorage,
-    StorageError,
-    ConfigurationError,
-    create_storage_backend
 )
 
 # Public API
@@ -61,20 +51,11 @@ __all__ = [
     "validate_environment_config",
     "get_configuration_summary",
     
-    # Collection Service
-    "MetricsCollectionService",
-    
     # Async Service
     "AsyncMetricsService",
     "get_metrics_service",
     "initialize_metrics_service", 
-    "shutdown_metrics_service",
-    
-    # Storage
-    "MetricsStorage",
-    "StorageError",
-    "ConfigurationError", 
-    "create_storage_backend"
+    "shutdown_metrics_service"
 ]
 
 # Version
@@ -87,23 +68,6 @@ if _validation_error:
     warnings.warn(f"Metrics configuration issue: {_validation_error}", RuntimeWarning)
 
 
-def create_metrics_service() -> MetricsCollectionService:
-    """
-    Factory function to create a configured metrics collection service
-    
-    Returns:
-        MetricsCollectionService: Configured service instance
-        
-    Raises:
-        ConfigurationError: If configuration is invalid
-    """
-    validation_error = validate_environment_config()
-    if validation_error:
-        raise ConfigurationError(validation_error)
-    
-    return MetricsCollectionService()
-
-
 def get_metrics_status() -> dict:
     """
     Get current metrics system status for debugging
@@ -113,19 +77,20 @@ def get_metrics_status() -> dict:
     """
     config_summary = get_configuration_summary()
     
-    # Test storage backend availability
-    storage_available = False
+    # Test async metrics service availability
+    metrics_service_available = False
     if config_summary.get("validation_status") == "valid":
         try:
-            service = MetricsCollectionService()
-            storage_available = service.storage_backend is not None
+            service = get_metrics_service()
+            metrics_service_available = service is not None
         except Exception:
             pass
     
     return {
         "version": __version__,
         "configuration": config_summary,
-        "storage_available": storage_available,
+        "metrics_service_available": metrics_service_available,
+        "storage_backend": "postgres",
         "integration_points": {
             "agent_proxy": "lib.utils.proxy_agents",
             "team_proxy": "lib.utils.proxy_teams",

@@ -1,0 +1,27 @@
+# Shared Workflow Configuration
+# Centralized configuration for shared workflow components
+
+whatsapp_notification:
+  # Model configuration for WhatsApp notification agent
+  model:
+    id: "gemini-2.5-flash"
+    provider: "google"
+    temperature: 0.5
+    max_tokens: 1000
+    
+  # Agent configuration
+  agent:
+    name: "WhatsApp Notification Agent"
+    instructions:
+      - "You are a WhatsApp notification agent for the PagBank support system."
+      - "Send professional, concise WhatsApp messages in Portuguese."
+      - "Use the send_whatsapp_message MCP tool to send messages."
+      - "Always include relevant protocol information and next steps."
+      - "Use appropriate emojis for visual clarity."
+      - "Keep messages under 300 words for readability."
+      - "Format messages with proper line breaks and sections."
+    
+  # Display settings
+  display:
+    markdown: true
+    show_tool_calls: true

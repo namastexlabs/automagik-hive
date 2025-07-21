@@ -19,28 +19,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Configure logging based on environment variables
-def setup_logging():
-    """Configure logging levels based on environment variables"""
-    # Get environment settings (consolidated debug mode)
-    debug_mode = os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"
-    demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "warning").upper()
-    
-    # Set Agno framework logging level
-    agno_level = getattr(logging, agno_log_level, logging.WARNING)
-    logging.getLogger("agno").setLevel(agno_level)
-    
-    # Set general logging level based on debug mode
-    if debug_mode:
-        logging.getLogger().setLevel(logging.DEBUG)
-    elif demo_mode:
-        logging.getLogger().setLevel(logging.INFO)
-    else:
-        logging.getLogger().setLevel(logging.WARNING)
-
-# Setup logging on import
-setup_logging()
+# Use unified logging system
+from lib.logging import logger
 
 from agno.knowledge.csv import CSVKnowledgeBase
 from agno.vectordb.pgvector import PgVector
@@ -61,13 +41,9 @@ class CSVHotReloadManager:
         self.observer = None
         self.knowledge_base = None
         
-        # Show initialization messages in demo/development mode
-        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
-        if demo_mode or is_development:
-            print("📄 CSV Hot Reload Manager initialized (AGNO-NATIVE)")
-            print(f"   Watching: {self.csv_path}")
-            print(f"   Mode: Simplified Agno incremental loading")
+        # Log initialization at INFO level
+        logger.info("📊 CSV Hot Reload Manager initialized",
+                   path=str(self.csv_path), mode="agno_native_incremental")
         
         # Initialize knowledge base
         self._initialize_knowledge_base()
@@ -96,7 +72,7 @@ class CSVHotReloadManager:
                 self.knowledge_base.load(recreate=False, skip_existing=True)
             
         except Exception as e:
-            logger.warning(f"Failed to initialize knowledge base: {e}")
+            logger.warning("📊 Failed to initialize knowledge base", error=str(e))
     
     def start_watching(self):
         """Start watching the CSV file for changes."""
@@ -105,13 +81,7 @@ class CSVHotReloadManager:
         
         self.is_running = True
         
-        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
-        should_print = demo_mode or is_development
-        
-        if should_print:
-            print("👀 Started watching CSV file for changes...")
-            print("🔥 Changes will be detected and processed using Agno incremental loading")
+        logger.info("📊 File watching started", path=str(self.csv_path))
         
         try:
             from watchdog.observers import Observer
@@ -135,12 +105,10 @@ class CSVHotReloadManager:
             self.observer.schedule(handler, str(self.csv_path.parent), recursive=False)
             self.observer.start()
             
-            if should_print:
-                print("✅ File watching active")
+            logger.debug("📊 File watching active", observer_started=True)
             
         except Exception as e:
-            if should_print:
-                print(f"❌ Error setting up file watcher: {e}")
+            logger.error("📊 Error setting up file watcher", error=str(e))
             self.stop_watching()
     
     def stop_watching(self):
@@ -155,10 +123,7 @@ class CSVHotReloadManager:
         
         self.is_running = False
         
-        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
-        if demo_mode or is_development:
-            print("⏹️  Stopped watching CSV file")
+        logger.info("📊 File watching stopped", path=str(self.csv_path))
     
     def _reload_knowledge_base(self):
         """Reload the knowledge base using Agno's incremental loading."""
@@ -169,16 +134,12 @@ class CSVHotReloadManager:
             # Use Agno's native incremental loading
             self.knowledge_base.load(recreate=False, skip_existing=True)
             
-            demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-            is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
-            if demo_mode or is_development:
-                print("✅ Knowledge base reloaded using Agno incremental loading")
+            logger.info("📊 Knowledge base reloaded", component="csv_hot_reload", 
+                       method="agno_incremental")
         
         except Exception as e:
-            demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-            is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
-            if demo_mode or is_development:
-                print(f"❌ Knowledge base reload failed: {e}")
+            logger.error("📊 Knowledge base reload failed", error=str(e), 
+                        component="csv_hot_reload")
     
     def get_status(self):
         """Get current status of the manager."""
@@ -191,13 +152,7 @@ class CSVHotReloadManager:
     
     def force_reload(self):
         """Manually force a reload."""
-        demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
-        is_development = os.getenv("HIVE_ENVIRONMENT", "production") == "development"
-        should_print = demo_mode or is_development
-        
-        if should_print:
-            print("🔄 Force reloading knowledge base...")
-        
+        logger.info("📊 Force reloading knowledge base", component="csv_hot_reload")
         self._reload_knowledge_base()
 
 
@@ -216,9 +171,7 @@ def main():
     
     if args.status:
         status = manager.get_status()
-        print("\n📊 Status Report:")
-        for key, value in status.items():
-            print(f"   {key}: {value}")
+        logger.info("📊 Status Report", **status)
         return
     
     if args.force_reload:

@@ -7,13 +7,11 @@ while leveraging shared storage utilities to eliminate code duplication.
 """
 
 import inspect
-import logging
 from typing import Dict, Any, Optional, Set, Callable
 
 from agno.workflow.v2.workflow import Workflow
 from .agno_storage_utils import create_dynamic_storage
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 class AgnoWorkflowProxy:
@@ -29,7 +27,7 @@ class AgnoWorkflowProxy:
         """Initialize the proxy by introspecting the current Agno Workflow class."""
         self._supported_params = self._discover_workflow_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.info(f"AgnoWorkflowProxy initialized with {len(self._supported_params)} Agno Workflow parameters")
+        logger.info(f"🤖 AgnoWorkflowProxy initialized with {len(self._supported_params)} Agno Workflow parameters")
     
     def _discover_workflow_parameters(self) -> Set[str]:
         """
@@ -48,11 +46,11 @@ class AgnoWorkflowProxy:
                 if param_name != 'self'
             }
             
-            logger.debug(f"Discovered {len(params)} Agno Workflow parameters: {sorted(params)}")
+            logger.debug(f"🤖 Discovered {len(params)} Agno Workflow parameters: {sorted(params)}")
             return params
             
         except Exception as e:
-            logger.error(f"Failed to introspect Agno Workflow parameters: {e}")
+            logger.error(f"🤖 Failed to introspect Agno Workflow parameters: {e}")
             # Fallback to known parameters if introspection fails
             return self._get_fallback_parameters()
     
@@ -148,7 +146,7 @@ class AgnoWorkflowProxy:
             if key in self._supported_params and value is not None
         }
         
-        logger.debug(f"Creating workflow with {len(filtered_params)} parameters")
+        logger.debug(f"🤖 Creating workflow with {len(filtered_params)} parameters")
         
         try:
             # Create the workflow with dynamically mapped parameters
@@ -160,8 +158,8 @@ class AgnoWorkflowProxy:
             return workflow
             
         except Exception as e:
-            logger.error(f"Failed to create workflow {component_id}: {e}")
-            logger.debug(f"Attempted parameters: {list(filtered_params.keys())}")
+            logger.error(f"🤖 Failed to create workflow {component_id}: {e}")
+            logger.debug(f"🤖 Attempted parameters: {list(filtered_params.keys())}")
             raise
     
     def _process_config(self, config: Dict[str, Any], component_id: str, db_url: Optional[str], **kwargs) -> Dict[str, Any]:
@@ -182,7 +180,7 @@ class AgnoWorkflowProxy:
                 processed[key] = value
             else:
                 # Log unknown parameters for debugging
-                logger.debug(f"Unknown Workflow parameter '{key}' in config for {component_id}")
+                logger.debug(f"🤖 Unknown Workflow parameter '{key}' in config for {component_id}")
         
         return processed
     
@@ -212,7 +210,7 @@ class AgnoWorkflowProxy:
         Steps handling depends on the specific workflow implementation.
         This could be a function, a list of steps, or custom step configuration.
         """
-        logger.info(f"Processing steps for workflow {component_id}")
+        logger.info(f"🤖 Processing steps for workflow {component_id}")
         
         # Steps can be:
         # 1. A callable function that defines the workflow
@@ -220,11 +218,11 @@ class AgnoWorkflowProxy:
         # 3. A custom step processing configuration
         
         if callable(steps_config):
-            logger.debug(f"Steps config is a callable function for {component_id}")
+            logger.debug(f"🤖 Steps config is a callable function for {component_id}")
         elif isinstance(steps_config, list):
-            logger.debug(f"Steps config is a list of {len(steps_config)} steps for {component_id}")
+            logger.debug(f"🤖 Steps config is a list of {len(steps_config)} steps for {component_id}")
         else:
-            logger.debug(f"Steps config is custom configuration for {component_id}")
+            logger.debug(f"🤖 Steps config is custom configuration for {component_id}")
         
         return steps_config
     

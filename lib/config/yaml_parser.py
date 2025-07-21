@@ -11,6 +11,7 @@ from pathlib import Path
 
 from .schemas import AgentConfig, TeamConfig, AgentConfigMCP, MCPToolConfig
 from ..mcp.catalog import MCPCatalog
+from lib.logging import logger
 
 
 class YAMLConfigParser:
@@ -123,7 +124,7 @@ class YAMLConfigParser:
         
         for tool in tools_list:
             if not isinstance(tool, str):
-                print(f"Warning: Invalid tool entry '{tool}', must be string")
+                logger.warning("🔧 Invalid tool entry, must be string", tool=tool)
                 continue
             
             tool = tool.strip()
@@ -133,7 +134,7 @@ class YAMLConfigParser:
                 if server_name:
                     mcp_tool_names.append(server_name)
                 else:
-                    print(f"Warning: Empty MCP tool name in '{tool}'")
+                    logger.warning("🔧 Empty MCP tool name", tool=tool)
             else:
                 # Regular tool
                 regular_tools.append(tool)
@@ -162,7 +163,7 @@ class YAMLConfigParser:
                     )
                     validated_tools.append(tool_config)
                 else:
-                    print(f"Warning: MCP server '{server_name}' not found in catalog")
+                    logger.warning("🤖 MCP server not found in catalog", server_name=server_name)
                     # Still add it but mark as disabled
                     tool_config = MCPToolConfig(
                         server_name=server_name,
@@ -171,7 +172,7 @@ class YAMLConfigParser:
                     validated_tools.append(tool_config)
             
             except Exception as e:
-                print(f"Warning: Error validating MCP tool '{server_name}': {e}")
+                logger.warning("🤖 Error validating MCP tool", server_name=server_name, error=str(e))
                 continue
         
         return validated_tools

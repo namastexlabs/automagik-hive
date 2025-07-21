@@ -1,9 +1,8 @@
 """
 Metrics Configuration Reader
 
-Reads and validates the 8 environment variables for the unified metrics system:
-- 5 core metrics collection flags
-- 3 storage and configuration settings
+Simplified PostgreSQL-only metrics system configuration.
+Reads and validates environment variables for metrics collection control.
 """
 import os
 from typing import Dict, Any, Optional
@@ -12,23 +11,21 @@ from dataclasses import dataclass
 
 @dataclass
 class MetricsConfig:
-    """Configuration for metrics collection system"""
+    """Configuration for PostgreSQL-only metrics collection system"""
     
-    # Core metrics collection (5)
+    # Core metrics collection flags
     collect_tokens: bool = True
     collect_time: bool = True
     collect_tools: bool = True
     collect_events: bool = True
     collect_content: bool = True
     
-    # Storage & configuration (3)
-    storage_backend: str = "file"
-    storage_path: str = "./logs/metrics.log"
+    # Monitoring configuration
     agno_monitor: bool = False
 
     @classmethod
     def from_environment(cls) -> "MetricsConfig":
-        """Load configuration from environment variables with validation"""
+        """Load configuration from environment variables"""
         
         def parse_bool(value: str, default: bool) -> bool:
             """Parse boolean from string with proper validation"""
@@ -36,22 +33,15 @@ class MetricsConfig:
                 return default
             return value.lower() in ("true", "1", "yes", "on")
         
-        # Core metrics collection
+        # Core metrics collection flags
         collect_tokens = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TOKENS", "true"), True)
         collect_time = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TIME", "true"), True)
         collect_tools = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TOOLS", "true"), True)
         collect_events = parse_bool(os.getenv("HIVE_METRICS_COLLECT_EVENTS", "true"), True)
         collect_content = parse_bool(os.getenv("HIVE_METRICS_COLLECT_CONTENT", "true"), True)
         
-        # Storage & configuration
-        storage_backend = os.getenv("HIVE_METRICS_STORAGE_BACKEND", "file")
-        storage_path = os.getenv("HIVE_METRICS_STORAGE_PATH", "./logs/metrics.log")
+        # Monitoring configuration
         agno_monitor = parse_bool(os.getenv("HIVE_AGNO_MONITOR", "false"), False)
-        
-        # Validate storage backend
-        valid_backends = {"file", "console", "postgres"}
-        if storage_backend not in valid_backends:
-            raise ValueError(f"Invalid storage backend '{storage_backend}'. Must be one of: {valid_backends}")
         
         return cls(
             collect_tokens=collect_tokens,
@@ -59,8 +49,6 @@ class MetricsConfig:
             collect_tools=collect_tools,
             collect_events=collect_events,
             collect_content=collect_content,
-            storage_backend=storage_backend,
-            storage_path=storage_path,
             agno_monitor=agno_monitor
         )
     
@@ -92,8 +80,6 @@ class MetricsConfig:
             "collect_tools": self.collect_tools,
             "collect_events": self.collect_events,
             "collect_content": self.collect_content,
-            "storage_backend": self.storage_backend,
-            "storage_path": self.storage_path,
             "agno_monitor": self.agno_monitor
         }
 
@@ -108,36 +94,15 @@ def validate_environment_config() -> Optional[str]:
     try:
         config = load_metrics_config()
         
-        # Check for file backend path requirements
-        if config.storage_backend == "file":
-            import pathlib
-            path = pathlib.Path(config.storage_path)
-            
-            # Ensure parent directory exists or can be created
-            try:
-                path.parent.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                return f"Cannot create directory for metrics file: {e}"
-        
-        # Check PostgreSQL backend requirements
-        elif config.storage_backend == "postgres":
-            # Check if required environment variables exist for PostgreSQL
-            import os
-            postgres_vars = ["HIVE_DATABASE_URL"]  # Reuse existing database URL
-            missing_vars = [var for var in postgres_vars if not os.getenv(var)]
-            if missing_vars:
-                return f"PostgreSQL backend requires environment variables: {missing_vars}"
+        # Check PostgreSQL database URL availability
+        database_url = os.getenv("HIVE_DATABASE_URL")
+        if not database_url:
+            return "PostgreSQL metrics storage requires HIVE_DATABASE_URL environment variable"
         
         # Validate collection configuration
         if not config.is_collection_enabled():
-            # This is a warning, not an error
+            # This is a warning, not an error - metrics collection is disabled
             pass
-        
-        # Validate storage path format for file backend
-        if config.storage_backend == "file":
-            path = pathlib.Path(config.storage_path)
-            if not path.suffix:
-                return f"File storage path should include file extension: {config.storage_path}"
         
         return None
     except Exception as e:
@@ -151,8 +116,8 @@ def get_configuration_summary() -> Dict[str, Any]:
         return {
             "metrics_enabled": config.is_collection_enabled(),
             "enabled_collections": config.get_enabled_collections(),
-            "storage_backend": config.storage_backend,
-            "storage_path": config.storage_path,
+            "storage_backend": "postgres",  # Always PostgreSQL now
+            "database_url_configured": bool(os.getenv("HIVE_DATABASE_URL")),
             "agno_monitor": config.agno_monitor,
             "validation_status": validate_environment_config() or "valid"
         }

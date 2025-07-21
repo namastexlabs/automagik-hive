@@ -28,7 +28,7 @@ def load_global_knowledge_config():
             global_config = yaml.safe_load(f)
         return global_config.get("knowledge", {})
     except Exception as e:
-        logger.warning("Could not load global knowledge config: %s", e)
+        logger.warning("🔧 Could not load global knowledge config: %s", e)
         return {
             "csv_file_path": "knowledge_rag.csv",
             "max_results": 10,
@@ -79,7 +79,7 @@ class VersionFactory:
         # FIRST: Check if this is a dev version by reading YAML directly
         dev_version_record = self._check_for_dev_version(component_id, component_type)
         if dev_version_record:
-            print(f"🔧 DEV MODE: Loading {component_id} directly from YAML (bypassing database)")
+            logger.info(f"🐛 DEV MODE: Loading {component_id} directly from YAML (bypassing database)")
             version_record = dev_version_record
         else:
             # Normal database lookup logic
@@ -91,12 +91,12 @@ class VersionFactory:
                 version_record = self.version_service.get_active_version(component_id)
                 if not version_record:
                     # Fallback: Try to sync from YAML if no active version found
-                    print(f"⚠️ No active version found for {component_id}, attempting YAML fallback...")
+                    logger.warning(f"🔧 No active version found for {component_id}, attempting YAML fallback...")
                     try:
                         version_record = self._sync_from_yaml_fallback(component_id, component_type)
                         if not version_record:
                             raise ValueError(f"No active version found for {component_id} and YAML fallback failed")
-                        print(f"✅ Loaded {component_id} from YAML fallback (version {version_record.version})")
+                        logger.info(f"🔧 Loaded {component_id} from YAML fallback (version {version_record.version})")
                     except Exception as e:
                         raise ValueError(f"No active version found for {component_id} and YAML fallback failed: {e}")
         
@@ -169,7 +169,7 @@ class VersionFactory:
             db_url=self.db_url
         )
         
-        logger.info(f"Agent {component_id} created with {len(proxy.get_supported_parameters())} available Agno parameters")
+        logger.info(f"🤖 Agent {component_id} created with {len(proxy.get_supported_parameters())} available Agno parameters")
         
         return agent
     
@@ -193,9 +193,9 @@ class VersionFactory:
                     if hasattr(tools_module, tool_name):
                         tool_function = getattr(tools_module, tool_name)
                         tools.append(tool_function)
-                        logger.info(f"Loaded tool '{tool_name}' for agent {component_id}")
+                        logger.info(f"🤖 Loaded tool '{tool_name}' for agent {component_id}")
                     else:
-                        logger.warning(f"Tool '{tool_name}' not found in {tools_module_path}")
+                        logger.warning(f"🤖 Tool '{tool_name}' not found in {tools_module_path}")
             else:
                 # Fallback: load all tools from module's __all__ if no specific tools configured
                 if hasattr(tools_module, '__all__'):
@@ -203,13 +203,13 @@ class VersionFactory:
                         if hasattr(tools_module, tool_name):
                             tool_function = getattr(tools_module, tool_name)
                             tools.append(tool_function)
-                            logger.info(f"Auto-loaded tool '{tool_name}' for agent {component_id}")
+                            logger.info(f"🤖 Auto-loaded tool '{tool_name}' for agent {component_id}")
                             
         except ImportError:
             # No tools.py file - that's okay, just use default tools
-            logger.debug(f"No custom tools found for agent {component_id}")
+            logger.debug(f"🤖 No custom tools found for agent {component_id}")
         except Exception as e:
-            logger.error(f"Error loading tools for agent {component_id}: {e}")
+            logger.error(f"🤖 Error loading tools for agent {component_id}: {e}")
         
         return tools
     
@@ -240,7 +240,7 @@ class VersionFactory:
             **kwargs
         )
         
-        logger.info(f"Team {component_id} created with {len(proxy.get_supported_parameters())} available Agno Team parameters")
+        logger.info(f"🤖 Team {component_id} created with {len(proxy.get_supported_parameters())} available Agno Team parameters")
         
         return team
     
@@ -271,7 +271,7 @@ class VersionFactory:
             **kwargs
         )
         
-        logger.info(f"Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters")
+        logger.info(f"🤖 Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters")
         
         return workflow
     
@@ -330,7 +330,7 @@ class VersionFactory:
                     )
                     
             except Exception as e:
-                print(f"⚠️ Error reading {config_file}: {e}")
+                logger.warning(f"🔧 Error reading {config_file}: {e}")
                 continue
         
         return None

@@ -7,14 +7,12 @@ shared storage utilities to eliminate code duplication.
 """
 
 import inspect
-import logging
 from typing import Dict, Any, Optional, Set, Callable
 
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from .agno_storage_utils import create_dynamic_storage
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 class AgnoAgentProxy:
@@ -30,7 +28,7 @@ class AgnoAgentProxy:
         """Initialize the proxy by introspecting the current Agno Agent class."""
         self._supported_params = self._discover_agent_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.info(f"AgnoAgentProxy initialized with {len(self._supported_params)} Agno parameters")
+        logger.info(f"🤖 AgnoAgentProxy initialized with {len(self._supported_params)} Agno parameters")
     
     def _discover_agent_parameters(self) -> Set[str]:
         """
@@ -49,11 +47,11 @@ class AgnoAgentProxy:
                 if param_name != 'self'
             }
             
-            logger.debug(f"Discovered {len(params)} Agno Agent parameters: {sorted(params)}")
+            logger.debug(f"🤖 Discovered {len(params)} Agno Agent parameters: {sorted(params)}")
             return params
             
         except Exception as e:
-            logger.error(f"Failed to introspect Agno Agent parameters: {e}")
+            logger.error(f"🤖 Failed to introspect Agno Agent parameters: {e}")
             # Fallback to known parameters if introspection fails
             return self._get_fallback_parameters()
     
@@ -204,7 +202,7 @@ class AgnoAgentProxy:
             if key in self._supported_params and value is not None
         }
         
-        logger.debug(f"Creating agent with {len(filtered_params)} parameters")
+        logger.debug(f"🤖 Creating agent with {len(filtered_params)} parameters")
         
         try:
             # Create the agent with dynamically mapped parameters
@@ -224,8 +222,8 @@ class AgnoAgentProxy:
             return agent
             
         except Exception as e:
-            logger.error(f"Failed to create agent {component_id}: {e}")
-            logger.debug(f"Attempted parameters: {list(filtered_params.keys())}")
+            logger.error(f"🤖 Failed to create agent {component_id}: {e}")
+            logger.debug(f"🤖 Attempted parameters: {list(filtered_params.keys())}")
             raise
     
     def _process_config(self, config: Dict[str, Any], component_id: str, db_url: Optional[str]) -> Dict[str, Any]:
@@ -259,7 +257,7 @@ class AgnoAgentProxy:
                 processed[key] = value
             else:
                 # Log unknown parameters for debugging
-                logger.debug(f"Unknown parameter '{key}' in config for {component_id}")
+                logger.debug(f"🤖 Unknown parameter '{key}' in config for {component_id}")
         
         return processed
     
@@ -347,11 +345,11 @@ class AgnoAgentProxy:
                 try:
                     knowledge_base.load(recreate=False, skip_existing=True)
                 except Exception as e:
-                    logger.warning(f"Failed to load knowledge base: {e}")
+                    logger.warning(f"🤖 Failed to load knowledge base: {e}")
                 
                 return knowledge_base
         except Exception as e:
-            logger.warning(f"Failed to create knowledge base for {component_id}: {e}")
+            logger.warning(f"🤖 Failed to create knowledge base for {component_id}: {e}")
         
         return None
     
@@ -421,7 +419,7 @@ class AgnoAgentProxy:
                 
             except Exception as e:
                 # Don't let metrics collection failures break agent execution
-                logger.warning(f"Metrics collection failed for agent {component_id}: {e}")
+                logger.warning(f"🤖 Metrics collection failed for agent {component_id}: {e}")
                 raise e  # Re-raise the original exception
         
         # Replace the run method

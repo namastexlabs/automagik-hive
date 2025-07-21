@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 
 from pydantic import field_validator, Field
@@ -15,9 +16,9 @@ class ApiSettings(BaseSettings):
     title: str = "Automagik Hive Multi-Agent System"
     version: str = "2.0"
 
-    # Application environment derived from the `ENVIRONMENT` environment variable.
+    # Application environment derived from the `HIVE_ENVIRONMENT` environment variable.
     # Valid values include "development", "production"
-    environment: str = "development"
+    environment: str = Field(default_factory=lambda: os.getenv("HIVE_ENVIRONMENT", "development"))
 
     # Set to False to disable docs at /docs and /redoc
     docs_enabled: bool = True
@@ -40,29 +41,28 @@ class ApiSettings(BaseSettings):
 
     @field_validator("cors_origin_list", mode="before")
     def set_cors_origin_list(cls, cors_origin_list, info: FieldValidationInfo):
-        valid_cors = cors_origin_list or []
-
-        environment = info.data.get("environment")
+        """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
+        environment = info.data.get("environment", os.getenv("HIVE_ENVIRONMENT", "development"))
         
         if environment == "development":
-            # Development: Allow all origins for easy testing
-            valid_cors.extend([
-                "http://localhost:3000",
-                "http://localhost:7777", 
-                "http://localhost:8000",
-                "*"
-            ])
-        elif environment == "production":
-            # Production: Add your domain(s) here
-            valid_cors.extend([
-                "https://your-domain.com",
-                "https://app.your-domain.com"
-            ])
-
-        # Remove None values and duplicates
-        valid_cors = list(set([cors for cors in valid_cors if cors is not None]))
-
-        return valid_cors
+            # Development: Allow all origins for convenience
+            return ["*"]
+        else:
+            # Production: Use environment variable
+            origins_str = os.getenv("HIVE_CORS_ORIGINS", "")
+            if not origins_str:
+                raise ValueError(
+                    "HIVE_CORS_ORIGINS must be set in production environment. "
+                    "Add comma-separated domain list to environment variables."
+                )
+            
+            # Parse and clean origins
+            origins = [origin.strip() for origin in origins_str.split(",") if origin.strip()]
+            
+            if not origins:
+                raise ValueError("HIVE_CORS_ORIGINS contains no valid origins")
+                
+            return origins
 
 
 # Create ApiSettings object

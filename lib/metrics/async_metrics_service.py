@@ -8,13 +8,14 @@ Uses background queue processing with psycopg connection pooling.
 import asyncio
 import json
 import logging
-import os
 import time
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 from queue import Queue
 from threading import Thread, Event
+
+from lib.services.metrics_service import MetricsService
 
 logger = logging.getLogger(__name__)
 
@@ -43,20 +44,17 @@ class AsyncMetricsService:
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        self.database_url = self._get_database_url()
-        self.table_name = self.config.get("table_name", "agent_metrics")
         self.batch_size = self.config.get("batch_size", 50)
-        self.flush_interval = self.config.get("flush_interval", 5.0)  # seconds
+        self.flush_interval = self.config.get("flush_interval", 5.0)
         
-        # Queue and processing
         self.metrics_queue = Queue(maxsize=1000)
         self.processing_thread = None
         self.stop_event = Event()
         
-        # Connection pool
-        self.connection_pool = None
+        self.async_loop = None
+        self.async_loop_thread = None
+        self.metrics_service = None
         
-        # Performance tracking
         self.stats = {
             "total_collected": 0,
             "total_stored": 0,
@@ -65,72 +63,56 @@ class AsyncMetricsService:
             "last_flush": None
         }
         
-        # Initialize
         self._initialize()
     
-    def _get_database_url(self) -> str:
-        """Get database URL from config or environment."""
-        return (self.config.get("database_url") or 
-                os.getenv("HIVE_DATABASE_URL", 
-                         "postgresql+psycopg://ai:ai@localhost:5532/ai"))
-    
     def _initialize(self):
-        """Initialize connection pool and create table."""
+        """Initialize metrics service and start background processing."""
         try:
-            # Import psycopg when needed
-            import psycopg
-            from psycopg_pool import ConnectionPool
-            
-            # Create connection pool
-            self.connection_pool = ConnectionPool(
-                conninfo=self.database_url,
-                min_size=1,
-                max_size=5
-            )
-            
-            # Create table if needed
-            self._create_table_if_not_exists()
-            
-            # Start background processing
+            self._start_async_loop_thread()
             self._start_background_processing()
+            logger.info("AsyncMetricsService initialized successfully with dedicated async loop")
             
-            logger.info("AsyncMetricsService initialized successfully")
-            
-        except ImportError:
-            logger.warning("psycopg not available - AsyncMetricsService will be disabled")
-            self.connection_pool = None
         except Exception as e:
             logger.error(f"Failed to initialize AsyncMetricsService: {e}")
             raise
     
-    def _create_table_if_not_exists(self):
-        """Create metrics table if it doesn't exist."""
-        try:
-            with self.connection_pool.connection() as conn:
-                create_table_sql = f"""
-                CREATE TABLE IF NOT EXISTS {self.table_name} (
-                    id SERIAL PRIMARY KEY,
-                    timestamp TIMESTAMPTZ NOT NULL,
-                    agent_name VARCHAR(255) NOT NULL,
-                    execution_type VARCHAR(50) NOT NULL,
-                    metrics JSONB NOT NULL,
-                    version VARCHAR(10) NOT NULL DEFAULT '1.0',
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-                
-                CREATE INDEX IF NOT EXISTS idx_{self.table_name}_timestamp 
-                ON {self.table_name}(timestamp);
-                
-                CREATE INDEX IF NOT EXISTS idx_{self.table_name}_agent_name 
-                ON {self.table_name}(agent_name);
-                """
-                
-                with conn.cursor() as cursor:
-                    cursor.execute(create_table_sql)
-                conn.commit()
-                
-        except Exception as e:
-            logger.error(f"Failed to create metrics table: {e}")
+    def _start_async_loop_thread(self):
+        """Start dedicated asyncio loop thread for safe async operations."""
+        if self.async_loop_thread and self.async_loop_thread.is_alive():
+            return
+            
+        def run_async_loop():
+            self.async_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.async_loop)
+            
+            async def init_metrics_service():
+                from lib.services.metrics_service import MetricsService
+                self.metrics_service = MetricsService()
+            
+            self.async_loop.run_until_complete(init_metrics_service())
+            try:
+                self.async_loop.run_forever()
+            except Exception as e:
+                logger.error(f"Async loop thread error: {e}")
+            finally:
+                self.async_loop.close()
+        
+        self.async_loop_thread = Thread(
+            target=run_async_loop,
+            daemon=True,
+            name="MetricsAsyncLoop"
+        )
+        self.async_loop_thread.start()
+        
+        timeout = 5.0
+        start_time = time.time()
+        while self.async_loop is None and (time.time() - start_time) < timeout:
+            time.sleep(0.01)
+        
+        if self.async_loop is None:
+            raise RuntimeError("Failed to start async loop thread")
+        
+        logger.info("Dedicated async loop thread started successfully")
     
     def _start_background_processing(self):
         """Start background thread for processing metrics queue."""
@@ -153,15 +135,14 @@ class AsyncMetricsService:
         
         while not self.stop_event.is_set():
             try:
-                # Collect metrics into batch
-                timeout = 0.1  # 100ms timeout for responsiveness
+                timeout = 0.1
                 
                 try:
                     entry = self.metrics_queue.get(timeout=timeout)
                     batch.append(entry)
                     self.metrics_queue.task_done()
                 except:
-                    pass  # Timeout is expected
+                    pass
                 
                 current_time = time.time()
                 should_flush = (
@@ -187,43 +168,49 @@ class AsyncMetricsService:
             logger.info(f"Flushed {len(batch)} metrics on shutdown")
     
     def _store_batch(self, batch: List[MetricsEntry]):
-        """Store a batch of metrics entries to database."""
-        if not batch:
+        """Store a batch of metrics entries using safe async bridge pattern."""
+        if not batch or not self.async_loop or not self.metrics_service:
             return
             
         try:
-            with self.connection_pool.connection() as conn:
-                # Prepare batch insert using psycopg3 syntax
-                insert_sql = f"""
-                INSERT INTO {self.table_name} 
-                (timestamp, agent_name, execution_type, metrics, version)
-                VALUES (%s, %s, %s, %s, %s)
-                """
-                
-                # Convert batch to values tuple
-                values = []
-                for entry in batch:
-                    values.append((
-                        entry.timestamp,
-                        entry.agent_name,
-                        entry.execution_type,
-                        json.dumps(entry.metrics),
-                        entry.version
-                    ))
-                
-                # Execute batch insert using executemany
-                with conn.cursor() as cursor:
-                    cursor.executemany(insert_sql, values)
-                conn.commit()
-                
-                # Update stats
-                self.stats["total_stored"] += len(batch)
-                
-                logger.debug(f"Stored batch of {len(batch)} metrics entries")
+            stored_count = 0
+            
+            for entry in batch:
+                try:
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.metrics_service.store_metrics(
+                            timestamp=entry.timestamp,
+                            agent_name=entry.agent_name,
+                            execution_type=entry.execution_type,
+                            metrics=entry.metrics,
+                            version=entry.version
+                        ),
+                        self.async_loop
+                    )
+                    
+                    def handle_result(fut):
+                        try:
+                            result = fut.result()
+                            logger.debug(f"Stored metric entry with ID: {result}")
+                        except Exception as e:
+                            self.stats["storage_errors"] += 1
+                            logger.warning(f"Async storage failed: {e}")
+                    
+                    future.add_done_callback(handle_result)
+                    future.result(timeout=5.0)
+                    stored_count += 1
+                    
+                except Exception as entry_error:
+                    self.stats["storage_errors"] += 1
+                    logger.warning(f"Failed to store metric entry: {entry_error}")
+                    continue
+            
+            self.stats["total_stored"] += stored_count
+            logger.debug(f"Stored batch of {stored_count}/{len(batch)} metrics entries via async bridge")
                 
         except Exception as e:
             self.stats["storage_errors"] += 1
-            logger.error(f"Failed to store metrics batch: {e}")
+            logger.error(f"Failed to store metrics batch via async bridge: {e}")
     
     async def collect_metrics(self, 
                             agent_name: str,
@@ -242,8 +229,8 @@ class AsyncMetricsService:
         Returns:
             bool: True if queued successfully, False if queue full
         """
-        # Skip if service not properly initialized
-        if not self.connection_pool:
+        # Skip if metrics service not available (should not happen)
+        if not self.metrics_service:
             return False
             
         try:
@@ -263,7 +250,6 @@ class AsyncMetricsService:
             return True
             
         except:
-            # Queue full - drop metrics to maintain performance
             self.stats["queue_overflows"] += 1
             logger.warning("Metrics queue full, dropping metrics entry")
             return False
@@ -344,7 +330,9 @@ class AsyncMetricsService:
         return {
             **self.stats,
             "queue_size": self.metrics_queue.qsize(),
-            "connection_pool_size": self.connection_pool.get_stats()["pool_size"] if self.connection_pool else 0,
+            "metrics_service_available": self.metrics_service is not None,
+            "async_loop_running": self.async_loop is not None and not self.async_loop.is_closed(),
+            "async_thread_alive": self.async_loop_thread.is_alive() if self.async_loop_thread else False,
             "is_processing": self.processing_thread.is_alive() if self.processing_thread else False
         }
     
@@ -375,14 +363,27 @@ class AsyncMetricsService:
     
     def close(self):
         """Gracefully shutdown the metrics service."""
+        logger.info("Shutting down AsyncMetricsService...")
+        
         if self.stop_event:
             self.stop_event.set()
         
         if self.processing_thread and self.processing_thread.is_alive():
             self.processing_thread.join(timeout=5.0)
-        
-        if self.connection_pool:
-            self.connection_pool.close()
+        if self.async_loop and self.async_loop_thread:
+            try:
+                self.async_loop.call_soon_threadsafe(self.async_loop.stop)
+                
+                if self.async_loop_thread.is_alive():
+                    self.async_loop_thread.join(timeout=5.0)
+                    
+                if self.async_loop_thread.is_alive():
+                    logger.warning("Async loop thread did not shut down within timeout")
+                else:
+                    logger.info("Async loop thread shut down successfully")
+                    
+            except Exception as e:
+                logger.error(f"Error shutting down async loop: {e}")
         
         logger.info("AsyncMetricsService closed")
 

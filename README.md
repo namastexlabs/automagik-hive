@@ -367,7 +367,7 @@ automagik-hive/
 # Dynamic configuration via .env
 HIVE_ENVIRONMENT=development
 HIVE_API_PORT=9888          # Overrides default 7777
-HIVE_DEMO_MODE=true         # Rich interface enabled
+HIVE_LOG_LEVEL=DEBUG        # Rich interface in development
 
 # Required APIs
 ANTHROPIC_API_KEY=your-key

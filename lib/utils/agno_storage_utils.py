@@ -62,7 +62,7 @@ def get_storage_class(storage_type: str):
     try:
         module = importlib.import_module(module_path)
         storage_class = getattr(module, class_name)
-        logger.debug(f"Successfully imported {storage_type} storage class")
+        logger.debug(f"🔧 Successfully imported {storage_type} storage class")
         return storage_class
     except (ImportError, AttributeError) as e:
         raise ImportError(f"Failed to import {storage_type} storage class: {e}")
@@ -129,20 +129,20 @@ def create_dynamic_storage(
             storage_params['db_url'] = db_url
     
     logger.debug(
-        f"Creating {storage_type} storage for {component_mode} '{component_id}' "
+        f"🔧 Creating {storage_type} storage for {component_mode} '{component_id}' "
         f"with {len(storage_params)} parameters: {list(storage_params.keys())}"
     )
     
     try:
         # 5. Dynamic instantiation with mapped parameters
         storage_instance = storage_class(**storage_params)
-        logger.info(f"Successfully created {storage_type} storage for {component_id}")
+        logger.info(f"🔧 Successfully created {storage_type} storage for {component_id}")
         return storage_instance
     except Exception as e:
         logger.error(
-            f"Failed to create {storage_type} storage for {component_id}: {e}"
+            f"🔧 Failed to create {storage_type} storage for {component_id}: {e}"
         )
-        logger.debug(f"Attempted parameters: {storage_params}")
+        logger.debug(f"🔧 Attempted parameters: {storage_params}")
         raise
 
 

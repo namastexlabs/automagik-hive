@@ -4,6 +4,7 @@ from typing import Dict, Callable, Optional, Any
 from agno.workflow import Workflow
 from pathlib import Path
 import importlib.util
+from lib.logging import logger
 
 
 def _discover_workflows() -> Dict[str, Callable[..., Workflow]]:
@@ -40,7 +41,7 @@ def _discover_workflows() -> Dict[str, Callable[..., Workflow]]:
                     registry[workflow_name] = factory_func
                     
             except Exception as e:
-                print(f"⚠️ Failed to load workflow {workflow_name}: {e}")
+                logger.warning("Failed to load workflow", workflow_name=workflow_name, error=str(e))
                 continue
     
     return registry

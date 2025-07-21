@@ -1,0 +1,19 @@
+# Memory Factory Configuration
+# Centralized model configuration for memory system
+
+memory:
+  # Default model for memory operations
+  model:
+    id: "gpt-4.1-mini"
+    provider: "openai"
+    temperature: 0.5
+    max_tokens: 1000
+
+  # Database configuration
+  database:
+    schema: "agno"  # Use agno schema for Agno framework tables
+    
+  # Memory settings - production-grade fail-fast behavior
+  settings:
+    fail_fast_on_errors: true
+    detailed_error_logging: true

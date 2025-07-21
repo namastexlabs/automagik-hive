@@ -7,15 +7,13 @@ while leveraging shared storage utilities to eliminate code duplication.
 """
 
 import inspect
-import logging
 from typing import Dict, Any, Optional, Set, Callable, List
 
 from agno.team import Team
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 from .agno_storage_utils import create_dynamic_storage
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 class AgnoTeamProxy:
@@ -31,7 +29,7 @@ class AgnoTeamProxy:
         """Initialize the proxy by introspecting the current Agno Team class."""
         self._supported_params = self._discover_team_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.info(f"AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters")
+        logger.info(f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters")
     
     def _discover_team_parameters(self) -> Set[str]:
         """
@@ -50,11 +48,11 @@ class AgnoTeamProxy:
                 if param_name != 'self'
             }
             
-            logger.debug(f"Discovered {len(params)} Agno Team parameters: {sorted(params)}")
+            logger.debug(f"🤖 Discovered {len(params)} Agno Team parameters: {sorted(params)}")
             return params
             
         except Exception as e:
-            logger.error(f"Failed to introspect Agno Team parameters: {e}")
+            logger.error(f"🤖 Failed to introspect Agno Team parameters: {e}")
             # Fallback to known parameters if introspection fails
             return self._get_fallback_parameters()
     
@@ -192,7 +190,7 @@ class AgnoTeamProxy:
             if key in self._supported_params and value is not None
         }
         
-        logger.debug(f"Creating team with {len(filtered_params)} parameters")
+        logger.debug(f"🤖 Creating team with {len(filtered_params)} parameters")
         
         try:
             # Create the team with dynamically mapped parameters
@@ -212,8 +210,8 @@ class AgnoTeamProxy:
             return team
             
         except Exception as e:
-            logger.error(f"Failed to create team {component_id}: {e}")
-            logger.debug(f"Attempted parameters: {list(filtered_params.keys())}")
+            logger.error(f"🤖 Failed to create team {component_id}: {e}")
+            logger.debug(f"🤖 Attempted parameters: {list(filtered_params.keys())}")
             raise
     
     def _process_config(self, config: Dict[str, Any], component_id: str, db_url: Optional[str], **kwargs) -> Dict[str, Any]:
@@ -234,7 +232,7 @@ class AgnoTeamProxy:
                 processed[key] = value
             else:
                 # Log unknown parameters for debugging
-                logger.debug(f"Unknown Team parameter '{key}' in config for {component_id}")
+                logger.debug(f"🤖 Unknown Team parameter '{key}' in config for {component_id}")
         
         return processed
     
@@ -305,9 +303,9 @@ class AgnoTeamProxy:
                     user_id=kwargs.get("user_id")
                 )
                 members.append(member_agent)
-                logger.info(f"Loaded team member: {member_name}")
+                logger.info(f"🤖 Loaded team member: {member_name}")
             except Exception as e:
-                logger.warning(f"Could not load team member {member_name}: {e}")
+                logger.warning(f"🤖 Could not load team member {member_name}: {e}")
         
         return members
     
@@ -374,7 +372,7 @@ class AgnoTeamProxy:
                 
             except Exception as e:
                 # Don't let metrics collection failures break team execution
-                logger.warning(f"Metrics collection failed for team {component_id}: {e}")
+                logger.warning(f"🤖 Metrics collection failed for team {component_id}: {e}")
                 raise e  # Re-raise the original exception
         
         # Replace the run method

@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .exceptions import MCPException, MCPConnectionError
+from lib.logging import logger
 
 
 @dataclass
@@ -111,7 +112,7 @@ class MCPCatalog:
         
         for server_name, server_config in mcp_servers.items():
             if not isinstance(server_config, dict):
-                print(f"Warning: Invalid server config for '{server_name}', skipping")
+                logger.warning("Invalid server config, skipping", server_name=server_name)
                 continue
             
             try:
@@ -138,13 +139,13 @@ class MCPCatalog:
                     )
                 
                 else:
-                    print(f"Warning: Unknown server type '{server_type}' for '{server_name}', skipping")
+                    logger.warning("Unknown server type, skipping", server_type=server_type, server_name=server_name)
                     continue
                 
                 self.available_servers[server_name] = config
                 
             except Exception as e:
-                print(f"Warning: Error processing server '{server_name}': {e}")
+                logger.warning("Error processing server", server_name=server_name, error=str(e))
                 continue
     
     def get_server_config(self, server_name: str) -> MCPServerConfig:

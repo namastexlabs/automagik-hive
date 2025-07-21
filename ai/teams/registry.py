@@ -4,6 +4,7 @@ from typing import Dict, Callable, Optional, Any
 from agno.team import Team
 from pathlib import Path
 import importlib.util
+from lib.logging import logger
 
 
 def _discover_teams() -> Dict[str, Callable[..., Team]]:
@@ -40,7 +41,7 @@ def _discover_teams() -> Dict[str, Callable[..., Team]]:
                     registry[team_name] = factory_func
                     
             except Exception as e:
-                print(f"⚠️ Failed to load team {team_name}: {e}")
+                logger.warning("Failed to load team", team_name=team_name, error=str(e))
                 continue
     
     return registry

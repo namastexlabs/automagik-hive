@@ -6,6 +6,7 @@ from api.settings import api_settings
 from api.routes.v1_router import v1_router
 from api.routes.health import health_check_router
 from lib.auth.dependencies import require_api_key, get_auth_service
+from lib.logging import logger
 
 
 @asynccontextmanager
@@ -13,7 +14,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup - initialize authentication
     auth_service = get_auth_service()
-    print(f"✅ Authentication initialized (enabled: {auth_service.is_auth_enabled()})")
+    logger.info("Authentication initialized", enabled=auth_service.is_auth_enabled())
     
     yield
     

@@ -49,6 +49,7 @@ dependencies = [
     "requests>=2.32.4",
     # MCP Protocol
     "mcp>=1.10.1",
+    "loguru>=0.7.3",
 ]
 
 [project.optional-dependencies]

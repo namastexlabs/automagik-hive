@@ -32,8 +32,7 @@ class ServerConfig:
         
         # Environment settings
         self.environment = os.getenv("HIVE_ENVIRONMENT", "development")
-        self.debug_mode = os.getenv("HIVE_DEBUG_MODE", "false").lower() == "true"
-        self.demo_mode = os.getenv("HIVE_DEMO_MODE", "false").lower() == "true"
+        self.log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
         
         # Validation
         self._validate_config()
@@ -48,6 +47,9 @@ class ServerConfig:
         
         if self.environment not in ["development", "staging", "production"]:
             raise ValueError(f"Invalid environment: {self.environment}. Must be one of: development, staging, production.")
+        
+        if self.log_level not in ["DEBUG", "INFO", "WARN", "ERROR"]:
+            raise ValueError(f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARN, ERROR.")
     
     @classmethod
     def get_instance(cls) -> 'ServerConfig':

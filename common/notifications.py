@@ -69,7 +69,7 @@ class WhatsAppProvider(NotificationProvider):
         # Check if WhatsApp notifications are enabled
         enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
         if not enabled:
-            logger.debug("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
+            logger.debug("📱 WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
             return False
         
         try:
@@ -79,7 +79,7 @@ class WhatsAppProvider(NotificationProvider):
             
             if cooldown_key in self._last_notification:
                 if current_time - self._last_notification[cooldown_key] < self.cooldown_seconds:
-                    logger.debug(f"Notification {cooldown_key} in cooldown, skipping")
+                    logger.debug(f"📱 Notification {cooldown_key} in cooldown, skipping")
                     return False
             
             # Format message with emoji
@@ -93,7 +93,7 @@ class WhatsAppProvider(NotificationProvider):
                 # Get MCP tools directly
                 async with get_mcp_tools("whatsapp_notifications") as tools:
                     # Debug: Check what tools are available
-                    logger.debug(f"Available MCP tools: {list(tools.functions.keys())}")
+                    logger.debug(f"📱 Available MCP tools: {list(tools.functions.keys())}")
                     
                     # Send WhatsApp message using MCP tools (agno pattern)
                     if "send_text_message" in tools.functions:
@@ -109,25 +109,25 @@ class WhatsAppProvider(NotificationProvider):
                         available_tools = list(tools.functions.keys())
                         raise ValueError(f"send_text_message tool not available in MCP server. Available tools: {available_tools}")
                     
-                    logger.info(f"✅ Sent WhatsApp notification: {notification.title}")
+                    logger.info(f"📱 Sent WhatsApp notification: {notification.title}")
                     logger.info(f"📱 Message delivered to group: {self.group_id}")
-                    logger.debug(f"WhatsApp result: {result}")
+                    logger.debug(f"📱 WhatsApp result: {result}")
                     
                     self._last_notification[cooldown_key] = current_time
                     return True
                         
             except Exception as e:
-                logger.error(f"WhatsApp MCP failed: {e}")
-                logger.debug(f"WhatsApp error details: {type(e).__name__}: {e}")
+                logger.error(f"📱 WhatsApp MCP failed: {e}")
+                logger.debug(f"📱 WhatsApp error details: {type(e).__name__}: {e}")
                 # Fallback to logging
-                logger.info(f"[WhatsApp] {formatted_message}")
-                logger.info(f"[WhatsApp] Would send to group: {self.group_id}")
+                logger.info(f"📱 [WhatsApp] {formatted_message}")
+                logger.info(f"📱 [WhatsApp] Would send to group: {self.group_id}")
                 # Still return True so it doesn't fallback to log provider
                 self._last_notification[cooldown_key] = current_time
                 return True
             
         except Exception as e:
-            logger.error(f"Failed to send WhatsApp notification: {e}")
+            logger.error(f"📱 Failed to send WhatsApp notification: {e}")
             return False
     
     def is_available(self) -> bool:
@@ -171,7 +171,7 @@ class LogProvider(NotificationProvider):
             return True
             
         except Exception as e:
-            logger.error(f"Failed to send log notification: {e}")
+            logger.error(f"📱 Failed to send log notification: {e}")
             return False
     
     def is_available(self) -> bool:
@@ -197,7 +197,7 @@ class NotificationService:
     def register_provider(self, name: str, provider: NotificationProvider):
         """Register a notification provider"""
         self.providers[name] = provider
-        logger.info(f"Registered notification provider: {name}")
+        logger.info(f"📱 Registered notification provider: {name}")
     
     async def send(self, notification: NotificationMessage, provider_name: str = None) -> bool:
         """Send notification using specified or default provider"""
@@ -206,11 +206,11 @@ class NotificationService:
         
         provider = self.providers.get(provider_name)
         if not provider:
-            logger.error(f"Unknown notification provider: {provider_name}")
+            logger.error(f"📱 Unknown notification provider: {provider_name}")
             return False
         
         if not provider.is_available():
-            logger.warning(f"Provider {provider_name} not available, falling back to log")
+            logger.warning(f"📱 Provider {provider_name} not available, falling back to log")
             provider = self.providers.get("log")
         
         return await provider.send(notification)

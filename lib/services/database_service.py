@@ -10,7 +10,7 @@ import asyncio
 from typing import Optional, Dict, Any, List
 from contextlib import asynccontextmanager
 import psycopg
-from psycopg.pool import AsyncConnectionPool
+from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import dict_row
 
 

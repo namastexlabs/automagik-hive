@@ -13,6 +13,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from lib.versioning import AgnoVersionService
+from lib.logging import logger
 
 
 class AgnoVersionSyncService:
@@ -48,7 +49,7 @@ class AgnoVersionSyncService:
     
     def sync_on_startup(self) -> Dict[str, Any]:
         """Main entry point - sync all components on startup"""
-        print("🔄 Starting Agno-based component version sync...")
+        logger.info("Starting Agno-based component version sync")
         
         total_synced = 0
         
@@ -59,12 +60,12 @@ class AgnoVersionSyncService:
                 total_synced += len(results)
                 
                 if results:
-                    print(f"✅ Synced {len(results)} {component_type}(s)")
+                    logger.info("Synchronized components", component_type=component_type, count=len(results))
             except Exception as e:
-                print(f"❌ Error syncing {component_type}s: {e}")
+                logger.error("Error syncing components", component_type=component_type, error=str(e))
                 self.sync_results[component_type + 's'] = {"error": str(e)}
         
-        print(f"🎉 Agno version sync completed: {total_synced} components processed")
+        logger.info("Agno version sync completed", total_components=total_synced)
         return self.sync_results
     
     def sync_component_type(self, component_type: str) -> List[Dict[str, Any]]:
@@ -81,7 +82,7 @@ class AgnoVersionSyncService:
                 if result:
                     results.append(result)
             except Exception as e:
-                print(f"⚠️ Error syncing {config_file}: {e}")
+                logger.warning("Error syncing config file", config_file=config_file, error=str(e))
                 results.append({
                     "component_id": "unknown",
                     "file": config_file,
@@ -104,7 +105,7 @@ class AgnoVersionSyncService:
             # Extract component information
             component_section = yaml_config.get(component_type, {})
             if not component_section:
-                print(f"⚠️ No {component_type} section in {config_file}")
+                logger.warning("No component section in config file", component_type=component_type, config_file=config_file)
                 return None
             
             # Get component ID
@@ -116,12 +117,12 @@ class AgnoVersionSyncService:
             )
             
             if not component_id:
-                print(f"⚠️ No component ID found in {config_file}")
+                logger.warning("No component ID found in config file", config_file=config_file)
                 return None
             
             yaml_version = component_section.get('version')
             if not yaml_version:
-                print(f"⚠️ No version found in {config_file} for {component_id}")
+                logger.warning("No version found in config file", config_file=config_file, component_id=component_id)
                 return None
             
             # Get current active version from Agno storage
@@ -138,12 +139,12 @@ class AgnoVersionSyncService:
                     yaml_config=yaml_config,
                     yaml_file_path=config_file
                 )
-                print(f"📝 Created {component_type} {component_id} v{yaml_version} in Agno storage")
+                logger.info("Created component in Agno storage", component_type=component_type, component_id=component_id, version=yaml_version)
             
             elif yaml_version == "dev":
                 # Dev versions skip sync entirely
                 action_taken = "dev_skip"
-                print(f"🔧 Skipped sync for {component_type} {component_id} (dev version)")
+                logger.debug("Skipped sync for dev version", component_type=component_type, component_id=component_id)
             
             elif isinstance(yaml_version, int) and isinstance(agno_version.version, int) and yaml_version > agno_version.version:
                 # YAML is newer - update Agno storage
@@ -153,18 +154,18 @@ class AgnoVersionSyncService:
                     yaml_config=yaml_config,
                     yaml_file_path=config_file
                 )
-                print(f"⬆️ Updated {component_type} {component_id} Agno: v{agno_version.version} → v{yaml_version}")
+                logger.info("Updated Agno version from YAML", component_type=component_type, component_id=component_id, old_version=agno_version.version, new_version=yaml_version)
             
             elif isinstance(yaml_version, int) and isinstance(agno_version.version, int) and agno_version.version > yaml_version:
                 # Agno is newer - update YAML
                 self.update_yaml_from_agno(config_file, component_id, component_type)
                 action_taken = "yaml_updated"
-                print(f"⬇️ Updated {component_type} {component_id} YAML: v{yaml_version} → v{agno_version.version}")
+                logger.info("Updated YAML version from Agno", component_type=component_type, component_id=component_id, old_version=yaml_version, new_version=agno_version.version)
             
             elif yaml_version == agno_version.version:
                 # Same version - check config consistency
                 if yaml_config != agno_version.config:
-                    print(f"⚠️ {component_type} {component_id} v{yaml_version}: YAML differs from Agno, Agno wins")
+                    logger.warning("Version conflict resolved - Agno wins", component_type=component_type, component_id=component_id, yaml_version=yaml_version, agno_version=agno_version.version)
                     self.update_yaml_from_agno(config_file, component_id, component_type)
                     action_taken = "yaml_corrected"
                 else:
@@ -181,7 +182,7 @@ class AgnoVersionSyncService:
             }
             
         except Exception as e:
-            print(f"❌ Error processing {config_file}: {e}")
+            logger.error("Error processing config file", config_file=config_file, error=str(e))
             return {
                 "component_id": "unknown",
                 "file": config_file,
@@ -194,7 +195,7 @@ class AgnoVersionSyncService:
         # Get active version from Agno storage
         agno_version = self.version_service.get_active_version(component_id)
         if not agno_version:
-            print(f"⚠️ No active Agno version found for {component_id}")
+            logger.warning("No active Agno version found", component_id=component_id)
             return
         
         # Create backup of current YAML
@@ -203,9 +204,9 @@ class AgnoVersionSyncService:
         
         try:
             shutil.copy2(yaml_file, backup_file)
-            print(f"💾 Created backup: {backup_file}")
+            logger.info("Created backup file", backup_file=backup_file)
         except Exception as e:
-            print(f"⚠️ Could not create backup for {yaml_file}: {e}")
+            logger.warning("Could not create backup", yaml_file=yaml_file, error=str(e))
         
         try:
             # Write new config from Agno storage
@@ -221,17 +222,17 @@ class AgnoVersionSyncService:
             
             # Verify the update was successful
             self.validate_yaml_update(yaml_file, agno_version.config)
-            print(f"✅ Updated YAML file: {yaml_file}")
+            logger.info("Updated YAML file", yaml_file=yaml_file)
             
         except Exception as e:
-            print(f"❌ Failed to update YAML file {yaml_file}: {e}")
+            logger.error("Failed to update YAML file", yaml_file=yaml_file, error=str(e))
             # Try to restore backup
             if os.path.exists(backup_file):
                 try:
                     shutil.copy2(backup_file, yaml_file)
-                    print(f"🔄 Restored backup for {yaml_file}")
+                    logger.info("Restored backup file", yaml_file=yaml_file)
                 except Exception as restore_error:
-                    print(f"💥 Could not restore backup: {restore_error}")
+                    logger.error("Could not restore backup", error=str(restore_error))
             raise e
     
     def validate_yaml_update(self, yaml_file: str, expected_config: Dict[str, Any]):
@@ -284,7 +285,7 @@ class AgnoVersionSyncService:
                         })
                         
                 except Exception as e:
-                    print(f"⚠️ Error reading {yaml_file}: {e}")
+                    logger.warning("Error reading YAML file", yaml_file=yaml_file, error=str(e))
         
         return discovered
     
@@ -360,9 +361,9 @@ class AgnoVersionSyncService:
                 for backup_file in backup_files[:-max_backups]:
                     try:
                         os.remove(backup_file)
-                        print(f"🗑️ Removed old backup: {backup_file}")
+                        logger.debug("Removed old backup", backup_file=backup_file)
                     except Exception as e:
-                        print(f"⚠️ Could not remove backup {backup_file}: {e}")
+                        logger.warning("Could not remove backup", backup_file=backup_file, error=str(e))
 
 
 # Convenience function for startup integration

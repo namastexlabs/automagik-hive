@@ -7,9 +7,7 @@ before they reach the Agno Playground endpoints.
 
 from fastapi import Form, HTTPException, Request, status
 from typing import Optional
-import logging
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 async def validate_message_dependency(message: str = Form(...)) -> str:
@@ -27,7 +25,7 @@ async def validate_message_dependency(message: str = Form(...)) -> str:
     """
     # Check for empty or whitespace-only messages
     if not message or not message.strip():
-        logger.warning("Empty message detected in Agno Playground endpoint")
+        logger.warning("🌐 Empty message detected in Agno Playground endpoint")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -42,7 +40,7 @@ async def validate_message_dependency(message: str = Form(...)) -> str:
     
     # Check for overly long messages (prevent abuse)
     if len(message) > 10000:  # 10KB limit
-        logger.warning(f"Message too long in Agno Playground endpoint: {len(message)} characters")
+        logger.warning(f"🌐 Message too long in Agno Playground endpoint: {len(message)} characters")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -115,7 +113,7 @@ async def validate_runs_request(request: Request) -> None:
         
         # Validate message content
         if not message or not message.strip():
-            logger.warning(f"Empty message detected in {request.url.path}")
+            logger.warning(f"🌐 Empty message detected in {request.url.path}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
@@ -130,7 +128,7 @@ async def validate_runs_request(request: Request) -> None:
         
         # Check for overly long messages
         if len(message) > 10000:
-            logger.warning(f"Message too long in {request.url.path}: {len(message)} characters")
+            logger.warning(f"🌐 Message too long in {request.url.path}: {len(message)} characters")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
@@ -147,6 +145,6 @@ async def validate_runs_request(request: Request) -> None:
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        logger.error(f"Error during request validation: {e}")
+        logger.error(f"🌐 Error during request validation: {e}")
         # Don't fail the request for validation errors, let the endpoint handle it
         pass
