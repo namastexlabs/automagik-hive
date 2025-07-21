@@ -193,15 +193,14 @@ class ConfigInheritanceManager:
         original_configs: Dict[str, Dict[str, Any]],
         enhanced_configs: Dict[str, Dict[str, Any]]
     ) -> str:
-        """Generate a report showing inheritance changes."""
-        report = ["🔄 AGNO Configuration Inheritance Report", "="*50]
-        
+        """Generate a concise report showing inheritance changes."""
         team_defaults = self._extract_team_defaults(team_config)
         total_inherited = 0
+        agents_with_inheritance = []
         
         for agent_id in original_configs.keys():
             agent_inherited = 0
-            report.append(f"\n📋 Agent: {agent_id}")
+            inherited_params = []
             
             for category, defaults in team_defaults.items():
                 for param, value in defaults.items():
@@ -210,23 +209,18 @@ class ConfigInheritanceManager:
                         param in original_configs[agent_id][category]
                     )
                     if not original_has:
-                        report.append(f"  ✅ Inherited {category}.{param} = {value}")
+                        inherited_params.append(f"{category}.{param}")
                         agent_inherited += 1
                         total_inherited += 1
-                    else:
-                        report.append(f"  🔧 Kept override {category}.{param}")
             
-            if agent_inherited == 0:
-                report.append("  ℹ️  No inheritance applied (all parameters explicitly set)")
+            if agent_inherited > 0:
+                agents_with_inheritance.append(f"{agent_id}({agent_inherited})")
         
-        report.extend([
-            f"\n📊 Summary:",
-            f"  • Total parameters inherited: {total_inherited}",
-            f"  • Agents processed: {len(original_configs)}",
-            f"  • Average inheritance per agent: {total_inherited/len(original_configs):.1f}",
-        ])
-        
-        return "\n".join(report)
+        if total_inherited == 0:
+            return f"Configuration inheritance: No parameters inherited (all agents have explicit overrides)"
+        else:
+            agent_summary = ", ".join(agents_with_inheritance) if agents_with_inheritance else "none"
+            return f"Configuration inheritance: {total_inherited} parameters inherited across {len(original_configs)} agents [{agent_summary}]"
 
 
 def load_team_with_inheritance(team_id: str, base_path: str = "ai") -> Dict[str, Any]:
@@ -267,7 +261,7 @@ def load_team_with_inheritance(team_id: str, base_path: str = "ai") -> Dict[str,
     
     # Generate report
     report = manager.generate_inheritance_report(team_config, agent_configs, enhanced_configs)
-    logger.info(f"🔧 {report}")
+    logger.info(f"🔧 Team {team_id}: {report}")
     
     return {
         'team_config': team_config,
