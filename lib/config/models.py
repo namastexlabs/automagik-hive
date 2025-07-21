@@ -22,7 +22,7 @@ from functools import lru_cache
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from lib.logging import logger
-from lib.config.provider_registry import provider_registry
+from .provider_registry import get_provider_registry
 
 # Load environment variables
 load_dotenv()
@@ -73,13 +73,15 @@ class ModelResolver:
         Raises:
             ModelResolutionError: If provider cannot be detected
         """
-        try:
-            provider = provider_registry.detect_provider(model_id)
-            logger.debug("🔧 Provider detected via registry", model_id=model_id, provider=provider)
-            return provider
-        except Exception as e:
-            logger.error("🔧 Provider detection failed", model_id=model_id, error=str(e))
-            raise ModelResolutionError(f"Cannot detect provider for model ID '{model_id}': {e}")
+        provider = get_provider_registry().detect_provider(model_id)
+        if provider is None:
+            available_providers = sorted(get_provider_registry().get_available_providers())
+            logger.error("🔧 Provider detection failed", model_id=model_id, 
+                        available_providers=available_providers)
+            raise ModelResolutionError(f"Cannot detect provider for model ID '{model_id}'. Available providers: {available_providers}")
+        
+        logger.debug("🔧 Provider detected via registry", model_id=model_id, provider=provider)
+        return provider
     
     @lru_cache(maxsize=64)
     def _discover_model_class(self, provider: str, model_id: str):
@@ -96,15 +98,17 @@ class ModelResolver:
         Raises:
             ModelResolutionError: If model class cannot be imported
         """
-        try:
-            model_class = provider_registry.discover_model_class(provider, model_id)
-            logger.debug("🔧 Model class discovered via registry", 
-                       provider=provider, class_name=model_class.__name__, model_id=model_id)
-            return model_class
-        except Exception as e:
+        model_class = get_provider_registry().resolve_model_class(provider, model_id)
+        if model_class is None:
+            available_classes = get_provider_registry().get_provider_classes(provider)
             logger.error("🔧 Model class discovery failed", 
-                        provider=provider, error=str(e), model_id=model_id)
-            raise ModelResolutionError(f"Failed to discover model class for provider '{provider}': {e}")
+                        provider=provider, model_id=model_id, 
+                        available_classes=available_classes)
+            raise ModelResolutionError(f"Failed to discover model class for provider '{provider}'. Available classes: {available_classes}")
+        
+        logger.debug("🔧 Model class discovered via registry", 
+                   provider=provider, class_name=model_class.__name__, model_id=model_id)
+        return model_class
     
     def resolve_model(self, model_id: Optional[str] = None, **config_overrides) -> Any:
         """
@@ -172,7 +176,7 @@ class ModelResolver:
         """Clear model resolver and provider registry caches."""
         self._detect_provider.cache_clear()
         self._discover_model_class.cache_clear()
-        provider_registry.reload()
+        get_provider_registry().clear_cache()
         logger.debug("🔧 Model resolver cache cleared")
 
 # Global model resolver instance

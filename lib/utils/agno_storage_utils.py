@@ -126,10 +126,7 @@ def create_dynamic_storage(
         elif param_name == 'db_url' and db_url:
             storage_params['db_url'] = db_url
     
-    logger.debug(
-        f"🔧 Creating {storage_type} storage for {component_mode} '{component_id}' "
-        f"with {len(storage_params)} parameters: {list(storage_params.keys())}"
-    )
+    logger.debug(f"🐛 Creating {storage_type} storage for {component_mode} '{component_id}' with {len(storage_params)} parameters: {list(storage_params.keys())}")
     
     try:
         # 5. Dynamic instantiation with mapped parameters
@@ -137,9 +134,7 @@ def create_dynamic_storage(
         logger.info(f"🔧 Successfully created {storage_type} storage for {component_id}")
         return storage_instance
     except Exception as e:
-        logger.error(
-            f"🔧 Failed to create {storage_type} storage for {component_id}: {e}"
-        )
+        logger.error(f"🚨 Failed to create {storage_type} storage for {component_id}: {e}")
         logger.debug(f"🔧 Attempted parameters: {storage_params}")
         raise
 

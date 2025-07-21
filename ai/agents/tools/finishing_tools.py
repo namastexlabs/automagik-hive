@@ -103,7 +103,7 @@ def get_protocol_from_session_state(
         # protocol_data = get_protocol_from_session_state(self.session_state, protocol_id)
         
         # Placeholder implementation
-        logger.info("Protocol retrieval from session state - placeholder implementation")
+        logger.info("🤖 Protocol retrieval from session state - placeholder implementation")
         return "📋 Protocolo disponível na sessão (implementação será finalizada na integração)"
         
     except Exception as e:

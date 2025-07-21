@@ -63,13 +63,13 @@ class WhatsAppNotificationService:
         """Initialize WhatsApp notification service."""
         self._agent = None
         self._mcp_tools = None
-        logger.debug("WhatsApp notification service initialized")
+        logger.debug("📱 WhatsApp notification service initialized")
     
     def _check_notifications_enabled(self) -> bool:
         """Check if WhatsApp notifications are enabled via environment variable."""
         enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
         if not enabled:
-            logger.debug("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
+            logger.debug("📱 WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
             return False
         return True
     

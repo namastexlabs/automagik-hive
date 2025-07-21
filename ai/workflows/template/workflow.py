@@ -83,7 +83,7 @@ def execute_validation_step(step_input: StepInput) -> StepOutput:
     if not input_message:
         raise ValueError("Input message is required for validation")
     
-    logger.info("Executing template validation step...")
+    logger.info("🤖 Executing template validation step...")
     
     validator = create_validation_agent()
     response = validator.run(f"Validate this input for template workflow:\n\n{input_message}")
@@ -100,7 +100,7 @@ def execute_validation_step(step_input: StepInput) -> StepOutput:
         "original_input": input_message
     }
     
-    logger.info(f"Validation completed - Input length: {validation_data['input_length']} characters")
+    logger.info(f"📊 Validation completed - Input length: {validation_data['input_length']} characters")
     
     return StepOutput(content=json.dumps(validation_data))
 
@@ -115,7 +115,7 @@ def execute_processing_step(step_input: StepInput) -> StepOutput:
     validation_data = json.loads(previous_output.content)
     original_input = validation_data["original_input"]
     
-    logger.info("Executing template processing step...")
+    logger.info("🤖 Executing template processing step...")
     
     processor = create_processing_agent()
     
@@ -141,7 +141,7 @@ def execute_processing_step(step_input: StepInput) -> StepOutput:
         "success": True
     }
     
-    logger.info("Processing step completed successfully")
+    logger.info("🤖 Processing step completed successfully")
     
     return StepOutput(content=json.dumps(processing_data))
 
@@ -155,7 +155,7 @@ def execute_completion_step(step_input: StepInput) -> StepOutput:
     
     processing_data = json.loads(previous_output.content)
     
-    logger.info("Executing template completion step...")
+    logger.info("🤖 Executing template completion step...")
     
     finalizer = create_finalizer_agent()
     
@@ -187,7 +187,7 @@ def execute_completion_step(step_input: StepInput) -> StepOutput:
         "success": True
     }
     
-    logger.info("Template workflow completed successfully")
+    logger.info("🤖 Template workflow completed successfully")
     
     return StepOutput(content=json.dumps(completion_data))
 
@@ -223,7 +223,7 @@ def get_template_workflow(**kwargs) -> Workflow:
         **kwargs
     )
     
-    logger.info("Template Workflow initialized successfully")
+    logger.info("🤖 Template Workflow initialized successfully")
     return workflow
 
 

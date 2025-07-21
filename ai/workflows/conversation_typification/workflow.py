@@ -127,7 +127,7 @@ def execute_business_unit_classification(step_input: StepInput) -> StepOutput:
     if not conversation_text:
         raise ValueError("conversation_text is required for business unit classification")
     
-    logger.info("Executing business unit classification...")
+    logger.info("🤖 Executing business unit classification...")
     
     classifier = create_business_unit_classifier()
     response = classifier.run(f"Conversa para classificar:\n\n{conversation_text}")
@@ -138,7 +138,7 @@ def execute_business_unit_classification(step_input: StepInput) -> StepOutput:
     business_unit = response.content.unidade_negocio.value
     confidence = response.content.confidence
     
-    logger.info(f"Business unit classified as: {business_unit} (confidence: {confidence:.3f})")
+    logger.info(f"🤖 Business unit classified as: {business_unit} (confidence: {confidence:.3f})")
     
     result = {
         "business_unit": business_unit,
@@ -159,7 +159,7 @@ def execute_product_classification(step_input: StepInput) -> StepOutput:
     business_unit = previous_data["business_unit"]
     conversation_text = previous_data["conversation_text"]
     
-    logger.info("Executing product classification...")
+    logger.info("🤖 Executing product classification...")
     
     classifier = create_product_classifier(business_unit)
     response = classifier.run(
@@ -173,7 +173,7 @@ def execute_product_classification(step_input: StepInput) -> StepOutput:
     product = response.content.produto
     confidence = response.content.confidence
     
-    logger.info(f"Product classified as: {product} (confidence: {confidence:.3f})")
+    logger.info(f"🤖 Product classified as: {product} (confidence: {confidence:.3f})")
     
     result = {
         "business_unit": business_unit,
@@ -196,7 +196,7 @@ def execute_motive_classification(step_input: StepInput) -> StepOutput:
     product = previous_data["product"]
     conversation_text = previous_data["conversation_text"]
     
-    logger.info("Executing motive classification...")
+    logger.info("🤖 Executing motive classification...")
     
     classifier = create_motive_classifier(business_unit, product)
     response = classifier.run(
@@ -211,7 +211,7 @@ def execute_motive_classification(step_input: StepInput) -> StepOutput:
     motive = response.content.motivo
     confidence = response.content.confidence
     
-    logger.info(f"Motive classified as: {motive} (confidence: {confidence:.3f})")
+    logger.info(f"🤖 Motive classified as: {motive} (confidence: {confidence:.3f})")
     
     result = {
         "business_unit": business_unit,
@@ -236,7 +236,7 @@ def execute_submotive_classification(step_input: StepInput) -> StepOutput:
     motive = previous_data["motive"]
     conversation_text = previous_data["conversation_text"]
     
-    logger.info("Executing submotive classification...")
+    logger.info("🤖 Executing submotive classification...")
     
     classifier = create_submotive_classifier(business_unit, product, motive)
     response = classifier.run(
@@ -252,7 +252,7 @@ def execute_submotive_classification(step_input: StepInput) -> StepOutput:
     submotive = response.content.submotivo
     confidence = response.content.confidence
     
-    logger.info(f"Submotive classified as: {submotive} (confidence: {confidence:.3f})")
+    logger.info(f"🤖 Submotive classified as: {submotive} (confidence: {confidence:.3f})")
     
     result = {
         "business_unit": business_unit,
@@ -280,7 +280,7 @@ def execute_validation_and_final_report(step_input: StepInput) -> StepOutput:
     conversation_text = previous_data.get("conversation_text", "")
     original_confidence = previous_data.get("confidence", 0.0)
     
-    logger.info("Executing validation and final report generation...")
+    logger.info("🤖 Executing validation and final report generation...")
     
     # Use LLM-based validation with retry
     validation_result, final_classification = validate_with_llm_retry(
@@ -296,9 +296,9 @@ def execute_validation_and_final_report(step_input: StepInput) -> StepOutput:
     # Determine confidence based on retry usage
     if final_classification.get("retry_used"):
         final_confidence = max(0.6, original_confidence * 0.8)  # Reduced confidence for retry
-        logger.info(f"LLM correction applied")
-        logger.info(f"Original: {business_unit} → {product} → {motive} → {submotive}")
-        logger.info(f"Corrected: {final_business_unit} → {final_product} → {final_motive} → {final_submotive}")
+        logger.info(f"🤖 LLM correction applied")
+        logger.info(f"🤖 Original: {business_unit} → {product} → {motive} → {submotive}")
+        logger.info(f"🤖 Corrected: {final_business_unit} → {final_product} → {final_motive} → {final_submotive}")
     else:
         final_confidence = original_confidence
         
@@ -316,7 +316,7 @@ def execute_validation_and_final_report(step_input: StepInput) -> StepOutput:
         validation_status=validation_result.valid
     )
     
-    logger.info(f"Final typification completed: {final_typification.hierarchy_path}")
+    logger.info(f"🤖 Final typification completed: {final_typification.hierarchy_path}")
     
     # Prepare comprehensive result
     result = {
@@ -374,5 +374,5 @@ def get_conversation_typification_workflow(**kwargs):
         **kwargs
     )
     
-    logger.info("Conversation Typification Workflow V2 (Fixed) initialized")
+    logger.info("🤖 Conversation Typification Workflow V2 (Fixed) initialized")
     return workflow

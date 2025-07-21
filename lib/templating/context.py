@@ -20,9 +20,7 @@ except ImportError:
     try:
         from agno.utils.log import logger
     except ImportError:
-        import logging
-        logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger(__name__)
+        from lib.logging import logger
 
 
 @dataclass
