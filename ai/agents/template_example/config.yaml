@@ -1,7 +1,7 @@
 agent:
   name: "Template Example - Context-Aware Agent"
   role: "Personalized Assistant"
-  version: "dev"
+  version: 1
   agent_id: "template_example"
   description: >
     Dynamic agent showcasing AGNO native context capabilities.

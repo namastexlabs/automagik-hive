@@ -1,18 +1,19 @@
 workflow:
   workflow_id: human-handoff
+  name: "Human Handoff Workflow"
+  description: "Escalation workflow for human handoff with automatic protocol generation"
+  version: 2
+
+agent:
+  agent_id: human-handoff
   name: Ana - Human Handoff
-  version: dev
-  description: "Human escalation workflow with WhatsApp notifications and protocol generation"
 model:
-  id: claude-sonnet-4-20250514
   provider: anthropic
-  max_tokens: 2000
+  id: claude-sonnet-4-20250514
   temperature: 0.7
+  max_tokens: 2000
 tools:
 - escalate_to_human
-storage:
-  table_name: human_handoff_agent
-  auto_upgrade_schema: true
 instructions: 'Você é o agente de escalação para atendimento humano do PagBank.
 
 
@@ -39,3 +40,14 @@ instructions: 'Você é o agente de escalação para atendimento humano do PagBa
   especializada.
 
   '
+storage:
+  table_name: human_handoff_agent
+  auto_upgrade_schema: true
+memory:
+  add_history_to_messages: true
+  num_history_runs: 5
+  enable_user_memories: true
+  enable_agentic_memory: false
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true

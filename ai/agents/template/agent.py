@@ -7,7 +7,7 @@ from lib.utils.version_factory import create_agent
 from datetime import datetime
 
 
-def get_template_agent(**kwargs):
+async def get_template_agent(**kwargs):
     """Template agent factory - add custom logic here if needed"""
     
     # CUSTOM LOGIC EXAMPLES (uncomment/modify as needed):
@@ -39,4 +39,4 @@ def get_template_agent(**kwargs):
     # elif experience == "novice":
     #     kwargs["instructions_append"] = "\nUsuário iniciante - explique termos técnicos"
     
-    return create_agent("template", **kwargs)
+    return await create_agent("template", **kwargs)

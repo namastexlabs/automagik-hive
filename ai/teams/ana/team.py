@@ -3,7 +3,7 @@ from lib.utils.version_factory import create_team
 from .models import UserContext
 
 
-def get_ana_team(
+async def get_ana_team(
     user_context: Optional[Union[UserContext, dict]] = None,
     session_id: Optional[str] = None,
     user_id: Optional[str] = None,
@@ -14,7 +14,7 @@ def get_ana_team(
         user_context = UserContext(**user_context)
     
     # Create team using factory pattern
-    team = create_team("ana", session_id=session_id, user_id=user_id, debug_mode=debug_mode)
+    team = await create_team("ana", session_id=session_id, user_id=user_id, debug_mode=debug_mode)
     
     # Add team-specific user context
     if user_context:

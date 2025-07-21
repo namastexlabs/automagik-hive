@@ -2,7 +2,7 @@ from typing import Optional
 from lib.utils.version_factory import create_team
 
 
-def get_template_team(
+async def get_template_team(
     session_id: Optional[str] = None,
     user_id: Optional[str] = None,
     debug_mode: bool = False
@@ -22,7 +22,7 @@ def get_template_team(
         Configured template team instance
     """
     # Create team using factory pattern
-    team = create_team("template", session_id=session_id, user_id=user_id, debug_mode=debug_mode)
+    team = await create_team("template", session_id=session_id, user_id=user_id, debug_mode=debug_mode)
     
     # Add template-specific metadata
     if team.metadata is None:

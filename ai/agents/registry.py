@@ -57,7 +57,7 @@ class AgentRegistry:
         return _discover_agents()
     
     @classmethod
-    def get_agent(
+    async def get_agent(
         cls,
         agent_id: str,
         version: Optional[int] = None,
@@ -94,7 +94,7 @@ class AgentRegistry:
         if agent_id not in available_agents:
             raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
         
-        return create_agent(
+        return await create_agent(
             agent_id=agent_id,
             version=version,
             session_id=session_id,
@@ -103,7 +103,7 @@ class AgentRegistry:
         )
     
     @classmethod
-    def get_all_agents(
+    async def get_all_agents(
         cls,
         session_id: Optional[str] = None,
         debug_mode: bool = False,
@@ -121,7 +121,7 @@ class AgentRegistry:
         
         for agent_id in available_agents:
             try:
-                agents[agent_id] = cls.get_agent(
+                agents[agent_id] = await cls.get_agent(
                     agent_id=agent_id,
                     session_id=session_id,
                     debug_mode=debug_mode,
@@ -157,7 +157,7 @@ class AgentRegistry:
 
 
 # Generic factory function - main entry point
-def get_agent(
+async def get_agent(
     name: str,
     version: Optional[int] = None,
     session_id: Optional[str] = None,
@@ -181,7 +181,7 @@ def get_agent(
     Returns:
         Configured Agent instance
     """
-    return AgentRegistry.get_agent(
+    return await AgentRegistry.get_agent(
         agent_id=name,
         version=version,
         session_id=session_id,
@@ -195,7 +195,7 @@ def get_agent(
 
 
 # Team convenience function
-def get_team_agents(
+async def get_team_agents(
     agent_names: list[str],
     session_id: Optional[str] = None,
     debug_mode: bool = False,
@@ -217,8 +217,9 @@ def get_team_agents(
     Returns:
         List of configured Agent instances
     """
-    return [
-        get_agent(
+    agents = []
+    for name in agent_names:
+        agent = await get_agent(
             name, 
             session_id=session_id, 
             debug_mode=debug_mode, 
@@ -228,8 +229,8 @@ def get_team_agents(
             pb_phone_number=pb_phone_number,
             pb_cpf=pb_cpf
         )
-        for name in agent_names
-    ]
+        agents.append(agent)
+    return agents
 
 
 # MCP convenience functions

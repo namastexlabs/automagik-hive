@@ -148,7 +148,7 @@ def _discover_teams() -> Dict[str, Callable[..., Team]]:
 TEAM_REGISTRY: Dict[str, Callable[..., Team]] = _discover_teams()
 
 
-def get_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
+async def get_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
     """
     Retrieve and instantiate a team by its ID.
     
@@ -182,7 +182,7 @@ def get_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
     if version is not None:
         kwargs['version'] = version
         
-    return team_factory(**kwargs)
+    return await team_factory(**kwargs)
 
 
 def list_available_teams() -> list[str]:

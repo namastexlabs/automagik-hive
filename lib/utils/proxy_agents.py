@@ -158,6 +158,9 @@ class AgnoAgentProxy:
             "events_config": self._handle_custom_metadata,
             "context_config": self._handle_custom_metadata,
             "display_config": self._handle_custom_metadata,
+            
+            # Display section handler (flattens display parameters)
+            "display": self._handle_display_section,
         }
     
     def create_agent(
@@ -313,8 +316,8 @@ class AgnoAgentProxy:
                                component_id: str, db_url: Optional[str]) -> Optional[object]:
         """Handle custom knowledge filter system."""
         try:
-            # Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
-            from agno.knowledge.csv import CSVKnowledgeBase
+            # Knowledge base creation is now handled by RowBasedCSVKnowledgeBase + PgVector directly
+            from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
             from agno.vectordb.pgvector import PgVector
             
             # Load global knowledge config first
@@ -347,9 +350,9 @@ class AgnoAgentProxy:
                     embedder=embedder
                 )
                 
-                # Create CSV knowledge base
-                knowledge_base = CSVKnowledgeBase(
-                    path=csv_path,
+                # Create CSV knowledge base using row-based processing (one document per CSV row)
+                knowledge_base = RowBasedCSVKnowledgeBase(
+                    csv_path=csv_path,
                     vector_db=vector_db
                 )
                 
@@ -372,6 +375,24 @@ class AgnoAgentProxy:
         # They are stored in metadata via _create_metadata
         return None
     
+    def _handle_display_section(self, display_config: Dict[str, Any], config: Dict[str, Any],
+                              component_id: str, db_url: Optional[str]) -> Dict[str, Any]:
+        """Handle display section by flattening display parameters to root level."""
+        if not isinstance(display_config, dict):
+            logger.warning(f"🤖 Invalid display config for {component_id}: expected dict, got {type(display_config)}")
+            return {}
+        
+        # Flatten display parameters to root level for Agno Agent
+        flattened = {}
+        for key, value in display_config.items():
+            if key in self._supported_params:
+                flattened[key] = value
+            else:
+                logger.debug(f"🤖 Unknown display parameter '{key}' for {component_id}")
+        
+        logger.debug(f"🤖 Flattened {len(flattened)} display parameters for {component_id}")
+        return flattened
+    
     def _create_metadata(self, config: Dict[str, Any], component_id: str) -> Dict[str, Any]:
         """Create metadata dictionary for the agent."""
         agent_config = config.get("agent", {})
@@ -381,16 +402,16 @@ class AgnoAgentProxy:
             "loaded_from": "proxy_agents",
             "agent_id": component_id,
             "agno_parameters_count": len(self._supported_params),
-            "custom_parameters": {
+                "custom_parameters": {
                 "knowledge_filter": config.get("knowledge_filter", {}),
                 "suggested_actions": config.get("suggested_actions", {}),
                 "escalation_triggers": config.get("escalation_triggers", {}),
                 "streaming_config": config.get("streaming_config", {}),
                 "events_config": config.get("events_config", {}),
                 "context_config": config.get("context_config", {}),
-                "display_config": config.get("display_config", {})
-            }
-        }
+                "display_config": config.get("display_config", {}),
+                "display": config.get("display", {})
+            }        }
     
     def _wrap_agent_with_metrics(self, agent: Agent, component_id: str, 
                                config: Dict[str, Any], metrics_service: object) -> Agent:

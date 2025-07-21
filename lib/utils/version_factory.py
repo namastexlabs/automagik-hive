@@ -56,7 +56,7 @@ class VersionFactory:
     
     # _build_dynamic_instructions method removed - AGNO handles instructions natively
     
-    def create_versioned_component(
+    async def create_versioned_component(
         self,
         component_id: str,
         component_type: str,
@@ -90,11 +90,11 @@ class VersionFactory:
         else:
             # Normal database lookup logic
             if version is not None:
-                version_record = self.version_service.get_version(component_id, version)
+                version_record = await self.version_service.get_version(component_id, version)
                 if not version_record:
                     raise ValueError(f"Version {version} not found for {component_id}")
             else:
-                version_record = self.version_service.get_active_version(component_id)
+                version_record = await self.version_service.get_active_version(component_id)
                 if not version_record:
                     # Fallback: Try to sync from YAML if no active version found
                     logger.warning(f"🔧 No active version found for {component_id}, attempting YAML fallback...")
@@ -123,7 +123,7 @@ class VersionFactory:
                 **kwargs
             )
         elif component_type == "team":
-            return self._create_team(
+            return await self._create_team(
                 component_id=component_id,
                 config=config,
                 session_id=session_id,
@@ -281,7 +281,7 @@ class VersionFactory:
         
         return tools
     
-    def _create_team(
+    async def _create_team(
         self,
         component_id: str,
         config: Dict[str, Any],
@@ -301,7 +301,7 @@ class VersionFactory:
         proxy = get_agno_team_proxy()
         
         # Create team using dynamic proxy
-        team = proxy.create_team(
+        team = await proxy.create_team(
             component_id=component_id,
             config=enhanced_config,
             session_id=session_id,
@@ -518,22 +518,98 @@ def get_version_factory() -> VersionFactory:
 
 
 # Clean factory functions
-def create_agent(agent_id: str, version: Optional[int] = None, **kwargs) -> Agent:
+async def create_agent(agent_id: str, version: Optional[int] = None, **kwargs) -> Agent:
     """Create agent using factory pattern."""
-    return get_version_factory().create_versioned_component(
+    return await get_version_factory().create_versioned_component(
         agent_id, "agent", version, **kwargs
     )
 
 
-def create_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
+async def create_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
     """Create team using factory pattern (unified with agents)."""
-    return get_version_factory().create_versioned_component(
+    return await get_version_factory().create_versioned_component(
         team_id, "team", version, **kwargs
     )
 
 
-def create_versioned_workflow(workflow_id: str, version: Optional[int] = None, **kwargs) -> Workflow:
+async def create_versioned_workflow(workflow_id: str, version: Optional[int] = None, **kwargs) -> Workflow:
     """Create versioned workflow using Agno storage."""
-    return get_version_factory().create_versioned_component(
+    return await get_version_factory().create_versioned_component(
         workflow_id, "workflow", version, **kwargs
     )
+
+
+# Synchronous wrappers for Agno framework compatibility
+def create_agent_sync(agent_id: str, version: Optional[int] = None, **kwargs) -> Agent:
+    """Synchronous wrapper for create_agent - for Agno framework compatibility."""
+    import asyncio
+    
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an event loop, need to handle carefully
+        import concurrent.futures
+        
+        def run_async():
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                return new_loop.run_until_complete(create_agent(agent_id, version, **kwargs))
+            finally:
+                new_loop.close()
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_async)
+            return future.result()
+            
+    except RuntimeError:
+        return asyncio.run(create_agent(agent_id, version, **kwargs))
+
+
+def create_team_sync(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
+    """Synchronous wrapper for create_team - for Agno framework compatibility."""
+    import asyncio
+    
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an event loop, need to handle carefully
+        import concurrent.futures
+        
+        def run_async():
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                return new_loop.run_until_complete(create_team(team_id, version, **kwargs))
+            finally:
+                new_loop.close()
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_async)
+            return future.result()
+            
+    except RuntimeError:
+        return asyncio.run(create_team(team_id, version, **kwargs))
+
+
+def create_versioned_workflow_sync(workflow_id: str, version: Optional[int] = None, **kwargs) -> Workflow:
+    """Synchronous wrapper for create_versioned_workflow - for Agno framework compatibility."""
+    import asyncio
+    
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an event loop, need to handle carefully
+        import concurrent.futures
+        
+        def run_async():
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                return new_loop.run_until_complete(create_versioned_workflow(workflow_id, version, **kwargs))
+            finally:
+                new_loop.close()
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_async)
+            return future.result()
+            
+    except RuntimeError:
+        return asyncio.run(create_versioned_workflow(workflow_id, version, **kwargs))

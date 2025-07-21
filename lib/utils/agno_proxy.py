@@ -129,12 +129,14 @@ def get_proxy_module_info() -> dict:
 
 def create_agent(*args, **kwargs):
     """Legacy compatibility wrapper for agent creation."""
-    return get_agno_proxy().create_agent(*args, **kwargs)
+    from .version_factory import create_agent_sync
+    return create_agent_sync(*args, **kwargs)
 
 
 def create_team(*args, **kwargs):
     """Legacy compatibility wrapper for team creation."""
-    return get_agno_team_proxy().create_team(*args, **kwargs)
+    from .version_factory import create_team_sync
+    return create_team_sync(*args, **kwargs)
 
 
 def create_workflow(*args, **kwargs):

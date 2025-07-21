@@ -98,6 +98,15 @@ class AgnoVersionSyncService:
             # Read YAML configuration
             with open(config_file, 'r', encoding='utf-8') as f:
                 yaml_config = yaml.safe_load(f)
+
+            # Skip shared configuration files
+            if 'shared' in config_file.lower():
+                logger.debug("🔧 Skipping shared configuration file", config_file=config_file)
+                return None
+            
+            if not isinstance(yaml_config, dict) or not any(section in yaml_config for section in ['agent', 'team', 'workflow']):
+                logger.debug("🔧 Skipping non-component configuration file", config_file=config_file)
+                return None
             
             if not yaml_config:
                 return None
@@ -105,7 +114,9 @@ class AgnoVersionSyncService:
             # Extract component information
             component_section = yaml_config.get(component_type, {})
             if not component_section:
-                logger.warning("🔧 No component section in config file", component_type=component_type, config_file=config_file)
+                # Show available sections for debugging
+                available_sections = list(yaml_config.keys()) if yaml_config else []
+                logger.warning(f"🔧 No '{component_type}' section in {config_file}. Available sections: {available_sections}")
                 return None
             
             # Get component ID

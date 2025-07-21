@@ -10,6 +10,7 @@ from agno.knowledge.csv import CSVKnowledgeBase
 from agno.vectordb.pgvector import PgVector, SearchType, HNSW
 from agno.embedder.openai import OpenAIEmbedder
 from lib.knowledge.metadata_csv_reader import create_metadata_csv_reader, create_default_csv_reader
+from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 
 
 # Global shared instance
@@ -41,7 +42,7 @@ def _check_knowledge_base_exists(db_url: str, table_name: str = "knowledge_base"
         logger.warning("📊 Could not check knowledge base existence", error=str(e))
         return False
 
-def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str = None, num_documents: int = 10, csv_path: str = None) -> CSVKnowledgeBase:
+def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str = None, num_documents: int = 10, csv_path: str = None) -> RowBasedCSVKnowledgeBase:
     """
     Create configurable shared knowledge base
     
@@ -104,13 +105,13 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
         distance=vector_config.get("distance", "cosine")
     )
     
-    # Create shared knowledge base with configurable num_documents
-    _shared_kb = CSVKnowledgeBase(
-        path=csv_path,
-        vector_db=vector_db,
-        reader=create_metadata_csv_reader(config),
-        num_documents=num_documents  # Configurable per agent
+    # Create shared knowledge base with row-based processing (one document per CSV row)
+    _shared_kb = RowBasedCSVKnowledgeBase(
+        csv_path=str(csv_path),
+        vector_db=vector_db
     )
+    # Set num_documents for backward compatibility
+    _shared_kb.num_documents = num_documents
     
     # Set agentic filters from configuration
     filter_config = config.get("knowledge", {}).get("filters", {})
@@ -166,6 +167,6 @@ def _load_knowledge_config() -> Dict[str, Any]:
         return {}
 
 
-def get_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str = None, num_documents: int = 10, csv_path: str = None) -> CSVKnowledgeBase:
+def get_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str = None, num_documents: int = 10, csv_path: str = None) -> RowBasedCSVKnowledgeBase:
     """Get the shared knowledge base"""
     return create_knowledge_base(config, db_url, num_documents, csv_path)

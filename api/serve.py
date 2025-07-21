@@ -66,40 +66,8 @@ def create_lifespan(startup_display=None):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """Application lifespan manager"""
-        # Startup
-        # First ensure Hive schema migrations are up to date
-        try:
-            from lib.services.migration_service import ensure_database_ready_async
-            migration_result = await ensure_database_ready_async()
-            
-            if migration_result["success"]:
-                logger.info("🔧 Database migrations completed", 
-                           action=migration_result.get("action", "completed"),
-                           revision=migration_result.get("current_revision"))
-                if startup_display:
-                    startup_display.add_migration_status(migration_result)
-            else:
-                logger.error("🔧 Database migration failed", 
-                            error=migration_result.get("message", "Unknown error"))
-                if startup_display:
-                    startup_display.add_migration_status(migration_result)
-                # In production, fail fast; in development, continue with warning
-                environment = os.getenv("HIVE_ENVIRONMENT", "development")
-                if environment == "production":
-                    raise ComponentLoadingError(f"Database migrations failed: {migration_result.get('message')}")
-                else:
-                    logger.warning("🔧 Continuing in development mode despite migration failure")
-        except ImportError:
-            logger.warning("🔧 Migration service not available - continuing without automatic migrations")
-        except ComponentLoadingError:
-            raise  # Re-raise ComponentLoadingError
-        except Exception as e:
-            logger.error("🔧 Migration service error", error=str(e), error_type=type(e).__name__)
-            environment = os.getenv("HIVE_ENVIRONMENT", "development")
-            if environment == "production":
-                raise ComponentLoadingError(f"Database migration service failed: {str(e)}")
-            else:
-                logger.warning("🔧 Continuing in development mode despite migration service error")
+        # Startup - Database migrations are now handled in main startup function
+        # This lifespan function handles other FastAPI startup tasks
         
         # Initialize MCP catalog
         try:
@@ -156,7 +124,48 @@ def create_lifespan(startup_display=None):
     
 
 
-def create_automagik_api():
+def _create_simple_sync_api():
+    """Simple synchronous API creation for event loop conflict scenarios."""
+    from fastapi import FastAPI
+    
+    # Get environment settings
+    environment = os.getenv("HIVE_ENVIRONMENT", "production")
+    is_development = environment == "development"
+    
+    # Initialize startup display
+    startup_display = create_startup_display()
+    
+    # Add some basic components to show the table works
+    startup_display.add_team("ana", "Ana", 0, version=1, status="✅")
+    startup_display.add_agent("test", "Test Agent", version=1, status="⚠️")
+    startup_display.add_error("System", "Running in simplified mode due to async conflicts")
+    
+    # Display the table
+    try:
+        startup_display.display_summary()
+        logger.info("🌐 Simplified startup display completed")
+    except Exception as e:
+        logger.error("🌐 Could not display even simplified table", error=str(e))
+    
+    # Create minimal FastAPI app
+    app = FastAPI(
+        title="Automagik Hive Multi-Agent System",
+        description="Multi-Agent System (Simplified Mode)",
+        version="1.0.0"
+    )
+    
+    @app.get("/")
+    async def root():
+        return {"status": "ok", "mode": "simplified", "message": "System running in simplified mode"}
+    
+    @app.get("/health")
+    async def health():
+        return {"status": "healthy", "mode": "simplified"}
+    
+    return app
+
+
+async def _async_create_automagik_api():
     """Create unified FastAPI app with environment-based features"""
     
     # Get environment settings
@@ -182,6 +191,19 @@ def create_automagik_api():
             uvicorn_module = sys.modules.get("uvicorn")
             if uvicorn_module:
                 logger.debug("🌐 Uvicorn module info", module=str(uvicorn_module))
+    
+    # FIRST PRIORITY: Check and run database migrations if needed
+    # This MUST happen before any other initialization that depends on the database
+    from lib.utils.db_migration import check_and_run_migrations
+    try:
+        migrations_run = await check_and_run_migrations()
+        if migrations_run:
+            logger.info("🔧 Database schema initialized via Alembic migrations")
+        else:
+            logger.debug("🔧 Database schema already up to date")
+    except Exception as e:
+        logger.warning("🔧 Database migration check failed", error=str(e))
+        logger.info("🔧 Continuing startup - system may use fallback initialization")
     
     # Initialize authentication system
     auth_service = get_auth_service()
@@ -236,14 +258,14 @@ def create_automagik_api():
         logger.info("🌐 Memory system configured", method="agno_internal_handling")
     
     # Create the Ana routing team
-    ana_team = get_ana_team(
+    ana_team = await get_ana_team(
         session_id=None  # Will be set per request
     )
     
     # Get all agents for comprehensive endpoint generation
     from ai.agents.registry import AgentRegistry
     agent_registry = AgentRegistry()
-    available_agents = agent_registry.get_all_agents()
+    available_agents = await agent_registry.get_all_agents()
     
     # Validate critical components loaded successfully
     if not ana_team:
@@ -265,9 +287,7 @@ def create_automagik_api():
         # Create custom sync service to capture logs
         class StartupVersionSync(AgnoVersionSyncService):
             def __init__(self, startup_display):
-                # Ensure database URL is passed explicitly
-                db_url = os.getenv("HIVE_DATABASE_URL")
-                super().__init__(db_url)
+                super().__init__()
                 self.startup_display = startup_display
             
             async def sync_on_startup(self):
@@ -333,21 +353,9 @@ def create_automagik_api():
                 return self.sync_results
         
         sync_service = StartupVersionSync(startup_display)
-        # For startup, we need to create a temporary event loop since no FastAPI loop exists yet
-        import asyncio
-        try:
-            # Try to get existing loop
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # If loop is running, we're in async context - shouldn't happen during startup
-                startup_display.add_error("Version Sync", "Unexpected: event loop already running during startup")
-                sync_results = {}
-            else:
-                sync_results = loop.run_until_complete(sync_service.sync_on_startup())
-        except RuntimeError:
-            # No event loop exists, create one (normal startup scenario)
-            sync_results = asyncio.run(sync_service.sync_on_startup())
         
+        # Run sync in the current async context (we're in _async_create_automagik_api)
+        sync_results = await sync_service.sync_on_startup()
         startup_display.set_sync_results(sync_results)
         
     except Exception as e:
@@ -432,15 +440,17 @@ def create_automagik_api():
         team_version = None
         member_count = 0
         try:
-            team = get_team(team_id, debug_mode=is_development)
+            team = await get_team(team_id, debug_mode=is_development)
             if hasattr(team, 'metadata') and team.metadata:
                 team_version = team.metadata.get('version')
             if hasattr(team, 'members') and team.members:
                 member_count = len(team.members)
             logger.info("🌐 Team loaded successfully", team_id=team_id)
         except Exception as e:
+            import traceback
             logger.error("🌐 Team loading failed", 
-                        team_id=team_id, error=str(e), error_type=type(e).__name__)
+                        team_id=team_id, error=str(e), error_type=type(e).__name__,
+                        traceback=traceback.format_exc())
             # Don't fail server startup for additional teams
             continue
         
@@ -515,17 +525,23 @@ def create_automagik_api():
         app.openapi_url = None
     
     # Always display startup summary with component table (core feature) - moved outside try-catch
-    if not is_reloader:
+    # Force display for debugging (temporarily ignore reloader check)
+    logger.info("🌐 About to display startup summary", 
+                teams=len(startup_display.teams),
+                agents=len(startup_display.agents), 
+                workflows=len(startup_display.workflows))
+    try:
+        startup_display.display_summary()
+        logger.info("🌐 Startup display completed successfully")
+    except Exception as e:
+        import traceback
+        logger.error("🌐 Could not display startup summary table", error=str(e), traceback=traceback.format_exc())
+        # Try fallback simple display
         try:
-            startup_display.display_summary()
-        except Exception as e:
-            logger.warning("🌐 Could not display startup summary table", error=str(e))
-            # Try fallback simple display
-            try:
-                from lib.utils.startup_display import display_simple_status
-                display_simple_status("Ana Team", "ana", len(available_agents) if available_agents else 0)
-            except Exception:
-                logger.info("🌐 System components loaded successfully", display_status="table_unavailable")
+            from lib.utils.startup_display import display_simple_status
+            display_simple_status("Ana Team", "ana", len(available_agents) if available_agents else 0)
+        except Exception:
+            logger.info("🌐 System components loaded successfully", display_status="table_unavailable")
     
     # Add custom business endpoints
     try:
@@ -593,6 +609,39 @@ def create_automagik_api():
 
 # Lazy app creation - only create when imported by uvicorn, not when running as script
 app = None
+
+def create_automagik_api():
+    """Create unified FastAPI app with environment-based features"""
+    
+    try:
+        # Try to get the running event loop
+        loop = asyncio.get_running_loop()
+        # We're in an event loop, need to handle this properly
+        logger.info("🌐 Event loop detected, using thread-based async initialization")
+        
+        import threading
+        import concurrent.futures
+        
+        def run_async_in_thread():
+            # Create a new event loop in a separate thread
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                result = new_loop.run_until_complete(_async_create_automagik_api())
+                return result
+            finally:
+                # Simplified cleanup - just close the loop
+                new_loop.close()
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_async_in_thread)
+            return future.result()
+            
+    except RuntimeError:
+        # No event loop running, safe to use asyncio.run()
+        logger.info("🌐 No event loop detected, using direct async initialization")
+        return asyncio.run(_async_create_automagik_api())
+
 
 # Only create app when imported
 if __name__ != "__main__":

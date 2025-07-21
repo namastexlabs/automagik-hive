@@ -1,7 +1,7 @@
 agent:
   name: Ana - Emissao
   role: Ana - Assistente Digital Emissão
-  version: dev
+  version: 1
   agent_id: emissao
   description: Ana, sua assistente digital especializada em cartões de crédito e débito,
     limites, faturas e serviços de emissão

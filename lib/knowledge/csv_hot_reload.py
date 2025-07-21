@@ -21,7 +21,7 @@ load_dotenv()
 # Use unified logging system
 from lib.logging import logger
 
-from agno.knowledge.csv import CSVKnowledgeBase
+from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from agno.vectordb.pgvector import PgVector
 
 
@@ -75,9 +75,9 @@ class CSVHotReloadManager:
                 embedder=embedder
             )
             
-            # Create CSVKnowledgeBase
-            self.knowledge_base = CSVKnowledgeBase(
-                path=str(self.csv_path),
+            # Create RowBasedCSVKnowledgeBase (one document per CSV row)
+            self.knowledge_base = RowBasedCSVKnowledgeBase(
+                csv_path=str(self.csv_path),
                 vector_db=vector_db
             )
             

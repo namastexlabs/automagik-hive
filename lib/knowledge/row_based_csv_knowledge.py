@@ -28,7 +28,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         # Initialize parent DocumentKnowledgeBase with the documents
         super().__init__(documents=documents, vector_db=vector_db)
         
-        # Store CSV path after parent initialization
+        # Store CSV path after parent initialization using object.__setattr__
         object.__setattr__(self, '_csv_path', csv_path_obj)
         
         logger.info("📊 Row-based CSV knowledge base initialized", 
@@ -92,10 +92,10 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                         documents.append(doc)
             
             logger.info("📊 CSV loaded successfully", 
-                       total_rows=len(documents), csv_path=str(self._csv_path))
+                       total_rows=len(documents), csv_path=str(csv_path))
                        
         except Exception as e:
-            logger.error("📊 Error loading CSV file", error=str(e), csv_path=str(self._csv_path))
+            logger.error("📊 Error loading CSV file", error=str(e), csv_path=str(csv_path))
         
         return documents
     
@@ -103,7 +103,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         """Reload documents from CSV file (for hot reload functionality)."""
         try:
             # Load new documents
-            new_documents = self._load_csv_as_documents()
+            new_documents = self._load_csv_as_documents(self._csv_path)
             
             # Update the documents
             self.documents = new_documents

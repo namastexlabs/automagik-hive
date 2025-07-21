@@ -146,7 +146,7 @@ class AgnoTeamProxy:
             "display_config": self._handle_custom_metadata,
         }
     
-    def create_team(
+    async def create_team(
         self,
         component_id: str,
         config: Dict[str, Any],
@@ -174,7 +174,7 @@ class AgnoTeamProxy:
             Configured Agno Team instance
         """
         # Process configuration into Agno parameters
-        team_params = self._process_config(config, component_id, db_url, **kwargs)
+        team_params = await self._process_config(config, component_id, db_url, **kwargs)
         
         # Add runtime parameters
         team_params.update({
@@ -214,7 +214,7 @@ class AgnoTeamProxy:
             logger.debug(f"🤖 Attempted parameters: {list(filtered_params.keys())}")
             raise
     
-    def _process_config(self, config: Dict[str, Any], component_id: str, db_url: Optional[str], **kwargs) -> Dict[str, Any]:
+    async def _process_config(self, config: Dict[str, Any], component_id: str, db_url: Optional[str], **kwargs) -> Dict[str, Any]:
         """Process configuration dictionary into Agno Team parameters."""
         processed = {}
         
@@ -222,7 +222,11 @@ class AgnoTeamProxy:
         for key, value in config.items():
             if key in self._custom_params:
                 # Use custom handler
-                handler_result = self._custom_params[key](value, config, component_id, db_url, **kwargs)
+                if key == "members":
+                    # Special handling for async members handler
+                    handler_result = await self._custom_params[key](value, config, component_id, db_url, **kwargs)
+                else:
+                    handler_result = self._custom_params[key](value, config, component_id, db_url, **kwargs)
                 if isinstance(handler_result, dict):
                     processed.update(handler_result)
                 else:
@@ -283,7 +287,7 @@ class AgnoTeamProxy:
             "mode": team_config.get("mode", "route")
         }
     
-    def _handle_members(self, members_config: List[str], config: Dict[str, Any],
+    async def _handle_members(self, members_config: List[str], config: Dict[str, Any],
                        component_id: str, db_url: Optional[str], **kwargs) -> List[Agent]:
         """
         Handle team members configuration (team-specific logic).
@@ -296,7 +300,7 @@ class AgnoTeamProxy:
             try:
                 # Load member agents using the agent registry
                 from ai.agents.registry import get_agent
-                member_agent = get_agent(
+                member_agent = await get_agent(
                     member_name,
                     session_id=kwargs.get("session_id"),
                     debug_mode=kwargs.get("debug_mode", False),

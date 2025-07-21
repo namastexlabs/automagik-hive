@@ -8,7 +8,7 @@ team:
   # team_id: "REQUIRED - Unique team identifier"
   # description: "REQUIRED - Team description"
   # mode: "route"  # Options: route, coordinate, collaborate
-  version: dev
+  version: 1
 
 # TEAM MODEL CONFIGURATION
 model:

@@ -46,7 +46,7 @@ agent:
   # role: "REQUIRED - Agent role description"  
   # agent_id: "REQUIRED - Unique agent identifier"
   # description: "REQUIRED - Agent description"
-  version: dev
+  version: 1
 
 # instructions: |
 #   REQUIRED - Agent-specific instructions

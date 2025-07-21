@@ -1,336 +1,83 @@
-# COMPLETE TEAM TEMPLATE - ALL 74 AGNO TEAM PARAMETERS
-# This template includes EVERY parameter supported by Agno Team class
-# Use this as the definitive reference for team configuration
-# Generated from Agno 1.7.5 introspection
+# Template Team Configuration
+# Comprehensive template showing all Agno Team parameters
 
-# ====================================================================
-# TEAM METADATA SECTION (Custom - not part of Agno Team class)
-# ====================================================================
 team:
-  name: "Complete Team Template"
-  role: "Template demonstrating all 74 Agno Team parameters"
-  version: "dev"
-  team_id: "template"
-  description: "Comprehensive template showing ALL supported Agno Team parameters"
+  team_id: template
+  name: Complete Team Template
+  description: Template demonstrating all Agno Team parameters
+  version: 4
+  mode: route
 
-# Factory configuration for flexible function naming
-factory:
-  # Primary factory function name (supports templates)
-  function_name: "get_template_team"
-  
-  # Alternative patterns to try (optional)
-  patterns:
-    - "create_{team_name_underscore}_team"
-    - "build_{team_name}_team"
-    - "{team_name_underscore}_factory"
-    - "team_factory"
-
-# ====================================================================
-# ALL 74 AGNO TEAM PARAMETERS (alphabetical order)
-# ====================================================================
-
-# 1. add_context: bool - Add context to messages
-add_context: false
-
-# 2. add_datetime_to_instructions: bool - Add current datetime to instructions
-add_datetime_to_instructions: true
-
-# 3. add_history_to_messages: bool - Add team history to messages
-add_history_to_messages: true
-
-# 4. add_location_to_instructions: bool - Add current location to instructions
-add_location_to_instructions: false
-
-# 5. add_member_tools_to_system_message: bool - Add member tools to system message
-add_member_tools_to_system_message: true
-
-# 6. add_memory_references: Optional[bool] - Add memory references to response
-add_memory_references: true
-
-# 7. add_references: bool - Add knowledge references to response
-add_references: false
-
-# 8. add_session_summary_references: Optional[bool] - Add session summary references
-add_session_summary_references: true
-
-# 9. add_state_in_messages: bool - Add session state to messages
-add_state_in_messages: false
-
-# 10. additional_context: Optional[str] - Additional context for system message
-additional_context: "This team demonstrates comprehensive Agno Team parameter usage with multi-agent coordination."
-
-# 11. cache_session: bool - Cache session in memory
-cache_session: true
-
-# 12. context: Optional[Dict[str, Any]] - Context for team operations
-context: {}
-
-# 13. debug_level: Literal[1, 2] - Debug verbosity level
-debug_level: 1
-
-# 14. debug_mode: bool - Enable debug mode (typically set by factory)
-debug_mode: false
-
-# 15. description: Optional[str] - Team description for system message
-description: "A comprehensive template team showcasing all 74 Agno Team parameters and multi-agent coordination capabilities."
-
-# 16. enable_agentic_context: bool - Enable agentic context management
-enable_agentic_context: false
-
-# 17. enable_agentic_knowledge_filters: Optional[bool] - Let team choose knowledge filters
-enable_agentic_knowledge_filters: true
-
-# 18. enable_agentic_memory: bool - Enable team memory management
-enable_agentic_memory: false
-
-# 19. enable_session_summaries: bool - Enable session summary creation
-enable_session_summaries: true
-
-# 20. enable_team_history: bool - Enable team history tracking
-enable_team_history: false
-
-# 21. enable_user_memories: bool - Enable user memory management
-enable_user_memories: true
-
-# 22. events_to_skip: Optional[List[Union[RunEvent, TeamRunEvent]]] - Events to skip (typically set programmatically)
-events_to_skip: null
-
-# 23. expected_output: Optional[str] - Expected output format
-expected_output: |
-  Coordinated team responses demonstrating:
-  1. Multi-agent collaboration and coordination
-  2. Proper parameter configuration across all team members
-  3. Effective use of all Agno Team capabilities
-  4. Seamless member interaction and knowledge sharing
-  5. Comprehensive team-based AI functionality
-
-# 24. extra_data: Optional[Dict[str, Any]] - Additional data stored with team
-extra_data: {}
-
-# 25. get_member_information_tool: bool - Add tool to get member information
-get_member_information_tool: false
-
-# 26. instructions: Optional[Union[str, List[str], Callable]] - Team instructions
-instructions: |
-  You are a comprehensive template team designed to showcase all 74 Agno Team parameters.
-  
-  Team coordination objectives:
-  1. Demonstrate multi-agent collaboration patterns
-  2. Showcase comprehensive team parameter configuration
-  3. Validate team-based functionality across all capabilities
-  4. Provide examples of best practices for team operations
-  
-  Team capabilities:
-  - Multi-agent coordination with configurable modes (route, coordinate, collaborate)
-  - Shared context and knowledge base across team members
-  - Team memory and history management
-  - Advanced member interaction and communication
-  - Streaming and real-time team responses
-  - Event handling and team monitoring
-  - Flexible member tool integration
-  
-  Coordinate effectively with team members while demonstrating these capabilities.
-
-# 27. knowledge: Optional[AgentKnowledge] - Knowledge base (typically created by factory)
-knowledge: null
-
-# 28. knowledge_filters: Optional[Dict[str, Any]] - Knowledge filtering parameters
-knowledge_filters: {}
-
-# 29. markdown: bool - Format output using markdown
-markdown: false
-
-# 30. members: List[Union[Agent, "Team"]] - Team members (loaded by factory)
-members:
-  - "pagbank"
-  - "emissao"
-  - "adquirencia"
-
-# 31. memory: Optional[Union[TeamMemory, Memory]] - Memory system (typically created by factory)
-memory: null
-
-# 32. mode: Literal["route", "coordinate", "collaborate"] - Team operation mode
-mode: "route"
-
-# 33. model: Optional[Model] - AI model for team coordination (created by factory)
+# Model configuration
 model:
-  provider: "anthropic"
-  id: "claude-sonnet-4-20250514"
-  temperature: 1.0
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
   max_tokens: 2000
-  thinking:
-    type: "enabled"
 
-# 34. monitoring: bool - Enable monitoring
-monitoring: false
+# Team members
+members:
+  - template_example
 
-# 35. name: Optional[str] - Team name (typically mapped from team.name)
-name: "Complete Team Template"
-
-# 36. num_history_runs: int - Number of historical runs to include
-num_history_runs: 10
-
-# 37. num_of_interactions_from_history: Optional[int] - Number of interactions from history
-num_of_interactions_from_history: null
-
-# 38. parse_response: bool - Parse the response
-parse_response: true
-
-# 39. parser_model: Optional[Model] - Model for parsing (typically set programmatically)
-parser_model: null
-
-# 40. parser_model_prompt: Optional[str] - Prompt for parser model
-parser_model_prompt: null
-
-# 41. read_team_history: bool - Add tool to read team history
-read_team_history: false
-
-# 42. reasoning: bool - Enable step-by-step reasoning
-reasoning: false
-
-# 43. reasoning_agent: Optional[Agent] - Agent for reasoning (typically set programmatically)
-reasoning_agent: null
-
-# 44. reasoning_max_steps: int - Maximum reasoning steps
-reasoning_max_steps: 10
-
-# 45. reasoning_min_steps: int - Minimum reasoning steps
-reasoning_min_steps: 1
-
-# 46. reasoning_model: Optional[Model] - Model for reasoning (typically set programmatically)
-reasoning_model: null
-
-# 47. references_format: Literal["json", "yaml"] - Format for knowledge references
-references_format: "json"
-
-# 48. response_model: Optional[Type[BaseModel]] - Response model (typically set programmatically)
-response_model: null
-
-# 49. retriever: Optional[Callable] - Custom retrieval function (typically set programmatically)
-retriever: null
-
-# 50. search_knowledge: bool - Add tool to search knowledge base
-search_knowledge: true
-
-# 51. session_id: Optional[str] - Session identifier (typically set by factory)
-session_id: null
-
-# 52. session_name: Optional[str] - Session name
-session_name: "Complete Team Template Session"
-
-# 53. session_state: Optional[Dict[str, Any]] - Session state
-session_state: {}
-
-# 54. share_member_interactions: bool - Share interactions between members
-share_member_interactions: false
-
-# 55. show_members_responses: bool - Show individual member responses
-show_members_responses: false
-
-# 56. show_tool_calls: bool - Show tool calls in response
-show_tool_calls: true
-
-# 57. storage: Optional[Storage] - Storage system (created by factory)
+# Storage configuration
 storage:
-  table_name: "teams_template_complete"
+  type: postgres
+  table_name: template_teams
   auto_upgrade_schema: true
 
-# 58. store_events: bool - Store events
-store_events: false
+# Memory configuration
+memory:
+  num_history_runs: 10
+  enable_user_memories: true
+  enable_agentic_memory: false
+  add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
 
-# 59. stream: Optional[bool] - Enable streaming
-stream: null
-
-# 60. stream_intermediate_steps: bool - Stream intermediate steps
-stream_intermediate_steps: false
-
-# 61. stream_member_events: bool - Stream member events
-stream_member_events: true
-
-# 62. success_criteria: Optional[str] - Success criteria
-success_criteria: "Successfully demonstrates all 74 Agno Team parameters working together in multi-agent coordination, providing comprehensive team-based AI capabilities."
-
-# 63. system_message: Optional[Union[str, Callable, Message]] - Custom system message
-system_message: null
-
-# 64. system_message_role: str - Role for system message
-system_message_role: "system"
-
-# 65. team_id: Optional[str] - Team identifier (typically set by factory)
-team_id: "template"
-
-# 66. team_session_state: Optional[Dict[str, Any]] - Team session state
-team_session_state: {}
-
-# 67. telemetry: bool - Enable telemetry
-telemetry: true
-
-# 68. tool_call_limit: Optional[int] - Maximum tool calls allowed
-tool_call_limit: null
-
-# 69. tool_choice: Optional[Union[str, Dict[str, Any]]] - Tool choice control
-tool_choice: null
-
-# 70. tool_hooks: Optional[List[Callable]] - Tool middleware (typically set programmatically)
-tool_hooks: null
-
-# 71. tools: Optional[List] - Tools (typically loaded by factory)
-tools: null
-
-# 72. use_json_mode: bool - Use JSON mode
-use_json_mode: false
-
-# 73. user_id: Optional[str] - User identifier (typically set by factory)
-user_id: null
-
-# 74. workflow_session_state: Optional[Dict[str, Any]] - Workflow session state
-workflow_session_state: {}
-
-# ====================================================================
-# CUSTOM PARAMETERS (Not part of Agno Team class)
-# These are handled separately by the version_factory
-# ====================================================================
-
-# Custom Action System
-suggested_actions:
-  coordination:
-    - "route_to_specialist"
-    - "coordinate_responses"
-    - "collaborate_on_complex_tasks"
-  team_management:
-    - "add_team_member"
-    - "configure_team_mode"
-    - "manage_team_context"
-
-# Custom Escalation System
-escalation_triggers:
-  team_coordination_keywords:
-    - "member conflict"
-    - "coordination failure"
-    - "team deadlock"
-  complexity_threshold: 2000
-
-# Custom Configuration Sections
-streaming_config:
-  enable_streaming: true
-  stream_intermediate_steps: false
-  stream_member_events: true
-  show_members_responses: false
-
-events_config:
-  enable_events: true
-  event_types:
-    - "team_start"
-    - "team_end"
-    - "member_interaction"
-    - "coordination_update"
-
-context_config:
-  enable_context_sharing: true
-  enable_agentic_context: false
-  share_member_interactions: false
-
-display_config:
+# Display configuration
+display:
   markdown: false
   show_tool_calls: true
-  add_member_tools_to_system_message: true
+  add_datetime_to_instructions: true
+
+# Context configuration
+context:
+  add_state_in_messages: true
+  enable_agentic_context: true
+  share_member_interactions: true
+
+# Events configuration
+events:
+  store_events: true
+  events_to_skip: []
+
+# Streaming configuration
+streaming:
+  stream: true
+  stream_member_events: true
+  show_members_responses: true
+  stream_intermediate_steps: true
+
+# Instructions
+instructions: |
+  You are a template team designed to demonstrate all Agno Team capabilities.
+  
+  Your primary functions:
+  1. Route requests to appropriate team members
+  2. Coordinate responses between multiple agents
+  3. Maintain context across team interactions
+  4. Demonstrate team-based AI workflows
+  
+  Always route requests to the most appropriate team member based on the request type.
+
+# Expected output format
+expected_output: |
+  Professional team coordination with:
+  1. Proper request routing
+  2. Context sharing between members
+  3. Coordinated responses
+  4. Clear team workflow demonstration
+
+# Success criteria
+success_criteria: Successfully demonstrates all Agno Team parameters working together in a coordinated multi-agent workflow.

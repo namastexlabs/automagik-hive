@@ -8,7 +8,7 @@ including context injection, conditional logic, and personalized configuration.
 from lib.utils.version_factory import create_agent
 
 
-def get_template_example_agent(**kwargs):
+async def get_template_example_agent(**kwargs):
     """
     Create template example agent with dynamic configuration.
     
@@ -65,4 +65,4 @@ def get_template_example_agent(**kwargs):
             }
         )
     """
-    return create_agent("template_example", **kwargs)
+    return await create_agent("template_example", **kwargs)

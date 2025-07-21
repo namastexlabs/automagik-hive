@@ -93,6 +93,19 @@ def setup_logging():
         logging.getLogger("requests").setLevel(logging.WARNING)
         logging.getLogger("httpx").setLevel(logging.WARNING)
     
+    # Always suppress extremely noisy watchdog DEBUG logs (even in DEBUG mode)
+    # Watchdog can generate hundreds of inotify_buffer DEBUG messages per second
+    logging.getLogger("watchdog").setLevel(logging.INFO)
+    logging.getLogger("watchdog.observers").setLevel(logging.INFO)
+    logging.getLogger("watchdog.observers.inotify_buffer").setLevel(logging.WARNING)
+    
+    # Suppress other potentially noisy database and async libraries in DEBUG mode
+    # These can generate excessive SQL query and connection pool DEBUG messages
+    if level == "DEBUG":
+        logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+        logging.getLogger("sqlalchemy.pool").setLevel(logging.INFO)
+        logging.getLogger("alembic.runtime.migration").setLevel(logging.INFO)
+    
     # Configure AGNO logging level from environment variable
     agno_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
     if agno_level in level_mapping:
