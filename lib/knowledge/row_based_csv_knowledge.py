@@ -111,7 +111,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             # Display business unit summary
             for bu, count in business_unit_counts.items():
                 if bu and bu != 'Unknown':
-                    tqdm.write(f"✓ {bu}: {count} documents processed")
+                    logger.info(f"📊 ✓ {bu}: {count} documents processed")
             
             logger.info("📊 CSV loaded successfully", 
                        total_rows=len(documents), csv_path=str(csv_path))
@@ -173,35 +173,29 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             bu = doc.meta_data.get('business_unit', 'Unknown')
             business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
         
-        # Process documents with progress bar - this is where the 33-second delay occurs
-        with tqdm(all_documents, desc="Embedding & upserting documents", unit="doc", leave=True) as pbar:
-            processed_by_unit = {}
-            
-            for doc in pbar:
-                try:
-                    # Upsert or insert individual document
-                    if upsert and self.vector_db.upsert_available():
-                        self.vector_db.upsert(documents=[doc], filters=doc.meta_data)
-                    else:
-                        self.vector_db.insert(documents=[doc], filters=doc.meta_data)
-                    
-                    # Track progress by business unit
-                    bu = doc.meta_data.get('business_unit', 'Unknown')
-                    processed_by_unit[bu] = processed_by_unit.get(bu, 0) + 1
-                    
-                    # Update progress description with current business unit
-                    if bu != 'Unknown':
-                        pbar.set_description(f"Embedding & upserting documents ({bu})")
-                    
-                except Exception as e:
-                    logger.error(f"🚨 Error processing document {doc.id}", error=str(e))
-                    continue
+        # Process documents without progress bar for cleaner output
+        processed_by_unit = {}
+        
+        for doc in all_documents:
+            try:
+                # Upsert or insert individual document
+                if upsert and self.vector_db.upsert_available():
+                    self.vector_db.upsert(documents=[doc], filters=doc.meta_data)
+                else:
+                    self.vector_db.insert(documents=[doc], filters=doc.meta_data)
+                
+                # Track progress by business unit
+                bu = doc.meta_data.get('business_unit', 'Unknown')
+                processed_by_unit[bu] = processed_by_unit.get(bu, 0) + 1
+                
+            except Exception as e:
+                logger.error(f"🚨 Error processing document {doc.id}", error=str(e))
+                continue
         
         # Show final business unit summary like the CSV loading does
-        tqdm.write("\n📊 Vector database loading completed:")
         for bu, count in business_unit_counts.items():
             if bu and bu != 'Unknown':
-                tqdm.write(f"✓ {bu}: {count} documents embedded & stored")
+                logger.info(f"📊 ✓ {bu}: {count} documents processed")
         
         log_info(f"Added {len(all_documents)} documents to knowledge base")
     
