@@ -180,9 +180,25 @@ class AgnoVersionSyncService:
             elif yaml_version == agno_version.version:
                 # Same version - check config consistency
                 if yaml_config != agno_version.config:
-                    logger.warning("🔧 Version conflict resolved - Agno wins", component_type=component_type, component_id=component_id, yaml_version=yaml_version, agno_version=agno_version.version)
-                    await self.update_yaml_from_agno(config_file, component_id, component_type)
-                    action_taken = "yaml_corrected"
+                    # CRITICAL: Changed from destructive "database wins" to fail on conflict
+                    # This prevents silent corruption of YAML files
+                    logger.error("🔧 CRITICAL: Version conflict detected - manual resolution required", 
+                                component_type=component_type, component_id=component_id, 
+                                yaml_version=yaml_version, agno_version=agno_version.version,
+                                yaml_file=config_file)
+                    logger.error("🔧 YAML and database configs differ but have same version - this indicates data corruption or ID collision")
+                    logger.error("🔧 Please manually resolve the conflict and ensure component IDs are unique across types")
+                    
+                    # Return error instead of corrupting YAML
+                    return {
+                        "component_id": component_id,
+                        "component_type": component_type,
+                        "file": config_file,
+                        "yaml_version": yaml_version,
+                        "agno_version": agno_version.version,
+                        "action": "version_conflict_error",
+                        "error": f"Version conflict: YAML and DB configs differ but have same version {yaml_version}"
+                    }
                 else:
                     # Perfect sync - no action needed
                     action_taken = "no_change"

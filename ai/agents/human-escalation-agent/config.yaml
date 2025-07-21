@@ -1,6 +1,6 @@
 agent:
-  agent_id: human-handoff
-  name: Ana - Human Handoff
+  agent_id: human-escalation-agent
+  name: Ana - Human Escalation Agent
   version: 1
   description: Agent for human handoff escalation
 model:
