@@ -45,3 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use well defined sub-directories to keep things organized and scalable
 - Structure projects with clear folder hierarchies and consistent naming conventions
 - Import/export properly - design for reusability and maintainability
+
+### Python Development
+- Never use python directly, use uv run
+- Always use uv run for python commands

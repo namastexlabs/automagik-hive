@@ -10,7 +10,7 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from datetime import datetime
 
-from .database_service import get_db_service
+from .database_service import get_db_service, DatabaseService
 
 
 @dataclass
@@ -46,6 +46,28 @@ class ComponentVersionService:
     Replaces the AgnoVersionService hack with proper database operations.
     """
     
+    def __init__(self, db_url: Optional[str] = None):
+        """Initialize with optional database URL."""
+        self.db_url = db_url
+        self._db_service: Optional[DatabaseService] = None
+    
+    async def _get_db_service(self) -> DatabaseService:
+        """Get database service with optional URL override. Caches instance to prevent connection pool proliferation."""
+        if self._db_service is None:
+            if self.db_url:
+                from .database_service import DatabaseService
+                self._db_service = DatabaseService(self.db_url)
+                await self._db_service.initialize()
+            else:
+                self._db_service = await get_db_service()
+        return self._db_service
+    
+    async def close(self):
+        """Clean up database service resources."""
+        if self._db_service and hasattr(self._db_service, 'close'):
+            await self._db_service.close()
+            self._db_service = None
+    
     async def create_component_version(
         self,
         component_id: str,
@@ -57,7 +79,7 @@ class ComponentVersionService:
         is_active: bool = False
     ) -> int:
         """Create a new component version."""
-        db = await get_db_service()
+        db = await self._get_db_service()
         
         query = """
         INSERT INTO hive.component_versions 
@@ -80,7 +102,7 @@ class ComponentVersionService:
     
     async def get_component_version(self, component_id: str, version: int) -> Optional[ComponentVersion]:
         """Get specific component version."""
-        db = await get_db_service()
+        db = await self._get_db_service()
         
         query = """
         SELECT id, component_id, component_type, version, config, description, 
@@ -110,7 +132,7 @@ class ComponentVersionService:
     
     async def get_active_version(self, component_id: str) -> Optional[ComponentVersion]:
         """Get active component version."""
-        db = await get_db_service()
+        db = await self._get_db_service()
         
         query = """
         SELECT id, component_id, component_type, version, config, description, 
@@ -142,7 +164,7 @@ class ComponentVersionService:
         changed_by: str = "system"
     ) -> bool:
         """Set a version as active (deactivates others)."""
-        db = await get_db_service()
+        db = await self._get_db_service()
         
         operations = [
             # Deactivate all versions for this component
@@ -169,7 +191,7 @@ class ComponentVersionService:
     
     async def list_component_versions(self, component_id: str) -> List[ComponentVersion]:
         """List all versions for a component."""
-        db = await get_db_service()
+        db = await self._get_db_service()
         
         query = """
         SELECT id, component_id, component_type, version, config, description, 
@@ -206,7 +228,7 @@ class ComponentVersionService:
         changed_by: str = "system"
     ) -> int:
         """Add version history record."""
-        db = await get_db_service()
+        db = await self._get_db_service()
         
         query = """
         INSERT INTO hive.version_history 
@@ -228,7 +250,7 @@ class ComponentVersionService:
     
     async def get_version_history(self, component_id: str) -> List[VersionHistory]:
         """Get version history for a component."""
-        db = await get_db_service()
+        db = await self._get_db_service()
         
         query = """
         SELECT id, component_id, from_version, to_version, action, description, changed_by, changed_at

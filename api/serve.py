@@ -265,10 +265,12 @@ def create_automagik_api():
         # Create custom sync service to capture logs
         class StartupVersionSync(AgnoVersionSyncService):
             def __init__(self, startup_display):
-                super().__init__()
+                # Ensure database URL is passed explicitly
+                db_url = os.getenv("HIVE_DATABASE_URL")
+                super().__init__(db_url)
                 self.startup_display = startup_display
             
-            def sync_on_startup(self):
+            async def sync_on_startup(self):
                 """Enhanced version sync with detailed status reporting."""
                 # Get actual component counts from filesystem
                 import glob
@@ -288,7 +290,7 @@ def create_automagik_api():
                 
                 for component_type in ['agent', 'team', 'workflow']:
                     try:
-                        results = self.sync_component_type(component_type)
+                        results = await self.sync_component_type(component_type)
                         self.sync_results[component_type + 's'] = results
                         total_synced += len(results)
                         
@@ -331,7 +333,21 @@ def create_automagik_api():
                 return self.sync_results
         
         sync_service = StartupVersionSync(startup_display)
-        sync_results = sync_service.sync_on_startup()
+        # For startup, we need to create a temporary event loop since no FastAPI loop exists yet
+        import asyncio
+        try:
+            # Try to get existing loop
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If loop is running, we're in async context - shouldn't happen during startup
+                startup_display.add_error("Version Sync", "Unexpected: event loop already running during startup")
+                sync_results = {}
+            else:
+                sync_results = loop.run_until_complete(sync_service.sync_on_startup())
+        except RuntimeError:
+            # No event loop exists, create one (normal startup scenario)
+            sync_results = asyncio.run(sync_service.sync_on_startup())
+        
         startup_display.set_sync_results(sync_results)
         
     except Exception as e:

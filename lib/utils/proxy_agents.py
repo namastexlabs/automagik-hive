@@ -347,6 +347,7 @@ class AgnoAgentProxy:
                     embedder=embedder
                 )
                 
+                # Create CSV knowledge base
                 knowledge_base = CSVKnowledgeBase(
                     path=csv_path,
                     vector_db=vector_db

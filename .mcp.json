@@ -50,7 +50,7 @@
         "args": [
           "-y",
           "@modelcontextprotocol/server-postgres",
-          "postgresql+psycopg://ai:ai@localhost:5532/ai"
+          "postgresql+psycopg://Hf5x57x9QMrNBipV:q4Ozv5gjcJNERMK4@localhost:5532/hive"
         ]
     }
   }

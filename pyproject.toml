@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.1.1"
+version = "0.1.2"
 description = "Automagik Multi-Agent Framework - Extensible Agent Creation System"
 readme = "README.md"
 license = "MIT"
@@ -50,6 +50,7 @@ dependencies = [
     # MCP Protocol
     "mcp>=1.10.1",
     "loguru>=0.7.3",
+    "pandas>=2.3.1",
 ]
 
 [project.optional-dependencies]

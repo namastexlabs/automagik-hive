@@ -47,7 +47,7 @@ class AgnoVersionSyncService:
             'workflows': []
         }
     
-    def sync_on_startup(self) -> Dict[str, Any]:
+    async def sync_on_startup(self) -> Dict[str, Any]:
         """Main entry point - sync all components on startup"""
         logger.info("🔧 Starting Agno-based component version sync")
         
@@ -55,7 +55,7 @@ class AgnoVersionSyncService:
         
         for component_type in ['agent', 'team', 'workflow']:
             try:
-                results = self.sync_component_type(component_type)
+                results = await self.sync_component_type(component_type)
                 self.sync_results[component_type + 's'] = results
                 total_synced += len(results)
                 
@@ -68,7 +68,7 @@ class AgnoVersionSyncService:
         logger.info("🔧 Agno version sync completed", total_components=total_synced)
         return self.sync_results
     
-    def sync_component_type(self, component_type: str) -> List[Dict[str, Any]]:
+    async def sync_component_type(self, component_type: str) -> List[Dict[str, Any]]:
         """Sync all components of a specific type"""
         pattern = self.config_paths.get(component_type)
         if not pattern:
@@ -78,7 +78,7 @@ class AgnoVersionSyncService:
         
         for config_file in glob.glob(pattern):
             try:
-                result = self.sync_single_component(config_file, component_type)
+                result = await self.sync_single_component(config_file, component_type)
                 if result:
                     results.append(result)
             except Exception as e:
@@ -92,7 +92,7 @@ class AgnoVersionSyncService:
         
         return results
     
-    def sync_single_component(self, config_file: str, component_type: str) -> Optional[Dict[str, Any]]:
+    async def sync_single_component(self, config_file: str, component_type: str) -> Optional[Dict[str, Any]]:
         """Core bilateral sync logic for a single component"""
         try:
             # Read YAML configuration
@@ -127,16 +127,7 @@ class AgnoVersionSyncService:
             
             # Get current active version from Agno storage
             try:
-                agno_version = self.version_service.get_active_version(component_id)
-                # Defensive check to ensure we got the expected type
-                if hasattr(agno_version, '__await__'):
-                    logger.error("🔧 Got coroutine instead of VersionInfo", component_id=component_id)
-                    # Properly close the coroutine to avoid RuntimeWarning
-                    try:
-                        agno_version.close()
-                    except:
-                        pass
-                    agno_version = None
+                agno_version = await self.version_service.get_active_version(component_id)
             except Exception as version_error:
                 logger.error("🔧 Error getting active version", component_id=component_id, error=str(version_error))
                 agno_version = None
@@ -146,7 +137,7 @@ class AgnoVersionSyncService:
             
             if not agno_version:
                 # No Agno version - create from YAML
-                _, action_taken = self.version_service.sync_from_yaml(
+                _, action_taken = await self.version_service.sync_from_yaml(
                     component_id=component_id,
                     component_type=component_type,
                     yaml_config=yaml_config,
@@ -161,7 +152,7 @@ class AgnoVersionSyncService:
             
             elif isinstance(yaml_version, int) and isinstance(agno_version.version, int) and yaml_version > agno_version.version:
                 # YAML is newer - update Agno storage
-                _, action_taken = self.version_service.sync_from_yaml(
+                _, action_taken = await self.version_service.sync_from_yaml(
                     component_id=component_id,
                     component_type=component_type,
                     yaml_config=yaml_config,
@@ -171,7 +162,7 @@ class AgnoVersionSyncService:
             
             elif isinstance(yaml_version, int) and isinstance(agno_version.version, int) and agno_version.version > yaml_version:
                 # Agno is newer - update YAML
-                self.update_yaml_from_agno(config_file, component_id, component_type)
+                await self.update_yaml_from_agno(config_file, component_id, component_type)
                 action_taken = "yaml_updated"
                 logger.info("🔧 Updated YAML version from Agno", component_type=component_type, component_id=component_id, old_version=yaml_version, new_version=agno_version.version)
             
@@ -179,7 +170,7 @@ class AgnoVersionSyncService:
                 # Same version - check config consistency
                 if yaml_config != agno_version.config:
                     logger.warning("🔧 Version conflict resolved - Agno wins", component_type=component_type, component_id=component_id, yaml_version=yaml_version, agno_version=agno_version.version)
-                    self.update_yaml_from_agno(config_file, component_id, component_type)
+                    await self.update_yaml_from_agno(config_file, component_id, component_type)
                     action_taken = "yaml_corrected"
                 else:
                     # Perfect sync - no action needed
@@ -203,20 +194,11 @@ class AgnoVersionSyncService:
                 "error": str(e)
             }
     
-    def update_yaml_from_agno(self, yaml_file: str, component_id: str, component_type: str):
+    async def update_yaml_from_agno(self, yaml_file: str, component_id: str, component_type: str):
         """Update YAML file with active Agno version configuration"""
         # Get active version from Agno storage
         try:
-            agno_version = self.version_service.get_active_version(component_id)
-            # Defensive check to ensure we got the expected type
-            if hasattr(agno_version, '__await__'):
-                logger.error("🔧 Got coroutine instead of VersionInfo", component_id=component_id)
-                # Properly close the coroutine to avoid RuntimeWarning
-                try:
-                    agno_version.close()
-                except:
-                    pass
-                agno_version = None
+            agno_version = await self.version_service.get_active_version(component_id)
         except Exception as version_error:
             logger.error("🔧 Error getting active version", component_id=component_id, error=str(version_error))
             agno_version = None
@@ -315,7 +297,7 @@ class AgnoVersionSyncService:
         
         return discovered
     
-    def force_sync_component(
+    async def force_sync_component(
         self,
         component_id: str,
         component_type: str,
@@ -328,11 +310,11 @@ class AgnoVersionSyncService:
             raise ValueError(f"No YAML file found for {component_type} {component_id}")
         
         if direction == "auto":
-            return self.sync_single_component(yaml_file, component_type)
+            return await self.sync_single_component(yaml_file, component_type)
         elif direction == "yaml_to_agno":
             with open(yaml_file, 'r', encoding='utf-8') as f:
                 yaml_config = yaml.safe_load(f)
-            _, action = self.version_service.sync_from_yaml(
+            _, action = await self.version_service.sync_from_yaml(
                 component_id=component_id,
                 component_type=component_type,
                 yaml_config=yaml_config,
@@ -340,7 +322,7 @@ class AgnoVersionSyncService:
             )
             return {"action": action, "direction": "yaml_to_agno"}
         elif direction == "agno_to_yaml":
-            self.update_yaml_from_agno(yaml_file, component_id, component_type)
+            await self.update_yaml_from_agno(yaml_file, component_id, component_type)
             return {"action": "yaml_updated", "direction": "agno_to_yaml"}
         else:
             raise ValueError(f"Invalid direction: {direction}")
@@ -393,7 +375,7 @@ class AgnoVersionSyncService:
 
 
 # Convenience function for startup integration
-def sync_all_components() -> Dict[str, Any]:
+async def sync_all_components() -> Dict[str, Any]:
     """Convenience function to sync all components on startup"""
     sync_service = AgnoVersionSyncService()
-    return sync_service.sync_on_startup()
+    return await sync_service.sync_on_startup()

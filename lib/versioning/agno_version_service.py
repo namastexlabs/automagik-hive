@@ -9,7 +9,6 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
-import asyncio
 
 from lib.services.component_version_service import ComponentVersionService, ComponentVersion as DBComponentVersion, VersionHistory as DBVersionHistory
 from pydantic import BaseModel
@@ -46,7 +45,7 @@ class AgnoVersionService:
         """Initialize with database URL"""
         self.db_url = db_url
         self.user_id = user_id
-        self.component_service = ComponentVersionService()
+        self.component_service = ComponentVersionService(db_url)
         self.sync_results = {}
     
     def _db_to_version_info(self, db_version: DBComponentVersion) -> VersionInfo:
@@ -75,7 +74,7 @@ class AgnoVersionService:
             new_config=None
         )
     
-    def create_version(
+    async def create_version(
         self,
         component_id: str,
         component_type: str,
@@ -85,9 +84,9 @@ class AgnoVersionService:
         created_by: Optional[str] = None
     ) -> int:
         """Create a new component version."""
-        return asyncio.run(self._create_version_async(
+        return await self._create_version_async(
             component_id, component_type, version, config, description, created_by
-        ))
+        )
     
     async def _create_version_async(
         self,
@@ -120,27 +119,27 @@ class AgnoVersionService:
         
         return version_id
     
-    def get_version(self, component_id: str, version: int) -> Optional[VersionInfo]:
+    async def get_version(self, component_id: str, version: int) -> Optional[VersionInfo]:
         """Get specific component version."""
-        return asyncio.run(self._get_version_async(component_id, version))
+        return await self._get_version_async(component_id, version)
     
     async def _get_version_async(self, component_id: str, version: int) -> Optional[VersionInfo]:
         """Async implementation of get_version."""
         db_version = await self.component_service.get_component_version(component_id, version)
         return self._db_to_version_info(db_version) if db_version else None
     
-    def get_active_version(self, component_id: str) -> Optional[VersionInfo]:
+    async def get_active_version(self, component_id: str) -> Optional[VersionInfo]:
         """Get active component version."""
-        return asyncio.run(self._get_active_version_async(component_id))
+        return await self._get_active_version_async(component_id)
     
     async def _get_active_version_async(self, component_id: str) -> Optional[VersionInfo]:
         """Async implementation of get_active_version."""
         db_version = await self.component_service.get_active_version(component_id)
         return self._db_to_version_info(db_version) if db_version else None
     
-    def set_active_version(self, component_id: str, version: int, changed_by: Optional[str] = None) -> bool:
+    async def set_active_version(self, component_id: str, version: int, changed_by: Optional[str] = None) -> bool:
         """Set a version as active."""
-        return asyncio.run(self._set_active_version_async(component_id, version, changed_by))
+        return await self._set_active_version_async(component_id, version, changed_by)
     
     async def _set_active_version_async(self, component_id: str, version: int, changed_by: Optional[str] = None) -> bool:
         """Async implementation of set_active_version."""
@@ -150,18 +149,18 @@ class AgnoVersionService:
             changed_by=changed_by or self.user_id
         )
     
-    def list_versions(self, component_id: str) -> List[VersionInfo]:
+    async def list_versions(self, component_id: str) -> List[VersionInfo]:
         """List all versions for a component."""
-        return asyncio.run(self._list_versions_async(component_id))
+        return await self._list_versions_async(component_id)
     
     async def _list_versions_async(self, component_id: str) -> List[VersionInfo]:
         """Async implementation of list_versions."""
         db_versions = await self.component_service.list_component_versions(component_id)
         return [self._db_to_version_info(v) for v in db_versions]
     
-    def get_version_history(self, component_id: str) -> List[VersionHistory]:
+    async def get_version_history(self, component_id: str) -> List[VersionHistory]:
         """Get version history for a component.""" 
-        return asyncio.run(self._get_version_history_async(component_id))
+        return await self._get_version_history_async(component_id)
     
     async def _get_version_history_async(self, component_id: str) -> List[VersionHistory]:
         """Async implementation of get_version_history."""
@@ -179,3 +178,49 @@ class AgnoVersionService:
             "teams": [],
             "workflows": []
         }
+    
+    async def sync_from_yaml(
+        self,
+        component_id: str,
+        component_type: str,
+        yaml_config: Dict[str, Any],
+        yaml_file_path: str
+    ) -> Tuple[Optional[VersionInfo], str]:
+        """Sync component from YAML configuration."""
+        try:
+            # Extract component section based on type
+            component_section = yaml_config.get(component_type, {})
+            if not component_section:
+                return None, "no_component_section"
+            
+            version = component_section.get('version')
+            if not version or version == "dev":
+                return None, "dev_version_skip"
+            
+            if not isinstance(version, int):
+                return None, "invalid_version"
+            
+            # Check if version already exists
+            existing = await self.get_version(component_id, version)
+            if existing:
+                return existing, "version_exists"
+            
+            # Create new version
+            version_id = await self.create_version(
+                component_id=component_id,
+                component_type=component_type,
+                version=version,
+                config=yaml_config,
+                description=f"Synced from {yaml_file_path}",
+                created_by=self.user_id
+            )
+            
+            # Set as active
+            await self.set_active_version(component_id, version, self.user_id)
+            
+            # Return the created version
+            created_version = await self.get_version(component_id, version)
+            return created_version, "created_and_activated"
+            
+        except Exception as e:
+            return None, f"error: {str(e)}"

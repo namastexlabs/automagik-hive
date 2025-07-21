@@ -21,7 +21,53 @@ def setup_logging():
     
     # Set log level for loguru - use sys.stderr to avoid file creation
     import sys
-    logger.configure(handlers=[{"sink": sys.stderr, "level": level}])
+    
+    # Create module filter function for Loguru
+    def module_filter(record):
+        """Filter function to suppress noisy modules in INFO mode."""
+        module_name = record.get("name", "")
+        
+        # In INFO mode, suppress these noisy modules
+        if level == "INFO":
+            noisy_modules = [
+                "lib.services.migration_service",
+                "lib.config.models",
+                "lib.utils.agno_storage_utils", 
+                "lib.utils.proxy_teams",
+                "ai.workflows.shared.config_loader", 
+                "ai.teams.registry",
+                "api.serve",
+                "__main__",
+                "__mp_main__"  # Multiprocessing main modules
+            ]
+            
+            # Only show WARNING+ from noisy modules
+            if any(module_name.startswith(mod) for mod in noisy_modules):
+                return record["level"].no >= 30  # WARNING level (30)
+        
+        return True
+    
+    # Custom format that suppresses module names starting with __mp_ or __main__
+    def custom_format(record):
+        """Custom format function to clean up module names in logs."""
+        module_name = record.get("name", "")
+        
+        # For multiprocessing main modules, just show the level and message
+        if module_name.startswith(("__mp_", "__main__")):
+            level_name = record["level"].name
+            message = record["message"]
+            time = record["time"].strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            return f"{time} | {level_name:<8} | {message}\n"
+        
+        # Default format for other modules
+        return "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>\n"
+    
+    logger.configure(handlers=[{
+        "sink": sys.stderr, 
+        "level": level,
+        "filter": module_filter,
+        "format": custom_format
+    }])
     
     # Also configure standard Python logging (for Agno and other libraries)
     level_mapping = {
