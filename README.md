@@ -228,8 +228,6 @@ Most relevant domain documents
 ### Hot Reload Configuration
 ```python
 # Automatically activated in development
-HIVE_CSV_HOT_RELOAD=true
-
 # Watchdog monitors changes in:
 # context/knowledge/knowledge_rag.csv
 ```
@@ -370,7 +368,6 @@ automagik-hive/
 HIVE_ENVIRONMENT=development
 HIVE_API_PORT=9888          # Overrides default 7777
 HIVE_DEMO_MODE=true         # Rich interface enabled
-HIVE_CSV_HOT_RELOAD=true         # Hot reload active
 
 # Required APIs
 ANTHROPIC_API_KEY=your-key
