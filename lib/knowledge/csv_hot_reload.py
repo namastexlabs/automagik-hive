@@ -61,11 +61,11 @@ class CSVHotReloadManager:
                 from agno.embedder.openai import OpenAIEmbedder
                 global_knowledge = load_global_knowledge_config()
                 embedder_model = global_knowledge.get("vector_db", {}).get("embedder", "text-embedding-3-small")
-                embedder = OpenAIEmbedder(model=embedder_model)
+                embedder = OpenAIEmbedder(id=embedder_model)
             except Exception as e:
                 logger.warning("🔧 Could not load global embedder config: %s", e)
                 from agno.embedder.openai import OpenAIEmbedder
-                embedder = OpenAIEmbedder(model="text-embedding-3-small")
+                embedder = OpenAIEmbedder(id="text-embedding-3-small")
             
             # Create PgVector instance  
             vector_db = PgVector(

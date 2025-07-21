@@ -338,7 +338,7 @@ class AgnoAgentProxy:
                 # Get embedder from global config and create proper embedder object
                 from agno.embedder.openai import OpenAIEmbedder
                 embedder_model = global_knowledge.get("vector_db", {}).get("embedder", "text-embedding-3-small")
-                embedder = OpenAIEmbedder(model=embedder_model)
+                embedder = OpenAIEmbedder(id=embedder_model)
                 
                 vector_db = PgVector(
                     table_name="knowledge_base",
