@@ -1,9 +1,8 @@
-team:
-  mode: route
-  name: Template Team
-  team_id: template-team
-  version: 8
-  description: Template demonstrating all Agno Team parameters
+workflow:
+  name: Template Workflow
+  workflow_id: template-workflow
+  version: 1
+  description: Template demonstrating all Agno Workflow parameters
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514

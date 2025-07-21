@@ -317,9 +317,7 @@ class AgnoAgentProxy:
                                component_id: str, db_url: Optional[str]) -> Optional[object]:
         """Handle custom knowledge filter system."""
         try:
-            # Knowledge base creation is now handled by RowBasedCSVKnowledgeBase + PgVector directly
-            from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
-            from agno.vectordb.pgvector import PgVector
+            # Knowledge base creation is now handled by shared factory pattern
             
             # Load global knowledge config first
             try:
@@ -344,30 +342,18 @@ class AgnoAgentProxy:
                               component=component_id, agent_path=knowledge_filter["csv_file_path"])
             
             if csv_path and db_url:
-                # Create knowledge base using pure Agno abstractions
-                # Get embedder from global config and create proper embedder object
-                from agno.embedder.openai import OpenAIEmbedder
-                embedder_model = global_knowledge.get("vector_db", {}).get("embedder", "text-embedding-3-small")
-                embedder = OpenAIEmbedder(id=embedder_model)
-                
-                vector_db = PgVector(
-                    table_name="knowledge_base",
-                    schema="agno",  # Use agno schema for Agno framework tables
-                    db_url=db_url,
-                    embedder=embedder
-                )
-                
-                # Create CSV knowledge base using row-based processing (one document per CSV row)
-                knowledge_base = RowBasedCSVKnowledgeBase(
-                    csv_path=csv_path,
-                    vector_db=vector_db
-                )
-                
-                # Load using Agno's native incremental loading
+                # Use shared knowledge base from factory to avoid duplicate CSV processing
                 try:
-                    knowledge_base.load(recreate=False, skip_existing=True)
+                    from lib.knowledge.knowledge_factory import get_knowledge_base
+                    knowledge_base = get_knowledge_base(
+                        config=global_knowledge,
+                        db_url=db_url,
+                        num_documents=max_results,
+                        csv_path=csv_path
+                    )
+                    logger.debug(f"🤖 Using shared knowledge base for {component_id}")
                 except Exception as e:
-                    logger.warning(f"🤖 Failed to load knowledge base: {e}")
+                    logger.warning(f"🤖 Failed to load shared knowledge base: {e}")
                 
                 return knowledge_base
         except Exception as e:

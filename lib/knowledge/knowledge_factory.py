@@ -86,8 +86,12 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
         # Convert to Path and resolve if relative
         csv_path = Path(csv_path)
         if not csv_path.is_absolute():
-            # Only add parent path if it's not already in the knowledge folder
-            if not str(csv_path).startswith("lib/knowledge/"):
+            # For relative paths, resolve against knowledge directory
+            if str(csv_path).startswith("lib/knowledge/"):
+                # Path already includes knowledge folder, resolve from project root
+                csv_path = csv_path.resolve()
+            else:
+                # Path doesn't include knowledge folder, add it
                 csv_path = Path(__file__).parent / csv_path
         logger.info("📊 Using provided CSV path", csv_path=str(csv_path))
     

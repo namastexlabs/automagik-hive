@@ -1,8 +1,9 @@
-workflow:
-  name: Template Workflow
-  workflow_id: template-workflow
-  version: 8
-  description: Template demonstrating all Agno Workflow parameters
+team:
+  mode: route
+  name: Template Team
+  team_id: template-team
+  version: 1
+  description: Template demonstrating all Agno Team parameters
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
@@ -28,6 +29,8 @@ context:
   add_state_in_messages: true
   enable_agentic_context: true
   share_member_interactions: true
+members:
+- template-agent
 events:
   store_events: true
   events_to_skip: []

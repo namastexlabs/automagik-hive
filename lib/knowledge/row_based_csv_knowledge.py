@@ -98,8 +98,8 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                         )
                         documents.append(doc)
                         
-                        # Show progress for business units
-                        if row_index > 0 and (row_index + 1) % 10 == 0:  # Every 10 rows
+                        # Show progress for business units (reduced frequency)
+                        if row_index > 0 and (row_index + 1) % 50 == 0:  # Every 50 rows
                             tqdm.write(f"Processed {row_index + 1}/{len(rows)} rows...")
             
             # Count documents by business unit for final summary
