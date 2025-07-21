@@ -131,6 +131,11 @@ class AgnoVersionSyncService:
                 # Defensive check to ensure we got the expected type
                 if hasattr(agno_version, '__await__'):
                     logger.error("🔧 Got coroutine instead of VersionInfo", component_id=component_id)
+                    # Properly close the coroutine to avoid RuntimeWarning
+                    try:
+                        agno_version.close()
+                    except:
+                        pass
                     agno_version = None
             except Exception as version_error:
                 logger.error("🔧 Error getting active version", component_id=component_id, error=str(version_error))
@@ -206,6 +211,11 @@ class AgnoVersionSyncService:
             # Defensive check to ensure we got the expected type
             if hasattr(agno_version, '__await__'):
                 logger.error("🔧 Got coroutine instead of VersionInfo", component_id=component_id)
+                # Properly close the coroutine to avoid RuntimeWarning
+                try:
+                    agno_version.close()
+                except:
+                    pass
                 agno_version = None
         except Exception as version_error:
             logger.error("🔧 Error getting active version", component_id=component_id, error=str(version_error))

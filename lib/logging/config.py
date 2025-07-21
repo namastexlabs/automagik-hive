@@ -19,8 +19,9 @@ def setup_logging():
     if level == "WARN":
         level = "WARNING"
     
-    # Set log level for loguru
-    logger.configure(handlers=[{"sink": "stderr", "level": level}])
+    # Set log level for loguru - use sys.stderr to avoid file creation
+    import sys
+    logger.configure(handlers=[{"sink": sys.stderr, "level": level}])
     
     # Also configure standard Python logging (for Agno and other libraries)
     level_mapping = {
@@ -36,21 +37,20 @@ def setup_logging():
     # Configure root logger
     logging.getLogger().setLevel(level_mapping.get(level, logging.INFO))
     
-    # Suppress specific noisy loggers when not in DEBUG mode
+    # Configure specific logger levels
+    # Always suppress uvicorn access logs (too noisy)
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    
+    # Suppress other commonly noisy libraries only when not in DEBUG
     if level != "DEBUG":
-        # Suppress uvicorn access logs and startup messages
-        logging.getLogger("uvicorn").setLevel(logging.WARNING)
-        logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-        logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
-        
-        # Suppress other common noisy libraries
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("requests").setLevel(logging.WARNING)
         logging.getLogger("httpx").setLevel(logging.WARNING)
-        logging.getLogger("alembic").setLevel(logging.WARNING)
-        
-        # Try to suppress agno if possible
-        logging.getLogger("agno").setLevel(logging.WARNING)
+    
+    # Configure AGNO logging level from environment variable
+    agno_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
+    if agno_level in level_mapping:
+        logging.getLogger("agno").setLevel(level_mapping[agno_level])
 
 
 # Performance optimization: lazy initialization
