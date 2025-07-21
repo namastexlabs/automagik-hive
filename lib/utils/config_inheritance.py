@@ -100,7 +100,7 @@ class ConfigInheritanceManager:
         defaults = {}
         
         for category, parameters in self.INHERITABLE_PARAMETERS.items():
-            if category in team_config:
+            if category in team_config and team_config[category] is not None:
                 defaults[category] = {}
                 for param in parameters:
                     if param in team_config[category]:
@@ -249,7 +249,7 @@ def load_team_with_inheritance(team_id: str, base_path: str = "ai") -> Dict[str,
     
     # Load all member agent configs
     agent_configs = {}
-    for member_id in team_config.get('members', []):
+    for member_id in (team_config.get('members') or []):
         agent_config_path = Path(base_path) / "agents" / member_id / "config.yaml"
         if agent_config_path.exists():
             with open(agent_config_path) as f:

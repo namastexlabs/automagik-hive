@@ -6,7 +6,7 @@ Unified logging configuration using Loguru with zero performance impact.
 Uses standard logging levels for consistent behavior.
 
 Environment Variables:
-- HIVE_LOG_LEVEL: DEBUG, INFO, WARN, ERROR (default: INFO)
+- HIVE_LOG_LEVEL: DEBUG, INFO, WARNING, ERROR (default: INFO)
 - HIVE_LOG_DIR: Optional log directory (default: no file logging)
 """
 

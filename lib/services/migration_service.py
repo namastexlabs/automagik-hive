@@ -48,7 +48,7 @@ class MigrationService:
     def _convert_to_sync_url(self, async_url: str) -> str:
         """Convert async psycopg URL to sync for Alembic compatibility."""
         if async_url.startswith("postgresql+psycopg://"):
-            return async_url.replace("postgresql+psycopg://", "postgresql://")
+            return async_url  # Keep psycopg3 dialect
         elif async_url.startswith("postgresql://"):
             return async_url  # Already sync format
         else:
@@ -71,7 +71,15 @@ class MigrationService:
                 
                 with engine.connect() as connection:
                     context = MigrationContext.configure(connection)
-                    current_rev = context.get_current_revision()
+                    
+                    try:
+                        current_rev = context.get_current_revision()
+                    except Exception:
+                        # Database is uninitialized - no alembic_version table exists
+                        # This is expected for first-time setup
+                        logger.info("🔧 Database uninitialized - no alembic_version table found")
+                        current_rev = None
+                    
                     head_rev = script.get_current_head()
                     
                     return {

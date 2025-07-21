@@ -205,7 +205,7 @@ class VersionFactory:
                         potential_team_config = yaml.safe_load(f)
                     
                     # Check if this agent is a member of this team
-                    members = potential_team_config.get('members', [])
+                    members = potential_team_config.get('members') or []
                     if agent_id in members:
                         team_config = potential_team_config
                         team_id = team_config_file.split('/')[-2]  # Extract team_id from path
@@ -325,7 +325,7 @@ class VersionFactory:
             
             # Load all member agent configurations
             agent_configs = {}
-            members = config.get('members', [])
+            members = config.get('members') or []
             
             for member_id in members:
                 agent_config_path = f"ai/agents/{member_id}/config.yaml"

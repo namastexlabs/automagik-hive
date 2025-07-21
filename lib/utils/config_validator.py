@@ -77,7 +77,7 @@ class AGNOConfigValidator:
         self._merge_results(result, team_validation)
         
         # Validate all team members
-        members = team_config.get('members', [])
+        members = team_config.get('members') or []
         member_configs = {}
         
         for member_id in members:
@@ -169,7 +169,7 @@ class AGNOConfigValidator:
                 result.is_valid = False
         
         # Validate team members exist
-        members = config.get('members', [])
+        members = config.get('members') or []
         if not members:
             result.warnings.append(f"Team {team_id}: No members defined")
         
@@ -278,7 +278,7 @@ class AGNOConfigValidator:
             try:
                 with open(team_path) as f:
                     team_config = yaml.safe_load(f)
-                members = team_config.get('members', [])
+                members = team_config.get('members') or []
                 all_team_members.update(members)
             except Exception:
                 continue
@@ -368,7 +368,7 @@ class AGNOConfigValidator:
             try:
                 with open(team_path) as f:
                     team_config = yaml.safe_load(f)
-                members = team_config.get('members', [])
+                members = team_config.get('members') or []
                 all_team_members.update(members)
             except Exception:
                 continue

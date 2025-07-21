@@ -493,8 +493,6 @@ def create_automagik_api():
         app.docs_url = "/docs"
         app.redoc_url = "/redoc"
         app.openapi_url = "/openapi.json"
-        if (demo_mode or is_development) and not is_reloader:
-            pass  # Removed verbose API documentation logging
     else:
         app.docs_url = None
         app.redoc_url = None
@@ -522,7 +520,7 @@ def create_automagik_api():
         from api.routes.version_router import version_router
         app.include_router(version_router)
         
-        if (demo_mode or is_development) and not is_reloader:
+        if is_development and not is_reloader:
             # Add development URLs
             port = get_server_config().port
             from rich.console import Console

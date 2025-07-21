@@ -48,8 +48,8 @@ class ServerConfig:
         if self.environment not in ["development", "staging", "production"]:
             raise ValueError(f"Invalid environment: {self.environment}. Must be one of: development, staging, production.")
         
-        if self.log_level not in ["DEBUG", "INFO", "WARN", "ERROR"]:
-            raise ValueError(f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARN, ERROR.")
+        if self.log_level not in ["DEBUG", "INFO", "WARNING", "ERROR"]:
+            raise ValueError(f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARNING, ERROR.")
     
     @classmethod
     def get_instance(cls) -> 'ServerConfig':

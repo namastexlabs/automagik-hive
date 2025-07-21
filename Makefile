@@ -111,7 +111,7 @@ define generate_postgres_credentials
     POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
     POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
     POSTGRES_DB="hive"; \
-    sed -i "s|HIVE_DATABASE_URL=postgresql+psycopg://hive_user:your-secure-password-here@localhost:5532/hive|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
+    sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
     $(call print_success,PostgreSQL credentials generated and saved to .env); \
     echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
     echo -e "  User: $$POSTGRES_USER"; \
@@ -128,6 +128,13 @@ define setup_docker_postgres
         $(call check_docker); \
         $(call generate_postgres_credentials); \
         echo -e "$(FONT_CYAN)🐳 Starting PostgreSQL container...$(FONT_RESET)"; \
+        DB_URL=$$(grep '^HIVE_DATABASE_URL=' .env | cut -d'=' -f2-); \
+        WITHOUT_PROTOCOL=$${DB_URL#*://}; \
+        CREDENTIALS=$${WITHOUT_PROTOCOL%%@*}; \
+        AFTER_AT=$${WITHOUT_PROTOCOL##*@}; \
+        export POSTGRES_USER=$${CREDENTIALS%%:*}; \
+        export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
+        export POSTGRES_DB=$${AFTER_AT##*/}; \
         $(DOCKER_COMPOSE) up -d postgres; \
         echo -e "$(FONT_GREEN)$(CHECKMARK) PostgreSQL container started with secure credentials!$(FONT_RESET)"; \
         echo -e "$(FONT_YELLOW)💡 Run 'make prod' to start the full production stack$(FONT_RESET)"; \
@@ -250,7 +257,18 @@ prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
 	@$(call check_docker)
 	@$(call check_env_file)
 	@echo -e "$(FONT_CYAN)🐳 Building and starting containers...$(FONT_RESET)"
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
+	@if [ -f .env ]; then \
+		DB_URL=$$(grep '^HIVE_DATABASE_URL=' .env | cut -d'=' -f2-); \
+		if [ -n "$$DB_URL" ]; then \
+			WITHOUT_PROTOCOL=$${DB_URL#*://}; \
+			CREDENTIALS=$${WITHOUT_PROTOCOL%%@*}; \
+			AFTER_AT=$${WITHOUT_PROTOCOL##*@}; \
+			export POSTGRES_USER=$${CREDENTIALS%%:*}; \
+			export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
+			export POSTGRES_DB=$${AFTER_AT##*/}; \
+		fi; \
+	fi; \
+	$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
 	@$(call show_hive_logo)
 	@$(call print_success,Production stack started!)
 	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
@@ -404,7 +422,7 @@ uninstall-containers-only: ## 🗑️ Remove containers only
 	@$(call print_status,Removing containers only...)
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
 	@docker container rm hive-agents hive-postgres 2>/dev/null || true
-	@pkill -f "python.*api/serve.py" 2>/dev/null || true
+	@if pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then pkill -f "python.*api/serve.py" 2>/dev/null || true; fi
 	@$(call print_success,Containers removed)
 	@echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"
 	@echo -e "$(FONT_GREEN)✓ Kept: Virtual environment (.venv/)$(FONT_RESET)"
@@ -417,7 +435,7 @@ uninstall-clean: ## 🗑️ Remove containers and venv
 	if [ "$$CONFIRM" = "yes" ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
 		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
-		pkill -f "python.*api/serve.py" 2>/dev/null || true; \
+		if pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then pkill -f "python.*api/serve.py" 2>/dev/null || true; fi; \
 		rm -rf .venv/ 2>/dev/null || true; \
 		$(call print_success,Clean uninstall complete); \
 		echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"; \
@@ -437,12 +455,7 @@ uninstall-purge: ## 🗑️ Full purge including data
 	@echo -e "$(FONT_YELLOW)Type 'DELETE EVERYTHING' to confirm full purge:$(FONT_RESET)"
 	@read -r CONFIRM < /dev/tty; \
 	if [ "$$CONFIRM" = "DELETE EVERYTHING" ]; then \
-		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
-		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
-		docker volume rm $$(docker volume ls -q | grep -E "(postgres|hive)" 2>/dev/null) 2>/dev/null || true; \
-		pkill -f "python.*api/serve.py" 2>/dev/null || true; \
-		rm -rf .venv/ ./data/ logs/ 2>/dev/null || true; \
-		$(call print_success,Full purge complete - all data deleted); \
+		./scripts/purge.sh; \
 	else \
 		echo -e "$(FONT_CYAN)Purge cancelled$(FONT_RESET)"; \
 	fi

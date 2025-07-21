@@ -77,7 +77,7 @@ class AGNOConfigMigrator:
             team_config = yaml.safe_load(f)
         
         # Load all member configurations
-        members = team_config.get('members', [])
+        members = team_config.get('members') or []
         member_configs = {}
         original_configs = {}
         

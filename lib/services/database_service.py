@@ -22,9 +22,12 @@ class DatabaseService:
     
     def __init__(self, db_url: Optional[str] = None, min_size: int = 2, max_size: int = 10):
         """Initialize database service with connection pool."""
-        self.db_url = db_url or os.getenv("HIVE_DATABASE_URL")
-        if not self.db_url:
+        raw_db_url = db_url or os.getenv("HIVE_DATABASE_URL")
+        if not raw_db_url:
             raise ValueError("HIVE_DATABASE_URL environment variable must be set")
+        
+        # Convert SQLAlchemy URL format to psycopg format by removing dialect identifier
+        self.db_url = raw_db_url.replace("postgresql+psycopg://", "postgresql://")
         
         self.pool: Optional[AsyncConnectionPool] = None
         self.min_size = min_size
