@@ -24,27 +24,7 @@ def setup_logging():
     
     # Create module filter function for Loguru
     def module_filter(record):
-        """Filter function to suppress noisy modules in INFO mode."""
-        module_name = record.get("name", "")
-        
-        # In INFO mode, suppress these noisy modules
-        if level == "INFO":
-            noisy_modules = [
-                "lib.services.migration_service",
-                "lib.config.models",
-                "lib.utils.agno_storage_utils", 
-                "lib.utils.proxy_teams",
-                "ai.workflows.shared.config_loader", 
-                "ai.teams.registry",
-                "api.serve",
-                "__main__",
-                "__mp_main__"  # Multiprocessing main modules
-            ]
-            
-            # Only show WARNING+ from noisy modules
-            if any(module_name.startswith(mod) for mod in noisy_modules):
-                return record["level"].no >= 30  # WARNING level (30)
-        
+        """Filter function for clean logging."""
         return True
     
     # Custom format that suppresses module names starting with __mp_ or __main__
@@ -60,7 +40,7 @@ def setup_logging():
             return f"{time} | {level_name:<8} | {message}\n"
         
         # Default format for other modules
-        return "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>\n"
+        return "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <level>{message}</level>\n"
     
     logger.configure(handlers=[{
         "sink": sys.stderr, 
@@ -70,18 +50,13 @@ def setup_logging():
     }])
     
     # Also configure standard Python logging (for Agno and other libraries)
-    level_mapping = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARNING": logging.WARNING,
-        "ERROR": logging.ERROR
-    }
+    log_level = getattr(logging, level, logging.INFO)
     
     # Set standard logging level to match
-    logging.basicConfig(level=level_mapping.get(level, logging.INFO))
+    logging.basicConfig(level=log_level)
     
     # Configure root logger
-    logging.getLogger().setLevel(level_mapping.get(level, logging.INFO))
+    logging.getLogger().setLevel(log_level)
     
     # Configure specific logger levels
     # Always suppress uvicorn access logs (too noisy)
@@ -108,8 +83,8 @@ def setup_logging():
     
     # Configure AGNO logging level from environment variable
     agno_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
-    if agno_level in level_mapping:
-        logging.getLogger("agno").setLevel(level_mapping[agno_level])
+    agno_log_level = getattr(logging, agno_level, logging.WARNING)
+    logging.getLogger("agno").setLevel(agno_log_level)
 
 
 # Performance optimization: lazy initialization

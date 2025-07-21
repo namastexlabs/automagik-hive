@@ -105,9 +105,6 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             for bu, count in business_unit_counts.items():
                 if bu and bu != 'Unknown':
                     logger.info(f"📊 ✓ {bu}: {count} documents processed")
-            
-            logger.info("📊 CSV loaded successfully", 
-                       total_rows=len(documents), csv_path=str(csv_path))
                        
         except Exception as e:
             logger.error("📊 Error loading CSV file", error=str(e), csv_path=str(csv_path))
