@@ -8,6 +8,7 @@ shared storage utilities to eliminate code duplication.
 
 import inspect
 from typing import Dict, Any, Optional, Set, Callable
+from pathlib import Path
 
 from agno.agent import Agent
 from agno.models.anthropic import Claude
@@ -328,7 +329,13 @@ class AgnoAgentProxy:
                 global_knowledge = {}
             
             # Use global config as primary source (csv_file_path should not be in agent configs)
-            csv_path = global_knowledge.get("csv_file_path")
+            csv_path_raw = global_knowledge.get("csv_file_path")
+            if csv_path_raw:
+                # Resolve relative path to knowledge directory (like knowledge_factory.py)
+                csv_path = str(Path(__file__).parent.parent / "knowledge" / csv_path_raw)
+                logger.debug(f"🤖 Resolved CSV path for {component_id}", csv_path=csv_path)
+            else:
+                csv_path = None
             max_results = knowledge_filter.get("max_results", global_knowledge.get("max_results", 10))
             
             # Warn if agent config has csv_file_path (should be removed)

@@ -1,12 +1,12 @@
 workflow:
   workflow_id: human-handoff
-  name: "Human Handoff Workflow"
-  description: "Escalation workflow for human handoff with automatic protocol generation"
+  name: Human Handoff Workflow
+  description: Escalation workflow for human handoff with automatic protocol generation
   version: 2
-
 agent:
   agent_id: human-handoff
   name: Ana - Human Handoff
+  version: 3
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514

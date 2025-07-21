@@ -1,18 +1,16 @@
 workflow:
-  workflow_id: template
-  name: "Template Workflow"
-  description: "Template workflow demonstrating proper Agno Workflow configuration structure and parameters"
-  version: 4
+  name: Template Workflow
+  workflow_id: template-workflow
+  version: 8
+  description: Template demonstrating all Agno Workflow parameters
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
   temperature: 0.7
   max_tokens: 2000
-members:
-- template_example
 storage:
   type: postgres
-  table_name: template_teams
+  table_name: template_agents
   auto_upgrade_schema: true
 memory:
   num_history_runs: 10

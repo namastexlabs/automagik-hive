@@ -1,8 +1,7 @@
 agent:
   name: Template Agent
-  role: Template Agent for Development
-  agent_id: template
-  version: 4
+  agent_id: template-agent
+  version: 8
   description: Template demonstrating all Agno Agent parameters
 model:
   provider: anthropic

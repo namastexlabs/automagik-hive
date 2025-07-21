@@ -121,6 +121,90 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         
         return documents
     
+    def load(
+        self,
+        recreate: bool = False,
+        upsert: bool = False,
+        skip_existing: bool = True,
+    ) -> None:
+        """
+        Load the knowledge base to the vector db with progress tracking.
+        
+        Override parent method to add tqdm progress bars during the slow vector operations.
+        """
+        if self.vector_db is None:
+            logger.warning("📊 No vector db provided")
+            return
+
+        from agno.utils.log import log_info, log_debug
+
+        if recreate:
+            log_info("Dropping collection")
+            self.vector_db.drop()
+
+        if not self.vector_db.exists():
+            log_info("Creating collection") 
+            self.vector_db.create()
+
+        log_info("Loading knowledge base")
+        
+        # Collect all documents first to show accurate progress
+        all_documents = []
+        for document_list in self.document_lists:
+            all_documents.extend(document_list)
+        
+        # Track metadata for filtering capabilities (before processing)
+        for doc in all_documents:
+            if doc.meta_data:
+                self._track_metadata_structure(doc.meta_data)
+        
+        # Filter existing documents if needed
+        if skip_existing and not upsert:
+            log_debug("Filtering out existing documents before insertion.")
+            all_documents = self.filter_existing_documents(all_documents)
+        
+        if not all_documents:
+            log_info("No documents to load")
+            return
+        
+        # Count documents by business unit for progress tracking
+        business_unit_counts = {}
+        for doc in all_documents:
+            bu = doc.meta_data.get('business_unit', 'Unknown')
+            business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
+        
+        # Process documents with progress bar - this is where the 33-second delay occurs
+        with tqdm(all_documents, desc="Embedding & upserting documents", unit="doc", leave=True) as pbar:
+            processed_by_unit = {}
+            
+            for doc in pbar:
+                try:
+                    # Upsert or insert individual document
+                    if upsert and self.vector_db.upsert_available():
+                        self.vector_db.upsert(documents=[doc], filters=doc.meta_data)
+                    else:
+                        self.vector_db.insert(documents=[doc], filters=doc.meta_data)
+                    
+                    # Track progress by business unit
+                    bu = doc.meta_data.get('business_unit', 'Unknown')
+                    processed_by_unit[bu] = processed_by_unit.get(bu, 0) + 1
+                    
+                    # Update progress description with current business unit
+                    if bu != 'Unknown':
+                        pbar.set_description(f"Embedding & upserting documents ({bu})")
+                    
+                except Exception as e:
+                    logger.error(f"🚨 Error processing document {doc.id}", error=str(e))
+                    continue
+        
+        # Show final business unit summary like the CSV loading does
+        tqdm.write("\n📊 Vector database loading completed:")
+        for bu, count in business_unit_counts.items():
+            if bu and bu != 'Unknown':
+                tqdm.write(f"✓ {bu}: {count} documents embedded & stored")
+        
+        log_info(f"Added {len(all_documents)} documents to knowledge base")
+    
     def reload_from_csv(self):
         """Reload documents from CSV file (for hot reload functionality)."""
         try:

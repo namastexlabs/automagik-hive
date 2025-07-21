@@ -6,7 +6,7 @@ workflow:
 agent:
   agent_id: human-handoff
   name: Ana - Human Handoff
-  version: 2
+  version: 3
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
