@@ -473,31 +473,31 @@ def main():
     kb = get_knowledge_base()
     loader = SmartIncrementalLoader(kb=kb)
     
-    print("🧪 Testing Smart Incremental Loader (PostgreSQL-based)")
-    print("=" * 60)
+    logger.info("🧪 Testing Smart Incremental Loader (PostgreSQL-based)")
+    logger.info("📊 " + "=" * 60)
     
     # Show database stats
     db_stats = loader.get_database_stats()
-    print("📊 Database Stats:")
+    logger.info("📊 Database Stats:")
     for key, value in db_stats.items():
-        print(f"   {key}: {value}")
+        logger.info(f"🔐 {key}: {value}")
     
     # Analyze changes
-    print("\n🔍 Analyzing changes...")
+    logger.info("🔍 Analyzing changes...")
     analysis = loader.analyze_changes()
     if "error" not in analysis:
-        print("📊 Analysis Results:")
+        logger.info("📊 Analysis Results:")
         for key, value in analysis.items():
-            print(f"   {key}: {value}")
+            logger.info(f"🔐 {key}: {value}")
     
     # Smart load
-    print("\n🚀 Starting smart load...")
+    logger.info("📊 🚀 Starting smart load...")
     result = loader.smart_load()
     
-    print("\n📋 Load Results:")
+    logger.info("📋 Load Results:")
     for key, value in result.items():
         if key != 'error':
-            print(f"   {key}: {value}")
+            logger.info(f"🔐 {key}: {value}")
 
 
 if __name__ == "__main__":

@@ -171,8 +171,8 @@ class ConfigAwareFilter:
 
 def test_config_filter():
     """Test the config-aware filter functionality."""
-    print("🧪 Testing Config-Aware Filter")
-    print("=" * 40)
+    logger.info("🧪 Testing Config-Aware Filter")
+    logger.info("📊 " + "=" * 40)
     
     filter_instance = ConfigAwareFilter()
     
@@ -187,21 +187,20 @@ def test_config_filter():
         detected = filter_instance.detect_business_unit_from_text(text)
         if detected:
             unit_info = filter_instance.get_business_unit_info(detected)
-            print(f"Text: {text[:50]}...")
-            print(f"Detected: {unit_info['name']} ({detected})")
-            print()
+            logger.info(f"📊 Text: {text[:50]}...")
+            logger.info(f"📊 Detected: {unit_info['name']} ({detected})")
     
     # Test search and performance settings
     search_params = filter_instance.get_enhanced_search_params()
     performance_settings = filter_instance.get_performance_settings()
     
-    print("🔧 Configuration Settings:")
-    print(f"Max Results: {search_params['max_results']}")
-    print(f"Cache TTL: {performance_settings['cache_ttl']} seconds")
+    logger.info("🔧 Configuration Settings:")
+    logger.info(f"📊 Max Results: {search_params['max_results']}")
+    logger.info(f"⚡ Cache TTL: {performance_settings['cache_ttl']} seconds")
     
     # List all business units
     units = filter_instance.list_business_units()
-    print(f"\n📊 Available Business Units: {list(units.values())}")
+    logger.info(f"📊 Available Business Units: {list(units.values())}")
 
 
 if __name__ == "__main__":
