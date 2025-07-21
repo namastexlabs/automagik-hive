@@ -335,10 +335,14 @@ class AgnoAgentProxy:
             
             if csv_path and db_url:
                 # Create knowledge base using pure Agno abstractions
+                # Get embedder from global config
+                embedder = global_knowledge.get("vector_db", {}).get("embedder", "text-embedding-3-small")
+                
                 vector_db = PgVector(
                     table_name="knowledge_base",
                     schema="agno",  # Use agno schema for Agno framework tables
-                    db_url=db_url
+                    db_url=db_url,
+                    embedder=embedder
                 )
                 
                 knowledge_base = CSVKnowledgeBase(

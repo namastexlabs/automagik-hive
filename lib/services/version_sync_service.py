@@ -126,7 +126,15 @@ class AgnoVersionSyncService:
                 return None
             
             # Get current active version from Agno storage
-            agno_version = self.version_service.get_active_version(component_id)
+            try:
+                agno_version = self.version_service.get_active_version(component_id)
+                # Defensive check to ensure we got the expected type
+                if hasattr(agno_version, '__await__'):
+                    logger.error("🔧 Got coroutine instead of VersionInfo", component_id=component_id)
+                    agno_version = None
+            except Exception as version_error:
+                logger.error("🔧 Error getting active version", component_id=component_id, error=str(version_error))
+                agno_version = None
             
             # Determine sync action
             action_taken = "no_change"
@@ -193,7 +201,15 @@ class AgnoVersionSyncService:
     def update_yaml_from_agno(self, yaml_file: str, component_id: str, component_type: str):
         """Update YAML file with active Agno version configuration"""
         # Get active version from Agno storage
-        agno_version = self.version_service.get_active_version(component_id)
+        try:
+            agno_version = self.version_service.get_active_version(component_id)
+            # Defensive check to ensure we got the expected type
+            if hasattr(agno_version, '__await__'):
+                logger.error("🔧 Got coroutine instead of VersionInfo", component_id=component_id)
+                agno_version = None
+        except Exception as version_error:
+            logger.error("🔧 Error getting active version", component_id=component_id, error=str(version_error))
+            agno_version = None
         if not agno_version:
             logger.warning("🔧 No active Agno version found", component_id=component_id)
             return

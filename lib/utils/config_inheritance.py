@@ -179,7 +179,7 @@ class ConfigInheritanceManager:
                     history_runs[runs] = []
                 history_runs[runs].append(agent_id)
         
-        if len(history_runs) > 2:  # Allow up to 2 different values (team default + 1 override)
+        if len(history_runs) > 3:  # Allow up to 3 different values (team default + 2 overrides for specialized roles)
             errors.append(
                 f"Excessive num_history_runs variation detected: {history_runs}. "
                 f"Consider standardizing or documenting intentional overrides."

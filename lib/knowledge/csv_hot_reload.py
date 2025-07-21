@@ -55,11 +55,21 @@ class CSVHotReloadManager:
             if not db_url:
                 raise ValueError("HIVE_DATABASE_URL environment variable is required")
             
+            # Load global knowledge config for embedder
+            try:
+                from lib.utils.version_factory import load_global_knowledge_config
+                global_knowledge = load_global_knowledge_config()
+                embedder = global_knowledge.get("vector_db", {}).get("embedder", "text-embedding-3-small")
+            except Exception as e:
+                logger.warning("🔧 Could not load global embedder config: %s", e)
+                embedder = "text-embedding-3-small"
+            
             # Create PgVector instance  
             vector_db = PgVector(
                 table_name="knowledge_base",
                 schema="agno",  # Use agno schema for Agno framework tables
-                db_url=db_url
+                db_url=db_url,
+                embedder=embedder
             )
             
             # Create CSVKnowledgeBase

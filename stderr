@@ -1,0 +1,404 @@
+2025-07-21 08:51:49.736 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.739 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.748 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.752 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.754 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.759 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.763 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.771 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.773 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.777 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.781 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.783 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:49.784 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 08:51:49.789 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:51.974 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:51.976 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:51.984 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:51.986 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:51.987 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:51.990 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:51.993 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:52.001 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:52.002 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:52.005 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:52.008 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:52.009 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:51:52.010 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 08:51:52.013 | ERROR    | lib.services.version_sync_service:sync_single_component:185 - 🔧 Error processing config file
+2025-07-21 08:57:20.476 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.480 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.483 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.492 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.496 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.500 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.504 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.513 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.516 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.519 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.524 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.526 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:20.527 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 08:57:20.532 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.721 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.721 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.723 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.723 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.724 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.724 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.732 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.732 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.735 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.735 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.738 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.739 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.742 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.742 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.749 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.749 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.751 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.751 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.753 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.753 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.757 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.757 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.758 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.758 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:22.759 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 08:57:22.762 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:22.762 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.798 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.803 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.806 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.816 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.820 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.824 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.828 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.837 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.840 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.844 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.849 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.851 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:34.852 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 08:57:34.857 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.014 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.015 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.016 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.016 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.017 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.017 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.025 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.025 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.028 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.028 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.031 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.031 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.034 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.034 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.041 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.041 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.043 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.043 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.045 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.045 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.048 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.048 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.049 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.050 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:57:37.050 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 08:57:37.054 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 08:57:37.054 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 08:58:05.376 | INFO     | lib.auth.init_service:_display_key_to_user:86 - 🔐 
+============================================================
+2025-07-21 08:58:05.376 | INFO     | lib.auth.init_service:_display_key_to_user:87 - 🔐 🔑 AUTOMAGIK HIVE - API KEY GENERATED
+2025-07-21 08:58:05.376 | INFO     | lib.auth.init_service:_display_key_to_user:88 - 🔐 ============================================================
+2025-07-21 08:58:05.376 | INFO     | lib.auth.init_service:_display_key_to_user:89 - 🔐 A new API key has been generated and saved to .env:
+2025-07-21 08:58:05.377 | INFO     | lib.auth.init_service:_display_key_to_user:90 - 🔐 
+API Key: hive_fPeNAQxRjwEOuxkbP6W81lobZDGsDDbG_gqADaUXx0A
+2025-07-21 08:58:05.377 | INFO     | lib.auth.init_service:_display_key_to_user:91 - 🔐 
+Use this key in your API requests:
+2025-07-21 08:58:05.377 | INFO     | lib.auth.init_service:_display_key_to_user:92 - 🔐 curl -H "x-api-key: hive_fPeNAQxRjwEOuxkbP6W81lobZDGsDDbG_gqADaUXx0A" \
+2025-07-21 08:58:05.377 | INFO     | lib.auth.init_service:_display_key_to_user:93 - 🔐      http://localhost:9888/api/v1/health
+2025-07-21 08:58:05.377 | INFO     | lib.auth.init_service:_display_key_to_user:94 - 🔐 
+============================================================
+
+2025-07-21 08:58:05.381 | INFO     | __main__:<module>:47 - 🌐 Automagik Hive logging initialized
+2025-07-21 08:58:05.724 | INFO     | ai.workflows.shared.config_loader:load_workflow_config:36 - 🔧 Loaded configuration for workflow: conversation_typification
+2025-07-21 08:58:05.734 | INFO     | ai.teams.registry:_discover_teams:133 - 🤖 Registered team
+2025-07-21 08:58:05.737 | INFO     | ai.teams.registry:_discover_teams:133 - 🤖 Registered team
+2025-07-21 08:58:05.853 | INFO     | api.serve:<module>:47 - 🌐 Automagik Hive logging initialized
+2025-07-21 08:58:05.859 | INFO     | api.serve:create_automagik_api:214 - 🌐 Centralized knowledge configuration loaded
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:86 - 🔐 
+============================================================
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:87 - 🔐 🔑 AUTOMAGIK HIVE - API KEY GENERATED
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:88 - 🔐 ============================================================
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:89 - 🔐 A new API key has been generated and saved to .env:
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:90 - 🔐 
+API Key: hive_j0HY8T9RUUeuTCsH-mudaloFuLbbuFQ6yyicFSrSzgk
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:91 - 🔐 
+Use this key in your API requests:
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:92 - 🔐 curl -H "x-api-key: hive_j0HY8T9RUUeuTCsH-mudaloFuLbbuFQ6yyicFSrSzgk" \
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:93 - 🔐      http://localhost:9888/api/v1/health
+2025-07-21 09:01:02.265 | INFO     | lib.auth.init_service:_display_key_to_user:94 - 🔐 
+============================================================
+
+2025-07-21 09:01:16.057 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.057 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.060 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.060 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.063 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.063 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.072 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.072 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.076 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.076 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.080 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.080 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.085 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.085 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.094 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.094 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.096 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.096 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.100 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.100 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.105 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.105 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.107 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.107 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:16.108 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:01:16.179 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:16.179 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.382 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.383 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.384 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.384 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.385 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.386 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.393 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.393 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.396 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.396 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.399 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.399 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.402 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.402 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.410 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.410 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.411 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.411 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.414 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.414 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.417 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.417 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.418 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.418 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:01:18.419 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:01:18.423 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:01:18.423 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.480 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.484 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.487 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.496 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.499 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.504 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.508 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.516 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.519 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.522 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.526 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.528 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:57.529 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:03:57.536 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.789 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.791 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.792 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.792 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.793 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.793 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.801 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.801 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.804 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.804 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.807 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.807 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.810 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.811 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.818 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.818 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.819 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.819 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.822 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.822 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.825 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.825 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.826 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.826 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:03:59.827 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:03:59.831 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:03:59.831 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.084 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.142 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.218 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.321 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.450 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.513 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.556 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.710 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.773 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.849 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template_example: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:52.867 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.871 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.873 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.883 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.886 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.891 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.896 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.904 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.907 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.910 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.915 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.917 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:52.918 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:04:52.923 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:53.055 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:53.114 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:53.192 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:53.377 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:53.513 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:53.574 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:53.654 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.064 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.122 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.203 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.307 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.438 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.497 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.541 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.702 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.766 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.844 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template_example: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:54.848 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.849 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.850 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.850 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.851 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.851 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.859 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.859 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.862 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.862 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.865 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.865 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.868 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.868 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.875 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.875 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.877 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.877 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.879 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.879 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.883 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.883 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.884 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.884 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:54.885 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:04:54.888 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:04:54.888 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:04:55.021 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:55.083 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:55.160 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:55.267 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:55.403 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:55.464 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:04:55.544 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:19.213 | WARNING  | lib.knowledge.csv_hot_reload:_initialize_knowledge_base:86 - 📊 Failed to initialize knowledge base
+2025-07-21 09:06:20.684 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:20.751 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:20.834 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:20.941 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.077 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.138 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.183 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.378 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.442 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.519 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template_example: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.537 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.537 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.540 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.540 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.543 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.543 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.552 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.553 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.556 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.556 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.561 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.561 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.565 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.565 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.573 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.573 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.576 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.576 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.579 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.580 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.584 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.584 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.586 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.586 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.587 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:06:21.591 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:21.591 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:21.729 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.789 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:21.872 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:22.045 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:22.208 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:22.273 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:22.354 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:22.646 | WARNING  | lib.knowledge.csv_hot_reload:_initialize_knowledge_base:86 - 📊 Failed to initialize knowledge base
+2025-07-21 09:06:22.798 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:22.859 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:22.944 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.050 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.187 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.248 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.293 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.449 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.512 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.592 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for template_example: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.595 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.596 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.598 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.598 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.599 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.599 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.607 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.608 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.610 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.610 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.613 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.613 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.617 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.617 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.624 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.624 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.626 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.626 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.628 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.628 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.632 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.632 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.633 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.633 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.634 | WARNING  | lib.services.version_sync_service:sync_single_component:108 - 🔧 No component section in config file
+2025-07-21 09:06:23.637 | ERROR    | lib.services.version_sync_service:sync_single_component:136 - 🔧 Error getting active version
+2025-07-21 09:06:23.637 | ERROR    | lib.services.version_sync_service:sync_single_component:193 - 🔧 Error processing config file
+2025-07-21 09:06:23.774 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.834 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:23.915 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:24.023 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for finalizacao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:24.186 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for pagbank: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:24.259 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for emissao: 'str' object has no attribute 'dimensions'
+2025-07-21 09:06:24.340 | WARNING  | lib.utils.proxy_agents:_handle_knowledge_filter:361 - 🤖 Failed to create knowledge base for adquirencia: 'str' object has no attribute 'dimensions'
