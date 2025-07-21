@@ -4,13 +4,11 @@ Handles loading and validation of the typification hierarchy.
 """
 
 import json
-import logging
 from typing import Dict, List
 from pathlib import Path
+from lib.logging import logger
 
 from .base import ValidationResult
-
-logger = logging.getLogger(__name__)
 
 
 def load_hierarchy() -> Dict:
@@ -20,10 +18,10 @@ def load_hierarchy() -> Dict:
         with open(hierarchy_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        logger.error("Hierarchy file not found. Run extract_typification_hierarchy.py first.")
+        logger.error("📊 Hierarchy file not found. Run extract_typification_hierarchy.py first.")
         raise
     except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in hierarchy file: {e}")
+        logger.error(f"📊 Invalid JSON in hierarchy file: {e}")
         raise
 
 

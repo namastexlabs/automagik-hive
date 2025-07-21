@@ -10,6 +10,7 @@ from typing import Optional, Dict, Any, List, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
+from lib.logging import logger
 
 
 class UrgencyLevel(str, Enum):
@@ -323,54 +324,54 @@ def create_workflow_input_template(workflow_type: str) -> Dict[str, Any]:
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("🔍 Testing Workflow Input Validation")
-    print("=" * 40)
+    logger.info("🤖 🔍 Testing Workflow Input Validation")
+    logger.info("🤖 " + "=" * 40)
     
     # Test 1: Valid human handoff input
-    print("\n1. Testing Human Handoff Input Validation:")
+    logger.info("🤖 \n1. Testing Human Handoff Input Validation:")
     try:
         valid_input = create_workflow_input_template("human_handoff")
         validated = validate_human_handoff_input(valid_input)
-        print(f"✅ Valid input: {validated.conversation.message}")
-        print(f"📋 Session ID: {validated.session.session_id}")
-        print(f"👤 Customer: {validated.customer.customer_name}")
+        logger.info(f"🤖 ✅ Valid input: {validated.conversation.message}")
+        logger.info(f"🤖 📋 Session ID: {validated.session.session_id}")
+        logger.info(f"🤖 👤 Customer: {validated.customer.customer_name}")
     except Exception as e:
-        print(f"❌ Validation failed: {e}")
+        logger.error(f"🤖 ❌ Validation failed: {e}")
     
     # Test 2: Invalid input (missing required field)
-    print("\n2. Testing Invalid Input:")
+    logger.info("🤖 \n2. Testing Invalid Input:")
     try:
         invalid_input = {"customer": {"customer_id": "123"}}  # Missing conversation
         validate_human_handoff_input(invalid_input)
-        print("❌ Should have failed validation")
+        logger.warning("🤖 ❌ Should have failed validation")
     except Exception as e:
-        print(f"✅ Correctly caught validation error: {e}")
+        logger.info(f"🤖 ✅ Correctly caught validation error: {e}")
     
     # Test 3: Typification input validation
-    print("\n3. Testing Typification Input Validation:")
+    logger.info("🤖 \n3. Testing Typification Input Validation:")
     try:
         typification_input = create_workflow_input_template("conversation_typification")
         validated = validate_typification_input(typification_input)
-        print(f"✅ Valid typification input: {len(validated.conversation.text)} chars")
-        print(f"📋 Session ID: {validated.session.session_id}")
+        logger.info(f"🤖 ✅ Valid typification input: {len(validated.conversation.text)} chars")
+        logger.info(f"🤖 📋 Session ID: {validated.session.session_id}")
     except Exception as e:
-        print(f"❌ Validation failed: {e}")
+        logger.error(f"🤖 ❌ Validation failed: {e}")
     
     # Test 4: Schema serialization
-    print("\n4. Testing Schema Serialization:")
+    logger.info("🤖 \n4. Testing Schema Serialization:")
     try:
         input_data = create_workflow_input_template("human_handoff")
         validated = validate_human_handoff_input(input_data)
         
         # Convert to JSON and back
         json_data = validated.json()
-        print(f"✅ JSON serialization successful: {len(json_data)} chars")
+        logger.info(f"🤖 ✅ JSON serialization successful: {len(json_data)} chars")
         
         # Parse back from JSON
         parsed = HumanHandoffWorkflowInput.parse_raw(json_data)
-        print(f"✅ JSON parsing successful: {parsed.conversation.message}")
+        logger.info(f"🤖 ✅ JSON parsing successful: {parsed.conversation.message}")
         
     except Exception as e:
-        print(f"❌ Serialization failed: {e}")
+        logger.error(f"🤖 ❌ Serialization failed: {e}")
     
-    print("\n✨ Validation testing completed!")
+    logger.info("🤖 \n✨ Validation testing completed!")

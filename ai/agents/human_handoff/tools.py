@@ -6,11 +6,10 @@ to the native Agno workflow system following established patterns.
 """
 
 import asyncio
-import logging
 from typing import Optional
 from datetime import datetime
 
-from agno.utils.log import logger
+from lib.logging import logger
 
 # Import the human handoff workflow
 from ai.workflows.human_handoff.workflow import get_human_handoff_workflow

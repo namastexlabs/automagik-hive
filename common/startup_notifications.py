@@ -4,11 +4,9 @@ Startup Notifications
 Handles notifications when the server starts up and shuts down.
 """
 
-import logging
 import asyncio
 from .notifications import send_notification, NotificationLevel
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 async def send_startup_notification(startup_display=None):
@@ -31,9 +29,9 @@ async def send_startup_notification(startup_display=None):
         
         # Run in isolated task to prevent context manager conflicts
         await asyncio.create_task(isolated_send())
-        logger.info("Startup notification sent")
+        logger.info("📱 Startup notification sent")
     except Exception as e:
-        logger.error(f"Failed to send startup notification: {e}")
+        logger.error(f"📱 Failed to send startup notification: {e}")
 
 
 def _build_startup_message(startup_display=None):
@@ -116,9 +114,12 @@ def _build_startup_message(startup_display=None):
             "📊 Component details unavailable"
         ])
     
+    # Import here to avoid circular imports
+    from lib.config.server_config import get_server_config
+    
     message_parts.extend([
         "",
-        f"🔗 API: http://localhost:{port}"
+        f"🔗 API: {get_server_config().get_base_url()}"
     ])
     
     return "\n".join(message_parts)
@@ -138,9 +139,9 @@ async def send_shutdown_notification():
         
         # Run in isolated task to prevent context manager conflicts
         await asyncio.create_task(isolated_send())
-        logger.info("Shutdown notification sent")
+        logger.info("📱 Shutdown notification sent")
     except Exception as e:
-        logger.error(f"Failed to send shutdown notification: {e}")
+        logger.error(f"📱 Failed to send shutdown notification: {e}")
 
 
 async def send_error_notification(error_message: str, source: str = "server-error"):
@@ -152,9 +153,9 @@ async def send_error_notification(error_message: str, source: str = "server-erro
             source=source,
             level=NotificationLevel.ERROR
         )
-        logger.info(f"Error notification sent: {error_message}")
+        logger.info(f"📱 Error notification sent: {error_message}")
     except Exception as e:
-        logger.error(f"Failed to send error notification: {e}")
+        logger.error(f"📱 Failed to send error notification: {e}")
 
 
 async def send_mcp_server_error(server_name: str, error_message: str):
@@ -166,9 +167,9 @@ async def send_mcp_server_error(server_name: str, error_message: str):
             source="mcp-server-error",
             level=NotificationLevel.CRITICAL
         )
-        logger.info(f"MCP server error notification sent: {server_name}")
+        logger.info(f"📱 MCP server error notification sent: {server_name}")
     except Exception as e:
-        logger.error(f"Failed to send MCP server error notification: {e}")
+        logger.error(f"📱 Failed to send MCP server error notification: {e}")
 
 
 async def send_health_check_notification(component: str, status: str, message: str):
@@ -182,9 +183,9 @@ async def send_health_check_notification(component: str, status: str, message: s
             source="health-check",
             level=level
         )
-        logger.info(f"Health check notification sent: {component} - {status}")
+        logger.info(f"📱 Health check notification sent: {component} - {status}")
     except Exception as e:
-        logger.error(f"Failed to send health check notification: {e}")
+        logger.error(f"📱 Failed to send health check notification: {e}")
 
 
 # Convenience function for common notification patterns
@@ -197,9 +198,9 @@ async def notify_system_event(title: str, message: str, level: NotificationLevel
             source="system-event",
             level=level
         )
-        logger.info(f"System event notification sent: {title}")
+        logger.info(f"📱 System event notification sent: {title}")
     except Exception as e:
-        logger.error(f"Failed to send system event notification: {e}")
+        logger.error(f"📱 Failed to send system event notification: {e}")
 
 
 async def notify_critical_error(title: str, message: str, source: str = "critical-error"):
@@ -211,9 +212,9 @@ async def notify_critical_error(title: str, message: str, source: str = "critica
             source=source,
             level=NotificationLevel.CRITICAL
         )
-        logger.info(f"Critical error notification sent: {title}")
+        logger.info(f"📱 Critical error notification sent: {title}")
     except Exception as e:
-        logger.error(f"Failed to send critical error notification: {e}")
+        logger.error(f"📱 Failed to send critical error notification: {e}")
 
 
 async def notify_performance_issue(component: str, metric: str, value: str, threshold: str):
@@ -225,9 +226,9 @@ async def notify_performance_issue(component: str, metric: str, value: str, thre
             source="performance-monitor",
             level=NotificationLevel.WARNING
         )
-        logger.info(f"Performance issue notification sent: {component}")
+        logger.info(f"📱 Performance issue notification sent: {component}")
     except Exception as e:
-        logger.error(f"Failed to send performance issue notification: {e}")
+        logger.error(f"📱 Failed to send performance issue notification: {e}")
 
 
 async def notify_user_action(action: str, user_id: str, details: str = ""):
@@ -243,9 +244,9 @@ async def notify_user_action(action: str, user_id: str, details: str = ""):
             source="user-action",
             level=NotificationLevel.INFO
         )
-        logger.info(f"User action notification sent: {action}")
+        logger.info(f"📱 User action notification sent: {action}")
     except Exception as e:
-        logger.error(f"Failed to send user action notification: {e}")
+        logger.error(f"📱 Failed to send user action notification: {e}")
 
 
 async def notify_security_event(event_type: str, message: str, source: str = "security"):
@@ -257,9 +258,9 @@ async def notify_security_event(event_type: str, message: str, source: str = "se
             source=source,
             level=NotificationLevel.CRITICAL
         )
-        logger.info(f"Security event notification sent: {event_type}")
+        logger.info(f"📱 Security event notification sent: {event_type}")
     except Exception as e:
-        logger.error(f"Failed to send security event notification: {e}")
+        logger.error(f"📱 Failed to send security event notification: {e}")
 
 
 # Quick notification shortcuts

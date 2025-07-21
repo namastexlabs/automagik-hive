@@ -105,7 +105,7 @@ def _configure_file_logging(level: str, log_dir: str):
         
     except Exception as e:
         # If file logging fails, continue with console only
-        logger.warning(f"Failed to configure file logging: {e}")
+        logger.warning(f"🔧 Failed to configure file logging: {e}")
 
 
 def _configure_library_logging(level: str):

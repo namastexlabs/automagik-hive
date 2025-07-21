@@ -26,7 +26,7 @@ def _load_whatsapp_config() -> Dict[str, Any]:
             config = yaml.safe_load(f)
         return config.get('whatsapp_notification', {})
     except Exception as e:
-        logger.warning("Could not load WhatsApp config, using defaults", error=str(e))
+        logger.warning("📱 Could not load WhatsApp config, using defaults", error=str(e))
         return {
             'model': {
                 'id': get_default_model_id(),
@@ -273,7 +273,7 @@ class WhatsAppNotificationService:
             return message
             
         except Exception as e:
-            logger.error(f"Error formatting typification message: {str(e)}")
+            logger.error(f"📱 Error formatting typification message: {str(e)}")
             return f"📊 Relatório de Tipificação disponível - ID: {report_data.get('report_id', 'N/A')}"
     
     def _format_handoff_message(self, handoff_data: Dict[str, Any]) -> str:
@@ -335,7 +335,7 @@ Obrigado pela paciência!"""
             return message
             
         except Exception as e:
-            logger.error(f"Error formatting handoff message: {str(e)}")
+            logger.error(f"📱 Error formatting handoff message: {str(e)}")
             return f"🚨 Escalação para atendimento humano - Protocolo: {handoff_data.get('protocol_id', 'N/A')}"
     
     def _build_send_instruction(
@@ -351,7 +351,7 @@ Obrigado pela paciência!"""
             recipient_number = os.getenv("EVOLUTION_API_FIXED_RECIPIENT")
             
         if not recipient_number:
-            logger.warning("No WhatsApp recipient specified and no default configured")
+            logger.warning("📱 No WhatsApp recipient specified and no default configured")
             recipient_number = "5511999999999@s.whatsapp.net"  # Fallback number
         
         # For Evolution API, we need to use the MCP tool properly

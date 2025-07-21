@@ -5,16 +5,14 @@ Clean, direct MCP tools creation without overengineering.
 Replaces the old overengineered connection manager with simple factory functions.
 """
 
-import logging
 from typing import Optional, AsyncContextManager
 from contextlib import asynccontextmanager
 
 from agno.tools.mcp import MCPTools
+from lib.logging import logger
 
 from .catalog import MCPCatalog
 from .exceptions import MCPConnectionError
-
-logger = logging.getLogger(__name__)
 
 # Global catalog instance
 _catalog: Optional[MCPCatalog] = None
@@ -77,7 +75,7 @@ async def get_mcp_tools(server_name: str) -> AsyncContextManager[MCPTools]:
             yield t
             
     except Exception as e:
-        logger.error(f"Failed to create MCP tools for {server_name}: {e}")
+        logger.error(f"🌐 Failed to create MCP tools for {server_name}: {e}")
         raise MCPConnectionError(f"Failed to connect to {server_name}: {e}")
 
 
@@ -125,7 +123,7 @@ def create_mcp_tools_sync(server_name: str) -> MCPTools:
             raise MCPConnectionError(f"Unknown server type for {server_name}")
             
     except Exception as e:
-        logger.error(f"Failed to create MCP tools for {server_name}: {e}")
+        logger.error(f"🌐 Failed to create MCP tools for {server_name}: {e}")
         raise MCPConnectionError(f"Failed to connect to {server_name}: {e}")
 
 

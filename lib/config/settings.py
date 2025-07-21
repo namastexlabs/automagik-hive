@@ -69,9 +69,6 @@ class Settings:
         self.enable_metrics = os.getenv("HIVE_ENABLE_METRICS", "true").lower() == "true"
         self.metrics_interval = int(os.getenv("HIVE_METRICS_INTERVAL", "60"))  # 1 minute
         
-        # Cache settings
-        self.cache_ttl = int(os.getenv("HIVE_CACHE_TTL", "300"))  # 5 minutes
-        self.cache_max_size = int(os.getenv("HIVE_CACHE_MAX_SIZE", "1000"))
     
     def is_production(self) -> bool:
         """Check if running in production environment."""

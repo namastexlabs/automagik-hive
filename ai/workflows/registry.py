@@ -41,7 +41,7 @@ def _discover_workflows() -> Dict[str, Callable[..., Workflow]]:
                     registry[workflow_name] = factory_func
                     
             except Exception as e:
-                logger.warning("Failed to load workflow", workflow_name=workflow_name, error=str(e))
+                logger.warning("🤖 Failed to load workflow", workflow_name=workflow_name, error=str(e))
                 continue
     
     return registry

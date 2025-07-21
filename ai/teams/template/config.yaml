@@ -13,6 +13,18 @@ team:
   team_id: "template"
   description: "Comprehensive template showing ALL supported Agno Team parameters"
 
+# Factory configuration for flexible function naming
+factory:
+  # Primary factory function name (supports templates)
+  function_name: "get_template_team"
+  
+  # Alternative patterns to try (optional)
+  patterns:
+    - "create_{team_name_underscore}_team"
+    - "build_{team_name}_team"
+    - "{team_name_underscore}_factory"
+    - "team_factory"
+
 # ====================================================================
 # ALL 74 AGNO TEAM PARAMETERS (alphabetical order)
 # ====================================================================

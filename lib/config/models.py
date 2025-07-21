@@ -1,19 +1,28 @@
 """AI Model configuration for Automagik Hive Multi-Agent System.
 
-Centralized model resolution system that leverages Agno's native model ecosystem
-without hardcoded provider mappings. Supports all 25+ Agno providers automatically.
+ZERO-CONFIGURATION model resolution system with dynamic provider discovery.
+Automatically discovers and supports ALL Agno providers at runtime without hardcoded mappings.
+
+Architecture:
+- Dynamic provider discovery via runtime scanning of agno.models namespace
+- Intelligent pattern matching for model ID → provider detection
+- Zero-configuration class resolution for all Agno model classes
+- Follows the same dynamic registry patterns as teams/agents registries
+- No YAML files, no hardcoded mappings - pure runtime intelligence
+
+This eliminates Issues 2 & 3:
+- Issue 2: Hardcoded provider patterns → Dynamic pattern detection
+- Issue 3: Hardcoded provider mappings → Runtime provider discovery
 """
 
 import os
-import importlib
-import re
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional
 from functools import lru_cache
-from pathlib import Path
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from lib.logging import logger
+from lib.config.provider_registry import provider_registry
 
 # Load environment variables
 load_dotenv()
@@ -24,14 +33,20 @@ class ModelResolutionError(Exception):
 
 class ModelResolver:
     """
-    Agno-native model resolver that dynamically discovers model classes
-    and creates instances based on configuration with environment-driven defaults.
+    Zero-configuration model resolver with dynamic provider discovery.
+    
+    Features:
+    - Automatically discovers ALL Agno providers at runtime
+    - Intelligent model ID → provider detection using pattern matching
+    - Dynamic class resolution without hardcoded mappings
+    - Environment-driven default model configuration
+    - Follows project's dynamic registry architecture patterns
+    
+    No configuration files needed - pure runtime intelligence.
     """
     
     def __init__(self):
-        self._model_cache = {}
-        self._provider_cache = {}
-        logger.debug("🔧 ModelResolver initialized")
+        logger.debug("🔧 ModelResolver initialized - using dynamic provider registry")
     
     def get_default_model_id(self) -> str:
         """
@@ -47,7 +62,7 @@ class ModelResolver:
     @lru_cache(maxsize=128)
     def _detect_provider(self, model_id: str) -> str:
         """
-        Detect provider from model ID using pattern matching.
+        Detect provider from model ID using dynamic registry.
         
         Args:
             model_id: Model identifier (e.g., "gpt-4.1-mini")
@@ -58,41 +73,18 @@ class ModelResolver:
         Raises:
             ModelResolutionError: If provider cannot be detected
         """
-        # Common provider patterns based on Agno's model ecosystem
-        provider_patterns = {
-            r'^gpt-': 'openai',
-            r'^o1-': 'openai', 
-            r'^o3-': 'openai',
-            r'^claude-': 'anthropic',
-            r'^gemini-': 'google',
-            r'^llama-': 'meta',
-            r'^mixtral-': 'mistral',
-            r'^command-': 'cohere',
-            r'^deepseek-': 'deepseek',
-            r'^qwen-': 'alibaba'
-        }
-        
-        for pattern, provider in provider_patterns.items():
-            if re.match(pattern, model_id, re.IGNORECASE):
-                logger.debug("🔧 Provider detected", model_id=model_id, provider=provider, pattern=pattern)
-                return provider
-        
-        # Fallback: try to infer from common naming conventions
-        model_lower = model_id.lower()
-        if 'gpt' in model_lower or 'openai' in model_lower:
-            return 'openai'
-        elif 'claude' in model_lower or 'anthropic' in model_lower:
-            return 'anthropic'
-        elif 'gemini' in model_lower or 'google' in model_lower:
-            return 'google'
-        
-        logger.error("🔧 Provider detection failed", model_id=model_id)
-        raise ModelResolutionError(f"Cannot detect provider for model ID: {model_id}")
+        try:
+            provider = provider_registry.detect_provider(model_id)
+            logger.debug("🔧 Provider detected via registry", model_id=model_id, provider=provider)
+            return provider
+        except Exception as e:
+            logger.error("🔧 Provider detection failed", model_id=model_id, error=str(e))
+            raise ModelResolutionError(f"Cannot detect provider for model ID '{model_id}': {e}")
     
     @lru_cache(maxsize=64)
-    def _discover_model_class(self, provider: str, model_id: str) -> Type:
+    def _discover_model_class(self, provider: str, model_id: str):
         """
-        Dynamically discover and import Agno model class for given provider.
+        Dynamically discover and import Agno model class using registry.
         
         Args:
             provider: Provider name (e.g., "openai")
@@ -105,55 +97,14 @@ class ModelResolver:
             ModelResolutionError: If model class cannot be imported
         """
         try:
-            # Try to import from agno.models.{provider}
-            module_path = f"agno.models.{provider}"
-            module = importlib.import_module(module_path)
-            
-            # Common model class naming patterns in Agno
-            class_names = [
-                f"{provider.title()}",  # e.g., "Openai" -> "OpenAI" might be mapped
-                f"{provider.title()}Chat",  # e.g., "OpenAIChat"
-                "Chat",  # Generic chat class
-                provider.upper(),  # e.g., "OPENAI"
-                provider.title().replace('ai', 'AI')  # Fix AI capitalization
-            ]
-            
-            # Special cases for known Agno providers
-            provider_class_map = {
-                'openai': ['OpenAIChat', 'OpenAI'],
-                'anthropic': ['Claude'],
-                'google': ['Gemini'],
-                'meta': ['Llama'],
-                'mistral': ['Mistral'],
-                'cohere': ['Cohere'],
-                'deepseek': ['DeepSeek'],
-                'groq': ['Groq']
-            }
-            
-            if provider in provider_class_map:
-                class_names = provider_class_map[provider] + class_names
-            
-            # Try to find the model class
-            for class_name in class_names:
-                if hasattr(module, class_name):
-                    model_class = getattr(module, class_name)
-                    logger.debug("🔧 Model class discovered", 
-                               provider=provider, class_name=class_name, 
-                               module=module_path, model_id=model_id)
-                    return model_class
-            
-            # If no specific class found, list available classes for debugging
-            available_classes = [name for name in dir(module) if not name.startswith('_') and name[0].isupper()]
-            logger.error("🔧 Model class not found", 
-                        provider=provider, module=module_path, 
-                        available_classes=available_classes, model_id=model_id)
-            raise ModelResolutionError(f"No suitable model class found in {module_path}. Available: {available_classes}")
-            
-        except ImportError as e:
-            logger.error("🔧 Provider module import failed", 
-                        provider=provider, module_path=module_path, 
-                        error=str(e), model_id=model_id)
-            raise ModelResolutionError(f"Provider '{provider}' not available in Agno installation: {e}")
+            model_class = provider_registry.discover_model_class(provider, model_id)
+            logger.debug("🔧 Model class discovered via registry", 
+                       provider=provider, class_name=model_class.__name__, model_id=model_id)
+            return model_class
+        except Exception as e:
+            logger.error("🔧 Model class discovery failed", 
+                        provider=provider, error=str(e), model_id=model_id)
+            raise ModelResolutionError(f"Failed to discover model class for provider '{provider}': {e}")
     
     def resolve_model(self, model_id: Optional[str] = None, **config_overrides) -> Any:
         """
@@ -172,11 +123,6 @@ class ModelResolver:
         # Resolve model ID with precedence: param -> default
         resolved_model_id = model_id or self.get_default_model_id()
         
-        # Check cache first
-        cache_key = f"{resolved_model_id}:{hash(frozenset(config_overrides.items()))}"
-        if cache_key in self._model_cache:
-            logger.debug("🔧 Model resolved from cache", model_id=resolved_model_id)
-            return self._model_cache[cache_key]
         
         try:
             # Detect provider and discover model class
@@ -192,8 +138,6 @@ class ModelResolver:
             # Create model instance
             model_instance = model_class(**model_config)
             
-            # Cache the result
-            self._model_cache[cache_key] = model_instance
             
             logger.info("🔧 Model resolved successfully", 
                        model_id=resolved_model_id, provider=provider, 
@@ -225,12 +169,10 @@ class ModelResolver:
             return False
     
     def clear_cache(self):
-        """Clear model resolution cache."""
-        self._model_cache.clear()
-        self._provider_cache.clear()
-        # Clear LRU caches
+        """Clear model resolver and provider registry caches."""
         self._detect_provider.cache_clear()
         self._discover_model_class.cache_clear()
+        provider_registry.reload()
         logger.debug("🔧 Model resolver cache cleared")
 
 # Global model resolver instance

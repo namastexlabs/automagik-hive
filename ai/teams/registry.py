@@ -1,10 +1,89 @@
 """Team registry for dynamic loading of team instances."""
 
-from typing import Dict, Callable, Optional, Any
+from typing import Dict, Callable, Optional, Any, List
 from agno.team import Team
 from pathlib import Path
 import importlib.util
+import yaml
 from lib.logging import logger
+
+
+def _get_factory_function_patterns(team_name: str, config: Optional[Dict[str, Any]] = None) -> List[str]:
+    """
+    Generate factory function name patterns to try for team discovery.
+    
+    Args:
+        team_name: The team directory name
+        config: Optional team configuration containing factory settings
+        
+    Returns:
+        List of factory function names to attempt, in order of preference
+    """
+    patterns = []
+    
+    # Check for custom factory pattern in config
+    if config and 'factory' in config and 'function_name' in config['factory']:
+        custom_name = config['factory']['function_name']
+        # Support template variables
+        if '{team_name}' in custom_name:
+            patterns.append(custom_name.format(team_name=team_name))
+        elif '{team_name_underscore}' in custom_name:
+            patterns.append(custom_name.format(team_name_underscore=team_name.replace('-', '_')))
+        else:
+            patterns.append(custom_name)
+    
+    # Check for additional factory patterns in config
+    if config and 'factory' in config and 'patterns' in config['factory']:
+        for pattern in config['factory']['patterns']:
+            if '{team_name}' in pattern:
+                patterns.append(pattern.format(team_name=team_name))
+            elif '{team_name_underscore}' in pattern:
+                patterns.append(pattern.format(team_name_underscore=team_name.replace('-', '_')))
+            else:
+                patterns.append(pattern)
+    
+    # Default patterns (for backward compatibility)
+    team_name_underscore = team_name.replace('-', '_')
+    patterns.extend([
+        f"get_{team_name_underscore}_team",  # Current default
+        f"create_{team_name_underscore}_team",
+        f"build_{team_name_underscore}_team",
+        f"make_{team_name_underscore}_team",
+        f"{team_name_underscore}_factory",
+        f"get_{team_name}_team",  # Hyphen version
+        f"create_{team_name}_team",
+        "get_team",  # Generic fallback
+        "create_team",
+        "team_factory"
+    ])
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_patterns = []
+    for pattern in patterns:
+        if pattern not in seen:
+            seen.add(pattern)
+            unique_patterns.append(pattern)
+    
+    return unique_patterns
+
+
+def _load_team_config(config_file: Path) -> Optional[Dict[str, Any]]:
+    """
+    Load team configuration from YAML file.
+    
+    Args:
+        config_file: Path to the config.yaml file
+        
+    Returns:
+        Dictionary containing configuration or None if load fails
+    """
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f)
+    except Exception as e:
+        logger.warning("🤖 Failed to load team config", config_file=str(config_file), error=str(e))
+        return None
 
 
 def _discover_teams() -> Dict[str, Callable[..., Team]]:
@@ -26,6 +105,9 @@ def _discover_teams() -> Dict[str, Callable[..., Team]]:
             team_name = team_path.name
             
             try:
+                # Load team configuration for factory patterns
+                config = _load_team_config(config_file)
+                
                 # Load the team module dynamically
                 spec = importlib.util.spec_from_file_location(
                     f"ai.teams.{team_name}.team",
@@ -34,14 +116,29 @@ def _discover_teams() -> Dict[str, Callable[..., Team]]:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 
-                # Look for the factory function
-                factory_func_name = f"get_{team_name.replace('-', '_')}_team"
-                if hasattr(module, factory_func_name):
-                    factory_func = getattr(module, factory_func_name)
+                # Try factory function patterns
+                factory_patterns = _get_factory_function_patterns(team_name, config)
+                factory_func = None
+                used_pattern = None
+                
+                for pattern in factory_patterns:
+                    if hasattr(module, pattern):
+                        factory_func = getattr(module, pattern)
+                        used_pattern = pattern
+                        logger.debug("🤖 Found factory function", team_name=team_name, pattern=used_pattern)
+                        break
+                
+                if factory_func:
                     registry[team_name] = factory_func
+                    logger.info("🤖 Registered team", team_name=team_name, factory_function=used_pattern)
+                else:
+                    attempted_patterns = ", ".join(factory_patterns[:5])  # Show first 5 attempts
+                    logger.warning("🤖 No factory function found for team", 
+                                 team_name=team_name, 
+                                 attempted_patterns=attempted_patterns)
                     
             except Exception as e:
-                logger.warning("Failed to load team", team_name=team_name, error=str(e))
+                logger.warning("🤖 Failed to load team", team_name=team_name, error=str(e))
                 continue
     
     return registry

@@ -1,0 +1,147 @@
+agent:
+  name: "{{ user_context.user_name | default('Agent') }} - Template Example"
+  role: "Personalized Assistant for {{ tenant_context.tenant_name | default('Organization') }}"
+  version: dev
+  agent_id: template-example
+  description: >
+    Dynamic agent configured for {{ user_context.user_name | default('user') }}
+    ({{ user_context.email | default('no-email') }}) 
+    in {{ system_context.environment | upper }} environment.
+    {% if user_context.business_units %}
+    Specialized for business units: {{ user_context.business_units | join(', ') }}
+    {% endif %}
+
+model:
+  id: claude-sonnet-4-20250514
+  provider: anthropic
+  max_tokens: {% if system_context.debug_mode %}4000{% else %}2000{% endif %}
+  temperature: {% if user_context.preferences.creativity_level %}{{ user_context.preferences.creativity_level }}{% else %}0.1{% endif %}
+
+memory:
+  num_history_runs: {% if tenant_context.subscription_type == 'premium' %}10{% else %}5{% endif %}
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+
+storage:
+  type: postgres
+  table_name: agents_{{ session_context.agent_id | replace('-', '_') }}
+  auto_upgrade_schema: true
+
+markdown: false
+
+knowledge:
+  search_knowledge: true
+  valid_metadata_filters:
+  {% if user_context.business_units %}
+  {% for unit in user_context.business_units %}
+  - {{ unit }}
+  {% endfor %}
+  {% else %}
+  - general
+  {% endif %}
+  enable_agentic_knowledge_filters: true
+
+instructions: |
+  You are a personalized AI assistant configured for:
+  
+  **User Information:**
+  - Name: {{ user_context.user_name | default('User') }}
+  - Email: {{ user_context.email | default('Not provided') }}
+  {% if user_context.phone_number %}
+  - Phone: {{ user_context.phone_number | format_phone }}
+  {% endif %}
+  {% if user_context.cpf %}
+  - CPF: {{ user_context.cpf | format_cpf }}
+  {% endif %}
+  
+  **Environment Context:**
+  - Environment: {{ system_context.environment | upper }}
+  - Timestamp: {{ system_context.timestamp }}
+  {% if system_context.debug_mode %}
+  - DEBUG MODE ENABLED
+  {% endif %}
+  
+  **Session Information:**
+  - Session ID: {{ session_context.session_id | default('N/A') }}
+  - Channel: {{ session_context.channel | default('api') | upper }}
+  
+  {% if tenant_context.tenant_name %}
+  **Organization:** {{ tenant_context.tenant_name }}
+  {% if tenant_context.subscription_type %}
+  Subscription: {{ tenant_context.subscription_type | upper }}
+  {% endif %}
+  {% endif %}
+  
+  **Guidelines:**
+  - Always address the user by their name when available
+  - Adapt responses based on the environment (more formal in production)
+  - Consider user's business units for specialized advice
+  {% if system_context.debug_mode %}
+  - Provide detailed debugging information when requested
+  {% endif %}
+  
+  {% if user_context.permissions %}
+  **Available Permissions:**
+  {% for permission in user_context.permissions %}
+  - {{ permission }}
+  {% endfor %}
+  {% endif %}
+
+expected_output: |
+  Personalized response for {{ user_context.user_name | default('user') }} 
+  considering their context and preferences.
+
+show_tool_calls: {% if system_context.debug_mode %}true{% else %}false{% endif %}
+
+knowledge_filter:
+  max_results: {% if tenant_context.subscription_type == 'premium' %}5{% else %}3{% endif %}
+  {% if user_context.business_units %}
+  business_unit: {{ user_context.business_units[0] }}
+  {% endif %}
+  csv_file_path: lib/knowledge/knowledge_rag.csv
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: {% if tenant_context.features and 'advanced_search' in tenant_context.features %}true{% else %}false{% endif %}
+  relevance_threshold: {% if system_context.debug_mode %}0.5{% else %}0.7{% endif %}
+
+success_criteria: >
+  SUCESSO = Provided personalized assistance to {{ user_context.user_name | default('user') }}
+  with context-aware responses in {{ system_context.environment }} environment
+
+suggested_actions:
+  {% if 'admin' in user_context.permissions %}
+  admin:
+  - view_system_status
+  - manage_configurations
+  {% endif %}
+  {% if 'user' in user_context.permissions %}
+  user:
+  - view_profile
+  - update_preferences
+  {% endif %}
+  general:
+  - get_help
+  - contact_support
+
+escalation_triggers:
+  {% if system_context.environment == 'production' %}
+  error_keywords:
+  - critical error
+  - system failure
+  - data loss
+  {% endif %}
+  {% if user_context.permissions and 'vip' in user_context.permissions %}
+  priority_user: true
+  {% endif %}
+
+add_datetime_to_instructions: true
+
+# Custom template variables
+custom:
+  personalization_level: "{{ custom.personalization_level | default('standard') }}"
+  user_segment: "{{ custom.user_segment | default('general') }}"
+  {% if custom.custom_greeting %}
+  greeting: "{{ custom.custom_greeting }}"
+  {% endif %}

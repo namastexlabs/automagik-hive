@@ -303,7 +303,7 @@ def execute_validation_and_final_report(step_input: StepInput) -> StepOutput:
         final_confidence = original_confidence
         
         if not validation_result.valid:
-            logger.warning(f"Validation failed: {validation_result.error_message}")
+            logger.warning(f"🤖 Validation failed: {validation_result.error_message}")
     
     # Create final typification
     final_typification = HierarchicalTypification(

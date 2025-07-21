@@ -11,8 +11,8 @@ This template demonstrates all key features of Agno Workflows 2.0:
 """
 
 import json
-import logging
 from datetime import datetime
+from lib.logging import logger
 from typing import Dict, Any, Optional
 
 from agno.workflow.v2 import Workflow, Step
@@ -252,15 +252,14 @@ if __name__ == "__main__":
         # Create workflow instance
         workflow = get_template_workflow()
         
-        print("🧪 Testing template workflow...")
-        print(f"📝 Input length: {len(test_input)} characters")
-        print()
+        logger.info("🤖 Testing template workflow...")
+        logger.info(f"🤖 Input length: {len(test_input)} characters")
         
         # Run workflow
         result = await workflow.arun(message=test_input.strip())
         
-        print("✅ Template workflow execution completed:")
-        print(result.content if hasattr(result, 'content') else result)
+        logger.info("🤖 Template workflow execution completed:")
+        logger.info(f"🤖 {result.content if hasattr(result, 'content') else result}")
         
     # Run test
     asyncio.run(test_template_workflow())

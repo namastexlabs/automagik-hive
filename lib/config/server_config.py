@@ -73,7 +73,9 @@ class ServerConfig:
     
     def get_base_url(self) -> str:
         """Get the base URL for the server."""
-        return f"http://localhost:{self.port}"
+        # Use localhost for local development, otherwise use the configured host
+        display_host = "localhost" if self.host in ["0.0.0.0", "::"] else self.host
+        return f"http://{display_host}:{self.port}"
     
     def __repr__(self) -> str:
         """String representation of configuration."""

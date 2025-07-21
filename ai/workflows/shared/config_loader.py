@@ -5,15 +5,9 @@ Provides consistent access to YAML configuration files following Agno standards.
 
 import yaml
 import os
-import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
-
-# Use agno logger if available, fallback to standard logging
-try:
-    from agno.utils.log import logger
-except ImportError:
-    logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 class WorkflowConfigLoader:
@@ -29,7 +23,7 @@ class WorkflowConfigLoader:
             config_path = self.workflows_dir / workflow_name / "config.yaml"
             
             if not config_path.exists():
-                logger.error(f"Configuration file not found: {config_path}")
+                logger.error(f"🔧 Configuration file not found: {config_path}")
                 raise FileNotFoundError(f"Configuration file not found: {config_path}")
             
             try:
@@ -39,17 +33,17 @@ class WorkflowConfigLoader:
                 # Process environment variables
                 config = self._process_env_vars(config)
                 
-                logger.info(f"Loaded configuration for workflow: {workflow_name}")
+                logger.info(f"🔧 Loaded configuration for workflow: {workflow_name}")
                 self._config_cache[workflow_name] = config
                 
             except yaml.YAMLError as e:
-                logger.error(f"Invalid YAML configuration in {config_path}: {e}")
+                logger.error(f"🔧 Invalid YAML configuration in {config_path}: {e}")
                 raise ValueError(f"Invalid YAML configuration in {config_path}: {e}")
             except Exception as e:
-                logger.error(f"Failed to load configuration from {config_path}: {e}")
+                logger.error(f"🔧 Failed to load configuration from {config_path}: {e}")
                 raise ValueError(f"Failed to load configuration from {config_path}: {e}")
         else:
-            logger.debug(f"Using cached configuration for workflow: {workflow_name}")
+            logger.debug(f"🔧 Using cached configuration for workflow: {workflow_name}")
         
         return self._config_cache[workflow_name]
     
@@ -68,24 +62,24 @@ class WorkflowConfigLoader:
                 # New structure with multiple models
                 models = config['models']
                 if model_key in models:
-                    logger.debug(f"Found model config '{model_key}' for workflow '{workflow_name}'")
+                    logger.debug(f"🔧 Found model config '{model_key}' for workflow '{workflow_name}'")
                     return models[model_key]
                 elif 'default' in models:
-                    logger.warning(f"Model '{model_key}' not found, using default for workflow '{workflow_name}'")
+                    logger.warning(f"🔧 Model '{model_key}' not found, using default for workflow '{workflow_name}'")
                     return models['default']
                 else:
                     available_models = list(models.keys())
-                    logger.error(f"Model '{model_key}' not found in workflow '{workflow_name}'. Available: {available_models}")
+                    logger.error(f"🔧 Model '{model_key}' not found in workflow '{workflow_name}'. Available: {available_models}")
                     raise ValueError(f"Model '{model_key}' not found in workflow '{workflow_name}'. Available models: {available_models}")
             elif 'model' in config:
                 # Single model structure
-                logger.debug(f"Using single model config for workflow '{workflow_name}'")
+                logger.debug(f"🔧 Using single model config for workflow '{workflow_name}'")
                 return config['model']
             else:
-                logger.error(f"No model configuration found for workflow '{workflow_name}'")
+                logger.error(f"🔧 No model configuration found for workflow '{workflow_name}'")
                 raise ValueError(f"No model configuration found for workflow '{workflow_name}'. Expected 'model' or 'models' section in config.yaml")
         except KeyError as e:
-            logger.error(f"Configuration error in workflow '{workflow_name}': {e}")
+            logger.error(f"🔧 Configuration error in workflow '{workflow_name}': {e}")
             raise ValueError(f"Configuration error in workflow '{workflow_name}': {e}")
     
     def get_storage_config(self, workflow_name: str) -> Dict[str, Any]:
@@ -94,9 +88,9 @@ class WorkflowConfigLoader:
         storage_config = config.get('storage', {})
         
         if not storage_config:
-            logger.warning(f"No storage configuration found for workflow '{workflow_name}', using defaults")
+            logger.warning(f"🔧 No storage configuration found for workflow '{workflow_name}', using defaults")
         else:
-            logger.debug(f"Storage config for '{workflow_name}': {list(storage_config.keys())}")
+            logger.debug(f"🔧 Storage config for '{workflow_name}': {list(storage_config.keys())}")
         
         return storage_config
     
@@ -148,7 +142,7 @@ class WorkflowConfigLoader:
                         substitutions_made.append(f"{path}: ${{{env_var}}} -> {env_value}")
                         return env_value
                     else:
-                        logger.warning(f"Environment variable '{env_var}' not found at {path}, keeping original value")
+                        logger.warning(f"🔧 Environment variable '{env_var}' not found at {path}, keeping original value")
                         return value
                 return value
             elif isinstance(value, dict):
@@ -160,7 +154,7 @@ class WorkflowConfigLoader:
         result = process_value(config)
         
         if substitutions_made:
-            logger.debug(f"Environment variable substitutions: {substitutions_made}")
+            logger.debug(f"🔧 Environment variable substitutions: {substitutions_made}")
         
         return result
     
@@ -168,7 +162,7 @@ class WorkflowConfigLoader:
         """Clear the configuration cache"""
         cache_size = len(self._config_cache)
         self._config_cache.clear()
-        logger.info(f"Configuration cache cleared ({cache_size} entries removed)")
+        logger.info(f"🔧 Configuration cache cleared ({cache_size} entries removed)")
 
 
 # Global instance for consistent access

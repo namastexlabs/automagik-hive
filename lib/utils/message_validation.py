@@ -7,9 +7,7 @@ errors from reaching the Claude API.
 
 from typing import Optional, Dict, Any
 from fastapi import HTTPException
-import logging
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 def validate_agent_message(message: str, context: str = "agent execution") -> None:
@@ -25,7 +23,7 @@ def validate_agent_message(message: str, context: str = "agent execution") -> No
     """
     # Check for empty or whitespace-only messages
     if not message or not message.strip():
-        logger.warning(f"Empty message detected in {context}")
+        logger.warning(f"🌐 Empty message detected in {context}")
         raise HTTPException(
             status_code=400,
             detail={
@@ -40,7 +38,7 @@ def validate_agent_message(message: str, context: str = "agent execution") -> No
     
     # Check for overly long messages (prevent abuse)
     if len(message) > 10000:  # 10KB limit
-        logger.warning(f"Message too long in {context}: {len(message)} characters")
+        logger.warning(f"🌐 Message too long in {context}: {len(message)} characters")
         raise HTTPException(
             status_code=400,
             detail={
@@ -96,7 +94,7 @@ def safe_agent_run(agent, message: str, context: str = "agent execution"):
         # Check if this is a Claude API error about empty messages
         error_msg = str(e).lower()
         if "text content blocks must be non-empty" in error_msg:
-            logger.error(f"Claude API empty message error caught: {e}")
+            logger.error(f"🌐 Claude API empty message error caught: {e}")
             raise HTTPException(
                 status_code=400,
                 detail={

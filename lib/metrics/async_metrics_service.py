@@ -7,7 +7,6 @@ Uses background queue processing with psycopg connection pooling.
 
 import asyncio
 import json
-import logging
 import time
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
@@ -16,8 +15,7 @@ from queue import Queue
 from threading import Thread, Event
 
 from lib.services.metrics_service import MetricsService
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 @dataclass
@@ -70,10 +68,10 @@ class AsyncMetricsService:
         try:
             self._start_async_loop_thread()
             self._start_background_processing()
-            logger.info("AsyncMetricsService initialized successfully with dedicated async loop")
+            logger.info("⚡ AsyncMetricsService initialized successfully with dedicated async loop")
             
         except Exception as e:
-            logger.error(f"Failed to initialize AsyncMetricsService: {e}")
+            logger.error(f"⚡ Failed to initialize AsyncMetricsService: {e}")
             raise
     
     def _start_async_loop_thread(self):
@@ -93,7 +91,7 @@ class AsyncMetricsService:
             try:
                 self.async_loop.run_forever()
             except Exception as e:
-                logger.error(f"Async loop thread error: {e}")
+                logger.error(f"⚡ Async loop thread error: {e}")
             finally:
                 self.async_loop.close()
         
@@ -112,7 +110,7 @@ class AsyncMetricsService:
         if self.async_loop is None:
             raise RuntimeError("Failed to start async loop thread")
         
-        logger.info("Dedicated async loop thread started successfully")
+        logger.info("⚡ Dedicated async loop thread started successfully")
     
     def _start_background_processing(self):
         """Start background thread for processing metrics queue."""
@@ -126,7 +124,7 @@ class AsyncMetricsService:
             name="MetricsProcessor"
         )
         self.processing_thread.start()
-        logger.info("Background metrics processing started")
+        logger.info("⚡ Background metrics processing started")
     
     def _background_processor(self):
         """Background thread that processes the metrics queue."""
@@ -157,7 +155,7 @@ class AsyncMetricsService:
                     self.stats["last_flush"] = datetime.now(timezone.utc)
                     
             except Exception as e:
-                logger.error(f"Error in metrics background processor: {e}")
+                logger.error(f"⚡ Error in metrics background processor: {e}")
                 # Clear problematic batch and continue
                 batch.clear()
                 time.sleep(1)
@@ -165,7 +163,7 @@ class AsyncMetricsService:
         # Flush remaining items on shutdown
         if batch:
             self._store_batch(batch)
-            logger.info(f"Flushed {len(batch)} metrics on shutdown")
+            logger.info(f"⚡ Flushed {len(batch)} metrics on shutdown")
     
     def _store_batch(self, batch: List[MetricsEntry]):
         """Store a batch of metrics entries using safe async bridge pattern."""
@@ -191,10 +189,10 @@ class AsyncMetricsService:
                     def handle_result(fut):
                         try:
                             result = fut.result()
-                            logger.debug(f"Stored metric entry with ID: {result}")
+                            logger.debug(f"⚡ Stored metric entry with ID: {result}")
                         except Exception as e:
                             self.stats["storage_errors"] += 1
-                            logger.warning(f"Async storage failed: {e}")
+                            logger.warning(f"⚡ Async storage failed: {e}")
                     
                     future.add_done_callback(handle_result)
                     future.result(timeout=5.0)
@@ -202,15 +200,15 @@ class AsyncMetricsService:
                     
                 except Exception as entry_error:
                     self.stats["storage_errors"] += 1
-                    logger.warning(f"Failed to store metric entry: {entry_error}")
+                    logger.warning(f"⚡ Failed to store metric entry: {entry_error}")
                     continue
             
             self.stats["total_stored"] += stored_count
-            logger.debug(f"Stored batch of {stored_count}/{len(batch)} metrics entries via async bridge")
+            logger.debug(f"⚡ Stored batch of {stored_count}/{len(batch)} metrics entries via async bridge")
                 
         except Exception as e:
             self.stats["storage_errors"] += 1
-            logger.error(f"Failed to store metrics batch via async bridge: {e}")
+            logger.error(f"⚡ Failed to store metrics batch via async bridge: {e}")
     
     async def collect_metrics(self, 
                             agent_name: str,
@@ -251,7 +249,7 @@ class AsyncMetricsService:
             
         except:
             self.stats["queue_overflows"] += 1
-            logger.warning("Metrics queue full, dropping metrics entry")
+            logger.warning("⚡ Metrics queue full, dropping metrics entry")
             return False
     
     def collect_from_response(self,
@@ -290,7 +288,7 @@ class AsyncMetricsService:
             return True
             
         except Exception as e:
-            logger.error(f"Failed to collect metrics from response: {e}")
+            logger.error(f"⚡ Failed to collect metrics from response: {e}")
             return False
     
     def _extract_metrics_from_response(self, 
@@ -321,7 +319,7 @@ class AsyncMetricsService:
                 metrics.update(yaml_overrides)
             
         except Exception as e:
-            logger.warning(f"Error extracting metrics from response: {e}")
+            logger.warning(f"⚡ Error extracting metrics from response: {e}")
         
         return metrics
     
@@ -363,7 +361,7 @@ class AsyncMetricsService:
     
     def close(self):
         """Gracefully shutdown the metrics service."""
-        logger.info("Shutting down AsyncMetricsService...")
+        logger.info("⚡ Shutting down AsyncMetricsService...")
         
         if self.stop_event:
             self.stop_event.set()
@@ -378,14 +376,14 @@ class AsyncMetricsService:
                     self.async_loop_thread.join(timeout=5.0)
                     
                 if self.async_loop_thread.is_alive():
-                    logger.warning("Async loop thread did not shut down within timeout")
+                    logger.warning("⚡ Async loop thread did not shut down within timeout")
                 else:
-                    logger.info("Async loop thread shut down successfully")
+                    logger.info("⚡ Async loop thread shut down successfully")
                     
             except Exception as e:
-                logger.error(f"Error shutting down async loop: {e}")
+                logger.error(f"⚡ Error shutting down async loop: {e}")
         
-        logger.info("AsyncMetricsService closed")
+        logger.info("⚡ AsyncMetricsService closed")
 
 
 # Global metrics service instance

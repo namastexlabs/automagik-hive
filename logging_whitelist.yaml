@@ -1,0 +1,17 @@
+# Logging Standards Whitelist Configuration
+# Minimal exemptions for absolute necessities only
+
+print_statements_allowed:
+  # CLI tools that display output to users (absolute minimum)
+  - "lib/auth/cli.py"
+
+emoji_exempt_patterns:
+  # Test files don't need emoji prefixes
+  - "test_*.py"
+  - "*_test.py" 
+  - "tests/*.py"
+  - "**/test_*.py"
+  - "**/tests/*.py"
+
+# NO LOGGING IMPORT EXEMPTIONS - 100% Loguru compliance required
+# NO TEMPORARY EXEMPTIONS - All files must comply

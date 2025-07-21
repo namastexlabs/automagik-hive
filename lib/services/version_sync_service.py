@@ -62,7 +62,7 @@ class AgnoVersionSyncService:
                 if results:
                     logger.info("Synchronized components", component_type=component_type, count=len(results))
             except Exception as e:
-                logger.error("Error syncing components", component_type=component_type, error=str(e))
+                logger.error("🔧 Error syncing components", component_type=component_type, error=str(e))
                 self.sync_results[component_type + 's'] = {"error": str(e)}
         
         logger.info("Agno version sync completed", total_components=total_synced)
@@ -82,7 +82,7 @@ class AgnoVersionSyncService:
                 if result:
                     results.append(result)
             except Exception as e:
-                logger.warning("Error syncing config file", config_file=config_file, error=str(e))
+                logger.warning("🔧 Error syncing config file", config_file=config_file, error=str(e))
                 results.append({
                     "component_id": "unknown",
                     "file": config_file,
@@ -105,7 +105,7 @@ class AgnoVersionSyncService:
             # Extract component information
             component_section = yaml_config.get(component_type, {})
             if not component_section:
-                logger.warning("No component section in config file", component_type=component_type, config_file=config_file)
+                logger.warning("🔧 No component section in config file", component_type=component_type, config_file=config_file)
                 return None
             
             # Get component ID
@@ -117,12 +117,12 @@ class AgnoVersionSyncService:
             )
             
             if not component_id:
-                logger.warning("No component ID found in config file", config_file=config_file)
+                logger.warning("🔧 No component ID found in config file", config_file=config_file)
                 return None
             
             yaml_version = component_section.get('version')
             if not yaml_version:
-                logger.warning("No version found in config file", config_file=config_file, component_id=component_id)
+                logger.warning("🔧 No version found in config file", config_file=config_file, component_id=component_id)
                 return None
             
             # Get current active version from Agno storage
@@ -165,7 +165,7 @@ class AgnoVersionSyncService:
             elif yaml_version == agno_version.version:
                 # Same version - check config consistency
                 if yaml_config != agno_version.config:
-                    logger.warning("Version conflict resolved - Agno wins", component_type=component_type, component_id=component_id, yaml_version=yaml_version, agno_version=agno_version.version)
+                    logger.warning("🔧 Version conflict resolved - Agno wins", component_type=component_type, component_id=component_id, yaml_version=yaml_version, agno_version=agno_version.version)
                     self.update_yaml_from_agno(config_file, component_id, component_type)
                     action_taken = "yaml_corrected"
                 else:
@@ -182,7 +182,7 @@ class AgnoVersionSyncService:
             }
             
         except Exception as e:
-            logger.error("Error processing config file", config_file=config_file, error=str(e))
+            logger.error("🔧 Error processing config file", config_file=config_file, error=str(e))
             return {
                 "component_id": "unknown",
                 "file": config_file,
@@ -195,7 +195,7 @@ class AgnoVersionSyncService:
         # Get active version from Agno storage
         agno_version = self.version_service.get_active_version(component_id)
         if not agno_version:
-            logger.warning("No active Agno version found", component_id=component_id)
+            logger.warning("🔧 No active Agno version found", component_id=component_id)
             return
         
         # Create backup of current YAML
@@ -206,7 +206,7 @@ class AgnoVersionSyncService:
             shutil.copy2(yaml_file, backup_file)
             logger.info("Created backup file", backup_file=backup_file)
         except Exception as e:
-            logger.warning("Could not create backup", yaml_file=yaml_file, error=str(e))
+            logger.warning("🔧 Could not create backup", yaml_file=yaml_file, error=str(e))
         
         try:
             # Write new config from Agno storage
@@ -225,14 +225,14 @@ class AgnoVersionSyncService:
             logger.info("Updated YAML file", yaml_file=yaml_file)
             
         except Exception as e:
-            logger.error("Failed to update YAML file", yaml_file=yaml_file, error=str(e))
+            logger.error("🔧 Failed to update YAML file", yaml_file=yaml_file, error=str(e))
             # Try to restore backup
             if os.path.exists(backup_file):
                 try:
                     shutil.copy2(backup_file, yaml_file)
                     logger.info("Restored backup file", yaml_file=yaml_file)
                 except Exception as restore_error:
-                    logger.error("Could not restore backup", error=str(restore_error))
+                    logger.error("🔧 Could not restore backup", error=str(restore_error))
             raise e
     
     def validate_yaml_update(self, yaml_file: str, expected_config: Dict[str, Any]):
@@ -285,7 +285,7 @@ class AgnoVersionSyncService:
                         })
                         
                 except Exception as e:
-                    logger.warning("Error reading YAML file", yaml_file=yaml_file, error=str(e))
+                    logger.warning("🔧 Error reading YAML file", yaml_file=yaml_file, error=str(e))
         
         return discovered
     
@@ -363,7 +363,7 @@ class AgnoVersionSyncService:
                         os.remove(backup_file)
                         logger.debug("Removed old backup", backup_file=backup_file)
                     except Exception as e:
-                        logger.warning("Could not remove backup", backup_file=backup_file, error=str(e))
+                        logger.warning("🔧 Could not remove backup", backup_file=backup_file, error=str(e))
 
 
 # Convenience function for startup integration

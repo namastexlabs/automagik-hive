@@ -8,11 +8,9 @@ with all Agno storage backends.
 """
 
 import inspect
-import logging
 import importlib
 from typing import Dict, Any, Optional
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 def get_storage_type_mapping() -> Dict[str, str]:

@@ -112,7 +112,7 @@ class MCPCatalog:
         
         for server_name, server_config in mcp_servers.items():
             if not isinstance(server_config, dict):
-                logger.warning("Invalid server config, skipping", server_name=server_name)
+                logger.warning("🌐 Invalid server config, skipping", server_name=server_name)
                 continue
             
             try:
@@ -139,13 +139,13 @@ class MCPCatalog:
                     )
                 
                 else:
-                    logger.warning("Unknown server type, skipping", server_type=server_type, server_name=server_name)
+                    logger.warning("🌐 Unknown server type, skipping", server_type=server_type, server_name=server_name)
                     continue
                 
                 self.available_servers[server_name] = config
                 
             except Exception as e:
-                logger.warning("Error processing server", server_name=server_name, error=str(e))
+                logger.warning("🌐 Error processing server", server_name=server_name, error=str(e))
                 continue
     
     def get_server_config(self, server_name: str) -> MCPServerConfig:

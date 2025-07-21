@@ -6,11 +6,9 @@ Simple REST endpoints for MCP server status information.
 
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, List
-import logging
 
 from lib.mcp import MCPCatalog, get_mcp_tools
-
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 router = APIRouter(prefix="/api/v1/mcp", tags=["MCP Status"])
 
@@ -34,7 +32,7 @@ async def get_mcp_status() -> Dict[str, Any]:
             "timestamp": None
         }
     except Exception as e:
-        logger.error(f"Error getting MCP status: {e}")
+        logger.error(f"🌐 Error getting MCP status: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting MCP status: {e}")
 
 
@@ -74,7 +72,7 @@ async def list_available_servers() -> Dict[str, Any]:
             "total_servers": len(servers)
         }
     except Exception as e:
-        logger.error(f"Error listing available servers: {e}")
+        logger.error(f"🌐 Error listing available servers: {e}")
         raise HTTPException(status_code=500, detail=f"Error listing servers: {e}")
 
 
@@ -98,7 +96,7 @@ async def test_server_connection(server_name: str) -> Dict[str, Any]:
                 try:
                     available_tools = tools.list_tools()
                 except Exception as e:
-                    logger.warning(f"Could not list tools for {server_name}: {e}")
+                    logger.warning(f"🌐 Could not list tools for {server_name}: {e}")
             
             return {
                 "status": "ok",
@@ -109,7 +107,7 @@ async def test_server_connection(server_name: str) -> Dict[str, Any]:
             }
             
     except Exception as e:
-        logger.error(f"Connection test failed for {server_name}: {e}")
+        logger.error(f"🌐 Connection test failed for {server_name}: {e}")
         return {
             "status": "error",
             "server_name": server_name,
@@ -151,7 +149,7 @@ async def get_mcp_configuration() -> Dict[str, Any]:
             "total_configured_servers": len(servers)
         }
     except Exception as e:
-        logger.error(f"Error getting MCP configuration: {e}")
+        logger.error(f"🌐 Error getting MCP configuration: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting configuration: {e}")
 
 

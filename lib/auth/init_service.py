@@ -8,6 +8,7 @@ import os
 import secrets
 from pathlib import Path
 from typing import Optional
+from lib.logging import logger
 
 
 class AuthInitService:
@@ -82,15 +83,15 @@ class AuthInitService:
     
     def _display_key_to_user(self, api_key: str) -> None:
         """Display generated API key to user."""
-        print("\n" + "="*60)
-        print("🔑 AUTOMAGIK HIVE - API KEY GENERATED")
-        print("="*60)
-        print("A new API key has been generated and saved to .env:")
-        print(f"\nAPI Key: {api_key}")
-        print("\nUse this key in your API requests:")
-        print(f'curl -H "x-api-key: {api_key}" \\')
-        print("     http://localhost:9888/api/v1/health")
-        print("\n" + "="*60 + "\n")
+        logger.info("🔐 \n" + "="*60)
+        logger.info("🔐 🔑 AUTOMAGIK HIVE - API KEY GENERATED")
+        logger.info("🔐 " + "="*60)
+        logger.info("🔐 A new API key has been generated and saved to .env:")
+        logger.info(f"🔐 \nAPI Key: {api_key}")
+        logger.info("🔐 \nUse this key in your API requests:")
+        logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\')
+        logger.info("🔐      http://localhost:9888/api/v1/health")
+        logger.info("🔐 \n" + "="*60 + "\n")
     
     def regenerate_key(self) -> str:
         """Generate and save a new API key."""

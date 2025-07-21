@@ -1,0 +1,58 @@
+agent:
+  agent_id: "template_example"
+  name: "{{ user_context.user_name | default('Anonymous') }} - Template Demo Agent"
+  version: "dev"
+  
+model:
+  id: "claude-sonnet-4-20250514"
+  temperature: {% if system_context.debug_mode %}0.9{% else %}0.7{% endif %}
+  max_tokens: {% if user_context.is_vip %}4000{% else %}2000{% endif %}
+
+instructions: |
+  You are a demonstration agent showcasing YAML templating capabilities.
+  
+  Hello {{ user_context.user_name | default('there') }}!
+  
+  Current context:
+  - Environment: {{ system_context.environment | upper }}
+  - Session: {{ session_context.session_id }}
+  - Channel: {{ session_context.channel | default('API') }}
+  
+  {% if user_context.phone_number %}
+  Your contact: {{ user_context.phone_number | format_phone }}
+  {% endif %}
+  
+  {% if user_context.permissions %}
+  Your permissions:
+  {% for permission in user_context.permissions %}
+  - {{ permission }}
+  {% endfor %}
+  {% endif %}
+  
+  {% if system_context.debug_mode %}
+  🐛 DEBUG MODE ACTIVE - Enhanced logging enabled
+  {% endif %}
+  
+  I'm configured to provide personalized assistance based on your:
+  - Subscription: {{ user_context.subscription_type | default('basic') }}
+  - Language: {{ user_context.language | default('pt-BR') }}
+  - Timezone: {{ user_context.timezone | default('America/Sao_Paulo') }}
+  
+  {% if tenant_context.enabled_features %}
+  Available features for {{ tenant_context.tenant_name | default('your organization') }}:
+  {% for feature in tenant_context.enabled_features %}
+  - {{ feature }}
+  {% endfor %}
+  {% endif %}
+
+tools: []
+
+knowledge:
+  sources: []
+
+storage:
+  type: "memory"
+  
+monitoring:
+  enabled: {{ system_context.debug_mode | default(false) }}
+  log_level: {% if system_context.debug_mode %}"DEBUG"{% else %}"INFO"{% endif %}

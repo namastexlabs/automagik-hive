@@ -5,7 +5,7 @@ workflow:
   workflow_id: conversation-typification
   name: "Tipificação Automática de Atendimento"
   description: "Análise hierárquica da conversa seguindo padrão PagBank de 5 níveis"
-  version: 35
+  version: dev
 
 # Model configurations for each agent step
 models:

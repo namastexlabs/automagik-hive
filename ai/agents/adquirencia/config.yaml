@@ -1,7 +1,7 @@
 agent:
   name: "Ana - Adquirencia"
   role: "Assistente Digital Adquirência"
-  version: 39
+  version: dev
   agent_id: "adquirencia"
   description: "Ana, sua assistente digital especializada em antecipação de vendas do PagBank e multiadquirência"
 

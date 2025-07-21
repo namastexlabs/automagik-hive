@@ -24,7 +24,7 @@ def _load_memory_config() -> Dict[str, Any]:
             config = yaml.safe_load(f)
         return config.get('memory', {})
     except Exception as e:
-        logger.warning("Could not load memory config, using defaults", error=str(e))
+        logger.warning("🔧 Could not load memory config, using defaults", error=str(e))
         return {
             'model': {
                 'id': get_default_model_id(),

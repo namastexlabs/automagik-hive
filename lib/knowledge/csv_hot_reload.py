@@ -8,7 +8,6 @@ Updated to use the new simplified Agno-based hot reload system.
 """
 
 import time
-import logging
 import os
 from datetime import datetime
 from pathlib import Path

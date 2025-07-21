@@ -3,12 +3,10 @@ Integration module for connecting typification workflow with Ana team router
 Handles post-conversation typification and agent routing based on results
 """
 
-import logging
 from typing import Dict, Optional, Any
+from lib.logging import logger
 
 from .workflow import get_conversation_typification_workflow, ConversationTypificationWorkflow
-
-logger = logging.getLogger(__name__)
 
 class TypificationIntegration:
     """Integration layer for typification workflow with Ana team"""
@@ -22,9 +20,9 @@ class TypificationIntegration:
         """Initialize the typification workflow"""
         try:
             self.workflow = get_conversation_typification_workflow(debug_mode=self.debug_mode)
-            logger.info("Typification workflow initialized successfully")
+            logger.info("🔄 Typification workflow initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize typification workflow: {e}")
+            logger.error(f"🔄 Failed to initialize typification workflow: {e}")
             raise
     
     def run_post_conversation_typification(
@@ -48,11 +46,11 @@ class TypificationIntegration:
         """
         
         if not self.workflow:
-            logger.error("Typification workflow not initialized")
+            logger.error("🔄 Typification workflow not initialized")
             return None
         
         try:
-            logger.info(f"Starting post-conversation typification for session {session_id}")
+            logger.info(f"🔄 Starting post-conversation typification for session {session_id}")
             
             # Run the workflow
             results = list(self.workflow.run(
@@ -63,21 +61,21 @@ class TypificationIntegration:
             ))
             
             if not results:
-                logger.warning(f"No results from typification workflow for session {session_id}")
+                logger.warning(f"🔄 No results from typification workflow for session {session_id}")
                 return None
             
             # Get the last result (should be RunResponse with workflow_completed event)
             result = results[-1]
             
             if hasattr(result, 'content') and result.content.get('status') == 'completed':
-                logger.info(f"Typification completed successfully: {result.content['hierarchy_path']}")
+                logger.info(f"🔄 Typification completed successfully: {result.content['hierarchy_path']}")
                 return result.content
             else:
-                logger.error(f"Typification failed: {result.content}")
+                logger.error(f"🔄 Typification failed: {result.content}")
                 return None
                 
         except Exception as e:
-            logger.error(f"Error in post-conversation typification: {e}")
+            logger.error(f"🔄 Error in post-conversation typification: {e}")
             return None
     
     def get_agent_routing_suggestions(

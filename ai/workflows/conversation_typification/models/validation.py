@@ -4,9 +4,9 @@ Uses Agno Workflows 2.0 patterns for intelligent validation and correction.
 """
 
 import json
-import logging
 from typing import Dict, List, Optional, Tuple
 from pathlib import Path
+from lib.logging import logger
 
 from agno.agent import Agent
 from agno.models.anthropic import Claude
@@ -14,8 +14,6 @@ from agno.workflow.v2 import Condition, Loop, Step, StepInput, StepOutput
 
 from .base import ValidationResult
 from .hierarchy import load_hierarchy, validate_typification_path
-
-logger = logging.getLogger(__name__)
 
 
 def create_validation_agent() -> Agent:
@@ -65,7 +63,7 @@ def validate_with_llm_retry(
             "retry_used": False
         }
     
-    logger.warning(f"Validation failed: {validation_result.error_message}")
+    logger.warning(f"🔍 Validation failed: {validation_result.error_message}")
     
     # Use LLM to correct the classification
     hierarchy = load_hierarchy()
@@ -94,7 +92,7 @@ def validate_with_llm_retry(
                 )
                 
                 if corrected_validation.valid:
-                    logger.info("LLM correction successful")
+                    logger.info("🔍 LLM correction successful")
                     return corrected_validation, {
                         **corrected,
                         "retry_used": True,
@@ -107,7 +105,7 @@ def validate_with_llm_retry(
                     }
     
     except Exception as e:
-        logger.error(f"LLM correction failed: {str(e)}")
+        logger.error(f"🔍 LLM correction failed: {str(e)}")
     
     # Return original validation failure if correction didn't work
     return validation_result, {
@@ -216,11 +214,11 @@ def parse_correction_response(response_content: str) -> Optional[Dict[str, str]]
             if all(field in correction_data for field in required_fields):
                 return correction_data
         
-        logger.warning("Could not parse correction response")
+        logger.warning("🔍 Could not parse correction response")
         return None
         
     except Exception as e:
-        logger.error(f"Failed to parse correction response: {str(e)}")
+        logger.error(f"🔍 Failed to parse correction response: {str(e)}")
         return None
 
 
@@ -251,7 +249,7 @@ def execute_validation_step(step_input: StepInput) -> StepOutput:
         return StepOutput(content=json.dumps(result))
         
     except Exception as e:
-        logger.error(f"Validation step failed: {str(e)}")
+        logger.error(f"🔍 Validation step failed: {str(e)}")
         return StepOutput(
             content=json.dumps({"success": False, "error": str(e)}),
             error=str(e)

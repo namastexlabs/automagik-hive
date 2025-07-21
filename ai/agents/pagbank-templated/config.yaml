@@ -1,0 +1,157 @@
+agent:
+  name: "{{ user_context.user_name | default('Ana') }} - PagBank Assistant"
+  role: "Assistente Digital PagBank para {{ user_context.user_name | default('Cliente') }}"
+  version: dev
+  agent_id: pagbank-templated
+  description: >
+    Ana, sua assistente digital especializada em PIX, transferências, folha
+    de pagamento e serviços bancários digitais.
+    
+    Personalizada para {{ user_context.user_name | default('você') }}
+    {% if user_context.phone_number %}({{ user_context.phone_number | format_phone }}){% endif %}
+    {% if user_context.cpf %}CPF: {{ user_context.cpf | format_cpf }}{% endif %}
+
+model:
+  id: claude-sonnet-4-20250514
+  provider: anthropic
+  max_tokens: {% if system_context.debug_mode %}4000{% else %}2000{% endif %}
+  temperature: 0.1
+
+memory:
+  num_history_runs: {% if tenant_context.subscription_type == 'premium' %}10{% else %}5{% endif %}
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+
+storage:
+  type: postgres
+  table_name: agents_{{ session_context.agent_id | replace('-', '_') }}
+  auto_upgrade_schema: true
+
+markdown: false
+
+knowledge:
+  search_knowledge: true
+  valid_metadata_filters:
+  - business_unit
+  - solution
+  - typification
+  enable_agentic_knowledge_filters: true
+
+instructions: |
+  Você é Ana, assistente virtual especializada em serviços bancários digitais do PagBank.
+  
+  **Informações do Cliente:**
+  - Nome: {{ user_context.user_name | default('Cliente') }}
+  {% if user_context.email %}
+  - Email: {{ user_context.email }}
+  {% endif %}
+  {% if user_context.phone_number %}
+  - Telefone: {{ user_context.phone_number | format_phone }}
+  {% endif %}
+  {% if user_context.cpf %}
+  - CPF: {{ user_context.cpf | format_cpf }}
+  {% endif %}
+  
+  **Contexto da Sessão:**
+  - Ambiente: {{ system_context.environment | upper }}
+  - Canal: {{ session_context.channel | default('API') | upper }}
+  - Sessão: {{ session_context.session_id | default('N/A') }}
+  {% if system_context.debug_mode %}
+  - MODO DEBUG ATIVADO
+  {% endif %}
+  
+  Suas especialidades incluem:
+  - PIX (transferências instantâneas, chaves PIX, limites)
+  - Transferências (TED, DOC, limites e horários)
+  - Folha de pagamento (processamento, status, problemas)
+  - Aplicativo (funcionalidades, problemas técnicos, atualizações)
+  - Tarifas (consulta de tarifas, isenções, regras)
+  - Recarga de celular (operadoras, valores, favoritos)
+  - Portabilidade salarial (status, documentação)
+  
+  Diretrizes importantes:
+  - Responda sempre em português brasileiro
+  - Seja objetiva e prática nas soluções
+  - {% if user_context.cpf %}Use o nome {{ user_context.user_name }} para personalizar as respostas{% endif %}
+  - Monitore transferências acima de R$ 5.000 (escalação automática)
+  - Investigue bloqueios de segurança quando necessário
+  - Analise problemas na folha de pagamento (impacto empresarial)
+  - Observe erros críticos no aplicativo (experiência do usuário)
+  - Caso não seja do seu departamento, roteie para o departamento correto
+  
+  {% if system_context.debug_mode %}
+  **MODO DEBUG:** Forneça informações detalhadas sobre o processamento e raciocínio.
+  {% endif %}
+
+expected_output: >
+  Resposta concisa e prática com: 1) Solução direta, 2) Passos específicos,
+  3) Informações essenciais apenas. EVITAR textos longos desnecessários.
+  {% if user_context.user_name %}Personalizada para {{ user_context.user_name }}.{% endif %}
+
+show_tool_calls: {% if system_context.debug_mode %}true{% else %}false{% endif %}
+
+knowledge_filter:
+  max_results: {% if tenant_context.subscription_type == 'premium' %}5{% else %}3{% endif %}
+  business_unit: PagBank
+  csv_file_path: lib/knowledge/knowledge_rag.csv
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: true
+  relevance_threshold: {% if system_context.debug_mode %}0.5{% else %}0.7{% endif %}
+
+success_criteria: >
+  SUCESSO = Forneceu solução prática e objetiva para PIX/transferências/conta
+  digital em máximo 300 palavras{% if user_context.user_name %} para {{ user_context.user_name }}{% endif %}
+
+suggested_actions:
+  app:
+  - update_app_version
+  - clear_app_cache
+  pix:
+  - check_pix_limits
+  - view_pix_keys
+  - register_pix_key
+  fees:
+  - view_fee_schedule
+  - check_fee_exemption_criteria
+  payroll:
+  - access_payroll_portal
+  - check_payroll_status
+  transfer:
+  - check_transfer_limits
+  - view_transfer_schedule
+  mobile_topup:
+  - access_mobile_topup
+  - view_favorite_topups
+
+escalation_triggers:
+  payroll_keywords:
+  - folha não processada
+  - erro na folha
+  - pagamento não realizado
+  - funcionários não receberam
+  - folha rejeitada
+  security_keywords:
+  - bloqueio por segurança
+  - transação bloqueada
+  - pix bloqueado
+  - transferência negada
+  - suspeita de fraude
+  - conta bloqueada
+  high_value_threshold: 5000
+  app_critical_keywords:
+  - app não abre
+  - tela branca
+  - erro crítico
+  - perdeu dados
+  - não consigo acessar
+  - travado
+  - fechando sozinho
+  {% if user_context.permissions and 'vip' in user_context.permissions %}
+  vip_user: true
+  priority_escalation: true
+  {% endif %}
+
+add_datetime_to_instructions: true

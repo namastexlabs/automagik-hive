@@ -4,13 +4,12 @@ Uses custom execution function to call typification workflow directly
 """
 
 import json
-import logging
 from typing import Any, Dict, Optional
 from datetime import datetime
 
 from agno.workflow.v2 import Workflow
 from agno.workflow.v2.types import WorkflowExecutionInput
-from agno.utils.log import logger
+from lib.logging import logger
 
 # Import typification workflow
 from ai.workflows.conversation_typification.workflow import get_conversation_typification_workflow
@@ -239,16 +238,15 @@ if __name__ == "__main__":
         workflow = get_finalizacao_workflow()
         workflow.workflow_session_state = test_session_state
         
-        print("🧪 Testando workflow de finalização...")
-        print(f"📋 Session ID: {test_session_state['session_id']}")
-        print(f"👤 Cliente: {test_session_state['customer_context']['customer_name']}")
-        print()
+        logger.info("🤖 Testando workflow de finalização...")
+        logger.info(f"🤖 Session ID: {test_session_state['session_id']}")
+        logger.info(f"🤖 Cliente: {test_session_state['customer_context']['customer_name']}")
         
         # Run workflow
         result = await workflow.arun(message=test_conversation)
         
-        print("✅ Resultado da finalização:")
-        print(result.content if hasattr(result, 'content') else result)
+        logger.info("🤖 Resultado da finalização:")
+        logger.info(f"🤖 {result.content if hasattr(result, 'content') else result}")
         
     # Run test
     asyncio.run(test_finalizacao())

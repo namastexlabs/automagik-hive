@@ -5,7 +5,6 @@ Simple notification system for monitoring alerts and system events.
 Designed to be easily extensible for different notification methods.
 """
 
-import logging
 import time
 import os
 from typing import Dict, Any, Optional
@@ -13,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum
 from abc import ABC, abstractmethod
 
-logger = logging.getLogger(__name__)
+from lib.logging import logger
 
 
 class NotificationLevel(str, Enum):
@@ -154,7 +153,8 @@ class LogProvider(NotificationProvider):
     """Log provider for notifications"""
     
     def __init__(self, logger_name: str = "notifications"):
-        self.logger = logging.getLogger(logger_name)
+        # Use the unified logger instead of creating a separate one
+        self.logger = logger
     
     async def send(self, notification: NotificationMessage) -> bool:
         """Send notification via logging"""
