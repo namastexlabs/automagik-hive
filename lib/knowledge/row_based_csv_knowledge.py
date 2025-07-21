@@ -49,14 +49,10 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         try:
             with open(path_to_use, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
-                # Convert to list to get total count for progress bar
                 rows = list(reader)
                 
-                # Process rows with progress bar
-                for row_index, row in enumerate(tqdm(rows, 
-                                                   desc="Processing CSV rows", 
-                                                   unit="row", 
-                                                   leave=True)):
+                # Process rows
+                for row_index, row in enumerate(rows):
                     # Create content combining all columns with clear formatting
                     content_parts = []
                     
@@ -98,9 +94,6 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                         )
                         documents.append(doc)
                         
-                        # Show progress for business units (reduced frequency)
-                        if row_index > 0 and (row_index + 1) % 50 == 0:  # Every 50 rows
-                            tqdm.write(f"Processed {row_index + 1}/{len(rows)} rows...")
             
             # Count documents by business unit for final summary
             business_unit_counts = {}
@@ -173,29 +166,35 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             bu = doc.meta_data.get('business_unit', 'Unknown')
             business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
         
-        # Process documents without progress bar for cleaner output
-        processed_by_unit = {}
-        
-        for doc in all_documents:
-            try:
-                # Upsert or insert individual document
-                if upsert and self.vector_db.upsert_available():
-                    self.vector_db.upsert(documents=[doc], filters=doc.meta_data)
-                else:
-                    self.vector_db.insert(documents=[doc], filters=doc.meta_data)
-                
-                # Track progress by business unit
-                bu = doc.meta_data.get('business_unit', 'Unknown')
-                processed_by_unit[bu] = processed_by_unit.get(bu, 0) + 1
-                
-            except Exception as e:
-                logger.error(f"🚨 Error processing document {doc.id}", error=str(e))
-                continue
+        # Process documents with progress bar - this is where the slow embedding/upsert occurs
+        with tqdm(all_documents, desc="Embedding & upserting documents", unit="doc", leave=True) as pbar:
+            processed_by_unit = {}
+            
+            for doc in pbar:
+                try:
+                    # Upsert or insert individual document
+                    if upsert and self.vector_db.upsert_available():
+                        self.vector_db.upsert(documents=[doc], filters=doc.meta_data)
+                    else:
+                        self.vector_db.insert(documents=[doc], filters=doc.meta_data)
+                    
+                    # Track progress by business unit
+                    bu = doc.meta_data.get('business_unit', 'Unknown')
+                    processed_by_unit[bu] = processed_by_unit.get(bu, 0) + 1
+                    
+                    # Update progress description with current business unit
+                    if bu != 'Unknown':
+                        pbar.set_description(f"Embedding & upserting documents ({bu})")
+                    
+                except Exception as e:
+                    logger.error(f"🚨 Error processing document {doc.id}", error=str(e))
+                    continue
         
         # Show final business unit summary like the CSV loading does
+        tqdm.write("\n📊 Vector database loading completed:")
         for bu, count in business_unit_counts.items():
             if bu and bu != 'Unknown':
-                logger.info(f"📊 ✓ {bu}: {count} documents processed")
+                tqdm.write(f"✓ {bu}: {count} documents embedded & stored")
         
         log_info(f"Added {len(all_documents)} documents to knowledge base")
     
