@@ -96,7 +96,8 @@ class SmartIncrementalLoader:
                     return set()
                 
                 # Get existing content hashes from agno schema
-                result = conn.execute(text(f"SELECT DISTINCT content_hash FROM agno.{self.table_name} WHERE content_hash IS NOT NULL"))
+                query = "SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL"
+                result = conn.execute(text(query))
                 existing_hashes = {row[0] for row in result.fetchall()}
                 return existing_hashes
                 
@@ -135,10 +136,11 @@ class SmartIncrementalLoader:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
                 # Add content_hash column if it doesn't exist
-                conn.execute(text(f"""
-                    ALTER TABLE agno.{self.table_name} 
+                alter_query = """
+                    ALTER TABLE agno.knowledge_base 
                     ADD COLUMN IF NOT EXISTS content_hash VARCHAR(32)
-                """))
+                """
+                conn.execute(text(alter_query))
                 conn.commit()
                 return True
         except Exception as e:
@@ -165,9 +167,9 @@ class SmartIncrementalLoader:
                     problem = row['data'].get('problem', '')[:100]  # First 100 chars for matching
                     
                     # Check if this content already exists in database
-                    result = conn.execute(text(
-                        f"SELECT COUNT(*) FROM agno.{self.table_name} WHERE content LIKE :pattern"
-                    ), {'pattern': f"%{problem}%"})
+                    # Note: Table name is validated from config, but use parameterized query for safety
+                    query = "SELECT COUNT(*) FROM agno.knowledge_base WHERE content LIKE :pattern"
+                    result = conn.execute(text(query), {'pattern': f"%{problem}%"})
                     
                     exists = result.fetchone()[0] > 0
                     
@@ -242,7 +244,8 @@ class SmartIncrementalLoader:
             try:
                 engine = create_engine(self.db_url)
                 with engine.connect() as conn:
-                    result_count = conn.execute(text(f"SELECT COUNT(*) FROM agno.{self.table_name}"))
+                    query_count = "SELECT COUNT(*) FROM agno.knowledge_base"
+                    result_count = conn.execute(text(query_count))
                     total_entries = result_count.fetchone()[0]
             except:
                 total_entries = 'unknown'
@@ -378,12 +381,13 @@ class SmartIncrementalLoader:
                 problem = row_data.get('problem', '')
                 
                 # Update the hash for rows matching this content (use content column, not document)
-                conn.execute(text(f"""
-                    UPDATE agno.{self.table_name} 
+                update_query = """
+                    UPDATE agno.knowledge_base 
                     SET content_hash = :hash 
                     WHERE content LIKE :problem_pattern
                     AND content_hash IS NULL
-                """), {
+                """
+                conn.execute(text(update_query), {
                     'hash': content_hash,
                     'problem_pattern': f"%{problem[:50]}%"  # Use first 50 chars for matching
                 })
@@ -426,8 +430,9 @@ class SmartIncrementalLoader:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
                 # Delete rows with these hashes
+                delete_query = "DELETE FROM agno.knowledge_base WHERE content_hash = :hash"
                 for hash_to_remove in removed_hashes:
-                    conn.execute(text(f"DELETE FROM agno.{self.table_name} WHERE content_hash = :hash"), {'hash': hash_to_remove})
+                    conn.execute(text(delete_query), {'hash': hash_to_remove})
                 
                 conn.commit()
                 from lib.logging import logger

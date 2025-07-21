@@ -5,6 +5,7 @@ Custom implementation that treats each CSV row as a separate document
 import csv
 from typing import List, Optional
 from pathlib import Path
+from tqdm import tqdm
 from agno.document.base import Document
 from agno.knowledge.document import DocumentKnowledgeBase
 from agno.vectordb.base import VectorDb
@@ -48,8 +49,14 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         try:
             with open(path_to_use, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
+                # Convert to list to get total count for progress bar
+                rows = list(reader)
                 
-                for row_index, row in enumerate(reader):
+                # Process rows with progress bar
+                for row_index, row in enumerate(tqdm(rows, 
+                                                   desc="Processing CSV rows", 
+                                                   unit="row", 
+                                                   leave=True)):
                     # Create content combining all columns with clear formatting
                     content_parts = []
                     
@@ -90,6 +97,21 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                             meta_data=meta_data
                         )
                         documents.append(doc)
+                        
+                        # Show progress for business units
+                        if row_index > 0 and (row_index + 1) % 10 == 0:  # Every 10 rows
+                            tqdm.write(f"Processed {row_index + 1}/{len(rows)} rows...")
+            
+            # Count documents by business unit for final summary
+            business_unit_counts = {}
+            for doc in documents:
+                bu = doc.meta_data.get('business_unit', 'Unknown')
+                business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
+            
+            # Display business unit summary
+            for bu, count in business_unit_counts.items():
+                if bu and bu != 'Unknown':
+                    tqdm.write(f"✓ {bu}: {count} documents processed")
             
             logger.info("📊 CSV loaded successfully", 
                        total_rows=len(documents), csv_path=str(csv_path))

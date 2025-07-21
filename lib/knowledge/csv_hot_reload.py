@@ -33,8 +33,21 @@ class CSVHotReloadManager:
     incremental loading capabilities.
     """
     
-    def __init__(self, csv_path: str = "lib/knowledge/knowledge_rag.csv"):
-        """Initialize with backward-compatible interface."""
+    def __init__(self, csv_path: str = None):
+        """Initialize with centralized config or fallback path."""
+        if csv_path is None:
+            # Use centralized config like knowledge_factory.py
+            try:
+                from lib.utils.version_factory import load_global_knowledge_config
+                global_config = load_global_knowledge_config()
+                csv_filename = global_config.get("csv_file_path", "knowledge_rag.csv")
+                # Make path relative to knowledge directory (same as knowledge_factory.py)
+                csv_path = str(Path(__file__).parent / csv_filename)
+                logger.info("📊 Using CSV path from centralized config", csv_path=csv_path)
+            except Exception as e:
+                logger.warning("🔧 Could not load centralized config, using fallback", error=str(e))
+                csv_path = "lib/knowledge/knowledge_rag.csv"
+        
         self.csv_path = Path(csv_path)
         self.is_running = False
         self.observer = None
