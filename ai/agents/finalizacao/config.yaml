@@ -44,4 +44,9 @@ storage:
   auto_upgrade_schema: true
 memory:
   add_history_to_messages: true
-  num_history_runs: 3
+  num_history_runs: 3  # INTENTIONAL OVERRIDE: Finalization agent needs minimal history for efficiency
+  enable_user_memories: true
+  enable_agentic_memory: false
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true

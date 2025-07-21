@@ -44,8 +44,7 @@ class Settings:
         self.memory_retention_days = int(os.getenv("HIVE_MEMORY_RETENTION_DAYS", "30"))
         self.max_memory_entries = int(os.getenv("HIVE_MAX_MEMORY_ENTRIES", "1000"))
         
-        # Knowledge base settings
-        self.knowledge_file = self.project_root / "lib/knowledge/knowledge_rag.csv"
+        # Knowledge base settings (now using global knowledge config)
         self.max_knowledge_results = int(os.getenv("HIVE_MAX_KNOWLEDGE_RESULTS", "10"))
         
         # Security settings

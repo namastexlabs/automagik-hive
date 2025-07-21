@@ -20,7 +20,6 @@ from lib.versioning import AgnoVersionService
 # Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
 
 from datetime import datetime
-from typing import Callable
 
 
 def load_global_knowledge_config():
@@ -53,94 +52,9 @@ class VersionFactory:
         
         self.version_service = AgnoVersionService(self.db_url)
     
-    def _create_context_functions(self, user_id: Optional[str] = None, session_id: Optional[str] = None, 
-                                debug_mode: bool = False, **context_kwargs) -> Dict[str, Callable]:
-        """Create AGNO native context functions to replace templating variables"""
-        context = {}
-        
-        # User context function
-        if user_id:
-            def get_user_context():
-                # In a real implementation, this would fetch from database/service
-                return {
-                    "user_name": context_kwargs.get("user_name", "User"),
-                    "email": context_kwargs.get("email"),
-                    "phone_number": context_kwargs.get("phone_number"),
-                    "cpf": context_kwargs.get("cpf"),
-                    "permissions": context_kwargs.get("permissions", []),
-                    "subscription_type": context_kwargs.get("subscription_type", "basic"),
-                    "language": context_kwargs.get("language", "pt-BR"),
-                    "timezone": context_kwargs.get("timezone", "America/Sao_Paulo"),
-                    "business_units": context_kwargs.get("business_units", []),
-                    "preferences": context_kwargs.get("preferences", {}),
-                    "is_vip": "vip" in context_kwargs.get("permissions", [])
-                }
-            context["user_data"] = get_user_context
-        
-        # Session context function  
-        if session_id:
-            def get_session_context():
-                return {
-                    "session_id": session_id,
-                    "channel": context_kwargs.get("channel", "API"),
-                    "timestamp": datetime.now().isoformat()
-                }
-            context["session_data"] = get_session_context
-        
-        # System context function
-        def get_system_context():
-            return {
-                "environment": os.getenv("HIVE_ENVIRONMENT", "production"),
-                "debug_mode": debug_mode,
-                "timestamp": datetime.now().isoformat()
-            }
-        context["system_data"] = get_system_context
-        
-        # Tenant context function
-        if context_kwargs.get("tenant_id"):
-            def get_tenant_context():
-                return {
-                    "tenant_id": context_kwargs.get("tenant_id"),
-                    "tenant_name": context_kwargs.get("tenant_name", "Organization"),
-                    "subscription_type": context_kwargs.get("subscription_type", "basic"),
-                    "enabled_features": context_kwargs.get("enabled_features", []),
-                    "features": context_kwargs.get("features", [])
-                }
-            context["tenant_data"] = get_tenant_context
-        
-        return context
+    # _create_context_functions method removed - AGNO handles context natively
     
-    def _build_dynamic_instructions(self, base_instructions: str, context_functions: Dict[str, Callable], 
-                                   user_id: Optional[str] = None, debug_mode: bool = False) -> Callable:
-        """Build dynamic instructions function that replaces templated instructions"""
-        def generate_instructions():
-            # Start with base instructions
-            instructions = base_instructions
-            
-            # Add personalized greeting if user context available
-            if user_id and "user_data" in context_functions:
-                user_data = context_functions["user_data"]()
-                user_name = user_data.get("user_name", "User")
-                instructions = f"Hello {user_name}!\n\n{instructions}"
-                
-                # Add user-specific context
-                if user_data.get("permissions"):
-                    permissions = ", ".join(user_data["permissions"])
-                    instructions += f"\n\nYour permissions: {permissions}"
-            
-            # Add debug information if debug mode
-            if debug_mode:
-                instructions += "\n\n🐛 DEBUG MODE ACTIVE - Enhanced logging enabled"
-                
-            # Add environment context
-            if "system_data" in context_functions:
-                system_data = context_functions["system_data"]()
-                env = system_data.get("environment", "production").upper()
-                instructions += f"\n\nEnvironment: {env}"
-            
-            return instructions
-        
-        return generate_instructions
+    # _build_dynamic_instructions method removed - AGNO handles instructions natively
     
     def create_versioned_component(
         self,
@@ -238,15 +152,10 @@ class VersionFactory:
         user_id: Optional[str],
         **context_kwargs
     ) -> Agent:
-        """Create versioned agent using dynamic Agno proxy for future compatibility."""
+        """Create versioned agent using dynamic Agno proxy with inheritance support."""
         
-        # Create AGNO native context functions to replace templating
-        context_functions = self._create_context_functions(
-            user_id=user_id,
-            session_id=session_id,
-            debug_mode=debug_mode,
-            **context_kwargs
-        )
+        # Apply inheritance from team configuration if agent is part of a team
+        enhanced_config = self._apply_team_inheritance(component_id, config)
         
         # Use the dynamic proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_proxy
@@ -254,26 +163,16 @@ class VersionFactory:
         proxy = get_agno_proxy()
         
         # Load custom tools
-        tools = self._load_agent_tools(component_id, config)
+        tools = self._load_agent_tools(component_id, enhanced_config)
         
         # Prepare config with AGNO native context support
-        enhanced_config = config.copy()
         if tools:
             enhanced_config["tools"] = tools
         
-        # Add AGNO native context parameters
-        enhanced_config["context"] = context_functions
+        # Add AGNO native context parameters - direct pass-through
+        enhanced_config["context"] = context_kwargs  # Direct context data
         enhanced_config["add_context"] = True  # Automatically inject context into messages
-        enhanced_config["resolve_context"] = True  # Resolve context functions when needed
-        
-        # Convert templated instructions to dynamic instructions if needed
-        base_instructions = enhanced_config.get("instructions", "")
-        if base_instructions and ("{{" in base_instructions or "{%" in base_instructions):
-            # This config still has templating - convert to dynamic instructions
-            logger.warning(f"🔧 Converting templated instructions for {component_id} to AGNO native context")
-            enhanced_config["instructions"] = self._build_dynamic_instructions(
-                base_instructions, context_functions, user_id, debug_mode
-            )
+        enhanced_config["resolve_context"] = True  # Resolve context at runtime
         
         # Create agent using dynamic proxy with native context
         agent = proxy.create_agent(
@@ -285,9 +184,63 @@ class VersionFactory:
             db_url=self.db_url
         )
         
-        logger.info(f"🤖 Agent {component_id} created with AGNO native context and {len(proxy.get_supported_parameters())} available parameters")
+        logger.info(f"🤖 Agent {component_id} created with inheritance and {len(proxy.get_supported_parameters())} available parameters")
         
         return agent
+    
+    def _apply_team_inheritance(self, agent_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply team inheritance to agent configuration if agent is part of a team."""
+        try:
+            from lib.utils.config_inheritance import ConfigInheritanceManager
+            import glob
+            import yaml
+            
+            # Find team that contains this agent
+            team_config = None
+            team_id = None
+            
+            for team_config_file in glob.glob("ai/teams/*/config.yaml"):
+                try:
+                    with open(team_config_file, 'r') as f:
+                        potential_team_config = yaml.safe_load(f)
+                    
+                    # Check if this agent is a member of this team
+                    members = potential_team_config.get('members', [])
+                    if agent_id in members:
+                        team_config = potential_team_config
+                        team_id = team_config_file.split('/')[-2]  # Extract team_id from path
+                        break
+                        
+                except Exception as e:
+                    logger.warning(f"🔧 Error reading team config {team_config_file}: {e}")
+                    continue
+            
+            if not team_config:
+                logger.debug(f"🔧 No team found for agent {agent_id}, using config as-is")
+                return config
+            
+            # Apply inheritance
+            manager = ConfigInheritanceManager()
+            agent_configs = {agent_id: config}
+            enhanced_configs = manager.apply_inheritance(team_config, agent_configs)
+            
+            # Validate inheritance
+            errors = manager.validate_configuration(team_config, enhanced_configs)
+            if errors:
+                logger.warning(f"🔧 Inheritance validation warnings for agent {agent_id}:")
+                for error in errors:
+                    logger.warning(f"  ⚠️  {error}")
+            
+            # Generate inheritance report
+            report = manager.generate_inheritance_report(team_config, agent_configs, enhanced_configs)
+            logger.debug(f"🔧 Inheritance applied for agent {agent_id} in team {team_id}")
+            logger.debug(report)
+            
+            return enhanced_configs[agent_id]
+            
+        except Exception as e:
+            logger.warning(f"🔧 Error applying inheritance to agent {agent_id}: {e}")
+            return config  # Fallback to original config
     
     def _load_agent_tools(self, component_id: str, config: Dict[str, Any]) -> list:
         """Load custom tools for an agent from its tools.py file."""
@@ -338,7 +291,10 @@ class VersionFactory:
         user_id: Optional[str],
         **kwargs
     ) -> Team:
-        """Create team using dynamic Agno Team proxy for future compatibility."""
+        """Create team using dynamic Agno Team proxy with inheritance validation."""
+        
+        # Validate team inheritance configuration
+        enhanced_config = self._validate_team_inheritance(component_id, config)
         
         # Use the dynamic team proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_team_proxy
@@ -348,7 +304,7 @@ class VersionFactory:
         # Create team using dynamic proxy
         team = proxy.create_team(
             component_id=component_id,
-            config=config,
+            config=enhanced_config,
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -356,9 +312,54 @@ class VersionFactory:
             **kwargs
         )
         
-        logger.info(f"🤖 Team {component_id} created with {len(proxy.get_supported_parameters())} available Agno Team parameters")
+        logger.info(f"🤖 Team {component_id} created with inheritance validation and {len(proxy.get_supported_parameters())} available parameters")
         
         return team
+    
+    def _validate_team_inheritance(self, team_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate team configuration for proper inheritance setup."""
+        try:
+            from lib.utils.config_inheritance import ConfigInheritanceManager
+            import glob
+            import yaml
+            
+            # Load all member agent configurations
+            agent_configs = {}
+            members = config.get('members', [])
+            
+            for member_id in members:
+                agent_config_path = f"ai/agents/{member_id}/config.yaml"
+                try:
+                    with open(agent_config_path, 'r') as f:
+                        agent_configs[member_id] = yaml.safe_load(f)
+                except Exception as e:
+                    logger.warning(f"🔧 Could not load member config for {member_id}: {e}")
+                    continue
+            
+            if not agent_configs:
+                logger.debug(f"🔧 No member agents found for team {team_id}")
+                return config
+            
+            # Validate inheritance setup
+            manager = ConfigInheritanceManager()
+            errors = manager.validate_configuration(config, agent_configs)
+            
+            if errors:
+                logger.warning(f"🔧 Team inheritance validation errors for {team_id}:")
+                for error in errors:
+                    logger.warning(f"  ⚠️  {error}")
+            
+            # Generate inheritance preview report
+            enhanced_agent_configs = manager.apply_inheritance(config, agent_configs)
+            report = manager.generate_inheritance_report(config, agent_configs, enhanced_agent_configs)
+            logger.info(f"🔧 Team {team_id} inheritance preview:")
+            logger.info(report)
+            
+            return config
+            
+        except Exception as e:
+            logger.warning(f"🔧 Error validating team inheritance for {team_id}: {e}")
+            return config  # Fallback to original config
     
     def _create_workflow(
         self,

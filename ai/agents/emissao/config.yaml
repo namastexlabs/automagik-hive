@@ -15,6 +15,9 @@ memory:
   enable_user_memories: true
   enable_agentic_memory: false
   add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
 storage:
   type: postgres
   table_name: agents_emissao
@@ -53,7 +56,6 @@ show_tool_calls: true
 knowledge_filter:
   max_results: 3
   business_unit: Emissão
-  csv_file_path: lib/knowledge/knowledge_rag.csv
   search_config:
     include_metadata: true
     use_semantic_search: true

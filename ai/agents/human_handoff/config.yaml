@@ -30,3 +30,12 @@ instructions: |
 storage:
   table_name: human_handoff_agent
   auto_upgrade_schema: true
+
+memory:
+  add_history_to_messages: true
+  num_history_runs: 5
+  enable_user_memories: true
+  enable_agentic_memory: false
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true

@@ -67,8 +67,42 @@ def create_lifespan(startup_display=None):
     async def lifespan(app: FastAPI):
         """Application lifespan manager"""
         # Startup
+        # First ensure Hive schema migrations are up to date
         try:
-            # Initialize MCP catalog
+            from lib.services.migration_service import ensure_database_ready_async
+            migration_result = await ensure_database_ready_async()
+            
+            if migration_result["success"]:
+                logger.info("🔧 Database migrations completed", 
+                           action=migration_result.get("action", "completed"),
+                           revision=migration_result.get("current_revision"))
+                if startup_display:
+                    startup_display.add_migration_status(migration_result)
+            else:
+                logger.error("🔧 Database migration failed", 
+                            error=migration_result.get("message", "Unknown error"))
+                if startup_display:
+                    startup_display.add_migration_status(migration_result)
+                # In production, fail fast; in development, continue with warning
+                environment = os.getenv("HIVE_ENVIRONMENT", "development")
+                if environment == "production":
+                    raise ComponentLoadingError(f"Database migrations failed: {migration_result.get('message')}")
+                else:
+                    logger.warning("🔧 Continuing in development mode despite migration failure")
+        except ImportError:
+            logger.warning("🔧 Migration service not available - continuing without automatic migrations")
+        except ComponentLoadingError:
+            raise  # Re-raise ComponentLoadingError
+        except Exception as e:
+            logger.error("🔧 Migration service error", error=str(e), error_type=type(e).__name__)
+            environment = os.getenv("HIVE_ENVIRONMENT", "development")
+            if environment == "production":
+                raise ComponentLoadingError(f"Database migration service failed: {str(e)}")
+            else:
+                logger.warning("🔧 Continuing in development mode despite migration service error")
+        
+        # Initialize MCP catalog
+        try:
             from lib.mcp import MCPCatalog
             catalog = MCPCatalog()
             servers = catalog.list_servers()
@@ -168,22 +202,21 @@ def create_automagik_api():
     if is_development and not is_reloader:
         logger.info("🌐 Database initialization", method="agno_storage_abstractions", status="auto_initialized")
     
-    # Initialize CSV hot reload manager using global knowledge configuration
-    # Get CSV path from global knowledge config
+    # Initialize CSV hot reload manager using centralized global knowledge configuration
+    # Use the same global config loading function as agents
     try:
-        import yaml
-        global_config_path = Path(__file__).parent.parent / "lib/knowledge/config.yaml"
-        with open(global_config_path) as f:
-            global_config = yaml.safe_load(f)
-        csv_path = global_config.get("knowledge", {}).get("csv_file_path", "knowledge_rag.csv")
-        # Convert to absolute path (relative to config file location)
+        from lib.utils.version_factory import load_global_knowledge_config
+        global_config = load_global_knowledge_config()
+        csv_filename = global_config.get("csv_file_path", "knowledge_rag.csv")
+        # Convert to absolute path (relative to knowledge directory)
         config_dir = Path(__file__).parent.parent / "lib/knowledge"
-        csv_path = config_dir / csv_path
-        logger.info("🌐 Global knowledge configuration loaded", csv_path=str(csv_path))
+        csv_path = config_dir / csv_filename
+        logger.info("🌐 Centralized knowledge configuration loaded", csv_path=str(csv_path))
     except Exception as e:
-        # Fallback to default if config reading fails
+        # This should not happen in production - enforce proper configuration
         csv_path = Path(__file__).parent.parent / "lib/knowledge/knowledge_rag.csv"
-        logger.warning("🌐 Could not read global knowledge config, using default", error=str(e), fallback_path=str(csv_path))
+        logger.error("🌐 Failed to load centralized knowledge config - using hardcoded fallback", 
+                    error=str(e), fallback_path=str(csv_path))
     if is_development and not is_reloader:
         logger.info("🌐 CSV hot reload manager configured", csv_path=str(csv_path))
         

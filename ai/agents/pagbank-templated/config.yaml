@@ -24,6 +24,9 @@ memory:
   enable_user_memories: true
   enable_agentic_memory: true
   add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
 
 storage:
   type: postgres
@@ -80,7 +83,6 @@ show_tool_calls: false
 knowledge_filter:
   max_results: 5
   business_unit: PagBank
-  csv_file_path: lib/knowledge/knowledge_rag.csv
   search_config:
     include_metadata: true
     use_semantic_search: true

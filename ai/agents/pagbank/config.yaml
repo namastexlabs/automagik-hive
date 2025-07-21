@@ -11,10 +11,13 @@ model:
   max_tokens: 2000
   temperature: 0.1
 memory:
-  num_history_runs: 5
+  num_history_runs: 10  # Standardized to match team default
   enable_user_memories: true
-  enable_agentic_memory: true
+  enable_agentic_memory: true  # INTENTIONAL OVERRIDE: PagBank agent can self-manage memories
   add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
 storage:
   type: postgres
   table_name: agents_pagbank
@@ -55,7 +58,6 @@ show_tool_calls: true
 knowledge_filter:
   max_results: 3
   business_unit: PagBank
-  csv_file_path: lib/knowledge/knowledge_rag.csv
   search_config:
     include_metadata: true
     use_semantic_search: true

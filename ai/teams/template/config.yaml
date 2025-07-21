@@ -45,13 +45,13 @@ add_location_to_instructions: false
 add_member_tools_to_system_message: true
 
 # 6. add_memory_references: Optional[bool] - Add memory references to response
-add_memory_references: null
+add_memory_references: true
 
 # 7. add_references: bool - Add knowledge references to response
 add_references: false
 
 # 8. add_session_summary_references: Optional[bool] - Add session summary references
-add_session_summary_references: null
+add_session_summary_references: true
 
 # 9. add_state_in_messages: bool - Add session state to messages
 add_state_in_messages: false

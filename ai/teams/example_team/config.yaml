@@ -39,6 +39,16 @@ members:
   - "example-agent"
   - "another-agent"
 
+# Memory configuration
+memory:
+  num_history_runs: 5
+  enable_user_memories: true
+  enable_agentic_memory: false
+  add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
+
 # Team instructions
 instructions: |
   You are an example team that demonstrates the multi-team knowledge configuration pattern.

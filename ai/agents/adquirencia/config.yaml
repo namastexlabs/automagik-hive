@@ -20,6 +20,8 @@ memory:
   add_history_to_messages: true
   num_history_runs: 10
   enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
 
 storage:
   table_name: "agents_adquirencia"
@@ -85,7 +87,6 @@ success_criteria: |
 knowledge_filter:
   max_results: 3
   business_unit: "Adquirência Web"
-  csv_file_path: "lib/knowledge/knowledge_rag.csv"
   relevance_threshold: 0.7
   search_config:
     include_metadata: true

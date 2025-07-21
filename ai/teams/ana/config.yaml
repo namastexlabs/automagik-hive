@@ -22,6 +22,8 @@ memory:
   enable_agentic_memory: false
   add_history_to_messages: true
   enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
 context:
   add_state_in_messages: true
   enable_agentic_context: true

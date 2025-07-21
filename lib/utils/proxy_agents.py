@@ -324,9 +324,14 @@ class AgnoAgentProxy:
             except Exception:
                 global_knowledge = {}
             
-            # Agent config overrides global config
-            csv_path = knowledge_filter.get("csv_file_path") or global_knowledge.get("csv_file_path")
+            # Use global config as primary source (csv_file_path should not be in agent configs)
+            csv_path = global_knowledge.get("csv_file_path")
             max_results = knowledge_filter.get("max_results", global_knowledge.get("max_results", 10))
+            
+            # Warn if agent config has csv_file_path (should be removed)
+            if "csv_file_path" in knowledge_filter:
+                logger.warning("⚠️  csv_file_path found in agent config - should use global config instead",
+                              component=component_id, agent_path=knowledge_filter["csv_file_path"])
             
             if csv_path and db_url:
                 # Create knowledge base using pure Agno abstractions

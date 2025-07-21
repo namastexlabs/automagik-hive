@@ -30,7 +30,7 @@ add_history_to_messages: true
 add_location_to_instructions: false
 
 # 5. add_memory_references: Optional[bool] - Add memory references to response
-add_memory_references: null
+add_memory_references: true
 
 # 6. add_messages: Optional[List[Message]] - Additional messages (typically set programmatically)
 add_messages: null
@@ -42,7 +42,7 @@ add_name_to_instructions: false
 add_references: false
 
 # 9. add_session_summary_references: Optional[bool] - Add session summary references
-add_session_summary_references: null
+add_session_summary_references: true
 
 # 10. add_state_in_messages: bool - Add session state to messages
 add_state_in_messages: false
@@ -323,7 +323,6 @@ user_message_role: "user"
 knowledge_filter:
   max_results: 5
   business_unit: "Template"
-  csv_file_path: "lib/knowledge/knowledge_rag.csv"
   relevance_threshold: 0.7
   search_config:
     include_metadata: true

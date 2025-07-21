@@ -21,6 +21,7 @@ class StartupDisplay:
         self.errors = []
         self.version_sync_logs = []
         self.sync_results = None
+        self.migration_status = None
         
     def add_agent(self, agent_id: str, name: str, version: Optional[int] = None, status: str = "✅"):
         """Add agent to display table."""
@@ -59,6 +60,27 @@ class StartupDisplay:
         """Store sync results for version information."""
         self.sync_results = sync_results
     
+    def add_migration_status(self, migration_result: Dict[str, Any]):
+        """Add database migration status to display."""
+        if migration_result.get("success"):
+            action = migration_result.get("action", "completed")
+            if action == "none_required":
+                status = "✅ Up to date"
+            else:
+                status = "✅ Applied"
+            
+            self.migration_status = {
+                "status": status,
+                "action": action,
+                "revision": migration_result.get("current_revision", "unknown")[:8] if migration_result.get("current_revision") else "none"
+            }
+        else:
+            self.migration_status = {
+                "status": "❌ Failed", 
+                "action": "error",
+                "error": migration_result.get("message", "unknown error")[:50]
+            }
+    
     def display_summary(self):
         """Display concise startup summary table."""
         
@@ -67,6 +89,16 @@ class StartupDisplay:
             console.print("\n[bold cyan]📦 Version Sync Status:[/bold cyan]")
             for log in self.version_sync_logs:
                 console.print(f"  {log}")
+            console.print()
+        
+        # Display migration status
+        if self.migration_status:
+            if self.migration_status["status"].startswith("✅"):
+                console.print("\n[bold green]🔧 Database Migration Status:[/bold green]")
+                console.print(f"  {self.migration_status['status']} - Revision: {self.migration_status['revision']}")
+            else:
+                console.print("\n[bold red]🔧 Database Migration Status:[/bold red]")
+                console.print(f"  {self.migration_status['status']}: {self.migration_status.get('error', 'Unknown error')}")
             console.print()
         
         # Display warning if sync_results is None (database issues)
