@@ -1,4 +1,5 @@
 team:
+  mode: coordinate
   name: "Code Development Team"
   team_id: "code-development-team"
   version: dev
@@ -7,76 +8,51 @@ team:
     capabilities through coordinated multi-agent collaboration. Handles project
     onboarding, code analysis, file operations, and intelligent code modifications.
 
-lead_agent: "project-orchestration-agent"
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
+  max_tokens: 2000
 
-# Coordinate mode enables intelligent task distribution and result synthesis
-coordinate_mode: true
+storage:
+  type: postgres
+  table_name: teams_code_development
+  auto_upgrade_schema: true
 
-agents:
-  - agent_id: "project-orchestration-agent"
-    role: "coordinator"
-    description: "Project lifecycle management and team coordination"
-    specialization:
-      - "project_onboarding"
-      - "memory_management"
-      - "workflow_orchestration"
-      - "agent_coordination"
-    capabilities:
-      - onboarding
-      - check_onboarding_performed
-      - activate_project
-      - get_current_config
-      - read_memory
-      - write_memory
-      - list_memories
-      - delete_memory
+memory:
+  num_history_runs: 10
+  enable_user_memories: true
+  enable_agentic_memory: false
+  add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
 
-  - agent_id: "code-understanding-agent"
-    role: "analyst"
-    description: "Code analysis and symbol comprehension specialist"
-    specialization:
-      - "symbol_analysis"
-      - "code_structure"
-      - "dependency_mapping"
-      - "architectural_insights"
-    capabilities:
-      - find_symbol
-      - find_referencing_symbols
-      - find_referencing_code_snippets
-      - get_symbols_overview
-  
-  - agent_id: "file-management-agent"
-    role: "operator"
-    description: "File system operations and content management"
-    specialization:
-      - "file_operations"
-      - "content_management"
-      - "directory_navigation"
-      - "search_operations"
-    capabilities:
-      - read_file
-      - create_text_file
-      - list_dir
-      - search_for_pattern
-      - delete_lines
-      - replace_lines
-      - insert_at_line
-  
-  - agent_id: "code-editing-agent"
-    role: "modifier"
-    description: "Symbol-aware code modifications and refactoring"
-    specialization:
-      - "code_modification"
-      - "symbol_refactoring"
-      - "syntax_validation"
-      - "automated_transformations"
-    capabilities:
-      - replace_symbol_body
-      - insert_before_symbol
-      - insert_after_symbol
-      - rename_symbol
-      - execute_shell_command
-      - validate_code_syntax
+display:
+  markdown: false
+  show_tool_calls: true
+  add_datetime_to_instructions: true
+
+context:
+  add_state_in_messages: true
+  enable_agentic_context: true
+  share_member_interactions: true
+
+events:
+  store_events: true
+  events_to_skip: []
+
+streaming:
+  stream: true
+  stream_member_events: true
+  show_members_responses: true
+  stream_intermediate_steps: true
+
+members:
+  - project-orchestration-agent
+  - code-understanding-agent
+  - file-management-agent
+  - code-editing-agent
 
 # Coordination patterns for different types of work
 coordination_patterns:
@@ -184,55 +160,20 @@ memory_coordination:
     code_editing: ["modification_log", "validation_results"]
 
 instructions: |
-  The Code Development Team provides comprehensive software development capabilities
-  through intelligent coordination of specialized agents.
+  You are the Code Development Team coordinator providing comprehensive software development capabilities.
 
-  **Team Coordination Principles:**
-  
-  1. **Intelligent Task Distribution**
-     - Route tasks to the most appropriate agent based on request analysis
-     - Enable parallel execution where possible for efficiency
-     - Ensure proper dependency management between agents
+  **Team Coordination:**
+  - Coordinate project-orchestration-agent for project setup and memory management
+  - Coordinate code-understanding-agent for symbol analysis and code structure
+  - Coordinate file-management-agent for file operations and content management  
+  - Coordinate code-editing-agent for safe code modifications and refactoring
 
-  2. **Comprehensive Project Understanding**
-     - Start with project onboarding for new codebases
-     - Maintain shared context through memory coordination
-     - Build cumulative understanding across interactions
+  **Workflow Patterns:**
+  - Project setup: Start with onboarding → directory analysis → symbol overview
+  - Code analysis: Symbol analysis → file reading → relationship mapping
+  - Code modifications: Understand structure → prepare changes → validate → record
 
-  3. **Safe Code Operations**
-     - Always understand code structure before modifications
-     - Validate syntax and references after changes
-     - Maintain comprehensive modification history
-
-  4. **Quality Assurance**
-     - Create backups before destructive operations
-     - Validate all modifications through multiple agents
-     - Coordinate rollback capabilities when needed
-
-  **Coordination Workflows:**
-
-  **For Project Setup:**
-  - Project Orchestration Agent performs comprehensive onboarding
-  - File Management Agent provides directory structure analysis
-  - Code Understanding Agent creates symbol overview
-  - All results synthesized for complete project understanding
-
-  **For Code Analysis:**
-  - Code Understanding Agent leads symbol and structure analysis
-  - File Management Agent provides file access and search capabilities
-  - Results coordinated for comprehensive code comprehension
-
-  **For Code Modifications:**
-  - Code Understanding Agent analyzes modification impact
-  - File Management Agent handles file operations and backups
-  - Code Editing Agent performs safe modifications
-  - Project Orchestration Agent records changes in memory
-
-  **Team Memory Management:**
-  - Shared project context across all agents
-  - Specialized memory for each agent's domain
-  - Cumulative learning from all interactions
-  - Consistent state management across workflows
+  Always ensure safe operations with proper validation and backup procedures.
 
 expected_output: |
   Coordinated software development capabilities with comprehensive project

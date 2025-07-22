@@ -24,7 +24,8 @@ def show_current_key():
         logger.info("🔐 Current API key retrieved", key_length=len(key))
         print(f"Current API Key: {key}")
         print(f"\nUsage example:")
-        print(f'curl -H "x-api-key: {key}" http://localhost:9888/playground/status')
+        port = os.getenv('HIVE_API_PORT', '8886')
+        print(f'curl -H "x-api-key: {key}" http://localhost:{port}/playground/status')
     else:
         logger.warning("🔐 No API key found")
         print("No API key found. Run the server once to generate a key automatically.")

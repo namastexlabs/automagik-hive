@@ -377,6 +377,43 @@ validate_dependencies() {
 }
 
 # ===========================================
+# 📂 Repository Management
+# ===========================================
+check_and_clone_repo() {
+    print_status "Checking repository setup..."
+    
+    # Check if we're already in the automagik-hive directory
+    if [[ -f "Makefile" && -f "pyproject.toml" && -d "ai" && -d "api" ]]; then
+        # Check if this is specifically the automagik-hive repo
+        if git remote -v 2>/dev/null | grep -q "automagik-hive"; then
+            print_success "Already in automagik-hive repository"
+            return 0
+        elif [[ "$(basename "$PWD")" == "automagik-hive" ]]; then
+            print_success "In automagik-hive directory"
+            return 0
+        fi
+    fi
+    
+    # Check if automagik-hive directory exists in current location
+    if [[ -d "automagik-hive" ]]; then
+        print_info "Found existing automagik-hive directory, entering it..."
+        cd automagik-hive
+        return 0
+    fi
+    
+    # Clone the repository
+    print_status "Cloning automagik-hive repository..."
+    if git clone https://github.com/namastex/automagik-hive.git; then
+        print_success "Repository cloned successfully"
+        cd automagik-hive
+        print_info "Changed to automagik-hive directory"
+    else
+        print_error "Failed to clone repository"
+        exit 1
+    fi
+}
+
+# ===========================================
 # 🚀 Main Installation Function
 # ===========================================
 create_data_directories() {
@@ -428,7 +465,10 @@ main() {
     # Step 4: Install Python via uv
     install_python
     
-    # Step 5: Optional Docker setup
+    # Step 5: Check and clone repository
+    check_and_clone_repo
+    
+    # Step 6: Optional Docker setup
     if ! check_docker; then
         echo ""
         echo -e "${CYAN}Would you like to install Docker? (y/N)${RESET}"
@@ -440,10 +480,10 @@ main() {
         fi
     fi
     
-    # Step 6: Validate everything
+    # Step 7: Validate everything
     validate_dependencies
     
-    # Step 7: Run make install
+    # Step 8: Run make install
     run_make_install
     
     # Success message
@@ -451,6 +491,7 @@ main() {
     echo -e "${GREEN}${CHECKMARK} Installation completed successfully!${RESET}"
     echo ""
     echo -e "${CYAN}Next steps:${RESET}"
+    echo -e "  • ${PURPLE}cd automagik-hive${RESET} (if not already there)"
     echo -e "  • Run ${PURPLE}make dev${RESET} to start development server"
     echo -e "  • Run ${PURPLE}make prod${RESET} to start production Docker stack"
     echo -e "  • Check ${PURPLE}make help${RESET} for all available commands"

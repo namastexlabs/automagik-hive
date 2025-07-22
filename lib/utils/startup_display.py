@@ -3,6 +3,7 @@ Concise startup display utility for Automagik Hive system.
 Replaces verbose startup logs with clean table format.
 """
 
+import os
 from typing import List, Dict, Any, Optional
 from rich.console import Console
 from rich.table import Table
@@ -268,7 +269,8 @@ def display_simple_status(team_name: str, team_id: str, agent_count: int, workfl
     table.add_row("🤖 Agents:", str(agent_count))
     if workflow_count > 0:
         table.add_row("⚡ Workflows:", str(workflow_count))
-    table.add_row("🌐 API:", "http://localhost:9888")
+    port = os.getenv('HIVE_API_PORT', '8886')
+    table.add_row("🌐 API:", f"http://localhost:{port}")
     
     panel = Panel(table, title="[bold green]System Ready[/bold green]", border_style="green")
     console.print(panel)

@@ -15,8 +15,9 @@ WORKDIR /app
 # Copy dependency files and README for package build
 COPY pyproject.toml uv.lock README.md ./
 
-# Install dependencies with UV sync (production only, no dev dependencies)
-RUN uv sync --frozen --no-dev --no-cache
+# Install dependencies with UV sync (production only, no dev dependencies) + BuildKit cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 # ============================================================================
 # STAGE 2: Production Runtime
@@ -43,27 +44,50 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 # Copy Python virtual environment from builder stage
 COPY --from=builder /app/.venv /app/.venv
 
-# Create non-root user for security
+# Create non-root user for security and fix .venv ownership
 RUN groupadd --gid 1000 hive \
-    && useradd --uid 1000 --gid hive --shell /bin/bash --create-home hive
+    && useradd --uid 1000 --gid hive --shell /bin/bash --create-home hive \
+    && chown -R hive:hive /app/.venv
 
-# Set working directory and copy application code
+# Set working directory and create necessary directories with proper ownership BEFORE copying files
 WORKDIR /app
-COPY --chown=hive:hive . .
-
-# Create necessary directories with proper ownership
 RUN mkdir -p /app/logs /app/data /app/uploads \
-    && chown -R hive:hive /app
+    && chown -R hive:hive /app/logs /app/data /app/uploads \
+    && chown hive:hive /app
+
+# Copy application files in layers for optimal cache utilization
+# Copy rarely changing files first (better cache hits)
+COPY --chown=hive:hive pyproject.toml uv.lock README.md ./
+COPY --chown=hive:hive alembic.ini ./
+COPY --chown=hive:hive alembic/ ./alembic/
+
+# Copy library code (changes less frequently)
+COPY --chown=hive:hive lib/ ./lib/
+
+# Copy AI agents and configurations (moderate change frequency)
+COPY --chown=hive:hive ai/ ./ai/
+
+# Copy API code (changes more frequently)
+COPY --chown=hive:hive api/ ./api/
+COPY --chown=hive:hive common/ ./common/
+
+# Copy remaining files
+COPY --chown=hive:hive scripts/ ./scripts/
+COPY --chown=hive:hive logging_whitelist.yaml ./
 
 # Switch to non-root user
 USER hive
 
-# Expose port for the application
-EXPOSE 9888
+# Set port environment variable with default
+ARG API_PORT=8886
+ENV HIVE_API_PORT=${API_PORT}
+
+# Expose port for the application  
+EXPOSE ${API_PORT}
 
 # Health check for container orchestration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:9888/api/v1/health', timeout=5)" || exit 1
+    CMD python -c "import requests, os; requests.get(f'http://localhost:{os.getenv(\"HIVE_API_PORT\", \"8886\")}/api/v1/health', timeout=5)" || exit 1
 
 # Production startup command using UV
 CMD ["uv", "run", "python", "api/serve.py"]

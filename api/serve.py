@@ -24,19 +24,20 @@ from lib.config.server_config import get_server_config
 from lib.auth.dependencies import get_auth_service
 from lib.exceptions import ComponentLoadingError
 
+# Configure unified logging system first
+from lib.logging import setup_logging, logger
+
 # Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    logger.warning("🌐 python-dotenv not installed, using system environment variables")
+    # Logger not available yet during startup, would create circular import
+    pass  # Silently continue - dotenv is optional for development
 
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
-
-# Configure unified logging system
-from lib.logging import setup_logging, logger
 
 # Setup logging immediately
 setup_logging()
@@ -235,11 +236,11 @@ async def _async_create_automagik_api():
         logger.debug("🌐 Environment configuration", 
                    environment=environment,
                    auth_enabled=auth_service.is_auth_enabled(),
-                   docs_url="http://localhost:9888/docs")
+                   docs_url=f"http://localhost:{os.getenv('HIVE_API_PORT', '8886')}/docs")
         if auth_service.is_auth_enabled():
             logger.debug("🌐 API authentication details",
                        api_key=auth_service.get_current_key(),
-                       usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:9888/playground/status')
+                       usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:{os.getenv("HIVE_API_PORT", "8886")}/playground/status')
         logger.debug("🌐 Development features status", enabled=is_development)
     
     # Extract components from orchestrated startup results

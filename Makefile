@@ -39,9 +39,9 @@ DOCKER_COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then ech
 UV := uv
 
 # Load port from .env file
-HIVE_PORT := $(shell grep -E '^HIVE_PORT=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
+HIVE_PORT := $(shell grep -E '^HIVE_API_PORT=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
 ifeq ($(HIVE_PORT),)
-    HIVE_PORT := 7777
+    HIVE_PORT := 8886
 endif
 
 # ===========================================
@@ -139,7 +139,7 @@ define setup_docker_postgres
         export POSTGRES_DB=$${AFTER_AT##*/}; \
         $(DOCKER_COMPOSE) up -d postgres; \
         echo -e "$(FONT_GREEN)$(CHECKMARK) PostgreSQL container started with secure credentials!$(FONT_RESET)"; \
-        echo -e "$(FONT_YELLOW)💡 Run 'make prod' to start the full production stack$(FONT_RESET)"; \
+        echo -e "$(FONT_YELLOW)💡 Run 'make dev' for development or 'make prod' for production stack$(FONT_RESET)"; \
     else \
         echo -e "$(FONT_GRAY)Skipping Docker PostgreSQL setup$(FONT_RESET)"; \
     fi
@@ -268,20 +268,55 @@ prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
 			export POSTGRES_USER=$${CREDENTIALS%%:*}; \
 			export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
 			export POSTGRES_DB=$${AFTER_AT##*/}; \
+			$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build; \
+		else \
+			echo "Error: Could not extract database URL from .env"; \
+			exit 1; \
 		fi; \
-	fi; \
-	$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
+	else \
+		echo "Error: .env file not found"; \
+		exit 1; \
+	fi
 	@$(call show_hive_logo)
 	@$(call print_success,Production stack started!)
 	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
 	@echo -e "$(FONT_CYAN)💡 Check status with 'make status'$(FONT_RESET)"
 
 .PHONY: stop
-stop: ## 🛑 Stop all services
+stop: ## 🛑 Stop application services (keeps PostgreSQL running)
+	@$(call print_status,Stopping application services...)
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) stop app 2>/dev/null || true
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) rm -f app 2>/dev/null || true
+	@pkill -f "python.*api/serve.py" 2>/dev/null || true
+	@$(call print_success,Application services stopped! PostgreSQL remains running.)
+
+.PHONY: stop-all
+stop-all: ## 🛑 Stop all services including PostgreSQL
 	@$(call print_status,Stopping all services...)
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
 	@pkill -f "python.*api/serve.py" 2>/dev/null || true
 	@$(call print_success,All services stopped!)
+
+.PHONY: update
+update: ## 🔄 Fast rebuild using cache (recommended for development)
+	@$(call print_status,Fast updating Automagik Hive application...)
+	@$(call print_status,Rebuilding with cache optimization...)
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build app
+	@$(call print_success,Application updated successfully! PostgreSQL data preserved.)
+	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
+
+.PHONY: rebuild
+rebuild: ## 🔄 Force full rebuild without cache (for clean state)
+	@$(call print_status,Force rebuilding Automagik Hive application...)
+	@$(call print_status,Stopping application container...)
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) stop app 2>/dev/null || true
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) rm -f app 2>/dev/null || true
+	@$(call print_status,Rebuilding application container (no cache)...)
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) build --no-cache app
+	@$(call print_status,Starting updated application...)
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d app
+	@$(call print_success,Application rebuilt successfully! PostgreSQL data preserved.)
+	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
 
 .PHONY: status
 status: ## 📊 Show service status

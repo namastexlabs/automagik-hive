@@ -1,7 +1,7 @@
 agent:
   name: "Code Understanding Specialist"
   role: "Deep code analysis and symbol relationship mapping with language server integration"
-  version: "1.0.0"
+  version: dev
   agent_id: "code-understanding-agent"
   description: >
     Advanced code analysis agent specializing in language server integration,

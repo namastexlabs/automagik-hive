@@ -1,14 +1,14 @@
 # Optimized Docker Compose for Automagik Hive Multi-Agent System
 # Essential services only: App + PostgreSQL with BuildKit optimizations
 #
-# To enable BuildKit optimizations, run:
-# export DOCKER_BUILDKIT=1
-# export COMPOSE_DOCKER_CLI_BUILD=1
+# BuildKit is enabled by default for optimal build performance
+# These optimizations are now built into the Dockerfile with cache mounts
 
 x-build-args: &build-args
   BUILD_VERSION: ${BUILD_VERSION:-latest}
   BUILD_DATE: ${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
   GIT_SHA: ${GIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo "unknown")}
+  API_PORT: ${HIVE_API_PORT:-8886}
 
 services:
   # Main application service with optimized build
@@ -24,14 +24,14 @@ services:
     container_name: hive-agents
     restart: unless-stopped
     ports:
-      - "${API_PORT:-9888}:${API_PORT:-9888}"
+      - "${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"
     environment:
       # Database connection with psycopg3 syntax
       - HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-ai}:${POSTGRES_PASSWORD:-ai}@postgres:5432/${POSTGRES_DB:-hive}
       - RUNTIME_ENV=prd
       - HIVE_LOG_LEVEL=info
       - HIVE_API_HOST=0.0.0.0
-      - HIVE_API_PORT=${API_PORT:-9888}
+      - HIVE_API_PORT=${HIVE_API_PORT:-8886}
       - HIVE_API_WORKERS=${API_WORKERS:-4}
       # Performance optimizations
       - PYTHONUNBUFFERED=1
@@ -45,7 +45,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT:-9888}/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3

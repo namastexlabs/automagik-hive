@@ -275,7 +275,7 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/hive
 
 # API Configuration  
 RUNTIME_ENV=prd                    # dev/staging/prd
-HIVE_API_PORT=9888
+HIVE_API_PORT=8886
 HIVE_API_HOST=0.0.0.0
 HIVE_API_WORKERS=4
 
@@ -309,7 +309,7 @@ spec:
       - name: hive-app
         image: automagik-hive:latest
         ports:
-        - containerPort: 9888
+        - containerPort: 8886
         env:
         - name: HIVE_DATABASE_URL
           valueFrom:
