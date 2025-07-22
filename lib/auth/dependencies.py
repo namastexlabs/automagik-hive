@@ -4,16 +4,20 @@ FastAPI authentication dependencies.
 Provides dependency injection for x-api-key authentication.
 """
 
-from fastapi import HTTPException, Depends, Header
+from fastapi import HTTPException, Depends
+from fastapi.security import APIKeyHeader
 from typing import Optional
 from .service import AuthService
 
 # Global auth service instance
 auth_service = AuthService()
 
+# API Key security scheme for OpenAPI docs
+api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
+
 
 async def require_api_key(
-    x_api_key: Optional[str] = Header(None, alias="x-api-key")
+    x_api_key: Optional[str] = Depends(api_key_header)
 ) -> bool:
     """
     Require valid x-api-key header for endpoint access.
@@ -40,7 +44,7 @@ async def require_api_key(
 
 
 async def optional_api_key(
-    x_api_key: Optional[str] = Header(None, alias="x-api-key")
+    x_api_key: Optional[str] = Depends(api_key_header)
 ) -> bool:
     """
     Optional API key validation for endpoints that can be public.
