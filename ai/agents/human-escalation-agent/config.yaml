@@ -1,7 +1,7 @@
 agent:
   agent_id: human-escalation-agent
   name: Ana - Human Escalation Agent
-  version: 1
+  version: dev
   description: Agent for human handoff escalation
 model:
   provider: anthropic

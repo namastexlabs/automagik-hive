@@ -163,7 +163,7 @@ knowledge:
   
   # Search configuration
   search_config:
-    max_results: 3
+    max_results: 5
     relevance_threshold: 0.7
     enable_hybrid_search: true
     use_semantic_search: true

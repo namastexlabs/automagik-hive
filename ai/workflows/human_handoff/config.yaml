@@ -1,7 +1,7 @@
 workflow:
   workflow_id: human-handoff
   name: Human Handoff Workflow
-  version: 1
+  version: dev
   description: Escalation workflow for human handoff with automatic protocol generation
 model:
   provider: anthropic

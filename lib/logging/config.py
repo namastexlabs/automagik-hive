@@ -60,7 +60,7 @@ def setup_logging():
     
     # Configure specific logger levels
     # Always suppress uvicorn access logs (too noisy)
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     
     # Suppress other commonly noisy libraries only when not in DEBUG
     if level != "DEBUG":

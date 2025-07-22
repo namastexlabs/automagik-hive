@@ -1,76 +1,106 @@
-# Automagik Hive - Enterprise Multi-Agent System
+# Automagik Hive
 
-A production-ready enterprise framework for building sophisticated multi-agent AI systems with intelligent routing and enterprise-grade deployment capabilities.
+<div align="center">
 
-## 🏗️ Architecture Overview
+![Automagik Logo](https://github.com/namastex/automagik-tools/raw/main/.git/automagik-logo.png)
 
-The system utilizes a clean architecture with Ana as the central coordinator that analyzes queries and routes them to specialized agents. Each agent has dedicated access to the knowledge base with intelligent filtering for precise and contextual responses.
+**Enterprise Multi-Agent AI Framework**
+
+*Production-grade boilerplate for building sophisticated multi-agent systems with intelligent routing and enterprise-grade deployment capabilities*
+
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Agno Framework](https://img.shields.io/badge/agno-v1.7.5-green.svg)](https://github.com/phidatahq/agno)
+[![PostgreSQL](https://img.shields.io/badge/postgresql-16+-blue.svg)](https://www.postgresql.org/)
+[![FastAPI](https://img.shields.io/badge/fastapi-0.116+-red.svg)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+
+[Quick Start](#quick-start) • [Architecture](#architecture) • [Features](#features) • [Documentation](#documentation) • [Deployment](#deployment)
+
+</div>
+
+## 🚀 Overview
+
+Automagik Hive is a production-ready enterprise multi-agent framework built on **Clean Architecture** principles with **Agno v1.7.5** at its core. It provides sophisticated multi-agent orchestration, intelligent routing, and enterprise-grade deployment capabilities through YAML-first configuration and modern containerization.
+
+**Key Differentiators:**
+- **YAML-First Configuration** with hot reload capabilities
+- **Intelligent Team Routing** using Agno's mode="route" for domain specialists  
+- **Enterprise-Grade Knowledge Management** with CSV-based RAG and vector search
+- **Workflows 2.0** with parallel execution, conditional logic, and state management
+- **Production-Ready Deployment** with multi-stage Docker builds and orchestration
+
+## 🏗️ Architecture
+
+The system follows clean architecture principles with intelligent routing teams that analyze queries and distribute them to specialized domain agents. Each agent has dedicated knowledge base access with intelligent filtering for precise and contextual responses.
 
 ```mermaid
 graph TB
     %% Client Entry Point
-    Customer[👤 Client Query<br/>API] --> Ana
-
-    %% Ana Central Coordinator
-    Ana[🤖 Ana Team<br/>Claude Sonnet 4<br/>Coordinator V2<br/>mode route]
+    Client[👤 Client Request<br/>FastAPI Endpoint] --> Router
     
-    %% Ana Routing Decision
-    Ana --> Routing{🔀 Ana Analysis<br/>Intelligent Routing<br/>15 words + routing}
+    %% Central Routing Team
+    Router[🤖 Routing Team<br/>Claude Sonnet 4<br/>Intelligent Coordinator<br/>mode: route]
     
-    %% Human Escalation via Workflow
-    Ana --> HumanWorkflow[🚨 trigger_human_handoff_workflow<br/>Direct tool without agent<br/>Workflow with MCP]
-    HumanWorkflow --> WhatsApp[📱 WhatsApp Evolution API<br/>Stakeholder Notification<br/>MCP Integration]
+    %% Routing Decision Engine
+    Router --> Routing{🔀 Query Analysis<br/>Domain Classification<br/>Agent Selection}
     
-    %% Specialized Agents by Domain
-    Routing -->|forward_task_to_member| SalesAgent[🏪 Sales Agent<br/>Revenue Operations<br/>Customer Acquisition<br/>Business Solutions]
-    Routing -->|forward_task_to_member| SupportAgent[💳 Support Agent<br/>Technical Support<br/>Account Management<br/>Issue Resolution]
-    Routing -->|forward_task_to_member| ProductAgent[💻 Product Agent<br/>Feature Requests<br/>Product Information<br/>Integration Support]
+    %% Human Escalation System
+    Router --> HumanWorkflow[🚨 Human Handoff Workflow<br/>Escalation Trigger<br/>MCP Integration]
+    HumanWorkflow --> Integration[📱 External Integrations<br/>WhatsApp/Slack/Email<br/>Notification Systems]
+    
+    %% Specialized Domain Agents
+    Routing -->|forward_task_to_member| Agent1[🏪 Domain Agent A<br/>Specialized Operations<br/>Business Logic<br/>Context Aware]
+    Routing -->|forward_task_to_member| Agent2[💳 Domain Agent B<br/>Process Management<br/>Data Processing<br/>Decision Making]
+    Routing -->|forward_task_to_member| Agent3[💻 Domain Agent C<br/>System Integration<br/>API Coordination<br/>External Services]
+    Routing -->|forward_task_to_member| Agent4[✅ Completion Agent<br/>Task Finalization<br/>Quality Assurance<br/>User Satisfaction]
     
     %% Knowledge Base System with Hot Reload
-    subgraph Knowledge[📚 Knowledge Base System]
-        CSV[📄 knowledge_rag.csv<br/>Hot Reload Active<br/>Filtered by Domain]
-        HotReload[🔄 CSV Hot Reload Manager<br/>Watchdog Active<br/>Real-time Updates]
-        Vector[🔍 Semantic Search<br/>Embeddings<br/>Relevance by Score]
+    subgraph Knowledge[📚 Enterprise Knowledge Base]
+        CSV[📄 CSV Knowledge Store<br/>Hot Reload System<br/>Domain Filtering]
+        HotReload[🔄 File Watcher<br/>Real-time Updates<br/>Zero-downtime Reload]
+        Vector[🔍 Vector Search<br/>PostgreSQL + pgvector<br/>Semantic Similarity]
         CSV --> HotReload
         HotReload --> Vector
     end
     
-    %% Agentic Filtering by Domain
-    SalesAgent --> Filter1[🎯 Agentic Filter<br/>business_unit: Sales<br/>max_results: 5<br/>threshold: 0.6]
-    SupportAgent --> Filter2[🎯 Agentic Filter<br/>business_unit: Support<br/>max_results: 5<br/>threshold: 0.6]
-    ProductAgent --> Filter3[🎯 Agentic Filter<br/>business_unit: Product<br/>max_results: 5<br/>threshold: 0.6]
+    %% Intelligent Knowledge Filtering
+    Agent1 --> Filter1[🎯 Agentic Filter<br/>Domain Context<br/>Relevance Scoring<br/>Result Limiting]
+    Agent2 --> Filter2[🎯 Agentic Filter<br/>Business Unit Focus<br/>Contextual Ranking<br/>Precision Tuning]
+    Agent3 --> Filter3[🎯 Agentic Filter<br/>System Context<br/>Integration Focus<br/>Technical Filtering]
     
-    %% Knowledge Queries
+    %% Knowledge Retrieval
     Filter1 --> Vector
     Filter2 --> Vector
     Filter3 --> Vector
     
-    %% PostgreSQL + Session Memory System
-    subgraph Memory[🧠 Memory System V2]
-        PostgresMemory[🗃️ PostgreSQL Memory<br/>Persistent Session<br/>Pattern Detection]
-        SessionMgmt[⏱️ Session Manager<br/>Conversation Continuity<br/>Auto-upgrade Schema]
-        PatternDetect[🔍 Pattern Detector<br/>Behavioral Analysis<br/>Continuous Learning]
+    %% Enterprise Memory System
+    subgraph Memory[🧠 Persistent Memory Layer]
+        PostgresMemory[🗃️ PostgreSQL Storage<br/>Session Persistence<br/>Conversation History]
+        SessionMgmt[⏱️ Session Manager<br/>Multi-turn Conversations<br/>Context Continuity]
+        PatternDetect[🔍 Pattern Analysis<br/>Usage Analytics<br/>Learning System]
     end
     
-    %% Memory Integration with Agents
-    Ana --> PostgresMemory
-    SalesAgent --> PostgresMemory
-    SupportAgent --> PostgresMemory
-    ProductAgent --> PostgresMemory
+    %% Memory Integration
+    Router --> PostgresMemory
+    Agent1 --> PostgresMemory
+    Agent2 --> PostgresMemory
+    Agent3 --> PostgresMemory
+    Agent4 --> PostgresMemory
     
     PostgresMemory --> SessionMgmt
     PostgresMemory --> PatternDetect
     
-    %% Response Flow with Success Criteria
-    SalesAgent --> Response[📝 Specialized Response<br/>Success Criteria Validation<br/>15 words Ana + routing]
-    SupportAgent --> Response
-    ProductAgent --> Response
+    %% Response Generation
+    Agent1 --> Response[📝 Response Generation<br/>Context Integration<br/>Quality Validation]
+    Agent2 --> Response
+    Agent3 --> Response
+    Agent4 --> Response
     
-    Response --> MemoryUpdate[💾 Memory Update<br/>Pattern Learning<br/>Session Continuity]
-    MemoryUpdate --> FinalResponse[✅ Final Response<br/>to Client]
+    Response --> MemoryUpdate[💾 Memory Persistence<br/>Learning Updates<br/>Pattern Recognition]
+    MemoryUpdate --> FinalResponse[✅ Client Response<br/>Formatted Output]
     
     %% Styling
-    classDef ana fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
+    classDef router fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
     classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
     classDef knowledge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
     classDef memory fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
@@ -78,16 +108,16 @@ graph TB
     classDef workflow fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000000
     classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
     
-    class Ana ana
-    class SalesAgent,SupportAgent,ProductAgent agent
+    class Router router
+    class Agent1,Agent2,Agent3,Agent4 agent
     class CSV,Vector,Filter1,Filter2,Filter3,HotReload knowledge
     class PostgresMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
     class Routing decision
     class HumanWorkflow workflow
-    class WhatsApp,Customer external
+    class Integration,Client external
 ```
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
 ### Universal Installation (Recommended)
 
@@ -95,10 +125,10 @@ Get started on any machine with our universal installer that handles all depende
 
 ```bash
 # One-command installation (handles everything)
-curl -sSL https://raw.githubusercontent.com/your-org/automagik-hive/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/namastex/automagik-hive/main/install.sh | bash
 
 # Or download and run locally
-wget https://raw.githubusercontent.com/your-org/automagik-hive/main/install.sh
+wget https://raw.githubusercontent.com/namastex/automagik-hive/main/install.sh
 chmod +x install.sh
 ./install.sh
 ```
@@ -113,43 +143,17 @@ The installer will:
 
 ### Manual Installation
 
-#### Environment Configuration
-```bash
-# Copy example file
-cp .env.example .env
-
-# Edit .env with your configurations
-# HIVE_PORT=9888            # Dynamic port (default: 7777)
-# ENVIRONMENT=development   # Development mode
-# DEMO_MODE=true           # Rich interface enabled
-```
-
 #### Option 1: Local Development
 ```bash
 # Install dependencies (local only)
-make install-local
-
-# Start development server
-make dev
-
-# Playground: Chat CLI for testing (optional)
-python chat.py
-```
-
-#### Option 2: Development with Docker PostgreSQL
-```bash
-# Install with optional Docker PostgreSQL setup
 make install
 
 # Start development server
 make dev
 ```
 
-#### Option 3: Production with Docker
+#### Option 2: Production with Docker
 ```bash
-# Setup environment
-make install
-
 # Start production stack
 make prod
 
@@ -158,272 +162,284 @@ make status
 ```
 
 Available endpoints:
-- **API**: http://localhost:9888 (.env configurable, default 7777)
-- **Docs**: http://localhost:9888/docs (Swagger UI)
-- **Chat CLI**: `python chat.py` (playground/testing)
-- **Health**: http://localhost:9888/api/v1/health
+- **API**: http://localhost:8886 (configurable via HIVE_API_PORT)
+- **Docs**: http://localhost:8886/docs (Swagger UI)
+- **Health**: http://localhost:8886/api/v1/health
 
-## 🤖 Ana Coordinator & Specialized Agents
+## ✨ Features
 
-### V2 Architecture with Ana
-The V2 system uses Ana as central coordinator with advanced capabilities:
+### 🔧 **Enterprise Configuration Management**
+- **YAML-First Architecture**: All components configured via YAML with hot reload
+- **Environment Scaling**: Automatic security/feature scaling from dev to production  
+- **Version Management**: Database-driven component versioning with sync services
+- **Registry Patterns**: Centralized component discovery and batch optimization
 
-- **Ana Team Router**: Agno Team with mode="route" for intelligent selection
-- **Success Criteria**: Responses ≤15 words + adequate routing
-- **Confidence Scoring**: Agent selection based on confidence
-- **Context Preservation**: Persistent memory between interactions
+### 🧠 **Advanced Knowledge Management**
+- **CSV-Based RAG**: Business data integration with vector search capabilities
+- **Smart Incremental Loading**: Efficient updates with hash-based change detection
+- **Business Unit Filtering**: Context-aware knowledge retrieval
+- **PostgreSQL Vector Storage**: Production-grade persistence with pgvector
 
-### Agents by Business Domain
+### 🚀 **Production-Ready Deployment**
+- **Multi-Stage Docker**: UV-native builds with security hardening
+- **Container Orchestration**: Docker Compose with health checks and dependencies
+- **Database Migrations**: Alembic integration with automatic schema management
+- **Performance Optimization**: Connection pooling, caching, and startup orchestration
 
-1. **🏪 Sales**: Revenue operations, customer acquisition, business solutions, deal processing
-2. **💳 Support**: Technical support, account management, issue resolution, troubleshooting
-3. **💻 Product**: Feature requests, product information, integration support, documentation
-4. **🚨 Human Handoff**: Automatic escalation workflow for human assistance with context preservation and WhatsApp notification
+### 🔒 **Enterprise Security & Monitoring**
+- **API Authentication**: Configurable API key middleware
+- **Structured Logging**: Comprehensive error taxonomy with trace IDs
+- **Health Monitoring**: Detailed system status and component health
+- **MCP Integration**: Secure external system connectivity
 
-## 💬 Rich Chat CLI Interface
+## 📚 Documentation
 
-### Real-time Interactive Chat
-The system includes an advanced chat interface with real-time monitoring:
+### Quick References
+- **[Agent Development](ai/agents/CLAUDE.md)** - Creating and configuring agents
+- **[Team Orchestration](ai/teams/CLAUDE.md)** - Setting up routing teams
+- **[Workflow Creation](ai/workflows/CLAUDE.md)** - Building multi-step processes
+- **[API Integration](api/CLAUDE.md)** - FastAPI endpoints and streaming
+- **[Knowledge Management](lib/knowledge/)** - RAG system configuration
+
+### Configuration Examples
+
+#### Agent Configuration (`ai/agents/my-agent/config.yaml`)
+```yaml
+agent:
+  name: "Customer Support Specialist"
+  agent_id: "customer-support"
+  version: "1.0.0"
+  description: "Handles customer inquiries with domain expertise"
+
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
+  max_tokens: 2000
+
+knowledge_filter:
+  enable_agentic_knowledge_filters: true
+  search_knowledge: true
+  max_results: 5
+  business_unit_filter: "customer_support"
+
+memory:
+  enable_user_memories: true
+  add_history_to_messages: true
+  read_chat_history: true
+```
+
+#### Team Configuration (`ai/teams/routing-team/config.yaml`)
+```yaml
+team:
+  mode: route
+  name: "Customer Service Routing Team"
+  team_id: "customer-routing"
+  version: "1.0.0"
+
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
+
+members:
+  - billing-specialist
+  - technical-support
+  - account-management
+
+instructions: |
+  You are a customer service routing team.
+  Route billing questions to billing-specialist
+  Route technical issues to technical-support
+  Route account changes to account-management
+```
+
+## 🐳 Deployment
+
+### Docker Deployment (Recommended)
 
 ```bash
-# Start chat CLI
-python chat.py
+# Production deployment
+docker-compose up --build -d
 
-# Features:
-# - Rich Console interface with split panels
-# - Real-time event monitoring
-# - Agent selection visualization
-# - Success criteria tracking (≤15 words)
-# - Live performance metrics
+# Check service health
+docker-compose ps
+docker-compose logs app
 ```
 
-### Interface Features
-- **Split Panels**: Chat on left, events on right
-- **Event Streaming**: Real-time agent activity
-- **Success Validation**: Automatic Ana criteria monitoring
-- **Rich Formatting**: Markdown and advanced formatting
-- **Session Tracking**: Conversation continuity
+### Environment Variables
 
-## 🎯 Knowledge System with Hot Reload
+```bash
+# Database Configuration
+HIVE_DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/hive
 
-### Intelligent Knowledge Base
-- **📄 CSV Hot Reload**: Automatic updates without system restart
-- **🎯 Agentic Filters**: Automatic filtering by business_unit
-- **🔍 Semantic Search**: Embeddings for contextual relevance
-- **⚡ Performance**: Sub-second responses with intelligent cache
+# API Configuration  
+RUNTIME_ENV=prd                    # dev/staging/prd
+HIVE_API_PORT=9888
+HIVE_API_HOST=0.0.0.0
+HIVE_API_WORKERS=4
 
-### Domain-based Filtering
-```
-Ana Query: "How to set up integrations?"
-↓ Ana Automatic Analysis ↓
-Routing: Product Agent
-↓ Agentic Filter Applied ↓
-- business_unit: "Product"
-- max_results: 5
-- relevance_threshold: 0.6
-↓ Result ↓
-Most relevant domain documents
+# AI Provider Keys
+ANTHROPIC_API_KEY=your_key_here
+OPENAI_API_KEY=your_key_here
+
+# Optional Integrations
+MCP_SERVERS_CONFIG=mcp_config.json
 ```
 
-### Hot Reload Configuration
-```python
-# Automatically activated in development
-# Watchdog monitors changes in:
-# context/knowledge/knowledge_rag.csv
+### Kubernetes (Advanced)
+
+```yaml
+# k8s/deployment.yaml example
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: automagik-hive
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: automagik-hive
+  template:
+    metadata:
+      labels:
+        app: automagik-hive
+    spec:
+      containers:
+      - name: hive-app
+        image: automagik-hive:latest
+        ports:
+        - containerPort: 9888
+        env:
+        - name: HIVE_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: url
 ```
 
-## 🧠 Memory System V2
+## 🔧 Development
 
-### PostgreSQL + Session Management
-- **PostgreSQL Base**: Persistent storage with auto-upgrade
-- **Session Continuity**: Context preserved between conversations
-- **Pattern Detection**: Continuous learning of behaviors
-- **Schema Auto-upgrade**: Automatic migrations via Alembic
+### Setting Up Development Environment
 
-### Memory Features
-- **User Memories**: Client preferences and context
-- **Agentic Memory**: Agent learning
-- **Pattern Recognition**: Recurring issue detection
-- **Session Tracking**: Conversational state management
+```bash
+# Install development dependencies
+uv sync --dev
 
-## 📱 WhatsApp & MCP Integration
+# Run tests
+uv run pytest
 
-### Evolution API Integration
-```
-Escalation Detected → trigger_human_handoff_workflow → MCP WhatsApp Tool
-                                                    ↓
-                                  mcp_send_whatsapp_message → Evolution API
-                                                    ↓
-                                          WhatsApp Stakeholder Notification
+# Code quality checks
+uv run ruff check --fix
+uv run mypy .
+
+# Database development
+uv run alembic revision --autogenerate -m "Add feature"
+uv run alembic upgrade head
 ```
 
-### Integration Features
-- **MCP Protocol**: Integration via Model Context Protocol
-- **Evolution API**: Direct WhatsApp Business connection
-- **Context Transfer**: Complete conversation history
-- **Real-time Alerts**: Instant notifications
+### Creating New Components
+
+```bash
+# Create new agent
+cp -r ai/agents/template-agent ai/agents/my-new-agent
+# Edit ai/agents/my-new-agent/config.yaml
+
+# Create new team
+cp -r ai/teams/template-team ai/teams/my-routing-team
+# Edit ai/teams/my-routing-team/config.yaml
+
+# Create new workflow
+cp -r ai/workflows/template-workflow ai/workflows/my-workflow
+# Edit ai/workflows/my-workflow/config.yaml
+```
+
+### Testing
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run specific test suites
+uv run pytest tests/agents/
+uv run pytest tests/workflows/
+uv run pytest tests/api/
+
+# Run with coverage
+uv run pytest --cov=ai --cov=api --cov=lib
+```
+
+## 🤝 Contributing
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Commit Standards
+
+All commits should be co-authored with:
+```bash
+Co-Authored-By: Automagik Genie <genie@namastex.ai>
+```
+
+## 📊 Performance
+
+### Benchmarks
+
+| Metric | Development | Production |
+|--------|-------------|------------|
+| **Startup Time** | ~3-5s | ~8-12s (includes migrations) |
+| **Response Time** | <200ms | <500ms (with database) |
+| **Concurrent Users** | 10-50 | 1000+ (with proper scaling) |
+| **Memory Usage** | ~200MB | ~500MB (per worker) |
+| **Database Connections** | 5-10 | 50-200 (pooled) |
+
+### Scaling Recommendations
+
+- **Small Deployment**: 1-2 workers, 1GB RAM, PostgreSQL
+- **Medium Deployment**: 4-8 workers, 4GB RAM, PostgreSQL with replicas
+- **Large Deployment**: 16+ workers, 8GB+ RAM, PostgreSQL cluster
+- **Enterprise**: Kubernetes with horizontal pod autoscaling
 
 ## 🛠️ Tech Stack
 
 ### Core Framework
-- **🤖 Agno Framework 1.7.1+**: Multi-agent orchestration
-- **🧠 Claude Sonnet 4**: Primary AI with thinking mode
-- **🐍 Python 3.12+**: Modern runtime with UV
-- **⚡ FastAPI 0.116.0+**: REST API with automatic docs
+- **[Agno v1.7.5](https://github.com/phidatahq/agno)** - Multi-agent orchestration framework
+- **[FastAPI](https://fastapi.tiangolo.com/)** - Modern API framework with auto-docs
+- **[PostgreSQL + pgvector](https://github.com/pgvector/pgvector)** - Vector database for embeddings
+- **[UV](https://docs.astral.sh/uv/)** - Modern Python package manager
 
-### Data & Persistence
-- **🐘 PostgreSQL 16+**: Main database with pgvector
-- **📊 SQLAlchemy 2.0+**: Async ORM with migrations
-- **📄 CSV Knowledge**: Hot-reload base with RAG
-- **🔍 Embeddings**: Advanced semantic search
+### AI Providers
+- **[Anthropic Claude](https://www.anthropic.com/)** - Primary reasoning model
+- **[OpenAI GPT](https://openai.com/)** - Alternative model support
+- **[Cohere](https://cohere.com/)** - Embedding and classification
+- **[Google AI](https://ai.google.dev/)** - Gemini model integration
 
-### Integration & Communication
-- **📱 Evolution API**: WhatsApp Business integration
-- **🔌 MCP Protocol**: Enhanced agent capabilities
-- **⚡ WebSocket**: Real-time monitoring
+### Infrastructure
+- **[Docker](https://www.docker.com/)** - Containerization with multi-stage builds
+- **[Alembic](https://alembic.sqlalchemy.org/)** - Database migrations
+- **[SQLAlchemy](https://www.sqlalchemy.org/)** - ORM with async support
+- **[Pydantic](https://pydantic.dev/)** - Data validation and serialization
 
-## 📁 Project Structure
+## 📄 License
 
-```
-automagik-hive/
-├── README.md                           # This file
-├── CLAUDE.md                           # Development context and patterns
-├── Makefile                            # Automation (install, dev, prod, test)
-├── chat.py                             # Rich Chat CLI Interface
-├── pyproject.toml                      # Python configuration with UV
-├── .env                                # Environment configuration (dynamic port)
-├── ai/
-│   ├── agents/                         # Specialized agents (YAML-driven)
-│   │   ├── registry.py                 # Factory and central registry
-│   │   ├── sales/                      # Sales specialist
-│   │   ├── support/                    # Support specialist
-│   │   ├── product/                    # Product specialist
-│   │   ├── human_handoff/              # Human escalation
-│   │   └── whatsapp_notifier/          # WhatsApp notifications
-│   ├── teams/                          # Ana Team Routing V2
-│   │   └── ana/                        # Ana Coordinator
-│   │       ├── team.py                 # Team(mode="route")
-│   │       ├── config.yaml             # Routing configuration
-│   │       └── demo_logging.py         # Rich console logging
-│   └── workflows/                      # Multi-step workflows
-│       ├── conversation_typification/  # Query classification
-│       └── human_handoff/              # Escalation process
-├── api/                                # FastAPI + Agno interface
-│   ├── serve.py                        # Main server
-│   ├── main.py                         # FastAPI app
-│   ├── routes/                         # Custom endpoints
-│   └── monitoring/                     # Monitoring system
-├── lib/
-│   ├── knowledge/                      # Knowledge and memory
-│   │   ├── knowledge_rag.csv           # Domain data
-│   │   ├── csv_hot_reload.py           # Hot reload manager
-│   │   └── agentic_filters.py          # Domain filters
-│   ├── memory/                         # Memory system V2
-│   │   ├── memory_manager.py           # PostgreSQL memory
-│   │   └── pattern_detector.py         # Pattern detection
-│   ├── config/                         # Configuration management
-│   └── utils/                          # Shared utilities
-├── db/                                 # Database layer
-│   ├── migrations/                     # Alembic migrations
-│   └── tables/                         # SQLAlchemy models
-├── tests/                              # Complete test suite
-│   ├── unit/                           # Unit tests
-│   ├── integration/                    # Integration tests
-│   └── monitoring/                     # Monitoring tests
-└── docs/                               # Project documentation
-    └── ai-context/                     # AI-specific docs
-```
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## 🎯 Key Features
+## 🙏 Acknowledgments
 
-### Intelligent Ana Coordinator
-- **🎯 Precision Routing**: Ana analyzes and routes with confidence scoring
-- **⚡ Success Criteria**: Automatic validation ≤15 words + routing
-- **🧠 Context Awareness**: Persistent memory with pattern learning
-- **🔄 Intelligent Escalation**: Automatic complexity detection
-
-### Rich Interface & Monitoring
-- **💬 Advanced Chat CLI**: Rich Console interface with split panels
-- **📊 Real-time Events**: Live agent activity monitoring
-- **📈 Live Metrics**: Performance and success criteria in real time
-- **🎨 Rich Formatting**: Markdown and advanced formatting
-
-### Dynamic Knowledge System
-- **🔄 Hot Reload**: CSV updates without system restart
-- **🎯 Agentic Filters**: Automatic filtering by business_unit
-- **🔍 Semantic Search**: Contextual relevance with embeddings
-- **⚡ Performance**: Sub-second responses with intelligent cache
-
-### Enterprise Integration
-- **📱 WhatsApp Evolution**: Notifications via MCP protocol
-- **👥 Human Handoff**: Escalation with context preservation
-- **🏛️ Compliance**: Audit and enterprise security
-- **📊 Analytics**: Detailed metrics and pattern detection
-
-## 🔐 Configuration & Deployment
-
-### Environment Configuration
-```bash
-# Dynamic configuration via .env
-HIVE_ENVIRONMENT=development
-HIVE_API_PORT=9888          # Overrides default 7777
-HIVE_LOG_LEVEL=DEBUG        # Rich interface in development
-
-# Required APIs
-ANTHROPIC_API_KEY=your-key
-OPENAI_API_KEY=your-key
-GEMINI_API_KEY=your-key
-
-# Database
-HIVE_DATABASE_URL=postgresql+psycopg://ai:ai@localhost:5532/ai
-
-# Optional integrations
-EVOLUTION_API_BASE_URL=http://localhost:8080
-```
-
-### Development Commands
-```bash
-# Complete setup
-make install
-
-# Development with hot reload
-make dev
-
-# Interactive chat CLI
-python chat.py
-
-# Production with Docker
-make prod
-
-# Status and logs
-make status
-make logs
-
-# Tests
-make test
-```
-
-## 📊 Performance & Metrics
-
-### Ana Success Criteria
-- **Response Efficiency**: ≤15 words + adequate routing
-- **Routing Precision**: Confidence-based agent selection
-- **Escalation Rate**: Handoff frequency monitoring
-- **Success Rate**: Automatic criteria validation
-
-### System Metrics
-- **Response Time**: <500ms average for Ana routing
-- **Throughput**: 1000+ requests/minute supported
-- **Availability**: 99.9% uptime with health monitoring
-- **Concurrent Users**: 1000+ via async architecture
-
-### Monitoring Stack
-- **Rich Console**: Development interface with events
-- **Health Checks**: Automatic monitoring endpoints
-- **Pattern Detection**: Continuous behavioral learning
-- **Performance Analytics**: Real-time metrics
+- **[Agno Framework](https://github.com/phidatahq/agno)** for providing the multi-agent foundation
+- **[FastAPI](https://fastapi.tiangolo.com/)** for the excellent API framework
+- **[Anthropic](https://www.anthropic.com/)** for Claude AI capabilities
+- **Open Source Community** for the amazing tools and libraries
 
 ---
 
-**Built with Agno Framework V2 + Ana Intelligence**  
-**© 2025 - Advanced Multi-Agent System**
+<div align="center">
+
+**[🏠 Homepage](https://docs.automagik.ai)** • **[📧 Contact](mailto:hive@namastex.ai)** • **[🐛 Issues](https://github.com/namastex/automagik-hive/issues)** • **[💬 Discussions](https://github.com/namastex/automagik-hive/discussions)**
+
+Made with ❤️ by the **Automagik Team**
+
+</div>

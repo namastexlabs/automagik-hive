@@ -255,7 +255,12 @@ class AgnoAgentProxy:
                 if isinstance(handler_result, dict):
                     processed.update(handler_result)
                 else:
-                    processed[key] = handler_result
+                    # Special case: knowledge_filter handler returns knowledge base object
+                    # that should be assigned to "knowledge" parameter, not "knowledge_filter"
+                    if key == "knowledge_filter" and handler_result is not None:
+                        processed["knowledge"] = handler_result
+                    else:
+                        processed[key] = handler_result
             elif key in self._supported_params:
                 # Direct mapping for supported parameters
                 processed[key] = value

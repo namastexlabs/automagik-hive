@@ -240,7 +240,7 @@ class StartupDisplay:
                     if found_component_id == component_id or found_component_id == component_id.replace('_', '-'):
                         version = component_section.get('version')
                         if version:
-                            return f"{version} 📄"  # Add indicator that this is from YAML fallback
+                            return str(version)  # Return version from YAML fallback
                         
                 except Exception:
                     # Skip files that can't be read or parsed

@@ -1,7 +1,7 @@
 workflow:
   name: Template Workflow
   workflow_id: template-workflow
-  version: 2
+  version: dev
   description: Template demonstrating all Agno Workflow parameters
 model:
   provider: anthropic

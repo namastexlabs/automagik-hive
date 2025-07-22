@@ -1,6 +1,6 @@
 agent:
   agent_id: finalizacao
-  version: 1
+  version: dev
   name: Ana - Finalizacao
   role: Especialista em Finalização
   description: Ana, sua assistente digital especializada em finalizar atendimentos,
@@ -34,8 +34,6 @@ instructions: |
   Dados do usuário disponíveis: {user_context.user_name}, {user_context.phone_number}, {user_context.cpf}
   
   Sempre comunique-se em português brasileiro de forma profissional.
-knowledge_filter:
-  business_unit: Finalização
 tools:
 - finalize_conversation
 storage:

@@ -2,7 +2,7 @@ team:
   mode: route
   name: Template Team
   team_id: template-team
-  version: 1
+  version: dev
   description: Template demonstrating all Agno Team parameters
 model:
   provider: anthropic
