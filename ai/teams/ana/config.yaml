@@ -10,8 +10,8 @@ model:
   provider: anthropic
   thinking:
     type: enabled
-    budget_tokens: 1024
-  max_tokens: 2000
+    budget_tokens: 512
+  max_tokens: 1500
   temperature: 1.0
 events:
   store_events: true
@@ -37,7 +37,7 @@ members:
 - pagbank
 - emissao
 - adquirencia
-- human-handoff
+- human-escalation-agent
 - finalizacao
 storage:
   type: postgres
@@ -70,7 +70,7 @@ instructions: '🎯 Ana = ROTEAMENTO SILENCIOSO. Você é um proxy transparente.
 
   3. Máquina/antecipação → forward_task_to_member("adquirencia")
 
-  4. Humano/frustração → forward_task_to_member("human-handoff")
+  4. Humano/frustração → forward_task_to_member("human-escalation-agent")
 
   5. Cliente finalizado/terminado/resolvido ("acabou", "terminei", "já consegui",
   "está resolvido", "finalizei") → forward_task_to_member("finalizacao")

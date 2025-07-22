@@ -164,7 +164,7 @@ class AgnoAgentProxy:
             "display": self._handle_display_section,
         }
     
-    def create_agent(
+    async def create_agent(
         self,
         component_id: str,
         config: Dict[str, Any],
@@ -280,8 +280,7 @@ class AgnoAgentProxy:
         
         # Add thinking support if enabled
         if thinking_config.get("type") == "enabled":
-            model_params["thinking"] = True
-            # Note: budget_tokens parameter is not supported by Agno's Claude class
+            model_params["thinking"] = thinking_config
         
         return Claude(**model_params)
     

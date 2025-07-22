@@ -47,15 +47,35 @@ agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
 logger.info("🌐 Automagik Hive logging initialized", 
            log_level=log_level, agno_level=agno_log_level)
 
+# CRITICAL: Run database migrations FIRST before any imports that trigger component loading
+# This ensures the database schema is ready before agents/teams are registered
+try:
+    from lib.utils.db_migration import check_and_run_migrations
+    
+    # Run migrations synchronously at startup
+    if asyncio.get_event_loop().is_running():
+        # If event loop is running, schedule the migration check
+        logger.debug("🔧 Event loop detected, scheduling migration check")
+    else:
+        # No event loop, safe to run directly
+        migrations_run = asyncio.run(check_and_run_migrations())
+        if migrations_run:
+            logger.info("🔧 Database schema initialized via Alembic migrations")
+        else:
+            logger.debug("🔧 Database schema already up to date")
+except Exception as e:
+    logger.warning("🔧 Database migration check failed during startup", error=str(e))
+    logger.info("🔧 Continuing startup - system may use fallback initialization")
 
-# Import V2 Ana team
-from ai.teams.ana.team import get_ana_team
+
+# Import teams via dynamic registry (removed hardcoded ana import)
 
 # Import workflow registry for dynamic loading
 from ai.workflows.registry import list_available_workflows, get_workflow
 
 # Import team registry for dynamic loading
 from ai.teams.registry import list_available_teams, get_team
+from lib.utils.version_factory import create_team
 
 # Import CSV hot reload manager
 from lib.knowledge.csv_hot_reload import CSVHotReloadManager
@@ -136,7 +156,7 @@ def _create_simple_sync_api():
     startup_display = create_startup_display()
     
     # Add some basic components to show the table works
-    startup_display.add_team("ana", "Ana", 0, version=1, status="✅")
+    startup_display.add_team("template-team", "Template Team", 0, version=1, status="✅")
     startup_display.add_agent("test", "Test Agent", version=1, status="⚠️")
     startup_display.add_error("System", "Running in simplified mode due to async conflicts")
     
@@ -192,18 +212,7 @@ async def _async_create_automagik_api():
             if uvicorn_module:
                 logger.debug("🌐 Uvicorn module info", module=str(uvicorn_module))
     
-    # FIRST PRIORITY: Check and run database migrations if needed
-    # This MUST happen before any other initialization that depends on the database
-    from lib.utils.db_migration import check_and_run_migrations
-    try:
-        migrations_run = await check_and_run_migrations()
-        if migrations_run:
-            logger.info("🔧 Database schema initialized via Alembic migrations")
-        else:
-            logger.debug("🔧 Database schema already up to date")
-    except Exception as e:
-        logger.warning("🔧 Database migration check failed", error=str(e))
-        logger.info("🔧 Continuing startup - system may use fallback initialization")
+    # Database migrations now happen at module import time for proper startup order
     
     # Initialize authentication system
     auth_service = get_auth_service()
@@ -257,20 +266,46 @@ async def _async_create_automagik_api():
     if is_development and not is_reloader:
         logger.info("🌐 Memory system configured", method="agno_internal_handling")
     
-    # Create the Ana routing team
-    ana_team = await get_ana_team(
-        session_id=None  # Will be set per request
-    )
+    # Dynamic team loading function
+    async def _load_all_discovered_teams():
+        """Load all teams discovered by the registry system."""
+        teams_list = []
+        available_teams = list_available_teams()
+        
+        for team_id in available_teams:
+            try:
+                team = await create_team(team_id)
+                if team:
+                    teams_list.append(team)
+                    logger.info("🌐 Team loaded successfully", team_id=team_id)
+            except Exception as e:
+                error_msg = str(e)
+                if "HIVE_DATABASE_URL" in error_msg:
+                    logger.warning("🌐 Team loading skipped - database not configured", 
+                                 team_id=team_id, reason="missing_database_url")
+                elif "No active version found" in error_msg:
+                    logger.warning("🌐 Team loading skipped - no version in database", 
+                                 team_id=team_id, reason="missing_version")
+                else:
+                    logger.error("🌐 Team loading failed", 
+                                team_id=team_id, error=str(e), error_type=type(e).__name__)
+                # Continue loading other teams even if one fails
+                continue
+        
+        return teams_list
     
     # Get all agents for comprehensive endpoint generation
     from ai.agents.registry import AgentRegistry
     agent_registry = AgentRegistry()
     available_agents = await agent_registry.get_all_agents()
     
+    # Load all teams dynamically
+    loaded_teams = await _load_all_discovered_teams()
+    
     # Validate critical components loaded successfully
-    if not ana_team:
-        logger.error("🌐 Critical: Ana routing team failed to load")
-        raise ComponentLoadingError("Ana routing team is required but failed to load")
+    if not loaded_teams:
+        logger.warning("🌐 Warning: No teams loaded from registry - server will start with agents only")
+        # Continue without teams - Playground can handle empty teams list
     
     if not available_agents:
         logger.error("🌐 Critical: No agents loaded from registry")
@@ -362,19 +397,24 @@ async def _async_create_automagik_api():
         startup_display.add_error("Version Sync", f"Component version sync failed: {e}")
     
     # Collect component information for display (remove redundant debug logs)
-    if ana_team and available_agents:
-        # Extract version from team metadata if available
-        team_version = None
-        if hasattr(ana_team, 'metadata') and ana_team.metadata:
-            team_version = ana_team.metadata.get('version')
-        
-        startup_display.add_team(
-            ana_team.team_id, 
-            ana_team.name, 
-            len(available_agents),
-            version=team_version,
-            status="✅"
-        )
+    if loaded_teams and available_agents:
+        # Add all loaded teams to startup display
+        for team in loaded_teams:
+            # Extract version from team metadata if available
+            team_version = None
+            if hasattr(team, 'metadata') and team.metadata:
+                team_version = team.metadata.get('version')
+            
+            # Count agents as team members (rough estimate)
+            member_count = len(available_agents) if available_agents else 0
+            
+            startup_display.add_team(
+                team.team_id, 
+                team.name, 
+                member_count,
+                version=team_version,
+                status="✅"
+            )
         
         # Add individual agents with version information (no redundant logging)
         for agent_id, agent in available_agents.items():
@@ -387,11 +427,11 @@ async def _async_create_automagik_api():
                 version = agent.metadata.get('version')
             
             startup_display.add_agent(actual_component_id, agent.name or agent_id, version=version, status="✅")
-    elif not ana_team or not available_agents:
-        startup_display.add_error("System", "No team or agents loaded - running with minimal configuration")
+    elif not loaded_teams or not available_agents:
+        startup_display.add_error("System", "No teams or agents loaded - running with minimal configuration")
     
     # Create FastAPI app with both teams AND agents for full endpoint generation
-    teams_list = [ana_team] if ana_team else []
+    teams_list = loaded_teams if loaded_teams else []
     agents_list = list(available_agents.values()) if available_agents else []
     
     # Ensure we have at least something to create app
@@ -460,8 +500,8 @@ async def _async_create_automagik_api():
     
     # Create base FastAPI app that will be configured by Playground
     app = FastAPI(
-        title="PagBank Multi-Agent System",
-        description="Sistema multi-agente de atendimento ao cliente PagBank com Ana como assistente unificada",
+        title="Automagik Hive Multi-Agent System",
+        description="Multi-Agent System with intelligent routing and dynamic team discovery",
         version="1.0.0"
     )
     
@@ -470,7 +510,7 @@ async def _async_create_automagik_api():
     from api.settings import api_settings
     app.title = api_settings.title
     app.version = api_settings.version
-    app.description = "Sistema multi-agente de atendimento ao cliente PagBank com Ana como assistente unificada"
+    app.description = "Multi-Agent System with intelligent routing and dynamic team discovery"
     
     # Set lifespan for monitoring
     app.router.lifespan_context = create_lifespan(startup_display)
@@ -539,7 +579,9 @@ async def _async_create_automagik_api():
         # Try fallback simple display
         try:
             from lib.utils.startup_display import display_simple_status
-            display_simple_status("Ana Team", "ana", len(available_agents) if available_agents else 0)
+            team_name = "Multi-Agent System"
+            team_count = len(loaded_teams) if loaded_teams else 0
+            display_simple_status(team_name, f"{team_count}_teams", len(available_agents) if available_agents else 0)
         except Exception:
             logger.info("🌐 System components loaded successfully", display_status="table_unavailable")
     

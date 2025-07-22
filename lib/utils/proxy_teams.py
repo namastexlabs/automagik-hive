@@ -255,7 +255,7 @@ class AgnoTeamProxy:
         
         # Add thinking support if enabled
         if thinking_config.get("type") == "enabled":
-            model_params["thinking"] = True
+            model_params["thinking"] = thinking_config
         
         return Claude(**model_params)
     

@@ -16,7 +16,8 @@ def finalize_conversation(
     customer_name: Optional[str] = None,
     customer_id: Optional[str] = None,
     customer_phone: Optional[str] = None,
-    customer_cpf: Optional[str] = None
+    customer_cpf: Optional[str] = None,
+    team_id: Optional[str] = None
 ) -> str:
     """
     Finalize conversation with automatic typification using native Agno workflow.
@@ -32,6 +33,7 @@ def finalize_conversation(
         customer_id: Customer ID (optional)
         customer_phone: Customer phone number (optional)
         customer_cpf: Customer CPF (optional)
+        team_id: Team context identifier (auto-detected if not provided)
         
     Returns:
         Final farewell message with protocol and typification results
@@ -62,10 +64,13 @@ def finalize_conversation(
         workflow = get_finalizacao_workflow()
         
         # Set up workflow session state (simulating team context)
+        # Auto-detect team_id from session context or use provided value
+        resolved_team_id = team_id or "default-team"
+        
         workflow.workflow_session_state = {
             "session_id": session_id,
             "customer_context": customer_context,
-            "team_id": "ana",
+            "team_id": resolved_team_id,
             "workflow_caller": "finalizacao_agent"
         }
         

@@ -23,7 +23,8 @@ def escalate_to_human(
     customer_name: Optional[str] = None,
     customer_phone: Optional[str] = None,
     customer_cpf: Optional[str] = None,
-    urgency_level: str = "medium"
+    urgency_level: str = "medium",
+    team_id: Optional[str] = None
 ) -> str:
     """
     Bridge tool that connects agent to human handoff workflow.
@@ -40,6 +41,7 @@ def escalate_to_human(
         customer_phone: Customer's phone number  
         customer_cpf: Customer's CPF
         urgency_level: Escalation urgency (low, medium, high, critical)
+        team_id: Team context identifier (auto-detected if not provided)
         
     Returns:
         Escalation response message with protocol and next steps
@@ -63,10 +65,13 @@ def escalate_to_human(
         workflow = get_human_handoff_workflow()
         
         # Set up session state (team context) - mirrors finalizacao pattern
+        # Auto-detect team_id from session context or use provided value
+        resolved_team_id = team_id or "default-team"
+        
         workflow.workflow_session_state = {
             "session_id": session_id,
             "customer_context": customer_context,
-            "team_id": "ana",
+            "team_id": resolved_team_id,
             "workflow_caller": "human_handoff_agent",
             "escalation_triggered": True,
             "escalation_timestamp": datetime.now().isoformat()

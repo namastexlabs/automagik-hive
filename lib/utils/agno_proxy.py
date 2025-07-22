@@ -124,24 +124,24 @@ def get_proxy_module_info() -> dict:
     return info
 
 
-# Legacy compatibility - these functions maintain the exact same signature
-# and behavior as the original monolithic agno_proxy.py file
+# Legacy compatibility - these functions maintain async patterns
+# for the modular agno_proxy.py file system
 
-def create_agent(*args, **kwargs):
+async def create_agent(*args, **kwargs):
     """Legacy compatibility wrapper for agent creation."""
-    from .version_factory import create_agent_sync
-    return create_agent_sync(*args, **kwargs)
+    from .version_factory import create_agent
+    return await create_agent(*args, **kwargs)
 
 
-def create_team(*args, **kwargs):
+async def create_team(*args, **kwargs):
     """Legacy compatibility wrapper for team creation."""
-    from .version_factory import create_team_sync
-    return create_team_sync(*args, **kwargs)
+    from .version_factory import create_team
+    return await create_team(*args, **kwargs)
 
 
-def create_workflow(*args, **kwargs):
+async def create_workflow(*args, **kwargs):
     """Legacy compatibility wrapper for workflow creation."""
-    return get_agno_workflow_proxy().create_workflow(*args, **kwargs)
+    return await get_agno_workflow_proxy().create_workflow(*args, **kwargs)
 
 
 # Module metadata for introspection

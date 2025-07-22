@@ -63,7 +63,7 @@ Ana routes users to appropriate specialists:
 1. **PIX/conta/saldo** → pagbank
 2. **Cartão/limite/fatura** → emissao  
 3. **Máquina/antecipação** → adquirencia
-4. **Humano/frustração** → human-handoff
+4. **Humano/frustração** → human-escalation-agent
 5. **Finalização** → finalizacao
 
 ## Testing

@@ -104,7 +104,7 @@ class AgnoWorkflowProxy:
             "display_config": self._handle_custom_metadata,
         }
     
-    def create_workflow(
+    async def create_workflow(
         self,
         component_id: str,
         config: Dict[str, Any],

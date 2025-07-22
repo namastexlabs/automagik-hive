@@ -163,35 +163,43 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             bu = doc.meta_data.get('business_unit', 'Unknown')
             business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
         
-        # Process documents with progress bar - this is where the slow embedding/upsert occurs
-        with tqdm(all_documents, desc="Embedding & upserting documents", unit="doc", leave=True) as pbar:
-            processed_by_unit = {}
+        # Process documents efficiently with batching - this eliminates logging spam at the root cause
+        from agno.utils.log import logger as agno_logger
+        
+        # Add logging filter to suppress any remaining batch messages
+        # Create custom filter without direct logging import
+        class AgnoBatchFilter:
+            def filter(self, record):
+                msg = record.getMessage()
+                return not (msg.startswith("Inserted batch of") or msg.startswith("Upserted batch of"))
+        
+        batch_filter = AgnoBatchFilter()
+        agno_logger.addFilter(batch_filter)
+        
+        try:
+            # Use smaller batches to show real progress during embedding
+            batch_size = 10  # Smaller batches for better progress visibility
             
-            for doc in pbar:
-                try:
-                    # Upsert or insert individual document
+            with tqdm(total=len(all_documents), desc="Embedding & upserting documents", unit="doc") as pbar:
+                for i in range(0, len(all_documents), batch_size):
+                    batch = all_documents[i:i + batch_size]
+                    
                     if upsert and self.vector_db.upsert_available():
-                        self.vector_db.upsert(documents=[doc], filters=doc.meta_data)
+                        self.vector_db.upsert(documents=batch, filters=None, batch_size=batch_size)
                     else:
-                        self.vector_db.insert(documents=[doc], filters=doc.meta_data)
+                        self.vector_db.insert(documents=batch, filters=None, batch_size=batch_size)
                     
-                    # Track progress by business unit
-                    bu = doc.meta_data.get('business_unit', 'Unknown')
-                    processed_by_unit[bu] = processed_by_unit.get(bu, 0) + 1
-                    
-                    # Update progress description with current business unit
-                    if bu != 'Unknown':
-                        pbar.set_description(f"Embedding & upserting documents ({bu})")
-                    
-                except Exception as e:
-                    logger.error(f"🚨 Error processing document {doc.id}", error=str(e))
-                    continue
+                    # Update progress bar with actual batch size processed
+                    pbar.update(len(batch))
+        finally:
+            # Remove the filter to avoid side effects elsewhere
+            agno_logger.removeFilter(batch_filter)
         
         # Show final business unit summary like the CSV loading does
-        tqdm.write("\n📊 Vector database loading completed:")
+        logger.info("📊 Vector database loading completed")
         for bu, count in business_unit_counts.items():
             if bu and bu != 'Unknown':
-                tqdm.write(f"✓ {bu}: {count} documents embedded & stored")
+                logger.info("📊 Business unit processing completed", business_unit=bu, document_count=count)
         
         log_info(f"Added {len(all_documents)} documents to knowledge base")
     
