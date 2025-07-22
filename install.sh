@@ -382,11 +382,17 @@ validate_dependencies() {
 check_and_clone_repo() {
     print_status "Checking repository setup..."
     
+    local repo_url="https://github.com/namastexlabs/automagik-hive.git"
+    local repo_dir="automagik-hive"
+    
     # Check if we're already in the automagik-hive directory
     if [[ -f "Makefile" && -f "pyproject.toml" && -d "ai" && -d "api" ]]; then
         # Check if this is specifically the automagik-hive repo
         if git remote -v 2>/dev/null | grep -q "automagik-hive"; then
             print_success "Already in automagik-hive repository"
+            # Ensure we're up to date with latest changes
+            print_info "Fetching latest changes..."
+            git fetch origin main 2>/dev/null || print_warning "Could not fetch latest changes"
             return 0
         elif [[ "$(basename "$PWD")" == "automagik-hive" ]]; then
             print_success "In automagik-hive directory"
@@ -395,20 +401,58 @@ check_and_clone_repo() {
     fi
     
     # Check if automagik-hive directory exists in current location
-    if [[ -d "automagik-hive" ]]; then
-        print_info "Found existing automagik-hive directory, entering it..."
-        cd automagik-hive
+    if [[ -d "$repo_dir" ]]; then
+        print_info "Found existing automagik-hive directory..."
+        cd "$repo_dir"
+        
+        # Verify it's a valid git repository
+        if [[ -d ".git" ]]; then
+            print_info "Updating existing repository..."
+            git fetch origin main 2>/dev/null || print_warning "Could not fetch updates"
+            print_success "Using existing repository"
+        else
+            print_warning "Directory exists but is not a git repository. Removing and re-cloning..."
+            cd ..
+            rm -rf "$repo_dir"
+            clone_repository "$repo_url" "$repo_dir"
+        fi
         return 0
     fi
     
     # Clone the repository
+    clone_repository "$repo_url" "$repo_dir"
+}
+
+clone_repository() {
+    local repo_url="$1"
+    local repo_dir="$2"
+    
     print_status "Cloning automagik-hive repository..."
-    if git clone https://github.com/namastex/automagik-hive.git; then
-        print_success "Repository cloned successfully"
-        cd automagik-hive
+    
+    # Try HTTPS first, then SSH if that fails
+    if git clone "$repo_url" "$repo_dir"; then
+        print_success "Repository cloned successfully via HTTPS"
+        cd "$repo_dir"
         print_info "Changed to automagik-hive directory"
     else
-        print_error "Failed to clone repository"
+        print_warning "HTTPS clone failed, trying SSH..."
+        local ssh_url="git@github.com:namastexlabs/automagik-hive.git"
+        if git clone "$ssh_url" "$repo_dir"; then
+            print_success "Repository cloned successfully via SSH"
+            cd "$repo_dir"
+            print_info "Changed to automagik-hive directory"
+        else
+            print_error "Failed to clone repository via both HTTPS and SSH"
+            print_info "Please check your internet connection and GitHub access"
+            print_info "You can also manually clone: git clone $repo_url"
+            exit 1
+        fi
+    fi
+    
+    # Verify the clone was successful
+    if [[ ! -f "Makefile" || ! -f "pyproject.toml" ]]; then
+        print_error "Repository cloned but appears incomplete"
+        print_info "Please check the repository contents and try again"
         exit 1
     fi
 }
@@ -490,12 +534,14 @@ main() {
     echo ""
     echo -e "${GREEN}${CHECKMARK} Installation completed successfully!${RESET}"
     echo ""
+    echo -e "${CYAN}🎉 Automagik Hive is now ready to use!${RESET}"
+    echo ""
     echo -e "${CYAN}Next steps:${RESET}"
-    echo -e "  • ${PURPLE}cd automagik-hive${RESET} (if not already there)"
     echo -e "  • Run ${PURPLE}make dev${RESET} to start development server"
     echo -e "  • Run ${PURPLE}make prod${RESET} to start production Docker stack"
     echo -e "  • Check ${PURPLE}make help${RESET} for all available commands"
     echo ""
+    echo -e "${GRAY}📁 Current directory: $(pwd)${RESET}"
     
     # Add PATH export suggestion
     if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
