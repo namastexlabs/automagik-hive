@@ -114,7 +114,6 @@ class StartupDisplay:
         table.add_column("ID", style="yellow", width=30)
         table.add_column("Name", style="green", width=45)
         table.add_column("Version", style="blue", width=12)
-        table.add_column("Status", style="white", width=10)
         
         # Add teams
         for team_id, info in self.teams.items():
@@ -123,8 +122,7 @@ class StartupDisplay:
                 "🏢 Team",
                 team_id,
                 info["name"],
-                version_info or "N/A",
-                info["status"]
+                version_info or "N/A"
             )
         
         # Add agents
@@ -134,8 +132,7 @@ class StartupDisplay:
                 "🤖 Agent",
                 agent_id,
                 info["name"],
-                version_info or "N/A",
-                info["status"]
+                version_info or "N/A"
             )
         
         # Add workflows
@@ -145,8 +142,7 @@ class StartupDisplay:
                 "⚡ Workflow",
                 workflow_id,
                 info["name"],
-                version_info or "N/A",
-                info["status"]
+                version_info or "N/A"
             )
         
         console.print(table)
@@ -165,10 +161,8 @@ class StartupDisplay:
         
         # Display summary stats
         total_components = len(self.agents) + len(self.teams) + len(self.workflows)
-        successful = sum(1 for items in [self.agents, self.teams, self.workflows] 
-                        for item in items.values() if item["status"] == "✅")
         
-        summary_text = f"[green]✅ {successful}/{total_components} components loaded[/green]"
+        summary_text = f"[green]✅ {total_components} components loaded[/green]"
         if self.errors:
             summary_text += f" | [red]⚠️ {len(self.errors)} issues[/red]"
         
