@@ -66,6 +66,8 @@ class Settings:
         
         # Performance monitoring
         self.enable_metrics = os.getenv("HIVE_ENABLE_METRICS", "true").lower() == "true"
+        self.metrics_batch_size = int(os.getenv("HIVE_METRICS_BATCH_SIZE", "50"))
+        self.metrics_flush_interval = float(os.getenv("HIVE_METRICS_FLUSH_INTERVAL", "5.0"))
         
     
     def is_production(self) -> bool:

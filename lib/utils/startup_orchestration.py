@@ -35,6 +35,7 @@ class StartupServices:
     auth_service: Any
     mcp_system: Optional[Any] = None
     csv_manager: Optional[Any] = None
+    metrics_service: Optional[Any] = None
     
     
 @dataclass 
@@ -161,9 +162,31 @@ async def initialize_services() -> StartupServices:
     except Exception as e:
         logger.warning("🤖 MCP system initialization failed", error=str(e))
     
+    # Initialize metrics service
+    metrics_service = None
+    try:
+        from lib.config.settings import settings
+        if settings.enable_metrics:
+            from lib.metrics.async_metrics_service import initialize_metrics_service
+            
+            # Create config with environment variables
+            metrics_config = {
+                "batch_size": settings.metrics_batch_size,
+                "flush_interval": settings.metrics_flush_interval
+            }
+            metrics_service = initialize_metrics_service(metrics_config)
+            logger.debug("📊 Metrics service ready", 
+                        batch_size=settings.metrics_batch_size,
+                        flush_interval=settings.metrics_flush_interval)
+        else:
+            logger.debug("📊 Metrics service disabled via HIVE_ENABLE_METRICS")
+    except Exception as e:
+        logger.warning("📊 Metrics service initialization failed", error=str(e))
+    
     services = StartupServices(
         auth_service=auth_service,
-        mcp_system=mcp_system
+        mcp_system=mcp_system,
+        metrics_service=metrics_service
     )
     
     logger.info("🔧 Services initialization completed")
