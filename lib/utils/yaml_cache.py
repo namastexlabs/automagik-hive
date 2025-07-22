@@ -202,7 +202,7 @@ class YAMLCacheManager:
     
     def _rebuild_inheritance_cache(self):
         """Rebuild the agent -> team inheritance mapping cache."""
-        logger.debug("🐛 🔗 Rebuilding inheritance cache...")
+        logger.debug("🔗 Rebuilding inheritance cache...")
         self._inheritance_cache.clear()
         
         # Discover all team configs
@@ -268,7 +268,7 @@ class YAMLCacheManager:
             self._yaml_cache.clear()
             self._glob_cache.clear()
             self._inheritance_cache.clear()
-            logger.debug("🐛 🗑️ All caches cleared")
+            logger.debug("🗑️ All caches cleared")
     
     def get_cache_stats(self) -> Dict[str, Any]:
         """

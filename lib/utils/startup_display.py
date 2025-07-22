@@ -1,6 +1,7 @@
 """
 Concise startup display utility for Automagik Hive system.
 Replaces verbose startup logs with clean table format.
+Enhanced with contextual emoji detection for improved visual scanning.
 """
 
 import os
@@ -9,6 +10,13 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
+
+# Import simplified emoji system
+try:
+    from lib.utils.emoji_loader import get_emoji_loader
+    EMOJI_AVAILABLE = True
+except ImportError:
+    EMOJI_AVAILABLE = False
 
 console = Console()
 
@@ -82,6 +90,25 @@ class StartupDisplay:
                 "error": migration_result.get("message", "unknown error")[:50]
             }
     
+    def _get_contextual_emoji(self, component_type: str, component_id: str) -> str:
+        """
+        Get contextual emoji for component based on type and ID.
+        
+        Args:
+            component_type: Type of component (team, agent, workflow)
+            component_id: Specific component identifier
+            
+        Returns:
+            Appropriate emoji with component type label
+        """
+        if EMOJI_AVAILABLE:
+            loader = get_emoji_loader()
+            emoji = loader.get_emoji(f"ai/{component_type}s/")
+        else:
+            emoji = "📄"
+        
+        return f"{emoji} {component_type.title()}"
+    
     def display_summary(self):
         """Display concise startup summary table."""
         
@@ -120,7 +147,7 @@ class StartupDisplay:
         for team_id, info in self.teams.items():
             version_info = self._get_version_info(team_id, 'team')
             table.add_row(
-                "🏢 Team",
+                self._get_contextual_emoji("team", team_id),
                 team_id,
                 info["name"],
                 version_info or "N/A"
@@ -130,7 +157,7 @@ class StartupDisplay:
         for agent_id, info in self.agents.items():
             version_info = self._get_version_info(agent_id, 'agent')
             table.add_row(
-                "🤖 Agent",
+                self._get_contextual_emoji("agent", agent_id),
                 agent_id,
                 info["name"],
                 version_info or "N/A"
@@ -140,7 +167,7 @@ class StartupDisplay:
         for workflow_id, info in self.workflows.items():
             version_info = self._get_version_info(workflow_id, 'workflow')
             table.add_row(
-                "⚡ Workflow",
+                self._get_contextual_emoji("workflow", workflow_id),
                 workflow_id,
                 info["name"],
                 version_info or "N/A"
@@ -265,12 +292,22 @@ def display_simple_status(team_name: str, team_id: str, agent_count: int, workfl
     table.add_column("", style="cyan")
     table.add_column("", style="white")
     
-    table.add_row("🏢 Team:", f"{team_name} ({team_id})")
-    table.add_row("🤖 Agents:", str(agent_count))
+    # Load emojis from YAML configuration
+    if EMOJI_AVAILABLE:
+        loader = get_emoji_loader()
+        team_emoji = loader.get_emoji("ai/teams/")
+        agent_emoji = loader.get_emoji("ai/agents/")  
+        workflow_emoji = loader.get_emoji("ai/workflows/")
+        api_emoji = loader.get_emoji("api/")
+    else:
+        team_emoji = agent_emoji = workflow_emoji = api_emoji = "📄"
+    
+    table.add_row(f"{team_emoji} Team:", f"{team_name} ({team_id})")
+    table.add_row(f"{agent_emoji} Agents:", str(agent_count))
     if workflow_count > 0:
-        table.add_row("⚡ Workflows:", str(workflow_count))
+        table.add_row(f"{workflow_emoji} Workflows:", str(workflow_count))
     port = os.getenv('HIVE_API_PORT', '8886')
-    table.add_row("🌐 API:", f"http://localhost:{port}")
+    table.add_row(f"{api_emoji} API:", f"http://localhost:{port}")
     
     panel = Panel(table, title="[bold green]System Ready[/bold green]", border_style="green")
     console.print(panel)

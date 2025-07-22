@@ -324,11 +324,11 @@ def create_workflow_input_template(workflow_type: str) -> Dict[str, Any]:
 
 # Example usage and testing
 if __name__ == "__main__":
-    logger.info("🤖 🔍 Testing Workflow Input Validation")
-    logger.info("🤖 " + "=" * 40)
+    logger.info("🔍 Testing Workflow Input Validation")
+    logger.info("" + "=" * 40)
     
     # Test 1: Valid human handoff input
-    logger.info("🤖 \n1. Testing Human Handoff Input Validation:")
+    logger.info("\n1. Testing Human Handoff Input Validation:")
     try:
         valid_input = create_workflow_input_template("human_handoff")
         validated = validate_human_handoff_input(valid_input)
@@ -339,16 +339,16 @@ if __name__ == "__main__":
         logger.error(f"🤖 ❌ Validation failed: {e}")
     
     # Test 2: Invalid input (missing required field)
-    logger.info("🤖 \n2. Testing Invalid Input:")
+    logger.info("\n2. Testing Invalid Input:")
     try:
         invalid_input = {"customer": {"customer_id": "123"}}  # Missing conversation
         validate_human_handoff_input(invalid_input)
-        logger.warning("🤖 ❌ Should have failed validation")
+        logger.warning("❌ Should have failed validation")
     except Exception as e:
         logger.info(f"🤖 ✅ Correctly caught validation error: {e}")
     
     # Test 3: Typification input validation
-    logger.info("🤖 \n3. Testing Typification Input Validation:")
+    logger.info("\n3. Testing Typification Input Validation:")
     try:
         typification_input = create_workflow_input_template("conversation_typification")
         validated = validate_typification_input(typification_input)
@@ -358,7 +358,7 @@ if __name__ == "__main__":
         logger.error(f"🤖 ❌ Validation failed: {e}")
     
     # Test 4: Schema serialization
-    logger.info("🤖 \n4. Testing Schema Serialization:")
+    logger.info("\n4. Testing Schema Serialization:")
     try:
         input_data = create_workflow_input_template("human_handoff")
         validated = validate_human_handoff_input(input_data)
@@ -374,4 +374,4 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"🤖 ❌ Serialization failed: {e}")
     
-    logger.info("🤖 \n✨ Validation testing completed!")
+    logger.info("\n✨ Validation testing completed!")

@@ -1,0 +1,231 @@
+# =========================================================================
+# 🎨 AUTOMAGIK HIVE - EMOJI MAPPINGS CONFIGURATION
+# =========================================================================
+#
+# Centralized emoji mappings for codebase resource types and development activities.
+# This file drives automatic emoji injection in logging and startup displays.
+#
+# Usage:
+# - Logging system automatically detects context and injects appropriate emojis
+# - Just use normal logging - emojis are added automatically based on file path and message content
+# - Startup display uses these mappings for visual component identification
+# - Git hooks validate new resource types have emoji mappings
+#
+# Implementation:
+# - Simple YAML-first approach with no hardcoding
+# - Automatic detection based on file paths and keywords
+# - No manual emoji management required
+#
+# Guidelines:
+# - Use contextually appropriate emojis that enhance understanding
+# - Maintain consistency across similar resource types
+# - Consider terminal compatibility for all emoji choices
+#
+# =========================================================================
+
+resource_types:
+  # Core infrastructure directories
+  directories:
+    "lib/": "🔧"              # Utilities and core infrastructure
+    "api/": "🌐"              # API endpoints and web services
+    "ai/agents/": "🤖"        # AI agent definitions
+    "ai/teams/": "👥"         # AI team configurations
+    "ai/workflows/": "⚡"     # AI workflow definitions
+    "tests/": "🧪"            # Test suites and validation
+    "docs/": "📚"             # Documentation files
+    "config/": "⚙️"           # Configuration files
+    "data/": "💾"             # Data storage and assets
+    "scripts/": "📜"          # Automation and build scripts
+    "common/": "🔗"           # Shared utilities and components
+    "genie/": "🧞"            # Genie-specific implementations
+    "migrations/": "🔄"       # Database migrations
+    "knowledge/": "🧠"        # Knowledge base and RAG systems
+    "static/": "🎨"           # Static assets and resources
+    
+  # Development activities and processes
+  activities:
+    startup: "🚀"             # System initialization
+    starting: "🚀"            # System initialization (alt form)
+    migration: "🔧"           # Database migrations
+    testing: "🧪"             # Test execution
+    building: "🏗️"           # Build processes
+    deployment: "📦"          # Deployment activities
+    monitoring: "📊"          # System monitoring
+    debugging: "🐛"           # Debug sessions
+    validation: "✅"          # Validation processes
+    optimization: "⚡"        # Performance optimization
+    security: "🔐"            # Security operations
+    backup: "💾"              # Backup operations
+    cleanup: "🧹"             # Cleanup and maintenance
+    discovery: "🔍"           # Component discovery
+    synchronization: "🔄"     # Version synchronization
+    configuration: "⚙️"       # Configuration resolution
+    initialization: "⚡"      # Service initialization
+    initialized: "✅"         # Initialization completion
+    completed: "✅"           # Completion status
+    registry: "📋"            # Registry operations
+    watching: "👁️"            # File watching operations
+    provider: "🔗"            # Provider operations
+    smart: "🧠"               # Smart loading operations  
+    shared: "🤝"              # Shared resource operations
+    # Component type keywords (high priority)
+    "registered team": "👥"   # Team registration messages
+    "registered agent": "🤖"  # Agent registration messages  
+    "registered workflow": "⚡" # Workflow registration messages
+    team: "👥"                # Team operations
+    agent: "🤖"               # Agent operations
+    workflow: "⚡"            # Workflow operations
+    template: "📄"            # Template operations
+    conversation: "💬"        # Conversation operations
+    csv: "📊"                 # CSV operations
+    file: "📁"                # File operations
+    manager: "⚙️"             # Manager operations
+    reload: "🔄"              # Reload operations
+    hot: "🔥"                 # Hot reload operations
+    path: "📁"                # Path operations
+    using: "🔧"               # Using operations
+    incremental: "📈"         # Incremental operations
+    loading: "⏳"             # Loading operations
+    exist: "✅"               # Existence checks
+    changes: "🔄"             # Change detection
+    ready: "✅"               # Ready state
+    
+  # System services and components
+  services:
+    logging: "📝"             # Logging infrastructure
+    metrics: "📊"             # Metrics collection
+    auth: "🔐"                # Authentication services
+    knowledge: "🧠"           # Knowledge management
+    database: "🗄️"           # Database operations
+    cache: "⚡"               # Caching systems
+    queue: "📬"               # Message queues
+    storage: "💾"             # File storage
+    network: "🌐"             # Network services
+    notification: "📱"        # Notification systems
+    webhook: "🔗"             # Webhook handling
+    scheduler: "⏰"           # Task scheduling
+    
+  # File types and extensions
+  file_types:
+    ".py": "🐍"               # Python source files
+    ".yaml": "📋"             # YAML configuration
+    ".yml": "📋"              # YAML configuration (alt)
+    ".md": "📖"               # Markdown documentation
+    ".json": "📄"             # JSON data files
+    ".env": "⚙️"              # Environment configuration
+    ".txt": "📄"              # Text files
+    ".log": "📝"              # Log files
+    ".sql": "🗄️"             # SQL files
+    ".sh": "📜"               # Shell scripts
+    ".js": "📜"               # JavaScript files
+    ".css": "🎨"              # CSS stylesheets
+    ".html": "🌐"             # HTML templates
+    ".toml": "⚙️"             # TOML configuration
+    
+  # Log levels and severity
+  log_levels:
+    DEBUG: "🐛"               # Debug information
+    INFO: "ℹ️"                # General information
+    WARNING: "⚠️"             # Warning messages
+    ERROR: "❌"               # Error conditions
+    CRITICAL: "🚨"            # Critical failures
+    
+  # Application states and statuses
+  states:
+    success: "✅"             # Successful operations
+    failure: "❌"             # Failed operations
+    pending: "⏳"             # Pending operations
+    running: "🏃"             # Running processes
+    stopped: "⏹️"             # Stopped processes
+    paused: "⏸️"              # Paused processes
+    loading: "⏳"             # Loading states
+    complete: "✅"            # Completed operations
+    
+  # Development environments
+  environments:
+    development: "🛠️"        # Development environment
+    staging: "🎭"             # Staging environment
+    production: "🏭"          # Production environment
+    testing: "🧪"             # Testing environment
+    local: "🏠"               # Local development
+    
+  # Default fallback emoji for unknown resource types
+  fallback: "📄"
+
+# Pattern matching rules for intelligent emoji detection
+detection_patterns:
+  # Directory-based detection (highest priority)
+  directory_patterns:
+    - pattern: "^lib/"
+      emoji: "🔧"
+    - pattern: "^api/"
+      emoji: "🌐"
+    - pattern: "^ai/agents/"
+      emoji: "🤖"
+    - pattern: "^ai/teams/"
+      emoji: "👥"
+    - pattern: "^ai/workflows/"
+      emoji: "⚡"
+    - pattern: "^tests/"
+      emoji: "🧪"
+    - pattern: "^docs/"
+      emoji: "📚"
+      
+  # Content-based keyword detection (medium priority)
+  keyword_patterns:
+    - keywords: ["auth", "authentication", "login", "security"]
+      emoji: "🔐"
+    - keywords: ["database", "db", "sql", "migration"]
+      emoji: "🗄️"
+    - keywords: ["api", "endpoint", "route", "http"]
+      emoji: "🌐"
+    - keywords: ["test", "testing", "spec", "assert"]
+      emoji: "🧪"
+    - keywords: ["log", "logging", "debug"]
+      emoji: "📝"
+    - keywords: ["metric", "monitor", "stats"]
+      emoji: "📊"
+    - keywords: ["cache", "redis", "memory"]
+      emoji: "⚡"
+    - keywords: ["queue", "task", "job"]
+      emoji: "📬"
+    - keywords: ["storage", "file", "upload"]
+      emoji: "💾"
+    - keywords: ["notification", "alert", "notify"]
+      emoji: "📱"
+      
+  # File extension detection (low priority)
+  extension_patterns:
+    - extensions: [".py"]
+      emoji: "🐍"
+    - extensions: [".yaml", ".yml"]
+      emoji: "📋"
+    - extensions: [".md"]
+      emoji: "📖"
+    - extensions: [".json"]
+      emoji: "📄"
+    - extensions: [".env"]
+      emoji: "⚙️"
+
+# Configuration for emoji injection behavior
+injection_config:
+  # Only inject emoji if message doesn't already contain one
+  skip_if_has_emoji: true
+  
+  # Minimum confidence threshold for emoji injection (0.0-1.0)
+  confidence_threshold: 0.7
+  
+  # Whether to inject emojis in different log levels
+  inject_by_level:
+    DEBUG: true
+    INFO: true
+    WARNING: true
+    ERROR: true
+    CRITICAL: true
+    
+  # Maximum length of message to analyze for performance
+  max_analysis_length: 500
+  
+  # Whether to cache emoji detection results
+  enable_caching: true
+  cache_size: 1000

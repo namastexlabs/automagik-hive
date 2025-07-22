@@ -48,19 +48,24 @@ class AuthInitService:
         return f"hive_{secrets.token_urlsafe(32)}"
     
     def _save_key_to_env(self, api_key: str) -> None:
-        """Add API key to .env file."""
+        """Add or replace API key in .env file."""
         env_content = []
+        api_key_updated = False
         
         # Read existing .env content
         if self.env_file.exists():
             env_content = self.env_file.read_text().splitlines()
         
-        # Remove existing HIVE_API_KEY lines
-        env_content = [line for line in env_content 
-                      if not line.startswith(f"{self.api_key_var}=")]
+        # Replace existing HIVE_API_KEY line or track if we need to add it
+        for i, line in enumerate(env_content):
+            if line.startswith(f"{self.api_key_var}="):
+                env_content[i] = f"{self.api_key_var}={api_key}"
+                api_key_updated = True
+                break
         
-        # Add new API key
-        env_content.append(f"{self.api_key_var}={api_key}")
+        # Add API key if it wasn't found
+        if not api_key_updated:
+            env_content.append(f"{self.api_key_var}={api_key}")
         
         # Ensure AUTH_DISABLED is set to false if not present
         has_auth_disabled = any(line.startswith(f"{self.auth_disabled_var}=") 
@@ -83,16 +88,16 @@ class AuthInitService:
     
     def _display_key_to_user(self, api_key: str) -> None:
         """Display generated API key to user."""
-        logger.info("🔐 \n" + "="*60)
-        logger.info("🔐 🔑 AUTOMAGIK HIVE - API KEY GENERATED")
-        logger.info("🔐 " + "="*60)
-        logger.info("🔐 A new API key has been generated and saved to .env:")
+        logger.info("\n" + "="*60)
+        logger.info("🔑 AUTOMAGIK HIVE - API KEY GENERATED")
+        logger.info("" + "="*60)
+        logger.info("A new API key has been generated and saved to .env:")
         logger.info(f"🔐 \nAPI Key: {api_key}")
-        logger.info("🔐 \nUse this key in your API requests:")
+        logger.info("\nUse this key in your API requests:")
         logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\')
         port = os.getenv('HIVE_API_PORT', '8886')
         logger.info(f"🔐      http://localhost:{port}/api/v1/health")
-        logger.info("🔐 \n" + "="*60 + "\n")
+        logger.info("\n" + "="*60 + "\n")
     
     def regenerate_key(self) -> str:
         """Generate and save a new API key."""

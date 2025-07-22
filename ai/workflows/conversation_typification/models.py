@@ -18,7 +18,7 @@ def load_hierarchy() -> Dict:
         with open("ai/workflows/conversation_typification/hierarchy.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        logger.error("📊 Hierarchy file not found. Run extract_typification_hierarchy.py first.")
+        logger.error("Hierarchy file not found. Run extract_typification_hierarchy.py first.")
         raise
     except json.JSONDecodeError as e:
         logger.error(f"📊 Invalid JSON in hierarchy file: {e}")

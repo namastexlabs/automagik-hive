@@ -94,7 +94,7 @@ class AsyncMetricsService:
                 self.processing_task = asyncio.create_task(self._background_processor())
                 
                 self._initialized = True
-                logger.info("⚡ AsyncMetricsService ready", 
+                logger.info("AsyncMetricsService ready", 
                           batch_size=self.batch_size,
                           flush_interval=self.flush_interval,
                           queue_size=self.queue_size)
@@ -193,7 +193,7 @@ class AsyncMetricsService:
                 
             except asyncio.TimeoutError:
                 self.stats["storage_errors"] += len(batch)
-                logger.error("⚡ Batch storage timeout - all entries failed")
+                logger.error("Batch storage timeout - all entries failed")
                 
         except Exception as e:
             self.stats["storage_errors"] += len(batch)
@@ -239,7 +239,7 @@ class AsyncMetricsService:
             
             # Log performance metrics periodically
             if self.stats["total_collected"] % 100 == 0:
-                logger.info("⚡ Metrics collection performance",
+                logger.info("Metrics collection performance",
                           total_collected=self.stats["total_collected"],
                           total_stored=self.stats["total_stored"],
                           queue_size=self.metrics_queue.qsize(),
@@ -250,7 +250,7 @@ class AsyncMetricsService:
             
         except asyncio.QueueFull:
             self.stats["queue_overflows"] += 1
-            logger.warning("⚡ Metrics queue full, dropping metrics entry")
+            logger.warning("Metrics queue full, dropping metrics entry")
             return False
     
     def collect_from_response(self,
@@ -277,7 +277,7 @@ class AsyncMetricsService:
                 return True
             except RuntimeError:
                 # No running loop - this shouldn't happen in FastAPI context
-                logger.warning("⚡ No running event loop for metrics collection")
+                logger.warning("No running event loop for metrics collection")
                 return False
             
         except Exception as e:
@@ -353,7 +353,7 @@ class AsyncMetricsService:
     
     async def close(self):
         """Gracefully shutdown the metrics service."""
-        logger.info("⚡ Shutting down AsyncMetricsService...")
+        logger.info("Shutting down AsyncMetricsService...")
         
         if self._shutdown_event:
             self._shutdown_event.set()
@@ -362,11 +362,11 @@ class AsyncMetricsService:
             try:
                 await asyncio.wait_for(self.processing_task, timeout=5.0)
             except asyncio.TimeoutError:
-                logger.warning("⚡ Processing task did not shut down within timeout")
+                logger.warning("Processing task did not shut down within timeout")
                 self.processing_task.cancel()
         
         self._initialized = False
-        logger.info("⚡ AsyncMetricsService closed")
+        logger.info("AsyncMetricsService closed")
 
 
 # Thread-safe global metrics service instance

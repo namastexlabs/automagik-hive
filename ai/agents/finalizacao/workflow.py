@@ -33,7 +33,7 @@ async def finalizacao_execution(
     """
     
     try:
-        logger.info("🎯 Iniciando finalização com tipificação integrada")
+        logger.info("Iniciando finalização com tipificação integrada")
         
         # Extract team context from workflow session state
         team_session = workflow.workflow_session_state or {}
@@ -47,11 +47,11 @@ async def finalizacao_execution(
         logger.info(f"👤 Customer context: {customer_context}")
         
         if not conversation_history:
-            logger.warning("⚠️ Nenhum histórico de conversa fornecido")
+            logger.warning("Nenhum histórico de conversa fornecido")
             return "❌ Erro: Histórico de conversa não encontrado para tipificação"
         
         # Call typification workflow directly using native Agno pattern
-        logger.info("🔄 Chamando workflow de tipificação...")
+        logger.info("Chamando workflow de tipificação...")
         
         typification_workflow = get_conversation_typification_workflow()
         typification_result = await typification_workflow.arun(
@@ -65,7 +65,7 @@ async def finalizacao_execution(
             }
         )
         
-        logger.info("✅ Tipificação concluída com sucesso")
+        logger.info("Tipificação concluída com sucesso")
         
         # Extract typification results
         if hasattr(typification_result, 'content'):
@@ -148,7 +148,7 @@ Tenha um ótimo dia! 💙"""
 ✅ Atendimento concluído com sucesso"""
             
             # Send notification using exact same pattern as startup
-            logger.info("📱 Sending WhatsApp notification for typification report")
+            logger.info("Sending WhatsApp notification for typification report")
             notification_sent = await send_notification(
                 title="🎯 Tipificação Concluída",
                 message=notification_message,
@@ -157,9 +157,9 @@ Tenha um ótimo dia! 💙"""
             )
             
             if notification_sent:
-                logger.info("✅ WhatsApp notification sent successfully")
+                logger.info("WhatsApp notification sent successfully")
             else:
-                logger.warning("⚠️ WhatsApp notification failed")
+                logger.warning("WhatsApp notification failed")
                 
         except Exception as e:
             logger.error(f"❌ Failed to send WhatsApp notification: {str(e)}")
@@ -238,14 +238,14 @@ if __name__ == "__main__":
         workflow = get_finalizacao_workflow()
         workflow.workflow_session_state = test_session_state
         
-        logger.info("🤖 Testando workflow de finalização...")
+        logger.info("Testando workflow de finalização...")
         logger.info(f"🤖 Session ID: {test_session_state['session_id']}")
         logger.info(f"🤖 Cliente: {test_session_state['customer_context']['customer_name']}")
         
         # Run workflow
         result = await workflow.arun(message=test_conversation)
         
-        logger.info("🤖 Resultado da finalização:")
+        logger.info("Resultado da finalização:")
         logger.info(f"🤖 {result.content if hasattr(result, 'content') else result}")
         
     # Run test

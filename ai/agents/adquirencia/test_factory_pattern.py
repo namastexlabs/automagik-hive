@@ -16,22 +16,22 @@ def test_basic_factory():
     """Test basic agent creation via factory"""
     try:
         agent = get_adquirencia_agent(session_id="test")
-        logger.info("🤖 Factory function works - agent created")
+        logger.info("Factory function works - agent created")
         print("✅ Factory function works - agent created")
         return True
     except Exception as e:
-        logger.error("🤖 Factory failed", error=str(e))
+        logger.error("Factory failed", error=str(e))
         print(f"❌ Factory failed: {e}")
         return False
 
 
 if __name__ == "__main__":
-    logger.info("🤖 Testing Minimal Factory Pattern")
+    logger.info("Testing Minimal Factory Pattern")
     print("🧪 Testing Minimal Factory Pattern")
     success = test_basic_factory()
     if success:
-        logger.info("🤖 Ready for custom logic!")
+        logger.info("Ready for custom logic!")
         print("🎉 Ready for custom logic!")
     else:
-        logger.error("🤖 Fix factory function")
+        logger.error("Fix factory function")
         print("❌ Fix factory function")

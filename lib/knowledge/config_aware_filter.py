@@ -23,7 +23,7 @@ class ConfigAwareFilter:
         # Build keyword lookup maps for faster filtering
         self._build_keyword_maps()
         
-        logger.info("📊 Config-aware filter initialized", 
+        logger.info("Config-aware filter initialized", 
                    business_units=len(self.business_units),
                    total_keywords=sum(len(bu.get("keywords", [])) for bu in self.business_units.values()))
     
@@ -89,7 +89,7 @@ class ConfigAwareFilter:
         best_unit = max(unit_scores.items(), key=lambda x: x[1]["score"])
         best_unit_id, best_data = best_unit
         
-        logger.debug("📊 Business unit detected", 
+        logger.debug("Business unit detected", 
                     text_preview=text[:50] + "...",
                     detected_unit=best_data["name"],
                     score=best_data["score"],
@@ -127,7 +127,7 @@ class ConfigAwareFilter:
             Filtered list of documents
         """
         if target_unit not in self.business_unit_keywords:
-            logger.warning("📊 Unknown business unit for filtering", unit=target_unit)
+            logger.warning("Unknown business unit for filtering", unit=target_unit)
             return documents
         
         filtered_docs = []
@@ -150,7 +150,7 @@ class ConfigAwareFilter:
             if detected_unit == target_unit:
                 filtered_docs.append(doc)
         
-        logger.info("📊 Documents filtered by business unit",
+        logger.info("Documents filtered by business unit",
                    target_unit=self.business_unit_keywords[target_unit]["name"],
                    original_count=len(documents),
                    filtered_count=len(filtered_docs))
@@ -171,8 +171,8 @@ class ConfigAwareFilter:
 
 def test_config_filter():
     """Test the config-aware filter functionality."""
-    logger.info("🧪 Testing Config-Aware Filter")
-    logger.info("📊 " + "=" * 40)
+    logger.info("Testing Config-Aware Filter")
+    logger.info("" + "=" * 40)
     
     filter_instance = ConfigAwareFilter()
     
@@ -194,7 +194,7 @@ def test_config_filter():
     search_params = filter_instance.get_enhanced_search_params()
     performance_settings = filter_instance.get_performance_settings()
     
-    logger.info("🔧 Configuration Settings:")
+    logger.info("Configuration Settings:")
     logger.info(f"📊 Max Results: {search_params['max_results']}")
     logger.info(f"⚡ Cache TTL: {performance_settings['cache_ttl']} seconds")
     

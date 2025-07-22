@@ -25,7 +25,7 @@ async def validate_message_dependency(message: str = Form(...)) -> str:
     """
     # Check for empty or whitespace-only messages
     if not message or not message.strip():
-        logger.warning("🌐 Empty message detected in Agno Playground endpoint")
+        logger.warning("Empty message detected in Agno Playground endpoint")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={

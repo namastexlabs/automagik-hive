@@ -99,13 +99,13 @@ class MetadataCSVReader(CSVReader):
                         content = row.get(self.content_column, "")
                         if content is None:
                             from lib.logging import logger
-                            logger.warning("📊 None content in row, skipping", row_index=row_idx + 1)
+                            logger.warning("None content in row, skipping", row_index=row_idx + 1)
                             continue
                         
                         content = content.strip()
                         if not content:
                             from lib.logging import logger
-                            logger.warning("📊 Empty content in row, skipping", row_index=row_idx + 1)
+                            logger.warning("Empty content in row, skipping", row_index=row_idx + 1)
                             continue
                         
                         # Extract metadata
@@ -127,7 +127,7 @@ class MetadataCSVReader(CSVReader):
                         
                     except Exception as e:
                         from lib.logging import logger
-                        logger.error("📊 Error processing CSV row", row_index=row_idx + 1, error=str(e))
+                        logger.error("Error processing CSV row", row_index=row_idx + 1, error=str(e))
                         continue
         
         except Exception as e:

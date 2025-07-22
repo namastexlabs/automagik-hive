@@ -45,7 +45,7 @@ setup_logging()
 # Log startup message at INFO level (replaces old demo mode print)
 log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
 agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
-logger.info("🌐 Automagik Hive logging initialized", 
+logger.info("Automagik Hive logging initialized", 
            log_level=log_level, agno_level=agno_log_level)
 
 # CRITICAL: Run database migrations FIRST before any imports that trigger component loading
@@ -57,20 +57,20 @@ try:
     try:
         # Try to get current event loop (Python 3.10+ recommended approach)
         loop = asyncio.get_running_loop()
-        logger.debug("🔧 Event loop detected, scheduling migration check")
+        logger.debug("Event loop detected, scheduling migration check")
     except RuntimeError:
         # No event loop running, safe to run directly
         try:
             migrations_run = asyncio.run(check_and_run_migrations())
             if migrations_run:
-                logger.info("🔧 Database schema initialized via Alembic migrations")
+                logger.info("Database schema initialized via Alembic migrations")
             else:
-                logger.debug("🔧 Database schema already up to date")
+                logger.debug("Database schema already up to date")
         except Exception as migration_error:
-            logger.warning("🔧 Database migration error", error=str(migration_error))
+            logger.warning("Database migration error", error=str(migration_error))
 except Exception as e:
-    logger.warning("🔧 Database migration check failed during startup", error=str(e))
-    logger.info("🔧 Continuing startup - system may use fallback initialization")
+    logger.warning("Database migration check failed during startup", error=str(e))
+    logger.info("Continuing startup - system may use fallback initialization")
 
 
 # Import teams via dynamic registry (removed hardcoded ana import)
@@ -102,9 +102,9 @@ def create_lifespan(startup_display=None):
             from lib.mcp import MCPCatalog
             catalog = MCPCatalog()
             servers = catalog.list_servers()
-            logger.debug("🌐 MCP system initialized", server_count=len(servers))
+            logger.debug("MCP system initialized", server_count=len(servers))
         except Exception as e:
-            logger.warning("🌐 Could not initialize MCP Connection Manager", error=str(e))
+            logger.warning("Could not initialize MCP Connection Manager", error=str(e))
         
         # Send startup notification with rich component information (production only)
         environment = os.getenv("HIVE_ENVIRONMENT", "development").lower()
@@ -115,17 +115,17 @@ def create_lifespan(startup_display=None):
                     from common.startup_notifications import send_startup_notification
                     # Pass startup_display for rich notification content
                     await send_startup_notification(startup_display)
-                    logger.debug("🌐 Startup notification sent successfully")
+                    logger.debug("Startup notification sent successfully")
                 except Exception as e:
-                    logger.warning("🌐 Could not send startup notification", error=str(e))
+                    logger.warning("Could not send startup notification", error=str(e))
             
             try:
                 asyncio.create_task(_send_startup_notification())
-                logger.debug("🌐 Startup notification scheduled")
+                logger.debug("Startup notification scheduled")
             except Exception as e:
-                logger.warning("🌐 Could not schedule startup notification", error=str(e))
+                logger.warning("Could not schedule startup notification", error=str(e))
         else:
-            logger.debug("🌐 Startup notifications disabled in development mode")
+            logger.debug("Startup notifications disabled in development mode")
         
         yield
         
@@ -134,18 +134,18 @@ def create_lifespan(startup_display=None):
             try:
                 from common.startup_notifications import send_shutdown_notification
                 await send_shutdown_notification()
-                logger.debug("🌐 Shutdown notification sent successfully")
+                logger.debug("Shutdown notification sent successfully")
             except Exception as e:
-                logger.warning("🌐 Could not send shutdown notification", error=str(e))
+                logger.warning("Could not send shutdown notification", error=str(e))
         
         try:
             asyncio.create_task(_send_shutdown_notification())
-            logger.debug("🌐 Shutdown notification scheduled")
+            logger.debug("Shutdown notification scheduled")
         except Exception as e:
-            logger.warning("🌐 Could not schedule shutdown notification", error=str(e))
+            logger.warning("Could not schedule shutdown notification", error=str(e))
         
         # MCP system has no resources to cleanup in simplified implementation
-        logger.debug("🌐 MCP system cleanup completed")
+        logger.debug("MCP system cleanup completed")
     
     return lifespan
     
@@ -171,9 +171,9 @@ def _create_simple_sync_api():
     # Display the table
     try:
         startup_display.display_summary()
-        logger.debug("🌐 Simplified startup display completed")
+        logger.debug("Simplified startup display completed")
     except Exception as e:
-        logger.error("🌐 Could not display even simplified table", error=str(e))
+        logger.error("Could not display even simplified table", error=str(e))
     
     # Create minimal FastAPI app
     app = FastAPI(
@@ -210,7 +210,7 @@ async def _async_create_automagik_api():
     
     # Skip verbose logging for reloader context to reduce duplicate output
     if is_reloader_context and is_development:
-        logger.debug("🌐 Reloader worker process - reducing log verbosity")
+        logger.debug("Reloader worker process - reducing log verbosity")
     
     # PERFORMANCE-OPTIMIZED SEQUENTIAL STARTUP
     # Replace scattered initialization with orchestrated startup sequence
@@ -219,15 +219,15 @@ async def _async_create_automagik_api():
     # Show environment info in development mode
     if is_development:
         auth_service = startup_results.services.auth_service
-        logger.debug("🌐 Environment configuration", 
+        logger.debug("Environment configuration", 
                    environment=environment,
                    auth_enabled=auth_service.is_auth_enabled(),
                    docs_url=f"http://localhost:{os.getenv('HIVE_API_PORT', '8886')}/docs")
         if auth_service.is_auth_enabled():
-            logger.debug("🌐 API authentication details",
+            logger.debug("API authentication details",
                        api_key=auth_service.get_current_key(),
                        usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:{os.getenv("HIVE_API_PORT", "8886")}/playground/status')
-        logger.debug("🌐 Development features status", enabled=is_development)
+        logger.debug("Development features status", enabled=is_development)
     
     # Extract components from orchestrated startup results
     available_agents = startup_results.registries.agents
@@ -241,18 +241,18 @@ async def _async_create_automagik_api():
             team = await create_team(team_id)
             if team:
                 loaded_teams.append(team)
-                logger.debug("🌐 Team instance created", team_id=team_id)
+                logger.debug("Team instance created", team_id=team_id)
         except Exception as e:
-            logger.warning("🌐 Team instance creation failed", 
+            logger.warning("Team instance creation failed", 
                          team_id=team_id, error=str(e), error_type=type(e).__name__)
             continue
     
     # Validate critical components loaded successfully
     if not loaded_teams:
-        logger.warning("🌐 Warning: No teams loaded - server will start with agents only")
+        logger.warning("Warning: No teams loaded - server will start with agents only")
     
     if not available_agents:
-        logger.error("🌐 Critical: No agents loaded from registry")
+        logger.error("Critical: No agents loaded from registry")
         raise ComponentLoadingError("At least one agent is required but none were loaded")
     
     # Create startup display with orchestrated results
@@ -274,9 +274,9 @@ async def _async_create_automagik_api():
         try:
             workflow = get_workflow(workflow_id, debug_mode=is_development)
             workflows_list.append(workflow)
-            logger.debug("🌐 Workflow instance created", workflow_id=workflow_id)
+            logger.debug("Workflow instance created", workflow_id=workflow_id)
         except Exception as e:
-            logger.warning("🌐 Workflow instance creation failed", 
+            logger.warning("Workflow instance creation failed", 
                         workflow_id=workflow_id, error=str(e), error_type=type(e).__name__)
             continue
     
@@ -286,7 +286,7 @@ async def _async_create_automagik_api():
         from lib.config.models import resolve_model
         dummy_agent = Agent(name="Test Agent", model=resolve_model())
         agents_list = [dummy_agent]
-        logger.warning("🌐 Using dummy agent - no components loaded successfully")
+        logger.warning("Using dummy agent - no components loaded successfully")
     
     # Create base FastAPI app for configuration
     
@@ -315,9 +315,9 @@ async def _async_create_automagik_api():
     try:
         from ai.agents.tools.finishing_tools import trigger_conversation_typification_workflow
         external_handler = trigger_conversation_typification_workflow
-        logger.debug("🌐 Workflow handler loaded successfully")
+        logger.debug("Workflow handler loaded successfully")
     except ImportError as e:
-        logger.warning("🌐 Workflow handler not available", error=str(e))
+        logger.warning("Workflow handler not available", error=str(e))
     
     # Create playground
     playground = Playground(
@@ -345,7 +345,7 @@ async def _async_create_automagik_api():
         # Development mode - no auth protection
         app.include_router(unified_router)
         
-    logger.debug("🌐 Unified API endpoints registered successfully")
+    logger.debug("Unified API endpoints registered successfully")
     
     # Configure docs based on settings and environment
     if is_development or api_settings.docs_enabled:
@@ -359,16 +359,16 @@ async def _async_create_automagik_api():
     
     # Display startup summary with component table (skip in quiet mode to avoid duplicates)
     if not is_reloader_context:
-        logger.debug("🌐 About to display startup summary", 
+        logger.debug("About to display startup summary", 
                     teams=len(startup_display.teams),
                     agents=len(startup_display.agents), 
                     workflows=len(startup_display.workflows))
         try:
             startup_display.display_summary()
-            logger.debug("🌐 Startup display completed successfully")
+            logger.debug("Startup display completed successfully")
         except Exception as e:
             import traceback
-            logger.error("🌐 Could not display startup summary table", error=str(e), traceback=traceback.format_exc())
+            logger.error("Could not display startup summary table", error=str(e), traceback=traceback.format_exc())
             # Try fallback simple display
             try:
                 from lib.utils.startup_display import display_simple_status
@@ -376,9 +376,9 @@ async def _async_create_automagik_api():
                 team_count = len(loaded_teams) if loaded_teams else 0
                 display_simple_status(team_name, f"{team_count}_teams", len(available_agents) if available_agents else 0)
             except Exception:
-                logger.debug("🌐 System components loaded successfully", display_status="table_unavailable")
+                logger.debug("System components loaded successfully", display_status="table_unavailable")
     else:
-        logger.debug("🌐 Skipping startup display (reloader context - avoiding duplicate table)")
+        logger.debug("Skipping startup display (reloader context - avoiding duplicate table)")
     
     # Add custom business endpoints
     try:
@@ -412,7 +412,7 @@ async def _async_create_automagik_api():
             console.print(table)
             
             # Add MCP Integration Config
-            logger.debug("🌐 MCP Integration Config for playground testing",
+            logger.debug("MCP Integration Config for playground testing",
                        config={
                            "automagik-hive": {
                                "command": "uvx",
@@ -458,7 +458,7 @@ def create_automagik_api():
         # Try to get the running event loop
         loop = asyncio.get_running_loop()
         # We're in an event loop, need to handle this properly
-        logger.debug("🌐 Event loop detected, using thread-based async initialization")
+        logger.debug("Event loop detected, using thread-based async initialization")
         
         import threading
         import concurrent.futures
@@ -480,7 +480,7 @@ def create_automagik_api():
             
     except RuntimeError:
         # No event loop running, safe to use asyncio.run()
-        logger.debug("🌐 No event loop detected, using direct async initialization")
+        logger.debug("No event loop detected, using direct async initialization")
         return asyncio.run(_async_create_automagik_api())
 
 
@@ -509,7 +509,7 @@ if __name__ == "__main__":
     # Show startup info in development mode
     is_development = environment == "development"
     if is_development:
-        logger.debug("🌐 Starting Automagik Hive API", 
+        logger.debug("Starting Automagik Hive API", 
                    host=host, port=port, reload=reload, mode="development" if reload else "production")
     
     # Use uvicorn directly with import string for reload/workers support

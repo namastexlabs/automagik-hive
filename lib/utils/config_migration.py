@@ -271,7 +271,7 @@ class AGNOConfigMigrator:
                 shutil.rmtree(self.base_path / "agents")
             shutil.copytree(agents_backup, self.base_path / "agents")
         
-        logger.info("✅ Restore completed")
+        logger.info("Restore completed")
     
     def generate_migration_report(self) -> str:
         """Generate detailed migration report."""
@@ -340,7 +340,7 @@ def migrate_configurations(
         result = migrator.migrate_team(team_id)
         result['teams_processed'] = 1
     else:
-        logger.info("🔄 Migrating all teams")
+        logger.info("Migrating all teams")
         result = migrator.migrate_all_teams()
     
     # Generate and display report
@@ -348,8 +348,8 @@ def migrate_configurations(
     logger.info(f"🔧 {report}")
     
     if not dry_run and not result['errors']:
-        logger.info("✅ Migration completed successfully!")
-        logger.info("🔧 📦 Backup created for rollback if needed")
+        logger.info("Migration completed successfully!")
+        logger.info("📦 Backup created for rollback if needed")
     elif result['errors']:
         logger.error(f"❌ Migration completed with {len(result['errors'])} errors")
     

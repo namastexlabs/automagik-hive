@@ -32,7 +32,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         # Store CSV path after parent initialization using object.__setattr__
         object.__setattr__(self, '_csv_path', csv_path_obj)
         
-        logger.debug("📊 Row-based CSV knowledge base initialized", 
+        logger.debug("Row-based CSV knowledge base initialized", 
                     csv_path=str(csv_path_obj), document_count=len(documents))
     
     def _load_csv_as_documents(self, csv_path: Path = None) -> List[Document]:
@@ -45,11 +45,11 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         elif hasattr(self, '_csv_path') and self._csv_path is not None:
             path_to_use = self._csv_path
         else:
-            logger.error("📊 CSV path not available - neither parameter nor stored path provided")
+            logger.error("CSV path not available - neither parameter nor stored path provided")
             return documents
         
         if not path_to_use.exists():
-            logger.warning("📊 CSV file not found", path=str(path_to_use))
+            logger.warning("CSV file not found", path=str(path_to_use))
             return documents
         
         try:
@@ -113,7 +113,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                     logger.debug(f"📊 ✓ {bu}: {count} documents processed")
                        
         except Exception as e:
-            logger.error("📊 Error loading CSV file", error=str(e), csv_path=str(csv_path))
+            logger.error("Error loading CSV file", error=str(e), csv_path=str(csv_path))
         
         return documents
     
@@ -129,7 +129,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         Override parent method to add tqdm progress bars during the slow vector operations.
         """
         if self.vector_db is None:
-            logger.warning("📊 No vector db provided")
+            logger.warning("No vector db provided")
             return
 
         from agno.utils.log import log_info, log_debug
@@ -202,10 +202,10 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             agno_logger.removeFilter(batch_filter)
         
         # Show final business unit summary like the CSV loading does
-        logger.debug("📊 Vector database loading completed")
+        logger.debug("Vector database loading completed")
         for bu, count in business_unit_counts.items():
             if bu and bu != 'Unknown':
-                logger.debug("📊 Business unit processing completed", business_unit=bu, document_count=count)
+                logger.debug("Business unit processing completed", business_unit=bu, document_count=count)
         
         log_info(f"Added {len(all_documents)} documents to knowledge base")
     
@@ -221,10 +221,10 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             # Reload into vector database
             self.load(recreate=True, skip_existing=False)
             
-            logger.info("📊 CSV knowledge base reloaded", document_count=len(new_documents))
+            logger.info("CSV knowledge base reloaded", document_count=len(new_documents))
             
         except Exception as e:
-            logger.error("📊 Error reloading CSV knowledge base", error=str(e))
+            logger.error("Error reloading CSV knowledge base", error=str(e))
     
     def validate_filters(self, filters: Optional[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[str]]:
         """
@@ -245,7 +245,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         # If no metadata filters tracked yet, all keys are considered invalid
         if not hasattr(self, 'valid_metadata_filters') or self.valid_metadata_filters is None:
             invalid_keys = list(filters.keys())
-            logger.debug("📊 No valid metadata filters tracked yet. All filter keys considered invalid", invalid_keys=invalid_keys)
+            logger.debug("No valid metadata filters tracked yet. All filter keys considered invalid", invalid_keys=invalid_keys)
             return {}, invalid_keys
 
         for key, value in filters.items():
@@ -255,6 +255,6 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                 valid_filters[key] = value
             else:
                 invalid_keys.append(key)
-                logger.debug("📊 Invalid filter key - not present in knowledge base", key=key)
+                logger.debug("Invalid filter key - not present in knowledge base", key=key)
 
         return valid_filters, invalid_keys

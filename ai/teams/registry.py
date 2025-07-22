@@ -82,7 +82,7 @@ def _load_team_config(config_file: Path) -> Optional[Dict[str, Any]]:
         with open(config_file, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
     except Exception as e:
-        logger.warning("🤖 Failed to load team config", config_file=str(config_file), error=str(e))
+        logger.warning("Failed to load team config", config_file=str(config_file), error=str(e))
         return None
 
 
@@ -125,20 +125,20 @@ def _discover_teams() -> Dict[str, Callable[..., Team]]:
                     if hasattr(module, pattern):
                         factory_func = getattr(module, pattern)
                         used_pattern = pattern
-                        logger.debug("🤖 Found factory function", team_name=team_name, pattern=used_pattern)
+                        logger.debug("Found factory function", team_name=team_name, pattern=used_pattern)
                         break
                 
                 if factory_func:
                     registry[team_name] = factory_func
-                    logger.info(f"🤖 Registered team: {team_name}", factory=used_pattern)
+                    logger.info(f"Registered team: {team_name}", factory=used_pattern)
                 else:
                     attempted_patterns = ", ".join(factory_patterns[:5])  # Show first 5 attempts
-                    logger.warning("🤖 No factory function found for team", 
+                    logger.warning("No factory function found for team", 
                                  team_name=team_name, 
                                  attempted_patterns=attempted_patterns)
                     
             except Exception as e:
-                logger.warning("🤖 Failed to load team", team_name=team_name, error=str(e))
+                logger.warning("Failed to load team", team_name=team_name, error=str(e))
                 continue
     
     return registry
@@ -152,11 +152,11 @@ def get_team_registry() -> Dict[str, Callable[..., Team]]:
     """Get team registry with lazy initialization"""
     global _TEAM_REGISTRY
     if _TEAM_REGISTRY is None:
-        logger.debug("🤖 Initializing team registry (lazy)")
+        logger.debug("Initializing team registry (lazy)")
         _TEAM_REGISTRY = _discover_teams()
-        logger.info("🤖 Team registry initialized", team_count=len(_TEAM_REGISTRY), teams=list(_TEAM_REGISTRY.keys()))
+        logger.info("Team registry initialized", team_count=len(_TEAM_REGISTRY), teams=list(_TEAM_REGISTRY.keys()))
     else:
-        logger.debug("🤖 Using cached team registry", team_count=len(_TEAM_REGISTRY))
+        logger.debug("Using cached team registry", team_count=len(_TEAM_REGISTRY))
     return _TEAM_REGISTRY
 
 

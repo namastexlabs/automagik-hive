@@ -29,7 +29,7 @@ def _discover_agents() -> list[str]:
                     if agent_id:
                         agent_ids.append(agent_id)
             except Exception as e:
-                logger.warning("🤖 Failed to load agent config", agent_path=agent_path.name, error=str(e))
+                logger.warning("Failed to load agent config", agent_path=agent_path.name, error=str(e))
                 continue
     
     return sorted(agent_ids)
@@ -129,7 +129,7 @@ class AgentRegistry:
                     memory=memory
                 )
             except Exception as e:
-                logger.warning("🤖 Failed to load agent", agent_id=agent_id, error=str(e))
+                logger.warning("Failed to load agent", agent_id=agent_id, error=str(e))
                 continue
         
         return agents

@@ -20,7 +20,7 @@ class TypificationIntegration:
         """Initialize the typification workflow"""
         try:
             self.workflow = get_conversation_typification_workflow(debug_mode=self.debug_mode)
-            logger.info("🔄 Typification workflow initialized successfully")
+            logger.info("Typification workflow initialized successfully")
         except Exception as e:
             logger.error(f"🔄 Failed to initialize typification workflow: {e}")
             raise
@@ -46,7 +46,7 @@ class TypificationIntegration:
         """
         
         if not self.workflow:
-            logger.error("🔄 Typification workflow not initialized")
+            logger.error("Typification workflow not initialized")
             return None
         
         try:

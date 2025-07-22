@@ -77,7 +77,7 @@ class MigrationService:
                     except Exception:
                         # Database is uninitialized - no alembic_version table exists
                         # This is expected for first-time setup
-                        logger.info("🔧 Database uninitialized - no alembic_version table found")
+                        logger.info("Database uninitialized - no alembic_version table found")
                         current_rev = None
                     
                     head_rev = script.get_current_head()
@@ -92,7 +92,7 @@ class MigrationService:
                     }
                     
             except Exception as e:
-                logger.error("🔧 Migration status check failed", error=str(e))
+                logger.error("Migration status check failed", error=str(e))
                 return {
                     "success": False,
                     "error": str(e),
@@ -110,7 +110,7 @@ class MigrationService:
                 cfg = self._get_alembic_config()
                 
                 # Run migrations
-                logger.info("🔧 Executing Alembic upgrade command", target=target_revision)
+                logger.info("Executing Alembic upgrade command", target=target_revision)
                 command.upgrade(cfg, target_revision)
                 
                 # Get final status
@@ -132,7 +132,7 @@ class MigrationService:
                     }
                     
             except Exception as e:
-                logger.error("🔧 Migration execution failed", 
+                logger.error("Migration execution failed", 
                             error=str(e), error_type=type(e).__name__)
                 return {
                     "success": False,
@@ -142,20 +142,20 @@ class MigrationService:
                 }
         
         try:
-            logger.info("🔧 Starting database migrations", target=target_revision)
+            logger.info("Starting database migrations", target=target_revision)
             result = await asyncio.get_event_loop().run_in_executor(None, _migrate_sync)
             
             if result["success"]:
-                logger.info("🔧 Database migrations completed successfully", 
+                logger.info("Database migrations completed successfully", 
                            revision=result["final_revision"])
             else:
-                logger.error("🔧 Database migration failed", 
+                logger.error("Database migration failed", 
                             error=result.get("error"))
             
             return result
             
         except Exception as e:
-            logger.error("🔧 Migration service error", 
+            logger.error("Migration service error", 
                         error=str(e), error_type=type(e).__name__)
             return {
                 "success": False,
@@ -179,7 +179,7 @@ class MigrationService:
             
             # If no migrations needed, we're done
             if not status.get("pending_upgrades", True) and status.get("is_database_initialized", False):
-                logger.info("🔧 Database schema is up-to-date", 
+                logger.info("Database schema is up-to-date", 
                            revision=status.get("current_revision"))
                 return {
                     "success": True,
@@ -199,7 +199,7 @@ class MigrationService:
             }
             
         except Exception as e:
-            logger.error("🔧 Database readiness check failed", 
+            logger.error("Database readiness check failed", 
                         error=str(e), error_type=type(e).__name__)
             return {
                 "success": False,

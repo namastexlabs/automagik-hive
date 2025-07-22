@@ -52,7 +52,7 @@ def trigger_conversation_typification_workflow(
         ))
         
         if not results:
-            logger.error("🤖 Typification workflow returned no results")
+            logger.error("Typification workflow returned no results")
             return "❌ Erro na tipificação: Nenhum resultado obtido"
         
         # Get the final result
@@ -67,10 +67,10 @@ def trigger_conversation_typification_workflow(
                 logger.info(f"✅ Typification completed successfully with protocol: {protocol_id}")
                 return f"✅ Tipificação concluída com sucesso! Protocolo: {protocol_id}"
             else:
-                logger.warning("🤖 Typification completed but no protocol ID found")
+                logger.warning("Typification completed but no protocol ID found")
                 return "⚠️ Tipificação concluída, mas protocolo não encontrado"
         else:
-            logger.warning("🤖 Typification completed but no metadata found")
+            logger.warning("Typification completed but no metadata found")
             return "✅ Tipificação concluída com sucesso!"
             
     except Exception as e:

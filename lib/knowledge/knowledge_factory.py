@@ -41,7 +41,7 @@ def _check_knowledge_base_exists(db_url: str, table_name: str = "knowledge_base"
             row_count = result.fetchone()[0]
             return row_count > 0
     except Exception as e:
-        logger.warning("📊 Could not check knowledge base existence", error=str(e))
+        logger.warning("Could not check knowledge base existence", error=str(e))
         return False
 
 def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str = None, num_documents: int = 10, csv_path: str = None) -> RowBasedCSVKnowledgeBase:
@@ -63,7 +63,7 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
     # Thread-safe check for existing instance
     with _kb_lock:
         if _shared_kb is not None:
-            logger.debug("📊 Returning existing shared knowledge base")
+            logger.debug("Returning existing shared knowledge base")
             # Update num_documents dynamically for this agent
             _shared_kb.num_documents = num_documents
             return _shared_kb
@@ -84,7 +84,7 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
         # Use path from config relative to knowledge folder
         csv_path = config.get("knowledge", {}).get("csv_file_path", "knowledge_rag.csv")
         csv_path = Path(__file__).parent / csv_path
-        logger.info("📊 Using CSV path from configuration", csv_path=str(csv_path))
+        logger.info("Using CSV path from configuration", csv_path=str(csv_path))
     else:
         # Convert to Path and resolve if relative
         csv_path = Path(csv_path)
@@ -96,7 +96,7 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
             else:
                 # Path doesn't include knowledge folder, add it
                 csv_path = Path(__file__).parent / csv_path
-        logger.info("📊 Using provided CSV path", csv_path=str(csv_path))
+        logger.info("Using provided CSV path", csv_path=str(csv_path))
     
     # Get vector database configuration
     vector_config = config.get("knowledge", {}).get("vector_db", {})
@@ -116,7 +116,7 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
     with _kb_lock:
         # Double-check pattern - another thread might have created it while we waited
         if _shared_kb is not None:
-            logger.debug("📊 Knowledge base was created by another thread, returning existing instance")
+            logger.debug("Knowledge base was created by another thread, returning existing instance")
             _shared_kb.num_documents = num_documents
             return _shared_kb
             
@@ -134,7 +134,7 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
         _shared_kb.valid_metadata_filters = valid_filters
     
     # Use smart incremental loading instead of basic Agno loading
-    logger.info("📊 Initializing smart incremental knowledge base loading")
+    logger.info("Initializing smart incremental knowledge base loading")
     try:
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
         smart_loader = SmartIncrementalLoader(csv_path=str(csv_path), kb=_shared_kb)
@@ -143,31 +143,31 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
         result = smart_loader.smart_load()
         
         if "error" in result:
-            logger.warning("📊 Smart loading failed", error=result['error'])
+            logger.warning("Smart loading failed", error=result['error'])
             # Fallback to basic loading
-            logger.info("📊 Falling back to basic knowledge base loading")
+            logger.info("Falling back to basic knowledge base loading")
             _shared_kb.load(recreate=False, upsert=True)
         else:
             # Smart loading succeeded - just connect to the populated database
             strategy = result.get('strategy', 'unknown')
             if strategy == 'no_changes':
-                logger.info("📊 Smart loading: No changes needed (all documents already exist)")
+                logger.info("Smart loading: No changes needed (all documents already exist)")
             elif strategy == 'incremental_update':
                 new_docs = result.get('new_rows_processed', 0)
-                logger.info("📊 Smart loading: Added new documents (incremental)", new_docs=new_docs)
+                logger.info("Smart loading: Added new documents (incremental)", new_docs=new_docs)
             elif strategy == 'initial_load_with_hashes':
                 total_docs = result.get('entries_processed', 'unknown')
-                logger.info("📊 Smart loading: Initial load completed", total_docs=total_docs)
+                logger.info("Smart loading: Initial load completed", total_docs=total_docs)
             else:
-                logger.info("📊 Smart loading: Completed", strategy=strategy)
+                logger.info("Smart loading: Completed", strategy=strategy)
             
     except Exception as e:
-        logger.warning("📊 Smart incremental loader failed", error=str(e))
+        logger.warning("Smart incremental loader failed", error=str(e))
         # Fallback to basic loading
-        logger.info("📊 Falling back to basic knowledge base loading")
+        logger.info("Falling back to basic knowledge base loading")
         _shared_kb.load(recreate=False, upsert=True)
     
-    logger.info("📊 Shared knowledge base ready")
+    logger.info("Shared knowledge base ready")
     
     return _shared_kb
 
@@ -178,7 +178,7 @@ def _load_knowledge_config() -> Dict[str, Any]:
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)
     except Exception as e:
-        logger.warning("🔧 Could not load knowledge config", error=str(e))
+        logger.warning("Could not load knowledge config", error=str(e))
         return {}
 
 

@@ -33,7 +33,7 @@ async def human_handoff_execution(
     """
     
     try:
-        logger.info("🤖 🚨 Iniciando escalação para atendimento humano com tipificação integrada")
+        logger.info("🚨 Iniciando escalação para atendimento humano com tipificação integrada")
         
         # Extract team context from workflow session state
         team_session = workflow.workflow_session_state or {}
@@ -47,11 +47,11 @@ async def human_handoff_execution(
         logger.info(f"👤 Customer context: {customer_context}")
         
         if not conversation_history:
-            logger.warning("🤖 ⚠️ Nenhum histórico de conversa fornecido")
+            logger.warning("⚠️ Nenhum histórico de conversa fornecido")
             return "❌ Erro: Histórico de conversa não encontrado para escalação"
         
         # Call typification workflow directly using native Agno pattern
-        logger.info("🤖 🔄 Chamando workflow de tipificação para escalação...")
+        logger.info("🔄 Chamando workflow de tipificação para escalação...")
         
         typification_workflow = get_conversation_typification_workflow()
         typification_result = await typification_workflow.arun(
@@ -66,7 +66,7 @@ async def human_handoff_execution(
             }
         )
         
-        logger.info("🤖 ✅ Tipificação para escalação concluída com sucesso")
+        logger.info("✅ Tipificação para escalação concluída com sucesso")
         
         # Extract typification results
         if hasattr(typification_result, 'content'):
@@ -157,7 +157,7 @@ Obrigada pela paciência! 💙"""
 🚨 Cliente aguarda atendimento especializado"""
             
             # Send notification using exact same pattern as startup
-            logger.info("📱 Sending WhatsApp notification for human handoff")
+            logger.info("Sending WhatsApp notification for human handoff")
             notification_sent = await send_notification(
                 title="🚨 Escalação para Atendimento Humano",
                 message=notification_message,
@@ -166,9 +166,9 @@ Obrigada pela paciência! 💙"""
             )
             
             if notification_sent:
-                logger.info("🤖 ✅ WhatsApp notification sent successfully")
+                logger.info("✅ WhatsApp notification sent successfully")
             else:
-                logger.warning("🤖 ⚠️ WhatsApp notification failed")
+                logger.warning("⚠️ WhatsApp notification failed")
                 
         except Exception as e:
             logger.error(f"❌ Failed to send WhatsApp notification: {str(e)}")
@@ -251,14 +251,14 @@ if __name__ == "__main__":
         workflow = get_human_handoff_workflow()
         workflow.workflow_session_state = test_session_state
         
-        logger.info("🤖 🧪 Testando workflow de escalação humana...")
+        logger.info("🧪 Testando workflow de escalação humana...")
         logger.info(f"🤖 📋 Session ID: {test_session_state['session_id']}")
         logger.info(f"🤖 👤 Cliente: {test_session_state['customer_context']['customer_name']}")
         
         # Run workflow
         result = await workflow.arun(message=test_conversation)
         
-        logger.info("🤖 ✅ Resultado da escalação:")
+        logger.info("✅ Resultado da escalação:")
         logger.info(f"🤖 {result.content if hasattr(result, 'content') else result}")
         
     # Run test

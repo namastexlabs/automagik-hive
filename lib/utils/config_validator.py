@@ -414,7 +414,7 @@ def validate_configurations(base_path: str = "ai", verbose: bool = False) -> Val
     """Validate all AGNO configurations in the project."""
     validator = AGNOConfigValidator(base_path)
     
-    logger.info("🔍 Starting AGNO configuration validation...")
+    logger.info("Starting AGNO configuration validation...")
     
     result = validator.validate_all_configurations()
     
@@ -435,12 +435,12 @@ def validate_configurations(base_path: str = "ai", verbose: bool = False) -> Val
             logger.info(f"🔧    • {suggestion}")
     
     if result.drift_detected:
-        logger.warning("⚠️ Configuration drift detected - consider standardization")
+        logger.warning("Configuration drift detected - consider standardization")
     
     if result.is_valid and not result.warnings:
-        logger.info("✅ All configurations valid!")
+        logger.info("All configurations valid!")
     elif result.is_valid:
-        logger.info("✅ Configurations valid with warnings")
+        logger.info("Configurations valid with warnings")
     
     return result
 

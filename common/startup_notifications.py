@@ -29,7 +29,7 @@ async def send_startup_notification(startup_display=None):
         
         # Run in isolated task to prevent context manager conflicts
         await asyncio.create_task(isolated_send())
-        logger.info("📱 Startup notification sent")
+        logger.info("Startup notification sent")
     except Exception as e:
         logger.error(f"📱 Failed to send startup notification: {e}")
 
@@ -139,7 +139,7 @@ async def send_shutdown_notification():
         
         # Run in isolated task to prevent context manager conflicts
         await asyncio.create_task(isolated_send())
-        logger.info("📱 Shutdown notification sent")
+        logger.info("Shutdown notification sent")
     except Exception as e:
         logger.error(f"📱 Failed to send shutdown notification: {e}")
 

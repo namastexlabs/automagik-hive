@@ -104,7 +104,29 @@ define check_env_file
         echo -e "$(FONT_CYAN)Copying .env.example to .env...$(FONT_RESET)"; \
         cp .env.example .env; \
         $(call print_success,.env created from example); \
-        echo -e "$(FONT_YELLOW)💡 Edit .env and add your API keys$(FONT_RESET)"; \
+        $(call generate_hive_api_key); \
+        echo -e "$(FONT_YELLOW)💡 Edit .env and add your AI provider API keys$(FONT_RESET)"; \
+    elif grep -q "HIVE_API_KEY=your-hive-api-key-here" .env; then \
+        $(call print_warning,Hive API key needs to be generated); \
+        $(call generate_hive_api_key); \
+    elif ! grep -q "HIVE_API_KEY=hive_" .env; then \
+        $(call print_warning,Hive API key format needs updating to hive_ prefix); \
+        $(call generate_hive_api_key); \
+    fi
+endef
+
+define generate_hive_api_key
+    $(call print_status,Generating secure Hive API key...); \
+    uv run python -c "from lib.auth.cli import regenerate_key; regenerate_key()"
+endef
+
+define show_api_key_info
+    echo ""; \
+    CURRENT_KEY=$$(grep "^HIVE_API_KEY=" .env 2>/dev/null | cut -d'=' -f2); \
+    if [ -n "$$CURRENT_KEY" ]; then \
+        echo -e "$(FONT_GREEN)🔑 YOUR API KEY: $$CURRENT_KEY$(FONT_RESET)"; \
+        echo -e "$(FONT_CYAN)   Already saved to .env - use in x-api-key headers$(FONT_RESET)"; \
+        echo ""; \
     fi
 endef
 
@@ -228,6 +250,7 @@ install-local: ## 🛠️ Install development environment (local only)
 	@$(call setup_python_env)
 	@$(call check_env_file)
 	@$(call show_hive_logo)
+	@$(call show_api_key_info)
 	@$(call print_success,Development environment ready!)
 	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
 

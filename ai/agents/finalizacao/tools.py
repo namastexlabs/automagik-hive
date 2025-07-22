@@ -86,7 +86,7 @@ def finalize_conversation(
         else:
             final_message = str(result)
         
-        logger.info("✅ Conversation finalization completed successfully")
+        logger.info("Conversation finalization completed successfully")
         return final_message
         
     except Exception as e:

@@ -35,18 +35,18 @@ class BatchLogger:
     def log_agent_inheritance(self, agent_id: str):
         """Log agent inheritance application (batched during startup)."""
         if self._should_log_verbose():
-            logger.debug(f"✅ Applied inheritance to agent {agent_id}")
+            logger.debug(f"Applied inheritance to agent {agent_id}")
             return
             
         if self.startup_mode:
             self.batches['agent_inheritance'].append(agent_id)
         else:
-            logger.debug(f"✅ Applied inheritance to agent {agent_id}")
+            logger.debug(f"Applied inheritance to agent {agent_id}")
             
     def log_model_resolved(self, model_id: str, provider: str):
         """Log model resolution (batched during startup)."""
         if self._should_log_verbose():
-            logger.info(f"🔧 Model resolved successfully", model_id=model_id, provider=provider)
+            logger.info(f"Model resolved successfully", model_id=model_id, provider=provider)
             return
             
         if self.startup_mode:
@@ -57,7 +57,7 @@ class BatchLogger:
     def log_storage_created(self, storage_type: str, component_id: str):
         """Log storage creation (batched during startup)."""
         if self._should_log_verbose():
-            logger.info(f"🔧 Successfully created {storage_type} storage for {component_id}")
+            logger.info(f"Successfully created {storage_type} storage for {component_id}")
             return
             
         if self.startup_mode:
@@ -91,13 +91,13 @@ class BatchLogger:
     def log_csv_processing(self, source: str, document_count: int):
         """Log CSV processing (batched during startup)."""
         if self._should_log_verbose():
-            logger.info(f"📊 ✓ {source}: {document_count} documents processed")
+            logger.info(f"{source}: {document_count} documents processed")
             return
             
         if self.startup_mode:
             self.batches['csv_processing'].append((source, document_count))
         else:
-            logger.debug(f"📊 {source}: {document_count} docs")
+            logger.debug(f"{source}: {document_count} docs")
             
     def log_once(self, message: str, level: str = "info", **kwargs):
         """Log a message only once (deduplication)."""
@@ -114,19 +114,19 @@ class BatchLogger:
         # Agent inheritance summary
         if self.batches['agent_inheritance']:
             agents = self.batches['agent_inheritance']
-            logger.info(f"✅ Applied inheritance to {len(agents)} agents: {', '.join(agents)}")
+            logger.info(f"Applied inheritance to {len(agents)} agents: {', '.join(agents)}")
             
         # Model resolution summary
         if self.batches['model_resolved']:
             models = self.batches['model_resolved']
             unique_providers = set(provider for _, provider in models)
-            logger.info(f"🔧 Model resolution: {len(models)} operations across {len(unique_providers)} providers")
+            logger.info(f"Model resolution: {len(models)} operations across {len(unique_providers)} providers")
             
         # Storage creation summary
         if self.batches['storage_created']:
             storage_ops = self.batches['storage_created']
             storage_types = Counter(storage_type for storage_type, _ in storage_ops)
-            logger.info(f"🔧 Storage initialization: {dict(storage_types)}")
+            logger.info(f"Storage initialization: {dict(storage_types)}")
             
         # Agent creation summary
         if self.batches['agent_created']:
@@ -134,7 +134,7 @@ class BatchLogger:
             total_params = sum(count for _, count in agents)
             avg_params = total_params // len(agents) if agents else 0
             agent_names = [name for name, _ in agents]
-            logger.info(f"🤖 Created {len(agents)} agents: {', '.join(agent_names)} (avg {avg_params} params)")
+            logger.info(f"Created {len(agents)} agents: {', '.join(agent_names)} (avg {avg_params} params)")
             
         # Team member loading summary
         team_keys = [key for key in self.batches.keys() if key.startswith('team_members')]
@@ -151,7 +151,7 @@ class BatchLogger:
             csv_ops = self.batches['csv_processing']
             total_docs = sum(count for _, count in csv_ops)
             sources = len(set(source for source, _ in csv_ops))
-            logger.info(f"📊 Knowledge base: {sources} sources, {total_docs} documents loaded")
+            logger.info(f"Knowledge base: {sources} sources, {total_docs} documents loaded")
             
         # Clear batches
         self.batches.clear()

@@ -57,7 +57,7 @@ async def batch_component_discovery() -> ComponentRegistries:
     Returns:
         ComponentRegistries: All discovered components with summary
     """
-    logger.debug("🔍 Starting batch component discovery")
+    logger.debug("Starting batch component discovery")
     start_time = datetime.now()
     
     # Import registry functions (triggers lazy initialization)
@@ -91,7 +91,7 @@ async def batch_component_discovery() -> ComponentRegistries:
         return registries
         
     except Exception as e:
-        logger.error("🚨 Component discovery failed", error=str(e), error_type=type(e).__name__)
+        logger.error("Component discovery failed", error=str(e), error_type=type(e).__name__)
         # Return minimal registries to allow startup to continue
         return ComponentRegistries(
             workflows={},
@@ -131,14 +131,14 @@ async def initialize_knowledge_base() -> Optional[Any]:
         csv_manager = CSVHotReloadManager(str(csv_path))
         csv_manager.start_watching()
         
-        logger.info("📊 Knowledge base CSV watching initialized", 
+        logger.info("Knowledge base CSV watching initialized", 
                    csv_path=str(csv_path), 
                    status="watching_for_changes",
                    timing="early_initialization",
                    note="shared_kb_will_be_initialized_lazily")
     except Exception as e:
-        logger.warning("📊 Knowledge base CSV watching initialization failed", error=str(e))
-        logger.info("📊 Knowledge base will use fallback initialization when first accessed")
+        logger.warning("Knowledge base CSV watching initialization failed", error=str(e))
+        logger.info("Knowledge base will use fallback initialization when first accessed")
     
     return csv_manager
 
@@ -154,12 +154,12 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
     Returns:
         StartupServices: Container with all initialized services
     """
-    logger.info("🔧 Initializing remaining services (auth, MCP, metrics)")
+    logger.info("⚙️ Initializing remaining services (auth, MCP, metrics)")
     
     # Initialize authentication system
     from lib.auth.dependencies import get_auth_service
     auth_service = get_auth_service()
-    logger.debug("🔐 Authentication service ready", auth_enabled=auth_service.is_auth_enabled())
+    logger.debug("Authentication service ready", auth_enabled=auth_service.is_auth_enabled())
     
     # Initialize MCP system
     mcp_system = None
@@ -168,9 +168,9 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
         catalog = MCPCatalog()
         servers = catalog.list_servers()
         mcp_system = catalog
-        logger.debug("🤖 MCP system ready", server_count=len(servers))
+        logger.debug("MCP system ready", server_count=len(servers))
     except Exception as e:
-        logger.warning("🤖 MCP system initialization failed", error=str(e))
+        logger.warning("MCP system initialization failed", error=str(e))
     
     # Initialize metrics service
     metrics_service = None
@@ -188,14 +188,14 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
             metrics_service = initialize_metrics_service(metrics_config)
             # Initialize async components
             await metrics_service.initialize()
-            logger.debug("📊 Metrics service ready", 
+            logger.debug("Metrics service ready", 
                         batch_size=settings.metrics_batch_size,
                         flush_interval=settings.metrics_flush_interval,
                         queue_size=settings.metrics_queue_size)
         else:
-            logger.debug("📊 Metrics service disabled via HIVE_ENABLE_METRICS")
+            logger.debug("Metrics service disabled via HIVE_ENABLE_METRICS")
     except Exception as e:
-        logger.warning("📊 Metrics service initialization failed", error=str(e))
+        logger.warning("Metrics service initialization failed", error=str(e))
     
     services = StartupServices(
         auth_service=auth_service,
@@ -204,7 +204,7 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
         metrics_service=metrics_service
     )
     
-    logger.info("🔧 Remaining services initialization completed")
+    logger.info("⚙️ Remaining services initialization completed")
     return services
 
 
@@ -221,11 +221,11 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
         Version sync results or None if skipped
     """
     if not db_url:
-        logger.warning("⚠️ Version synchronization skipped - HIVE_DATABASE_URL not configured")
+        logger.warning("Version synchronization skipped - HIVE_DATABASE_URL not configured")
         return None
     
     # Log actual component counts from registries
-    logger.info("🔧 Synchronizing component versions", 
+    logger.info("🔄 Synchronizing component versions", 
                discovered_components=registries.summary)
     
     sync_service = None
@@ -268,7 +268,7 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
             elif isinstance(results, dict) and results.get("error"):
                 sync_summary.append(f"0 {comp_type} (error)")
         
-        logger.info("✅ Version synchronization completed", 
+        logger.info("🔄 Version synchronization completed", 
                    summary=", ".join(sync_summary) if sync_summary else "no components",
                    total_synced=total_synced,
                    total_discovered=registries.total_components)
@@ -276,7 +276,7 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
         return sync_results
         
     except Exception as e:
-        logger.error("🚨 Version synchronization failed", error=str(e))
+        logger.error("Version synchronization failed", error=str(e))
         return None
     finally:
         # Ensure proper cleanup of database connections
@@ -293,9 +293,9 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
                         component_service = version_service.component_service
                         if hasattr(component_service, 'close'):
                             await component_service.close()
-                logger.debug("🔧 Database connections cleaned up")
+                logger.debug("Database connections cleaned up")
             except Exception as cleanup_error:
-                logger.debug("🔧 Database cleanup attempted", error=str(cleanup_error))
+                logger.debug("Database cleanup attempted", error=str(cleanup_error))
 
 
 async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
@@ -320,9 +320,9 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     """
     startup_start = datetime.now()
     if not quiet_mode:
-        logger.info("⚡ Starting Performance-Optimized Sequential Startup")
+        logger.info("🚀 Starting Performance-Optimized Sequential Startup")
     else:
-        logger.debug("⚡ Starting Performance-Optimized Sequential Startup (quiet mode)")
+        logger.debug("🚀 Starting Performance-Optimized Sequential Startup (quiet mode)")
     
     services = None
     registries = None
@@ -331,25 +331,25 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     try:
         # 1. Database Migration (User requirement - first priority)
         if not quiet_mode:
-            logger.info("📊 Database migration check")
+            logger.info("🗄️ Database migration check")
         try:
             from lib.utils.db_migration import check_and_run_migrations
             migrations_run = await check_and_run_migrations()
             if migrations_run:
-                logger.info("📊 Database schema initialized via Alembic migrations")
+                logger.info("Database schema initialized via Alembic migrations")
             else:
-                logger.debug("📊 Database schema already up to date")
+                logger.debug("Database schema already up to date")
         except Exception as e:
-            logger.warning("📊 Database migration check failed", error=str(e))
-            logger.info("🔧 Continuing startup - system will use fallback initialization")
+            logger.warning("Database migration check failed", error=str(e))
+            logger.info("Continuing startup - system will use fallback initialization")
         
         # 2. Logging System Ready (implicit - already configured)
         if not quiet_mode:
-            logger.info("🔧 Logging system ready")
+            logger.info("📝 Logging system ready")
         
         # 3. Knowledge Base Init (CSV watching setup - shared KB initialized lazily)
         if not quiet_mode:
-            logger.info("📊 Initializing knowledge base CSV watching")
+            logger.info("Initializing knowledge base CSV watching")
         csv_manager = await initialize_knowledge_base()
         
         # 4. Component Discovery (Single batch operation - MOVED BEFORE version sync)
@@ -363,7 +363,7 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
         
         # 6. Configuration Resolution (implicit via registry lazy loading)
         if not quiet_mode:
-            logger.info("🔧 Configuration resolution completed")
+            logger.info("⚙️ Configuration resolution completed")
         
         # 7. Other Service Initialization (auth, MCP, metrics)
         services = await initialize_other_services(csv_manager)
@@ -371,12 +371,12 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
         # 8. Startup Summary
         startup_time = (datetime.now() - startup_start).total_seconds()
         if not quiet_mode:
-            logger.info("⚡ Sequential startup completed", 
+            logger.info("🚀 Sequential startup completed", 
                        total_components=registries.total_components,
                        startup_time_seconds=f"{startup_time:.2f}",
                        sequence="optimized")
         else:
-            logger.debug("⚡ Sequential startup completed (quiet mode)", 
+            logger.debug("Sequential startup completed (quiet mode)", 
                         total_components=registries.total_components,
                         startup_time_seconds=f"{startup_time:.2f}")
         
@@ -387,7 +387,7 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
         )
         
     except Exception as e:
-        logger.error("🚨 Sequential startup failed", error=str(e), error_type=type(e).__name__)
+        logger.error("Sequential startup failed", error=str(e), error_type=type(e).__name__)
         # Return minimal results to allow server to continue
         return StartupResults(
             registries=registries or ComponentRegistries(workflows={}, teams={}, agents={}, summary="startup failed"),

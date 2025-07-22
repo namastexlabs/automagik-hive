@@ -124,7 +124,7 @@ class YAMLConfigParser:
         
         for tool in tools_list:
             if not isinstance(tool, str):
-                logger.warning("🔧 Invalid tool entry, must be string", tool=tool)
+                logger.warning("Invalid tool entry, must be string", tool=tool)
                 continue
             
             tool = tool.strip()
@@ -134,7 +134,7 @@ class YAMLConfigParser:
                 if server_name:
                     mcp_tool_names.append(server_name)
                 else:
-                    logger.warning("🔧 Empty MCP tool name", tool=tool)
+                    logger.warning("Empty MCP tool name", tool=tool)
             else:
                 # Regular tool
                 regular_tools.append(tool)
@@ -163,7 +163,7 @@ class YAMLConfigParser:
                     )
                     validated_tools.append(tool_config)
                 else:
-                    logger.warning("🤖 MCP server not found in catalog", server_name=server_name)
+                    logger.warning("MCP server not found in catalog", server_name=server_name)
                     # Still add it but mark as disabled
                     tool_config = MCPToolConfig(
                         server_name=server_name,
@@ -172,7 +172,7 @@ class YAMLConfigParser:
                     validated_tools.append(tool_config)
             
             except Exception as e:
-                logger.warning("🤖 Error validating MCP tool", server_name=server_name, error=str(e))
+                logger.warning("Error validating MCP tool", server_name=server_name, error=str(e))
                 continue
         
         return validated_tools

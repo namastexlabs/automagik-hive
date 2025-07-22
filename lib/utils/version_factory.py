@@ -37,7 +37,7 @@ def load_global_knowledge_config():
         else:
             raise FileNotFoundError("Knowledge config not found")
     except Exception as e:
-        logger.warning("🔧 Could not load global knowledge config: %s", e)
+        logger.warning("Could not load global knowledge config: %s", e)
         return {
             "csv_file_path": "knowledge_rag.csv",
             "max_results": 10,
@@ -110,7 +110,7 @@ class VersionFactory:
                 
                 # Log summary for first few fallbacks only
                 if self.yaml_fallback_count == 1:
-                    logger.info("🔧 First startup detected: Loading components from YAML configs before database sync")
+                    logger.info("First startup detected: Loading components from YAML configs before database sync")
                 
                 return result
         

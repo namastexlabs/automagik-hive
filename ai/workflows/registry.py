@@ -41,7 +41,7 @@ def _discover_workflows() -> Dict[str, Callable[..., Workflow]]:
                     registry[workflow_name] = factory_func
                     
             except Exception as e:
-                logger.warning("🤖 Failed to load workflow", workflow_name=workflow_name, error=str(e))
+                logger.warning("Failed to load workflow", workflow_name=workflow_name, error=str(e))
                 continue
     
     return registry
@@ -55,9 +55,9 @@ def get_workflow_registry() -> Dict[str, Callable[..., Workflow]]:
     """Get workflow registry with lazy initialization"""
     global _WORKFLOW_REGISTRY
     if _WORKFLOW_REGISTRY is None:
-        logger.debug("🤖 Initializing workflow registry (lazy)")
+        logger.debug("Initializing workflow registry (lazy)")
         _WORKFLOW_REGISTRY = _discover_workflows()
-        logger.info(f"🤖 Workflow registry initialized", workflow_count=len(_WORKFLOW_REGISTRY))
+        logger.info("Workflow registry initialized", workflow_count=len(_WORKFLOW_REGISTRY))
     return _WORKFLOW_REGISTRY
 
 

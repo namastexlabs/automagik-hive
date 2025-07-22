@@ -29,7 +29,7 @@ async def check_and_run_migrations() -> bool:
         # Get database URL
         db_url = os.getenv("HIVE_DATABASE_URL")
         if not db_url:
-            logger.warning("🔧 HIVE_DATABASE_URL not set, skipping migration check")
+            logger.warning("HIVE_DATABASE_URL not set, skipping migration check")
             return False
         
         # Use the same URL format - SQLAlchemy will handle the driver
@@ -47,7 +47,7 @@ async def check_and_run_migrations() -> bool:
                 schema_exists = result.fetchone() is not None
                 
                 if not schema_exists:
-                    logger.info("🔧 Database schema missing, running migrations...")
+                    logger.info("Database schema missing, running migrations...")
                     return await _run_migrations()
                 
                 # Check if component_versions table exists
@@ -58,24 +58,24 @@ async def check_and_run_migrations() -> bool:
                 table_exists = result.fetchone() is not None
                 
                 if not table_exists:
-                    logger.info("🔧 Required tables missing, running migrations...")
+                    logger.info("Required tables missing, running migrations...")
                     return await _run_migrations()
                 
                 # Check if migrations are up to date
                 migration_needed = _check_migration_status(conn)
                 if migration_needed:
-                    logger.info("🔧 Database schema outdated, running migrations...")
+                    logger.info("Database schema outdated, running migrations...")
                     return await _run_migrations()
                 
-                logger.debug("🔧 Database schema up to date, skipping migrations")
+                logger.debug("Database schema up to date, skipping migrations")
                 return False
                 
         except OperationalError as e:
-            logger.error("🔧 Database connection failed", error=str(e))
+            logger.error("Database connection failed", error=str(e))
             return False
             
     except Exception as e:
-        logger.error("🔧 Migration check failed", error=str(e))
+        logger.error("Migration check failed", error=str(e))
         return False
 
 
@@ -98,14 +98,14 @@ def _check_migration_status(conn) -> bool:
         migration_needed = current_rev != head_rev
         
         if migration_needed:
-            logger.info("🔧 Migration status", 
+            logger.info("Migration status", 
                        current_revision=current_rev or "None", 
                        head_revision=head_rev)
         
         return migration_needed
         
     except Exception as e:
-        logger.warning("🔧 Could not check migration status", error=str(e))
+        logger.warning("Could not check migration status", error=str(e))
         # Assume migration needed if we can't determine status
         return True
 
@@ -126,7 +126,7 @@ async def _run_migrations() -> bool:
                 command.upgrade(alembic_cfg, "head")
                 return True
             except Exception as e:
-                logger.error("🔧 Alembic migration failed", error=str(e))
+                logger.error("Alembic migration failed", error=str(e))
                 return False
         
         # Run in thread pool
@@ -135,14 +135,14 @@ async def _run_migrations() -> bool:
             success = future.result(timeout=30)  # 30 second timeout
         
         if success:
-            logger.info("🔧 Database migrations completed successfully")
+            logger.info("Database migrations completed successfully")
         else:
-            logger.error("🔧 Database migrations failed")
+            logger.error("Database migrations failed")
         
         return success
         
     except Exception as e:
-        logger.error("🔧 Migration execution failed", error=str(e))
+        logger.error("Migration execution failed", error=str(e))
         return False
 
 

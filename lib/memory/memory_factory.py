@@ -24,7 +24,7 @@ def _load_memory_config() -> Dict[str, Any]:
             config = yaml.safe_load(f)
         return config.get('memory', {})
     except Exception as e:
-        logger.warning("🔧 Could not load memory config, using defaults", error=str(e))
+        logger.warning("Could not load memory config, using defaults", error=str(e))
         return {
             'model': {
                 'id': get_default_model_id(),
@@ -67,7 +67,7 @@ def create_memory_instance(
         db_url = os.getenv("HIVE_DATABASE_URL")
     
     if not db_url:
-        logger.error("🔧 Memory creation failed: No database URL provided", table_name=table_name)
+        logger.error("Memory creation failed: No database URL provided", table_name=table_name)
         raise MemoryFactoryError(f"No HIVE_DATABASE_URL provided for memory table '{table_name}'")
     
     try:
@@ -88,7 +88,7 @@ def create_memory_instance(
             model=model
         )
     except Exception as e:
-        logger.error("🔧 Memory creation failed: Database connection error", 
+        logger.error("Memory creation failed: Database connection error", 
                     table_name=table_name, error=str(e), error_type=type(e).__name__)
         raise MemoryFactoryError(f"Memory creation failed for table '{table_name}': {e}") from e
 

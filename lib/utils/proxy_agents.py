@@ -29,7 +29,7 @@ class AgnoAgentProxy:
         """Initialize the proxy by introspecting the current Agno Agent class."""
         self._supported_params = self._discover_agent_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.info(f"🤖 AgnoAgentProxy initialized with {len(self._supported_params)} Agno parameters")
+        logger.info(f"AgnoAgentProxy initialized with {len(self._supported_params)} Agno parameters")
     
     def _discover_agent_parameters(self) -> Set[str]:
         """
@@ -342,7 +342,7 @@ class AgnoAgentProxy:
             
             # Warn if agent config has csv_file_path (should be removed)
             if "csv_file_path" in knowledge_filter:
-                logger.warning("⚠️  csv_file_path found in agent config - should use global config instead",
+                logger.warning("csv_file_path found in agent config - should use global config instead",
                               component=component_id, agent_path=knowledge_filter["csv_file_path"])
             
             if csv_path and db_url:

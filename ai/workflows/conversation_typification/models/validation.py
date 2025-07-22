@@ -92,7 +92,7 @@ def validate_with_llm_retry(
                 )
                 
                 if corrected_validation.valid:
-                    logger.info("🔍 LLM correction successful")
+                    logger.info("LLM correction successful")
                     return corrected_validation, {
                         **corrected,
                         "retry_used": True,
@@ -214,7 +214,7 @@ def parse_correction_response(response_content: str) -> Optional[Dict[str, str]]
             if all(field in correction_data for field in required_fields):
                 return correction_data
         
-        logger.warning("🔍 Could not parse correction response")
+        logger.warning("Could not parse correction response")
         return None
         
     except Exception as e:

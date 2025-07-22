@@ -68,7 +68,7 @@ class WhatsAppProvider(NotificationProvider):
         # Check if WhatsApp notifications are enabled
         enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
         if not enabled:
-            logger.debug("📱 WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
+            logger.debug("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
             return False
         
         try:

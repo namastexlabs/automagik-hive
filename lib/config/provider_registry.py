@@ -58,14 +58,14 @@ class ProviderRegistry:
                 # Skip internal modules, keep packages (actual providers)
                 if not modname.startswith('_') and ispkg:
                     providers.add(modname)
-                    logger.debug("🔧 Discovered provider", provider=modname)
+                    logger.debug("Discovered provider", provider=modname)
             
-            logger.info("🔧 Provider discovery complete", 
+            logger.info("Provider discovery complete", 
                        provider_count=len(providers), 
                        providers=sorted(providers))
                        
         except ImportError as e:
-            logger.warning("🔧 Agno models module not available, using fallback providers", error=str(e))
+            logger.warning("Agno models module not available, using fallback providers", error=str(e))
             # Fallback to common providers if Agno isn't available
             providers = {'openai', 'anthropic', 'google', 'meta', 'mistral', 'cohere', 'groq'}
         
@@ -91,7 +91,7 @@ class ProviderRegistry:
             provider_patterns = self._generate_provider_patterns(provider)
             patterns.update(provider_patterns)
             
-        logger.debug("🔧 Generated provider patterns", pattern_count=len(patterns))
+        logger.debug("Generated provider patterns", pattern_count=len(patterns))
         self._pattern_cache = patterns
         return patterns
     
@@ -187,16 +187,16 @@ class ProviderRegistry:
         # Try exact pattern matches first
         for pattern, provider in patterns.items():
             if re.match(pattern, model_lower, re.IGNORECASE):
-                logger.debug("🔧 Provider detected", model_id=model_id, provider=provider, pattern=pattern)
+                logger.debug("Provider detected", model_id=model_id, provider=provider, pattern=pattern)
                 return provider
         
         # Fallback: substring matching for common cases
         for provider in self.get_available_providers():
             if provider in model_lower:
-                logger.debug("🔧 Provider detected via substring", model_id=model_id, provider=provider)
+                logger.debug("Provider detected via substring", model_id=model_id, provider=provider)
                 return provider
         
-        logger.debug("🔧 Provider detection failed", model_id=model_id, 
+        logger.debug("Provider detection failed", model_id=model_id, 
                     available_providers=sorted(self.get_available_providers()))
         return None
     
@@ -229,11 +229,11 @@ class ProviderRegistry:
                     if isinstance(attr, type):
                         classes.append(attr_name)
             
-            logger.debug("🔧 Discovered classes for provider", 
+            logger.debug("Discovered classes for provider", 
                         provider=provider, classes=classes)
                         
         except ImportError as e:
-            logger.warning("🔧 Failed to import provider module", 
+            logger.warning("Failed to import provider module", 
                           provider=provider, error=str(e))
             # Fallback class names for common providers
             classes = self._get_fallback_classes(provider)
@@ -289,7 +289,7 @@ class ProviderRegistry:
             for class_name in class_candidates:
                 if hasattr(module, class_name):
                     model_class = getattr(module, class_name)
-                    logger.debug("🔧 Model class resolved", 
+                    logger.debug("Model class resolved", 
                                provider=provider, class_name=class_name, 
                                model_id=model_id)
                     return model_class
@@ -297,14 +297,14 @@ class ProviderRegistry:
             # If no specific class found, log available classes for debugging
             available_classes = [name for name in dir(module) 
                                if not name.startswith('_') and name[0].isupper()]
-            logger.warning("🔧 No suitable model class found", 
+            logger.warning("No suitable model class found", 
                           provider=provider, model_id=model_id,
                           candidates=class_candidates, 
                           available=available_classes)
             return None
             
         except ImportError as e:
-            logger.error("🔧 Provider module import failed", 
+            logger.error("Provider module import failed", 
                         provider=provider, model_id=model_id, error=str(e))
             return None
     
@@ -321,7 +321,7 @@ class ProviderRegistry:
         self.get_provider_classes.cache_clear()
         self.resolve_model_class.cache_clear()
         
-        logger.debug("🔧 Provider registry cache cleared")
+        logger.debug("Provider registry cache cleared")
 
 
 # Global registry instance

@@ -93,7 +93,7 @@ class Settings:
             try:
                 from lib.logging import logger
                 logger.error(f"⚡ Invalid metrics configuration in environment variables: {e}")
-                logger.info("⚡ Using secure default values for metrics configuration")
+                logger.info("Using secure default values for metrics configuration")
             except ImportError:
                 # Fallback if logger is not available during early initialization
                 # Fallback for early initialization - avoid print statements

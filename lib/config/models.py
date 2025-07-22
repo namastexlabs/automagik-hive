@@ -46,7 +46,7 @@ class ModelResolver:
     """
     
     def __init__(self):
-        logger.debug("🔧 ModelResolver initialized - using dynamic provider registry")
+        logger.debug("ModelResolver initialized - using dynamic provider registry")
     
     def get_default_model_id(self) -> str:
         """
@@ -56,7 +56,7 @@ class ModelResolver:
             str: Model ID (e.g., "gpt-4.1-mini", "claude-sonnet-4", "gemini-2.5-flash")
         """
         default = os.getenv("HIVE_DEFAULT_MODEL", "gpt-4.1-mini")
-        logger.debug("🔧 Default model resolved", model_id=default, source="HIVE_DEFAULT_MODEL" if "HIVE_DEFAULT_MODEL" in os.environ else "system_default")
+        logger.debug("Default model resolved", model_id=default, source="HIVE_DEFAULT_MODEL" if "HIVE_DEFAULT_MODEL" in os.environ else "system_default")
         return default
     
     @lru_cache(maxsize=128)
@@ -76,11 +76,11 @@ class ModelResolver:
         provider = get_provider_registry().detect_provider(model_id)
         if provider is None:
             available_providers = sorted(get_provider_registry().get_available_providers())
-            logger.error("🔧 Provider detection failed", model_id=model_id, 
+            logger.error("Provider detection failed", model_id=model_id, 
                         available_providers=available_providers)
             raise ModelResolutionError(f"Cannot detect provider for model ID '{model_id}'. Available providers: {available_providers}")
         
-        logger.debug("🔧 Provider detected via registry", model_id=model_id, provider=provider)
+        logger.debug("Provider detected via registry", model_id=model_id, provider=provider)
         return provider
     
     @lru_cache(maxsize=64)
@@ -101,12 +101,12 @@ class ModelResolver:
         model_class = get_provider_registry().resolve_model_class(provider, model_id)
         if model_class is None:
             available_classes = get_provider_registry().get_provider_classes(provider)
-            logger.error("🔧 Model class discovery failed", 
+            logger.error("Model class discovery failed", 
                         provider=provider, model_id=model_id, 
                         available_classes=available_classes)
             raise ModelResolutionError(f"Failed to discover model class for provider '{provider}'. Available classes: {available_classes}")
         
-        logger.debug("🔧 Model class discovered via registry", 
+        logger.debug("Model class discovered via registry", 
                    provider=provider, class_name=model_class.__name__, model_id=model_id)
         return model_class
     
@@ -143,13 +143,13 @@ class ModelResolver:
             model_instance = model_class(**model_config)
             
             
-            logger.debug("🔧 Model resolved successfully", 
+            logger.debug("Model resolved successfully", 
                         model_id=resolved_model_id, provider=provider)
             
             return model_instance
             
         except Exception as e:
-            logger.error("🔧 Model resolution failed", 
+            logger.error("Model resolution failed", 
                         model_id=resolved_model_id, error=str(e), 
                         error_type=type(e).__name__)
             raise ModelResolutionError(f"Failed to resolve model '{resolved_model_id}': {e}")
@@ -176,7 +176,7 @@ class ModelResolver:
         self._detect_provider.cache_clear()
         self._discover_model_class.cache_clear()
         get_provider_registry().clear_cache()
-        logger.debug("🔧 Model resolver cache cleared")
+        logger.debug("Model resolver cache cleared")
 
 # Global model resolver instance
 model_resolver = ModelResolver()

@@ -31,7 +31,7 @@ def get_agno_proxy():
         # Lazy import to prevent circular dependencies
         from .proxy_agents import AgnoAgentProxy
         _agno_agent_proxy = AgnoAgentProxy()
-        logger.debug("🤖 Created new AgnoAgentProxy instance")
+        logger.debug("Created new AgnoAgentProxy instance")
     return _agno_agent_proxy
 
 
@@ -49,7 +49,7 @@ def get_agno_team_proxy():
         # Lazy import to prevent circular dependencies
         from .proxy_teams import AgnoTeamProxy
         _agno_team_proxy = AgnoTeamProxy()
-        logger.debug("🤖 Created new AgnoTeamProxy instance")
+        logger.debug("Created new AgnoTeamProxy instance")
     return _agno_team_proxy
 
 
@@ -67,7 +67,7 @@ def get_agno_workflow_proxy():
         # Lazy import to prevent circular dependencies
         from .proxy_workflows import AgnoWorkflowProxy
         _agno_workflow_proxy = AgnoWorkflowProxy()
-        logger.debug("🤖 Created new AgnoWorkflowProxy instance")
+        logger.debug("Created new AgnoWorkflowProxy instance")
     return _agno_workflow_proxy
 
 
@@ -82,7 +82,7 @@ def reset_proxy_instances():
     _agno_agent_proxy = None
     _agno_team_proxy = None
     _agno_workflow_proxy = None
-    logger.info("🤖 All proxy instances reset")
+    logger.info("All proxy instances reset")
 
 
 def get_proxy_module_info() -> dict:

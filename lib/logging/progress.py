@@ -23,7 +23,7 @@ class StartupProgress:
         if total_items:
             self.total_components = total_items
             self.completed_components = 0
-        logger.info(f"🔧 {phase_name}...", phase=phase_name)
+        logger.info(f"{phase_name}...", phase=phase_name)
         
     def update_progress(self, item_name: Optional[str] = None, increment: int = 1):
         """Update progress within current phase."""
@@ -32,23 +32,23 @@ class StartupProgress:
         if self.total_components > 0:
             percentage = (self.completed_components / self.total_components) * 100
             if item_name:
-                logger.debug(f"🐛 ✓ {item_name} ({self.completed_components}/{self.total_components})", item=item_name, progress=f"{self.completed_components}/{self.total_components}")
+                logger.debug(f"{item_name} ({self.completed_components}/{self.total_components})", item=item_name, progress=f"{self.completed_components}/{self.total_components}")
             
             # Log progress milestones
             if percentage >= 100:
-                logger.info(f"✅ {self.current_phase} complete: {self.completed_components}/{self.total_components}")
+                logger.info(f"{self.current_phase} complete: {self.completed_components}/{self.total_components}")
             elif self.completed_components % max(1, self.total_components // 4) == 0:  # Log every 25%
-                logger.info(f"⚡ {self.current_phase}: {self.completed_components}/{self.total_components} ({percentage:.0f}%)", phase=self.current_phase, progress=f"{self.completed_components}/{self.total_components}", percentage=percentage)
+                logger.info(f"{self.current_phase}: {self.completed_components}/{self.total_components} ({percentage:.0f}%)", phase=self.current_phase, progress=f"{self.completed_components}/{self.total_components}", percentage=percentage)
         else:
             if item_name:
-                logger.debug(f"🐛 ✓ {item_name}", item=item_name)
+                logger.debug(f"{item_name}", item=item_name)
                 
     def complete_phase(self, summary: Optional[str] = None):
         """Complete the current phase."""
         if summary:
-            logger.info(f"✅ {self.current_phase} complete: {summary}")
+            logger.info(f"{self.current_phase} complete: {summary}")
         else:
-            logger.info(f"✅ {self.current_phase} complete")
+            logger.info(f"{self.current_phase} complete")
         self.current_phase = None
         
     def complete_startup(self, summary: Dict[str, Any]):

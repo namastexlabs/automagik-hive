@@ -55,7 +55,7 @@ class SmartIncrementalLoader:
                 return yaml.safe_load(file)
         except Exception as e:
             from lib.logging import logger
-            logger.warning("🔧 Could not load config", error=str(e))
+            logger.warning("Could not load config", error=str(e))
             return {}
     
     def _hash_row(self, row: pd.Series) -> str:
@@ -92,7 +92,7 @@ class SmartIncrementalLoader:
                 if not hash_column_exists:
                     # Old table without hash tracking - treat as empty for fresh start
                     from lib.logging import logger
-                    logger.warning("📊 Table exists but no content_hash column - will recreate with hash tracking")
+                    logger.warning("Table exists but no content_hash column - will recreate with hash tracking")
                     return set()
                 
                 # Get existing content hashes from agno schema
@@ -103,7 +103,7 @@ class SmartIncrementalLoader:
                 
         except Exception as e:
             from lib.logging import logger
-            logger.warning("📊 Could not check existing hashes", error=str(e))
+            logger.warning("Could not check existing hashes", error=str(e))
             return set()
     
     def _get_csv_rows_with_hashes(self) -> List[Dict[str, Any]]:
@@ -127,7 +127,7 @@ class SmartIncrementalLoader:
             
         except Exception as e:
             from lib.logging import logger
-            logger.warning("📊 Could not read CSV with hashes", error=str(e))
+            logger.warning("Could not read CSV with hashes", error=str(e))
             return []
     
     def _add_hash_column_to_table(self) -> bool:
@@ -145,7 +145,7 @@ class SmartIncrementalLoader:
                 return True
         except Exception as e:
             from lib.logging import logger
-            logger.warning("📊 Could not add hash column", error=str(e))
+            logger.warning("Could not add hash column", error=str(e))
             return False
     
     def analyze_changes(self) -> Dict[str, Any]:
@@ -203,7 +203,7 @@ class SmartIncrementalLoader:
         
         if force_recreate:
             from lib.logging import logger
-            logger.info("📊 Force recreate requested - will rebuild everything")
+            logger.info("Force recreate requested - will rebuild everything")
             return self._full_reload()
         
         # Analyze changes at row level
@@ -228,7 +228,7 @@ class SmartIncrementalLoader:
         """Initial load of fresh database with hash tracking"""
         try:
             from lib.logging import logger
-            logger.info("📊 Initial load: creating knowledge base with hash tracking")
+            logger.info("Initial load: creating knowledge base with hash tracking")
             start_time = datetime.now()
             
             # Load with recreate=True to get fresh start
@@ -258,7 +258,7 @@ class SmartIncrementalLoader:
             }
             
             from lib.logging import logger
-            logger.info("📊 Initial load with hash tracking completed", load_time_seconds=round(load_time, 2))
+            logger.info("Initial load with hash tracking completed", load_time_seconds=round(load_time, 2))
             return result
             
         except Exception as e:
@@ -268,7 +268,7 @@ class SmartIncrementalLoader:
         """Full reload with fresh embeddings (fallback method)"""
         try:
             from lib.logging import logger
-            logger.info("📊 Full reload: recreating knowledge base")
+            logger.info("Full reload: recreating knowledge base")
             start_time = datetime.now()
             
             # Load with recreate=True - this will show per-row upserts
@@ -289,7 +289,7 @@ class SmartIncrementalLoader:
             }
             
             from lib.logging import logger
-            logger.info("📊 Full reload completed", load_time_seconds=round(load_time, 2))
+            logger.info("Full reload completed", load_time_seconds=round(load_time, 2))
             return result
             
         except Exception as e:
@@ -316,13 +316,13 @@ class SmartIncrementalLoader:
                         processed_count += 1
                     else:
                         from lib.logging import logger
-                        logger.warning("📊 Failed to process row", row_index=row_data['index'])
+                        logger.warning("Failed to process row", row_index=row_data['index'])
             
             # Handle removed rows if any
             removed_count = 0
             if analysis['removed_rows_count'] > 0:
                 from lib.logging import logger
-                logger.info("📊 Removing obsolete entries", removed_count=analysis['removed_rows_count'])
+                logger.info("Removing obsolete entries", removed_count=analysis['removed_rows_count'])
                 removed_count = self._remove_rows_by_hash(analysis['removed_hashes'])
             
             load_time = (datetime.now() - start_time).total_seconds()
@@ -369,7 +369,7 @@ class SmartIncrementalLoader:
             
         except Exception as e:
             from lib.logging import logger
-            logger.error("📊 Error processing single row", error=str(e))
+            logger.error("Error processing single row", error=str(e))
             return False
     
     def _update_row_hash(self, row_data: Dict[str, Any], content_hash: str) -> bool:
@@ -396,14 +396,14 @@ class SmartIncrementalLoader:
                 
         except Exception as e:
             from lib.logging import logger
-            logger.warning("📊 Could not update row hash", error=str(e))
+            logger.warning("Could not update row hash", error=str(e))
             return False
     
     def _populate_existing_hashes(self) -> bool:
         """Populate content_hash for existing rows that don't have it"""
         try:
             from lib.logging import logger
-            logger.info("📊 Populating content hashes for existing rows")
+            logger.info("Populating content hashes for existing rows")
             
             # Get all CSV rows to compute their hashes
             csv_rows = self._get_csv_rows_with_hashes()
@@ -413,12 +413,12 @@ class SmartIncrementalLoader:
                 self._update_row_hash(row_data['data'], row_data['hash'])
             
             from lib.logging import logger
-            logger.info("📊 Populated hashes for rows", rows_count=len(csv_rows))
+            logger.info("Populated hashes for rows", rows_count=len(csv_rows))
             return True
             
         except Exception as e:
             from lib.logging import logger
-            logger.warning("📊 Could not populate existing hashes", error=str(e))
+            logger.warning("Could not populate existing hashes", error=str(e))
             return False
     
     def _remove_rows_by_hash(self, removed_hashes: List[str]) -> int:
@@ -436,12 +436,12 @@ class SmartIncrementalLoader:
                 
                 conn.commit()
                 from lib.logging import logger
-                logger.info("📊 Removed obsolete rows", removed_count=len(removed_hashes))
+                logger.info("Removed obsolete rows", removed_count=len(removed_hashes))
                 return len(removed_hashes)
                 
         except Exception as e:
             from lib.logging import logger
-            logger.warning("📊 Could not remove rows", error=str(e))
+            logger.warning("Could not remove rows", error=str(e))
             return 0
     
     def get_database_stats(self) -> Dict[str, Any]:
@@ -473,28 +473,28 @@ def main():
     kb = get_knowledge_base()
     loader = SmartIncrementalLoader(kb=kb)
     
-    logger.info("🧪 Testing Smart Incremental Loader (PostgreSQL-based)")
-    logger.info("📊 " + "=" * 60)
+    logger.info("Testing Smart Incremental Loader (PostgreSQL-based)")
+    logger.info("" + "=" * 60)
     
     # Show database stats
     db_stats = loader.get_database_stats()
-    logger.info("📊 Database Stats:")
+    logger.info("Database Stats:")
     for key, value in db_stats.items():
         logger.info(f"🔐 {key}: {value}")
     
     # Analyze changes
-    logger.info("🔍 Analyzing changes...")
+    logger.info("Analyzing changes...")
     analysis = loader.analyze_changes()
     if "error" not in analysis:
-        logger.info("📊 Analysis Results:")
+        logger.info("Analysis Results:")
         for key, value in analysis.items():
             logger.info(f"🔐 {key}: {value}")
     
     # Smart load
-    logger.info("📊 🚀 Starting smart load...")
+    logger.info("🚀 Starting smart load...")
     result = loader.smart_load()
     
-    logger.info("📋 Load Results:")
+    logger.info("Load Results:")
     for key, value in result.items():
         if key != 'error':
             logger.info(f"🔐 {key}: {value}")
