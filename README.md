@@ -125,10 +125,10 @@ Get started on any machine with our universal installer that handles all depende
 
 ```bash
 # One-command installation (handles everything)
-curl -sSL https://raw.githubusercontent.com/namastex/automagik-hive/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
 
 # Or download and run locally
-wget https://raw.githubusercontent.com/namastex/automagik-hive/main/install.sh
+wget https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh
 chmod +x install.sh
 ./install.sh
 ```
