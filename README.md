@@ -40,7 +40,7 @@ graph TB
     
     %% Core Framework - Automagik Hive
     subgraph Framework[🏗️ Automagik Hive Framework]
-        subgraph Core[⚡ Core Framework (Agno v1.7.5)]
+        subgraph Core[⚡ Core Framework - Agno v1.7.5]
             AgnoCore[🤖 Agno Framework<br/>Agent Primitives<br/>Team Orchestration<br/>Storage Abstractions]
             ModelProviders[🧠 Model Providers<br/>Anthropic Claude<br/>OpenAI GPT<br/>Google Gemini<br/>Cohere]
             AgentMemory[💾 Agent Memory<br/>PostgreSQL Storage<br/>Session Management<br/>Context Persistence]
