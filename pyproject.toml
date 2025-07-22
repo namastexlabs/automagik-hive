@@ -51,6 +51,7 @@ dependencies = [
     "mcp>=1.10.1",
     "loguru>=0.7.3",
     "pandas>=2.3.1",
+    "greenlet>=3.2.3",
 ]
 
 [project.optional-dependencies]
