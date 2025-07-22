@@ -60,7 +60,7 @@ class AgnoVersionSyncService:
                 total_synced += len(results)
                 
                 if results:
-                    logger.info("🔧 Synchronized components", component_type=component_type, count=len(results))
+                    logger.debug("🔧 Synchronized components", component_type=component_type, count=len(results))
             except Exception as e:
                 logger.error("🔧 Error syncing components", component_type=component_type, error=str(e))
                 self.sync_results[component_type + 's'] = {"error": str(e)}
@@ -154,7 +154,7 @@ class AgnoVersionSyncService:
                     yaml_config=yaml_config,
                     yaml_file_path=config_file
                 )
-                logger.info("🔧 Created component in Agno storage", component_type=component_type, component_id=component_id, version=yaml_version)
+                logger.debug("🔧 Created component in Agno storage", component_type=component_type, component_id=component_id, version=yaml_version)
             
             elif yaml_version == "dev":
                 # Dev versions skip sync entirely

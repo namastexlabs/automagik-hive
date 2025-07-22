@@ -47,8 +47,18 @@ def _discover_workflows() -> Dict[str, Callable[..., Workflow]]:
     return registry
 
 
-# Dynamic workflow registry - no hardcoded imports
-WORKFLOW_REGISTRY: Dict[str, Callable[..., Workflow]] = _discover_workflows()
+# Dynamic workflow registry - lazy initialization
+_WORKFLOW_REGISTRY: Optional[Dict[str, Callable[..., Workflow]]] = None
+
+
+def get_workflow_registry() -> Dict[str, Callable[..., Workflow]]:
+    """Get workflow registry with lazy initialization"""
+    global _WORKFLOW_REGISTRY
+    if _WORKFLOW_REGISTRY is None:
+        logger.debug("🤖 Initializing workflow registry (lazy)")
+        _WORKFLOW_REGISTRY = _discover_workflows()
+        logger.info(f"🤖 Workflow registry initialized", workflow_count=len(_WORKFLOW_REGISTRY))
+    return _WORKFLOW_REGISTRY
 
 
 def get_workflow(workflow_id: str, version: Optional[int] = None, **kwargs) -> Workflow:
@@ -66,19 +76,18 @@ def get_workflow(workflow_id: str, version: Optional[int] = None, **kwargs) -> W
     Raises:
         ValueError: If the workflow_id is not found in the registry
     """
-    # Refresh registry to pick up new workflows
-    global WORKFLOW_REGISTRY
-    WORKFLOW_REGISTRY = _discover_workflows()
+    # Get registry with lazy initialization
+    registry = get_workflow_registry()
     
-    if workflow_id not in WORKFLOW_REGISTRY:
-        available_workflows = ", ".join(sorted(WORKFLOW_REGISTRY.keys()))
+    if workflow_id not in registry:
+        available_workflows = ", ".join(sorted(registry.keys()))
         raise ValueError(
             f"Workflow '{workflow_id}' not found in registry. "
             f"Available workflows: {available_workflows}"
         )
     
     # Get the factory function for the workflow
-    workflow_factory = WORKFLOW_REGISTRY[workflow_id]
+    workflow_factory = registry[workflow_id]
     
     # Create and return the workflow instance
     # Pass version if provided, along with any other kwargs
@@ -95,10 +104,9 @@ def list_available_workflows() -> list[str]:
     Returns:
         list[str]: Sorted list of workflow IDs
     """
-    # Refresh registry to pick up new workflows
-    global WORKFLOW_REGISTRY
-    WORKFLOW_REGISTRY = _discover_workflows()
-    return sorted(WORKFLOW_REGISTRY.keys())
+    # Get registry with lazy initialization
+    registry = get_workflow_registry()
+    return sorted(registry.keys())
 
 
 def is_workflow_registered(workflow_id: str) -> bool:
@@ -111,7 +119,6 @@ def is_workflow_registered(workflow_id: str) -> bool:
     Returns:
         bool: True if the workflow is registered, False otherwise
     """
-    # Refresh registry to pick up new workflows
-    global WORKFLOW_REGISTRY
-    WORKFLOW_REGISTRY = _discover_workflows()
-    return workflow_id in WORKFLOW_REGISTRY
+    # Get registry with lazy initialization
+    registry = get_workflow_registry()
+    return workflow_id in registry

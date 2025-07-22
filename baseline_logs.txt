@@ -1,0 +1,153 @@
+🐝 Starting Automagik Hive development server...
+💡 Press Ctrl+C to stop the server
+🚀 Starting server...
+2025-07-22 01:45:12.277 | INFO     | 🌐 Automagik Hive logging initialized
+/home/namastex/workspace/automagik-hive/api/serve.py:56: DeprecationWarning: There is no current event loop
+  if asyncio.get_event_loop().is_running():
+INFO:alembic.runtime.migration:Context impl PostgresqlImpl.
+INFO:alembic.runtime.migration:Will assume transactional DDL.
+2025-07-22 01:45:12.642 | INFO     | 🔧 Loaded configuration for workflow: conversation_typification
+INFO 🤖 Template Workflow initialized successfully                              
+2025-07-22 01:45:12.695 | INFO     | 🤖 Registered team
+2025-07-22 01:45:12.699 | INFO     | 🤖 Registered team
+2025-07-22 01:45:12.771 | INFO     | 🌐 Starting Automagik Hive API
+INFO:     Will watch for changes in these directories: ['/home/namastex/workspace/automagik-hive']
+INFO:     Uvicorn running on http://0.0.0.0:8886 (Press CTRL+C to quit)
+INFO:     Started reloader process [3257924] using StatReload
+2025-07-22 01:45:13.487 | INFO     | 🌐 Automagik Hive logging initialized
+INFO:alembic.runtime.migration:Context impl PostgresqlImpl.
+INFO:alembic.runtime.migration:Will assume transactional DDL.
+2025-07-22 01:45:13.875 | INFO     | 🔧 Loaded configuration for workflow: conversation_typification
+INFO 🤖 Template Workflow initialized successfully                              
+2025-07-22 01:45:13.930 | INFO     | 🤖 Registered team
+2025-07-22 01:45:13.934 | INFO     | 🤖 Registered team
+2025-07-22 01:45:14.003 | INFO     | 🌐 No event loop detected, using direct async initialization
+2025-07-22 01:45:14.004 | INFO     | 🌐 Environment configuration
+2025-07-22 01:45:14.004 | INFO     | 🌐 Development features status
+2025-07-22 01:45:14.004 | INFO     | 🌐 Database initialization
+2025-07-22 01:45:14.017 | INFO     | 🌐 Centralized knowledge configuration loaded
+2025-07-22 01:45:14.017 | INFO     | 🌐 CSV hot reload manager configured
+2025-07-22 01:45:14.018 | INFO     | 📊 CSV Hot Reload Manager initialized
+2025-07-22 01:45:14.269 | INFO     | 📊 ✓ Adquirência Web: 8 documents processed
+2025-07-22 01:45:14.270 | INFO     | 📊 ✓ Emissão: 14 documents processed
+2025-07-22 01:45:14.270 | INFO     | 📊 ✓ Adquirência Web / Adquirência Presencial: 2 documents processed
+2025-07-22 01:45:14.270 | INFO     | 📊 ✓ PagBank: 40 documents processed
+2025-07-22 01:45:14.270 | INFO     | 📊 Row-based CSV knowledge base initialized
+INFO Loading knowledge base                                                     
+INFO Skipped 64 existing/duplicate documents.                                   
+INFO No documents to load                                                       
+2025-07-22 01:45:14.358 | INFO     | 📊 File watching started
+2025-07-22 01:45:14.359 | INFO     | 🌐 CSV hot reload manager activated
+2025-07-22 01:45:14.359 | INFO     | 🌐 Memory system configured
+INFO ✅ Applied inheritance to agent adquirencia                                
+2025-07-22 01:45:14.410 | INFO     | 🤖 AgnoAgentProxy initialized with 88 Agno parameters
+2025-07-22 01:45:14.426 | INFO     | 🔧 Provider discovery complete
+2025-07-22 01:45:14.598 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:14.611 | INFO     | 🔧 Successfully created postgres storage for adquirencia
+2025-07-22 01:45:14.617 | INFO     | 📊 Using provided CSV path
+2025-07-22 01:45:14.620 | INFO     | 📊 ✓ Adquirência Web: 8 documents processed
+2025-07-22 01:45:14.620 | INFO     | 📊 ✓ Emissão: 14 documents processed
+2025-07-22 01:45:14.620 | INFO     | 📊 ✓ Adquirência Web / Adquirência Presencial: 2 documents processed
+2025-07-22 01:45:14.620 | INFO     | 📊 ✓ PagBank: 40 documents processed
+2025-07-22 01:45:14.620 | INFO     | 📊 Row-based CSV knowledge base initialized
+2025-07-22 01:45:14.620 | INFO     | 📊 Initializing smart incremental knowledge base loading
+2025-07-22 01:45:14.899 | INFO     | 📊 Smart loading: No changes needed (all documents already exist)
+2025-07-22 01:45:14.899 | INFO     | 📊 Shared knowledge base ready
+INFO 🤖 Agent adquirencia created with inheritance and 88 available parameters  
+INFO ✅ Applied inheritance to agent emissao                                    
+2025-07-22 01:45:14.931 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:14.942 | INFO     | 🔧 Successfully created postgres storage for emissao
+INFO 🤖 Agent emissao created with inheritance and 88 available parameters      
+INFO ✅ Applied inheritance to agent finalizacao                                
+INFO 🤖 Loaded tool 'finalize_conversation' for agent finalizacao               
+2025-07-22 01:45:14.974 | INFO     | 🔧 Successfully created postgres storage for finalizacao
+2025-07-22 01:45:14.986 | INFO     | 🔧 Model resolved successfully
+INFO 🤖 Agent finalizacao created with inheritance and 88 available parameters  
+INFO ✅ Applied inheritance to agent human-escalation-agent                     
+INFO 🤖 Loaded tool 'escalate_to_human' for agent human-escalation-agent        
+2025-07-22 01:45:15.016 | INFO     | 🔧 Successfully created postgres storage for human-escalation-agent
+2025-07-22 01:45:15.027 | INFO     | 🔧 Model resolved successfully
+INFO 🤖 Agent human-escalation-agent created with inheritance and 88 available  
+     parameters                                                                 
+INFO ✅ Applied inheritance to agent pagbank                                    
+2025-07-22 01:45:15.057 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:15.069 | INFO     | 🔧 Successfully created postgres storage for pagbank
+INFO 🤖 Agent pagbank created with inheritance and 88 available parameters      
+INFO ✅ Applied inheritance to agent template-agent                             
+2025-07-22 01:45:15.100 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:15.111 | INFO     | 🔧 Successfully created postgres storage for template-agent
+INFO 🤖 Agent template-agent created with inheritance and 88 available          
+     parameters                                                                 
+2025-07-22 01:45:15.114 | INFO     | 🤖 Registered team
+2025-07-22 01:45:15.117 | INFO     | 🤖 Registered team
+INFO 🔧 Creating team ana (session_id=None, debug_mode=False)                   
+INFO ✅ Applied inheritance to agent pagbank                                    
+INFO ✅ Applied inheritance to agent emissao                                    
+INFO ✅ Applied inheritance to agent adquirencia                                
+INFO ✅ Applied inheritance to agent human-escalation-agent                     
+INFO ✅ Applied inheritance to agent finalizacao                                
+INFO 🔧 Team ana: Configuration inheritance: 15 parameters inherited across 5   
+     agents [pagbank(3), emissao(3), adquirencia(2), human-escalation-agent(4), 
+     finalizacao(3)]                                                            
+INFO 🔧 Team ana inheritance validation completed                               
+2025-07-22 01:45:15.135 | INFO     | 🤖 AgnoTeamProxy initialized with 74 Agno Team parameters
+INFO 🔧 AgnoTeamProxy loaded successfully for team ana                          
+2025-07-22 01:45:15.148 | INFO     | 🔧 Model resolved successfully
+INFO ✅ Applied inheritance to agent pagbank                                    
+2025-07-22 01:45:15.176 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:15.187 | INFO     | 🔧 Successfully created postgres storage for pagbank
+INFO 🤖 Agent pagbank created with inheritance and 88 available parameters      
+2025-07-22 01:45:15.188 | INFO     | 🤖 Loaded team member: pagbank
+INFO ✅ Applied inheritance to agent emissao                                    
+2025-07-22 01:45:15.217 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:15.229 | INFO     | 🔧 Successfully created postgres storage for emissao
+INFO 🤖 Agent emissao created with inheritance and 88 available parameters      
+2025-07-22 01:45:15.231 | INFO     | 🤖 Loaded team member: emissao
+INFO ✅ Applied inheritance to agent adquirencia                                
+2025-07-22 01:45:15.259 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:15.270 | INFO     | 🔧 Successfully created postgres storage for adquirencia
+INFO 🤖 Agent adquirencia created with inheritance and 88 available parameters  
+2025-07-22 01:45:15.271 | INFO     | 🤖 Loaded team member: adquirencia
+INFO ✅ Applied inheritance to agent human-escalation-agent                     
+INFO 🤖 Loaded tool 'escalate_to_human' for agent human-escalation-agent        
+2025-07-22 01:45:15.300 | INFO     | 🔧 Successfully created postgres storage for human-escalation-agent
+2025-07-22 01:45:15.311 | INFO     | 🔧 Model resolved successfully
+INFO 🤖 Agent human-escalation-agent created with inheritance and 88 available  
+     parameters                                                                 
+2025-07-22 01:45:15.312 | INFO     | 🤖 Loaded team member: human-escalation-agent
+INFO ✅ Applied inheritance to agent finalizacao                                
+INFO 🤖 Loaded tool 'finalize_conversation' for agent finalizacao               
+2025-07-22 01:45:15.341 | INFO     | 🔧 Successfully created postgres storage for finalizacao
+2025-07-22 01:45:15.354 | INFO     | 🔧 Model resolved successfully
+INFO 🤖 Agent finalizacao created with inheritance and 88 available parameters  
+2025-07-22 01:45:15.355 | INFO     | 🤖 Loaded team member: finalizacao
+2025-07-22 01:45:15.367 | INFO     | 🔧 Successfully created postgres storage for ana
+INFO 🤖 Team ana created with inheritance validation and 74 available parameters
+2025-07-22 01:45:15.368 | INFO     | 🌐 Team loaded successfully
+INFO 🔧 Creating team template-team (session_id=None, debug_mode=False)         
+INFO ✅ Applied inheritance to agent template-agent                             
+INFO 🔧 Team template-team: Configuration inheritance: 6 parameters inherited   
+     across 1 agents [template-agent(6)]                                        
+INFO 🔧 Team template-team inheritance validation completed                     
+INFO 🔧 AgnoTeamProxy loaded successfully for team template-team                
+2025-07-22 01:45:15.388 | INFO     | 🔧 Successfully created postgres storage for template-team
+2025-07-22 01:45:15.401 | INFO     | 🔧 Model resolved successfully
+INFO ✅ Applied inheritance to agent template-agent                             
+2025-07-22 01:45:15.431 | INFO     | 🔧 Model resolved successfully
+2025-07-22 01:45:15.444 | INFO     | 🔧 Successfully created postgres storage for template-agent
+INFO 🤖 Agent template-agent created with inheritance and 88 available          
+     parameters                                                                 
+2025-07-22 01:45:15.445 | INFO     | 🤖 Loaded team member: template-agent
+INFO 🤖 Team template-team created with inheritance validation and 74 available 
+     parameters                                                                 
+2025-07-22 01:45:15.446 | INFO     | 🌐 Team loaded successfully
+INFO 🤖 Template Workflow initialized successfully                              
+INFO 🤖 Template Workflow initialized successfully                              
+INFO 🤖 Conversation Typification Workflow V2 (Fixed) initialized               
+2025-07-22 01:45:15.508 | INFO     | 🌐 Workflow loaded successfully
+INFO 🤖 Template Workflow initialized successfully                              
+2025-07-22 01:45:15.509 | INFO     | 🌐 Workflow loaded successfully
+2025-07-22 01:45:15.511 | INFO     | 🤖 Registered team
+2025-07-22 01:45:15.514 | INFO     | 🤖 Registered team
+2025-07-22 01:45:15.516 | INFO     | 🤖 Registered team
+2025-07-22 01:45:15.519 | INFO     | 🤖 Registered team

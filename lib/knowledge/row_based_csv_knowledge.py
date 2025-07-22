@@ -32,15 +32,21 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         # Store CSV path after parent initialization using object.__setattr__
         object.__setattr__(self, '_csv_path', csv_path_obj)
         
-        logger.info("📊 Row-based CSV knowledge base initialized", 
-                   csv_path=str(csv_path_obj), document_count=len(documents))
+        logger.debug("📊 Row-based CSV knowledge base initialized", 
+                    csv_path=str(csv_path_obj), document_count=len(documents))
     
     def _load_csv_as_documents(self, csv_path: Path = None) -> List[Document]:
         """Load CSV file and create one document per row."""
         documents = []
         
-        # Use provided path or stored path
-        path_to_use = csv_path if csv_path else self._csv_path
+        # Use provided path or stored path (safely handle initialization)
+        if csv_path is not None:
+            path_to_use = csv_path
+        elif hasattr(self, '_csv_path') and self._csv_path is not None:
+            path_to_use = self._csv_path
+        else:
+            logger.error("📊 CSV path not available - neither parameter nor stored path provided")
+            return documents
         
         if not path_to_use.exists():
             logger.warning("📊 CSV file not found", path=str(path_to_use))
@@ -104,7 +110,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             # Display business unit summary
             for bu, count in business_unit_counts.items():
                 if bu and bu != 'Unknown':
-                    logger.info(f"📊 ✓ {bu}: {count} documents processed")
+                    logger.debug(f"📊 ✓ {bu}: {count} documents processed")
                        
         except Exception as e:
             logger.error("📊 Error loading CSV file", error=str(e), csv_path=str(csv_path))
@@ -196,10 +202,10 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             agno_logger.removeFilter(batch_filter)
         
         # Show final business unit summary like the CSV loading does
-        logger.info("📊 Vector database loading completed")
+        logger.debug("📊 Vector database loading completed")
         for bu, count in business_unit_counts.items():
             if bu and bu != 'Unknown':
-                logger.info("📊 Business unit processing completed", business_unit=bu, document_count=count)
+                logger.debug("📊 Business unit processing completed", business_unit=bu, document_count=count)
         
         log_info(f"Added {len(all_documents)} documents to knowledge base")
     

@@ -193,7 +193,7 @@ def execute_completion_step(step_input: StepInput) -> StepOutput:
 
 
 # Factory function to create workflow
-def get_template_workflow(**kwargs) -> Workflow:
+def get_template_workflow_workflow(**kwargs) -> Workflow:
     """Factory function to create template workflow"""
     
     # Create workflow with step-based architecture
@@ -228,7 +228,7 @@ def get_template_workflow(**kwargs) -> Workflow:
 
 
 # For backward compatibility and direct testing
-template_workflow = get_template_workflow()
+template_workflow = get_template_workflow_workflow()
 
 
 if __name__ == "__main__":
@@ -250,7 +250,7 @@ if __name__ == "__main__":
         """
         
         # Create workflow instance
-        workflow = get_template_workflow()
+        workflow = get_template_workflow_workflow()
         
         logger.info("🤖 Testing template workflow...")
         logger.info(f"🤖 Input length: {len(test_input)} characters")

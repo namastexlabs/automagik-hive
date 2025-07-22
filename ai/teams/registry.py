@@ -130,7 +130,7 @@ def _discover_teams() -> Dict[str, Callable[..., Team]]:
                 
                 if factory_func:
                     registry[team_name] = factory_func
-                    logger.info("🤖 Registered team", team_name=team_name, factory_function=used_pattern)
+                    logger.info(f"🤖 Registered team: {team_name}", factory=used_pattern)
                 else:
                     attempted_patterns = ", ".join(factory_patterns[:5])  # Show first 5 attempts
                     logger.warning("🤖 No factory function found for team", 
@@ -144,8 +144,20 @@ def _discover_teams() -> Dict[str, Callable[..., Team]]:
     return registry
 
 
-# Dynamic team registry - no hardcoded imports
-TEAM_REGISTRY: Dict[str, Callable[..., Team]] = _discover_teams()
+# Dynamic team registry - lazy initialization
+_TEAM_REGISTRY: Optional[Dict[str, Callable[..., Team]]] = None
+
+
+def get_team_registry() -> Dict[str, Callable[..., Team]]:
+    """Get team registry with lazy initialization"""
+    global _TEAM_REGISTRY
+    if _TEAM_REGISTRY is None:
+        logger.debug("🤖 Initializing team registry (lazy)")
+        _TEAM_REGISTRY = _discover_teams()
+        logger.info("🤖 Team registry initialized", team_count=len(_TEAM_REGISTRY), teams=list(_TEAM_REGISTRY.keys()))
+    else:
+        logger.debug("🤖 Using cached team registry", team_count=len(_TEAM_REGISTRY))
+    return _TEAM_REGISTRY
 
 
 async def get_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
@@ -163,19 +175,18 @@ async def get_team(team_id: str, version: Optional[int] = None, **kwargs) -> Tea
     Raises:
         ValueError: If the team_id is not found in the registry
     """
-    # Refresh registry to pick up new teams
-    global TEAM_REGISTRY
-    TEAM_REGISTRY = _discover_teams()
+    # Get registry with lazy initialization
+    registry = get_team_registry()
     
-    if team_id not in TEAM_REGISTRY:
-        available_teams = ", ".join(sorted(TEAM_REGISTRY.keys()))
+    if team_id not in registry:
+        available_teams = ", ".join(sorted(registry.keys()))
         raise ValueError(
             f"Team '{team_id}' not found in registry. "
             f"Available teams: {available_teams}"
         )
     
     # Get the factory function for the team
-    team_factory = TEAM_REGISTRY[team_id]
+    team_factory = registry[team_id]
     
     # Create and return the team instance
     # Pass version if provided, along with any other kwargs
@@ -192,10 +203,9 @@ def list_available_teams() -> list[str]:
     Returns:
         list[str]: Sorted list of team IDs
     """
-    # Refresh registry to pick up new teams
-    global TEAM_REGISTRY
-    TEAM_REGISTRY = _discover_teams()
-    return sorted(TEAM_REGISTRY.keys())
+    # Get registry with lazy initialization
+    registry = get_team_registry()
+    return sorted(registry.keys())
 
 
 def is_team_registered(team_id: str) -> bool:
@@ -208,7 +218,6 @@ def is_team_registered(team_id: str) -> bool:
     Returns:
         bool: True if the team is registered, False otherwise
     """
-    # Refresh registry to pick up new teams
-    global TEAM_REGISTRY
-    TEAM_REGISTRY = _discover_teams()
-    return team_id in TEAM_REGISTRY
+    # Get registry with lazy initialization
+    registry = get_team_registry()
+    return team_id in registry

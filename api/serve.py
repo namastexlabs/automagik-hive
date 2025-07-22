@@ -53,16 +53,20 @@ try:
     from lib.utils.db_migration import check_and_run_migrations
     
     # Run migrations synchronously at startup
-    if asyncio.get_event_loop().is_running():
-        # If event loop is running, schedule the migration check
+    try:
+        # Try to get current event loop (Python 3.10+ recommended approach)
+        loop = asyncio.get_running_loop()
         logger.debug("🔧 Event loop detected, scheduling migration check")
-    else:
-        # No event loop, safe to run directly
-        migrations_run = asyncio.run(check_and_run_migrations())
-        if migrations_run:
-            logger.info("🔧 Database schema initialized via Alembic migrations")
-        else:
-            logger.debug("🔧 Database schema already up to date")
+    except RuntimeError:
+        # No event loop running, safe to run directly
+        try:
+            migrations_run = asyncio.run(check_and_run_migrations())
+            if migrations_run:
+                logger.info("🔧 Database schema initialized via Alembic migrations")
+            else:
+                logger.debug("🔧 Database schema already up to date")
+        except Exception as migration_error:
+            logger.warning("🔧 Database migration error", error=str(migration_error))
 except Exception as e:
     logger.warning("🔧 Database migration check failed during startup", error=str(e))
     logger.info("🔧 Continuing startup - system may use fallback initialization")
@@ -80,6 +84,9 @@ from lib.utils.version_factory import create_team
 # Import CSV hot reload manager
 from lib.knowledge.csv_hot_reload import CSVHotReloadManager
 
+# Import orchestrated startup infrastructure
+from lib.utils.startup_orchestration import orchestrated_startup, get_startup_display_with_results
+
 
 def create_lifespan(startup_display=None):
     """Create lifespan context manager with startup_display access"""
@@ -94,7 +101,7 @@ def create_lifespan(startup_display=None):
             from lib.mcp import MCPCatalog
             catalog = MCPCatalog()
             servers = catalog.list_servers()
-            logger.info("🌐 MCP system initialized", server_count=len(servers))
+            logger.debug("🌐 MCP system initialized", server_count=len(servers))
         except Exception as e:
             logger.warning("🌐 Could not initialize MCP Connection Manager", error=str(e))
         
@@ -107,17 +114,17 @@ def create_lifespan(startup_display=None):
                     from common.startup_notifications import send_startup_notification
                     # Pass startup_display for rich notification content
                     await send_startup_notification(startup_display)
-                    logger.info("🌐 Startup notification sent successfully")
+                    logger.debug("🌐 Startup notification sent successfully")
                 except Exception as e:
                     logger.warning("🌐 Could not send startup notification", error=str(e))
             
             try:
                 asyncio.create_task(_send_startup_notification())
-                logger.info("🌐 Startup notification scheduled")
+                logger.debug("🌐 Startup notification scheduled")
             except Exception as e:
                 logger.warning("🌐 Could not schedule startup notification", error=str(e))
         else:
-            logger.info("🌐 Startup notifications disabled in development mode")
+            logger.debug("🌐 Startup notifications disabled in development mode")
         
         yield
         
@@ -126,18 +133,18 @@ def create_lifespan(startup_display=None):
             try:
                 from common.startup_notifications import send_shutdown_notification
                 await send_shutdown_notification()
-                logger.info("🌐 Shutdown notification sent successfully")
+                logger.debug("🌐 Shutdown notification sent successfully")
             except Exception as e:
                 logger.warning("🌐 Could not send shutdown notification", error=str(e))
         
         try:
             asyncio.create_task(_send_shutdown_notification())
-            logger.info("🌐 Shutdown notification scheduled")
+            logger.debug("🌐 Shutdown notification scheduled")
         except Exception as e:
             logger.warning("🌐 Could not schedule shutdown notification", error=str(e))
         
         # MCP system has no resources to cleanup in simplified implementation
-        logger.info("🌐 MCP system cleanup completed")
+        logger.debug("🌐 MCP system cleanup completed")
     
     return lifespan
     
@@ -163,7 +170,7 @@ def _create_simple_sync_api():
     # Display the table
     try:
         startup_display.display_summary()
-        logger.info("🌐 Simplified startup display completed")
+        logger.debug("🌐 Simplified startup display completed")
     except Exception as e:
         logger.error("🌐 Could not display even simplified table", error=str(e))
     
@@ -186,7 +193,7 @@ def _create_simple_sync_api():
 
 
 async def _async_create_automagik_api():
-    """Create unified FastAPI app with environment-based features"""
+    """Create unified FastAPI app with Performance-Optimized Sequential Startup"""
     
     # Get environment settings
     environment = os.getenv("HIVE_ENVIRONMENT", "production")
@@ -212,289 +219,87 @@ async def _async_create_automagik_api():
             if uvicorn_module:
                 logger.debug("🌐 Uvicorn module info", module=str(uvicorn_module))
     
-    # Database migrations now happen at module import time for proper startup order
+    # Skip orchestrated startup for reloader process to prevent duplicate execution
+    if is_reloader:
+        logger.debug("🌐 Reloader process detected - using simplified initialization")
+        # Create minimal app for reloader
+        return _create_simple_sync_api()
     
-    # Initialize authentication system
-    auth_service = get_auth_service()
+    # PERFORMANCE-OPTIMIZED SEQUENTIAL STARTUP
+    # Replace scattered initialization with orchestrated startup sequence
+    startup_results = await orchestrated_startup()
     
     # Show environment info in development mode
-    if is_development and not is_reloader:
-        logger.info("🌐 Environment configuration", 
+    if is_development:
+        auth_service = startup_results.services.auth_service
+        logger.debug("🌐 Environment configuration", 
                    environment=environment,
                    auth_enabled=auth_service.is_auth_enabled(),
                    docs_url="http://localhost:9888/docs")
         if auth_service.is_auth_enabled():
-            logger.info("🌐 API authentication details",
+            logger.debug("🌐 API authentication details",
                        api_key=auth_service.get_current_key(),
                        usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:9888/playground/status')
-        logger.info("🌐 Development features status", enabled=is_development)
+        logger.debug("🌐 Development features status", enabled=is_development)
     
-    # Database initialization is now handled by Agno storage automatically
-    if is_development and not is_reloader:
-        logger.info("🌐 Database initialization", method="agno_storage_abstractions", status="auto_initialized")
+    # Extract components from orchestrated startup results
+    available_agents = startup_results.registries.agents
+    workflow_registry = startup_results.registries.workflows
+    team_registry = startup_results.registries.teams
     
-    # Initialize CSV hot reload manager using centralized global knowledge configuration
-    # Use the same global config loading function as agents
-    try:
-        from lib.utils.version_factory import load_global_knowledge_config
-        global_config = load_global_knowledge_config()
-        csv_filename = global_config.get("csv_file_path", "knowledge_rag.csv")
-        # Convert to absolute path (relative to knowledge directory)
-        config_dir = Path(__file__).parent.parent / "lib/knowledge"
-        csv_path = config_dir / csv_filename
-        logger.info("🌐 Centralized knowledge configuration loaded", csv_path=str(csv_path))
-    except Exception as e:
-        # This should not happen in production - enforce proper configuration
-        csv_path = Path(__file__).parent.parent / "lib/knowledge/knowledge_rag.csv"
-        logger.error("🌐 Failed to load centralized knowledge config - using hardcoded fallback", 
-                    error=str(e), fallback_path=str(csv_path))
-    if is_development and not is_reloader:
-        logger.info("🌐 CSV hot reload manager configured", csv_path=str(csv_path))
-        
-        # Start CSV hot reload manager immediately in demo/development mode
+    # Load team instances from registry
+    loaded_teams = []
+    for team_id in team_registry.keys():
         try:
-            from lib.knowledge.csv_hot_reload import CSVHotReloadManager
-            csv_manager = CSVHotReloadManager(str(csv_path))
-            csv_manager.start_watching()
-            logger.info("🌐 CSV hot reload manager activated", status="watching_for_changes")
+            team = await create_team(team_id)
+            if team:
+                loaded_teams.append(team)
+                logger.debug("🌐 Team instance created", team_id=team_id)
         except Exception as e:
-            logger.warning("🌐 Could not start CSV hot reload manager", error=str(e))
-            logger.info("🌐 CSV hot reload manager configured", status="will_start_on_first_use")
-    
-    # V2 Architecture: Agno framework handles memory internally
-    # No need for global memory manager - removed legacy memory system
-    if is_development and not is_reloader:
-        logger.info("🌐 Memory system configured", method="agno_internal_handling")
-    
-    # Dynamic team loading function
-    async def _load_all_discovered_teams():
-        """Load all teams discovered by the registry system."""
-        teams_list = []
-        available_teams = list_available_teams()
-        
-        for team_id in available_teams:
-            try:
-                team = await create_team(team_id)
-                if team:
-                    teams_list.append(team)
-                    logger.info("🌐 Team loaded successfully", team_id=team_id)
-            except Exception as e:
-                error_msg = str(e)
-                if "HIVE_DATABASE_URL" in error_msg:
-                    logger.warning("🌐 Team loading skipped - database not configured", 
-                                 team_id=team_id, reason="missing_database_url")
-                elif "No active version found" in error_msg:
-                    logger.warning("🌐 Team loading skipped - no version in database", 
-                                 team_id=team_id, reason="missing_version")
-                else:
-                    logger.error("🌐 Team loading failed", 
-                                team_id=team_id, error=str(e), error_type=type(e).__name__)
-                # Continue loading other teams even if one fails
-                continue
-        
-        return teams_list
-    
-    # Get all agents for comprehensive endpoint generation
-    from ai.agents.registry import AgentRegistry
-    agent_registry = AgentRegistry()
-    available_agents = await agent_registry.get_all_agents()
-    
-    # Load all teams dynamically
-    loaded_teams = await _load_all_discovered_teams()
+            logger.warning("🌐 Team instance creation failed", 
+                         team_id=team_id, error=str(e), error_type=type(e).__name__)
+            continue
     
     # Validate critical components loaded successfully
     if not loaded_teams:
-        logger.warning("🌐 Warning: No teams loaded from registry - server will start with agents only")
-        # Continue without teams - Playground can handle empty teams list
+        logger.warning("🌐 Warning: No teams loaded - server will start with agents only")
     
     if not available_agents:
         logger.error("🌐 Critical: No agents loaded from registry")
         raise ComponentLoadingError("At least one agent is required but none were loaded")
     
-    # Initialize startup display
-    startup_display = create_startup_display()
+    # Create startup display with orchestrated results
+    startup_display = get_startup_display_with_results(startup_results)
     
-    # Initialize component version sync and capture results for startup display
-    sync_results = None
-    try:
-        from lib.services.version_sync_service import AgnoVersionSyncService
-        
-        # Create custom sync service to capture logs
-        class StartupVersionSync(AgnoVersionSyncService):
-            def __init__(self, startup_display):
-                super().__init__()
-                self.startup_display = startup_display
-            
-            async def sync_on_startup(self):
-                """Enhanced version sync with detailed status reporting."""
-                # Get actual component counts from filesystem
-                import glob
-                agent_files = glob.glob('ai/agents/*/config.yaml')
-                team_files = glob.glob('ai/teams/*/config.yaml')
-                workflow_files = glob.glob('ai/workflows/*/config.yaml')
-                
-                total_components = len(agent_files) + len(team_files) + len(workflow_files)
-                
-                self.startup_display.add_version_sync_log(f"🔍 Scanning {total_components} components ({len(agent_files)} agents, {len(team_files)} teams, {len(workflow_files)} workflows)")
-                
-                total_synced = 0
-                yaml_to_db_count = 0
-                db_to_yaml_count = 0
-                no_change_count = 0
-                updated_components = []
-                
-                for component_type in ['agent', 'team', 'workflow']:
-                    try:
-                        results = await self.sync_component_type(component_type)
-                        self.sync_results[component_type + 's'] = results
-                        total_synced += len(results)
-                        
-                        if results:
-                            for result in results:
-                                if isinstance(result, dict):
-                                    component_id = result.get("component_id", "unknown")
-                                    action = result.get("action", "")
-                                    yaml_version = result.get("yaml_version")
-                                    agno_version = result.get("agno_version")
-                                    
-                                    if action in ["created", "updated"]:
-                                        yaml_to_db_count += 1
-                                        updated_components.append(f"{component_id} v{yaml_version}")
-                                    elif action in ["yaml_updated", "yaml_corrected"]:
-                                        db_to_yaml_count += 1
-                                        updated_components.append(f"{component_id} v{agno_version}")
-                                    else:  # no_change or other stable states
-                                        no_change_count += 1
-                                        
-                    except Exception as e:
-                        self.startup_display.add_version_sync_log(f"❌ Error syncing {component_type}s: {e}")
-                        self.sync_results[component_type + 's'] = {"error": str(e)}
-                
-                # Generate enhanced summary
-                if yaml_to_db_count == 0 and db_to_yaml_count == 0:
-                    self.startup_display.add_version_sync_log(f"✅ All {total_synced} components in sync (no changes needed)")
-                    self.startup_display.add_version_sync_log("🎉 All components up-to-date")
-                else:
-                    if yaml_to_db_count > 0:
-                        self.startup_display.add_version_sync_log(f"⬆️ {yaml_to_db_count} components updated: YAML→DB")
-                    if db_to_yaml_count > 0:
-                        self.startup_display.add_version_sync_log(f"⬇️ {db_to_yaml_count} components updated: DB→YAML")
-                    if no_change_count > 0:
-                        self.startup_display.add_version_sync_log(f"✅ {no_change_count} components in sync")
-                    
-                    total_updates = yaml_to_db_count + db_to_yaml_count
-                    self.startup_display.add_version_sync_log(f"🎉 Sync completed: {total_updates} updates applied")
-                
-                return self.sync_results
-        
-        sync_service = StartupVersionSync(startup_display)
-        
-        # Run sync in the current async context (we're in _async_create_automagik_api)
-        sync_results = await sync_service.sync_on_startup()
-        startup_display.set_sync_results(sync_results)
-        
-    except Exception as e:
-        startup_display.add_error("Version Sync", f"Component version sync failed: {e}")
+    # Version synchronization already handled by orchestrated startup
+    # Results are available in startup_results.sync_results
     
-    # Collect component information for display (remove redundant debug logs)
-    if loaded_teams and available_agents:
-        # Add all loaded teams to startup display
-        for team in loaded_teams:
-            # Extract version from team metadata if available
-            team_version = None
-            if hasattr(team, 'metadata') and team.metadata:
-                team_version = team.metadata.get('version')
-            
-            # Count agents as team members (rough estimate)
-            member_count = len(available_agents) if available_agents else 0
-            
-            startup_display.add_team(
-                team.team_id, 
-                team.name, 
-                member_count,
-                version=team_version,
-                status="✅"
-            )
-        
-        # Add individual agents with version information (no redundant logging)
-        for agent_id, agent in available_agents.items():
-            # Use the actual agent component ID
-            actual_component_id = getattr(agent, 'agent_id', agent_id)
-            
-            # Extract version from agent metadata if available
-            version = None
-            if hasattr(agent, 'metadata') and agent.metadata:
-                version = agent.metadata.get('version')
-            
-            startup_display.add_agent(actual_component_id, agent.name or agent_id, version=version, status="✅")
-    elif not loaded_teams or not available_agents:
-        startup_display.add_error("System", "No teams or agents loaded - running with minimal configuration")
+    # Component information already populated by orchestrated startup
+    # startup_display already contains all component details from get_startup_display_with_results()
     
-    # Create FastAPI app with both teams AND agents for full endpoint generation
+    # Create FastAPI app components from orchestrated startup results  
     teams_list = loaded_teams if loaded_teams else []
     agents_list = list(available_agents.values()) if available_agents else []
     
+    # Create workflow instances from registry
+    workflows_list = []
+    for workflow_id in workflow_registry.keys():
+        try:
+            workflow = get_workflow(workflow_id, debug_mode=is_development)
+            workflows_list.append(workflow)
+            logger.debug("🌐 Workflow instance created", workflow_id=workflow_id)
+        except Exception as e:
+            logger.warning("🌐 Workflow instance creation failed", 
+                        workflow_id=workflow_id, error=str(e), error_type=type(e).__name__)
+            continue
+    
     # Ensure we have at least something to create app
     if not teams_list and not agents_list:
-        # Create a minimal dummy agent for testing
         from agno.agent import Agent
         from lib.config.models import resolve_model
         dummy_agent = Agent(name="Test Agent", model=resolve_model())
         agents_list = [dummy_agent]
-    
-    # Create workflow instances dynamically
-    workflows_list = []
-    available_workflows = list_available_workflows()
-    
-    for workflow_id in available_workflows:
-        try:
-            workflow = get_workflow(workflow_id, debug_mode=is_development)
-            workflows_list.append(workflow)
-            logger.info("🌐 Workflow loaded successfully", workflow_id=workflow_id)
-        except Exception as e:
-            logger.error("🌐 Workflow loading failed", 
-                        workflow_id=workflow_id, error=str(e), error_type=type(e).__name__)
-            # Don't fail server startup for workflow loading issues
-            continue
-        # Add workflows to startup display dynamically with version information
-        for workflow_id in available_workflows:
-            workflow_name = workflow_id.replace('-', ' ').title()
-            
-            # Try to get version from the workflow instance if available
-            workflow_version = None
-            for workflow in workflows_list:
-                if hasattr(workflow, 'workflow_id') and workflow.workflow_id == workflow_id:
-                    if hasattr(workflow, 'metadata') and workflow.metadata:
-                        workflow_version = workflow.metadata.get('version')
-                    break
-            
-            startup_display.add_workflow(workflow_id, workflow_name, version=workflow_version, status="✅")
-    
-    # Discover and add additional teams to startup display dynamically
-    available_teams = list_available_teams()
-    
-    for team_id in available_teams:
-        team_name = team_id.replace('-', ' ').title()
-        
-        # Try to get version and member count from the team instance if available
-        team_version = None
-        member_count = 0
-        try:
-            team = await get_team(team_id, debug_mode=is_development)
-            if hasattr(team, 'metadata') and team.metadata:
-                team_version = team.metadata.get('version')
-            if hasattr(team, 'members') and team.members:
-                member_count = len(team.members)
-            logger.info("🌐 Team loaded successfully", team_id=team_id)
-        except Exception as e:
-            import traceback
-            logger.error("🌐 Team loading failed", 
-                        team_id=team_id, error=str(e), error_type=type(e).__name__,
-                        traceback=traceback.format_exc())
-            # Don't fail server startup for additional teams
-            continue
-        
-        startup_display.add_team(team_id, team_name, member_count, version=team_version, status="✅")
+        logger.warning("🌐 Using dummy agent - no components loaded successfully")
     
     # Create base FastAPI app for configuration
     
@@ -523,7 +328,7 @@ async def _async_create_automagik_api():
     try:
         from ai.agents.tools.finishing_tools import trigger_conversation_typification_workflow
         external_handler = trigger_conversation_typification_workflow
-        logger.info("🌐 Workflow handler loaded successfully")
+        logger.debug("🌐 Workflow handler loaded successfully")
     except ImportError as e:
         logger.warning("🌐 Workflow handler not available", error=str(e))
     
@@ -540,6 +345,7 @@ async def _async_create_automagik_api():
     unified_router = playground.get_async_router()
     
     # Add authentication protection to playground routes if auth is enabled
+    auth_service = startup_results.services.auth_service
     if auth_service.is_auth_enabled():
         from fastapi import APIRouter, Depends
         from lib.auth.dependencies import require_api_key
@@ -552,7 +358,7 @@ async def _async_create_automagik_api():
         # Development mode - no auth protection
         app.include_router(unified_router)
         
-    logger.info("🌐 Unified API endpoints registered successfully")
+    logger.debug("🌐 Unified API endpoints registered successfully")
     
     # Configure docs based on settings and environment
     if is_development or api_settings.docs_enabled:
@@ -566,13 +372,13 @@ async def _async_create_automagik_api():
     
     # Always display startup summary with component table (core feature) - moved outside try-catch
     # Force display for debugging (temporarily ignore reloader check)
-    logger.info("🌐 About to display startup summary", 
+    logger.debug("🌐 About to display startup summary", 
                 teams=len(startup_display.teams),
                 agents=len(startup_display.agents), 
                 workflows=len(startup_display.workflows))
     try:
         startup_display.display_summary()
-        logger.info("🌐 Startup display completed successfully")
+        logger.debug("🌐 Startup display completed successfully")
     except Exception as e:
         import traceback
         logger.error("🌐 Could not display startup summary table", error=str(e), traceback=traceback.format_exc())
@@ -583,7 +389,7 @@ async def _async_create_automagik_api():
             team_count = len(loaded_teams) if loaded_teams else 0
             display_simple_status(team_name, f"{team_count}_teams", len(available_agents) if available_agents else 0)
         except Exception:
-            logger.info("🌐 System components loaded successfully", display_status="table_unavailable")
+            logger.debug("🌐 System components loaded successfully", display_status="table_unavailable")
     
     # Add custom business endpoints
     try:
@@ -617,7 +423,7 @@ async def _async_create_automagik_api():
             console.print(table)
             
             # Add MCP Integration Config
-            logger.info("🌐 MCP Integration Config for playground testing",
+            logger.debug("🌐 MCP Integration Config for playground testing",
                        config={
                            "automagik-hive": {
                                "command": "uvx",
@@ -646,6 +452,10 @@ async def _async_create_automagik_api():
         allow_headers=["*"],
     )
     
+    # Switch from startup to runtime logging mode
+    from lib.logging import set_runtime_mode
+    set_runtime_mode()
+    
     return app
 
 
@@ -659,7 +469,7 @@ def create_automagik_api():
         # Try to get the running event loop
         loop = asyncio.get_running_loop()
         # We're in an event loop, need to handle this properly
-        logger.info("🌐 Event loop detected, using thread-based async initialization")
+        logger.debug("🌐 Event loop detected, using thread-based async initialization")
         
         import threading
         import concurrent.futures
@@ -681,7 +491,7 @@ def create_automagik_api():
             
     except RuntimeError:
         # No event loop running, safe to use asyncio.run()
-        logger.info("🌐 No event loop detected, using direct async initialization")
+        logger.debug("🌐 No event loop detected, using direct async initialization")
         return asyncio.run(_async_create_automagik_api())
 
 
@@ -710,7 +520,7 @@ if __name__ == "__main__":
     # Show startup info in development mode
     is_development = environment == "development"
     if is_development:
-        logger.info("🌐 Starting Automagik Hive API", 
+        logger.debug("🌐 Starting Automagik Hive API", 
                    host=host, port=port, reload=reload, mode="development" if reload else "production")
     
     # Use uvicorn directly with import string for reload/workers support

@@ -15,7 +15,7 @@ from typing import Dict, Any, List, Optional, Set
 from pathlib import Path
 import yaml
 import copy
-from agno.utils.log import logger
+from lib.logging import log_agent_inheritance, logger
 
 
 class ConfigInheritanceManager:
@@ -87,7 +87,7 @@ class ConfigInheritanceManager:
                     agent_config, team_defaults, agent_id
                 )
                 enhanced_configs[agent_id] = enhanced_config
-                logger.info(f"✅ Applied inheritance to agent {agent_id}")
+                logger.debug(f"✅ Applied inheritance to agent {agent_id}")
                 
             except Exception as e:
                 logger.error(f"❌ Error applying inheritance to agent {agent_id}: {e}")

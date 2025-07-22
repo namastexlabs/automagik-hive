@@ -29,7 +29,7 @@ class AgnoTeamProxy:
         """Initialize the proxy by introspecting the current Agno Team class."""
         self._supported_params = self._discover_team_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.info(f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters")
+        logger.debug(f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters")
     
     def _discover_team_parameters(self) -> Set[str]:
         """
@@ -307,7 +307,7 @@ class AgnoTeamProxy:
                     user_id=kwargs.get("user_id")
                 )
                 members.append(member_agent)
-                logger.info(f"🤖 Loaded team member: {member_name}")
+                logger.debug(f"🤖 Loaded team member: {member_name}")
             except Exception as e:
                 logger.warning(f"🤖 Could not load team member {member_name}: {e}")
         

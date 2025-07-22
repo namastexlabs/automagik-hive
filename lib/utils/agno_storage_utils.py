@@ -131,7 +131,7 @@ def create_dynamic_storage(
     try:
         # 5. Dynamic instantiation with mapped parameters
         storage_instance = storage_class(**storage_params)
-        logger.info(f"🔧 Successfully created {storage_type} storage for {component_id}")
+        logger.debug(f"🔧 Successfully created {storage_type} storage for {component_id}")
         return storage_instance
     except Exception as e:
         logger.error(f"🚨 Failed to create {storage_type} storage for {component_id}: {e}")

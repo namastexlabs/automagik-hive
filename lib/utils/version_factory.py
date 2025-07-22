@@ -158,7 +158,7 @@ class VersionFactory:
             db_url=self.db_url
         )
         
-        logger.info(f"🤖 Agent {component_id} created with inheritance and {len(proxy.get_supported_parameters())} available parameters")
+        logger.debug(f"🤖 Agent {component_id} created with inheritance and {len(proxy.get_supported_parameters())} available parameters")
         
         return agent
     
@@ -273,7 +273,7 @@ class VersionFactory:
                     if hasattr(tools_module, tool_name):
                         tool_function = getattr(tools_module, tool_name)
                         tools.append(tool_function)
-                        logger.info(f"🤖 Loaded tool '{tool_name}' for agent {component_id}")
+                        logger.debug(f"🤖 Loaded tool '{tool_name}' for agent {component_id}")
                     else:
                         missing_tools.append(tool_name)
                         error_msg = f"Tool '{tool_name}' not found in {tools_module_path}"
@@ -297,7 +297,7 @@ class VersionFactory:
                         if hasattr(tools_module, tool_name):
                             tool_function = getattr(tools_module, tool_name)
                             tools.append(tool_function)
-                            logger.info(f"🤖 Auto-loaded tool '{tool_name}' for agent {component_id}")
+                            logger.debug(f"🤖 Auto-loaded tool '{tool_name}' for agent {component_id}")
                             
         except ImportError:
             # No tools.py file - check if tools are required
@@ -333,20 +333,20 @@ class VersionFactory:
     ) -> Team:
         """Create team using dynamic Agno Team proxy with inheritance validation."""
         
-        logger.info(f"🔧 Creating team {component_id} (session_id={session_id}, debug_mode={debug_mode})")
+        logger.debug(f"🔧 Creating team {component_id} (session_id={session_id}, debug_mode={debug_mode})")
         
         try:
             # Validate team inheritance configuration
             logger.debug(f"🔧 Validating inheritance for team {component_id}")
             enhanced_config = self._validate_team_inheritance(component_id, config)
-            logger.info(f"🔧 Team {component_id} inheritance validation completed")
+            logger.debug(f"🔧 Team {component_id} inheritance validation completed")
             
             # Use the dynamic team proxy system for automatic Agno compatibility
             logger.debug(f"🔧 Loading AgnoTeamProxy for team {component_id}")
             from lib.utils.agno_proxy import get_agno_team_proxy
             
             proxy = get_agno_team_proxy()
-            logger.info(f"🔧 AgnoTeamProxy loaded successfully for team {component_id}")
+            logger.debug(f"🔧 AgnoTeamProxy loaded successfully for team {component_id}")
             
             # Create team using dynamic proxy
             logger.debug(f"🔧 Creating team instance via proxy for {component_id}")
@@ -360,7 +360,7 @@ class VersionFactory:
                 **kwargs
             )
             
-            logger.info(f"🤖 Team {component_id} created with inheritance validation and {len(proxy.get_supported_parameters())} available parameters")
+            logger.debug(f"🤖 Team {component_id} created with inheritance validation and {len(proxy.get_supported_parameters())} available parameters")
             
             return team
         except Exception as e:
@@ -442,7 +442,7 @@ class VersionFactory:
             # Generate inheritance preview report
             enhanced_agent_configs = manager.apply_inheritance(config, agent_configs)
             report = manager.generate_inheritance_report(config, agent_configs, enhanced_agent_configs)
-            logger.info(f"🔧 Team {team_id}: {report}")
+            logger.debug(f"🔧 Team {team_id}: {report}")
             
             return config
             
@@ -487,7 +487,7 @@ class VersionFactory:
             **kwargs
         )
         
-        logger.info(f"🤖 Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters")
+        logger.debug(f"🤖 Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters")
         
         return workflow
 

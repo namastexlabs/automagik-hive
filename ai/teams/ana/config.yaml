@@ -2,7 +2,7 @@ team:
   mode: route
   name: Ana - Atendimento PagBank personalizado
   team_id: ana
-  version: 1
+  version: 2
   description: Ana, assistente virtual empática do PagBank que ajuda com carinho e
     usa especialistas internamente
 model:
@@ -10,7 +10,7 @@ model:
   provider: anthropic
   thinking:
     type: enabled
-    budget_tokens: 512
+    budget_tokens: 1024
   max_tokens: 1500
   temperature: 1.0
 events:

@@ -4,6 +4,10 @@
       "type": "sse",
       "url": "http://localhost:8765/mcp/openmemory/sse/namastex"
     },
+    "kanban": {
+      "type": "sse",
+      "url": "http://localhost:23002/sse"
+    },
     "ask-repo-agent": {
       "type": "sse",
       "url": "https://mcp.deepwiki.com/sse"

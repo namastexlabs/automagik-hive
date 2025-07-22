@@ -143,9 +143,8 @@ class ModelResolver:
             model_instance = model_class(**model_config)
             
             
-            logger.info("🔧 Model resolved successfully", 
-                       model_id=resolved_model_id, provider=provider, 
-                       class_name=model_class.__name__, config_keys=list(config_overrides.keys()))
+            logger.debug("🔧 Model resolved successfully", 
+                        model_id=resolved_model_id, provider=provider)
             
             return model_instance
             
