@@ -204,31 +204,17 @@ async def _async_create_automagik_api():
     # Check if we're in uvicorn reload process to prevent duplicate output
     import sys
     
-    # More precise reloader detection - only block for actual reloader processes
-    # Check if this is the reloader master process (not the worker process)
-    is_reloader = (
-        any("reloader" in str(arg) for arg in sys.argv) and 
-        os.getenv("RUN_MAIN") != "true"  # This is the key - worker processes have RUN_MAIN=true
-    )
+    # Detect if we're in the reloader context to reduce duplicate logs
+    # In development with reload, uvicorn creates multiple processes
+    is_reloader_context = os.getenv("RUN_MAIN") == "true"
     
-    # Debug logging for reloader detection in development mode
-    if is_development:
-        logger.debug("🌐 Reloader detection", is_reloader=is_reloader)
-        if is_reloader:
-            logger.debug("🌐 Reloader details", sys_argv=str(sys.argv))
-            uvicorn_module = sys.modules.get("uvicorn")
-            if uvicorn_module:
-                logger.debug("🌐 Uvicorn module info", module=str(uvicorn_module))
-    
-    # Skip orchestrated startup for reloader process to prevent duplicate execution
-    if is_reloader:
-        logger.debug("🌐 Reloader process detected - using simplified initialization")
-        # Create minimal app for reloader
-        return _create_simple_sync_api()
+    # Skip verbose logging for reloader context to reduce duplicate output
+    if is_reloader_context and is_development:
+        logger.debug("🌐 Reloader worker process - reducing log verbosity")
     
     # PERFORMANCE-OPTIMIZED SEQUENTIAL STARTUP
     # Replace scattered initialization with orchestrated startup sequence
-    startup_results = await orchestrated_startup()
+    startup_results = await orchestrated_startup(quiet_mode=is_reloader_context)
     
     # Show environment info in development mode
     if is_development:
@@ -371,26 +357,28 @@ async def _async_create_automagik_api():
         app.redoc_url = None
         app.openapi_url = None
     
-    # Always display startup summary with component table (core feature) - moved outside try-catch
-    # Force display for debugging (temporarily ignore reloader check)
-    logger.debug("🌐 About to display startup summary", 
-                teams=len(startup_display.teams),
-                agents=len(startup_display.agents), 
-                workflows=len(startup_display.workflows))
-    try:
-        startup_display.display_summary()
-        logger.debug("🌐 Startup display completed successfully")
-    except Exception as e:
-        import traceback
-        logger.error("🌐 Could not display startup summary table", error=str(e), traceback=traceback.format_exc())
-        # Try fallback simple display
+    # Display startup summary with component table (skip in quiet mode to avoid duplicates)
+    if not is_reloader_context:
+        logger.debug("🌐 About to display startup summary", 
+                    teams=len(startup_display.teams),
+                    agents=len(startup_display.agents), 
+                    workflows=len(startup_display.workflows))
         try:
-            from lib.utils.startup_display import display_simple_status
-            team_name = "Multi-Agent System"
-            team_count = len(loaded_teams) if loaded_teams else 0
-            display_simple_status(team_name, f"{team_count}_teams", len(available_agents) if available_agents else 0)
-        except Exception:
-            logger.debug("🌐 System components loaded successfully", display_status="table_unavailable")
+            startup_display.display_summary()
+            logger.debug("🌐 Startup display completed successfully")
+        except Exception as e:
+            import traceback
+            logger.error("🌐 Could not display startup summary table", error=str(e), traceback=traceback.format_exc())
+            # Try fallback simple display
+            try:
+                from lib.utils.startup_display import display_simple_status
+                team_name = "Multi-Agent System"
+                team_count = len(loaded_teams) if loaded_teams else 0
+                display_simple_status(team_name, f"{team_count}_teams", len(available_agents) if available_agents else 0)
+            except Exception:
+                logger.debug("🌐 System components loaded successfully", display_status="table_unavailable")
+    else:
+        logger.debug("🌐 Skipping startup display (reloader context - avoiding duplicate table)")
     
     # Add custom business endpoints
     try:

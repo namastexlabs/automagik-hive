@@ -196,3 +196,4 @@ dist/
 *.egg-info/
 
 codebase.md
+.env

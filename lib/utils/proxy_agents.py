@@ -429,27 +429,38 @@ class AgnoAgentProxy:
         
         def wrapped_run(*args, **kwargs):
             """Wrapped run method that collects metrics after execution"""
+            response = None
             try:
                 # Execute original run method
                 response = original_run(*args, **kwargs)
                 
-                # Extract YAML overrides for metrics
-                yaml_overrides = self._extract_metrics_overrides(config)
-                
-                # Collect metrics from response
-                if hasattr(metrics_service, 'collect_from_response'):
-                    metrics_service.collect_from_response(
-                        response=response,
-                        agent_name=component_id,
-                        execution_type="agent",
-                        yaml_overrides=yaml_overrides
-                    )
+                # Only collect metrics if response is valid
+                if response is not None:
+                    try:
+                        # Extract YAML overrides for metrics
+                        yaml_overrides = self._extract_metrics_overrides(config)
+                        
+                        # Collect metrics from response with validation
+                        if hasattr(metrics_service, 'collect_from_response'):
+                            success = metrics_service.collect_from_response(
+                                response=response,
+                                agent_name=component_id,
+                                execution_type="agent",
+                                yaml_overrides=yaml_overrides
+                            )
+                            if not success:
+                                logger.debug(f"🤖 Metrics collection returned false for agent {component_id}")
+                    
+                    except Exception as metrics_error:
+                        # Don't let metrics collection failures break agent execution
+                        logger.warning(f"🤖 Metrics collection error for agent {component_id}: {metrics_error}")
+                        # Continue execution - metrics failure should not affect agent operation
                 
                 return response
                 
             except Exception as e:
-                # Don't let metrics collection failures break agent execution
-                logger.warning(f"🤖 Metrics collection failed for agent {component_id}: {e}")
+                # Log original execution failure separately from metrics
+                logger.error(f"🤖 Agent {component_id} execution failed: {e}")
                 raise e  # Re-raise the original exception
         
         # Replace the run method

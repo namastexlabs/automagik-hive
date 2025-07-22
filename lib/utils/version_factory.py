@@ -58,6 +58,7 @@ class VersionFactory:
             raise ValueError("HIVE_DATABASE_URL environment variable required")
         
         self.version_service = AgnoVersionService(self.db_url)
+        self.yaml_fallback_count = 0  # Track first-startup fallback usage
     
     
     async def create_versioned_component(
@@ -96,8 +97,9 @@ class VersionFactory:
             if not version_record:
                 # First startup case: No active version in database yet
                 # Fall back to loading from YAML config directly
+                self.yaml_fallback_count += 1
                 logger.debug(f"🔧 No active version found for {component_id}, loading from YAML config (first startup)")
-                return await self._create_component_from_yaml(
+                result = await self._create_component_from_yaml(
                     component_id=component_id,
                     component_type=component_type,
                     session_id=session_id,
@@ -105,6 +107,12 @@ class VersionFactory:
                     user_id=user_id,
                     **kwargs
                 )
+                
+                # Log summary for first few fallbacks only
+                if self.yaml_fallback_count == 1:
+                    logger.info("🔧 First startup detected: Loading components from YAML configs before database sync")
+                
+                return result
         
         config = version_record.config
         
@@ -546,7 +554,7 @@ class VersionFactory:
         if not yaml_config or component_type not in yaml_config:
             raise ValueError(f"Invalid YAML config in {config_file}: missing '{component_type}' section")
         
-        logger.info(f"🔧 Loading {component_type} {component_id} from YAML (first startup fallback)")
+        logger.debug(f"🔧 Loading {component_type} {component_id} from YAML (first startup fallback)")
         
         # Use the same creation methods but with YAML config
         creation_methods = {

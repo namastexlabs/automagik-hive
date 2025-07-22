@@ -65,9 +65,43 @@ class Settings:
         
         
         # Performance monitoring
-        self.enable_metrics = os.getenv("HIVE_ENABLE_METRICS", "true").lower() == "true"
-        self.metrics_batch_size = int(os.getenv("HIVE_METRICS_BATCH_SIZE", "50"))
-        self.metrics_flush_interval = float(os.getenv("HIVE_METRICS_FLUSH_INTERVAL", "5.0"))
+        self.enable_metrics = os.getenv("HIVE_ENABLE_METRICS", "true").lower() in ("true", "yes", "1", "on", "enabled")
+        
+        # Secure metrics configuration with input validation
+        try:
+            from lib.logging import logger
+            
+            # Validate batch size (1-10000 range)
+            batch_size = int(os.getenv("HIVE_METRICS_BATCH_SIZE", "50"))
+            self.metrics_batch_size = max(1, min(batch_size, 10000))
+            if batch_size != self.metrics_batch_size:
+                logger.warning(f"⚡ HIVE_METRICS_BATCH_SIZE clamped from {batch_size} to {self.metrics_batch_size}")
+            
+            # Validate flush interval (0.1-3600 seconds range)
+            flush_interval = float(os.getenv("HIVE_METRICS_FLUSH_INTERVAL", "5.0"))
+            self.metrics_flush_interval = max(0.1, min(flush_interval, 3600.0))
+            if flush_interval != self.metrics_flush_interval:
+                logger.warning(f"⚡ HIVE_METRICS_FLUSH_INTERVAL clamped from {flush_interval} to {self.metrics_flush_interval}")
+            
+            # Validate queue size (10-100000 range)
+            queue_size = int(os.getenv("HIVE_METRICS_QUEUE_SIZE", "1000"))
+            self.metrics_queue_size = max(10, min(queue_size, 100000))
+            if queue_size != self.metrics_queue_size:
+                logger.warning(f"⚡ HIVE_METRICS_QUEUE_SIZE clamped from {queue_size} to {self.metrics_queue_size}")
+                
+        except (ValueError, TypeError) as e:
+            try:
+                from lib.logging import logger
+                logger.error(f"⚡ Invalid metrics configuration in environment variables: {e}")
+                logger.info("⚡ Using secure default values for metrics configuration")
+            except ImportError:
+                # Fallback if logger is not available during early initialization
+                # Fallback for early initialization - avoid print statements
+                # Using secure default values (logging not available during early init)
+            # Use secure defaults
+            self.metrics_batch_size = 50
+            self.metrics_flush_interval = 5.0
+            self.metrics_queue_size = 1000
         
     
     def is_production(self) -> bool:

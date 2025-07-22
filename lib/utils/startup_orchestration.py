@@ -298,7 +298,7 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
                 logger.debug("🔧 Database cleanup attempted", error=str(cleanup_error))
 
 
-async def orchestrated_startup() -> StartupResults:
+async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     """
     Performance-Optimized Sequential Startup Implementation
     
@@ -319,7 +319,10 @@ async def orchestrated_startup() -> StartupResults:
         StartupResults: Complete startup state for API wiring
     """
     startup_start = datetime.now()
-    logger.info("⚡ Starting Performance-Optimized Sequential Startup")
+    if not quiet_mode:
+        logger.info("⚡ Starting Performance-Optimized Sequential Startup")
+    else:
+        logger.debug("⚡ Starting Performance-Optimized Sequential Startup (quiet mode)")
     
     services = None
     registries = None
@@ -327,7 +330,8 @@ async def orchestrated_startup() -> StartupResults:
     
     try:
         # 1. Database Migration (User requirement - first priority)
-        logger.info("📊 Database migration check")
+        if not quiet_mode:
+            logger.info("📊 Database migration check")
         try:
             from lib.utils.db_migration import check_and_run_migrations
             migrations_run = await check_and_run_migrations()
@@ -340,14 +344,17 @@ async def orchestrated_startup() -> StartupResults:
             logger.info("🔧 Continuing startup - system will use fallback initialization")
         
         # 2. Logging System Ready (implicit - already configured)
-        logger.info("🔧 Logging system ready")
+        if not quiet_mode:
+            logger.info("🔧 Logging system ready")
         
         # 3. Knowledge Base Init (CSV watching setup - shared KB initialized lazily)
-        logger.info("📊 Initializing knowledge base CSV watching")
+        if not quiet_mode:
+            logger.info("📊 Initializing knowledge base CSV watching")
         csv_manager = await initialize_knowledge_base()
         
         # 4. Component Discovery (Single batch operation - MOVED BEFORE version sync)
-        logger.info("🔍 Discovering components")
+        if not quiet_mode:
+            logger.info("🔍 Discovering components")
         registries = await batch_component_discovery()
         
         # 5. Version Synchronization (NOW uses actual discovered registries)
@@ -355,17 +362,23 @@ async def orchestrated_startup() -> StartupResults:
         sync_results = await run_version_synchronization(registries, db_url)
         
         # 6. Configuration Resolution (implicit via registry lazy loading)
-        logger.info("🔧 Configuration resolution completed")
+        if not quiet_mode:
+            logger.info("🔧 Configuration resolution completed")
         
         # 7. Other Service Initialization (auth, MCP, metrics)
         services = await initialize_other_services(csv_manager)
         
         # 8. Startup Summary
         startup_time = (datetime.now() - startup_start).total_seconds()
-        logger.info("⚡ Sequential startup completed", 
-                   total_components=registries.total_components,
-                   startup_time_seconds=f"{startup_time:.2f}",
-                   sequence="optimized")
+        if not quiet_mode:
+            logger.info("⚡ Sequential startup completed", 
+                       total_components=registries.total_components,
+                       startup_time_seconds=f"{startup_time:.2f}",
+                       sequence="optimized")
+        else:
+            logger.debug("⚡ Sequential startup completed (quiet mode)", 
+                        total_components=registries.total_components,
+                        startup_time_seconds=f"{startup_time:.2f}")
         
         return StartupResults(
             registries=registries,

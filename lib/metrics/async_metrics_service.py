@@ -1,18 +1,25 @@
 """
-Async Metrics Service with Queue Architecture
+Async Metrics Service
 
-High-performance async metrics collection designed for <0.1ms agent latency impact.
-Uses background queue processing with psycopg connection pooling.
+High-performance async metrics collection with <0.1ms agent latency impact.
+Collects execution metrics from agents, teams, and workflows with minimal performance overhead.
+
+FEATURES:
+- Event-driven collection triggered by agent/team execution
+- Non-blocking asyncio.Queue with configurable batch processing  
+- Concurrent database writes for optimal throughput
+- Input validation with bounds checking for security
+- Thread-safe singleton initialization
+- Configurable queue size, batch size, and flush intervals
+- Graceful error handling and performance monitoring
 """
 
 import asyncio
 import json
-import time
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
-from queue import Queue
-from threading import Thread, Event
+import threading
 
 from lib.services.metrics_service import MetricsService
 from lib.logging import logger
@@ -32,26 +39,34 @@ class AsyncMetricsService:
     """
     High-performance async metrics service with <0.1ms target latency.
     
+    Collects execution metrics from agents, teams, and workflows without
+    impacting performance. Uses event-driven collection with configurable
+    batch processing and concurrent database writes.
+    
     Features:
-    - Non-blocking queue-based collection
-    - Background batch processing  
-    - Connection pooling for efficiency
-    - Automatic error recovery
-    - Performance monitoring
+    - Non-blocking asyncio.Queue for zero-latency collection
+    - Background task processing with configurable batching
+    - Concurrent database writes for optimal throughput
+    - Input validation and bounds checking for security
+    - Thread-safe initialization and graceful shutdown
+    - Performance monitoring with periodic statistics
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.batch_size = self.config.get("batch_size", 50)
         self.flush_interval = self.config.get("flush_interval", 5.0)
+        self.queue_size = self.config.get("queue_size", 1000)
         
-        self.metrics_queue = Queue(maxsize=1000)
-        self.processing_thread = None
-        self.stop_event = Event()
-        
-        self.async_loop = None
-        self.async_loop_thread = None
+        # Async queue and processing
+        self.metrics_queue = None  # Will be created in initialize()
+        self.processing_task = None
         self.metrics_service = None
+        self._shutdown_event = None
+        self._initialized = False
+        
+        # Thread-safe initialization lock
+        self._init_lock = threading.Lock()
         
         self.stats = {
             "total_collected": 0,
@@ -60,96 +75,60 @@ class AsyncMetricsService:
             "storage_errors": 0,
             "last_flush": None
         }
-        
-        self._initialize()
     
-    def _initialize(self):
+    async def initialize(self):
         """Initialize metrics service and start background processing."""
-        try:
-            self._start_async_loop_thread()
-            self._start_background_processing()
-            logger.info("⚡ AsyncMetricsService initialized successfully with dedicated async loop")
+        with self._init_lock:
+            if self._initialized:
+                return
             
-        except Exception as e:
-            logger.error(f"⚡ Failed to initialize AsyncMetricsService: {e}")
-            raise
-    
-    def _start_async_loop_thread(self):
-        """Start dedicated asyncio loop thread for safe async operations."""
-        if self.async_loop_thread and self.async_loop_thread.is_alive():
-            return
-            
-        def run_async_loop():
-            self.async_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.async_loop)
-            
-            async def init_metrics_service():
-                from lib.services.metrics_service import MetricsService
-                self.metrics_service = MetricsService()
-            
-            self.async_loop.run_until_complete(init_metrics_service())
             try:
-                self.async_loop.run_forever()
-            except Exception as e:
-                logger.error(f"⚡ Async loop thread error: {e}")
-            finally:
-                self.async_loop.close()
-        
-        self.async_loop_thread = Thread(
-            target=run_async_loop,
-            daemon=True,
-            name="MetricsAsyncLoop"
-        )
-        self.async_loop_thread.start()
-        
-        timeout = 5.0
-        start_time = time.time()
-        while self.async_loop is None and (time.time() - start_time) < timeout:
-            time.sleep(0.01)
-        
-        if self.async_loop is None:
-            raise RuntimeError("Failed to start async loop thread")
-        
-        logger.info("⚡ Dedicated async loop thread started successfully")
-    
-    def _start_background_processing(self):
-        """Start background thread for processing metrics queue."""
-        if self.processing_thread and self.processing_thread.is_alive():
-            return
-            
-        self.stop_event.clear()
-        self.processing_thread = Thread(
-            target=self._background_processor,
-            daemon=True,
-            name="MetricsProcessor"
-        )
-        self.processing_thread.start()
-        logger.info("⚡ Background metrics processing started")
-    
-    def _background_processor(self):
-        """Background thread that processes the metrics queue."""
-        batch = []
-        last_flush = time.time()
-        
-        while not self.stop_event.is_set():
-            try:
-                timeout = 0.1
+                # Create async queue
+                self.metrics_queue = asyncio.Queue(maxsize=self.queue_size)
+                self._shutdown_event = asyncio.Event()
                 
+                # Initialize metrics service
+                self.metrics_service = MetricsService()
+                
+                # Start background processing task
+                self.processing_task = asyncio.create_task(self._background_processor())
+                
+                self._initialized = True
+                logger.info("⚡ AsyncMetricsService ready", 
+                          batch_size=self.batch_size,
+                          flush_interval=self.flush_interval,
+                          queue_size=self.queue_size)
+                
+            except Exception as e:
+                logger.error(f"⚡ Failed to initialize AsyncMetricsService: {e}")
+                raise
+    
+    async def _background_processor(self):
+        """Background task that processes the metrics queue."""
+        batch = []
+        last_flush = asyncio.get_event_loop().time()
+        
+        while not self._shutdown_event.is_set():
+            try:
+                # Try to get items from queue with timeout
                 try:
-                    entry = self.metrics_queue.get(timeout=timeout)
+                    entry = await asyncio.wait_for(
+                        self.metrics_queue.get(), 
+                        timeout=0.1
+                    )
                     batch.append(entry)
                     self.metrics_queue.task_done()
-                except:
+                except asyncio.TimeoutError:
                     pass
                 
-                current_time = time.time()
+                current_time = asyncio.get_event_loop().time()
                 should_flush = (
                     len(batch) >= self.batch_size or
                     (batch and current_time - last_flush >= self.flush_interval)
                 )
                 
                 if should_flush and batch:
-                    self._store_batch(batch)
+                    await self._store_batch(batch.copy())
                     batch.clear()
                     last_flush = current_time
                     self.stats["last_flush"] = datetime.now(timezone.utc)
@@ -158,57 +137,67 @@ class AsyncMetricsService:
                 logger.error(f"⚡ Error in metrics background processor: {e}")
                 # Clear problematic batch and continue
                 batch.clear()
-                time.sleep(1)
+                await asyncio.sleep(1)
         
         # Flush remaining items on shutdown
         if batch:
-            self._store_batch(batch)
+            await self._store_batch(batch)
             logger.info(f"⚡ Flushed {len(batch)} metrics on shutdown")
     
-    def _store_batch(self, batch: List[MetricsEntry]):
-        """Store a batch of metrics entries using safe async bridge pattern."""
-        if not batch or not self.async_loop or not self.metrics_service:
+    async def _store_batch(self, batch: List[MetricsEntry]):
+        """Store a batch of metrics entries concurrently."""
+        if not batch or not self.metrics_service:
             return
             
         try:
-            stored_count = 0
-            
+            # Create concurrent tasks for all entries in batch
+            tasks = []
             for entry in batch:
-                try:
-                    future = asyncio.run_coroutine_threadsafe(
-                        self.metrics_service.store_metrics(
-                            timestamp=entry.timestamp,
-                            agent_name=entry.agent_name,
-                            execution_type=entry.execution_type,
-                            metrics=entry.metrics,
-                            version=entry.version
-                        ),
-                        self.async_loop
+                task = asyncio.create_task(
+                    self.metrics_service.store_metrics(
+                        timestamp=entry.timestamp,
+                        agent_name=entry.agent_name,
+                        execution_type=entry.execution_type,
+                        metrics=entry.metrics,
+                        version=entry.version
                     )
-                    
-                    def handle_result(fut):
-                        try:
-                            result = fut.result()
-                            logger.debug(f"⚡ Stored metric entry with ID: {result}")
-                        except Exception as e:
-                            self.stats["storage_errors"] += 1
-                            logger.warning(f"⚡ Async storage failed: {e}")
-                    
-                    future.add_done_callback(handle_result)
-                    future.result(timeout=5.0)
-                    stored_count += 1
-                    
-                except Exception as entry_error:
-                    self.stats["storage_errors"] += 1
-                    logger.warning(f"⚡ Failed to store metric entry: {entry_error}")
-                    continue
+                )
+                tasks.append(task)
             
-            self.stats["total_stored"] += stored_count
-            logger.debug(f"⚡ Stored batch of {stored_count}/{len(batch)} metrics entries via async bridge")
+            # Wait for all tasks to complete with timeout
+            try:
+                results = await asyncio.wait_for(
+                    asyncio.gather(*tasks, return_exceptions=True),
+                    timeout=10.0
+                )
+                
+                # Count successful stores
+                stored_count = 0
+                for result in results:
+                    if isinstance(result, Exception):
+                        self.stats["storage_errors"] += 1
+                        logger.warning(f"⚡ Storage error: {result}")
+                    else:
+                        stored_count += 1
+                        logger.debug(f"⚡ Stored metric entry with ID: {result}")
+                
+                self.stats["total_stored"] += stored_count
+                
+                # Performance logging
+                if len(batch) > 0:
+                    success_rate = (stored_count / len(batch)) * 100
+                    logger.debug(f"⚡ Stored batch of {stored_count}/{len(batch)} metrics entries concurrently",
+                               success_rate=f"{success_rate:.1f}%",
+                               batch_size=len(batch),
+                               errors=len(batch) - stored_count)
+                
+            except asyncio.TimeoutError:
+                self.stats["storage_errors"] += len(batch)
+                logger.error("⚡ Batch storage timeout - all entries failed")
                 
         except Exception as e:
-            self.stats["storage_errors"] += 1
-            logger.error(f"⚡ Failed to store metrics batch via async bridge: {e}")
+            self.stats["storage_errors"] += len(batch)
+            logger.error(f"⚡ Failed to store metrics batch: {e}")
     
     async def collect_metrics(self, 
                             agent_name: str,
@@ -227,7 +216,10 @@ class AsyncMetricsService:
         Returns:
             bool: True if queued successfully, False if queue full
         """
-        # Skip if metrics service not available (should not happen)
+        if not self._initialized:
+            await self.initialize()
+            
+        # Skip if metrics service not available
         if not self.metrics_service:
             return False
             
@@ -245,9 +237,18 @@ class AsyncMetricsService:
             self.metrics_queue.put_nowait(entry)
             self.stats["total_collected"] += 1
             
+            # Log performance metrics periodically
+            if self.stats["total_collected"] % 100 == 0:
+                logger.info("⚡ Metrics collection performance",
+                          total_collected=self.stats["total_collected"],
+                          total_stored=self.stats["total_stored"],
+                          queue_size=self.metrics_queue.qsize(),
+                          queue_overflows=self.stats["queue_overflows"],
+                          storage_errors=self.stats["storage_errors"])
+            
             return True
             
-        except:
+        except asyncio.QueueFull:
             self.stats["queue_overflows"] += 1
             logger.warning("⚡ Metrics queue full, dropping metrics entry")
             return False
@@ -266,26 +267,18 @@ class AsyncMetricsService:
             # Extract metrics from response
             metrics = self._extract_metrics_from_response(response, yaml_overrides)
             
-            # Use async collect (run in event loop if available)
+            # Use async collect in a safe way
             try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # Create task for async collection
-                    asyncio.create_task(
-                        self.collect_metrics(agent_name, execution_type, metrics)
-                    )
-                else:
-                    # Run in new event loop
-                    asyncio.run(
-                        self.collect_metrics(agent_name, execution_type, metrics)
-                    )
-            except:
-                # Fallback to sync-like collection
-                return asyncio.run(
+                loop = asyncio.get_running_loop()
+                # Create task for async collection
+                asyncio.create_task(
                     self.collect_metrics(agent_name, execution_type, metrics)
                 )
-            
-            return True
+                return True
+            except RuntimeError:
+                # No running loop - this shouldn't happen in FastAPI context
+                logger.warning("⚡ No running event loop for metrics collection")
+                return False
             
         except Exception as e:
             logger.error(f"⚡ Failed to collect metrics from response: {e}")
@@ -327,11 +320,10 @@ class AsyncMetricsService:
         """Get current performance statistics."""
         return {
             **self.stats,
-            "queue_size": self.metrics_queue.qsize(),
+            "queue_size": self.metrics_queue.qsize() if self.metrics_queue else 0,
             "metrics_service_available": self.metrics_service is not None,
-            "async_loop_running": self.async_loop is not None and not self.async_loop.is_closed(),
-            "async_thread_alive": self.async_loop_thread.is_alive() if self.async_loop_thread else False,
-            "is_processing": self.processing_thread.is_alive() if self.processing_thread else False
+            "is_processing": self.processing_task and not self.processing_task.done(),
+            "initialized": self._initialized
         }
     
     async def flush(self, timeout: float = 5.0) -> bool:
@@ -344,7 +336,7 @@ class AsyncMetricsService:
         Returns:
             bool: True if flushed successfully
         """
-        if not self.processing_thread:
+        if not self.metrics_queue:
             return False
             
         queue_size = self.metrics_queue.qsize()
@@ -352,42 +344,34 @@ class AsyncMetricsService:
             return True
             
         # Wait for queue to empty
-        start_time = time.time()
+        start_time = asyncio.get_event_loop().time()
         while (self.metrics_queue.qsize() > 0 and 
-               time.time() - start_time < timeout):
+               asyncio.get_event_loop().time() - start_time < timeout):
             await asyncio.sleep(0.1)
         
         return self.metrics_queue.qsize() == 0
     
-    def close(self):
+    async def close(self):
         """Gracefully shutdown the metrics service."""
         logger.info("⚡ Shutting down AsyncMetricsService...")
         
-        if self.stop_event:
-            self.stop_event.set()
+        if self._shutdown_event:
+            self._shutdown_event.set()
         
-        if self.processing_thread and self.processing_thread.is_alive():
-            self.processing_thread.join(timeout=5.0)
-        if self.async_loop and self.async_loop_thread:
+        if self.processing_task:
             try:
-                self.async_loop.call_soon_threadsafe(self.async_loop.stop)
-                
-                if self.async_loop_thread.is_alive():
-                    self.async_loop_thread.join(timeout=5.0)
-                    
-                if self.async_loop_thread.is_alive():
-                    logger.warning("⚡ Async loop thread did not shut down within timeout")
-                else:
-                    logger.info("⚡ Async loop thread shut down successfully")
-                    
-            except Exception as e:
-                logger.error(f"⚡ Error shutting down async loop: {e}")
+                await asyncio.wait_for(self.processing_task, timeout=5.0)
+            except asyncio.TimeoutError:
+                logger.warning("⚡ Processing task did not shut down within timeout")
+                self.processing_task.cancel()
         
+        self._initialized = False
         logger.info("⚡ AsyncMetricsService closed")
 
 
-# Global metrics service instance
+# Thread-safe global metrics service instance
 _metrics_service: Optional[AsyncMetricsService] = None
+_init_lock = threading.Lock()
 
 
 def get_metrics_service() -> Optional[AsyncMetricsService]:
@@ -396,16 +380,18 @@ def get_metrics_service() -> Optional[AsyncMetricsService]:
 
 
 def initialize_metrics_service(config: Optional[Dict[str, Any]] = None) -> AsyncMetricsService:
-    """Initialize the global metrics service."""
+    """Initialize the global metrics service with thread safety."""
     global _metrics_service
-    if _metrics_service is None:
-        _metrics_service = AsyncMetricsService(config)
-    return _metrics_service
+    with _init_lock:
+        if _metrics_service is None:
+            _metrics_service = AsyncMetricsService(config)
+        return _metrics_service
 
 
-def shutdown_metrics_service():
+async def shutdown_metrics_service():
     """Shutdown the global metrics service."""
     global _metrics_service
-    if _metrics_service:
-        _metrics_service.close()
-        _metrics_service = None
+    with _init_lock:
+        if _metrics_service:
+            await _metrics_service.close()
+            _metrics_service = None
