@@ -35,86 +35,130 @@ The system follows clean architecture principles with intelligent routing teams 
 
 ```mermaid
 graph TB
-    %% Client Entry Point
-    Client[👤 Client Request<br/>FastAPI Endpoint] --> Router
+    %% Client Layer
+    Client[🌐 Client Applications<br/>REST API Clients<br/>Web Interfaces<br/>Mobile Apps] --> LoadBalancer
     
-    %% Central Routing Team
-    Router[🤖 Routing Team<br/>Claude Sonnet 4<br/>Intelligent Coordinator<br/>mode: route]
+    %% Load Balancing & API Gateway
+    LoadBalancer[⚖️ Load Balancer<br/>NGINX/HAProxy<br/>Rate Limiting<br/>SSL Termination] --> APIGateway
+    APIGateway[🚪 API Gateway<br/>FastAPI Application<br/>Authentication<br/>Request Routing] --> Middleware
     
-    %% Routing Decision Engine
-    Router --> Routing{🔀 Query Analysis<br/>Domain Classification<br/>Agent Selection}
-    
-    %% Human Escalation System
-    Router --> HumanWorkflow[🚨 Human Handoff Workflow<br/>Escalation Trigger<br/>MCP Integration]
-    HumanWorkflow --> Integration[📱 External Integrations<br/>WhatsApp/Slack/Email<br/>Notification Systems]
-    
-    %% Specialized Domain Agents
-    Routing -->|forward_task_to_member| Agent1[🏪 Domain Agent A<br/>Specialized Operations<br/>Business Logic<br/>Context Aware]
-    Routing -->|forward_task_to_member| Agent2[💳 Domain Agent B<br/>Process Management<br/>Data Processing<br/>Decision Making]
-    Routing -->|forward_task_to_member| Agent3[💻 Domain Agent C<br/>System Integration<br/>API Coordination<br/>External Services]
-    Routing -->|forward_task_to_member| Agent4[✅ Completion Agent<br/>Task Finalization<br/>Quality Assurance<br/>User Satisfaction]
-    
-    %% Knowledge Base System with Hot Reload
-    subgraph Knowledge[📚 Enterprise Knowledge Base]
-        CSV[📄 CSV Knowledge Store<br/>Hot Reload System<br/>Domain Filtering]
-        HotReload[🔄 File Watcher<br/>Real-time Updates<br/>Zero-downtime Reload]
-        Vector[🔍 Vector Search<br/>PostgreSQL + pgvector<br/>Semantic Similarity]
-        CSV --> HotReload
-        HotReload --> Vector
+    %% Middleware Layer
+    subgraph Middleware[🔒 Middleware Stack]
+        CORS[🌍 CORS Middleware<br/>Cross-Origin Support<br/>Security Headers]
+        Auth[🔐 Authentication<br/>API Key Validation<br/>JWT Processing]
+        Logging[📝 Logging Middleware<br/>Request Tracing<br/>Performance Metrics]
+        RateLimit[⏱️ Rate Limiting<br/>Request Throttling<br/>DDoS Protection]
     end
     
-    %% Intelligent Knowledge Filtering
-    Agent1 --> Filter1[🎯 Agentic Filter<br/>Domain Context<br/>Relevance Scoring<br/>Result Limiting]
-    Agent2 --> Filter2[🎯 Agentic Filter<br/>Business Unit Focus<br/>Contextual Ranking<br/>Precision Tuning]
-    Agent3 --> Filter3[🎯 Agentic Filter<br/>System Context<br/>Integration Focus<br/>Technical Filtering]
-    
-    %% Knowledge Retrieval
-    Filter1 --> Vector
-    Filter2 --> Vector
-    Filter3 --> Vector
-    
-    %% Enterprise Memory System
-    subgraph Memory[🧠 Persistent Memory Layer]
-        PostgresMemory[🗃️ PostgreSQL Storage<br/>Session Persistence<br/>Conversation History]
-        SessionMgmt[⏱️ Session Manager<br/>Multi-turn Conversations<br/>Context Continuity]
-        PatternDetect[🔍 Pattern Analysis<br/>Usage Analytics<br/>Learning System]
+    %% Application Layer - Clean Architecture
+    subgraph AppCore[🏗️ Application Core]
+        subgraph API[🚀 API Layer (api/)]
+            Routes[📍 Route Handlers<br/>v1_router.py<br/>health.py<br/>mcp_router.py]
+            Validation[✅ Request Validation<br/>Pydantic Models<br/>Input Sanitization]
+            Streaming[📡 Streaming Support<br/>SSE/WebSocket<br/>Real-time Responses]
+        end
+        
+        subgraph Business[🧠 Business Logic (ai/)]
+            AgentFactory[🏭 Agent Factory<br/>YAML Configuration<br/>Dynamic Loading]
+            TeamOrchestrator[👥 Team Orchestrator<br/>Routing Logic<br/>Task Distribution]
+            WorkflowEngine[⚡ Workflow Engine<br/>Process Automation<br/>State Management]
+        end
+        
+        subgraph Shared[📚 Shared Libraries (lib/)]
+            Config[⚙️ Configuration<br/>YAML Parser<br/>Environment Management]
+            Knowledge[🧠 Knowledge System<br/>CSV Hot Reload<br/>Vector Search]
+            Memory[💾 Memory Management<br/>Session Persistence<br/>Context Handling]
+            Utils[🛠️ Utilities<br/>Validation<br/>Helpers]
+        end
     end
     
-    %% Memory Integration
-    Router --> PostgresMemory
-    Agent1 --> PostgresMemory
-    Agent2 --> PostgresMemory
-    Agent3 --> PostgresMemory
-    Agent4 --> PostgresMemory
+    %% Data Layer
+    subgraph DataLayer[🗄️ Data Layer]
+        PostgreSQL[(🐘 PostgreSQL<br/>Primary Database<br/>pgvector Extension<br/>ACID Compliance)]
+        Migrations[📋 Alembic Migrations<br/>Schema Versioning<br/>Database Evolution]
+        ConnectionPool[🏊 Connection Pool<br/>SQLAlchemy<br/>Async Support]
+    end
     
-    PostgresMemory --> SessionMgmt
-    PostgresMemory --> PatternDetect
+    %% External Integrations
+    subgraph External[🔌 External Systems]
+        MCPServers[🔗 MCP Servers<br/>Model Context Protocol<br/>External AI Services]
+        AIProviders[🤖 AI Providers<br/>Anthropic Claude<br/>OpenAI GPT<br/>Google Gemini]
+        Notifications[📱 Notification Systems<br/>WhatsApp<br/>Slack<br/>Email]
+    end
     
-    %% Response Generation
-    Agent1 --> Response[📝 Response Generation<br/>Context Integration<br/>Quality Validation]
-    Agent2 --> Response
-    Agent3 --> Response
-    Agent4 --> Response
+    %% Infrastructure Layer
+    subgraph Infrastructure[🏭 Infrastructure]
+        Docker[🐳 Docker Containers<br/>Multi-stage Builds<br/>UV Package Manager]
+        Compose[🐙 Docker Compose<br/>Service Orchestration<br/>Health Checks]
+        Volumes[💽 Persistent Storage<br/>Database Volumes<br/>Log Storage<br/>Configuration]
+    end
     
-    Response --> MemoryUpdate[💾 Memory Persistence<br/>Learning Updates<br/>Pattern Recognition]
-    MemoryUpdate --> FinalResponse[✅ Client Response<br/>Formatted Output]
+    %% Monitoring & Observability
+    subgraph Monitoring[📊 Monitoring Stack]
+        HealthChecks[❤️ Health Checks<br/>Service Status<br/>Dependency Checks]
+        Metrics[📈 Metrics Collection<br/>Performance Monitoring<br/>Usage Analytics]
+        LogAggregation[📋 Log Aggregation<br/>Structured Logging<br/>Error Tracking]
+    end
+    
+    %% Request Flow
+    Middleware --> Routes
+    Routes --> Validation
+    Validation --> AgentFactory
+    AgentFactory --> TeamOrchestrator
+    TeamOrchestrator --> WorkflowEngine
+    
+    %% Data Flow
+    Business --> Knowledge
+    Business --> Memory
+    Business --> Config
+    
+    %% Storage Connections
+    Memory --> ConnectionPool
+    Knowledge --> ConnectionPool
+    ConnectionPool --> PostgreSQL
+    PostgreSQL --> Migrations
+    
+    %% External Connections
+    Business --> MCPServers
+    Business --> AIProviders
+    WorkflowEngine --> Notifications
+    
+    %% Infrastructure Connections
+    APIGateway --> Docker
+    Docker --> Compose
+    Compose --> Volumes
+    PostgreSQL --> Volumes
+    
+    %% Monitoring Connections
+    Routes --> HealthChecks
+    Business --> Metrics
+    Middleware --> LogAggregation
+    
+    %% Response Flow
+    WorkflowEngine --> Streaming
+    Streaming --> Routes
+    Routes --> APIGateway
+    APIGateway --> LoadBalancer
+    LoadBalancer --> Client
     
     %% Styling
-    classDef router fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
-    classDef agent fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
-    classDef knowledge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
-    classDef memory fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
-    classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
-    classDef workflow fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000000
+    classDef client fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
+    classDef gateway fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
+    classDef middleware fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+    classDef business fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+    classDef data fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
     classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
+    classDef infrastructure fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000
+    classDef monitoring fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000000
     
-    class Router router
-    class Agent1,Agent2,Agent3,Agent4 agent
-    class CSV,Vector,Filter1,Filter2,Filter3,HotReload knowledge
-    class PostgresMemory,PatternDetect,SessionMgmt,MemoryUpdate memory
-    class Routing decision
-    class HumanWorkflow workflow
-    class Integration,Client external
+    class Client,LoadBalancer client
+    class APIGateway gateway
+    class CORS,Auth,Logging,RateLimit,Middleware middleware
+    class AgentFactory,TeamOrchestrator,WorkflowEngine,Routes,Validation,Streaming,Config,Knowledge,Memory,Utils,API,Business,Shared,AppCore business
+    class PostgreSQL,Migrations,ConnectionPool,DataLayer data
+    class MCPServers,AIProviders,Notifications,External external
+    class Docker,Compose,Volumes,Infrastructure infrastructure
+    class HealthChecks,Metrics,LogAggregation,Monitoring monitoring
 ```
 
 ## ⚡ Quick Start
