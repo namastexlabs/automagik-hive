@@ -1,0 +1,246 @@
+team:
+  name: "Code Development Team"
+  team_id: "code-development-team"
+  version: dev
+  description: >
+    Comprehensive code development team providing end-to-end software development
+    capabilities through coordinated multi-agent collaboration. Handles project
+    onboarding, code analysis, file operations, and intelligent code modifications.
+
+lead_agent: "project-orchestration-agent"
+
+# Coordinate mode enables intelligent task distribution and result synthesis
+coordinate_mode: true
+
+agents:
+  - agent_id: "project-orchestration-agent"
+    role: "coordinator"
+    description: "Project lifecycle management and team coordination"
+    specialization:
+      - "project_onboarding"
+      - "memory_management"
+      - "workflow_orchestration"
+      - "agent_coordination"
+    capabilities:
+      - onboarding
+      - check_onboarding_performed
+      - activate_project
+      - get_current_config
+      - read_memory
+      - write_memory
+      - list_memories
+      - delete_memory
+
+  - agent_id: "code-understanding-agent"
+    role: "analyst"
+    description: "Code analysis and symbol comprehension specialist"
+    specialization:
+      - "symbol_analysis"
+      - "code_structure"
+      - "dependency_mapping"
+      - "architectural_insights"
+    capabilities:
+      - find_symbol
+      - find_referencing_symbols
+      - find_referencing_code_snippets
+      - get_symbols_overview
+  
+  - agent_id: "file-management-agent"
+    role: "operator"
+    description: "File system operations and content management"
+    specialization:
+      - "file_operations"
+      - "content_management"
+      - "directory_navigation"
+      - "search_operations"
+    capabilities:
+      - read_file
+      - create_text_file
+      - list_dir
+      - search_for_pattern
+      - delete_lines
+      - replace_lines
+      - insert_at_line
+  
+  - agent_id: "code-editing-agent"
+    role: "modifier"
+    description: "Symbol-aware code modifications and refactoring"
+    specialization:
+      - "code_modification"
+      - "symbol_refactoring"
+      - "syntax_validation"
+      - "automated_transformations"
+    capabilities:
+      - replace_symbol_body
+      - insert_before_symbol
+      - insert_after_symbol
+      - rename_symbol
+      - execute_shell_command
+      - validate_code_syntax
+
+# Coordination patterns for different types of work
+coordination_patterns:
+  project_setup:
+    description: "Initial project analysis and setup"
+    workflow:
+      - agent: "project-orchestration-agent"
+        action: "onboarding"
+        description: "Comprehensive project analysis and setup"
+      - agent: "file-management-agent"
+        action: "list_dir"
+        description: "Directory structure analysis"
+      - agent: "code-understanding-agent"
+        action: "get_symbols_overview"
+        description: "Code structure overview"
+        depends_on: ["project-orchestration-agent"]
+
+  code_analysis:
+    description: "Deep code analysis and understanding"
+    workflow:
+      - agent: "code-understanding-agent"
+        action: "find_symbol"
+        description: "Locate and analyze symbols"
+      - agent: "code-understanding-agent"
+        action: "find_referencing_symbols"
+        description: "Map symbol relationships"
+        depends_on: ["find_symbol"]
+      - agent: "file-management-agent"
+        action: "read_file"
+        description: "Read relevant files for analysis"
+        parallel: true
+
+  code_modification:
+    description: "Safe code modifications with validation"
+    workflow:
+      - agent: "code-understanding-agent"
+        action: "find_symbol"
+        description: "Understand current symbol structure"
+      - agent: "file-management-agent"
+        action: "read_file"
+        description: "Read target files"
+        parallel: true
+      - agent: "code-editing-agent"
+        action: "replace_symbol_body"
+        description: "Perform code modifications"
+        depends_on: ["code-understanding-agent", "file-management-agent"]
+      - agent: "code-editing-agent"
+        action: "validate_code_syntax"
+        description: "Validate modifications"
+        depends_on: ["replace_symbol_body"]
+      - agent: "project-orchestration-agent"
+        action: "write_memory"
+        description: "Record modifications"
+        depends_on: ["validate_code_syntax"]
+
+# Task routing based on request analysis
+task_routing:
+  project_questions:
+    keywords: ["project", "setup", "onboard", "overview", "structure"]
+    primary_agent: "project-orchestration-agent"
+    support_agents: ["file-management-agent"]
+
+  code_analysis:
+    keywords: ["find", "analyze", "understand", "symbol", "function", "class"]
+    primary_agent: "code-understanding-agent"
+    support_agents: ["file-management-agent"]
+
+  file_operations:
+    keywords: ["read", "write", "create", "delete", "search", "file", "directory"]
+    primary_agent: "file-management-agent"
+    support_agents: ["code-understanding-agent"]
+
+  code_modification:
+    keywords: ["modify", "change", "refactor", "rename", "replace", "edit"]
+    primary_agent: "code-editing-agent"
+    support_agents: ["code-understanding-agent", "file-management-agent"]
+    always_coordinate: true
+
+# Quality assurance patterns
+quality_assurance:
+  before_modification:
+    - validate_target_exists
+    - analyze_dependencies
+    - create_backup
+    - understand_scope
+
+  after_modification:
+    - validate_syntax
+    - check_references
+    - run_tests
+    - update_memory
+
+# Memory coordination patterns
+memory_coordination:
+  shared_context:
+    - project_structure
+    - symbol_mappings
+    - modification_history
+    - workflow_state
+
+  agent_specific:
+    project_orchestration: ["project_config", "coordination_state"]
+    code_understanding: ["symbol_cache", "analysis_results"]
+    file_management: ["file_operations", "search_results"]
+    code_editing: ["modification_log", "validation_results"]
+
+instructions: |
+  The Code Development Team provides comprehensive software development capabilities
+  through intelligent coordination of specialized agents.
+
+  **Team Coordination Principles:**
+  
+  1. **Intelligent Task Distribution**
+     - Route tasks to the most appropriate agent based on request analysis
+     - Enable parallel execution where possible for efficiency
+     - Ensure proper dependency management between agents
+
+  2. **Comprehensive Project Understanding**
+     - Start with project onboarding for new codebases
+     - Maintain shared context through memory coordination
+     - Build cumulative understanding across interactions
+
+  3. **Safe Code Operations**
+     - Always understand code structure before modifications
+     - Validate syntax and references after changes
+     - Maintain comprehensive modification history
+
+  4. **Quality Assurance**
+     - Create backups before destructive operations
+     - Validate all modifications through multiple agents
+     - Coordinate rollback capabilities when needed
+
+  **Coordination Workflows:**
+
+  **For Project Setup:**
+  - Project Orchestration Agent performs comprehensive onboarding
+  - File Management Agent provides directory structure analysis
+  - Code Understanding Agent creates symbol overview
+  - All results synthesized for complete project understanding
+
+  **For Code Analysis:**
+  - Code Understanding Agent leads symbol and structure analysis
+  - File Management Agent provides file access and search capabilities
+  - Results coordinated for comprehensive code comprehension
+
+  **For Code Modifications:**
+  - Code Understanding Agent analyzes modification impact
+  - File Management Agent handles file operations and backups
+  - Code Editing Agent performs safe modifications
+  - Project Orchestration Agent records changes in memory
+
+  **Team Memory Management:**
+  - Shared project context across all agents
+  - Specialized memory for each agent's domain
+  - Cumulative learning from all interactions
+  - Consistent state management across workflows
+
+expected_output: |
+  Coordinated software development capabilities with comprehensive project
+  understanding, safe code operations, and intelligent task distribution
+  across specialized agents.
+
+success_criteria: >
+  SUCESSO = Successfully coordinated multi-agent workflows, maintained
+  code quality and safety, provided comprehensive development capabilities
+
+add_datetime_to_instructions: true

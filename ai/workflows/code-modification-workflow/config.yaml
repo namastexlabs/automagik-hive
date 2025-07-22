@@ -1,0 +1,350 @@
+workflow:
+  name: "Code Modification Workflow"
+  workflow_id: "code-modification-workflow"
+  version: dev
+  description: >
+    Safe and intelligent code modification workflow that analyzes impact,
+    performs modifications with validation, and ensures code integrity
+    throughout the modification process.
+
+steps:
+  - step_id: "pre_modification_analysis"
+    name: "Pre-Modification Impact Analysis"
+    description: "Analyze the target symbol and assess modification impact"
+    agent: "code-understanding-agent"
+    action: "find_symbol"
+    inputs:
+      symbol_name: "{{ target_symbol }}"
+      symbol_type: "{{ symbol_type }}"
+      file_pattern: "{{ file_pattern }}"
+    expected_outputs:
+      - symbol_location
+      - current_definition
+      - modification_scope
+
+  - step_id: "dependency_assessment"
+    name: "Dependency Impact Assessment"
+    description: "Assess how modifications will affect dependent code"
+    agent: "code-understanding-agent"
+    action: "find_referencing_symbols"
+    depends_on: ["pre_modification_analysis"]
+    inputs:
+      target_symbol: "{{ target_symbol }}"
+      target_file: "{{ target_file_path }}"
+      target_line: "{{ target_line_number }}"
+    expected_outputs:
+      - dependent_symbols
+      - impact_analysis
+      - risk_assessment
+
+  - step_id: "backup_creation"
+    name: "Safety Backup Creation"
+    description: "Create comprehensive backup of files to be modified"
+    agent: "file-management-agent"
+    action: "read_file"
+    depends_on: ["pre_modification_analysis"]
+    inputs:
+      relative_path: "{{ target_file_path }}"
+      max_chars: 500000
+    expected_outputs:
+      - original_file_content
+      - backup_confirmation
+      - rollback_capability
+
+  - step_id: "modification_execution"
+    name: "Code Modification Execution"
+    description: "Perform the requested code modification"
+    agent: "code-editing-agent"
+    action: "{{ modification_action }}"
+    depends_on: ["pre_modification_analysis", "dependency_assessment", "backup_creation"]
+    inputs:
+      file_path: "{{ target_file_path }}"
+      symbol_name: "{{ target_symbol }}"
+      symbol_type: "{{ symbol_type }}"
+      new_body: "{{ new_code_content }}"
+      validate_syntax: true
+      backup: true
+    expected_outputs:
+      - modification_result
+      - changes_summary
+      - syntax_validation
+
+  - step_id: "post_modification_validation"
+    name: "Post-Modification Validation"
+    description: "Validate syntax and structure after modifications"
+    agent: "code-editing-agent"
+    action: "validate_code_syntax"
+    depends_on: ["modification_execution"]
+    inputs:
+      file_path: "{{ target_file_path }}"
+      language: "{{ detected_language }}"
+    expected_outputs:
+      - syntax_validation_result
+      - error_detection
+      - quality_metrics
+
+  - step_id: "reference_verification"
+    name: "Reference Integrity Verification"
+    description: "Verify that symbol references are still valid"
+    agent: "code-understanding-agent"
+    action: "find_referencing_code_snippets"
+    depends_on: ["modification_execution"]
+    inputs:
+      target_symbol: "{{ target_symbol }}"
+      target_file: "{{ target_file_path }}"
+      context_lines: 3
+    expected_outputs:
+      - reference_status
+      - broken_references
+      - integration_health
+
+  - step_id: "test_execution"
+    name: "Automated Test Execution"
+    description: "Run relevant tests to verify modification integrity"
+    agent: "code-editing-agent"
+    action: "execute_shell_command"
+    depends_on: ["post_modification_validation"]
+    conditional: "test_command_available"
+    inputs:
+      command: "{{ test_command }}"
+      working_directory: "."
+      timeout: 120
+      capture_output: true
+    expected_outputs:
+      - test_results
+      - test_success_status
+      - test_failure_details
+
+  - step_id: "modification_documentation"
+    name: "Modification Documentation and Memory Update"
+    description: "Document the modification and update project memory"
+    agent: "project-orchestration-agent"
+    action: "write_memory"
+    depends_on: ["post_modification_validation", "reference_verification"]
+    inputs:
+      memory_name: "modification_{{ target_symbol }}_{{ timestamp }}"
+      content: "{{ consolidate_modification_results }}"
+    expected_outputs:
+      - modification_record
+      - change_log_entry
+      - memory_update_confirmation
+
+# Input parameters for workflow execution
+input_parameters:
+  target_symbol:
+    type: string
+    description: "Name of the symbol to modify"
+    required: true
+
+  symbol_type:
+    type: string
+    description: "Type of symbol to modify"
+    required: true
+    options: ["function", "class", "method", "variable"]
+
+  modification_type:
+    type: string
+    description: "Type of modification to perform"
+    required: true
+    options: ["replace_body", "insert_before", "insert_after", "rename"]
+
+  new_code_content:
+    type: string
+    description: "New code content for the modification"
+    required: true
+
+  target_file_path:
+    type: string
+    description: "Path to the file containing the target symbol"
+    required: false  # Will be auto-detected if not provided
+
+  validation_level:
+    type: string
+    description: "Level of validation to perform"
+    required: false
+    default: "standard"
+    options: ["basic", "standard", "comprehensive"]
+
+  run_tests:
+    type: boolean
+    description: "Whether to run automated tests after modification"
+    required: false
+    default: true
+
+  rollback_on_failure:
+    type: boolean
+    description: "Automatically rollback on validation failure"
+    required: false
+    default: true
+
+# Dynamic parameter resolution
+dynamic_parameters:
+  modification_action:
+    source: "input_parameters"
+    mapping:
+      "replace_body": "replace_symbol_body"
+      "insert_before": "insert_before_symbol"
+      "insert_after": "insert_after_symbol"
+      "rename": "rename_symbol"
+
+  target_file_path:
+    source: "pre_modification_analysis"
+    extraction: "primary_file"
+    fallback_detection: true
+
+  target_line_number:
+    source: "pre_modification_analysis"
+    extraction: "line_number"
+    fallback: null
+
+  detected_language:
+    source: "target_file_path"
+    extraction: "file_extension"
+    mapping:
+      ".py": "python"
+      ".js": "javascript"
+      ".ts": "typescript"
+      ".java": "java"
+
+  test_command:
+    source: "project_analysis"
+    detection_patterns:
+      - "pytest ."
+      - "npm test"
+      - "mvn test"
+      - "cargo test"
+    fallback: null
+
+# Output structure
+output_structure:
+  modification_summary:
+    - modification_type
+    - target_symbol
+    - files_modified
+    - lines_changed
+
+  validation_results:
+    - syntax_validation
+    - reference_integrity
+    - test_execution_status
+    - quality_assessment
+
+  impact_analysis:
+    - dependency_effects
+    - breaking_changes
+    - compatibility_status
+    - performance_implications
+
+  rollback_information:
+    - backup_locations
+    - rollback_instructions
+    - recovery_options
+    - safety_measures
+
+# Workflow coordination
+coordination:
+  retry_failed_steps: true
+  max_retries: 1
+  parallel_execution_limit: 2
+  timeout_per_step: 300  # 5 minutes
+
+  rollback_triggers:
+    - "syntax_validation_failed"
+    - "critical_references_broken"
+    - "test_execution_failed"
+    - "user_requested_rollback"
+
+  error_handling:
+    syntax_error:
+      action: "rollback_modification"
+      notify: true
+    
+    reference_broken:
+      action: "attempt_fix"
+      max_attempts: 1
+      fallback: "rollback_modification"
+    
+    test_failure:
+      action: "conditional_rollback"
+      condition: "rollback_on_failure == true"
+
+# Quality gates
+quality_gates:
+  - gate_id: "modification_safety"
+    description: "Ensure modification can be performed safely"
+    condition: "backup_created AND impact_assessed"
+    critical: true
+    
+  - gate_id: "syntax_integrity"
+    description: "Ensure code syntax remains valid"
+    condition: "syntax_validation_passed"
+    critical: true
+    
+  - gate_id: "reference_integrity"
+    description: "Ensure symbol references remain valid"
+    condition: "no_broken_references OR references_fixable"
+    
+  - gate_id: "test_compatibility"
+    description: "Ensure modifications don't break tests"
+    condition: "tests_pass OR no_tests_available"
+
+# Success criteria
+success_criteria:
+  primary:
+    - "Code modification completed successfully"
+    - "Syntax validation passed"
+    - "No critical references broken"
+    - "Modification documented in memory"
+
+  secondary:
+    - "All tests pass (if available)"
+    - "Code quality maintained or improved"
+    - "Change history properly tracked"
+    - "Rollback capability maintained"
+
+# Rollback procedures
+rollback_procedures:
+  automatic_triggers:
+    - syntax_validation_failure
+    - critical_reference_breakage
+    - test_execution_failure (if configured)
+
+  rollback_steps:
+    - restore_from_backup
+    - verify_restoration
+    - clear_failed_modification_memory
+    - notify_rollback_completion
+
+  manual_rollback:
+    available: true
+    command: "rollback_modification"
+    requires_confirmation: true
+
+# Integration points
+integration:
+  team_coordination:
+    team_id: "code-development-team"
+    coordination_mode: "sequential"
+
+  memory_management:
+    persistent_memory: true
+    modification_history: true
+    rollback_tracking: true
+
+  quality_assurance:
+    syntax_validation: "mandatory"
+    reference_checking: "mandatory"
+    test_execution: "conditional"
+
+  notifications:
+    completion_status: true
+    error_alerts: true
+    rollback_notifications: true
+
+expected_duration: "5-20 minutes"
+
+tags:
+  - "code-modification"
+  - "safe-editing"
+  - "validation"
+  - "rollback-capable"
