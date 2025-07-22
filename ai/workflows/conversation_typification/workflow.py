@@ -1,10 +1,10 @@
 """
-Conversation Typification Workflow - Agno Workflows 2.0 (Fixed)
-================================================================
+Conversation Typification Workflow - Agno Workflows 2.0
+========================================================
 
-Corrected implementation using standalone functions as step executors.
-The issue was that instance methods cannot have attributes set on them,
-but the workflow framework needs to set workflow_session_state on executors.
+Implementation using standalone functions as step executors.
+Uses the step-based architecture where standalone functions serve as
+step executors, allowing the workflow framework to manage session state.
 """
 
 import os
@@ -374,5 +374,5 @@ def get_conversation_typification_workflow(**kwargs):
         **kwargs
     )
     
-    logger.info("🤖 Conversation Typification Workflow V2 (Fixed) initialized")
+    logger.info("🤖 Conversation Typification Workflow V2 initialized")
     return workflow
