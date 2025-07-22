@@ -13,8 +13,10 @@ from lib.knowledge.metadata_csv_reader import create_metadata_csv_reader, create
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 
 
-# Global shared instance
+# Global shared instance with thread safety
+import threading
 _shared_kb = None
+_kb_lock = threading.Lock()
 
 def _check_knowledge_base_exists(db_url: str, table_name: str = "knowledge_base") -> bool:
     """Check if the knowledge base table already exists and has data"""
@@ -58,12 +60,13 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
     """
     global _shared_kb
     
-    # Return existing instance if already created in this process
-    if _shared_kb is not None:
-        logger.debug("📊 Returning existing shared knowledge base")
-        # Update num_documents dynamically for this agent
-        _shared_kb.num_documents = num_documents
-        return _shared_kb
+    # Thread-safe check for existing instance
+    with _kb_lock:
+        if _shared_kb is not None:
+            logger.debug("📊 Returning existing shared knowledge base")
+            # Update num_documents dynamically for this agent
+            _shared_kb.num_documents = num_documents
+            return _shared_kb
     
     # Load configuration if not provided
     if config is None:
@@ -109,18 +112,26 @@ def create_knowledge_base(config: Optional[Dict[str, Any]] = None, db_url: str =
         distance=vector_config.get("distance", "cosine")
     )
     
-    # Create shared knowledge base with row-based processing (one document per CSV row)
-    _shared_kb = RowBasedCSVKnowledgeBase(
-        csv_path=str(csv_path),
-        vector_db=vector_db
-    )
-    # Set num_documents for backward compatibility
-    _shared_kb.num_documents = num_documents
-    
-    # Set agentic filters from configuration
-    filter_config = config.get("knowledge", {}).get("filters", {})
-    valid_filters = set(filter_config.get("valid_metadata_fields", ["business_unit", "solution", "typification"]))
-    _shared_kb.valid_metadata_filters = valid_filters
+    # Thread-safe creation and assignment of shared knowledge base
+    with _kb_lock:
+        # Double-check pattern - another thread might have created it while we waited
+        if _shared_kb is not None:
+            logger.debug("📊 Knowledge base was created by another thread, returning existing instance")
+            _shared_kb.num_documents = num_documents
+            return _shared_kb
+            
+        # Create shared knowledge base with row-based processing (one document per CSV row)
+        _shared_kb = RowBasedCSVKnowledgeBase(
+            csv_path=str(csv_path),
+            vector_db=vector_db
+        )
+        # Set num_documents for backward compatibility
+        _shared_kb.num_documents = num_documents
+        
+        # Set agentic filters from configuration
+        filter_config = config.get("knowledge", {}).get("filters", {})
+        valid_filters = set(filter_config.get("valid_metadata_fields", ["business_unit", "solution", "typification"]))
+        _shared_kb.valid_metadata_filters = valid_filters
     
     # Use smart incremental loading instead of basic Agno loading
     logger.info("📊 Initializing smart incremental knowledge base loading")

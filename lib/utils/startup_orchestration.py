@@ -101,20 +101,23 @@ async def batch_component_discovery() -> ComponentRegistries:
         )
 
 
+
 async def initialize_knowledge_base() -> Optional[Any]:
     """
-    Initialize knowledge base early in startup sequence.
+    Initialize CSV hot reload manager for knowledge base watching.
     
-    CRITICAL: This must happen before agent/team loading since they depend on it.
+    The shared knowledge base will be initialized lazily when first accessed by agents,
+    preventing duplicate loading and race conditions.
     
     Returns:
-        CSV manager instance or None if initialization fails
+        CSV manager instance or None if initialization failed
     """
-    logger.info("📊 Initializing knowledge base")
     
+    csv_manager = None
     try:
         from lib.utils.version_factory import load_global_knowledge_config
         from lib.knowledge.csv_hot_reload import CSVHotReloadManager
+        from pathlib import Path
         
         # Load centralized knowledge configuration
         global_config = load_global_knowledge_config()
@@ -124,27 +127,34 @@ async def initialize_knowledge_base() -> Optional[Any]:
         config_dir = Path(__file__).parent.parent.parent / "lib/knowledge"
         csv_path = config_dir / csv_filename
         
-        # Initialize CSV hot reload manager
+        # Initialize CSV hot reload manager (this will handle knowledge base creation internally)
         csv_manager = CSVHotReloadManager(str(csv_path))
         csv_manager.start_watching()
         
-        logger.info("📊 Knowledge base ready", csv_path=str(csv_path), status="watching_for_changes")
-        return csv_manager
-        
+        logger.info("📊 Knowledge base CSV watching initialized", 
+                   csv_path=str(csv_path), 
+                   status="watching_for_changes",
+                   timing="early_initialization",
+                   note="shared_kb_will_be_initialized_lazily")
     except Exception as e:
-        logger.warning("📊 Knowledge base initialization failed", error=str(e))
-        logger.info("📊 Knowledge base will use fallback initialization")
-        return None
-
-
-async def initialize_services() -> StartupServices:
-    """
-    Initialize core services in the correct order.
+        logger.warning("📊 Knowledge base CSV watching initialization failed", error=str(e))
+        logger.info("📊 Knowledge base will use fallback initialization when first accessed")
     
+    return csv_manager
+
+
+async def initialize_other_services(csv_manager: Optional[Any] = None) -> StartupServices:
+    """
+    Initialize remaining core services (auth, MCP, metrics).
+    Knowledge base is already initialized earlier in the startup sequence.
+    
+    Args:
+        csv_manager: Already initialized CSV manager from early initialization
+        
     Returns:
         StartupServices: Container with all initialized services
     """
-    logger.info("🔧 Initializing services")
+    logger.info("🔧 Initializing remaining services (auth, MCP, metrics)")
     
     # Initialize authentication system
     from lib.auth.dependencies import get_auth_service
@@ -169,15 +179,19 @@ async def initialize_services() -> StartupServices:
         if settings.enable_metrics:
             from lib.metrics.async_metrics_service import initialize_metrics_service
             
-            # Create config with environment variables
+            # Create config with validated environment variables
             metrics_config = {
                 "batch_size": settings.metrics_batch_size,
-                "flush_interval": settings.metrics_flush_interval
+                "flush_interval": settings.metrics_flush_interval,
+                "queue_size": settings.metrics_queue_size
             }
             metrics_service = initialize_metrics_service(metrics_config)
+            # Initialize async components
+            await metrics_service.initialize()
             logger.debug("📊 Metrics service ready", 
                         batch_size=settings.metrics_batch_size,
-                        flush_interval=settings.metrics_flush_interval)
+                        flush_interval=settings.metrics_flush_interval,
+                        queue_size=settings.metrics_queue_size)
         else:
             logger.debug("📊 Metrics service disabled via HIVE_ENABLE_METRICS")
     except Exception as e:
@@ -186,19 +200,21 @@ async def initialize_services() -> StartupServices:
     services = StartupServices(
         auth_service=auth_service,
         mcp_system=mcp_system,
+        csv_manager=csv_manager,
         metrics_service=metrics_service
     )
     
-    logger.info("🔧 Services initialization completed")
+    logger.info("🔧 Remaining services initialization completed")
     return services
 
 
 async def run_version_synchronization(registries: ComponentRegistries, db_url: Optional[str]) -> Optional[Dict[str, Any]]:
     """
     Run component version synchronization with enhanced reporting and proper cleanup.
+    Now uses actual registries data for more accurate synchronization.
     
     Args:
-        registries: Component registries from batch discovery
+        registries: Component registries from batch discovery (now actually used)
         db_url: Database URL for version sync service
         
     Returns:
@@ -208,7 +224,9 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
         logger.warning("⚠️ Version synchronization skipped - HIVE_DATABASE_URL not configured")
         return None
     
-    logger.info("🔧 Synchronizing component versions")
+    # Log actual component counts from registries
+    logger.info("🔧 Synchronizing component versions", 
+               discovered_components=registries.summary)
     
     sync_service = None
     try:
@@ -216,20 +234,33 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
         
         sync_service = AgnoVersionSyncService(db_url=db_url)
         
-        # Run comprehensive sync
+        # Run comprehensive sync using actual registry data
         total_synced = 0
         sync_results = {}
         
-        for component_type in ['agent', 'team', 'workflow']:
+        # Sync each component type with registry-aware logging
+        component_mapping = {
+            'agent': (registries.agents, 'agents'),
+            'team': (registries.teams, 'teams'), 
+            'workflow': (registries.workflows, 'workflows')
+        }
+        
+        for component_type, (registry_dict, plural_name) in component_mapping.items():
             try:
                 results = await sync_service.sync_component_type(component_type)
-                sync_results[component_type + 's'] = results
-                total_synced += len(results) if results else 0
+                sync_results[plural_name] = results
+                synced_count = len(results) if results else 0
+                total_synced += synced_count
+                
+                # Log comparison between discovered and synced
+                discovered_count = len(registry_dict)
+                logger.debug(f"🔧 {component_type.title()} sync: {synced_count} synced vs {discovered_count} discovered")
+                
             except Exception as e:
                 logger.error(f"🚨 {component_type} sync failed", error=str(e))
-                sync_results[component_type + 's'] = {"error": str(e)}
+                sync_results[plural_name] = {"error": str(e)}
         
-        # Create more informative summary
+        # Create more informative summary with registry comparison
         sync_summary = []
         for comp_type, results in sync_results.items():
             if isinstance(results, list):
@@ -238,7 +269,9 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
                 sync_summary.append(f"0 {comp_type} (error)")
         
         logger.info("✅ Version synchronization completed", 
-                   summary=", ".join(sync_summary) if sync_summary else "no components")
+                   summary=", ".join(sync_summary) if sync_summary else "no components",
+                   total_synced=total_synced,
+                   total_discovered=registries.total_components)
         
         return sync_results
         
@@ -275,11 +308,11 @@ async def orchestrated_startup() -> StartupResults:
     Startup Sequence:
     1. Database Migration (user requirement)
     2. Logging System Ready 
-    3. Knowledge Base Init (CRITICAL - agents/teams depend on this)
-    4. Component Discovery (BATCH - single filesystem scan)
-    5. Configuration Resolution
-    6. Version Synchronization  
-    7. Service Initialization
+    3. Knowledge Base CSV Watching Init (lazy shared KB initialization)
+    4. Component Discovery (BATCH - single filesystem scan) 
+    5. Version Synchronization (uses actual discovered components)
+    6. Configuration Resolution
+    7. Other Service Initialization (auth, MCP, metrics)
     8. API Wiring preparation
     
     Returns:
@@ -288,7 +321,6 @@ async def orchestrated_startup() -> StartupResults:
     startup_start = datetime.now()
     logger.info("⚡ Starting Performance-Optimized Sequential Startup")
     
-    csv_manager = None
     services = None
     registries = None
     sync_results = None
@@ -310,23 +342,23 @@ async def orchestrated_startup() -> StartupResults:
         # 2. Logging System Ready (implicit - already configured)
         logger.info("🔧 Logging system ready")
         
-        # 3. Knowledge Base Init (CRITICAL - moved early as requested)
+        # 3. Knowledge Base Init (CSV watching setup - shared KB initialized lazily)
+        logger.info("📊 Initializing knowledge base CSV watching")
         csv_manager = await initialize_knowledge_base()
         
-        # 4. Version Synchronization (MOVED BEFORE component discovery)
-        db_url = os.getenv("HIVE_DATABASE_URL")
-        sync_results = await run_version_synchronization(ComponentRegistries(workflows={}, teams={}, agents={}, summary="pre-sync"), db_url)
-        
-        # 5. Component Discovery (Single batch operation) 
+        # 4. Component Discovery (Single batch operation - MOVED BEFORE version sync)
         logger.info("🔍 Discovering components")
         registries = await batch_component_discovery()
+        
+        # 5. Version Synchronization (NOW uses actual discovered registries)
+        db_url = os.getenv("HIVE_DATABASE_URL")
+        sync_results = await run_version_synchronization(registries, db_url)
         
         # 6. Configuration Resolution (implicit via registry lazy loading)
         logger.info("🔧 Configuration resolution completed")
         
-        # 7. Service Initialization
-        services = await initialize_services()
-        services.csv_manager = csv_manager
+        # 7. Other Service Initialization (auth, MCP, metrics)
+        services = await initialize_other_services(csv_manager)
         
         # 8. Startup Summary
         startup_time = (datetime.now() - startup_start).total_seconds()
