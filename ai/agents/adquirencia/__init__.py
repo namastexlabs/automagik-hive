@@ -1,1 +1,0 @@
-"""Adquirencia Agent - Merchant services specialist."""

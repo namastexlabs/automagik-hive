@@ -52,7 +52,7 @@ def trigger_conversation_typification_workflow(
         ))
         
         if not results:
-            logger.error("Typification workflow returned no results")
+            logger.error("🚨 Typification workflow returned no results")
             return "❌ Erro na tipificação: Nenhum resultado obtido"
         
         # Get the final result
@@ -67,10 +67,10 @@ def trigger_conversation_typification_workflow(
                 logger.info(f"✅ Typification completed successfully with protocol: {protocol_id}")
                 return f"✅ Tipificação concluída com sucesso! Protocolo: {protocol_id}"
             else:
-                logger.warning("Typification completed but no protocol ID found")
+                logger.warning("⚠️ Typification completed but no protocol ID found")
                 return "⚠️ Tipificação concluída, mas protocolo não encontrado"
         else:
-            logger.warning("Typification completed but no metadata found")
+            logger.warning("📊 Typification completed but no metadata found")
             return "✅ Tipificação concluída com sucesso!"
             
     except Exception as e:
@@ -112,16 +112,16 @@ def send_farewell_message(
             if message_type == "grateful":
                 farewell = f"Obrigado por entrar em contato, {customer_name}! Fico feliz em ter ajudado. {protocol_message}. Tenha um ótimo dia!"
             elif message_type == "professional":
-                farewell = f"Atendimento finalizado para {customer_name}. {protocol_message}. Agradecemos por escolher o PagBank!"
+                farewell = f"Atendimento finalizado para {customer_name}. {protocol_message}. Agradecemos!"
             else:  # standard
                 farewell = f"Obrigado por entrar em contato, {customer_name}! Seu atendimento foi finalizado com sucesso. {protocol_message}. Tenha um ótimo dia!"
         else:
             if message_type == "grateful":
-                farewell = f"Fico feliz em ter ajudado! {protocol_message}. Agradecemos por escolher o PagBank!"
+                farewell = f"Fico feliz em ter ajudado! {protocol_message}. Agradecemos!"
             elif message_type == "professional":
                 farewell = f"Atendimento finalizado com sucesso. {protocol_message}. Agradecemos pela preferência!"
             else:  # standard
-                farewell = f"Seu atendimento foi finalizado com sucesso! {protocol_message}. Obrigado por escolher o PagBank!"
+                farewell = f"Seu atendimento foi finalizado com sucesso! {protocol_message}. Obrigado!"
         
         logger.info(f"✅ Farewell message created successfully")
         return farewell

@@ -6,7 +6,7 @@
     },
     "kanban": {
       "type": "sse",
-      "url": "http://localhost:23002/sse"
+      "url": "http://localhost:8889/sse"
     },
     "ask-repo-agent": {
       "type": "sse",
@@ -24,19 +24,7 @@
         "wait"
       ]
     },
-    "whatsapp_notifications": {
-      "command": "uvx",
-      "args": [
-        "automagik-tools@0.8.15",
-        "tool",
-        "evolution-api"
-      ],
-      "env": {
-        "EVOLUTION_API_BASE_URL": "http://192.168.112.142:8080",
-        "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
-        "EVOLUTION_API_INSTANCE": "SofIA"
-      }
-    },
+
      "genie-agents": {
        "command": "uvx",
        "args": [

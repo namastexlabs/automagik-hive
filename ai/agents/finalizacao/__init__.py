@@ -1,1 +1,0 @@
-"""Finalizacao Agent - Conversation finalization specialist."""
