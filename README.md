@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**🪄 Automagik Hive**
+![Automagik Logo](automagik-logo.png)
 
 **Enterprise Multi-Agent AI Framework**
 
