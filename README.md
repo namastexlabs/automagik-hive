@@ -35,130 +35,147 @@ The system follows clean architecture principles with intelligent routing teams 
 
 ```mermaid
 graph TB
-    %% Client Layer
-    Client[🌐 Client Applications<br/>REST API Clients<br/>Web Interfaces<br/>Mobile Apps] --> LoadBalancer
+    %% Developer Starting Point
+    Developer[👨‍💻 Framework Users<br/>Multi-Agent Developers<br/>Enterprise Teams<br/>AI System Builders] --> Framework
     
-    %% Load Balancing & API Gateway
-    LoadBalancer[⚖️ Load Balancer<br/>NGINX/HAProxy<br/>Rate Limiting<br/>SSL Termination] --> APIGateway
-    APIGateway[🚪 API Gateway<br/>FastAPI Application<br/>Authentication<br/>Request Routing] --> Middleware
-    
-    %% Middleware Layer
-    subgraph Middleware[🔒 Middleware Stack]
-        CORS[🌍 CORS Middleware<br/>Cross-Origin Support<br/>Security Headers]
-        Auth[🔐 Authentication<br/>API Key Validation<br/>JWT Processing]
-        Logging[📝 Logging Middleware<br/>Request Tracing<br/>Performance Metrics]
-        RateLimit[⏱️ Rate Limiting<br/>Request Throttling<br/>DDoS Protection]
-    end
-    
-    %% Application Layer - Clean Architecture
-    subgraph AppCore[🏗️ Application Core]
-        subgraph API[🚀 API Layer (api/)]
-            Routes[📍 Route Handlers<br/>v1_router.py<br/>health.py<br/>mcp_router.py]
-            Validation[✅ Request Validation<br/>Pydantic Models<br/>Input Sanitization]
-            Streaming[📡 Streaming Support<br/>SSE/WebSocket<br/>Real-time Responses]
+    %% Core Framework - Automagik Hive
+    subgraph Framework[🏗️ Automagik Hive Framework]
+        subgraph Core[⚡ Core Framework (Agno v1.7.5)]
+            AgnoCore[🤖 Agno Framework<br/>Agent Primitives<br/>Team Orchestration<br/>Storage Abstractions]
+            ModelProviders[🧠 Model Providers<br/>Anthropic Claude<br/>OpenAI GPT<br/>Google Gemini<br/>Cohere]
+            AgentMemory[💾 Agent Memory<br/>PostgreSQL Storage<br/>Session Management<br/>Context Persistence]
         end
         
-        subgraph Business[🧠 Business Logic (ai/)]
-            AgentFactory[🏭 Agent Factory<br/>YAML Configuration<br/>Dynamic Loading]
-            TeamOrchestrator[👥 Team Orchestrator<br/>Routing Logic<br/>Task Distribution]
-            WorkflowEngine[⚡ Workflow Engine<br/>Process Automation<br/>State Management]
+        subgraph ComponentSystem[🔧 Component System]
+            YAMLConfigs[📄 YAML Configurations<br/>Agent Definitions<br/>Team Compositions<br/>Workflow Processes]
+            VersionFactory[🏭 Version Factory<br/>Component Versioning<br/>Dynamic Loading<br/>Hot Reload]
+            ComponentRegistry[📚 Component Registry<br/>Agent Discovery<br/>Team Loading<br/>Workflow Management]
         end
         
-        subgraph Shared[📚 Shared Libraries (lib/)]
-            Config[⚙️ Configuration<br/>YAML Parser<br/>Environment Management]
-            Knowledge[🧠 Knowledge System<br/>CSV Hot Reload<br/>Vector Search]
-            Memory[💾 Memory Management<br/>Session Persistence<br/>Context Handling]
-            Utils[🛠️ Utilities<br/>Validation<br/>Helpers]
+        subgraph KnowledgeSystem[🧠 Enterprise Knowledge]
+            CSVKnowledge[📊 CSV Knowledge Base<br/>Business Data<br/>Hot Reload<br/>Vector Search]
+            IncrementalLoader[🔄 Incremental Loader<br/>Smart Updates<br/>Hash Detection<br/>Zero Downtime]
+            VectorDB[🔍 PgVector Integration<br/>Semantic Search<br/>Embedding Storage<br/>Query Optimization]
         end
     end
     
-    %% Data Layer
-    subgraph DataLayer[🗄️ Data Layer]
-        PostgreSQL[(🐘 PostgreSQL<br/>Primary Database<br/>pgvector Extension<br/>ACID Compliance)]
-        Migrations[📋 Alembic Migrations<br/>Schema Versioning<br/>Database Evolution]
-        ConnectionPool[🏊 Connection Pool<br/>SQLAlchemy<br/>Async Support]
+    %% What Developers Build With Framework
+    subgraph UserSystems[🎯 What You Build]
+        subgraph Agents[🤖 Custom Agents]
+            DomainAgents[🏢 Domain Specialists<br/>Business Logic<br/>Expertise Areas<br/>Tool Integration]
+            RoutingAgents[🚦 Routing Agents<br/>Query Analysis<br/>Intent Detection<br/>Agent Selection]
+            HumanEscalation[👤 Human Escalation<br/>Frustration Detection<br/>Handoff Triggers<br/>Support Integration]
+        end
+        
+        subgraph Teams[👥 Agent Teams]
+            RoutingTeams[🎯 Routing Teams<br/>mode: route<br/>Intelligent Distribution<br/>Specialist Coordination]
+            CollaborativeTeams[🤝 Collaborative Teams<br/>mode: coordinate<br/>Multi-Agent Tasks<br/>Shared Context]
+            WorkflowTeams[⚡ Workflow Teams<br/>Process Execution<br/>State Management<br/>Task Sequences]
+        end
+        
+        subgraph Workflows[⚙️ Business Workflows]
+            ConversationFlow[💬 Conversation Workflows<br/>Typification<br/>Quality Analysis<br/>Satisfaction Tracking]
+            EscalationFlow[🚨 Escalation Workflows<br/>Human Handoff<br/>Notification Systems<br/>Context Transfer]
+            BusinessProcesses[📋 Business Processes<br/>Custom Logic<br/>Integration Points<br/>Automation Rules]
+        end
+    end
+    
+    %% Deployment & Infrastructure
+    subgraph Infrastructure[🏭 Deployment Infrastructure]
+        subgraph API[🌐 FastAPI Application]
+            PlaygroundAPI[🎮 Playground API<br/>Auto-Generated<br/>CRUD Operations<br/>Real-time Testing]
+            ProductionAPI[🚀 Production API<br/>Authentication<br/>Rate Limiting<br/>Monitoring]
+            StreamingAPI[📡 Streaming API<br/>Server-Sent Events<br/>WebSocket Support<br/>Real-time Updates]
+        end
+        
+        subgraph Database[🗄️ Database Layer]
+            PostgresDB[(🐘 PostgreSQL<br/>Component Versions<br/>Agent Sessions<br/>Knowledge Storage)]
+            Migrations[📋 Alembic Migrations<br/>Schema Evolution<br/>Version Control<br/>Automated Updates]
+            Monitoring[📊 Performance Monitoring<br/>Query Optimization<br/>Connection Pooling<br/>Health Checks]
+        end
+        
+        subgraph Deployment[🚀 Deployment Options]
+            DockerDeploy[🐳 Docker Deployment<br/>Multi-stage Builds<br/>Production Ready<br/>Scaling Support]
+            K8sDeploy[☸️ Kubernetes<br/>Horizontal Scaling<br/>High Availability<br/>Enterprise Features]
+            CloudDeploy[☁️ Cloud Platforms<br/>AWS/GCP/Azure<br/>Managed Services<br/>Auto-scaling]
+        end
     end
     
     %% External Integrations
-    subgraph External[🔌 External Systems]
-        MCPServers[🔗 MCP Servers<br/>Model Context Protocol<br/>External AI Services]
-        AIProviders[🤖 AI Providers<br/>Anthropic Claude<br/>OpenAI GPT<br/>Google Gemini]
-        Notifications[📱 Notification Systems<br/>WhatsApp<br/>Slack<br/>Email]
+    subgraph Integrations[🔌 Integration Ecosystem]
+        MCPProtocol[🔗 MCP Protocol<br/>Model Context Protocol<br/>Tool Integration<br/>External Services]
+        NotificationSystems[📱 Notification Systems<br/>WhatsApp Business<br/>Slack Integration<br/>Email Automation]
+        BusinessSystems[🏢 Business Systems<br/>CRM Integration<br/>ERP Connectivity<br/>API Gateways]
     end
     
-    %% Infrastructure Layer
-    subgraph Infrastructure[🏭 Infrastructure]
-        Docker[🐳 Docker Containers<br/>Multi-stage Builds<br/>UV Package Manager]
-        Compose[🐙 Docker Compose<br/>Service Orchestration<br/>Health Checks]
-        Volumes[💽 Persistent Storage<br/>Database Volumes<br/>Log Storage<br/>Configuration]
-    end
+    %% Framework Flow
+    Developer --> YAMLConfigs
+    YAMLConfigs --> VersionFactory
+    VersionFactory --> ComponentRegistry
+    ComponentRegistry --> AgnoCore
     
-    %% Monitoring & Observability
-    subgraph Monitoring[📊 Monitoring Stack]
-        HealthChecks[❤️ Health Checks<br/>Service Status<br/>Dependency Checks]
-        Metrics[📈 Metrics Collection<br/>Performance Monitoring<br/>Usage Analytics]
-        LogAggregation[📋 Log Aggregation<br/>Structured Logging<br/>Error Tracking]
-    end
+    %% Component Creation Flow
+    AgnoCore --> DomainAgents
+    AgnoCore --> RoutingTeams
+    AgnoCore --> ConversationFlow
     
-    %% Request Flow
-    Middleware --> Routes
-    Routes --> Validation
-    Validation --> AgentFactory
-    AgentFactory --> TeamOrchestrator
-    TeamOrchestrator --> WorkflowEngine
+    %% Knowledge Flow
+    CSVKnowledge --> IncrementalLoader
+    IncrementalLoader --> VectorDB
+    VectorDB --> DomainAgents
     
-    %% Data Flow
-    Business --> Knowledge
-    Business --> Memory
-    Business --> Config
+    %% Team Composition
+    DomainAgents --> RoutingTeams
+    RoutingTeams --> CollaborativeTeams
+    CollaborativeTeams --> WorkflowTeams
     
-    %% Storage Connections
-    Memory --> ConnectionPool
-    Knowledge --> ConnectionPool
-    ConnectionPool --> PostgreSQL
-    PostgreSQL --> Migrations
+    %% Workflow Integration
+    WorkflowTeams --> ConversationFlow
+    ConversationFlow --> EscalationFlow
+    EscalationFlow --> BusinessProcesses
+    
+    %% API Generation
+    UserSystems --> PlaygroundAPI
+    PlaygroundAPI --> ProductionAPI
+    ProductionAPI --> StreamingAPI
+    
+    %% Storage Integration
+    AgentMemory --> PostgresDB
+    ComponentRegistry --> PostgresDB
+    VectorDB --> PostgresDB
     
     %% External Connections
-    Business --> MCPServers
-    Business --> AIProviders
-    WorkflowEngine --> Notifications
+    HumanEscalation --> NotificationSystems
+    BusinessProcesses --> BusinessSystems
+    DomainAgents --> MCPProtocol
     
-    %% Infrastructure Connections
-    APIGateway --> Docker
-    Docker --> Compose
-    Compose --> Volumes
-    PostgreSQL --> Volumes
+    %% Deployment Flow
+    ProductionAPI --> DockerDeploy
+    DockerDeploy --> K8sDeploy
+    K8sDeploy --> CloudDeploy
     
-    %% Monitoring Connections
-    Routes --> HealthChecks
-    Business --> Metrics
-    Middleware --> LogAggregation
-    
-    %% Response Flow
-    WorkflowEngine --> Streaming
-    Streaming --> Routes
-    Routes --> APIGateway
-    APIGateway --> LoadBalancer
-    LoadBalancer --> Client
+    %% Monitoring Integration
+    PostgresDB --> Monitoring
+    ProductionAPI --> Monitoring
+    UserSystems --> Monitoring
     
     %% Styling
-    classDef client fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
-    classDef gateway fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
-    classDef middleware fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
-    classDef business fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
-    classDef data fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
-    classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
-    classDef infrastructure fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000
-    classDef monitoring fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000000
+    classDef developer fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
+    classDef framework fill:#e8f5e8,stroke:#388e3c,stroke-width:3px,color:#000000
+    classDef userSystems fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+    classDef infrastructure fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+    classDef integrations fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
+    classDef agno fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000
+    classDef components fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000
+    classDef knowledge fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000000
     
-    class Client,LoadBalancer client
-    class APIGateway gateway
-    class CORS,Auth,Logging,RateLimit,Middleware middleware
-    class AgentFactory,TeamOrchestrator,WorkflowEngine,Routes,Validation,Streaming,Config,Knowledge,Memory,Utils,API,Business,Shared,AppCore business
-    class PostgreSQL,Migrations,ConnectionPool,DataLayer data
-    class MCPServers,AIProviders,Notifications,External external
-    class Docker,Compose,Volumes,Infrastructure infrastructure
-    class HealthChecks,Metrics,LogAggregation,Monitoring monitoring
+    class Developer developer
+    class Framework,Core,AgnoCore,ModelProviders,AgentMemory framework
+    class ComponentSystem,YAMLConfigs,VersionFactory,ComponentRegistry components
+    class KnowledgeSystem,CSVKnowledge,IncrementalLoader,VectorDB knowledge
+    class UserSystems,Agents,Teams,Workflows,DomainAgents,RoutingAgents,HumanEscalation,RoutingTeams,CollaborativeTeams,WorkflowTeams,ConversationFlow,EscalationFlow,BusinessProcesses userSystems
+    class Infrastructure,API,Database,Deployment,PlaygroundAPI,ProductionAPI,StreamingAPI,PostgresDB,Migrations,Monitoring,DockerDeploy,K8sDeploy,CloudDeploy infrastructure
+    class Integrations,MCPProtocol,NotificationSystems,BusinessSystems integrations
 ```
 
 ## ⚡ Quick Start
@@ -169,7 +186,7 @@ Get started on any machine with our universal installer that handles all depende
 
 ```bash
 # One-command installation (handles everything)
-curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/refs/heads/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
 
 # Or download and run locally
 wget https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh
