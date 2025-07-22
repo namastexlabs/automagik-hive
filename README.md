@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Automagik Logo](https://github.com/namastex/automagik-tools/raw/main/.git/automagik-logo.png)
+**🪄 Automagik Hive**
 
 **Enterprise Multi-Agent AI Framework**
 
