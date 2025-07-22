@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Automagik Logo](automagik-logo.png)
+![Automagik Logo](.github/images/automagik-logo.png)
 
 **Enterprise Multi-Agent AI Framework**
 
