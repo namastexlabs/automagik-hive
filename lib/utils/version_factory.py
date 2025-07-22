@@ -9,12 +9,16 @@ from typing import Optional, Dict, Any, Union
 from pathlib import Path
 import yaml
 import os
+from dotenv import load_dotenv
 from agno.agent import Agent
 from agno.team import Team
 from agno.workflow import Workflow
 from agno.models.anthropic import Claude
 from agno.storage.postgres import PostgresStorage
 from agno.utils.log import logger
+
+# Load environment variables
+load_dotenv()
 
 from lib.versioning import AgnoVersionService
 from lib.utils.yaml_cache import get_yaml_cache_manager, load_yaml_cached, discover_components_cached
@@ -90,7 +94,17 @@ class VersionFactory:
         else:
             version_record = await self.version_service.get_active_version(component_id)
             if not version_record:
-                raise ValueError(f"No active version found for {component_id}")
+                # First startup case: No active version in database yet
+                # Fall back to loading from YAML config directly
+                logger.debug(f"🔧 No active version found for {component_id}, loading from YAML config (first startup)")
+                return await self._create_component_from_yaml(
+                    component_id=component_id,
+                    component_type=component_type,
+                    session_id=session_id,
+                    debug_mode=debug_mode,
+                    user_id=user_id,
+                    **kwargs
+                )
         
         config = version_record.config
         
@@ -490,6 +504,65 @@ class VersionFactory:
         logger.debug(f"🤖 Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters")
         
         return workflow
+    
+    async def _create_component_from_yaml(
+        self,
+        component_id: str,
+        component_type: str,
+        session_id: Optional[str],
+        debug_mode: bool,
+        user_id: Optional[str],
+        **kwargs
+    ) -> Union[Agent, Team, Workflow]:
+        """
+        Fallback method to create components directly from YAML during first startup.
+        Used when database doesn't have synced versions yet.
+        """
+        import yaml
+        from pathlib import Path
+        
+        # Determine config file path based on component type
+        config_paths = {
+            'agent': f'ai/agents/{component_id}/config.yaml',
+            'team': f'ai/teams/{component_id}/config.yaml', 
+            'workflow': f'ai/workflows/{component_id}/config.yaml'
+        }
+        
+        config_file = config_paths.get(component_type)
+        if not config_file:
+            raise ValueError(f"Unsupported component type: {component_type}")
+        
+        config_path = Path(config_file)
+        if not config_path.exists():
+            raise ValueError(f"Config file not found: {config_file}")
+        
+        # Load YAML configuration
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                yaml_config = yaml.safe_load(f)
+        except Exception as e:
+            raise ValueError(f"Failed to load YAML config from {config_file}: {e}")
+        
+        if not yaml_config or component_type not in yaml_config:
+            raise ValueError(f"Invalid YAML config in {config_file}: missing '{component_type}' section")
+        
+        logger.info(f"🔧 Loading {component_type} {component_id} from YAML (first startup fallback)")
+        
+        # Use the same creation methods but with YAML config
+        creation_methods = {
+            "agent": self._create_agent,
+            "team": self._create_team,
+            "workflow": self._create_workflow
+        }
+        
+        return await creation_methods[component_type](
+            component_id=component_id,
+            config=yaml_config,  # Pass the full YAML config
+            session_id=session_id,
+            debug_mode=debug_mode,
+            user_id=user_id,
+            **kwargs
+        )
 
 
 # Global factory instance - lazy initialization
