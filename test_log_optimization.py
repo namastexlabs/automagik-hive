@@ -95,8 +95,9 @@ def test_alembic_suppression():
     """Test that Alembic messages are suppressed."""
     print("🧪 Testing Alembic log suppression...")
     
-    import logging
-    alembic_logger = logging.getLogger("alembic.runtime.migration")
+    from lib.logging import logger
+    # Note: This test still needs to check the actual logging level configuration
+    # but uses our standard logger for output
     
     if alembic_logger.level >= logging.WARNING:
         print("  ✅ Alembic logging set to WARNING level")

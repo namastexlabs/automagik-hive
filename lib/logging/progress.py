@@ -23,7 +23,7 @@ class StartupProgress:
         if total_items:
             self.total_components = total_items
             self.completed_components = 0
-        logger.info(f"🚀 {phase_name}...")
+        logger.info(f"🔧 {phase_name}...", phase=phase_name)
         
     def update_progress(self, item_name: Optional[str] = None, increment: int = 1):
         """Update progress within current phase."""
@@ -32,16 +32,16 @@ class StartupProgress:
         if self.total_components > 0:
             percentage = (self.completed_components / self.total_components) * 100
             if item_name:
-                logger.debug(f"    ✓ {item_name} ({self.completed_components}/{self.total_components})")
+                logger.debug(f"🐛 ✓ {item_name} ({self.completed_components}/{self.total_components})", item=item_name, progress=f"{self.completed_components}/{self.total_components}")
             
             # Log progress milestones
             if percentage >= 100:
                 logger.info(f"✅ {self.current_phase} complete: {self.completed_components}/{self.total_components}")
             elif self.completed_components % max(1, self.total_components // 4) == 0:  # Log every 25%
-                logger.info(f"⏳ {self.current_phase}: {self.completed_components}/{self.total_components} ({percentage:.0f}%)")
+                logger.info(f"⚡ {self.current_phase}: {self.completed_components}/{self.total_components} ({percentage:.0f}%)", phase=self.current_phase, progress=f"{self.completed_components}/{self.total_components}", percentage=percentage)
         else:
             if item_name:
-                logger.debug(f"    ✓ {item_name}")
+                logger.debug(f"🐛 ✓ {item_name}", item=item_name)
                 
     def complete_phase(self, summary: Optional[str] = None):
         """Complete the current phase."""
@@ -62,7 +62,7 @@ class StartupProgress:
             summary.get('workflows', 0)
         ])
         
-        logger.info(f"🎉 System ready: {total_components} components loaded ({elapsed:.1f}s)")
+        logger.info(f"⚡ System ready: {total_components} components loaded ({elapsed:.1f}s)", total_components=total_components, elapsed_time=elapsed)
         
         # Optional detailed breakdown (only if requested)
         import os
@@ -121,7 +121,7 @@ class ComponentTracker:
         if summary['errors'] > 0:
             logger.warning(f"⚠️ Startup completed with {summary['errors']} errors")
             for error in self.errors:
-                logger.warning(f"  • {error['component']}: {error['error']}")
+                logger.warning(f"🚨   • {error['component']}: {error['error']}", component=error['component'], error=error['error'])
                 
         # Log component counts
         components = []
@@ -141,7 +141,7 @@ class ComponentTracker:
                 logger.info(f"🤖 Agents: {', '.join(summary['agent_details'])}")
             if summary['team_details']:
                 team_info = [f"{tid}({count})" for tid, count in summary['team_details']]
-                logger.info(f"👥 Teams: {', '.join(team_info)}")
+                logger.info(f"🔧 Teams: {', '.join(team_info)}", teams=team_info)
             if summary['workflow_details']:
                 logger.info(f"⚡ Workflows: {', '.join(summary['workflow_details'])}")
 

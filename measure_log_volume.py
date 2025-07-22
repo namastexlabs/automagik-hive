@@ -9,10 +9,11 @@ import sys
 import time
 import re
 from collections import defaultdict, Counter
+from lib.logging import logger
 
 def measure_startup_logs():
     """Run the server briefly and capture startup logs."""
-    print("📊 Measuring baseline startup log volume...")
+    logger.info("📊 Measuring baseline startup log volume...")
     
     try:
         # Start server and capture logs for 30 seconds
@@ -40,10 +41,10 @@ def measure_startup_logs():
         return logs
         
     except KeyboardInterrupt:
-        print("Measurement interrupted")
+        logger.warning("🔧 ⚠️ Measurement interrupted")
         return []
     except Exception as e:
-        print(f"Error measuring logs: {e}")
+        logger.error(f"🚨 Error measuring logs: {e}")
         return []
 
 def analyze_log_patterns(logs):
@@ -82,50 +83,50 @@ def analyze_log_patterns(logs):
 
 def generate_report(categorized, pattern_counts, total_lines):
     """Generate a comprehensive log analysis report."""
-    print(f"\n📈 LOG VOLUME ANALYSIS REPORT")
-    print("=" * 60)
-    print(f"Total startup log lines: {total_lines}")
-    print(f"Target reduction (60%): {total_lines * 0.6:.0f} lines")
-    print(f"Optimal target: <{total_lines * 0.4:.0f} lines")
+    logger.info(f"\n📊 LOG VOLUME ANALYSIS REPORT")
+    logger.info("📊 " + "=" * 60)
+    logger.info(f"📊 Total startup log lines: {total_lines}")
+    logger.info(f"🎯 Target reduction (60%): {total_lines * 0.6:.0f} lines")
+    logger.info(f"⚡ 📈 Optimal target: <{total_lines * 0.4:.0f} lines")
     
-    print(f"\n📊 LOG PATTERN BREAKDOWN:")
-    print("-" * 40)
+    logger.info(f"\n📊 LOG PATTERN BREAKDOWN:")
+    logger.info("📊 " + "-" * 40)
     
     # Sort by frequency
     sorted_patterns = sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True)
     
     for pattern_name, count in sorted_patterns:
         percentage = (count / total_lines) * 100
-        print(f"{pattern_name:20} | {count:3d} lines | {percentage:5.1f}%")
+        logger.info(f"📊 {pattern_name:20} | {count:3d} lines | {percentage:5.1f}%")
     
-    print(f"\n🎯 HIGH-IMPACT OPTIMIZATION TARGETS:")
-    print("-" * 40)
+    logger.info(f"\n🎯 HIGH-IMPACT OPTIMIZATION TARGETS:")
+    logger.info("🎯 " + "-" * 40)
     
     high_impact = [item for item in sorted_patterns if item[1] > 3]  # More than 3 occurrences
     for pattern_name, count in high_impact:
         examples = categorized[pattern_name][:2]  # Show first 2 examples
-        print(f"\n{pattern_name.upper()} ({count} occurrences):")
+        logger.info(f"\n🎯 {pattern_name.upper()} ({count} occurrences):")
         for example in examples:
             # Truncate long lines
             truncated = example[:80] + "..." if len(example) > 80 else example
-            print(f"  → {truncated}")
+            logger.info(f"🎯   → {truncated}")
     
     return high_impact
 
 def main():
     """Main measurement and analysis function."""
-    print("🔍 Starting Automagik Hive Log Volume Analysis")
+    logger.info("🔍 Starting Automagik Hive Log Volume Analysis")
     
     # Read baseline if it exists
     try:
         with open('baseline_logs.txt', 'r') as f:
             baseline_logs = [line.strip() for line in f.readlines() if line.strip()]
         
-        print(f"📋 Using existing baseline: {len(baseline_logs)} lines")
+        logger.info(f"📋 Using existing baseline: {len(baseline_logs)} lines")
         logs = baseline_logs
         
     except FileNotFoundError:
-        print("📋 No baseline found, measuring live startup...")
+        logger.info("📋 No baseline found, measuring live startup...")
         logs = measure_startup_logs()
         
         # Save the baseline
@@ -134,7 +135,7 @@ def main():
                 f.write(f"{log}\n")
     
     if not logs:
-        print("❌ No logs captured. Cannot proceed with analysis.")
+        logger.error("🚨 No logs captured. Cannot proceed with analysis.")
         return
     
     # Analyze patterns
@@ -143,13 +144,13 @@ def main():
     # Generate report
     high_impact = generate_report(categorized, pattern_counts, total_lines)
     
-    print(f"\n💡 OPTIMIZATION RECOMMENDATIONS:")
-    print("-" * 40)
-    print("1. Move agent_inheritance, model_resolved to DEBUG level")
-    print("2. Batch storage_created messages into single summary") 
-    print("3. Replace individual agent_created with batch summary")
-    print("4. Consolidate CSV processing messages")
-    print("5. Reduce system_init verbosity with progress indicators")
+    logger.info(f"\n🔧 OPTIMIZATION RECOMMENDATIONS:")
+    logger.info("🔧 " + "-" * 40)
+    logger.info("🔧 1. Move agent_inheritance, model_resolved to DEBUG level")
+    logger.info("🔧 2. Batch storage_created messages into single summary")
+    logger.info("🔧 3. Replace individual agent_created with batch summary")
+    logger.info("🔧 4. Consolidate CSV processing messages")
+    logger.info("🔧 5. Reduce system_init verbosity with progress indicators")
     
     # Save detailed analysis
     with open('log_analysis_report.txt', 'w') as f:
@@ -164,7 +165,7 @@ def main():
                 f.write(f"  - {example}\n")
             f.write("\n")
     
-    print(f"\n✅ Analysis complete. Detailed report saved to 'log_analysis_report.txt'")
+    logger.info(f"\n🎯 ✅ Analysis complete. Detailed report saved to 'log_analysis_report.txt'")
 
 if __name__ == "__main__":
     main()

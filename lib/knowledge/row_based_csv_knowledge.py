@@ -3,7 +3,7 @@ Row-Based CSV Knowledge Base
 Custom implementation that treats each CSV row as a separate document
 """
 import csv
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Tuple
 from pathlib import Path
 from tqdm import tqdm
 from agno.document.base import Document
@@ -225,3 +225,36 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             
         except Exception as e:
             logger.error("📊 Error reloading CSV knowledge base", error=str(e))
+    
+    def validate_filters(self, filters: Optional[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[str]]:
+        """
+        Validate filter keys against known metadata fields.
+        
+        Args:
+            filters: Dictionary of filter key-value pairs to validate
+            
+        Returns:
+            Tuple of (valid_filters, invalid_keys)
+        """
+        if not filters:
+            return {}, []
+
+        valid_filters = {}
+        invalid_keys = []
+
+        # If no metadata filters tracked yet, all keys are considered invalid
+        if not hasattr(self, 'valid_metadata_filters') or self.valid_metadata_filters is None:
+            invalid_keys = list(filters.keys())
+            logger.debug("📊 No valid metadata filters tracked yet. All filter keys considered invalid", invalid_keys=invalid_keys)
+            return {}, invalid_keys
+
+        for key, value in filters.items():
+            # Handle both normal keys and prefixed keys like meta_data.key
+            base_key = key.split(".")[-1] if "." in key else key
+            if base_key in self.valid_metadata_filters or key in self.valid_metadata_filters:
+                valid_filters[key] = value
+            else:
+                invalid_keys.append(key)
+                logger.debug("📊 Invalid filter key - not present in knowledge base", key=key)
+
+        return valid_filters, invalid_keys

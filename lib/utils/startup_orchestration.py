@@ -90,7 +90,7 @@ async def batch_component_discovery() -> ComponentRegistries:
         return registries
         
     except Exception as e:
-        logger.error("🔍 Component discovery failed", error=str(e), error_type=type(e).__name__)
+        logger.error("🚨 Component discovery failed", error=str(e), error_type=type(e).__name__)
         # Return minimal registries to allow startup to continue
         return ComponentRegistries(
             workflows={},
@@ -109,7 +109,7 @@ async def initialize_knowledge_base() -> Optional[Any]:
     Returns:
         CSV manager instance or None if initialization fails
     """
-    logger.info("📚 Initializing knowledge base")
+    logger.info("📊 Initializing knowledge base")
     
     try:
         from lib.utils.version_factory import load_global_knowledge_config
@@ -127,12 +127,12 @@ async def initialize_knowledge_base() -> Optional[Any]:
         csv_manager = CSVHotReloadManager(str(csv_path))
         csv_manager.start_watching()
         
-        logger.info("📚 Knowledge base ready", csv_path=str(csv_path), status="watching_for_changes")
+        logger.info("📊 Knowledge base ready", csv_path=str(csv_path), status="watching_for_changes")
         return csv_manager
         
     except Exception as e:
-        logger.warning("📚 Knowledge base initialization failed", error=str(e))
-        logger.info("📚 Knowledge base will use fallback initialization")
+        logger.warning("📊 Knowledge base initialization failed", error=str(e))
+        logger.info("📊 Knowledge base will use fallback initialization")
         return None
 
 
@@ -143,12 +143,12 @@ async def initialize_services() -> StartupServices:
     Returns:
         StartupServices: Container with all initialized services
     """
-    logger.info("⚙️ Initializing services")
+    logger.info("🔧 Initializing services")
     
     # Initialize authentication system
     from lib.auth.dependencies import get_auth_service
     auth_service = get_auth_service()
-    logger.debug("⚙️ Authentication service ready", auth_enabled=auth_service.is_auth_enabled())
+    logger.debug("🔐 Authentication service ready", auth_enabled=auth_service.is_auth_enabled())
     
     # Initialize MCP system
     mcp_system = None
@@ -157,16 +157,16 @@ async def initialize_services() -> StartupServices:
         catalog = MCPCatalog()
         servers = catalog.list_servers()
         mcp_system = catalog
-        logger.debug("⚙️ MCP system ready", server_count=len(servers))
+        logger.debug("🤖 MCP system ready", server_count=len(servers))
     except Exception as e:
-        logger.warning("⚙️ MCP system initialization failed", error=str(e))
+        logger.warning("🤖 MCP system initialization failed", error=str(e))
     
     services = StartupServices(
         auth_service=auth_service,
         mcp_system=mcp_system
     )
     
-    logger.info("⚙️ Services initialization completed")
+    logger.info("🔧 Services initialization completed")
     return services
 
 
@@ -182,7 +182,7 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
         Version sync results or None if skipped
     """
     if not db_url:
-        logger.warning("🔧 Version synchronization skipped - HIVE_DATABASE_URL not configured")
+        logger.warning("⚠️ Version synchronization skipped - HIVE_DATABASE_URL not configured")
         return None
     
     logger.info("🔧 Synchronizing component versions")
@@ -203,7 +203,7 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
                 sync_results[component_type + 's'] = results
                 total_synced += len(results) if results else 0
             except Exception as e:
-                logger.error(f"🔧 {component_type} sync failed", error=str(e))
+                logger.error(f"🚨 {component_type} sync failed", error=str(e))
                 sync_results[component_type + 's'] = {"error": str(e)}
         
         # Create more informative summary
@@ -214,13 +214,13 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
             elif isinstance(results, dict) and results.get("error"):
                 sync_summary.append(f"0 {comp_type} (error)")
         
-        logger.info("🔧 Version synchronization completed", 
+        logger.info("✅ Version synchronization completed", 
                    summary=", ".join(sync_summary) if sync_summary else "no components")
         
         return sync_results
         
     except Exception as e:
-        logger.error("🔧 Version synchronization failed", error=str(e))
+        logger.error("🚨 Version synchronization failed", error=str(e))
         return None
     finally:
         # Ensure proper cleanup of database connections
@@ -263,7 +263,7 @@ async def orchestrated_startup() -> StartupResults:
         StartupResults: Complete startup state for API wiring
     """
     startup_start = datetime.now()
-    logger.info("🚀 Starting Performance-Optimized Sequential Startup")
+    logger.info("⚡ Starting Performance-Optimized Sequential Startup")
     
     csv_manager = None
     services = None
@@ -272,20 +272,20 @@ async def orchestrated_startup() -> StartupResults:
     
     try:
         # 1. Database Migration (User requirement - first priority)
-        logger.info("🗄️ Database migration check")
+        logger.info("📊 Database migration check")
         try:
             from lib.utils.db_migration import check_and_run_migrations
             migrations_run = await check_and_run_migrations()
             if migrations_run:
-                logger.info("🗄️ Database schema initialized via Alembic migrations")
+                logger.info("📊 Database schema initialized via Alembic migrations")
             else:
-                logger.debug("🗄️ Database schema already up to date")
+                logger.debug("📊 Database schema already up to date")
         except Exception as e:
-            logger.warning("🗄️ Database migration check failed", error=str(e))
-            logger.info("🗄️ Continuing startup - system will use fallback initialization")
+            logger.warning("📊 Database migration check failed", error=str(e))
+            logger.info("🔧 Continuing startup - system will use fallback initialization")
         
         # 2. Logging System Ready (implicit - already configured)
-        logger.info("📝 Logging system ready")
+        logger.info("🔧 Logging system ready")
         
         # 3. Knowledge Base Init (CRITICAL - moved early as requested)
         csv_manager = await initialize_knowledge_base()
@@ -299,7 +299,7 @@ async def orchestrated_startup() -> StartupResults:
         registries = await batch_component_discovery()
         
         # 6. Configuration Resolution (implicit via registry lazy loading)
-        logger.info("⚙️ Configuration resolution completed")
+        logger.info("🔧 Configuration resolution completed")
         
         # 7. Service Initialization
         services = await initialize_services()
@@ -307,7 +307,7 @@ async def orchestrated_startup() -> StartupResults:
         
         # 8. Startup Summary
         startup_time = (datetime.now() - startup_start).total_seconds()
-        logger.info("🚀 Sequential startup completed", 
+        logger.info("⚡ Sequential startup completed", 
                    total_components=registries.total_components,
                    startup_time_seconds=f"{startup_time:.2f}",
                    sequence="optimized")
@@ -319,7 +319,7 @@ async def orchestrated_startup() -> StartupResults:
         )
         
     except Exception as e:
-        logger.error("🚀 Sequential startup failed", error=str(e), error_type=type(e).__name__)
+        logger.error("🚨 Sequential startup failed", error=str(e), error_type=type(e).__name__)
         # Return minimal results to allow server to continue
         return StartupResults(
             registries=registries or ComponentRegistries(workflows={}, teams={}, agents={}, summary="startup failed"),
