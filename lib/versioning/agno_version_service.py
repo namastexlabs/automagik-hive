@@ -194,8 +194,24 @@ class AgnoVersionService:
                 return None, "no_component_section"
             
             version = component_section.get('version')
-            if not version or version == "dev":
-                return None, "dev_version_skip"
+            if not version:
+                return None, "no_version_specified"
+            
+            # Handle dev versions in development environment
+            if version == "dev":
+                import os
+                environment = os.getenv("HIVE_ENVIRONMENT", "production").lower()
+                if environment == "development":
+                    # In development mode, treat dev as version 1 for database storage
+                    version = 1
+                    # Add dev marker to config for identification
+                    yaml_config = dict(yaml_config)
+                    if component_type in yaml_config:
+                        yaml_config[component_type] = dict(yaml_config[component_type])
+                        yaml_config[component_type]['version'] = version
+                        yaml_config[component_type]['is_dev_version'] = True
+                else:
+                    return None, "dev_version_skip"
             
             if not isinstance(version, int):
                 return None, "invalid_version"

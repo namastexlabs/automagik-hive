@@ -66,7 +66,6 @@ class Settings:
         
         # Performance monitoring
         self.enable_metrics = os.getenv("HIVE_ENABLE_METRICS", "true").lower() == "true"
-        self.metrics_interval = int(os.getenv("HIVE_METRICS_INTERVAL", "60"))  # 1 minute
         
     
     def is_production(self) -> bool:
