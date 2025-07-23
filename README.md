@@ -14,7 +14,7 @@
 [![FastAPI](https://img.shields.io/badge/fastapi-0.116+-red.svg)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 
-[Quick Start](#quick-start) • [Architecture](#architecture) • [Features](#features) • [Documentation](#documentation) • [Deployment](#deployment)
+[Getting Started](#-getting-started) • [Architecture](#%EF%B8%8F-architecture) • [Features](#-features) • [Configuration](#-configuration) • [Deployment](#-deployment)
 
 </div>
 
@@ -24,39 +24,23 @@ Automagik Hive is a production-ready enterprise multi-agent framework that trans
 
 **What makes it special:** Instead of writing complex code, you define intelligent agents, routing teams, and business workflows in YAML files. Automagik Hive automatically handles orchestration, memory management, knowledge integration, API generation, and enterprise deployment.
 
-**Key Differentiators:**
-- **YAML-First Configuration** with hot reload capabilities
-- **Intelligent Team Routing** using Agno's mode="route" for domain specialists  
-- **Enterprise-Grade Knowledge Management** with CSV-based RAG and vector search
-- **Workflows 2.0** with parallel execution, conditional logic, and state management
-- **Production-Ready Deployment** with multi-stage Docker builds and orchestration
-
-## 🏗️ How It Works
-
-Simple: You define agents, teams, and workflows in YAML. Automagik Hive handles the rest - memory, knowledge, APIs, and deployment.
-
 ```mermaid
 graph LR
-    %% What You Can Build
     You[👨‍💻 You] --> Build{What You Can Build}
     
-    %% Simple Options
-    Build --> Agent[🤖 Smart Agents<br/>Domain Experts<br/>Custom Tools<br/>Auto Memory]
-    Build --> Team[👥 Agent Teams<br/>Route Requests<br/>Collaborate<br/>Share Context]
-    Build --> Workflow[⚡ Workflows<br/>Multi-Step Tasks<br/>Human Handoff<br/>Notifications]
+    Build --> Agent[🤖 Smart Agents]
+    Build --> Team[👥 Agent Teams]
+    Build --> Workflow[⚡ Workflows]
     
-    %% Powered By
-    Agent --> Framework[🏗️ Automagik Hive<br/>YAML Config<br/>Hot Reload<br/>Production Ready]
+    Agent --> Framework[🏗️ Automagik Hive]
     Team --> Framework
     Workflow --> Framework
     
-    %% Features
     Framework --> Features{Core Features}
-    Features --> Knowledge[📚 Smart Knowledge<br/>CSV Import<br/>Vector Search<br/>Real-time Updates]
-    Features --> API[🌐 Instant APIs<br/>Auto-Generated<br/>Streaming<br/>Authentication]
-    Features --> Deploy[🚀 Easy Deploy<br/>Docker Ready<br/>Cloud Native<br/>Scalable]
+    Features --> Knowledge[📚 Smart Knowledge]
+    Features --> API[🌐 Instant APIs]
+    Features --> Deploy[🚀 Easy Deploy]
     
-    %% Styling
     classDef you fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000000
     classDef build fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
     classDef framework fill:#e8f5e8,stroke:#388e3c,stroke-width:3px,color:#000000
@@ -68,126 +52,11 @@ graph LR
     class Knowledge,API,Deploy features
 ```
 
-## 🎯 What You Can Build
-
-### 🤖 **Smart Agents**
-Create intelligent agents that understand your business domain and remember conversations.
-
-```yaml
-# ai/agents/my-agent/config.yaml
-agent:
-  name: "Customer Support Agent"
-  agent_id: "support-agent"
-
-instructions: |
-  You are a customer support specialist who helps with billing,
-  account issues, and product questions. You have access to our
-  knowledge base and remember previous conversations.
-
-knowledge:
-  search_knowledge: true
-  max_results: 5
-```
-
-**What you get:**
-- 🧠 **Memory**: Remembers user context across conversations
-- 📚 **Knowledge**: Access to your business data via CSV imports
-- 🛠️ **Tools**: Custom functions and integrations
-- 🔄 **Hot Reload**: Update agents without restarting
-
----
-
-### 👥 **Agent Teams**
-Build teams that intelligently route requests to the right specialist.
-
-```yaml
-# ai/teams/support-team/config.yaml
-team:
-  mode: route
-  name: "Support Team"
-  
-members:
-  - billing-agent
-  - technical-agent
-  - sales-agent
-
-instructions: |
-  Route billing questions to billing-agent,
-  technical issues to technical-agent,
-  and sales inquiries to sales-agent.
-```
-
-**What you get:**
-- 🎯 **Smart Routing**: Automatically picks the right agent
-- 🤝 **Collaboration**: Agents share context when needed
-- 📊 **Coordination**: Teams manage complex multi-step tasks
-- 🔗 **Workflows**: Trigger business processes automatically
-
----
-
-### ⚡ **Business Workflows**
-Automate complex business processes with multi-step workflows.
-
-```python
-# ai/workflows/escalation/workflow.py
-def customer_escalation_workflow():
-    """Automatically escalate frustrated customers to human support"""
-    # 1. Detect customer frustration
-    # 2. Gather conversation context
-    # 3. Send WhatsApp notification to support team
-    # 4. Transfer conversation with full history
-```
-
-**What you get:**
-- 🚨 **Auto Escalation**: Detect frustrated users and route to humans
-- 📱 **Notifications**: WhatsApp, Slack, Email integrations
-- 📋 **Context Transfer**: Full conversation history preserved
-- ⚙️ **Custom Logic**: Build any business process you need
-
----
-
-### 🌐 **Instant Production APIs**
-Your agents become APIs automatically - no code required.
-
-```bash
-# Instant playground for testing
-http://localhost:8886/docs
-
-# Production endpoints auto-generated
-POST /agents/support-agent/run
-POST /teams/support-team/run
-POST /workflows/escalation/run
-```
-
-**What you get:**
-- 📡 **Real-time Streaming**: Server-sent events for live responses
-- 🔐 **Authentication**: API key protection for production
-- 📊 **Monitoring**: Built-in health checks and metrics
-- 🐳 **Docker Ready**: One command deployment
-
----
-
-### 📚 **Smart Knowledge Base**
-Import your business data and get instant semantic search.
-
-```csv
-# lib/knowledge/knowledge_rag.csv
-business_unit,question,answer,solution
-Support,How do I reset my password?,Click Account > Reset Password,account_recovery
-Billing,When is my payment due?,Payments are due on the 15th of each month,payment_schedule
-```
-
-**What you get:**
-- 🔄 **Hot Reload**: Edit CSV, changes apply instantly
-- 🔍 **Vector Search**: Semantic search powered by PostgreSQL + pgvector
-- 🎯 **Smart Filtering**: Agents only see relevant knowledge
-- 📈 **Scalable**: Handles large knowledge bases efficiently
-
-## ⚡ Quick Start
+## ⚡ Getting Started
 
 ### Universal Installation (Recommended)
 
-Get started on any machine with our universal installer that handles all dependencies:
+Get started on any machine with our universal installer:
 
 ```bash
 # One-command installation (handles everything)
@@ -200,16 +69,18 @@ chmod +x install.sh
 ```
 
 The installer will:
-- ✅ Detect your operating system (Linux, macOS, Windows/WSL)
+- ✅ Detect your OS (Linux, macOS, Windows/WSL)
 - ✅ Install Python 3.12+ via uv (if needed)
-- ✅ Install all system dependencies (curl, git, openssl, make)
-- ✅ Offer optional Docker setup with secure PostgreSQL credentials
+- ✅ Install system dependencies
+- ✅ Optional Docker setup with secure PostgreSQL
 - ✅ Run `make install` automatically
-- ✅ Validate everything works correctly
+- ✅ Validate everything works
 
-### Manual Installation
+### Alternative Installation Methods
 
-#### Option 1: Local Development
+<details>
+<summary><strong>Local Development</strong></summary>
+
 ```bash
 # Install dependencies (local only)
 make install
@@ -217,8 +88,11 @@ make install
 # Start development server
 make dev
 ```
+</details>
 
-#### Option 2: Production with Docker
+<details>
+<summary><strong>Production with Docker</strong></summary>
+
 ```bash
 # Start production stack
 make prod
@@ -226,11 +100,47 @@ make prod
 # Check status
 make status
 ```
+</details>
+
+<details>
+<summary><strong>Development Environment</strong></summary>
+
+```bash
+# Install development dependencies
+uv sync --dev
+
+# Run tests
+uv run pytest
+
+# Code quality checks
+uv run ruff check --fix
+uv run mypy .
+```
+</details>
+
+### Quick Access
 
 Available endpoints:
 - **API**: http://localhost:8886 (configurable via HIVE_API_PORT)
 - **Docs**: http://localhost:8886/docs (Swagger UI)
 - **Health**: http://localhost:8886/api/v1/health
+
+## 🏗️ Architecture
+
+### 🤖 **Smart Agents**
+Create intelligent agents that understand your business domain and remember conversations.
+
+### 👥 **Agent Teams** 
+Build teams that intelligently route requests to the right specialist using Agno's mode="route".
+
+### ⚡ **Business Workflows**
+Automate complex business processes with multi-step workflows and human handoff capabilities.
+
+### 🌐 **Instant Production APIs**
+Your agents become APIs automatically - no code required. Real-time streaming, authentication, and Docker-ready deployment.
+
+### 📚 **Smart Knowledge Base**
+Import your business data via CSV and get instant semantic search with hot reload capabilities.
 
 ## ✨ Features
 
@@ -258,19 +168,12 @@ Available endpoints:
 - **Health Monitoring**: Detailed system status and component health
 - **MCP Integration**: Secure external system connectivity
 
-## 📚 Documentation
+## 📚 Configuration
 
-### Quick References
-- **[Agent Development](ai/agents/CLAUDE.md)** - Creating and configuring agents
-- **[Team Orchestration](ai/teams/CLAUDE.md)** - Setting up routing teams
-- **[Workflow Creation](ai/workflows/CLAUDE.md)** - Building multi-step processes
-- **[API Integration](api/CLAUDE.md)** - FastAPI endpoints and streaming
-- **[Knowledge Management](lib/knowledge/)** - RAG system configuration
+### Agent Configuration
 
-### Configuration Examples
-
-#### Agent Configuration (`ai/agents/my-agent/config.yaml`)
 ```yaml
+# ai/agents/my-agent/config.yaml
 agent:
   name: "Customer Support Specialist"
   agent_id: "customer-support"
@@ -282,6 +185,11 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.7
   max_tokens: 2000
+
+instructions: |
+  You are a customer support specialist who helps with billing,
+  account issues, and product questions. You have access to our
+  knowledge base and remember previous conversations.
 
 knowledge_filter:
   enable_agentic_knowledge_filters: true
@@ -295,8 +203,10 @@ memory:
   read_chat_history: true
 ```
 
-#### Team Configuration (`ai/teams/routing-team/config.yaml`)
+### Team Configuration
+
 ```yaml
+# ai/teams/routing-team/config.yaml
 team:
   mode: route
   name: "Customer Service Routing Team"
@@ -319,6 +229,21 @@ instructions: |
   Route technical issues to technical-support
   Route account changes to account-management
 ```
+
+### Knowledge Base Setup
+
+```csv
+# lib/knowledge/knowledge_rag.csv
+business_unit,question,answer,solution
+Support,How do I reset my password?,Click Account > Reset Password,account_recovery
+Billing,When is my payment due?,Payments are due on the 15th of each month,payment_schedule
+```
+
+**Key Benefits:**
+- 🔄 **Hot Reload**: Edit CSV, changes apply instantly
+- 🔍 **Vector Search**: Semantic search powered by PostgreSQL + pgvector
+- 🎯 **Smart Filtering**: Agents only see relevant knowledge
+- 📈 **Scalable**: Handles large knowledge bases efficiently
 
 ## 🐳 Deployment
 
@@ -386,24 +311,6 @@ spec:
 
 ## 🔧 Development
 
-### Setting Up Development Environment
-
-```bash
-# Install development dependencies
-uv sync --dev
-
-# Run tests
-uv run pytest
-
-# Code quality checks
-uv run ruff check --fix
-uv run mypy .
-
-# Database development
-uv run alembic revision --autogenerate -m "Add feature"
-uv run alembic upgrade head
-```
-
 ### Creating New Components
 
 ```bash
@@ -435,19 +342,12 @@ uv run pytest tests/api/
 uv run pytest --cov=ai --cov=api --cov=lib
 ```
 
-## 🤝 Contributing
+### Database Development
 
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### Commit Standards
-
-All commits should be co-authored with:
 ```bash
-Co-Authored-By: Automagik Genie <genie@namastex.ai>
+# Database development
+uv run alembic revision --autogenerate -m "Add feature"
+uv run alembic upgrade head
 ```
 
 ## 📊 Performance
@@ -488,6 +388,30 @@ Co-Authored-By: Automagik Genie <genie@namastex.ai>
 - **[Alembic](https://alembic.sqlalchemy.org/)** - Database migrations
 - **[SQLAlchemy](https://www.sqlalchemy.org/)** - ORM with async support
 - **[Pydantic](https://pydantic.dev/)** - Data validation and serialization
+
+## 📚 Documentation
+
+### Quick References
+- **[Agent Development](ai/agents/CLAUDE.md)** - Creating and configuring agents
+- **[Team Orchestration](ai/teams/CLAUDE.md)** - Setting up routing teams
+- **[Workflow Creation](ai/workflows/CLAUDE.md)** - Building multi-step processes
+- **[API Integration](api/CLAUDE.md)** - FastAPI endpoints and streaming
+- **[Knowledge Management](lib/knowledge/)** - RAG system configuration
+
+## 🤝 Contributing
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Commit Standards
+
+All commits should be co-authored with:
+```bash
+Co-Authored-By: Automagik Genie <genie@namastex.ai>
+```
 
 ## 📄 License
 
