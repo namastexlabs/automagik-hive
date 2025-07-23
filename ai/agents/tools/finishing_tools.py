@@ -5,14 +5,8 @@ from typing import Dict, Any, Optional
 from agno.tools import tool
 from agno.utils.log import logger
 
-# Import shared protocol utilities
-from ai.workflows.shared.protocol_generator import (
-    get_protocol_from_session_state,
-    format_protocol_for_user
-)
-
-# Import existing workflow
-from ai.workflows.conversation_typification.workflow import get_conversation_typification_workflow
+# Note: Using dynamic registry pattern for workflows, same as agents and teams
+# No hardcoded imports to specific workflows
 
 
 @tool
@@ -41,8 +35,15 @@ def trigger_conversation_typification_workflow(
     logger.info(f"🎯 Triggering conversation typification for session {session_id}")
     
     try:
-        # Create and run typification workflow using factory function
-        workflow = get_conversation_typification_workflow()
+        # Use dynamic registry lookup - same pattern as agents and teams
+        from ai.workflows.registry import get_workflow, is_workflow_registered
+        
+        if not is_workflow_registered('conversation-typification'):
+            logger.debug("🤖 Conversation typification workflow not available - graceful handling")
+            return "⚠️ Workflow de tipificação não está disponível no momento"
+        
+        # Get workflow via registry (same as agents/teams)
+        workflow = get_workflow('conversation-typification')
         
         # Execute workflow with proper input format for Agno Workflows 2.0
         results = list(workflow.run(
@@ -101,11 +102,8 @@ def send_farewell_message(
     logger.info(f"💬 Sending farewell message for protocol {protocol_id}")
     
     try:
-        # Format protocol for user display
-        protocol_message = format_protocol_for_user({
-            "protocol_id": protocol_id,
-            "protocol_type": "finalization"
-        })
+        # Format protocol for user display (inline implementation - no dependency on missing shared module)
+        protocol_message = f"Protocolo: {protocol_id}"
         
         # Create personalized farewell message
         if customer_name:
