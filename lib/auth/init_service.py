@@ -30,8 +30,7 @@ class AuthInitService:
         if self.env_file.exists():
             existing_key = self._read_key_from_env()
             if existing_key:
-                # Set in environment for current session
-                os.environ[self.api_key_var] = existing_key
+                # Return .env value without overriding shell environment
                 return existing_key
         
         # Generate new key and save
@@ -88,16 +87,16 @@ class AuthInitService:
     
     def _display_key_to_user(self, api_key: str) -> None:
         """Display generated API key to user."""
-        logger.info("\n" + "="*60)
-        logger.info("🔑 AUTOMAGIK HIVE - API KEY GENERATED")
-        logger.info("" + "="*60)
-        logger.info("A new API key has been generated and saved to .env:")
+        logger.info("🔐 \n" + "="*60)
+        logger.info("🔐 🔑 AUTOMAGIK HIVE - API KEY GENERATED")
+        logger.info("🔐 " + "="*60)
+        logger.info("🔐 A new API key has been generated and saved to .env:")
         logger.info(f"🔐 \nAPI Key: {api_key}")
-        logger.info("\nUse this key in your API requests:")
+        logger.info("🔐 \nUse this key in your API requests:")
         logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\')
         port = os.getenv('HIVE_API_PORT', '8886')
         logger.info(f"🔐      http://localhost:{port}/api/v1/health")
-        logger.info("\n" + "="*60 + "\n")
+        logger.info("🔐 \n" + "="*60 + "\n")
     
     def regenerate_key(self) -> str:
         """Generate and save a new API key."""

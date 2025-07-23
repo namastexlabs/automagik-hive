@@ -95,6 +95,7 @@ resource_types:
     logging: "📝"             # Logging infrastructure
     metrics: "📊"             # Metrics collection
     auth: "🔐"                # Authentication services
+    AuthInitService: "🔐"     # Authentication initialization service
     knowledge: "🧠"           # Knowledge management
     database: "🗄️"           # Database operations
     cache: "⚡"               # Caching systems
