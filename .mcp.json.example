@@ -2,7 +2,11 @@
   "mcpServers": {
     "genie-memory": {
       "type": "sse",
-      "url": "http://localhost:8765/mcp/openmemory/sse/namastex"
+      "url": "http://localhost:8765/mcp/openmemory/sse/your-username"
+    },
+    "automagik-forge": {
+      "type": "sse",
+      "url": "http://localhost:8889/sse"
     },
     "ask-repo-agent": {
       "type": "sse",
@@ -20,38 +24,25 @@
         "wait"
       ]
     },
-    "whatsapp_notifications": {
+    "genie-agents": {
       "command": "uvx",
       "args": [
         "automagik-tools@0.8.15",
         "tool",
-        "evolution-api"
+        "genie-agents"
       ],
       "env": {
-        "EVOLUTION_API_BASE_URL": "http://your-evolution-api-host:8080",
-        "EVOLUTION_API_API_KEY": "your-evolution-api-key-here",
-        "EVOLUTION_API_INSTANCE": "your-instance-name"
+        "GENIE_AGENTS_API_BASE_URL": "http://localhost:9888",
+        "GENIE_AGENTS_TIMEOUT": "300"
       }
     },
-     "automagik-hive": {
-       "command": "uvx",
-       "args": [
-         "automagik-tools@0.8.15",
-         "tool",
-         "genie-agents"
-       ],
-       "env": {
-         "GENIE_AGENTS_API_BASE_URL": "http://localhost:9888",
-         "GENIE_AGENTS_TIMEOUT": "300"
-      }
-    },
-      "postgres": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-postgres",
-          "postgresql+psycopg://ai:ai@localhost:5532/ai"
-        ]
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql+psycopg://user:password@localhost:5432/database"
+      ]
     }
   }
 }
