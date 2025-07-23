@@ -20,7 +20,9 @@
 
 ## 🚀 Overview
 
-Automagik Hive is a production-ready enterprise multi-agent framework built on **Clean Architecture** principles with **Agno v1.7.5** at its core. It provides sophisticated multi-agent orchestration, intelligent routing, and enterprise-grade deployment capabilities through YAML-first configuration and modern containerization.
+Automagik Hive is a production-ready enterprise multi-agent framework that transforms how you build AI-powered applications. Built on **Clean Architecture** principles with **Agno v1.7.5** at its core, it enables rapid development of sophisticated multi-agent systems through simple YAML configuration.
+
+**What makes it special:** Instead of writing complex code, you define intelligent agents, routing teams, and business workflows in YAML files. Automagik Hive automatically handles orchestration, memory management, knowledge integration, API generation, and enterprise deployment.
 
 **Key Differentiators:**
 - **YAML-First Configuration** with hot reload capabilities
@@ -499,7 +501,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**[🏠 Homepage](https://docs.automagik.ai)** • **[📧 Contact](mailto:hive@namastex.ai)** • **[🐛 Issues](https://github.com/namastexlabs/automagik-hive/issues)** • **[💬 Discussions](https://github.com/namastexlabs/automagik-hive/discussions)**
+**[💬 Discord](https://discord.gg/CEbzP5Hteh)** • **[🐛 Issues](https://github.com/namastexlabs/automagik-hive/issues)** • **[💬 Discussions](https://github.com/namastexlabs/automagik-hive/discussions)**
 
 Made with ❤️ by the **Automagik Team**
 
