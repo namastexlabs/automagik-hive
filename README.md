@@ -9,7 +9,7 @@
 *Production-grade boilerplate for building sophisticated multi-agent systems with intelligent routing and enterprise-grade deployment capabilities*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![Agno Framework](https://img.shields.io/badge/agno-v1.7.5-green.svg)](https://github.com/phidatahq/agno)
+[![Agno Framework](https://img.shields.io/badge/agno-v1.7.5-green.svg)](https://github.com/agno-agi/agno)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-16+-blue.svg)](https://www.postgresql.org/)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.116+-red.svg)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
@@ -470,7 +470,7 @@ Co-Authored-By: Automagik Genie <genie@namastex.ai>
 ## 🛠️ Tech Stack
 
 ### Core Framework
-- **[Agno v1.7.5](https://github.com/phidatahq/agno)** - Multi-agent orchestration framework
+- **[Agno v1.7.5](https://github.com/agno-agi/agno)** - Multi-agent orchestration framework
 - **[FastAPI](https://fastapi.tiangolo.com/)** - Modern API framework with auto-docs
 - **[PostgreSQL + pgvector](https://github.com/pgvector/pgvector)** - Vector database for embeddings
 - **[UV](https://docs.astral.sh/uv/)** - Modern Python package manager
@@ -493,10 +493,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 🙏 Acknowledgments
 
-- **[Agno Framework](https://github.com/phidatahq/agno)** for providing the multi-agent foundation
-- **[FastAPI](https://fastapi.tiangolo.com/)** for the excellent API framework
-- **[Anthropic](https://www.anthropic.com/)** for Claude AI capabilities
-- **Open Source Community** for the amazing tools and libraries
+- **[Agno Framework](https://github.com/agno-agi/agno)** for providing the multi-agent foundation
 
 ---
 
