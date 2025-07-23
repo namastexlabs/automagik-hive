@@ -96,8 +96,9 @@ class Settings:
                 logger.info("Using secure default values for metrics configuration")
             except ImportError:
                 # Fallback if logger is not available during early initialization
-                # Fallback for early initialization - avoid print statements
                 # Using secure default values (logging not available during early init)
+                pass
+            
             # Use secure defaults
             self.metrics_batch_size = 50
             self.metrics_flush_interval = 5.0
