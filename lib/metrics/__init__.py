@@ -24,16 +24,16 @@ Usage:
     HIVE_METRICS_COLLECT_TOKENS=true
     HIVE_DATABASE_URL=postgresql+psycopg://user:pass@host:port/database
     HIVE_AGNO_MONITOR=false
-    
+
     # Automatic AGNO native metrics via proxies
     from lib.utils.agno_proxy import create_agent
     agent = create_agent("my-agent", config)  # AGNO metrics automatically collected
-    
+
     # Manual usage with AGNO bridge
     from lib.metrics import AsyncMetricsService, AgnoMetricsBridge
     service = AsyncMetricsService()
     await service.collect_metrics("agent-name", "agent", agno_response)
-    
+
     # LangWatch integration
     from lib.metrics import initialize_dual_path_metrics
     coordinator = initialize_dual_path_metrics(bridge, langwatch_enabled=True)
@@ -71,19 +71,19 @@ from .langwatch_integration import (
 __all__ = [
     # Configuration
     "MetricsConfig",
-    "load_metrics_config", 
+    "load_metrics_config",
     "validate_environment_config",
     "get_configuration_summary",
-    
+
     # Async Service with AGNO Native Metrics
     "AsyncMetricsService",
     "get_metrics_service",
-    "initialize_metrics_service", 
+    "initialize_metrics_service",
     "shutdown_metrics_service",
-    
+
     # AGNO Native Metrics Bridge
     "AgnoMetricsBridge",
-    
+
     # LangWatch Integration
     "LangWatchManager",
     "DualPathMetricsCoordinator",
@@ -121,12 +121,12 @@ def _check_langwatch_availability() -> bool:
 def get_metrics_status() -> dict:
     """
     Get current metrics system status for debugging
-    
+
     Returns:
         Dictionary with system status information
     """
     config_summary = get_configuration_summary()
-    
+
     # Test async metrics service availability
     metrics_service_available = False
     if config_summary.get("validation_status") == "valid":
@@ -135,7 +135,7 @@ def get_metrics_status() -> dict:
             metrics_service_available = service is not None
         except Exception:
             pass
-    
+
     return {
         "version": __version__,
         "configuration": config_summary,
@@ -154,7 +154,7 @@ def get_metrics_status() -> dict:
         },
         "advantages": [
             "AGNO native metrics (15+ token types vs 3 manual)",
-            "Native timing metrics (time, time_to_first_token)", 
+            "Native timing metrics (time, time_to_first_token)",
             "Audio and reasoning token support",
             "Cache metrics for performance optimization",
             "LangWatch OpenTelemetry integration",

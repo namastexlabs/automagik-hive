@@ -51,6 +51,8 @@ dependencies = [
     "mcp>=1.10.1",
     "loguru>=0.7.3",
     "pandas>=2.3.1",
+    "langwatch>=0.2.9",
+    "openinference-instrumentation-agno>=0.1.9",
 ]
 
 [project.optional-dependencies]
