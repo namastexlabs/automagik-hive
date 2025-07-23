@@ -4,7 +4,7 @@
       "type": "sse",
       "url": "http://localhost:8765/mcp/openmemory/sse/namastex"
     },
-    "kanban": {
+    "automagik-forge": {
       "type": "sse",
       "url": "http://localhost:8889/sse"
     },
