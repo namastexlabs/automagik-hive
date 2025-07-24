@@ -236,6 +236,7 @@ help: ## 🐝 Show this help message
 	@echo -e "$(FONT_CYAN)🔄 Maintenance:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files"
 	@echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run test suite"
+	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Uninstall with data preservation options"
 	@echo ""
 	@echo -e "$(FONT_YELLOW)💡Production uses Docker$(FONT_RESET)"
 	@echo ""
