@@ -1,0 +1,160 @@
+# Forge Template: Intelligent Monitoring Setup
+# Enhanced with MCP integration, memory, and WhatsApp notifications
+# SLI/SLO definitions, observability, and automated alerting
+
+name: "intelligent-monitoring-setup"
+title: "Implement comprehensive monitoring for [component/system]"
+description: "AI-powered observability with SLI/SLO definitions, intelligent alerting, dashboard automation, and performance baseline establishment"
+
+## Memory Context
+<memory>
+<!-- Previous monitoring configurations, SLI/SLO definitions, alerting strategies, and dashboard patterns -->
+</memory>
+
+## Agno Monitoring Pattern Research
+### Research Phase
+- [ ] Search agno-agi/agi for observability and monitoring patterns using ask-repo-agent
+- [ ] Query context7/agno for SLI/SLO best practices and metrics collection using search-repo-docs
+- [ ] Research Agno's performance monitoring and benchmarking methodologies
+- [ ] Identify multi-agent system monitoring and coordination patterns
+- [ ] Study Agno's error tracking and incident response approaches
+- [ ] Cross-reference with existing Automagik Hive monitoring infrastructure
+
+## Contextual Monitoring Analysis for Automagik Hive
+### 1. Current Monitoring Landscape Assessment
+- [ ] Map existing monitoring tools and observability infrastructure
+- [ ] Document current metrics collection and storage systems
+- [ ] Identify existing dashboards, alerts, and notification channels
+- [ ] Assess current logging and tracing capabilities
+- [ ] Review existing SLI/SLO definitions and performance baselines
+- [ ] Document monitoring coverage gaps and blind spots
+
+### 2. System Characteristics and Monitoring Requirements
+- [ ] Define system criticality and business impact assessment
+- [ ] Identify key user journeys and business process dependencies
+- [ ] Map system architecture and component interdependencies
+- [ ] Assess performance characteristics and scaling patterns
+- [ ] Document compliance and audit monitoring requirements
+- [ ] Evaluate security monitoring and threat detection needs
+
+### 3. Observability Strategy Design
+- [ ] Design comprehensive monitoring strategy with three pillars approach
+- [ ] Plan metrics, logging, and tracing integration architecture
+- [ ] Create SLI/SLO framework aligned with business objectives
+- [ ] Design alerting strategy with appropriate escalation paths
+- [ ] Plan dashboard hierarchy from executive to operational views
+- [ ] Design incident response and on-call procedures integration
+
+## Comprehensive Monitoring Implementation Checklist
+
+### 1. Service Level Indicators (SLI) Definition
+- [ ] Define availability SLIs with uptime and error rate measurements
+- [ ] Create latency SLIs with percentile-based performance targets
+- [ ] Establish throughput SLIs for request volume and processing capacity
+- [ ] Design quality SLIs for data accuracy and system correctness
+- [ ] Create user experience SLIs for customer-facing functionality
+- [ ] Implement business KPI SLIs aligned with organizational goals
+- [ ] Validate SLI measurements with historical data and trends
+
+### 2. Service Level Objectives (SLO) Framework
+- [ ] Set availability SLOs with appropriate uptime targets (99.9%, 99.95%)
+- [ ] Define latency SLOs with realistic performance expectations
+- [ ] Establish error budget policies and consumption monitoring
+- [ ] Create SLO violation alerting and escalation procedures
+- [ ] Design SLO reporting and stakeholder communication processes
+- [ ] Implement SLO review and adjustment procedures
+- [ ] Validate SLO achievability with system capacity planning
+
+### 3. Metrics Collection and Storage
+- [ ] Implement application metrics with business and technical KPIs
+- [ ] Set up infrastructure metrics for CPU, memory, disk, and network
+- [ ] Create custom metrics for domain-specific business logic
+- [ ] Design metrics aggregation and retention policies
+- [ ] Implement metrics labeling and dimensionality strategies
+- [ ] Set up metrics storage with appropriate scalability and retention
+- [ ] Create metrics backup and disaster recovery procedures
+
+### 4. Logging and Audit Trail Implementation
+- [ ] Design structured logging with consistent format and fields
+- [ ] Implement log aggregation with centralized collection and storage
+- [ ] Create log parsing and enrichment pipelines
+- [ ] Set up log retention policies and compliance requirements
+- [ ] Implement security and audit logging for compliance
+- [ ] Design log search and analysis capabilities
+- [ ] Create log-based alerting for critical events and errors
+
+### 5. Distributed Tracing and Performance Analysis
+- [ ] Implement distributed tracing for request flow visibility
+- [ ] Set up trace sampling strategies for performance and cost optimization
+- [ ] Create trace correlation with logs and metrics
+- [ ] Design performance bottleneck identification and analysis
+- [ ] Implement trace-based SLI measurement and validation
+- [ ] Set up trace retention and storage optimization
+- [ ] Create trace analysis dashboards and reporting
+
+### 6. Intelligent Alerting and Notification
+- [ ] Design alert hierarchy with severity levels and escalation paths
+- [ ] Implement intelligent alerting with anomaly detection and baselines
+- [ ] Create alert correlation and noise reduction mechanisms
+- [ ] Set up multi-channel notification system (email, Slack, PagerDuty)
+- [ ] Design alert acknowledgment and resolution workflows
+- [ ] Implement alert fatigue reduction with smart grouping and throttling
+- [ ] Create alert effectiveness measurement and optimization
+
+## Database Monitoring Integration (if applicable)
+- [ ] Use postgres tool to validate database monitoring configuration
+- [ ] Set up database performance metrics and query analysis
+- [ ] Implement database connection pool and resource monitoring
+- [ ] Create database backup and replication monitoring
+- [ ] Set up database security and access audit logging
+- [ ] Design database capacity planning and growth monitoring
+
+## Pattern Compliance Validation
+- [ ] Verify monitoring implementation follows Agno framework patterns
+- [ ] Check alignment with context7/agno observability best practices
+- [ ] Validate consistency with Automagik Hive monitoring standards
+- [ ] Ensure monitoring supports system reliability and performance goals
+- [ ] Document monitoring decisions and architectural trade-offs
+- [ ] Confirm compliance with enterprise security and governance requirements
+
+## Memory-Driven Monitoring Insights
+- [ ] Apply successful monitoring patterns from previous implementations
+- [ ] Reference effective SLI/SLO definitions from historical systems
+- [ ] Leverage lessons learned from past incident response experiences
+- [ ] Cross-check against known monitoring anti-patterns and failures
+- [ ] Apply historical alerting optimization insights and noise reduction
+- [ ] Utilize proven dashboard design patterns from memory
+
+## Goal
+Establish comprehensive, intelligent monitoring and observability with well-defined SLIs/SLOs, effective alerting, and actionable dashboards to ensure system reliability and performance visibility.
+
+## Deliverables
+1. **SLI/SLO framework** with business-aligned objectives and error budgets
+2. **Comprehensive monitoring implementation** with metrics, logging, and tracing
+3. **Intelligent alerting system** with escalation paths and noise reduction
+4. **Dashboard suite** with executive, operational, and debugging views
+5. **Incident response integration** with monitoring-driven procedures
+6. **Monitoring documentation** with runbooks and troubleshooting guides
+
+## Success Criteria
+- [ ] SLI/SLO framework accurately reflects business requirements and system reality
+- [ ] Monitoring provides comprehensive visibility with minimal blind spots
+- [ ] Alerting effectively identifies issues with minimal false positives
+- [ ] Dashboards enable quick problem identification and resolution
+- [ ] Monitoring data supports effective incident response and debugging
+- [ ] System performance baselines established and tracked over time
+- [ ] Monitoring implementation aligns with Agno framework patterns
+- [ ] Stakeholders can effectively track system health and business impact
+
+## Automated Learning Capture
+The system will automatically capture:
+- Effective SLI/SLO definitions and business alignment strategies
+- Monitoring architecture patterns and tool integration approaches
+- Alerting optimization techniques and noise reduction strategies
+- Dashboard design patterns and user experience insights
+- Incident response monitoring integration and effectiveness metrics
+- Performance baseline establishment and trending analysis methods
+
+---
+
+**Enhanced with MCP Integration**: This template leverages ask-repo-agent for Agno monitoring research, search-repo-docs for context7 observability approaches, postgres tool for database monitoring validation, and intelligent memory system for monitoring pattern learning and SLI/SLO optimization.

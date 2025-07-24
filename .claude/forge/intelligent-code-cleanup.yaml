@@ -1,0 +1,152 @@
+# Forge Template: Intelligent Code Cleanup
+# Enhanced with MCP integration, memory, and WhatsApp notifications  
+# Migrated from: code-cleanup.yaml to match default template style
+
+name: "intelligent-code-cleanup"
+title: "Clean and refactor code for [component/module]"
+description: "AI-powered code cleanup with Agno pattern compliance, memory-driven insights, and automated quality improvements"
+
+## Memory Context
+<memory>
+<!-- Previous cleanup patterns, successful refactoring approaches, and code quality insights -->
+</memory>
+
+## Agno Code Quality Pattern Research
+### Research Phase
+- [ ] Search agno-agi/agi for code organization patterns using ask-repo-agent
+- [ ] Query context7/agno for code quality standards using search-repo-docs
+- [ ] Research Agno's modular architecture and composition principles
+- [ ] Identify clean code patterns in multi-agent systems
+- [ ] Study Agno's approach to minimal boilerplate and clean interfaces
+
+## Contextual Code Analysis for Automagik Hive
+### 1. Current Code Quality Assessment
+- [ ] Scan target components for code complexity and maintainability issues
+- [ ] Identify code smells, duplication, and anti-patterns
+- [ ] Review existing linting rules and formatting standards  
+- [ ] Map dependencies and coupling between modules
+- [ ] Document current code organization and architectural patterns
+
+### 2. Project Standards Alignment Check
+- [ ] Verify alignment with Automagik Hive coding standards from CLAUDE.md
+- [ ] Check compliance with KISS, YAGNI, and DRY principles
+- [ ] Review file size constraints (target: under 350 lines)
+- [ ] Validate modular design and single responsibility adherence
+- [ ] Assess type annotation coverage and documentation quality
+
+### 3. Technical Debt Analysis
+- [ ] Identify outdated patterns and deprecated API usage
+- [ ] Map areas requiring modernization to current Python standards
+- [ ] Document performance bottlenecks in code structure
+- [ ] Review error handling and exception management patterns
+- [ ] Assess test coverage and testability of target code
+
+## Comprehensive Code Cleanup Checklist
+
+### 1. Code Structure and Organization
+- [ ] Break down large files (>350 lines) into focused modules
+- [ ] Extract utilities, constants, and types into separate files
+- [ ] Organize imports following project conventions (isort configuration)
+- [ ] Group related functionality using composition over inheritance
+- [ ] Ensure single responsibility principle for each module/class
+- [ ] Remove unused imports, variables, and dead code
+
+### 2. Code Formatting and Style Consistency
+- [ ] Apply Black formatting with project line length settings
+- [ ] Organize imports with isort using project profile
+- [ ] Fix linting issues identified by flake8 and pylint
+- [ ] Ensure consistent variable and function naming conventions
+- [ ] Apply type hints following project typing standards
+- [ ] Remove trailing whitespace and normalize line endings
+
+### 3. Code Quality Improvements
+- [ ] Simplify complex conditionals and nested logic
+- [ ] Extract magic numbers and strings to named constants
+- [ ] Improve function and variable names for clarity
+- [ ] Replace repetitive code with reusable functions/classes
+- [ ] Optimize data structure choices for performance and readability
+- [ ] Apply modern Python features and idioms where appropriate
+
+### 4. Error Handling and Robustness
+- [ ] Add appropriate exception handling and error recovery
+- [ ] Replace bare except clauses with specific exception types
+- [ ] Implement proper logging instead of print statements
+- [ ] Add input validation and boundary condition checking
+- [ ] Ensure resource cleanup and proper context management
+- [ ] Validate external API interactions and error responses
+
+### 5. Documentation and Maintainability
+- [ ] Add or improve docstrings following project standards
+- [ ] Include type annotations for all public interfaces
+- [ ] Document complex algorithms and business logic
+- [ ] Add inline comments for non-obvious code sections
+- [ ] Create or update module-level documentation
+- [ ] Ensure examples and usage patterns are current
+
+### 6. Dependency and Import Optimization
+- [ ] Remove unused dependencies and imports
+- [ ] Replace deprecated libraries with modern alternatives
+- [ ] Optimize import statements for clarity and performance
+- [ ] Review third-party dependency versions and security
+- [ ] Consolidate similar functionality across modules
+- [ ] Validate circular dependency resolution
+
+## Agno Pattern Compliance Validation
+- [ ] Verify modular architecture follows Agno composition principles
+- [ ] Check for minimal boilerplate following Agno clean interface patterns
+- [ ] Validate tool composition approach over inheritance
+- [ ] Ensure configuration-driven design where appropriate
+- [ ] Apply small, focused file organization (under 350 lines like Agno)
+
+## Memory-Driven Quality Insights
+- [ ] Apply successful refactoring patterns from previous cleanup sessions
+- [ ] Reference effective code organization strategies from memory
+- [ ] Leverage lessons learned from past technical debt reduction
+- [ ] Cross-check against known code quality anti-patterns
+- [ ] Apply historical insights about maintainability improvements
+
+## Database Code Quality (if applicable)
+- [ ] Use postgres tool to validate query structure and performance
+- [ ] Review database interaction patterns for efficiency
+- [ ] Ensure proper connection management and resource cleanup
+- [ ] Validate SQL injection prevention and parameterized queries
+- [ ] Check database schema consistency and migration quality
+
+## Backup and Safety Measures
+- [ ] Create pre-cleanup backup using git branch or file copies
+- [ ] Ensure all changes are version controlled
+- [ ] Run existing tests to establish baseline functionality
+- [ ] Validate changes don't break existing functionality
+- [ ] Document cleanup decisions and rationale
+
+## Goal
+Transform target code into clean, maintainable, and efficient implementation following Agno patterns and Automagik Hive standards, with measurable improvements in code quality metrics and maintainability.
+
+## Deliverables
+1. **Refactored code** with improved structure and organization
+2. **Code quality report** showing before/after metrics and improvements
+3. **Documentation updates** reflecting structural changes and improvements
+4. **Test validation** confirming functionality is preserved
+5. **Cleanup summary** documenting patterns applied and decisions made
+6. **Maintenance guidelines** for sustained code quality
+
+## Success Criteria
+- [ ] All files under 350-line target following project standards
+- [ ] Code complexity reduced and readability improved
+- [ ] Linting and formatting issues resolved
+- [ ] Type annotation coverage improved
+- [ ] Technical debt reduced with documented improvements
+- [ ] Existing functionality preserved (all tests pass)
+- [ ] Code patterns align with Agno framework best practices
+
+## Automated Learning Capture
+The system will automatically capture:
+- Effective refactoring patterns and code organization strategies
+- Successful technical debt reduction approaches
+- Code quality improvement techniques and their impact
+- Maintainability patterns and architectural decisions
+- Performance implications of code structure changes
+
+---
+
+**Enhanced with MCP Integration**: This template leverages ask-repo-agent for Agno code quality patterns, search-repo-docs for context7 refactoring approaches, postgres tool for database code validation, and intelligent memory system for code quality pattern learning and refactoring strategy optimization.

@@ -1,0 +1,141 @@
+# Forge Template: Intelligent Security Audit
+# Enhanced with MCP integration, memory, and WhatsApp notifications
+# Migrated from: security-audit.yaml to match default template style
+
+name: "intelligent-security-audit"
+title: "Comprehensive security audit for [component/system]"
+description: "AI-powered security analysis with OWASP compliance, Agno pattern research, and memory-driven threat intelligence"
+
+## Memory Context
+<memory>
+<!-- Previous security findings, vulnerability patterns, and remediation insights -->
+</memory>
+
+## Agno Security Pattern Research
+### Research Phase
+- [ ] Search agno-agi/agi for security implementation patterns using ask-repo-agent
+- [ ] Query context7/agno for security best practices and threat models using search-repo-docs
+- [ ] Research Agno's security architecture and data protection approaches
+- [ ] Identify multi-agent security coordination patterns
+- [ ] Cross-reference with Automagik Hive's current security implementations
+
+## Contextual Security Analysis for Automagik Hive
+### 1. Security Landscape Assessment
+- [ ] Map current authentication and authorization mechanisms
+- [ ] Identify data flow patterns and sensitive information handling
+- [ ] Document API endpoints and access control implementations
+- [ ] Analyze agent-to-agent communication security
+- [ ] Review database security configuration using postgres tool
+
+### 2. Threat Surface Analysis
+- [ ] Identify external interfaces and attack vectors
+- [ ] Map user input validation points and sanitization
+- [ ] Document secret management and configuration security
+- [ ] Assess third-party integration security risks
+- [ ] Analyze deployment and infrastructure security posture
+
+### 3. Compliance Framework Preparation
+- [ ] Determine applicable compliance requirements (OWASP, SOC2, etc.)
+- [ ] Map existing security controls to compliance frameworks
+- [ ] Identify compliance gaps and remediation requirements
+- [ ] Document audit trail and logging capabilities
+- [ ] Prepare security policy and procedure documentation
+
+## Comprehensive Security Audit Checklist
+
+### 1. OWASP Top 10 Security Analysis
+- [ ] **Injection Flaws**: Scan for SQL, NoSQL, OS, and LDAP injection vulnerabilities
+- [ ] **Broken Authentication**: Verify session management and credential protection
+- [ ] **Sensitive Data Exposure**: Check encryption at rest and in transit
+- [ ] **XML External Entities (XXE)**: Validate XML parser security configurations
+- [ ] **Broken Access Control**: Test authorization and privilege escalation
+- [ ] **Security Misconfiguration**: Review security headers and server configuration
+- [ ] **Cross-Site Scripting (XSS)**: Test input validation and output encoding
+- [ ] **Insecure Deserialization**: Check object serialization security
+- [ ] **Components with Known Vulnerabilities**: Audit dependencies and versions
+- [ ] **Insufficient Logging & Monitoring**: Validate security event tracking
+
+### 2. Database Security Validation
+- [ ] Use postgres tool to validate database security configuration
+- [ ] Test SQL injection prevention mechanisms
+- [ ] Verify database access controls and user permissions
+- [ ] Check encryption of sensitive data at rest
+- [ ] Validate backup security and access controls
+- [ ] Test database connection security and SSL/TLS configuration
+
+### 3. API Security Assessment
+- [ ] Validate API authentication and authorization mechanisms
+- [ ] Test rate limiting and DoS protection
+- [ ] Check input validation and parameter tampering prevention
+- [ ] Verify output encoding and information disclosure prevention
+- [ ] Test CORS configuration and cross-origin security
+- [ ] Validate API versioning and backward compatibility security
+
+### 4. Agent Security Analysis (Automagik Hive Specific)
+- [ ] Verify agent-to-agent communication encryption
+- [ ] Test agent authentication and identity verification
+- [ ] Check agent capability isolation and sandboxing
+- [ ] Validate agent memory security and data leakage prevention
+- [ ] Test agent workflow authorization and privilege management
+- [ ] Assess agent deployment and runtime security
+
+### 5. Infrastructure Security Review
+- [ ] Validate container security and image scanning
+- [ ] Check network segmentation and firewall configurations
+- [ ] Test secret management and environment variable security
+- [ ] Verify deployment pipeline security and access controls
+- [ ] Assess monitoring and intrusion detection capabilities
+- [ ] Review backup and disaster recovery security
+
+### 6. Dependency and Supply Chain Security
+- [ ] Scan dependencies for known vulnerabilities
+- [ ] Verify package integrity and signature validation
+- [ ] Check for outdated or unmaintained dependencies
+- [ ] Validate license compliance and security implications
+- [ ] Test dependency update and patching processes
+
+## Memory-Driven Threat Intelligence
+- [ ] Review previous security audit findings for similar components
+- [ ] Apply lessons learned from past vulnerability discoveries
+- [ ] Reference successful remediation patterns from memory
+- [ ] Cross-check against known attack patterns in system memory
+- [ ] Leverage historical incident response insights
+
+## Pattern Compliance Validation
+- [ ] Verify security implementation follows Agno framework patterns
+- [ ] Check alignment with context7/agno security best practices
+- [ ] Validate consistency with Automagik Hive security standards
+- [ ] Ensure compliance with identified regulatory requirements
+- [ ] Document security architecture decisions and rationale
+
+## Goal
+Complete comprehensive security assessment with OWASP Top 10 compliance, identifying and prioritizing security vulnerabilities with actionable remediation guidance based on Agno patterns and memory-driven threat intelligence.
+
+## Deliverables
+1. **Security assessment report** with prioritized findings and risk ratings
+2. **OWASP compliance matrix** showing current status and gaps
+3. **Vulnerability scan results** with detailed technical analysis
+4. **Remediation roadmap** with timelines and resource requirements
+5. **Security recommendations** based on Agno patterns and best practices
+6. **Compliance documentation** for applicable regulatory frameworks
+
+## Success Criteria
+- [ ] All critical and high-severity vulnerabilities identified and documented
+- [ ] OWASP Top 10 compliance assessment completed
+- [ ] Database security validated using postgres tool
+- [ ] Agent security architecture assessed and validated
+- [ ] Dependency vulnerabilities scanned and cataloged
+- [ ] Remediation priorities established with actionable recommendations
+- [ ] Security patterns align with Agno framework best practices
+
+## Automated Learning Capture
+The system will automatically capture:
+- New vulnerability patterns and attack vectors discovered
+- Effective remediation strategies and implementation approaches
+- Security tool configurations and validation techniques
+- Compliance mapping insights and regulatory requirements
+- Agent security patterns and multi-agent threat considerations
+
+---
+
+**Enhanced with MCP Integration**: This template leverages ask-repo-agent for Agno security research, search-repo-docs for context7 security approaches, postgres tool for database security validation, and intelligent memory system for threat intelligence and remediation pattern learning.

@@ -1,0 +1,124 @@
+# Forge Template: Intelligent Test Suite
+# Enhanced with MCP integration, memory, and WhatsApp notifications
+# Migrated from: test-suite.yaml to match default template style
+
+name: "intelligent-test-suite"
+title: "Add comprehensive tests for [component/function]"
+description: "Generate intelligent tests with Agno pattern research, memory-driven insights, and automated coverage analysis"
+
+## Memory Context
+<memory>
+<!-- Automatically injected memories will appear here -->
+</memory>
+
+## Agno Pattern Research
+### Research Phase
+- [ ] Search agno-agi/agi for testing frameworks and patterns using ask-repo-agent
+- [ ] Query context7/agno for testing best practices using search-repo-docs  
+- [ ] Cross-reference patterns with existing Automagik Hive test structure
+- [ ] Identify performance testing approaches from Agno benchmarking methods
+- [ ] Research multi-agent testing patterns for complex workflows
+
+## Contextual Analysis for Automagik Hive
+### 1. Current Test Landscape Analysis
+- [ ] Scan existing tests in `/tests/` directory structure
+- [ ] Identify current testing frameworks (pytest, coverage tools)
+- [ ] Check test coverage baseline with `uv run python -m coverage report`
+- [ ] Map existing test patterns in `tests/teams/test_registry.py`
+- [ ] Document current coverage gaps and untested modules
+
+### 2. Component-Specific Test Planning
+- [ ] Analyze target component structure and dependencies
+- [ ] Identify public interfaces and critical functionality
+- [ ] Map error conditions and edge cases specific to component
+- [ ] Check database interactions requiring postgres tool validation
+- [ ] Document integration points with other Automagik Hive components
+
+### 3. Test Data and Environment Assessment
+- [ ] Verify test database connection using postgres tool
+- [ ] Check existing test fixtures and data factories
+- [ ] Validate test isolation and cleanup mechanisms
+- [ ] Assess performance testing requirements for target component
+- [ ] Document environment-specific test considerations
+
+## Comprehensive Testing Checklist
+
+### 1. Test Environment Setup
+- [ ] Verify pytest installation and configuration
+- [ ] Set up test database using postgres tool for data validation
+- [ ] Configure coverage tracking with target threshold (80%+ for new code)
+- [ ] Prepare test fixtures specific to component functionality
+- [ ] Set up performance benchmarking if required
+
+### 2. Unit Test Development
+- [ ] Test the happy path with typical inputs and expected outputs
+- [ ] Create edge case tests for boundary conditions and limits
+- [ ] Implement error case tests for invalid inputs and exceptions
+- [ ] Mock external dependencies following Automagik Hive patterns
+- [ ] Write clear, descriptive test names that explain behavior
+- [ ] Ensure each test focuses on single behavior or outcome
+
+### 3. Integration Test Implementation  
+- [ ] Test component interactions within Automagik Hive ecosystem
+- [ ] Verify database operations using postgres tool for validation
+- [ ] Test API endpoints and request/response cycles
+- [ ] Validate agent-to-agent communication patterns
+- [ ] Test workflow orchestration and state management
+
+### 4. Performance and Load Testing
+- [ ] Implement performance benchmarks following Agno patterns
+- [ ] Test memory usage and resource consumption
+- [ ] Validate response times under normal and peak loads
+- [ ] Test concurrent access and thread safety
+- [ ] Benchmark against baseline performance metrics
+
+### 5. Test Quality Assurance
+- [ ] Ensure tests run independently without order dependencies
+- [ ] Validate test data cleanup after each test execution
+- [ ] Check test naming follows project conventions
+- [ ] Verify clear assertions that validate expected behavior
+- [ ] Review test documentation and inline comments
+
+## Database-Aware Testing (if applicable)
+- [ ] Use postgres tool to validate test database schema
+- [ ] Test data migration scenarios and rollbacks
+- [ ] Verify referential integrity and constraint validation
+- [ ] Test transaction handling and error recovery
+- [ ] Validate query performance and optimization
+
+## Pattern Compliance Validation
+- [ ] Verify tests follow Agno framework testing principles
+- [ ] Check alignment with context7/agno testing patterns
+- [ ] Validate integration with existing Automagik Hive test suite
+- [ ] Ensure consistency with project testing standards
+- [ ] Document any deviations from established patterns
+
+## Goal
+Achieve comprehensive test coverage (minimum 80%) for target component with intelligent test generation based on Agno patterns and memory-driven insights from previous testing sessions.
+
+## Deliverables
+1. **Test files** with comprehensive unit, integration, and performance tests
+2. **Coverage report** showing improved coverage metrics
+3. **Test documentation** explaining test strategy and execution
+4. **Performance benchmarks** following Agno testing methodology
+5. **Integration validation** confirming component works within Automagik Hive ecosystem
+
+## Success Criteria
+- [ ] All tests pass consistently without flaky behavior
+- [ ] Code coverage meets or exceeds 80% threshold for new code
+- [ ] Performance benchmarks establish baseline metrics
+- [ ] Integration tests validate component interactions
+- [ ] Test patterns align with Agno framework best practices
+- [ ] Tests integrate seamlessly with existing Automagik Hive test suite
+
+## Automated Learning Capture
+The system will automatically capture:
+- Effective test patterns discovered during implementation
+- Performance benchmarks and optimization insights
+- Integration challenges and solutions
+- Memory-driven improvements based on historical testing data
+- Pattern compliance lessons and framework alignment insights
+
+---
+
+**Enhanced with MCP Integration**: This template leverages ask-repo-agent for Agno pattern research, search-repo-docs for context7 testing approaches, postgres tool for database testing, and intelligent memory system for continuous learning improvement.
