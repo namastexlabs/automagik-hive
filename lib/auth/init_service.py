@@ -93,7 +93,7 @@ class AuthInitService:
         logger.info("🔐 A new API key has been generated and saved to .env:")
         logger.info(f"🔐 \nAPI Key: {api_key}")
         logger.info("🔐 \nUse this key in your API requests:")
-        logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\')
+        logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\\\')
         port = os.getenv('HIVE_API_PORT', '8886')
         logger.info(f"🔐      http://localhost:{port}/api/v1/health")
         logger.info("🔐 \n" + "="*60 + "\n")
