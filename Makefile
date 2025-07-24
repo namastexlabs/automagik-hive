@@ -146,9 +146,9 @@ endef
 define setup_docker_postgres
     echo ""; \
     echo -e "$(FONT_PURPLE)🐳 Optional Docker PostgreSQL Setup$(FONT_RESET)"; \
-    echo -e "$(FONT_CYAN)Would you like to set up Docker PostgreSQL with secure credentials? (y/N)$(FONT_RESET)"; \
+    echo -e "$(FONT_CYAN)Would you like to set up Docker PostgreSQL with secure credentials? (Y/n)$(FONT_RESET)"; \
     read -r REPLY; \
-    if [ "$$REPLY" = "y" ] || [ "$$REPLY" = "Y" ]; then \
+    if [ "$$REPLY" != "n" ] && [ "$$REPLY" != "N" ]; then \
         $(call check_docker); \
         $(call generate_postgres_credentials); \
         echo -e "$(FONT_CYAN)🐳 Starting PostgreSQL container...$(FONT_RESET)"; \
