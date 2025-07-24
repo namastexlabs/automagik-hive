@@ -51,6 +51,8 @@ dependencies = [
     "mcp>=1.10.1",
     "loguru>=0.7.3",
     "pandas>=2.3.1",
+    "langwatch>=0.2.9",
+    "openinference-instrumentation-agno>=0.1.9",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +61,7 @@ dev = [
     "pytest>=8.4.1",
     "pytest-asyncio>=1.0.0",
     "coverage>=7.9.2",
+    "langwatch-scenario>=0.7.8",
 ]
 
 # Heavy analytics stack (excluded from production Docker)

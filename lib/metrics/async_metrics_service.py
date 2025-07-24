@@ -23,6 +23,8 @@ import threading
 
 from lib.services.metrics_service import MetricsService
 from lib.logging import logger
+from lib.metrics.agno_metrics_bridge import AgnoMetricsBridge
+from lib.metrics.config import MetricsConfig
 
 
 @dataclass
@@ -57,6 +59,10 @@ class AsyncMetricsService:
         self.batch_size = self.config.get("batch_size", 50)
         self.flush_interval = self.config.get("flush_interval", 5.0)
         self.queue_size = self.config.get("queue_size", 1000)
+        
+        # Initialize AGNO metrics bridge for comprehensive metrics extraction
+        metrics_config = self.config.get("metrics_config")
+        self.metrics_bridge = AgnoMetricsBridge(config=metrics_config)
         
         # Async queue and processing
         self.metrics_queue = None  # Will be created in initialize()
@@ -287,34 +293,25 @@ class AsyncMetricsService:
     def _extract_metrics_from_response(self, 
                                      response: Any,
                                      yaml_overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Extract metrics data from agent response."""
-        metrics = {}
+        """
+        Extract comprehensive metrics using AGNO native metrics bridge.
         
-        try:
-            # Basic response metrics
-            if hasattr(response, 'content'):
-                metrics['response_length'] = len(str(response.content))
-            
-            if hasattr(response, 'model'):
-                metrics['model'] = str(response.model)
-            
-            if hasattr(response, 'usage'):
-                usage = response.usage
-                if hasattr(usage, 'input_tokens'):
-                    metrics['input_tokens'] = usage.input_tokens
-                if hasattr(usage, 'output_tokens'):
-                    metrics['output_tokens'] = usage.output_tokens
-                if hasattr(usage, 'total_tokens'):
-                    metrics['total_tokens'] = usage.total_tokens
-            
-            # Apply YAML overrides
-            if yaml_overrides:
-                metrics.update(yaml_overrides)
-            
-        except Exception as e:
-            logger.warning(f"⚡ Error extracting metrics from response: {e}")
+        DROP-IN REPLACEMENT: Now uses AgnoMetricsBridge for superior metrics collection.
+        Provides comprehensive coverage of AGNO native metrics including:
+        - Token metrics: input_tokens, output_tokens, total_tokens, prompt_tokens, completion_tokens
+        - Advanced tokens: audio_tokens, cached_tokens, reasoning_tokens, cache_write_tokens
+        - Timing metrics: time, time_to_first_token  
+        - Content metrics: prompt_tokens_details, completion_tokens_details
+        - Additional metrics: model-specific metrics
         
-        return metrics
+        Args:
+            response: AGNO response object (agent/team/workflow)
+            yaml_overrides: Optional YAML-level metric overrides
+            
+        Returns:
+            Dictionary with comprehensive metrics for PostgreSQL storage
+        """
+        return self.metrics_bridge.extract_metrics(response, yaml_overrides)
     
     def get_stats(self) -> Dict[str, Any]:
         """Get current performance statistics."""
