@@ -3,57 +3,143 @@
 # 🐝 Automagik Hive Universal Installer
 # ===========================================
 # Smart installer that delegates to make install after ensuring prerequisites
+# are met, including Python (via uv), uv itself, and Docker.
 
 set -euo pipefail
 
 # ===========================================
 # 🎨 Colors & Symbols
 # ===========================================
-RED=$(tput setaf 1 2>/dev/null || echo '')
-GREEN=$(tput setaf 2 2>/dev/null || echo '')
-YELLOW=$(tput setaf 3 2>/dev/null || echo '')
 PURPLE=$(tput setaf 5 2>/dev/null || echo '')
+GREEN=$(tput setaf 2 2>/dev/null || echo '')
+RED=$(tput setaf 1 2>/dev/null || echo '')
 CYAN=$(tput setaf 6 2>/dev/null || echo '')
+YELLOW=$(tput setaf 3 2>/dev/null || echo '')
 RESET=$(tput sgr0 2>/dev/null || echo '')
 
 print_status() { echo -e "${PURPLE}🐝 $1${RESET}"; }
 print_success() { echo -e "${GREEN}✅ $1${RESET}"; }
 print_error() { echo -e "${RED}❌ $1${RESET}"; }
 print_info() { echo -e "${CYAN}💡 $1${RESET}"; }
+print_warning() { echo -e "${YELLOW}⚠️ $1${RESET}"; }
 
 # ===========================================
-# 🔍 System Detection & Prerequisites
+# 🚀 Prerequisite Installation
 # ===========================================
-install_prerequisites() {
-    print_status "Installing essential prerequisites..."
-    
-    # Install curl, git, make based on OS
+
+# Installs git, curl, and build tools based on the detected OS.
+install_basic_tools() {
+    print_status "Ensuring basic tools (git, curl, make) are installed..."
     if command -v apt-get >/dev/null 2>&1; then
-        sudo apt-get update -qq && sudo apt-get install -y curl git build-essential
-    elif command -v yum >/dev/null 2>&1; then
-        sudo yum install -y curl git gcc make
+        sudo apt-get update -qq && sudo apt-get install -y curl git build-essential lsb-release
     elif command -v dnf >/dev/null 2>&1; then
-        sudo dnf install -y curl git gcc make
+        sudo dnf install -y curl git gcc make dnf-plugins-core
+    elif command -v yum >/dev/null 2>&1; then
+        sudo yum install -y curl git gcc make yum-utils
     elif command -v pacman >/dev/null 2>&1; then
         sudo pacman -Sy --noconfirm curl git base-devel
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
+    elif [[ "$(uname -s)" == "Darwin" ]]; then
         if ! command -v brew >/dev/null 2>&1; then
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         fi
         brew install curl git
-        if ! xcode-select --print-path >/dev/null 2>&1; then
-            xcode-select --install
-        fi
     fi
-    
-    # Install uv if not present
-    if ! command -v uv >/dev/null 2>&1 && ! [[ -f "$HOME/.local/bin/uv" ]]; then
-        print_status "Installing uv (Python package manager)..."
-        curl -LsSf https://astral.sh/uv/install.sh | sh
+    print_success "Basic tools are present."
+}
+
+# Ensures uv is installed, installing it if not found.
+ensure_uv() {
+    print_status "Verifying uv installation..."
+    if command -v uv >/dev/null 2>&1 || [[ -f "$HOME/.local/bin/uv" ]]; then
+        print_success "uv is already installed."
         export PATH="$HOME/.local/bin:$PATH"
+        return 0
+    fi
+
+    print_info "uv not found, installing..."
+    if ! curl -LsSf https://astral.sh/uv/install.sh | sh; then
+        print_error "Failed to install uv." && exit 1
     fi
     
-    print_success "Prerequisites installed"
+    export PATH="$HOME/.local/bin:$PATH"
+    local shell_rc="$HOME/.bashrc"
+    if [[ -n "${ZSH_VERSION:-}" ]]; then shell_rc="$HOME/.zshrc"; fi
+    
+    if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$shell_rc" 2>/dev/null; then
+        echo -e '\nexport PATH="$HOME/.local/bin:$PATH"' >> "$shell_rc"
+        print_info "Added uv to PATH in $shell_rc. Please restart your shell to apply changes."
+    fi
+    print_success "uv installed."
+}
+
+# Ensures Python 3.12+ is available, using uv to install it if needed.
+ensure_python() {
+    print_status "Verifying Python 3.12+ installation..."
+    if command -v python3 >/dev/null 2>&1; then
+        local version
+        version=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null || echo "0.0")
+        if [ "$(printf '%s\n' "3.12" "$version" | sort -V | head -n1)" = "3.12" ]; then
+            print_success "Python $version is already installed."
+            return 0
+        fi
+        print_warning "Python $version found, but 3.12+ is required."
+    fi
+
+    print_info "Attempting to install Python 3.12 using uv..."
+    if ! uv python install 3.12; then
+        print_error "Failed to install Python 3.12 with uv." && exit 1
+    fi
+    print_success "Python 3.12 installed via uv."
+}
+
+# Ensures Docker is installed and the daemon is running.
+ensure_docker() {
+    print_status "Verifying Docker installation..."
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        print_success "Docker is installed and running."
+        return 0
+    fi
+    
+    print_info "Docker not found or not running. Attempting installation..."
+    case "$(uname -s)" in
+        Linux)
+            local pm
+            if command -v apt-get >/dev/null; then pm="apt"; fi
+            if command -v dnf >/dev/null; then pm="dnf"; fi
+            if command -v yum >/dev/null; then pm="yum"; fi
+            if command -v pacman >/dev/null; then pm="pacman"; fi
+
+            case "$pm" in
+                apt)
+                    sudo install -m 0755 -d /etc/apt/keyrings
+                    curl -fsSL "https://download.docker.com/linux/$(. /etc/os-release && echo "$ID")/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+                    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$(. /etc/os-release && echo "$ID") $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                    sudo apt-get update -qq
+                    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+                    ;;
+                dnf|yum)
+                    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+                    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+                    ;;
+                pacman)
+                    sudo pacman -S --noconfirm docker docker-compose
+                    ;;
+                *) print_error "Unsupported Linux distribution for auto-install." && exit 1 ;;
+            esac
+            sudo usermod -aG docker "$USER"
+            sudo systemctl enable --now docker
+            print_warning "Added user to docker group. You may need to log out and back in."
+            ;;
+        Darwin)
+            brew install --cask docker
+            print_info "Please start Docker Desktop manually. The script will continue once it's running."
+            until docker info >/dev/null 2>&1; do sleep 5; done
+            ;;
+        *) print_error "Unsupported OS for automatic Docker installation." && exit 1 ;;
+    esac
+    
+    print_success "Docker is now installed and running."
 }
 
 # ===========================================
@@ -61,67 +147,41 @@ install_prerequisites() {
 # ===========================================
 setup_repository() {
     print_status "Setting up Automagik Hive repository..."
-    
-    # If we're already in the repo, just update
-    if [[ -f "Makefile" && -f "pyproject.toml" && -d "ai" ]]; then
-        if git remote -v 2>/dev/null | grep -q "automagik-hive"; then
-            print_success "Already in automagik-hive repository"
-            git fetch origin main 2>/dev/null || true
-            return 0
-        fi
+    if [[ -f "Makefile" && -d "ai" ]]; then
+        print_success "Already in automagik-hive repository."
+        return
     fi
     
-    # Clone if needed
     local repo_url="https://github.com/namastexlabs/automagik-hive.git"
     if [[ ! -d "automagik-hive" ]]; then
-        print_status "Cloning repository..."
-        git clone "$repo_url" automagik-hive || {
-            print_error "Failed to clone repository"
-            print_info "Ensure you have access to: $repo_url"
-            exit 1
-        }
+        print_info "Cloning repository..."
+        git clone "$repo_url" automagik-hive
     fi
-    
     cd automagik-hive
-    print_success "Repository ready"
+    print_success "Repository is ready."
 }
 
 # ===========================================
-# 🚀 Main Installation
+# 🚀 Main Installation Logic
 # ===========================================
 main() {
-    echo -e "${PURPLE}"
-    echo "    ████         ████    ████    ████             ███████████"
-    echo "    ████         ████    ████     ████            ███████████"
-    echo "    ████         ████    ████      ████      ████ ████"
-    echo "    ████         ████    ████      █████    ████  ████"
-    echo -e "${RESET}"
-    echo -e "${PURPLE}🐝 Automagik Hive Universal Installer${RESET}"
-    echo ""
+    echo -e "${PURPLE}🐝 Automagik Hive Universal Installer${RESET}\n"
     
-    # Step 1: Install prerequisites
-    install_prerequisites
+    install_basic_tools
+    ensure_uv
+    ensure_python
+    ensure_docker
     
-    # Step 2: Setup repository
     setup_repository
     
-    # Step 3: Ensure PATH includes uv
-    export PATH="$HOME/.local/bin:$PATH"
-    
-    # Step 4: Delegate to make install (which handles everything else)
-    print_status "Running make install (handles Python, dependencies, Docker setup)..."
+    print_status "All prerequisites met. Running 'make install'..."
     if make install; then
         echo ""
         print_success "🎉 Automagik Hive installation completed!"
-        echo ""
-        print_info "Next steps:"
-        echo "  • Run 'make dev' for development server"
-        echo "  • Run 'make prod' for production Docker stack"
-        echo "  • Check 'make help' for all commands"
-        echo ""
+        print_status "🚀 Handing over to 'make dev' to start the development server..."
+        exec make dev
     else
-        print_error "Installation failed during 'make install'"
-        print_info "Check the error messages above and try again"
+        print_error "Installation failed during 'make install'."
         exit 1
     fi
 }
