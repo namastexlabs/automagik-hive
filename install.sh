@@ -178,8 +178,7 @@ main() {
     if make install; then
         echo ""
         print_success "🎉 Automagik Hive installation completed!"
-        print_status "🚀 Handing over to 'make dev' to start the development server..."
-        exec make dev
+        print_info "Run 'make dev' to start development server"
     else
         print_error "Installation failed during 'make install'."
         exit 1

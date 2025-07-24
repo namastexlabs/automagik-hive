@@ -147,7 +147,7 @@ define setup_docker_postgres
     echo ""; \
     echo -e "$(FONT_PURPLE)🐳 Optional Docker PostgreSQL Setup$(FONT_RESET)"; \
     echo -e "$(FONT_CYAN)Would you like to set up Docker PostgreSQL with secure credentials? (Y/n)$(FONT_RESET)"; \
-    read -r REPLY; \
+    read -r REPLY </dev/tty; \
     if [ "$$REPLY" != "n" ] && [ "$$REPLY" != "N" ]; then \
         $(call check_docker); \
         $(call generate_postgres_credentials); \
@@ -260,6 +260,7 @@ install-local: ## 🛠️ Install development environment (local only)
 install: ## 🛠️ Install with optional Docker PostgreSQL setup
 	@$(MAKE) install-local
 	@$(call setup_docker_postgres)
+
 
 # ===========================================
 # 🎛️ Service Management
