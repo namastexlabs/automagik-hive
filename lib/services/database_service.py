@@ -94,8 +94,13 @@ async def get_db_service() -> DatabaseService:
     """Get or create global database service instance."""
     global _db_service
     if _db_service is None:
-        _db_service = DatabaseService()
-        await _db_service.initialize()
+        service = DatabaseService()
+        try:
+            await service.initialize()
+            _db_service = service
+        except Exception:
+            # Don't cache failed service instance
+            raise
     return _db_service
 
 

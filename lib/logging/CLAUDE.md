@@ -1,155 +1,114 @@
-# Logging Standards for Automagik Hive
+# CLAUDE.md - Logging
 
-Rich contextual logging with emojis and colors for enhanced visual debugging.
+🗺️ **Logging & Observability Domain**
 
-## Emoji Context Categories
+## 🧭 Navigation
 
-Use these standardized emoji prefixes for immediate visual context:
+**🔙 Main Hub**: [/CLAUDE.md](../../CLAUDE.md)  
+**🔗 Core**: [AI System](../../ai/CLAUDE.md) | [API](../../api/CLAUDE.md) | [Config](../config/CLAUDE.md)  
+**🔗 Support**: [Auth](../auth/CLAUDE.md) | [Knowledge](../knowledge/CLAUDE.md) | [MCP](../mcp/CLAUDE.md) | [Testing](../../tests/CLAUDE.md)
 
-| Context | Emoji | Usage | Example |
-|---------|-------|-------|---------|
-| **System/Config** | 🔧 | Service initialization, configuration, version management | `logger.info("🔧 Agent registry initialized", agents_found=5)` |
-| **Data/Knowledge** | 📊 | Database operations, CSV processing, knowledge base | `logger.info("📊 Knowledge base reloaded", records=150)` |
-| **Agent/AI** | 🤖 | Agent creation, AI operations, MCP tools | `logger.info("🤖 Agent created successfully", agent_id="pagbank")` |
-| **Communication** | 📱 | WhatsApp, notifications, external integrations | `logger.info("📱 WhatsApp notification sent", group_id=group)` |
-| **Security/Auth** | 🔐 | Authentication, authorization, access control | `logger.warning("🔐 Invalid authentication attempt", user_id=user)` |
-| **API/Network** | 🌐 | HTTP requests, API responses, network operations | `logger.debug("🌐 API request completed", endpoint="/agents", status=200)` |
-| **Performance** | ⚡ | Timing, metrics, resource monitoring | `logger.info("⚡ Operation completed", duration_ms=45.2)` |
-| **Debug/Dev** | 🐛 | Development logging, debugging information | `logger.debug("🐛 DEV MODE: Loading from YAML", config_file=path)` |
+## Purpose
 
-## Usage Patterns
+Performance-first logging system using Loguru with automatic YAML-driven emoji injection. Structured, visually intuitive, and zero-performance impact.
 
-### Standard Import
+## Quick Start
+
+**Basic usage**:
 ```python
 from lib.logging import logger
+
+# Standard patterns - emojis added automatically based on context
+logger.info("Service initialized", service="api_server", port=8000) 
+logger.info("Agent created", agent_id="pagbank", version="2.1.0")
+logger.error("Authentication failed", user_id="user_123", reason="invalid_token")
 ```
 
-### Basic Logging with Context
+**Automatic emoji injection**: The system automatically adds appropriate emojis based on:
+1. File path (directory-based context)
+2. Message keywords (content analysis)
+3. YAML configuration mappings
+
+## Emoji System Architecture
+
+**YAML-driven configuration** (`lib/config/emoji_mappings.yaml`):
+- **Directory mappings**: `lib/` → 🔧, `ai/agents/` → 🤖, `api/` → 🌐
+- **Keyword detection**: "authentication" → 🔐, "database" → 🗄️, "csv" → 📊
+- **Activity patterns**: "startup" → 🚀, "testing" → 🧪, "debugging" → 🐛
+
+**Emoji loader utility** (`lib/utils/emoji_loader.py`):
 ```python
-# System/Configuration
-logger.info("🔧 Service initialized", service="api_server", port=8000)
-logger.warning("🔧 Configuration missing", config_key="DATABASE_URL")
+from lib.utils.emoji_loader import auto_emoji
 
-# Data/Knowledge Operations  
-logger.info("📊 CSV file loaded", path="knowledge.csv", records=250)
-logger.error("📊 Database query failed", table="agents", error=str(e))
-
-# Agent/AI Operations
-logger.info("🤖 Agent started", agent_id="pagbank", version="2.1.0")
-logger.debug("🤖 MCP tool invoked", tool="whatsapp_send", result="success")
-
-# Communication
-logger.info("📱 Notification sent", type="whatsapp", recipient="user_123")
-logger.warning("📱 External API rate limited", service="whatsapp", retry_after=30)
-
-# Security/Authentication
-logger.info("🔐 User authenticated", user_id="user_123", method="token")
-logger.error("🔐 Authorization failed", user_id="user_123", resource="agent_create")
-
-# API/Network
-logger.debug("🌐 HTTP request", method="POST", endpoint="/api/agents", status=201)
-logger.error("🌐 Network timeout", endpoint="external_api", timeout_ms=5000)
-
-# Performance
-logger.info("⚡ Query executed", duration_ms=45.2, rows_affected=100)
-logger.warning("⚡ Slow operation detected", operation="csv_load", duration_ms=2500)
-
-# Debug/Development
-logger.debug("🐛 Variable state", variable="agent_config", value=config_dict)
-logger.debug("🐛 Function entry", function="create_agent", params={"id": "test"})
+# Manual emoji enhancement (rarely needed)
+enhanced_message = auto_emoji("Starting system", __file__)
+logger.info(enhanced_message)
 ```
 
-## Rich Console Colors
+## Core Features
 
-The Loguru configuration automatically applies colors in development:
+**Automatic Enhancement**: YAML-driven emoji injection without manual coding  
+**Structured Fields**: Use key=value pairs for searchability  
+**Environment Aware**: Colors in dev, plain text in production  
+**Performance First**: Zero-impact logging with batch processing  
+**Loguru Foundation**: Modern async-safe logging with rich formatting
 
-- **DEBUG**: Dim cyan - for detailed development information
-- **INFO**: Bright white - for normal operations
-- **WARNING**: Yellow - for recoverable issues
-- **ERROR**: Red/Bold - for errors requiring attention
+## Best Practices
 
-## Structured Logging
-
-Always include contextual fields for searchability:
-
+**Let the system handle emojis**:
 ```python
-# ✅ GOOD: Rich contextual information
-logger.info("🤖 Agent operation completed",
-           agent_id="pagbank",
-           operation="process_request",
-           user_id=user_id,
-           duration_ms=response_time,
-           success=True)
+# ✅ GOOD: Clean message, emoji added automatically
+logger.info("Agent completed", agent_id="pagbank", duration_ms=45.2, success=True)
 
-# ✅ GOOD: Error with context
-logger.error("🔐 Authentication failed",
-            user_id=user_id,
-            ip_address=request.client.host,
-            reason="invalid_credentials",
-            attempt_number=attempts)
-
-# ❌ BAD: No context
-logger.info("Operation completed")
-logger.error("Authentication failed")
+# ❌ BAD: Manual emoji hardcoding
+logger.info("🤖 Agent completed", agent_id="pagbank", duration_ms=45.2, success=True)
 ```
 
-## Performance Guidelines
-
-- Use structured fields instead of f-strings
-- Avoid expensive operations in log calls
-- Use lazy evaluation for complex data
-
+**Structured fields for searchability**:
 ```python
-# ✅ GOOD: Structured fields
-logger.info("📊 Processing completed", 
-           records_processed=count, duration_ms=duration)
+# ✅ GOOD: Structured and searchable
+logger.error("Auth failed", user_id=user_id, ip=request.client.host, reason="invalid_token")
 
-# ✅ GOOD: Lazy evaluation for expensive data
-logger.debug("🤖 Agent state dump", 
-             state=lambda: expensive_state_serialization())
-
-# ❌ BAD: Expensive string operations
-logger.debug(f"State: {expensive_serialization()}")
+# ❌ BAD: String formatting
+logger.error(f"Auth failed for {user_id}: {reason}")
 ```
 
-## Environment Behavior
+## Critical Rules
 
-- **Development** (TTY + DEBUG): Rich console with colors and emojis
-- **Production** (Non-TTY or INFO+): Plain text with emojis for context
-- **File Logging**: Only when `HIVE_LOG_DIR` is set
+- **Never hardcode emojis**: Let YAML-driven system handle visual enhancement
+- **Structured fields only**: Use key=value pairs, never f-strings
+- **Trust automatic detection**: File path and keywords drive emoji selection
+- **Performance first**: Use batch logging for startup operations
+- **Rich context**: Include structured data for debugging and monitoring
 
-## Migration from Print/Old Logging
+## Batch Logging System
 
+**Startup optimization** (`lib/logging/batch_logger.py`):
 ```python
-# ❌ OLD: Print statements
-print("Agent created successfully")
-print(f"Processing {count} records")
+from lib.logging import batch_logger, startup_logging
 
-# ✅ NEW: Rich logging
-logger.info("🤖 Agent created successfully", agent_id=agent_id)
-logger.info("📊 Processing records", count=count)
-
-# ❌ OLD: Standard logging
-import logging
-logging.info("User logged in")
-
-# ✅ NEW: Rich logging
-logger.info("🔐 User authenticated", user_id=user_id, method="password")
+# Batch logging during startup for performance
+with startup_logging():
+    batch_logger.log_agent_created("pagbank", 45)
+    batch_logger.log_model_resolved("claude-sonnet-4", "anthropic")
+    batch_logger.log_csv_processing("knowledge_rag.csv", 1500)
+# Automatically flushes batched logs as summaries
 ```
 
-## Quick Reference
+**Environment configuration**:
+```bash
+HIVE_LOG_LEVEL=DEBUG|INFO|WARNING|ERROR  # Default: INFO
+HIVE_VERBOSE_LOGS=true|false              # Default: false
+```
 
-**Common Patterns:**
-- Service startup: `🔧 Service started`
-- Data operations: `📊 Records loaded/saved/processed`
-- Agent lifecycle: `🤖 Agent created/started/stopped`
-- External calls: `📱 Notification sent` or `🌐 API called`
-- Auth events: `🔐 User logged in/out/failed`
-- Performance: `⚡ Operation timing`
-- Debug info: `🐛 Debug details`
+## Integration
 
-**Remember:**
-- Always use emoji prefix for immediate visual context
-- Include structured fields for filtering/searching
-- Keep performance impact zero
-- Use appropriate log levels (DEBUG/INFO/WARNING/ERROR)
+- **Agents**: Agent lifecycle with automatic 🤖 emoji detection
+- **Teams**: Multi-agent coordination using 👥 emoji mapping  
+- **Workflows**: Step-based process monitoring with ⚡ emoji
+- **API**: Request/response logging with 🌐 emoji injection
+- **Auth**: Security events with automatic 🔐 emoji detection
+- **Knowledge**: Database operations with 🗄️ and CSV 📊 emojis
+- **MCP**: External service integration with contextual emojis
+
+Navigate to [AI System](../../ai/CLAUDE.md) for domain-specific logging patterns or [Auth](../auth/CLAUDE.md) for security logging.

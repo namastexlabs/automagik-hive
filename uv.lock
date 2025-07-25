@@ -264,9 +264,12 @@ dev = [
 [package.dev-dependencies]
 dev = [
     { name = "coverage" },
+    { name = "faker" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
     { name = "ruff" },
 ]
 
@@ -315,9 +318,12 @@ provides-extras = ["dev", "analytics"]
 [package.metadata.requires-dev]
 dev = [
     { name = "coverage", specifier = ">=7.9.2" },
+    { name = "faker", specifier = ">=37.4.2" },
     { name = "mypy", specifier = ">=1.16.1" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=1.0.0" },
+    { name = "pytest-cov", specifier = ">=6.2.1" },
+    { name = "pytest-mock", specifier = ">=3.14.1" },
     { name = "ruff", specifier = ">=0.12.3" },
 ]
 
@@ -670,6 +676,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d8/86/bd275fd5e779749ec65ba8f40893b9f2501b4eb1f4be78615895b63af2c6/dspy_ai-2.6.27.tar.gz", hash = "sha256:93d363e2ceb3745554133c8849e3eea356653707a6760eadfb9533d7d9e5f330", size = 1112, upload-time = "2025-06-03T17:47:22.669Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fb/3e/47ae39dca48913b755c8ae4ffabd9c9ecc92365065a4461f2bdc3a81e603/dspy_ai-2.6.27-py3-none-any.whl", hash = "sha256:e7d4d3328dd05098efbedbd72d1c324a2317e4693638eb8755926c9ff0f64861", size = 1107, upload-time = "2025-06-03T17:47:21.399Z" },
+]
+
+[[package]]
+name = "faker"
+version = "37.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/65/95/da573e055608e180086e2ac3208f8c15d8b44220912f565a9821b9bff33a/faker-37.4.2.tar.gz", hash = "sha256:8e281bbaea30e5658895b8bea21cc50d27aaf3a43db3f2694409ca5701c56b0a", size = 1902890, upload-time = "2025-07-15T16:38:24.803Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/1c/b909a055be556c11f13cf058cfa0e152f9754d803ff3694a937efe300709/faker-37.4.2-py3-none-any.whl", hash = "sha256:b70ed1af57bfe988cbcd0afd95f4768c51eaf4e1ce8a30962e127ac5c139c93f", size = 1943179, upload-time = "2025-07-15T16:38:23.053Z" },
 ]
 
 [[package]]
@@ -2615,6 +2633,32 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4e/51/f8794af39eeb870e87a8c8068642fc07bce0c854d6865d7dd0f2a9d338c2/pytest_asyncio-1.1.0.tar.gz", hash = "sha256:796aa822981e01b68c12e4827b8697108f7205020f24b5793b3c41555dab68ea", size = 46652, upload-time = "2025-07-16T04:29:26.393Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/9d/bf86eddabf8c6c9cb1ea9a869d6873b46f105a5d292d3a6f7071f5b07935/pytest_asyncio-1.1.0-py3-none-any.whl", hash = "sha256:5fe2d69607b0bd75c656d1211f969cadba035030156745ee09e7d71740e58ecf", size = 15157, upload-time = "2025-07-16T04:29:24.929Z" },
+]
+
+[[package]]
+name = "pytest-cov"
+version = "6.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "coverage" },
+    { name = "pluggy" },
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/18/99/668cade231f434aaa59bbfbf49469068d2ddd945000621d3d165d2e7dd7b/pytest_cov-6.2.1.tar.gz", hash = "sha256:25cc6cc0a5358204b8108ecedc51a9b57b34cc6b8c967cc2c01a4e00d8a67da2", size = 69432, upload-time = "2025-06-12T10:47:47.684Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bc/16/4ea354101abb1287856baa4af2732be351c7bee728065aed451b678153fd/pytest_cov-6.2.1-py3-none-any.whl", hash = "sha256:f5bc4c23f42f1cdd23c70b1dab1bbaef4fc505ba950d53e0081d0730dd7e86d5", size = 24644, upload-time = "2025-06-12T10:47:45.932Z" },
+]
+
+[[package]]
+name = "pytest-mock"
+version = "3.14.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/71/28/67172c96ba684058a4d24ffe144d64783d2a270d0af0d9e792737bddc75c/pytest_mock-3.14.1.tar.gz", hash = "sha256:159e9edac4c451ce77a5cdb9fc5d1100708d2dd4ba3c3df572f14097351af80e", size = 33241, upload-time = "2025-05-26T13:58:45.167Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b2/05/77b60e520511c53d1c1ca75f1930c7dd8e971d0c4379b7f4b3f9644685ba/pytest_mock-3.14.1-py3-none-any.whl", hash = "sha256:178aefcd11307d874b4cd3100344e7e2d888d9791a6a1d9bfe90fbc1b74fd1d0", size = 9923, upload-time = "2025-05-26T13:58:43.487Z" },
 ]
 
 [[package]]

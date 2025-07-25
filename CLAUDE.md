@@ -2,50 +2,236 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# Automagik Hive - Enterprise Multi-Agent System
+## Project Overview
 
-## 1. Project Overview
-- **Vision:** Production-ready enterprise boilerplate for building sophisticated multi-agent AI systems with intelligent routing and enterprise-grade deployment capabilities
-- **Key Architecture:** Clean Architecture with YAML-driven agent configuration, Agno Framework integration for intelligent routing, PostgreSQL backend with auto-migrations
+Automagik Hive is an enterprise multi-agent AI framework built on **Agno v1.7.5** that enables rapid development of sophisticated multi-agent systems through YAML configuration. It provides production-ready boilerplate for building intelligent agents, routing teams, and business workflows with enterprise-grade deployment capabilities.
 
+## Key Architecture
 
-## 3. Coding Standards & AI Instructions
+### Codebase Exploration Command
+```bash
+# Use this tree command to explore the entire codebase structure
+tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_modules|.github|genie|scripts|common|docs|alembic' -P '*.py|*.yaml|*.yml|*.toml|*.md|Makefile|Dockerfile|*.ini|*.sh|*.csv|*.json' --prune -L 4
+```
 
-### General Instructions
-- When updating documentation, keep updates concise and on point to prevent bloat.
-- Write code following KISS, YAGNI, and DRY principles.
-- When in doubt follow proven best practices for implementation.
-- Do not run any servers, rather tell the user to run servers for testing.
-- Always consider industry standard libraries/frameworks first over custom implementations.
-- Never mock anything. Never use placeholders. Never hardcode. Never omit code.
-- Apply SOLID principles where relevant. Use modern framework features rather than reinventing solutions.
-- Be brutally honest about whether an idea is good or bad.
-- Make side effects explicit and minimal.
-- **🚫 ABSOLUTE RULE: NEVER IMPLEMENT BACKWARD COMPATIBILITY** - It is forbidden and will be rejected. Always break compatibility in favor of clean, modern implementations.
-- **📧 Git Commits**: ALWAYS co-author commits with Automagik Genie using: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
+### 🗺️ Architecture Treasure Map
+```
+🧭 NAVIGATION ESSENTIALS
+├── pyproject.toml              # UV package manager (use `uv add <package>` - never pip!)
+├── Makefile                    # Command center: make install/dev/prod/test
+├── .env.example                # Environment template (copy to .env)
+├── CLAUDE.md                   # 👈 You are here
 
-### Automagik Hive Specific Instructions
-- **Agent Development**: Always use YAML configuration files for new agents following the exiating architecture pattern
-- **Agent Versioning**: **CRITICAL** - Whenever an agent is changed (code, config, tools, instructions), the version MUST be bumped in the agent's config.yaml file
-- **Testing**: Every new agent must have corresponding unit and integration tests
-- **Knowledge Base**: Use the CSV-based RAG system with hot reload for context-aware responses
-- **Configuration**: Never hardcode values - always use .env files and YAML configs
-- **🚫 NO LEGACY CODE**: Remove any backward compatibility code immediately - clean implementations only
-- **🎯 KISS Principle**: Simplify over-engineered components, eliminate redundant layers and abstractions
-- **Version Bump**: For every change in agents, teams and workflows, the version should be bumped at yaml level
+🤖 MULTI-AGENT CORE (Start Here for Agent Development)
+├── ai/
+│   ├── agents/registry.py      # 🏭 Agent factory - loads all agents
+│   │   └── template-agent/     # 📋 Copy this to create new agents
+│   ├── teams/registry.py       # 🏭 Team factory - routing logic
+│   │   └── template-team/      # 📋 Copy this to create new teams  
+│   └── workflows/registry.py   # 🏭 Workflow factory - orchestration
+│       └── template-workflow/  # 📋 Copy this to create new workflows
+
+🌐 API LAYER (Where HTTP Meets Agents)
+├── api/
+│   ├── serve.py                # 🚀 Production server (Agno FastAPIApp)
+│   ├── main.py                 # 🛝 Dev playground (Agno Playground)
+│   └── routes/v1_router.py     # 🛣️ Main API endpoints
+
+📚 SHARED SERVICES (The Foundation)
+├── lib/
+│   ├── config/settings.py      # 🎛️ Global configuration hub
+│   ├── knowledge/              # 🧠 CSV-based RAG system
+│   │   ├── knowledge_rag.csv   # 📊 Data goes here
+│   │   └── csv_hot_reload.py   # 🔄 Hot reload magic
+│   ├── auth/service.py         # 🔐 API authentication
+│   ├── utils/agno_proxy.py     # 🔌 Agno framework integration
+│   └── versioning/             # 📦 Component version management
+
+🧪 TESTING (TODO: Not implemented yet - create tests/scenarios/ for new features)
+```
+
+### Component Decision Framework
+- **🤖 Individual Agents**: Single domain expertise (code editing, file management, project orchestration)
+- **👥 Teams**: Multi-domain coordination using `mode="route"` (intelligent routing) or `mode="coordinate"` (collaboration)
+- **⚡ Workflows**: Multi-step processes with parallel execution, conditional logic, and state management
+- **🏭 Factory Pattern**: Registry-based component creation with version management and hot-reload
+
+## Development Commands
+
+### Quick Start
+```bash
+# Universal installation
+curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
+
+# Local development
+make install        # Install with optional Docker PostgreSQL
+make dev           # Start development server with hot reload (user runs servers for testing)
+
+# Production deployment
+make prod          # Start Docker stack
+make status        # Check service status
+```
+
+### Development Workflow
+```bash
+# Package management (uses UV - NEVER use python directly)
+uv sync            # Install dependencies
+uv sync --dev      # Install with dev dependencies
+
+# Code quality
+uv run ruff check --fix    # Lint and fix code
+uv run mypy .              # Type checking
+uv run pytest             # Run tests
+
+# Database operations
+uv run alembic revision --autogenerate -m "Description"
+uv run alembic upgrade head
+```
+
+### Testing
+```bash
+# Run all tests
+uv run pytest
+
+# Specific test suites
+uv run pytest tests/agents/
+uv run pytest tests/workflows/ 
+uv run pytest tests/api/
+
+# With coverage
+uv run pytest --cov=ai --cov=api --cov=lib
+```
+
+## Core Development Patterns
+
+### Development Principles
+- **KISS, YAGNI, DRY**: Write simple, focused code that solves current needs without unnecessary complexity
+- **SOLID Principles**: Apply where relevant, favor composition over inheritance
+- **Modern Frameworks**: Use industry standard libraries over custom implementations
+- **🚫 NO BACKWARD COMPATIBILITY**: Always break compatibility for clean, modern implementations
+- **No Mocking/Placeholders**: Never mock, use placeholders, hardcode, or omit code
+- **Explicit Side Effects**: Make side effects explicit and minimal
+- **Honest Assessment**: Be brutally honest about whether ideas are good or bad
+
+### YAML-First Configuration
+All components use YAML configuration with hot reload capabilities:
+
+```yaml
+# Agent configuration example
+agent:
+  name: "Domain Specialist"
+  agent_id: "domain-specialist"
+  version: "1.0.0"  # CRITICAL: Bump version for ANY changes
+
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
+
+instructions: |
+  You are a specialist who handles specific domain tasks
+  with access to knowledge base and conversation memory.
+```
+
+### Agno Framework Integration
+- **Playground Pattern**: Auto-generates API endpoints via `Playground()` 
+- **FastAPI Integration**: Uses Agno's `FastAPIApp()` for production deployment
+- **Storage**: PostgreSQL with pgvector support, automatic SQLite fallback
+- **Streaming**: Real-time responses via Server-Sent Events and WebSocket
+
+### Environment-Based Configuration
+Configuration scales automatically from development to production:
+- **Development**: Relaxed CORS, docs enabled, SQLite fallback
+- **Production**: Strict security, API key required, PostgreSQL with connection pooling
+
+## Key Technical Details
+
+### Database Architecture
+- **Primary**: PostgreSQL with pgvector for embeddings
+- **Fallback**: SQLite for development
+- **Migrations**: Alembic with automatic schema management
+- **Connection**: Pool size 20, max overflow 30, connection recycling
+
+### API Architecture
+- **Framework**: FastAPI with automatic OpenAPI docs
+- **Authentication**: API key middleware (configurable)
+- **Streaming**: SSE and WebSocket support for real-time responses
+- **CORS**: Environment-based origin configuration
+
+### Knowledge Management
+- **Format**: CSV-based RAG with hot reload
+- **Storage**: PostgreSQL with vector search capabilities
+- **Filtering**: Business unit and context-aware retrieval
+- **Performance**: Incremental loading with hash-based change detection
+
+## Configuration Management
+
+### Environment Variables
+```bash
+# Required
+ANTHROPIC_API_KEY=your_key_here
+OPENAI_API_KEY=your_key_here
+
+# Database (optional - auto-fallback to SQLite)
+HIVE_DATABASE_URL=postgresql+psycopg://user:pass@host:port/db
+
+# API Configuration
+RUNTIME_ENV=dev|staging|prd
+HIVE_API_PORT=8886
+HIVE_API_HOST=0.0.0.0
+```
+
+### Component Creation
+```bash
+# Create new components from templates
+cp -r ai/agents/template-agent ai/agents/my-new-agent
+cp -r ai/teams/template-team ai/teams/my-routing-team
+cp -r ai/workflows/template-workflow ai/workflows/my-workflow
+
+# CRITICAL: After copying, immediately update version in config.yaml
+# Remember: ANY change requires version bump in YAML config
+```
+
+## Performance Characteristics
+
+- **Startup Time**: 3-5s development, 8-12s production (includes migrations)
+- **Response Time**: <200ms development, <500ms production
+- **Concurrent Users**: 10-50 development, 1000+ production with scaling
+- **Memory Usage**: ~200MB development, ~500MB per worker production
+
+## Important Development Rules
+
+### Automagik Hive Specific
+- **Agent Development**: Always use YAML configuration files following existing architecture patterns
+- **🚨 CRITICAL VERSION BUMPING**: For ANY change to agents/teams/workflows (code, config, tools, instructions), the version MUST be bumped in the YAML config file
+- **Testing Required**: Every new agent must have corresponding unit and integration tests
+- **Knowledge Base**: Use CSV-based RAG system with hot reload for context-aware responses
+- **No Hardcoding**: Never hardcode values - always use .env files and YAML configs
+- **🚫 NO LEGACY CODE**: Remove backward compatibility code immediately - clean implementations only
+- **🎯 KISS Principle**: Simplify over-engineered components, eliminate redundant layers
 
 ### File Organization & Modularity
-- Default to creating multiple small, focused files rather than large monolithic ones
-- Each file should have a single responsibility and clear purpose
-- Keep files under 350 lines when possible - split larger files by extracting utilities, constants, types, or logical components into separate modules
-- Separate concerns: utilities, constants, types, components, and business logic into different files
-- Prefer composition over inheritance - use inheritance only for true 'is-a' relationships, favor composition for 'has-a' or behavior mixing
-
-- Follow existing project structure and conventions - place files in appropriate directories. Create new directories and move files if deemed appropriate.
-- Use well defined sub-directories to keep things organized and scalable
-- Structure projects with clear folder hierarchies and consistent naming conventions
-- Import/export properly - design for reusability and maintainability
+- **Small Focused Files**: Default to multiple small files (<350 lines) rather than monolithic ones
+- **Single Responsibility**: Each file should have one clear purpose
+- **Separation of Concerns**: Separate utilities, constants, types, components, and business logic
+- **Composition Over Inheritance**: Use inheritance only for true 'is-a' relationships
+- **Clear Structure**: Follow existing project structure, create new directories when appropriate
+- **Proper Imports/Exports**: Design for reusability and maintainability
 
 ### Python Development
-- Never use python directly, use uv run
-- Always use uv run for python commands
+- **Never use python directly**: Always use `uv run` for python commands
+- **UV Package Management**: Use `uv add <package>` for dependencies, never pip
+
+### Git Commit Requirements
+- **📧 MANDATORY**: ALWAYS co-author commits with: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
+
+## Component-Specific Guides
+
+For detailed implementation guidance, see component-specific CLAUDE.md files:
+- `ai/CLAUDE.md` - Multi-agent system orchestration
+- `api/CLAUDE.md` - FastAPI integration patterns  
+- `lib/config/CLAUDE.md` - Configuration management
+- `lib/knowledge/CLAUDE.md` - Knowledge base management
+- `tests/CLAUDE.md` - Testing patterns
+
+This framework provides a production-ready foundation for building sophisticated multi-agent AI systems with enterprise-grade deployment capabilities.

@@ -83,7 +83,7 @@ async def execute_versioned_component(
     
     # Get the specific version from Agno storage
     service = get_version_service()
-    version_record = service.get_version(request.component_id, request.version)
+    version_record = await service.get_version(request.component_id, request.version)
     
     if not version_record:
         raise HTTPException(

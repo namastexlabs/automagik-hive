@@ -94,10 +94,13 @@ build-backend = "hatchling.build"
 [tool.uv]
 dev-dependencies = [
     "pytest>=8.4.1",
-    "pytest-asyncio>=1.0.0", 
+    "pytest-asyncio>=1.0.0",
     "coverage>=7.9.2",
     "ruff>=0.12.3",
     "mypy>=1.16.1",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
+    "faker>=37.4.2",
 ]
 
 # UV workspace configuration
