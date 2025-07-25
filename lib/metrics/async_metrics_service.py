@@ -114,6 +114,9 @@ class AsyncMetricsService:
         batch = []
         last_flush = asyncio.get_event_loop().time()
         
+        logger.debug(f"Background processor started", 
+                   batch_size=self.batch_size, flush_interval=self.flush_interval)
+        
         while not self._shutdown_event.is_set():
             try:
                 # Try to get items from queue with timeout
@@ -124,6 +127,10 @@ class AsyncMetricsService:
                     )
                     batch.append(entry)
                     self.metrics_queue.task_done()
+                    
+                    logger.debug(f"Queue item processed", 
+                               agent_name=entry.agent_name, batch_size=len(batch))
+                    
                 except asyncio.TimeoutError:
                     pass
                 
@@ -134,6 +141,10 @@ class AsyncMetricsService:
                 )
                 
                 if should_flush and batch:
+                    logger.debug(f"Processing batch for storage", 
+                               batch_size=len(batch), 
+                               reason="size_limit" if len(batch) >= self.batch_size else "time_limit")
+                    
                     await self._store_batch(batch.copy())
                     batch.clear()
                     last_flush = current_time
@@ -222,11 +233,15 @@ class AsyncMetricsService:
         Returns:
             bool: True if queued successfully, False if queue full
         """
+        logger.debug(f"Collecting metrics for {agent_name}", 
+                   execution_type=execution_type, initialized=self._initialized)
+        
         if not self._initialized:
             await self.initialize()
             
         # Skip if metrics service not available
         if not self.metrics_service:
+            logger.debug(f"Metrics service not available for {agent_name}")
             return False
             
         try:
@@ -242,6 +257,9 @@ class AsyncMetricsService:
             # Non-blocking queue put
             self.metrics_queue.put_nowait(entry)
             self.stats["total_collected"] += 1
+            
+            logger.debug(f"Metrics entry queued for {agent_name}", 
+                       queue_size_after=self.metrics_queue.qsize())
             
             # Log performance metrics periodically
             if self.stats["total_collected"] % 100 == 0:
@@ -269,24 +287,37 @@ class AsyncMetricsService:
         
         This method maintains compatibility with existing code.
         """
+        logger.debug(f"Collecting metrics from response for {agent_name}", 
+                   execution_type=execution_type, initialized=self._initialized)
+        
         try:
             # Extract metrics from response
             metrics = self._extract_metrics_from_response(response, yaml_overrides)
+            
+            logger.debug(f"Extracted {len(metrics) if metrics else 0} metrics from response", 
+                       agent_name=agent_name)
             
             # Use async collect in a safe way
             try:
                 loop = asyncio.get_running_loop()
                 # Create task for async collection
-                asyncio.create_task(
+                task = asyncio.create_task(
                     self.collect_metrics(agent_name, execution_type, metrics)
                 )
+                
+                logger.debug(f"Async task created for metrics collection", 
+                           agent_name=agent_name)
                 return True
-            except RuntimeError:
+            except RuntimeError as e:
                 # No running loop - this shouldn't happen in FastAPI context
+                logger.debug(f"No running event loop for metrics collection", 
+                            agent_name=agent_name, error=str(e))
                 logger.warning("No running event loop for metrics collection")
                 return False
             
         except Exception as e:
+            logger.debug(f"Failed to collect metrics from response", 
+                        agent_name=agent_name, error=str(e))
             logger.error(f"⚡ Failed to collect metrics from response: {e}")
             return False
     

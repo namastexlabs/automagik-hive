@@ -178,18 +178,27 @@ class DualPathMetricsCoordinator:
     Coordinator for dual-path metrics architecture.
 
     Ensures AgnoMetricsBridge and LangWatch work together without conflicts.
+    Provides a compatible interface for agent integration by delegating to AsyncMetricsService.
     """
 
-    def __init__(self, agno_bridge, langwatch_manager: Optional[LangWatchManager] = None):
+    def __init__(self, agno_bridge, langwatch_manager: Optional[LangWatchManager] = None, async_metrics_service=None):
         """
         Initialize coordinator.
 
         Args:
             agno_bridge: AgnoMetricsBridge instance
             langwatch_manager: Optional LangWatch manager
+            async_metrics_service: AsyncMetricsService instance for PostgreSQL collection
         """
         self.agno_bridge = agno_bridge
         self.langwatch_manager = langwatch_manager
+        self.async_metrics_service = async_metrics_service
+        
+        from lib.logging import logger
+        logger.debug(f"DualPathMetricsCoordinator initialized", 
+                   agno_bridge_available=agno_bridge is not None,
+                   langwatch_manager_available=langwatch_manager is not None,
+                   async_metrics_service_available=async_metrics_service is not None)
 
     async def initialize(self) -> Dict[str, bool]:
         """
@@ -224,6 +233,86 @@ class DualPathMetricsCoordinator:
             Metrics dictionary for PostgreSQL storage
         """
         return self.agno_bridge.extract_metrics(response, yaml_overrides)
+
+    def collect_from_response(self, response: Any, agent_name: str, execution_type: str, 
+                            yaml_overrides: Optional[Dict[str, Any]] = None) -> bool:
+        """
+        Collect metrics from an agent response (compatible interface for agent integration).
+        
+        Delegates to the underlying AsyncMetricsService for PostgreSQL collection.
+        LangWatch collection happens automatically via OpenTelemetry instrumentation.
+        
+        Args:
+            response: AGNO response object
+            agent_name: Name of the agent
+            execution_type: Type of execution (agent, team, workflow)
+            yaml_overrides: Optional YAML overrides
+            
+        Returns:
+            bool: True if collection was successful
+        """
+        logger.debug(f"Collecting metrics from response via coordinator for {agent_name}", 
+                   execution_type=execution_type,
+                   async_service_available=self.async_metrics_service is not None)
+        
+        if not self.async_metrics_service:
+            logger.debug("No AsyncMetricsService available for metrics collection")
+            return False
+        
+        try:
+            result = self.async_metrics_service.collect_from_response(
+                response=response,
+                agent_name=agent_name,
+                execution_type=execution_type,
+                yaml_overrides=yaml_overrides
+            )
+            
+            logger.debug(f"Metrics collection delegation result for {agent_name}: {'success' if result else 'failed'}")
+            return result
+            
+        except Exception as e:
+            logger.debug(f"Error in collect_from_response delegation for {agent_name}", 
+                        error=str(e))
+            return False
+
+    async def collect_metrics(self, agent_name: str, execution_type: str, 
+                            metrics: Dict[str, Any], version: str = "1.0") -> bool:
+        """
+        Collect metrics directly (compatible interface for agent integration).
+        
+        Delegates to the underlying AsyncMetricsService for PostgreSQL collection.
+        
+        Args:
+            agent_name: Name of the agent
+            execution_type: Type of execution (agent, team, workflow)
+            metrics: Metrics data dictionary
+            version: Metrics version
+            
+        Returns:
+            bool: True if collection was successful
+        """
+        if not self.async_metrics_service:
+            logger.warning("No AsyncMetricsService available for metrics collection")
+            return False
+            
+        return await self.async_metrics_service.collect_metrics(
+            agent_name=agent_name,
+            execution_type=execution_type,
+            metrics=metrics,
+            version=version
+        )
+
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Get metrics collection statistics (compatible interface for agent integration).
+        
+        Returns:
+            Dictionary with statistics from AsyncMetricsService
+        """
+        if not self.async_metrics_service:
+            return {"error": "No AsyncMetricsService available"}
+            
+        return self.async_metrics_service.get_stats()
 
     def get_status(self) -> Dict[str, Any]:
         """
@@ -369,7 +458,8 @@ def get_langwatch_manager() -> Optional[LangWatchManager]:
 
 
 def initialize_dual_path_metrics(agno_bridge, langwatch_enabled: bool = False,
-                                langwatch_config: Optional[Dict[str, Any]] = None) -> DualPathMetricsCoordinator:
+                                langwatch_config: Optional[Dict[str, Any]] = None,
+                                async_metrics_service=None) -> DualPathMetricsCoordinator:
     """
     Create or retrieve the global dual-path metrics coordinator.
     
@@ -381,6 +471,7 @@ def initialize_dual_path_metrics(agno_bridge, langwatch_enabled: bool = False,
         agno_bridge: AgnoMetricsBridge instance for PostgreSQL path
         langwatch_enabled: Whether to enable LangWatch integration
         langwatch_config: Optional LangWatch configuration
+        async_metrics_service: AsyncMetricsService instance for PostgreSQL collection
 
     Returns:
         Dual-path metrics coordinator (singleton)
@@ -395,9 +486,9 @@ def initialize_dual_path_metrics(agno_bridge, langwatch_enabled: bool = False,
     # Create LangWatch manager if needed
     langwatch_manager = initialize_langwatch(langwatch_enabled, langwatch_config)
 
-    # Create coordinator (async initialization deferred)
-    _coordinator = DualPathMetricsCoordinator(agno_bridge, langwatch_manager)
-    logger.debug("🔧 Dual-path metrics coordinator created (async initialization deferred)")
+    # Create coordinator with AsyncMetricsService (async initialization deferred)
+    _coordinator = DualPathMetricsCoordinator(agno_bridge, langwatch_manager, async_metrics_service)
+    logger.debug("Dual-path metrics coordinator created (async initialization deferred)")
 
     return _coordinator
 
