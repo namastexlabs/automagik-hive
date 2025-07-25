@@ -92,9 +92,12 @@ class LangWatchManager:
 
             # Create instrumentor instance
             self.instrumentor = AgnoInstrumentor()
+            
+            # Actually instrument the Agno framework
+            self.instrumentor.instrument()
 
             self._initialized = True
-            logger.info("🚀 LangWatch AgnoInstrumentor initialized successfully (global setup handled separately)")
+            logger.info("🚀 LangWatch AgnoInstrumentor initialized and instrumented successfully")
             return True
 
         except ImportError as e:
