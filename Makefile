@@ -175,6 +175,7 @@ define setup_docker_postgres
             export POSTGRES_UID=1000; \
             export POSTGRES_GID=1000; \
         fi; \
+        mkdir -p ./data/postgres && chown -R $${POSTGRES_UID}:$${POSTGRES_GID} ./data 2>/dev/null || sudo chown -R $$USER:$$USER ./data; \
         $(DOCKER_COMPOSE) up -d postgres; \
         echo -e "$(FONT_GREEN)$(CHECKMARK) PostgreSQL container started with secure credentials!$(FONT_RESET)"; \
         echo -e "$(FONT_YELLOW)💡 Run 'make dev' for development or 'make prod' for production stack$(FONT_RESET)"; \
