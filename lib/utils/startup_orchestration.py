@@ -199,6 +199,12 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
             langwatch_enabled = getattr(settings, 'enable_langwatch', False)
             langwatch_config = getattr(settings, 'langwatch_config', {})
 
+            # Launch LangWatch global setup as background task (async, non-blocking)
+            if langwatch_enabled and langwatch_config:
+                from lib.metrics.langwatch_integration import setup_langwatch_global
+                asyncio.create_task(setup_langwatch_global(langwatch_config))
+                logger.debug("🚀 LangWatch async setup task launched")
+
             # Initialize dual-path metrics coordinator with LangWatch integration
             metrics_bridge = AgnoMetricsBridge()
             metrics_coordinator = initialize_dual_path_metrics(

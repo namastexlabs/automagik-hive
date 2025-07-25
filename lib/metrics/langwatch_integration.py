@@ -1,8 +1,14 @@
 """
-LangWatch Integration for AGNO Metrics
+LangWatch Integration for AGNO Metrics - Async Architecture
 
 Provides seamless integration with LangWatch's AgnoInstrumentor for OpenTelemetry-based
 metrics collection that works alongside PostgreSQL storage without conflicts.
+
+ARCHITECTURE:
+- Global Setup: langwatch.setup() called once per application in background task
+- Manager Coordination: LangWatchManager waits for global setup before instrumentor init  
+- Zero Performance Impact: All LangWatch operations are async and separate from agents
+- Dual-Path Metrics: PostgreSQL and OpenTelemetry paths operate independently
 
 DEPENDENCIES:
 To use LangWatch integration, install the required packages:
@@ -21,10 +27,11 @@ ENVIRONMENT VARIABLES:
     Set HIVE_ENABLE_LANGWATCH explicitly to override this behavior.
 
 USAGE:
-The integration follows the official LangWatch Agno pattern:
+The integration follows the official LangWatch Agno pattern with async enhancements:
     https://docs.langwatch.ai/integration/python/integrations/agno
 """
 
+import asyncio
 from typing import Optional, Dict, Any
 from lib.logging import logger
 
@@ -53,14 +60,12 @@ class LangWatchManager:
         self.instrumentor = None
         self._initialized = False
 
-    def initialize(self) -> bool:
+    async def initialize(self) -> bool:
         """
         Initialize LangWatch AgnoInstrumentor.
 
-        Sets up LangWatch instrumentation alongside AgnoMetricsBridge
-        without interfering with PostgreSQL metrics collection.
-
-        Uses the official Agno integration pattern from LangWatch docs.
+        Waits for global LangWatch setup completion, then initializes only
+        the instrumentor without calling langwatch.setup() directly.
 
         Returns:
             True if initialization successful, False otherwise
@@ -73,23 +78,23 @@ class LangWatchManager:
             logger.debug("🔧 LangWatch already initialized")
             return True
 
+        # Wait for global setup completion (non-blocking for agents)
         try:
-            # Import LangWatch and proper Agno instrumentor
-            import langwatch
+            await asyncio.wait_for(_setup_complete.wait(), timeout=5.0)
+            logger.debug("🔧 Global LangWatch setup confirmed, proceeding with instrumentor")
+        except asyncio.TimeoutError:
+            logger.warning("⚠️  LangWatch global setup timed out, proceeding anyway for graceful degradation")
+
+        try:
+            # Import and create instrumentor instance only
+            # Global langwatch.setup() is handled separately in startup
             from openinference.instrumentation.agno import AgnoInstrumentor
 
             # Create instrumentor instance
             self.instrumentor = AgnoInstrumentor()
 
-            # Initialize LangWatch with Agno instrumentor
-            # This follows the official pattern from LangWatch docs
-            langwatch.setup(
-                instrumentors=[self.instrumentor],
-                **self.config  # Pass any additional config to langwatch.setup()
-            )
-
             self._initialized = True
-            logger.info("🚀 LangWatch AgnoInstrumentor initialized successfully with langwatch.setup()")
+            logger.info("🚀 LangWatch AgnoInstrumentor initialized successfully (global setup handled separately)")
             return True
 
         except ImportError as e:
@@ -186,7 +191,7 @@ class DualPathMetricsCoordinator:
         self.agno_bridge = agno_bridge
         self.langwatch_manager = langwatch_manager
 
-    def initialize(self) -> Dict[str, bool]:
+    async def initialize(self) -> Dict[str, bool]:
         """
         Initialize both metrics paths.
 
@@ -198,9 +203,9 @@ class DualPathMetricsCoordinator:
             "langwatch": False
         }
 
-        # Initialize LangWatch if available
+        # Initialize LangWatch if available (now async)
         if self.langwatch_manager:
-            status["langwatch"] = self.langwatch_manager.initialize()
+            status["langwatch"] = await self.langwatch_manager.initialize()
 
         logger.info(f"🔧 Dual-path metrics initialized - PostgreSQL: {status['agno_bridge']}, LangWatch: {status['langwatch']}")
         return status
@@ -258,26 +263,97 @@ class DualPathMetricsCoordinator:
         logger.info("🔧 Dual-path metrics coordinator shutdown completed")
 
 
-# Global instance for easy access
+# Global singleton instances
 _langwatch_manager = None
 _coordinator = None
+
+# Global async setup coordination
+# These are used to ensure langwatch.setup() is called only once per application
+# and to coordinate between the global setup and manager initialization
+_setup_complete = asyncio.Event()
+_setup_task = None
+
+
+async def setup_langwatch_global(config: Dict[str, Any]) -> bool:
+    """
+    Global async LangWatch setup - called once per application lifecycle.
+    
+    This function performs the global langwatch.setup() call in a background task,
+    completely separate from agent operations to ensure zero performance impact.
+    Uses proper async coordination to signal completion to waiting components.
+    
+    Args:
+        config: LangWatch configuration dictionary
+        
+    Returns:
+        True if setup successful, False otherwise
+    """
+    global _setup_task
+    if _setup_task is not None:
+        return await _setup_task
+    
+    _setup_task = asyncio.create_task(_do_setup(config))
+    return await _setup_task
+
+
+async def _do_setup(config: Dict[str, Any]) -> bool:
+    """
+    Internal async setup implementation with comprehensive error handling.
+    
+    Performs the actual langwatch.setup() call and signals completion to
+    any waiting components regardless of success or failure.
+    """
+    try:
+        # Import LangWatch and perform global setup
+        import langwatch
+        langwatch.setup(**config)
+        _setup_complete.set()
+        logger.info("🚀 LangWatch global async setup completed successfully")
+        return True
+    except ImportError as e:
+        if "langwatch" in str(e):
+            logger.warning("⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration")
+        elif "openinference" in str(e):
+            logger.warning("⚠️  OpenInference dependencies not available - install 'openinference-instrumentation-agno' package")
+        else:
+            logger.warning(f"⚠️  LangWatch integration dependencies not available: {e}")
+        _setup_complete.set()  # Signal completion even if failed for graceful degradation
+        return False
+    except Exception as e:
+        logger.error(f"🚨 Failed to initialize LangWatch globally: {e}")
+        _setup_complete.set()  # Signal completion even if failed for graceful degradation
+        return False
 
 
 def initialize_langwatch(enabled: bool = False, config: Optional[Dict[str, Any]] = None) -> LangWatchManager:
     """
-    Initialize global LangWatch manager.
+    Create or retrieve the global LangWatch manager instance.
+    
+    This function manages the singleton LangWatch manager but does not perform
+    any setup operations. Global langwatch.setup() is handled asynchronously
+    during application startup, and instrumentor initialization is deferred
+    until the manager is actually needed.
 
     Args:
         enabled: Whether to enable LangWatch integration
-        config: Optional LangWatch configuration
+        config: Optional LangWatch configuration for the manager
 
     Returns:
-        LangWatch manager instance
+        LangWatch manager instance (singleton)
     """
     global _langwatch_manager
 
+    # Return existing manager if available
+    if _langwatch_manager is not None:
+        logger.debug("🔧 LangWatch manager already exists, returning existing instance")
+        # Update configuration if provided
+        if config:
+            _langwatch_manager.configure(**config)
+        return _langwatch_manager
+
+    # Create new manager instance (initialization deferred)
     _langwatch_manager = LangWatchManager(enabled=enabled, config=config)
-    _langwatch_manager.initialize()
+    logger.debug("🔧 LangWatch manager created (async initialization deferred)")
 
     return _langwatch_manager
 
@@ -295,24 +371,33 @@ def get_langwatch_manager() -> Optional[LangWatchManager]:
 def initialize_dual_path_metrics(agno_bridge, langwatch_enabled: bool = False,
                                 langwatch_config: Optional[Dict[str, Any]] = None) -> DualPathMetricsCoordinator:
     """
-    Initialize complete dual-path metrics architecture.
+    Create or retrieve the global dual-path metrics coordinator.
+    
+    Manages the singleton coordinator that orchestrates both PostgreSQL and
+    LangWatch OpenTelemetry metrics paths. The coordinator is created immediately
+    but async initialization is deferred until needed.
 
     Args:
-        agno_bridge: AgnoMetricsBridge instance
+        agno_bridge: AgnoMetricsBridge instance for PostgreSQL path
         langwatch_enabled: Whether to enable LangWatch integration
         langwatch_config: Optional LangWatch configuration
 
     Returns:
-        Dual-path metrics coordinator
+        Dual-path metrics coordinator (singleton)
     """
     global _coordinator
 
-    # Initialize LangWatch manager
+    # Return existing coordinator if available
+    if _coordinator is not None:
+        logger.debug("🔧 Dual-path metrics coordinator already exists, returning existing instance")
+        return _coordinator
+
+    # Create LangWatch manager if needed
     langwatch_manager = initialize_langwatch(langwatch_enabled, langwatch_config)
 
-    # Create coordinator
+    # Create coordinator (async initialization deferred)
     _coordinator = DualPathMetricsCoordinator(agno_bridge, langwatch_manager)
-    _coordinator.initialize()
+    logger.debug("🔧 Dual-path metrics coordinator created (async initialization deferred)")
 
     return _coordinator
 
@@ -329,16 +414,25 @@ def get_metrics_coordinator() -> Optional[DualPathMetricsCoordinator]:
 
 def shutdown_langwatch_integration() -> None:
     """
-    Shutdown LangWatch integration and cleanup resources.
+    Shutdown LangWatch integration and cleanup all resources.
+    
+    Properly shuts down both the coordinator and manager, and resets
+    global state for clean restart if needed.
     """
-    global _langwatch_manager, _coordinator
+    global _langwatch_manager, _coordinator, _setup_complete, _setup_task
 
+    # Shutdown coordinator first (which will shutdown manager)
     if _coordinator:
         _coordinator.shutdown()
         _coordinator = None
 
+    # Shutdown manager if still active
     if _langwatch_manager:
         _langwatch_manager.shutdown()
         _langwatch_manager = None
+
+    # Reset global setup state for clean restart
+    _setup_complete.clear()
+    _setup_task = None
 
     logger.info("🔧 LangWatch integration shutdown completed")

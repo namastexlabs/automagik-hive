@@ -64,7 +64,8 @@ from .langwatch_integration import (
     get_langwatch_manager,
     initialize_dual_path_metrics,
     get_metrics_coordinator,
-    shutdown_langwatch_integration
+    shutdown_langwatch_integration,
+    setup_langwatch_global
 )
 
 # Public API
@@ -91,7 +92,8 @@ __all__ = [
     "get_langwatch_manager",
     "initialize_dual_path_metrics",
     "get_metrics_coordinator",
-    "shutdown_langwatch_integration"
+    "shutdown_langwatch_integration",
+    "setup_langwatch_global"
 ]
 
 # Version

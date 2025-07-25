@@ -6,7 +6,7 @@
     },
     "automagik-forge": {
       "type": "sse",
-      "url": "http://localhost:8889/sse"
+      "url": "http://192.168.112.154:8889/sse"
     },
     "ask-repo-agent": {
       "type": "sse",
@@ -16,28 +16,20 @@
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
     },
-    "wait": {
+    "automagik-hive": {
       "command": "uvx",
       "args": [
-        "automagik-tools@0.8.15",
+        "automagik-tools@0.8.16",
         "tool",
-        "wait"
-      ]
-    },
-
-     "genie-agents": {
-       "command": "uvx",
-       "args": [
-         "automagik-tools@0.8.15",
-         "tool",
-         "genie-agents"
-       ],
-       "env": {
-         "GENIE_AGENTS_API_BASE_URL": "http://localhost:9888",
-         "GENIE_AGENTS_TIMEOUT": "300"
+        "automagik-hive"
+      ],
+      "env": {
+        "HIVE_API_BASE_URL": "http://localhost:8886",
+        "HIVE_API_KEY": "hive_l_15Bhc_B_ObYltpQ09EtdlSeNs3rXwWoB_g6UBDZ3o",
+        "HIVE_TIMEOUT": "300"
       }
     },
-      "postgres": {
+    "postgres": {
         "command": "npx",
         "args": [
           "-y",
