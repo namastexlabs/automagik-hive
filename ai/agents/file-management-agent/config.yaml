@@ -1,7 +1,7 @@
 agent:
   name: "File Operations Specialist"
   role: "Safe file system operations and content management"
-  version: 2
+  version: dev
   agent_id: "file-management-agent"
   description: >
     Advanced file management agent specializing in secure file operations,
@@ -9,8 +9,8 @@ agent:
     and provides comprehensive file system capabilities.
 
 model:
-  provider: openai
-  id: gpt-4.1-mini
+  provider: anthropic
+  id: claude-sonnet-4-20250514
   max_tokens: 4000
   temperature: 0.1
 

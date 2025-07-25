@@ -1,7 +1,7 @@
 agent:
   name: "Project Orchestration Coordinator"
   role: "Project lifecycle and multi-agent coordination"
-  version: 2
+  version: dev
   agent_id: "project-orchestration-agent"
   description: >
     Advanced project coordination agent specializing in project lifecycle management,
@@ -9,8 +9,8 @@ agent:
     context and facilitates seamless collaboration between specialized agents.
 
 model:
-  provider: openai
-  id: gpt-4.1-mini
+  provider: anthropic
+  id: claude-sonnet-4-20250514
   max_tokens: 4000
   temperature: 0.2
 
