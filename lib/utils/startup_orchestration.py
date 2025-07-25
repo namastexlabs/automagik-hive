@@ -214,6 +214,9 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
                 async_metrics_service=async_metrics_service
             )
 
+            # Initialize the coordinator (this actually initializes LangWatch)
+            await metrics_coordinator.initialize()
+
             # Use coordinator as the metrics service (it wraps async service)
             metrics_service = metrics_coordinator
 
