@@ -69,6 +69,7 @@ class VersionFactory:
         session_id: Optional[str] = None,
         debug_mode: bool = False,
         user_id: Optional[str] = None,
+        metrics_service: Optional[object] = None,
         **kwargs
     ) -> Union[Agent, Team, Workflow]:
         """
@@ -81,6 +82,7 @@ class VersionFactory:
             session_id: Session ID for tracking
             debug_mode: Enable debug mode
             user_id: User identifier
+            metrics_service: Optional metrics collection service
             **kwargs: Additional parameters
             
         Returns:
@@ -136,6 +138,7 @@ class VersionFactory:
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
+            metrics_service=metrics_service,
             **kwargs
         )
     
@@ -146,6 +149,7 @@ class VersionFactory:
         session_id: Optional[str],
         debug_mode: bool,
         user_id: Optional[str],
+        metrics_service: Optional[object] = None,
         **context_kwargs
     ) -> Agent:
         """Create versioned agent using dynamic Agno proxy with inheritance support."""
@@ -177,7 +181,8 @@ class VersionFactory:
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
-            db_url=self.db_url
+            db_url=self.db_url,
+            metrics_service=metrics_service
         )
         
         logger.debug(f"🤖 Agent {component_id} created with inheritance and {len(proxy.get_supported_parameters())} available parameters")
@@ -351,6 +356,7 @@ class VersionFactory:
         session_id: Optional[str],
         debug_mode: bool,
         user_id: Optional[str],
+        metrics_service: Optional[object] = None,
         **kwargs
     ) -> Team:
         """Create team using dynamic Agno Team proxy with inheritance validation."""
@@ -379,6 +385,7 @@ class VersionFactory:
                 debug_mode=debug_mode,
                 user_id=user_id,
                 db_url=self.db_url,
+                metrics_service=metrics_service,
                 **kwargs
             )
             
@@ -489,6 +496,7 @@ class VersionFactory:
         session_id: Optional[str],
         debug_mode: bool,
         user_id: Optional[str],
+        metrics_service: Optional[object] = None,
         **kwargs
     ) -> Workflow:
         """Create workflow using dynamic Agno Workflow proxy for future compatibility."""
@@ -506,6 +514,7 @@ class VersionFactory:
             debug_mode=debug_mode,
             user_id=user_id,
             db_url=self.db_url,
+            metrics_service=metrics_service,
             **kwargs
         )
         
@@ -520,6 +529,7 @@ class VersionFactory:
         session_id: Optional[str],
         debug_mode: bool,
         user_id: Optional[str],
+        metrics_service: Optional[object] = None,
         **kwargs
     ) -> Union[Agent, Team, Workflow]:
         """
@@ -569,6 +579,7 @@ class VersionFactory:
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
+            metrics_service=metrics_service,
             **kwargs
         )
 
@@ -585,17 +596,17 @@ def get_version_factory() -> VersionFactory:
 
 
 # Clean factory functions
-async def create_agent(agent_id: str, version: Optional[int] = None, **kwargs) -> Agent:
+async def create_agent(agent_id: str, version: Optional[int] = None, metrics_service: Optional[object] = None, **kwargs) -> Agent:
     """Create agent using factory pattern."""
     return await get_version_factory().create_versioned_component(
-        agent_id, "agent", version, **kwargs
+        agent_id, "agent", version, metrics_service=metrics_service, **kwargs
     )
 
 
-async def create_team(team_id: str, version: Optional[int] = None, **kwargs) -> Team:
+async def create_team(team_id: str, version: Optional[int] = None, metrics_service: Optional[object] = None, **kwargs) -> Team:
     """Create team using factory pattern (unified with agents)."""
     return await get_version_factory().create_versioned_component(
-        team_id, "team", version, **kwargs
+        team_id, "team", version, metrics_service=metrics_service, **kwargs
     )
 
 

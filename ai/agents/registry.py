@@ -66,6 +66,7 @@ class AgentRegistry:
         db_url: Optional[str] = None,
         memory: Optional[Any] = None,
         user_id: Optional[str] = None,  # Agno native parameter
+        metrics_service: Optional[object] = None,  # Metrics collection service
         pb_phone_number: Optional[str] = None,  # PagBank business parameter
         pb_cpf: Optional[str] = None  # PagBank business parameter
     ) -> Agent:
@@ -79,6 +80,7 @@ class AgentRegistry:
             debug_mode: Enable debug mode
             db_url: Database URL override
             user_id: Agno native user identifier for shared team context
+            metrics_service: Optional metrics collection service
             pb_phone_number: PagBank business parameter - phone number
             pb_cpf: PagBank business parameter - CPF document
             
@@ -99,7 +101,8 @@ class AgentRegistry:
             version=version,
             session_id=session_id,
             debug_mode=debug_mode,
-            user_id=user_id
+            user_id=user_id,
+            metrics_service=metrics_service
         )
     
     @classmethod

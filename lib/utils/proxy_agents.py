@@ -424,21 +424,33 @@ class AgnoAgentProxy:
         Returns:
             Agent with wrapped run() method
         """
+        logger.debug(f"Applying metrics wrapper to agent {component_id}", 
+                   metrics_service_type=type(metrics_service).__name__,
+                   has_collect_from_response=hasattr(metrics_service, 'collect_from_response'),
+                   agent_type=type(agent).__name__)
+        
         # Store original run method
         original_run = agent.run
         
         def wrapped_run(*args, **kwargs):
             """Wrapped run method that collects metrics after execution"""
+            logger.debug(f"Agent {component_id} wrapped run() invoked")
+            
             response = None
             try:
                 # Execute original run method
                 response = original_run(*args, **kwargs)
+                
+                logger.debug(f"Agent {component_id} execution completed", 
+                           response_received=response is not None)
                 
                 # Only collect metrics if response is valid
                 if response is not None:
                     try:
                         # Extract YAML overrides for metrics
                         yaml_overrides = self._extract_metrics_overrides(config)
+                        
+                        logger.debug(f"Collecting metrics for agent {component_id}")
                         
                         # Collect metrics from response with validation
                         if hasattr(metrics_service, 'collect_from_response'):
@@ -448,12 +460,15 @@ class AgnoAgentProxy:
                                 execution_type="agent",
                                 yaml_overrides=yaml_overrides
                             )
+                            logger.debug(f"Metrics collection for {component_id}: {'success' if success else 'failed'}")
                             if not success:
                                 logger.debug(f"🤖 Metrics collection returned false for agent {component_id}")
+                        else:
+                            logger.debug(f"No collect_from_response method on metrics service for {component_id}")
                     
                     except Exception as metrics_error:
                         # Don't let metrics collection failures break agent execution
-                        logger.warning(f"🤖 Metrics collection error for agent {component_id}: {metrics_error}")
+                        logger.warning(f"Metrics collection error for agent {component_id}: {metrics_error}")
                         # Continue execution - metrics failure should not affect agent operation
                 
                 return response
@@ -463,8 +478,64 @@ class AgnoAgentProxy:
                 logger.error(f"🤖 Agent {component_id} execution failed: {e}")
                 raise e  # Re-raise the original exception
         
-        # Replace the run method
+        # Replace both sync and async run methods for comprehensive coverage
         agent.run = wrapped_run
+        
+        # Also wrap arun (async run) method if it exists
+        if hasattr(agent, 'arun'):
+            original_arun = agent.arun
+            
+            async def wrapped_arun(*args, **kwargs):
+                """Wrapped arun method that collects metrics after execution"""
+                logger.debug(f"Agent {component_id} wrapped arun() invoked")
+                
+                response = None
+                try:
+                    # Execute original arun method
+                    response = await original_arun(*args, **kwargs)
+                    
+                    logger.debug(f"Agent {component_id} async execution completed", 
+                               response_received=response is not None)
+                    
+                    # Only collect metrics if response is valid
+                    if response is not None:
+                        try:
+                            # Extract YAML overrides for metrics
+                            yaml_overrides = self._extract_metrics_overrides(config)
+                            
+                            logger.debug(f"Collecting async metrics for agent {component_id}")
+                            
+                            # Collect metrics from response with validation
+                            if hasattr(metrics_service, 'collect_from_response'):
+                                success = metrics_service.collect_from_response(
+                                    response=response,
+                                    agent_name=component_id,
+                                    execution_type="agent",
+                                    yaml_overrides=yaml_overrides
+                                )
+                                logger.debug(f"Async metrics collection for {component_id}: {'success' if success else 'failed'}")
+                                if not success:
+                                    logger.debug(f"🤖 Async metrics collection returned false for agent {component_id}")
+                            else:
+                                logger.debug(f"No collect_from_response method on metrics service for {component_id}")
+                        
+                        except Exception as metrics_error:
+                            # Don't let metrics collection failures break agent execution
+                            logger.warning(f"Async metrics collection error for agent {component_id}: {metrics_error}")
+                            # Continue execution - metrics failure should not affect agent operation
+                    
+                    return response
+                    
+                except Exception as e:
+                    # Log original execution failure separately from metrics
+                    logger.error(f"🤖 Agent {component_id} async execution failed: {e}")
+                    raise e  # Re-raise the original exception
+            
+            agent.arun = wrapped_arun
+            logger.debug(f"Both run() and arun() methods wrapped for agent {component_id}")
+        else:
+            logger.debug(f"Only run() method wrapped for agent {component_id} (no arun method)")
+            
         return agent
     
     def _extract_metrics_overrides(self, config: Dict[str, Any]) -> Dict[str, bool]:
