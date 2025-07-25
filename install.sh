@@ -161,9 +161,9 @@ ensure_docker() {
 # ===========================================
 setup_repository() {
     print_status "Setting up Automagik Hive repository..."
-    if [[ -f "Makefile" && -d "ai" ]]; then
+    if [[ -f "Makefile" && -d "lib" ]]; then
         print_success "Already in automagik-hive repository."
-        return
+        return 0
     fi
     
     local repo_url="https://github.com/namastexlabs/automagik-hive.git"
@@ -171,8 +171,8 @@ setup_repository() {
         print_info "Cloning repository..."
         git clone "$repo_url" automagik-hive
     fi
-    cd automagik-hive
     print_success "Repository is ready."
+    return 1  # Signal that we need to cd into the directory
 }
 
 # ===========================================
@@ -186,14 +186,13 @@ main() {
     ensure_python
     ensure_docker
     
-    setup_repository
-    
-    # Ensure we're in the repository directory for make install
-    if [[ ! -f "Makefile" ]]; then
+    if ! setup_repository; then
+        # Need to cd into the cloned directory
         if [[ -d "automagik-hive" ]]; then
-            cd automagik-hive
+            cd automagik-hive || { print_error "Failed to enter repository directory"; exit 1; }
+            print_info "Switched to automagik-hive directory"
         else
-            print_error "Repository directory not found"
+            print_error "Repository directory not found after setup"
             exit 1
         fi
     fi
