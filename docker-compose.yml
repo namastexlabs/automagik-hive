@@ -56,6 +56,7 @@ services:
     image: agnohq/pgvector:16
     container_name: hive-postgres
     restart: unless-stopped
+    user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"
     environment:
       # Extract from URL: postgresql+psycopg://user:pass@host:port/db
       - POSTGRES_USER

@@ -30,6 +30,20 @@ print_warning() { echo -e "${YELLOW}⚠️ $1${RESET}"; }
 # Installs git, curl, and build tools based on the detected OS.
 install_basic_tools() {
     print_status "Ensuring basic tools (git, curl, make) are installed..."
+    
+    # Check if all required tools are already present
+    local missing_tools=()
+    if ! command -v git >/dev/null 2>&1; then missing_tools+=("git"); fi
+    if ! command -v curl >/dev/null 2>&1; then missing_tools+=("curl"); fi
+    if ! command -v make >/dev/null 2>&1; then missing_tools+=("make/build-essential"); fi
+    
+    if [ ${#missing_tools[@]} -eq 0 ]; then
+        print_success "All basic tools already installed."
+        return 0
+    fi
+    
+    print_info "Missing tools: ${missing_tools[*]}"
+    
     if command -v apt-get >/dev/null 2>&1; then
         sudo apt-get update -qq && sudo apt-get install -y curl git build-essential lsb-release
     elif command -v dnf >/dev/null 2>&1; then
@@ -44,7 +58,7 @@ install_basic_tools() {
         fi
         brew install curl git
     fi
-    print_success "Basic tools are present."
+    print_success "Basic tools installation completed."
 }
 
 # Ensures uv is installed, installing it if not found.
@@ -147,9 +161,9 @@ ensure_docker() {
 # ===========================================
 setup_repository() {
     print_status "Setting up Automagik Hive repository..."
-    if [[ -f "Makefile" && -d "ai" ]]; then
+    if [[ -f "Makefile" && -d "lib" ]]; then
         print_success "Already in automagik-hive repository."
-        return
+        return 0
     fi
     
     local repo_url="https://github.com/namastexlabs/automagik-hive.git"
@@ -157,8 +171,8 @@ setup_repository() {
         print_info "Cloning repository..."
         git clone "$repo_url" automagik-hive
     fi
-    cd automagik-hive
     print_success "Repository is ready."
+    return 1  # Signal that we need to cd into the directory
 }
 
 # ===========================================
@@ -172,7 +186,16 @@ main() {
     ensure_python
     ensure_docker
     
-    setup_repository
+    if ! setup_repository; then
+        # Need to cd into the cloned directory
+        if [[ -d "automagik-hive" ]]; then
+            cd automagik-hive || { print_error "Failed to enter repository directory"; exit 1; }
+            print_info "Switched to automagik-hive directory"
+        else
+            print_error "Repository directory not found after setup"
+            exit 1
+        fi
+    fi
     
     print_status "All prerequisites met. Running 'make install'..."
     if make install; then

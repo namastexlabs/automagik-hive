@@ -152,6 +152,15 @@ define setup_docker_postgres
         $(call check_docker); \
         $(call generate_postgres_credentials); \
         echo -e "$(FONT_CYAN)🐳 Starting PostgreSQL container...$(FONT_RESET)"; \
+        if [ -d "./data/postgres" ]; then \
+            if [ "$$(uname -s)" = "Linux" ] || [ "$$(uname -s)" = "Darwin" ]; then \
+                OWNER=$$(stat -c '%U' ./data/postgres 2>/dev/null || stat -f '%Su' ./data/postgres 2>/dev/null || echo "unknown"); \
+                if [ "$$OWNER" = "root" ]; then \
+                    echo -e "$(FONT_YELLOW)💡 Fixing PostgreSQL data directory permissions...$(FONT_RESET)"; \
+                    sudo chown -R $$(id -u):$$(id -g) ./data/postgres 2>/dev/null || true; \
+                fi; \
+            fi; \
+        fi; \
         DB_URL=$$(grep '^HIVE_DATABASE_URL=' .env | cut -d'=' -f2-); \
         WITHOUT_PROTOCOL=$${DB_URL#*://}; \
         CREDENTIALS=$${WITHOUT_PROTOCOL%%@*}; \
@@ -159,6 +168,14 @@ define setup_docker_postgres
         export POSTGRES_USER=$${CREDENTIALS%%:*}; \
         export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
         export POSTGRES_DB=$${AFTER_AT##*/}; \
+        if [ "$$(uname -s)" = "Linux" ] || [ "$$(uname -s)" = "Darwin" ]; then \
+            export POSTGRES_UID=$$(id -u); \
+            export POSTGRES_GID=$$(id -g); \
+        else \
+            export POSTGRES_UID=1000; \
+            export POSTGRES_GID=1000; \
+        fi; \
+        mkdir -p ./data/postgres && chown -R $${POSTGRES_UID}:$${POSTGRES_GID} ./data 2>/dev/null || sudo chown -R $$USER:$$USER ./data; \
         $(DOCKER_COMPOSE) up -d postgres; \
         echo -e "$(FONT_GREEN)$(CHECKMARK) PostgreSQL container started with secure credentials!$(FONT_RESET)"; \
         echo -e "$(FONT_YELLOW)💡 Run 'make dev' for development or 'make prod' for production stack$(FONT_RESET)"; \
@@ -294,6 +311,13 @@ prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
 			export POSTGRES_USER=$${CREDENTIALS%%:*}; \
 			export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
 			export POSTGRES_DB=$${AFTER_AT##*/}; \
+			if [ "$$(uname -s)" = "Linux" ] || [ "$$(uname -s)" = "Darwin" ]; then \
+				export POSTGRES_UID=$$(id -u); \
+				export POSTGRES_GID=$$(id -g); \
+			else \
+				export POSTGRES_UID=1000; \
+				export POSTGRES_GID=1000; \
+			fi; \
 			$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build; \
 		else \
 			echo "Error: Could not extract database URL from .env"; \
