@@ -188,6 +188,16 @@ main() {
     
     setup_repository
     
+    # Ensure we're in the repository directory for make install
+    if [[ ! -f "Makefile" ]]; then
+        if [[ -d "automagik-hive" ]]; then
+            cd automagik-hive
+        else
+            print_error "Repository directory not found"
+            exit 1
+        fi
+    fi
+    
     print_status "All prerequisites met. Running 'make install'..."
     if make install; then
         echo ""
