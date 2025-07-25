@@ -49,7 +49,7 @@ class TestMCPStatus:
 
     def test_get_mcp_status_catalog_error(self, test_client, api_headers):
         """Test MCP status when catalog initialization fails."""
-        with patch("lib.mcp.MCPCatalog", side_effect=Exception("Catalog initialization failed")):
+        with patch("api.routes.mcp_router.MCPCatalog", side_effect=Exception("Catalog initialization failed")):
             response = test_client.get(
                 "/api/v1/mcp/status",
                 headers=api_headers
@@ -145,7 +145,7 @@ class TestMCPServerListing:
 
     def test_list_available_servers_catalog_error(self, test_client, api_headers):
         """Test server listing when catalog fails."""
-        with patch("lib.mcp.MCPCatalog", side_effect=Exception("Catalog error")):
+        with patch("api.routes.mcp_router.MCPCatalog", side_effect=Exception("Catalog error")):
             response = test_client.get(
                 "/api/v1/mcp/servers",
                 headers=api_headers
@@ -178,7 +178,7 @@ class TestMCPServerTesting:
         async def mock_get_mcp_tools_error(server_name: str):
             raise Exception("Connection failed")
         
-        with patch("lib.mcp.get_mcp_tools", side_effect=mock_get_mcp_tools_error):
+        with patch("api.routes.mcp_router.get_mcp_tools", side_effect=mock_get_mcp_tools_error):
             response = test_client.get(
                 "/api/v1/mcp/servers/failing-server/test",
                 headers=api_headers
@@ -194,7 +194,7 @@ class TestMCPServerTesting:
 
     def test_test_server_connection_no_tools_method(self, test_client, api_headers):
         """Test server connection when tools don't have list_tools method."""
-        async def mock_get_mcp_tools_no_method(server_name: str):
+        def mock_get_mcp_tools_no_method(server_name: str):
             mock_tools = AsyncMock()
             del mock_tools.list_tools  # Remove list_tools method
             
@@ -207,7 +207,7 @@ class TestMCPServerTesting:
             
             return AsyncContextManager()
         
-        with patch("lib.mcp.get_mcp_tools", side_effect=mock_get_mcp_tools_no_method):
+        with patch("api.routes.mcp_router.get_mcp_tools", side_effect=mock_get_mcp_tools_no_method):
             response = test_client.get(
                 "/api/v1/mcp/servers/test-server/test",
                 headers=api_headers
@@ -222,9 +222,9 @@ class TestMCPServerTesting:
 
     def test_test_server_connection_tools_error(self, test_client, api_headers):
         """Test server connection when list_tools fails."""
-        async def mock_get_mcp_tools_tools_error(server_name: str):
+        def mock_get_mcp_tools_tools_error(server_name: str):
             mock_tools = AsyncMock()
-            mock_tools.list_tools.side_effect = Exception("Tools listing failed")
+            mock_tools.list_tools = Mock(side_effect=Exception("Tools listing failed"))
             
             class AsyncContextManager:
                 async def __aenter__(self):
@@ -235,7 +235,7 @@ class TestMCPServerTesting:
             
             return AsyncContextManager()
         
-        with patch("lib.mcp.get_mcp_tools", side_effect=mock_get_mcp_tools_tools_error):
+        with patch("api.routes.mcp_router.get_mcp_tools", side_effect=mock_get_mcp_tools_tools_error):
             response = test_client.get(
                 "/api/v1/mcp/servers/test-server/test",
                 headers=api_headers
@@ -346,7 +346,7 @@ class TestMCPConfiguration:
 
     def test_get_mcp_configuration_catalog_error(self, test_client, api_headers):
         """Test MCP configuration when catalog fails."""
-        with patch("lib.mcp.MCPCatalog", side_effect=Exception("Catalog initialization failed")):
+        with patch("api.routes.mcp_router.MCPCatalog", side_effect=Exception("Catalog initialization failed")):
             response = test_client.get(
                 "/api/v1/mcp/config",
                 headers=api_headers
@@ -396,7 +396,7 @@ class TestMCPRouterEdgeCases:
         async def mock_get_mcp_tools_not_found(server_name: str):
             raise Exception(f"Server {server_name} not found")
         
-        with patch("lib.mcp.get_mcp_tools", side_effect=mock_get_mcp_tools_not_found):
+        with patch("api.routes.mcp_router.get_mcp_tools", side_effect=mock_get_mcp_tools_not_found):
             response = test_client.get(
                 "/api/v1/mcp/servers/non-existent-server/test",
                 headers=api_headers
@@ -478,7 +478,7 @@ class TestMCPRouterEdgeCases:
 
     def test_mcp_catalog_import_error(self, test_client, api_headers):
         """Test MCP endpoints when catalog import fails."""
-        with patch("lib.mcp.MCPCatalog", side_effect=ImportError("MCP module not available")):
+        with patch("api.routes.mcp_router.MCPCatalog", side_effect=ImportError("MCP module not available")):
             response = test_client.get("/api/v1/mcp/status", headers=api_headers)
             
             assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR

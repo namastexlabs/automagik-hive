@@ -20,7 +20,7 @@ from httpx import ASGITransport, AsyncClient
 
 # Set test environment before importing API modules
 os.environ["HIVE_ENVIRONMENT"] = "development"
-os.environ["HIVE_DATABASE_URL"] = "sqlite:///test.db"
+os.environ["HIVE_DATABASE_URL"] = "postgresql+psycopg://test:test@localhost:5432/test_db"
 os.environ["HIVE_API_PORT"] = "8887"
 os.environ["HIVE_LOG_LEVEL"] = "ERROR"  # Reduce log noise in tests
 os.environ["AGNO_LOG_LEVEL"] = "ERROR"
@@ -122,7 +122,7 @@ def mock_component_registries():
 @pytest.fixture
 def mock_mcp_catalog():
     """Mock MCP catalog for testing MCP endpoints."""
-    with patch("lib.mcp.MCPCatalog") as mock_catalog_class:
+    with patch("api.routes.mcp_router.MCPCatalog") as mock_catalog_class:
         mock_catalog = Mock()
         mock_catalog.list_servers.return_value = ["test-server", "another-server"]
         mock_catalog.get_server_info.return_value = {
@@ -139,9 +139,10 @@ def mock_mcp_catalog():
 @pytest.fixture
 def mock_mcp_tools():
     """Mock MCP tools for connection testing."""
-    async def mock_get_mcp_tools(server_name: str):
+    def mock_get_mcp_tools(server_name: str):
         mock_tools = AsyncMock()
-        mock_tools.list_tools.return_value = ["test-tool-1", "test-tool-2"]
+        # Make list_tools return the actual list, not a coroutine
+        mock_tools.list_tools = Mock(return_value=["test-tool-1", "test-tool-2"])
         
         class AsyncContextManager:
             async def __aenter__(self):
@@ -152,7 +153,7 @@ def mock_mcp_tools():
         
         return AsyncContextManager()
     
-    with patch("lib.mcp.get_mcp_tools", side_effect=mock_get_mcp_tools):
+    with patch("api.routes.mcp_router.get_mcp_tools", side_effect=mock_get_mcp_tools):
         yield
 
 
@@ -188,15 +189,15 @@ def mock_version_service():
         service.delete_version.return_value = True
         service.list_versions.return_value = [mock_version]
         service.get_history.return_value = [mock_history]
-        service.get_all_components.return_value = ["test-component"]
-        service.get_active_version.return_value = mock_version
+        service.get_all_components = AsyncMock(return_value=["test-component"])
+        service.get_active_version = AsyncMock(return_value=mock_version)
         # Configure get_components_by_type to return empty list for invalid types
-        def mock_get_components_by_type(component_type):
+        async def mock_get_components_by_type(component_type):
             if component_type in ["agent", "team", "workflow"]:
                 return ["test-component"]
             return []
         
-        service.get_components_by_type.side_effect = mock_get_components_by_type
+        service.get_components_by_type = AsyncMock(side_effect=mock_get_components_by_type)
         
         mock.return_value = service
         yield service
@@ -369,7 +370,7 @@ def setup_test_environment():
     # Set test environment variables
     test_env = {
         "HIVE_ENVIRONMENT": "development",
-        "HIVE_DATABASE_URL": "sqlite:///test.db",
+        "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db",
         "HIVE_API_PORT": "8887",
         "HIVE_LOG_LEVEL": "ERROR",
         "AGNO_LOG_LEVEL": "ERROR",
