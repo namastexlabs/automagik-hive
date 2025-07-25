@@ -197,10 +197,17 @@ main() {
         fi
     fi
     
+    # Pre-fix data permissions before Docker starts
+    if [[ -d "data" ]]; then
+        print_status "Fixing data directory permissions..."
+        sudo chown -R $(id -u):$(id -g) data/ 2>/dev/null || true
+    fi
+    
     print_status "All prerequisites met. Running 'make install'..."
     if make install; then
         echo ""
         print_success "🎉 Automagik Hive installation completed!"
+        print_info "You are now in the automagik-hive directory"
         print_info "Run 'make dev' to start development server"
     else
         print_error "Installation failed during 'make install'."
