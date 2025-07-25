@@ -11,7 +11,6 @@ from typing import Dict, Any, Optional, Set, Callable
 from pathlib import Path
 
 from agno.agent import Agent
-from agno.models.anthropic import Claude
 from .agno_storage_utils import create_dynamic_storage
 from lib.logging import logger
 
@@ -271,23 +270,17 @@ class AgnoAgentProxy:
         return processed
     
     def _handle_model_config(self, model_config: Dict[str, Any], config: Dict[str, Any], 
-                           component_id: str, db_url: Optional[str]) -> Claude:
-        """Handle model configuration with thinking support."""
-        thinking_config = model_config.get("thinking", {})
+                           component_id: str, db_url: Optional[str]):
+        """Handle model configuration with dynamic provider support."""
+        from lib.config.models import resolve_model
         
-        # Base model parameters using resolver for fallback
-        from lib.config.models import get_default_model_id
-        model_params = {
-            "id": model_config.get("id") or get_default_model_id(),
-            "temperature": model_config.get("temperature", 0.7),
-            "max_tokens": model_config.get("max_tokens", 2000)
-        }
-        
-        # Add thinking support if enabled
-        if thinking_config.get("type") == "enabled":
-            model_params["thinking"] = thinking_config
-        
-        return Claude(**model_params)
+        # Use dynamic model resolution to support all providers
+        return resolve_model(
+            model_id=model_config.get("id"),
+            temperature=model_config.get("temperature", 0.7),
+            max_tokens=model_config.get("max_tokens", 2000),
+            **{k: v for k, v in model_config.items() if k not in ["id", "temperature", "max_tokens"]}
+        )
     
     def _handle_storage_config(self, storage_config: Dict[str, Any], config: Dict[str, Any],
                              component_id: str, db_url: Optional[str]):
