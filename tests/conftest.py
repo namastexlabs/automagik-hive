@@ -85,13 +85,25 @@ def mock_component_registries():
         }
     }
     
+    # Mock the component creations to return simple mock agents
+    mock_agent = Mock()
+    mock_agent.run.return_value = "Test response"
+    mock_agent.metadata = {}  # Add metadata as empty dict, not Mock
+    
     patches = [
         patch("ai.agents.registry.AgentRegistry.list_available_agents", return_value=list(mock_agents.keys())),
         patch("ai.teams.registry.list_available_teams", return_value=list(mock_teams.keys())),
         patch("ai.workflows.registry.list_available_workflows", return_value=list(mock_workflows.keys())),
-        patch("lib.utils.version_factory.create_agent", return_value=Mock()),
-        patch("lib.utils.version_factory.create_team", return_value=Mock()),
-        patch("ai.workflows.registry.get_workflow", return_value=Mock()),
+        patch("lib.utils.version_factory.create_agent", return_value=mock_agent),
+        patch("lib.utils.version_factory.create_team", return_value=mock_agent),
+        patch("ai.workflows.registry.get_workflow", return_value=mock_agent),
+        # Mock the database services to avoid actual database connections
+        patch("lib.services.database_service.get_db_service", return_value=AsyncMock()),
+        patch("lib.services.component_version_service.ComponentVersionService"),
+        patch("lib.versioning.agno_version_service.AgnoVersionService"),
+        # Mock the version factory method to return mock agent directly
+        patch("lib.utils.version_factory.VersionFactory.create_versioned_component", 
+              new_callable=lambda: AsyncMock(return_value=mock_agent)),
     ]
     
     for p in patches:
@@ -148,7 +160,7 @@ def mock_mcp_tools():
 def mock_version_service():
     """Mock version service for version router testing."""
     with patch("api.routes.version_router.get_version_service") as mock:
-        service = Mock()
+        service = AsyncMock()
         
         # Mock version info
         mock_version = Mock()
@@ -168,7 +180,7 @@ def mock_version_service():
         mock_history.changed_by = "test"
         mock_history.reason = "Initial version"
         
-        # Configure service methods
+        # Configure async service methods
         service.get_version.return_value = mock_version
         service.create_version.return_value = mock_version
         service.update_config.return_value = mock_version
@@ -193,25 +205,50 @@ def mock_version_service():
 @pytest.fixture
 def mock_startup_orchestration():
     """Mock startup orchestration to avoid loading real components."""
+    # Create dict-like mocks for registries
+    class DictLikeMock(dict):
+        def __init__(self, items=None):
+            super().__init__(items or {})
+        
+        def keys(self):
+            return super().keys()
+    
+    # Create list-like mocks for startup display
+    class ListLikeMock(list):
+        def __init__(self, items=None):
+            super().__init__(items or [])
+    
     mock_results = Mock()
     mock_results.registries = Mock()
-    mock_results.registries.agents = {"test-agent": Mock()}
-    mock_results.registries.workflows = {"test-workflow": Mock()}
-    mock_results.registries.teams = {"test-team": Mock()}
+    mock_results.registries.agents = DictLikeMock({"test-agent": Mock()})
+    mock_results.registries.workflows = DictLikeMock({"test-workflow": Mock()})
+    mock_results.registries.teams = DictLikeMock()
     mock_results.services = Mock()
     mock_results.services.auth_service = Mock()
     mock_results.services.auth_service.is_auth_enabled.return_value = False
     mock_results.services.auth_service.get_current_key.return_value = "test-key"
+    mock_results.services.metrics_service = Mock()
     mock_results.sync_results = {}
     
+    # Create proper startup display mock
+    mock_startup_display = Mock()
+    mock_startup_display.teams = ListLikeMock([])
+    mock_startup_display.agents = ListLikeMock(['test-agent'])
+    mock_startup_display.workflows = ListLikeMock(['test-workflow'])
+    mock_startup_display.display_summary = Mock()
+    
     with patch("lib.utils.startup_orchestration.orchestrated_startup", return_value=mock_results):
-        with patch("lib.utils.startup_orchestration.get_startup_display_with_results") as mock_display:
-            mock_display.return_value = Mock()
-            mock_display.return_value.teams = []
-            mock_display.return_value.agents = []
-            mock_display.return_value.workflows = []
-            mock_display.return_value.display_summary = Mock()
-            yield mock_results
+        # Mock both create_startup_display and get_startup_display_with_results
+        with patch("lib.utils.startup_display.create_startup_display", return_value=mock_startup_display):
+            with patch("lib.utils.startup_orchestration.get_startup_display_with_results", return_value=mock_startup_display):
+                # Mock the team creation function used in serve.py
+                async def mock_create_team(*args, **kwargs):
+                    mock_team = Mock()
+                    mock_team.name = 'test-team'
+                    return mock_team
+                
+                with patch("lib.utils.version_factory.create_team", side_effect=mock_create_team):
+                    yield mock_results
 
 
 @pytest.fixture
@@ -323,6 +360,12 @@ def setup_test_environment():
     # Store original environment
     original_env = os.environ.copy()
     
+    # Clear problematic environment variables
+    problematic_vars = ['env']  # The 'env=[object Object]' causes Agno Playground validation errors
+    for var in problematic_vars:
+        if var in os.environ:
+            del os.environ[var]
+    
     # Set test environment variables
     test_env = {
         "HIVE_ENVIRONMENT": "development",
@@ -353,6 +396,11 @@ def mock_external_dependencies():
         patch("lib.metrics.langwatch_integration.LangWatchManager"),
         patch("lib.logging.setup_logging"),
         patch("lib.logging.set_runtime_mode"),
+        # Mock serve.py startup orchestration to prevent component loading at import
+        patch("api.serve.orchestrated_startup"),
+        patch("api.serve.create_startup_display"),
+        # Mock the serve.py app creation to prevent execution at import time
+        patch("api.serve.create_automagik_api", return_value=Mock()),
     ]
     
     for p in patches:

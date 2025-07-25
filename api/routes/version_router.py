@@ -98,7 +98,7 @@ async def execute_versioned_component(
     from lib.utils.version_factory import VersionFactory
     factory = VersionFactory()
     
-    component = factory.create_versioned_component(
+    component = await factory.create_versioned_component(
         component_id=request.component_id,
         component_type=component_type,
         version=request.version,
