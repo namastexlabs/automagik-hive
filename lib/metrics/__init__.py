@@ -114,7 +114,8 @@ def _check_langwatch_availability() -> bool:
         True if LangWatch can be imported, False otherwise
     """
     try:
-        from langwatch import AgnoInstrumentor
+        import langwatch
+        from openinference.instrumentation.agno import AgnoInstrumentor
         return True
     except ImportError:
         return False
