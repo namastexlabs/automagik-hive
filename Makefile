@@ -152,6 +152,10 @@ define setup_docker_postgres
         $(call check_docker); \
         $(call generate_postgres_credentials); \
         echo -e "$(FONT_CYAN)🐳 Starting PostgreSQL container...$(FONT_RESET)"; \
+        if [ -d "./data/postgres" ] && [ "$$(stat -c '%U' ./data/postgres 2>/dev/null)" = "root" ]; then \
+            echo -e "$(FONT_YELLOW)💡 Fixing PostgreSQL data directory permissions...$(FONT_RESET)"; \
+            sudo chown -R $$(id -u):$$(id -g) ./data/postgres 2>/dev/null || true; \
+        fi; \
         DB_URL=$$(grep '^HIVE_DATABASE_URL=' .env | cut -d'=' -f2-); \
         WITHOUT_PROTOCOL=$${DB_URL#*://}; \
         CREDENTIALS=$${WITHOUT_PROTOCOL%%@*}; \
@@ -159,6 +163,8 @@ define setup_docker_postgres
         export POSTGRES_USER=$${CREDENTIALS%%:*}; \
         export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
         export POSTGRES_DB=$${AFTER_AT##*/}; \
+        export POSTGRES_UID=$$(id -u); \
+        export POSTGRES_GID=$$(id -g); \
         $(DOCKER_COMPOSE) up -d postgres; \
         echo -e "$(FONT_GREEN)$(CHECKMARK) PostgreSQL container started with secure credentials!$(FONT_RESET)"; \
         echo -e "$(FONT_YELLOW)💡 Run 'make dev' for development or 'make prod' for production stack$(FONT_RESET)"; \
@@ -294,6 +300,8 @@ prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
 			export POSTGRES_USER=$${CREDENTIALS%%:*}; \
 			export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
 			export POSTGRES_DB=$${AFTER_AT##*/}; \
+			export POSTGRES_UID=$$(id -u); \
+			export POSTGRES_GID=$$(id -g); \
 			$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build; \
 		else \
 			echo "Error: Could not extract database URL from .env"; \
