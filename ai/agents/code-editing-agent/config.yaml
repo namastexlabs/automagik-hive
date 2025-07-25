@@ -1,7 +1,7 @@
 agent:
   name: "Code Modification Specialist"
   role: "Symbol-aware code editing and refactoring operations"
-  version: dev
+  version: 2
   agent_id: "code-editing-agent"
   description: >
     Advanced code editing agent specializing in safe code modifications,
@@ -9,8 +9,8 @@ agent:
     code integrity while providing intelligent editing capabilities.
 
 model:
-  id: claude-sonnet-4-20250514
-  provider: anthropic
+  provider: openai
+  id: gpt-4.1-mini
   max_tokens: 4000
   temperature: 0.1
 

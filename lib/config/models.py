@@ -50,14 +50,25 @@ class ModelResolver:
     
     def get_default_model_id(self) -> str:
         """
-        Get default model ID from environment variable with system fallback.
+        Get default model ID from environment variable.
+        Only used when YAML configuration doesn't specify a model.
         
         Returns:
-            str: Model ID (e.g., "gpt-4.1-mini", "claude-sonnet-4", "gemini-2.5-flash")
+            str: Model ID from HIVE_DEFAULT_MODEL environment variable
+            
+        Raises:
+            ModelResolutionError: If HIVE_DEFAULT_MODEL is not set
         """
-        default = os.getenv("HIVE_DEFAULT_MODEL", "gpt-4.1-mini")
-        logger.debug("Default model resolved", model_id=default, source="HIVE_DEFAULT_MODEL" if "HIVE_DEFAULT_MODEL" in os.environ else "system_default")
-        return default
+        # Get model from environment
+        default_model = os.getenv("HIVE_DEFAULT_MODEL")
+        if not default_model:
+            raise ModelResolutionError(
+                "HIVE_DEFAULT_MODEL environment variable is required when model not specified in YAML. "
+                "Example: export HIVE_DEFAULT_MODEL=gpt-4o-mini"
+            )
+        
+        logger.debug("Default model resolved from HIVE_DEFAULT_MODEL", model_id=default_model)
+        return default_model
     
     @lru_cache(maxsize=128)
     def _detect_provider(self, model_id: str) -> str:
@@ -183,8 +194,26 @@ model_resolver = ModelResolver()
 
 # Convenience functions for easy access
 def get_default_model_id() -> str:
-    """Get default model ID from environment or system default."""
+    """Get default model ID from environment or provider-based default."""
     return model_resolver.get_default_model_id()
+
+def get_default_provider() -> str:
+    """Get default provider from environment variable.
+    Only used when YAML configuration doesn't specify a provider.
+    
+    Returns:
+        str: Provider from HIVE_DEFAULT_PROVIDER environment variable
+        
+    Raises:
+        ModelResolutionError: If HIVE_DEFAULT_PROVIDER is not set
+    """
+    default_provider = os.getenv("HIVE_DEFAULT_PROVIDER")
+    if not default_provider:
+        raise ModelResolutionError(
+            "HIVE_DEFAULT_PROVIDER environment variable is required when provider not specified in YAML. "
+            "Example: export HIVE_DEFAULT_PROVIDER=openai"
+        )
+    return default_provider
 
 def resolve_model(model_id: Optional[str] = None, **config_overrides) -> Any:
     """Create model instance using centralized resolver."""
@@ -193,6 +222,22 @@ def resolve_model(model_id: Optional[str] = None, **config_overrides) -> Any:
 def validate_model(model_id: str) -> bool:
     """Validate model availability without creating instance."""
     return model_resolver.validate_model_availability(model_id)
+
+def validate_required_environment_variables():
+    """Validate required environment variables at startup.
+    
+    Only validates when YAML configuration doesn't provide values.
+    
+    Raises:
+        EnvironmentError: If required environment variables are missing
+    """
+    # Only check if we're likely to need them (can be called conditionally)
+    if not os.getenv("HIVE_DEFAULT_MODEL") or not os.getenv("HIVE_DEFAULT_PROVIDER"):
+        logger.warning(
+            "Environment variables HIVE_DEFAULT_MODEL and/or HIVE_DEFAULT_PROVIDER not set. "
+            "These are required when YAML configuration doesn't specify model/provider. "
+            "Example: HIVE_DEFAULT_PROVIDER=openai HIVE_DEFAULT_MODEL=gpt-4o-mini"
+        )
 
 
 # Portuguese language specific configurations

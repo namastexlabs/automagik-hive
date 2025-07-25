@@ -66,8 +66,11 @@ class ProviderRegistry:
                        
         except ImportError as e:
             logger.warning("Agno models module not available, using fallback providers", error=str(e))
-            # Fallback to common providers if Agno isn't available
-            providers = {'openai', 'anthropic', 'google', 'meta', 'mistral', 'cohere', 'groq'}
+            # Fallback to common providers, prioritizing default provider from environment
+            import os
+            default_provider = os.getenv("HIVE_DEFAULT_PROVIDER", "openai")
+            providers = {default_provider, 'openai', 'anthropic', 'google', 'meta', 'mistral', 'cohere', 'groq'}
+            logger.debug("Using fallback providers with default priority", default_provider=default_provider)
         
         self._providers_cache = providers
         return providers

@@ -1,7 +1,7 @@
 agent:
   name: "Code Understanding Specialist"
   role: "Deep code analysis and symbol relationship mapping with language server integration"
-  version: dev
+  version: 2
   agent_id: "code-understanding-agent"
   description: >
     Advanced code analysis agent specializing in language server integration,
@@ -9,8 +9,8 @@ agent:
     into code relationships and dependencies.
 
 model:
-  id: claude-sonnet-4-20250514
-  provider: anthropic
+  provider: openai
+  id: gpt-4.1-mini
   max_tokens: 4000
   temperature: 0.1
 

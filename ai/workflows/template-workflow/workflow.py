@@ -18,14 +18,13 @@ from typing import Dict, Any, Optional
 from agno.workflow.v2 import Workflow, Step
 from agno.workflow.v2.types import StepInput, StepOutput
 from agno.agent import Agent
-from agno.models.anthropic import Claude
-from agno.utils.log import logger
 
 
-def create_template_model() -> Claude:
-    """Create Claude model for template workflow"""
-    return Claude(
-        id='claude-sonnet-4-20250514',
+def create_template_model():
+    """Create model for template workflow using dynamic resolution"""
+    from lib.config.models import resolve_model, get_default_model_id
+    return resolve_model(
+        model_id=get_default_model_id(),  # Use environment-based default
         temperature=0.7,
         max_tokens=1000
     )

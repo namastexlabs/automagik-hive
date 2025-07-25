@@ -16,6 +16,36 @@
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
     },
+    "wait": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@0.8.16",
+        "tool",
+        "wait"
+      ]
+    },
+    "send_whatsapp_message": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@0.7.8",
+        "tool",
+        "evolution-api"
+      ],
+      "env": {
+        "EVOLUTION_API_BASE_URL": "http://192.168.112.142:8080",
+        "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
+        "EVOLUTION_API_INSTANCE": "SofIA",
+        "EVOLUTION_API_FIXED_RECIPIENT": "120363402149983989@g.us"
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql+psycopg://BLhLE3e2PLglc6d:bGDsdMn1r2fFLHj@localhost:5532/hive"
+      ]
+    },
     "automagik-hive": {
       "command": "uvx",
       "args": [
@@ -24,18 +54,10 @@
         "automagik-hive"
       ],
       "env": {
-        "HIVE_API_BASE_URL": "http://localhost:8886",
-        "HIVE_API_KEY": "hive_l_15Bhc_B_ObYltpQ09EtdlSeNs3rXwWoB_g6UBDZ3o",
+        "HIVE_API_BASE_URL": "http://localhost:18886",
+        "HIVE_API_KEY": "hive_jpWDdifLH7exYA9_G5qJrfOgoGigCQtxG0boig-qER8",
         "HIVE_TIMEOUT": "300"
       }
-    },
-    "postgres": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-postgres",
-          "postgresql+psycopg://Hf5x57x9QMrNBipV:q4Ozv5gjcJNERMK4@localhost:5532/hive"
-        ]
     }
   }
 }
