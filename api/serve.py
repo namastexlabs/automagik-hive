@@ -238,7 +238,7 @@ async def _async_create_automagik_api():
     loaded_teams = []
     for team_id in team_registry.keys():
         try:
-            team = await create_team(team_id)
+            team = await create_team(team_id, metrics_service=startup_results.services.metrics_service)
             if team:
                 loaded_teams.append(team)
                 logger.debug("Team instance created", team_id=team_id)
@@ -266,7 +266,34 @@ async def _async_create_automagik_api():
     
     # Create FastAPI app components from orchestrated startup results  
     teams_list = loaded_teams if loaded_teams else []
-    agents_list = list(available_agents.values()) if available_agents else []
+    
+    # METRICS FIX: Create wrapped agent instances instead of using raw registry entries
+    # This ensures agents have metrics collection capabilities when used by Agno Playground
+    agents_list = []
+    if available_agents:
+        from ai.agents.registry import AgentRegistry
+        for agent_id in available_agents.keys():
+            try:
+                # Create wrapped agent instance with metrics service
+                wrapped_agent = await AgentRegistry.get_agent(
+                    agent_id,
+                    session_id=None,  # Playground will handle session management
+                    debug_mode=is_development,
+                    user_id=None,
+                    metrics_service=startup_results.services.metrics_service  # CRITICAL FIX: Pass metrics service
+                )
+                if wrapped_agent:
+                    agents_list.append(wrapped_agent)
+                    
+                    logger.debug(f"Agent {agent_id} wrapped successfully for Playground")
+            except Exception as e:
+                logger.warning(f"Failed to create wrapped agent {agent_id} for Playground: {e}")
+                # Fallback to raw registry entry if wrapping fails
+                if agent_id in available_agents:
+                    agents_list.append(available_agents[agent_id])
+                    logger.debug(f"Using fallback raw agent for Playground", agent_id=agent_id)
+    
+    logger.debug(f"Created {len(agents_list)} agents for Playground")
     
     # Create workflow instances from registry
     workflows_list = []

@@ -210,7 +210,8 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
             metrics_coordinator = initialize_dual_path_metrics(
                 agno_bridge=metrics_bridge,
                 langwatch_enabled=langwatch_enabled,
-                langwatch_config=langwatch_config
+                langwatch_config=langwatch_config,
+                async_metrics_service=async_metrics_service
             )
 
             # Use coordinator as the metrics service (it wraps async service)
