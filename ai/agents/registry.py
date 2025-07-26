@@ -152,12 +152,14 @@ class AgentRegistry:
     @classmethod
     def list_mcp_servers(cls) -> list[str]:
         """List all available MCP servers."""
-        return cls.get_mcp_catalog().list_servers()
+        servers: list[str] = cls.get_mcp_catalog().list_servers()
+        return servers
 
     @classmethod
     def get_mcp_server_info(cls, server_name: str) -> dict[str, Any]:
         """Get information about an MCP server."""
-        return cls.get_mcp_catalog().get_server_info(server_name)
+        server_info: dict[str, Any] = cls.get_mcp_catalog().get_server_info(server_name)
+        return server_info
 
     @classmethod
     def reload_mcp_catalog(cls) -> None:

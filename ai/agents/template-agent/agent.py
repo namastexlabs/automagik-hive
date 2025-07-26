@@ -5,10 +5,14 @@ This agent demonstrates the full capabilities of the YAML templating system
 including context injection, conditional logic, and personalized configuration.
 """
 
+from typing import Any
+
+from agno.agent import Agent
+
 from lib.utils.version_factory import create_agent
 
 
-async def get_template_example_agent(**kwargs):
+async def get_template_example_agent(**kwargs: Any) -> Agent:
     """
     Create template example agent with dynamic configuration.
 

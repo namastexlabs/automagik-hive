@@ -45,9 +45,7 @@ def create_user_context_state(
         user_context["cpf"] = cpf
 
     # Add any additional context
-    for key, value in kwargs.items():
-        if value is not None:
-            user_context[key] = value
+    user_context.update({key: value for key, value in kwargs.items() if value is not None})
 
     # Return session_state structure
     session_state = {"user_context": user_context}

@@ -3,16 +3,17 @@ FastAPI server for Automagik Hive Multi-Agent System
 Production-ready API endpoint using V2 Ana Team architecture
 """
 
-import os
-import sys
-
 # import logging - replaced with unified logging
 import asyncio
-from pathlib import Path
-from agno.playground import Playground
-from starlette.middleware.cors import CORSMiddleware
+import os
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any, Callable, Optional
+
+from agno.playground import Playground
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 # CRITICAL FIX: Load environment variables FIRST before any other imports
 # This ensures AGNO_LOG_LEVEL is available when logging system initializes
@@ -28,14 +29,12 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.utils.startup_display import create_startup_display, display_simple_status
 from lib.config.server_config import get_server_config
-from lib.auth.dependencies import get_auth_service
 from lib.exceptions import ComponentLoadingError
 
 # Configure unified logging system AFTER environment variables are loaded
-from lib.logging import setup_logging, logger
-
+from lib.logging import logger, setup_logging
+from lib.utils.startup_display import create_startup_display
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
@@ -78,23 +77,20 @@ except Exception as e:
 # Import teams via dynamic registry (removed hardcoded ana import)
 
 # Import workflow registry for dynamic loading
-from ai.workflows.registry import list_available_workflows, get_workflow
-
-# Import team registry for dynamic loading
-from ai.teams.registry import list_available_teams, get_team
-from lib.utils.version_factory import create_team
+from ai.workflows.registry import get_workflow
 
 # Import CSV hot reload manager
-from lib.knowledge.csv_hot_reload import CSVHotReloadManager
-
 # Import orchestrated startup infrastructure
 from lib.utils.startup_orchestration import (
-    orchestrated_startup,
     get_startup_display_with_results,
+    orchestrated_startup,
 )
 
+# Import team registry for dynamic loading
+from lib.utils.version_factory import create_team
 
-def create_lifespan(startup_display=None):
+
+def create_lifespan(startup_display: Any = None) -> Callable:
     """Create lifespan context manager with startup_display access"""
 
     @asynccontextmanager
@@ -160,13 +156,12 @@ def create_lifespan(startup_display=None):
     return lifespan
 
 
-def _create_simple_sync_api():
+def _create_simple_sync_api() -> FastAPI:
     """Simple synchronous API creation for event loop conflict scenarios."""
     from fastapi import FastAPI
 
     # Get environment settings
-    environment = os.getenv("HIVE_ENVIRONMENT", "production")
-    is_development = environment == "development"
+    os.getenv("HIVE_ENVIRONMENT", "production")
 
     # Initialize startup display
     startup_display = create_startup_display()
@@ -215,10 +210,9 @@ async def _async_create_automagik_api():
     # Get environment settings
     environment = os.getenv("HIVE_ENVIRONMENT", "production")
     is_development = environment == "development"
-    log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
+    os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
 
     # Check if we're in uvicorn reload process to prevent duplicate output
-    import sys
 
     # Detect if we're in the reloader context to reduce duplicate logs
     # In development with reload, uvicorn creates multiple processes
@@ -256,7 +250,7 @@ async def _async_create_automagik_api():
 
     # Load team instances from registry
     loaded_teams = []
-    for team_id in team_registry.keys():
+    for team_id in team_registry:
         try:
             team = await create_team(
                 team_id, metrics_service=startup_results.services.metrics_service
@@ -301,7 +295,7 @@ async def _async_create_automagik_api():
     if available_agents:
         from ai.agents.registry import AgentRegistry
 
-        for agent_id in available_agents.keys():
+        for agent_id in available_agents:
             try:
                 # Create wrapped agent instance with metrics service
                 wrapped_agent = await AgentRegistry.get_agent(
@@ -325,14 +319,14 @@ async def _async_create_automagik_api():
                 if agent_id in available_agents:
                     agents_list.append(available_agents[agent_id])
                     logger.debug(
-                        f"Using fallback raw agent for Playground", agent_id=agent_id
+                        "Using fallback raw agent for Playground", agent_id=agent_id
                     )
 
     logger.debug(f"Created {len(agents_list)} agents for Playground")
 
     # Create workflow instances from registry
     workflows_list = []
-    for workflow_id in workflow_registry.keys():
+    for workflow_id in workflow_registry:
         try:
             workflow = get_workflow(workflow_id, debug_mode=is_development)
             workflows_list.append(workflow)
@@ -349,6 +343,7 @@ async def _async_create_automagik_api():
     # Ensure we have at least something to create app
     if not teams_list and not agents_list:
         from agno.agent import Agent
+
         from lib.config.models import resolve_model
 
         dummy_agent = Agent(name="Test Agent", model=resolve_model())
@@ -381,7 +376,6 @@ async def _async_create_automagik_api():
     # Use Playground as the primary router since it provides comprehensive CRUD operations
 
     # Try to get workflow handler via registry (same pattern as agents/teams)
-    external_handler = None
     try:
         from ai.workflows.registry import is_workflow_registered
 
@@ -413,6 +407,7 @@ async def _async_create_automagik_api():
     auth_service = startup_results.services.auth_service
     if auth_service.is_auth_enabled():
         from fastapi import APIRouter, Depends
+
         from lib.auth.dependencies import require_api_key
 
         # Create protected wrapper for playground routes
@@ -488,7 +483,7 @@ async def _async_create_automagik_api():
 
         if is_development and not is_reloader:
             # Add development URLs
-            port = get_server_config().port
+            get_server_config().port
             from rich.console import Console
             from rich.table import Table
 
@@ -555,25 +550,23 @@ async def _async_create_automagik_api():
 app = None
 
 
-def create_automagik_api():
+def create_automagik_api() -> FastAPI:
     """Create unified FastAPI app with environment-based features"""
 
     try:
         # Try to get the running event loop
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
         # We're in an event loop, need to handle this properly
         logger.debug("Event loop detected, using thread-based async initialization")
 
-        import threading
         import concurrent.futures
 
-        def run_async_in_thread():
+        def run_async_in_thread() -> FastAPI:
             # Create a new event loop in a separate thread
             new_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(new_loop)
             try:
-                result = new_loop.run_until_complete(_async_create_automagik_api())
-                return result
+                return new_loop.run_until_complete(_async_create_automagik_api())
             finally:
                 # Simplified cleanup - just close the loop
                 new_loop.close()
@@ -592,7 +585,7 @@ def create_automagik_api():
 _app_instance = None
 
 
-def get_app():
+def get_app() -> FastAPI:
     """Get or create the FastAPI application lazily."""
     global _app_instance
     if _app_instance is None:
@@ -601,7 +594,7 @@ def get_app():
 
 
 # For uvicorn - use factory function to avoid import-time app creation
-def app():
+def app() -> FastAPI:
     """Factory function for uvicorn to create app on demand."""
     return get_app()
 

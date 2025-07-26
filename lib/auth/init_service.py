@@ -14,7 +14,7 @@ from lib.logging import logger
 class AuthInitService:
     """Service for initializing and managing API keys."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.env_file = Path(".env")
         self.api_key_var = "HIVE_API_KEY"
         self.auth_disabled_var = "HIVE_AUTH_DISABLED"

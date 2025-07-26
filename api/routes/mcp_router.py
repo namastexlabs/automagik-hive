@@ -4,17 +4,18 @@ MCP Status API Routes
 Simple REST endpoints for MCP server status information.
 """
 
-from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, List
+from typing import Any
 
-from lib.mcp import MCPCatalog, get_mcp_tools
+from fastapi import APIRouter, HTTPException
+
 from lib.logging import logger
+from lib.mcp import MCPCatalog, get_mcp_tools
 
 router = APIRouter(prefix="/api/v1/mcp", tags=["MCP Status"])
 
 
 @router.get("/status")
-async def get_mcp_status() -> Dict[str, Any]:
+async def get_mcp_status() -> dict[str, Any]:
     """
     Get overall MCP system status.
 
@@ -37,7 +38,7 @@ async def get_mcp_status() -> Dict[str, Any]:
 
 
 @router.get("/servers")
-async def list_available_servers() -> Dict[str, Any]:
+async def list_available_servers() -> dict[str, Any]:
     """
     List all available MCP servers.
 
@@ -74,7 +75,7 @@ async def list_available_servers() -> Dict[str, Any]:
 
 
 @router.get("/servers/{server_name}/test")
-async def test_server_connection(server_name: str) -> Dict[str, Any]:
+async def test_server_connection(server_name: str) -> dict[str, Any]:
     """
     Test connection to a specific MCP server.
 
@@ -114,7 +115,7 @@ async def test_server_connection(server_name: str) -> Dict[str, Any]:
 
 
 @router.get("/config")
-async def get_mcp_configuration() -> Dict[str, Any]:
+async def get_mcp_configuration() -> dict[str, Any]:
     """
     Get MCP system configuration information.
 
@@ -151,6 +152,6 @@ async def get_mcp_configuration() -> Dict[str, Any]:
 
 
 # Add router to the main application
-def register_mcp_routes(app):
+def register_mcp_routes(app: "FastAPI") -> None:
     """Register MCP routes with the FastAPI application"""
     app.include_router(router)

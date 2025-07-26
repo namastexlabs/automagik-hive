@@ -1,9 +1,9 @@
 import os
-from typing import List, Optional
+from typing import Any, Type
 
-from pydantic import field_validator, Field
-from pydantic_settings import BaseSettings
+from pydantic import Field, field_validator
 from pydantic_core.core_schema import FieldValidationInfo
+from pydantic_settings import BaseSettings
 
 
 class ApiSettings(BaseSettings):
@@ -29,10 +29,10 @@ class ApiSettings(BaseSettings):
     # This list is set using the set_cors_origin_list validator
     # which uses the environment variable to set the
     # default cors origin list.
-    cors_origin_list: Optional[List[str]] = Field(None, validate_default=True)
+    cors_origin_list: list[str] | None = Field(None, validate_default=True)
 
     @field_validator("environment")
-    def validate_environment(cls, environment):
+    def validate_environment(cls: Type["ApiSettings"], environment: str) -> str:  # noqa: N805
         """Validate environment."""
 
         valid_environments = ["development", "production"]
@@ -42,7 +42,7 @@ class ApiSettings(BaseSettings):
         return environment
 
     @field_validator("cors_origin_list", mode="before")
-    def set_cors_origin_list(cls, cors_origin_list, info: FieldValidationInfo):
+    def set_cors_origin_list(cls: Type["ApiSettings"], _cors_origin_list: Any, info: FieldValidationInfo) -> list[str]:  # noqa: N805
         """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
         environment = info.data.get(
             "environment", os.getenv("HIVE_ENVIRONMENT", "development")
@@ -51,24 +51,23 @@ class ApiSettings(BaseSettings):
         if environment == "development":
             # Development: Allow all origins for convenience
             return ["*"]
-        else:
-            # Production: Use environment variable
-            origins_str = os.getenv("HIVE_CORS_ORIGINS", "")
-            if not origins_str:
-                raise ValueError(
-                    "HIVE_CORS_ORIGINS must be set in production environment. "
-                    "Add comma-separated domain list to environment variables."
-                )
+        # Production: Use environment variable
+        origins_str = os.getenv("HIVE_CORS_ORIGINS", "")
+        if not origins_str:
+            raise ValueError(
+                "HIVE_CORS_ORIGINS must be set in production environment. "
+                "Add comma-separated domain list to environment variables."
+            )
 
-            # Parse and clean origins
-            origins = [
-                origin.strip() for origin in origins_str.split(",") if origin.strip()
-            ]
+        # Parse and clean origins
+        origins = [
+            origin.strip() for origin in origins_str.split(",") if origin.strip()
+        ]
 
-            if not origins:
-                raise ValueError("HIVE_CORS_ORIGINS contains no valid origins")
+        if not origins:
+            raise ValueError("HIVE_CORS_ORIGINS contains no valid origins")
 
-            return origins
+        return origins
 
 
 # Create ApiSettings object

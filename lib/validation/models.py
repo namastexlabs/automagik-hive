@@ -55,8 +55,7 @@ class AgentRequest(BaseValidatedRequest):
 
         # Remove potentially dangerous characters but keep reasonable punctuation
         # This is a basic sanitization - adjust based on your needs
-        sanitized = re.sub(r'[<>"\']', "", v.strip())
-        return sanitized
+        return re.sub(r'[<>"\']', "", v.strip())
 
     @validator("context")
     def validate_context(cls, v):
@@ -70,7 +69,7 @@ class AgentRequest(BaseValidatedRequest):
 
         # Ensure no dangerous keys
         dangerous_keys = ["__", "eval", "exec", "import", "open", "file"]
-        for key in v.keys():
+        for key in v:
             if any(danger in str(key).lower() for danger in dangerous_keys):
                 raise ValueError(f"Invalid context key: {key}")
 
@@ -116,8 +115,7 @@ class TeamRequest(BaseValidatedRequest):
             raise ValueError("Task cannot be empty")
 
         # Basic sanitization
-        sanitized = re.sub(r'[<>"\']', "", v.strip())
-        return sanitized
+        return re.sub(r'[<>"\']', "", v.strip())
 
 
 class WorkflowRequest(BaseValidatedRequest):

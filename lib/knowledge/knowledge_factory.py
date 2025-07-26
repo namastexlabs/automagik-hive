@@ -31,9 +31,9 @@ def _check_knowledge_base_exists(
             # Check if table exists in agno schema
             result = conn.execute(
                 text("""
-                SELECT COUNT(*) as count 
-                FROM information_schema.tables 
-                WHERE table_name = :table_name 
+                SELECT COUNT(*) as count
+                FROM information_schema.tables
+                WHERE table_name = :table_name
                 AND table_schema = 'agno'
             """),
                 {"table_name": table_name},

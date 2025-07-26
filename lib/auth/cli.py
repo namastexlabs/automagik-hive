@@ -15,7 +15,7 @@ from lib.auth.init_service import AuthInitService
 from lib.logging import logger
 
 
-def show_current_key():
+def show_current_key() -> None:
     """Display the current API key."""
     init_service = AuthInitService()
     key = init_service.get_current_key()
@@ -31,7 +31,7 @@ def show_current_key():
         print("No API key found. Run the server once to generate a key automatically.")
 
 
-def regenerate_key():
+def regenerate_key() -> None:
     """Generate a new API key."""
     init_service = AuthInitService()
     new_key = init_service.regenerate_key()
@@ -39,7 +39,7 @@ def regenerate_key():
     print(f"✅ New API key generated: {new_key}")
 
 
-def show_auth_status():
+def show_auth_status() -> None:
     """Show authentication configuration status."""
     auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
 

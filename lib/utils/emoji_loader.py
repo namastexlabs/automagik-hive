@@ -8,6 +8,7 @@ The logging system automatically gets emojis by checking file paths and keywords
 import re
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -15,18 +16,20 @@ import yaml
 class EmojiLoader:
     """Simple YAML emoji loader with automatic path/keyword matching."""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self, config_path: str | None = None) -> None:
         if config_path is None:
             current_dir = Path(__file__).parent
-            config_path = current_dir.parent / "config" / "emoji_mappings.yaml"
+            config_path_resolved: Path = current_dir.parent / "config" / "emoji_mappings.yaml"
+        else:
+            config_path_resolved = Path(config_path)
 
-        self.config_path = Path(config_path)
+        self.config_path = config_path_resolved
         self._config = self._load_yaml()
         self._emoji_regex = re.compile(
             r"[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF\U0001F1E0-\U0001F1FF\U00002600-\U000026FF\U00002700-\U000027BF]"
         )
 
-    def _load_yaml(self) -> dict:
+    def _load_yaml(self) -> dict[str, Any]:
         """Load YAML config - fail fast if not available."""
         try:
             with open(self.config_path, encoding="utf-8") as f:
@@ -52,7 +55,7 @@ class EmojiLoader:
         if not self._config or not self._config.get("resource_types"):
             return ""
 
-        resource_types = self._config["resource_types"]
+        resource_types: dict[str, Any] = self._config["resource_types"]
 
         # Skip if message already has emoji
         if message and self.has_emoji(message):
@@ -60,7 +63,7 @@ class EmojiLoader:
 
         # 1. Directory matching - longest first
         if file_path:
-            directories = resource_types.get("directories", {})
+            directories: dict[str, str] = resource_types.get("directories", {})
             normalized_path = file_path.replace("\\", "/")
 
             for directory in sorted(directories.keys(), key=len, reverse=True):
@@ -72,7 +75,7 @@ class EmojiLoader:
             message_lower = message.lower()
 
             # Collect all keywords from activities and services
-            all_keywords = {}
+            all_keywords: dict[str, str] = {}
             all_keywords.update(resource_types.get("activities", {}))
             all_keywords.update(resource_types.get("services", {}))
 
@@ -88,7 +91,7 @@ class EmojiLoader:
         # 3. File extension
         if file_path:
             extension = Path(file_path).suffix.lower()
-            file_types = resource_types.get("file_types", {})
+            file_types: dict[str, str] = resource_types.get("file_types", {})
             if extension in file_types:
                 return file_types[extension]
 

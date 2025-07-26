@@ -11,18 +11,18 @@ This template demonstrates all key features of Agno Workflows 2.0:
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 
 from agno.agent import Agent
 from agno.workflow.v2 import Step, Workflow
 from agno.workflow.v2.types import StepInput, StepOutput
 
+from lib.config.models import get_default_model_id, resolve_model
 from lib.logging import logger
 
 
 def create_template_model():
     """Create model for template workflow using dynamic resolution"""
-    from lib.config.models import get_default_model_id, resolve_model
 
     return resolve_model(
         model_id=get_default_model_id(),  # Use environment-based default
@@ -97,7 +97,7 @@ def execute_validation_step(step_input: StepInput) -> StepOutput:
     validation_data = {
         "input_valid": True,
         "input_length": len(input_message),
-        "validation_timestamp": datetime.now().isoformat(),
+        "validation_timestamp": datetime.now(UTC).isoformat(),
         "validation_notes": str(response.content),
         "original_input": input_message,
     }
@@ -127,7 +127,7 @@ def execute_processing_step(step_input: StepInput) -> StepOutput:
     Validation Results: {validation_data["validation_notes"]}
     Input Length: {validation_data["input_length"]} characters
     Original Input: {original_input}
-    
+
     Please process this input according to template workflow requirements.
     """
 
@@ -139,7 +139,7 @@ def execute_processing_step(step_input: StepInput) -> StepOutput:
     # Create processing results
     processing_data = {
         "processing_result": str(response.content),
-        "processing_timestamp": datetime.now().isoformat(),
+        "processing_timestamp": datetime.now(UTC).isoformat(),
         "input_metadata": validation_data,
         "workflow_step": "processing",
         "success": True,
@@ -165,10 +165,10 @@ def execute_completion_step(step_input: StepInput) -> StepOutput:
 
     completion_context = f"""
     Workflow Execution Summary:
-    
+
     Validation Results: {processing_data["input_metadata"]["validation_notes"]}
     Processing Results: {processing_data["processing_result"]}
-    
+
     Please provide a comprehensive workflow completion summary.
     """
 
@@ -180,7 +180,7 @@ def execute_completion_step(step_input: StepInput) -> StepOutput:
     # Create final results
     completion_data = {
         "workflow_summary": str(response.content),
-        "completion_timestamp": datetime.now().isoformat(),
+        "completion_timestamp": datetime.now(UTC).isoformat(),
         "total_steps_executed": 3,
         "workflow_status": "completed",
         "validation_metadata": processing_data["input_metadata"],
@@ -248,7 +248,7 @@ if __name__ == "__main__":
         - Input validation
         - Main processing logic
         - Workflow completion and summary
-        
+
         The workflow should process this input through all three steps
         and provide a comprehensive summary of the execution.
         """

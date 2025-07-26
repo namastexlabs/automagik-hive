@@ -13,7 +13,7 @@ from .init_service import AuthInitService
 class AuthService:
     """Core authentication service."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Initialize API key on startup
         self.init_service = AuthInitService()
         self.api_key = self.init_service.ensure_api_key()

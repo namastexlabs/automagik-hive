@@ -11,7 +11,7 @@ from fastapi.security import APIKeyHeader
 from .service import AuthService
 
 # Global auth service instance
-auth_service = AuthService()
+auth_service: AuthService = AuthService()
 
 # API Key security scheme for OpenAPI docs
 api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)

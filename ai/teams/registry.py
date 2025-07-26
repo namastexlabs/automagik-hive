@@ -91,7 +91,8 @@ def _load_team_config(config_file: Path) -> dict[str, Any] | None:
     """
     try:
         with open(config_file, encoding="utf-8") as f:
-            return yaml.safe_load(f)
+            config_data = yaml.safe_load(f)
+            return config_data if isinstance(config_data, dict) else None
     except Exception as e:
         logger.warning(
             "Failed to load team config", config_file=str(config_file), error=str(e)
@@ -102,7 +103,7 @@ def _load_team_config(config_file: Path) -> dict[str, Any] | None:
 def _discover_teams() -> dict[str, Callable[..., Team]]:
     """Dynamically discover teams from filesystem"""
     teams_dir = Path("ai/teams")
-    registry = {}
+    registry: dict[str, Callable[..., Team]] = {}
 
     if not teams_dir.exists():
         return registry
@@ -125,6 +126,11 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
                 spec = importlib.util.spec_from_file_location(
                     f"ai.teams.{team_name}.team", team_file
                 )
+                if spec is None or spec.loader is None:
+                    logger.warning(
+                        "Failed to create module spec", team_name=team_name
+                    )
+                    continue
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
 
@@ -184,7 +190,7 @@ def get_team_registry() -> dict[str, Callable[..., Team]]:
     return _TEAM_REGISTRY
 
 
-async def get_team(team_id: str, version: int | None = None, **kwargs) -> Team:
+async def get_team(team_id: str, version: int | None = None, **kwargs: Any) -> Team:
     """
     Retrieve and instantiate a team by its ID.
 
@@ -217,7 +223,14 @@ async def get_team(team_id: str, version: int | None = None, **kwargs) -> Team:
     if version is not None:
         kwargs["version"] = version
 
-    return await team_factory(**kwargs)
+    # Call the factory function (may or may not be async)
+    result = team_factory(**kwargs)
+    
+    # If the result is awaitable, await it; otherwise return it directly
+    if hasattr(result, '__await__'):
+        return await result
+    else:
+        return result
 
 
 def list_available_teams() -> list[str]:

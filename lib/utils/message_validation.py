@@ -70,12 +70,12 @@ def validate_request_data(
     Raises:
         HTTPException: If message validation fails
     """
-    message = request_data.get("message", "")
+    message: str = request_data.get("message", "")
     validate_agent_message(message, context)
     return message
 
 
-def safe_agent_run(agent, message: str, context: str = "agent execution"):
+def safe_agent_run(agent: Any, message: str, context: str = "agent execution") -> Any:
     """
     Safely run an agent with message validation.
 

@@ -25,14 +25,14 @@ console = Console()
 class StartupDisplay:
     """Manages concise startup output display."""
 
-    def __init__(self):
-        self.agents = {}
-        self.teams = {}
-        self.workflows = {}
-        self.errors = []
-        self.version_sync_logs = []
-        self.sync_results = None
-        self.migration_status = None
+    def __init__(self) -> None:
+        self.agents: dict[str, dict[str, str]] = {}
+        self.teams: dict[str, dict[str, str]] = {}
+        self.workflows: dict[str, dict[str, str]] = {}
+        self.errors: list[str] = []
+        self.version_sync_logs: list[str] = []
+        self.sync_results: dict[str, Any] | None = None
+        self.migration_status: str | None = None
 
     def add_agent(
         self,
@@ -78,19 +78,19 @@ class StartupDisplay:
             "status": status,
         }
 
-    def add_error(self, component: str, message: str):
+    def add_error(self, component: str, message: str) -> None:
         """Add error message."""
         self.errors.append({"component": component, "message": message})
 
-    def add_version_sync_log(self, message: str):
+    def add_version_sync_log(self, message: str) -> None:
         """Add version sync log message."""
         self.version_sync_logs.append(message)
 
-    def set_sync_results(self, sync_results: dict):
+    def set_sync_results(self, sync_results: dict[str, Any]) -> None:
         """Store sync results for version information."""
         self.sync_results = sync_results
 
-    def add_migration_status(self, migration_result: dict[str, Any]):
+    def add_migration_status(self, migration_result: dict[str, Any]) -> None:
         """Add database migration status to display."""
         if migration_result.get("success"):
             action = migration_result.get("action", "completed")
@@ -132,7 +132,7 @@ class StartupDisplay:
 
         return f"{emoji} {component_type.title()}"
 
-    def display_summary(self):
+    def display_summary(self) -> None:
         """Display concise startup summary table."""
 
         # Display version sync logs first (if any)
@@ -338,7 +338,7 @@ def create_startup_display() -> StartupDisplay:
 
 def display_simple_status(
     team_name: str, team_id: str, agent_count: int, workflow_count: int = 0
-):
+) -> None:
     """Quick display for simple startup scenarios."""
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("", style="cyan")

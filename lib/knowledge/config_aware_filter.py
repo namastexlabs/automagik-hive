@@ -142,7 +142,8 @@ class ConfigAwareFilter:
             return documents
 
         filtered_docs = []
-        target_keywords = self.business_unit_keywords[target_unit]["keywords"]
+        # Note: target_keywords would be used for filtering if needed
+        # target_keywords = self.business_unit_keywords[target_unit]["keywords"]
 
         for doc in documents:
             # Check existing metadata first

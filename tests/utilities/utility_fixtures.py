@@ -8,6 +8,7 @@ component tests to ensure consistency and reduce duplication.
 import os
 import shutil
 import tempfile
+import time
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -206,8 +207,6 @@ class PerformanceTestHelper:
     @staticmethod
     def measure_execution_time(func, *args, **kwargs):
         """Measure execution time of a function."""
-        import time
-
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter()

@@ -13,7 +13,7 @@ load_dotenv()
 class Settings:
     """General application settings."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Project paths
         self.project_root = Path(__file__).parent.parent.parent
         self.data_dir = self.project_root / "data"
@@ -212,7 +212,7 @@ class Settings:
 
 
 # Global settings instance
-settings = Settings()
+settings: Settings = Settings()
 
 
 # Common settings utilities

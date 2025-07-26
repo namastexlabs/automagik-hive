@@ -1,12 +1,19 @@
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from lib.utils.version_factory import create_team
+
+if TYPE_CHECKING:
+    from agno.team import Team
 
 
 async def get_code_development_team(
     session_id: str | None = None,
     user_id: str | None = None,
     debug_mode: bool = False,
-) -> "Team":
+) -> Team:
     """
     Create code development team using factory pattern.
 

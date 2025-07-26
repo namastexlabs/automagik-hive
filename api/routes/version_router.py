@@ -5,14 +5,13 @@ Modern versioning endpoints using Agno storage abstractions.
 No backward compatibility - clean implementation only.
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import Optional, Dict, Any, List
-import json
-from pydantic import BaseModel
 import os
+from typing import Any
 
-from lib.versioning import AgnoVersionService, VersionInfo, VersionHistory
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from pydantic import BaseModel
 
+from lib.versioning import AgnoVersionService
 
 router = APIRouter(prefix="/api/v1/version", tags=["versioning"])
 
@@ -23,12 +22,12 @@ class VersionedExecutionRequest(BaseModel):
     message: str
     component_id: str
     version: int
-    session_id: Optional[str] = None
+    session_id: str | None = None
     debug_mode: bool = False
-    user_id: Optional[str] = None
-    user_name: Optional[str] = None
-    phone_number: Optional[str] = None
-    cpf: Optional[str] = None
+    user_id: str | None = None
+    user_name: str | None = None
+    phone_number: str | None = None
+    cpf: str | None = None
 
 
 class VersionedExecutionResponse(BaseModel):
@@ -38,8 +37,8 @@ class VersionedExecutionResponse(BaseModel):
     component_id: str
     component_type: str
     version: int
-    session_id: Optional[str]
-    metadata: Dict[str, Any]
+    session_id: str | None
+    metadata: dict[str, Any]
 
 
 class VersionCreateRequest(BaseModel):
@@ -47,16 +46,16 @@ class VersionCreateRequest(BaseModel):
 
     component_type: str
     version: int
-    config: Dict[str, Any]
-    description: Optional[str] = None
+    config: dict[str, Any]
+    description: str | None = None
     is_active: bool = False
 
 
 class VersionUpdateRequest(BaseModel):
     """Request model for updating a version."""
 
-    config: Dict[str, Any]
-    reason: Optional[str] = None
+    config: dict[str, Any]
+    reason: str | None = None
 
 
 def get_version_service() -> AgnoVersionService:
@@ -120,7 +119,7 @@ async def execute_versioned_component(
     )
 
     # Create response
-    result = VersionedExecutionResponse(
+    return VersionedExecutionResponse(
         response=response.content if hasattr(response, "content") else str(response),
         component_id=request.component_id,
         component_type=component_type,
@@ -129,7 +128,6 @@ async def execute_versioned_component(
         metadata=getattr(component, "metadata", {}),
     )
 
-    return result
 
 
 @router.post("/components/{component_id}/versions")
@@ -140,7 +138,7 @@ async def create_component_version(component_id: str, request: VersionCreateRequ
 
     try:
         # Create the version
-        version_id = await service.create_version(
+        await service.create_version(
             component_id=component_id,
             component_type=request.component_type,
             version=request.version,
@@ -221,7 +219,7 @@ async def update_component_version(
 ):
     """Update configuration for a specific version."""
 
-    service = get_version_service()
+    get_version_service()
 
     try:
         # Update config method doesn't exist in AgnoVersionService yet
@@ -236,7 +234,7 @@ async def update_component_version(
 
 @router.post("/components/{component_id}/versions/{version}/activate")
 async def activate_component_version(
-    component_id: str, version: int, reason: Optional[str] = None
+    component_id: str, version: int, reason: str | None = None
 ):
     """Activate a specific version."""
 
@@ -262,7 +260,7 @@ async def activate_component_version(
 async def delete_component_version(component_id: str, version: int):
     """Delete a specific version."""
 
-    service = get_version_service()
+    get_version_service()
 
     try:
         # Delete method doesn't exist in AgnoVersionService yet
@@ -275,11 +273,10 @@ async def delete_component_version(component_id: str, version: int):
                 "version": version,
                 "message": f"Version {version} deleted successfully",
             }
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Version {version} not found for component {component_id}",
-            )
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version {version} not found for component {component_id}",
+        )
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

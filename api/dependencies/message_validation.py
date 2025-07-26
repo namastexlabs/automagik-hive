@@ -5,8 +5,10 @@ Provides dependency injection for validating agent messages
 before they reach the Agno Playground endpoints.
 """
 
+import json
+
 from fastapi import Form, HTTPException, Request, status
-from typing import Optional
+
 from lib.logging import logger
 
 
@@ -59,8 +61,8 @@ async def validate_message_dependency(message: str = Form(...)) -> str:
 
 
 async def validate_optional_message_dependency(
-    message: Optional[str] = Form(None),
-) -> Optional[str]:
+    message: str | None = Form(None),
+) -> str | None:
     """
     FastAPI dependency to validate optional message content from form data.
 
@@ -106,8 +108,6 @@ async def validate_runs_request(request: Request) -> None:
             # Handle JSON data
             body = await request.body()
             if body:
-                import json
-
                 data = json.loads(body.decode())
                 message = data.get("message", "")
             else:
@@ -151,7 +151,6 @@ async def validate_runs_request(request: Request) -> None:
     except HTTPException:
         # Re-raise HTTP exceptions
         raise
-    except Exception as e:
+    except (json.JSONDecodeError, ValueError) as e:
         logger.error(f"🌐 Error during request validation: {e}")
         # Don't fail the request for validation errors, let the endpoint handle it
-        pass

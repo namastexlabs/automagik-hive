@@ -198,6 +198,8 @@ class AgnoVersionService:
 
     def sync_component_type(self, component_type: str) -> list[dict[str, Any]]:
         """Sync components of a specific type."""
+        # TODO: Implement component type synchronization
+        _ = component_type  # Explicitly mark as unused for now
         return []
 
     def sync_on_startup(self) -> dict[str, Any]:
@@ -248,7 +250,7 @@ class AgnoVersionService:
                 return existing, "version_exists"
 
             # Create new version
-            version_id = await self.create_version(
+            await self.create_version(
                 component_id=component_id,
                 component_type=component_type,
                 version=version,
@@ -266,11 +268,3 @@ class AgnoVersionService:
 
         except Exception as e:
             return None, f"error: {e!s}"
-
-    async def get_all_components(self) -> list[str]:
-        """Get all distinct component IDs."""
-        return await self.component_service.get_all_components()
-
-    async def get_components_by_type(self, component_type: str) -> list[str]:
-        """Get all component IDs of a specific type."""
-        return await self.component_service.get_components_by_type(component_type)

@@ -3,6 +3,7 @@
 import importlib.util
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from agno.workflow import Workflow
 
@@ -12,7 +13,7 @@ from lib.logging import logger
 def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
     """Dynamically discover workflows from filesystem"""
     workflows_dir = Path("ai/workflows")
-    registry = {}
+    registry: dict[str, Callable[..., Workflow]] = {}
 
     if not workflows_dir.exists():
         return registry
@@ -32,6 +33,11 @@ def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
                 spec = importlib.util.spec_from_file_location(
                     f"ai.workflows.{workflow_name}.workflow", workflow_file
                 )
+                if spec is None or spec.loader is None:
+                    logger.warning(
+                        "Failed to create module spec", workflow_name=workflow_name
+                    )
+                    continue
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
 
@@ -66,7 +72,7 @@ def get_workflow_registry() -> dict[str, Callable[..., Workflow]]:
     return _WORKFLOW_REGISTRY
 
 
-def get_workflow(workflow_id: str, version: int | None = None, **kwargs) -> Workflow:
+def get_workflow(workflow_id: str, version: int | None = None, **kwargs: Any) -> Workflow:
     """
     Retrieve and instantiate a workflow by its ID.
 
