@@ -21,7 +21,7 @@ class TestAgentDiscovery:
     """Test agent discovery functionality."""
 
     @patch("ai.agents.registry.Path")
-    def test_discover_agents_no_directory(self, mock_path):
+    def test_discover_agents_no_directory(self, mock_path) -> None:
         """Test discovery when agents directory doesn't exist."""
         mock_agents_dir = Mock()
         mock_agents_dir.exists.return_value = False
@@ -32,7 +32,7 @@ class TestAgentDiscovery:
 
     @patch("ai.agents.registry.Path")
     @patch("builtins.open", new_callable=mock_open)
-    def test_discover_agents_with_valid_configs(self, mock_file, mock_path):
+    def test_discover_agents_with_valid_configs(self, mock_file, mock_path) -> None:
         """Test discovery with valid agent configurations."""
         # Mock directory structure
         mock_agents_dir = MagicMock()
@@ -82,7 +82,7 @@ agent:
         assert result == ["agent-1", "agent-2"]  # Should be sorted
 
     @patch("ai.agents.registry.Path")
-    def test_discover_agents_skips_files(self, mock_path):
+    def test_discover_agents_skips_files(self, mock_path) -> None:
         """Test that discovery skips files and only processes directories."""
         mock_agents_dir = MagicMock()
         mock_agents_dir.exists.return_value = True
@@ -98,7 +98,7 @@ agent:
 
     @patch("ai.agents.registry.Path")
     @patch("builtins.open", new_callable=mock_open)
-    def test_discover_agents_handles_invalid_yaml(self, mock_file, mock_path):
+    def test_discover_agents_handles_invalid_yaml(self, mock_file, mock_path) -> None:
         """Test discovery handles invalid YAML gracefully."""
         mock_agents_dir = MagicMock()
         mock_agents_dir.exists.return_value = True
@@ -125,7 +125,7 @@ agent:
 class TestAgentRegistry:
     """Test AgentRegistry class functionality."""
 
-    def test_get_mcp_catalog_singleton(self):
+    def test_get_mcp_catalog_singleton(self) -> None:
         """Test that MCP catalog is a singleton."""
         # Reset the catalog to test initialization
         AgentRegistry._mcp_catalog = None
@@ -141,7 +141,7 @@ class TestAgentRegistry:
             mock_catalog_class.assert_called_once()
 
     @patch("ai.agents.registry._discover_agents")
-    def test_get_available_agents(self, mock_discover):
+    def test_get_available_agents(self, mock_discover) -> None:
         """Test getting available agents."""
         mock_discover.return_value = ["agent-1", "agent-2"]
 
@@ -152,7 +152,7 @@ class TestAgentRegistry:
     @patch("ai.agents.registry.create_agent")
     @patch("ai.agents.registry._discover_agents")
     @pytest.mark.asyncio
-    async def test_get_agent_success(self, mock_discover, mock_create):
+    async def test_get_agent_success(self, mock_discover, mock_create) -> None:
         """Test successful agent retrieval."""
         mock_discover.return_value = ["test-agent"]
         mock_agent = Mock()
@@ -178,7 +178,7 @@ class TestAgentRegistry:
 
     @patch("ai.agents.registry._discover_agents")
     @pytest.mark.asyncio
-    async def test_get_agent_not_found(self, mock_discover):
+    async def test_get_agent_not_found(self, mock_discover) -> None:
         """Test agent not found error."""
         mock_discover.return_value = ["agent-1", "agent-2"]
 
@@ -188,7 +188,7 @@ class TestAgentRegistry:
     @patch("ai.agents.registry.create_agent")
     @patch("ai.agents.registry._discover_agents")
     @pytest.mark.asyncio
-    async def test_get_all_agents_success(self, mock_discover, mock_create):
+    async def test_get_all_agents_success(self, mock_discover, mock_create) -> None:
         """Test getting all agents successfully."""
         mock_discover.return_value = ["agent-1", "agent-2"]
         mock_agent1 = Mock()
@@ -206,7 +206,7 @@ class TestAgentRegistry:
     @patch("ai.agents.registry.create_agent")
     @patch("ai.agents.registry._discover_agents")
     @pytest.mark.asyncio
-    async def test_get_all_agents_with_failures(self, mock_discover, mock_create):
+    async def test_get_all_agents_with_failures(self, mock_discover, mock_create) -> None:
         """Test getting all agents with some failures."""
         mock_discover.return_value = ["agent-1", "agent-2", "agent-3"]
         mock_agent1 = Mock()
@@ -222,14 +222,14 @@ class TestAgentRegistry:
         assert mock_create.call_count == 3
 
     @patch("ai.agents.registry._discover_agents")
-    def test_list_available_agents(self, mock_discover):
+    def test_list_available_agents(self, mock_discover) -> None:
         """Test listing available agents."""
         mock_discover.return_value = ["agent-1", "agent-2"]
 
         result = AgentRegistry.list_available_agents()
         assert result == ["agent-1", "agent-2"]
 
-    def test_list_mcp_servers(self):
+    def test_list_mcp_servers(self) -> None:
         """Test listing MCP servers."""
         mock_catalog = Mock()
         mock_catalog.list_servers.return_value = ["server-1", "server-2"]
@@ -238,7 +238,7 @@ class TestAgentRegistry:
             result = AgentRegistry.list_mcp_servers()
             assert result == ["server-1", "server-2"]
 
-    def test_get_mcp_server_info(self):
+    def test_get_mcp_server_info(self) -> None:
         """Test getting MCP server info."""
         mock_catalog = Mock()
         server_info = {"name": "test-server", "status": "active"}
@@ -249,7 +249,7 @@ class TestAgentRegistry:
             assert result == server_info
             mock_catalog.get_server_info.assert_called_once_with("test-server")
 
-    def test_reload_mcp_catalog(self):
+    def test_reload_mcp_catalog(self) -> None:
         """Test reloading MCP catalog."""
         # Set initial catalog
         AgentRegistry._mcp_catalog = Mock()
@@ -265,7 +265,7 @@ class TestFactoryFunctions:
 
     @patch("ai.agents.registry.AgentRegistry.get_agent")
     @pytest.mark.asyncio
-    async def test_get_agent_factory(self, mock_registry_get):
+    async def test_get_agent_factory(self, mock_registry_get) -> None:
         """Test get_agent factory function."""
         mock_agent = Mock()
         mock_registry_get.return_value = mock_agent
@@ -293,7 +293,7 @@ class TestFactoryFunctions:
 
     @patch("ai.agents.registry.get_agent")
     @pytest.mark.asyncio
-    async def test_get_team_agents(self, mock_get_agent):
+    async def test_get_team_agents(self, mock_get_agent) -> None:
         """Test getting multiple agents for a team."""
         mock_agent1 = Mock()
         mock_agent2 = Mock()
@@ -315,7 +315,7 @@ class TestFactoryFunctions:
         assert calls[1][0][0] == "agent-2"  # First positional arg
 
     @patch("ai.agents.registry.AgentRegistry.list_mcp_servers")
-    def test_list_mcp_servers_function(self, mock_registry_list):
+    def test_list_mcp_servers_function(self, mock_registry_list) -> None:
         """Test list_mcp_servers function."""
         mock_registry_list.return_value = ["server-1", "server-2"]
 
@@ -324,7 +324,7 @@ class TestFactoryFunctions:
         mock_registry_list.assert_called_once()
 
     @patch("ai.agents.registry.AgentRegistry.get_mcp_server_info")
-    def test_get_mcp_server_info_function(self, mock_registry_get):
+    def test_get_mcp_server_info_function(self, mock_registry_get) -> None:
         """Test get_mcp_server_info function."""
         server_info = {"name": "test-server", "version": "1.0"}
         mock_registry_get.return_value = server_info
@@ -334,7 +334,7 @@ class TestFactoryFunctions:
         mock_registry_get.assert_called_once_with("test-server")
 
     @patch("ai.agents.registry.AgentRegistry.reload_mcp_catalog")
-    def test_reload_mcp_catalog_function(self, mock_registry_reload):
+    def test_reload_mcp_catalog_function(self, mock_registry_reload) -> None:
         """Test reload_mcp_catalog function."""
         reload_mcp_catalog()
         mock_registry_reload.assert_called_once()
