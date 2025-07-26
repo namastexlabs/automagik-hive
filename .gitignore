@@ -5,7 +5,7 @@
 .env.*.local
 
 # MCP Configuration (contains local settings and credentials)
-.mcp.json
+# .mcp.json
 
 # Python
 __pycache__/

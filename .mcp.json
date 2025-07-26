@@ -55,7 +55,7 @@
       ],
       "env": {
         "HIVE_API_BASE_URL": "http://localhost:18886",
-        "HIVE_API_KEY": "hive_jpWDdifLH7exYA9_G5qJrfOgoGigCQtxG0boig-qER8",
+        "HIVE_API_KEY": "hive_h8nNeADei98fLVwEACjnGMgsXj8SUxPDrsrYUDu6WLU",
         "HIVE_TIMEOUT": "300"
       }
     }
