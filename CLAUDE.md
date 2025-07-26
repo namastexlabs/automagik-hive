@@ -230,4 +230,9 @@ For detailed implementation guidance, see component-specific CLAUDE.md files:
 - `lib/knowledge/CLAUDE.md` - Knowledge base management
 - `tests/CLAUDE.md` - Testing patterns
 
+## Development Memory
+
+### Problem-Solving Strategies
+- **Collaborative Problem Solving**: Whenever facing the same problem for the first time, chat with gemini-2.5-pro using zen chat, introduce it into whatever you're trying to solve, like a code buddy, and reference @ codebase.md it has all of our code, and gemini has a 1M context window :)
+
 This framework provides a production-ready foundation for building sophisticated multi-agent AI systems with enterprise-grade deployment capabilities.
