@@ -18,7 +18,9 @@ class ApiSettings(BaseSettings):
 
     # Application environment derived from the `HIVE_ENVIRONMENT` environment variable.
     # Valid values include "development", "production"
-    environment: str = Field(default_factory=lambda: os.getenv("HIVE_ENVIRONMENT", "development"))
+    environment: str = Field(
+        default_factory=lambda: os.getenv("HIVE_ENVIRONMENT", "development")
+    )
 
     # Set to False to disable docs at /docs and /redoc
     docs_enabled: bool = True
@@ -42,8 +44,10 @@ class ApiSettings(BaseSettings):
     @field_validator("cors_origin_list", mode="before")
     def set_cors_origin_list(cls, cors_origin_list, info: FieldValidationInfo):
         """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
-        environment = info.data.get("environment", os.getenv("HIVE_ENVIRONMENT", "development"))
-        
+        environment = info.data.get(
+            "environment", os.getenv("HIVE_ENVIRONMENT", "development")
+        )
+
         if environment == "development":
             # Development: Allow all origins for convenience
             return ["*"]
@@ -55,13 +59,15 @@ class ApiSettings(BaseSettings):
                     "HIVE_CORS_ORIGINS must be set in production environment. "
                     "Add comma-separated domain list to environment variables."
                 )
-            
+
             # Parse and clean origins
-            origins = [origin.strip() for origin in origins_str.split(",") if origin.strip()]
-            
+            origins = [
+                origin.strip() for origin in origins_str.split(",") if origin.strip()
+            ]
+
             if not origins:
                 raise ValueError("HIVE_CORS_ORIGINS contains no valid origins")
-                
+
             return origins
 
 

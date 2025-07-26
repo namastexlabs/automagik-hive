@@ -10,18 +10,34 @@ Environment Variables:
 - HIVE_LOG_DIR: Optional log directory (default: no file logging)
 """
 
-from .config import setup_logging
 from loguru import logger
+
 from .batch_logger import (
-    batch_logger, log_agent_inheritance, log_model_resolved,
-    log_storage_created, log_agent_created, log_team_member_loaded,
-    log_csv_processing, set_runtime_mode, startup_logging
+    batch_logger,
+    log_agent_created,
+    log_agent_inheritance,
+    log_csv_processing,
+    log_model_resolved,
+    log_storage_created,
+    log_team_member_loaded,
+    set_runtime_mode,
+    startup_logging,
 )
-from .progress import startup_progress, component_tracker
+from .config import setup_logging
+from .progress import component_tracker, startup_progress
 
 __all__ = [
-    "setup_logging", "logger", "batch_logger",
-    "log_agent_inheritance", "log_model_resolved", "log_storage_created",
-    "log_agent_created", "log_team_member_loaded", "log_csv_processing",
-    "set_runtime_mode", "startup_logging", "startup_progress", "component_tracker"
+    "batch_logger",
+    "component_tracker",
+    "log_agent_created",
+    "log_agent_inheritance",
+    "log_csv_processing",
+    "log_model_resolved",
+    "log_storage_created",
+    "log_team_member_loaded",
+    "logger",
+    "set_runtime_mode",
+    "setup_logging",
+    "startup_logging",
+    "startup_progress",
 ]

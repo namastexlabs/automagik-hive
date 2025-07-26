@@ -11,15 +11,15 @@ from lib.utils.version_factory import create_agent
 async def get_template_example_agent(**kwargs):
     """
     Create template example agent with dynamic configuration.
-    
+
     This factory function demonstrates how agents can be created with
     context-aware templating that personalizes the agent based on:
-    
+
     - User context (name, permissions, subscription)
     - Session context (channel, metadata)
     - System context (environment, debug mode)
     - Tenant context (features, branding)
-    
+
     Args:
         **kwargs: Context parameters for template rendering including:
             - user_id: User identifier for context loading
@@ -34,10 +34,10 @@ async def get_template_example_agent(**kwargs):
             - debug_mode: Enable debug features
             - tenant_id: Tenant/organization identifier
             - custom_context: Additional template variables
-    
+
     Returns:
         Agent instance with rendered configuration based on provided context
-        
+
     Example Usage:
         # Basic usage
         agent = get_template_example_agent(
@@ -45,11 +45,11 @@ async def get_template_example_agent(**kwargs):
             user_id="user_123",
             subscription_type="pro"
         )
-        
+
         # Advanced usage with full context
         agent = get_template_example_agent(
             user_name="Maria Santos",
-            user_id="user_456", 
+            user_id="user_456",
             email="maria@example.com",
             phone_number="5511999887766",
             permissions=["read", "write", "admin"],

@@ -39,33 +39,28 @@ Usage:
     coordinator = initialize_dual_path_metrics(bridge, langwatch_enabled=True)
 """
 
-from .config import (
-    MetricsConfig,
-    load_metrics_config,
-    validate_environment_config,
-    get_configuration_summary
-)
-
+from .agno_metrics_bridge import AgnoMetricsBridge
 from .async_metrics_service import (
     AsyncMetricsService,
     get_metrics_service,
     initialize_metrics_service,
-    shutdown_metrics_service
+    shutdown_metrics_service,
 )
-
-from .agno_metrics_bridge import (
-    AgnoMetricsBridge
+from .config import (
+    MetricsConfig,
+    get_configuration_summary,
+    load_metrics_config,
+    validate_environment_config,
 )
-
 from .langwatch_integration import (
-    LangWatchManager,
     DualPathMetricsCoordinator,
-    initialize_langwatch,
+    LangWatchManager,
     get_langwatch_manager,
-    initialize_dual_path_metrics,
     get_metrics_coordinator,
+    initialize_dual_path_metrics,
+    initialize_langwatch,
+    setup_langwatch_global,
     shutdown_langwatch_integration,
-    setup_langwatch_global
 )
 
 # Public API
@@ -75,16 +70,13 @@ __all__ = [
     "load_metrics_config",
     "validate_environment_config",
     "get_configuration_summary",
-
     # Async Service with AGNO Native Metrics
     "AsyncMetricsService",
     "get_metrics_service",
     "initialize_metrics_service",
     "shutdown_metrics_service",
-
     # AGNO Native Metrics Bridge
     "AgnoMetricsBridge",
-
     # LangWatch Integration
     "LangWatchManager",
     "DualPathMetricsCoordinator",
@@ -93,7 +85,7 @@ __all__ = [
     "initialize_dual_path_metrics",
     "get_metrics_coordinator",
     "shutdown_langwatch_integration",
-    "setup_langwatch_global"
+    "setup_langwatch_global",
 ]
 
 # Version
@@ -103,19 +95,21 @@ __version__ = "1.0.0"
 _validation_error = validate_environment_config()
 if _validation_error:
     import warnings
+
     warnings.warn(f"Metrics configuration issue: {_validation_error}", RuntimeWarning)
 
 
 def _check_langwatch_availability() -> bool:
     """
     Check if LangWatch is available for integration.
-    
+
     Returns:
         True if LangWatch can be imported, False otherwise
     """
     try:
         import langwatch
         from openinference.instrumentation.agno import AgnoInstrumentor
+
         return True
     except ImportError:
         return False
@@ -153,7 +147,7 @@ def get_metrics_status() -> dict:
             "workflow_proxy": "lib.utils.proxy_workflows",
             "auto_injection": True,
             "agno_native_metrics": True,
-            "langwatch_integration": True
+            "langwatch_integration": True,
         },
         "advantages": [
             "AGNO native metrics (15+ token types vs 3 manual)",
@@ -161,6 +155,6 @@ def get_metrics_status() -> dict:
             "Audio and reasoning token support",
             "Cache metrics for performance optimization",
             "LangWatch OpenTelemetry integration",
-            "Future-proof automatic metric updates"
-        ]
+            "Future-proof automatic metric updates",
+        ],
     }
