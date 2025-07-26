@@ -10,7 +10,7 @@ from lib.mcp.exceptions import MCPConnectionError, MCPException
 class TestMCPException:
     """Test base MCP exception class."""
 
-    def test_basic_exception_creation(self):
+    def test_basic_exception_creation(self) -> None:
         """Test creating a basic MCP exception."""
         message = "Test MCP error"
         exception = MCPException(message)
@@ -18,14 +18,14 @@ class TestMCPException:
         assert str(exception) == message
         assert isinstance(exception, Exception)
 
-    def test_inheritance_chain(self):
+    def test_inheritance_chain(self) -> None:
         """Test that MCPException inherits from Exception."""
         exception = MCPException("test")
 
         assert isinstance(exception, Exception)
         assert isinstance(exception, MCPException)
 
-    def test_exception_can_be_raised(self):
+    def test_exception_can_be_raised(self) -> None:
         """Test that MCPException can be raised and caught."""
         message = "Test exception message"
 
@@ -34,12 +34,12 @@ class TestMCPException:
 
         assert str(exc_info.value) == message
 
-    def test_exception_with_empty_message(self):
+    def test_exception_with_empty_message(self) -> None:
         """Test MCPException with empty message."""
         exception = MCPException("")
         assert str(exception) == ""
 
-    def test_exception_with_none_message(self):
+    def test_exception_with_none_message(self) -> None:
         """Test MCPException with None message."""
         exception = MCPException(None)
         assert str(exception) == "None"
@@ -48,7 +48,7 @@ class TestMCPException:
 class TestMCPConnectionError:
     """Test MCP connection error exception class."""
 
-    def test_basic_connection_error_creation(self):
+    def test_basic_connection_error_creation(self) -> None:
         """Test creating a basic MCP connection error."""
         message = "Connection failed"
         exception = MCPConnectionError(message)
@@ -56,9 +56,10 @@ class TestMCPConnectionError:
         assert str(exception) == message
         assert isinstance(exception, MCPException)
         assert isinstance(exception, Exception)
+        assert isinstance(exception, MCPConnectionError)
         assert exception.server_name is None
 
-    def test_connection_error_with_server_name(self):
+    def test_connection_error_with_server_name(self) -> None:
         """Test creating MCP connection error with server name."""
         message = "Connection to server failed"
         server_name = "test-server"
@@ -67,7 +68,7 @@ class TestMCPConnectionError:
         assert str(exception) == message
         assert exception.server_name == server_name
 
-    def test_connection_error_positional_server_name(self):
+    def test_connection_error_positional_server_name(self) -> None:
         """Test creating MCP connection error with positional server name."""
         message = "Connection failed"
         server_name = "my-server"
@@ -76,7 +77,7 @@ class TestMCPConnectionError:
         assert str(exception) == message
         assert exception.server_name == server_name
 
-    def test_inheritance_chain(self):
+    def test_inheritance_chain(self) -> None:
         """Test that MCPConnectionError inherits from MCPException."""
         exception = MCPConnectionError("test")
 
@@ -84,7 +85,7 @@ class TestMCPConnectionError:
         assert isinstance(exception, MCPException)
         assert isinstance(exception, MCPConnectionError)
 
-    def test_connection_error_can_be_raised(self):
+    def test_connection_error_can_be_raised(self) -> None:
         """Test that MCPConnectionError can be raised and caught."""
         message = "Connection timeout"
         server_name = "timeout-server"
@@ -95,7 +96,7 @@ class TestMCPConnectionError:
         assert str(exc_info.value) == message
         assert exc_info.value.server_name == server_name
 
-    def test_catch_as_base_exception(self):
+    def test_catch_as_base_exception(self) -> None:
         """Test that MCPConnectionError can be caught as MCPException."""
         message = "Network error"
         server_name = "network-server"
@@ -108,7 +109,7 @@ class TestMCPConnectionError:
         assert str(exc_info.value) == message
         assert exc_info.value.server_name == server_name
 
-    def test_server_name_attribute_access(self):
+    def test_server_name_attribute_access(self) -> None:
         """Test direct access to server_name attribute."""
         server_name = "attribute-test-server"
         exception = MCPConnectionError("test message", server_name=server_name)
@@ -122,17 +123,17 @@ class TestMCPConnectionError:
         exception.server_name = new_server_name
         assert exception.server_name == new_server_name
 
-    def test_empty_server_name(self):
+    def test_empty_server_name(self) -> None:
         """Test MCPConnectionError with empty server name."""
         exception = MCPConnectionError("test", server_name="")
         assert exception.server_name == ""
 
-    def test_none_server_name_explicit(self):
+    def test_none_server_name_explicit(self) -> None:
         """Test MCPConnectionError with explicit None server name."""
         exception = MCPConnectionError("test", server_name=None)
         assert exception.server_name is None
 
-    def test_exception_str_representation(self):
+    def test_exception_str_representation(self) -> None:
         """Test string representation of exceptions."""
         # Test basic exception
         basic_exception = MCPException("Basic error")
@@ -147,7 +148,7 @@ class TestMCPConnectionError:
         assert str(conn_with_server) == "Server connection failed"
         # Note: server_name is stored as attribute but doesn't change str representation
 
-    def test_exception_repr_representation(self):
+    def test_exception_repr_representation(self) -> None:
         """Test repr representation of exceptions."""
         exception = MCPConnectionError("Test error", "test-server")
         repr_str = repr(exception)
