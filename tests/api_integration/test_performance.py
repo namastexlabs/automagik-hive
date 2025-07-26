@@ -5,13 +5,12 @@ Tests system performance under various load conditions
 and validates response times and throughput.
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from fastapi import status
-import time
-import threading
 import concurrent.futures
 import statistics
+import threading
+import time
+
+from fastapi import status
 
 
 class TestResponseTimePerformance:
@@ -20,23 +19,23 @@ class TestResponseTimePerformance:
     def test_health_endpoint_response_time(self, test_client):
         """Test health endpoint response time under normal conditions."""
         response_times = []
-        
+
         # Make 20 requests to get average response time
         for _ in range(20):
             start_time = time.time()
             response = test_client.get("/health")
             end_time = time.time()
-            
+
             assert response.status_code == status.HTTP_200_OK
             response_times.append(end_time - start_time)
-        
+
         # Response times should be consistently fast
         avg_time = statistics.mean(response_times)
         max_time = max(response_times)
-        
+
         assert avg_time < 0.1, f"Average response time too slow: {avg_time:.3f}s"
         assert max_time < 0.5, f"Maximum response time too slow: {max_time:.3f}s"
-        
+
         # 95th percentile should be under 200ms
         p95_time = sorted(response_times)[int(len(response_times) * 0.95)]
         assert p95_time < 0.2, f"95th percentile too slow: {p95_time:.3f}s"
@@ -44,22 +43,25 @@ class TestResponseTimePerformance:
     def test_component_listing_response_time(self, test_client, api_headers):
         """Test component listing endpoint response time."""
         response_times = []
-        
+
         # Make 10 requests to get average response time
         for _ in range(10):
             start_time = time.time()
-            response = test_client.get("/api/v1/version/components", headers=api_headers)
+            response = test_client.get(
+                "/api/v1/version/components",
+                headers=api_headers,
+            )
             end_time = time.time()
-            
+
             # Accept various status codes based on auth configuration
             assert response.status_code in [
                 status.HTTP_200_OK,
                 status.HTTP_401_UNAUTHORIZED,
-                status.HTTP_403_FORBIDDEN
+                status.HTTP_403_FORBIDDEN,
             ]
-            
+
             response_times.append(end_time - start_time)
-        
+
         # Response times should be reasonable for component listing
         avg_time = statistics.mean(response_times)
         assert avg_time < 1.0, f"Average response time too slow: {avg_time:.3f}s"
@@ -67,22 +69,22 @@ class TestResponseTimePerformance:
     def test_mcp_status_response_time(self, test_client, api_headers):
         """Test MCP status endpoint response time."""
         response_times = []
-        
+
         # Make 10 requests to get average response time
         for _ in range(10):
             start_time = time.time()
             response = test_client.get("/api/v1/mcp/status", headers=api_headers)
             end_time = time.time()
-            
+
             assert response.status_code in [
                 status.HTTP_200_OK,
                 status.HTTP_500_INTERNAL_SERVER_ERROR,  # If MCP not available
                 status.HTTP_401_UNAUTHORIZED,
-                status.HTTP_403_FORBIDDEN
+                status.HTTP_403_FORBIDDEN,
             ]
-            
+
             response_times.append(end_time - start_time)
-        
+
         # MCP status should respond quickly
         avg_time = statistics.mean(response_times)
         assert avg_time < 2.0, f"Average response time too slow: {avg_time:.3f}s"
@@ -95,36 +97,38 @@ class TestConcurrencyPerformance:
         """Test performance of health checks under concurrent load."""
         num_requests = 100
         max_workers = 20
-        
+
         def make_request():
             start_time = time.time()
             response = test_client.get("/health")
             end_time = time.time()
             return response.status_code, end_time - start_time
-        
+
         # Measure total time for concurrent requests
         total_start = time.time()
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(make_request) for _ in range(num_requests)]
             results = [future.result() for future in futures]
-        
+
         total_end = time.time()
         total_time = total_end - total_start
-        
+
         # All requests should succeed
         for status_code, _ in results:
             assert status_code == status.HTTP_200_OK
-        
+
         # Performance metrics
         response_times = [duration for _, duration in results]
         avg_response_time = statistics.mean(response_times)
         throughput = num_requests / total_time  # requests per second
-        
+
         # Performance assertions
-        assert avg_response_time < 0.5, f"Average response time under load: {avg_response_time:.3f}s"
+        assert avg_response_time < 0.5, (
+            f"Average response time under load: {avg_response_time:.3f}s"
+        )
         assert throughput > 50, f"Throughput too low: {throughput:.1f} req/s"
-        
+
         # No single request should take too long
         max_response_time = max(response_times)
         assert max_response_time < 2.0, f"Slowest request: {max_response_time:.3f}s"
@@ -132,86 +136,99 @@ class TestConcurrencyPerformance:
     def test_mixed_endpoint_concurrency_performance(self, test_client, api_headers):
         """Test performance with mixed endpoint types under load."""
         num_requests_per_type = 20
-        
+
         def make_health_request():
             start_time = time.time()
             response = test_client.get("/health")
             end_time = time.time()
             return "health", response.status_code, end_time - start_time
-        
+
         def make_component_request():
             start_time = time.time()
-            response = test_client.get("/api/v1/version/components", headers=api_headers)
+            response = test_client.get(
+                "/api/v1/version/components",
+                headers=api_headers,
+            )
             end_time = time.time()
             return "components", response.status_code, end_time - start_time
-        
+
         def make_mcp_request():
             start_time = time.time()
             response = test_client.get("/api/v1/mcp/status", headers=api_headers)
             end_time = time.time()
             return "mcp", response.status_code, end_time - start_time
-        
+
         # Create mixed load
         with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
             futures = []
-            
+
             # Submit different types of requests
             for _ in range(num_requests_per_type):
                 futures.append(executor.submit(make_health_request))
                 futures.append(executor.submit(make_component_request))
                 futures.append(executor.submit(make_mcp_request))
-            
+
             results = [future.result() for future in futures]
-        
+
         # Analyze results by endpoint type
-        health_times = [duration for endpoint, _, duration in results if endpoint == "health"]
-        component_times = [duration for endpoint, _, duration in results if endpoint == "components"]
-        mcp_times = [duration for endpoint, _, duration in results if endpoint == "mcp"]
-        
+        health_times = [
+            duration for endpoint, _, duration in results if endpoint == "health"
+        ]
+        component_times = [
+            duration for endpoint, _, duration in results if endpoint == "components"
+        ]
+        [duration for endpoint, _, duration in results if endpoint == "mcp"]
+
         # Health endpoints should remain fast under mixed load
         if health_times:
             avg_health_time = statistics.mean(health_times)
-            assert avg_health_time < 0.3, f"Health endpoints slow under mixed load: {avg_health_time:.3f}s"
-        
+            assert avg_health_time < 0.3, (
+                f"Health endpoints slow under mixed load: {avg_health_time:.3f}s"
+            )
+
         # Component endpoints should handle concurrent load reasonably
         if component_times:
             avg_component_time = statistics.mean(component_times)
-            assert avg_component_time < 2.0, f"Component endpoints slow under load: {avg_component_time:.3f}s"
+            assert avg_component_time < 2.0, (
+                f"Component endpoints slow under load: {avg_component_time:.3f}s"
+            )
 
     def test_concurrent_request_isolation(self, test_client):
         """Test that concurrent requests don't interfere with each other."""
         num_requests = 50
         request_data = {}  # Track data per request
-        
+
         def make_request_with_id(request_id):
             # Make unique request
-            response = test_client.get(f"/health")
+            response = test_client.get("/health")
             data = response.json()
-            
+
             # Store timing data
             timestamp = time.time()
             request_data[request_id] = {
-                'status': response.status_code,
-                'timestamp': timestamp,
-                'service': data.get('service', ''),
-                'utc': data.get('utc', '')
+                "status": response.status_code,
+                "timestamp": timestamp,
+                "service": data.get("service", ""),
+                "utc": data.get("utc", ""),
             }
-            
+
             return request_id
-        
+
         # Execute concurrent requests
         with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-            futures = [executor.submit(make_request_with_id, i) for i in range(num_requests)]
+            futures = [
+                executor.submit(make_request_with_id, i) for i in range(num_requests)
+            ]
             completed_ids = [future.result() for future in futures]
-        
+
         # Verify all requests completed successfully
         assert len(completed_ids) == num_requests
         assert len(request_data) == num_requests
-        
+
         # Verify request isolation - all should have unique timestamps
-        timestamps = [data['timestamp'] for data in request_data.values()]
+        timestamps = [data["timestamp"] for data in request_data.values()]
         unique_timestamps = set(timestamps)
-        
+
         # Should have mostly unique timestamps (some may be very close)
         assert len(unique_timestamps) >= num_requests * 0.8
 
@@ -221,52 +238,56 @@ class TestMemoryPerformance:
 
     def test_memory_usage_under_load(self, test_client):
         """Test memory usage doesn't grow excessively under load."""
-        import psutil
         import os
-        
+
+        import psutil
+
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
-        
+
         # Generate load
         for _ in range(100):
             response = test_client.get("/health")
             assert response.status_code == status.HTTP_200_OK
-        
+
         # Check memory after load
         final_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_growth = final_memory - initial_memory
-        
+
         # Memory growth should be reasonable (under 50MB for 100 requests)
         assert memory_growth < 50, f"Excessive memory growth: {memory_growth:.1f}MB"
 
     def test_no_memory_leaks_in_repeated_requests(self, test_client):
         """Test for memory leaks in repeated requests."""
-        import psutil
-        import os
         import gc
-        
+        import os
+
+        import psutil
+
         process = psutil.Process(os.getpid())
-        
+
         # Baseline memory measurement
         gc.collect()
         baseline_memory = process.memory_info().rss / 1024 / 1024  # MB
-        
+
         # Make many requests in batches
         for batch in range(5):
             for _ in range(50):
                 response = test_client.get("/health")
                 assert response.status_code == status.HTTP_200_OK
-            
+
             # Force garbage collection
             gc.collect()
-            
+
             # Check memory
             current_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_growth = current_memory - baseline_memory
-            
+
             # Memory shouldn't grow excessively with each batch
-            assert memory_growth < 30, f"Potential memory leak detected after batch {batch}: {memory_growth:.1f}MB growth"
+            assert memory_growth < 30, (
+                f"Potential memory leak detected after batch {batch}: {memory_growth:.1f}MB growth"
+            )
 
 
 class TestThroughputPerformance:
@@ -276,77 +297,78 @@ class TestThroughputPerformance:
         """Test maximum throughput for health endpoint."""
         duration = 5  # Test for 5 seconds
         request_count = 0
-        
+
         def make_requests_for_duration():
             nonlocal request_count
             end_time = time.time() + duration
-            
+
             while time.time() < end_time:
                 response = test_client.get("/health")
                 if response.status_code == status.HTTP_200_OK:
                     request_count += 1
-        
+
         # Use multiple threads to maximize throughput
         threads = []
         for _ in range(4):  # 4 threads
             thread = threading.Thread(target=make_requests_for_duration)
             threads.append(thread)
-        
+
         # Start all threads
         start_time = time.time()
         for thread in threads:
             thread.start()
-        
+
         # Wait for completion
         for thread in threads:
             thread.join()
-        
+
         actual_duration = time.time() - start_time
         throughput = request_count / actual_duration
-        
+
         # Should achieve reasonable throughput
         assert throughput > 100, f"Throughput too low: {throughput:.1f} req/s"
-        print(f"Health endpoint throughput: {throughput:.1f} req/s")
 
     def test_sustainable_load_performance(self, test_client):
         """Test performance under sustained load."""
         duration = 10  # 10 second test
         target_rps = 20  # Target 20 requests per second
         request_interval = 1.0 / target_rps
-        
+
         successful_requests = 0
         response_times = []
-        
+
         end_time = time.time() + duration
         next_request_time = time.time()
-        
+
         while time.time() < end_time:
             # Wait for next request time
             current_time = time.time()
             if current_time < next_request_time:
                 time.sleep(next_request_time - current_time)
-            
+
             # Make request
             start_time = time.time()
             response = test_client.get("/health")
             request_end_time = time.time()
-            
+
             if response.status_code == status.HTTP_200_OK:
                 successful_requests += 1
                 response_times.append(request_end_time - start_time)
-            
+
             # Schedule next request
             next_request_time += request_interval
-        
+
         # Calculate metrics
         actual_rps = successful_requests / duration
         avg_response_time = statistics.mean(response_times) if response_times else 0
-        
+
         # Performance assertions
-        assert actual_rps >= target_rps * 0.9, f"Sustained RPS too low: {actual_rps:.1f} (target: {target_rps})"
-        assert avg_response_time < 0.2, f"Response time degraded under sustained load: {avg_response_time:.3f}s"
-        
-        print(f"Sustained load: {actual_rps:.1f} RPS, avg response time: {avg_response_time:.3f}s")
+        assert actual_rps >= target_rps * 0.9, (
+            f"Sustained RPS too low: {actual_rps:.1f} (target: {target_rps})"
+        )
+        assert avg_response_time < 0.2, (
+            f"Response time degraded under sustained load: {avg_response_time:.3f}s"
+        )
 
 
 class TestScalabilityPerformance:
@@ -356,59 +378,66 @@ class TestScalabilityPerformance:
         """Test how response times scale with concurrent users."""
         concurrency_levels = [1, 5, 10, 20]
         results = {}
-        
+
         for concurrency in concurrency_levels:
-            response_times = []
-            
+
             def make_request():
                 start_time = time.time()
                 response = test_client.get("/health")
                 end_time = time.time()
                 return response.status_code, end_time - start_time
-            
+
             # Run requests at this concurrency level
-            with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
-                futures = [executor.submit(make_request) for _ in range(concurrency * 5)]
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=concurrency,
+            ) as executor:
+                futures = [
+                    executor.submit(make_request) for _ in range(concurrency * 5)
+                ]
                 request_results = [future.result() for future in futures]
-            
+
             # Calculate average response time
-            valid_times = [duration for status, duration in request_results if status == 200]
+            valid_times = [
+                duration for status, duration in request_results if status == 200
+            ]
             if valid_times:
                 avg_time = statistics.mean(valid_times)
                 results[concurrency] = avg_time
-        
+
         # Analyze scalability with absolute time thresholds
         if len(results) >= 2:
             # Verify response times remain reasonable under concurrent load
             for concurrency, avg_time in results.items():
                 # Health endpoint should respond quickly even under concurrent load
                 # Using absolute thresholds consistent with other performance tests
-                assert avg_time < 0.1, f"Average response time too slow at {concurrency} concurrent users: {avg_time:.3f}s"
+                assert avg_time < 0.1, (
+                    f"Average response time too slow at {concurrency} concurrent users: {avg_time:.3f}s"
+                )
 
     def test_error_rate_under_load(self, test_client):
         """Test error rates under increasing load."""
         num_requests = 200
         max_workers = 50
-        
+
         def make_request():
             try:
                 response = test_client.get("/health")
                 return response.status_code
             except Exception as e:
-                return f"Exception: {str(e)}"
-        
+                return f"Exception: {e!s}"
+
         # Execute high concurrency test
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(make_request) for _ in range(num_requests)]
             results = [future.result() for future in futures]
-        
+
         # Analyze error rates
         successful_requests = sum(1 for result in results if result == 200)
         error_rate = (num_requests - successful_requests) / num_requests
-        
+
         # Error rate should be low even under high load
         assert error_rate < 0.1, f"High error rate under load: {error_rate:.1%}"
-        
+
         # At least 80% of requests should succeed
         success_rate = successful_requests / num_requests
         assert success_rate > 0.8, f"Success rate too low: {success_rate:.1%}"

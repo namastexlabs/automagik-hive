@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for the migration service.
+"""Test script for the migration service.
 Verifies automatic migration functionality.
 """
 
@@ -13,43 +12,34 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+
 async def test_migration_service():
     """Test the migration service functionality."""
     try:
         # Test import
-        from lib.services.migration_service import ensure_database_ready_async, check_migration_status_async
-        
-        print("🔧 Testing migration service...")
-        
+        from lib.services.migration_service import (
+            check_migration_status_async,
+            ensure_database_ready_async,
+        )
+
         # Check if database URL is configured
         db_url = os.getenv("HIVE_DATABASE_URL")
         if not db_url:
-            print("❌ HIVE_DATABASE_URL not set")
             return False
-        
-        print(f"✅ Database URL configured: {db_url.split('@')[0]}@***")
-        
+
         # Check migration status
-        status = await check_migration_status_async()
-        print(f"🔍 Migration Status Check: {status}")
-        
+        await check_migration_status_async()
+
         # Test ensure database ready
         result = await ensure_database_ready_async()
-        print(f"🚀 Ensure Database Ready: {result}")
-        
-        if result["success"]:
-            print("✅ Migration service working correctly!")
-            return True
-        else:
-            print(f"❌ Migration service failed: {result.get('message')}")
-            return False
-            
-    except ImportError as e:
-        print(f"❌ Import error: {e}")
+
+        return bool(result["success"])
+
+    except ImportError:
         return False
-    except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+    except Exception:
         return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(test_migration_service())

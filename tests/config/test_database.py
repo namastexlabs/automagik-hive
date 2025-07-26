@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -26,8 +27,8 @@ TEST_CONFIG = {
     "coverage_threshold": 80.0,
     "tier_targets": {
         "tier_1": 95.0,  # Mission critical
-        "tier_2": 85.0,  # High impact  
+        "tier_2": 85.0,  # High impact
         "tier_3": 75.0,  # Moderate impact
         "tier_4": 60.0,  # Supportive
-    }
+    },
 }

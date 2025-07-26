@@ -6,13 +6,16 @@ component tests to ensure consistency and reduce duplication.
 """
 
 import os
-import tempfile
 import shutil
+import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Dict, Any, Generator, Optional
-from unittest.mock import Mock, MagicMock, patch
+from typing import Any
+from unittest.mock import Mock, patch
+
 import pytest
 import yaml
+
 # Settings import removed - using mock instead
 
 
@@ -38,26 +41,22 @@ def temp_file() -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def sample_yaml_config() -> Dict[str, Any]:
+def sample_yaml_config() -> dict[str, Any]:
     """Sample YAML configuration for testing."""
     return {
-        "agent": {
-            "name": "Test Agent",
-            "agent_id": "test-agent",
-            "version": "1.0.0"
-        },
+        "agent": {"name": "Test Agent", "agent_id": "test-agent", "version": "1.0.0"},
         "model": {
             "provider": "anthropic",
             "id": "claude-sonnet-4-20250514",
-            "temperature": 0.7
+            "temperature": 0.7,
         },
         "instructions": "Test instructions",
-        "tools": ["test_tool"]
+        "tools": ["test_tool"],
     }
 
 
 @pytest.fixture
-def yaml_config_file(temp_dir: Path, sample_yaml_config: Dict[str, Any]) -> Path:
+def yaml_config_file(temp_dir: Path, sample_yaml_config: dict[str, Any]) -> Path:
     """Create a temporary YAML config file."""
     config_file = temp_dir / "config.yaml"
     with open(config_file, "w") as f:
@@ -110,14 +109,14 @@ def csv_file(temp_dir: Path, sample_csv_content: str) -> Path:
 
 
 @pytest.fixture
-def env_vars() -> Generator[Dict[str, str], None, None]:
+def env_vars() -> Generator[dict[str, str], None, None]:
     """Clean environment variables fixture."""
     original_env = os.environ.copy()
     test_env = {
         "HIVE_DATABASE_URL": "sqlite:///test.db",
         "ANTHROPIC_API_KEY": "test-key",
         "OPENAI_API_KEY": "test-key",
-        "RUNTIME_ENV": "dev"
+        "RUNTIME_ENV": "dev",
     }
     os.environ.update(test_env)
     try:
@@ -153,7 +152,7 @@ def mock_path_is_dir():
 
 class MockAgentResponse:
     """Mock agent response for testing."""
-    
+
     def __init__(self, content: str = "Test response", model: str = "test-model"):
         self.content = content
         self.model = model
@@ -162,7 +161,7 @@ class MockAgentResponse:
 
 class MockUsage:
     """Mock usage information for agent responses."""
-    
+
     def __init__(self, input_tokens: int = 100, output_tokens: int = 50):
         self.input_tokens = input_tokens
         self.output_tokens = output_tokens
@@ -175,7 +174,7 @@ def mock_agent_response() -> MockAgentResponse:
     return MockAgentResponse()
 
 
-def create_test_config(config_data: Dict[str, Any], temp_dir: Path) -> Path:
+def create_test_config(config_data: dict[str, Any], temp_dir: Path) -> Path:
     """Helper to create test configuration files."""
     config_file = temp_dir / "test_config.yaml"
     with open(config_file, "w") as f:
@@ -187,14 +186,14 @@ def assert_file_contains(file_path: Path, content: str) -> bool:
     """Helper to assert file contains specific content."""
     if not file_path.exists():
         return False
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         return content in f.read()
 
 
 def assert_yaml_valid(file_path: Path) -> bool:
     """Helper to assert YAML file is valid."""
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             yaml.safe_load(f)
         return True
     except yaml.YAMLError:
@@ -203,21 +202,24 @@ def assert_yaml_valid(file_path: Path) -> bool:
 
 class PerformanceTestHelper:
     """Helper class for performance testing utilities."""
-    
+
     @staticmethod
     def measure_execution_time(func, *args, **kwargs):
         """Measure execution time of a function."""
         import time
+
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         execution_time = end_time - start_time
         return result, execution_time
-    
+
     @staticmethod
     def assert_performance_threshold(execution_time: float, threshold: float):
         """Assert execution time is below threshold."""
-        assert execution_time < threshold, f"Execution time {execution_time:.4f}s exceeded threshold {threshold}s"
+        assert execution_time < threshold, (
+            f"Execution time {execution_time:.4f}s exceeded threshold {threshold}s"
+        )
 
 
 @pytest.fixture
