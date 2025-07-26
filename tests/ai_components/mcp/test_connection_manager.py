@@ -20,7 +20,7 @@ from lib.mcp.exceptions import MCPConnectionError
 class TestGetCatalog:
     """Test global catalog management."""
 
-    def test_singleton_behavior(self):
+    def test_singleton_behavior(self) -> None:
         """Test that get_catalog returns the same instance."""
         # Reset the global catalog
         import lib.mcp.connection_manager
@@ -32,7 +32,7 @@ class TestGetCatalog:
 
         assert catalog1 is catalog2
 
-    def test_lazy_initialization(self):
+    def test_lazy_initialization(self) -> None:
         """Test that catalog is lazily initialized."""
         import lib.mcp.connection_manager
 
@@ -47,7 +47,7 @@ class TestGetCatalog:
             assert result is mock_instance
             mock_catalog_class.assert_called_once()
 
-    def test_multiple_calls_single_initialization(self):
+    def test_multiple_calls_single_initialization(self) -> None:
         """Test that multiple calls only initialize once."""
         import lib.mcp.connection_manager
 
@@ -71,7 +71,7 @@ class TestGetMCPTools:
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
-    async def test_sse_server_connection(self, mock_mcp_tools_class, mock_get_catalog):
+    async def test_sse_server_connection(self, mock_mcp_tools_class, mock_get_catalog) -> None:
         """Test creating MCP tools for SSE server."""
         # Setup mocks
         mock_catalog = Mock()
@@ -109,7 +109,7 @@ class TestGetMCPTools:
         self,
         mock_mcp_tools_class,
         mock_get_catalog,
-    ):
+    ) -> None:
         """Test creating MCP tools for command server."""
         # Setup mocks
         mock_catalog = Mock()
@@ -148,7 +148,7 @@ class TestGetMCPTools:
         self,
         mock_mcp_tools_class,
         mock_get_catalog,
-    ):
+    ) -> None:
         """Test creating MCP tools for command server without args."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -179,7 +179,7 @@ class TestGetMCPTools:
 
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
-    async def test_server_not_found(self, mock_get_catalog):
+    async def test_server_not_found(self, mock_get_catalog) -> None:
         """Test error when server is not found."""
         mock_catalog = Mock()
         mock_catalog.get_server_config.side_effect = Exception("Server not found")
@@ -191,7 +191,7 @@ class TestGetMCPTools:
 
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
-    async def test_unknown_server_type(self, mock_get_catalog):
+    async def test_unknown_server_type(self, mock_get_catalog) -> None:
         """Test error when server has unknown type."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -220,7 +220,7 @@ class TestGetMCPTools:
         mock_logger,
         mock_mcp_tools_class,
         mock_get_catalog,
-    ):
+    ) -> None:
         """Test error when MCPTools creation fails."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -252,7 +252,7 @@ class TestGetMCPTools:
         self,
         mock_mcp_tools_class,
         mock_get_catalog,
-    ):
+    ) -> None:
         """Test SSE server with None env defaults to empty dict."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -286,7 +286,7 @@ class TestCreateMCPToolsSync:
 
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
-    def test_sync_sse_server(self, mock_mcp_tools_class, mock_get_catalog):
+    def test_sync_sse_server(self, mock_mcp_tools_class, mock_get_catalog) -> None:
         """Test synchronous creation for SSE server."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -313,7 +313,7 @@ class TestCreateMCPToolsSync:
 
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
-    def test_sync_command_server(self, mock_mcp_tools_class, mock_get_catalog):
+    def test_sync_command_server(self, mock_mcp_tools_class, mock_get_catalog) -> None:
         """Test synchronous creation for command server."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -339,7 +339,7 @@ class TestCreateMCPToolsSync:
         )
 
     @patch("lib.mcp.connection_manager.get_catalog")
-    def test_sync_server_not_found(self, mock_get_catalog):
+    def test_sync_server_not_found(self, mock_get_catalog) -> None:
         """Test sync error when server is not found."""
         mock_catalog = Mock()
         mock_catalog.get_server_config.side_effect = Exception("Not found")
@@ -349,7 +349,7 @@ class TestCreateMCPToolsSync:
             create_mcp_tools_sync("missing")
 
     @patch("lib.mcp.connection_manager.get_catalog")
-    def test_sync_unknown_server_type(self, mock_get_catalog):
+    def test_sync_unknown_server_type(self, mock_get_catalog) -> None:
         """Test sync error for unknown server type."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -376,7 +376,7 @@ class TestCreateMCPToolsSync:
         mock_logger,
         mock_mcp_tools_class,
         mock_get_catalog,
-    ):
+    ) -> None:
         """Test sync error when MCPTools creation fails."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -404,7 +404,7 @@ class TestCreateMCPToolsSync:
         self,
         mock_mcp_tools_class,
         mock_get_catalog,
-    ):
+    ) -> None:
         """Test sync command server with None env defaults to empty dict."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
@@ -434,7 +434,7 @@ class TestLegacyCompatibility:
     """Test legacy compatibility functions."""
 
     @pytest.mark.asyncio
-    async def test_get_mcp_connection_manager(self):
+    async def test_get_mcp_connection_manager(self) -> None:
         """Test legacy connection manager function."""
         result = await get_mcp_connection_manager()
 
@@ -442,7 +442,7 @@ class TestLegacyCompatibility:
         assert result is get_mcp_tools
 
     @pytest.mark.asyncio
-    async def test_shutdown_mcp_connection_manager(self):
+    async def test_shutdown_mcp_connection_manager(self) -> None:
         """Test legacy shutdown function (no-op)."""
         # Should not raise any exception
         result = await shutdown_mcp_connection_manager()
