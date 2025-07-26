@@ -19,7 +19,7 @@ class TestWorkflowDiscovery:
     """Test workflow discovery functionality."""
 
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_directory(self, mock_path):
+    def test_discover_workflows_no_directory(self, mock_path) -> None:
         """Test discovery when workflows directory doesn't exist."""
         mock_workflows_dir = Mock()
         mock_workflows_dir.exists.return_value = False
@@ -28,7 +28,7 @@ class TestWorkflowDiscovery:
         result = _discover_workflows()
         assert result == {}
 
-    def test_discover_workflows_success_integration(self):
+    def test_discover_workflows_success_integration(self) -> None:
         """Test successful workflow discovery using integration approach."""
         # Test that the function can be called without error
         result = _discover_workflows()
@@ -36,7 +36,7 @@ class TestWorkflowDiscovery:
         # The result could be empty or contain actual workflows
 
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_skips_files(self, mock_path):
+    def test_discover_workflows_skips_files(self, mock_path) -> None:
         """Test that discovery skips files and only processes directories."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -51,7 +51,7 @@ class TestWorkflowDiscovery:
         assert result == {}
 
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_skips_underscore_dirs(self, mock_path):
+    def test_discover_workflows_skips_underscore_dirs(self, mock_path) -> None:
         """Test that discovery skips directories starting with underscore."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -67,7 +67,7 @@ class TestWorkflowDiscovery:
         assert result == {}
 
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_missing_config(self, mock_path):
+    def test_discover_workflows_missing_config(self, mock_path) -> None:
         """Test workflow discovery when config.yaml is missing."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -92,7 +92,7 @@ class TestWorkflowDiscovery:
         assert result == {}
 
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_missing_workflow_file(self, mock_path):
+    def test_discover_workflows_missing_workflow_file(self, mock_path) -> None:
         """Test workflow discovery when workflow.py is missing."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -118,7 +118,7 @@ class TestWorkflowDiscovery:
 
     @patch("ai.workflows.registry.importlib.util")
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_factory_function(self, mock_path, mock_importlib):
+    def test_discover_workflows_no_factory_function(self, mock_path, mock_importlib) -> None:
         """Test discovery when workflow module has no factory function."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -157,7 +157,7 @@ class TestWorkflowDiscovery:
 
     @patch("ai.workflows.registry.importlib.util")
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_import_exception(self, mock_path, mock_importlib):
+    def test_discover_workflows_import_exception(self, mock_path, mock_importlib) -> None:
         """Test discovery handles import exceptions gracefully."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -186,7 +186,7 @@ class TestWorkflowDiscovery:
         result = _discover_workflows()
         assert result == {}
 
-    def test_hyphen_to_underscore_conversion_logic(self):
+    def test_hyphen_to_underscore_conversion_logic(self) -> None:
         """Test that hyphens in workflow names are properly converted to underscores."""
         # Test the logic directly
         workflow_name = "multi-word-workflow"
@@ -198,7 +198,7 @@ class TestWorkflowRegistry:
     """Test workflow registry functionality."""
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_get_workflow_registry_lazy_initialization(self, mock_discover):
+    def test_get_workflow_registry_lazy_initialization(self, mock_discover) -> None:
         """Test that workflow registry is lazily initialized."""
         # Reset the global registry
         import ai.workflows.registry
@@ -218,7 +218,7 @@ class TestWorkflowRegistry:
         assert registry1 is registry2
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_get_workflow_success(self, mock_discover):
+    def test_get_workflow_success(self, mock_discover) -> None:
         """Test successful workflow retrieval."""
         mock_factory = Mock()
         mock_workflow = Mock()
@@ -237,7 +237,7 @@ class TestWorkflowRegistry:
         mock_factory.assert_called_once_with(version=1, param1="value1")
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_get_workflow_not_found(self, mock_discover):
+    def test_get_workflow_not_found(self, mock_discover) -> None:
         """Test workflow not found error."""
         mock_discover.return_value = {"workflow-1": Mock(), "workflow-2": Mock()}
 
@@ -250,7 +250,7 @@ class TestWorkflowRegistry:
             get_workflow("missing-workflow")
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_get_workflow_without_version(self, mock_discover):
+    def test_get_workflow_without_version(self, mock_discover) -> None:
         """Test workflow retrieval without version parameter."""
         mock_factory = Mock()
         mock_workflow = Mock()
@@ -269,7 +269,7 @@ class TestWorkflowRegistry:
         mock_factory.assert_called_once_with(param1="value1")
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_list_available_workflows(self, mock_discover):
+    def test_list_available_workflows(self, mock_discover) -> None:
         """Test listing available workflows."""
         mock_discover.return_value = {
             "workflow-b": Mock(),
@@ -288,7 +288,7 @@ class TestWorkflowRegistry:
         assert result == ["workflow-a", "workflow-b", "workflow-c"]
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_list_available_workflows_empty(self, mock_discover):
+    def test_list_available_workflows_empty(self, mock_discover) -> None:
         """Test listing available workflows when none exist."""
         mock_discover.return_value = {}
 
@@ -301,7 +301,7 @@ class TestWorkflowRegistry:
         assert result == []
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_is_workflow_registered_true(self, mock_discover):
+    def test_is_workflow_registered_true(self, mock_discover) -> None:
         """Test checking if workflow is registered (positive case)."""
         mock_discover.return_value = {"existing-workflow": Mock()}
 
@@ -314,7 +314,7 @@ class TestWorkflowRegistry:
         assert result is True
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_is_workflow_registered_false(self, mock_discover):
+    def test_is_workflow_registered_false(self, mock_discover) -> None:
         """Test checking if workflow is registered (negative case)."""
         mock_discover.return_value = {"existing-workflow": Mock()}
 
@@ -327,7 +327,7 @@ class TestWorkflowRegistry:
         assert result is False
 
     @patch("ai.workflows.registry._discover_workflows")
-    def test_workflow_registry_logging(self, mock_discover):
+    def test_workflow_registry_logging(self, mock_discover) -> None:
         """Test that appropriate logging occurs during registry initialization."""
         mock_discover.return_value = {"workflow-1": Mock(), "workflow-2": Mock()}
 
