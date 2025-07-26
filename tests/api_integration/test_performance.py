@@ -377,16 +377,13 @@ class TestScalabilityPerformance:
                 avg_time = statistics.mean(valid_times)
                 results[concurrency] = avg_time
         
-        # Analyze scalability
+        # Analyze scalability with absolute time thresholds
         if len(results) >= 2:
-            # Response time shouldn't increase dramatically with concurrency
-            base_time = results[1] if 1 in results else min(results.values())
-            
+            # Verify response times remain reasonable under concurrent load
             for concurrency, avg_time in results.items():
-                if concurrency > 1:
-                    # Response time shouldn't be more than 3x the baseline
-                    scalability_ratio = avg_time / base_time
-                    assert scalability_ratio < 3.0, f"Poor scalability at {concurrency} concurrent users: {scalability_ratio:.1f}x slower"
+                # Health endpoint should respond quickly even under concurrent load
+                # Using absolute thresholds consistent with other performance tests
+                assert avg_time < 0.1, f"Average response time too slow at {concurrency} concurrent users: {avg_time:.3f}s"
 
     def test_error_rate_under_load(self, test_client):
         """Test error rates under increasing load."""

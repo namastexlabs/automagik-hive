@@ -1,5 +1,6 @@
 # Environment variables
 .env
+.env.agent
 .env.local
 .env.*.local
 
@@ -183,6 +184,7 @@ data/*.sqlite3
 
 # Local data directories (PostgreSQL data)
 /data/postgres/
+/data/postgres-agent/
 
 tmp/
 

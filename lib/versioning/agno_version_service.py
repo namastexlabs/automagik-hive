@@ -167,6 +167,14 @@ class AgnoVersionService:
         db_history = await self.component_service.get_version_history(component_id)
         return [self._db_to_version_history(h) for h in db_history]
     
+    async def get_all_components(self) -> List[str]:
+        """Get all distinct component IDs."""
+        return await self.component_service.get_all_components()
+    
+    async def get_components_by_type(self, component_type: str) -> List[str]:
+        """Get all distinct component IDs of a specific type."""
+        return await self.component_service.get_components_by_type(component_type)
+    
     def sync_component_type(self, component_type: str) -> List[Dict[str, Any]]:
         """Sync components of a specific type."""
         return []
@@ -240,3 +248,11 @@ class AgnoVersionService:
             
         except Exception as e:
             return None, f"error: {str(e)}"
+    
+    async def get_all_components(self) -> List[str]:
+        """Get all distinct component IDs."""
+        return await self.component_service.get_all_components()
+    
+    async def get_components_by_type(self, component_type: str) -> List[str]:
+        """Get all component IDs of a specific type."""
+        return await self.component_service.get_components_by_type(component_type)

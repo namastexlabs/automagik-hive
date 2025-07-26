@@ -44,6 +44,12 @@ ifeq ($(HIVE_PORT),)
     HIVE_PORT := 8886
 endif
 
+# Load agent port from .env.agent file
+AGENT_PORT := $(shell grep -E '^HIVE_API_PORT=' .env.agent 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
+ifeq ($(AGENT_PORT),)
+    AGENT_PORT := 38886
+endif
+
 # ===========================================
 # 🛠️ Utility Functions
 # ===========================================
@@ -120,6 +126,13 @@ define generate_hive_api_key
     uv run python -c "from lib.auth.cli import regenerate_key; regenerate_key()"
 endef
 
+define generate_agent_hive_api_key
+    $(call print_status,Generating secure Agent API key...); \
+    API_KEY=$$(uv run python -c "import secrets; print('hive_agent_' + secrets.token_urlsafe(32))"); \
+    sed -i "s|^HIVE_API_KEY=.*|HIVE_API_KEY=$$API_KEY|" .env.agent; \
+    echo -e "$(FONT_GREEN)🔑 Agent API Key: $$API_KEY$(FONT_RESET)"
+endef
+
 define show_api_key_info
     echo ""; \
     CURRENT_KEY=$$(grep "^HIVE_API_KEY=" .env 2>/dev/null | cut -d'=' -f2); \
@@ -138,6 +151,19 @@ define generate_postgres_credentials
     sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
     $(call print_success,PostgreSQL credentials generated and saved to .env); \
     echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
+    echo -e "  User: $$POSTGRES_USER"; \
+    echo -e "  Password: $$POSTGRES_PASS"; \
+    echo -e "  Database: $$POSTGRES_DB"
+endef
+
+define generate_agent_postgres_credentials
+    $(call print_status,Generating secure Agent PostgreSQL credentials...); \
+    POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+    POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+    POSTGRES_DB="hive_agent"; \
+    sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:35532/$$POSTGRES_DB|" .env.agent; \
+    $(call print_success,Agent PostgreSQL credentials generated and saved to .env.agent); \
+    echo -e "$(FONT_CYAN)Generated agent credentials:$(FONT_RESET)"; \
     echo -e "  User: $$POSTGRES_USER"; \
     echo -e "  Password: $$POSTGRES_PASS"; \
     echo -e "  Database: $$POSTGRES_DB"
@@ -224,6 +250,92 @@ define setup_python_env
     fi
 endef
 
+define setup_agent_env
+    $(call print_status,Creating agent environment...); \
+    cp .env.example .env.agent; \
+    sed -i 's|HIVE_API_PORT=8886|HIVE_API_PORT=38886|' .env.agent; \
+    sed -i 's|localhost:5532|localhost:35532|' .env.agent; \
+    sed -i 's|/hive|/hive_agent|' .env.agent; \
+    sed -i 's|http://localhost:8886|http://localhost:38886|' .env.agent; \
+    $(call print_success,Agent environment file created)
+endef
+
+define setup_agent_postgres
+    $(call check_docker); \
+    $(call generate_agent_postgres_credentials); \
+    echo -e "$(FONT_CYAN)🐳 Starting Agent PostgreSQL container...$(FONT_RESET)"; \
+    DB_URL=$$(grep '^HIVE_DATABASE_URL=' .env.agent | cut -d'=' -f2-); \
+    WITHOUT_PROTOCOL=$${DB_URL#*://}; \
+    CREDENTIALS=$${WITHOUT_PROTOCOL%%@*}; \
+    AFTER_AT=$${WITHOUT_PROTOCOL##*@}; \
+    export POSTGRES_USER=$${CREDENTIALS%%:*}; \
+    export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
+    export POSTGRES_DB=$${AFTER_AT##*/}; \
+    if [ "$$(uname -s)" = "Linux" ] || [ "$$(uname -s)" = "Darwin" ]; then \
+        export POSTGRES_UID=$$(id -u); \
+        export POSTGRES_GID=$$(id -g); \
+    else \
+        export POSTGRES_UID=1000; \
+        export POSTGRES_GID=1000; \
+    fi; \
+    mkdir -p ./data/postgres-agent && chown -R $${POSTGRES_UID}:$${POSTGRES_GID} ./data 2>/dev/null || sudo chown -R $$USER:$$USER ./data; \
+    $(DOCKER_COMPOSE) -f docker-compose-agent.yml up -d postgres-agent; \
+    $(call print_success,Agent PostgreSQL container started on port 35532!)
+endef
+
+define cleanup_agent_environment
+    $(call print_status,Cleaning up existing agent environment...); \
+    pkill -f "python.*api/serve.py.*\.env\.agent" 2>/dev/null || true; \
+    $(DOCKER_COMPOSE) -f docker-compose-agent.yml down 2>/dev/null || true; \
+    docker container rm hive-agents-agent hive-postgres-agent 2>/dev/null || true; \
+    rm -f logs/agent-server.pid logs/agent-server.log 2>/dev/null || true; \
+    rm -rf ./data/postgres-agent 2>/dev/null || true; \
+    $(call print_success,Agent environment cleaned up)
+endef
+
+define start_agent_background
+    mkdir -p logs; \
+    $(call print_status,Starting agent server in background...); \
+    ( \
+        set -a; \
+        source .env.agent; \
+        set +a; \
+        nohup uv run python api/serve.py > logs/agent-server.log 2>&1 & echo $$! > logs/agent-server.pid; \
+    ); \
+    sleep 3; \
+    if [ -f logs/agent-server.pid ] && kill -0 $$(cat logs/agent-server.pid) 2>/dev/null; then \
+        $(call print_success,Agent server started in background (PID: $$(cat logs/agent-server.pid))); \
+        echo -e "$(FONT_CYAN)🌐 Agent API: http://localhost:$(AGENT_PORT)$(FONT_RESET)"; \
+        echo -e "$(FONT_CYAN)📋 Logs: make agent-logs$(FONT_RESET)"; \
+        echo -e "$(FONT_YELLOW)--- Startup logs ---$(FONT_RESET)"; \
+        head -20 logs/agent-server.log 2>/dev/null || echo "No logs yet"; \
+    else \
+        $(call print_error,Failed to start agent server); \
+        echo -e "$(FONT_YELLOW)Check logs: cat logs/agent-server.log$(FONT_RESET)"; \
+        exit 1; \
+    fi
+endef
+
+define stop_agent_background
+    if [ -f logs/agent-server.pid ]; then \
+        PID=$$(cat logs/agent-server.pid); \
+        if kill -0 $$PID 2>/dev/null; then \
+            $(call print_status,Stopping agent server (PID: $$PID)...); \
+            kill -TERM $$PID 2>/dev/null; \
+            sleep 5; \
+            if kill -0 $$PID 2>/dev/null; then \
+                kill -KILL $$PID 2>/dev/null; \
+            fi; \
+            $(call print_success,Agent server stopped); \
+        else \
+            $(call print_warning,Agent server not running); \
+        fi; \
+        rm -f logs/agent-server.pid; \
+    else \
+        $(call print_warning,No agent server PID file found); \
+    fi
+endef
+
 # ===========================================
 # 📋 Help System
 # ===========================================
@@ -238,6 +350,14 @@ help: ## 🐝 Show this help message
 	@echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install environment with optional PostgreSQL setup"
 	@echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Start local development server (with hot-reload)"
 	@echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Start production stack via Docker"
+	@echo ""
+	@echo -e "$(FONT_CYAN)🤖 Agent Environment (LLM-Optimized):$(FONT_RESET)"
+	@echo -e "  $(FONT_PURPLE)install-agent$(FONT_RESET)   Silent agent environment setup (ports 38886/35532)"
+	@echo -e "  $(FONT_PURPLE)agent$(FONT_RESET)           Start agent server in background (non-blocking)"
+	@echo -e "  $(FONT_PURPLE)agent-stop$(FONT_RESET)      Stop agent server cleanly"
+	@echo -e "  $(FONT_PURPLE)agent-restart$(FONT_RESET)   Restart agent server"
+	@echo -e "  $(FONT_PURPLE)agent-logs$(FONT_RESET)      Show agent logs (non-blocking)"
+	@echo -e "  $(FONT_PURPLE)agent-status$(FONT_RESET)    Check agent environment status"
 	@echo ""
 	@echo -e "$(FONT_CYAN)🎛️ Service Control:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)status$(FONT_RESET)          Show running services status"
@@ -547,6 +667,92 @@ uninstall-purge: ## 🗑️ Full purge including data
 		echo -e "$(FONT_CYAN)Purge cancelled$(FONT_RESET)"; \
 	fi
 
+# ===========================================
+# 🤖 Agent Environment Commands
+# ===========================================
+.PHONY: install-agent
+install-agent: ## 🤖 Silent agent environment setup (destructive reinstall)
+	@$(call print_status,Setting up agent environment...)
+	@$(call check_prerequisites)
+	@$(call setup_python_env)
+	@if [ -f ".env.agent" ] || [ -f "logs/agent-server.pid" ] || docker ps --filter "name=hive-postgres-agent" --format "{{.Names}}" | grep -q hive-postgres-agent; then \
+		$(call cleanup_agent_environment); \
+	fi
+	@$(call setup_agent_env)
+	@$(call setup_agent_postgres)
+	@$(call generate_agent_hive_api_key)
+	@$(call print_success,Agent environment ready!)
+	@echo -e "$(FONT_CYAN)🌐 Agent API will be available at: http://localhost:$(AGENT_PORT)$(FONT_RESET)"
+	@echo -e "$(FONT_CYAN)💡 Start with: make agent$(FONT_RESET)"
+
+.PHONY: agent
+agent: ## 🤖 Start agent server in background (non-blocking)
+	@if [ ! -f ".env.agent" ]; then \
+		$(call print_error,Agent environment not found); \
+		echo -e "$(FONT_YELLOW)💡 Run 'make install-agent' first$(FONT_RESET)"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(VENV_PATH)" ]; then \
+		$(call print_error,Virtual environment not found); \
+		echo -e "$(FONT_YELLOW)💡 Run 'make install-agent' first$(FONT_RESET)"; \
+		exit 1; \
+	fi
+	@if [ -f "logs/agent-server.pid" ] && kill -0 $$(cat logs/agent-server.pid) 2>/dev/null; then \
+		$(call print_warning,Agent server already running (PID: $$(cat logs/agent-server.pid))); \
+		echo -e "$(FONT_CYAN)🌐 Agent API: http://localhost:$(AGENT_PORT)$(FONT_RESET)"; \
+		exit 0; \
+	fi
+	@$(call start_agent_background)
+
+.PHONY: agent-stop
+agent-stop: ## 🛑 Stop agent server cleanly
+	@$(call stop_agent_background)
+
+.PHONY: agent-restart
+agent-restart: ## 🔄 Restart agent server
+	@$(call stop_agent_background)
+	@sleep 2
+	@$(MAKE) agent
+
+.PHONY: agent-logs
+agent-logs: ## 📄 Show agent logs (non-blocking)
+	@echo -e "$(FONT_PURPLE)🤖 Agent Server Logs$(FONT_RESET)"
+	@if [ -f "logs/agent-server.log" ]; then \
+		echo -e "$(FONT_CYAN)=== Recent Agent Logs (last 50 lines) ====$(FONT_RESET)"; \
+		tail -50 logs/agent-server.log; \
+	else \
+		echo -e "$(FONT_YELLOW)⚠️ No agent log file found$(FONT_RESET)"; \
+		echo -e "$(FONT_GRAY)💡 Start agent server with 'make agent'$(FONT_RESET)"; \
+	fi
+
+.PHONY: agent-status
+agent-status: ## 📊 Check agent environment status
+	@$(call print_status,Agent Environment Status)
+	@echo ""
+	@echo -e "$(FONT_PURPLE)┌─────────────────────────┬──────────┬─────────┬──────────┐$(FONT_RESET)"
+	@echo -e "$(FONT_PURPLE)│ Agent Service           │ Status   │ Port    │ PID      │$(FONT_RESET)"
+	@echo -e "$(FONT_PURPLE)├─────────────────────────┼──────────┼─────────┼──────────┤$(FONT_RESET)"
+	@if [ -f "logs/agent-server.pid" ] && kill -0 $$(cat logs/agent-server.pid) 2>/dev/null; then \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"agent-server" "running" "$(AGENT_PORT)" "$$(cat logs/agent-server.pid)"; \
+	else \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"agent-server" "stopped" "-" "-"; \
+	fi
+	@if docker ps --filter "name=hive-postgres-agent" --format "{{.Names}}" | grep -q hive-postgres-agent; then \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"agent-postgres" "running" "35532" "$(shell docker ps --filter 'name=hive-postgres-agent' --format '{{.ID}}' | head -c 6)"; \
+	else \
+		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
+			"agent-postgres" "stopped" "-" "-"; \
+	fi
+	@echo -e "$(FONT_PURPLE)└─────────────────────────┴──────────┴─────────┴──────────┘$(FONT_RESET)"
+	@if [ -f "logs/agent-server.log" ]; then \
+		echo ""; \
+		echo -e "$(FONT_CYAN)Recent agent activity:$(FONT_RESET)"; \
+		tail -5 logs/agent-server.log 2>/dev/null | sed 's/^/  /' || echo -e "$(FONT_GRAY)  No recent activity$(FONT_RESET)"; \
+	fi
+
 .PHONY: test
 test: ## 🧪 Run test suite
 	@$(call print_status,Running tests...)
@@ -560,4 +766,4 @@ test: ## 🧪 Run test suite
 # ===========================================
 # 🧹 Phony Targets
 # ===========================================
-.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall uninstall-containers-only uninstall-clean uninstall-purge
+.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall uninstall-containers-only uninstall-clean uninstall-purge install-agent agent agent-stop agent-restart agent-logs agent-status

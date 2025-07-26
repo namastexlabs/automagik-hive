@@ -479,7 +479,7 @@ async def _async_create_automagik_api():
     return app
 
 
-# Lazy app creation - only create when imported by uvicorn, not when running as script
+# Lazy app creation to prevent import-time execution
 app = None
 
 def create_automagik_api():
@@ -515,14 +515,24 @@ def create_automagik_api():
         return asyncio.run(_async_create_automagik_api())
 
 
-# Only create app when imported
-if __name__ != "__main__":
-    app = create_automagik_api()
+# Global app instance for lazy loading
+_app_instance = None
+
+def get_app():
+    """Get or create the FastAPI application lazily."""
+    global _app_instance
+    if _app_instance is None:
+        _app_instance = create_automagik_api()
+    return _app_instance
+
+# For uvicorn - use factory function to avoid import-time app creation
+def app():
+    """Factory function for uvicorn to create app on demand."""
+    return get_app()
 
 
 if __name__ == "__main__":
     import uvicorn
-    
     
     # Get server configuration from unified config
     config = get_server_config()
@@ -543,10 +553,11 @@ if __name__ == "__main__":
         logger.debug("Starting Automagik Hive API", 
                    host=host, port=port, reload=reload, mode="development" if reload else "production")
     
-    # Use uvicorn directly with import string for reload/workers support
+    # Use uvicorn with factory function to support reload
     uvicorn.run(
         "api.serve:app",
         host=host,
         port=port,
-        reload=reload
+        reload=reload,
+        factory=True
     )

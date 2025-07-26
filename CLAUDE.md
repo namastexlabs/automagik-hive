@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Automagik Hive is an enterprise multi-agent AI framework built on **Agno v1.7.5** that enables rapid development of sophisticated multi-agent systems through YAML configuration. It provides production-ready boilerplate for building intelligent agents, routing teams, and business workflows with enterprise-grade deployment capabilities.
+Automagik Hive is an enterprise multi-agent AI framework built on **Agno (agno-agi/agno)** that enables rapid development of sophisticated multi-agent systems through YAML configuration. It provides production-ready boilerplate for building intelligent agents, routing teams, and business workflows with enterprise-grade deployment capabilities.
 
 ## Key Architecture
 

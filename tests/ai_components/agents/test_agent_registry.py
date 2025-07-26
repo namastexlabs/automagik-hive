@@ -3,7 +3,7 @@ Tests for ai/agents/registry.py - Agent Registry and factory functions
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch, mock_open
+from unittest.mock import Mock, MagicMock, patch, mock_open, AsyncMock
 from pathlib import Path
 from ai.agents.registry import (
     _discover_agents,
@@ -171,7 +171,8 @@ class TestAgentRegistry:
             version=1,
             session_id='session-123',
             debug_mode=True,
-            user_id='user-456'
+            user_id='user-456',
+            metrics_service=None
         )
     
     @patch('ai.agents.registry._discover_agents')

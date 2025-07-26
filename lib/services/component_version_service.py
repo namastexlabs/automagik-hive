@@ -274,3 +274,30 @@ class ComponentVersionService:
             )
             for row in results
         ]
+    
+    async def get_all_components(self) -> List[str]:
+        """Get all distinct component IDs."""
+        db = await self._get_db_service()
+        
+        query = """
+        SELECT DISTINCT component_id
+        FROM hive.component_versions
+        ORDER BY component_id
+        """
+        
+        results = await db.fetch_all(query)
+        return [row["component_id"] for row in results]
+    
+    async def get_components_by_type(self, component_type: str) -> List[str]:
+        """Get all component IDs of a specific type."""
+        db = await self._get_db_service()
+        
+        query = """
+        SELECT DISTINCT component_id
+        FROM hive.component_versions
+        WHERE component_type = %(component_type)s
+        ORDER BY component_id
+        """
+        
+        results = await db.fetch_all(query, {"component_type": component_type})
+        return [row["component_id"] for row in results]
