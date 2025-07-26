@@ -16,7 +16,7 @@ from lib.mcp.exceptions import MCPException
 class TestMCPServerConfig:
     """Test MCP server configuration data class."""
 
-    def test_basic_server_config_creation(self):
+    def test_basic_server_config_creation(self) -> None:
         """Test creating a basic server configuration."""
         config = MCPServerConfig(
             name="test-server",
@@ -32,7 +32,7 @@ class TestMCPServerConfig:
         assert config.args == ["--version"]
         assert config.env == {"PATH": "/usr/bin"}
 
-    def test_minimal_server_config(self):
+    def test_minimal_server_config(self) -> None:
         """Test creating server config with minimal parameters."""
         config = MCPServerConfig(name="minimal-server", type="sse")
 
@@ -43,17 +43,17 @@ class TestMCPServerConfig:
         assert config.env == {}  # Should be initialized to empty dict
         assert config.url is None
 
-    def test_post_init_args_initialization(self):
+    def test_post_init_args_initialization(self) -> None:
         """Test that __post_init__ initializes args when None."""
         config = MCPServerConfig(name="test", type="command", args=None)
         assert config.args == []
 
-    def test_post_init_env_initialization(self):
+    def test_post_init_env_initialization(self) -> None:
         """Test that __post_init__ initializes env when None."""
         config = MCPServerConfig(name="test", type="command", env=None)
         assert config.env == {}
 
-    def test_is_sse_server_property(self):
+    def test_is_sse_server_property(self) -> None:
         """Test is_sse_server property."""
         sse_config = MCPServerConfig(name="sse-server", type="sse")
         command_config = MCPServerConfig(name="cmd-server", type="command")
@@ -61,7 +61,7 @@ class TestMCPServerConfig:
         assert sse_config.is_sse_server is True
         assert command_config.is_sse_server is False
 
-    def test_is_command_server_property(self):
+    def test_is_command_server_property(self) -> None:
         """Test is_command_server property."""
         # Type is command
         command_config = MCPServerConfig(name="cmd-server", type="command")
@@ -79,7 +79,7 @@ class TestMCPServerConfig:
         sse_config = MCPServerConfig(name="sse-server", type="sse")
         assert sse_config.is_command_server is False
 
-    def test_sse_server_with_url(self):
+    def test_sse_server_with_url(self) -> None:
         """Test SSE server configuration with URL."""
         config = MCPServerConfig(
             name="sse-server",
@@ -95,7 +95,7 @@ class TestMCPServerConfig:
 class TestMCPCatalog:
     """Test MCP catalog functionality."""
 
-    def test_catalog_with_valid_config_file(self):
+    def test_catalog_with_valid_config_file(self) -> None:
         """Test catalog initialization with valid configuration file."""
         # Create a temporary config file
         config_data = {
@@ -128,12 +128,12 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_catalog_with_missing_config_file(self):
+    def test_catalog_with_missing_config_file(self) -> None:
         """Test catalog initialization with missing configuration file."""
         with pytest.raises(MCPException, match="MCP configuration file not found"):
             MCPCatalog("nonexistent.json")
 
-    def test_catalog_with_invalid_json(self):
+    def test_catalog_with_invalid_json(self) -> None:
         """Test catalog initialization with invalid JSON."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("{ invalid json }")
@@ -145,7 +145,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_catalog_with_non_dict_root(self):
+    def test_catalog_with_non_dict_root(self) -> None:
         """Test catalog initialization with non-dictionary root."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(["not", "a", "dict"], f)
@@ -157,7 +157,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_catalog_with_invalid_mcpservers(self):
+    def test_catalog_with_invalid_mcpservers(self) -> None:
         """Test catalog with invalid mcpServers structure."""
         config_data = {
             "mcpServers": "not a dict",  # Should be a dictionary
@@ -173,7 +173,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_catalog_with_mixed_server_types(self):
+    def test_catalog_with_mixed_server_types(self) -> None:
         """Test catalog with both command and SSE servers."""
         config_data = {
             "mcpServers": {
@@ -207,7 +207,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_catalog_with_default_command_type(self):
+    def test_catalog_with_default_command_type(self) -> None:
         """Test that servers default to command type."""
         config_data = {
             "mcpServers": {
@@ -233,7 +233,7 @@ class TestMCPCatalog:
             Path(temp_path).unlink()
 
     @patch("lib.mcp.catalog.logger")
-    def test_catalog_skips_invalid_server_configs(self, mock_logger):
+    def test_catalog_skips_invalid_server_configs(self, mock_logger) -> None:
         """Test that catalog skips invalid server configurations."""
         config_data = {
             "mcpServers": {
@@ -263,7 +263,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_get_server_config_success(self):
+    def test_get_server_config_success(self) -> None:
         """Test getting server configuration successfully."""
         config_data = {
             "mcpServers": {"test-server": {"type": "command", "command": "python"}},
@@ -283,7 +283,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_get_server_config_not_found(self):
+    def test_get_server_config_not_found(self) -> None:
         """Test getting configuration for non-existent server."""
         config_data = {"mcpServers": {}}
 
@@ -299,7 +299,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_list_servers(self):
+    def test_list_servers(self) -> None:
         """Test listing all available servers."""
         config_data = {
             "mcpServers": {
@@ -324,7 +324,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_has_server(self):
+    def test_has_server(self) -> None:
         """Test checking if server exists."""
         config_data = {
             "mcpServers": {"existing-server": {"type": "command", "command": "test"}},
@@ -342,7 +342,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_get_server_info(self):
+    def test_get_server_info(self) -> None:
         """Test getting detailed server information."""
         config_data = {
             "mcpServers": {
@@ -374,7 +374,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_reload_catalog(self):
+    def test_reload_catalog(self) -> None:
         """Test reloading catalog from configuration file."""
         # Create initial config
         initial_config = {
@@ -411,7 +411,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_catalog_str_representation(self):
+    def test_catalog_str_representation(self) -> None:
         """Test string representation of catalog."""
         config_data = {
             "mcpServers": {
@@ -434,7 +434,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_catalog_repr_representation(self):
+    def test_catalog_repr_representation(self) -> None:
         """Test debug representation of catalog."""
         config_data = {
             "mcpServers": {"test-server": {"type": "command", "command": "test"}},
@@ -454,7 +454,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_empty_mcpservers_section(self):
+    def test_empty_mcpservers_section(self) -> None:
         """Test catalog with empty mcpServers section."""
         config_data = {"mcpServers": {}}
 
@@ -470,7 +470,7 @@ class TestMCPCatalog:
         finally:
             Path(temp_path).unlink()
 
-    def test_missing_mcpservers_section(self):
+    def test_missing_mcpservers_section(self) -> None:
         """Test catalog with missing mcpServers section."""
         config_data = {"otherConfig": "value"}  # No mcpServers
 
