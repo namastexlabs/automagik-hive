@@ -82,7 +82,7 @@ class TestTriggerConversationTypificationWorkflow:
 
     @patch("ai.workflows.registry.get_workflow")
     @patch("ai.workflows.registry.is_workflow_registered")
-    def test_typification_without_metadata(self, mock_is_registered, mock_get_workflow):
+    def test_typification_without_metadata(self, mock_is_registered, mock_get_workflow) -> None:
         """Test typification completed but no metadata found."""
         mock_is_registered.return_value = True
 
@@ -128,7 +128,7 @@ class TestTriggerConversationTypificationWorkflow:
         assert "Tipificação concluída com sucesso!" in result
 
     @patch("ai.workflows.registry.is_workflow_registered")
-    def test_workflow_not_registered(self, mock_is_registered):
+    def test_workflow_not_registered(self, mock_is_registered) -> None:
         """Test when typification workflow is not registered."""
         mock_is_registered.return_value = False
 
@@ -143,7 +143,7 @@ class TestTriggerConversationTypificationWorkflow:
 
     @patch("ai.workflows.registry.get_workflow")
     @patch("ai.workflows.registry.is_workflow_registered")
-    def test_empty_workflow_results(self, mock_is_registered, mock_get_workflow):
+    def test_empty_workflow_results(self, mock_is_registered, mock_get_workflow) -> None:
         """Test when workflow returns no results."""
         mock_is_registered.return_value = True
 
@@ -161,7 +161,7 @@ class TestTriggerConversationTypificationWorkflow:
 
     @patch("ai.workflows.registry.get_workflow")
     @patch("ai.workflows.registry.is_workflow_registered")
-    def test_workflow_execution_exception(self, mock_is_registered, mock_get_workflow):
+    def test_workflow_execution_exception(self, mock_is_registered, mock_get_workflow) -> None:
         """Test when workflow execution raises an exception."""
         mock_is_registered.return_value = True
 
@@ -178,7 +178,7 @@ class TestTriggerConversationTypificationWorkflow:
         assert "Erro na tipificação: Workflow failed" in result
 
     @patch("ai.workflows.registry.is_workflow_registered")
-    def test_workflow_registry_import_exception(self, mock_is_registered):
+    def test_workflow_registry_import_exception(self, mock_is_registered) -> None:
         """Test when workflow registry import fails."""
         mock_is_registered.side_effect = ImportError("Cannot import workflow registry")
 
@@ -193,7 +193,7 @@ class TestTriggerConversationTypificationWorkflow:
 
     @patch("ai.workflows.registry.get_workflow")
     @patch("ai.workflows.registry.is_workflow_registered")
-    def test_multiple_workflow_results(self, mock_is_registered, mock_get_workflow):
+    def test_multiple_workflow_results(self, mock_is_registered, mock_get_workflow) -> None:
         """Test with multiple workflow results (should use the last one)."""
         mock_is_registered.return_value = True
 
@@ -222,7 +222,7 @@ class TestTriggerConversationTypificationWorkflow:
 class TestSendFarewellMessage:
     """Test farewell message generation."""
 
-    def test_standard_farewell_with_customer_name(self):
+    def test_standard_farewell_with_customer_name(self) -> None:
         """Test standard farewell message with customer name."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-12345",
@@ -235,7 +235,7 @@ class TestSendFarewellMessage:
         assert "Obrigado por entrar em contato" in result
         assert "finalizado com sucesso" in result
 
-    def test_grateful_farewell_with_customer_name(self):
+    def test_grateful_farewell_with_customer_name(self) -> None:
         """Test grateful farewell message with customer name."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-67890",
@@ -248,7 +248,7 @@ class TestSendFarewellMessage:
         assert "Fico feliz em ter ajudado" in result
         assert "Tenha um ótimo dia" in result
 
-    def test_professional_farewell_with_customer_name(self):
+    def test_professional_farewell_with_customer_name(self) -> None:
         """Test professional farewell message with customer name."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-11111",
@@ -261,7 +261,7 @@ class TestSendFarewellMessage:
         assert "Atendimento finalizado para" in result
         assert "Agradecemos" in result
 
-    def test_standard_farewell_without_customer_name(self):
+    def test_standard_farewell_without_customer_name(self) -> None:
         """Test standard farewell message without customer name."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-22222",
@@ -275,7 +275,7 @@ class TestSendFarewellMessage:
         assert "João" not in result
         assert "Maria" not in result
 
-    def test_grateful_farewell_without_customer_name(self):
+    def test_grateful_farewell_without_customer_name(self) -> None:
         """Test grateful farewell message without customer name."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-33333",
@@ -286,7 +286,7 @@ class TestSendFarewellMessage:
         assert "Fico feliz em ter ajudado" in result
         assert "Agradecemos" in result
 
-    def test_professional_farewell_without_customer_name(self):
+    def test_professional_farewell_without_customer_name(self) -> None:
         """Test professional farewell message without customer name."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-44444",
@@ -297,7 +297,7 @@ class TestSendFarewellMessage:
         assert "Atendimento finalizado com sucesso" in result
         assert "Agradecemos pela preferência" in result
 
-    def test_default_message_type(self):
+    def test_default_message_type(self) -> None:
         """Test that standard is the default message type."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-55555",
@@ -309,7 +309,7 @@ class TestSendFarewellMessage:
         assert "Obrigado por entrar em contato" in result
         assert "finalizado com sucesso" in result
 
-    def test_unknown_message_type_defaults_to_standard(self):
+    def test_unknown_message_type_defaults_to_standard(self) -> None:
         """Test that unknown message types default to standard."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-66666",
@@ -323,7 +323,7 @@ class TestSendFarewellMessage:
         assert "finalizado com sucesso" in result
 
     @patch("ai.agents.tools.finishing_tools.logger")
-    def test_logging_calls(self, mock_logger):
+    def test_logging_calls(self, mock_logger) -> None:
         """Test that appropriate logging calls are made."""
         send_farewell_message.entrypoint(
             protocol_id="PROTO-77777",
@@ -340,21 +340,21 @@ class TestSendFarewellMessage:
             "Farewell message created successfully" in call for call in log_calls
         )
 
-    def test_protocol_formatting(self):
+    def test_protocol_formatting(self) -> None:
         """Test protocol ID formatting in messages."""
         protocol_id = "PROTO-FORMAT-TEST"
         result = send_farewell_message.entrypoint(protocol_id=protocol_id)
 
         assert f"Protocolo: {protocol_id}" in result
 
-    def test_empty_protocol_id(self):
+    def test_empty_protocol_id(self) -> None:
         """Test behavior with empty protocol ID."""
         result = send_farewell_message.entrypoint(protocol_id="")
 
         assert "Protocolo:" in result
         assert "finalizado com sucesso" in result
 
-    def test_none_customer_name_handling(self):
+    def test_none_customer_name_handling(self) -> None:
         """Test explicit None customer name handling."""
         result = send_farewell_message.entrypoint(
             protocol_id="PROTO-NONE-TEST",
