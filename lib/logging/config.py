@@ -214,5 +214,6 @@ def ensure_logging_initialized():
         _logging_initialized = True
 
 
-# Auto-initialize on import for convenience
-ensure_logging_initialized()
+# CRITICAL FIX: Remove auto-initialization on import to prevent race condition
+# This was causing logging to be configured before .env files were loaded
+# Now logging is initialized explicitly in api/serve.py after environment setup

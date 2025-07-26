@@ -13,6 +13,13 @@ from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+# CRITICAL FIX: Load environment variables FIRST before any other imports
+# This ensures AGNO_LOG_LEVEL is available when logging system initializes
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # Silently continue - dotenv is optional for development
 
 # Add project root to path to import common module
 project_root = Path(__file__).parent.parent
@@ -24,16 +31,8 @@ from lib.config.server_config import get_server_config
 from lib.auth.dependencies import get_auth_service
 from lib.exceptions import ComponentLoadingError
 
-# Configure unified logging system first
+# Configure unified logging system AFTER environment variables are loaded
 from lib.logging import setup_logging, logger
-
-# Load environment variables
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    # Logger not available yet during startup, would create circular import
-    pass  # Silently continue - dotenv is optional for development
 
 
 # Initialize execution tracing system

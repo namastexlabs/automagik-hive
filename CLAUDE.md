@@ -56,50 +56,46 @@ tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_mo
 - **⚡ Workflows**: Multi-step processes with parallel execution, conditional logic, and state management
 - **🏭 Factory Pattern**: Registry-based component creation with version management and hot-reload
 
-## Development Commands
+## Agent Environment Commands
 
-### Quick Start
+### Essential Commands for AI Agents
+**🤖 LLM-optimized commands - all non-blocking, return terminal immediately:**
 ```bash
-# Universal installation
-curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
+# First-time setup (silent, no prompts, mirror environment)
+make install-agent  # Creates .env.agent, ports 38886/35532, separate DB
 
-# Local development
-make install        # Install with optional Docker PostgreSQL
-make dev           # Start development server with hot reload (user runs servers for testing)
+# Daily agent operations 
+make agent          # Start server in background, show startup logs, return terminal
+make agent-logs     # View logs (non-blocking, last 50 lines)
+make agent-restart  # Clean restart sequence  
+make agent-stop     # Clean shutdown with PID management
+make agent-status   # Quick environment check
 
-# Production deployment
-make prod          # Start Docker stack
-make status        # Check service status
+# Your isolated agent environment:
+# - Agent API: http://localhost:38886
+# - Agent DB: postgresql://localhost:35532  
+# - Agent config: .env.agent (auto-generated from .env.example)
+# - Isolated containers: hive-agents-agent, hive-postgres-agent
+# - Completely separate from any user environments
 ```
 
-### Development Workflow
+### Agent Development Workflow
 ```bash
-# Package management (uses UV - NEVER use python directly)
-uv sync            # Install dependencies
-uv sync --dev      # Install with dev dependencies
+# Package management (NEVER use python directly - always use uv)
+uv sync                           # Install dependencies when needed
+uv run ruff check --fix          # Lint and fix code automatically
+uv run mypy .                    # Type checking for quality assurance
+uv run pytest                   # Run tests to validate functionality
 
-# Code quality
-uv run ruff check --fix    # Lint and fix code
-uv run mypy .              # Type checking
-uv run pytest             # Run tests
-
-# Database operations
+# Database operations (when working with data)
 uv run alembic revision --autogenerate -m "Description"
 uv run alembic upgrade head
-```
 
-### Testing
-```bash
-# Run all tests
-uv run pytest
-
-# Specific test suites
-uv run pytest tests/agents/
-uv run pytest tests/workflows/ 
-uv run pytest tests/api/
-
-# With coverage
-uv run pytest --cov=ai --cov=api --cov=lib
+# Testing commands for validation
+uv run pytest tests/agents/      # Test agent functionality
+uv run pytest tests/workflows/   # Test workflow orchestration  
+uv run pytest tests/api/         # Test API endpoints
+uv run pytest --cov=ai --cov=api --cov=lib  # With test coverage
 ```
 
 ## Core Development Patterns
