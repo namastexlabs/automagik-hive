@@ -5,12 +5,12 @@ This demonstrates the complete working AGNO native metrics implementation
 as a drop-in replacement for manual extraction.
 """
 
-import os
 import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-
+import time
 from dataclasses import dataclass
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
 
 from lib.metrics import (
     AgnoMetricsBridge,
@@ -151,7 +151,8 @@ def test_async_metrics_service_integration():
     yaml_overrides = {"agent_version": "1.2.3", "execution_context": "integration_test"}
 
     # This calls the AgnoMetricsBridge under the hood
-    metrics = service._extract_metrics_from_response(response, yaml_overrides)
+    # Note: Using private method for testing - consider making public if needed
+    metrics = service._extract_metrics_from_response(response, yaml_overrides)  # noqa: SLF001
 
     # Verify AGNO metrics were extracted
     assert "input_tokens" in metrics, "Should have AGNO input tokens"
@@ -187,14 +188,14 @@ def test_langwatch_integration():
 
         assert len(metrics) > 10, "Should extract comprehensive metrics"
 
-    except Exception:
+    except (ImportError, AttributeError, ValueError):
+        # Handle specific exceptions that might occur during testing
+        # Silently pass for expected testing failures
         pass
 
 
 def test_performance_comparison():
     """Test and compare performance characteristics."""
-    import time
-
     bridge = AgnoMetricsBridge()
     response = MockAdvancedAgnoResponse()
 
@@ -256,8 +257,9 @@ if __name__ == "__main__":
         test_performance_comparison()
         test_configuration_flexibility()
 
-    except Exception:
+    except (ImportError, AttributeError, AssertionError, SystemExit):
         import traceback
 
         traceback.print_exc()
+        # Integration test failed - exit with error code
         sys.exit(1)
