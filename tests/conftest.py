@@ -61,7 +61,9 @@ def mock_database() -> Generator[Mock, None, None]:
 
 
 @pytest.fixture
-def mock_component_registries() -> Generator[dict[str, dict[str, dict[str, Any]]], None, None]:
+def mock_component_registries() -> Generator[
+    dict[str, dict[str, dict[str, Any]]], None, None
+]:
     """Mock component registries to avoid loading real agents/teams/workflows."""
     mock_agents = {
         "test-agent": {
