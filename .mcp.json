@@ -43,7 +43,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql+psycopg://OFIJIbWL5Vf31ShT:sEPbSrZU7rRla8xp@localhost:35532/hive_agent"
+        "postgresql+psycopg://cV1VOWsqo0JruxYs:WI1IQUzR8gis9diA@localhost:35532/hive_agent"
       ]
     },
     "automagik-hive": {
@@ -54,8 +54,8 @@
         "automagik-hive"
       ],
       "env": {
-        "HIVE_API_BASE_URL": "http://localhost:8886",
-        "HIVE_API_KEY": "hive_h8nNeADei98fLVwEACjnGMgsXj8SUxPDrsrYUDu6WLU",
+        "HIVE_API_BASE_URL": "http://localhost:38886",
+        "HIVE_API_KEY": "hive_U8AO1fE8_mYh80ObdHjkMBahXhsQZj4vGd0_K_Ng1UI",
         "HIVE_TIMEOUT": "300"
       }
     }
