@@ -9,6 +9,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -40,11 +41,11 @@ class MockAdvancedSessionMetrics:
     reasoning_tokens: int = 75
     time: float = 2.456
     time_to_first_token: float = 0.234
-    prompt_tokens_details: dict = None
-    completion_tokens_details: dict = None
-    additional_metrics: dict = None
+    prompt_tokens_details: Optional[Dict[str, Any]] = None
+    completion_tokens_details: Optional[Dict[str, Any]] = None
+    additional_metrics: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.prompt_tokens_details = {"cached_tokens": 45}
         self.completion_tokens_details = {"reasoning_tokens": 75}
         self.additional_metrics = {"model_version": "gpt-4o-2024-12-01"}
@@ -54,16 +55,16 @@ class MockAdvancedSessionMetrics:
 class MockAdvancedAgnoResponse:
     """Mock AGNO response with comprehensive metrics."""
 
-    session_metrics: MockAdvancedSessionMetrics = None
+    session_metrics: Optional[MockAdvancedSessionMetrics] = None
     content: str = "This is an advanced AGNO response with comprehensive metrics including audio tokens, reasoning tokens, and cache metrics."
     model: str = "gpt-4o"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.session_metrics is None:
             self.session_metrics = MockAdvancedSessionMetrics()
 
 
-def test_metrics_system_status():
+def test_metrics_system_status() -> None:
     """Test the overall metrics system status."""
     status = get_metrics_status()
 
@@ -79,7 +80,7 @@ def test_metrics_system_status():
     assert status["bridge_version"] == "1.0.0", "Should have bridge version"
 
 
-def test_agno_metrics_bridge_comprehensive():
+def test_agno_metrics_bridge_comprehensive() -> None:
     """Test comprehensive AGNO metrics extraction."""
     # Create bridge with full configuration
     config = MetricsConfig(
@@ -134,7 +135,7 @@ def test_agno_metrics_bridge_comprehensive():
         assert field in metrics, f"Missing advanced field: {field}"
 
 
-def test_async_metrics_service_integration():
+def test_async_metrics_service_integration() -> None:
     """Test AsyncMetricsService with AgnoMetricsBridge integration."""
     # Create service with metrics config
     config = {
@@ -164,7 +165,7 @@ def test_async_metrics_service_integration():
     assert metrics["agent_version"] == "1.2.3", "Should have correct override value"
 
 
-def test_langwatch_integration():
+def test_langwatch_integration() -> None:
     """Test LangWatch integration setup."""
     # Test LangWatch manager (without actual LangWatch dependency)
     langwatch_manager = LangWatchManager(enabled=False)
@@ -194,7 +195,7 @@ def test_langwatch_integration():
         pass
 
 
-def test_performance_comparison():
+def test_performance_comparison() -> None:
     """Test and compare performance characteristics."""
     bridge = AgnoMetricsBridge()
     response = MockAdvancedAgnoResponse()
@@ -216,7 +217,7 @@ def test_performance_comparison():
         pass
 
 
-def test_configuration_flexibility():
+def test_configuration_flexibility() -> None:
     """Test configuration flexibility and filtering."""
     response = MockAdvancedAgnoResponse()
 

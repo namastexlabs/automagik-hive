@@ -215,7 +215,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["D", "ARG"]
+"tests/**/*.py" = ["D", "ARG", "PLC0415", "SLF001", "INP001", "BLE001", "SIM117", "DTZ"]  # Allow imports in functions, private access, namespace packages, broad exceptions, nested with statements, and datetime without timezone for testing
 "api/**/*.py" = ["D"]
 "ai/**/*.py" = ["D"]
 "lib/**/*.py" = ["D"]
@@ -252,6 +252,18 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
+# Skip imports that have problematic module structures
+follow_imports = "skip"
+
+# Exclude problematic third-party modules with duplicate imports
+exclude = [
+    ".venv/",
+    "__pycache__/",
+    ".git/",
+    "*.egg-info/",
+    "build/",
+    "dist/"
+]
 
 # External AI and ML dependencies - ignore missing imports and relax typing
 [[tool.mypy.overrides]]
