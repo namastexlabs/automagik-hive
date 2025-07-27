@@ -24,43 +24,38 @@ dependencies = [
     # === Core Framework ===
     # Agno bundles: httpx, pydantic, python-dotenv, rich, pyyaml, gitpython, typer
     "agno==1.7.5",
-    
     # === System Utilities ===
-    "aiofiles>=24.1.0",          # Async file operations
-    "jinja2>=3.1.6",             # Template rendering
-    "markdown>=3.8.2",           # Markdown processing
-    "watchdog>=6.0.0",           # File system monitoring
-    "psutil>=5.9.0",             # System process utilities
-    
+    "aiofiles>=24.1.0", # Async file operations
+    "jinja2>=3.1.6", # Template rendering
+    "markdown>=3.8.2", # Markdown processing
+    "watchdog>=6.0.0", # File system monitoring
+    "psutil>=5.9.0", # System process utilities
     # === Database Stack ===
-    "asyncpg>=0.29.0",           # Async PostgreSQL driver
-    "pgvector>=0.2.0",           # Vector operations for PostgreSQL
-    "alembic>=1.16.4",           # Database migrations
-    "psycopg[binary]>=3.1.0",    # PostgreSQL adapter
-    "psycopg-pool>=3.1.0",       # Connection pooling
-    "sqlalchemy>=2.0.0",         # ORM and database toolkit
-    
+    "asyncpg>=0.29.0", # Async PostgreSQL driver
+    "pgvector>=0.2.0", # Vector operations for PostgreSQL
+    "alembic>=1.16.4", # Database migrations
+    "psycopg[binary]>=3.1.0", # PostgreSQL adapter
+    "psycopg-pool>=3.1.0", # Connection pooling
+    "sqlalchemy>=2.0.0", # ORM and database toolkit
     # === AI Providers ===
-    "anthropic>=0.31.0",         # Claude/Anthropic API
-    "openai>=1.93.2",            # OpenAI API (GPT-4, etc.)
-    "cohere>=5.15.0",            # Cohere API
+    "anthropic>=0.31.0", # Claude/Anthropic API
+    "openai>=1.93.2", # OpenAI API (GPT-4, etc.)
+    "cohere>=5.15.0", # Cohere API
     "google-generativeai>=0.8.5", # Gemini API
-    "google-genai>=1.25.0",      # Google AI SDK
-    
+    "google-genai>=1.25.0", # Google AI SDK
     # === Web Framework ===
-    "fastapi>=0.116.0",          # High-performance web framework
-    "uvicorn>=0.35.0",           # ASGI server
-    "aiohttp>=3.12.14",          # Async HTTP client/server
-    "requests>=2.32.4",          # HTTP library
-    
+    "fastapi>=0.116.0", # High-performance web framework
+    "uvicorn>=0.35.0", # ASGI server
+    "aiohttp>=3.12.14", # Async HTTP client/server
+    "requests>=2.32.4", # HTTP library
     # === Observability & Integration ===
-    "mcp>=1.10.1",               # Model Context Protocol
-    "loguru>=0.7.3",             # Enhanced logging
-    "langwatch>=0.2.9",          # LLM monitoring
+    "mcp>=1.10.1", # Model Context Protocol
+    "loguru>=0.7.3", # Enhanced logging
+    "langwatch>=0.2.9", # LLM monitoring
     "openinference-instrumentation-agno>=0.1.9", # Agno instrumentation
-    
     # === Data Processing ===
-    "pandas>=2.3.1",             # Data manipulation and analysis
+    "pandas>=2.3.1", # Data manipulation and analysis
+    "tdd-guard-pytest>=0.1.0",
 ]
 
 [project.optional-dependencies]

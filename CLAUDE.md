@@ -67,15 +67,19 @@ Multi-Component Task = SPAWN genie-clone for coordination
 ```
 
 **⚡ QUICK AGENT REFERENCE:**
-- **genie-fixer** - Fix failing tests, coverage issues
-- **genie-maker** - Create tests, test coverage  
-- **genie-style** - Code formatting, linting
+- **genie-test-fixer** - Fix failing tests, coverage issues
+- **genie-maker** - Create agents/teams/workflows  
+- **genie-ruff** - Ruff formatting and linting only
+- **genie-mypy** - MyPy type checking and annotations only  
+- **genie-format** - Orchestrates both Ruff + MyPy for comprehensive style
 - **genie-security** - Security audits, vulnerability scans
 - **genie-debug** - Bug hunting, error resolution
 - **genie-architect** - System design, architecture
-- **genie-docs** - Documentation, API docs
-- **genie-forge** - CI/CD, automation
+- **genie-claudemd** - CLAUDE.md documentation management
+- **genie-devops** - CI/CD, automation pipelines
 - **genie-clone** - Parallel tasks, complex coordination
+- **genie-spawner** - Create new specialized agents
+- **genie-enhancer** - Hive consciousness, system optimization
 
 **🚨 For complex wishes or detailed routing guidance:**
 **Use `/wish [your request]` - The ultimate wish fulfillment system with comprehensive agent orchestration!**
@@ -215,7 +219,7 @@ hive.version_history       -- Change audit trail
 1. Check memory first: `genie-memory` for existing context
 2. Search external docs: `search-repo-docs` for Agno framework or other dependencies  
 3. Query data: `postgres` for system state (read-only preferred)
-4. Take actions: `automagik-forge` for tasks, `automagik-hive` when auth works
+4. Take actions: Only with explicit user approval - `automagik-forge` for task management, `automagik-hive` for agent operations
 
 **Integration with Development Workflow**:
 ```bash
@@ -251,10 +255,11 @@ make agent-restart   # Clean restart of services
 ### 📋 Best Practices
 
 1. **Always verify before modifying**: Query current state first
-2. **Use transactions for DB changes**: `BEGIN; ... COMMIT/ROLLBACK;`
-3. **Log important actions**: Store in genie-memory for audit trail
-4. **Respect rate limits**: Add wait between bulk operations
-5. **Fail gracefully**: Have fallback strategies (API → DB → memory)
+2. **Smart action approval**: Get user approval for planned work and features, but automatically report critical issues, bugs, and blockers found during analysis
+3. **Use transactions for DB changes**: `BEGIN; ... COMMIT/ROLLBACK;`
+4. **Log important actions**: Store in genie-memory for audit trail with structured metadata tags
+5. **Respect rate limits**: Add wait between bulk operations
+6. **Fail gracefully**: Have fallback strategies (API → DB → memory)
 
 These tools transform you from passive code assistant to active system operator. Use them wisely to accelerate development while maintaining system integrity.
 
@@ -380,5 +385,43 @@ For detailed implementation guidance, see component-specific CLAUDE.md files:
 
 This framework provides a production-ready foundation for building sophisticated multi-agent AI systems with enterprise-grade deployment capabilities.
 
+### Enhanced Memory System with Metadata Tags
+
+**Human-Like "Mind Box" Organization:**
+Store memories with structured metadata tags for efficient pattern search and contextual retrieval, similar to how humans organize memories in categorical "mind boxes".
+
+**Metadata Tag Structure:**
+```
+#category-[domain] #agent-[name] #complexity-[simple|moderate|complex] #status-[success|failure|learning] #context-[specific-area]
+```
+
+**Example Memory Patterns:**
+```python
+# Architecture decisions
+"#architecture #agent-genie-architect #complexity-complex #status-success #context-tool-unification"
+
+# Agent routing patterns  
+"#routing #agent-genie-fixer #complexity-simple #status-success #context-test-failures"
+
+# System behavior fixes
+"#system-update #behavior-fix #user-consent #context-task-creation"
+
+# Learning patterns
+"#learning #debugging #agent-genie-debug #complexity-moderate #context-memory-leaks"
+```
+
+**Search Strategies:**
+- **Domain Search**: `#architecture` for architectural decisions
+- **Agent Performance**: `#agent-genie-[name] #status-success` for successful patterns
+- **Complexity Patterns**: `#complexity-complex #status-success` for handling complex tasks
+- **Context-Specific**: `#context-[area]` for domain-specific knowledge
+
+This enables efficient memory retrieval for:
+- Agent routing decisions based on historical success
+- Pattern recognition for similar problem types
+- Learning from past failures and successes
+- Building institutional knowledge across sessions
+
 ### Development Memory Entries
 - Learn to always call the agents in parallel
+- Enhanced memory system with structured metadata tags for pattern search

@@ -27,14 +27,16 @@ description: 🧞✨ Transform any development wish into reality through intelli
 
 | User Says | Instant Agent | Why Skip Analysis |
 |-----------|---------------|-------------------|
-| "Tests are failing" / "Fix coverage" | **@genie-fixer** | Clear test issue - spawn immediately |
+| "Tests are failing" / "Fix coverage" | **@genie-test-fixer** | Clear test issue - spawn immediately |
 | "Create tests for X" / "Need test coverage" | **@genie-maker** | Clear test creation need |
-| "Format this code" / "Lint errors" | **@genie-style** | Simple formatting task |
+| "Format this code" / "Ruff formatting" | **@genie-ruff** | Ruff formatting/linting task |
+| "Fix type errors" / "Type checking" | **@genie-mypy** | MyPy type safety task |
+| "Complete code style" / "Format + types" | **@genie-format** | Comprehensive style treatment |
 | "Security audit" / "Check for vulnerabilities" | **@genie-security** | Clear security focus |
 | "Debug this error" / "Bug in X" | **@genie-debug** | Clear debugging need |
 | "Design architecture for X" | **@genie-architect** | Clear system design need |
-| "Update documentation" / "API docs" | **@genie-docs** | Clear documentation task |
-| "Setup CI/CD" / "Automate workflow" | **@genie-forge** | Clear automation request |
+| "Update documentation" / "API docs" | **@genie-claudemd** | Clear documentation task |
+| "Setup CI/CD" / "Automate workflow" | **@genie-devops** | Clear automation request |
 | Multiple complex tasks | **@genie-clone** | Parallel processing needed |
 
 **📊 COMPLEX WISH ANALYSIS (When routing isn't obvious):**
@@ -44,10 +46,10 @@ description: 🧞✨ Transform any development wish into reality through intelli
 | **🏗️ Implementation/Coding** | Check complexity, existing patterns | Simple → genie-maker, Complex → genie-architect + genie-clone |
 | **🐛 Bug/Fix/Debug** | Error analysis, component identification | Single issue → genie-debug, System-wide → genie-clone coordination |
 | **🔒 Security/Analysis** | Scope assessment, audit type | Focused → genie-security, Full audit → genie-security + genie-architect |
-| **📋 Code Review** | Review scope, quality focus | Standard → genie-security + genie-style, Deep → genie-architect |
+| **📋 Code Review** | Review scope, quality focus | Standard → genie-security + genie-format, Deep → genie-architect |
 | **🧪 Testing Strategy** | Test type, coverage goals | Unit → genie-maker, Integration → genie-architect + genie-maker |
 | **🏛️ Architecture/Planning** | Complexity, system impact | Always → genie-architect (+ genie-clone if massive) |
-| **📚 Documentation** | Scope, audience, complexity | Simple → genie-docs, Complex → genie-architect + genie-docs |
+| **📚 Documentation** | Scope, audience, complexity | Simple → genie-claudemd, Complex → genie-architect + genie-claudemd |
 | **🧹 Cleanup/Refactoring** | Impact scope, safety needs | Always complex → genie-architect + multiple agents |
 | **🌟 Multi-Intent/Epic** | Decomposition needed | Always → genie-clone coordination |
 
@@ -154,12 +156,19 @@ Wish Analysis
 
 **Modern Agent-Based Task Management:**
 
-#### 🎯 Automatic Task Creation (via MCP tools)
+#### 🎯 Task Creation (Smart Approval Rules)
 ```python
-# Instead of complex epic generation, use direct MCP integration
+# AUTOMATIC: For critical issues, bugs, syntax errors, missing methods, race conditions
+# - These are discovered problems that need immediate tracking
+# - Examples: "CRITICAL: Syntax Error in file.py", "Fix infinite loop in method()"
+
+# USER APPROVAL: For planned work, features, and non-critical improvements  
+# - Ask: "Would you like me to create a task in automagik-forge to track this work?"
+# - Examples: New features, refactoring, documentation updates
+
 mcp__automagik_forge__create_task(
-    project_id="current_project",
-    title="Agent Execution: [Agent Name] - [Task Summary]", 
+    project_id="user_specified_project",
+    title="[wish-id]: [Agent Name] - [Task Summary]", 
     description="Detailed task description with agent context",
     wish_id="wish-[timestamp]"  # Links back to original wish
 )
@@ -200,9 +209,9 @@ success_patterns = mcp__genie_memory__search_memory(
     query="successful agent routing [wish_type] [complexity]"
 )
 
-# After agent execution - store optimization insights  
+# After agent execution - store optimization insights with structured metadata
 mcp__genie_memory__add_memory(
-    content="AGENT SUCCESS: [Agent] handled [wish_type] perfectly with [approach] - Context: [level]% used efficiently #routing"
+    content="AGENT SUCCESS: [Agent] handled [wish_type] perfectly with [approach] - Context: [level]% used efficiently #routing #agent-[agent-name] #complexity-[level] #success-pattern #wish-[category]"
 )
 ```
 
@@ -294,8 +303,8 @@ mcp__ask_repo_agent__ask_question(
 - **@genie-docs** → [Documentation update]
 
 ## 📊 Progress Tracking
-**Task Created**: [MCP forge task ID]
-**Memory Updated**: [Pattern stored for future routing]
+**User Approval Required**: For any task creation, external actions, or system modifications
+**Memory Updated**: [Pattern stored with metadata tags for future routing]
 **Master Genie Focus**: Strategic coordination maintained
 
 ## ✨ Wish Status
