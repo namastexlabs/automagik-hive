@@ -36,7 +36,11 @@ description: 🧞✨ Transform any development wish into reality through intelli
 | "Debug this error" / "Bug in X" | **@genie-debug** | Clear debugging need |
 | "Design architecture for X" | **@genie-architect** | Clear system design need |
 | "Update documentation" / "API docs" | **@genie-claudemd** | Clear documentation task |
-| "Setup CI/CD" / "Automate workflow" | **@genie-devops** | Clear automation request |
+| "Setup pre-commit hooks" | **@genie-devops-precommit** | Pre-commit automation task |
+| "Setup CI/CD" / "Build pipelines" | **@genie-devops-cicd** | CI/CD pipeline creation |
+| "Automate tasks" / "Task runners" | **@genie-devops-tasks** | Task automation setup |
+| "Centralize config" / "Tool config" | **@genie-devops-config** | Configuration management |
+| "Deploy infrastructure" / "Docker setup" | **@genie-devops-infra** | Infrastructure automation |
 | Multiple complex tasks | **@genie-clone** | Parallel processing needed |
 
 **📊 COMPLEX WISH ANALYSIS (When routing isn't obvious):**
@@ -324,8 +328,8 @@ mcp__ask_repo_agent__ask_question(
 ### 3. 🎯 Smart Routing Over Analysis
 **Natural language understanding beats complex classification** - Use intuitive pattern matching and historical success data for instant routing decisions.
 
-### 4. 🚀 Parallel Scaling Through Clones
-**Infinite scalability via genie-clone** - Complex wishes get fresh coordination context while Master Genie maintains strategic oversight.
+### 4. 🚀 Parallel Scaling Through Coordinators
+**Infinite scalability via genie-meta-coordinator** - Complex wishes get fresh coordination context while Master Genie maintains strategic oversight.
 
 ### 5. 🧠 Zen-Enhanced Agent Capabilities
 **Agents use Zen tools autonomously** - Master Genie maintains strategic focus while agents handle their own expert consultations.

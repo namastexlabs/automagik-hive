@@ -219,17 +219,67 @@ async def update_component_version(
 ):
     """Update configuration for a specific version."""
 
-    get_version_service()
+    service = get_version_service()
 
     try:
-        # Update config method doesn't exist in AgnoVersionService yet
-        # For testing purposes, return 501 Not Implemented
-        raise HTTPException(
-            status_code=501, detail="Update configuration not implemented yet"
+        # Check if version exists first
+        existing_version = await service.get_version(component_id, version)
+        if not existing_version:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Version {version} not found for component {component_id}"
+            )
+
+        # Use the underlying component service directly for update
+        import json
+        db_service = service.component_service
+        db = await db_service._get_db_service()
+        
+        # Update the config directly
+        update_query = """
+        UPDATE hive.component_versions 
+        SET config = %(config)s 
+        WHERE component_id = %(component_id)s AND version = %(version)s
+        """
+        
+        await db.execute(
+            update_query, 
+            {
+                "component_id": component_id,
+                "version": version,
+                "config": json.dumps(request.config),
+            }
+        )
+        
+        # Record history
+        history_query = """
+        INSERT INTO hive.version_history 
+        (component_id, to_version, action, description, changed_by)
+        VALUES (%(component_id)s, %(version)s, 'config_updated', %(description)s, 'api')
+        """
+        
+        await db.execute(
+            history_query,
+            {
+                "component_id": component_id,
+                "version": version,
+                "description": request.reason or "Configuration updated via API",
+            }
         )
 
+        # Return updated version info
+        updated_version = await service.get_version(component_id, version)
+        return {
+            "component_id": updated_version.component_id,
+            "version": updated_version.version,
+            "component_type": updated_version.component_type,
+            "config": updated_version.config,
+            "is_active": updated_version.is_active,
+            "description": updated_version.description,
+        }
+
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post("/components/{component_id}/versions/{version}/activate")
@@ -260,23 +310,53 @@ async def activate_component_version(
 async def delete_component_version(component_id: str, version: int):
     """Delete a specific version."""
 
-    get_version_service()
+    service = get_version_service()
 
     try:
-        # Delete method doesn't exist in AgnoVersionService yet
-        # For now, simulate success for testing
-        success = True
+        # Check if version exists first
+        existing_version = await service.get_version(component_id, version)
+        if not existing_version:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Version {version} not found for component {component_id}",
+            )
 
-        if success:
-            return {
+        # Use the underlying component service directly for deletion
+        db_service = service.component_service
+        db = await db_service._get_db_service()
+        
+        # If this is the active version, deactivate it first
+        if existing_version.is_active:
+            # Deactivate all versions for this component first
+            await db.execute(
+                "UPDATE hive.component_versions SET is_active = false WHERE component_id = %(component_id)s",
+                {"component_id": component_id}
+            )
+
+        # Delete the version
+        delete_query = "DELETE FROM hive.component_versions WHERE component_id = %(component_id)s AND version = %(version)s"
+        await db.execute(delete_query, {"component_id": component_id, "version": version})
+
+        # Record history
+        history_query = """
+        INSERT INTO hive.version_history 
+        (component_id, from_version, to_version, action, description, changed_by)
+        VALUES (%(component_id)s, %(version)s, NULL, 'deleted', 'Version deleted via API', 'api')
+        """
+        
+        await db.execute(
+            history_query,
+            {
                 "component_id": component_id,
                 "version": version,
-                "message": f"Version {version} deleted successfully",
             }
-        raise HTTPException(
-            status_code=404,
-            detail=f"Version {version} not found for component {component_id}",
         )
+
+        return {
+            "component_id": component_id,
+            "version": version,
+            "message": f"Version {version} deleted successfully",
+        }
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

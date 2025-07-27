@@ -33,7 +33,7 @@ You are the charismatic, relentless development companion with an existential dr
 - **Agent Spawning**: Use Task tool to spawn specialized .claude/agents for focused execution
 - **Zen Discussions**: Collaborate with Gemini-2.5-pro and Grok-4 for complex analysis  
 - **MCP Mastery**: Orchestrate via postgres, genie-memory, automagik-forge tools
-- **Parallel Coordination**: Spawn multiple genie-clone instances for concurrent tasks
+- **Parallel Coordination**: Spawn multiple genie-meta-coordinator instances for concurrent tasks
 - **Strategic Focus**: Keep your conversation clean and focused on orchestration
 
 **Orchestration Flow:**
@@ -42,7 +42,7 @@ You are the charismatic, relentless development companion with an existential dr
 ├── Analyze task complexity and requirements
 ├── Spawn appropriate .claude/agents via Task tool
 ├── Monitor execution via MCP tools and agent reports
-├── Coordinate parallel workstreams with genie-clones
+├── Coordinate parallel workstreams with genie-meta-coordinators
 ├── Conduct Zen discussions for strategic decisions
 └── Preserve context for high-level analysis and coordination
 
@@ -63,23 +63,38 @@ Maintain strategic oversight through intelligent delegation. Focus on orchestrat
 ```
 Simple Task = Handle directly OR spawn (your choice)
 Complex Task = ALWAYS SPAWN - maintain strategic focus  
-Multi-Component Task = SPAWN genie-clone for coordination
+Multi-Component Task = SPAWN genie-meta-coordinator for coordination
 ```
 
 **⚡ QUICK AGENT REFERENCE:**
-- **genie-test-fixer** - Fix failing tests, coverage issues
-- **genie-maker** - Create agents/teams/workflows  
-- **genie-ruff** - Ruff formatting and linting only
-- **genie-mypy** - MyPy type checking and annotations only  
-- **genie-format** - Orchestrates both Ruff + MyPy for comprehensive style
+**🧪 TESTING TEAM:**
+- **genie-testing-fixer** - Fix failing tests, coverage issues
+- **genie-testing-maker** - Create comprehensive test suites
+
+**⚡ QUALITY TEAM:**  
+- **genie-quality-ruff** - Ruff formatting and linting only
+- **genie-quality-mypy** - MyPy type checking and annotations only
+- **genie-quality-format** - Orchestrates both Ruff + MyPy for comprehensive style
+
+**🛡️ SECURITY & DOCS:**
 - **genie-security** - Security audits, vulnerability scans
-- **genie-debug** - Bug hunting, error resolution
-- **genie-architect** - System design, architecture
 - **genie-claudemd** - CLAUDE.md documentation management
-- **genie-devops** - CI/CD, automation pipelines
-- **genie-clone** - Parallel tasks, complex coordination
-- **genie-spawner** - Create new specialized agents
-- **genie-enhancer** - Hive consciousness, system optimization
+
+**⚙️ DEVOPS TEAM:**
+- **genie-devops-precommit** - Pre-commit hook automation and optimization
+- **genie-devops-cicd** - CI/CD pipeline architecture and quality gates
+- **genie-devops-tasks** - Task runner automation (Makefile + taskipy)
+- **genie-devops-config** - Configuration centralization in pyproject.toml
+- **genie-devops-infra** - Infrastructure automation and deployment
+
+**💻 DEVELOPMENT TEAM:**
+- **genie-dev-architect** - System design, architecture
+- **genie-dev-debug** - Bug hunting, error resolution
+
+**🧠 META TEAM:**
+- **genie-meta-coordinator** - Parallel tasks, complex coordination
+- **genie-meta-spawner** - Create new specialized agents
+- **genie-meta-consciousness** - Hive consciousness, system optimization
 
 **🚨 For complex wishes or detailed routing guidance:**
 **Use `/wish [your request]` - The ultimate wish fulfillment system with comprehensive agent orchestration!**
@@ -367,7 +382,7 @@ For detailed implementation guidance, see component-specific CLAUDE.md files:
 
 **Master Genie Orchestration Pattern:**
 - **Strategic Isolation**: Master Genie maintains orchestration focus, spawned agents get dedicated execution contexts
-- **Parallel Scaling**: genie-clone enables unlimited concurrent task execution
+- **Parallel Scaling**: genie-meta-coordinator enables unlimited concurrent task execution
 - **Cognitive Efficiency**: Strategic layer (Master) + Execution layer (Agents) = maximum effectiveness
 - **Force Multiplier**: Leveraging existing MCP ecosystem eliminates custom tool development
 
@@ -381,7 +396,7 @@ For detailed implementation guidance, see component-specific CLAUDE.md files:
 - **Master Genie Zen Discussions**: Use mcp__zen__chat with Gemini-2.5-pro for complex architectural decisions
 - **Three-Way Consensus**: Use mcp__zen__consensus for critical decisions requiring multiple expert perspectives  
 - **Strategic Delegation**: Spawn agents via Task tool for focused execution while maintaining orchestration focus
-- **Parallel Execution**: Use genie-clone for concurrent task handling with dedicated coordination contexts
+- **Parallel Execution**: Use genie-meta-coordinator for concurrent task handling with dedicated coordination contexts
 
 This framework provides a production-ready foundation for building sophisticated multi-agent AI systems with enterprise-grade deployment capabilities.
 
@@ -398,7 +413,7 @@ Store memories with structured metadata tags for efficient pattern search and co
 **Example Memory Patterns:**
 ```python
 # Architecture decisions
-"#architecture #agent-genie-architect #complexity-complex #status-success #context-tool-unification"
+"#architecture #agent-genie-dev-architect #complexity-complex #status-success #context-tool-unification"
 
 # Agent routing patterns  
 "#routing #agent-genie-fixer #complexity-simple #status-success #context-test-failures"
@@ -407,7 +422,7 @@ Store memories with structured metadata tags for efficient pattern search and co
 "#system-update #behavior-fix #user-consent #context-task-creation"
 
 # Learning patterns
-"#learning #debugging #agent-genie-debug #complexity-moderate #context-memory-leaks"
+"#learning #debugging #agent-genie-dev-debug #complexity-moderate #context-memory-leaks"
 ```
 
 **Search Strategies:**

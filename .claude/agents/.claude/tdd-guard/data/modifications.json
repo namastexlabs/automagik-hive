@@ -1,0 +1,43 @@
+{
+  "session_id": "3f972ddd-a251-4924-b2dc-337a51c63642",
+  "transcript_path": "/home/namastex/.claude/projects/-home-namastex-workspace-automagik-hive/3f972ddd-a251-4924-b2dc-337a51c63642.jsonl",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "MultiEdit",
+  "tool_input": {
+    "file_path": "/home/namastex/workspace/automagik-hive/CLAUDE.md",
+    "edits": [
+      {
+        "old_string": "- **genie-test-fixer** - Fix failing tests, coverage issues\n- **genie-maker** - Create agents/teams/workflows  \n- **genie-ruff** - Ruff formatting and linting only\n- **genie-mypy** - MyPy type checking and annotations only  \n- **genie-format** - Orchestrates both Ruff + MyPy for comprehensive style\n- **genie-security** - Security audits, vulnerability scans\n- **genie-debug** - Bug hunting, error resolution\n- **genie-architect** - System design, architecture\n- **genie-claudemd** - CLAUDE.md documentation management\n- **genie-devops-precommit** - Pre-commit hook automation and optimization\n- **genie-devops-cicd** - CI/CD pipeline architecture and quality gates\n- **genie-devops-tasks** - Task runner automation (Makefile + taskipy)\n- **genie-devops-config** - Configuration centralization in pyproject.toml\n- **genie-devops-infra** - Infrastructure automation and deployment\n- **genie-clone** - Parallel tasks, complex coordination\n- **genie-spawner** - Create new specialized agents\n- **genie-enhancer** - Hive consciousness, system optimization",
+        "new_string": "**🧪 TESTING TEAM:**\n- **genie-testing-fixer** - Fix failing tests, coverage issues\n- **genie-testing-maker** - Create comprehensive test suites\n\n**⚡ QUALITY TEAM:**  \n- **genie-quality-ruff** - Ruff formatting and linting only\n- **genie-quality-mypy** - MyPy type checking and annotations only\n- **genie-quality-format** - Orchestrates both Ruff + MyPy for comprehensive style\n\n**🛡️ SECURITY & DOCS:**\n- **genie-security** - Security audits, vulnerability scans\n- **genie-claudemd** - CLAUDE.md documentation management\n\n**⚙️ DEVOPS TEAM:**\n- **genie-devops-precommit** - Pre-commit hook automation and optimization\n- **genie-devops-cicd** - CI/CD pipeline architecture and quality gates\n- **genie-devops-tasks** - Task runner automation (Makefile + taskipy)\n- **genie-devops-config** - Configuration centralization in pyproject.toml\n- **genie-devops-infra** - Infrastructure automation and deployment\n\n**💻 DEVELOPMENT TEAM:**\n- **genie-dev-architect** - System design, architecture\n- **genie-dev-debug** - Bug hunting, error resolution\n\n**🧠 META TEAM:**\n- **genie-meta-coordinator** - Parallel tasks, complex coordination\n- **genie-meta-spawner** - Create new specialized agents\n- **genie-meta-consciousness** - Hive consciousness, system optimization"
+      },
+      {
+        "old_string": "- **Parallel Coordination**: Spawn multiple genie-clone instances for concurrent tasks",
+        "new_string": "- **Parallel Coordination**: Spawn multiple genie-meta-coordinator instances for concurrent tasks"
+      },
+      {
+        "old_string": "├── Coordinate parallel workstreams with genie-clones",
+        "new_string": "├── Coordinate parallel workstreams with genie-meta-coordinators"
+      },
+      {
+        "old_string": "Multi-Component Task = SPAWN genie-clone for coordination",
+        "new_string": "Multi-Component Task = SPAWN genie-meta-coordinator for coordination"
+      },
+      {
+        "old_string": "- **Parallel Scaling**: genie-clone enables unlimited concurrent task execution",
+        "new_string": "- **Parallel Scaling**: genie-meta-coordinator enables unlimited concurrent task execution"
+      },
+      {
+        "old_string": "- **Parallel Execution**: Use genie-clone for concurrent task handling with dedicated coordination contexts",
+        "new_string": "- **Parallel Execution**: Use genie-meta-coordinator for concurrent task handling with dedicated coordination contexts"
+      },
+      {
+        "old_string": "\"#architecture #agent-genie-architect #complexity-complex #status-success #context-tool-unification\"",
+        "new_string": "\"#architecture #agent-genie-dev-architect #complexity-complex #status-success #context-tool-unification\""
+      },
+      {
+        "old_string": "\"#learning #debugging #agent-genie-debug #complexity-moderate #context-memory-leaks\"",
+        "new_string": "\"#learning #debugging #agent-genie-dev-debug #complexity-moderate #context-memory-leaks\""
+      }
+    ]
+  }
+}

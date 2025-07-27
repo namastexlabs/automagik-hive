@@ -288,7 +288,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
         # Mock supported parameters to match config
         proxy._supported_params = {"name", "mode", "description", "instructions"}
         
-        result = await proxy._process_config(config, "test-team", None)
+        result = await proxy._process_config(config, "test-team", "postgresql://test_db")
         
         assert result["name"] == "Test Team"
         assert result["mode"] == "route"
@@ -312,7 +312,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
             mock_storage.return_value = MagicMock()
             mock_team.return_value = {"name": "Custom Team"}
             
-            result = await proxy._process_config(config, "test-team", None)
+            result = await proxy._process_config(config, "test-team", "postgresql://test_db")
             
             mock_model.assert_called_once()
             mock_storage.assert_called_once()
@@ -330,7 +330,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
         with patch.object(proxy, '_handle_members', new_callable=AsyncMock) as mock_handler:
             mock_handler.return_value = mock_members
             
-            result = await proxy._process_config(config, "test-team", None)
+            result = await proxy._process_config(config, "test-team", "postgresql://test_db")
             
             assert result["members"] == mock_members
             mock_handler.assert_called_once()
@@ -344,7 +344,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
         }
         
         with patch('lib.utils.proxy_teams.logger') as mock_logger:
-            await proxy._process_config(config, "test-team", None)
+            await proxy._process_config(config, "test-team", "postgresql://test_db")
             
             # Should log unknown parameters
             assert mock_logger.debug.call_count == 2
@@ -364,7 +364,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
                 "extra_field": "value"
             }
             
-            result = await proxy._process_config(config, "test-team", None)
+            result = await proxy._process_config(config, "test-team", "postgresql://test_db")
             
             # Dict result should be merged into processed config
             assert result["name"] == "Test Team"
@@ -1000,7 +1000,7 @@ class TestAgnoTeamProxyEdgeCases:
             mock_handler.side_effect = ValueError("Invalid model config")
             
             with pytest.raises(ValueError, match="Invalid model config"):
-                await proxy._process_config(config, "test-team", None)
+                await proxy._process_config(config, "test-team", "postgresql://test_db")
 
     def test_fallback_parameters_completeness(self, proxy):
         """Test that fallback parameters cover major Team functionality areas."""

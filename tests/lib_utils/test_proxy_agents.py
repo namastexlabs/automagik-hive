@@ -339,14 +339,14 @@ class TestConfigurationProcessing:
     def test_process_config_with_custom_handlers(self, proxy):
         """Test config processing with custom handlers."""
         config = {
-            "model": {"id": "test-model", "temperature": 0.7},
+            "model": {"id": "claude-sonnet-4-20250514", "temperature": 0.7},
             "agent": {"name": "Test Agent", "version": 1},
-            "storage": {"type": "memory"},
+            "storage": {"type": "sqlite"},
         }
 
-        with patch.object(proxy, "_handle_model_config", return_value="mock_model") as mock_model_handler, \
-             patch.object(proxy, "_handle_agent_metadata", return_value={"name": "Test Agent"}) as mock_agent_handler, \
-             patch.object(proxy, "_handle_storage_config", return_value="mock_storage") as mock_storage_handler:
+        with patch("lib.utils.proxy_agents.AgnoAgentProxy._handle_model_config", return_value="mock_model") as mock_model_handler, \
+             patch("lib.utils.proxy_agents.AgnoAgentProxy._handle_agent_metadata", return_value={"name": "Test Agent"}) as mock_agent_handler, \
+             patch("lib.utils.proxy_agents.AgnoAgentProxy._handle_storage_config", return_value="mock_storage") as mock_storage_handler:
 
             processed = proxy._process_config(config, "test-agent", None)
 
@@ -359,7 +359,7 @@ class TestConfigurationProcessing:
         config = {
             "name": "Test Agent",
             "instructions": "Test instructions",
-            "model": {"id": "test-model"},
+            "model": {"id": "claude-sonnet-4-20250514"},
             "knowledge_filter": {"max_results": 10},
             "unknown_param": "value",
         }
@@ -392,7 +392,7 @@ class TestCustomParameterHandlers:
         mock_resolve_model.return_value = "mock_model"
         
         model_config = {
-            "id": "test-model",
+            "id": "claude-sonnet-4-20250514",
             "temperature": 0.8,
             "max_tokens": 3000,
             "custom_param": "value",
@@ -403,7 +403,7 @@ class TestCustomParameterHandlers:
         )
         
         mock_resolve_model.assert_called_once_with(
-            model_id="test-model",
+            model_id="claude-sonnet-4-20250514",
             temperature=0.8,
             max_tokens=3000,
             custom_param="value",

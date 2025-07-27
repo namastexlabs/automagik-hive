@@ -114,8 +114,8 @@ def mock_component_registries() -> Generator[
             "ai.workflows.registry.list_available_workflows",
             return_value=list(mock_workflows.keys()),
         ),
-        patch("lib.utils.version_factory.create_agent", return_value=mock_agent),
-        patch("lib.utils.version_factory.create_team", return_value=mock_agent),
+        patch("lib.utils.version_factory.create_agent", new_callable=AsyncMock, return_value=mock_agent),
+        patch("lib.utils.version_factory.create_team", new_callable=AsyncMock, return_value=mock_agent),
         patch("ai.workflows.registry.get_workflow", return_value=mock_agent),
         # Mock the database services to avoid actual database connections
         patch("lib.services.database_service.get_db_service", return_value=AsyncMock()),
