@@ -379,3 +379,6 @@ For detailed implementation guidance, see component-specific CLAUDE.md files:
 - **Parallel Execution**: Use genie-clone for concurrent task handling with dedicated coordination contexts
 
 This framework provides a production-ready foundation for building sophisticated multi-agent AI systems with enterprise-grade deployment capabilities.
+
+### Development Memory Entries
+- Learn to always call the agents in parallel

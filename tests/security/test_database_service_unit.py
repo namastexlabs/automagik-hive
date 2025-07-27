@@ -5,6 +5,7 @@ Tests database service functionality with proper mocking to avoid real connectio
 """
 
 import os
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -146,11 +147,13 @@ class TestDatabaseServiceUnit:
 
             # Mock the get_connection context manager
             mock_connection = AsyncMock()
-            service.get_connection = AsyncMock()
-            service.get_connection.return_value.__aenter__ = AsyncMock(
-                return_value=mock_connection,
-            )
-            service.get_connection.return_value.__aexit__ = AsyncMock(return_value=None)
+            
+            # Create proper async context manager mock
+            @asynccontextmanager
+            async def mock_get_connection():
+                yield mock_connection
+                
+            service.get_connection = mock_get_connection
 
             query = "INSERT INTO test (name) VALUES (%(name)s)"
             params = {"name": "test_value"}
@@ -173,16 +176,19 @@ class TestDatabaseServiceUnit:
             mock_cursor = AsyncMock()
             mock_cursor.fetchone.return_value = {"id": 1, "name": "test"}
 
-            mock_connection.cursor.return_value.__aenter__ = AsyncMock(
-                return_value=mock_cursor,
-            )
-            mock_connection.cursor.return_value.__aexit__ = AsyncMock(return_value=None)
+            # Create proper async context manager for cursor
+            @asynccontextmanager
+            async def mock_cursor_context(*args, **kwargs):
+                yield mock_cursor
+                
+            mock_connection.cursor = mock_cursor_context
 
-            service.get_connection = AsyncMock()
-            service.get_connection.return_value.__aenter__ = AsyncMock(
-                return_value=mock_connection,
-            )
-            service.get_connection.return_value.__aexit__ = AsyncMock(return_value=None)
+            # Create proper async context manager for connection
+            @asynccontextmanager
+            async def mock_get_connection():
+                yield mock_connection
+                
+            service.get_connection = mock_get_connection
 
             query = "SELECT * FROM test WHERE id = %(id)s"
             params = {"id": 1}
@@ -210,16 +216,19 @@ class TestDatabaseServiceUnit:
                 {"id": 2, "name": "test2"},
             ]
 
-            mock_connection.cursor.return_value.__aenter__ = AsyncMock(
-                return_value=mock_cursor,
-            )
-            mock_connection.cursor.return_value.__aexit__ = AsyncMock(return_value=None)
+            # Create proper async context manager for cursor
+            @asynccontextmanager
+            async def mock_cursor_context(*args, **kwargs):
+                yield mock_cursor
+                
+            mock_connection.cursor = mock_cursor_context
 
-            service.get_connection = AsyncMock()
-            service.get_connection.return_value.__aenter__ = AsyncMock(
-                return_value=mock_connection,
-            )
-            service.get_connection.return_value.__aexit__ = AsyncMock(return_value=None)
+            # Create proper async context manager for connection
+            @asynccontextmanager
+            async def mock_get_connection():
+                yield mock_connection
+                
+            service.get_connection = mock_get_connection
 
             query = "SELECT * FROM test"
 
@@ -241,18 +250,20 @@ class TestDatabaseServiceUnit:
             # Mock connection with transaction
             mock_connection = AsyncMock()
             mock_transaction = AsyncMock()
-            mock_connection.transaction.return_value.__aenter__ = AsyncMock(
-                return_value=mock_transaction,
-            )
-            mock_connection.transaction.return_value.__aexit__ = AsyncMock(
-                return_value=None,
-            )
+            
+            # Create proper async context manager for transaction
+            @asynccontextmanager
+            async def mock_transaction_context():
+                yield mock_transaction
+                
+            mock_connection.transaction = mock_transaction_context
 
-            service.get_connection = AsyncMock()
-            service.get_connection.return_value.__aenter__ = AsyncMock(
-                return_value=mock_connection,
-            )
-            service.get_connection.return_value.__aexit__ = AsyncMock(return_value=None)
+            # Create proper async context manager for connection
+            @asynccontextmanager
+            async def mock_get_connection():
+                yield mock_connection
+                
+            service.get_connection = mock_get_connection
 
             operations = [
                 ("INSERT INTO test (name) VALUES (%(name)s)", {"name": "test1"}),

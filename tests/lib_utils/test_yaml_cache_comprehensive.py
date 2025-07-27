@@ -14,7 +14,7 @@ import pytest
 import yaml
 
 
-class TestYamlCacheManager:
+class TestYAMLCacheManager:
     """Comprehensive tests for YAML cache manager."""
 
     @pytest.fixture
@@ -38,12 +38,12 @@ class TestYamlCacheManager:
 
     def test_yaml_cache_manager_creation(self):
         """Test YAML cache manager creation."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
         assert manager is not None
-        assert hasattr(manager, "_cache")
-        assert hasattr(manager, "_file_mtimes")
+        assert hasattr(manager, "_yaml_cache")
+        assert hasattr(manager, "_glob_cache")
 
     def test_get_yaml_cache_manager_singleton(self):
         """Test get_yaml_cache_manager singleton pattern."""
@@ -58,21 +58,21 @@ class TestYamlCacheManager:
 
     def test_yaml_cache_file_loading(self, temp_directory, sample_yaml_content):
         """Test YAML file loading with caching."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         # Create test YAML file
         yaml_file = temp_directory / "test.yaml"
         with open(yaml_file, "w") as f:
             yaml.dump(sample_yaml_content, f)
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # First load should read from file
-        result1 = manager.load_yaml(str(yaml_file))
+        result1 = manager.get_yaml(str(yaml_file))
         assert result1 == sample_yaml_content
 
         # Second load should use cache
-        result2 = manager.load_yaml(str(yaml_file))
+        result2 = manager.get_yaml(str(yaml_file))
         assert result2 == sample_yaml_content
         assert result1 is result2  # Should be same object from cache
 
@@ -82,16 +82,16 @@ class TestYamlCacheManager:
         sample_yaml_content,
     ):
         """Test file modification detection and cache invalidation."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         yaml_file = temp_directory / "test.yaml"
         with open(yaml_file, "w") as f:
             yaml.dump(sample_yaml_content, f)
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Load initial content
-        result1 = manager.load_yaml(str(yaml_file))
+        result1 = manager.get_yaml(str(yaml_file))
         assert result1 == sample_yaml_content
 
         # Modify file
@@ -101,53 +101,53 @@ class TestYamlCacheManager:
             yaml.dump(modified_content, f)
 
         # Should detect modification and reload
-        result2 = manager.load_yaml(str(yaml_file))
+        result2 = manager.get_yaml(str(yaml_file))
         assert result2 == modified_content
         assert result2 != result1
 
     def test_yaml_cache_invalid_file_handling(self):
         """Test handling of invalid/non-existent files."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Test non-existent file
-        result = manager.load_yaml("/non/existent/file.yaml")
+        result = manager.get_yaml("/non/existent/file.yaml")
         assert result is None
 
         # Test invalid YAML
         with patch("builtins.open", mock_open(read_data="invalid: yaml: content: [")):
-            result = manager.load_yaml("/fake/invalid.yaml")
+            result = manager.get_yaml("/fake/invalid.yaml")
             assert result is None
 
     def test_yaml_cache_permission_error_handling(self):
         """Test handling of permission errors."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         with patch("builtins.open", side_effect=PermissionError("Permission denied")):
-            result = manager.load_yaml("/restricted/file.yaml")
+            result = manager.get_yaml("/restricted/file.yaml")
             assert result is None
 
     def test_yaml_cache_clear_functionality(self, temp_directory, sample_yaml_content):
         """Test cache clearing functionality."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         yaml_file = temp_directory / "test.yaml"
         with open(yaml_file, "w") as f:
             yaml.dump(sample_yaml_content, f)
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Load and cache
-        manager.load_yaml(str(yaml_file))
-        assert str(yaml_file) in manager._cache
+        manager.get_yaml(str(yaml_file))
+        assert str(yaml_file) in manager._yaml_cache
 
         # Clear cache
         manager.clear_cache()
-        assert len(manager._cache) == 0
-        assert len(manager._file_mtimes) == 0
+        assert len(manager._yaml_cache) == 0
+        assert len(manager._glob_cache) == 0
 
     def test_yaml_cache_thread_safety(self, temp_directory, sample_yaml_content):
         """Test thread safety of YAML cache."""
@@ -163,7 +163,7 @@ class TestYamlCacheManager:
         def test_function():
             try:
                 manager = get_yaml_cache_manager()
-                result = manager.load_yaml(str(yaml_file))
+                result = manager.get_yaml(str(yaml_file))
                 results.append(result)
             except Exception as e:
                 errors.append(e)
@@ -186,9 +186,9 @@ class TestYamlCacheManager:
 
     def test_yaml_cache_memory_management(self, temp_directory):
         """Test memory management with large cache."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Create many YAML files
         for i in range(100):
@@ -198,15 +198,14 @@ class TestYamlCacheManager:
                 yaml.dump(content, f)
 
             # Load to cache
-            manager.load_yaml(str(yaml_file))
+            manager.get_yaml(str(yaml_file))
 
         # All files should be cached
-        assert len(manager._cache) == 100
-        assert len(manager._file_mtimes) == 100
+        assert len(manager._yaml_cache) == 100
 
         # Clear should work
         manager.clear_cache()
-        assert len(manager._cache) == 0
+        assert len(manager._yaml_cache) == 0
 
 
 class TestYamlCacheUtilityFunctions:
@@ -259,61 +258,61 @@ class TestYamlCacheUtilityFunctions:
             with open(config_file, "w") as f:
                 yaml.dump({"name": "test_component"}, f)
 
-        # Test discovery
-        result = discover_components_cached(str(temp_directory))
+        # Test discovery with specific pattern
+        pattern = str(temp_directory / "*" / "config.yaml")
+        result = discover_components_cached(pattern)
 
-        assert "agents" in result
-        assert "teams" in result
-        assert "workflows" in result
-
-        # Should find the config files
-        assert len(result["agents"]) > 0
-        assert len(result["teams"]) > 0
-        assert len(result["workflows"]) > 0
+        # Should return list of matching file paths
+        assert isinstance(result, list)
+        assert len(result) == 3
+        assert any("agents" in path for path in result)
+        assert any("teams" in path for path in result)
+        assert any("workflows" in path for path in result)
 
     def test_discover_components_empty_directory(self, temp_directory):
         """Test component discovery in empty directory."""
         from lib.utils.yaml_cache import discover_components_cached
 
-        result = discover_components_cached(str(temp_directory))
+        # Test with pattern that won't match anything
+        pattern = str(temp_directory / "*" / "config.yaml")
+        result = discover_components_cached(pattern)
 
-        # Should return empty collections
-        assert result["agents"] == []
-        assert result["teams"] == []
-        assert result["workflows"] == []
+        # Should return empty list
+        assert isinstance(result, list)
+        assert result == []
 
     def test_discover_components_non_existent_directory(self):
         """Test component discovery with non-existent directory."""
         from lib.utils.yaml_cache import discover_components_cached
 
-        result = discover_components_cached("/non/existent/directory")
+        # Test with non-existent pattern
+        pattern = "/non/existent/directory/*/config.yaml"
+        result = discover_components_cached(pattern)
 
-        # Should handle gracefully
-        assert isinstance(result, dict)
-        assert "agents" in result
-        assert "teams" in result
-        assert "workflows" in result
+        # Should handle gracefully and return empty list
+        assert isinstance(result, list)
+        assert result == []
 
     def test_yaml_cache_error_recovery(self, temp_directory):
         """Test error recovery in YAML cache operations."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Test recovery from OS errors
         with patch("os.path.getmtime", side_effect=OSError("File system error")):
-            result = manager.load_yaml("/fake/file.yaml")
+            result = manager.get_yaml("/fake/file.yaml")
             assert result is None
 
         # Test recovery from YAML errors
         with patch("yaml.safe_load", side_effect=yaml.YAMLError("Invalid YAML")):
             with patch("builtins.open", mock_open(read_data="some: content")):
-                result = manager.load_yaml("/fake/file.yaml")
+                result = manager.get_yaml("/fake/file.yaml")
                 assert result is None
 
     def test_yaml_cache_mtime_comparison(self, temp_directory):
         """Test modification time comparison logic."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         yaml_file = temp_directory / "test.yaml"
         content = {"version": 1}
@@ -321,15 +320,20 @@ class TestYamlCacheUtilityFunctions:
         with open(yaml_file, "w") as f:
             yaml.dump(content, f)
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # First load
-        result1 = manager.load_yaml(str(yaml_file))
+        result1 = manager.get_yaml(str(yaml_file))
         assert result1 == content
 
-        # Get original mtime
-        original_mtime = manager._file_mtimes.get(str(yaml_file))
-        assert original_mtime is not None
+        # Get normalized path for cache lookup (YAMLCacheManager uses os.path.abspath)
+        import os
+        normalized_path = os.path.abspath(str(yaml_file))
+        
+        # Get original cached object
+        original_cached = manager._yaml_cache.get(normalized_path)
+        assert original_cached is not None
+        original_mtime = original_cached.mtime
 
         # Modify file with significantly different time
         time.sleep(0.1)
@@ -338,16 +342,17 @@ class TestYamlCacheUtilityFunctions:
             yaml.dump(updated_content, f)
 
         # Should detect change
-        result2 = manager.load_yaml(str(yaml_file))
+        result2 = manager.get_yaml(str(yaml_file))
         assert result2 == updated_content
 
-        # New mtime should be different
-        new_mtime = manager._file_mtimes.get(str(yaml_file))
-        assert new_mtime != original_mtime
+        # New cached object should have different mtime
+        new_cached = manager._yaml_cache.get(normalized_path)
+        assert new_cached is not None
+        assert new_cached.mtime != original_mtime
 
     def test_yaml_cache_large_file_handling(self, temp_directory):
         """Test handling of large YAML files."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         # Create large YAML content
         large_content = {
@@ -359,10 +364,10 @@ class TestYamlCacheUtilityFunctions:
         with open(yaml_file, "w") as f:
             yaml.dump(large_content, f)
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Should handle large files
-        result = manager.load_yaml(str(yaml_file))
+        result = manager.get_yaml(str(yaml_file))
         assert result == large_content
         assert len(result) == 50
 
@@ -380,7 +385,7 @@ class TestYamlCacheUtilityFunctions:
         results = []
 
         def concurrent_reader():
-            result = manager.load_yaml(str(yaml_file))
+            result = manager.get_yaml(str(yaml_file))
             results.append(result)
 
         # Start multiple concurrent readers
@@ -398,9 +403,16 @@ class TestYamlCacheUtilityFunctions:
 class TestYamlCacheEdgeCases:
     """Test edge cases and error conditions."""
 
+    @pytest.fixture
+    def temp_directory(self):
+        """Create temporary directory for testing."""
+        temp_dir = tempfile.mkdtemp()
+        yield Path(temp_dir)
+        shutil.rmtree(temp_dir)
+
     def test_yaml_cache_symlink_handling(self, temp_directory):
         """Test handling of symbolic links."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         # Create original file
         original_file = temp_directory / "original.yaml"
@@ -413,10 +425,10 @@ class TestYamlCacheEdgeCases:
         try:
             symlink_file.symlink_to(original_file)
 
-            manager = YamlCacheManager()
+            manager = YAMLCacheManager()
 
             # Should handle symlinks
-            result = manager.load_yaml(str(symlink_file))
+            result = manager.get_yaml(str(symlink_file))
             assert result == content
 
         except OSError:
@@ -425,7 +437,7 @@ class TestYamlCacheEdgeCases:
 
     def test_yaml_cache_unicode_content(self, temp_directory):
         """Test handling of Unicode content."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         unicode_content = {
             "english": "Hello World",
@@ -438,28 +450,28 @@ class TestYamlCacheEdgeCases:
         with open(yaml_file, "w", encoding="utf-8") as f:
             yaml.dump(unicode_content, f, allow_unicode=True)
 
-        manager = YamlCacheManager()
-        result = manager.load_yaml(str(yaml_file))
+        manager = YAMLCacheManager()
+        result = manager.get_yaml(str(yaml_file))
         assert result == unicode_content
 
     def test_yaml_cache_binary_file_handling(self, temp_directory):
         """Test handling of binary files mistaken for YAML."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         # Create binary file with .yaml extension
         binary_file = temp_directory / "binary.yaml"
         with open(binary_file, "wb") as f:
             f.write(b"\x00\x01\x02\x03\x04\x05")
 
-        manager = YamlCacheManager()
-        result = manager.load_yaml(str(binary_file))
+        manager = YAMLCacheManager()
+        result = manager.get_yaml(str(binary_file))
 
         # Should handle gracefully
         assert result is None
 
     def test_yaml_cache_very_long_path(self, temp_directory):
         """Test handling of very long file paths."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         # Create deeply nested directory
         deep_path = temp_directory
@@ -474,8 +486,8 @@ class TestYamlCacheEdgeCases:
             with open(yaml_file, "w") as f:
                 yaml.dump(content, f)
 
-            manager = YamlCacheManager()
-            result = manager.load_yaml(str(yaml_file))
+            manager = YAMLCacheManager()
+            result = manager.get_yaml(str(yaml_file))
             assert result == content
 
         except OSError:
@@ -484,10 +496,10 @@ class TestYamlCacheEdgeCases:
 
     def test_yaml_cache_rapid_file_changes(self, temp_directory):
         """Test handling of rapid file changes."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         yaml_file = temp_directory / "rapid.yaml"
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Make rapid changes
         for i in range(10):
@@ -495,7 +507,7 @@ class TestYamlCacheEdgeCases:
             with open(yaml_file, "w") as f:
                 yaml.dump(content, f)
 
-            result = manager.load_yaml(str(yaml_file))
+            result = manager.get_yaml(str(yaml_file))
             assert result["version"] == i
 
             # Small delay to ensure different mtimes
@@ -503,7 +515,7 @@ class TestYamlCacheEdgeCases:
 
     def test_yaml_cache_circular_references(self, temp_directory):
         """Test handling of YAML with circular references."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         # Create YAML with references (YAML anchors/aliases)
         yaml_content = """
@@ -524,8 +536,8 @@ class TestYamlCacheEdgeCases:
         with open(yaml_file, "w") as f:
             f.write(yaml_content)
 
-        manager = YamlCacheManager()
-        result = manager.load_yaml(str(yaml_file))
+        manager = YAMLCacheManager()
+        result = manager.get_yaml(str(yaml_file))
 
         # Should handle YAML references
         assert result is not None
@@ -538,11 +550,18 @@ class TestYamlCacheEdgeCases:
 class TestYamlCachePerformance:
     """Test performance aspects of YAML cache."""
 
+    @pytest.fixture
+    def temp_directory(self):
+        """Create temporary directory for testing."""
+        temp_dir = tempfile.mkdtemp()
+        yield Path(temp_dir)
+        shutil.rmtree(temp_dir)
+
     def test_yaml_cache_performance_benchmark(self, temp_directory):
         """Basic performance benchmark for YAML cache."""
         import time
 
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
         # Create test file
         yaml_file = temp_directory / "benchmark.yaml"
@@ -550,16 +569,16 @@ class TestYamlCachePerformance:
         with open(yaml_file, "w") as f:
             yaml.dump(content, f)
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Time first load (from disk)
         start_time = time.time()
-        result1 = manager.load_yaml(str(yaml_file))
+        result1 = manager.get_yaml(str(yaml_file))
         first_load_time = time.time() - start_time
 
         # Time second load (from cache)
         start_time = time.time()
-        result2 = manager.load_yaml(str(yaml_file))
+        result2 = manager.get_yaml(str(yaml_file))
         cached_load_time = time.time() - start_time
 
         # Cache should be faster
@@ -568,9 +587,9 @@ class TestYamlCachePerformance:
 
     def test_yaml_cache_memory_efficiency(self, temp_directory):
         """Test memory efficiency of cache."""
-        from lib.utils.yaml_cache import YamlCacheManager
+        from lib.utils.yaml_cache import YAMLCacheManager
 
-        manager = YamlCacheManager()
+        manager = YAMLCacheManager()
 
         # Load same file multiple times
         yaml_file = temp_directory / "memory_test.yaml"
@@ -581,7 +600,7 @@ class TestYamlCachePerformance:
         # Multiple loads should return same object (memory efficient)
         results = []
         for _ in range(5):
-            result = manager.load_yaml(str(yaml_file))
+            result = manager.get_yaml(str(yaml_file))
             results.append(result)
 
         # All results should be the same object (same id)

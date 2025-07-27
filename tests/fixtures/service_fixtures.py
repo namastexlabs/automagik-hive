@@ -58,7 +58,6 @@ def mock_database_pool():
 def mock_psycopg_operations():
     """Mock psycopg operations."""
     with (
-        patch("lib.services.database_service.psycopg.connect") as mock_connect,
         patch("lib.services.database_service.AsyncConnectionPool") as mock_pool_class,
     ):
         mock_connection = AsyncMock()
@@ -107,11 +106,9 @@ def mock_psycopg_operations():
         mock_pool.open = AsyncMock()
         mock_pool.close = AsyncMock()
 
-        mock_connect.return_value = mock_connection
         mock_pool_class.return_value = mock_pool
 
         yield {
-            "connect": mock_connect,
             "pool_class": mock_pool_class,
             "connection": mock_connection,
             "pool": mock_pool,

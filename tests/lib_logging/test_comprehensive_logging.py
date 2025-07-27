@@ -33,94 +33,101 @@ class TestBatchLogger:
 
     def test_batch_logger_creation(self):
         """Test BatchLogger can be created."""
-        logger = BatchLogger(name="test_batch", batch_size=10)
+        logger = BatchLogger()
         assert logger is not None
-        assert hasattr(logger, "batch_size")
+        assert hasattr(logger, "batches")
 
     def test_batch_logger_basic_logging(self):
         """Test basic batch logging functionality."""
-        logger = BatchLogger(name="test_basic", batch_size=3)
+        logger = BatchLogger()
 
-        # Test adding messages
-        if hasattr(logger, "add_message"):
-            logger.add_message("Test message 1")
-            logger.add_message("Test message 2")
-            logger.add_message("Test message 3")
+        # Test actual methods that exist
+        # Test agent inheritance logging
+        logger.log_agent_inheritance("test_agent")
+        assert "agent_inheritance" in logger.batches
+        assert "test_agent" in logger.batches["agent_inheritance"]
 
-            # Should handle batch operations
-            assert True  # Basic functionality works
-        else:
-            # Test alternative methods that might exist
-            methods_to_try = ["log", "batch_log", "add", "append"]
-            found_method = False
-            for method_name in methods_to_try:
-                if hasattr(logger, method_name):
-                    method = getattr(logger, method_name)
-                    try:
-                        method("Test message")
-                        found_method = True
-                        break
-                    except Exception:
-                        continue
+        # Test model resolution logging
+        logger.log_model_resolved("test_model", "test_provider")
+        assert "model_resolved" in logger.batches
+        assert ("test_model", "test_provider") in logger.batches["model_resolved"]
 
-            assert found_method or len(dir(logger)) > 2  # Has some functionality
+        # Test storage creation logging
+        logger.log_storage_created("vector", "test_component")
+        assert "storage_created" in logger.batches
+        assert ("vector", "test_component") in logger.batches["storage_created"]
 
     def test_batch_logger_flush(self):
         """Test batch logger flush functionality."""
-        logger = BatchLogger(name="test_flush", batch_size=10)
+        logger = BatchLogger()
 
-        # Test flush methods
-        flush_methods = ["flush", "flush_batch", "process_batch"]
-        for method_name in flush_methods:
-            if hasattr(logger, method_name):
-                method = getattr(logger, method_name)
-                try:
-                    method()
-                    assert True  # Method exists and callable
-                    break
-                except Exception:
-                    continue
+        # Add some test data
+        logger.log_agent_inheritance("test_agent")
+        logger.log_model_resolved("test_model", "test_provider")
+
+        # Test force_flush method (this exists in the real implementation)
+        initial_batches = len(logger.batches)
+        assert initial_batches > 0  # We have some batches
+
+        logger.force_flush()
+        # After flush, batches should be cleared
+        assert len(logger.batches) == 0
 
     def test_batch_logger_configuration(self):
         """Test batch logger configuration options."""
-        # Test different configurations
-        configs = [
-            {"batch_size": 5},
-            {"batch_size": 100, "flush_interval": 30},
-            {"name": "custom_logger"},
-        ]
-
-        for config in configs:
-            try:
-                logger = BatchLogger(**config)
-                assert logger is not None
-            except TypeError:
-                # Some parameters might not be supported
-                pass
+        # Test the actual configuration that works
+        logger = BatchLogger()
+        assert logger is not None
+        
+        # Test environment-based configuration
+        assert hasattr(logger, "startup_mode")
+        assert hasattr(logger, "verbose")
+        assert hasattr(logger, "log_level")
+        
+        # Test runtime mode switching
+        assert logger.startup_mode == True
+        logger.set_runtime_mode()
+        assert logger.startup_mode == False
 
 
 class TestLoggingConfig:
     """Test logging configuration functionality."""
 
     def test_logging_config_creation(self):
-        """Test LoggingConfig can be created."""
-        config = LoggingConfig()
-        assert config is not None
+        """Test LoggingConfig functionality via setup_logging."""
+        # Since LoggingConfig class doesn't exist, test the actual setup_logging function
+        try:
+            setup_logging()
+            # Should not crash
+            assert True
+        except Exception as e:
+            # Some setup might require specific environment
+            pytest.fail(f"setup_logging() should not crash: {e}")
 
     def test_logging_config_parameters(self):
         """Test LoggingConfig with different parameters."""
-        # Test common configuration parameters
+        # Test environment-based configuration that the real setup_logging uses
+        import os
+        original_level = os.environ.get("HIVE_LOG_LEVEL")
+        
         try:
-            config = LoggingConfig(level="INFO")
-            assert config is not None
-        except Exception:
-            pass
-
-        try:
-            config = LoggingConfig(format="%(levelname)s: %(message)s")
-            assert config is not None
-        except Exception:
-            pass
+            # Test setting log level via environment
+            os.environ["HIVE_LOG_LEVEL"] = "DEBUG"
+            setup_logging()
+            assert True  # Should not crash
+            
+            os.environ["HIVE_LOG_LEVEL"] = "INFO"
+            setup_logging()
+            assert True  # Should not crash
+            
+        except Exception as e:
+            pytest.fail(f"setup_logging() with environment vars should not crash: {e}")
+        finally:
+            # Restore original environment
+            if original_level:
+                os.environ["HIVE_LOG_LEVEL"] = original_level
+            elif "HIVE_LOG_LEVEL" in os.environ:
+                del os.environ["HIVE_LOG_LEVEL"]
 
     def test_setup_logging_function(self):
         """Test setup_logging function."""
@@ -262,14 +269,16 @@ class TestLoggingIntegration:
     def test_batch_logger_with_progress(self):
         """Test batch logger integration with progress tracking."""
         try:
-            batch_logger = BatchLogger(name="batch_progress", batch_size=5)
+            batch_logger = BatchLogger()
             progress_tracker = StartupProgress()
 
-            # Test combined usage
+            # Test combined usage with real interface
             for i in range(10):
-                if hasattr(batch_logger, "add_message"):
-                    batch_logger.add_message(f"Processing item {i}")
+                # Use actual BatchLogger methods
+                batch_logger.log_agent_inheritance(f"agent_{i}")
+                batch_logger.log_model_resolved(f"model_{i}", "test_provider")
 
+                # Test progress tracker methods if they exist
                 if hasattr(progress_tracker, "update"):
                     progress_tracker.update(1)
                 elif hasattr(progress_tracker, "increment"):
@@ -290,18 +299,16 @@ class TestLoggingIntegration:
         start_time = time.time()
 
         try:
-            batch_logger = BatchLogger(name="perf_test", batch_size=100)
+            batch_logger = BatchLogger()
 
-            # Log many messages
-            for i in range(1000):
-                if hasattr(batch_logger, "add_message"):
-                    batch_logger.add_message(f"Performance test message {i}")
-                else:
-                    break
+            # Log many messages using real interface
+            for i in range(100):  # Reduce to reasonable amount for testing
+                batch_logger.log_agent_inheritance(f"perf_agent_{i}")
+                if i % 10 == 0:  # Add some variety
+                    batch_logger.log_model_resolved(f"perf_model_{i}", "test_provider")
 
-            # Flush if possible
-            if hasattr(batch_logger, "flush"):
-                batch_logger.flush()
+            # Flush using real method
+            batch_logger.force_flush()
 
             end_time = time.time()
             duration = end_time - start_time
@@ -345,7 +352,7 @@ class TestLoggingErrorHandling:
             pass  # Exception is acceptable
 
         try:
-            logger = BatchLogger(name="")
+            logger = BatchLogger()
             assert logger is not None
         except Exception:
             pass

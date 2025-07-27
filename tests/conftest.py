@@ -18,6 +18,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
+# Pytest plugins must be defined at the top level conftest.py
+# Note: tests.config.conftest is auto-discovered, so we only include explicit fixture modules
+pytest_plugins = [
+    "tests.fixtures.config_fixtures",
+    "tests.fixtures.service_fixtures",
+]
+
 # Set test environment before importing API modules
 os.environ["HIVE_ENVIRONMENT"] = "development"
 os.environ["HIVE_DATABASE_URL"] = (
@@ -114,10 +121,11 @@ def mock_component_registries() -> Generator[
         patch("lib.services.database_service.get_db_service", return_value=AsyncMock()),
         patch("lib.services.component_version_service.ComponentVersionService"),
         patch("lib.versioning.agno_version_service.AgnoVersionService"),
-        # Mock the version factory method to return mock agent directly
+        # Mock the version factory method to return mock agent directly, but fail for non-existent components
         patch(
             "lib.utils.version_factory.VersionFactory.create_versioned_component",
-            new_callable=lambda: AsyncMock(return_value=mock_agent),
+            new_callable=lambda: AsyncMock(side_effect=lambda component_id, **kwargs: 
+                None if component_id == "non-existent-component" else mock_agent),
         ),
     ]
 
@@ -175,15 +183,17 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
     with patch("api.routes.version_router.get_version_service") as mock:
         service = AsyncMock()
 
-        # Mock version info
-        mock_version = Mock()
-        mock_version.component_id = "test-component"
-        mock_version.version = 1
-        mock_version.component_type = "agent"
-        mock_version.config = {"test": True}
-        mock_version.created_at = "2024-01-01T00:00:00"
-        mock_version.is_active = True
-        mock_version.description = "Test component for API testing"
+        # Mock version info - dynamic component_id to match requests
+        def create_mock_version(component_id="test-component", config=None):
+            mock_version = Mock()
+            mock_version.component_id = component_id
+            mock_version.version = 1
+            mock_version.component_type = "agent"
+            mock_version.config = config or {"test": True}
+            mock_version.created_at = "2024-01-01T00:00:00"
+            mock_version.is_active = True
+            mock_version.description = "Test component for API testing"
+            return mock_version
 
         # Mock history entry
         mock_history = Mock()
@@ -193,16 +203,52 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
         mock_history.changed_by = "test"
         mock_history.reason = "Initial version"
 
-        # Configure async service methods
-        service.get_version.return_value = mock_version
-        service.create_version.return_value = mock_version
-        service.update_config.return_value = mock_version
-        service.activate_version.return_value = mock_version
+        # Track created versions to maintain state consistency
+        created_versions = {}
+        
+        # Configure async service methods with dynamic responses
+        async def mock_get_version(component_id, version_num):
+            # Return None for non-existent components to trigger 404 responses
+            if component_id == "non-existent" or component_id == "non-existent-component":
+                return None
+            # Return stored version if it exists, otherwise create default
+            key = f"{component_id}-{version_num}"
+            if key in created_versions:
+                return created_versions[key]
+            return create_mock_version(component_id)
+        
+        async def mock_create_version(component_id, config=None, **kwargs):
+            # Store the version with the provided config
+            version_num = kwargs.get("version", 1)
+            key = f"{component_id}-{version_num}"
+            mock_version = create_mock_version(component_id, config)
+            created_versions[key] = mock_version
+            return mock_version
+        
+        async def mock_list_versions(component_id):
+            # Return all versions for this component
+            versions = [v for k, v in created_versions.items() if k.startswith(f"{component_id}-")]
+            return versions if versions else [create_mock_version(component_id)]
+        
+        async def mock_get_active_version(component_id):
+            # Return None for non-existent components
+            if component_id == "non-existent" or component_id == "non-existent-component":
+                return None
+            # Return the first version for this component
+            for k, v in created_versions.items():
+                if k.startswith(f"{component_id}-"):
+                    return v
+            return create_mock_version(component_id)
+
+        service.get_version.side_effect = mock_get_version
+        service.create_version.side_effect = mock_create_version
+        service.update_config.return_value = create_mock_version()
+        service.activate_version.return_value = create_mock_version()
         service.delete_version.return_value = True
-        service.list_versions.return_value = [mock_version]
+        service.list_versions.side_effect = mock_list_versions
         service.get_history.return_value = [mock_history]
         service.get_all_components = AsyncMock(return_value=["test-component"])
-        service.get_active_version = AsyncMock(return_value=mock_version)
+        service.get_active_version.side_effect = mock_get_active_version
 
         # Configure get_components_by_type to return empty list for invalid types
         async def mock_get_components_by_type(component_type: str) -> list[str]:

@@ -57,8 +57,6 @@ class ComponentVersionService:
         """Get database service with optional URL override. Caches instance to prevent connection pool proliferation."""
         if self._db_service is None:
             if self.db_url:
-                from .database_service import DatabaseService
-
                 self._db_service = DatabaseService(self.db_url)
                 await self._db_service.initialize()
             else:

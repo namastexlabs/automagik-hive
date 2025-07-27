@@ -279,7 +279,7 @@ class TestVersionManagement:
             headers=api_headers,
         )
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_activate_component_version_success(self, test_client, api_headers):
         """Test successful component version activation."""

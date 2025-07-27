@@ -30,24 +30,25 @@ class TestSettings:
         fake_settings_file.touch()
 
         with patch("lib.config.settings.__file__", str(fake_settings_file)):
-            test_settings = Settings()
+            with patch.dict(os.environ, mock_env_vars):
+                test_settings = Settings()
 
-            # Test application settings
-            assert test_settings.app_name == "PagBank Multi-Agent System"
-            assert test_settings.version == "0.1.0"
-            assert test_settings.environment == "development"  # From mock_env_vars
+                # Test application settings
+                assert test_settings.app_name == "PagBank Multi-Agent System"
+                assert test_settings.version == "0.1.0"
+                assert test_settings.environment == "development"  # From mock_env_vars
 
-            # Test API settings
-            assert test_settings.log_level == "DEBUG"  # From mock_env_vars
-            assert (
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-                in test_settings.log_format
-            )
+                # Test API settings
+                assert test_settings.log_level == "DEBUG"  # From mock_env_vars
+                assert (
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                    in test_settings.log_format
+                )
 
-            # Test agent settings
-            assert test_settings.max_conversation_turns == 10  # From mock_env_vars
-            assert test_settings.session_timeout == 600
-            assert test_settings.max_concurrent_users == 50
+                # Test agent settings
+                assert test_settings.max_conversation_turns == 10  # From mock_env_vars
+                assert test_settings.session_timeout == 600
+                assert test_settings.max_concurrent_users == 50
 
     def test_settings_directory_creation(self, temp_project_dir, mock_env_vars):
         """Test that directories are created during initialization."""
@@ -68,11 +69,12 @@ class TestSettings:
         fake_settings_file.touch()
 
         with patch("lib.config.settings.__file__", str(fake_settings_file)):
-            test_settings = Settings()
+            with patch.dict(os.environ, mock_env_vars):
+                test_settings = Settings()
 
-            # Directories should be created
-            assert test_settings.data_dir.exists()
-            assert test_settings.logs_dir.exists()
+                # Directories should be created
+                assert test_settings.data_dir.exists()
+                assert test_settings.logs_dir.exists()
 
     def test_settings_environment_variable_parsing(
         self,
@@ -333,31 +335,35 @@ class TestSettingsEdgeCases:
 
     def test_settings_security_settings(self, mock_env_vars, clean_singleton):
         """Test security-related settings."""
-        test_settings = Settings()
+        with patch.dict(os.environ, mock_env_vars):
+            test_settings = Settings()
 
-        assert test_settings.max_request_size == 5242880  # From mock_env_vars
-        assert test_settings.rate_limit_requests == 50
-        assert test_settings.rate_limit_period == 30
+            assert test_settings.max_request_size == 5242880  # From mock_env_vars
+            assert test_settings.rate_limit_requests == 50
+            assert test_settings.rate_limit_period == 30
 
     def test_settings_team_routing_settings(self, mock_env_vars, clean_singleton):
         """Test team routing settings."""
-        test_settings = Settings()
+        with patch.dict(os.environ, mock_env_vars):
+            test_settings = Settings()
 
-        assert test_settings.team_routing_timeout == 15  # From mock_env_vars
-        assert test_settings.max_team_switches == 2
+            assert test_settings.team_routing_timeout == 15  # From mock_env_vars
+            assert test_settings.max_team_switches == 2
 
     def test_settings_knowledge_base_settings(self, mock_env_vars, clean_singleton):
         """Test knowledge base settings."""
-        test_settings = Settings()
+        with patch.dict(os.environ, mock_env_vars):
+            test_settings = Settings()
 
-        assert test_settings.max_knowledge_results == 5  # From mock_env_vars
+            assert test_settings.max_knowledge_results == 5  # From mock_env_vars
 
     def test_settings_memory_settings(self, mock_env_vars, clean_singleton):
         """Test memory settings."""
-        test_settings = Settings()
+        with patch.dict(os.environ, mock_env_vars):
+            test_settings = Settings()
 
-        assert test_settings.memory_retention_days == 7  # From mock_env_vars
-        assert test_settings.max_memory_entries == 500
+            assert test_settings.memory_retention_days == 7  # From mock_env_vars
+            assert test_settings.max_memory_entries == 500
 
 
 class TestSettingsIntegration:

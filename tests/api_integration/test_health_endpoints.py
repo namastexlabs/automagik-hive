@@ -230,7 +230,16 @@ class TestHealthEndpoints:
 
         # UTC timestamp should be recent (within last minute)
         utc_time = datetime.fromisoformat(data["utc"])
-        now = datetime.utcnow()
+        
+        # Handle timezone-aware datetime comparison properly
+        if utc_time.tzinfo is not None:
+            # If the timestamp is timezone-aware, compare with timezone-aware datetime
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+        else:
+            # If the timestamp is naive, compare with naive UTC datetime
+            now = datetime.utcnow()
+        
         time_diff = abs((now - utc_time).total_seconds())
         assert time_diff < 60, f"Health check timestamp too old: {time_diff}s"
 

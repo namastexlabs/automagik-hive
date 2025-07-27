@@ -17,30 +17,32 @@ class TestSettingsBasic:
 
     def test_settings_initialization(self, mock_env_vars, clean_singleton):
         """Test basic settings initialization."""
-        test_settings = Settings()
+        with patch.dict(os.environ, mock_env_vars):
+            test_settings = Settings()
 
-        # Test basic attributes exist
-        assert hasattr(test_settings, "app_name")
-        assert hasattr(test_settings, "version")
-        assert hasattr(test_settings, "environment")
-        assert hasattr(test_settings, "log_level")
+            # Test basic attributes exist
+            assert hasattr(test_settings, "app_name")
+            assert hasattr(test_settings, "version")
+            assert hasattr(test_settings, "environment")
+            assert hasattr(test_settings, "log_level")
 
-        # Test from environment
-        assert test_settings.environment == "development"
-        assert test_settings.log_level == "DEBUG"
+            # Test from environment
+            assert test_settings.environment == "development"
+            assert test_settings.log_level == "DEBUG"
 
     def test_settings_environment_parsing(self, mock_env_vars, clean_singleton):
         """Test environment variable parsing."""
-        test_settings = Settings()
+        with patch.dict(os.environ, mock_env_vars):
+            test_settings = Settings()
 
-        # Test integer values
-        assert test_settings.max_conversation_turns == 10
-        assert test_settings.session_timeout == 600
-        assert test_settings.max_concurrent_users == 50
+            # Test integer values
+            assert test_settings.max_conversation_turns == 10
+            assert test_settings.session_timeout == 600
+            assert test_settings.max_concurrent_users == 50
 
-        # Test boolean values
-        assert test_settings.enable_metrics is False
-        assert test_settings.enable_langwatch is False
+            # Test boolean values
+            assert test_settings.enable_metrics is False
+            assert test_settings.enable_langwatch is False
 
     def test_settings_metrics_validation(self, mock_env_vars, clean_singleton):
         """Test metrics configuration validation."""
