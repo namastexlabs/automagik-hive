@@ -1478,3 +1478,123 @@ class TestVersionFactoryWorkingCore:
             
             result = load_global_knowledge_config()
             assert result["csv_file_path"] == "knowledge_rag.csv"
+
+
+class TestCoordinatorIntegration:
+    """Test coordinator integration with version factory."""
+
+    @pytest.mark.asyncio
+    async def test_create_coordinator_via_factory(self):
+        """Test coordinator creation using version factory."""
+        from lib.utils.version_factory import create_coordinator
+        
+        mock_coordinator = MagicMock()
+        mock_coordinator.metadata = {"component_type": "coordinator"}
+        
+        with patch("lib.utils.version_factory.get_version_factory") as mock_get_factory:
+            mock_factory = AsyncMock()
+            mock_factory.create_versioned_component.return_value = mock_coordinator
+            mock_get_factory.return_value = mock_factory
+            
+            result = await create_coordinator("test-coordinator")
+            
+            assert result == mock_coordinator
+            mock_factory.create_versioned_component.assert_called_once_with(
+                "test-coordinator", "coordinator", None, metrics_service=None
+            )
+
+    @pytest.mark.asyncio
+    async def test_coordinator_creation_methods_mapping(self):
+        """Test that coordinator is included in creation methods mapping."""
+        from lib.utils.version_factory import VersionFactory
+        
+        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
+            factory = VersionFactory()
+            
+            # Mock the version service and coordinator creation
+            mock_coordinator = MagicMock()
+            mock_coordinator.metadata = {"component_type": "coordinator"}
+            
+            with patch.object(factory, "_create_coordinator", return_value=mock_coordinator) as mock_create_coord:
+                with patch.object(factory.version_service, "get_active_version") as mock_get_version:
+                    mock_version_record = MagicMock()
+                    mock_version_record.component_type = "coordinator"
+                    mock_version_record.config = {"coordinator": {"name": "Test Coordinator"}}
+                    mock_get_version.return_value = mock_version_record
+                    
+                    result = await factory.create_versioned_component(
+                        "test-coordinator", "coordinator"
+                    )
+                    
+                    assert result == mock_coordinator
+                    mock_create_coord.assert_called_once()
+
+    @pytest.mark.asyncio 
+    async def test_coordinator_yaml_fallback(self):
+        """Test coordinator creation via YAML fallback."""
+        from lib.utils.version_factory import VersionFactory
+        
+        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
+            factory = VersionFactory()
+            
+            mock_coordinator = MagicMock()
+            
+            with patch.object(factory, "_create_coordinator", return_value=mock_coordinator) as mock_create_coord:
+                with patch.object(factory.version_service, "get_active_version", return_value=None):
+                    with patch("pathlib.Path.exists", return_value=True):
+                        with patch("builtins.open", mock_open(read_data="coordinator:\n  name: Test Coordinator")):
+                            with patch("yaml.safe_load", return_value={"coordinator": {"name": "Test Coordinator"}}):
+                                
+                                result = await factory.create_versioned_component(
+                                    "test-coordinator", "coordinator"
+                                )
+                                
+                                assert result == mock_coordinator
+                                mock_create_coord.assert_called_once()
+
+    def test_coordinator_config_paths(self):
+        """Test that coordinator config paths are properly mapped."""
+        from lib.utils.version_factory import VersionFactory
+        
+        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
+            factory = VersionFactory()
+            
+            # Check that coordinator path is in the _create_component_from_yaml method
+            # We can't easily test this directly, but we can verify the method handles coordinators
+            assert hasattr(factory, "_create_coordinator")
+
+    @pytest.mark.asyncio
+    async def test_coordinator_proxy_integration(self):
+        """Test that coordinator proxy is properly integrated."""
+        from lib.utils.version_factory import VersionFactory
+        
+        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
+            factory = VersionFactory()
+            
+            mock_coordinator = MagicMock()
+            mock_coordinator.metadata = {"component_type": "coordinator"}
+            
+            with patch("lib.utils.agno_proxy.get_agno_coordinator_proxy") as mock_get_proxy:
+                mock_proxy = AsyncMock()
+                mock_proxy.create_coordinator.return_value = mock_coordinator
+                mock_proxy.get_supported_parameters.return_value = {"test_param"}
+                mock_get_proxy.return_value = mock_proxy
+                
+                result = await factory._create_coordinator(
+                    "test-coordinator",
+                    {"coordinator": {"name": "Test"}},
+                    "session123",
+                    False,
+                    "user123"
+                )
+                
+                assert result == mock_coordinator
+                mock_proxy.create_coordinator.assert_called_once_with(
+                    component_id="test-coordinator",
+                    config={"coordinator": {"name": "Test"}},
+                    session_id="session123",
+                    debug_mode=False,
+                    user_id="user123",
+                    db_url=factory.db_url,
+                    metrics_service=None
+                )

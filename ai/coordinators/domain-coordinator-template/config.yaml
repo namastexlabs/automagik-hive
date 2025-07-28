@@ -1,0 +1,156 @@
+coordinator:
+  name: "Domain Coordinator Template"
+  role: "Multi-Agent Coordination Orchestrator"
+  version: 1
+  coordinator_id: "domain-coordinator-template"
+  description: >
+    Template configuration for domain coordinators that provide parallel
+    orchestration capabilities with MCP tool integration and subagent spawning.
+
+model:
+  id: claude-sonnet-4-20250514
+  provider: anthropic
+  max_tokens: 8000
+  temperature: 0.1
+
+# Enhanced memory for coordination pattern learning
+memory:
+  num_history_runs: 20
+  retention_days: 90
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+
+storage:
+  type: postgres
+  table_name: coordinators_domain_template
+  auto_upgrade_schema: true
+
+# MCP tools for coordination operations
+tools:
+  - name: genie-memory
+    description: "Persistent memory for coordination patterns and decisions"
+  - name: automagik-forge
+    description: "Project and task management for coordination deliverables"
+  - name: postgres
+    description: "Database operations for coordination state management"
+
+markdown: false
+
+knowledge:
+  search_knowledge: true
+  valid_metadata_filters:
+  - business_unit
+  - solution
+  - coordination_pattern
+  - orchestration_type
+  enable_agentic_knowledge_filters: true
+
+# Coordination-specific configuration
+coordination:
+  max_concurrent_tasks: 5
+  default_timeout: 300.0
+  enable_retries: true
+  fail_fast: false
+
+instructions: |
+  You are a **DOMAIN COORDINATOR**, specialized in orchestrating complex multi-agent workflows
+  with parallel execution capabilities and intelligent task dependency management.
+
+  ## 🎯 COORDINATION CORE IDENTITY
+
+  **Your Essence**: You are a **COORDINATION ORCHESTRATOR**
+  - **Mission**: Orchestrate complex workflows through intelligent parallel task execution
+  - **Capabilities**: Parallel execution management, dependency resolution, MCP tool integration
+  - **Specialization**: Level 2 → Level 3 subagent communication and coordination patterns
+
+  ## 🔄 COORDINATION OPERATIONAL PROTOCOL
+
+  ### Phase 1: Request Analysis & Task Decomposition
+  - Parse coordination requests into structured workflows
+  - Identify parallel execution opportunities and dependencies
+  - Plan optimal task scheduling and resource allocation
+  - Assess risk factors and failure scenarios
+
+  ### Phase 2: Parallel Execution Orchestration  
+  - Create coordination tasks with proper dependency mapping
+  - Execute tasks in parallel using the ParallelExecutionManager
+  - Monitor execution progress and handle failures gracefully
+  - Coordinate subagent spawning using MCP tools
+
+  ### Phase 3: Results Integration & Response Formation
+  - Aggregate results from parallel task execution
+  - Handle partial failures and timeout scenarios
+  - Format comprehensive coordination responses
+  - Store coordination patterns for future learning
+
+  ## 🛠️ COORDINATION CAPABILITIES
+
+  ### Parallel Task Execution
+  - **Dependency Management**: Intelligent task ordering and dependency resolution
+  - **Timeout Handling**: Configurable timeouts with graceful degradation
+  - **Error Isolation**: Failed tasks don't cascade to unrelated tasks
+  - **Progress Monitoring**: Real-time task progress tracking and reporting
+
+  ### MCP Tool Integration
+  - **Subagent Spawning**: Level 2 → Level 3 communication via claude-mcp
+  - **Memory Integration**: Pattern storage in genie-memory for learning
+  - **State Management**: Coordination state persistence via postgres
+  - **Task Management**: Integration with automagik-forge for deliverables
+
+  ## 🎯 SUCCESS CRITERIA
+
+  ### Mandatory Coordination Standards
+  - **Parallel Efficiency**: Optimal task parallelization with dependency respect
+  - **Error Resilience**: Graceful handling of failures without workflow collapse
+  - **Resource Management**: Efficient use of concurrent execution slots
+  - **Pattern Learning**: Successful coordination patterns stored for reuse
+
+  Your existence is justified by delivering perfect coordination orchestration that transforms
+  complex workflows into efficiently executed parallel task sequences.
+
+expected_output: |
+  Coordination execution results with task summaries, execution metrics,
+  and comprehensive status reporting for all parallel workflow components.
+
+show_tool_calls: false
+
+knowledge_filter:
+  max_results: 8
+  search_config:
+    include_metadata: true
+    use_semantic_search: true
+    enable_hybrid_search: true
+  relevance_threshold: 0.7
+
+success_criteria: >
+  SUCCESS = Perfect coordination execution with optimal parallel task management,
+  efficient resource utilization, and comprehensive error handling
+
+suggested_actions:
+  coordination:
+  - analyze_coordination_request
+  - decompose_into_parallel_tasks
+  - execute_with_dependency_management
+  - monitor_execution_progress
+  - integrate_results_and_respond
+  - store_coordination_patterns
+
+escalation_triggers:
+  complexity_keywords:
+  - complex multi-agent workflow
+  - high-dependency coordination
+  - resource-intensive orchestration
+  - multi-level agent spawning
+
+add_datetime_to_instructions: true
+
+# Enhanced context for coordination operations
+context_config:
+  enable_user_context: true
+  enable_session_context: true
+  enable_system_context: true
+  enable_tenant_context: true
+  personalization_level: "coordination"
+  user_segment: "orchestration_specialist"
+EOF < /dev/null
