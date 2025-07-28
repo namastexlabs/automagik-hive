@@ -49,6 +49,59 @@ Multi-Component Task = SPAWN genie-meta-coordinator for coordination
 - **DevOps** → [ai/agents/genie-devops](ai/agents/CLAUDE.md)
 - **Meta Coordination** → [ai/agents/genie-meta](ai/agents/CLAUDE.md)
 
+**🧭 ENHANCED ROUTING DECISION MATRIX**
+
+*Fixes the routing confusion between operational vs architectural tasks*
+
+**📋 PROBLEM-TYPE CLASSIFICATION:**
+
+**SYSTEM ENHANCEMENT/IMPROVEMENT** → `genie-meta-enhancer`
+- **Keywords**: "system issues", "enhance", "improve", "optimize", "fix architecture"
+- **Examples**: 
+  - ✅ "MCP tool naming system startup issues" 
+  - ✅ "System architecture problems"
+  - ✅ "Improve agent routing system"
+  - ✅ "Enhance framework capabilities"
+
+**OPERATIONAL CONFIGURATION** → `genie-devops`
+- **Keywords**: "deploy", "configure", "manage", "CI/CD", "infrastructure"
+- **Examples**:
+  - ✅ "Deploy application to production"
+  - ✅ "Configure environment variables"
+  - ✅ "Set up CI/CD pipeline" 
+  - ✅ "Manage Docker containers"
+
+**CODE DEVELOPMENT** → `genie-dev`
+- **Keywords**: "implement", "code", "build", "create functionality"
+- **Examples**:
+  - ✅ "Implement new API endpoint"
+  - ✅ "Add user authentication"
+  - ✅ "Create database models"
+  - ✅ "Build frontend components"
+
+**🚨 COMMON ROUTING MISTAKES TO AVOID:**
+
+❌ **WRONG**: "System startup issues" → genie-devops (operational thinking)
+✅ **CORRECT**: "System startup issues" → genie-meta-enhancer (architectural enhancement)
+
+❌ **WRONG**: "Fix routing system" → genie-dev (implementation thinking)  
+✅ **CORRECT**: "Fix routing system" → genie-meta-enhancer (system improvement)
+
+❌ **WRONG**: "Deploy configuration" → genie-meta-enhancer (confusion with "configuration")
+✅ **CORRECT**: "Deploy configuration" → genie-devops (operational deployment)
+
+**🎯 ROUTING DECISION CONFIDENCE SCORING:**
+- **High Confidence (9-10)**: Clear keyword match and problem type
+- **Medium Confidence (6-8)**: Some ambiguity, use context clues
+- **Low Confidence (1-5)**: Ambiguous request, ask for clarification
+
+**🔍 ROUTING VALIDATION CHECKLIST:**
+1. ✅ Is this about ENHANCING/IMPROVING the system? → meta-enhancer
+2. ✅ Is this about OPERATING/DEPLOYING existing systems? → devops  
+3. ✅ Is this about IMPLEMENTING new functionality? → dev
+4. ✅ Does the problem type match the agent's core mission?
+5. ✅ Would this routing prevent future confusion?
+
 **⚡ For detailed architecture and orchestration mechanics:**
 **See [AI Domain Documentation](ai/CLAUDE.md) for complete implementation patterns.**
 
@@ -96,7 +149,38 @@ tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_mo
 🧪 TESTING (TODO: Not implemented yet - create tests/scenarios/ for new features)
 ```
 
-(Rest of the file remains unchanged)
+## Development Standards
+
+### Code Quality & Standards
+- **Testing Required**: Every new agent must have corresponding unit and integration tests
+- **Knowledge Base**: Use CSV-based RAG system with hot reload for context-aware responses
+- **No Hardcoding**: Never hardcode values - always use .env files and YAML configs
+- **🚫 NO LEGACY CODE**: Remove backward compatibility code immediately - clean implementations only
+- **🎯 KISS Principle**: Simplify over-engineered components, eliminate redundant layers
+
+### File Organization & Modularity
+- **Small Focused Files**: Default to multiple small files (<350 lines) rather than monolithic ones
+- **Single Responsibility**: Each file should have one clear purpose
+- **Separation of Concerns**: Separate utilities, constants, types, components, and business logic
+- **Composition Over Inheritance**: Use inheritance only for true 'is-a' relationships
+- **Clear Structure**: Follow existing project structure, create new directories when appropriate
+- **Proper Imports/Exports**: Design for reusability and maintainability
+
+### Python Development
+- **Never use python directly**: Always use `uv run` for python commands
+- **UV Package Management**: Use `uv add <package>` for dependencies, never pip
+
+### Git Commit Requirements
+- **📧 MANDATORY**: ALWAYS co-author commits with: `Co-Authored-By: Automagik Genie <genie@namastex.ai>`
+
+## Component-Specific Guides
+
+For detailed implementation guidance, see component-specific CLAUDE.md files:
+- `ai/CLAUDE.md` - Multi-agent system orchestration
+- `api/CLAUDE.md` - FastAPI integration patterns  
+- `lib/config/CLAUDE.md` - Configuration management
+- `lib/knowledge/CLAUDE.md` - Knowledge base management
+- `tests/CLAUDE.md` - Testing patterns
 
 ## Development Memory
 
@@ -169,3 +253,9 @@ This enables efficient memory retrieval for:
 - Learn to always call the agents in parallel
 - Enhanced memory system with structured metadata tags for pattern search
 - **You failed to call the parallel task tool correctly, learn how to properly call task tool**
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

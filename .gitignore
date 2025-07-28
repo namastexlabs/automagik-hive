@@ -188,6 +188,7 @@ data/*.sqlite3
 
 tmp/
 backup/
+backups/
 # Logs
 logs/
 *.log
