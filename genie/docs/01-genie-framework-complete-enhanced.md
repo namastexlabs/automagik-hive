@@ -98,13 +98,11 @@ Code Changes → Master Genie → QAUnit Team → Route Based on Need
 - `genie-devops-cicd` → CI/CD pipeline architecture and quality gates
 - `genie-devops-precommit` → Pre-commit hook automation
 - `genie-devops-tasks` → Task runner automation (Makefile + taskipy)
-- `genie-devops-config` → Configuration centralization
 - `genie-devops-infra` → Infrastructure automation and deployment
 
 **Sample DevOpsUnit Workflow**:
 ```
 Deployment Request → Master Genie → DevOpsUnit → Coordinate Pipeline
-1. genie-devops-config: Centralize configurations
 2. genie-devops-precommit: Setup quality gates
 3. genie-devops-cicd: Build CI/CD pipeline
 4. genie-devops-infra: Deploy infrastructure

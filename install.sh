@@ -62,12 +62,6 @@ install_basic_tools() {
     fi
     print_success "Basic tools installation completed."
     
-    # Install tdd-guard globally
-    if command -v npm >/dev/null 2>&1; then
-        print_status "Installing tdd-guard globally..."
-        npm install -g tdd-guard
-        print_success "tdd-guard installed globally."
-    fi
 }
 
 # Ensures uv is installed, installing it if not found.

@@ -57,7 +57,6 @@ def develop_feature(self, requirements: str):
 - `genie-devops-precommit` → Pre-commit hook automation and optimization
 - `genie-devops-cicd` → CI/CD pipeline architecture and quality gates
 - `genie-devops-tasks` → Task runner automation (Makefile + taskipy)
-- `genie-devops-config` → Configuration centralization in pyproject.toml
 - `genie-devops-infra` → Infrastructure automation and deployment
 
 **Coordination Pattern**: Parallel execution with infrastructure dependencies
@@ -66,7 +65,6 @@ def develop_feature(self, requirements: str):
 def setup_infrastructure(self, project_context: str):
     # Parallel configuration setup
     parallel_tasks = [
-        ("genie-devops-config", "centralize_configuration"),
         ("genie-devops-tasks", "setup_task_automation"),
         ("genie-devops-precommit", "configure_quality_gates")
     ]

@@ -1,7 +1,0 @@
-agent:
-  agent_id: agent-3
-  name: Agent Three
-  role: Tertiary Agent
-knowledge:
-  references_format: json
-  search_knowledge: true

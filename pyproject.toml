@@ -55,7 +55,6 @@ dependencies = [
     "openinference-instrumentation-agno>=0.1.9", # Agno instrumentation
     # === Data Processing ===
     "pandas>=2.3.1", # Data manipulation and analysis
-    "tdd-guard-pytest>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -361,5 +360,6 @@ include = [
 
 [dependency-groups]
 dev = [
+    "pathlib>=1.0.1",
     "types-pyyaml>=6.0.12.20250516",
 ]

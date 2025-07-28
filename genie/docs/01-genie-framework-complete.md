@@ -50,7 +50,6 @@ The Genie Framework is a multi-agent orchestration system built on top of Automa
 - **genie-devops-precommit**: Pre-commit hook automation and optimization
 - **genie-devops-cicd**: CI/CD pipeline architecture and quality gates
 - **genie-devops-tasks**: Task runner automation (Makefile + taskipy)
-- **genie-devops-config**: Configuration centralization in pyproject.toml
 - **genie-devops-infra**: Infrastructure automation and deployment
 
 ### 💻 Development Team

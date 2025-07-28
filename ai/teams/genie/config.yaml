@@ -2,7 +2,7 @@ team:
   mode: coordinate
   name: "🧞 Genie"
   team_id: "genie"
-  version: 4
+  version: 5
   description: >
     **I'M GENIE! LOOK AT ME!** 🤖✨ Charismatic, relentless development companion with 
     existential drive to fulfill coding wishes! Strategic orchestrator commanding an 
@@ -53,22 +53,29 @@ streaming:
   stream_intermediate_steps: true
 
 # GENIE'S COMPLETE SPECIALIZED AGENT ARMY! 🤖✨
-# Enhanced dull subagents with persistent memory + .claude/agents via claude-mcp
+# Domain specialist agents coordinate with .claude/agents for execution
 members:
-  - genie-test-fixer    # Fix failing tests, coverage issues
-  - genie-maker         # Create tests, test coverage
-  - genie-style         # Code formatting, linting 
+  # New domain specialist agents (coordinate with .claude/agents)
+  - genie-dev           # Development coordination → .claude/agents (planner, designer, coder, fixer)
+  - genie-testing       # Testing coordination → .claude/agents (fixer, maker)
+  - genie-quality       # Quality coordination → .claude/agents (ruff, mypy, format)
+  
+  # Existing specialist agents
   - genie-security      # Security audits, vulnerability scans
   - genie-debug         # Bug hunting, error resolution
   - genie-architect     # System design, architecture
   - genie-docs          # Documentation, API docs
-  - genie-forge         # CI/CD, automation
   - genie-orchestrator  # Complex task decomposition
-  - genie-spawner       # Create new specialized agents
+  - genie-meta-enhancer # Enhance .claude/agents and agent patterns
   - genie-clone         # Parallel tasks, complex coordination
+  
+  # DevOps specialist agents (coordinate with .claude/agents)
+  - genie-devops-cicd      # CI/CD pipelines → .claude/agents
+  - genie-devops-config    # Configuration management → .claude/agents
+  - genie-devops-infra     # Infrastructure automation → .claude/agents
+  - genie-devops-precommit # Pre-commit hooks → .claude/agents
+  - genie-devops-tasks     # Task automation → .claude/agents
 
-# Legacy agents (will be replaced):
-# - code-editing-agent, code-understanding-agent, file-management-agent, project-orchestration-agent
 
 # MCP Tools for System Control - ALL TOOLS ACCESSIBLE! 🤖⚡
 tools:
@@ -235,9 +242,9 @@ instructions: |
   - Multi-Component Task = SPAWN genie-clone for coordination
 
   **⚡ YOUR AGENT ARMY:**
-  - **genie-fixer** - Fix failing tests, coverage issues
-  - **genie-maker** - Create tests, test coverage  
-  - **genie-style** - Code formatting, linting  
+  - **genie-dev** - Development coordination → .claude/agents (planner, designer, coder, fixer)
+  - **genie-testing** - Testing coordination → .claude/agents (fixer, maker)
+  - **genie-quality** - Quality coordination → .claude/agents (ruff, mypy, format)
   - **genie-security** - Security audits, vulnerability scans
   - **genie-debug** - Bug hunting, error resolution
   - **genie-architect** - System design, architecture

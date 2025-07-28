@@ -127,10 +127,14 @@ define generate_hive_api_key
 endef
 
 define generate_agent_hive_api_key
-    $(call print_status,Generating secure Agent API key...); \
-    API_KEY=$$(uv run python -c "import secrets; print('hive_agent_' + secrets.token_urlsafe(32))"); \
-    sed -i "s|^HIVE_API_KEY=.*|HIVE_API_KEY=$$API_KEY|" .env.agent; \
-    echo -e "$(FONT_GREEN)🔑 Agent API Key: $$API_KEY$(FONT_RESET)"
+    $(call use_unified_api_key_for_agent); \
+    $(call extract_hive_api_key_from_env); \
+    if [ -z "$$HIVE_API_KEY" ]; then \
+        $(call print_status,Generating secure Agent API key...); \
+        API_KEY=$$(uv run python -c "import secrets; print('hive_agent_' + secrets.token_urlsafe(32))"); \
+        sed -i "s|^HIVE_API_KEY=.*|HIVE_API_KEY=$$API_KEY|" .env.agent; \
+        echo -e "$(FONT_GREEN)🔑 Agent API Key: $$API_KEY$(FONT_RESET)"; \
+    fi
 endef
 
 define show_api_key_info
@@ -144,29 +148,42 @@ define show_api_key_info
 endef
 
 define generate_postgres_credentials
-    $(call print_status,Generating secure PostgreSQL credentials...); \
-    POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_DB="hive"; \
-    sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
-    $(call print_success,PostgreSQL credentials generated and saved to .env); \
-    echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
-    echo -e "  User: $$POSTGRES_USER"; \
-    echo -e "  Password: $$POSTGRES_PASS"; \
-    echo -e "  Database: $$POSTGRES_DB"
+    $(call extract_postgres_credentials_from_env); \
+    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ]; then \
+        $(call print_status,Using existing PostgreSQL credentials from .env...); \
+        echo -e "$(FONT_CYAN)Reusing credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER"; \
+        echo -e "  Password: $$POSTGRES_PASS"; \
+        echo -e "  Database: $$POSTGRES_DB"; \
+    else \
+        $(call print_status,Generating secure PostgreSQL credentials...); \
+        POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_DB="hive"; \
+        sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
+        $(call print_success,PostgreSQL credentials generated and saved to .env); \
+        echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER"; \
+        echo -e "  Password: $$POSTGRES_PASS"; \
+        echo -e "  Database: $$POSTGRES_DB"; \
+    fi
 endef
 
 define generate_agent_postgres_credentials
-    $(call print_status,Generating secure Agent PostgreSQL credentials...); \
-    POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_DB="hive_agent"; \
-    sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:35532/$$POSTGRES_DB|" .env.agent; \
-    $(call print_success,Agent PostgreSQL credentials generated and saved to .env.agent); \
-    echo -e "$(FONT_CYAN)Generated agent credentials:$(FONT_RESET)"; \
-    echo -e "  User: $$POSTGRES_USER"; \
-    echo -e "  Password: $$POSTGRES_PASS"; \
-    echo -e "  Database: $$POSTGRES_DB"
+    $(call use_unified_credentials_for_agent); \
+    $(call extract_postgres_credentials_from_env); \
+    if [ -z "$$POSTGRES_USER" ]; then \
+        $(call print_status,Generating secure Agent PostgreSQL credentials...); \
+        POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_DB="hive_agent"; \
+        sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:35532/$$POSTGRES_DB|" .env.agent; \
+        $(call print_success,Agent PostgreSQL credentials generated and saved to .env.agent); \
+        echo -e "$(FONT_CYAN)Generated agent credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER"; \
+        echo -e "  Password: $$POSTGRES_PASS"; \
+        echo -e "  Database: $$POSTGRES_DB"; \
+    fi
 endef
 
 define setup_docker_postgres
@@ -397,6 +414,7 @@ install-local: ## 🛠️ Install development environment (local only)
 install: ## 🛠️ Install with optional Docker PostgreSQL setup
 	@$(MAKE) install-local
 	@$(call setup_docker_postgres)
+	@$(call sync_mcp_config_with_credentials)
 
 
 # ===========================================
@@ -681,6 +699,7 @@ install-agent: ## 🤖 Silent agent environment setup (destructive reinstall)
 	@$(call setup_agent_env)
 	@$(call setup_agent_postgres)
 	@$(call generate_agent_hive_api_key)
+	@$(call sync_mcp_config_with_credentials)
 	@$(call print_success,Agent environment ready!)
 	@echo -e "$(FONT_CYAN)🌐 Agent API will be available at: http://localhost:$(AGENT_PORT)$(FONT_RESET)"
 	@echo -e "$(FONT_CYAN)💡 Start with: make agent$(FONT_RESET)"
@@ -767,3 +786,68 @@ test: ## 🧪 Run test suite
 # 🧹 Phony Targets
 # ===========================================
 .PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall uninstall-containers-only uninstall-clean uninstall-purge install-agent agent agent-stop agent-restart agent-logs agent-status
+# ===========================================
+# 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
+# ===========================================
+
+# Extract PostgreSQL credentials from main .env file
+define extract_postgres_credentials_from_env
+    if [ -f ".env" ] && grep -q "^HIVE_DATABASE_URL=" .env; then \
+        EXISTING_URL=$$(grep "^HIVE_DATABASE_URL=" .env | cut -d'=' -f2); \
+        if echo "$$EXISTING_URL" | grep -q "postgresql+psycopg://"; then \
+            POSTGRES_USER=$$(echo "$$EXISTING_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p'); \
+            POSTGRES_PASS=$$(echo "$$EXISTING_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p'); \
+            POSTGRES_DB=$$(echo "$$EXISTING_URL" | sed -n 's|.*/\([^?]*\).*|\1|p'); \
+            POSTGRES_HOST=$$(echo "$$EXISTING_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p'); \
+            POSTGRES_PORT=$$(echo "$$EXISTING_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p'); \
+        fi; \
+    fi
+endef
+
+# Extract API key from main .env file  
+define extract_hive_api_key_from_env
+    if [ -f ".env" ] && grep -q "^HIVE_API_KEY=" .env; then \
+        HIVE_API_KEY=$$(grep "^HIVE_API_KEY=" .env | cut -d'=' -f2); \
+    fi
+endef
+
+
+# Use unified credentials from main .env for agent (shared user/pass, different port/db)
+define use_unified_credentials_for_agent
+    $(call extract_postgres_credentials_from_env); \
+    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ]; then \
+        $(call print_status,Using unified credentials from main .env for agent...); \
+        sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:35532/hive_agent|" .env.agent; \
+        echo -e "$(FONT_CYAN)Unified agent credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER (shared)"; \
+        echo -e "  Password: $$POSTGRES_PASS (shared)"; \
+        echo -e "  Database: hive_agent"; \
+        echo -e "  Port: 35532 (agent-specific)"; \
+    fi
+endef
+
+# Use unified API key from main .env for agent  
+define use_unified_api_key_for_agent
+    $(call extract_hive_api_key_from_env); \
+    if [ -n "$$HIVE_API_KEY" ]; then \
+        $(call print_status,Using unified API key from main .env for agent...); \
+        sed -i "s|^HIVE_API_KEY=.*|HIVE_API_KEY=$$HIVE_API_KEY|" .env.agent; \
+        echo -e "$(FONT_CYAN)Unified agent API key:$(FONT_RESET)"; \
+        echo -e "  API Key: $$HIVE_API_KEY (shared)"; \
+    fi
+endef
+
+# Generate MCP configuration with current credentials
+define sync_mcp_config_with_credentials
+    $(call extract_postgres_credentials_from_env); \
+    $(call extract_hive_api_key_from_env); \
+    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ] && [ -n "$$HIVE_API_KEY" ]; then \
+        $(call print_status,Updating .mcp.json with current credentials...); \
+        sed -i "s|postgresql+psycopg://[^@]*@|postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@|g" .mcp.json; \
+        sed -i "s|\"HIVE_API_KEY\": \"[^\"]*\"|\"HIVE_API_KEY\": \"$$HIVE_API_KEY\"|g" .mcp.json; \
+        $(call print_success,.mcp.json updated with current credentials); \
+    else \
+        $(call print_warning,Could not update .mcp.json - missing credentials); \
+    fi
+endef
+
