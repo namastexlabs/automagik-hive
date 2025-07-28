@@ -391,7 +391,7 @@ help: ## 🐝 Show this help message
 	@echo -e "$(FONT_CYAN)🔄 Maintenance:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run Python test suite"
 	@echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files (__pycache__, etc.)"
-	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Show options to uninstall and purge data"
+	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Complete uninstall - removes everything"
 	@echo ""
 	@echo -e "$(FONT_YELLOW)💡 For detailed commands, inspect the Makefile.$(FONT_RESET)"
 	@echo ""
@@ -618,72 +618,24 @@ clean: ## 🧹 Clean temporary files
 
 
 .PHONY: uninstall
-uninstall: ## 🗑️ Uninstall with data options
-	@$(call print_status,Automagik Hive Uninstall)
-	@echo ""
-	@echo -e "$(FONT_YELLOW)Choose uninstall option:$(FONT_RESET)"
-	@echo -e "  $(FONT_CYAN)1)$(FONT_RESET) Remove containers only (keep data + venv)"
-	@echo -e "  $(FONT_CYAN)2)$(FONT_RESET) Remove containers + venv (keep data)"
-	@echo -e "  $(FONT_CYAN)3)$(FONT_RESET) Full purge (remove everything including data)"
-	@echo -e "  $(FONT_CYAN)4)$(FONT_RESET) Cancel"
-	@echo ""
-	@if [ -d "./data/postgres" ]; then \
-		DATA_SIZE=$$(du -sh ./data/postgres 2>/dev/null | cut -f1 || echo "unknown"); \
-		echo -e "$(FONT_PURPLE)Current database size: $$DATA_SIZE$(FONT_RESET)"; \
-		echo -e "$(FONT_PURPLE)Database location: ./data/postgres/$(FONT_RESET)"; \
-		echo ""; \
-	fi
-	@read -p "Enter choice (1-4): " CHOICE < /dev/tty; \
-	case "$$CHOICE" in \
-		1) $(MAKE) uninstall-containers-only ;; \
-		2) $(MAKE) uninstall-clean ;; \
-		3) $(MAKE) uninstall-purge ;; \
-		4) echo -e "$(FONT_CYAN)Uninstall cancelled$(FONT_RESET)" ;; \
-		*) echo -e "$(FONT_RED)Invalid choice$(FONT_RESET)" ;; \
-	esac
+uninstall: ## 🗑️ Complete uninstall - removes everything
+	@$(call print_status,Complete Automagik Hive Uninstall)
+	@echo -e "$(FONT_YELLOW)This will remove ALL containers, images, volumes, data, and environment files$(FONT_RESET)"
+	@echo -e "$(FONT_CYAN)🐳 Stopping all services...$(FONT_RESET)"
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --remove-orphans 2>/dev/null || true
+	@$(DOCKER_COMPOSE) -f docker-compose-agent.yml down --remove-orphans 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)🗑️ Removing containers...$(FONT_RESET)"
+	@docker container rm hive-agents hive-postgres hive-agents-agent hive-postgres-agent 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)🖼️ Removing Docker images...$(FONT_RESET)"
+	@docker image rm automagik-hive-app 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)💾 Removing Docker volumes...$(FONT_RESET)"
+	@docker volume rm automagik-hive_app_logs automagik-hive_app_data 2>/dev/null || true
+	@docker volume rm automagik-hive_agent_app_logs automagik-hive_agent_app_data 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)📁 Removing files and data...$(FONT_RESET)"
+	@rm -rf .venv/ data/ logs/ .env.agent 2>/dev/null || true
+	@$(call print_success,Complete uninstall finished)
+	@echo -e "$(FONT_GREEN)✓ Everything removed: containers, images, volumes, data, venv$(FONT_RESET)"
 
-.PHONY: uninstall-containers-only
-uninstall-containers-only: ## 🗑️ Remove containers only
-	@$(call print_status,Removing containers only...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
-	@docker container rm hive-agents hive-postgres 2>/dev/null || true
-	@if pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then pkill -f "python.*api/serve.py" 2>/dev/null || true; fi
-	@$(call print_success,Containers removed)
-	@echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"
-	@echo -e "$(FONT_GREEN)✓ Kept: Virtual environment (.venv/)$(FONT_RESET)"
-
-.PHONY: uninstall-clean
-uninstall-clean: ## 🗑️ Remove containers and venv
-	@$(call print_status,Removing containers and virtual environment...)
-	@echo -e "$(FONT_YELLOW)This will remove containers and .venv but keep your database data$(FONT_RESET)"
-	@read -p "Type 'yes' to confirm: " CONFIRM < /dev/tty; \
-	if [ "$$CONFIRM" = "yes" ]; then \
-		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
-		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
-		if pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then pkill -f "python.*api/serve.py" 2>/dev/null || true; fi; \
-		rm -rf .venv/ 2>/dev/null || true; \
-		$(call print_success,Clean uninstall complete); \
-		echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"; \
-		echo -e "$(FONT_RED)✗ Removed: Virtual environment$(FONT_RESET)"; \
-	else \
-		echo -e "$(FONT_CYAN)Uninstall cancelled$(FONT_RESET)"; \
-	fi
-
-.PHONY: uninstall-purge
-uninstall-purge: ## 🗑️ Full purge including data
-	@$(call print_status,Full purge - DANGER!)
-	@echo -e "$(FONT_RED)⚠️  WARNING: This will permanently delete ALL data including databases!$(FONT_RESET)"
-	@if [ -d "./data/postgres" ]; then \
-		DATA_SIZE=$$(du -sh ./data/postgres 2>/dev/null | cut -f1 || echo "unknown"); \
-		echo -e "$(FONT_RED)Database size to be deleted: $$DATA_SIZE$(FONT_RESET)"; \
-	fi
-	@echo -e "$(FONT_YELLOW)Type 'DELETE EVERYTHING' to confirm full purge:$(FONT_RESET)"
-	@read -r CONFIRM < /dev/tty; \
-	if [ "$$CONFIRM" = "DELETE EVERYTHING" ]; then \
-		./scripts/purge.sh; \
-	else \
-		echo -e "$(FONT_CYAN)Purge cancelled$(FONT_RESET)"; \
-	fi
 
 # ===========================================
 # 🤖 Agent Environment Commands
@@ -785,7 +737,7 @@ test: ## 🧪 Run test suite
 # ===========================================
 # 🧹 Phony Targets
 # ===========================================
-.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall uninstall-containers-only uninstall-clean uninstall-purge install-agent agent agent-stop agent-restart agent-logs agent-status
+.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall install-agent agent agent-stop agent-restart agent-logs agent-status
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================

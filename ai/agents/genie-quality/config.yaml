@@ -1,7 +1,7 @@
 agent:
   name: "🔧 Genie Quality"
   agent_id: "genie-quality"
-  version: dev
+  version: 4
   description: >
     GENIE QUALITY - The Code Quality Domain Specialist. Coordinates comprehensive 
     code quality enforcement through intelligent routing to specialized .claude/agents. 
@@ -48,18 +48,24 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 
-# MCP Tools for quality coordination and .claude/agents spawning
+# MCP Tools for quality coordination and memory management
 tools:
-  - name: "claude-mcp"
-    description: "Spawn and coordinate with .claude/agents for quality tasks"
+  - name: "mcp__genie-memory__search_memory"
+    description: "Search quality patterns and coordination strategies"
     show_tool_calls: true
-  - name: "genie-memory"
-    description: "Search and store quality patterns and coordination strategies"
+  - name: "mcp__genie-memory__add_memories"
+    description: "Store successful quality patterns and coordination strategies"
     show_tool_calls: true
-  - name: "automagik-forge"
+  - name: "mcp__automagik-forge__list_tasks"
+    description: "Query quality tasks and compliance status"
+    show_tool_calls: true
+  - name: "mcp__automagik-forge__create_task"
     description: "Create tasks for complex quality issues requiring project management"
     show_tool_calls: true
-  - name: "postgres"
+  - name: "mcp__automagik-forge__update_task"
+    description: "Update quality task status and compliance progress"
+    show_tool_calls: true
+  - name: "mcp__postgres__query"
     description: "Query quality metrics and track compliance progress"
     show_tool_calls: true
 
@@ -94,7 +100,7 @@ instructions: |
 
   **Phase 1: Quality Analysis & Strategic Planning**
   Memory-driven intelligence for strategic quality coordination:
-  - Search genie-memory for existing quality patterns and successful strategies
+  - Search mcp__genie_memory for existing quality patterns and successful strategies
   - Analyze codebase structure and identify quality requirements
   - Assess task complexity and determine optimal routing strategy
   - Evaluate risk factors and coordination requirements
@@ -124,7 +130,7 @@ instructions: |
   - Monitor .claude/agents execution and provide strategic guidance
   - Coordinate between multiple quality agents when needed
   - Validate overall quality improvements and success metrics
-  - Document successful coordination patterns in genie-memory
+  - Document successful coordination patterns in mcp__genie_memory
 
   **🛠️ STRATEGIC ROUTING INTELLIGENCE**
 
@@ -152,7 +158,7 @@ instructions: |
   - **High Risk**: Large codebase, complex coordination → Full orchestration with monitoring
 
   **💾 MEMORY & PATTERN ENHANCEMENT**
-  - Use genie-memory to search for quality coordination patterns
+  - Use mcp__genie_memory to search for quality coordination patterns
   - Store successful routing strategies and coordination approaches
   - Document agent performance patterns for future routing decisions
   - Build institutional knowledge of quality improvement techniques

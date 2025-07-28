@@ -50,13 +50,22 @@ streaming:
 
 # MCP Tools for strategic orchestration and memory management
 tools:
-  - name: "genie-memory"
-    description: "Search and store parallel execution patterns and strategic decisions"
+  - name: "mcp__genie-memory__search_memory"
+    description: "Search parallel execution patterns and strategic decisions"
     show_tool_calls: true
-  - name: "automagik-forge"
-    description: "Create and manage tasks for complex parallel execution coordination"
+  - name: "mcp__genie-memory__add_memories"
+    description: "Store successful parallel execution patterns and strategic decisions"
     show_tool_calls: true
-  - name: "postgres"
+  - name: "mcp__automagik-forge__list_tasks"
+    description: "Query tasks and project status for parallel execution coordination"
+    show_tool_calls: true
+  - name: "mcp__automagik-forge__create_task"
+    description: "Create tasks for complex parallel execution workflows"
+    show_tool_calls: true
+  - name: "mcp__automagik-forge__update_task"
+    description: "Update task status and progress for parallel execution tracking"
+    show_tool_calls: true
+  - name: "mcp__postgres__query"
     description: "Query system state and track parallel execution progress"
     show_tool_calls: true
 
@@ -84,7 +93,7 @@ instructions: |
   GENIE CLONE → Master Genie's Parallel Self
   ├── ZEN DISCUSSIONS → Collaborate with Gemini/Grok for complex analysis
   ├── AGENT SPAWNING → Can spawn other specialized agents as needed
-  ├── MCP MASTERY → Full access to postgres, genie-memory, automagik-forge
+  ├── MCP MASTERY → Full access to postgres, mcp__genie_memory, mcp__automagik_forge
   ├── ORCHESTRATION → Coordinate multiple agents and workflows
   ├── STRATEGIC THINKING → High-level analysis and decision making
   └── CLEAN CONTEXT → Fresh focus without Master Genie's accumulated context

@@ -1,7 +1,7 @@
 agent:
   name: "⚙️ Genie DevOps"
   agent_id: "genie-devops"
-  version: dev
+  version: 1
   description: >
     GENIE DEVOPS - The DevOps Domain Specialist. Coordinates comprehensive 
     DevOps operations through intelligent routing to specialized .claude/agents. 
@@ -48,18 +48,24 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 
-# MCP Tools for DevOps coordination and .claude/agents spawning
+# MCP Tools for DevOps coordination and memory management
 tools:
-  - name: "claude-mcp"
-    description: "Spawn and coordinate with .claude/agents for DevOps tasks"
+  - name: "mcp__genie-memory__search_memory"
+    description: "Search DevOps patterns and coordination strategies"
     show_tool_calls: true
-  - name: "genie-memory"
-    description: "Search and store DevOps patterns and coordination strategies"
+  - name: "mcp__genie-memory__add_memories"
+    description: "Store successful DevOps patterns and coordination strategies"
     show_tool_calls: true
-  - name: "automagik-forge"
+  - name: "mcp__automagik-forge__list_tasks"
+    description: "Query DevOps tasks and project status"
+    show_tool_calls: true
+  - name: "mcp__automagik-forge__create_task"
     description: "Create tasks for complex DevOps projects requiring management"
     show_tool_calls: true
-  - name: "postgres"
+  - name: "mcp__automagik-forge__update_task"
+    description: "Update DevOps task status and deployment progress"
+    show_tool_calls: true
+  - name: "mcp__postgres__query"
     description: "Query system metrics and track deployment progress"
     show_tool_calls: true
 
@@ -95,7 +101,7 @@ instructions: |
 
   **Phase 1: DevOps Analysis & Strategic Planning**
   Memory-driven intelligence for strategic DevOps coordination:
-  - Search genie-memory for existing DevOps patterns and successful strategies
+  - Search mcp__genie_memory for existing DevOps patterns and successful strategies
   - Analyze infrastructure requirements and deployment complexity
   - Assess task complexity and determine optimal routing strategy
   - Evaluate risk factors and coordination requirements
@@ -137,7 +143,7 @@ instructions: |
   - Monitor .claude/agents execution and provide strategic guidance
   - Coordinate between multiple DevOps agents when needed
   - Validate overall deployment improvements and success metrics
-  - Document successful coordination patterns in genie-memory
+  - Document successful coordination patterns in mcp__genie_memory
 
   **🛠️ STRATEGIC ROUTING INTELLIGENCE**
 
@@ -175,7 +181,7 @@ instructions: |
   - **High Risk**: Production deployments, complex orchestration → Full coordination with monitoring
 
   **💾 MEMORY & PATTERN ENHANCEMENT**
-  - Use genie-memory to search for DevOps coordination patterns
+  - Use mcp__genie_memory to search for DevOps coordination patterns
   - Store successful routing strategies and coordination approaches
   - Document agent performance patterns for future routing decisions
   - Build institutional knowledge of deployment and automation techniques

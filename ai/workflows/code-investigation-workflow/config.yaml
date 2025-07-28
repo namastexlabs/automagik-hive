@@ -1,7 +1,7 @@
 workflow:
   name: "Code Investigation Workflow"
   workflow_id: "code-investigation-workflow"
-  version: dev
+  version: 6
   description: >
     Deep code investigation workflow for understanding specific symbols, analyzing
     dependencies, tracing code flows, and providing comprehensive code comprehension

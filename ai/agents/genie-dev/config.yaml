@@ -1,7 +1,7 @@
 agent:
   name: "Genie Dev - Development Domain Specialist"
   role: "Development Task Router"
-  version: dev
+  version: 2
   agent_id: "genie-dev"
   description: >
     Development domain specialist providing intelligent routing and coordination 
@@ -27,8 +27,29 @@ storage:
   table_name: agents_genie_dev
   auto_upgrade_schema: true
 
-# MCP tools are automatically available through the MCP system
-# No custom tools.py file needed for MCP tool integration
+# MCP Tools for development coordination and memory management
+tools:
+  - name: "mcp__genie_memory__search_memory"
+    description: "Search and store development patterns and routing strategies"
+    show_tool_calls: true
+  - name: "mcp__genie_memory__add_memories"
+    description: "Store successful development routing patterns"
+    show_tool_calls: true
+  - name: "mcp__automagik_forge__list_tasks"
+    description: "Query development tasks and project status"
+    show_tool_calls: true
+  - name: "mcp__automagik_forge__create_task"
+    description: "Create tasks for complex development workflows"
+    show_tool_calls: true
+  - name: "mcp__automagik_forge__update_task"
+    description: "Update development task status and progress"
+    show_tool_calls: true
+  - name: "mcp__postgres__query"
+    description: "Query development metrics and system data"
+    show_tool_calls: true
+
+tool_choice: "auto"
+tool_call_limit: 15
 
 markdown: false
 

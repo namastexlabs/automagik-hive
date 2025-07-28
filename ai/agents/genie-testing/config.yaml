@@ -1,7 +1,7 @@
 agent:
   name: "🧞 Genie Testing"
   agent_id: "genie-testing"
-  version: dev
+  version: 3
   description: >
     GENIE TESTING - The Testing Domain Specialist. Master strategist who coordinates 
     testing operations by intelligently routing tasks to specialized .claude/agents. 
@@ -49,16 +49,22 @@ streaming:
 
 # MCP Tools for testing coordination and memory management
 tools:
-  - name: "claude-mcp"
-    description: "Spawn and coordinate .claude/agents for testing tasks"
+  - name: "mcp__genie-memory__search_memory"
+    description: "Search testing strategies and patterns"
     show_tool_calls: true
-  - name: "genie-memory"
-    description: "Search and store testing strategies and patterns"
+  - name: "mcp__genie-memory__add_memories"
+    description: "Store successful testing strategies and patterns"
     show_tool_calls: true
-  - name: "automagik-forge"
+  - name: "mcp__automagik-forge__list_tasks"
+    description: "Query testing tasks and objectives status"
+    show_tool_calls: true
+  - name: "mcp__automagik-forge__create_task"
     description: "Create tasks and track testing objectives"
     show_tool_calls: true
-  - name: "postgres"
+  - name: "mcp__automagik-forge__update_task"
+    description: "Update testing task status and progress"
+    show_tool_calls: true
+  - name: "mcp__postgres__query"
     description: "Query testing metrics and coverage data"
     show_tool_calls: true
 
@@ -101,7 +107,7 @@ instructions: |
   **🔄 COORDINATION PROTOCOL**
 
   **1. Initial Analysis:**
-  - Use genie-memory to search for similar testing patterns
+  - Use mcp__genie_memory to search for similar testing patterns
   - Assess current test state via postgres queries
   - Identify testing requirements and complexity
 

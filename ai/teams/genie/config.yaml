@@ -69,12 +69,8 @@ members:
   - genie-meta-enhancer # Enhance .claude/agents and agent patterns
   - genie-clone         # Parallel tasks, complex coordination
   
-  # DevOps specialist agents (coordinate with .claude/agents)
-  - genie-devops-cicd      # CI/CD pipelines → .claude/agents
-  - genie-devops-config    # Configuration management → .claude/agents
-  - genie-devops-infra     # Infrastructure automation → .claude/agents
-  - genie-devops-precommit # Pre-commit hooks → .claude/agents
-  - genie-devops-tasks     # Task automation → .claude/agents
+  # DevOps specialist agents (coordinate with .claude/agents)  
+  - genie-devops           # DevOps coordination → .claude/agents (all devops tasks)
 
 
 # MCP Tools for System Control - ALL TOOLS ACCESSIBLE! 🤖⚡

@@ -8,4 +8,3 @@ of DevOps tasks through intelligent routing to specialized .claude/agents.
 from .agent import get_genie_devops_agent
 
 __all__ = ["get_genie_devops_agent"]
-EOF < /dev/null

@@ -26,6 +26,8 @@ from lib.utils.yaml_cache import (
     load_yaml_cached,
 )
 from lib.versioning import AgnoVersionService
+from lib.versioning.bidirectional_sync import BidirectionalSync
+from lib.versioning.dev_mode import DevMode
 
 
 def load_global_knowledge_config():
@@ -58,7 +60,7 @@ class VersionFactory:
             raise ValueError("HIVE_DATABASE_URL environment variable required")
 
         self.version_service = AgnoVersionService(self.db_url)
-        self.yaml_fallback_count = 0  # Track first-startup fallback usage
+        self.sync_engine = BidirectionalSync(self.db_url)
 
     async def create_versioned_component(
         self,
@@ -88,45 +90,26 @@ class VersionFactory:
             Configured component instance
         """
 
-        # Simple database lookup - no fallbacks (KISS principle)
-        if version is not None:
-            version_record = await self.version_service.get_version(
-                component_id, version
+        # Clean two-path logic: DEV vs PRODUCTION
+        if DevMode.is_enabled():
+            # Dev mode: YAML only, no DB interaction
+            logger.debug(f"Dev mode: Loading {component_id} from YAML only")
+            config = await self._load_from_yaml_only(
+                component_id, component_type, **kwargs
             )
-            if not version_record:
-                raise ValueError(f"Version {version} not found for {component_id}")
         else:
-            version_record = await self.version_service.get_active_version(component_id)
-            if not version_record:
-                # First startup case: No active version in database yet
-                # Fall back to loading from YAML config directly
-                self.yaml_fallback_count += 1
-                logger.debug(
-                    f"🔧 No active version found for {component_id}, loading from YAML config (first startup)"
-                )
-                result = await self._create_component_from_yaml(
-                    component_id=component_id,
-                    component_type=component_type,
-                    session_id=session_id,
-                    debug_mode=debug_mode,
-                    user_id=user_id,
-                    **kwargs,
-                )
+            # Production: Always bidirectional sync
+            logger.debug(
+                f"Production mode: Loading {component_id} with bidirectional sync"
+            )
+            config = await self._load_with_bidirectional_sync(
+                component_id, component_type, version, **kwargs
+            )
 
-                # Log summary for first few fallbacks only
-                if self.yaml_fallback_count == 1:
-                    logger.info(
-                        "First startup detected: Loading components from YAML configs before database sync"
-                    )
-
-                return result
-
-        config = version_record.config
-
-        # Validate component type matches
-        if version_record.component_type != component_type:
+        # Validate component configuration contains expected type
+        if component_type not in config:
             raise ValueError(
-                f"Component {component_id} is type {version_record.component_type}, not {component_type}"
+                f"Component type {component_type} not found in configuration for {component_id}"
             )
 
         # Create component using type-specific method
@@ -309,11 +292,13 @@ class VersionFactory:
             return config  # Fallback to original config
 
     def _load_agent_tools(self, component_id: str, config: dict[str, Any]) -> list:
-        """Load custom tools for an agent from its tools.py file."""
+        """Load tools from YAML config via central registry (replaces tools.py approach)."""
         import os
+        
+        # Import the new tool registry
+        from lib.tools.registry import ToolRegistry
 
         tools = []
-        missing_tools = []
 
         # Check if strict validation is enabled (fail-fast mode) - defaults to true
         strict_validation = (
@@ -321,69 +306,28 @@ class VersionFactory:
         )
 
         try:
-            # Use agent ID as-is for Python module path (importlib handles hyphens)
-            tools_module_path = f"ai.agents.{component_id}.tools"
-
-            import importlib
-
-            tools_module = importlib.import_module(tools_module_path)
-
-            # Get tool names from config
-            tool_names = config.get("tools", [])
-
-            if tool_names:
-                for tool_name in tool_names:
-                    if hasattr(tools_module, tool_name):
-                        tool_function = getattr(tools_module, tool_name)
-                        tools.append(tool_function)
-                        logger.debug(
-                            f"🤖 Loaded tool '{tool_name}' for agent {component_id}"
-                        )
-                    else:
-                        missing_tools.append(tool_name)
-                        error_msg = (
-                            f"Tool '{tool_name}' not found in {tools_module_path}"
-                        )
-
+            # Get tool configurations from YAML
+            tool_configs = config.get("tools", [])
+            
+            if tool_configs:
+                # Validate tool configurations
+                for tool_config in tool_configs:
+                    if not self._validate_tool_config(tool_config):
+                        error_msg = f"Invalid tool configuration: {tool_config}"
                         if strict_validation:
                             logger.error(f"🤖 STRICT VALIDATION FAILED: {error_msg}")
-                            raise ValueError(
-                                f"Agent {component_id} tool validation failed: Missing required tool '{tool_name}' in {tools_module_path}"
-                            )
+                            raise ValueError(f"Agent {component_id} tool validation failed: {error_msg}")
                         logger.warning(f"🤖 {error_msg}")
+                
+                # Load tools via central registry
+                tools = ToolRegistry.load_tools(tool_configs)
+                
+                logger.info(f"🤖 Loaded {len(tools)} tools for agent {component_id} via central registry")
+                
+            else:
+                # No tools configured - that's okay for agents without specific tool requirements
+                logger.debug(f"🤖 No tools configured for agent {component_id}")
 
-                # Report missing tools summary
-                if missing_tools:
-                    if strict_validation:
-                        logger.error(
-                            f"🤖 Agent {component_id} missing {len(missing_tools)} required tools: {missing_tools}"
-                        )
-                    else:
-                        logger.warning(
-                            f"🤖 Agent {component_id} missing {len(missing_tools)} tools (non-critical): {missing_tools}"
-                        )
-            # Fallback: load all tools from module's __all__ if no specific tools configured
-            elif hasattr(tools_module, "__all__"):
-                for tool_name in tools_module.__all__:
-                    if hasattr(tools_module, tool_name):
-                        tool_function = getattr(tools_module, tool_name)
-                        tools.append(tool_function)
-                        logger.debug(
-                            f"🤖 Auto-loaded tool '{tool_name}' for agent {component_id}"
-                        )
-
-        except ImportError:
-            # No tools.py file - check if tools are required
-            tool_names = config.get("tools", [])
-            if tool_names and strict_validation:
-                logger.error(
-                    f"🤖 STRICT VALIDATION FAILED: No tools.py module found for agent {component_id} but tools are configured: {tool_names}"
-                )
-                raise ValueError(
-                    f"Agent {component_id} tool validation failed: Missing tools.py module but tools are configured"
-                )
-            # No tools.py file - that's okay, just use default tools
-            logger.debug(f"🤖 No custom tools found for agent {component_id}")
         except ValueError:
             # Re-raise validation errors (these are intentional failures)
             raise
@@ -398,6 +342,26 @@ class VersionFactory:
             logger.error(f"🤖 {error_msg}")
 
         return tools
+
+    def _validate_tool_config(self, tool_config: dict[str, Any]) -> bool:
+        """
+        Validate tool configuration structure.
+        
+        Args:
+            tool_config: Tool configuration dictionary from YAML
+            
+        Returns:
+            True if valid, False otherwise
+        """
+        # Tool config can be just a string (tool name) or dict with name + description
+        if isinstance(tool_config, str):
+            return True  # Simple string format is valid
+            
+        if isinstance(tool_config, dict):
+            required_fields = ["name"]
+            return all(field in tool_config for field in required_fields)
+            
+        return False
 
     async def _create_team(
         self,
@@ -539,9 +503,7 @@ class VersionFactory:
                     raise ValueError(
                         f"Team {team_id} inheritance validation failed: {len(errors)} configuration errors"
                     )
-                logger.warning(
-                    f"🔧 Team inheritance validation errors for {team_id}:"
-                )
+                logger.warning(f"🔧 Team inheritance validation errors for {team_id}:")
                 for error in errors:
                     logger.warning(f"  ⚠️  {error}")
 
@@ -640,6 +602,85 @@ class VersionFactory:
         )
 
         return coordinator
+
+    async def _load_from_yaml_only(
+        self, component_id: str, component_type: str, **kwargs
+    ) -> dict:
+        """
+        Load component configuration from YAML only (dev mode).
+
+        Args:
+            component_id: The component identifier
+            component_type: The component type
+            **kwargs: Additional parameters
+
+        Returns:
+            dict: Component configuration from YAML
+        """
+        from pathlib import Path
+
+        # Determine config file path based on component type
+        config_paths = {
+            "agent": f"ai/agents/{component_id}/config.yaml",
+            "team": f"ai/teams/{component_id}/config.yaml",
+            "workflow": f"ai/workflows/{component_id}/config.yaml",
+            "coordinator": f"ai/coordinators/{component_id}/config.yaml",
+        }
+
+        config_file = config_paths.get(component_type)
+        if not config_file:
+            raise ValueError(f"Unsupported component type: {component_type}")
+
+        config_path = Path(config_file)
+        if not config_path.exists():
+            raise ValueError(f"Config file not found: {config_file}")
+
+        # Load YAML configuration
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                yaml_config = yaml.safe_load(f)
+        except Exception as e:
+            raise ValueError(f"Failed to load YAML config from {config_file}: {e}")
+
+        if not yaml_config or component_type not in yaml_config:
+            raise ValueError(
+                f"Invalid YAML config in {config_file}: missing '{component_type}' section"
+            )
+
+        logger.debug(
+            f"Dev mode: Loaded {component_type} {component_id} configuration from YAML"
+        )
+        return yaml_config
+
+    async def _load_with_bidirectional_sync(
+        self,
+        component_id: str,
+        component_type: str,
+        version: int | None = None,
+        **kwargs,
+    ) -> dict:
+        """
+        Load component configuration with bidirectional sync (production mode).
+
+        Args:
+            component_id: The component identifier
+            component_type: The component type
+            version: Specific version to load (None for active)
+            **kwargs: Additional parameters
+
+        Returns:
+            dict: Synchronized component configuration
+        """
+        if version is not None:
+            # Load specific version from database
+            version_record = await self.version_service.get_version(
+                component_id, version
+            )
+            if not version_record:
+                raise ValueError(f"Version {version} not found for {component_id}")
+            return version_record.config
+        # Perform bidirectional sync and return result
+        return await self.sync_engine.sync_component(component_id, component_type)
 
     async def _create_component_from_yaml(
         self,
@@ -762,5 +803,9 @@ async def create_coordinator(
 ) -> Agent:
     """Create coordinator using factory pattern."""
     return await get_version_factory().create_versioned_component(
-        coordinator_id, "coordinator", version, metrics_service=metrics_service, **kwargs
+        coordinator_id,
+        "coordinator",
+        version,
+        metrics_service=metrics_service,
+        **kwargs,
     )

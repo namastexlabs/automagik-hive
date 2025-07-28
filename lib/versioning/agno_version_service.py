@@ -126,9 +126,7 @@ class AgnoVersionService:
 
         return version_id
 
-    async def get_version(
-        self, component_id: str, version: int
-    ) -> VersionInfo | None:
+    async def get_version(self, component_id: str, version: int) -> VersionInfo | None:
         """Get specific component version."""
         return await self._get_version_async(component_id, version)
 
@@ -145,9 +143,7 @@ class AgnoVersionService:
         """Get active component version."""
         return await self._get_active_version_async(component_id)
 
-    async def _get_active_version_async(
-        self, component_id: str
-    ) -> VersionInfo | None:
+    async def _get_active_version_async(self, component_id: str) -> VersionInfo | None:
         """Async implementation of get_active_version."""
         db_version = await self.component_service.get_active_version(component_id)
         return self._db_to_version_info(db_version) if db_version else None
@@ -223,23 +219,6 @@ class AgnoVersionService:
             version = component_section.get("version")
             if not version:
                 return None, "no_version_specified"
-
-            # Handle dev versions in development environment
-            if version == "dev":
-                import os
-
-                environment = os.getenv("HIVE_ENVIRONMENT", "production").lower()
-                if environment == "development":
-                    # In development mode, treat dev as version 1 for database storage
-                    version = 1
-                    # Add dev marker to config for identification
-                    yaml_config = dict(yaml_config)
-                    if component_type in yaml_config:
-                        yaml_config[component_type] = dict(yaml_config[component_type])
-                        yaml_config[component_type]["version"] = version
-                        yaml_config[component_type]["is_dev_version"] = True
-                else:
-                    return None, "dev_version_skip"
 
             if not isinstance(version, int):
                 return None, "invalid_version"

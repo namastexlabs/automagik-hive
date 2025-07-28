@@ -360,6 +360,9 @@ include = [
 
 [dependency-groups]
 dev = [
+    "bandit>=1.8.6",
     "pathlib>=1.0.1",
+    "pip-audit>=2.9.0",
+    "safety>=3.6.0",
     "types-pyyaml>=6.0.12.20250516",
 ]

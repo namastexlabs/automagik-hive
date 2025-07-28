@@ -1,7 +1,7 @@
 workflow:
   name: "Code Project Onboarding Workflow"
   workflow_id: "code-onboarding-workflow"
-  version: dev
+  version: 8
   description: >
     Comprehensive project onboarding workflow that analyzes project structure,
     identifies technologies, maps dependencies, and sets up development context

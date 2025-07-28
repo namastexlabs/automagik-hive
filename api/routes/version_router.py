@@ -12,6 +12,8 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 from lib.versioning import AgnoVersionService
+from lib.versioning.bidirectional_sync import BidirectionalSync
+from lib.versioning.dev_mode import DevMode
 
 router = APIRouter(prefix="/api/v1/version", tags=["versioning"])
 
@@ -129,7 +131,6 @@ async def execute_versioned_component(
     )
 
 
-
 @router.post("/components/{component_id}/versions")
 async def create_component_version(component_id: str, request: VersionCreateRequest):
     """Create a new component version."""
@@ -226,46 +227,66 @@ async def update_component_version(
         existing_version = await service.get_version(component_id, version)
         if not existing_version:
             raise HTTPException(
-                status_code=404, 
-                detail=f"Version {version} not found for component {component_id}"
+                status_code=404,
+                detail=f"Version {version} not found for component {component_id}",
             )
 
         # Use the underlying component service directly for update
         import json
+
         db_service = service.component_service
         db = await db_service._get_db_service()
-        
+
         # Update the config directly
         update_query = """
-        UPDATE hive.component_versions 
-        SET config = %(config)s 
+        UPDATE hive.component_versions
+        SET config = %(config)s
         WHERE component_id = %(component_id)s AND version = %(version)s
         """
-        
+
         await db.execute(
-            update_query, 
+            update_query,
             {
                 "component_id": component_id,
                 "version": version,
                 "config": json.dumps(request.config),
-            }
+            },
         )
-        
+
         # Record history
         history_query = """
-        INSERT INTO hive.version_history 
+        INSERT INTO hive.version_history
         (component_id, to_version, action, description, changed_by)
         VALUES (%(component_id)s, %(version)s, 'config_updated', %(description)s, 'api')
         """
-        
+
         await db.execute(
             history_query,
             {
                 "component_id": component_id,
                 "version": version,
                 "description": request.reason or "Configuration updated via API",
-            }
+            },
         )
+
+        # Trigger YAML write-back (production only)
+        if not DevMode.is_enabled():
+            try:
+                db_url = os.getenv("HIVE_DATABASE_URL")
+                if db_url:
+                    sync_engine = BidirectionalSync(db_url)
+                    await sync_engine.write_back_to_yaml(
+                        component_id=component_id,
+                        component_type=existing_version.component_type,
+                        config=request.config,
+                        version=version,
+                    )
+            except Exception as e:
+                # Log but don't fail the API call - database update succeeded
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to write back to YAML for {component_id}: {e}")
 
         # Return updated version info
         updated_version = await service.get_version(component_id, version)
@@ -324,32 +345,34 @@ async def delete_component_version(component_id: str, version: int):
         # Use the underlying component service directly for deletion
         db_service = service.component_service
         db = await db_service._get_db_service()
-        
+
         # If this is the active version, deactivate it first
         if existing_version.is_active:
             # Deactivate all versions for this component first
             await db.execute(
                 "UPDATE hive.component_versions SET is_active = false WHERE component_id = %(component_id)s",
-                {"component_id": component_id}
+                {"component_id": component_id},
             )
 
         # Delete the version
         delete_query = "DELETE FROM hive.component_versions WHERE component_id = %(component_id)s AND version = %(version)s"
-        await db.execute(delete_query, {"component_id": component_id, "version": version})
+        await db.execute(
+            delete_query, {"component_id": component_id, "version": version}
+        )
 
         # Record history
         history_query = """
-        INSERT INTO hive.version_history 
+        INSERT INTO hive.version_history
         (component_id, from_version, to_version, action, description, changed_by)
         VALUES (%(component_id)s, %(version)s, NULL, 'deleted', 'Version deleted via API', 'api')
         """
-        
+
         await db.execute(
             history_query,
             {
                 "component_id": component_id,
                 "version": version,
-            }
+            },
         )
 
         return {

@@ -29,12 +29,18 @@ storage:
 
 # Basic MCP tools for architectural operations
 tools:
-  - name: genie-memory
-    description: "Persistent memory for architectural patterns and decisions"
-  - name: automagik-forge
-    description: "Project and task management for architectural deliverables"
-  - name: postgres
-    description: "Database operations for architecture analysis"
+- name: mcp__genie_memory__search_memory
+  description: Search architectural patterns and design history
+- name: mcp__genie_memory__add_memories
+  description: Store architectural patterns and design decisions
+- name: mcp__automagik_forge__list_tasks
+  description: List architectural tasks and deliverables
+- name: mcp__automagik_forge__create_task
+  description: Create architectural tasks and design tickets
+- name: mcp__automagik_forge__update_task
+  description: Update architectural task status and progress
+- name: mcp__postgres__query
+  description: Query architectural data and system metrics
 
 markdown: false
 

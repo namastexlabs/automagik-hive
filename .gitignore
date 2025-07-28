@@ -187,7 +187,7 @@ data/*.sqlite3
 /data/postgres-agent/
 
 tmp/
-
+backup/
 # Logs
 logs/
 *.log

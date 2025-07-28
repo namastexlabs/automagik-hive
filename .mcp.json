@@ -2,7 +2,7 @@
   "mcpServers": {
     "genie-memory": {
       "type": "sse",
-      "url": "http://localhost:8765/mcp/openmemory/sse/namastex"
+      "url": "http://192.168.112.156:8765/mcp/openmemory/sse/genie"
     },
     "automagik-forge": {
       "type": "sse",
@@ -43,19 +43,19 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql+psycopg://ybQDcMp8qEt3I9Gk:cIJ9nepVEABPW4ec@localhost:35532/hive_agent"
+        "postgresql+psycopg://ybQDcMp8qEt3I9Gk:cIJ9nepVEABPW4ec@localhost:5532/hive"
       ]
     },
     "automagik-hive": {
       "command": "uvx",
       "args": [
-        "automagik-tools@0.8.16",
+        "automagik-tools@0.8.17",
         "tool",
         "automagik-hive"
       ],
       "env": {
         "HIVE_API_BASE_URL": "http://localhost:38886",
-        "HIVE_API_KEY": "hive_h8nNeADei98fLVwEACjnGMgsXj8SUxPDrsrYUDu6WLU",
+        "HIVE_API_KEY": "hive_CLbBmpZYnnf3i1Kc1IVcqaZfjEI6zXni3PeGRtmuFxM",
         "HIVE_TIMEOUT": "300"
       }
     }

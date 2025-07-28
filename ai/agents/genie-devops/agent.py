@@ -33,4 +33,3 @@ async def get_genie_devops_agent(**kwargs: Any) -> Agent:
         Agent instance configured for strategic DevOps coordination
     """
     return await create_agent("genie_devops", **kwargs)
-EOF < /dev/null
