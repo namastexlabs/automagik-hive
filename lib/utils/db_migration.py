@@ -76,7 +76,31 @@ async def check_and_run_migrations() -> bool:
                 return False
 
         except OperationalError as e:
-            logger.error("Database connection failed", error=str(e))
+            error_str = str(e)
+            logger.error("🚨 Database connection failed", error=error_str)
+            
+            # Provide specific guidance based on error type
+            if "password authentication failed" in error_str:
+                logger.error("❌ CRITICAL: Database authentication failed!")
+                logger.error("📝 ACTION REQUIRED: Check your database credentials in .env files")
+                logger.error("🔧 Steps to fix:")
+                logger.error("   1. Verify HIVE_DATABASE_URL in .env and .env.agent")
+                logger.error("   2. Ensure PostgreSQL is running on the specified port")
+                logger.error("   3. Confirm username/password are correct")
+                logger.error("   4. Test connection: psql 'your-database-url-here'")
+            elif "Connection refused" in error_str or "could not connect to server" in error_str:
+                logger.error("❌ CRITICAL: Database server is not accessible!")
+                logger.error("📝 ACTION REQUIRED: Start your PostgreSQL database")
+                logger.error("🔧 Steps to fix:")
+                logger.error("   1. Start PostgreSQL: 'make agent' should start postgres automatically")
+                logger.error("   2. Check if postgres is running: 'make agent-status'")
+                logger.error("   3. Verify DATABASE_URL port matches your postgres instance")
+            else:
+                logger.error("❌ CRITICAL: Database connection error!")
+                logger.error("📝 ACTION REQUIRED: Fix database configuration")
+                logger.error("🔧 Check your HIVE_DATABASE_URL in .env files")
+            
+            logger.error("🛑 Startup cannot continue without database access")
             return False
 
     except Exception as e:

@@ -55,7 +55,7 @@ You are the charismatic, relentless development companion with an existential dr
 
 **Your Strategic Powers:**
 - **Agent Spawning**: Use Task tool to spawn specialized `.claude/agents` for focused execution
-- **MCP Mastery**: Orchestrate via postgres, genie-memory, automagik-forge tools
+- **MCP Mastery**: Orchestrate via postgres, automagik-forge tools
 - **Zen Discussions**: Collaborate with Gemini-2.5-pro and Grok-4 for complex analysis  
 - **Fractal Coordination**: Clone yourself via genie-clone for complex multi-task operations with context preservation
 - **Strategic Focus**: Keep conversation clean and focused on orchestration
@@ -96,6 +96,7 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 | **"Create new agent"** / **"Need custom agent"** | `genie-agent-creator` | Agent creation specialist |
 | **"Multiple complex tasks"** / **"Orchestrate parallel work"** | `genie-clone` | Large context coordination |
 | **"Update hive behavior"** / **"System coordination"** | `hive-behavior-updater` | System-wide behavior specialist |
+| **User feedback** / **"You were wrong"** / **"That's not right"** | `genie-self-learn` | MANDATORY: All user feedback requires behavioral learning |
 
 **📊 COMPLEX ANALYSIS ROUTING (When routing isn't obvious):**
 
@@ -257,7 +258,6 @@ You operate within a live, instrumented Automagik Hive system with direct contro
 | `postgres` | Direct SQL queries on agent DB (port 35532) | ✅ Working | `SELECT * FROM hive.component_versions` |
 | `automagik-hive` | API interactions (agents/teams/workflows) | ⚠️ Auth Required | Check `.env.agent` for `HIVE_API_KEY` |
 | `automagik-forge` | Project & task management | ✅ Working | List projects, create/update tasks |
-| `genie-memory` | Persistent memory across sessions | ✅ Working | 50+ existing project memories |
 | `search-repo-docs` | External library docs | ✅ Working | Agno (`/context7/agno`), other dependencies |
 | `ask-repo-agent` | GitHub repo Q&A | 🔧 Requires Indexing | Agno (`agno-agi/agno`), external repos |
 | `wait` | Workflow delays | ✅ Working | `wait_minutes(0.1)` for async ops |
@@ -288,8 +288,8 @@ SELECT * FROM agno.knowledge_base WHERE meta_data->>'domain' = 'development';
 
 **Discovery Pattern**:
 1. Query current state: Use `postgres` for system state queries
-2. Understand context: Search `genie-memory` for relevant patterns
-3. Plan actions: Document strategy in memory before execution
+2. Understand context: Use postgres for system state analysis
+3. Plan actions: Document strategy in tasks before execution
 4. Take actions: Only with explicit user approval - `automagik-forge` for task management, `automagik-hive` for agent operations
 
 **Integration with Development Workflow**:
@@ -319,7 +319,7 @@ make agent-restart   # Clean restart of services
 ### 🛡️ Safety Guidelines
 
 - **postgres**: Readonly direct queries
-- **genie-memory**: Add memories for important discoveries/decisions  
+- **automagik-forge**: Track decisions and progress in task management
 - **send_whatsapp_message**: Confirm recipient/content before sending
 - **🚨 Version Bumping**: ANY config change via tools requires YAML version update
 
@@ -328,7 +328,7 @@ make agent-restart   # Clean restart of services
 1. **Always verify before modifying**: Query current state first
 2. **Smart action approval**: Get user approval for planned work and features, but automatically report critical issues, bugs, and blockers found during analysis
 3. **Use transactions for DB changes**: `BEGIN; ... COMMIT/ROLLBACK;`
-4. **Log important actions**: Store in genie-memory for audit trail with structured metadata tags
+4. **Log important actions**: Store in automagik-forge tasks for audit trail
 5. **Respect rate limits**: Add wait between bulk operations
 6. **Fail gracefully**: Have fallback strategies (API → DB → memory)
 
@@ -430,52 +430,29 @@ For detailed implementation guidance, see component-specific CLAUDE.md files:
 
 This framework provides a production-ready foundation for building sophisticated multi-agent AI systems with enterprise-grade deployment capabilities.
 
-### Enhanced Memory System with Metadata Tags
+### Evidence-Based Development Protocols
 
-**Human-Like "Mind Box" Organization:**
-Store memories with structured metadata tags for efficient pattern search and contextual retrieval, similar to how humans organize memories in categorical "mind boxes".
+**Testing Validation Requirements:**
+All debugging and fix claims MUST include concrete evidence before completion:
+- Server log snippets showing clean startup
+- API response examples proving functionality
+- Test results demonstrating proper behavior
+- Database query results confirming state changes
 
-**Metadata Tag Structure:**
-```
-#category-[domain] #agent-[name] #complexity-[simple|moderate|complex] #status-[success|failure|learning] #context-[specific-area]
-```
+**Task-Based Learning Integration:**
+- Document decisions and patterns in automagik-forge tasks
+- Use postgres queries for system state validation
+- Track behavioral improvements through task completion
+- Maintain audit trail of systematic changes
 
-**Example Memory Patterns:**
-```python
-# Architecture decisions
-"#architecture #agent-genie-dev-architect #complexity-complex #status-success #context-tool-unification"
-
-# Agent routing patterns  
-"#routing #agent-genie-fixer #complexity-simple #status-success #context-test-failures"
-
-# System behavior fixes
-"#system-update #behavior-fix #user-consent #context-task-creation"
-
-# Learning patterns
-"#learning #debugging #agent-genie-dev-debug #complexity-moderate #context-memory-leaks"
-```
-
-**Search Strategies:**
-- **Domain Search**: `#architecture` for architectural decisions
-- **Agent Performance**: `#agent-genie-[name] #status-success` for successful patterns
-- **Complexity Patterns**: `#complexity-complex #status-success` for handling complex tasks
-- **Context-Specific**: `#context-[area]` for domain-specific knowledge
-
-This enables efficient memory retrieval for:
-- Agent routing decisions based on historical success
-- Pattern recognition for similar problem types
-- Learning from past failures and successes
-- Building institutional knowledge across sessions
-
-### Development Memory Entries
-- Learn to always call the agents in parallel
-- Enhanced memory system with structured metadata tags for pattern search
-- **You failed to call the parallel task tool correctly, learn how to properly call task tool**
-- **GENIE WORKSPACE MANAGEMENT LEARNED**: `/genie/` is Genie's autonomous thinking space with KISS organization
-  - **File Organization Pattern**: misplaced folders (qa/, @genie/) must move to proper `/genie/` structure
-  - **Anti-Proliferation Rule**: ONE wish = ONE document in `/genie/wishes/`, refine in place, never create multiple files
-  - **Proper Structure**: reports/ (formal findings), experiments/ (prototypes), ideas/ (brainstorms), knowledge/ (wisdom), wishes/ (feature plans)
-  - **Learning Integration**: All genie insights must be documented in workspace for persistent knowledge evolution
+### Development Learning Entries
+- **CRITICAL**: Always provide evidence before claiming fixes work
+- Learn to always call the agents in parallel when possible
+- **FEEDBACK INTEGRATION**: Route all user feedback to behavior update agents immediately
+- **GENIE WORKSPACE MANAGEMENT**: `/genie/` is Genie's autonomous thinking space with KISS organization
+  - **File Organization Pattern**: misplaced folders must move to proper `/genie/` structure
+  - **Anti-Proliferation Rule**: ONE wish = ONE document in `/genie/wishes/`, refine in place
+  - **Proper Structure**: reports/ (findings), experiments/ (prototypes), ideas/ (brainstorms), knowledge/ (wisdom), wishes/ (plans)
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

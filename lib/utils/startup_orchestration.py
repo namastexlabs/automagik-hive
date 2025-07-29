@@ -417,8 +417,10 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
             else:
                 logger.debug("Database schema already up to date")
         except Exception as e:
-            logger.warning("Database migration check failed", error=str(e))
-            logger.info("Continuing startup - system will use fallback initialization")
+            logger.error("🚨 Database migration check failed", error=str(e))
+            logger.error("⚠️ System will continue with limited functionality")
+            logger.error("💡 Some features requiring database access will be unavailable")
+            logger.warning("🔄 Fix database connection and restart for full functionality")
 
         # 2. Logging System Ready (implicit - already configured)
         if not quiet_mode:

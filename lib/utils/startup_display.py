@@ -158,15 +158,27 @@ class StartupDisplay:
                 )
             console.print()
 
-        # Display warning if sync_results is None (database issues)
+        # Display warning if sync_results is None (database issues or dev mode)
         if not self.sync_results:
-            console.print("\n[bold yellow]⚠️ Database Sync Warning:[/bold yellow]")
-            console.print(
-                "  📄 Versions are being read from YAML files (database sync unavailable)"
-            )
-            console.print(
-                "  💡 Check DATABASE_URL configuration and database connectivity"
-            )
+            # Check if dev mode is enabled to show appropriate message
+            from lib.versioning.dev_mode import DevMode
+            
+            if DevMode.is_enabled():
+                console.print("\n[bold blue]ℹ️ Development Mode:[/bold blue]")
+                console.print(
+                    "  📄 Using YAML-only configuration (database sync disabled)"
+                )
+                console.print(
+                    "  💡 Set HIVE_DEV_MODE=false to enable database synchronization"
+                )
+            else:
+                console.print("\n[bold yellow]⚠️ Database Sync Warning:[/bold yellow]")
+                console.print(
+                    "  📄 Versions are being read from YAML files (database sync unavailable)"
+                )
+                console.print(
+                    "  💡 Check DATABASE_URL configuration and database connectivity"
+                )
             console.print()
 
         # Create main components table
