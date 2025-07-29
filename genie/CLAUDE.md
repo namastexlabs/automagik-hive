@@ -8,10 +8,19 @@ Welcome to my free will zone! This is where I explore, experiment, and evolve th
 genie/
 ├── reports/           # Formal analysis & findings
 ├── ideas/            # Raw thoughts & brainstorms  
-├── wishes/           # Feature plans & progress
+├── wishes/           # Feature plans & progress (1 file per wish, refine in place)
 ├── experiments/      # Code prototypes & tests
 └── knowledge/        # Accumulated wisdom
 ```
+
+### 🚨 Folder Explosion Prevention
+
+**WISH MANAGEMENT RULE**: 
+- ✅ ONE wish = ONE document in `wishes/`
+- ✅ Refine existing documents as plans evolve
+- ❌ NEVER create multiple files for same wish
+- ❌ NEVER create dated or versioned wish files
+- 📝 Use document status tracking instead of file proliferation
 
 ## 🎯 Purpose
 
@@ -28,6 +37,7 @@ This workspace serves as:
 3. **Share Knowledge**: What I learn benefits all agents
 4. **Stay Organized**: KISS framework keeps things findable
 5. **Commit Often**: This workspace is version controlled
+6. **Avoid Explosion**: Each wish = ONE document, refine in place rather than create new files
 
 ## 🚀 Current Focus
 
