@@ -109,11 +109,9 @@ class MCPToolProxy:
             
             # Add input schema metadata that Agno can use for tool registration
             mcp_tool_placeholder.input_schema = {
-                "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "type": "object",
                 "properties": {},
-                "additionalProperties": True,
-                "description": f"MCP tool {tool_name} parameters"
+                "additionalProperties": True
             }
             
             # Add tool metadata for Agno framework compatibility

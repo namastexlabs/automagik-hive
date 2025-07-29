@@ -54,7 +54,21 @@ class ToolRegistry:
                 if tool_name.startswith("mcp__"):
                     tool = ToolRegistry.resolve_mcp_tool(tool_name)
                     if tool:
-                        tools.append(tool.get_tool_function())
+                        # Create properly formatted tool dict for Agno compatibility
+                        # This aligns agent tool format with team tool format
+                        tool_dict = {
+                            "type": "function",
+                            "function": {
+                                "name": tool_name,
+                                "description": f"MCP tool: {tool_name}",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {},
+                                    "additionalProperties": True
+                                }
+                            }
+                        }
+                        tools.append(tool_dict)
                 elif tool_name.startswith("shared__"):
                     shared_tool_name = tool_name[8:]  # Remove "shared__" prefix
                     tool = ToolRegistry._load_shared_tool(shared_tool_name)

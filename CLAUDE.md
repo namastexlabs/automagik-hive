@@ -53,65 +53,62 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 
 ### 🧭 **ENHANCED ROUTING DECISION MATRIX**
 
-*Fixes the routing confusion between operational vs architectural tasks*
+*Updated for sophisticated agent ecosystem with advanced TDD compliance and subagent orchestration*
 
-**📋 PROBLEM-TYPE CLASSIFICATION:**
+**🎯 IMMEDIATE AGENT ROUTING (Bypass analysis for obvious wishes):**
 
-**AGENT FILE UPDATES** → `genie-agent-enhancer`
-- **Keywords**: "enhance agent", "improve agent", "update .claude/agents", "agent capabilities"
-- **Examples**: 
-  - ✅ "Update genie-dev-fixer.md capabilities" 
-  - ✅ "Enhance agent prompts and instructions"
-  - ✅ "Improve agent routing system documentation"
-  - ✅ "Add new capabilities to existing agents"
+| User Says | Instant Agent | Routing Reason |
+|-----------|---------------|-----------------|
+| **"Tests are failing"** / **"Fix coverage"** | `genie-testing-fixer` | TDD-compliant test repair specialist |
+| **"Create tests for X"** / **"Need test coverage"** | `genie-testing-maker` | Comprehensive test suite orchestrator |
+| **"Format this code"** / **"Ruff formatting"** | `genie-quality-ruff` | Ultra-focused Ruff specialist |
+| **"Fix type errors"** / **"Type checking"** | `genie-quality-mypy` | Ultra-focused MyPy specialist |
+| **"Debug this error"** / **"Bug in X"** | `genie-dev-fixer` | Systematic debugging MEESEEKS |
+| **"Plan feature X"** / **"Analyze requirements"** | `genie-dev-planner` | Requirements analysis specialist |
+| **"Design architecture for X"** | `genie-dev-designer` | System architecture MEESEEKS |
+| **"Implement X"** / **"Code this feature"** | `genie-dev-coder` | Implementation specialist (requires DDD) |
+| **"Update documentation"** / **"Fix CLAUDE.md"** | `genie-claudemd` | Documentation management specialist |
+| **"Enhance agent X"** / **"Improve agent capabilities"** | `genie-agent-enhancer` | Agent optimization specialist |
+| **"Create new agent"** / **"Need custom agent"** | `genie-agent-creator` | Agent creation specialist |
+| **"Multiple complex tasks"** / **"Orchestrate parallel work"** | `genie-clone` | Large context coordination |
+| **"Update hive behavior"** / **"System coordination"** | `hive-behavior-updater` | System-wide behavior specialist |
 
-**SYSTEM DEBUGGING/TECHNICAL ISSUES** → `genie-dev-fixer`
-- **Keywords**: "system issues", "startup problems", "debugging", "failures", "errors", "technical problems"
-- **Examples**: 
-  - ✅ "MCP tool naming system startup issues" 
-  - ✅ "System startup failures and debugging"
-  - ✅ "Application crashes and error analysis"
-  - ✅ "Technical problem diagnosis and resolution"
+**📊 COMPLEX ANALYSIS ROUTING (When routing isn't obvious):**
 
-**COMPLEX MULTI-TASK OPERATIONS** → `genie-clone` (fractal context preservation)
-- **Keywords**: "complex", "multiple tasks", "coordinate", "orchestrate", "parallel", "fractal"
-- **Examples**:
-  - ✅ "Refactor multiple agent files simultaneously"
-  - ✅ "Coordinate complex multi-step deployment"
-  - ✅ "Orchestrate parallel testing and quality checks"
-  - ✅ "Break down complex requirements into subtasks"
+| Wish Category | Analysis Approach | Agent Selection Strategy |
+|---------------|-------------------|--------------------------|
+| **🔧 Testing & Quality** | Assess scope and current state | Simple fix → `genie-testing-fixer`, New tests → `genie-testing-maker`, Format → `genie-quality-ruff`, Types → `genie-quality-mypy` |
+| **🏗️ Development Pipeline** | Check if requirements exist | No specs → `genie-dev-planner`, Has TSD → `genie-dev-designer`, Has DDD → `genie-dev-coder` |
+| **🐛 Issues & Debugging** | Error analysis and component identification | Single issue → `genie-dev-fixer`, System-wide → `genie-clone` coordination |
+| **📚 Documentation** | Scope assessment and complexity | Simple updates → `genie-claudemd`, Complex coordination → `genie-clone` |
+| **🤖 Agent Operations** | Agent management type | Enhance existing → `genie-agent-enhancer`, Create new → `genie-agent-creator` |
+| **🌟 Multi-Intent/Epic** | Decomposition and coordination needs | Always → `genie-clone` with fractal context preservation |
 
-**CODE DEVELOPMENT (TDD)** → `genie-testing-maker` → `genie-dev-coder` (coordinated TDD cycle)
-- **Keywords**: "implement", "code", "build", "create functionality"
-- **Examples**:
-  - ✅ "Implement new API endpoint"
-  - ✅ "Add user authentication"
-  - ✅ "Create database models"
-  - ✅ "Build frontend components"
+**🚨 CRITICAL ROUTING PRINCIPLES:**
 
-**🚨 COMMON ROUTING MISTAKES TO AVOID:**
+**TDD WORKFLOW INTEGRATION:**
+```
+Development Sequence: genie-dev-planner → genie-dev-designer → genie-testing-maker → genie-dev-coder → genie-testing-fixer
+Quality Gates: genie-quality-ruff + genie-quality-mypy (parallel execution)
+```
 
-❌ **WRONG**: "System startup issues" → genie-agent-enhancer (confusing debugging with agent enhancement)
-✅ **CORRECT**: "System startup issues" → genie-dev-fixer (technical debugging)
+**PARALLEL EXECUTION OPPORTUNITIES:**
+- **Quality Sweep**: `genie-quality-ruff` + `genie-quality-mypy` simultaneously
+- **Test & Debug**: `genie-testing-fixer` + `genie-dev-fixer` for complex issues
+- **Documentation**: `genie-claudemd` runs parallel with development agents
 
-❌ **WRONG**: "Update agent capabilities" → genie-dev-fixer (confusing agent enhancement with debugging)  
-✅ **CORRECT**: "Update agent capabilities" → genie-agent-enhancer (agent file updates)
-
-❌ **WRONG**: "Refactor multiple files" → genie-agent-enhancer (single-focus thinking)
-✅ **CORRECT**: "Refactor multiple files" → genie-clone (parallel fractal coordination)
-
-**🎯 ROUTING DECISION CONFIDENCE SCORING:**
-- **High Confidence (9-10)**: Clear keyword match and problem type
-- **Medium Confidence (6-8)**: Some ambiguity, use context clues
-- **Low Confidence (1-5)**: Ambiguous request, ask for clarification
+**FRACTAL COORDINATION TRIGGERS:**
+- **Epic Scale**: Multi-week development efforts requiring cross-system changes
+- **Parallel Streams**: Multiple simultaneous development tracks
+- **Complex Dependencies**: Tasks requiring sophisticated coordination
 
 **🔍 ROUTING VALIDATION CHECKLIST:**
-1. ✅ Is this about DEBUGGING/TECHNICAL ISSUES/STARTUP PROBLEMS? → genie-dev-fixer
-2. ✅ Is this about UPDATING .claude/agents/*.md FILES? → genie-agent-enhancer
-3. ✅ Is this COMPLEX/MULTI-TASK requiring fractal coordination? → genie-clone  
-4. ✅ Is this about IMPLEMENTING new functionality? → genie-testing-maker → genie-dev-coder (TDD cycle)
-5. ✅ Does the problem type match the agent's core mission?
-6. ✅ Would this routing prevent future confusion?
+1. ✅ **TDD Compliance**: Does the agent support Red-Green-Refactor cycles?
+2. ✅ **Subagent Orchestration**: Can the agent handle internal complexity autonomously?
+3. ✅ **Memory Integration**: Will the agent store and leverage patterns effectively?
+4. ✅ **Parallel Compatibility**: Can multiple agents work simultaneously if needed?
+5. ✅ **Quality Gates**: Does the agent enforce proper validation criteria?
+6. ✅ **Genie Strategic Focus**: Does routing preserve Master Genie's coordination role?
 
 ### ⚡ **QUICK AGENT REFERENCE:**
 

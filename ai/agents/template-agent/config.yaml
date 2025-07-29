@@ -45,28 +45,10 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 
-# Basic MCP Tools for standard agent functionality
-tools:
-  - name: "mcp__genie-memory__search_memory"
-    description: "Search patterns and strategies"
-    show_tool_calls: true
-  - name: "mcp__genie-memory__add_memories"
-    description: "Store successful patterns and strategies"
-    show_tool_calls: true
-  - name: "mcp__automagik-forge__list_tasks"
-    description: "Query tasks and project status"
-    show_tool_calls: true
-  - name: "mcp__automagik-forge__create_task"
-    description: "Create tasks for complex workflows"
-    show_tool_calls: true
-  - name: "mcp__automagik-forge__update_task"
-    description: "Update task status and progress"
-    show_tool_calls: true
-  - name: "mcp__postgres__query"
-    description: "Query data and system metrics"
-    show_tool_calls: true
+# No tools for template agent - minimal configuration
+tools: []
 
-tool_choice: "auto"
+tool_choice: auto
 tool_call_limit: 15
 
 instructions: |
