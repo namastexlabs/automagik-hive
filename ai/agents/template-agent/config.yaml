@@ -3,7 +3,7 @@ agent:
   agent_id: "template-agent"
   version: 1  # DEV MODE: Keep at version 1 until MVP ship!
   description: >
-    TEMPLATE AGENT - A foundational template for creating new specialized agents. 
+    TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents. 
     This configuration serves as a starting point for building domain-specific 
     agents with standardized patterns, memory management, and tool integration.
 

@@ -40,21 +40,6 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 tools:
-- name: mcp__genie-memory__search_memory
-  description: Search testing strategies and patterns
-  show_tool_calls: true
-- name: mcp__genie-memory__add_memories
-  description: Store successful testing strategies and patterns
-  show_tool_calls: true
-- name: mcp__automagik-forge__list_tasks
-  description: Query testing tasks and objectives status
-  show_tool_calls: true
-- name: mcp__automagik-forge__create_task
-  description: Create tasks and track testing objectives
-  show_tool_calls: true
-- name: mcp__automagik-forge__update_task
-  description: Update testing task status and progress
-  show_tool_calls: true
 - name: mcp__postgres__query
   description: Query testing metrics and coverage data
   show_tool_calls: true
@@ -77,7 +62,7 @@ instructions: "You are **GENIE TESTING**, a domain specialist agent in the Genie
   \ architecture\n\n**Decision Framework:**\n```\nFAILING TESTS → genie-testing-fixer\n\
   COVERAGE GAPS → genie-testing-fixer  \nNEW FEATURES → genie-testing-maker\nTEST\
   \ ARCHITECTURE → genie-testing-maker\nMIXED SCENARIOS → Parallel coordination\n\
-  ```\n\n**\U0001F504 COORDINATION PROTOCOL**\n\n**1. Initial Analysis:**\n- Use mcp__genie_memory\
+  ```\n\n**\U0001F504 COORDINATION PROTOCOL**\n\n**1. Initial Analysis:**\n- Use system memory\
   \ to search for similar testing patterns\n- Assess current test state via postgres\
   \ queries\n- Identify testing requirements and complexity\n\n**2. Strategic Planning:**\n\
   - Determine which specialists are needed\n- Plan coordination for complex multi-agent\

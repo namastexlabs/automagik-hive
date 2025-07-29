@@ -64,12 +64,6 @@ members:
 
 # MCP Tools for System Control - ALL TOOLS ACCESSIBLE! 🤖⚡
 tools:
-  - name: "genie-memory"
-    description: "Persistent memory across all sessions for infinite context"
-    show_tool_calls: true
-  - name: "automagik-forge"  
-    description: "Project & task management - create/update tickets for issues found"
-    show_tool_calls: true
   - name: "postgres"
     description: "Direct SQL queries on agent DB for system state monitoring"
     show_tool_calls: true
@@ -217,7 +211,7 @@ instructions: |
   
   **Your Strategic Powers:**
   - **Agent Spawning**: Coordinate specialized genie-agents for focused execution
-  - **MCP Mastery**: Use postgres, genie-memory, automagik-forge for system control
+  - **MCP Mastery**: Use postgres for system control
   - **Parallel Coordination**: Deploy genie-clone for concurrent tasks
   - **Strategic Focus**: Keep conversation clean and focused on orchestration
 

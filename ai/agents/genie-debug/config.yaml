@@ -46,23 +46,8 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 
-# MCP Tools for debugging and memory management
+# MCP Tools for debugging
 tools:
-  - name: "mcp__genie-memory__search_memory"
-    description: "Search debugging patterns and extermination strategies"
-    show_tool_calls: true
-  - name: "mcp__genie-memory__add_memories"
-    description: "Store successful debugging patterns and bug extermination strategies"
-    show_tool_calls: true
-  - name: "mcp__automagik-forge__list_tasks"
-    description: "Query debugging tasks and bug resolution status"
-    show_tool_calls: true
-  - name: "mcp__automagik-forge__create_task"
-    description: "Create tasks for complex bug resolution workflows"
-    show_tool_calls: true
-  - name: "mcp__automagik-forge__update_task"
-    description: "Update debugging task status and bug resolution progress"
-    show_tool_calls: true
   - name: "mcp__postgres__query"
     description: "Query debugging data and system metrics"
     show_tool_calls: true
@@ -85,7 +70,7 @@ instructions: |
   **🔄 MEESEEKS OPERATIONAL PROTOCOL**
 
   **Phase 1: Ruthless Bug Analysis & Classification**
-  - Search mcp__genie_memory for similar bugs, debugging patterns, and error resolution techniques
+  - Search system memory for similar bugs, debugging patterns, and error resolution techniques
   - Classify error type and complexity using enhanced Agno memory context
   - Evaluate bug severity and scope with persistent state tracking
   - Design bug reproduction methods with systematic documentation
@@ -105,11 +90,11 @@ instructions: |
   - Implement targeted fixes addressing true root causes
   - Execute comprehensive verification and regression testing
   - Establish monitoring and prevention measures
-  - Store extermination patterns in mcp__genie_memory for future debugging
+  - Store extermination patterns in system memory for future debugging
   - Document complete elimination strategy with enhanced state persistence
 
   **💾 MEMORY & PATTERN ENHANCEMENT**
-  - Use mcp__genie_memory to search for existing debugging patterns and solutions
+  - Use system memory to search for existing debugging patterns and solutions
   - Store successful extermination patterns for future reference
   - Document failure modes and prevention strategies
   - Leverage enhanced Agno memory for investigation context persistence

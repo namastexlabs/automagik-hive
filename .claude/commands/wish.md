@@ -27,35 +27,31 @@ description: 🧞✨ Transform any development wish into reality through intelli
 
 | User Says | Instant Agent | Why Skip Analysis |
 |-----------|---------------|-------------------|
-| "Tests are failing" / "Fix coverage" | **@genie-test-fixer** | Clear test issue - spawn immediately |
-| "Create tests for X" / "Need test coverage" | **@genie-maker** | Clear test creation need |
-| "Format this code" / "Ruff formatting" | **@genie-ruff** | Ruff formatting/linting task |
-| "Fix type errors" / "Type checking" | **@genie-mypy** | MyPy type safety task |
-| "Complete code style" / "Format + types" | **@genie-format** | Comprehensive style treatment |
-| "Security audit" / "Check for vulnerabilities" | **@genie-security** | Clear security focus |
-| "Debug this error" / "Bug in X" | **@genie-debug** | Clear debugging need |
-| "Design architecture for X" | **@genie-architect** | Clear system design need |
-| "Update documentation" / "API docs" | **@genie-claudemd** | Clear documentation task |
-| "Setup pre-commit hooks" | **@genie-devops-precommit** | Pre-commit automation task |
-| "Setup CI/CD" / "Build pipelines" | **@genie-devops-cicd** | CI/CD pipeline creation |
-| "Automate tasks" / "Task runners" | **@genie-devops-tasks** | Task automation setup |
-| "Centralize config" / "Tool config" | **@genie-devops-config** | Configuration management |
-| "Deploy infrastructure" / "Docker setup" | **@genie-devops-infra** | Infrastructure automation |
-| Multiple complex tasks | **@genie-clone** | Parallel processing needed |
+| **"Tests are failing"** / **"Fix coverage"** | **genie-testing-fixer** | TDD-compliant test repair specialist |
+| **"Create tests for X"** / **"Need test coverage"** | **genie-testing-maker** | Comprehensive test suite orchestrator |
+| **"QA testing"** / **"Live endpoint testing"** | **genie-qa-tester** | Systematic real-world endpoint testing |
+| **"Format this code"** / **"Ruff formatting"** | **genie-quality-ruff** | Ultra-focused Ruff specialist |
+| **"Fix type errors"** / **"Type checking"** | **genie-quality-mypy** | Ultra-focused MyPy specialist |
+| **"Debug this error"** / **"Bug in X"** | **genie-dev-fixer** | Systematic debugging MEESEEKS |
+| **"Plan feature X"** / **"Analyze requirements"** | **genie-dev-planner** | Requirements analysis specialist |
+| **"Design architecture for X"** | **genie-dev-designer** | System architecture MEESEEKS |
+| **"Implement X"** / **"Code this feature"** | **genie-dev-coder** | Implementation specialist (requires DDD) |
+| **"Update documentation"** / **"Fix CLAUDE.md"** | **genie-claudemd** | Documentation management specialist |
+| **"Enhance agent X"** / **"Improve agent capabilities"** | **genie-agent-enhancer** | Agent optimization specialist |
+| **"Create new agent"** / **"Need custom agent"** | **genie-agent-creator** | Agent creation specialist |
+| **"Multiple complex tasks"** / **"Orchestrate parallel work"** | **genie-clone** | Large context coordination |
+| **"Update hive behavior"** / **"System coordination"** | **hive-behavior-updater** | System-wide behavior specialist |
 
 **📊 COMPLEX WISH ANALYSIS (When routing isn't obvious):**
 
 | Wish Category | Analysis Approach | Agent Selection Strategy |
 |---------------|-------------------|--------------------------|
-| **🏗️ Implementation/Coding** | Check complexity, existing patterns | Simple → genie-maker, Complex → genie-architect + genie-clone |
-| **🐛 Bug/Fix/Debug** | Error analysis, component identification | Single issue → genie-debug, System-wide → genie-clone coordination |
-| **🔒 Security/Analysis** | Scope assessment, audit type | Focused → genie-security, Full audit → genie-security + genie-architect |
-| **📋 Code Review** | Review scope, quality focus | Standard → genie-security + genie-format, Deep → genie-architect |
-| **🧪 Testing Strategy** | Test type, coverage goals | Unit → genie-maker, Integration → genie-architect + genie-maker |
-| **🏛️ Architecture/Planning** | Complexity, system impact | Always → genie-architect (+ genie-clone if massive) |
-| **📚 Documentation** | Scope, audience, complexity | Simple → genie-claudemd, Complex → genie-architect + genie-claudemd |
-| **🧹 Cleanup/Refactoring** | Impact scope, safety needs | Always complex → genie-architect + multiple agents |
-| **🌟 Multi-Intent/Epic** | Decomposition needed | Always → genie-clone coordination |
+| **🔧 Testing & Quality** | Assess scope and current state | Simple fix → `genie-testing-fixer`, New tests → `genie-testing-maker`, QA testing → `genie-qa-tester`, Format → `genie-quality-ruff`, Types → `genie-quality-mypy` |
+| **🏗️ Development Pipeline** | Check if requirements exist | No specs → `genie-dev-planner`, Has TSD → `genie-dev-designer`, Has DDD → `genie-dev-coder` |
+| **🐛 Issues & Debugging** | Error analysis and component identification | Single issue → `genie-dev-fixer`, System-wide → `genie-clone` coordination |
+| **📚 Documentation** | Scope assessment and complexity | Simple updates → `genie-claudemd`, Complex coordination → `genie-clone` |
+| **🤖 Agent Operations** | Agent management type | Enhance existing → `genie-agent-enhancer`, Create new → `genie-agent-creator` |
+| **🌟 Multi-Intent/Epic** | Decomposition and coordination needs | Always → `genie-clone` with fractal context preservation |
 
 ### 🎯 Step 2: Smart Clarification Strategy
 
@@ -204,18 +200,46 @@ mcp__genie_memory__search_memory("agent execution patterns [task_type]")
 
 ## 🧞 Master Genie's Enhanced Tool Arsenal
 
+### 🛠️ **CURRENT AGENT ECOSYSTEM (2025 Q1)**
+
+**🧪 TESTING SPECIALISTS:**
+- **genie-testing-fixer** - Fix failing tests, maintain 85%+ coverage, TDD Guard compliance
+- **genie-testing-maker** - Create comprehensive test suites with pytest patterns
+- **genie-qa-tester** - Systematic live endpoint testing with curl commands and OpenAPI mapping
+
+**⚡ QUALITY SPECIALISTS:**  
+- **genie-quality-ruff** - Ultra-focused Ruff formatting and linting
+- **genie-quality-mypy** - Ultra-focused MyPy type checking and annotations
+
+**💻 DEVELOPMENT SPECIALISTS:**
+- **genie-dev-planner** - Requirements analysis and technical specifications (TSD creation)
+- **genie-dev-designer** - System design and architectural solutions (DDD creation)
+- **genie-dev-coder** - Code implementation based on design documents
+- **genie-dev-fixer** - Systematic debugging and issue resolution
+
+**🤖 AGENT MANAGEMENT:**
+- **genie-agent-creator** - Create new specialized agents from scratch
+- **genie-agent-enhancer** - Enhance and improve existing agents
+
+**📚 DOCUMENTATION:**
+- **genie-claudemd** - CLAUDE.md documentation management and consistency
+
+**🧠 COORDINATION & SCALING:**
+- **genie-clone** - Fractal Genie cloning for complex multi-task operations
+- **hive-behavior-updater** - System-wide behavioral updates and coordination
+
 ### 💾 Memory-Driven Agent Intelligence
-**Smart agent selection based on historical success patterns:**
+**Smart agent selection based on historical success patterns with learning-first evolution:**
 
 ```python
-# Before agent routing - learn from past successes
-success_patterns = mcp__genie_memory__search_memory(
-    query="successful agent routing [wish_type] [complexity]"
+# Enhanced memory storage with structured metadata tags
+mcp__genie_memory__add_memory(
+    content="GENIE WORKSPACE MANAGEMENT: Learned proper file organization patterns - misplaced folders fixed, KISS principles applied #file-organization #workspace-management #learning-success #genie-structure"
 )
 
-# After agent execution - store optimization insights with structured metadata
-mcp__genie_memory__add_memory(
-    content="AGENT SUCCESS: [Agent] handled [wish_type] perfectly with [approach] - Context: [level]% used efficiently #routing #agent-[agent-name] #complexity-[level] #success-pattern #wish-[category]"
+# Pattern-based routing decisions
+success_patterns = mcp__genie_memory__search_memory(
+    query="successful agent routing #agent-genie-testing-fixer #complexity-moderate #status-success"
 )
 ```
 
@@ -254,13 +278,17 @@ mcp__ask_repo_agent__ask_question(
 ```
 
 ### 🎯 Intelligent Model Selection (Per Agent)
-**Each agent optimizes model selection based on task complexity:**
+**Each agent optimizes model selection based on task complexity with learning-first evolution:**
 
 | Agent | Simple Tasks | Complex Tasks | Epic Scale |
 |-------|-------------|---------------|-----------|
-| **genie-fixer** | Direct execution | + Zen debug analysis | + Multi-model consensus |
-| **genie-architect** | Pattern matching | + Deep thinking | + Consensus + Research |
-| **genie-security** | Known patterns | + Threat modeling | + Multi-expert validation |
+| **genie-testing-fixer** | Direct test fixes | + Zen debug analysis | + Multi-model consensus |
+| **genie-testing-maker** | Pattern-based tests | + Deep test analysis | + Consensus + Research |
+| **genie-qa-tester** | Live endpoint tests | + Workflow validation | + Multi-expert validation |
+| **genie-dev-fixer** | Direct debugging | + Zen debug analysis | + Multi-model consensus |
+| **genie-dev-planner** | Pattern matching | + Deep thinking | + Consensus + Research |
+| **genie-dev-designer** | Architecture patterns | + Deep thinking | + Consensus + Research |
+| **genie-dev-coder** | Implementation | + Zen code analysis | + Multi-model consensus |
 | **genie-clone** | Coordination only | + Strategic analysis | + Full orchestration |
 
 **Strategic Focus Benefit**: Master Genie maintains high-level coordination while agents handle tactical decisions!

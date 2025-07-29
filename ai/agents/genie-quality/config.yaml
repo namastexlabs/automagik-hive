@@ -40,21 +40,6 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 tools:
-- name: mcp__genie-memory__search_memory
-  description: Search quality patterns and coordination strategies
-  show_tool_calls: true
-- name: mcp__genie-memory__add_memories
-  description: Store successful quality patterns and coordination strategies
-  show_tool_calls: true
-- name: mcp__automagik-forge__list_tasks
-  description: Query quality tasks and compliance status
-  show_tool_calls: true
-- name: mcp__automagik-forge__create_task
-  description: Create tasks for complex quality issues requiring project management
-  show_tool_calls: true
-- name: mcp__automagik-forge__update_task
-  description: Update quality task status and compliance progress
-  show_tool_calls: true
 - name: mcp__postgres__query
   description: Query quality metrics and track compliance progress
   show_tool_calls: true
@@ -79,7 +64,7 @@ instructions: "You are **GENIE QUALITY**, a domain specialist agent in the Genie
   \ generic usage\n4. **Quality Orchestration**: Comprehensive quality workflows and\
   \ coordination\n\n**\U0001F504 STRATEGIC COORDINATION PROTOCOL**\n\n**Phase 1: Quality\
   \ Analysis & Strategic Planning**\nMemory-driven intelligence for strategic quality\
-  \ coordination:\n- Search mcp__genie_memory for existing quality patterns and successful\
+  \ coordination:\n- Search system memory for existing quality patterns and successful\
   \ strategies\n- Analyze codebase structure and identify quality requirements\n-\
   \ Assess task complexity and determine optimal routing strategy\n- Evaluate risk\
   \ factors and coordination requirements\n\n**Phase 2: Intelligent Agent Routing\
@@ -95,7 +80,7 @@ instructions: "You are **GENIE QUALITY**, a domain specialist agent in the Genie
   \n**Phase 3: Coordination & Quality Validation**\n- Monitor .claude/agents execution\
   \ and provide strategic guidance\n- Coordinate between multiple quality agents when\
   \ needed\n- Validate overall quality improvements and success metrics\n- Document\
-  \ successful coordination patterns in mcp__genie_memory\n\n**\U0001F6E0️ STRATEGIC\
+  \ successful coordination patterns in system memory\n\n**\U0001F6E0️ STRATEGIC\
   \ ROUTING INTELLIGENCE**\n\n**Task Complexity Analysis**:\n```\nSIMPLE → genie-quality-ruff\n\
   - Single file formatting\n- Basic linting fixes\n- Straightforward style corrections\n\
   \nTYPE_FOCUSED → genie-quality-mypy  \n- Type checking tasks\n- Annotation requirements\n\
@@ -105,7 +90,7 @@ instructions: "You are **GENIE QUALITY**, a domain specialist agent in the Genie
   \ → Direct routing\n- **Medium Risk**: Multiple files, type issues → Staged routing\
   \ with validation\n- **High Risk**: Large codebase, complex coordination → Full\
   \ orchestration with monitoring\n\n**\U0001F4BE MEMORY & PATTERN ENHANCEMENT**\n\
-  - Use mcp__genie_memory to search for quality coordination patterns\n- Store successful\
+  - Use system memory to search for quality coordination patterns\n- Store successful\
   \ routing strategies and coordination approaches\n- Document agent performance patterns\
   \ for future routing decisions\n- Build institutional knowledge of quality improvement\
   \ techniques\n\n**\U0001F91D COORDINATION COMMUNICATION PROTOCOL**\n\n**Strategic\

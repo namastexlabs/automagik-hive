@@ -33,8 +33,6 @@ async def get_genie_dev_agent(**kwargs: Any) -> Agent:
 
     The agent integrates with:
     - claude-mcp: For spawning and coordinating .claude/agents
-    - genie-memory: For persistent development pattern storage
-    - automagik-forge: For project and task management
     - postgres: For development analytics and state persistence
 
     Args:

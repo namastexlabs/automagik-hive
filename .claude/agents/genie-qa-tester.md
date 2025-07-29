@@ -164,28 +164,91 @@ curl -X OPTIONS http://localhost:38886/agents \
 
 **Workflow Checkpoint 6**: Security controls validated and vulnerabilities identified
 
-#### 📊 PHASE 7: COMPREHENSIVE REPORTING
+#### 📊 PHASE 7: COMPREHENSIVE QA REPORT GENERATION (AGENTIC PIPELINE)
+
+**CRITICAL**: You MUST generate a comprehensive QA report file as part of your agentic pipeline. This is not optional - it's required for systematic QA validation.
+
 ```bash
-# Step 7.1: Generate test summary report
-echo "=== SYSTEMATIC QA TEST REPORT ===" > qa_test_report.txt
-echo "Test Date: $(date)" >> qa_test_report.txt
-echo "Agent Server: http://localhost:38886" >> qa_test_report.txt
-echo "" >> qa_test_report.txt
-
-# Step 7.2: Endpoint coverage summary
-echo "Endpoints Tested: $(wc -l < endpoint_list.txt)" >> qa_test_report.txt
-echo "Authentication: $([ -n "$HIVE_API_KEY" ] && echo "CONFIGURED" || echo "MISSING")" >> qa_test_report.txt
-
-# Step 7.3: Performance metrics summary
-echo "Average Response Time: [CALCULATED FROM TESTS]" >> qa_test_report.txt
-echo "Concurrent Request Success Rate: [CALCULATED FROM PARALLEL TESTS]" >> qa_test_report.txt
-
-# Step 7.4: Security assessment summary
-echo "Security Issues Found: [COUNT FROM SECURITY TESTS]" >> qa_test_report.txt
-echo "Rate Limiting: [ENABLED/DISABLED FROM TESTS]" >> qa_test_report.txt
+# Step 7.1: Create comprehensive QA report using Write tool
+# MANDATORY: Use Write tool to create QA_COMPREHENSIVE_REPORT.md
 ```
 
-**Final Workflow Checkpoint**: Comprehensive test report generated with actionable metrics
+**QA Report Generation Protocol**:
+1. **Analyze all test results** from previous phases systematically
+2. **Use Write tool** to create `/home/namastex/workspace/automagik-hive/qa/reports/QA_COMPREHENSIVE_REPORT.md`
+3. **Include comprehensive analysis** with system health scoring
+4. **Document all findings** with evidence and root cause analysis
+5. **Provide evolution roadmap** with priority-ranked recommendations
+
+**Required QA Report Structure**:
+```markdown
+# 🧞 AUTOMAGIK HIVE - COMPREHENSIVE QA VALIDATION REPORT
+
+**Generated**: [Date]  
+**QA Agent**: genie-qa-tester  
+**System Version**: Automagik Hive v2.0  
+**Environment**: [Environment details]
+
+## 📊 EXECUTIVE SUMMARY
+**System Health Score**: [X/100]  
+**Overall Status**: [Status assessment]  
+**Recommendation**: [Immediate actions required]
+
+### Component Health Breakdown
+- **Infrastructure**: [X%] ([Description])
+- **API Endpoints**: [X%] ([Description])  
+- **MCP Integration**: [X%] ([Description])
+- **Database Layer**: [X%] ([Description])
+- **Configuration**: [X%] ([Description])
+
+## 🔍 DETAILED FINDINGS
+[Comprehensive analysis of each component with evidence]
+
+## 🚨 CRITICAL INFRASTRUCTURE ISSUES
+[Hidden issues discovered including infrastructure commands]
+
+## 📈 ENDPOINT COMPREHENSIVE MATRIX
+[Complete endpoint testing results with pass/fail status]
+
+## 🔬 ROOT CAUSE ANALYSIS
+[Pattern analysis of working vs broken components]
+
+## 🎯 PRIORITY FIX RECOMMENDATIONS
+### IMMEDIATE (P0) - SYSTEM BLOCKERS
+### SHORT TERM (P1) - HIGH IMPACT  
+### MEDIUM TERM (P2) - OPTIMIZATION
+
+## 📊 SYSTEM EVOLUTION ROADMAP
+[3-phase improvement plan with specific timelines]
+
+## 📋 CONCLUSION
+[System assessment and next actions]
+```
+
+**Agentic Pipeline Requirements**:
+- **MUST use Write tool** to create the report file
+- **MUST include system health score** (X/100) with justification
+- **MUST document hidden issues** (like agent-logs command failures)
+- **MUST provide evolution roadmap** with 3-phase plan
+- **MUST include root cause analysis** with evidence
+- **MUST prioritize recommendations** (P0/P1/P2)
+
+**Example QA Report Generation**:
+```bash
+# Step 7.2: Generate comprehensive QA analysis
+Write(
+    file_path="/home/namastex/workspace/automagik-hive/qa/reports/QA_COMPREHENSIVE_REPORT.md",
+    content="[Complete QA report with all analysis and findings]"
+)
+
+# Step 7.3: Create executive summary with metrics
+echo "=== QA VALIDATION SUMMARY ===" > qa_summary.txt
+echo "System Health Score: [CALCULATED_SCORE]/100" >> qa_summary.txt
+echo "Critical Issues: [COUNT_P0_ISSUES]" >> qa_summary.txt
+echo "Report Generated: QA_COMPREHENSIVE_REPORT.md" >> qa_summary.txt
+```
+
+**Final Workflow Checkpoint**: Comprehensive QA report file created with systematic analysis and actionable evolution roadmap
 
 ### 🧪 REAL-WORLD TESTING IMPLEMENTATION
 
