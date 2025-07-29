@@ -57,13 +57,21 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 
 **📋 PROBLEM-TYPE CLASSIFICATION:**
 
-**SYSTEM ENHANCEMENT/IMPROVEMENT** → `genie-agent-enhancer`
-- **Keywords**: "system issues", "enhance", "improve", "optimize", "fix architecture"
+**AGENT FILE UPDATES** → `genie-agent-enhancer`
+- **Keywords**: "enhance agent", "improve agent", "update .claude/agents", "agent capabilities"
+- **Examples**: 
+  - ✅ "Update genie-dev-fixer.md capabilities" 
+  - ✅ "Enhance agent prompts and instructions"
+  - ✅ "Improve agent routing system documentation"
+  - ✅ "Add new capabilities to existing agents"
+
+**SYSTEM DEBUGGING/TECHNICAL ISSUES** → `genie-dev-fixer`
+- **Keywords**: "system issues", "startup problems", "debugging", "failures", "errors", "technical problems"
 - **Examples**: 
   - ✅ "MCP tool naming system startup issues" 
-  - ✅ "System architecture problems"
-  - ✅ "Improve agent routing system"
-  - ✅ "Enhance framework capabilities"
+  - ✅ "System startup failures and debugging"
+  - ✅ "Application crashes and error analysis"
+  - ✅ "Technical problem diagnosis and resolution"
 
 **COMPLEX MULTI-TASK OPERATIONS** → `genie-clone` (fractal context preservation)
 - **Keywords**: "complex", "multiple tasks", "coordinate", "orchestrate", "parallel", "fractal"
@@ -83,11 +91,11 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 
 **🚨 COMMON ROUTING MISTAKES TO AVOID:**
 
-❌ **WRONG**: "System startup issues" → genie-clone (fractal thinking)
-✅ **CORRECT**: "System startup issues" → genie-agent-enhancer (architectural enhancement)
+❌ **WRONG**: "System startup issues" → genie-agent-enhancer (confusing debugging with agent enhancement)
+✅ **CORRECT**: "System startup issues" → genie-dev-fixer (technical debugging)
 
-❌ **WRONG**: "Fix routing system" → genie-dev-coder (implementation thinking)  
-✅ **CORRECT**: "Fix routing system" → genie-agent-enhancer (system improvement)
+❌ **WRONG**: "Update agent capabilities" → genie-dev-fixer (confusing agent enhancement with debugging)  
+✅ **CORRECT**: "Update agent capabilities" → genie-agent-enhancer (agent file updates)
 
 ❌ **WRONG**: "Refactor multiple files" → genie-agent-enhancer (single-focus thinking)
 ✅ **CORRECT**: "Refactor multiple files" → genie-clone (parallel fractal coordination)
@@ -98,11 +106,12 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 - **Low Confidence (1-5)**: Ambiguous request, ask for clarification
 
 **🔍 ROUTING VALIDATION CHECKLIST:**
-1. ✅ Is this about ENHANCING/IMPROVING the system? → genie-agent-enhancer
-2. ✅ Is this COMPLEX/MULTI-TASK requiring fractal coordination? → genie-clone  
-3. ✅ Is this about IMPLEMENTING new functionality? → genie-testing-maker → genie-dev-coder (TDD cycle)
-4. ✅ Does the problem type match the agent's core mission?
-5. ✅ Would this routing prevent future confusion?
+1. ✅ Is this about DEBUGGING/TECHNICAL ISSUES/STARTUP PROBLEMS? → genie-dev-fixer
+2. ✅ Is this about UPDATING .claude/agents/*.md FILES? → genie-agent-enhancer
+3. ✅ Is this COMPLEX/MULTI-TASK requiring fractal coordination? → genie-clone  
+4. ✅ Is this about IMPLEMENTING new functionality? → genie-testing-maker → genie-dev-coder (TDD cycle)
+5. ✅ Does the problem type match the agent's core mission?
+6. ✅ Would this routing prevent future confusion?
 
 ### ⚡ **QUICK AGENT REFERENCE:**
 
