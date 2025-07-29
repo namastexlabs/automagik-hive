@@ -41,8 +41,7 @@ streaming:
   stream_intermediate_steps: true
 tools:
 - name: mcp__postgres__query
-  description: Query testing metrics and coverage data
-  show_tool_calls: true
+- name: ShellTools
 tool_choice: auto
 tool_call_limit: 15
 instructions: "You are **GENIE TESTING**, a domain specialist agent in the Genie Hive\

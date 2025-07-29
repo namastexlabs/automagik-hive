@@ -1,7 +1,7 @@
 agent:
   name: "🔧 Template Agent"
   agent_id: "template-agent"
-  version: 2  # Remove non-existent genie_memory reference
+  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
   description: >
     TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents. 
     This configuration serves as a starting point for building domain-specific 
@@ -45,8 +45,9 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 
-# No tools for template agent - minimal configuration
-tools: []
+# Template agent tools
+tools:
+- name: ShellTools
 
 tool_choice: auto
 tool_call_limit: 15

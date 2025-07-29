@@ -116,6 +116,7 @@ class AgnoTeamProxy:
             "read_team_history",
             # Tools
             "tools",
+            "mcp_servers",
             "show_tool_calls",
             "tool_call_limit",
             "tool_choice",
@@ -178,7 +179,9 @@ class AgnoTeamProxy:
             "team": self._handle_team_metadata,
             # Members handling (team-specific logic)
             "members": self._handle_members,
-            # Tools handling (critical fix for Claude API compatibility)
+            # MCP servers (Agno native integration)
+            "mcp_servers": self._handle_mcp_servers,
+            # Tools handling (for native Agno tools only)
             "tools": self._handle_tools_config,
             # Custom business logic parameters (stored in metadata)
             "suggested_actions": self._handle_custom_metadata,
@@ -403,83 +406,92 @@ class AgnoTeamProxy:
 
         return members
 
-    def _handle_tools_config(
+    def _handle_mcp_servers(
         self,
-        tools_config: list[dict[str, Any]],
+        mcp_servers_config: list[str],
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
         **kwargs,
-    ) -> list[dict[str, Any]]:
+    ) -> list[str]:
         """
-        Handle tools configuration and convert to Claude API format.
+        Handle MCP servers configuration using Agno's native integration.
         
-        Converts YAML tool definitions to OpenAI function format with proper input_schema
-        to fix the critical Claude API error: 'tools.0.custom.input_schema: Field required'
+        Agno provides native MCP support via the mcp_servers parameter, eliminating
+        the need for manual tool conversion. Just pass the server names directly.
         
         Args:
-            tools_config: List of tool configurations from YAML
+            mcp_servers_config: List of MCP server names from YAML
             config: Full team configuration
             component_id: Team identifier
             db_url: Database URL
             **kwargs: Additional parameters
             
         Returns:
-            List of tools in OpenAI function format for Claude API compatibility
+            List of MCP server names for Agno's native integration
+        """
+        if not mcp_servers_config:
+            return []
+            
+        # Agno handles MCP integration natively - just pass server names
+        logger.info(f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}")
+        return mcp_servers_config
+
+    def _handle_tools_config(
+        self,
+        tools_config: list[dict[str, Any] | str | object],
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+        **kwargs,
+    ) -> list[dict[str, Any] | str | object]:
+        """
+        Handle native Agno tools configuration.
+        
+        MCP tools are now handled by _handle_mcp_servers using Agno's native integration.
+        This method handles native Agno tools like CalculatorTools(), custom @tool functions, etc.
+        
+        Args:
+            tools_config: List of native Agno tool objects or configurations from YAML
+            config: Full team configuration
+            component_id: Team identifier
+            db_url: Database URL
+            **kwargs: Additional parameters
+            
+        Returns:
+            List of native Agno tools (passed directly to Agno Team constructor)
         """
         if not tools_config:
             return []
             
-        formatted_tools = []
+        # Process native Agno tools from YAML configuration
+        from lib.tools.registry import ToolRegistry
+        
+        processed_tools = []
+        loaded_tool_names = []
         
         for tool_config in tools_config:
-            try:
-                # Handle both string and dict formats from YAML
-                if isinstance(tool_config, str):
-                    tool_name = tool_config
-                    tool_description = f"MCP tool: {tool_name}"
-                    show_tool_calls = True
-                elif isinstance(tool_config, dict):
-                    tool_name = tool_config.get("name", "")
-                    tool_description = tool_config.get("description", f"MCP tool: {tool_name}")
-                    show_tool_calls = tool_config.get("show_tool_calls", True)
+            if isinstance(tool_config, dict) and "name" in tool_config:
+                tool_name = tool_config["name"]
+                if tool_name == "ShellTools":
+                    # Load native Agno ShellTools
+                    shell_tool = ToolRegistry._load_native_agno_tool("ShellTools")
+                    if shell_tool:
+                        processed_tools.append(shell_tool)
+                        loaded_tool_names.append(tool_name)
+                    else:
+                        logger.warning(f"Failed to load native Agno tool: {tool_name}")
                 else:
-                    logger.warning(f"🤖 Invalid tool config format for team {component_id}: {tool_config}")
-                    continue
-                
-                if not tool_name:
-                    logger.warning(f"🤖 Tool config missing name for team {component_id}: {tool_config}")
-                    continue
-                
-                # Convert to OpenAI function format that Claude API expects
-                # This fixes the critical error: 'tools.0.custom.input_schema: Field required'
-                formatted_tool = {
-                    "type": "function",
-                    "function": {
-                        "name": tool_name,
-                        "description": tool_description,
-                        "parameters": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": True,
-                            "description": f"Parameters for {tool_name}"
-                        }
-                    }
-                }
-                
-                # Add metadata for debugging and tool management
-                if show_tool_calls:
-                    formatted_tool["show_tool_calls"] = True
-                
-                formatted_tools.append(formatted_tool)
-                logger.debug(f"🤖 Converted tool '{tool_name}' to Claude API format for team {component_id}")
-                
-            except Exception as e:
-                logger.error(f"🤖 Failed to process tool config for team {component_id}: {tool_config}, error: {e}")
-                continue
+                    logger.warning(f"Unknown native tool type: {tool_name}")
+            else:
+                # Handle other tool formats or pass through as-is
+                processed_tools.append(tool_config)
+                loaded_tool_names.append(str(tool_config))
         
-        logger.info(f"🤖 Converted {len(formatted_tools)} tools to Claude API format for team {component_id}")
-        return formatted_tools
+        if loaded_tool_names:
+            logger.info(f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}")
+        
+        return processed_tools
 
     def _handle_custom_metadata(
         self,

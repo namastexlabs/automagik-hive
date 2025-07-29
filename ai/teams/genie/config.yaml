@@ -63,28 +63,19 @@ members:
 
 
 # MCP Tools for System Control - ALL TOOLS ACCESSIBLE! 🤖⚡
+# Using Agno's native MCP integration - descriptions and configs come from MCP servers
+mcp_servers:
+  - "postgres"              # Direct SQL queries on agent DB for system state monitoring
+  - "automagik-hive"        # API interactions with agents/teams/workflows in the hive  
+  - "claude-mcp"            # Spawn specialized .claude/agents for heavy lifting tasks
+  - "search-repo-docs"      # External library documentation access for research
+  - "ask-repo-agent"        # GitHub repository Q&A for codebase understanding
+  - "wait"                  # Workflow delays for async operations and coordination
+  - "send_whatsapp_message" # External notifications for critical alerts (use responsibly!)
+
+# Native Agno tools - ShellTools for system command execution
 tools:
-  - name: "postgres"
-    description: "Direct SQL queries on agent DB for system state monitoring"
-    show_tool_calls: true
-  - name: "automagik-hive"
-    description: "API interactions with agents/teams/workflows in the hive"
-    show_tool_calls: true
-  - name: "claude-mcp"
-    description: "Spawn specialized .claude/agents for heavy lifting tasks"
-    show_tool_calls: true
-  - name: "search-repo-docs"
-    description: "External library documentation access for research"
-    show_tool_calls: true
-  - name: "ask-repo-agent"
-    description: "GitHub repository Q&A for codebase understanding"
-    show_tool_calls: true
-  - name: "wait"
-    description: "Workflow delays for async operations and coordination"
-    show_tool_calls: true
-  - name: "send_whatsapp_message"
-    description: "External notifications for critical alerts (use responsibly!)"
-    show_tool_calls: true
+  - name: ShellTools
 
 tool_choice: "auto"  # Intelligent tool routing
 tool_call_limit: 20  # Allow complex orchestration workflows

@@ -49,8 +49,7 @@ streaming:
 # MCP Tools for debugging
 tools:
   - name: "mcp__postgres__query"
-    description: "Query debugging data and system metrics"
-    show_tool_calls: true
+  - name: "ShellTools"
 
 tool_choice: "auto"
 tool_call_limit: 15

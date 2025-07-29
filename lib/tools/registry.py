@@ -38,7 +38,15 @@ class ToolRegistry:
         """
         tools = []
         
-        for tool_config in tool_configs:
+        # Sort tool configs for deterministic loading order
+        def get_tool_name(config):
+            if isinstance(config, str):
+                return config
+            return config.get("name", "")
+        
+        sorted_tool_configs = sorted(tool_configs, key=get_tool_name) 
+        
+        for tool_config in sorted_tool_configs:
             if not ToolRegistry._validate_tool_config(tool_config):
                 logger.warning(f"Invalid tool config: {tool_config}")
                 continue
@@ -69,6 +77,11 @@ class ToolRegistry:
                     tool = ToolRegistry._load_shared_tool(shared_tool_name)
                     if tool:
                         tools.append(tool)
+                elif tool_name == "ShellTools":
+                    # Handle native Agno ShellTools directly
+                    agno_shell_tool = ToolRegistry._load_native_agno_tool("ShellTools")
+                    if agno_shell_tool:
+                        tools.append(agno_shell_tool)
                 else:
                     logger.warning(f"Unknown tool type for: {tool_name}")
                     
@@ -140,6 +153,35 @@ class ToolRegistry:
             logger.error(f"Failed to resolve MCP tool {name}: {e}")
             
         return None
+    
+    @staticmethod
+    def _load_native_agno_tool(tool_name: str) -> Any:
+        """
+        Load native Agno tools directly.
+        
+        Args:
+            tool_name: Name of the native Agno tool (e.g., "ShellTools")
+            
+        Returns:
+            Agno tool instance or None if not found
+        """
+        try:
+            if tool_name == "ShellTools":
+                from agno.tools.shell import ShellTools
+                return ShellTools()
+            # Add more native Agno tools here as needed
+            # elif tool_name == "CalculatorTools":
+            #     from agno.tools.calculator import CalculatorTools
+            #     return CalculatorTools()
+            else:
+                logger.warning(f"Native Agno tool not implemented: {tool_name}")
+                return None
+        except ImportError as e:
+            logger.error(f"Failed to import native Agno tool {tool_name}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to load native Agno tool {tool_name}: {e}")
+            return None
     
     @staticmethod    
     def _load_shared_tool(tool_name: str) -> Callable:

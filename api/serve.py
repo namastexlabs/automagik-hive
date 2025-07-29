@@ -289,38 +289,27 @@ async def _async_create_automagik_api():
     # Create FastAPI app components from orchestrated startup results
     teams_list = loaded_teams if loaded_teams else []
 
-    # METRICS FIX: Create wrapped agent instances instead of using raw registry entries
-    # This ensures agents have metrics collection capabilities when used by Agno Playground
+    # ORCHESTRATION FIX: Reuse agents from orchestrated startup to prevent duplicate loading
+    # Agents were already loaded with proper configuration during batch_component_discovery()
     agents_list = []
-    if available_agents:
-        from ai.agents.registry import AgentRegistry
-
-        for agent_id in available_agents:
+    if startup_results.registries.agents:
+        # Use the already-loaded agents from orchestrated startup
+        for agent_id, agent_instance in startup_results.registries.agents.items():
             try:
-                # Create wrapped agent instance with metrics service
-                wrapped_agent = await AgentRegistry.get_agent(
-                    agent_id,
-                    session_id=None,  # Playground will handle session management
-                    debug_mode=is_development,
-                    user_id=None,
-                    metrics_service=startup_results.services.metrics_service,  # CRITICAL FIX: Pass metrics service
-                )
-                if wrapped_agent:
-                    agents_list.append(wrapped_agent)
-
-                    logger.debug(
-                        f"Agent {agent_id} wrapped successfully for Playground"
-                    )
+                # Add metrics service to existing agent if available
+                if hasattr(agent_instance, 'metrics_service') and startup_results.services.metrics_service:
+                    agent_instance.metrics_service = startup_results.services.metrics_service
+                
+                agents_list.append(agent_instance)
+                logger.debug(f"Agent {agent_id} reused from orchestrated startup")
+                
             except Exception as e:
                 logger.warning(
-                    f"Failed to create wrapped agent {agent_id} for Playground: {e}"
+                    f"Failed to configure agent {agent_id} from orchestrated startup: {e}"
                 )
-                # Fallback to raw registry entry if wrapping fails
-                if agent_id in available_agents:
-                    agents_list.append(available_agents[agent_id])
-                    logger.debug(
-                        "Using fallback raw agent for Playground", agent_id=agent_id
-                    )
+                # Agent instance is still usable, add it anyway
+                agents_list.append(agent_instance)
+                logger.debug(f"Using agent {agent_id} without metrics enhancement")
 
     logger.debug(f"Created {len(agents_list)} agents for Playground")
 

@@ -323,7 +323,7 @@ class VersionFactory:
                 # Load tools via central registry
                 tools = ToolRegistry.load_tools(tool_configs)
                 
-                # Extract tool names for better logging
+                # Extract tool names for better logging (sorted for deterministic output)
                 tool_names = []
                 for tool_config in tool_configs:
                     if isinstance(tool_config, str):
@@ -332,7 +332,9 @@ class VersionFactory:
                         tool_names.append(tool_config["name"])
                 
                 if tool_names:
-                    logger.info(f"Loaded tools for agent {component_id}: {', '.join(tool_names)}")
+                    # Sort tool names alphabetically for consistent display
+                    sorted_tool_names = sorted(tool_names)
+                    logger.info(f"Loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}")
                 else:
                     logger.info(f"Loaded {len(tools)} tools for agent {component_id} via central registry")
                 

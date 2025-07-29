@@ -1,7 +1,7 @@
 agent:
   name: Genie Dev - Development Domain Specialist
   role: Development Task Router
-  version: 2  # Fix MCP server name mismatches
+  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
   agent_id: genie-dev
   description: 'Development domain specialist providing intelligent routing and coordination  for
     development tasks. Routes to specialized .claude/agents (genie-dev-planner,  genie-dev-designer,
@@ -25,17 +25,10 @@ storage:
   auto_upgrade_schema: true
 tools:
 - name: mcp__automagik-forge__list_tasks
-  description: Query development tasks and project status
-  show_tool_calls: true
 - name: mcp__automagik-forge__create_task
-  description: Create tasks for complex development workflows
-  show_tool_calls: true
 - name: mcp__automagik-forge__update_task
-  description: Update development task status and progress
-  show_tool_calls: true
 - name: mcp__postgres__query
-  description: Query development metrics and system data
-  show_tool_calls: true
+- name: ShellTools
 tool_choice: auto
 tool_call_limit: 15
 markdown: false
@@ -121,7 +114,7 @@ expected_output: 'Intelligent development task analysis with optimal routing to 
   All routing decisions informed by persistent memory and pattern recognition.
 
   '
-show_tool_calls: false
+show_tool_calls: true
 knowledge_filter:
   max_results: 10
   search_config:
