@@ -12,9 +12,10 @@ from typing import Any
 import yaml
 from agno.agent import Agent
 from agno.team import Team
-from agno.utils.log import logger
 from agno.workflow import Workflow
 from dotenv import load_dotenv
+
+from lib.logging import logger
 
 # Load environment variables
 load_dotenv()
@@ -315,18 +316,29 @@ class VersionFactory:
                     if not self._validate_tool_config(tool_config):
                         error_msg = f"Invalid tool configuration: {tool_config}"
                         if strict_validation:
-                            logger.error(f"🤖 STRICT VALIDATION FAILED: {error_msg}")
+                            logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
                             raise ValueError(f"Agent {component_id} tool validation failed: {error_msg}")
-                        logger.warning(f"🤖 {error_msg}")
+                        logger.warning(f"{error_msg}")
                 
                 # Load tools via central registry
                 tools = ToolRegistry.load_tools(tool_configs)
                 
-                logger.info(f"🤖 Loaded {len(tools)} tools for agent {component_id} via central registry")
+                # Extract tool names for better logging
+                tool_names = []
+                for tool_config in tool_configs:
+                    if isinstance(tool_config, str):
+                        tool_names.append(tool_config)
+                    elif isinstance(tool_config, dict) and "name" in tool_config:
+                        tool_names.append(tool_config["name"])
+                
+                if tool_names:
+                    logger.info(f"Loaded tools for agent {component_id}: {', '.join(tool_names)}")
+                else:
+                    logger.info(f"Loaded {len(tools)} tools for agent {component_id} via central registry")
                 
             else:
                 # No tools configured - that's okay for agents without specific tool requirements
-                logger.debug(f"🤖 No tools configured for agent {component_id}")
+                logger.debug(f"No tools configured for agent {component_id}")
 
         except ValueError:
             # Re-raise validation errors (these are intentional failures)
@@ -335,11 +347,11 @@ class VersionFactory:
             error_msg = f"Error loading tools for agent {component_id}: {e}"
 
             if strict_validation:
-                logger.error(f"🤖 STRICT VALIDATION FAILED: {error_msg}")
+                logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
                 raise ValueError(
                     f"Agent {component_id} tool loading failed due to unexpected error: {e}"
                 )
-            logger.error(f"🤖 {error_msg}")
+            logger.error(f"{error_msg}")
 
         return tools
 

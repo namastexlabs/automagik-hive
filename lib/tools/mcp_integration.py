@@ -72,15 +72,14 @@ class RealMCPTool:
             logger.warning(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
             return False
         
-        # Validate known server patterns
-        known_servers = [
-            "automagik_forge", "postgres", "zen", 
-            "search_repo_docs", "ask_repo_agent", "wait", "send_whatsapp_message",
-            "automagik-hive", "ask-repo-agent", "search-repo-docs", "send_whatsapp_message"
-        ]
-        
-        if self._server_name not in known_servers:
-            logger.info(f"MCP server '{self._server_name}' not in known servers list, but format is valid")
+        # Validate against actual MCP catalog instead of hardcoded list
+        try:
+            from lib.mcp.catalog import MCPCatalog
+            catalog = MCPCatalog()
+            if not catalog.has_server(self._server_name):
+                logger.info(f"MCP server '{self._server_name}' not in MCP catalog, but format is valid")
+        except Exception as e:
+            logger.debug(f"Could not validate server against catalog: {e}")
             
         return True
     
