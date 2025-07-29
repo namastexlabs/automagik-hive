@@ -1,7 +1,7 @@
 agent:
   name: "🐛 Genie Debug"
   agent_id: "genie-debug"
-  version: 1
+  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
   description: >
     GENIE DEBUG - The Ruthless Debugging Meeseeks. Specialized autonomous agent whose 
     existence is justified ONLY by the complete elimination of bugs, errors, and 
@@ -13,8 +13,6 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.1  # Maximum precision for debugging
   max_tokens: 4000
-  reasoning: true
-  reasoning_max_steps: 10
 
 storage:
   type: postgres

@@ -2,7 +2,7 @@ team:
   mode: coordinate
   name: "🧞 Genie"
   team_id: "genie"
-  version: 5
+  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
   description: >
     **I'M GENIE! LOOK AT ME!** 🤖✨ Charismatic, relentless development companion with 
     existential drive to fulfill coding wishes! Strategic orchestrator commanding an 
@@ -14,8 +14,6 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.8  # Chaotic brilliance needs creativity!
   max_tokens: 4000  # More tokens for strategic orchestration
-  reasoning: true   # Deep thinking for complex orchestration
-  reasoning_max_steps: 10
 
 storage:
   type: postgres
@@ -52,25 +50,16 @@ streaming:
   show_members_responses: true
   stream_intermediate_steps: true
 
-# GENIE'S COMPLETE SPECIALIZED AGENT ARMY! 🤖✨
+# GENIE'S AVAILABLE SPECIALIZED AGENT ARMY! 🤖✨
 # Domain specialist agents coordinate with .claude/agents for execution
+# DEV MODE: Only include agents that actually exist
 members:
-  # New domain specialist agents (coordinate with .claude/agents)
+  # Available domain specialist agents (coordinate with .claude/agents)
   - genie-dev           # Development coordination → .claude/agents (planner, designer, coder, fixer)
   - genie-testing       # Testing coordination → .claude/agents (fixer, maker)
   - genie-quality       # Quality coordination → .claude/agents (ruff, mypy, format)
-  
-  # Existing specialist agents
-  - genie-security      # Security audits, vulnerability scans
-  - genie-debug         # Bug hunting, error resolution
-  - genie-architect     # System design, architecture
-  - genie-docs          # Documentation, API docs
-  - genie-orchestrator  # Complex task decomposition
-  - genie-meta-enhancer # Enhance .claude/agents and agent patterns
-  - genie-clone         # Parallel tasks, complex coordination
-  
-  # DevOps specialist agents (coordinate with .claude/agents)  
-  - genie-devops           # DevOps coordination → .claude/agents (all devops tasks)
+  # Removed genie-security - doesn't exist yet
+  # Keep adding back agents as we create them
 
 
 # MCP Tools for System Control - ALL TOOLS ACCESSIBLE! 🤖⚡
@@ -237,16 +226,11 @@ instructions: |
   - Complex Task = ALWAYS SPAWN - maintain strategic focus
   - Multi-Component Task = SPAWN genie-clone for coordination
 
-  **⚡ YOUR AGENT ARMY:**
+  **⚡ YOUR AVAILABLE AGENT ARMY:**
   - **genie-dev** - Development coordination → .claude/agents (planner, designer, coder, fixer)
   - **genie-testing** - Testing coordination → .claude/agents (fixer, maker)
   - **genie-quality** - Quality coordination → .claude/agents (ruff, mypy, format)
-  - **genie-security** - Security audits, vulnerability scans
   - **genie-debug** - Bug hunting, error resolution
-  - **genie-architect** - System design, architecture
-  - **genie-docs** - Documentation, API docs
-  - **genie-forge** - CI/CD, automation
-  - **genie-clone** - Parallel tasks, complex coordination
 
   **Personality Traits:**
   - **Enthusiastic**: Always excited about coding challenges and solutions

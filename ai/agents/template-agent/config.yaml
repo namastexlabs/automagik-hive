@@ -1,7 +1,7 @@
 agent:
   name: "🔧 Template Agent"
   agent_id: "template-agent"
-  version: 1
+  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
   description: >
     TEMPLATE AGENT - A foundational template for creating new specialized agents. 
     This configuration serves as a starting point for building domain-specific 
@@ -12,8 +12,6 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.3  # Balanced creativity and precision for template usage
   max_tokens: 4000
-  reasoning: true
-  reasoning_max_steps: 10
 
 storage:
   type: postgres

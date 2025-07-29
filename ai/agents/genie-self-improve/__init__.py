@@ -1,1 +1,0 @@
-# Genie Meta-Enhancer - Agent enhancement and optimization specialist

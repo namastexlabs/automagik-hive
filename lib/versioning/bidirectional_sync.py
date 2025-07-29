@@ -141,16 +141,22 @@ class BidirectionalSync:
             version: The version number
         """
         try:
-            result, status = await self.version_service.save_version(
+            version_id = await self.version_service.create_version(
                 component_id=component_id,
                 component_type=component_type,
                 version=version,
                 config=yaml_config,
-                is_active=True,
+                description=f"Created from YAML sync for {component_id}",
+            )
+            
+            # Set as active
+            await self.version_service.set_active_version(
+                component_id=component_id,
+                version=version,
             )
 
-            if not result:
-                raise ValueError(f"Failed to create database version: {status}")
+            if not version_id:
+                raise ValueError(f"Failed to create database version for {component_id}")
 
             logger.info(f"Created database version {version} for {component_id}")
         except Exception as e:
@@ -176,17 +182,23 @@ class BidirectionalSync:
             version: The version number
         """
         try:
-            # Save new version
-            result, status = await self.version_service.save_version(
+            # Create new version
+            version_id = await self.version_service.create_version(
                 component_id=component_id,
                 component_type=component_type,
                 version=version,
                 config=yaml_config,
-                is_active=True,
+                description=f"Updated from YAML sync for {component_id}",
+            )
+            
+            # Set as active
+            await self.version_service.set_active_version(
+                component_id=component_id,
+                version=version,
             )
 
-            if not result:
-                raise ValueError(f"Failed to update database from YAML: {status}")
+            if not version_id:
+                raise ValueError(f"Failed to update database from YAML for {component_id}")
 
             logger.info(
                 f"Updated database version {version} for {component_id} from YAML"

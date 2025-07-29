@@ -334,7 +334,14 @@ class AgnoAgentProxy:
         """Handle model configuration with dynamic provider support."""
         from lib.config.models import resolve_model
 
+        # Define Agno-specific parameters that should NOT be passed to underlying model classes
+        agno_agent_params = {
+            "reasoning", "reasoning_model", "reasoning_agent", 
+            "reasoning_min_steps", "reasoning_max_steps"
+        }
+
         # Use dynamic model resolution to support all providers
+        # Filter out Agno-specific parameters that the underlying model class doesn't accept
         return resolve_model(
             model_id=model_config.get("id"),
             temperature=model_config.get("temperature", 0.7),
@@ -342,7 +349,7 @@ class AgnoAgentProxy:
             **{
                 k: v
                 for k, v in model_config.items()
-                if k not in ["id", "temperature", "max_tokens"]
+                if k not in ["id", "temperature", "max_tokens"] and k not in agno_agent_params
             },
         )
 

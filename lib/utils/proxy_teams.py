@@ -178,6 +178,8 @@ class AgnoTeamProxy:
             "team": self._handle_team_metadata,
             # Members handling (team-specific logic)
             "members": self._handle_members,
+            # Tools handling (critical fix for Claude API compatibility)
+            "tools": self._handle_tools_config,
             # Custom business logic parameters (stored in metadata)
             "suggested_actions": self._handle_custom_metadata,
             "escalation_triggers": self._handle_custom_metadata,
@@ -400,6 +402,84 @@ class AgnoTeamProxy:
                 logger.warning(f"🤖 Could not load team member {member_name}: {e}")
 
         return members
+
+    def _handle_tools_config(
+        self,
+        tools_config: list[dict[str, Any]],
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+        **kwargs,
+    ) -> list[dict[str, Any]]:
+        """
+        Handle tools configuration and convert to Claude API format.
+        
+        Converts YAML tool definitions to OpenAI function format with proper input_schema
+        to fix the critical Claude API error: 'tools.0.custom.input_schema: Field required'
+        
+        Args:
+            tools_config: List of tool configurations from YAML
+            config: Full team configuration
+            component_id: Team identifier
+            db_url: Database URL
+            **kwargs: Additional parameters
+            
+        Returns:
+            List of tools in OpenAI function format for Claude API compatibility
+        """
+        if not tools_config:
+            return []
+            
+        formatted_tools = []
+        
+        for tool_config in tools_config:
+            try:
+                # Handle both string and dict formats from YAML
+                if isinstance(tool_config, str):
+                    tool_name = tool_config
+                    tool_description = f"MCP tool: {tool_name}"
+                    show_tool_calls = True
+                elif isinstance(tool_config, dict):
+                    tool_name = tool_config.get("name", "")
+                    tool_description = tool_config.get("description", f"MCP tool: {tool_name}")
+                    show_tool_calls = tool_config.get("show_tool_calls", True)
+                else:
+                    logger.warning(f"🤖 Invalid tool config format for team {component_id}: {tool_config}")
+                    continue
+                
+                if not tool_name:
+                    logger.warning(f"🤖 Tool config missing name for team {component_id}: {tool_config}")
+                    continue
+                
+                # Convert to OpenAI function format that Claude API expects
+                # This fixes the critical error: 'tools.0.custom.input_schema: Field required'
+                formatted_tool = {
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        "description": tool_description,
+                        "parameters": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": True,
+                            "description": f"Parameters for {tool_name}"
+                        }
+                    }
+                }
+                
+                # Add metadata for debugging and tool management
+                if show_tool_calls:
+                    formatted_tool["show_tool_calls"] = True
+                
+                formatted_tools.append(formatted_tool)
+                logger.debug(f"🤖 Converted tool '{tool_name}' to Claude API format for team {component_id}")
+                
+            except Exception as e:
+                logger.error(f"🤖 Failed to process tool config for team {component_id}: {tool_config}, error: {e}")
+                continue
+        
+        logger.info(f"🤖 Converted {len(formatted_tools)} tools to Claude API format for team {component_id}")
+        return formatted_tools
 
     def _handle_custom_metadata(
         self,

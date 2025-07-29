@@ -9,17 +9,17 @@ if TYPE_CHECKING:
     from agno.team import Team
 
 
-async def get_code_development_team(
+async def get_genie_team(
     session_id: str | None = None,
     user_id: str | None = None,
     debug_mode: bool = False,
 ) -> Team:
     """
-    Create code development team using factory pattern.
+    Create the magical Genie team using factory pattern.
 
-    Provides comprehensive software development capabilities through
-    coordinated multi-agent collaboration including project onboarding,
-    code analysis, file operations, and intelligent code modifications.
+    Provides comprehensive development capabilities through charismatic,
+    relentless coordination of specialized agents. GENIE commands an army 
+    of specialists to fulfill all coding wishes!
 
     Args:
         session_id: Session ID for conversation tracking
@@ -27,30 +27,32 @@ async def get_code_development_team(
         debug_mode: Enable debug mode
 
     Returns:
-        Configured team instance
+        Configured Genie team instance with tool format fix applied
     """
-    # Create team using factory pattern
+    # Create team using factory pattern with correct team ID
     team = await create_team(
-        "code-development-team",
+        "genie",
         session_id=session_id,
         user_id=user_id,
         debug_mode=debug_mode,
     )
 
-    # Add team-specific metadata
+    # Add Genie-specific metadata
     if team.metadata is None:
         team.metadata = {}
 
     team.metadata.update(
         {
             "team_type": "coordinate",
-            "purpose": "Comprehensive software development capabilities",
+            "purpose": "Magical development companion with tool format fix",
             "specialization": [
-                "project_onboarding",
-                "code_analysis",
-                "file_operations",
-                "code_modifications",
+                "strategic_orchestration",
+                "agent_spawning",
+                "mcp_mastery",
+                "chaos_brilliance",
+                "tool_format_conversion",  # Our critical fix!
             ],
+            "claude_api_fix": "Applied OpenAI function format conversion for tools",
         }
     )
 

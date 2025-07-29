@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "genie-memory": {
-      "type": "sse",
-      "url": "http://192.168.112.156:8765/mcp/openmemory/sse/genie"
-    },
     "automagik-forge": {
       "type": "sse",
       "url": "http://192.168.112.154:8889/sse"
@@ -15,14 +11,6 @@
     "search-repo-docs": {
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
-    },
-    "wait": {
-      "command": "uvx",
-      "args": [
-        "automagik-tools@0.8.16",
-        "tool",
-        "wait"
-      ]
     },
     "send_whatsapp_message": {
       "command": "uvx",
@@ -43,8 +31,13 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql+psycopg://ybQDcMp8qEt3I9Gk:cIJ9nepVEABPW4ec@localhost:5532/hive"
+        "postgresql+psycopg://ybQDcMp8qEt3I9Gk:cIJ9nepVEABPW4ec@localhost:35532/hive_agent"
       ]
+    },
+    "claude-mcp": {
+      "command": "claude",
+      "args": ["--mcp-config", ".mcp.json", "--dangerously-skip-permissions", "mcp", "serve"],
+      "env": {}
     },
     "automagik-hive": {
       "command": "uvx",
