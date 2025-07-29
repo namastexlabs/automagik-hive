@@ -16,14 +16,14 @@ from typing import Any, Callable, Dict, List
 
 from agno.utils.log import logger
 
-from .mcp_integration import MCPToolProxy
+from .mcp_integration import RealMCPTool, create_mcp_tool
 
 
 class ToolRegistry:
     """Central registry for all tools in the Automagik Hive system."""
     
     _shared_tools_cache: Dict[str, Any] = {}
-    _mcp_tools_cache: Dict[str, MCPToolProxy] = {}
+    _mcp_tools_cache: Dict[str, RealMCPTool] = {}
     
     @staticmethod
     def load_tools(tool_configs: List[Dict[str, Any]]) -> List[Callable]:
@@ -52,23 +52,18 @@ class ToolRegistry:
             try:
                 # Determine tool type and load accordingly
                 if tool_name.startswith("mcp__"):
-                    tool = ToolRegistry.resolve_mcp_tool(tool_name)
-                    if tool:
-                        # Create properly formatted tool dict for Agno compatibility
-                        # This aligns agent tool format with team tool format
-                        tool_dict = {
-                            "type": "function",
-                            "function": {
-                                "name": tool_name,
-                                "description": f"MCP tool: {tool_name}",
-                                "parameters": {
-                                    "type": "object",
-                                    "properties": {},
-                                    "additionalProperties": True
-                                }
-                            }
-                        }
-                        tools.append(tool_dict)
+                    real_tool = ToolRegistry.resolve_mcp_tool(tool_name)
+                    if real_tool:
+                        # Get the MCPTools instance which Agno can use directly
+                        mcp_tools_instance = real_tool.get_tool_function()
+                        if mcp_tools_instance:
+                            # Add the MCPTools instance directly - Agno knows how to handle this
+                            tools.append(mcp_tools_instance)
+                            logger.debug(f"🌐 Added MCPTools instance for {tool_name}")
+                        else:
+                            logger.warning(f"Failed to get MCPTools instance for {tool_name}")
+                    else:
+                        logger.warning(f"Failed to resolve MCP tool: {tool_name}")
                 elif tool_name.startswith("shared__"):
                     shared_tool_name = tool_name[8:]  # Remove "shared__" prefix
                     tool = ToolRegistry._load_shared_tool(shared_tool_name)
@@ -122,24 +117,25 @@ class ToolRegistry:
         return shared_tools
     
     @staticmethod
-    def resolve_mcp_tool(name: str) -> MCPToolProxy:
+    def resolve_mcp_tool(name: str) -> RealMCPTool:
         """
-        Resolve MCP tool by name.
+        Resolve MCP tool by name using real MCP connections.
         
         Args:
-            name: MCP tool name (e.g., "mcp__genie_memory__search_memory")
+            name: MCP tool name (e.g., "mcp__postgres__query")
             
         Returns:
-            MCPToolProxy instance or None if not found
+            RealMCPTool instance or None if not found
         """
         if name in ToolRegistry._mcp_tools_cache:
             return ToolRegistry._mcp_tools_cache[name]
             
         try:
-            proxy = MCPToolProxy(name)
-            if proxy.validate_name():
-                ToolRegistry._mcp_tools_cache[name] = proxy
-                return proxy
+            real_tool = create_mcp_tool(name)
+            if real_tool.validate_name():
+                ToolRegistry._mcp_tools_cache[name] = real_tool
+                logger.debug(f"🌐 Cached real MCP tool: {name}")
+                return real_tool
         except Exception as e:
             logger.error(f"Failed to resolve MCP tool {name}: {e}")
             

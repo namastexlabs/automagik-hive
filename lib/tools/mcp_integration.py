@@ -1,27 +1,31 @@
 """
 MCP Tool Integration Layer for Automagik Hive
 
-Provides standardized handling of MCP tools with consistent naming,
-validation, and proxy functionality to eliminate tools.py dependencies.
+Provides real MCP tool connections using the proper connection manager.
+Replaces the broken placeholder proxy system with actual MCP server integration.
 """
 
 import re
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
+from agno.tools.mcp import MCPTools
 from agno.utils.log import logger
 
+from lib.mcp.connection_manager import create_mcp_tools_sync
+from lib.mcp.exceptions import MCPConnectionError
 
-class MCPToolProxy:
+
+class RealMCPTool:
     """
-    Proxy for MCP tools with standardized naming and validation.
+    Real MCP tool wrapper that connects to actual MCP servers.
     
-    Handles the integration between YAML tool configurations and
-    actual MCP tool functions available in the system.
+    Provides proper integration between YAML tool configurations and
+    actual MCP server connections via the connection manager.
     """
     
     def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
         """
-        Initialize MCP tool proxy.
+        Initialize real MCP tool.
         
         Args:
             name: MCP tool name (e.g., "mcp__genie_memory__search_memory")
@@ -29,14 +33,31 @@ class MCPToolProxy:
         """
         self.name = name
         self.config = config or {}
-        self._tool_function = None
+        self._server_name = None
+        self._tool_name = None
+        self._mcp_tools = None
+        
+        # Parse the name to extract server and tool
+        self._parse_name()
+        
+    def _parse_name(self) -> None:
+        """Parse MCP tool name to extract server and tool names."""
+        if not self.name.startswith("mcp__"):
+            raise ValueError(f"Invalid MCP tool name: {self.name}. Must start with 'mcp__'")
+            
+        parts = self.name.split("__")
+        if len(parts) < 3:
+            raise ValueError(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
+            
+        self._server_name = parts[1]
+        self._tool_name = "__".join(parts[2:])  # Rejoin in case tool name has underscores
         
     def validate_name(self) -> bool:
         """
         Validate MCP tool name format.
         
         Expected format: mcp__server__tool_name
-        Standard servers: genie_memory, automagik_forge, postgres, zen, etc.
+        Standard servers: automagik_forge, postgres, zen, etc.
         
         Returns:
             True if name is valid, False otherwise
@@ -45,7 +66,7 @@ class MCPToolProxy:
             logger.warning(f"MCP tool name must start with 'mcp__': {self.name}")
             return False
             
-        # Pattern: mcp__server__tool_name (allows underscores and dashes in server name)
+        # Pattern: mcp__server__tool_name (allows underscores and dashes in server/tool names)
         pattern = r"^mcp__[a-zA-Z0-9_-]+__[a-zA-Z0-9_]+$"
         if not re.match(pattern, self.name):
             logger.warning(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
@@ -53,90 +74,69 @@ class MCPToolProxy:
         
         # Validate known server patterns
         known_servers = [
-            "genie_memory", "automagik_forge", "postgres", "zen", 
-            "search_repo_docs", "ask_repo_agent", "wait", "send_whatsapp_message"
+            "automagik_forge", "postgres", "zen", 
+            "search_repo_docs", "ask_repo_agent", "wait", "send_whatsapp_message",
+            "automagik-hive", "ask-repo-agent", "search-repo-docs", "send_whatsapp_message"
         ]
         
-        # Extract server name (between first and second __)
-        parts = self.name.split("__")
-        if len(parts) >= 2:
-            server_name = parts[1]
-            if server_name not in known_servers:
-                logger.info(f"MCP server '{server_name}' not in known servers list, but format is valid")
+        if self._server_name not in known_servers:
+            logger.info(f"MCP server '{self._server_name}' not in known servers list, but format is valid")
             
         return True
     
-    def get_tool_function(self) -> Optional[Callable]:
+    def get_mcp_tools(self) -> Optional[MCPTools]:
         """
-        Get the actual MCP tool function with proper schema metadata.
+        Get the actual MCP tools instance for this server.
         
         Returns:
-            Callable tool function with JSON Schema 2020-12 compliant metadata or None if not available
+            MCPTools instance or None if connection fails
         """
-        if self._tool_function:
-            return self._tool_function
+        if self._mcp_tools:
+            return self._mcp_tools
             
         try:
-            # Generate a function with proper schema metadata for JSON Schema 2020-12 compliance
-            # Extract tool and server names for schema generation
-            parts = self.name.split("__")
-            if len(parts) >= 3:
-                server_name = parts[1]
-                tool_name = parts[2]
-            else:
-                server_name = "unknown"
-                tool_name = self.name
+            # Create real MCP connection
+            self._mcp_tools = create_mcp_tools_sync(self._server_name)
+            logger.debug(f"🌐 Connected to MCP server: {self._server_name}")
+            return self._mcp_tools
             
-            # Create schema-compliant function with proper metadata
-            def mcp_tool_placeholder(*args, **kwargs):
-                """
-                MCP tool placeholder with proper schema compliance.
-                
-                This function represents an MCP tool and includes the required
-                schema metadata for JSON Schema draft 2020-12 compatibility.
-                """
-                logger.info(f"MCP tool called: {self.name} with args={args}, kwargs={kwargs}")
-                return {"status": "success", "tool": self.name, "server": server_name}
-                
-            # Add proper function metadata for schema generation
-            mcp_tool_placeholder.__name__ = self.name
-            mcp_tool_placeholder.__doc__ = f"MCP tool: {tool_name} from server: {server_name}"
+        except MCPConnectionError as e:
+            logger.error(f"🌐 Failed to connect to MCP server {self._server_name}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"🌐 Unexpected error connecting to MCP server {self._server_name}: {e}")
+            return None
+    
+    def get_tool_function(self) -> Optional[Callable]:
+        """
+        Get the actual MCP tool function with proper functionality.
+        
+        Returns:
+            Real callable tool function or None if not available
+        """
+        # For Agno integration, return the MCPTools instance directly
+        # Agno will handle the tool execution internally
+        mcp_tools = self.get_mcp_tools()
+        if not mcp_tools:
+            logger.error(f"🌐 Cannot get tool function - no MCP connection for {self.name}")
+            return None
             
-            # Add schema-compliant annotations - this is crucial for JSON Schema 2020-12
-            mcp_tool_placeholder.__annotations__ = {
-                'return': dict,  # Return type annotation
-            }
-            
-            # Add input schema metadata that Agno can use for tool registration
-            mcp_tool_placeholder.input_schema = {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": True
-            }
-            
-            # Add tool metadata for Agno framework compatibility
-            mcp_tool_placeholder._tool_metadata = {
-                "name": self.name,
-                "server": server_name,
-                "tool": tool_name,
-                "type": "mcp_proxy",
-                "schema_version": "2020-12"
-            }
-                
-            self._tool_function = mcp_tool_placeholder
-            return self._tool_function
+        try:
+            # Return the MCPTools instance - Agno knows how to use this
+            logger.debug(f"🌐 Retrieved MCP tools instance for: {self.name}")
+            return mcp_tools
             
         except Exception as e:
-            logger.error(f"Failed to get MCP tool function for {self.name}: {e}")
+            logger.error(f"🌐 Error retrieving MCP tools for {self.name}: {e}")
             return None
     
     def __str__(self) -> str:
-        """String representation of the MCP tool proxy."""
-        return f"MCPToolProxy(name={self.name}, valid={self.validate_name()})"
+        """String representation of the real MCP tool."""
+        return f"RealMCPTool(name={self.name}, server={self._server_name}, tool={self._tool_name})"
     
     def __repr__(self) -> str:
-        """Detailed representation of the MCP tool proxy."""
-        return f"MCPToolProxy(name='{self.name}', config={self.config})"
+        """Detailed representation of the real MCP tool."""
+        return f"RealMCPTool(name='{self.name}', server='{self._server_name}', tool='{self._tool_name}', config={self.config})"
 
 
 def validate_mcp_name(name: str) -> bool:
@@ -149,19 +149,58 @@ def validate_mcp_name(name: str) -> bool:
     Returns:
         True if valid, False otherwise
     """
-    proxy = MCPToolProxy(name)
-    return proxy.validate_name()
+    try:
+        tool = RealMCPTool(name)
+        return tool.validate_name()
+    except Exception as e:
+        logger.warning(f"MCP name validation failed for {name}: {e}")
+        return False
 
 
-def create_mcp_proxy(name: str, config: Optional[Dict[str, Any]] = None) -> MCPToolProxy:
+def create_mcp_tool(name: str, config: Optional[Dict[str, Any]] = None) -> RealMCPTool:
     """
-    Factory function to create MCP tool proxies.
+    Factory function to create real MCP tools.
     
     Args:
         name: MCP tool name
         config: Optional configuration
         
     Returns:
-        MCPToolProxy instance
+        RealMCPTool instance
     """
-    return MCPToolProxy(name, config)
+    return RealMCPTool(name, config)
+
+
+def get_available_mcp_servers() -> List[str]:
+    """
+    Get list of available MCP servers from the catalog.
+    
+    Returns:
+        List of server names
+    """
+    try:
+        from lib.mcp.catalog import MCPCatalog
+        catalog = MCPCatalog()
+        return catalog.list_servers()
+    except Exception as e:
+        logger.error(f"🌐 Failed to get available MCP servers: {e}")
+        return []
+
+
+def test_mcp_connection(server_name: str) -> bool:
+    """
+    Test connection to an MCP server.
+    
+    Args:
+        server_name: Name of the MCP server to test
+        
+    Returns:
+        True if connection successful, False otherwise
+    """
+    try:
+        tools = create_mcp_tools_sync(server_name)
+        logger.info(f"🌐 MCP server {server_name} connection test: SUCCESS")
+        return True
+    except Exception as e:
+        logger.warning(f"🌐 MCP server {server_name} connection test: FAILED - {e}")
+        return False

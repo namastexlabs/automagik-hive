@@ -1,7 +1,7 @@
 agent:
   name: "🔧 Template Agent"
   agent_id: "template-agent"
-  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
+  version: 2  # Remove non-existent genie_memory reference
   description: >
     TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents. 
     This configuration serves as a starting point for building domain-specific 
@@ -83,7 +83,7 @@ instructions: |
   - Create specialized agent validation criteria
 
   **💾 MEMORY & PATTERN MANAGEMENT**
-  - Use mcp__genie_memory for pattern storage and retrieval
+  - Use postgres queries for pattern storage and retrieval
   - Document template customization strategies
   - Store successful adaptation patterns for reuse
   - Maintain template evolution and improvement history

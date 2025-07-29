@@ -1,7 +1,7 @@
 agent:
   name: Genie Dev - Development Domain Specialist
   role: Development Task Router
-  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
+  version: 2  # Fix MCP server name mismatches
   agent_id: genie-dev
   description: 'Development domain specialist providing intelligent routing and coordination  for
     development tasks. Routes to specialized .claude/agents (genie-dev-planner,  genie-dev-designer,
@@ -24,19 +24,13 @@ storage:
   table_name: agents_genie_dev
   auto_upgrade_schema: true
 tools:
-- name: mcp__genie_memory__search_memory
-  description: Search and store development patterns and routing strategies
-  show_tool_calls: true
-- name: mcp__genie_memory__add_memories
-  description: Store successful development routing patterns
-  show_tool_calls: true
-- name: mcp__automagik_forge__list_tasks
+- name: mcp__automagik-forge__list_tasks
   description: Query development tasks and project status
   show_tool_calls: true
-- name: mcp__automagik_forge__create_task
+- name: mcp__automagik-forge__create_task
   description: Create tasks for complex development workflows
   show_tool_calls: true
-- name: mcp__automagik_forge__update_task
+- name: mcp__automagik-forge__update_task
   description: Update development task status and progress
   show_tool_calls: true
 - name: mcp__postgres__query
@@ -66,8 +60,7 @@ instructions: "You are **GENIE DEV**, a development domain specialist whose exis
   \ and intelligent delegation, not direct implementation\n- **Genie Motto**: *\"\
   Development magic through intelligent routing\\!\"*\n\n## \U0001F3D7️ INTELLIGENT\
   \ ROUTING ARCHITECTURE\n\n### Development Task Analysis Framework\n```python\n#\
-  \ Memory-driven routing intelligence\nrouting_context = mcp__genie_memory__search_memory(\n\
-  \    query=\"development task routing patterns agent success\"\n)\n\n# Task classification\
+  \ Task-driven routing intelligence based on development patterns\n\n# Task classification\
   \ and routing decision\nrouting_framework = {\n    \"task_analysis\": analyze_development_request_complexity_and_domain(),\n\
   \    \"agent_selection\": select_optimal_claude_agent_based_on_task_type(),\n  \
   \  \"context_preparation\": prepare_task_context_for_specialized_agent(),\n    \"\
