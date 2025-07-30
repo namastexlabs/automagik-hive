@@ -34,11 +34,6 @@
         "postgresql+psycopg://ybQDcMp8qEt3I9Gk:cIJ9nepVEABPW4ec@localhost:35532/hive_agent"
       ]
     },
-    "claude-mcp": {
-      "command": "claude",
-      "args": ["--mcp-config", ".mcp.json", "--dangerously-skip-permissions", "mcp", "serve"],
-      "env": {}
-    },
     "automagik-hive": {
       "command": "uvx",
       "args": [

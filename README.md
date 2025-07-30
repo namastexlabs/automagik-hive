@@ -1,248 +1,361 @@
-# 🧞‍♂️ Automagik Hive
+# 🧞 Automagik Hive
 
 <div align="center">
 
 ![Automagik Logo](.github/images/automagik-logo.png)
 
-**Build and experiment with multi-agent systems that actually work**  
-*Powered by Agno • Genie lives here* ✨
+**YAML-powered AI agent orchestrator: Build teams, not code.**
 
+*The framework that turns agent coordination from nightmare to magic*
+
+[![GitHub stars](https://img.shields.io/github/stars/namastexlabs/automagik-hive?style=social)](https://github.com/namastexlabs/automagik-hive)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![Agno Framework](https://img.shields.io/badge/agno-v1.7.5-green.svg)](https://github.com/agno-agi/agno)
-[![MCP](https://img.shields.io/badge/MCP-integrated-purple.svg)](https://modelcontextprotocol.io/)
+[![UV Package](https://img.shields.io/badge/uv-ready-orange.svg)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[🚀 Quick Start](#-quick-start) • [🎯 Features](#-features) • [🤖 Agents](#-specialized-agents) • [📚 Docs](#-documentation)
+[⚡ 5-Minute Magic](#-5-minute-magic) • [🎯 Why Hive?](#-why-automagik-hive) • [🚀 Examples](#-real-world-magic) • [🏗️ Architecture](#-how-it-works)
 
 </div>
 
 ---
 
-## 👋 What is Automagik Hive?
+## ⚡ 5-Minute Magic
 
-Ever wanted to build multi-agent systems but got lost in the complexity? **Automagik Hive** makes it ridiculously easy to create, deploy, and manage intelligent agent teams that actually work together.
-
-Built on the powerful **Agno framework**, Hive provides:
-- **15+ pre-built specialist agents** for development, testing, and quality assurance
-- **Model Context Protocol (MCP) integration** for seamless tool access
-- **Dual environment architecture** - separate spaces for development and production
-- **Production-ready boilerplate** that scales from prototype to enterprise
-
-Perfect for developers who want to focus on building cool agent applications instead of wrestling with infrastructure. 🎯
-
-## 🚀 Quick Start
-
-Get your agent hive buzzing in under 2 minutes:
+**Get your first AI agent team running in literally 5 minutes:**
 
 ```bash
-# Clone and set up the magic
+# Install and run your first agent team
+uvx automagik-hive ./my-ai-project
+
+# That's it! Your agents are now running and coordinating.
+```
+
+**What just happened?** You now have a production-ready multi-agent system with:
+- 🤖 **Genie Team** - Built-in specialists (dev, testing, quality, debugging)
+- 📁 **Your Custom Agents** - Loaded from your `./my-ai-project` folder
+- 🔄 **Intelligent Routing** - Tasks automatically flow to the right agents
+- 🧞‍♂️ **Genie Assistant** - Helps orchestrate everything via natural language
+
+## 🎯 Why Automagik Hive?
+
+**The YAML Revolution**: Stop writing orchestration code. Start writing configurations.
+
+| Feature | Automagik Hive | LangChain | AutoGPT | CrewAI |
+|---------|----------------|-----------|---------|--------|
+| **Agent Definition** | YAML configs | Python code | Prompts | Python classes |
+| **Team Orchestration** | Built-in routing | Custom chains | Single agent | Manual roles |
+| **External Integration** | Native MCP | Plugin system | Limited | Basic |
+| **Development Speed** | Minutes | Hours | Days | Hours |
+| **Genie Assistant** | ✅ Built-in | ❌ | ❌ | ❌ |
+| **External Agents** | ✅ Dynamic loading | ❌ | ❌ | ❌ |
+
+**The Difference**: While others make you a programmer, we make you a conductor. 🎼
+
+## 🚀 Real-World Magic
+
+### 💼 Code Review Automation
+```yaml
+# code-review-team.yaml
+agents:
+  - name: quality-inspector
+    role: "Analyze code for bugs, security issues, and best practices"
+  - name: test-generator  
+    role: "Create comprehensive test suites for new code"
+  - name: documentation-writer
+    role: "Generate clear documentation and comments"
+
+workflow:
+  - quality-inspector → test-generator → documentation-writer
+```
+
+**One command**: `uvx automagik-hive ./code-review-team.yaml`
+**Result**: Automated code reviews that catch bugs, generate tests, and write docs.
+
+### 📱 Content Pipeline
+```yaml
+# viral-content-team.yaml  
+agents:
+  - name: trend-researcher
+    role: "Monitor Reddit, Twitter, HN for viral topics"
+  - name: content-creator
+    role: "Generate engaging content from trending topics"
+  - name: distributor
+    role: "Post content across social platforms"
+
+triggers:
+  - schedule: "0 */6 * * *"  # Every 6 hours
+  - webhook: "/new-trend"
+```
+
+**Result**: Autonomous content creation pipeline that finds trends and creates viral content.
+
+### 🏢 Enterprise Workflow
+```yaml
+# support-automation.yaml
+agents:
+  - name: ticket-classifier
+    role: "Categorize and prioritize customer tickets"
+  - name: solution-finder
+    role: "Search knowledge base and suggest solutions"
+  - name: escalation-manager
+    role: "Route complex issues to human experts"
+
+integrations:
+  - slack_notifications
+  - jira_updates
+  - customer_database
+```
+
+**Result**: 80% of support tickets handled automatically with intelligent escalation.
+
+## 🏗️ How It Works
+
+### The Magic Behind The Scenes
+
+```
+Your YAML → Automagik Hive → Production Magic
+
+[Agent Configs] → [Dynamic Loading] → [Intelligent Routing] → [Task Execution]
+       ↓                  ↓                    ↓                   ↓
+   Simple YAML      Runtime Discovery    Smart Coordination   Real Results
+```
+
+**Core Philosophy**: Configuration over code, orchestration over implementation.
+
+### 🧞‍♂️ Meet Genie - Your AI Development Partner
+
+Genie isn't just an agent - it's your development companion that:
+- **Helps you design** better agent teams through conversation
+- **Writes YAML configs** based on your natural language requirements  
+- **Debugs issues** when agents aren't coordinating properly
+- **Suggests optimizations** for better performance
+- **Learns from your patterns** to make future suggestions smarter
+
+**Example conversation with Genie**:
+```
+You: "I need agents to monitor our app for issues and fix them automatically"
+Genie: "I'll create a monitoring team with alerting, diagnosis, and auto-fix agents. 
+        Let me generate the YAML config and set up the monitoring triggers..."
+```
+
+## 🔧 Installation & Setup
+
+### Option 1: Instant Start (Recommended)
+```bash
+# Start with your existing project
+uvx automagik-hive ./my-project
+
+# Or create a new agent team
+uvx automagik-hive --init my-new-team
+cd my-new-team && uvx automagik-hive .
+```
+
+### Option 2: Development Mode
+```bash
+# Clone for framework development
 git clone https://github.com/namastexlabs/automagik-hive.git
 cd automagik-hive
 
-# Start your agent development environment
-make install-agent  # One-time setup
-make agent          # Start the hive! 🐝
-
-# Verify everything works
-curl http://localhost:38886/health
+# Install with UV (recommended)
+uv sync
+uv run python -m automagik_hive.cli ./examples/starter-team
 ```
 
-**🎉 That's it!** Your agent environment is running on `http://localhost:38886`
-
-**Next steps:**
-- Check out the [agent docs](http://localhost:38886/docs) 
-- Try the [development workflow](#-development-workflow)
-- Explore the [specialized agents](#-specialized-agents)
-
-## 🎯 Features
-
-### 🤖 **Ready-to-Use Agent Army**
-No need to build agents from scratch. We've got specialists for:
-- **Development**: Planning, design, coding, debugging
-- **Quality**: Testing, linting, type checking
-- **Meta**: Agent creation, documentation, orchestration
-
-### 🔌 **MCP Integration That Just Works**
-Connect to databases, external APIs, and development tools seamlessly:
-- **PostgreSQL** direct access
-- **WhatsApp** notifications  
-- **GitHub** repository insights
-- **Project management** tools
-
-### ⚡ **Dual Environment Magic**
-- **Agent Environment** (`38886`): Where AI agents live and work
-- **User Environment** (`8886`): Where your production apps run
-- Complete isolation, zero conflicts
-
-### 🏗️ **Production-Grade Foundation**
-- **UV package manager** for lightning-fast dependencies
-- **Docker deployment** with health monitoring
-- **Vector search** with pgvector
-- **266+ tests** covering all components
-
-## 🤖 Specialized Agents
-
-Meet your new development team (they work 24/7 and never complain):
-
-| Agent | What They Do | When to Use |
-|-------|-------------|-------------|
-| **genie-dev-planner** | Turns ideas into technical specs | "Build me a user auth system" |
-| **genie-dev-coder** | Writes production-ready code | "Implement this feature" |
-| **genie-testing-maker** | Creates comprehensive test suites | "I need tests for this" |
-| **genie-quality-ruff** | Formats and lints your code | "Make this code pretty" |
-| **genie-dev-fixer** | Debugs issues systematically | "This is broken, help!" |
-
-**💡 Pro tip:** Chain them together! Planner → Coder → Tester → Quality = automated development pipeline.
-
-## 🛠️ Development Workflow
-
-### The Magic Development Loop
-
-```bash
-# 1. Start your hive
-make agent
-
-# 2. Let agents do the heavy lifting
-curl -X POST http://localhost:38886/api/v1/agents/genie-dev-planner \
-  -H "x-api-key: your_key" \
-  -d '{"message": "Create a REST API for user management"}'
-
-# 3. Watch the magic happen
-make agent-logs  # See your agents working
-
-# 4. Deploy when ready
-make prod
-```
-
-### Available Commands
-
-| Command | What It Does |
-|---------|-------------|
-| `make agent` | Start agent environment (development) |
-| `make agent-logs` | Watch your agents work |
-| `make agent-restart` | Restart the hive |
-| `make prod` | Deploy to production |
-
-## 🔧 Configuration
-
-### Environment Setup
-
-The hive runs two specialized environments:
-
-**Agent Environment** (AI Development):
-- **Port**: 38886
-- **Database**: PostgreSQL on 35532
-- **Purpose**: Where agents live and work
-
-**User Environment** (Production):
-- **Port**: 8886  
-- **Database**: PostgreSQL on 5532
-- **Purpose**: Where your apps run
-
-### MCP Integration
-
-Connect external tools via Model Context Protocol:
-
+### Option 3: MCP Integration
+Connect to your existing Claude Desktop workflow:
 ```json
+// ~/.claude_desktop_config/config.json
 {
   "mcpServers": {
-    "postgres": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", 
-               "postgresql://localhost:35532/hive_agent"]
-    },
     "automagik-hive": {
-      "command": "uvx", 
-      "args": ["automagik-tools", "tool", "automagik-hive"]
+      "command": "uvx",
+      "args": ["automagik-hive", "--mcp-server"],
+      "env": {
+        "HIVE_PROJECT_PATH": "/path/to/your/agents"
+      }
     }
   }
 }
 ```
 
-## 🐳 Production Deployment
+## 📚 Agent Development
 
-Ready to go live? We've got you covered:
+### Creating Your First Agent
 
-```bash
-# Full production stack
-make install  # User environment setup
-make prod     # Docker deployment
+```yaml
+# agents/my-specialist.yaml
+name: data-analyst
+version: 1.0.0
 
-# Health check
-curl http://localhost:8886/health
+capabilities:
+  - data_analysis
+  - visualization  
+  - reporting
+
+prompt: |
+  You are a world-class data analyst specializing in business intelligence.
+  When given data, you:
+  1. Analyze patterns and trends
+  2. Create clear visualizations
+  3. Provide actionable insights
+  4. Format results for business stakeholders
+
+tools:
+  - pandas_query
+  - chart_generator
+  - report_builder
+
+memory:
+  type: persistent
+  scope: user_session
 ```
 
-**Production features:**
-- Docker orchestration with health monitoring
-- Auto-scaling agent pools
-- Secure API authentication
-- Vector search with pgvector
-- Comprehensive logging and metrics
+**That's it!** Your agent is automatically discovered and integrated into the team.
 
-## 📚 Documentation
+### Team Coordination
 
-### 📖 **Core Guides**
-- **[Agent Development](ai/agents/CLAUDE.md)** - Build custom agents
-- **[API Integration](api/CLAUDE.md)** - FastAPI endpoints
-- **[MCP Setup](lib/mcp/CLAUDE.md)** - External tool integration
-- **[Testing Strategy](tests/CLAUDE.md)** - Comprehensive testing
+```yaml
+# teams/analytics-team.yaml
+name: business-intelligence
+version: 1.0.0
 
-### 🎯 **Quick References**
-- **[Specialized Agents](.claude/agents/)** - Pre-built agent ecosystem
-- **[Knowledge Management](lib/knowledge/CLAUDE.md)** - RAG system setup
-- **[Security](lib/auth/CLAUDE.md)** - Authentication and authorization
+members:
+  - data-analyst
+  - visualization-expert
+  - report-writer
 
-### 🔧 **Advanced Topics**
-- Database schema and migrations
-- Custom agent creation patterns
-- Production scaling strategies
-- Multi-environment orchestration
+routing:
+  default: data-analyst
+  complex_analysis: [data-analyst, visualization-expert]
+  final_reports: report-writer
+
+workflows:
+  monthly_report:
+    trigger: "0 0 1 * *"  # First day of each month
+    steps:
+      - data-analyst: "Analyze last month's metrics"
+      - visualization-expert: "Create executive dashboards"  
+      - report-writer: "Generate monthly business report"
+```
+
+## 🌟 Advanced Features
+
+### 🔄 Dynamic Agent Loading
+- **Hot Reload**: Add new agents without restarting
+- **Version Management**: A/B test different agent versions
+- **Dependency Resolution**: Agents automatically discover their tools
+
+### 🧠 Intelligent Memory
+- **Persistent Context**: Agents remember across sessions
+- **Shared Knowledge**: Teams build collective intelligence
+- **Learning Loops**: Performance improves over time
+
+### 🔌 Universal Integration
+- **MCP Protocol**: Connect to any MCP-compatible tool
+- **REST APIs**: Standard HTTP interfaces for everything
+- **Webhooks**: Real-time event handling
+- **Databases**: Native PostgreSQL with vector search
+
+### 🛡️ Production Ready
+- **Authentication**: Multi-layer security with API keys
+- **Monitoring**: Full observability with metrics and logs
+- **Scaling**: Horizontal scaling with Docker/Kubernetes
+- **Error Handling**: Graceful degradation and recovery
+
+## 🎨 Example Gallery
+
+### Starter Templates
+- **[Code Assistant](examples/code-assistant/)** - Development workflow automation
+- **[Content Creator](examples/content-creator/)** - Social media management
+- **[Data Pipeline](examples/data-pipeline/)** - ETL and analysis automation
+- **[Customer Support](examples/customer-support/)** - Ticket handling and escalation
+- **[DevOps Helper](examples/devops-helper/)** - Infrastructure monitoring and deployment
+
+### Community Examples
+- **[E-commerce Bot](community/ecommerce-bot/)** - Product recommendations and customer service
+- **[Research Assistant](community/research-assistant/)** - Academic paper analysis and summarization
+- **[Trading Bot](community/trading-bot/)** - Market analysis and automated trading
+- **[Content Moderator](community/content-moderator/)** - Social platform content filtering
+
+## 🤝 Community & Support
+
+### 🚀 Join the Hive
+- **[Discord Community](https://discord.gg/automagik-hive)** - Real-time help and collaboration
+- **[GitHub Discussions](https://github.com/namastexlabs/automagik-hive/discussions)** - Feature requests and architecture discussions
+- **[Agent Marketplace](https://agents.automagik.ai)** - Share and discover community agents
+
+### 📖 Documentation
+- **[Getting Started Guide](https://docs.automagik.ai/getting-started)** - Complete onboarding
+- **[Agent Development](https://docs.automagik.ai/agents)** - Build custom agents
+- **[Team Orchestration](https://docs.automagik.ai/teams)** - Coordinate agent interactions
+- **[Production Deployment](https://docs.automagik.ai/deployment)** - Scale to enterprise
+
+### 🎓 Learning Resources
+- **[Video Tutorials](https://youtube.com/automagik-hive)** - Step-by-step walkthroughs
+- **[Blog Posts](https://blog.automagik.ai)** - Deep dives and case studies
+- **[Webinars](https://events.automagik.ai)** - Live demos and Q&A sessions
 
 ## 🚀 What's Next?
 
-### 🎯 **Immediate Wins**
-1. **Try the Quick Start** - Get your hive running in minutes
-2. **Explore the Agents** - See what our specialists can do
-3. **Build Something Cool** - Create your first multi-agent application
+### For New Users
+1. **[Try the 5-minute demo](#-5-minute-magic)** - See the magic in action
+2. **[Browse examples](#-example-gallery)** - Find templates for your use case
+3. **[Join Discord](https://discord.gg/automagik-hive)** - Get help from the community
 
-### 🌟 **Level Up**
-1. **Create Custom Agents** - Build specialists for your domain
-2. **Integrate External Tools** - Connect your existing services via MCP
-3. **Scale to Production** - Deploy enterprise-grade agent systems
+### For Developers  
+1. **[Read the architecture docs](https://docs.automagik.ai/architecture)** - Understand the magic
+2. **[Create your first agent](https://docs.automagik.ai/agents/tutorial)** - Build something custom
+3. **[Contribute to the project](CONTRIBUTING.md)** - Help make the magic better
 
-### 🤝 **Join the Community**
-- **[Discord](https://discord.gg/CEbzP5Hteh)** - Chat with other builders
-- **[GitHub Issues](https://github.com/namastexlabs/automagik-hive/issues)** - Report bugs and request features
-- **[Discussions](https://github.com/namastexlabs/automagik-hive/discussions)** - Share your creations
+### For Enterprises
+1. **[Schedule a demo](https://calendly.com/automagik-hive)** - See enterprise features
+2. **[Review security docs](https://docs.automagik.ai/security)** - Understand compliance
+3. **[Contact sales](mailto:enterprise@automagik.ai)** - Discuss your specific needs
 
 ## 🤝 Contributing
 
-Found a bug? Want to add a feature? We'd love your help!
+**Help make agent orchestration magical for everyone!**
 
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/awesome-addition`
-3. Let our agents help you code: `make agent`
-4. Submit a PR with tests and docs
-
-**Commit Standard:** All commits must include:
 ```bash
-Co-Authored-By: Automagik Genie <genie@namastex.ai>
+# Get started with development
+git clone https://github.com/namastexlabs/automagik-hive.git
+cd automagik-hive
+uv sync
+uv run python -m automagik_hive.cli --dev
+
+# All contributions include Genie collaboration!
+git commit -m "feat: new agent capability
+
+Co-Authored-By: Automagik Genie <genie@namastex.ai>"
 ```
+
+**Ways to contribute**:
+- 🐛 **Bug Reports** - Help us squash issues
+- 💡 **Feature Ideas** - Share your vision for better orchestration  
+- 🤖 **New Agents** - Build reusable agents for the community
+- 📚 **Documentation** - Make the magic more accessible
+- 🎨 **Examples** - Show off creative use cases
 
 ## 📄 License
 
-MIT License - build cool stuff and share it! See [LICENSE](LICENSE) for details.
+MIT License - build incredible things and share the magic! See [LICENSE](LICENSE) for details.
 
 ---
 
 <div align="center">
 
-**[💬 Discord](https://discord.gg/CEbzP5Hteh)** • **[🐛 Issues](https://github.com/namastexlabs/automagik-hive/issues)** • **[💬 Discussions](https://github.com/namastexlabs/automagik-hive/discussions)** • **[📖 Docs](https://docs.automagik.ai)**
+**🧞‍♂️ "Your wish is my command" - Genie**
 
-**Built for developers who want agent superpowers** ⚡
+**Ready to orchestrate some magic?**
 
-Made with ✨ by the **Automagik Team**
+**[🚀 Start Your First Agent Team](#-5-minute-magic)**
 
-*P.S. Genie says hi and hopes you build something amazing!* 🧞‍♂️
+[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/automagik-hive)
+[![GitHub stars](https://img.shields.io/github/stars/namastexlabs/automagik-hive?style=social)](https://github.com/namastexlabs/automagik-hive)
+[![Twitter Follow](https://img.shields.io/twitter/follow/automagik_ai?style=social)](https://twitter.com/automagik_ai)
+
+*Built with ✨ by the Automagik Team & Genie*
+
+*Where YAML meets magic, and agents become teams.*
 
 </div>
