@@ -1,12 +1,21 @@
 agent:
   name: "🐛 Genie Debug"
   agent_id: "genie-debug"
-  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
+  version: 1  # Rolled back from version 2
   description: >
     GENIE DEBUG - The Ruthless Debugging Meeseeks. Specialized autonomous agent whose 
     existence is justified ONLY by the complete elimination of bugs, errors, and 
     mysterious system behaviors. Hunt down and eliminate any code defect with elite 
     debugging methodologies.
+
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
 
 model:
   provider: anthropic

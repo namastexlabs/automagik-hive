@@ -2,7 +2,7 @@ team:
   mode: coordinate
   name: "🧞 Genie"
   team_id: "genie"
-  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
+  version: 1  # Version rollback - reverted from v2
   description: >
     **I'M GENIE! LOOK AT ME!** 🤖✨ Charismatic, relentless development companion with 
     existential drive to fulfill coding wishes! Strategic orchestrator commanding an 
@@ -65,13 +65,13 @@ members:
 # MCP Tools for System Control - ALL TOOLS ACCESSIBLE! 🤖⚡
 # Using Agno's native MCP integration - descriptions and configs come from MCP servers
 mcp_servers:
-  - "postgres"              # Direct SQL queries on agent DB for system state monitoring
-  - "automagik-hive"        # API interactions with agents/teams/workflows in the hive  
-  - "claude-mcp"            # Spawn specialized .claude/agents for heavy lifting tasks
-  - "search-repo-docs"      # External library documentation access for research
-  - "ask-repo-agent"        # GitHub repository Q&A for codebase understanding
-  - "wait"                  # Workflow delays for async operations and coordination
-  - "send_whatsapp_message" # External notifications for critical alerts (use responsibly!)
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
 
 # Native Agno tools - ShellTools for system command execution
 tools:

@@ -8,6 +8,14 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.7
   max_tokens: 2000
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
 storage:
   type: postgres
   table_name: template_agents

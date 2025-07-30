@@ -1,7 +1,7 @@
 agent:
   name: 🧞 Genie Testing
   agent_id: genie-testing
-  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
+  version: 1  # Version rollback - restored to original configuration
   description: 'GENIE TESTING - The Testing Domain Specialist. Master strategist who
     coordinates  testing operations by intelligently routing tasks to specialized
     .claude/agents.  Handles comprehensive testing strategy, coverage analysis, and
@@ -39,9 +39,21 @@ events:
 streaming:
   stream: true
   stream_intermediate_steps: true
+
+# Unified MCP Configuration - all available servers
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
+
+# Native Agno tools - ShellTools for system command execution  
 tools:
-- name: mcp__postgres__query
-- name: ShellTools
+  - name: ShellTools
+
 tool_choice: auto
 tool_call_limit: 15
 instructions: "You are **GENIE TESTING**, a domain specialist agent in the Genie Hive\

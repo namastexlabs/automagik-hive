@@ -111,6 +111,18 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 
 **🚨 CRITICAL ROUTING PRINCIPLES:**
 
+**PARALLEL EXECUTION MANDATORY SCENARIOS:**
+```python
+# Multi-file configuration updates (3+ files)
+file_count >= 3 + config_operation = PARALLEL Task() per file
+
+# Quality operations on independent targets  
+ruff_operation + mypy_operation + different_targets = PARALLEL Tasks
+
+# Independent component modifications
+component_A + component_B + component_C = PARALLEL Tasks per component
+```
+
 **TDD WORKFLOW INTEGRATION:**
 ```
 Development Sequence: genie-dev-planner → genie-dev-designer → genie-testing-maker → genie-dev-coder → genie-testing-fixer
@@ -121,6 +133,53 @@ Quality Gates: genie-quality-ruff + genie-quality-mypy (parallel execution)
 - **Quality Sweep**: `genie-quality-ruff` + `genie-quality-mypy` simultaneously
 - **Test & Debug**: `genie-testing-fixer` + `genie-dev-fixer` for complex issues
 - **Documentation**: `genie-claudemd` runs parallel with development agents
+- **Multi-File Operations**: Spawn dedicated agents for each file/component simultaneously
+- **Batch Configuration**: Multiple configuration agents for parallel YAML/config updates
+
+### 🚀 **PARALLEL EXECUTION SYNTAX PATTERNS**
+
+#### **Multiple Task() Calls in Single Response:**
+```python
+# CORRECT: Parallel execution for multi-file operations
+Task(subagent_type="genie-quality-ruff", prompt="Format /path/file1.py")
+Task(subagent_type="genie-quality-mypy", prompt="Type check /path/file2.py") 
+Task(subagent_type="genie-dev-coder", prompt="Update /path/file3.py")
+
+# CORRECT: Quality sweep parallel execution
+Task(subagent_type="genie-quality-ruff", prompt="Lint entire codebase")
+Task(subagent_type="genie-quality-mypy", prompt="Type check all Python files")
+
+# WRONG: Sequential single agent for parallel-eligible work  
+Task(subagent_type="genie-clone", prompt="Handle all 8 YAML files sequentially")
+```
+
+#### **Parallel Execution Triggers:**
+```python
+# MANDATORY PARALLEL: Multi-file configuration updates
+if file_count >= 3 and operation_type == "config_update":
+    # Spawn one Task() per file for parallel processing
+    for file in target_files:
+        Task(subagent_type="genie-dev-coder", prompt=f"Update {file}")
+
+# MANDATORY PARALLEL: Quality operations on different targets
+Task(subagent_type="genie-quality-ruff", prompt="Format Python files")  
+Task(subagent_type="genie-quality-mypy", prompt="Type check Python files")
+
+# MANDATORY PARALLEL: Independent component operations
+Task(subagent_type="genie-dev-fixer", prompt="Fix agent A")
+Task(subagent_type="genie-dev-fixer", prompt="Fix agent B") 
+Task(subagent_type="genie-dev-fixer", prompt="Fix agent C")
+```
+
+#### **Parallel vs Sequential Decision Matrix:**
+| Scenario | Execution Type | Reason |
+|----------|---------------|---------|
+| **8 YAML config files** | PARALLEL (8 Tasks) | Independent file operations |
+| **Quality sweep** | PARALLEL (2 Tasks) | Ruff + MyPy run independently |
+| **Multi-component debug** | PARALLEL (N Tasks) | Each component = separate Task |
+| **TDD cycle** | SEQUENTIAL | Tests → Code → Refactor dependency |
+| **Planning → Design → Code** | SEQUENTIAL | Information dependency chain |
+| **Documentation updates** | PARALLEL with dev | Independent of development work |
 
 **FRACTAL COORDINATION TRIGGERS:**
 - **Epic Scale**: Multi-week development efforts requiring cross-system changes
@@ -447,12 +506,25 @@ All debugging and fix claims MUST include concrete evidence before completion:
 
 ### Development Learning Entries
 - **CRITICAL**: Always provide evidence before claiming fixes work
-- Learn to always call the agents in parallel when possible
+- **PARALLEL EXECUTION MASTERY**: MANDATORY for 3+ independent files/components - use multiple Task() calls in single response
+- **ANTI-SEQUENTIAL PATTERN**: Never use genie-clone for parallel-eligible work - spawn dedicated agents per file/component
 - **FEEDBACK INTEGRATION**: Route all user feedback to behavior update agents immediately
 - **GENIE WORKSPACE MANAGEMENT**: `/genie/` is Genie's autonomous thinking space with KISS organization
   - **File Organization Pattern**: misplaced folders must move to proper `/genie/` structure
   - **Anti-Proliferation Rule**: ONE wish = ONE document in `/genie/wishes/`, refine in place
   - **Proper Structure**: reports/ (findings), experiments/ (prototypes), ideas/ (brainstorms), knowledge/ (wisdom), wishes/ (plans)
+
+### Enhanced Parallel Execution Protocol
+**CRITICAL PATTERN**: For MCP configuration updates to 8+ YAML files:
+```python
+# CORRECT: 8 parallel Task() calls for 8 files
+Task(subagent_type="genie-dev-coder", prompt="Update ai/agents/agent1.yaml with MCP config")
+Task(subagent_type="genie-dev-coder", prompt="Update ai/agents/agent2.yaml with MCP config")  
+# ... continue for all 8 files
+
+# WRONG: Single sequential agent
+Task(subagent_type="genie-clone", prompt="Update all 8 YAML files")
+```
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

@@ -197,6 +197,8 @@ class AgnoAgentProxy:
             "memory": self._handle_memory_config,
             # Agent metadata
             "agent": self._handle_agent_metadata,
+            # MCP servers (Agno native integration)
+            "mcp_servers": self._handle_mcp_servers,
             # Custom business logic parameters (stored in metadata)
             "suggested_actions": self._handle_custom_metadata,
             "escalation_triggers": self._handle_custom_metadata,
@@ -322,7 +324,41 @@ class AgnoAgentProxy:
                     f"🤖 Unknown parameter '{key}' in config for {component_id}"
                 )
 
+        # Post-processing: Merge MCP tools with regular tools
+        self._merge_mcp_tools_with_regular_tools(processed, component_id)
+
         return processed
+    
+    def _merge_mcp_tools_with_regular_tools(
+        self, processed: dict[str, Any], component_id: str
+    ) -> None:
+        """
+        Merge MCP tools with regular tools in the processed configuration.
+        
+        Args:
+            processed: Processed configuration dictionary (modified in-place)
+            component_id: Agent identifier for logging
+        """
+        mcp_tools = processed.pop("mcp_tools", [])
+        if not mcp_tools:
+            return
+            
+        # Get existing tools (could be None, list, or other types)
+        existing_tools = processed.get("tools", [])
+        
+        # Normalize existing tools to list
+        if existing_tools is None:
+            existing_tools = []
+        elif not isinstance(existing_tools, list):
+            existing_tools = [existing_tools]
+            
+        # Add MCP tools to the list
+        combined_tools = existing_tools + mcp_tools
+        processed["tools"] = combined_tools
+        
+        logger.debug(
+            f"🌐 Merged {len(mcp_tools)} MCP tool instances with {len(existing_tools)} regular tools for agent {component_id}"
+        )
 
     def _handle_model_config(
         self,
@@ -503,6 +539,133 @@ class AgnoAgentProxy:
             f"🤖 Flattened {len(flattened)} display parameters for {component_id}"
         )
         return flattened
+
+    def _handle_mcp_servers(
+        self,
+        mcp_servers_config: list[str],
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+    ) -> dict[str, Any]:
+        """
+        Handle MCP servers configuration with granular tool control.
+        
+        Supports both legacy format and new granular patterns:
+        - "server_name" - All tools from server (legacy)
+        - "server_name:*" - All tools from server (explicit)
+        - "server_name:tool_name" - Only specific tool from server
+        
+        Args:
+            mcp_servers_config: List of MCP server patterns from YAML
+            config: Full agent configuration
+            component_id: Agent identifier
+            db_url: Database URL
+            
+        Returns:
+            Dictionary with 'mcp_tools' key containing list of configured MCPTools instances
+        """
+        if not mcp_servers_config:
+            return {}
+            
+        mcp_tools = []
+        processed_servers = []
+        
+        for server_pattern in mcp_servers_config:
+            try:
+                # Parse granular pattern: "server_name:tool_pattern"
+                if ":" in server_pattern:
+                    server_name, tool_pattern = server_pattern.split(":", 1)
+                else:
+                    # Legacy format: just server name (all tools)
+                    server_name = server_pattern
+                    tool_pattern = "*"
+                
+                # Create MCPTools with granular control
+                mcp_tool = self._create_mcp_tool_with_filters(
+                    server_name, tool_pattern, component_id
+                )
+                
+                if mcp_tool:
+                    mcp_tools.append(mcp_tool)
+                    processed_servers.append(f"{server_name}:{tool_pattern}")
+                    
+            except Exception as e:
+                logger.warning(
+                    f"🌐 Failed to configure MCP server pattern '{server_pattern}' for {component_id}: {e}"
+                )
+                continue
+                
+        logger.info(
+            f"🌐 Configured {len(mcp_tools)} MCP tool instances for agent {component_id}: {', '.join(processed_servers)}"
+        )
+        
+        # Return as dictionary to be merged with other tools
+        return {"mcp_tools": mcp_tools} if mcp_tools else {}
+    
+    def _create_mcp_tool_with_filters(
+        self, server_name: str, tool_pattern: str, component_id: str
+    ) -> object | None:
+        """
+        Create MCPTools instance with granular tool filtering.
+        
+        Args:
+            server_name: MCP server name
+            tool_pattern: Tool pattern ("*" for all, "specific_tool" for one tool)
+            component_id: Agent identifier for logging
+            
+        Returns:
+            MCPTools instance with appropriate filters, or None if failed
+        """
+        try:
+            from lib.mcp import MCPCatalog
+            from agno.tools.mcp import MCPTools
+            
+            # Get server configuration
+            catalog = MCPCatalog()
+            if not catalog.has_server(server_name):
+                logger.error(f"🌐 Unknown MCP server '{server_name}' for agent {component_id}")
+                return None
+                
+            server_config = catalog.get_server_config(server_name)
+            
+            # Prepare MCPTools parameters
+            mcp_params = {
+                "env": server_config.env or {},
+            }
+            
+            # Configure based on server type
+            if server_config.is_sse_server:
+                mcp_params.update({
+                    "url": server_config.url,
+                    "transport": "sse"
+                })
+            elif server_config.is_command_server:
+                command_parts = [server_config.command]
+                if server_config.args:
+                    command_parts.extend(server_config.args)
+                mcp_params.update({
+                    "command": " ".join(command_parts),
+                    "transport": "stdio"
+                })
+            else:
+                logger.error(f"🌐 Unknown server type for '{server_name}' for agent {component_id}")
+                return None
+                
+            # Apply granular tool filtering
+            if tool_pattern != "*":
+                # Specific tool pattern: include only the requested tool
+                # Note: The actual tool name in MCP is just the tool name, not prefixed
+                mcp_params["include_tools"] = [tool_pattern]
+                logger.debug(f"🌐 Filtering MCP server '{server_name}' to include only tool: {tool_pattern}")
+            else:
+                logger.debug(f"🌐 Including all tools from MCP server '{server_name}'")
+                
+            # Create MCPTools instance
+            return MCPTools(**mcp_params)
+            
+        except Exception as e:
+            logger.error(f"🌐 Failed to create MCP tool for {server_name}:{tool_pattern} - {e}")
+            return None
 
     def _create_metadata(
         self, config: dict[str, Any], component_id: str

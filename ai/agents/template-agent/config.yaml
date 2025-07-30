@@ -1,7 +1,7 @@
 agent:
   name: "🔧 Template Agent"
   agent_id: "template-agent"
-  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
+  version: 1  # Rolled back to original version
   description: >
     TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents. 
     This configuration serves as a starting point for building domain-specific 
@@ -40,6 +40,16 @@ context:
 events:
   store_events: true
   events_to_skip: []
+
+# MCP servers configuration for unified tool access
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
 
 streaming:
   stream: true

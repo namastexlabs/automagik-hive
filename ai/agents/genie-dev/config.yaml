@@ -1,7 +1,7 @@
 agent:
   name: Genie Dev - Development Domain Specialist
   role: Development Task Router
-  version: 1  # DEV MODE: Keep at version 1 until MVP ship!
+  version: 1  # Rollback: Reverted from version 2
   agent_id: genie-dev
   description: 'Development domain specialist providing intelligent routing and coordination  for
     development tasks. Routes to specialized .claude/agents (genie-dev-planner,  genie-dev-designer,
@@ -23,12 +23,21 @@ storage:
   type: postgres
   table_name: agents_genie_dev
   auto_upgrade_schema: true
+
+# Unified MCP Configuration - same pattern as teams
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
+
+# Native Agno tools - ShellTools for system command execution  
 tools:
-- name: mcp__automagik-forge__list_tasks
-- name: mcp__automagik-forge__create_task
-- name: mcp__automagik-forge__update_task
-- name: mcp__postgres__query
-- name: ShellTools
+  - name: ShellTools
+
 tool_choice: auto
 tool_call_limit: 15
 markdown: false
