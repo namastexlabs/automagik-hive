@@ -21,41 +21,55 @@
 
 ## ⚡ 5-Minute Magic
 
-**Get your first AI agent team running in literally 5 minutes:**
+**Watch your wish come true: From zero to AI project management team in 5 minutes**
 
-**Prerequisites**: Python 3.12+ and UV package manager
-
-```bash
-# Install and run your first agent team
-uvx automagik-hive ./my-ai-project
-
-# That's it! Your agents are now running and coordinating.
-```
-
-<details>
-<summary>🛠️ <strong>Don't have UV or Python 3.12?</strong> Click here for one-command setup</summary>
+### Step 1: Prerequisites (30 seconds)
 
 ```bash
-# One command to install all prerequisites (UV, Python 3.12, Docker, Make)
+# One command installs everything you need (UV, Python 3.12+, Docker, Make)
 curl -fsSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/scripts/install-predeps.sh | bash
-
-# For developers: Install locally for framework development
-curl -fsSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/scripts/install.sh | bash
 ```
 
-**What gets installed:**
-- ✅ **UV** - Modern Python package manager (replaces pip/conda)
-- ✅ **Python 3.12+** - Latest Python via UV
-- ✅ **Docker** - For production deployment (optional)
-- ✅ **Make** - For development workflows (optional)
+### Step 2: Make Your Wish (30 seconds)
+```bash
+# Create and launch your project management team
+uvx automagik-hive --init project-management-team
+cd project-management-team
+uvx automagik-hive .
+```
 
-</details>
+### Step 3: Magic Happens (4 minutes)
+**You tell Genie your wish:**
+```
+You: "I need a team to manage my software project - planning, coding, testing, and deployment"
 
-**What just happened?** You now have a production-ready multi-agent system with:
-- 🤖 **Genie Team** - Built-in specialists (dev, testing, quality, debugging)
-- 📁 **Your Custom Agents** - Loaded from your `./my-ai-project` folder
-- 🔄 **Intelligent Routing** - Tasks automatically flow to the right agents
-- 🧞‍♂️ **Genie Assistant** - Helps orchestrate everything via natural language
+Genie: "Perfect! I'm setting up your project management dream team:
+       🎯 Project Planner - Breaks down requirements and creates roadmaps  
+       💻 Senior Developer - Implements features with best practices
+       🧪 QA Specialist - Creates tests and ensures quality
+       🚀 DevOps Engineer - Handles deployment and monitoring
+       
+       Your team is ready! What's your first project?"
+
+You: "Build a todo application with React frontend and Python backend"
+
+Genie: "Excellent! Let me coordinate your team:
+       - Planner is creating the technical specification...
+       - Developer is setting up the project structure...  
+       - QA is preparing the testing strategy...
+       - DevOps is configuring the deployment pipeline...
+       
+       ✨ Your todo app project is now running with full team coordination!"
+```
+
+**What just happened?** In 5 minutes you got:
+- 🤖 **Custom Agent Team** - Project manager, developer, QA, DevOps working together
+- 🧞‍♂️ **Genie Orchestration** - Natural language coordination of your entire team  
+- 📋 **Active Project** - Real todo app being built by AI agents
+- 🔄 **Intelligent Workflow** - Tasks automatically flow between team members
+- 🚀 **Production Pipeline** - Testing, deployment, monitoring all configured
+
+**The Magic**: You made a wish, Genie assembled the perfect team, and your project is already in progress!
 
 ## 🎯 Why Automagik Hive?
 
