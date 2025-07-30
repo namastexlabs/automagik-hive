@@ -30,54 +30,52 @@
 curl -fsSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/scripts/install-predeps.sh | bash
 ```
 
-### Step 2: Make Your Wish (30 seconds)
+### Step 2: Wake Up Genie (30 seconds)
 ```bash
-# Create and launch your project management team
-uvx automagik-hive --init project-management-team
-cd project-management-team
-uvx automagik-hive .
+# Start Genie in your workspace folder
+uvx automagik-hive ./my-workspace
+
+# Genie is now running on http://localhost:38886 and ready for your wish!
 ```
 
-**What `--init` creates for you:**
-- 📁 **4 Specialist Agents** - Planner, Developer, QA, DevOps (ready-to-run YAML configs)
-- 🤝 **Team Coordination** - Intelligent routing and workflow automation
-- 🔧 **Tool Integrations** - GitHub, Slack, Docker (pre-configured, optional)
-- ⚙️ **Environment Setup** - `.env` file with sensible defaults
-- 📚 **Example Workflows** - Project kickoff, feature development, deployment
-- 🚀 **Zero Configuration** - Everything works immediately
-
 ### Step 3: Magic Happens (4 minutes)
-**You tell Genie your wish:**
+**You tell Genie your wish via chat or web interface:**
 ```
 You: "I need a team to manage my software project - planning, coding, testing, and deployment"
 
-Genie: "Perfect! I'm setting up your project management dream team:
-       🎯 Project Planner - Breaks down requirements and creates roadmaps  
-       💻 Senior Developer - Implements features with best practices
-       🧪 QA Specialist - Creates tests and ensures quality
-       🚀 DevOps Engineer - Handles deployment and monitoring
+Genie: "Perfect! I understand you need a project management team. 
+       Let me create that for you right now...
        
-       Your team is ready! What's your first project?"
+       ✨ Creating ./project-management-team/ with:
+       🎯 Project Planner - Requirements analysis and roadmaps  
+       💻 Senior Developer - Full-stack development and architecture
+       🧪 QA Specialist - Testing strategy and quality assurance
+       🚀 DevOps Engineer - Deployment and infrastructure
+       
+       🚀 Launching your team now on port 8887...
+       
+       Your project management team is live! What's your first project?"
 
 You: "Build a todo application with React frontend and Python backend"
 
-Genie: "Excellent! Let me coordinate your team:
-       - Planner is creating the technical specification...
-       - Developer is setting up the project structure...  
-       - QA is preparing the testing strategy...
-       - DevOps is configuring the deployment pipeline...
+Genie: "Excellent! I'm coordinating your new team:
+       - Planner: Creating technical specification for React/Python todo app...
+       - Developer: Setting up project structure with best practices...  
+       - QA: Preparing comprehensive testing strategy...
+       - DevOps: Configuring deployment pipeline...
        
-       ✨ Your todo app project is now running with full team coordination!"
+       ✨ Your todo app project is now actively being built by your AI team!
+       Monitor progress at: http://localhost:8887"
 ```
 
 **What just happened?** In 5 minutes you got:
-- 🤖 **Custom Agent Team** - Project manager, developer, QA, DevOps working together
-- 🧞‍♂️ **Genie Orchestration** - Natural language coordination of your entire team  
-- 📋 **Active Project** - Real todo app being built by AI agents
-- 🔄 **Intelligent Workflow** - Tasks automatically flow between team members
+- 🧞‍♂️ **Genie Consultation** - Personal AI assistant understanding your needs
+- 🤖 **Custom Agent Team** - Genie created and launched the perfect team for you
+- 📋 **Active Project** - Real todo app being built by your AI team
+- 🔄 **Dual-Instance Architecture** - Genie (port 38886) + Your Team (port 8887)
 - 🚀 **Production Pipeline** - Testing, deployment, monitoring all configured
 
-**The Magic**: You made a wish, Genie assembled the perfect team, and your project is already in progress!
+**The Magic**: You made a wish to Genie, Genie created your perfect team, and your project is running!
 
 ## 🎯 Why Automagik Hive?
 
@@ -185,12 +183,12 @@ Genie: "I'll create a monitoring team with alerting, diagnosis, and auto-fix age
 
 ### Option 1: Instant Start (Recommended)
 ```bash
-# Start with your existing project
-uvx automagik-hive ./my-project
+# Wake up Genie in your workspace
+uvx automagik-hive ./my-workspace
 
-# Or create a new agent team
-uvx automagik-hive --init my-new-team
-cd my-new-team && uvx automagik-hive .
+# Tell Genie what kind of team you need
+# Genie will create and launch the perfect team for you
+# Visit: http://localhost:38886 to chat with Genie
 ```
 
 ### Option 2: Development Mode
