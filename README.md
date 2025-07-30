@@ -38,6 +38,14 @@ cd project-management-team
 uvx automagik-hive .
 ```
 
+**What `--init` creates for you:**
+- 📁 **4 Specialist Agents** - Planner, Developer, QA, DevOps (ready-to-run YAML configs)
+- 🤝 **Team Coordination** - Intelligent routing and workflow automation
+- 🔧 **Tool Integrations** - GitHub, Slack, Docker (pre-configured, optional)
+- ⚙️ **Environment Setup** - `.env` file with sensible defaults
+- 📚 **Example Workflows** - Project kickoff, feature development, deployment
+- 🚀 **Zero Configuration** - Everything works immediately
+
 ### Step 3: Magic Happens (4 minutes)
 **You tell Genie your wish:**
 ```
