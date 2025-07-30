@@ -12,6 +12,7 @@ from typing import Optional
 # Load environment variables if dotenv is available
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     # If dotenv is not available, just use system environment
@@ -20,63 +21,71 @@ except ImportError:
 
 class ServerConfig:
     """Single source of truth for all server configuration."""
-    
-    _instance: Optional['ServerConfig'] = None
-    
+
+    _instance: Optional["ServerConfig"] = None
+
     def __init__(self):
         """Initialize server configuration with environment variables."""
         # Server host and port configuration
         self.host = os.getenv("HIVE_API_HOST", "0.0.0.0")
         self.port = int(os.getenv("HIVE_API_PORT", "8886"))
         self.workers = int(os.getenv("HIVE_API_WORKERS", "4"))
-        
+
         # Environment settings
         self.environment = os.getenv("HIVE_ENVIRONMENT", "development")
         self.log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
-        
+
         # Validation
         self._validate_config()
-    
+
     def _validate_config(self):
         """Validate configuration values."""
         if not (1 <= self.port <= 65535):
-            raise ValueError(f"Invalid port number: {self.port}. Must be between 1 and 65535.")
-        
+            raise ValueError(
+                f"Invalid port number: {self.port}. Must be between 1 and 65535."
+            )
+
         if self.workers < 1:
-            raise ValueError(f"Invalid worker count: {self.workers}. Must be at least 1.")
-        
+            raise ValueError(
+                f"Invalid worker count: {self.workers}. Must be at least 1."
+            )
+
         if self.environment not in ["development", "staging", "production"]:
-            raise ValueError(f"Invalid environment: {self.environment}. Must be one of: development, staging, production.")
-        
+            raise ValueError(
+                f"Invalid environment: {self.environment}. Must be one of: development, staging, production."
+            )
+
         if self.log_level not in ["DEBUG", "INFO", "WARNING", "ERROR"]:
-            raise ValueError(f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARNING, ERROR.")
-    
+            raise ValueError(
+                f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARNING, ERROR."
+            )
+
     @classmethod
-    def get_instance(cls) -> 'ServerConfig':
+    def get_instance(cls) -> "ServerConfig":
         """Get singleton instance of ServerConfig."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
-    
+
     @classmethod
     def reset_instance(cls):
         """Reset singleton instance (useful for testing)."""
         cls._instance = None
-    
+
     def is_development(self) -> bool:
         """Check if running in development environment."""
         return self.environment.lower() == "development"
-    
+
     def is_production(self) -> bool:
         """Check if running in production environment."""
         return self.environment.lower() == "production"
-    
+
     def get_base_url(self) -> str:
         """Get the base URL for the server."""
         # Use localhost for local development, otherwise use the configured host
         display_host = "localhost" if self.host in ["0.0.0.0", "::"] else self.host
         return f"http://{display_host}:{self.port}"
-    
+
     def __repr__(self) -> str:
         """String representation of configuration."""
         return f"ServerConfig(host={self.host}, port={self.port}, workers={self.workers}, environment={self.environment})"

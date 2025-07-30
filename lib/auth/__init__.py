@@ -4,13 +4,8 @@ Authentication module for Automagik Hive.
 Provides simple x-api-key authentication with auto-generated keys.
 """
 
-from .service import AuthService
-from .dependencies import require_api_key, optional_api_key
+from .dependencies import optional_api_key, require_api_key
 from .init_service import AuthInitService
+from .service import AuthService
 
-__all__ = [
-    "AuthService",
-    "require_api_key", 
-    "optional_api_key",
-    "AuthInitService"
-]
+__all__ = ["AuthInitService", "AuthService", "optional_api_key", "require_api_key"]

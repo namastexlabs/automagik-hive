@@ -1,1 +1,1 @@
-"""Template Agent - Example agent for testing and development."""
+# Template Agent - Foundational agent template for specialized agent development

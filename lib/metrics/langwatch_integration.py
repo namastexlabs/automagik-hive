@@ -6,7 +6,7 @@ metrics collection that works alongside PostgreSQL storage without conflicts.
 
 ARCHITECTURE:
 - Global Setup: langwatch.setup() called once per application in background task
-- Manager Coordination: LangWatchManager waits for global setup before instrumentor init  
+- Manager Coordination: LangWatchManager waits for global setup before instrumentor init
 - Zero Performance Impact: All LangWatch operations are async and separate from agents
 - Dual-Path Metrics: PostgreSQL and OpenTelemetry paths operate independently
 
@@ -32,7 +32,8 @@ The integration follows the official LangWatch Agno pattern with async enhanceme
 """
 
 import asyncio
-from typing import Optional, Dict, Any
+from typing import Any
+
 from lib.logging import logger
 
 
@@ -47,7 +48,7 @@ class LangWatchManager:
     Both systems access AGNO native metrics independently without conflicts.
     """
 
-    def __init__(self, enabled: bool = False, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, enabled: bool = False, config: dict[str, Any] | None = None):
         """
         Initialize LangWatch manager.
 
@@ -81,9 +82,13 @@ class LangWatchManager:
         # Wait for global setup completion (non-blocking for agents)
         try:
             await asyncio.wait_for(_setup_complete.wait(), timeout=5.0)
-            logger.debug("🔧 Global LangWatch setup confirmed, proceeding with instrumentor")
-        except asyncio.TimeoutError:
-            logger.warning("⚠️  LangWatch global setup timed out, proceeding anyway for graceful degradation")
+            logger.debug(
+                "🔧 Global LangWatch setup confirmed, proceeding with instrumentor"
+            )
+        except TimeoutError:
+            logger.warning(
+                "⚠️  LangWatch global setup timed out, proceeding anyway for graceful degradation"
+            )
 
         try:
             # Import and create instrumentor instance only
@@ -92,21 +97,29 @@ class LangWatchManager:
 
             # Create instrumentor instance
             self.instrumentor = AgnoInstrumentor()
-            
+
             # Actually instrument the Agno framework
             self.instrumentor.instrument()
 
             self._initialized = True
-            logger.info("🚀 LangWatch AgnoInstrumentor initialized and instrumented successfully")
+            logger.info(
+                "🚀 LangWatch AgnoInstrumentor initialized and instrumented successfully"
+            )
             return True
 
         except ImportError as e:
             if "langwatch" in str(e):
-                logger.warning("⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration")
+                logger.warning(
+                    "⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration"
+                )
             elif "openinference" in str(e):
-                logger.warning("⚠️  OpenInference Agno instrumentor not available - install 'openinference-instrumentation-agno' package")
+                logger.warning(
+                    "⚠️  OpenInference Agno instrumentor not available - install 'openinference-instrumentation-agno' package"
+                )
             else:
-                logger.warning(f"⚠️  LangWatch integration dependencies not available: {e}")
+                logger.warning(
+                    f"⚠️  LangWatch integration dependencies not available: {e}"
+                )
             return False
         except Exception as e:
             logger.error(f"🚨 Failed to initialize LangWatch: {e}")
@@ -123,7 +136,7 @@ class LangWatchManager:
 
         try:
             # Uninstrument the AgnoInstrumentor if available
-            if self.instrumentor and hasattr(self.instrumentor, 'uninstrument'):
+            if self.instrumentor and hasattr(self.instrumentor, "uninstrument"):
                 self.instrumentor.uninstrument()
 
             self.instrumentor = None
@@ -142,7 +155,7 @@ class LangWatchManager:
         """
         return self.enabled and self._initialized and self.instrumentor is not None
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """
         Get LangWatch integration status.
 
@@ -156,7 +169,7 @@ class LangWatchManager:
             "instrumentor_available": self.instrumentor is not None,
             "config": self.config,
             "integration_type": "dual_path",
-            "description": "LangWatch OpenTelemetry integration running parallel to PostgreSQL metrics"
+            "description": "LangWatch OpenTelemetry integration running parallel to PostgreSQL metrics",
         }
 
     def configure(self, **kwargs) -> None:
@@ -184,7 +197,12 @@ class DualPathMetricsCoordinator:
     Provides a compatible interface for agent integration by delegating to AsyncMetricsService.
     """
 
-    def __init__(self, agno_bridge, langwatch_manager: Optional[LangWatchManager] = None, async_metrics_service=None):
+    def __init__(
+        self,
+        agno_bridge,
+        langwatch_manager: LangWatchManager | None = None,
+        async_metrics_service=None,
+    ):
         """
         Initialize coordinator.
 
@@ -196,14 +214,17 @@ class DualPathMetricsCoordinator:
         self.agno_bridge = agno_bridge
         self.langwatch_manager = langwatch_manager
         self.async_metrics_service = async_metrics_service
-        
-        from lib.logging import logger
-        logger.debug(f"DualPathMetricsCoordinator initialized", 
-                   agno_bridge_available=agno_bridge is not None,
-                   langwatch_manager_available=langwatch_manager is not None,
-                   async_metrics_service_available=async_metrics_service is not None)
 
-    async def initialize(self) -> Dict[str, bool]:
+        from lib.logging import logger
+
+        logger.debug(
+            "DualPathMetricsCoordinator initialized",
+            agno_bridge_available=agno_bridge is not None,
+            langwatch_manager_available=langwatch_manager is not None,
+            async_metrics_service_available=async_metrics_service is not None,
+        )
+
+    async def initialize(self) -> dict[str, bool]:
         """
         Initialize both metrics paths.
 
@@ -212,17 +233,21 @@ class DualPathMetricsCoordinator:
         """
         status = {
             "agno_bridge": True,  # AgnoMetricsBridge is always available
-            "langwatch": False
+            "langwatch": False,
         }
 
         # Initialize LangWatch if available (now async)
         if self.langwatch_manager:
             status["langwatch"] = await self.langwatch_manager.initialize()
 
-        logger.info(f"🔧 Dual-path metrics initialized - PostgreSQL: {status['agno_bridge']}, LangWatch: {status['langwatch']}")
+        logger.info(
+            f"🔧 Dual-path metrics initialized - PostgreSQL: {status['agno_bridge']}, LangWatch: {status['langwatch']}"
+        )
         return status
 
-    def extract_metrics(self, response: Any, yaml_overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def extract_metrics(
+        self, response: Any, yaml_overrides: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Extract metrics using AgnoMetricsBridge.
 
@@ -237,87 +262,103 @@ class DualPathMetricsCoordinator:
         """
         return self.agno_bridge.extract_metrics(response, yaml_overrides)
 
-    def collect_from_response(self, response: Any, agent_name: str, execution_type: str, 
-                            yaml_overrides: Optional[Dict[str, Any]] = None) -> bool:
+    def collect_from_response(
+        self,
+        response: Any,
+        agent_name: str,
+        execution_type: str,
+        yaml_overrides: dict[str, Any] | None = None,
+    ) -> bool:
         """
         Collect metrics from an agent response (compatible interface for agent integration).
-        
+
         Delegates to the underlying AsyncMetricsService for PostgreSQL collection.
         LangWatch collection happens automatically via OpenTelemetry instrumentation.
-        
+
         Args:
             response: AGNO response object
             agent_name: Name of the agent
             execution_type: Type of execution (agent, team, workflow)
             yaml_overrides: Optional YAML overrides
-            
+
         Returns:
             bool: True if collection was successful
         """
-        logger.debug(f"Collecting metrics from response via coordinator for {agent_name}", 
-                   execution_type=execution_type,
-                   async_service_available=self.async_metrics_service is not None)
-        
+        logger.debug(
+            f"Collecting metrics from response via coordinator for {agent_name}",
+            execution_type=execution_type,
+            async_service_available=self.async_metrics_service is not None,
+        )
+
         if not self.async_metrics_service:
             logger.debug("No AsyncMetricsService available for metrics collection")
             return False
-        
+
         try:
             result = self.async_metrics_service.collect_from_response(
                 response=response,
                 agent_name=agent_name,
                 execution_type=execution_type,
-                yaml_overrides=yaml_overrides
+                yaml_overrides=yaml_overrides,
             )
-            
-            logger.debug(f"Metrics collection delegation result for {agent_name}: {'success' if result else 'failed'}")
+
+            logger.debug(
+                f"Metrics collection delegation result for {agent_name}: {'success' if result else 'failed'}"
+            )
             return result
-            
+
         except Exception as e:
-            logger.debug(f"Error in collect_from_response delegation for {agent_name}", 
-                        error=str(e))
+            logger.debug(
+                f"Error in collect_from_response delegation for {agent_name}",
+                error=str(e),
+            )
             return False
 
-    async def collect_metrics(self, agent_name: str, execution_type: str, 
-                            metrics: Dict[str, Any], version: str = "1.0") -> bool:
+    async def collect_metrics(
+        self,
+        agent_name: str,
+        execution_type: str,
+        metrics: dict[str, Any],
+        version: str = "1.0",
+    ) -> bool:
         """
         Collect metrics directly (compatible interface for agent integration).
-        
+
         Delegates to the underlying AsyncMetricsService for PostgreSQL collection.
-        
+
         Args:
             agent_name: Name of the agent
             execution_type: Type of execution (agent, team, workflow)
             metrics: Metrics data dictionary
             version: Metrics version
-            
+
         Returns:
             bool: True if collection was successful
         """
         if not self.async_metrics_service:
             logger.warning("No AsyncMetricsService available for metrics collection")
             return False
-            
+
         return await self.async_metrics_service.collect_metrics(
             agent_name=agent_name,
             execution_type=execution_type,
             metrics=metrics,
-            version=version
+            version=version,
         )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get metrics collection statistics (compatible interface for agent integration).
-        
+
         Returns:
             Dictionary with statistics from AsyncMetricsService
         """
         if not self.async_metrics_service:
             return {"error": "No AsyncMetricsService available"}
-            
+
         return self.async_metrics_service.get_stats()
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """
         Get comprehensive status of dual-path metrics.
 
@@ -330,14 +371,16 @@ class DualPathMetricsCoordinator:
                 "active": True,
                 "component": "AgnoMetricsBridge",
                 "storage": "PostgreSQL via AsyncMetricsService",
-                "metrics_source": "AGNO native metrics"
+                "metrics_source": "AGNO native metrics",
             },
             "opentelemetry_path": {
-                "active": self.langwatch_manager.is_active() if self.langwatch_manager else False,
+                "active": self.langwatch_manager.is_active()
+                if self.langwatch_manager
+                else False,
                 "component": "LangWatch AgnoInstrumentor",
                 "storage": "OpenTelemetry backend",
-                "metrics_source": "AGNO native metrics"
-            }
+                "metrics_source": "AGNO native metrics",
+            },
         }
 
         if self.langwatch_manager:
@@ -366,47 +409,52 @@ _setup_complete = asyncio.Event()
 _setup_task = None
 
 
-async def setup_langwatch_global(config: Dict[str, Any]) -> bool:
+async def setup_langwatch_global(config: dict[str, Any]) -> bool:
     """
     Global async LangWatch setup - called once per application lifecycle.
-    
+
     This function performs the global langwatch.setup() call in a background task,
     completely separate from agent operations to ensure zero performance impact.
     Uses proper async coordination to signal completion to waiting components.
-    
+
     Args:
         config: LangWatch configuration dictionary
-        
+
     Returns:
         True if setup successful, False otherwise
     """
     global _setup_task
     if _setup_task is not None:
         return await _setup_task
-    
+
     _setup_task = asyncio.create_task(_do_setup(config))
     return await _setup_task
 
 
-async def _do_setup(config: Dict[str, Any]) -> bool:
+async def _do_setup(config: dict[str, Any]) -> bool:
     """
     Internal async setup implementation with comprehensive error handling.
-    
+
     Performs the actual langwatch.setup() call and signals completion to
     any waiting components regardless of success or failure.
     """
     try:
         # Import LangWatch and perform global setup
         import langwatch
+
         langwatch.setup(**config)
         _setup_complete.set()
         logger.info("🚀 LangWatch global async setup completed successfully")
         return True
     except ImportError as e:
         if "langwatch" in str(e):
-            logger.warning("⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration")
+            logger.warning(
+                "⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration"
+            )
         elif "openinference" in str(e):
-            logger.warning("⚠️  OpenInference dependencies not available - install 'openinference-instrumentation-agno' package")
+            logger.warning(
+                "⚠️  OpenInference dependencies not available - install 'openinference-instrumentation-agno' package"
+            )
         else:
             logger.warning(f"⚠️  LangWatch integration dependencies not available: {e}")
         _setup_complete.set()  # Signal completion even if failed for graceful degradation
@@ -417,10 +465,12 @@ async def _do_setup(config: Dict[str, Any]) -> bool:
         return False
 
 
-def initialize_langwatch(enabled: bool = False, config: Optional[Dict[str, Any]] = None) -> LangWatchManager:
+def initialize_langwatch(
+    enabled: bool = False, config: dict[str, Any] | None = None
+) -> LangWatchManager:
     """
     Create or retrieve the global LangWatch manager instance.
-    
+
     This function manages the singleton LangWatch manager but does not perform
     any setup operations. Global langwatch.setup() is handled asynchronously
     during application startup, and instrumentor initialization is deferred
@@ -450,7 +500,7 @@ def initialize_langwatch(enabled: bool = False, config: Optional[Dict[str, Any]]
     return _langwatch_manager
 
 
-def get_langwatch_manager() -> Optional[LangWatchManager]:
+def get_langwatch_manager() -> LangWatchManager | None:
     """
     Get the global LangWatch manager instance.
 
@@ -460,12 +510,15 @@ def get_langwatch_manager() -> Optional[LangWatchManager]:
     return _langwatch_manager
 
 
-def initialize_dual_path_metrics(agno_bridge, langwatch_enabled: bool = False,
-                                langwatch_config: Optional[Dict[str, Any]] = None,
-                                async_metrics_service=None) -> DualPathMetricsCoordinator:
+def initialize_dual_path_metrics(
+    agno_bridge,
+    langwatch_enabled: bool = False,
+    langwatch_config: dict[str, Any] | None = None,
+    async_metrics_service=None,
+) -> DualPathMetricsCoordinator:
     """
     Create or retrieve the global dual-path metrics coordinator.
-    
+
     Manages the singleton coordinator that orchestrates both PostgreSQL and
     LangWatch OpenTelemetry metrics paths. The coordinator is created immediately
     but async initialization is deferred until needed.
@@ -483,20 +536,26 @@ def initialize_dual_path_metrics(agno_bridge, langwatch_enabled: bool = False,
 
     # Return existing coordinator if available
     if _coordinator is not None:
-        logger.debug("🔧 Dual-path metrics coordinator already exists, returning existing instance")
+        logger.debug(
+            "🔧 Dual-path metrics coordinator already exists, returning existing instance"
+        )
         return _coordinator
 
     # Create LangWatch manager if needed
     langwatch_manager = initialize_langwatch(langwatch_enabled, langwatch_config)
 
     # Create coordinator with AsyncMetricsService (async initialization deferred)
-    _coordinator = DualPathMetricsCoordinator(agno_bridge, langwatch_manager, async_metrics_service)
-    logger.debug("Dual-path metrics coordinator created (async initialization deferred)")
+    _coordinator = DualPathMetricsCoordinator(
+        agno_bridge, langwatch_manager, async_metrics_service
+    )
+    logger.debug(
+        "Dual-path metrics coordinator created (async initialization deferred)"
+    )
 
     return _coordinator
 
 
-def get_metrics_coordinator() -> Optional[DualPathMetricsCoordinator]:
+def get_metrics_coordinator() -> DualPathMetricsCoordinator | None:
     """
     Get the global dual-path metrics coordinator.
 
@@ -509,7 +568,7 @@ def get_metrics_coordinator() -> Optional[DualPathMetricsCoordinator]:
 def shutdown_langwatch_integration() -> None:
     """
     Shutdown LangWatch integration and cleanup all resources.
-    
+
     Properly shuts down both the coordinator and manager, and resets
     global state for clean restart if needed.
     """

@@ -1,9 +1,20 @@
-# Optimized Docker Compose for Automagik Hive Multi-Agent System
-# Essential services only: App + PostgreSQL with BuildKit optimizations
+# =============================================================================
+# Automagik Hive Multi-Agent System - Docker Compose Configuration
+# =============================================================================
 #
-# BuildKit is enabled by default for optimal build performance
-# These optimizations are now built into the Dockerfile with cache mounts
+# Production-ready orchestration for:
+# - Main application service with optimized build
+# - PostgreSQL database with pgvector extension
+# - BuildKit optimizations for fast builds
+#
+# Usage:
+#   docker-compose up -d          # Start all services
+#   docker-compose logs -f app    # View application logs
+#   make install                  # Initial setup with database
+#
+# =============================================================================
 
+# Shared build arguments for consistent builds across services
 x-build-args: &build-args
   BUILD_VERSION: ${BUILD_VERSION:-latest}
   BUILD_DATE: ${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}

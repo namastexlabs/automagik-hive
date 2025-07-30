@@ -2,8 +2,16 @@ team:
   mode: route
   name: Template Team
   team_id: template-team
-  version: dev
+  version: 1  # Rollback from version 2
   description: Template demonstrating all Agno Team parameters
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514

@@ -19,60 +19,77 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
-# Minimal dependencies - Agno provides most core functionality
+# Production dependencies - organized by function for maintainability
 dependencies = [
-    # Core Framework (Agno bundles: httpx, pydantic, python-dotenv, rich, pyyaml, gitpython, typer)
+    # === Core Framework ===
+    # Agno bundles: httpx, pydantic, python-dotenv, rich, pyyaml, gitpython, typer
     "agno==1.7.5",
-    # Additional utilities not in Agno
-    "aiofiles>=24.1.0",
-    "jinja2>=3.1.6",
-    "markdown>=3.8.2",
-    "watchdog>=6.0.0",
-    "psutil>=5.9.0",
-    # Database stack
-    "asyncpg>=0.29.0",
-    "pgvector>=0.2.0",
-    "alembic>=1.16.4",
-    "psycopg[binary]>=3.1.0",
-    "psycopg-pool>=3.1.0",
-    "sqlalchemy>=2.0.0",
-    # AI Providers (not in Agno)
-    "anthropic>=0.31.0",
-    "openai>=1.93.2",
-    "cohere>=5.15.0",
-    "google-generativeai>=0.8.5",
-    "google-genai>=1.25.0",
-    # Web Framework (not in Agno core)
-    "fastapi>=0.116.0",
-    "uvicorn>=0.35.0",
-    "aiohttp>=3.12.14",
-    "requests>=2.32.4",
-    # MCP Protocol
-    "mcp>=1.10.1",
-    "loguru>=0.7.3",
-    "pandas>=2.3.1",
-    "langwatch>=0.2.9",
-    "openinference-instrumentation-agno>=0.1.9",
+    # === System Utilities ===
+    "aiofiles>=24.1.0", # Async file operations
+    "jinja2>=3.1.6", # Template rendering
+    "markdown>=3.8.2", # Markdown processing
+    "watchdog>=6.0.0", # File system monitoring
+    "psutil>=5.9.0", # System process utilities
+    # === Database Stack ===
+    "asyncpg>=0.29.0", # Async PostgreSQL driver
+    "pgvector>=0.2.0", # Vector operations for PostgreSQL
+    "alembic>=1.16.4", # Database migrations
+    "psycopg[binary]>=3.1.0", # PostgreSQL adapter
+    "psycopg-pool>=3.1.0", # Connection pooling
+    "sqlalchemy>=2.0.0", # ORM and database toolkit
+    # === AI Providers ===
+    "anthropic>=0.31.0", # Claude/Anthropic API
+    "openai>=1.93.2", # OpenAI API (GPT-4, etc.)
+    "cohere>=5.15.0", # Cohere API
+    "google-generativeai>=0.8.5", # Gemini API
+    "google-genai>=1.25.0", # Google AI SDK
+    # === Web Framework ===
+    "fastapi>=0.116.0", # High-performance web framework
+    "uvicorn>=0.35.0", # ASGI server
+    "aiohttp>=3.12.14", # Async HTTP client/server
+    "requests>=2.32.4", # HTTP library
+    # === Observability & Integration ===
+    "mcp>=1.10.1", # Model Context Protocol
+    "loguru>=0.7.3", # Enhanced logging
+    "langwatch>=0.2.9", # LLM monitoring
+    "openinference-instrumentation-agno>=0.1.9", # Agno instrumentation
+    # === Data Processing ===
+    "pandas>=2.3.1", # Data manipulation and analysis
 ]
 
 [project.optional-dependencies]
-# Development dependencies (managed by UV)
+# Development and testing dependencies
 dev = [
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.0.0",
-    "coverage>=7.9.2",
-    "langwatch-scenario>=0.7.8",
+    # === Testing Framework ===
+    "pytest>=8.4.1",             # Testing framework
+    "pytest-asyncio>=1.0.0",     # Async testing support
+    "pytest-cov>=6.2.1",         # Coverage reporting
+    "pytest-mock>=3.14.1",       # Mocking utilities
+    "coverage>=7.9.2",           # Code coverage analysis
+    "faker>=37.4.2",             # Test data generation
+    
+    # === Development Tools ===
+    "ruff>=0.12.3",              # Fast Python linter and formatter
+    "mypy>=1.16.1",              # Static type checking
+    
+    # === Scenario Testing ===
+    "langwatch-scenario>=0.7.8", # LLM scenario testing
 ]
 
-# Heavy analytics stack (excluded from production Docker)
+# Analytics and data science stack (optional, excluded from production Docker)  
 analytics = [
-    "pandas>=2.0.0",
-    "scipy>=1.16.0", 
-    "matplotlib>=3.10.3",
-    "seaborn>=0.13.2",
-    "plotly>=6.2.0",
-    "numpy>=1.24.0",
-    "sentence-transformers>=2.2.0",
+    # === Core Data Science ===
+    "numpy>=1.24.0",             # Numerical computing
+    "pandas>=2.0.0",             # Data manipulation and analysis
+    "scipy>=1.16.0",             # Scientific computing
+    
+    # === Visualization ===
+    "matplotlib>=3.10.3",        # Plotting library
+    "seaborn>=0.13.2",           # Statistical data visualization
+    "plotly>=6.2.0",             # Interactive plotting
+    
+    # === Machine Learning ===
+    "sentence-transformers>=2.2.0", # Sentence embeddings
 ]
 
 [project.urls]
@@ -123,7 +140,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# Enable all recommended rules
+# Enable comprehensive linting rules for code quality and consistency
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings  
@@ -132,39 +149,67 @@ select = [
     "N",    # pep8-naming
     "D",    # pydocstyle
     "UP",   # pyupgrade
+    "YTT",  # flake8-2020
+    "BLE",  # flake8-blind-except
     "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    # "COM",  # flake8-commas (disabled due to formatter conflicts)
     "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "T10",  # flake8-debugger
+    "EM",   # flake8-errmsg
+    "FA",   # flake8-future-annotations
     "ISC",  # flake8-implicit-str-concat
+    "ICN",  # flake8-import-conventions
+    "G",    # flake8-logging-format
+    "INP",  # flake8-no-pep420
     "PIE",  # flake8-pie
     "T20",  # flake8-print
     "PYI",  # flake8-pyi
+    "PT",   # flake8-pytest-style
     "Q",    # flake8-quotes
     "RSE",  # flake8-raise
     "RET",  # flake8-return
+    "SLF",  # flake8-self
     "SIM",  # flake8-simplify
     "TID",  # flake8-tidy-imports
+    "TCH",  # flake8-type-checking
     "ARG",  # flake8-unused-arguments
     "PTH",  # flake8-use-pathlib
     "ERA",  # eradicate
+    "PD",   # pandas-vet
+    "PGH",  # pygrep-hooks
     "PL",   # pylint
     "TRY",  # tryceratops
+    "FLY",  # flynt
+    "NPY",  # numpy-specific rules
+    "PERF", # perflint
     "RUF",  # ruff-specific rules
 ]
 
 ignore = [
-    "D100", # Missing docstring in public module
-    "D101", # Missing docstring in public class
-    "D102", # Missing docstring in public method
-    "D103", # Missing docstring in public function
-    "D104", # Missing docstring in public package
-    "D105", # Missing docstring in magic method
-    "D107", # Missing docstring in __init__
-    "E501", # Line too long (handled by formatter)
-    "TRY003", # Avoid specifying long messages outside the exception class
+    # Documentation rules (relaxed for development velocity)
+    "D100", "D101", "D102", "D103", "D104", "D105", "D107",
+    # Line length handled by formatter
+    "E501",
+    # Exception message rules (can be overly strict)
+    "TRY003", "EM101", "EM102",
+    # Import organization (handled by isort settings)
+    "E402",
+    # Magic value comparisons (common in tests and configuration)
+    "PLR2004",
+    # Complexity rules (can be overly restrictive for legitimate complex code)
+    "PLR0913", "PLR0912", "PLR0915", "PLR0911",
+    # Try-else rules (sometimes else block is clearer without)
+    "TRY300",
+    # Global statements (legitimate use in configuration)
+    "PLW0603",
+    # Builtin open (pathlib not always better for simple operations)
+    "PTH123",
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["D", "ARG"]
+"tests/**/*.py" = ["D", "ARG", "PLC0415", "SLF001", "INP001", "BLE001", "SIM117", "DTZ"]  # Allow imports in functions, private access, namespace packages, broad exceptions, nested with statements, and datetime without timezone for testing
 "api/**/*.py" = ["D"]
 "ai/**/*.py" = ["D"]
 "lib/**/*.py" = ["D"]
@@ -187,6 +232,7 @@ line-ending = "auto"
 # ============================================================================
 [tool.mypy]
 python_version = "3.12"
+strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -200,10 +246,57 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
+# Skip imports that have problematic module structures
+follow_imports = "skip"
 
+# Exclude problematic third-party modules with duplicate imports
+exclude = [
+    ".venv/",
+    "__pycache__/",
+    ".git/",
+    "*.egg-info/",
+    "build/",
+    "dist/"
+]
+
+# External AI and ML dependencies - ignore missing imports and relax typing
 [[tool.mypy.overrides]]
-module = ["agno.*", "anthropic.*", "sentence_transformers.*", "pgvector.*"]
+module = [
+    "agno.*",
+    "anthropic.*", 
+    "openai.*",
+    "cohere.*",
+    "google.*",
+    "sentence_transformers.*",
+    "pgvector.*",
+    "asyncpg.*",
+    "psycopg.*",
+    "alembic.*",
+    "langwatch.*",
+    "openinference.*",
+    "uvicorn.*",
+    "aiohttp.*",
+    "aiofiles.*",
+    "loguru.*",
+    "pandas.*",
+    "numpy.*",
+    "matplotlib.*",
+    "seaborn.*",
+    "plotly.*",
+    "scipy.*"
+]
 ignore_missing_imports = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+# Test files - STRICT TYPE CHECKING ENFORCED FOR GENIE STYLE ENFORCER
+[[tool.mypy.overrides]]
+module = "tests.*"
+strict = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_return_any = true
 
 # ============================================================================
 # Pytest Configuration
@@ -263,4 +356,13 @@ include = [
     "/tests",
     "/README.md",
     "/pyproject.toml",
+]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.6",
+    "pathlib>=1.0.1",
+    "pip-audit>=2.9.0",
+    "safety>=3.6.0",
+    "types-pyyaml>=6.0.12.20250516",
 ]

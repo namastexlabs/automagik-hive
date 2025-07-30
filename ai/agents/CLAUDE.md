@@ -9,70 +9,80 @@
 
 ## Purpose
 
-Specialized AI agents with domain expertise. YAML-first configuration, factory-based instantiation. Building blocks for teams and workflows.
+Domain orchestrator agents that coordinate with .claude/agents execution layer. These agents handle specialized coordination within their domains while spawning .claude/agents for heavy lifting and test-first methodology compliance.
 
-## Agent Structure
+## Domain Orchestrator Structure
 
-**Each agent folder**:
+**Each domain orchestrator folder**:
 ```
-my-agent/
-├── agent.py      # Factory function + session management
-└── config.yaml   # YAML config (expertise, instructions, behavior)
-```
-
-**Registry pattern**: `ai/agents/registry.py` loads all agents via factory functions
-
-## Quick Start
-
-```bash
-# Create new agent
-cp -r ai/agents/template-agent ai/agents/my-specialist
-
-# Edit config.yaml (bump version!)
-agent:
-  agent_id: "my-specialist"
-  version: 1  # CRITICAL: Increment for ANY change
-
-# Implement factory in agent.py
-def get_my_specialist_agent(**kwargs) -> Agent:
-    config = load_yaml_config()
-    return Agent(**config, **kwargs)
+genie-dev/
+├── agent.py      # Factory function with claude-mcp tool integration
+└── config.yaml   # Domain coordination instructions + .claude/agents spawning
 ```
 
-## Factory Pattern
+**Registry pattern**: `ai/agents/registry.py` loads all orchestrators via factory functions
 
-**Standard implementation**:
+## Coordination Patterns
+
+**Domain Orchestrator Template**:
 ```python
-def get_domain_agent(
-    version: Optional[int] = None,
-    session_id: Optional[str] = None,
-    debug_mode: bool = False,
-    db_url: Optional[str] = None
-) -> Agent:
+def get_genie_dev_agent(**kwargs) -> Agent:
     config = yaml.safe_load(open("config.yaml"))
     
     return Agent(
         name=config["agent"]["name"],
         agent_id=config["agent"]["agent_id"],
-        instructions=config["instructions"],
+        instructions=config["instructions"],  # Coordination logic
+        tools=[claude_mcp_tool],  # Spawn .claude/agents
         model=ModelConfig(**config["model"]),
         storage=PostgresStorage(
             table_name=config["storage"]["table_name"],
             auto_upgrade_schema=True
         ),
-        session_id=session_id,
-        debug_mode=debug_mode
+        version="dev",  # All new agents use dev version
+        **kwargs
     )
 ```
 
-## YAML Configuration
+**Coordination Instructions Pattern**:
+```yaml
+instructions: |
+  You are the GENIE-DEV domain orchestrator.
+  
+  COORDINATION ROLE:
+  - Analyze development tasks and requirements
+  - Spawn appropriate .claude/agents for execution:
+    * genie-dev-planner for task planning
+    * genie-dev-designer for system design  
+    * genie-dev-coder for implementation
+    * genie-dev-fixer for bug resolution
+  
+  SPAWNING PATTERN:
+  - Use claude-mcp tool to spawn .claude/agents
+  - .claude/agents auto-load CLAUDE.md context
+  - Monitor execution and coordinate results
+  - Maintain strategic focus on coordination
+```
 
-**Standard config.yaml**:
+## Test-First Integration
+
+**Execution Layer Connection:**
+```yaml
+# Domain orchestrators coordinate but don't execute directly
+claude_agents_integration:
+  spawning_tool: "claude-mcp"
+  auto_context: true  # .claude/agents auto-load CLAUDE.md
+  test_first: true  # Test-first methodology embedded
+  memory_retention: "30-run"  # Pattern learning
+  session_duration: "180-day"  # Long-term memory
+```
+
+**Example Domain Config:**
 ```yaml
 agent:
-  agent_id: "domain-specialist"
-  name: "Domain Expert"
-  version: 1
+  agent_id: "genie-dev"
+  name: "Development Coordinator"
+  version: "dev"
 
 model:
   provider: "anthropic"
@@ -80,36 +90,47 @@ model:
   temperature: 0.7
 
 instructions: |
-  You are a specialist in [domain].
-  Your expertise includes [skills].
+  You are the GENIE-DEV domain orchestrator.
+  
+  Your role is to coordinate development work by spawning 
+  appropriate .claude/agents from the execution layer:
+  
+  Available execution agents:
+  - genie-dev-planner: Task analysis and planning
+  - genie-dev-designer: System architecture and design
+  - genie-dev-coder: Implementation and coding
+  - genie-dev-fixer: Bug resolution and debugging
+  
+  ALL .claude/agents automatically:
+  - Load CLAUDE.md context at runtime
+  - Follow test-first methodology
+  - Report structured results back
+  
+  COORDINATION FOCUS: Strategic oversight, NOT direct execution.
 
-knowledge_filter:
-  business_unit: "Domain"  # Filters CSV knowledge
+claude_agents:
+  available:
+    - "genie-dev-planner"
+    - "genie-dev-designer" 
+    - "genie-dev-coder"
+    - "genie-dev-fixer"
+  spawning_pattern: "task-complexity-based"
 
 storage:
-  table_name: "domain_specialist"
+  table_name: "genie_dev_coordinator"
 ```
 
-## Integration
+## Execution Layer Integration
 
-- **Teams**: Loaded via `get_team_agents(["agent-id"])`
-- **Workflows**: Used as `Step(agent=domain_agent)`
-- **API**: Auto-exposed via `Playground(agents=[...])`
-- **Knowledge**: Filtered by business_unit for domain-specific data
+- **Strategic Isolation**: Domain orchestrators maintain coordination focus
+- **Execution Delegation**: .claude/agents handle all heavy lifting
+- **Auto-Context Loading**: Execution agents inherit CLAUDE.md automatically
+- **TDD Compliance**: Test-first methodology embedded across execution layer
+- **Parallel Safety**: Multiple execution agents can run simultaneously
 
-## Critical Rules
+## Performance Targets
 
-- **🚨 Version Bump**: ANY change (code/config/instructions) requires version increment
-- **Factory Functions**: Always use factory pattern, never direct instantiation
-- **YAML-First**: Business logic in YAML, infrastructure in Python
-- **Domain Isolation**: Use knowledge filters for specialized data
-- **Testing**: Every agent needs unit/integration tests
-
-## Performance
-
-- **Target**: <2s response time
-- **Storage**: PostgreSQL with auto-schema upgrades
-- **Memory**: Hot-reload YAML configs
-- **Knowledge**: Business unit filtering for relevance
-
-Navigate to [Teams](../teams/CLAUDE.md) for multi-agent coordination or [Workflows](../workflows/CLAUDE.md) for step-based processes.
+- **Coordination**: <1s routing decisions
+- **Spawning**: <500ms .claude/agents activation
+- **Memory**: 30-run pattern retention with 180-day persistence
+- **Parallel Execution**: Unlimited concurrent .claude/agents

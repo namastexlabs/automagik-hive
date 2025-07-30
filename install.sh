@@ -27,15 +27,17 @@ print_warning() { echo -e "${YELLOW}⚠️ $1${RESET}"; }
 # 🚀 Prerequisite Installation
 # ===========================================
 
-# Installs git, curl, and build tools based on the detected OS.
+# Installs git, curl, build tools, and Node.js/npm based on the detected OS.
 install_basic_tools() {
-    print_status "Ensuring basic tools (git, curl, make) are installed..."
+    print_status "Ensuring basic tools (git, curl, make, node/npm) are installed..."
     
     # Check if all required tools are already present
     local missing_tools=()
     if ! command -v git >/dev/null 2>&1; then missing_tools+=("git"); fi
     if ! command -v curl >/dev/null 2>&1; then missing_tools+=("curl"); fi
     if ! command -v make >/dev/null 2>&1; then missing_tools+=("make/build-essential"); fi
+    if ! command -v node >/dev/null 2>&1; then missing_tools+=("node"); fi
+    if ! command -v npm >/dev/null 2>&1; then missing_tools+=("npm"); fi
     
     if [ ${#missing_tools[@]} -eq 0 ]; then
         print_success "All basic tools already installed."
@@ -45,20 +47,21 @@ install_basic_tools() {
     print_info "Missing tools: ${missing_tools[*]}"
     
     if command -v apt-get >/dev/null 2>&1; then
-        sudo apt-get update -qq && sudo apt-get install -y curl git build-essential lsb-release
+        sudo apt-get update -qq && sudo apt-get install -y curl git build-essential lsb-release nodejs npm
     elif command -v dnf >/dev/null 2>&1; then
-        sudo dnf install -y curl git gcc make dnf-plugins-core
+        sudo dnf install -y curl git gcc make dnf-plugins-core nodejs npm
     elif command -v yum >/dev/null 2>&1; then
-        sudo yum install -y curl git gcc make yum-utils
+        sudo yum install -y curl git gcc make yum-utils nodejs npm
     elif command -v pacman >/dev/null 2>&1; then
-        sudo pacman -Sy --noconfirm curl git base-devel
+        sudo pacman -Sy --noconfirm curl git base-devel nodejs npm
     elif [[ "$(uname -s)" == "Darwin" ]]; then
         if ! command -v brew >/dev/null 2>&1; then
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         fi
-        brew install curl git
+        brew install curl git node
     fi
     print_success "Basic tools installation completed."
+    
 }
 
 # Ensures uv is installed, installing it if not found.

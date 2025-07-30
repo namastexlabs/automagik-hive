@@ -127,10 +127,14 @@ define generate_hive_api_key
 endef
 
 define generate_agent_hive_api_key
-    $(call print_status,Generating secure Agent API key...); \
-    API_KEY=$$(uv run python -c "import secrets; print('hive_agent_' + secrets.token_urlsafe(32))"); \
-    sed -i "s|^HIVE_API_KEY=.*|HIVE_API_KEY=$$API_KEY|" .env.agent; \
-    echo -e "$(FONT_GREEN)🔑 Agent API Key: $$API_KEY$(FONT_RESET)"
+    $(call use_unified_api_key_for_agent); \
+    $(call extract_hive_api_key_from_env); \
+    if [ -z "$$HIVE_API_KEY" ]; then \
+        $(call print_status,Generating secure Agent API key...); \
+        API_KEY=$$(uv run python -c "import secrets; print('hive_agent_' + secrets.token_urlsafe(32))"); \
+        sed -i "s|^HIVE_API_KEY=.*|HIVE_API_KEY=$$API_KEY|" .env.agent; \
+        echo -e "$(FONT_GREEN)🔑 Agent API Key: $$API_KEY$(FONT_RESET)"; \
+    fi
 endef
 
 define show_api_key_info
@@ -144,29 +148,42 @@ define show_api_key_info
 endef
 
 define generate_postgres_credentials
-    $(call print_status,Generating secure PostgreSQL credentials...); \
-    POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_DB="hive"; \
-    sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
-    $(call print_success,PostgreSQL credentials generated and saved to .env); \
-    echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
-    echo -e "  User: $$POSTGRES_USER"; \
-    echo -e "  Password: $$POSTGRES_PASS"; \
-    echo -e "  Database: $$POSTGRES_DB"
+    $(call extract_postgres_credentials_from_env); \
+    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ]; then \
+        $(call print_status,Using existing PostgreSQL credentials from .env...); \
+        echo -e "$(FONT_CYAN)Reusing credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER"; \
+        echo -e "  Password: $$POSTGRES_PASS"; \
+        echo -e "  Database: $$POSTGRES_DB"; \
+    else \
+        $(call print_status,Generating secure PostgreSQL credentials...); \
+        POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_DB="hive"; \
+        sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:5532/$$POSTGRES_DB|" .env; \
+        $(call print_success,PostgreSQL credentials generated and saved to .env); \
+        echo -e "$(FONT_CYAN)Generated credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER"; \
+        echo -e "  Password: $$POSTGRES_PASS"; \
+        echo -e "  Database: $$POSTGRES_DB"; \
+    fi
 endef
 
 define generate_agent_postgres_credentials
-    $(call print_status,Generating secure Agent PostgreSQL credentials...); \
-    POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-    POSTGRES_DB="hive_agent"; \
-    sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:35532/$$POSTGRES_DB|" .env.agent; \
-    $(call print_success,Agent PostgreSQL credentials generated and saved to .env.agent); \
-    echo -e "$(FONT_CYAN)Generated agent credentials:$(FONT_RESET)"; \
-    echo -e "  User: $$POSTGRES_USER"; \
-    echo -e "  Password: $$POSTGRES_PASS"; \
-    echo -e "  Database: $$POSTGRES_DB"
+    $(call use_unified_credentials_for_agent); \
+    $(call extract_postgres_credentials_from_env); \
+    if [ -z "$$POSTGRES_USER" ]; then \
+        $(call print_status,Generating secure Agent PostgreSQL credentials...); \
+        POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
+        POSTGRES_DB="hive_agent"; \
+        sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:35532/$$POSTGRES_DB|" .env.agent; \
+        $(call print_success,Agent PostgreSQL credentials generated and saved to .env.agent); \
+        echo -e "$(FONT_CYAN)Generated agent credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER"; \
+        echo -e "  Password: $$POSTGRES_PASS"; \
+        echo -e "  Database: $$POSTGRES_DB"; \
+    fi
 endef
 
 define setup_docker_postgres
@@ -374,7 +391,7 @@ help: ## 🐝 Show this help message
 	@echo -e "$(FONT_CYAN)🔄 Maintenance:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run Python test suite"
 	@echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files (__pycache__, etc.)"
-	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Show options to uninstall and purge data"
+	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Complete uninstall - removes everything"
 	@echo ""
 	@echo -e "$(FONT_YELLOW)💡 For detailed commands, inspect the Makefile.$(FONT_RESET)"
 	@echo ""
@@ -397,6 +414,7 @@ install-local: ## 🛠️ Install development environment (local only)
 install: ## 🛠️ Install with optional Docker PostgreSQL setup
 	@$(MAKE) install-local
 	@$(call setup_docker_postgres)
+	@$(call sync_mcp_config_with_credentials)
 
 
 # ===========================================
@@ -600,72 +618,24 @@ clean: ## 🧹 Clean temporary files
 
 
 .PHONY: uninstall
-uninstall: ## 🗑️ Uninstall with data options
-	@$(call print_status,Automagik Hive Uninstall)
-	@echo ""
-	@echo -e "$(FONT_YELLOW)Choose uninstall option:$(FONT_RESET)"
-	@echo -e "  $(FONT_CYAN)1)$(FONT_RESET) Remove containers only (keep data + venv)"
-	@echo -e "  $(FONT_CYAN)2)$(FONT_RESET) Remove containers + venv (keep data)"
-	@echo -e "  $(FONT_CYAN)3)$(FONT_RESET) Full purge (remove everything including data)"
-	@echo -e "  $(FONT_CYAN)4)$(FONT_RESET) Cancel"
-	@echo ""
-	@if [ -d "./data/postgres" ]; then \
-		DATA_SIZE=$$(du -sh ./data/postgres 2>/dev/null | cut -f1 || echo "unknown"); \
-		echo -e "$(FONT_PURPLE)Current database size: $$DATA_SIZE$(FONT_RESET)"; \
-		echo -e "$(FONT_PURPLE)Database location: ./data/postgres/$(FONT_RESET)"; \
-		echo ""; \
-	fi
-	@read -p "Enter choice (1-4): " CHOICE < /dev/tty; \
-	case "$$CHOICE" in \
-		1) $(MAKE) uninstall-containers-only ;; \
-		2) $(MAKE) uninstall-clean ;; \
-		3) $(MAKE) uninstall-purge ;; \
-		4) echo -e "$(FONT_CYAN)Uninstall cancelled$(FONT_RESET)" ;; \
-		*) echo -e "$(FONT_RED)Invalid choice$(FONT_RESET)" ;; \
-	esac
+uninstall: ## 🗑️ Complete uninstall - removes everything
+	@$(call print_status,Complete Automagik Hive Uninstall)
+	@echo -e "$(FONT_YELLOW)This will remove ALL containers, images, volumes, data, and environment files$(FONT_RESET)"
+	@echo -e "$(FONT_CYAN)🐳 Stopping all services...$(FONT_RESET)"
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --remove-orphans 2>/dev/null || true
+	@$(DOCKER_COMPOSE) -f docker-compose-agent.yml down --remove-orphans 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)🗑️ Removing containers...$(FONT_RESET)"
+	@docker container rm hive-agents hive-postgres hive-agents-agent hive-postgres-agent 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)🖼️ Removing Docker images...$(FONT_RESET)"
+	@docker image rm automagik-hive-app 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)💾 Removing Docker volumes...$(FONT_RESET)"
+	@docker volume rm automagik-hive_app_logs automagik-hive_app_data 2>/dev/null || true
+	@docker volume rm automagik-hive_agent_app_logs automagik-hive_agent_app_data 2>/dev/null || true
+	@echo -e "$(FONT_CYAN)📁 Removing files and data...$(FONT_RESET)"
+	@rm -rf .venv/ data/ logs/ .env.agent 2>/dev/null || true
+	@$(call print_success,Complete uninstall finished)
+	@echo -e "$(FONT_GREEN)✓ Everything removed: containers, images, volumes, data, venv$(FONT_RESET)"
 
-.PHONY: uninstall-containers-only
-uninstall-containers-only: ## 🗑️ Remove containers only
-	@$(call print_status,Removing containers only...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
-	@docker container rm hive-agents hive-postgres 2>/dev/null || true
-	@if pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then pkill -f "python.*api/serve.py" 2>/dev/null || true; fi
-	@$(call print_success,Containers removed)
-	@echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"
-	@echo -e "$(FONT_GREEN)✓ Kept: Virtual environment (.venv/)$(FONT_RESET)"
-
-.PHONY: uninstall-clean
-uninstall-clean: ## 🗑️ Remove containers and venv
-	@$(call print_status,Removing containers and virtual environment...)
-	@echo -e "$(FONT_YELLOW)This will remove containers and .venv but keep your database data$(FONT_RESET)"
-	@read -p "Type 'yes' to confirm: " CONFIRM < /dev/tty; \
-	if [ "$$CONFIRM" = "yes" ]; then \
-		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true; \
-		docker container rm hive-agents hive-postgres 2>/dev/null || true; \
-		if pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then pkill -f "python.*api/serve.py" 2>/dev/null || true; fi; \
-		rm -rf .venv/ 2>/dev/null || true; \
-		$(call print_success,Clean uninstall complete); \
-		echo -e "$(FONT_GREEN)✓ Kept: Database data (./data/)$(FONT_RESET)"; \
-		echo -e "$(FONT_RED)✗ Removed: Virtual environment$(FONT_RESET)"; \
-	else \
-		echo -e "$(FONT_CYAN)Uninstall cancelled$(FONT_RESET)"; \
-	fi
-
-.PHONY: uninstall-purge
-uninstall-purge: ## 🗑️ Full purge including data
-	@$(call print_status,Full purge - DANGER!)
-	@echo -e "$(FONT_RED)⚠️  WARNING: This will permanently delete ALL data including databases!$(FONT_RESET)"
-	@if [ -d "./data/postgres" ]; then \
-		DATA_SIZE=$$(du -sh ./data/postgres 2>/dev/null | cut -f1 || echo "unknown"); \
-		echo -e "$(FONT_RED)Database size to be deleted: $$DATA_SIZE$(FONT_RESET)"; \
-	fi
-	@echo -e "$(FONT_YELLOW)Type 'DELETE EVERYTHING' to confirm full purge:$(FONT_RESET)"
-	@read -r CONFIRM < /dev/tty; \
-	if [ "$$CONFIRM" = "DELETE EVERYTHING" ]; then \
-		./scripts/purge.sh; \
-	else \
-		echo -e "$(FONT_CYAN)Purge cancelled$(FONT_RESET)"; \
-	fi
 
 # ===========================================
 # 🤖 Agent Environment Commands
@@ -681,6 +651,7 @@ install-agent: ## 🤖 Silent agent environment setup (destructive reinstall)
 	@$(call setup_agent_env)
 	@$(call setup_agent_postgres)
 	@$(call generate_agent_hive_api_key)
+	@$(call sync_mcp_config_with_credentials)
 	@$(call print_success,Agent environment ready!)
 	@echo -e "$(FONT_CYAN)🌐 Agent API will be available at: http://localhost:$(AGENT_PORT)$(FONT_RESET)"
 	@echo -e "$(FONT_CYAN)💡 Start with: make agent$(FONT_RESET)"
@@ -766,4 +737,69 @@ test: ## 🧪 Run test suite
 # ===========================================
 # 🧹 Phony Targets
 # ===========================================
-.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall uninstall-containers-only uninstall-clean uninstall-purge install-agent agent agent-stop agent-restart agent-logs agent-status
+.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall install-agent agent agent-stop agent-restart agent-logs agent-status
+# ===========================================
+# 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
+# ===========================================
+
+# Extract PostgreSQL credentials from main .env file
+define extract_postgres_credentials_from_env
+    if [ -f ".env" ] && grep -q "^HIVE_DATABASE_URL=" .env; then \
+        EXISTING_URL=$$(grep "^HIVE_DATABASE_URL=" .env | cut -d'=' -f2); \
+        if echo "$$EXISTING_URL" | grep -q "postgresql+psycopg://"; then \
+            POSTGRES_USER=$$(echo "$$EXISTING_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p'); \
+            POSTGRES_PASS=$$(echo "$$EXISTING_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p'); \
+            POSTGRES_DB=$$(echo "$$EXISTING_URL" | sed -n 's|.*/\([^?]*\).*|\1|p'); \
+            POSTGRES_HOST=$$(echo "$$EXISTING_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p'); \
+            POSTGRES_PORT=$$(echo "$$EXISTING_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p'); \
+        fi; \
+    fi
+endef
+
+# Extract API key from main .env file  
+define extract_hive_api_key_from_env
+    if [ -f ".env" ] && grep -q "^HIVE_API_KEY=" .env; then \
+        HIVE_API_KEY=$$(grep "^HIVE_API_KEY=" .env | cut -d'=' -f2); \
+    fi
+endef
+
+
+# Use unified credentials from main .env for agent (shared user/pass, different port/db)
+define use_unified_credentials_for_agent
+    $(call extract_postgres_credentials_from_env); \
+    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ]; then \
+        $(call print_status,Using unified credentials from main .env for agent...); \
+        sed -i "s|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@localhost:35532/hive_agent|" .env.agent; \
+        echo -e "$(FONT_CYAN)Unified agent credentials:$(FONT_RESET)"; \
+        echo -e "  User: $$POSTGRES_USER (shared)"; \
+        echo -e "  Password: $$POSTGRES_PASS (shared)"; \
+        echo -e "  Database: hive_agent"; \
+        echo -e "  Port: 35532 (agent-specific)"; \
+    fi
+endef
+
+# Use unified API key from main .env for agent  
+define use_unified_api_key_for_agent
+    $(call extract_hive_api_key_from_env); \
+    if [ -n "$$HIVE_API_KEY" ]; then \
+        $(call print_status,Using unified API key from main .env for agent...); \
+        sed -i "s|^HIVE_API_KEY=.*|HIVE_API_KEY=$$HIVE_API_KEY|" .env.agent; \
+        echo -e "$(FONT_CYAN)Unified agent API key:$(FONT_RESET)"; \
+        echo -e "  API Key: $$HIVE_API_KEY (shared)"; \
+    fi
+endef
+
+# Generate MCP configuration with current credentials
+define sync_mcp_config_with_credentials
+    $(call extract_postgres_credentials_from_env); \
+    $(call extract_hive_api_key_from_env); \
+    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ] && [ -n "$$HIVE_API_KEY" ]; then \
+        $(call print_status,Updating .mcp.json with current credentials...); \
+        sed -i "s|postgresql+psycopg://[^@]*@|postgresql+psycopg://$$POSTGRES_USER:$$POSTGRES_PASS@|g" .mcp.json; \
+        sed -i "s|\"HIVE_API_KEY\": \"[^\"]*\"|\"HIVE_API_KEY\": \"$$HIVE_API_KEY\"|g" .mcp.json; \
+        $(call print_success,.mcp.json updated with current credentials); \
+    else \
+        $(call print_warning,Could not update .mcp.json - missing credentials); \
+    fi
+endef
+

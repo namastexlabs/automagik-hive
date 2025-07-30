@@ -1,5 +1,6 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter
-from datetime import datetime
 
 ######################################################
 ## Router for health checks
@@ -9,7 +10,7 @@ health_check_router = APIRouter(tags=["Health"])
 
 
 @health_check_router.get("/health")
-def get_health():
+def get_health() -> dict[str, str]:
     """Check the health of the Automagik Hive Multi-Agent System API"""
 
     return {
@@ -17,6 +18,6 @@ def get_health():
         "service": "Automagik Hive Multi-Agent System",
         "router": "health",
         "path": "/health",
-        "utc": datetime.utcnow().isoformat(),
+        "utc": datetime.now(tz=UTC).isoformat(),
         "message": "System operational",
     }

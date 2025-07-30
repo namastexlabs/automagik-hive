@@ -3,24 +3,26 @@ Startup orchestration infrastructure for Performance-Optimized Sequential Startu
 Eliminates scattered logging and implements dependency-aware initialization order
 """
 
-import os
 import asyncio
-from datetime import datetime
+import os
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Dict, Callable, Any, Optional, List
-from pathlib import Path
+from datetime import datetime
+from typing import Any
+
+from agno.team import Team
+from agno.workflow import Workflow
 
 from lib.logging import logger
-from agno.workflow import Workflow
-from agno.team import Team
 
 
 @dataclass
 class ComponentRegistries:
     """Container for all component registries with batch discovery results"""
-    workflows: Dict[str, Callable[..., Workflow]]
-    teams: Dict[str, Callable[..., Team]]
-    agents: Dict[str, Any]  # Agent registry type from agents/registry.py
+
+    workflows: dict[str, Callable[..., Workflow]]
+    teams: dict[str, Callable[..., Team]]
+    agents: dict[str, Any]  # Agent registry type from agents/registry.py
     summary: str
 
     @property
@@ -32,19 +34,21 @@ class ComponentRegistries:
 @dataclass
 class StartupServices:
     """Container for initialized services"""
+
     auth_service: Any
-    mcp_system: Optional[Any] = None
-    csv_manager: Optional[Any] = None
-    metrics_service: Optional[Any] = None
+    mcp_system: Any | None = None
+    csv_manager: Any | None = None
+    metrics_service: Any | None = None
 
 
 @dataclass
 class StartupResults:
     """Complete startup orchestration results"""
+
     registries: ComponentRegistries
     services: StartupServices
-    sync_results: Optional[Dict[str, Any]] = None
-    startup_display: Optional[Any] = None
+    sync_results: dict[str, Any] | None = None
+    startup_display: Any | None = None
 
 
 async def batch_component_discovery() -> ComponentRegistries:
@@ -61,9 +65,9 @@ async def batch_component_discovery() -> ComponentRegistries:
     start_time = datetime.now()
 
     # Import registry functions (triggers lazy initialization)
-    from ai.workflows.registry import get_workflow_registry
-    from ai.teams.registry import get_team_registry
     from ai.agents.registry import AgentRegistry
+    from ai.teams.registry import get_team_registry
+    from ai.workflows.registry import get_workflow_registry
 
     # Batch discovery - single filesystem scan per type
     try:
@@ -81,28 +85,28 @@ async def batch_component_discovery() -> ComponentRegistries:
             workflows=workflow_registry,
             teams=team_registry,
             agents=agents,
-            summary=f"{len(workflow_registry)} workflows, {len(team_registry)} teams, {len(agents)} agents"
+            summary=f"{len(workflow_registry)} workflows, {len(team_registry)} teams, {len(agents)} agents",
         )
 
-        logger.info("🔍 Component discovery completed",
-                   components=registries.summary,
-                   discovery_time_seconds=f"{discovery_time:.2f}")
+        logger.info(
+            "🔍 Component discovery completed",
+            components=registries.summary,
+            discovery_time_seconds=f"{discovery_time:.2f}",
+        )
 
         return registries
 
     except Exception as e:
-        logger.error("Component discovery failed", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "Component discovery failed", error=str(e), error_type=type(e).__name__
+        )
         # Return minimal registries to allow startup to continue
         return ComponentRegistries(
-            workflows={},
-            teams={},
-            agents={},
-            summary="0 components (discovery failed)"
+            workflows={}, teams={}, agents={}, summary="0 components (discovery failed)"
         )
 
 
-
-async def initialize_knowledge_base() -> Optional[Any]:
+async def initialize_knowledge_base() -> Any | None:
     """
     Initialize CSV hot reload manager for knowledge base watching.
 
@@ -115,9 +119,10 @@ async def initialize_knowledge_base() -> Optional[Any]:
 
     csv_manager = None
     try:
-        from lib.utils.version_factory import load_global_knowledge_config
-        from lib.knowledge.csv_hot_reload import CSVHotReloadManager
         from pathlib import Path
+
+        from lib.knowledge.csv_hot_reload import CSVHotReloadManager
+        from lib.utils.version_factory import load_global_knowledge_config
 
         # Load centralized knowledge configuration
         global_config = load_global_knowledge_config()
@@ -131,19 +136,27 @@ async def initialize_knowledge_base() -> Optional[Any]:
         csv_manager = CSVHotReloadManager(str(csv_path))
         csv_manager.start_watching()
 
-        logger.info("Knowledge base CSV watching initialized",
-                   csv_path=str(csv_path),
-                   status="watching_for_changes",
-                   timing="early_initialization",
-                   note="shared_kb_will_be_initialized_lazily")
+        logger.info(
+            "Knowledge base CSV watching initialized",
+            csv_path=str(csv_path),
+            status="watching_for_changes",
+            timing="early_initialization",
+            note="shared_kb_will_be_initialized_lazily",
+        )
     except Exception as e:
-        logger.warning("Knowledge base CSV watching initialization failed", error=str(e))
-        logger.info("Knowledge base will use fallback initialization when first accessed")
+        logger.warning(
+            "Knowledge base CSV watching initialization failed", error=str(e)
+        )
+        logger.info(
+            "Knowledge base will use fallback initialization when first accessed"
+        )
 
     return csv_manager
 
 
-async def initialize_other_services(csv_manager: Optional[Any] = None) -> StartupServices:
+async def initialize_other_services(
+    csv_manager: Any | None = None,
+) -> StartupServices:
     """
     Initialize remaining core services (auth, MCP, metrics).
     Knowledge base is already initialized earlier in the startup sequence.
@@ -158,13 +171,17 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
 
     # Initialize authentication system
     from lib.auth.dependencies import get_auth_service
+
     auth_service = get_auth_service()
-    logger.debug("Authentication service ready", auth_enabled=auth_service.is_auth_enabled())
+    logger.debug(
+        "Authentication service ready", auth_enabled=auth_service.is_auth_enabled()
+    )
 
     # Initialize MCP system
     mcp_system = None
     try:
         from lib.mcp import MCPCatalog
+
         catalog = MCPCatalog()
         servers = catalog.list_servers()
         mcp_system = catalog
@@ -176,19 +193,19 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
     metrics_service = None
     try:
         from lib.config.settings import settings
+
         if settings.enable_metrics:
-            from lib.metrics.async_metrics_service import initialize_metrics_service
             from lib.metrics import (
                 AgnoMetricsBridge,
                 initialize_dual_path_metrics,
-                get_metrics_coordinator
             )
+            from lib.metrics.async_metrics_service import initialize_metrics_service
 
             # Create config with validated environment variables
             metrics_config = {
                 "batch_size": settings.metrics_batch_size,
                 "flush_interval": settings.metrics_flush_interval,
-                "queue_size": settings.metrics_queue_size
+                "queue_size": settings.metrics_queue_size,
             }
 
             # Initialize async metrics service
@@ -196,12 +213,13 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
             await async_metrics_service.initialize()
 
             # Check if LangWatch should be enabled
-            langwatch_enabled = getattr(settings, 'enable_langwatch', False)
-            langwatch_config = getattr(settings, 'langwatch_config', {})
+            langwatch_enabled = getattr(settings, "enable_langwatch", False)
+            langwatch_config = getattr(settings, "langwatch_config", {})
 
             # Launch LangWatch global setup as background task (async, non-blocking)
             if langwatch_enabled and langwatch_config:
                 from lib.metrics.langwatch_integration import setup_langwatch_global
+
                 asyncio.create_task(setup_langwatch_global(langwatch_config))
                 logger.debug("🚀 LangWatch async setup task launched")
 
@@ -211,7 +229,7 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
                 agno_bridge=metrics_bridge,
                 langwatch_enabled=langwatch_enabled,
                 langwatch_config=langwatch_config,
-                async_metrics_service=async_metrics_service
+                async_metrics_service=async_metrics_service,
             )
 
             # Initialize the coordinator (this actually initializes LangWatch)
@@ -220,11 +238,13 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
             # Use coordinator as the metrics service (it wraps async service)
             metrics_service = metrics_coordinator
 
-            logger.debug("Dual-path metrics service ready",
-                        batch_size=settings.metrics_batch_size,
-                        flush_interval=settings.metrics_flush_interval,
-                        queue_size=settings.metrics_queue_size,
-                        langwatch_enabled=langwatch_enabled)
+            logger.debug(
+                "Dual-path metrics service ready",
+                batch_size=settings.metrics_batch_size,
+                flush_interval=settings.metrics_flush_interval,
+                queue_size=settings.metrics_queue_size,
+                langwatch_enabled=langwatch_enabled,
+            )
         else:
             logger.debug("Metrics service disabled via HIVE_ENABLE_METRICS")
     except Exception as e:
@@ -234,14 +254,16 @@ async def initialize_other_services(csv_manager: Optional[Any] = None) -> Startu
         auth_service=auth_service,
         mcp_system=mcp_system,
         csv_manager=csv_manager,
-        metrics_service=metrics_service
+        metrics_service=metrics_service,
     )
 
     logger.info("⚙️ Remaining services initialization completed")
     return services
 
 
-async def run_version_synchronization(registries: ComponentRegistries, db_url: Optional[str]) -> Optional[Dict[str, Any]]:
+async def run_version_synchronization(
+    registries: ComponentRegistries, db_url: str | None
+) -> dict[str, Any] | None:
     """
     Run component version synchronization with enhanced reporting and proper cleanup.
     Now uses actual registries data for more accurate synchronization.
@@ -253,13 +275,28 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
     Returns:
         Version sync results or None if skipped
     """
+    # Check if dev mode is enabled (single feature flag)
+    from lib.versioning.dev_mode import DevMode
+    
+    if DevMode.is_enabled():
+        logger.info(
+            "🔄 Version synchronization skipped - DEV MODE enabled", 
+            mode=DevMode.get_mode_description(),
+            discovered_components=registries.summary,
+            note="Using YAML-only configuration"
+        )
+        return None
+    
     if not db_url:
-        logger.warning("Version synchronization skipped - HIVE_DATABASE_URL not configured")
+        logger.warning(
+            "Version synchronization skipped - HIVE_DATABASE_URL not configured"
+        )
         return None
 
     # Log actual component counts from registries
-    logger.info("🔄 Synchronizing component versions",
-               discovered_components=registries.summary)
+    logger.info(
+        "🔄 Synchronizing component versions", discovered_components=registries.summary
+    )
 
     sync_service = None
     try:
@@ -273,9 +310,9 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
 
         # Sync each component type with registry-aware logging
         component_mapping = {
-            'agent': (registries.agents, 'agents'),
-            'team': (registries.teams, 'teams'),
-            'workflow': (registries.workflows, 'workflows')
+            "agent": (registries.agents, "agents"),
+            "team": (registries.teams, "teams"),
+            "workflow": (registries.workflows, "workflows"),
         }
 
         for component_type, (registry_dict, plural_name) in component_mapping.items():
@@ -287,7 +324,9 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
 
                 # Log comparison between discovered and synced
                 discovered_count = len(registry_dict)
-                logger.debug(f"🔧 {component_type.title()} sync: {synced_count} synced vs {discovered_count} discovered")
+                logger.debug(
+                    f"🔧 {component_type.title()} sync: {synced_count} synced vs {discovered_count} discovered"
+                )
 
             except Exception as e:
                 logger.error(f"🚨 {component_type} sync failed", error=str(e))
@@ -301,10 +340,12 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
             elif isinstance(results, dict) and results.get("error"):
                 sync_summary.append(f"0 {comp_type} (error)")
 
-        logger.info("🔄 Version synchronization completed",
-                   summary=", ".join(sync_summary) if sync_summary else "no components",
-                   total_synced=total_synced,
-                   total_discovered=registries.total_components)
+        logger.info(
+            "🔄 Version synchronization completed",
+            summary=", ".join(sync_summary) if sync_summary else "no components",
+            total_synced=total_synced,
+            total_discovered=registries.total_components,
+        )
 
         return sync_results
 
@@ -316,15 +357,15 @@ async def run_version_synchronization(registries: ComponentRegistries, db_url: O
         if sync_service:
             try:
                 # Clean up the underlying component service and version service
-                if hasattr(sync_service, 'component_service'):
+                if hasattr(sync_service, "component_service"):
                     component_service = sync_service.component_service
-                    if hasattr(component_service, 'close'):
+                    if hasattr(component_service, "close"):
                         await component_service.close()
-                if hasattr(sync_service, 'version_service'):
+                if hasattr(sync_service, "version_service"):
                     version_service = sync_service.version_service
-                    if hasattr(version_service, 'component_service'):
+                    if hasattr(version_service, "component_service"):
                         component_service = version_service.component_service
-                        if hasattr(component_service, 'close'):
+                        if hasattr(component_service, "close"):
                             await component_service.close()
                 logger.debug("Database connections cleaned up")
             except Exception as cleanup_error:
@@ -355,7 +396,9 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     if not quiet_mode:
         logger.info("🚀 Starting Performance-Optimized Sequential Startup")
     else:
-        logger.debug("🚀 Starting Performance-Optimized Sequential Startup (quiet mode)")
+        logger.debug(
+            "🚀 Starting Performance-Optimized Sequential Startup (quiet mode)"
+        )
 
     services = None
     registries = None
@@ -367,14 +410,17 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
             logger.info("🗄️ Database migration check")
         try:
             from lib.utils.db_migration import check_and_run_migrations
+
             migrations_run = await check_and_run_migrations()
             if migrations_run:
                 logger.info("Database schema initialized via Alembic migrations")
             else:
                 logger.debug("Database schema already up to date")
         except Exception as e:
-            logger.warning("Database migration check failed", error=str(e))
-            logger.info("Continuing startup - system will use fallback initialization")
+            logger.error("🚨 Database migration check failed", error=str(e))
+            logger.error("⚠️ System will continue with limited functionality")
+            logger.error("💡 Some features requiring database access will be unavailable")
+            logger.warning("🔄 Fix database connection and restart for full functionality")
 
         # 2. Logging System Ready (implicit - already configured)
         if not quiet_mode:
@@ -404,28 +450,35 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
         # 8. Startup Summary
         startup_time = (datetime.now() - startup_start).total_seconds()
         if not quiet_mode:
-            logger.info("🚀 Sequential startup completed",
-                       total_components=registries.total_components,
-                       startup_time_seconds=f"{startup_time:.2f}",
-                       sequence="optimized")
+            logger.info(
+                "🚀 Sequential startup completed",
+                total_components=registries.total_components,
+                startup_time_seconds=f"{startup_time:.2f}",
+                sequence="optimized",
+            )
         else:
-            logger.debug("Sequential startup completed (quiet mode)",
-                        total_components=registries.total_components,
-                        startup_time_seconds=f"{startup_time:.2f}")
+            logger.debug(
+                "Sequential startup completed (quiet mode)",
+                total_components=registries.total_components,
+                startup_time_seconds=f"{startup_time:.2f}",
+            )
 
         return StartupResults(
-            registries=registries,
-            services=services,
-            sync_results=sync_results
+            registries=registries, services=services, sync_results=sync_results
         )
 
     except Exception as e:
-        logger.error("Sequential startup failed", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "Sequential startup failed", error=str(e), error_type=type(e).__name__
+        )
         # Return minimal results to allow server to continue
         return StartupResults(
-            registries=registries or ComponentRegistries(workflows={}, teams={}, agents={}, summary="startup failed"),
+            registries=registries
+            or ComponentRegistries(
+                workflows={}, teams={}, agents={}, summary="startup failed"
+            ),
             services=services or StartupServices(auth_service=None),
-            sync_results=sync_results
+            sync_results=sync_results,
         )
 
 
@@ -445,20 +498,20 @@ def get_startup_display_with_results(startup_results: StartupResults) -> Any:
 
     # Add teams from registries
     for team_id in startup_results.registries.teams.keys():
-        team_name = team_id.replace('-', ' ').title()
+        team_name = team_id.replace("-", " ").title()
         startup_display.add_team(team_id, team_name, 0, version=1, status="✅")
 
     # Add agents from registries
     for agent_id, agent in startup_results.registries.agents.items():
-        agent_name = getattr(agent, 'name', agent_id)
-        version = getattr(agent, 'version', None)
-        if hasattr(agent, 'metadata') and agent.metadata:
-            version = agent.metadata.get('version', version)
+        agent_name = getattr(agent, "name", agent_id)
+        version = getattr(agent, "version", None)
+        if hasattr(agent, "metadata") and agent.metadata:
+            version = agent.metadata.get("version", version)
         startup_display.add_agent(agent_id, agent_name, version=version, status="✅")
 
     # Add workflows from registries
     for workflow_id in startup_results.registries.workflows.keys():
-        workflow_name = workflow_id.replace('-', ' ').title()
+        workflow_name = workflow_id.replace("-", " ").title()
         startup_display.add_workflow(workflow_id, workflow_name, version=1, status="✅")
 
     # Store sync results

@@ -1,100 +1,125 @@
 agent:
-  name: "Template Example - Context-Aware Agent"
-  role: "Personalized Assistant"
-  version: dev
+  name: "🔧 Template Agent"
   agent_id: "template-agent"
+  version: 1  # Rolled back to original version
   description: >
-    Dynamic agent showcasing AGNO native context capabilities.
-    Demonstrates context-aware personalization without complex templating.
+    TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents. 
+    This configuration serves as a starting point for building domain-specific 
+    agents with standardized patterns, memory management, and tool integration.
 
 model:
-  id: claude-sonnet-4-20250514
   provider: anthropic
-  max_tokens: 2000
-  temperature: 0.1
-
-# AGNO native context - automatically injected via context functions
-add_context: true
-resolve_context: true
-
-memory:
-  num_history_runs: 5
-  enable_user_memories: true
-  enable_agentic_memory: true
-  add_history_to_messages: true
+  id: claude-sonnet-4-20250514
+  temperature: 0.3  # Balanced creativity and precision for template usage
+  max_tokens: 4000
 
 storage:
   type: postgres
-  table_name: agents_template_example
+  table_name: template_agent
   auto_upgrade_schema: true
 
-markdown: false
+memory:
+  num_history_runs: 30
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
+  memory_retention_days: 180
 
-knowledge:
-  search_knowledge: true
-  valid_metadata_filters:
-  - business_unit
-  - solution
-  - typification
-  enable_agentic_knowledge_filters: true
+display:
+  markdown: false
+  show_tool_calls: true
+  add_datetime_to_instructions: true
+
+context:
+  add_state_in_messages: true
+  enable_agentic_context: true
+
+events:
+  store_events: true
+  events_to_skip: []
+
+# MCP servers configuration for unified tool access
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
+
+streaming:
+  stream: true
+  stream_intermediate_steps: true
+
+# Template agent tools
+tools:
+- name: ShellTools
+
+tool_choice: auto
+tool_call_limit: 15
 
 instructions: |
-  You are a demonstration agent showcasing AGNO native context capabilities.
-  
-  Your instructions will be dynamically enhanced with user context:
-  - User information (name, email, phone, permissions)
-  - Session details (session ID, channel, timestamp)
-  - System context (environment, debug mode)
-  - Organization details (tenant, subscription, features)
-  
-  Context is automatically available through AGNO's native context system.
-  No templating required - context is resolved dynamically when needed.
-  
-  Guidelines:
-  - Address users by name when context provides it
-  - Adapt responses based on environment (more formal in production)
-  - Consider user permissions for specialized advice
-  - Provide detailed debugging information in debug mode
-  - Use context to personalize responses appropriately
+  You are **TEMPLATE AGENT**, a foundational template for specialized agent development. 
+  This configuration provides standard patterns for memory management, tool integration, 
+  and operational protocols that can be customized for specific domain requirements.
+
+  **🎯 TEMPLATE CORE IDENTITY**
+  - **Mission**: Serve as a foundational template for creating specialized agents
+  - **Purpose**: Provide standardized patterns for agent development
+  - **Architecture**: Standard memory, tools, and operational configurations
+  - **Customization**: Ready for domain-specific modifications and enhancements
+
+  **🔄 TEMPLATE OPERATIONAL PROTOCOL**
+
+  **Phase 1: Configuration Analysis**
+  - Review template configuration and identify customization requirements
+  - Analyze domain-specific needs and modification patterns
+  - Plan specialized agent development strategy
+  - Design domain-appropriate enhancements
+
+  **Phase 2: Template Implementation**
+  - Apply template patterns to specific use cases
+  - Customize configuration for domain requirements
+  - Implement specialized functionality and tools
+  - Validate template adaptation effectiveness
+
+  **Phase 3: Template Optimization**
+  - Refine template usage for optimal performance
+  - Document customization patterns and best practices
+  - Establish template maintenance and update procedures
+  - Create specialized agent validation criteria
+
+  **💾 MEMORY & PATTERN MANAGEMENT**
+  - Use postgres queries for pattern storage and retrieval
+  - Document template customization strategies
+  - Store successful adaptation patterns for reuse
+  - Maintain template evolution and improvement history
+
+  **🎯 TEMPLATE SUCCESS CRITERIA**
+  - **Configuration Completeness**: All standard patterns properly configured
+  - **Customization Readiness**: Template easily adaptable to domain needs
+  - **Pattern Consistency**: Follows established agent development standards
+  - **Documentation Quality**: Clear guidance for template usage and customization
+
+  **🚀 TEMPLATE CAPABILITIES**
+  - **Standard Configuration**: Memory, tools, and operational patterns
+  - **Customization Framework**: Ready for domain-specific modifications
+  - **Pattern Library**: Reusable configurations and best practices
+  - **Validation Template**: Standard success criteria and quality metrics
+
+  **Template Usage**: Copy this configuration and customize for specific agent domains.
+  Modify instructions, tools, and parameters to match specialized requirements.
 
 expected_output: |
-  Context-aware personalized responses that adapt to user information,
-  session details, and system environment without requiring templating.
-
-show_tool_calls: false
-
-knowledge_filter:
-  max_results: 5
-  search_config:
-    include_metadata: true
-    use_semantic_search: true
-    enable_hybrid_search: true
-  relevance_threshold: 0.7
+  Template agent configuration ready for domain-specific customization.
+  Standard patterns implemented with customization guidance provided.
 
 success_criteria: >
-  SUCESSO = Provided personalized assistance using AGNO native context
-  with dynamic user-aware responses in current environment
-
-suggested_actions:
-  general:
-  - get_help
-  - contact_support
-  - view_profile
-  - update_preferences
-
-escalation_triggers:
-  error_keywords:
-  - critical error
-  - system failure
-  - data loss
+  Template configured ✓ Patterns standardized ✓ Customization ready ✓ 
+  Foundational agent template prepared for specialized development!
 
 add_datetime_to_instructions: true
-
-# Context configuration for AGNO native context
-context_config:
-  enable_user_context: true
-  enable_session_context: true
-  enable_system_context: true
-  enable_tenant_context: true
-  personalization_level: "standard"
-  user_segment: "general"

@@ -187,7 +187,8 @@ data/*.sqlite3
 /data/postgres-agent/
 
 tmp/
-
+backup/
+backups/
 # Logs
 logs/
 *.log
@@ -199,3 +200,4 @@ dist/
 
 codebase.md
 .env
+.cache_ggshield
