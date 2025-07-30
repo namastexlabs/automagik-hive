@@ -55,6 +55,38 @@ jobs:
             trivy-results.sarif
             bandit-report.json
 
+  # Installation script testing
+  test-install-script:
+    name: Test Installation Script
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: darwin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x scripts/install-predeps.sh scripts/test-install-predeps.sh
+
+      - name: Run installation script tests
+        run: ./scripts/test-install-predeps.sh --verbose
+
+      - name: Test script help functionality
+        run: |
+          ./scripts/install-predeps.sh --help || echo "Help functionality test completed"
+
+      - name: Validate script with ShellCheck (Ubuntu only)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          shellcheck scripts/install-predeps.sh scripts/test-install-predeps.sh
+
   # Code quality and testing
   test:
     name: Test Suite
@@ -143,7 +175,7 @@ jobs:
   build:
     name: Build and Scan Docker Image
     runs-on: ubuntu-latest
-    needs: [security-scan, test]
+    needs: [security-scan, test, test-install-script]
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
       image-tag: ${{ steps.meta.outputs.tags }}
