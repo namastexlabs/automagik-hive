@@ -16,7 +16,18 @@ async def lifespan(_app: FastAPI):
     """Application lifespan manager"""
     # Startup - initialize authentication
     auth_service = get_auth_service()
-    logger.info("Authentication initialized", enabled=auth_service.is_auth_enabled())
+    auth_status = auth_service.get_auth_status()
+    
+    logger.info(
+        "Authentication initialized",
+        **auth_status
+    )
+    
+    # Log security warnings for production
+    if auth_status["production_override_active"]:
+        logger.warning(
+            "Production Security Override: Authentication ENABLED despite HIVE_AUTH_DISABLED=true"
+        )
 
     yield
 

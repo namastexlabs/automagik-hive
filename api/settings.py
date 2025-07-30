@@ -33,12 +33,25 @@ class ApiSettings(BaseSettings):
 
     @field_validator("environment")
     def validate_environment(cls: Type["ApiSettings"], environment: str) -> str:  # noqa: N805
-        """Validate environment."""
+        """Validate environment and enforce production security requirements."""
 
-        valid_environments = ["development", "production"]
+        valid_environments = ["development", "staging", "production"]
         if environment not in valid_environments:
-            raise ValueError(f"Invalid environment: {environment}")
+            raise ValueError(f"Invalid environment: {environment}. Must be one of: {valid_environments}")
 
+        # Production security validation
+        if environment == "production":
+            # Ensure critical production settings are configured
+            api_key = os.getenv("HIVE_API_KEY")
+            if not api_key or api_key.strip() == "" or api_key in ["your-hive-api-key-here"]:
+                raise ValueError(
+                    "Production environment requires a valid HIVE_API_KEY. "
+                    "Update your .env file with a secure API key."
+                )
+            
+            # Note: Authentication is automatically enabled in production regardless of HIVE_AUTH_DISABLED
+            # This is handled in AuthService, no validation needed here
+            
         return environment
 
     @field_validator("cors_origin_list", mode="before")

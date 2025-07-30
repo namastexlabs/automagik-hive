@@ -54,6 +54,16 @@ class ServerConfig:
             raise ValueError(
                 f"Invalid environment: {self.environment}. Must be one of: development, staging, production."
             )
+            
+        # Production security validation
+        if self.environment == "production":
+            import os
+            api_key = os.getenv("HIVE_API_KEY")
+            if not api_key or api_key.strip() == "" or api_key in ["your-hive-api-key-here"]:
+                raise ValueError(
+                    "Production environment requires a valid HIVE_API_KEY. "
+                    "Set HIVE_API_KEY to a secure value in your environment."
+                )
 
         if self.log_level not in ["DEBUG", "INFO", "WARNING", "ERROR"]:
             raise ValueError(

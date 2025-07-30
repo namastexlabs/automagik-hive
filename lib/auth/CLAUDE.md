@@ -36,7 +36,8 @@ async def protected_endpoint(
 
 **API Key Security**: Cryptographic generation with `secrets.token_urlsafe(32)`  
 **Constant-Time Validation**: `secrets.compare_digest()` prevents timing attacks  
-**Development Bypass**: `HIVE_AUTH_DISABLED=true` for local development  
+**Developer-Friendly Defaults**: `HIVE_AUTH_DISABLED=true` by default for easier onboarding  
+**Production Security Override**: Authentication ALWAYS enabled in production regardless of settings  
 **Auto-Generation**: Keys auto-created and saved to `.env` file  
 **FastAPI Integration**: Ready-to-use dependencies for endpoint protection
 
@@ -116,12 +117,39 @@ async def chat(
     return {"response": "processed"}
 ```
 
+## Environment Configuration
+
+**Authentication behavior varies by environment**:
+
+```python
+# Check current authentication status
+from lib.auth.service import AuthService
+
+auth_service = AuthService() 
+status = auth_service.get_auth_status()
+
+print(f"Environment: {status['environment']}")
+print(f"Auth Enabled: {status['auth_enabled']}")
+print(f"Production Override: {status['production_override_active']}")
+```
+
+**Environment Behavior**:
+- **Development**: Respects `HIVE_AUTH_DISABLED` setting (default: `true` for easier onboarding)
+- **Staging**: Respects `HIVE_AUTH_DISABLED` setting (configurable for testing)  
+- **Production**: ALWAYS enables authentication regardless of `HIVE_AUTH_DISABLED` (security override)
+
+**Production Requirements**:
+- Valid `HIVE_API_KEY` (not placeholder values)
+- Valid `HIVE_CORS_ORIGINS` (comma-separated domain list)
+- Authentication automatically enabled (cannot be disabled)
+
 ## Critical Rules
 
 - **Cryptographic Security**: Use `secrets.token_urlsafe()` and `secrets.compare_digest()`
 - **Input Validation**: Always validate message content, size limits (10KB)
 - **User Context**: Sanitize all inputs, use secure session state
-- **Development Bypass**: Use `HIVE_AUTH_DISABLED=true` for local dev only
+- **Development Defaults**: `HIVE_AUTH_DISABLED=true` by default for easier developer onboarding  
+- **Production Override**: Authentication ALWAYS enabled when `HIVE_ENVIRONMENT=production`
 - **Error Handling**: Never expose sensitive details in error messages
 - **Session Security**: Use Agno's session_state for persistence
 
