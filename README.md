@@ -23,12 +23,33 @@
 
 **Get your first AI agent team running in literally 5 minutes:**
 
+**Prerequisites**: Python 3.12+ and UV package manager
+
 ```bash
 # Install and run your first agent team
 uvx automagik-hive ./my-ai-project
 
 # That's it! Your agents are now running and coordinating.
 ```
+
+<details>
+<summary>🛠️ <strong>Don't have UV or Python 3.12?</strong> Click here for one-command setup</summary>
+
+```bash
+# One command to install all prerequisites (UV, Python 3.12, Docker, Make)
+curl -fsSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/scripts/install-predeps.sh | bash
+
+# For developers: Install locally for framework development
+curl -fsSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/scripts/install.sh | bash
+```
+
+**What gets installed:**
+- ✅ **UV** - Modern Python package manager (replaces pip/conda)
+- ✅ **Python 3.12+** - Latest Python via UV
+- ✅ **Docker** - For production deployment (optional)
+- ✅ **Make** - For development workflows (optional)
+
+</details>
 
 **What just happened?** You now have a production-ready multi-agent system with:
 - 🤖 **Genie Team** - Built-in specialists (dev, testing, quality, debugging)
