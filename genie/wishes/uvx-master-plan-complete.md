@@ -1,41 +1,15 @@
 # 🧞 UVX AUTOMAGIK HIVE - COMPLETE MASTER PLAN
-## EXPERT-VALIDATED COMPREHENSIVE PROJECT SPECIFICATION
-
----
-
-## 🧠 EXPERT CONSENSUS & PROJECT FOUNDATION
-
-**GEMINI-2.5-PRO + GROK-4 COLLABORATIVE ASSESSMENT**
-
-### **🎯 EXPERT VERDICT**
-- **Technical Feasibility**: 75% (High with scope reduction)
-- **Viral Adoption Probability**: 15% (Realistic market assessment)  
-- **Primary Risk**: Over-promising "magical" capabilities vs. delivery reality
-- **Recommendation**: **Incremental MVP approach** with ruthless scope reduction
-
-### **🚨 CRITICAL EXPERT INSIGHTS**
-
-**GEMINI'S KEY CONCERNS:**
-- "Dual-instance architecture" needs immediate clarification
-- 75% parallelization is overly optimistic (reality: 50-60%)
-- Missing user testing phase is fatal for viral ambitions
-- Performance targets may be unrealistic for multi-container orchestration
-
-**GROK'S REALITY CHECK:**
-- "Brilliant core, delusional execution" - trim the hype
-- .claude inheritance system is dangerous over-engineering
-- Resource requirements: 5-8 person team, $500K-$1M budget
-- Stick to simple YAML configs over complex inheritance
-
-**UNIFIED EXPERT RECOMMENDATION:**
-Build incrementally starting with core value: reliable one-command dev environment setup
 
 ---
 
 ## 📊 PROJECT ARCHITECTURE
 
 ### **🎯 CORE VISION**
-Transform Automagik Hive into the ultimate viral developer experience with `uvx automagik-hive ./my-workspace` - creating reliable multi-container architecture with Docker orchestration for Genie consultation and agent development.
+Transform Automagik Hive into the ultimate viral developer experience with two-command simplicity:
+- `uvx automagik-hive --init` - Interactive workspace creation with API key collection
+- `uvx automagik-hive ./my-workspace` - Start existing workspace server
+
+Creating reliable multi-container architecture with Docker orchestration for Genie consultation and agent development.
 
 ### **🏗️ MULTI-CONTAINER ARCHITECTURE**
 ```
@@ -63,7 +37,8 @@ uvx automagik-hive ./my-workspace
 ### **🔧 COMPLETE COMMAND STRUCTURE**
 ```bash
 # === CORE WORKSPACE COMMANDS (UVX + Docker PostgreSQL) ===
-uvx automagik-hive ./my-workspace    # Create workspace + start server (8886) + PostgreSQL (5532)
+uvx automagik-hive ./my-workspace    # Start existing workspace server (8886) + PostgreSQL (5532) 
+uvx automagik-hive --init            # Interactive workspace initialization with API keys
 uvx automagik-hive --help            # Show available commands
 uvx automagik-hive --version         # Show version info
 
@@ -90,16 +65,26 @@ uvx automagik-hive --list-templates  # Show available templates
 
 ### **🐳 DOCKER REQUIREMENTS & AUTO-INSTALLATION**
 - **Main Server**: UVX execution + Docker PostgreSQL (agnohq/pgvector:16)
-- **Docker Auto-Detection**: Check Docker installation, offer automatic installation
+- **PostgreSQL + pgvector Only**: No SQLite fallback - PostgreSQL with pgvector extension required
+- **Docker Auto-Installation**: Automatic Docker installation if missing (Linux/macOS/Windows/WSL) 
+- **UVX Compatibility**: All Docker operations work within UVX environment without conflicts
+- **Built-in vs External**: Users choose Docker container (recommended) or external PostgreSQL
 - **PostgreSQL Requirements**: agnohq/pgvector:16 image with vector extensions
 - **Credential Generation**: Automatic secure credential generation like `make install`
 - **Container Patterns**: Reuse existing docker-compose.yml and docker-compose-agent.yml patterns
-- **Cross-Platform**: Linux, macOS, Windows/WSL Docker installation detection
+- **Cross-Platform**: Docker installation detection and automatic setup across all platforms
+- **Interactive Setup**: Part of --init flow with user choice and guided installation
 
 ### **📁 WORKSPACE STRUCTURE (Multi-Container)**
 ```
 ./my-workspace/
 ├── .env              # Main environment (workspace 8886 + PostgreSQL 5532)
+├── .claude/          # Complete Claude Code integration
+│   ├── agents/       # Full Genie agent ecosystem
+│   ├── commands/     # Custom slash commands
+│   ├── settings.json # TDD hooks and configurations
+│   └── *.py, *.sh    # Utility scripts and validators
+├── .mcp.json         # MCP server configuration for Claude Code/Cursor
 ├── data/             # Persistent PostgreSQL data volumes
 │   ├── postgres/     # Main PostgreSQL data (port 5532)
 │   ├── postgres-genie/  # Genie PostgreSQL data (port 48886)
@@ -129,12 +114,30 @@ uvx automagik-hive --list-templates  # Show available templates
     └── docker-compose-agent.yml  # Agent container definition (existing)
 ```
 
-### **🔧 DYNAMIC .ENV GENERATION STRATEGY**
-- **Main .env**: Generated from existing main .env OR .env.example (fallback)
+### **🔧 DYNAMIC TEMPLATE GENERATION STRATEGY**
+- **Main .env**: Auto-generated from .env.example template on `uvx automagik-hive ./my-workspace` IF not exists
+- **.claude/ folder**: Auto-copied from repository .claude folder on `uvx automagik-hive ./my-workspace` IF not exists
+- **.mcp.json**: Auto-generated from .mcp.json template on `uvx automagik-hive ./my-workspace` IF not exists
+- **Template Sources**: 
+  - `.env.example` from automagik-hive package as environment template
+  - `.claude/` folder from automagik-hive package as complete Claude Code integration
+  - `.mcp.json` from automagik-hive package as MCP server configuration template
+- **Credential Processing**: Replace placeholder values (your-*-here) with generated secure credentials
+- **MCP URL Processing**: Replace server URLs with workspace-specific endpoints (localhost:8886, localhost:5532)
 - **Container .env files**: Auto-generated from main .env with port adjustments:
   - `genie/.env`: Copy main .env + change ports to 48886
   - `agent-dev/.env`: Copy main .env + change ports to 35532  
-- **Single Source**: Only maintain .env.example template
+- **MCP Server Configuration**: Pre-configured with all essential tools
+  - **automagik-hive**: Workspace API server (localhost:8886)
+  - **postgres**: Workspace database (localhost:5532)
+  - **automagik-forge**: Task management
+  - **External Tools**: Documentation, WhatsApp, repo analysis
+- **IDE Integration**: 
+  - **Claude Code**: Native .mcp.json support
+  - **Cursor**: Auto-detection and MCP server installation
+  - **Manual Setup**: Print complete configuration for other IDEs
+- **Single Source**: Only maintain templates in package (no duplication)
+- **Zero-Config Experience**: User gets working environment + full Claude Code + MCP integration with single command
 - **Credential Inheritance**: All containers share credentials, different ports only
 
 ### **🔄 CONTAINER COORDINATION**
@@ -151,11 +154,11 @@ uvx automagik-hive --list-templates  # Show available templates
 ## 🏭 COMPREHENSIVE TASK BREAKDOWN
 
 **📊 PROJECT METRICS**: 
-- **Tasks**: 25 (increased from 23 - added Docker infrastructure)
+- **Tasks**: 28 (increased from 27 - added interactive workspace initialization)
 - **Phases**: 8 (added User Testing phase)
-- **Parallelization**: 52% realistic (adjusted for Docker dependencies)
-- **Success Strategy**: Incremental MVP with validation gates
-- **Critical Dependencies**: Docker installation and PostgreSQL containers
+- **Parallelization**: 50% realistic (adjusted for Docker dependencies + interactive flows)
+- **Success Strategy**: Incremental MVP with validation gates + excellent DX
+- **Critical Dependencies**: Docker installation, container templates, interactive initialization, and full-stack orchestration
 
 ---
 
@@ -194,12 +197,13 @@ uvx automagik-hive --list-templates  # Show available templates
 ### **T1.3: Complete Command Parsing System**
 - **Parallelization**: ❌ **DEPENDS ON T1.1**
 - **Dependencies**: T1.1 (CLI structure)
-- **What**: Parse ALL UVX commands - workspace, Genie container, agent container, templates
-- **Why**: Complete viral UVX experience with multi-container orchestration
+- **What**: Parse ALL UVX commands - workspace startup, interactive init, containers, templates
+- **Why**: Complete viral UVX experience with multi-container orchestration + excellent DX
 - **Complete Command Implementation**:
 
   **WORKSPACE COMMANDS (Direct execution)**:
-  - `uvx automagik-hive ./my-workspace` - Create workspace + start main server (8886)
+  - `uvx automagik-hive ./my-workspace` - Start existing workspace server (8886) + PostgreSQL (5532)
+  - `uvx automagik-hive --init` - Interactive workspace initialization with API key collection
   - `uvx automagik-hive --help` - Show complete command help
   - `uvx automagik-hive --version` - Show version information
 
@@ -220,7 +224,6 @@ uvx automagik-hive --list-templates  # Show available templates
   - `uvx automagik-hive --agent-reset` - Destroy and recreate agent environment
 
   **TEMPLATE COMMANDS (Future)**:
-  - `uvx automagik-hive --init <template>` - Create project from template
   - `uvx automagik-hive --list-templates` - Show available templates
 
 - **Complexity**: Very High - 15+ commands with Docker container orchestration
@@ -277,12 +280,12 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Challenge**: Design entities that coordinate multiple execution contexts (direct + containers)
 - **Success**: Domain models support all command routing and container orchestration
 
-### **T1.5: Docker Installation & Environment Validation**
+### **T1.5: Docker Installation & Container Template Creation**
 - **Parallelization**: ✅ **INDEPENDENT** - Utility work
 - **Dependencies**: None
-- **What**: Comprehensive environment validation including Docker auto-installation
-- **Why**: Prevent runtime failures, enable seamless Docker setup for any user
-- **Docker Requirements**: Critical for all services (main PostgreSQL, Genie container, Agent container)
+- **What**: Comprehensive environment validation + Docker container templates for Genie and Agent
+- **Why**: Prevent runtime failures, enable seamless full-stack container orchestration
+- **Docker Requirements**: Critical for all services (main workspace PostgreSQL, Genie full-stack, Agent full-stack)
 - **Validation & Installation Scope**:
   - **Python 3.12+** validation
   - **UVX environment** detection and compatibility
@@ -291,21 +294,42 @@ uvx automagik-hive --list-templates  # Show available templates
   - **Docker daemon** health check
   - **PostgreSQL image** pre-pulling (agnohq/pgvector:16)
   - **Cross-platform** Docker installation (Linux, macOS, Windows/WSL)
+- **Docker Container Template Creation**:
+  - **Genie Template**: `docker-compose-genie.yml` - Full-stack PostgreSQL + FastAPI (port 48886)
+  - **Agent Template**: `docker-compose-agent.yml` - Full-stack PostgreSQL + FastAPI (port 35532) 
+  - **Template Patterns**: Based on existing `docker-compose.yml` production patterns
+  - **Container Architecture**: Single service with internal PostgreSQL + application
+  - **Port Strategy**: 
+    - Main workspace: Direct PostgreSQL (5532) + UVX CLI
+    - Genie container: All-in-one full-stack (48886)
+    - Agent container: All-in-one full-stack (35532)
 - **Docker Installation Strategy**:
   - **Linux**: Detect distro, use appropriate package manager (apt, yum, dnf, pacman)
   - **macOS**: Offer Docker Desktop download/installation
   - **Windows/WSL**: Detect WSL2, guide Docker Desktop setup
   - **Permission handling**: Docker group membership, sudo requirements
-- **Make Integration**: Replicate `make install` Docker setup logic
-- **Complexity**: Very High - cross-platform Docker installation automation
-- **Current State**: No environment validation exists - failures happen at runtime
+- **Make Integration**: Replicate `make install` Docker setup logic, extend for full-stack containers
+- **Template Integration**: 
+  - Use existing `docker-compose.yml` as template base
+  - Adapt health checks, networking, volumes for Genie and Agent contexts
+  - Maintain consistency with production patterns
+- **Complexity**: Very High - cross-platform Docker installation + full-stack container templates
+- **Current State**: No environment validation exists, `docker-compose-agent.yml` exists but separate containers
 - **UVX Context**: Handle UVX package isolation, different installation patterns, environment markers
 - **Integration Points**: 
   - Existing `check_docker` function from Makefile
   - `setup_docker_postgres` credential generation patterns
+  - Production `docker-compose.yml` patterns for full-stack templates
   - Cross-platform compatibility from Makefile Docker detection
-- **Challenge**: Automated Docker installation across all platforms, permission handling
-- **Success**: Complete environment ready - Python, UVX, Docker, pgvector image pulled
+- **Template Requirements**:
+  - **Genie Template**: Single service with PostgreSQL + App on port 48886
+  - **Agent Template**: Single service with PostgreSQL + App on port 35532
+  - **Consistency**: Mirror production `docker-compose.yml` patterns
+  - **Health Checks**: Both PostgreSQL and API endpoint validation
+  - **Networking**: Isolated networks per container
+  - **Volumes**: Persistent data storage per container
+- **Challenge**: Automated Docker installation + full-stack container template creation
+- **Success**: Complete environment ready - Python, UVX, Docker, pgvector pulled + Genie/Agent templates created
 
 ### **T1.6: PostgreSQL Container Management**
 - **Parallelization**: ❌ **DEPENDS ON T1.5** - Needs Docker ready
@@ -439,31 +463,255 @@ uvx automagik-hive --list-templates  # Show available templates
 ## **🟠 PHASE 2: WORKSPACE MANAGEMENT (SIMPLIFIED)**
 *Reliable workspace creation without complex agent inheritance*
 
-### **⚡ PARALLELIZATION ANALYSIS: LOW (1/3 tasks parallel - 33%)**
-*Expert insight: Integration complexity reduces parallelization*
+### **⚡ PARALLELIZATION ANALYSIS: LOW (1/4 tasks parallel - 25%)**
+*Expert insight: Integration complexity + interactive flows reduce parallelization*
 
-### **T2.1: Workspace Creation**
+### **T2.1: Workspace Creation & Auto-Template Setup**
 - **Parallelization**: ✅ **INDEPENDENT** - File operations
-- **Dependencies**: T1.4 (domain models)
-- **What**: Create workspace directory structure
-- **Why**: Foundation for user environment
+- **Dependencies**: T1.4 (domain models), T1.7 (credential management)
+- **What**: Create workspace directory structure + automatic .env + .claude folder generation + MCP server setup
+- **Why**: Foundation for user environment with zero-config experience including Claude Code + MCP integration
 - **Expert Simplification**: Simple directory creation, no complex inheritance
 - **Structure**:
   ```
   ./my-workspace/
-  ├── .env              # Basic environment
-  ├── config.yaml       # Simple configuration
-  └── src/              # User code directory
+  ├── .env              # Auto-generated from .env.example if not exists
+  ├── .claude/          # Auto-copied from repository .claude folder if not exists
+  │   ├── agents/       # Complete Genie agent ecosystem
+  │   │   ├── claude.md
+  │   │   ├── genie-*.md  # All specialized Genie agents
+  │   │   └── ...
+  │   ├── commands/     # Custom slash commands
+  │   ├── settings.json # Claude Code configuration with TDD hooks
+  │   ├── tba/          # Additional configurations
+  │   └── *.py, *.sh    # Utility scripts and validators
+  ├── .mcp.json         # Auto-generated MCP server configuration if not exists
+  ├── data/             # Persistent PostgreSQL data volumes
+  │   ├── postgres/     # Main PostgreSQL data (port 5532)
+  │   ├── postgres-genie/  # Genie PostgreSQL data (port 48886)
+  │   └── postgres-agent/  # Agent PostgreSQL data (port 35532)
+  ├── ai/               # User AI components (mirrors existing ai/ structure)
+  │   ├── agents/       # Custom user agents
+  │   ├── teams/        # Custom user teams
+  │   ├── workflows/    # Custom user workflows
+  │   └── tools/        # Custom user tools
+  ├── genie/            # Genie container configuration
+  │   ├── .env          # Generated from main .env (port 48886)
+  │   └── docker-compose-genie.yml  # Genie container definition
+  └── agent-dev/        # Agent development container configuration  
+      ├── .env          # Generated from main .env (port 35532)
+      └── docker-compose-agent.yml  # Agent container definition
   ```
-- **Complexity**: Low - standard filesystem operations
-- **Current State**: No workspace management exists
-- **Creates**: `cli/application/workspace_service.py` with path operations
-- **Challenge**: Cross-platform path handling, permission management
-- **Success**: Reliable workspace creation across platforms
+- **Automatic Template Generation**:
+  - **Environment**: Use `.env.example` from automagik-hive package as template
+  - **Claude Integration**: Copy entire `.claude/` folder from automagik-hive package if not exists
+  - **MCP Configuration**: Generate `.mcp.json` from repository template with workspace-specific URLs
+  - **Trigger**: Called by T2.2 interactive initialization after user consent
+  - **Credential Integration**: Use T1.7 credential generation for secure .env values
+  - **Template Processing**: Replace placeholder values with generated credentials and workspace URLs
+  - **Fallback Strategy**: If templates not found, use embedded defaults
+- **Auto-Generated Components**:
+  - **Main .env**: Generated from template with secure credentials
+  - **Container .env files**: Auto-generated from main .env with port adjustments
+  - **.claude/ folder**: Complete copy of repository .claude configuration
+  - **.mcp.json**: MCP server configuration with workspace-specific endpoints
+  - **Genie Agents**: Full access to specialized Genie agent ecosystem
+  - **TDD Integration**: Automatic TDD hooks and validation setup via settings.json
+- **MCP Server Integration**:
+  - **automagik-hive**: Pre-configured with workspace server URL (port 8886)
+  - **postgres**: Pre-configured with workspace PostgreSQL URL (port 5532)
+  - **automagik-forge**: Task and project management server
+  - **External Tools**: search-repo-docs, ask-repo-agent, send_whatsapp_message
+  - **Cursor Integration**: Automatic detection and installation for Cursor IDE
+  - **Claude Code Integration**: Native MCP support through .mcp.json
+- **MCP Auto-Installation**:
+  - **Cursor Detection**: Check for Cursor installation, auto-configure MCP servers
+  - **Claude Code Native**: .mcp.json automatically recognized
+  - **Manual Fallback**: Print complete .mcp.json configuration for manual setup
+  - **Server URLs**: Dynamically generate URLs based on workspace configuration
+- **Claude Code Integration**:
+  - **Agents**: Complete Genie agent ecosystem (genie-dev-*, genie-quality-*, etc.)
+  - **Settings**: TDD hooks, tool configurations, development workflows
+  - **Commands**: Custom slash commands for enhanced development
+  - **Scripts**: Utility scripts and validators for quality assurance
+- **Complexity**: High - filesystem operations + template processing + credential generation + folder copying + MCP configuration
+- **Current State**: No workspace management exists, `.env.example`, `.claude/`, and `.mcp.json` available in repository
+- **Creates**: `cli/application/workspace_service.py` with path operations + template generation + folder copying + MCP setup
+- **Integration Points**:
+  - `.env.example` template from automagik-hive package
+  - `.claude/` folder from automagik-hive package (complete copy)
+  - `.mcp.json` template from automagik-hive package
+  - T1.7 credential generation system
+  - Template processing for placeholder replacement
+  - MCP server configuration generation
+- **Challenge**: Cross-platform path handling, permission management, template processing, recursive folder copying, MCP integration
+- **Success**: Reliable workspace creation + automatic .env generation + complete .claude integration + MCP server setup
 
-### **T2.2: Simple Agent System (REVISED)**
+### **T2.2: Interactive Workspace Initialization (--init)**
 - **Parallelization**: ❌ **DEPENDS ON T2.1**
 - **Dependencies**: T2.1 (workspace structure)
+- **What**: Interactive workspace initialization via `--init` with API key collection and workspace selection
+- **Why**: Excellent developer experience with guided setup and API key management
+- **Command Behavior**:
+  - **--init**: Interactive workspace creation with full configuration
+  - **./my-workspace**: Start existing workspace only (no creation)
+- **Interactive --init Flow**:
+  ```
+  uvx automagik-hive --init
+  
+  🧞 Welcome to Automagik Hive Interactive Setup!
+  
+  📁 Workspace Directory:
+  Enter workspace path [./my-workspace]: ./my-ai-project
+  
+  📁 Directory './my-ai-project' doesn't exist.
+  🎯 Create workspace directory? [Y/n]: Y
+  
+  🗄️ PostgreSQL + pgvector Database Setup:
+  Automagik Hive requires PostgreSQL with pgvector extension.
+  
+  🔍 Checking Docker installation...
+  ❌ Docker not found.
+  
+  💡 We can install Docker for you, or you can provide external PostgreSQL credentials.
+  
+  Choose database setup:
+  1) Install Docker + built-in PostgreSQL (recommended) 
+  2) Use external PostgreSQL server
+  
+  Selection [1]: 1
+  
+  🐳 Installing Docker...
+  [Detecting Linux/macOS/Windows...]
+  ✅ Docker installed successfully!
+  ✅ Docker daemon started
+  ✅ Pulling agnohq/pgvector:16 image...
+  
+  🔑 API Key Configuration:
+  These are optional but recommended for full functionality.
+  Leave empty to skip (you can add them later).
+  
+  🤖 OpenAI API Key: sk-...
+  🧠 Anthropic API Key: sk-ant-...
+  💎 Google Gemini API Key: AIza...
+  
+  📋 Setup Summary:
+  - Workspace: ./my-ai-project
+  - Database: Built-in Docker PostgreSQL + pgvector
+  - Templates: .env, .claude/, .mcp.json
+  - API Keys: 3 configured
+  
+  🎯 Create Automagik Hive workspace? [Y/n]: Y
+  
+  🚀 Creating workspace...
+  ✅ Generated secure PostgreSQL credentials
+  ✅ Started PostgreSQL container (port 5532)
+  ✅ Created .env with API keys + database URL
+  ✅ Copied .claude/ agent ecosystem
+  ✅ Generated .mcp.json configuration
+  ✅ Created Docker configurations
+  
+  🎉 Workspace ready! Next steps:
+  cd ./my-ai-project
+  uvx automagik-hive ./my-ai-project
+  
+  # Alternative flow for external PostgreSQL:
+  🗄️ External PostgreSQL Configuration:
+  PostgreSQL Host [localhost]: 
+  PostgreSQL Port [5432]: 
+  PostgreSQL Database [hive]: 
+  PostgreSQL User: myuser
+  PostgreSQL Password: ****
+  
+  🔍 Testing connection...
+  ✅ Connected to PostgreSQL
+  ⚠️  pgvector extension not found - attempting to install...
+  ✅ pgvector extension installed
+  ```
+- **Startup Command Behavior (./path)**:
+  ```
+  uvx automagik-hive ./my-workspace
+  
+  # If workspace exists and initialized:
+  🚀 Starting Automagik Hive workspace...
+  
+  # If directory doesn't exist:
+  ❌ Directory './my-workspace' not found.
+  💡 Run 'uvx automagik-hive --init' to create a new workspace.
+  
+  # If directory exists but not initialized:
+  ❌ Directory './my-workspace' exists but not initialized.
+  💡 Run 'uvx automagik-hive --init' to initialize this workspace.
+  ```
+- **PostgreSQL + pgvector Database Setup**:
+  - **Built-in Docker (Recommended)**: Automatic Docker installation + agnohq/pgvector:16 container
+  - **External PostgreSQL**: Use existing PostgreSQL server with pgvector extension
+  - **Docker Auto-Installation**: Detect OS, install Docker if missing, start daemon
+  - **Connection Testing**: Validate external PostgreSQL credentials and pgvector extension
+  - **Credential Generation**: Secure random PostgreSQL user/password for Docker setup
+  - **Port Management**: Default port 5532 for Docker, configurable for external
+- **Docker Installation Flow**:
+  - **Detection**: Check if Docker is installed and daemon running
+  - **Auto-Install**: Offer to install Docker if missing (Linux/macOS/Windows/WSL)
+  - **UVX Compatible**: All Docker operations work within UVX environment
+  - **Image Pulling**: Pre-pull agnohq/pgvector:16 image during setup
+  - **Container Lifecycle**: Start/stop/health-check PostgreSQL container
+  - **Mimics make install**: Same patterns as existing Makefile Docker setup
+- **External PostgreSQL Flow**:
+  - **Connection Details**: Host, port, database, username, password
+  - **Connection Testing**: Validate credentials before proceeding
+  - **pgvector Extension**: Check for extension, attempt to install if missing
+  - **Fallback Options**: Clear guidance if pgvector installation fails
+- **API Key Collection**:
+  - **OpenAI API Key**: For GPT models (sk-...)
+  - **Anthropic API Key**: For Claude models (sk-ant-...)
+  - **Google Gemini API Key**: For Gemini models (AIza...)
+  - **No Validation**: Accept any value including empty strings
+  - **Optional Setup**: Users can skip keys and add later
+  - **Secure Storage**: Store in generated .env file
+- **Workspace Selection**:
+  - **Default Path**: ./my-workspace
+  - **Custom Path**: User can specify any directory
+  - **Path Validation**: Check write permissions, parent directory exists
+  - **Directory Creation**: Create directories as needed with user consent
+- **Detection Logic**:
+  - **Never Initialized**: No .env file exists
+  - **Partially Initialized**: .env exists, but missing .claude/ or .mcp.json
+  - **Fully Initialized**: All required files/folders exist (.env, .claude/, .mcp.json)
+  - **Graceful Handling**: Handle missing directories, permission issues, corrupted files
+- **DX Enhancements**:
+  - **Clear Guidance**: Step-by-step instructions with emojis
+  - **Progress Indicators**: Show initialization progress
+  - **Setup Summary**: Review before creation
+  - **Error Recovery**: Graceful handling of permission errors, disk space
+  - **Abort Safety**: Allow user to abort at any stage without corruption
+  - **Next Steps**: Clear instructions after completion
+- **Integration Points**:
+  - **T1.5 Docker Management**: Use Docker installation and container management 
+  - **T1.6 PostgreSQL Container**: Use container management for built-in PostgreSQL
+  - **T1.7 Credentials**: Use credential generation + user API keys + PostgreSQL credentials
+  - **T2.1 Templates**: Call T2.1 workspace creation after collecting all user input
+  - **Command Routing**: Separate --init and ./path behaviors
+  - **Make Integration**: Replicate `make install` Docker setup patterns
+- **Database Requirements**:
+  - **Only PostgreSQL**: No SQLite fallback - PostgreSQL + pgvector required
+  - **pgvector Extension**: Essential for AI embeddings and vector operations
+  - **Container Image**: agnohq/pgvector:16 (same as existing setup)
+  - **Port Configuration**: Default 5532 for workspace, 48886 for Genie, 35532 for Agent
+- **UVX Compatibility**:
+  - **Docker in UVX**: All Docker operations must work within UVX environment
+  - **Subprocess Management**: Handle Docker daemon, container lifecycle from within UVX
+  - **Environment Isolation**: Ensure Docker operations don't interfere with UVX package isolation
+  - **Cross-Platform**: Docker installation works on Linux/macOS/Windows/WSL from UVX
+- **Complexity**: Very High - user interaction + Docker installation + PostgreSQL setup + API key management + UVX compatibility
+- **Current State**: No interactive initialization exists - direct file creation, no Docker integration
+- **Creates**: `cli/application/interactive_initializer.py` with guided setup flow + Docker management
+- **Challenge**: Cross-platform Docker installation from UVX, PostgreSQL setup, graceful error handling, clear UX messaging
+- **Success**: Excellent developer experience with guided setup, automatic Docker installation, and PostgreSQL + pgvector ready
+
+### **T2.3: Simple Agent System (REVISED)**
+- **Parallelization**: ❌ **DEPENDS ON T2.2**
+- **Dependencies**: T2.2 (workspace initialization)
 - **What**: Simple YAML-based agent configuration (NO inheritance system)
 - **Why**: Enable basic AI assistance
 - **Expert Revision**: Abandoned complex .claude inheritance, use simple YAML
@@ -475,9 +723,9 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Challenge**: Simple agent loading without inheritance complexity
 - **Success**: Basic agent configuration working without inheritance complexity
 
-### **T2.3: Configuration Management**
-- **Parallelization**: ❌ **DEPENDS ON T2.1, T2.2**
-- **Dependencies**: T2.1, T2.2 (workspace and agents)
+### **T2.4: Configuration Management**
+- **Parallelization**: ❌ **DEPENDS ON T2.2, T2.3**
+- **Dependencies**: T2.2 (workspace initialization), T2.3 (agent system)
 - **What**: Manage workspace configuration simply
 - **Why**: Consistent environment setup
 - **Expert Focus**: Explicit configuration over "magical" discovery
