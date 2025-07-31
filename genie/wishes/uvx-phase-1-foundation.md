@@ -27,7 +27,7 @@ uvx automagik-hive ./my-workspace
 │   ├── Wish fulfillment orchestration
 │   ├── Custom agent creation capabilities
 │   └── Optional --genie-serve command to start
-└── Agent Development Container (Port 35532) - Docker container
+└── Agent Development Container (Port 38886) - Docker container
     ├── PostgreSQL + FastAPI in single container
     ├── Complete isolated agent testing environment
     ├── Agent lifecycle management
