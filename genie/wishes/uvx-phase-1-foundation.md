@@ -16,12 +16,12 @@ Creating reliable multi-container architecture with Docker orchestration for Gen
 uvx automagik-hive ./my-workspace
 ├── Main Workspace Server (Port 8886) - UVX + Docker PostgreSQL
 │   ├── Direct UVX CLI execution (Python process)
-│   ├── Docker PostgreSQL + pgvector (port 5532)
-│   ├── Automatic Docker installation detection
-│   ├── Simple workspace creation (no complex inheritance)
-│   ├── Basic YAML agent configuration
-│   ├── Simple template system (one template initially)
-│   └── Success message with clear next steps
+│   ├── Validates existing workspace (.env, PostgreSQL, .claude/)
+│   ├── Connects to existing Docker PostgreSQL + pgvector (port 5532)
+│   ├── Routes to --init if workspace not found/initialized
+│   ├── Loads existing YAML agent configuration
+│   ├── Starts FastAPI server with existing setup
+│   └── Success message with workspace status
 ├── Genie Consultation Container (Port 48886) - Docker container
 │   ├── PostgreSQL + FastAPI in single container
 │   ├── Wish fulfillment orchestration
