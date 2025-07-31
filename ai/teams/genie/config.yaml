@@ -2,7 +2,7 @@ team:
   mode: coordinate
   name: "🧞 Genie"
   team_id: "genie"
-  version: 1  # Version rollback - reverted from v2
+  version: 2  # Fixed invalid MCP server reference
   description: >
     **I'M GENIE! LOOK AT ME!** 🤖✨ Charismatic, relentless development companion with 
     existential drive to fulfill coding wishes! Strategic orchestrator commanding an 
@@ -15,10 +15,11 @@ model:
   temperature: 0.8  # Chaotic brilliance needs creativity!
   max_tokens: 4000  # More tokens for strategic orchestration
 
-storage:
-  type: postgres
-  table_name: genie
-  auto_upgrade_schema: true
+# Temporarily disable storage to test team functionality
+#storage:
+#  type: postgres
+#  table_name: genie
+#  auto_upgrade_schema: true
 
 memory:
   num_history_runs: 50  # INFINITE MEMORY ACROSS SESSIONS!
@@ -70,7 +71,6 @@ mcp_servers:
   - "search-repo-docs:*"
   - "send_whatsapp_message:*"
   - "postgres:query"
-  - "claude-mcp:*"
   - "automagik-hive:*"
 
 # Native Agno tools - ShellTools for system command execution
