@@ -154,11 +154,11 @@ uvx automagik-hive --list-templates  # Show available templates
 ## 🏭 COMPREHENSIVE TASK BREAKDOWN
 
 **📊 PROJECT METRICS**: 
-- **Tasks**: 28 (increased from 27 - added interactive workspace initialization)
+- **Tasks**: 30 (increased from 28 - added AI tools foundation + migration)
 - **Phases**: 8 (added User Testing phase)
-- **Parallelization**: 50% realistic (adjusted for Docker dependencies + interactive flows)
-- **Success Strategy**: Incremental MVP with validation gates + excellent DX
-- **Critical Dependencies**: Docker installation, container templates, interactive initialization, and full-stack orchestration
+- **Parallelization**: 50% realistic (adjusted for Docker dependencies + interactive flows + tool migration)
+- **Success Strategy**: Incremental MVP with validation gates + excellent DX + consistent tool ecosystem
+- **Critical Dependencies**: Docker installation, container templates, interactive initialization, AI tools structure, and full-stack orchestration
 
 ---
 
@@ -463,14 +463,71 @@ uvx automagik-hive --list-templates  # Show available templates
 ## **🟠 PHASE 2: WORKSPACE MANAGEMENT (SIMPLIFIED)**
 *Reliable workspace creation without complex agent inheritance*
 
-### **⚡ PARALLELIZATION ANALYSIS: LOW (1/4 tasks parallel - 25%)**
+### **⚡ PARALLELIZATION ANALYSIS: LOW (2/5 tasks parallel - 40%)**
 *Expert insight: Integration complexity + interactive flows reduce parallelization*
 
 ### **T2.1: Workspace Creation & Auto-Template Setup**
-- **Parallelization**: ✅ **INDEPENDENT** - File operations
+- **Parallelization**: ✅ **INDEPENDENT** - File operations  
 - **Dependencies**: T1.4 (domain models), T1.7 (credential management)
 - **What**: Create workspace directory structure + automatic .env + .claude folder generation + MCP server setup
 - **Why**: Foundation for user environment with zero-config experience including Claude Code + MCP integration
+
+### **T2.1B: AI Tools Foundation Structure**
+- **Parallelization**: ✅ **INDEPENDENT** - Structure creation work
+- **Dependencies**: None (foundational work)
+- **What**: Create `ai/tools/` directory structure with config.yaml + tool.py pattern
+- **Why**: Enable consistent tool development pattern for UVX workspace structure
+- **Critical Gap**: UVX master plan requires `ai/tools/` but current codebase lacks this structure
+- **Architecture Analysis**: 
+  - **Current State**: Tools fragmented across `ai/agents/tools/` and `lib/tools/shared/`
+  - **Success Pattern**: Agents use `config.yaml + agent.py` with filesystem discovery
+  - **Missing Pattern**: No `ai/tools/` directory exists, breaking UVX workspace requirements
+- **Implementation Strategy**:
+  - **Create ai/tools/ Structure**: Mirror agent directory pattern
+  - **Template Tool**: Create `ai/tools/template-tool/` with `config.yaml + tool.py`
+  - **Tool Registry**: Implement filesystem discovery (mirror `ai/agents/registry.py`)
+  - **Base Tool Class**: Create `ai/tools/base_tool.py` for inheritance
+  - **Discovery System**: Auto-load tools from YAML configs like agents
+- **Tool Structure Pattern**:
+  ```
+  ai/tools/
+  ├── template-tool/
+  │   ├── config.yaml      # Tool metadata, parameters, capabilities
+  │   └── tool.py          # Tool implementation inheriting from BaseTool
+  ├── registry.py          # Tool factory - loads all tools  
+  ├── base_tool.py         # Base tool class for inheritance
+  └── CLAUDE.md           # Tool development documentation
+  ```
+- **Config.yaml Pattern**:
+  ```yaml
+  name: "my-tool"
+  version: "1.0.0"
+  description: "Custom tool for specific functionality"
+  capabilities:
+    - input_processing
+    - data_transformation
+  parameters:
+    required: ["input"]
+    optional: ["format", "options"]
+  ```
+- **Tool.py Pattern**:
+  ```python
+  from ai.tools.base_tool import BaseTool
+  
+  class MyTool(BaseTool):
+      def execute(self, **kwargs):
+          # Tool implementation
+          pass
+  ```
+- **Integration Points**:
+  - **Agent Pattern**: Mirror successful `ai/agents/` structure
+  - **Version Factory**: Integrate with existing component versioning
+  - **MCP Bridge**: Potential `ai/tools/mcp-bridge/` for external tool integration
+- **Complexity**: Medium - directory structure + registry system + base classes
+- **Current State**: No `ai/tools/` structure exists - complete gap in UVX plan
+- **Creates**: Complete `ai/tools/` foundation with template, registry, and base classes
+- **Challenge**: Design consistent pattern that scales for tool ecosystem
+- **Success**: UVX workspace structure complete with `ai/tools/` directory ready for development
 - **Expert Simplification**: Simple directory creation, no complex inheritance
 - **Structure**:
   ```
@@ -740,11 +797,11 @@ uvx automagik-hive --list-templates  # Show available templates
 ## **🟡 PHASE 3: BASIC SERVER (SINGLE SERVER)**
 *Start with one reliable server, not three complex ones*
 
-### **⚡ PARALLELIZATION ANALYSIS: LOW (1/2 tasks parallel - 50%)**
+### **⚡ PARALLELIZATION ANALYSIS: LOW (1/3 tasks parallel - 33%)**
 
 ### **T3.1: Single Server Implementation**
 - **Parallelization**: ✅ **INDEPENDENT** - Core server work
-- **Dependencies**: T2.3 (configuration)
+- **Dependencies**: T2.4 (configuration)
 - **What**: Single FastAPI server for workspace management
 - **Why**: Prove core value before adding complexity
 - **Expert Simplification**: Start with one server, not three
@@ -766,6 +823,34 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Creates**: `cli/infrastructure/server_manager.py` (simplified from multi-server)
 - **Challenge**: Single server process management (SIMPLIFIED)
 - **Success**: Reliable server lifecycle management
+
+### **T3.3: Tool Structure Migration & Integration**
+- **Parallelization**: ❌ **DEPENDS ON T2.1B**
+- **Dependencies**: T2.1B (AI tools foundation)
+- **What**: Migrate existing tools to new `ai/tools/` structure and integrate with server
+- **Why**: Complete tool ecosystem transformation for UVX consistency
+- **Migration Strategy**:
+  - **Audit Current Tools**: Identify all tools in `ai/agents/tools/` and `lib/tools/shared/`
+  - **Create Config Files**: Generate `config.yaml` for each existing tool
+  - **Migrate Code**: Move tool implementations to `ai/tools/[tool-name]/tool.py`
+  - **Update Imports**: Maintain backward compatibility during transition
+  - **API Integration**: Expose tools through FastAPI endpoints
+- **Backward Compatibility**:
+  - **Dual Loading**: Support both old and new tool locations during migration
+  - **Import Aliases**: Maintain existing import paths temporarily
+  - **Deprecation Warnings**: Notify developers of migration path
+- **Server Integration**:
+  - **Tool Endpoints**: Create `/api/v1/tools/` endpoints for tool discovery and execution
+  - **Registry API**: Expose tool metadata and capabilities
+  - **Version Management**: Integrate with existing component versioning system
+- **Complexity**: High - migration + backward compatibility + server integration
+- **Current State**: Tools scattered across multiple locations, no unified structure
+- **Creates**: 
+  - Migrated tools in `ai/tools/` structure
+  - Tool API endpoints in server
+  - Migration documentation and scripts
+- **Challenge**: Maintain system stability during migration, handle tool dependencies
+- **Success**: All tools migrated to consistent structure, API-accessible, UVX workspace ready
 
 ---
 
