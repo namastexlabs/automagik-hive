@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "genie-memory": {
-      "type": "sse",
-      "url": "http://localhost:8765/mcp/openmemory/sse/your-username"
-    },
     "automagik-forge": {
       "type": "sse",
       "url": "http://localhost:8889/sse"
@@ -16,33 +12,26 @@
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
     },
-    "wait": {
-      "command": "uvx",
-      "args": [
-        "automagik-tools@0.8.15",
-        "tool",
-        "wait"
-      ]
-    },
-    "genie-agents": {
-      "command": "uvx",
-      "args": [
-        "automagik-tools@0.8.15",
-        "tool",
-        "genie-agents"
-      ],
-      "env": {
-        "GENIE_AGENTS_API_BASE_URL": "http://localhost:9888",
-        "GENIE_AGENTS_TIMEOUT": "300"
-      }
-    },
     "postgres": {
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql+psycopg://user:password@localhost:5432/database"
+        "postgresql+psycopg://DB_USER:DB_PASSWORD@localhost:5532/hive"
       ]
+    },
+    "automagik-hive": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@0.8.17",
+        "tool",
+        "automagik-hive"
+      ],
+      "env": {
+        "HIVE_API_BASE_URL": "http://localhost:8886",
+        "HIVE_API_KEY": "YOUR_HIVE_API_KEY",
+        "HIVE_TIMEOUT": "300"
+      }
     }
   }
 }
