@@ -114,15 +114,19 @@ uvx automagik-hive --list-templates  # Show available templates
     └── docker-compose-agent.yml  # Agent container definition (existing)
 ```
 
-### **🔧 DYNAMIC TEMPLATE GENERATION STRATEGY**
-- **Main .env**: Auto-generated from .env.example template on `uvx automagik-hive ./my-workspace` IF not exists
-- **.claude/ folder**: Auto-copied from repository .claude folder on `uvx automagik-hive ./my-workspace` IF not exists
-- **.mcp.json**: Auto-generated from .mcp.json template on `uvx automagik-hive ./my-workspace` IF not exists
+### **🔧 COMMAND-SPECIFIC BEHAVIOR STRATEGY**
+
+#### **--init Command (Template Generation)**
+- **Main .env**: Auto-generated from .env.example template during interactive initialization
+- **.claude/ folder**: Auto-copied from repository .claude folder during interactive setup
+- **.mcp.json**: Auto-generated from .mcp.json template with workspace-specific URLs
+- **ai/ structure**: Auto-created with agents/, teams/, workflows/, tools/ directories
 - **Template Sources**: 
   - `.env.example` from automagik-hive package as environment template
   - `.claude/` folder from automagik-hive package as complete Claude Code integration
   - `.mcp.json` from automagik-hive package as MCP server configuration template
-- **Credential Processing**: Replace placeholder values (your-*-here) with generated secure credentials
+- **Credential Processing**: Replace placeholder values (your-*-here) with generated secure credentials + user API keys
+- **PostgreSQL Setup**: Either Docker container credentials OR external PostgreSQL connection
 - **MCP URL Processing**: Replace server URLs with workspace-specific endpoints (localhost:8886, localhost:5532)
 - **Container .env files**: Auto-generated from main .env with port adjustments:
   - `genie/.env`: Copy main .env + change ports to 48886
@@ -136,9 +140,32 @@ uvx automagik-hive --list-templates  # Show available templates
   - **Claude Code**: Native .mcp.json support
   - **Cursor**: Auto-detection and MCP server installation
   - **Manual Setup**: Print complete configuration for other IDEs
+- **Interactive Collection**: User provides workspace path, API keys, database choice
 - **Single Source**: Only maintain templates in package (no duplication)
-- **Zero-Config Experience**: User gets working environment + full Claude Code + MCP integration with single command
-- **Credential Inheritance**: All containers share credentials, different ports only
+
+#### **./workspace Command (Startup Only)**
+- **Dependency Check**: Verify all required components exist before starting
+- **Required Components**:
+  - `.env` file with valid database URL and credentials
+  - PostgreSQL database running and accessible
+  - `.claude/` folder (optional but recommended)
+  - `.mcp.json` file (optional but recommended)
+- **Startup Validation**:
+  - **Database Connection**: Test PostgreSQL connection with credentials from .env
+  - **Port Availability**: Check if ports 8886, 5532 are available
+  - **Docker Status**: If using Docker PostgreSQL, verify container is running
+  - **File Integrity**: Validate .env file format and required variables
+- **Failure Behaviors**:
+  - **Missing .env**: "❌ Workspace not initialized. Run 'uvx automagik-hive --init'"
+  - **Database Unreachable**: "❌ PostgreSQL connection failed. Check database status."
+  - **Missing Dependencies**: "⚠️ Optional components missing: .claude/, .mcp.json"
+- **Success Behavior**: 
+  - "🚀 Starting Automagik Hive workspace..."
+  - Start FastAPI server on port 8886
+  - Connect to PostgreSQL database
+  - Load agents, teams, workflows, tools
+- **No Template Generation**: Never creates files - only validates and starts
+- **Clear Guidance**: Always recommend --init when dependencies missing
 
 ### **🔄 CONTAINER COORDINATION**
 - **Main Workspace**: Direct UVX execution + Docker PostgreSQL (agnohq/pgvector:16)
@@ -163,122 +190,302 @@ uvx automagik-hive --list-templates  # Show available templates
 ---
 
 ## **🔴 PHASE 1: CLI FOUNDATION (MVP CORE)**
-*Prove core value: reliable one-command environment setup*
+*Build missing CLI foundation and leverage existing strengths*
 
-### **⚡ PARALLELIZATION ANALYSIS: MEDIUM (4/7 tasks parallel - 57%)**
+### **⚡ PARALLELIZATION ANALYSIS: MEDIUM (4/9 tasks parallel - 44%)**
+*Reduced parallelization due to sequential CLI foundation requirements*
 
-### **T1.1: Create CLI Module Structure**
-- **Parallelization**: ✅ **INDEPENDENT** - Core foundation work
-- **Dependencies**: None
-- **Blocks**: T1.3 (needs structure)
-- **What**: Build minimal CLI with typer, lazy loading for <500ms startup
-- **Why**: Prove `uvx automagik-hive` can work reliably
-- **Expert Insight**: Focus on reliability over features - "magic must be bulletproof"
-- **Simplified Scope**: Basic CLI help and argument parsing only
-- **Complexity**: Medium - requires optimization patterns for <500ms startup
-- **Current State**: No CLI exists - only FastAPI server entry point at `api/serve.py`
-- **Creates**: `cli/__init__.py`, `cli/main.py`, `cli/commands.py`, `cli/exceptions.py`
-- **Implementation Context**: Lazy-loaded entry point, typer integration, command stubs
-- **Challenge**: Optimize for <500ms startup with lazy loading patterns
-- **Success**: CLI shows help in <200ms, routes basic commands
+### **T1.0: CLI Foundation Architecture** 🆕
+- **Parallelization**: ✅ **INDEPENDENT** - Critical foundation work
+- **Dependencies**: None (must be first)
+- **Blocks**: ALL other Phase 1 tasks
+- **What**: Build complete CLI infrastructure from scratch with typer framework
+- **Why**: **CRITICAL GAP** - UVX plan assumes CLI exists, but codebase has ZERO CLI implementation
+- **Codebase Reality**: Only FastAPI server entry point at `api/serve.py` exists
+- **Foundation Requirements**:
+  - CLI module structure with lazy loading for <500ms startup
+  - Command routing framework with typer integration
+  - Error handling and user feedback system
+  - Configuration management for CLI operations
+  - Integration points with existing FastAPI server
+- **Architecture Pattern**:
+  ```
+  cli/
+  ├── __init__.py          # CLI package initialization
+  ├── main.py              # Entry point with lazy loading
+  ├── commands/            # Command modules
+  │   ├── __init__.py
+  │   ├── init.py          # --init command implementation
+  │   ├── workspace.py     # ./workspace command implementation
+  │   ├── genie.py         # --genie-* commands
+  │   └── agent.py         # --agent-* commands
+  ├── core/                # Core CLI infrastructure
+  │   ├── __init__.py
+  │   ├── config.py        # CLI configuration management
+  │   ├── exceptions.py    # CLI-specific exceptions
+  │   └── utils.py         # CLI utilities
+  └── domain/              # Business logic (to be populated by T1.4)
+  ```
+- **Integration Strategy**: Design CLI to coordinate existing FastAPI server, not replace it
+- **Complexity**: High - building complete CLI from zero, must integrate with existing system
+- **Current State**: **COMPLETE GAP** - no CLI infrastructure exists
+- **Creates**: Complete CLI foundation ready for command implementation
+- **Challenge**: Build reliable CLI that integrates with existing FastAPI architecture
+- **Success**: Working CLI framework ready for command implementation in subsequent tasks
 
-### **T1.2: Update Package Entry Point**
+### **T1.1: AI Tools Directory Structure** 🔄
+- **Parallelization**: ✅ **INDEPENDENT** - Can run parallel with T1.0
+- **Dependencies**: None (foundational structure work)
+- **What**: Create missing `ai/tools/` structure required by UVX workspace generation
+- **Why**: **CRITICAL GAP** - UVX plan requires `ai/tools/` but it doesn't exist in codebase
+- **Codebase Reality**: Tools scattered across `ai/agents/tools/` and `lib/tools/shared/` - no unified structure
+- **Structure Requirements**:
+  ```
+  ai/tools/
+  ├── template-tool/           # Template for new tools
+  │   ├── config.yaml         # Tool metadata and configuration
+  │   └── tool.py             # Tool implementation
+  ├── registry.py             # Tool discovery and loading system
+  ├── base_tool.py           # Base class for all tools
+  └── CLAUDE.md              # Tool development documentation
+  ```
+- **Pattern Alignment**: Mirror successful `ai/agents/` pattern (config.yaml + .py file)
+- **Registry System**: Filesystem discovery like agents registry
+- **Integration Points**: Prepare for workspace template generation in Phase 2
+- **Complexity**: Medium - directory structure + registry + base classes
+- **Current State**: **MISSING ENTIRELY** - breaks UVX workspace structure
+- **Creates**: Complete `ai/tools/` foundation ready for tool development
+- **Challenge**: Design scalable pattern consistent with existing agent architecture
+- **Success**: UVX workspace structure will work as designed
+
+### **T1.2: Credential Management Integration** 🔄
+- **Parallelization**: ✅ **INDEPENDENT** - Leverage existing excellence
+- **Dependencies**: None (existing system integration)
+- **What**: Integrate existing Makefile credential generation with CLI system
+- **Why**: **LEVERAGE STRENGTH** - Excellent credential system already exists, just needs CLI integration
+- **Existing Foundation**: 
+  - `generate_postgres_credentials` function in Makefile
+  - `generate_hive_api_key` function in Makefile  
+  - `lib.auth.cli.regenerate_key` integration
+  - Secure random generation patterns
+- **CLI Integration Strategy**:
+  - Extract credential generation logic to Python modules
+  - Create CLI-compatible credential management service
+  - Maintain compatibility with existing make commands
+  - Support both Docker and external PostgreSQL setups
+- **Credential Types**:
+  - **PostgreSQL**: Random secure user/password generation
+  - **Hive API Key**: Secure token generation with hive_ prefix
+  - **Database URLs**: Complete connection string construction
+  - **Environment Files**: .env creation and management
+- **Security Requirements**:
+  - Cryptographically secure random generation
+  - No hardcoded credentials
+  - Proper file permissions on credential files
+  - Credential validation and format checking
+- **Complexity**: Medium - integration work, security patterns already proven
+- **Current State**: **EXCELLENT FOUNDATION** - complete system exists in Makefile
+- **Creates**: CLI-compatible credential management leveraging existing patterns
+- **Challenge**: Extract Makefile logic to Python while maintaining security
+- **Success**: CLI can generate secure credentials using proven patterns
+
+### **T1.3: PostgreSQL Container Management** 🔄  
+- **Parallelization**: ✅ **INDEPENDENT** - Build on existing Docker expertise
+- **Dependencies**: T1.2 (credential management)
+- **What**: Integrate existing Docker PostgreSQL patterns with CLI system
+- **Why**: **LEVERAGE STRENGTH** - Excellent Docker PostgreSQL foundation already exists
+- **Existing Foundation**:
+  - Complete `docker-compose.yml` with agnohq/pgvector:16
+  - `setup_docker_postgres` functionality in Makefile
+  - Cross-platform UID/GID handling
+  - Health check and validation patterns
+- **Container Requirements**:
+  - **Image**: agnohq/pgvector:16 (same as existing setup)
+  - **Port**: 5532 (external) → 5432 (container)
+  - **Database**: hive (same as existing setup)
+  - **Extensions**: pgvector for AI embeddings
+  - **Persistence**: ./data/postgres volume mounting
+  - **User/Group**: Cross-platform UID/GID handling
+- **CLI Integration**:
+  - Container lifecycle management through CLI commands
+  - Health checking and status reporting
+  - Integration with credential management (T1.2)
+  - Volume and network management
+- **Make Integration**: Replicate `setup_docker_postgres` functionality in CLI
+- **Complexity**: Medium - integration work, patterns already proven
+- **Current State**: **EXCELLENT FOUNDATION** - Docker compose exists, needs CLI integration
+- **Creates**: CLI-managed PostgreSQL container using existing proven patterns
+- **Challenge**: Integrate existing Docker expertise with new CLI system
+- **Success**: PostgreSQL container running with pgvector, CLI-managed, workspace ready
+
+### **T1.4: Package Entry Point Configuration** 🔄
 - **Parallelization**: ✅ **INDEPENDENT** - Simple config change
-- **Dependencies**: None
-- **What**: Add `automagik-hive = "cli:main"` to pyproject.toml
-- **Why**: Enable UVX installation
-- **Expert Insight**: Keep backward compatibility with existing `hive` entry
-- **Complexity**: Low - configuration change with backward compatibility
-- **Current State**: `pyproject.toml` has `hive = "api.serve:main"` under `[project.scripts]`
-- **Modifies**: Add new entry point while keeping existing for compatibility
-- **Challenge**: Maintain backward compatibility for existing users
-- **Success**: `uvx automagik-hive --help` works
+- **Dependencies**: T1.0 (CLI foundation)
+- **What**: Add CLI entry point to pyproject.toml with backward compatibility
+- **Why**: Enable UVX installation while maintaining existing functionality
+- **Configuration Strategy**:
+  - Add `automagik-hive = "cli.main:app"` to pyproject.toml
+  - Keep existing `hive = "api.serve:main"` for backward compatibility
+  - Ensure CLI entry point references T1.0 CLI foundation
+- **Backward Compatibility**: Existing users can still use `hive` command
+- **Integration**: Entry point must reference CLI foundation from T1.0
+- **Complexity**: Low - configuration change with dependency on T1.0
+- **Current State**: `pyproject.toml` ready, needs CLI integration
+- **Creates**: UVX-compatible entry point with backward compatibility
+- **Challenge**: Ensure entry point works with CLI foundation
+- **Success**: `uvx automagik-hive --help` works, existing `hive` command still works
 
-### **T1.3: Complete Command Parsing System**
-- **Parallelization**: ❌ **DEPENDS ON T1.1**
-- **Dependencies**: T1.1 (CLI structure)
-- **What**: Parse ALL UVX commands - workspace startup, interactive init, containers, templates
-- **Why**: Complete viral UVX experience with multi-container orchestration + excellent DX
-- **Complete Command Implementation**:
+### **T1.5: Core Command Implementation** 🔄
+- **Parallelization**: ❌ **DEPENDS ON T1.0, T1.4**
+- **Dependencies**: T1.0 (CLI foundation), T1.4 (entry point)
+- **What**: Implement core commands using CLI foundation - **SIMPLIFIED SCOPE**
+- **Why**: **SCOPE REDUCTION** - Focus on essential commands first, not all 15+ commands
+- **Simplified Command Set** (Phase 1 MVP):
+  ```bash
+  # CORE COMMANDS ONLY (Phase 1)
+  uvx automagik-hive --init            # Interactive workspace initialization
+  uvx automagik-hive ./my-workspace    # Start existing workspace
+  uvx automagik-hive --help            # Show help
+  uvx automagik-hive --version         # Show version
+  ```
+- **Future Commands** (Phase 2+):
+  - Genie container commands (--genie-*)
+  - Agent development commands (--agent-*)
+  - Template commands (--list-templates)
+- **Implementation Strategy**:
+  - Use CLI foundation from T1.0
+  - Route --init to interactive initialization logic
+  - Route ./workspace to workspace startup with validation
+  - Integration with credential management (T1.2)
+  - Integration with PostgreSQL management (T1.3)
+- **Command Routing**: Direct integration with existing FastAPI server
+- **Complexity**: Medium → High (reduced scope but still significant integration work)
+- **Current State**: No command implementation exists
+- **Creates**: Working core commands using CLI foundation
+- **Challenge**: Integrate CLI with existing FastAPI server architecture
+- **Success**: Core UVX workflow works - init and startup commands functional
 
-  **WORKSPACE COMMANDS (Direct execution)**:
-  - `uvx automagik-hive ./my-workspace` - Start existing workspace server (8886) + PostgreSQL (5532)
-  - `uvx automagik-hive --init` - Interactive workspace initialization with API key collection
-  - `uvx automagik-hive --help` - Show complete command help
-  - `uvx automagik-hive --version` - Show version information
-
-  **GENIE CONTAINER COMMANDS (Docker 48886)**:
-  - `uvx automagik-hive --genie-serve` - Start Genie consultation container
-  - `uvx automagik-hive --genie-logs` - Stream Genie container logs
-  - `uvx automagik-hive --genie-status` - Check Genie container health
-  - `uvx automagik-hive --genie-stop` - Stop Genie container
-  - `uvx automagik-hive --genie-restart` - Restart Genie container
-
-  **AGENT DEVELOPMENT COMMANDS (Docker 35532)**:
-  - `uvx automagik-hive --agent-install` - Create agent dev environment from scratch
-  - `uvx automagik-hive --agent-serve` - Start agent development container
-  - `uvx automagik-hive --agent-logs` - Stream agent container logs
-  - `uvx automagik-hive --agent-status` - Check agent container health
-  - `uvx automagik-hive --agent-stop` - Stop agent development container
-  - `uvx automagik-hive --agent-restart` - Restart agent development container
-  - `uvx automagik-hive --agent-reset` - Destroy and recreate agent environment
-
-  **TEMPLATE COMMANDS (Future)**:
-  - `uvx automagik-hive --list-templates` - Show available templates
-
-- **Complexity**: Very High - 15+ commands with Docker container orchestration
-- **Current State**: No CLI commands exist - must implement complete command structure
-- **Docker Integration**: Commands must trigger Docker containers using existing patterns
-- **Container Patterns**: Reuse existing `docker-compose-agent.yml` patterns for both containers
-- **Integration Context**: 
-  - Main server: Direct FastAPI coordination with existing `api/serve.py`
-  - Genie container: PostgreSQL + FastAPI container (port 48886)
-  - Agent container: PostgreSQL + FastAPI container (port 35532)
-- **Command Routing Strategy**:
-  - Workspace commands → Direct server start
-  - Genie commands → Docker container management
-  - Agent commands → Docker container management
-  - Template commands → File generation + workspace creation
-- **Challenge**: Complex argument patterns, Docker orchestration, container lifecycle management
-- **Success**: All command signatures parse correctly, route to appropriate handlers (direct/container)
-
-### **T1.4: Multi-Container Domain Models**
-- **Parallelization**: ✅ **INDEPENDENT** - Design work
-- **Dependencies**: None
-- **What**: Domain entities for multi-container architecture - workspace, Genie container, agent container
-- **Why**: Clean separation for testability and container orchestration
-- **Multi-Container Architecture**: Three distinct execution contexts
-  - **Workspace Server**: Direct UVX execution (port 8886)
-  - **Genie Container**: Docker PostgreSQL + FastAPI (port 48886)
-  - **Agent Container**: Docker PostgreSQL + FastAPI (port 35532)
-- **Domain Model Requirements**:
-  - `WorkspaceServer` - Direct server management
-  - `GenieContainer` - Docker container lifecycle (start/stop/logs/status/restart)
-  - `AgentContainer` - Docker container lifecycle + install/reset operations
-  - `CommandRouter` - Route commands to appropriate execution context
-  - `ContainerManager` - Generic Docker container operations
-- **Complexity**: High - multi-container orchestration with Docker integration
-- **Current State**: No domain models exist - business logic coupled to FastAPI server
-- **Server Context**: Multi-container coordination
-  - Main workspace server (8886) - direct execution
-  - Genie consultation container (48886) - Docker orchestration
-  - Agent development container (35532) - Docker orchestration
-- **Creates**: 
-  - `cli/domain/workspace.py` - Workspace server entity
-  - `cli/domain/genie_container.py` - Genie container entity
-  - `cli/domain/agent_container.py` - Agent container entity
-  - `cli/domain/container_manager.py` - Generic container operations
-  - `cli/domain/command_router.py` - Command routing logic
+### **T1.6: Docker Installation & Environment Validation** 🔄
+- **Parallelization**: ✅ **INDEPENDENT** - Cross-platform infrastructure work
+- **Dependencies**: None (foundational infrastructure)
+- **What**: Cross-platform Docker installation and environment validation system
+- **Why**: Enable seamless Docker setup for any user across all platforms
+- **Docker Requirements**: Critical for PostgreSQL + pgvector containers
+- **Validation & Installation Scope**:
+  - **Python 3.12+** validation
+  - **UVX environment** detection and compatibility
+  - **Docker availability** detection
+  - **Docker auto-installation** if not available
+  - **Docker daemon** health check
+  - **PostgreSQL image** pre-pulling (agnohq/pgvector:16)
+  - **Cross-platform** Docker installation (Linux, macOS, Windows/WSL)
+- **Docker Installation Strategy**:
+  - **Linux**: Detect distro, use appropriate package manager (apt, yum, dnf, pacman)
+  - **macOS**: Offer Docker Desktop download/installation
+  - **Windows/WSL**: Detect WSL2, guide Docker Desktop setup
+  - **Permission handling**: Docker group membership, sudo requirements
+- **UVX Compatibility**: All Docker operations must work within UVX environment
 - **Integration Points**: 
-  - Existing `lib/config/server_config.py` for port management
-  - Existing `docker-compose-agent.yml` patterns for containers
-  - Docker API for container lifecycle management
-- **Container Operations**:
-  - **Genie**: serve, logs, status, stop, restart
-  - **Agent**: install, serve, logs, status, stop, restart, reset
-  - **Workspace**: direct server start (no container)
-- **Challenge**: Design entities that coordinate multiple execution contexts (direct + containers)
-- **Success**: Domain models support all command routing and container orchestration
+  - Existing `check_docker` function from Makefile
+  - Cross-platform compatibility patterns
+  - Integration with T1.3 PostgreSQL management
+- **Complexity**: Very High - cross-platform Docker installation automation from UVX
+- **Current State**: Partial patterns exist in Makefile, need UVX integration
+- **Creates**: Complete Docker installation and validation system
+- **Challenge**: Automated Docker installation across all platforms from within UVX
+- **Success**: Complete environment ready - Python, UVX, Docker, pgvector image pulled
+
+### **T1.7: Container Strategy Decision** 🆕
+- **Parallelization**: ❌ **DEPENDS ON T1.6** - Architecture decision needed
+- **Dependencies**: T1.6 (Docker foundation)
+- **What**: Make architectural decision on container strategy for UVX system
+- **Why**: **CRITICAL DECISION** - Current codebase uses single service, UVX plan assumes multi-container
+- **Architecture Options**:
+  
+  **Option A: Single Service Evolution (Recommended)**
+  - **Current Pattern**: FastAPI server + separate PostgreSQL container
+  - **UVX Evolution**: CLI coordinates existing FastAPI + PostgreSQL
+  - **Pros**: Leverages existing architecture, faster Phase 1 delivery
+  - **Cons**: Less separation between Genie/Agent/Workspace contexts
+  
+  **Option B: Multi-Container Architecture (UVX Plan)**
+  - **UVX Pattern**: 3 separate containers (Workspace + Genie + Agent)
+  - **Pros**: Clean separation, matches UVX plan exactly
+  - **Cons**: Complex orchestration, significant architecture change
+
+- **Decision Factors**:
+  - **Phase 1 Speed**: Option A enables faster MVP delivery
+  - **Long-term Vision**: Option B matches UVX architectural vision
+  - **Complexity**: Option A leverages existing strengths
+  - **Resource Requirements**: Option B requires container orchestration expertise
+- **Recommendation**: Start with Option A, evolve to Option B in later phases
+- **Impact on Subsequent Tasks**: Decision affects T1.8, T1.9, and Phase 2+ complexity
+- **Complexity**: Low - decision task, but high impact on system architecture  
+- **Current State**: Architecture mismatch between current (single) and UVX plan (multi)
+- **Creates**: Clear architectural direction for container strategy
+- **Challenge**: Balance MVP speed vs long-term architectural vision
+- **Success**: Clear container strategy chosen, subsequent tasks aligned
+
+### **T1.8: Domain Models for Chosen Architecture** 🔄
+- **Parallelization**: ❌ **DEPENDS ON T1.7** - Architecture-dependent design
+- **Dependencies**: T1.7 (container strategy decision)
+- **What**: Design domain entities based on chosen container architecture
+- **Why**: Clean separation for testability and system coordination
+- **Domain Model Strategy** (depends on T1.7 decision):
+  
+  **If Single Service (Option A)**:
+  - `WorkspaceManager` - Coordinates CLI with existing FastAPI server
+  - `ServiceController` - Start/stop/status for unified service
+  - `DatabaseManager` - PostgreSQL container lifecycle
+  - `CommandRouter` - Route CLI commands to service operations
+  
+  **If Multi-Container (Option B)**:
+  - `WorkspaceServer` - Direct server management (port 8886)
+  - `GenieContainer` - Docker container lifecycle (port 48886)
+  - `AgentContainer` - Docker container lifecycle (port 35532)
+  - `ContainerManager` - Generic Docker container operations
+  - `CommandRouter` - Route commands to appropriate execution context
+
+- **Integration Points**: 
+  - Existing `lib/config/server_config.py` for configuration
+  - Existing FastAPI server architecture
+  - Docker management from T1.6
+- **Complexity**: Medium - design work based on architectural decision
+- **Current State**: No domain models exist, depends on T1.7 decision
+- **Creates**: Domain models aligned with chosen container strategy
+- **Challenge**: Design flexible entities that support chosen architecture
+- **Success**: Domain models ready for command implementation
+
+### **T1.9: Advanced Container Features** 🔄
+- **Parallelization**: ❌ **DEPENDS ON T1.7, T1.8** - Complex container work
+- **Dependencies**: T1.7 (container strategy), T1.8 (domain models)
+- **What**: Implement advanced container features based on chosen strategy
+- **Why**: Complete container orchestration for chosen architecture
+- **Implementation Strategy** (depends on T1.7 decision):
+  
+  **If Single Service (Option A)**:
+  - Enhanced service lifecycle management
+  - Advanced health checking and monitoring
+  - Graceful startup/shutdown sequences
+  - Service dependency management
+  
+  **If Multi-Container (Option B)**:
+  - **Genie All-in-One Container**: PostgreSQL + FastAPI (port 48886)
+  - **Agent All-in-One Container**: PostgreSQL + FastAPI (port 35532)
+  - Multi-container orchestration and coordination
+  - Inter-container communication and networking
+  - Advanced container health checking
+
+- **Container Requirements** (if Option B):
+  - **Multi-stage builds**: Combine PostgreSQL + FastAPI in single containers
+  - **Process management**: Supervisord for multi-process containers
+  - **Health checks**: Both PostgreSQL and API endpoint validation
+  - **Volume persistence**: Data persistence across container restarts
+- **Complexity**: Very High - advanced container orchestration
+- **Current State**: No advanced container features exist
+- **Creates**: Complete container system based on chosen architecture
+- **Challenge**: Implement complex orchestration while maintaining reliability
+- **Success**: Advanced container features working reliably for chosen strategy
 
 ### **T1.5: Docker Installation & Container Template Creation**
 - **Parallelization**: ✅ **INDEPENDENT** - Utility work
