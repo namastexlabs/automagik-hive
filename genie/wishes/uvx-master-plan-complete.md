@@ -181,19 +181,26 @@ uvx automagik-hive --list-templates  # Show available templates
 ## 🏭 COMPREHENSIVE TASK BREAKDOWN
 
 **📊 PROJECT METRICS**: 
-- **Tasks**: 30 (increased from 28 - added AI tools foundation + migration)
+- **Tasks**: 30 (unified Phase 1 with corrected task numbering)
 - **Phases**: 8 (added User Testing phase)
-- **Parallelization**: 50% realistic (adjusted for Docker dependencies + interactive flows + tool migration)
-- **Success Strategy**: Incremental MVP with validation gates + excellent DX + consistent tool ecosystem
-- **Critical Dependencies**: Docker installation, container templates, interactive initialization, AI tools structure, and full-stack orchestration
+- **Parallelization**: 50% realistic (adjusted for unified container architecture + credential migration)
+- **Success Strategy**: Incremental MVP with validation gates + excellent DX + unified container ecosystem
+- **Critical Dependencies**: CLI foundation, unified container architecture, credential migration to Python, AI tools structure
 
 ---
 
-## **🔴 PHASE 1: CLI FOUNDATION (MVP CORE)**
-*Build missing CLI foundation and leverage existing strengths*
+## **🔴 PHASE 1: CLI FOUNDATION & UNIFIED ARCHITECTURE (MVP CORE)**
+*Build missing CLI foundation with unified 3-container architecture*
 
-### **⚡ PARALLELIZATION ANALYSIS: MEDIUM (4/9 tasks parallel - 44%)**
-*Reduced parallelization due to sequential CLI foundation requirements*
+### **⚡ PARALLELIZATION ANALYSIS: MEDIUM (5/10 tasks parallel - 50%)**
+*Unified approach: main PostgreSQL + Genie all-in-one + Agent all-in-one containers*
+
+**📊 UNIFIED PHASE 1 METRICS:**
+- **Total Tasks**: 10 (unified and corrected from duplicate sequences)
+- **Container Architecture**: 3-container unified approach (main PostgreSQL + Genie unified + Agent unified)
+- **Parallel Tasks**: T1.0, T1.1, T1.2, T1.3, T1.5 (5 tasks can run independently)
+- **Sequential Dependencies**: T1.4→T1.6→T1.7→T1.8/T1.9 (linear dependency chain)
+- **Critical Path**: CLI Foundation → Core Commands → Domain Models → Container Implementations
 
 ### **T1.0: CLI Foundation Architecture** 🆕
 - **Parallelization**: ✅ **INDEPENDENT** - Critical foundation work
@@ -258,21 +265,22 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Challenge**: Design scalable pattern consistent with existing agent architecture
 - **Success**: UVX workspace structure will work as designed
 
-### **T1.2: Credential Management Integration** 🔄
-- **Parallelization**: ✅ **INDEPENDENT** - Leverage existing excellence
-- **Dependencies**: None (existing system integration)
-- **What**: Integrate existing Makefile credential generation with CLI system
-- **Why**: **LEVERAGE STRENGTH** - Excellent credential system already exists, just needs CLI integration
-- **Existing Foundation**: 
-  - `generate_postgres_credentials` function in Makefile
-  - `generate_hive_api_key` function in Makefile  
-  - `lib.auth.cli.regenerate_key` integration
-  - Secure random generation patterns
-- **CLI Integration Strategy**:
-  - Extract credential generation logic to Python modules
+### **T1.2: Credential Management Migration & Integration** 🔄
+- **Parallelization**: ✅ **INDEPENDENT** - Migration + CLI integration work
+- **Dependencies**: None (foundational migration work)
+- **What**: **MIGRATE** Makefile credential functions to Python codebase + CLI integration
+- **Why**: **MODERNIZE & UNIFY** - Move credential generation from Makefile to Python for better CLI integration
+- **Migration Requirements**: 
+  - **MIGRATE** `generate_postgres_credentials` from Makefile to Python
+  - **MIGRATE** `generate_hive_api_key` from Makefile to Python  
+  - **INTEGRATE** with existing `lib.auth.cli.regenerate_key` 
+  - **PRESERVE** secure random generation patterns
+- **Python Integration Strategy**:
+  - Create `lib/credentials/` module for all credential operations
+  - Extract credential generation logic from Makefile to Python modules
   - Create CLI-compatible credential management service
-  - Maintain compatibility with existing make commands
-  - Support both Docker and external PostgreSQL setups
+  - Maintain backward compatibility with existing make commands during transition
+  - Support unified container architecture (main + Genie + Agent)
 - **Credential Types**:
   - **PostgreSQL**: Random secure user/password generation
   - **Hive API Key**: Secure token generation with hive_ prefix
@@ -289,17 +297,17 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Challenge**: Extract Makefile logic to Python while maintaining security
 - **Success**: CLI can generate secure credentials using proven patterns
 
-### **T1.3: PostgreSQL Container Management** 🔄  
+### **T1.3: Main Application PostgreSQL Container** 🔄  
 - **Parallelization**: ✅ **INDEPENDENT** - Build on existing Docker expertise
 - **Dependencies**: T1.2 (credential management)
-- **What**: Integrate existing Docker PostgreSQL patterns with CLI system
-- **Why**: **LEVERAGE STRENGTH** - Excellent Docker PostgreSQL foundation already exists
-- **Existing Foundation**:
-  - Complete `docker-compose.yml` with agnohq/pgvector:16
-  - `setup_docker_postgres` functionality in Makefile
-  - Cross-platform UID/GID handling
-  - Health check and validation patterns
-- **Container Requirements**:
+- **What**: **MAIN APPLICATION ONLY** PostgreSQL container (like `make install`)
+- **Why**: **UNIFIED ARCHITECTURE** - Single main PostgreSQL for workspace, separate unified containers for Genie/Agent
+- **Container Architecture**:
+  - **Main Application**: PostgreSQL container ONLY (like current `make install`)
+  - **Genie**: Will be unified PostgreSQL + FastAPI container (T1.8)
+  - **Agent**: Will be unified PostgreSQL + FastAPI container (T1.9)
+  - **Total**: 3 containers when all features used
+- **Main PostgreSQL Requirements**:
   - **Image**: agnohq/pgvector:16 (same as existing setup)
   - **Port**: 5532 (external) → 5432 (container)
   - **Database**: hive (same as existing setup)
@@ -307,16 +315,20 @@ uvx automagik-hive --list-templates  # Show available templates
   - **Persistence**: ./data/postgres volume mounting
   - **User/Group**: Cross-platform UID/GID handling
 - **CLI Integration**:
-  - Container lifecycle management through CLI commands
+  - Container lifecycle management for main PostgreSQL only
   - Health checking and status reporting
-  - Integration with credential management (T1.2)
+  - Integration with migrated credential management (T1.2)
   - Volume and network management
-- **Make Integration**: Replicate `setup_docker_postgres` functionality in CLI
+- **Existing Foundation Leverage**:
+  - Complete `docker-compose.yml` with agnohq/pgvector:16
+  - `setup_docker_postgres` functionality patterns
+  - Cross-platform UID/GID handling
+  - Health check and validation patterns
 - **Complexity**: Medium - integration work, patterns already proven
 - **Current State**: **EXCELLENT FOUNDATION** - Docker compose exists, needs CLI integration
-- **Creates**: CLI-managed PostgreSQL container using existing proven patterns
-- **Challenge**: Integrate existing Docker expertise with new CLI system
-- **Success**: PostgreSQL container running with pgvector, CLI-managed, workspace ready
+- **Creates**: CLI-managed main PostgreSQL container using existing proven patterns
+- **Challenge**: Integrate existing Docker expertise with new CLI system for main container only
+- **Success**: Main PostgreSQL container running with pgvector, CLI-managed, workspace ready
 
 ### **T1.4: Package Entry Point Configuration** 🔄
 - **Parallelization**: ✅ **INDEPENDENT** - Simple config change
@@ -335,9 +347,47 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Challenge**: Ensure entry point works with CLI foundation
 - **Success**: `uvx automagik-hive --help` works, existing `hive` command still works
 
-### **T1.5: Core Command Implementation** 🔄
-- **Parallelization**: ❌ **DEPENDS ON T1.0, T1.4**
-- **Dependencies**: T1.0 (CLI foundation), T1.4 (entry point)
+### **T1.5: Docker Installation & Container Template Creation** 🔄
+- **Parallelization**: ✅ **INDEPENDENT** - Infrastructure setup work
+- **Dependencies**: None (foundational infrastructure)
+- **What**: Cross-platform Docker installation + Genie/Agent container template creation
+- **Why**: **UNIFIED APPROACH** - Enable seamless Docker setup + create unified container templates
+- **Docker Installation & Validation**:
+  - **Python 3.12+** validation
+  - **UVX environment** detection and compatibility
+  - **Docker availability** detection
+  - **Docker auto-installation** if not available
+  - **Docker daemon** health check
+  - **PostgreSQL image** pre-pulling (agnohq/pgvector:16)
+  - **Cross-platform** Docker installation (Linux, macOS, Windows/WSL)
+- **Container Template Creation**:
+  - **Genie Template**: `docker-compose-genie.yml` - Unified PostgreSQL + FastAPI (port 48886)
+  - **Agent Template**: `docker-compose-agent.yml` - Unified PostgreSQL + FastAPI (port 35532) 
+  - **Template Patterns**: Based on existing `docker-compose.yml` production patterns
+  - **Container Architecture**: Single service with internal PostgreSQL + application per container
+  - **Port Strategy**: 
+    - Main workspace: PostgreSQL only (5532) + UVX CLI coordination
+    - Genie container: All-in-one unified (48886)
+    - Agent container: All-in-one unified (35532)
+- **Docker Installation Strategy**:
+  - **Linux**: Detect distro, use appropriate package manager (apt, yum, dnf, pacman)
+  - **macOS**: Offer Docker Desktop download/installation
+  - **Windows/WSL**: Detect WSL2, guide Docker Desktop setup
+  - **Permission handling**: Docker group membership, sudo requirements
+- **Template Integration**: 
+  - Use existing `docker-compose.yml` as template base
+  - Adapt health checks, networking, volumes for unified containers
+  - Maintain consistency with production patterns
+- **UVX Compatibility**: All Docker operations must work within UVX environment
+- **Complexity**: Very High - cross-platform Docker installation + unified container template creation
+- **Current State**: Partial Docker patterns exist, `docker-compose-agent.yml` exists but needs unification
+- **Creates**: Complete Docker installation system + unified container templates
+- **Challenge**: Automated Docker installation + unified container template creation across all platforms
+- **Success**: Complete environment ready - Python, UVX, Docker, pgvector pulled + unified Genie/Agent templates created
+
+### **T1.6: Core Command Implementation** 🔄
+- **Parallelization**: ❌ **DEPENDS ON T1.0, T1.4, T1.5**
+- **Dependencies**: T1.0 (CLI foundation), T1.4 (entry point), T1.5 (Docker templates)
 - **What**: Implement core commands using CLI foundation - **SIMPLIFIED SCOPE**
 - **Why**: **SCOPE REDUCTION** - Focus on essential commands first, not all 15+ commands
 - **Simplified Command Set** (Phase 1 MVP):
@@ -356,253 +406,54 @@ uvx automagik-hive --list-templates  # Show available templates
   - Use CLI foundation from T1.0
   - Route --init to interactive initialization logic
   - Route ./workspace to workspace startup with validation
-  - Integration with credential management (T1.2)
-  - Integration with PostgreSQL management (T1.3)
+  - Integration with migrated credential management (T1.2)
+  - Integration with main PostgreSQL management (T1.3)
+  - Use Docker templates from T1.5 for unified containers
 - **Command Routing**: Direct integration with existing FastAPI server
-- **Complexity**: Medium → High (reduced scope but still significant integration work)
+- **Unified Container Integration**: Support main PostgreSQL + unified Genie/Agent containers
+- **Complexity**: High - CLI integration with unified container architecture
 - **Current State**: No command implementation exists
-- **Creates**: Working core commands using CLI foundation
-- **Challenge**: Integrate CLI with existing FastAPI server architecture
-- **Success**: Core UVX workflow works - init and startup commands functional
+- **Creates**: Working core commands using CLI foundation + unified container support
+- **Challenge**: Integrate CLI with existing FastAPI server + unified container architecture
+- **Success**: Core UVX workflow works - init and startup commands functional with 3-container architecture
 
-### **T1.6: Docker Installation & Environment Validation** 🔄
-- **Parallelization**: ✅ **INDEPENDENT** - Cross-platform infrastructure work
-- **Dependencies**: None (foundational infrastructure)
-- **What**: Cross-platform Docker installation and environment validation system
-- **Why**: Enable seamless Docker setup for any user across all platforms
-- **Docker Requirements**: Critical for PostgreSQL + pgvector containers
-- **Validation & Installation Scope**:
-  - **Python 3.12+** validation
-  - **UVX environment** detection and compatibility
-  - **Docker availability** detection
-  - **Docker auto-installation** if not available
-  - **Docker daemon** health check
-  - **PostgreSQL image** pre-pulling (agnohq/pgvector:16)
-  - **Cross-platform** Docker installation (Linux, macOS, Windows/WSL)
-- **Docker Installation Strategy**:
-  - **Linux**: Detect distro, use appropriate package manager (apt, yum, dnf, pacman)
-  - **macOS**: Offer Docker Desktop download/installation
-  - **Windows/WSL**: Detect WSL2, guide Docker Desktop setup
-  - **Permission handling**: Docker group membership, sudo requirements
-- **UVX Compatibility**: All Docker operations must work within UVX environment
-- **Integration Points**: 
-  - Existing `check_docker` function from Makefile
-  - Cross-platform compatibility patterns
-  - Integration with T1.3 PostgreSQL management
-- **Complexity**: Very High - cross-platform Docker installation automation from UVX
-- **Current State**: Partial patterns exist in Makefile, need UVX integration
-- **Creates**: Complete Docker installation and validation system
-- **Challenge**: Automated Docker installation across all platforms from within UVX
-- **Success**: Complete environment ready - Python, UVX, Docker, pgvector image pulled
-
-### **T1.7: Container Strategy Decision** 🆕
-- **Parallelization**: ❌ **DEPENDS ON T1.6** - Architecture decision needed
-- **Dependencies**: T1.6 (Docker foundation)
-- **What**: Make architectural decision on container strategy for UVX system
-- **Why**: **CRITICAL DECISION** - Current codebase uses single service, UVX plan assumes multi-container
-- **Architecture Options**:
-  
-  **Option A: Single Service Evolution (Recommended)**
-  - **Current Pattern**: FastAPI server + separate PostgreSQL container
-  - **UVX Evolution**: CLI coordinates existing FastAPI + PostgreSQL
-  - **Pros**: Leverages existing architecture, faster Phase 1 delivery
-  - **Cons**: Less separation between Genie/Agent/Workspace contexts
-  
-  **Option B: Multi-Container Architecture (UVX Plan)**
-  - **UVX Pattern**: 3 separate containers (Workspace + Genie + Agent)
-  - **Pros**: Clean separation, matches UVX plan exactly
-  - **Cons**: Complex orchestration, significant architecture change
-
-- **Decision Factors**:
-  - **Phase 1 Speed**: Option A enables faster MVP delivery
-  - **Long-term Vision**: Option B matches UVX architectural vision
-  - **Complexity**: Option A leverages existing strengths
-  - **Resource Requirements**: Option B requires container orchestration expertise
-- **Recommendation**: Start with Option A, evolve to Option B in later phases
-- **Impact on Subsequent Tasks**: Decision affects T1.8, T1.9, and Phase 2+ complexity
-- **Complexity**: Low - decision task, but high impact on system architecture  
-- **Current State**: Architecture mismatch between current (single) and UVX plan (multi)
-- **Creates**: Clear architectural direction for container strategy
-- **Challenge**: Balance MVP speed vs long-term architectural vision
-- **Success**: Clear container strategy chosen, subsequent tasks aligned
-
-### **T1.8: Domain Models for Chosen Architecture** 🔄
-- **Parallelization**: ❌ **DEPENDS ON T1.7** - Architecture-dependent design
-- **Dependencies**: T1.7 (container strategy decision)
-- **What**: Design domain entities based on chosen container architecture
-- **Why**: Clean separation for testability and system coordination
-- **Domain Model Strategy** (depends on T1.7 decision):
-  
-  **If Single Service (Option A)**:
-  - `WorkspaceManager` - Coordinates CLI with existing FastAPI server
-  - `ServiceController` - Start/stop/status for unified service
-  - `DatabaseManager` - PostgreSQL container lifecycle
-  - `CommandRouter` - Route CLI commands to service operations
-  
-  **If Multi-Container (Option B)**:
-  - `WorkspaceServer` - Direct server management (port 8886)
-  - `GenieContainer` - Docker container lifecycle (port 48886)
-  - `AgentContainer` - Docker container lifecycle (port 35532)
-  - `ContainerManager` - Generic Docker container operations
-  - `CommandRouter` - Route commands to appropriate execution context
-
+### **T1.7: Unified Container Domain Models** 🔄
+- **Parallelization**: ❌ **DEPENDS ON T1.5, T1.6** - Architecture-dependent design
+- **Dependencies**: T1.5 (Docker templates), T1.6 (core commands)
+- **What**: Design domain entities for unified 3-container architecture
+- **Why**: **UNIFIED ARCHITECTURE** - Clean separation for testability and container orchestration
+- **Container Architecture Models** (DECIDED - Unified Approach):
+  - `MainWorkspaceManager` - Coordinates CLI with main PostgreSQL container + FastAPI server
+  - `GenieContainerManager` - Unified PostgreSQL + FastAPI container lifecycle (port 48886)
+  - `AgentContainerManager` - Unified PostgreSQL + FastAPI container lifecycle (port 35532)
+  - `ContainerOrchestrator` - Coordinates all 3 containers and their interactions
+  - `CommandRouter` - Route CLI commands to appropriate container context
+- **Domain Model Responsibilities**:
+  - **MainWorkspaceManager**: Main PostgreSQL container + existing FastAPI server coordination
+  - **GenieContainerManager**: Genie all-in-one container (PostgreSQL + FastAPI unified)
+  - **AgentContainerManager**: Agent all-in-one container (PostgreSQL + FastAPI unified)  
+  - **ContainerOrchestrator**: Cross-container coordination, health checking, lifecycle management
+  - **CommandRouter**: Route --init/./workspace to main, --genie-* to Genie, --agent-* to Agent
 - **Integration Points**: 
   - Existing `lib/config/server_config.py` for configuration
-  - Existing FastAPI server architecture
-  - Docker management from T1.6
-- **Complexity**: Medium - design work based on architectural decision
-- **Current State**: No domain models exist, depends on T1.7 decision
-- **Creates**: Domain models aligned with chosen container strategy
-- **Challenge**: Design flexible entities that support chosen architecture
-- **Success**: Domain models ready for command implementation
+  - Existing FastAPI server architecture for main workspace
+  - Docker templates from T1.5 for unified containers
+  - Migrated credential management from T1.2
+- **Unified Architecture Benefits**:
+  - **Main**: Leverages existing FastAPI server + PostgreSQL patterns
+  - **Genie**: Self-contained environment for wish fulfillment with own database
+  - **Agent**: Isolated agent development environment with own database
+- **Complexity**: Medium - design work for unified container architecture
+- **Current State**: No unified domain models exist
+- **Creates**: Domain models aligned with unified 3-container strategy
+- **Challenge**: Design flexible entities that support unified container coordination
+- **Success**: Domain models ready for unified container implementation
 
-### **T1.9: Advanced Container Features** 🔄
-- **Parallelization**: ❌ **DEPENDS ON T1.7, T1.8** - Complex container work
-- **Dependencies**: T1.7 (container strategy), T1.8 (domain models)
-- **What**: Implement advanced container features based on chosen strategy
-- **Why**: Complete container orchestration for chosen architecture
-- **Implementation Strategy** (depends on T1.7 decision):
-  
-  **If Single Service (Option A)**:
-  - Enhanced service lifecycle management
-  - Advanced health checking and monitoring
-  - Graceful startup/shutdown sequences
-  - Service dependency management
-  
-  **If Multi-Container (Option B)**:
-  - **Genie All-in-One Container**: PostgreSQL + FastAPI (port 48886)
-  - **Agent All-in-One Container**: PostgreSQL + FastAPI (port 35532)
-  - Multi-container orchestration and coordination
-  - Inter-container communication and networking
-  - Advanced container health checking
-
-- **Container Requirements** (if Option B):
-  - **Multi-stage builds**: Combine PostgreSQL + FastAPI in single containers
-  - **Process management**: Supervisord for multi-process containers
-  - **Health checks**: Both PostgreSQL and API endpoint validation
-  - **Volume persistence**: Data persistence across container restarts
-- **Complexity**: Very High - advanced container orchestration
-- **Current State**: No advanced container features exist
-- **Creates**: Complete container system based on chosen architecture
-- **Challenge**: Implement complex orchestration while maintaining reliability
-- **Success**: Advanced container features working reliably for chosen strategy
-
-### **T1.5: Docker Installation & Container Template Creation**
-- **Parallelization**: ✅ **INDEPENDENT** - Utility work
-- **Dependencies**: None
-- **What**: Comprehensive environment validation + Docker container templates for Genie and Agent
-- **Why**: Prevent runtime failures, enable seamless full-stack container orchestration
-- **Docker Requirements**: Critical for all services (main workspace PostgreSQL, Genie full-stack, Agent full-stack)
-- **Validation & Installation Scope**:
-  - **Python 3.12+** validation
-  - **UVX environment** detection and compatibility
-  - **Docker availability** detection
-  - **Docker auto-installation** if not available
-  - **Docker daemon** health check
-  - **PostgreSQL image** pre-pulling (agnohq/pgvector:16)
-  - **Cross-platform** Docker installation (Linux, macOS, Windows/WSL)
-- **Docker Container Template Creation**:
-  - **Genie Template**: `docker-compose-genie.yml` - Full-stack PostgreSQL + FastAPI (port 48886)
-  - **Agent Template**: `docker-compose-agent.yml` - Full-stack PostgreSQL + FastAPI (port 35532) 
-  - **Template Patterns**: Based on existing `docker-compose.yml` production patterns
-  - **Container Architecture**: Single service with internal PostgreSQL + application
-  - **Port Strategy**: 
-    - Main workspace: Direct PostgreSQL (5532) + UVX CLI
-    - Genie container: All-in-one full-stack (48886)
-    - Agent container: All-in-one full-stack (35532)
-- **Docker Installation Strategy**:
-  - **Linux**: Detect distro, use appropriate package manager (apt, yum, dnf, pacman)
-  - **macOS**: Offer Docker Desktop download/installation
-  - **Windows/WSL**: Detect WSL2, guide Docker Desktop setup
-  - **Permission handling**: Docker group membership, sudo requirements
-- **Make Integration**: Replicate `make install` Docker setup logic, extend for full-stack containers
-- **Template Integration**: 
-  - Use existing `docker-compose.yml` as template base
-  - Adapt health checks, networking, volumes for Genie and Agent contexts
-  - Maintain consistency with production patterns
-- **Complexity**: Very High - cross-platform Docker installation + full-stack container templates
-- **Current State**: No environment validation exists, `docker-compose-agent.yml` exists but separate containers
-- **UVX Context**: Handle UVX package isolation, different installation patterns, environment markers
-- **Integration Points**: 
-  - Existing `check_docker` function from Makefile
-  - `setup_docker_postgres` credential generation patterns
-  - Production `docker-compose.yml` patterns for full-stack templates
-  - Cross-platform compatibility from Makefile Docker detection
-- **Template Requirements**:
-  - **Genie Template**: Single service with PostgreSQL + App on port 48886
-  - **Agent Template**: Single service with PostgreSQL + App on port 35532
-  - **Consistency**: Mirror production `docker-compose.yml` patterns
-  - **Health Checks**: Both PostgreSQL and API endpoint validation
-  - **Networking**: Isolated networks per container
-  - **Volumes**: Persistent data storage per container
-- **Challenge**: Automated Docker installation + full-stack container template creation
-- **Success**: Complete environment ready - Python, UVX, Docker, pgvector pulled + Genie/Agent templates created
-
-### **T1.6: PostgreSQL Container Management**
-- **Parallelization**: ❌ **DEPENDS ON T1.5** - Needs Docker ready
-- **Dependencies**: T1.5 (Docker installation), T1.4 (domain models)
-- **What**: Main workspace PostgreSQL container orchestration
-- **Why**: Core database requirement for workspace server (port 8886)
-- **Container Requirements**:
-  - **Image**: agnohq/pgvector:16 (same as existing docker-compose.yml)
-  - **Port**: 5532 (external) → 5432 (container)
-  - **Database**: hive (same as existing setup)
-  - **Extensions**: pgvector for AI embeddings
-  - **Persistence**: ./data/postgres volume mounting
-  - **User/Group**: Cross-platform UID/GID handling
-- **Make Integration**: Replicate `setup_docker_postgres` functionality
-- **Credential Generation**: Automatic secure user/password generation
-- **Complexity**: High - container lifecycle, credential management, volume handling
-- **Current State**: Docker compose exists, needs CLI integration
-- **Integration Points**:
-  - Existing `docker-compose.yml` PostgreSQL service
-  - `setup_docker_postgres` credential generation
-  - `generate_postgres_credentials` patterns
-  - Cross-platform UID/GID detection
-- **Container Operations**:
-  - **Start**: Container creation with secure credentials
-  - **Health Check**: pg_isready validation
-  - **Volume Setup**: ./data/postgres with proper permissions
-  - **Network**: Bridge network for app connection
-- **Challenge**: Cross-platform container management, permission handling
-- **Success**: PostgreSQL container running with pgvector, secure credentials, workspace connection
-
-### **T1.7: Credential Management System**
-- **Parallelization**: ✅ **INDEPENDENT** - Can run parallel with container setup
-- **Dependencies**: None (pure credential generation)
-- **What**: Secure credential generation and management system
-- **Why**: Automated secure setup like `make install` without user interaction
-- **Credential Types**:
-  - **PostgreSQL**: Random secure user/password generation
-  - **Hive API Key**: Secure token generation with hive_ prefix
-  - **Database URLs**: Complete connection string construction
-  - **Environment Files**: .env creation and management
-- **Generation Strategy**:
-  - **PostgreSQL User**: Random base64 string (16 chars)
-  - **PostgreSQL Password**: Random base64 string (16 chars)
-  - **API Key**: hive_[32-char secure token]
-  - **Database URL**: postgresql+psycopg://user:pass@localhost:5532/hive
-- **Make Integration**: Replicate all credential generation functions
-- **Complexity**: Medium - secure random generation, file manipulation
-- **Current State**: Makefile functions exist, need CLI integration
-- **Integration Points**:
-  - `generate_postgres_credentials` from Makefile
-  - `generate_hive_api_key` from Makefile
-  - `lib.auth.cli.regenerate_key` integration
-  - Cross-platform secure random generation
-- **Security Requirements**:
-  - **Cryptographically secure** random generation
-  - **No hardcoded** credentials
-  - **Proper file permissions** on credential files
-  - **Credential validation** and format checking
-- **Challenge**: Secure random generation, cross-platform file permissions
-- **Success**: Complete .env file with secure credentials ready for all services
-
-### **T1.8: Genie All-in-One Container**
-- **Parallelization**: ✅ **INDEPENDENT** - Container definition work
-- **Dependencies**: None (container orchestration design)
-- **What**: Create unified Genie container with PostgreSQL + FastAPI
-- **Why**: Single container deployment for Genie consultation server (port 48886)
+### **T1.8: Genie All-in-One Container Implementation** 🔄
+- **Parallelization**: ❌ **DEPENDS ON T1.5, T1.7** - Unified container implementation
+- **Dependencies**: T1.5 (Docker templates), T1.7 (domain models)
+- **What**: Implement unified Genie container with PostgreSQL + FastAPI
+- **Why**: **UNIFIED GENIE CONTAINER** - Single container deployment for Genie consultation server (port 48886)
 - **Container Requirements**:
   - **Base Image**: Multi-stage build from existing Dockerfile
   - **PostgreSQL**: agnohq/pgvector:16 embedded in container
@@ -610,34 +461,37 @@ uvx automagik-hive --list-templates  # Show available templates
   - **Port**: 48886 (external) for API access
   - **Database**: Internal PostgreSQL on standard 5432
   - **Persistence**: Volume mount for ./data/postgres-genie
-- **Docker Compose Strategy**:
-  - **Single Service**: `genie-server` with internal database
-  - **Health Checks**: Both PostgreSQL and API endpoints
-  - **Environment**: Inherit credentials from main .env
-  - **Network**: Bridge network for isolation
-- **Complexity**: High - multi-service container orchestration
-- **Current State**: Separate containers exist, need unified approach
-- **Integration Points**:
-  - Existing `docker-compose-agent.yml` patterns
-  - Multi-service container design
-  - Credential inheritance from main environment
-- **Container Architecture**:
+- **Unified Container Architecture**:
   ```dockerfile
   # Multi-stage: PostgreSQL + Application in single container
   FROM agnohq/pgvector:16 as postgres-base
   FROM automagik-hive-app as app-base
   FROM ubuntu:22.04 as unified
   # Install both PostgreSQL and Python application
-  # Supervisord or similar for process management
+  # Supervisord for process management
   ```
-- **Challenge**: Multi-process container management, service coordination
+- **Docker Compose Strategy**:
+  - **Single Service**: `genie-server` with internal database
+  - **Health Checks**: Both PostgreSQL and API endpoints
+  - **Environment**: Inherit credentials from main .env with port adjustments
+  - **Network**: Bridge network for isolation
+  - **Process Management**: Supervisord or similar for multi-process coordination
+- **Integration Points**:
+  - Docker template from T1.5 (docker-compose-genie.yml)
+  - Domain models from T1.7 (GenieContainerManager)
+  - Credential management from T1.2 (port-adjusted credentials)
+  - Existing FastAPI server patterns
+- **Complexity**: High - multi-process container orchestration within single container
+- **Current State**: Separate containers exist, need unified approach
+- **Creates**: Single unified Genie container (PostgreSQL + FastAPI)
+- **Challenge**: Multi-process container management, service coordination within single container
 - **Success**: Single container runs both PostgreSQL and Genie API on port 48886
 
-### **T1.9: Agent All-in-One Container**
-- **Parallelization**: ✅ **INDEPENDENT** - Container definition work
-- **Dependencies**: None (container orchestration design)
-- **What**: Create unified Agent container with PostgreSQL + FastAPI
-- **Why**: Single container deployment for agent development environment (port 35532)
+### **T1.9: Agent All-in-One Container Implementation** 🔄
+- **Parallelization**: ❌ **DEPENDS ON T1.5, T1.7** - Unified container implementation
+- **Dependencies**: T1.5 (Docker templates), T1.7 (domain models)
+- **What**: Implement unified Agent container with PostgreSQL + FastAPI
+- **Why**: **UNIFIED AGENT CONTAINER** - Single container deployment for agent development environment (port 35532)
 - **Container Requirements**:
   - **Base Image**: Multi-stage build from existing Dockerfile
   - **PostgreSQL**: agnohq/pgvector:16 embedded in container
@@ -645,23 +499,31 @@ uvx automagik-hive --list-templates  # Show available templates
   - **Port**: 35532 (external) for API access
   - **Database**: Internal PostgreSQL on standard 5432
   - **Persistence**: Volume mount for ./data/postgres-agent
-- **Docker Compose Strategy**:
-  - **Single Service**: `agent-dev-server` with internal database
-  - **Health Checks**: Both PostgreSQL and API endpoints
-  - **Environment**: Inherit credentials from main .env
-  - **Network**: Bridge network for isolation
-- **Complexity**: High - multi-service container orchestration
-- **Current State**: Separate containers exist in docker-compose-agent.yml, need unified approach
-- **Integration Points**:
-  - Existing `docker-compose-agent.yml` patterns
-  - Existing `make agent-*` command functionality
-  - Multi-service container design
-- **Container Architecture**:
+- **Unified Container Architecture**:
   ```dockerfile
   # Multi-stage: PostgreSQL + Application in single container
   # Same pattern as Genie container but different ports/database
+  FROM agnohq/pgvector:16 as postgres-base
+  FROM automagik-hive-app as app-base
+  FROM ubuntu:22.04 as unified
+  # Install both PostgreSQL and Python application
+  # Supervisord for process management
   ```
-- **Make Command Integration**: Replace existing `docker-compose-agent.yml` two-container approach
+- **Docker Compose Strategy**:
+  - **Single Service**: `agent-dev-server` with internal database
+  - **Health Checks**: Both PostgreSQL and API endpoints
+  - **Environment**: Inherit credentials from main .env with port adjustments
+  - **Network**: Bridge network for isolation
+  - **Process Management**: Supervisord or similar for multi-process coordination
+- **Integration Points**:
+  - Docker template from T1.5 (docker-compose-agent.yml)
+  - Domain models from T1.7 (AgentContainerManager)
+  - Credential management from T1.2 (port-adjusted credentials)
+  - Existing `make agent-*` command functionality patterns
+- **Make Command Compatibility**: Replace existing `docker-compose-agent.yml` two-container approach
+- **Complexity**: High - multi-process container orchestration within single container
+- **Current State**: Separate containers exist in docker-compose-agent.yml, need unified approach
+- **Creates**: Single unified Agent container (PostgreSQL + FastAPI)
 - **Challenge**: Multi-process container management, existing workflow compatibility
 - **Success**: Single container runs both PostgreSQL and Agent API on port 35532
 

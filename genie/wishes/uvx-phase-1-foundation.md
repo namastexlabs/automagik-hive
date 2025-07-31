@@ -277,6 +277,11 @@ uvx automagik-hive --list-templates  # Show available templates
   - **Hive API Key**: Secure token generation with hive_ prefix
   - **Database URLs**: Complete connection string construction
   - **Environment Files**: .env creation and management
+- **Generation Strategy** (detailed specs from existing Makefile):
+  - **PostgreSQL User**: Random base64 string (16 chars)
+  - **PostgreSQL Password**: Random base64 string (16 chars)
+  - **API Key**: hive_[32-char secure token]
+  - **Database URL**: postgresql+psycopg://user:pass@localhost:5532/hive
 - **Security Requirements**:
   - Cryptographically secure random generation
   - No hardcoded credentials
@@ -334,34 +339,35 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Challenge**: Ensure entry point works with CLI foundation
 - **Success**: `uvx automagik-hive --help` works, existing `hive` command still works
 
-### **T1.5: Core Command Scaffolding** 🔄
+### **T1.5: Core Command Implementation** 🔄
 - **Parallelization**: ❌ **DEPENDS ON T1.0, T1.4**
 - **Dependencies**: T1.0 (CLI foundation), T1.4 (entry point)
-- **What**: Establish basic CLI command structure with empty implementations
-- **Why**: Create working command entry points that can be iteratively filled with functionality
+- **What**: Implement core commands using CLI foundation - **SIMPLIFIED SCOPE**
+- **Why**: **SCOPE REDUCTION** - Focus on essential commands first, not all 15+ commands
 - **Simplified Command Set** (Phase 1 MVP):
   ```bash
-  # CORE COMMANDS SCAFFOLDING (Phase 1)
-  uvx automagik-hive --init            # Interactive workspace initialization (empty shell)
-  uvx automagik-hive ./my-workspace    # Start existing workspace (empty shell)
-  uvx automagik-hive --help            # Show help (functional)
-  uvx automagik-hive --version         # Show version (functional)
+  # CORE COMMANDS ONLY (Phase 1)
+  uvx automagik-hive --init            # Interactive workspace initialization
+  uvx automagik-hive ./my-workspace    # Start existing workspace
+  uvx automagik-hive --help            # Show help
+  uvx automagik-hive --version         # Show version
   ```
-- **Scaffolding Strategy**:
+- **Future Commands** (Phase 2+):
+  - Genie container commands (--genie-*)
+  - Agent development commands (--agent-*)
+  - Template commands (--list-templates)
+- **Implementation Strategy**:
   - Use CLI foundation from T1.0
-  - Create command entry points with placeholder implementations
-  - Implement --help and --version commands fully
-  - Route --init and ./workspace to "Coming soon" messages initially
-  - Prepare integration points for later tasks
-- **Future Implementation** (T1.8, T1.9):
-  - Commands will be filled with actual functionality
-  - Integration with container orchestration
-  - Database and credential management
-- **Complexity**: Medium - basic command routing with integration preparation
+  - Route --init to interactive initialization logic
+  - Route ./workspace to workspace startup with validation
+  - Integration with credential management (T1.2)
+  - Integration with PostgreSQL management (T1.3)
+- **Command Routing**: Direct integration with existing FastAPI server
+- **Complexity**: Medium → High (reduced scope but still significant integration work)
 - **Current State**: No command implementation exists
-- **Creates**: Working CLI with command structure ready for implementation
-- **Challenge**: Design command interface that supports multiple container strategies
-- **Success**: `uvx automagik-hive --help` and `uvx automagik-hive --version` work, other commands show "coming soon"
+- **Creates**: Working core commands using CLI foundation
+- **Challenge**: Integrate CLI with existing FastAPI server architecture
+- **Success**: Core UVX workflow works - init and startup commands functional
 
 ### **T1.6: Container Strategy & Environment Validation** 🔄
 - **Parallelization**: ❌ **DEPENDS ON T1.5** - Needs command structure
@@ -380,12 +386,21 @@ uvx automagik-hive --list-templates  # Show available templates
   - **Issues**: Brittle, complex process management, poor separation
   - **Conclusion**: Docker Compose is the superior choice for multi-service orchestration
 
-- **Environment Validation**:
+- **Environment Validation & Container Template Creation**:
   - **Python 3.12+** validation
   - **UVX environment** detection and compatibility
   - **Docker availability** detection and installation guidance
   - **Docker daemon** health check
   - **PostgreSQL image** pre-pulling (agnohq/pgvector:16)
+- **Docker Container Template Creation**:
+  - **Genie Template**: `docker-compose-genie.yml` - All-in-one PostgreSQL + FastAPI (port 48886)
+  - **Agent Template**: `docker-compose-agent.yml` - All-in-one PostgreSQL + FastAPI (port 35532) 
+  - **Template Patterns**: Based on existing `docker-compose.yml` production patterns
+  - **Container Architecture**: Single service with internal PostgreSQL + application
+  - **Port Strategy**: 
+    - Main workspace: Standard Docker Compose PostgreSQL (5532) + UVX CLI
+    - Genie container: All-in-one full-stack (48886)
+    - Agent container: All-in-one full-stack (35532)
 - **Docker Installation Guidance**:
   - **Detection**: Check if Docker is installed and daemon running
   - **Guidance**: Provide platform-specific installation instructions if missing
@@ -439,20 +454,30 @@ uvx automagik-hive --list-templates  # Show available templates
 - **Dependencies**: T1.6 (container strategy)
 - **What**: Containerize Genie and Agent FastAPI applications for Docker Compose
 - **Why**: Complete the multi-service container architecture
-- **Genie Service Containerization**:
-  - **Dockerfile**: Create optimized Dockerfile for Genie FastAPI service
-  - **Service Definition**: Add Genie service to `docker-compose.yml` template
+- **Genie All-in-One Container** (unified PostgreSQL + FastAPI):
+  - **Multi-stage Dockerfile**: PostgreSQL + Application in single container
+    ```dockerfile
+    # Multi-stage: PostgreSQL + Application in single container
+    FROM agnohq/pgvector:16 as postgres-base
+    FROM automagik-hive-app as app-base
+    FROM ubuntu:22.04 as unified
+    # Install both PostgreSQL and Python application
+    # Supervisord for process management
+    ```
+  - **Service Definition**: Single `genie-server` service with internal database
   - **Port**: 48886 (external) for Genie consultation API
-  - **Dependencies**: PostgreSQL service connection
-  - **Environment**: Inherit credentials from .env file
-  - **Health Checks**: FastAPI endpoint validation
-- **Agent Service Containerization**:
-  - **Dockerfile**: Create optimized Dockerfile for Agent FastAPI service
-  - **Service Definition**: Add Agent service to `docker-compose.yml` template
+  - **Database**: Internal PostgreSQL on standard 5432
+  - **Persistence**: Volume mount for ./data/postgres-genie
+  - **Process Management**: Supervisord for multi-process coordination
+  - **Health Checks**: Both PostgreSQL and API endpoint validation
+- **Agent All-in-One Container** (unified PostgreSQL + FastAPI):
+  - **Multi-stage Dockerfile**: Same pattern as Genie but different ports/database
+  - **Service Definition**: Single `agent-dev-server` with internal database
   - **Port**: 35532 (external) for Agent development API
-  - **Dependencies**: PostgreSQL service connection
-  - **Environment**: Inherit credentials from .env file
-  - **Health Checks**: FastAPI endpoint validation
+  - **Database**: Internal PostgreSQL on standard 5432
+  - **Persistence**: Volume mount for ./data/postgres-agent
+  - **Process Management**: Supervisord for multi-process coordination
+  - **Health Checks**: Both PostgreSQL and API endpoint validation
 - **Docker Compose Architecture**:
   ```yaml
   services:
@@ -572,6 +597,34 @@ T1.7 (Foundational Services) ↔ T1.8 (Application Services) → Parallel execut
 **LEVERAGE**: Excellent existing Docker and credential systems - integrate don't rebuild  
 **STRATEGY**: Docker Compose approach (T1.6) enables proper multi-service orchestration  
 **HYBRID**: Just-in-time architectural decisions prevent analysis paralysis while ensuring working functionality  
+
+---
+
+## 🏭 **FORGE DISPATCH PROTOCOL**
+
+### **TASK REFERENCE FORMAT**
+When creating forge tasks, reference: `@uvx-phase-1-foundation.md#T[1.X]`
+
+**Example Forge Task Creation:**
+```
+Task: T1.0 - CLI Foundation Architecture
+Reference: @uvx-phase-1-foundation.md#T1.0
+Context: Complete task specification with dependencies, success criteria, and expert insights
+```
+
+### **SUBAGENT CONSTRAINTS**
+All subagents working on Phase 1 MUST:
+1. Reference the complete task specification from this document
+2. Follow expert-validated simplifications (no complex inheritance, hybrid container approach)
+3. Implement exactly what's specified - no improvisation or scope expansion
+4. Validate against success criteria before marking complete
+5. Respect dependency chain and parallelization analysis
+
+### **PHASE 1 GATES**
+- **T1.0-T1.4**: Foundation tasks (CLI, tools, credentials, entry point)
+- **T1.5**: Core command scaffolding (enables subsequent implementation)
+- **T1.6-T1.9**: Container orchestration (environment, strategy, services, integration)
+- **Success Criteria**: All 10 tasks complete, UVX installation working, core commands functional
 
 ---
 
