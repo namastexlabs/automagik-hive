@@ -25,6 +25,14 @@ from .batch_logger import (
 )
 from .config import setup_logging
 from .progress import component_tracker, startup_progress
+from .session_logger import (
+    log_run_continuation_attempt,
+    log_run_continuation_failure,
+    log_run_continuation_success,
+    log_run_creation,
+    log_session_start,
+    session_logger,
+)
 
 __all__ = [
     "batch_logger",
@@ -40,4 +48,10 @@ __all__ = [
     "setup_logging",
     "startup_logging",
     "startup_progress",
+    "session_logger",
+    "log_session_start",
+    "log_run_creation",
+    "log_run_continuation_attempt",
+    "log_run_continuation_success",
+    "log_run_continuation_failure",
 ]

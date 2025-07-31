@@ -518,6 +518,11 @@ async def _async_create_automagik_api():
 
     # Version support handled via router endpoints
 
+    # Add custom agent run error handler middleware
+    from lib.middleware import AgentRunErrorHandler
+    
+    app.add_middleware(AgentRunErrorHandler)
+    
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
