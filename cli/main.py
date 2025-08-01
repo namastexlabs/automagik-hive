@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from cli.commands.agent import AgentCommands
     from cli.commands.init import InitCommands
+    from cli.commands.mcp_test import MCPTestCommands
     from cli.commands.postgres import PostgreSQLCommands
     from cli.commands.uninstall import UninstallCommands
     from cli.commands.workspace import WorkspaceCommands
@@ -31,6 +32,7 @@ class LazyCommandLoader:
         self._postgres_commands = None
         self._agent_commands = None
         self._uninstall_commands = None
+        self._mcp_test_commands = None
     
     @property
     def init_commands(self) -> "InitCommands":
@@ -71,6 +73,14 @@ class LazyCommandLoader:
             from cli.commands.uninstall import UninstallCommands
             self._uninstall_commands = UninstallCommands()
         return self._uninstall_commands
+    
+    @property
+    def mcp_test_commands(self) -> "MCPTestCommands":
+        """Lazy load MCPTestCommands only when needed."""
+        if self._mcp_test_commands is None:
+            from cli.commands.mcp_test import MCPTestCommands
+            self._mcp_test_commands = MCPTestCommands()
+        return self._mcp_test_commands
 
 
 def create_parser() -> argparse.ArgumentParser:

@@ -8,9 +8,11 @@ import os
 import subprocess
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from cli.core.docker_service import DockerService
-from cli.core.postgres_service import PostgreSQLService
+if TYPE_CHECKING:
+    from cli.core.docker_service import DockerService
+    from cli.core.postgres_service import PostgreSQLService
 
 
 class WorkspaceCommands:
@@ -21,9 +23,25 @@ class WorkspaceCommands:
     """
 
     def __init__(self):
-        self.docker_service = DockerService()
-        self.postgres_service = PostgreSQLService()
+        self._docker_service = None
+        self._postgres_service = None
         self._compose_cmd = None  # Cached compose command
+    
+    @property
+    def docker_service(self) -> "DockerService":
+        """Lazy load DockerService only when needed."""
+        if self._docker_service is None:
+            from cli.core.docker_service import DockerService
+            self._docker_service = DockerService()
+        return self._docker_service
+    
+    @property
+    def postgres_service(self) -> "PostgreSQLService":
+        """Lazy load PostgreSQLService only when needed."""
+        if self._postgres_service is None:
+            from cli.core.postgres_service import PostgreSQLService
+            self._postgres_service = PostgreSQLService()
+        return self._postgres_service
 
     def start_workspace(self, workspace_path: str) -> bool:
         """Start an existing workspace server.

@@ -6,6 +6,7 @@ measuring import times and module initialization overhead.
 
 import cProfile
 import pstats
+import sys
 import time
 import tracemalloc
 from pathlib import Path

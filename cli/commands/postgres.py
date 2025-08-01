@@ -5,8 +5,10 @@ integrating with the PostgreSQL service layer for high-level operations.
 """
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from cli.core.postgres_service import PostgreSQLService
+if TYPE_CHECKING:
+    from cli.core.postgres_service import PostgreSQLService
 
 
 class PostgreSQLCommands:
@@ -17,7 +19,15 @@ class PostgreSQLCommands:
     """
 
     def __init__(self):
-        self.postgres_service = PostgreSQLService()
+        self._postgres_service = None
+    
+    @property
+    def postgres_service(self) -> "PostgreSQLService":
+        """Lazy load PostgreSQLService only when needed."""
+        if self._postgres_service is None:
+            from cli.core.postgres_service import PostgreSQLService
+            self._postgres_service = PostgreSQLService()
+        return self._postgres_service
 
     def postgres_status(self, workspace_path: str | None = None) -> bool:
         """Show PostgreSQL container status.

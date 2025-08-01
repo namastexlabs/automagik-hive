@@ -6,8 +6,10 @@ integrating with the Agent service layer for high-level operations.
 
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from cli.core.agent_service import AgentService
+if TYPE_CHECKING:
+    from cli.core.agent_service import AgentService
 
 
 class AgentCommands:
@@ -18,7 +20,15 @@ class AgentCommands:
     """
 
     def __init__(self) -> None:
-        self.agent_service = AgentService()
+        self._agent_service = None
+    
+    @property
+    def agent_service(self) -> "AgentService":
+        """Lazy load AgentService only when needed."""
+        if self._agent_service is None:
+            from cli.core.agent_service import AgentService
+            self._agent_service = AgentService()
+        return self._agent_service
 
     def install(self, workspace_path: str | None = None) -> bool:
         """Install complete agent environment with isolated ports and database.
