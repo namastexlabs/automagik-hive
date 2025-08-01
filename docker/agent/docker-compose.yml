@@ -34,6 +34,7 @@ services:
     image: pgvector/pgvector:0.8.0-pg16
     container_name: hive-postgres-agent
     restart: unless-stopped
+    user: "1000:1000"  # Match host user permissions (namastex:namastex)
     ports:
       - "35532:5432"  # Agent PostgreSQL port
     environment:
