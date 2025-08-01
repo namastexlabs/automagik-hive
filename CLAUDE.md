@@ -267,24 +267,24 @@ tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_mo
 ## 🔧 AGENT ENVIRONMENT COMMANDS
 
 ### Essential Commands for AI Agents
-**🤖 LLM-optimized commands - all non-blocking, return terminal immediately:**
+**🤖 LLM-optimized commands - unified CLI interface (no prompts, automation-friendly):**
 ```bash
-# First-time setup (silent, no prompts, mirror environment)
-make install-agent  # Creates .env.agent, ports 38886/35532, separate DB
-
-# Daily agent operations 
-make agent          # Start server in background, show startup logs, return terminal
-make agent-logs     # View logs (non-blocking, last 50 lines)
-make agent-restart  # Clean restart sequence  
-make agent-stop     # Clean shutdown with PID management
-make agent-status   # Quick environment check
+# Agent environment setup and management
+uvx automagik-hive --install agent     # Setup agent Docker services (ports 38886/35532) - no prompts
+uvx automagik-hive --start agent       # Start agent services in background
+uvx automagik-hive --stop agent        # Stop agent services  
+uvx automagik-hive --restart agent     # Restart agent services
+uvx automagik-hive --status agent      # Check agent service status
+uvx automagik-hive --health agent      # Health check agent services
+uvx automagik-hive --logs agent 100    # View agent logs (100 lines)
 
 # Your isolated agent environment:
 # - Agent API: http://localhost:38886
 # - Agent DB: postgresql://localhost:35532  
-# - Agent config: .env.agent (auto-generated from .env.example)
-# - Isolated containers: hive-agents-agent, hive-postgres-agent
-# - Completely separate from any user environments
+# - Agent config: .env.agent (auto-generated)
+# - Isolated containers: hive-agent-postgres, hive-agent-api
+# - Completely separate from user environments
+# - Zero prompts or confirmations for automation compatibility
 ```
 
 ### Agent Development Workflow
@@ -354,8 +354,8 @@ SELECT * FROM agno.knowledge_base WHERE meta_data->>'domain' = 'development';
 **Integration with Development Workflow**:
 ```bash
 # Before using MCP tools, ensure agent environment is running
-make agent-status    # Check if services are up
-make agent-logs      # Debug any connection issues
+uvx automagik-hive --status agent    # Check if services are up
+uvx automagik-hive --logs agent 50   # Debug any connection issues
 
 # After tool usage that modifies configs
 # CRITICAL: Bump version in YAML files per our rules
@@ -371,7 +371,7 @@ cat .env.agent | grep HIVE_API_KEY  # Verify API key exists
 
 **Connection Failures**:
 ```bash
-make agent-restart   # Clean restart of services
+uvx automagik-hive --restart agent   # Clean restart of services
 # Remember: Agent API on http://localhost:38886
 ```
 
