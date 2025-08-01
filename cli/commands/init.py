@@ -8,6 +8,7 @@ import base64
 import contextlib
 import json
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -784,6 +785,18 @@ HIVE_DEV_MODE=true
         try:
             if template_path.exists():
                 template_content = template_path.read_text()
+                
+                # Replace build sections with pre-built image for UVX distribution
+                if "build:" in template_content:
+                    # Replace build section with image for agent/genie services
+                    import re
+                    # Remove build sections and replace with image
+                    template_content = re.sub(
+                        r'\s*build:\s*\n\s*context:.*?\n\s*dockerfile:.*?\n\s*target:.*?\n',
+                        '    image: agnohq/automagik-hive:latest\n',
+                        template_content,
+                        flags=re.MULTILINE | re.DOTALL
+                    )
                 
                 # Replace template variables with actual credentials
                 if "postgres_user" in credentials:
