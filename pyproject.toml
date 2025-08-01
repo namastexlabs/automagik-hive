@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.1.0a19"
+version = "0.1.0a20"
 description = "Automagik Multi-Agent Framework - Extensible Agent Creation System"
 readme = "README.md"
 license = "MIT"
