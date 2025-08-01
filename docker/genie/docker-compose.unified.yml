@@ -1,30 +1,51 @@
 services:
-  genie-all-in-one:
-    build:
-      context: ../..
-      dockerfile: docker/genie/Dockerfile.unified
-      target: genie-production
-    container_name: hive-genie-unified
+  # PostgreSQL Database Service
+  genie-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: hive-genie-postgres
     restart: unless-stopped
     ports:
-      - "48886:48886"
+      - "48532:5432"
     environment:
-      - HIVE_SERVICE_MODE=genie
-      - HIVE_API_PORT=48886
-      - PYTHONUNBUFFERED=1
+      - POSTGRES_DB=hive_genie
+      - POSTGRES_USER=genie
+      - POSTGRES_PASSWORD=genie_secure_password
     volumes:
-      - ../../data/postgres-genie:/var/lib/postgresql/data
-      - ../../logs/genie:/var/log/hive
-    networks:
-      - genie_network
+      - genie-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:48886/api/v1/health"]
+      test: ["CMD-SHELL", "pg_isready -U genie -d hive_genie"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - genie-network
+
+  # Genie API Service (main service CLI expects)
+  genie-all-in-one:
+    build:
+      context: ../..
+      dockerfile: docker/genie/Dockerfile.api
+    container_name: hive-genie-api
+    restart: unless-stopped
+    ports:
+      - "48886:48886"
+    environment:
+      - HIVE_HOST=0.0.0.0
+      - HIVE_PORT=48886
+      - DATABASE_URL=postgresql+psycopg://genie:genie_secure_password@genie-postgres:5432/hive_genie
+      - HIVE_DATABASE_URL=postgresql+psycopg://genie:genie_secure_password@genie-postgres:5432/hive_genie
+      - HIVE_SERVICE_MODE=genie
+    depends_on:
+      genie-postgres:
+        condition: service_healthy
+    networks:
+      - genie-network
 
 networks:
-  genie_network:
+  genie-network:
     driver: bridge
-    name: hive_genie_network
+
+volumes:
+  genie-data:
+    driver: local

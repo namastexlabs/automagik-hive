@@ -762,15 +762,16 @@ HIVE_DEV_MODE=true
             agent_docker_dir = workspace_path / "docker" / "agent"
             agent_docker_dir.mkdir(parents=True, exist_ok=True)
 
-            # Use the unified template (templates are already unified)
-            agent_template = template_dir / "agent.yml"
+            # Use the unified docker-compose file from the source
+            source_agent_dir = Path(__file__).parent.parent.parent / "docker" / "agent"
+            unified_agent_template = source_agent_dir / "docker-compose.unified.yml"
 
-            if agent_template.exists():
-                self._copy_and_customize_template(
-                    agent_template,
-                    agent_docker_dir / "docker-compose.unified.yml",
-                    credentials
-                )
+            if unified_agent_template.exists():
+                # Copy the unified compose file directly
+                shutil.copy2(unified_agent_template, agent_docker_dir / "docker-compose.unified.yml")
+                print("✅ Copied unified agent compose file")
+            else:
+                print("⚠️ Unified agent template not found, using fallback")
             
             # Copy unified container build files for agent
             self._copy_unified_container_files("agent", workspace_path, credentials)
@@ -781,15 +782,16 @@ HIVE_DEV_MODE=true
             genie_docker_dir = workspace_path / "docker" / "genie"
             genie_docker_dir.mkdir(parents=True, exist_ok=True)
 
-            # Use the unified template (templates are already unified)
-            genie_template = template_dir / "genie.yml"
+            # Use the unified docker-compose file from the source
+            source_genie_dir = Path(__file__).parent.parent.parent / "docker" / "genie"
+            unified_genie_template = source_genie_dir / "docker-compose.unified.yml"
 
-            if genie_template.exists():
-                self._copy_and_customize_template(
-                    genie_template,
-                    genie_docker_dir / "docker-compose.unified.yml",
-                    credentials
-                )
+            if unified_genie_template.exists():
+                # Copy the unified compose file directly
+                shutil.copy2(unified_genie_template, genie_docker_dir / "docker-compose.unified.yml")
+                print("✅ Copied unified genie compose file")
+            else:
+                print("⚠️ Unified genie template not found, using fallback")
             
             # Copy unified container build files for genie
             self._copy_unified_container_files("genie", workspace_path, credentials)
@@ -1374,29 +1376,47 @@ echo 🎉 Workspace started successfully!
                             success = False
 
                     elif service == "agent":
-                        print("🤖 Starting Agent All-in-One Container...")
+                        print("🤖 Starting Agent Database Container...")
+                        # Check if the compose file exists
+                        agent_compose_file = workspace_path / "docker" / "agent" / "docker-compose.unified.yml"
+                        if not agent_compose_file.exists():
+                            print(f"❌ Agent compose file not found: {agent_compose_file}")
+                            print("💡 Make sure you selected agent service during initialization")
+                            success = False
+                            continue
+                            
                         result = secure_subprocess_call(
                             ["docker", "compose", "-f", "docker/agent/docker-compose.unified.yml", "up", "-d", "agent-all-in-one", "--remove-orphans"],
                             capture_output=True,
                             timeout=120
                         )
                         if result.returncode == 0:
-                            print("✅ Agent All-in-One Container started on port 38886")
+                            print("✅ Agent Database Container started on port 35532")
                         else:
-                            print(f"⚠️ Failed to start Agent container: {result.stderr}")
+                            print(f"⚠️ Failed to start Agent container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}")
+                            print("💡 Check that docker/agent/docker-compose.unified.yml contains the correct service definition")
                             success = False
 
                     elif service == "genie":
-                        print("🧞 Starting Genie All-in-One Container...")
+                        print("🧞 Starting Genie Database Container...")
+                        # Check if the compose file exists
+                        genie_compose_file = workspace_path / "docker" / "genie" / "docker-compose.unified.yml"
+                        if not genie_compose_file.exists():
+                            print(f"❌ Genie compose file not found: {genie_compose_file}")
+                            print("💡 Make sure you selected genie service during initialization")
+                            success = False
+                            continue
+                            
                         result = secure_subprocess_call(
                             ["docker", "compose", "-f", "docker/genie/docker-compose.unified.yml", "up", "-d", "genie-all-in-one", "--remove-orphans"],
                             capture_output=True,
                             timeout=120
                         )
                         if result.returncode == 0:
-                            print("✅ Genie All-in-One Container started on port 48886")
+                            print("✅ Genie Database Container started on port 48532")
                         else:
-                            print(f"⚠️ Failed to start Genie container: {result.stderr}")
+                            print(f"⚠️ Failed to start Genie container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}")
+                            print("💡 Check that docker/genie/docker-compose.unified.yml contains the correct service definition")
                             success = False
 
             finally:

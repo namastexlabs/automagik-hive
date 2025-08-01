@@ -10,8 +10,8 @@ FROM python:3.12-slim as builder
 # Install UV package manager
 RUN pip install uv
 
-# Copy dependency files
-COPY pyproject.toml uv.lock ./
+# Copy dependency and build files  
+COPY pyproject.toml uv.lock README.md ./
 
 # Install dependencies with UV
 RUN uv sync --frozen --no-dev
@@ -19,10 +19,22 @@ RUN uv sync --frozen --no-dev
 # Stage 2: Unified Production Container
 FROM ubuntu:22.04 as agent-production
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Set timezone and disable interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install system dependencies with required repositories
+RUN apt-get update && apt-get install -y software-properties-common wget gnupg && \
+    # Add PostgreSQL 16 repository
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ jammy-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+    # Add Python 3.12 repository (deadsnakes PPA)  
+    add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && \
+    apt-get install -y \
     python3.12 \
     python3.12-venv \
+    python3.12-dev \
     python3-pip \
     postgresql-16 \
     postgresql-contrib-16 \
