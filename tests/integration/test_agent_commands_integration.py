@@ -47,7 +47,7 @@ services:
     ports:
       - "35532:5432"
     volumes:
-      - ./data/postgres-agent:/var/lib/postgresql/data
+      - ../../data/postgres-agent:/var/lib/postgresql/data
 """)
             
             # Create .env.example

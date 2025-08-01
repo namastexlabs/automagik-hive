@@ -52,11 +52,11 @@ services:
       retries: 5
       start_period: 30s
 
-  # Agent All-in-One Service (PostgreSQL + FastAPI)
+  # Agent FastAPI Service (connects to postgres-agent)
   agent-dev-server:
     build:
-      context: .
-      dockerfile: Dockerfile.agent
+      context: ../../
+      dockerfile: docker/agent/Dockerfile.agent
       args:
         <<: *agent-build-args
       platforms:
@@ -65,51 +65,42 @@ services:
     container_name: hive-agent-dev-server
     restart: unless-stopped
     ports:
-      - "35532:35532"  # Agent development API
+      - "38886:38886"  # Agent development API (different from postgres port)
     environment:
-      # Agent-specific database connection (internal PostgreSQL)
-      - HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-agent}:${POSTGRES_PASSWORD:-agent}@localhost:5432/${POSTGRES_DB:-hive_agent}
+      # Agent-specific database connection (connects to postgres-agent service)
+      - HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-agent}:${POSTGRES_PASSWORD:-agent}@postgres-agent:5432/${POSTGRES_DB:-hive_agent}
       - RUNTIME_ENV=prd
       - HIVE_LOG_LEVEL=info
       - HIVE_API_HOST=0.0.0.0
-      - HIVE_API_PORT=35532
+      - HIVE_API_PORT=38886
       - HIVE_API_WORKERS=${API_WORKERS:-2}
-      - HIVE_ENVIRONMENT=agent-development
-      # PostgreSQL configuration for internal database
-      - POSTGRES_USER=${POSTGRES_USER:-agent}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-agent}
-      - POSTGRES_DB=hive_agent
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      - HIVE_ENVIRONMENT=development
       # Performance optimizations
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
-      # Supervisord configuration
-      - SUPERVISOR_LOG_LEVEL=info
     volumes:
-      - ../../data/postgres-agent:/var/lib/postgresql/data  # PostgreSQL persistence
       - agent_app_logs:/app/logs                        # Application logs
       - agent_app_data:/app/data                        # Application data
-      - agent_supervisor_logs:/var/log/supervisor       # Supervisor logs
+    depends_on:
+      postgres-agent:
+        condition: service_healthy
     networks:
       - agent_network
     healthcheck:
-      test: |
-        # Multi-service health check: PostgreSQL + FastAPI
-        pg_isready -U ${POSTGRES_USER:-agent} -d hive_agent &&
-        curl -f http://localhost:35532/api/v1/health
+      test: ["CMD", "curl", "-f", "http://localhost:38886/api/v1/health"]
       interval: 30s
-      timeout: 15s  # Longer timeout for dual-service check
+      timeout: 10s
       retries: 3
-      start_period: 90s  # Extra time for PostgreSQL + app startup
-    # Resource limits for all-in-one container
+      start_period: 60s
+    # Resource limits for agent service
     deploy:
       resources:
         limits:
-          memory: 2G
-          cpus: '1.0'
+          memory: 1G
+          cpus: '0.5'
         reservations:
-          memory: 512M
-          cpus: '0.25'
+          memory: 256M
+          cpus: '0.1'
 
 # Agent network configuration
 networks:

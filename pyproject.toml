@@ -55,6 +55,7 @@ dependencies = [
     "openinference-instrumentation-agno>=0.1.9", # Agno instrumentation
     # === Data Processing ===
     "pandas>=2.3.1", # Data manipulation and analysis
+    "docker>=7.1.0",
 ]
 
 [project.optional-dependencies]
