@@ -45,7 +45,10 @@ except ImportError:
 
 
 # Test environment configuration
-pytest_plugins = ["pytest_mock", "pytest_benchmark"]
+try:
+    pytest_plugins = ["pytest_mock"]
+except ImportError:
+    pytest_plugins = []
 
 
 class TestEnvironmentManager:
