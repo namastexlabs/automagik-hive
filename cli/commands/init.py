@@ -43,6 +43,13 @@ class InitCommands:
         Returns:
             True if initialization successful, False otherwise
         """
+        # Display welcome message
+        print("\n🧞 Welcome to Automagik Hive Workspace Initialization!")
+        print("=" * 60)
+        print("This will guide you through setting up a new AI workspace")
+        print("with database, services, and configuration files.")
+        print("=" * 60)
+        
         current_step = 0
 
         try:
@@ -161,17 +168,23 @@ class InitCommands:
                 workspace_path = secure_resolve_workspace(workspace_name)
             else:
                 # Interactive workspace name input with platform-specific examples
-                self._get_platform_specific_example()
+                example = self._get_platform_specific_example()
+                print(f"\n📁 Workspace Path Setup")
+                print("Enter the path where you'd like to create your workspace.")
+                print(f"Example: {example}")
+                print()
 
                 while True:
                     name = input("Workspace path: ").strip()
                     if not name:
+                        print("❌ Please enter a workspace path.")
                         continue
                     try:
                         # Secure validation of user input
                         workspace_path = secure_resolve_workspace(name)
                         break
                     except SecurityError:
+                        print("❌ Invalid path. Please enter a valid workspace path.")
                         continue
 
             # Enhanced directory existence check
@@ -218,18 +231,41 @@ class InitCommands:
 
     def _select_container_services(self) -> list[str]:
         """Interactive container services selection."""
+        print("\n🐳 Container Services Setup")
+        print("=" * 50)
+        print("Select which services to include in your workspace:")
+        print()
+        print("1. Basic Setup - PostgreSQL only")
+        print("   • PostgreSQL database with pgvector extension")
+        print("   • Ideal for simple AI applications")
+        print()
+        print("2. Full Development Suite")
+        print("   • PostgreSQL database")
+        print("   • Agent Development Environment (port 38886)")
+        print("   • Genie Consultation Service (port 48886)")
+        print()
+        print("3. Custom Selection")
+        print("   • Choose individual services")
+        print()
+        
         while True:
             try:
-                choice = input("\nEnter your choice (1-3): ").strip()
+                choice = input("Enter your choice (1-3): ").strip()
 
                 if choice == "1":
+                    print("✅ Selected: Basic PostgreSQL setup")
                     return ["postgres"]
                 if choice == "2":
+                    print("✅ Selected: Full development suite")
                     return ["postgres", "agent", "genie"]
                 if choice == "3":
+                    print("✅ Selected: Custom service selection")
                     return self._custom_service_selection()
+                else:
+                    print("❌ Invalid choice. Please enter 1, 2, or 3.")
 
             except (EOFError, KeyboardInterrupt):
+                print("\n⚠️ Using default: Basic PostgreSQL setup")
                 return ["postgres"]  # Default to basic PostgreSQL
 
     def _custom_service_selection(self) -> list[str]:
@@ -315,21 +351,46 @@ class InitCommands:
 
     def _setup_postgres_interactively(self) -> dict[str, str] | None:
         """Interactive PostgreSQL setup with user choice."""
+        print("\n🗄️ PostgreSQL Database Setup")
+        print("=" * 50)
+        print("Choose how to set up your PostgreSQL database:")
+        print()
+        print("1. Docker PostgreSQL (Recommended)")
+        print("   • Automatic setup using Docker")
+        print("   • Includes pgvector extension")
+        print("   • Isolated and easy to manage")
+        print()
+        print("2. External PostgreSQL")
+        print("   • Connect to existing PostgreSQL server")
+        print("   • Requires manual pgvector setup")
+        print("   • You'll need connection details")
+        print()
+        print("3. Manual Configuration")
+        print("   • Skip setup, configure manually later")
+        print("   • You'll need to edit .env file")
+        print()
+        
         while True:
             try:
-                choice = input("\nEnter your choice (1-3): ").strip()
+                choice = input("Enter your choice (1-3): ").strip()
 
                 if choice == "1":
+                    print("✅ Selected: Docker PostgreSQL setup")
                     return self._setup_docker_postgres()
                 if choice == "2":
+                    print("✅ Selected: External PostgreSQL connection")
                     return self._setup_external_postgres()
                 if choice == "3":
+                    print("✅ Selected: Manual configuration")
                     return {
                         "type": "manual",
                         "database_url": "postgresql+psycopg://user:pass@localhost:5432/hive",
                     }
+                else:
+                    print("❌ Invalid choice. Please enter 1, 2, or 3.")
 
             except (EOFError, KeyboardInterrupt):
+                print("\n⚠️ Setup cancelled")
                 return None
 
     def _setup_docker_postgres(self) -> dict[str, str] | None:
