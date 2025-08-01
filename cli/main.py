@@ -53,7 +53,7 @@ Core Commands:
   uvx automagik-hive --agent-reset             # Reset agent environment
 
   # Uninstallation commands (DESTRUCTIVE)
-  uvx automagik-hive --uninstall ./workspace   # Remove specific workspace
+  uvx automagik-hive --uninstall               # Remove current workspace data
   uvx automagik-hive --uninstall-global        # Remove ALL components (DANGEROUS)
 
   # With specific workspace
@@ -140,7 +140,7 @@ Note: T1.5 Core Command Implementation - Essential UVX functionality ready.
     uninstall_group.add_argument(
         "--uninstall",
         action="store_true",
-        help="Remove specific workspace with all data (DESTRUCTIVE - requires workspace path)",
+        help="Remove current workspace data and containers (DESTRUCTIVE)",
     )
     uninstall_group.add_argument(
         "--uninstall-global",
@@ -299,7 +299,7 @@ def main() -> int:
 
     # Handle Uninstallation commands
     elif args.uninstall:
-        success = uninstall_commands.uninstall_workspace(args.workspace)
+        success = uninstall_commands.uninstall_current_workspace()
         return 0 if success else 1
 
     elif args.uninstall_global:

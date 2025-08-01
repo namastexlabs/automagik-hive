@@ -25,34 +25,31 @@ class UninstallCommands:
         self.docker_service = DockerService()
         self.postgres_service = PostgreSQLService()
 
-    def uninstall_workspace(self, workspace_path: str | None = None) -> bool:
-        """Uninstall a specific workspace with all its data.
+    def uninstall_current_workspace(self) -> bool:
+        """Uninstall current workspace (UVX-optimized).
         
-        Args:
-            workspace_path: Path to workspace directory to remove
-            
+        For UVX serverless instances, removes Docker containers and data
+        from the current workspace directory.
+        
         Returns:
             True if uninstall successful, False otherwise
         """
-        if not workspace_path:
-            print("❌ Workspace path is required for uninstallation")
-            print("💡 Usage: uvx automagik-hive --uninstall ./my-workspace")
-            return False
-
-        workspace = Path(workspace_path).resolve()
-
-        if not workspace.exists():
-            print(f"⚠️ Workspace '{workspace}' does not exist")
-            return True
-
-        print(f"🗑️ Uninstalling Automagik Hive workspace: {workspace}")
+        current_dir = Path.cwd()
         
-        # Show comprehensive data destruction warning
-        if not self._confirm_workspace_destruction(workspace):
+        print(f"🗑️ Uninstalling Automagik Hive from current directory: {current_dir}")
+        
+        # Check if this looks like a workspace
+        if not self._is_automagik_workspace(current_dir):
+            print("❌ Current directory doesn't appear to be an Automagik Hive workspace")
+            print("💡 Run this command from a workspace directory (contains docker-compose.yml and .env)")
+            return False
+        
+        # Show UVX-appropriate warning
+        if not self._confirm_uvx_uninstall(current_dir):
             print("🛑 Uninstallation cancelled by user")
             return False
 
-        return self._remove_workspace_completely(workspace)
+        return self._cleanup_uvx_workspace(current_dir)
 
     def uninstall_global(self) -> bool:
         """Uninstall all Automagik Hive components globally.
@@ -90,6 +87,77 @@ class UninstallCommands:
             print("\n⚠️ Global uninstallation completed with some issues")
             print("💡 Some components may require manual cleanup")
 
+        return success
+
+    def _is_automagik_workspace(self, path: Path) -> bool:
+        """Check if directory is an Automagik Hive workspace."""
+        compose_file = path / "docker-compose.yml"
+        env_file = path / ".env"
+        
+        if not compose_file.exists() or not env_file.exists():
+            return False
+            
+        # Check if .env contains Hive variables
+        try:
+            with open(env_file) as f:
+                content = f.read()
+                return "HIVE_" in content or "automagik" in content.lower()
+        except Exception:
+            return False
+
+    def _confirm_uvx_uninstall(self, workspace: Path) -> bool:
+        """Confirm UVX workspace uninstall with appropriate warnings."""
+        print("\n🚨 DATA DESTRUCTION WARNING 🚨")
+        print("=" * 50)
+        print("This will PERMANENTLY DELETE:")
+        print(f"  🐳 Docker containers and volumes in: {workspace}")
+        print(f"  🗄️ PostgreSQL database with all data")
+        print(f"  💾 Data directory: {workspace / 'data'}")
+        print(f"  📝 Log files: {workspace / 'logs'}")
+        print("\n⚠️ The UVX package itself will remain available")
+        print("⚠️ Only workspace data will be destroyed")
+        
+        while True:
+            confirm = input("\nType 'DELETE' to confirm data destruction: ").strip()
+            if confirm == "DELETE":
+                return True
+            elif confirm.lower() in ["cancel", "no", "n", ""]:
+                return False
+            else:
+                print("❌ Invalid input. Type 'DELETE' to confirm or press Enter to cancel.")
+
+    def _cleanup_uvx_workspace(self, workspace: Path) -> bool:
+        """Clean up UVX workspace data."""
+        success = True
+        
+        print(f"\n🔄 Cleaning up workspace data...")
+        
+        # Step 1: Stop and remove Docker containers
+        compose_file = workspace / "docker-compose.yml"
+        if compose_file.exists():
+            print("🐳 Stopping and removing Docker containers...")
+            success &= self._stop_workspace_containers(workspace)
+        
+        # Step 2: Remove data and logs directories (but keep workspace structure)
+        data_dirs = ["data", "logs"]
+        for dir_name in data_dirs:
+            dir_path = workspace / dir_name
+            if dir_path.exists():
+                try:
+                    print(f"📁 Removing {dir_name} directory...")
+                    shutil.rmtree(dir_path)
+                    print(f"✅ Removed {dir_name} directory")
+                except Exception as e:
+                    print(f"❌ Error removing {dir_name}: {e}")
+                    success = False
+        
+        if success:
+            print("\n🎉 Workspace data cleanup completed!")
+            print("✨ Docker containers and data have been removed")
+            print("💡 Workspace structure preserved for future use")
+        else:
+            print("\n⚠️ Cleanup completed with some issues")
+            
         return success
 
     def _confirm_workspace_destruction(self, workspace: Path) -> bool:

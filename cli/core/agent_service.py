@@ -85,7 +85,11 @@ class AgentService:
             True if started successfully, False otherwise
         """
         workspace = Path(workspace_path).resolve()
+        print(f"🚀 Starting agent server in workspace: {workspace}")
+        
         if not self._validate_agent_environment(workspace):
+            print("❌ Agent environment validation failed")
+            print("💡 Run 'uvx automagik-hive --agent-install' first to set up the environment")
             return False
 
         # Check if already running
@@ -162,7 +166,7 @@ class AgentService:
                 else:
                     print(f"❌ Error reading log file (exit code: {result.returncode})")
                     return False
-            except (OSError, subprocess.SubprocessError) as e:
+            except (OSError, subprocess.SubprocessError, Exception) as e:
                 print(f"❌ Error executing tail command: {e}")
                 return False
         else:
@@ -245,11 +249,16 @@ class AgentService:
         """Validate agent environment is properly set up."""
         agent_env = workspace / ".env.agent"
         if not agent_env.exists():
+            print(f"❌ Agent environment file missing: {agent_env}")
             return False
 
         # Check if venv exists
         venv_path = workspace / ".venv"
-        return venv_path.exists()
+        if not venv_path.exists():
+            print(f"❌ Python virtual environment missing: {venv_path}")
+            return False
+            
+        return True
 
     def _create_agent_env_file(self, workspace_path: str) -> bool:
         """Create .env.agent file with proper port configuration."""
@@ -540,7 +549,10 @@ class AgentService:
         workspace = Path(workspace_path)
 
         # Stop agent server
-        self._stop_agent_background()
+        try:
+            self._stop_agent_background()
+        except Exception:
+            pass  # Continue cleanup even if stop fails
 
         # Stop agent containers
         with contextlib.suppress(builtins.BaseException):

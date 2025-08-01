@@ -155,11 +155,13 @@ class TestAgentServiceValidation:
         
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            (workspace / "docker-compose.yml").write_text("version: '3.8'\n")
+            # Create expected directory structure
+            (workspace / "docker" / "agent").mkdir(parents=True)
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
+            (workspace / ".env.example").write_text("HIVE_API_PORT=8886\n")
             
             result = service._validate_workspace(workspace)
 
-        # Should fail initially - validation logic not implemented
         assert result is True
 
     def test_validate_workspace_nonexistent_directory(self, mock_compose_manager):
@@ -549,10 +551,10 @@ class TestAgentServiceServerManagement:
         """Test agent server stop failure."""
         service = AgentService()
         
-        with patch.object(service, "_stop_agent_background", return_value=False):
-            result = service.stop_agent("test_workspace")
+        with patch.object(service, "_is_agent_running", return_value=True):
+            with patch.object(service, "_stop_agent_background", return_value=False):
+                result = service.stop_agent("test_workspace")
 
-        # Should fail initially - stop failure handling not implemented
         assert result is False
 
     def test_restart_agent_success(self, mock_compose_manager):
