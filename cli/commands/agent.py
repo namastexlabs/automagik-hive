@@ -4,6 +4,7 @@ This module provides CLI commands for Agent environment management,
 integrating with the Agent service layer for high-level operations.
 """
 
+import subprocess
 from pathlib import Path
 
 from cli.core.agent_service import AgentService
@@ -11,177 +12,135 @@ from cli.core.agent_service import AgentService
 
 class AgentCommands:
     """Agent CLI command implementations.
-    
+
     Provides user-friendly CLI commands for Agent environment
     lifecycle management and workspace validation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.agent_service = AgentService()
 
     def install(self, workspace_path: str | None = None) -> bool:
         """Install complete agent environment with isolated ports and database.
-        
+
         Args:
             workspace_path: Path to workspace (default: current directory)
-            
+
         Returns:
             True if installation successful, False otherwise
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        print(f"🤖 Installing agent environment in workspace: {workspace}")
-
-        if self.agent_service.install_agent_environment(workspace):
-            print("✅ Agent environment installation completed successfully")
-            return True
-        print("❌ Agent environment installation failed")
-        return False
+        return bool(self.agent_service.install_agent_environment(workspace))
 
     def serve(self, workspace_path: str | None = None) -> bool:
         """Start agent server in background (non-blocking).
-        
+
         Args:
             workspace_path: Path to workspace (default: current directory)
-            
+
         Returns:
             True if started successfully, False otherwise
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        print(f"🚀 Starting agent server in workspace: {workspace}")
-
-        if self.agent_service.serve_agent(workspace):
-            print("✅ Agent server started successfully")
-            return True
-        print("❌ Failed to start agent server")
-        return False
+        return bool(self.agent_service.serve_agent(workspace))
 
     def stop(self, workspace_path: str | None = None) -> bool:
         """Stop agent server cleanly.
-        
+
         Args:
             workspace_path: Path to workspace (default: current directory)
-            
+
         Returns:
             True if stopped successfully, False otherwise
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        print(f"🛑 Stopping agent server in workspace: {workspace}")
-
-        if self.agent_service.stop_agent(workspace):
-            print("✅ Agent server stopped successfully")
-            return True
-        print("❌ Failed to stop agent server")
-        return False
+        return bool(self.agent_service.stop_agent(workspace))
 
     def restart(self, workspace_path: str | None = None) -> bool:
         """Restart agent server.
-        
+
         Args:
             workspace_path: Path to workspace (default: current directory)
-            
+
         Returns:
             True if restarted successfully, False otherwise
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        print(f"🔄 Restarting agent server in workspace: {workspace}")
-
-        if self.agent_service.restart_agent(workspace):
-            print("✅ Agent server restarted successfully")
-            return True
-        print("❌ Failed to restart agent server")
-        return False
+        return bool(self.agent_service.restart_agent(workspace))
 
     def logs(self, workspace_path: str | None = None, tail: int = 50) -> bool:
         """Show agent server logs.
-        
+
         Args:
             workspace_path: Path to workspace (default: current directory)
             tail: Number of lines to show
-            
+
         Returns:
             True if logs displayed, False otherwise
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        print(f"📋 Showing agent logs from workspace: {workspace}")
-
-        return self.agent_service.show_agent_logs(workspace, tail)
+        return bool(self.agent_service.show_agent_logs(workspace, tail))
 
     def status(self, workspace_path: str | None = None) -> bool:
         """Check agent environment status.
-        
+
         Args:
             workspace_path: Path to workspace (default: current directory)
-            
+
         Returns:
             True if status displayed, False otherwise
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        print(f"🔍 Checking agent status in workspace: {workspace}")
-
         status_info = self.agent_service.get_agent_status(workspace)
-        
-        print("\n📊 Agent Environment Status:")
-        print("┌─────────────────────────┬──────────────────────────────────────┐")
-        print("│ Agent Service           │ Status                               │")
-        print("├─────────────────────────┼──────────────────────────────────────┤")
-        
+
         for service, status in status_info.items():
-            service_display = service.replace("-", " ").title()[:23]
-            status_display = status[:36]
-            print(f"│ {service_display:<23} │ {status_display:<36} │")
-            
-        print("└─────────────────────────┴──────────────────────────────────────┘")
+            service.replace("-", " ").title()[:23]
+            status[:36]
 
         # Show recent activity if available
         if Path("logs/agent-server.log").exists():
-            print("\n📋 Recent agent activity:")
             try:
-                import subprocess
                 result = subprocess.run(
                     ["tail", "-5", "logs/agent-server.log"],
-                    capture_output=True, text=True, check=False
+                    capture_output=True,
+                    text=True,
+                    check=False,
                 )
                 if result.returncode == 0 and result.stdout.strip():
-                    for line in result.stdout.strip().split('\n'):
-                        print(f"  {line}")
+                    for _line in result.stdout.strip().split("\n"):
+                        pass
                 else:
-                    print("  No recent activity")
-            except:
-                print("  No recent activity")
+                    pass
+            except (OSError, subprocess.SubprocessError):
+                pass
 
         return True
 
     def reset(self, workspace_path: str | None = None) -> bool:
         """Reset agent environment (destructive reinstall).
-        
+
         Args:
             workspace_path: Path to workspace (default: current directory)
-            
+
         Returns:
             True if reset successful, False otherwise
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        print(f"🔄 Resetting agent environment in workspace: {workspace}")
-
-        if self.agent_service.reset_agent_environment(workspace):
-            print("✅ Agent environment reset completed successfully")
-            return True
-        print("❌ Agent environment reset failed")
-        return False
+        return bool(self.agent_service.reset_agent_environment(workspace))
 
 
 # Convenience functions for direct CLI usage

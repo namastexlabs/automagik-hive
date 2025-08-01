@@ -292,9 +292,9 @@ class WorkspaceCommands:
                 print("📋 Server logs will appear below...")
                 print("⏹️ Press Ctrl+C to quit\n")
 
-                # Use the dedicated server entry point
+                # Use the dedicated server entry point from automagik-hive package
                 result = subprocess.run([
-                    "uvx", "automagik-hive-server"
+                    "uvx", "--from", "automagik-hive", "automagik-hive-server"
                 ], check=False, env=env, cwd=workspace)
 
             os.chdir(original_cwd)
