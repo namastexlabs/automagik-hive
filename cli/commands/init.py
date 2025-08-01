@@ -312,10 +312,10 @@ class InitCommands:
                                 ]
                             )
 
-                        if result.returncode == 0:
-                            print("✅ Permissions fixed successfully")
-                        else:
-                            print("⚠️ Permission fix failed, but continuing...")
+                            if result.returncode == 0:
+                                print("✅ Permissions fixed successfully")
+                            else:
+                                print("⚠️ Permission fix failed, but continuing...")
                     except (SecurityError, subprocess.SubprocessError):
                         print("⚠️ Permission fix failed, but continuing...")
                     except Exception:
