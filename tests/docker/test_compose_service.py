@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from lib.docker.compose_service import DockerComposeService
+from docker.lib.compose_service import DockerComposeService
 from lib.auth.credential_service import CredentialService
 
 

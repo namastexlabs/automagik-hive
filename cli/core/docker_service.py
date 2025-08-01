@@ -9,7 +9,7 @@ import subprocess
 from typing import Dict, List
 from pathlib import Path
 
-from lib.docker.compose_manager import DockerComposeManager, ServiceStatus
+from docker.lib.compose_manager import DockerComposeManager, ServiceStatus
 
 
 class DockerService:

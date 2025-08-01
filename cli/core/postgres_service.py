@@ -8,7 +8,7 @@ for CLI commands, wrapping the PostgreSQLManager functionality.
 from typing import Optional
 from pathlib import Path
 
-from lib.docker.postgres_manager import PostgreSQLManager, ContainerStatus
+from docker.lib.postgres_manager import PostgreSQLManager, ContainerStatus
 from lib.auth.credential_service import CredentialService
 
 

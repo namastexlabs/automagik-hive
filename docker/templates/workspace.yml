@@ -1,0 +1,54 @@
+# =============================================================================
+# UVX Automagik Hive Workspace - Docker Compose Configuration
+# =============================================================================
+#
+# Main workspace PostgreSQL service for UVX CLI integration:
+# - PostgreSQL database with pgvector extension (port 5532)
+# - UVX CLI runs Python process directly (not containerized)
+# - FastAPI application connects to PostgreSQL container
+# - Complete workspace foundation
+#
+# Usage:
+#   docker-compose -f docker-compose-workspace.yml up -d postgres
+#   uvx automagik-hive ./my-workspace
+#
+# =============================================================================
+
+services:
+  # Main workspace PostgreSQL database with pgvector extension
+  postgres:
+    image: agnohq/pgvector:16
+    container_name: hive-postgres-workspace
+    restart: unless-stopped
+    user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"
+    environment:
+      # Workspace database configuration
+      - POSTGRES_USER=${POSTGRES_USER:-workspace}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-workspace}
+      - POSTGRES_DB=hive
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+    ports:
+      - "5532:5432"
+    networks:
+      - workspace_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workspace}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Workspace network configuration
+networks:
+  workspace_network:
+    driver: bridge
+    name: hive_workspace_network

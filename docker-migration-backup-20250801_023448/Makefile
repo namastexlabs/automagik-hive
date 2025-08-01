@@ -30,7 +30,7 @@ MAGIC := 🐝
 PROJECT_ROOT := $(shell pwd)
 VENV_PATH := $(PROJECT_ROOT)/.venv
 PYTHON := $(VENV_PATH)/bin/python
-DOCKER_COMPOSE_FILE := docker/main/docker-compose.yml
+DOCKER_COMPOSE_FILE := docker-compose.yml
 
 # Docker Compose command detection
 DOCKER_COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; else echo "docker compose"; fi)
@@ -296,14 +296,14 @@ define setup_agent_postgres
         export POSTGRES_GID=1000; \
     fi; \
     mkdir -p ./data/postgres-agent && chown -R $${POSTGRES_UID}:$${POSTGRES_GID} ./data 2>/dev/null || sudo chown -R $$USER:$$USER ./data; \
-    $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml up -d postgres-agent; \
+    $(DOCKER_COMPOSE) -f docker-compose-agent.yml up -d postgres-agent; \
     $(call print_success,Agent PostgreSQL container started on port 35532!)
 endef
 
 define cleanup_agent_environment
     $(call print_status,Cleaning up existing agent environment...); \
     pkill -f "python.*api/serve.py.*\.env\.agent" 2>/dev/null || true; \
-    $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml down 2>/dev/null || true; \
+    $(DOCKER_COMPOSE) -f docker-compose-agent.yml down 2>/dev/null || true; \
     docker container rm hive-agents-agent hive-postgres-agent 2>/dev/null || true; \
     rm -f logs/agent-server.pid logs/agent-server.log 2>/dev/null || true; \
     rm -rf ./data/postgres-agent 2>/dev/null || true; \
@@ -623,7 +623,7 @@ uninstall: ## 🗑️ Complete uninstall - removes everything
 	@echo -e "$(FONT_YELLOW)This will remove ALL containers, images, volumes, data, and environment files$(FONT_RESET)"
 	@echo -e "$(FONT_CYAN)🐳 Stopping all services...$(FONT_RESET)"
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --remove-orphans 2>/dev/null || true
-	@$(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml down --remove-orphans 2>/dev/null || true
+	@$(DOCKER_COMPOSE) -f docker-compose-agent.yml down --remove-orphans 2>/dev/null || true
 	@echo -e "$(FONT_CYAN)🗑️ Removing containers...$(FONT_RESET)"
 	@docker container rm hive-agents hive-postgres hive-agents-agent hive-postgres-agent 2>/dev/null || true
 	@echo -e "$(FONT_CYAN)🖼️ Removing Docker images...$(FONT_RESET)"
