@@ -33,6 +33,15 @@ class AuthInitService:
                 # Return .env value without overriding shell environment
                 return existing_key
 
+        # For CLI operations, don't auto-generate keys that interfere with workspace creation
+        # Only generate if we're in a proper workspace context
+        if not self.env_file.exists() or not self.env_file.is_file():
+            # Return a temporary key for CLI operations
+            temp_key = self._generate_secure_key()
+            logger.info(f"🔐 Using temporary API key for CLI operation: {temp_key}")
+            os.environ[self.api_key_var] = temp_key
+            return temp_key
+
         # Generate new key and save
         new_key = self._generate_secure_key()
         self._save_key_to_env(new_key)

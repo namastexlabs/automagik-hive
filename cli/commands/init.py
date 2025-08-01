@@ -1088,10 +1088,38 @@ Thumbs.db
             # Create directories with explicit permissions
             for subdir in base_dirs:
                 dir_path = data_path / subdir
+                
+                # Remove existing directory if it has permission issues
+                if dir_path.exists():
+                    try:
+                        # Try to write a test file to check permissions
+                        test_file = dir_path / ".permission_test"
+                        test_file.touch()
+                        test_file.unlink()
+                    except (PermissionError, OSError):
+                        print(f"🧹 Cleaning up data directory: {subdir}")
+                        # Remove problematic directory
+                        try:
+                            import shutil
+                            shutil.rmtree(dir_path)
+                        except Exception:
+                            pass
+                
+                # Create directory with proper permissions
                 dir_path.mkdir(parents=True, exist_ok=True)
                 # Set permissions to allow current user read/write/execute
                 dir_path.chmod(0o755)
-
+                
+                # For PostgreSQL directories, ensure proper ownership
+                if "postgres" in subdir:
+                    try:
+                        import os
+                        uid = os.getuid() if hasattr(os, "getuid") else 1000
+                        gid = os.getgid() if hasattr(os, "getgid") else 1000
+                        os.chown(dir_path, uid, gid)
+                    except Exception:
+                        # Don't fail if chown doesn't work
+                        pass
 
         except PermissionError:
             # Don't fail the entire initialization for this
@@ -1296,12 +1324,15 @@ echo 🎉 Workspace started successfully!
             original_cwd = os.getcwd()
             os.chdir(workspace_path)
             
+            # Clean up any conflicting containers and networks first
+            self._cleanup_existing_containers()
+            
             try:
                 for service in container_services:
                     if service == "postgres" and postgres_config["type"] == "docker":
                         print("🗄️ Starting PostgreSQL container...")
                         result = secure_subprocess_call(
-                            ["docker", "compose", "up", "-d", "postgres"],
+                            ["docker", "compose", "up", "-d", "postgres", "--remove-orphans"],
                             capture_output=True,
                             timeout=120
                         )
@@ -1314,7 +1345,7 @@ echo 🎉 Workspace started successfully!
                     elif service == "agent":
                         print("🤖 Starting Agent Development Environment...")
                         result = secure_subprocess_call(
-                            ["docker", "compose", "-f", "docker-compose-agent.yml", "up", "-d"],
+                            ["docker", "compose", "-f", "docker-compose-agent.yml", "up", "-d", "--remove-orphans"],
                             capture_output=True,
                             timeout=120
                         )
@@ -1327,7 +1358,7 @@ echo 🎉 Workspace started successfully!
                     elif service == "genie":
                         print("🧞 Starting Genie Development Assistant...")
                         result = secure_subprocess_call(
-                            ["docker", "compose", "-f", "docker-compose-genie.yml", "up", "-d"],
+                            ["docker", "compose", "-f", "docker-compose-genie.yml", "up", "-d", "--remove-orphans"],
                             capture_output=True,
                             timeout=120
                         )
@@ -1350,3 +1381,55 @@ echo 🎉 Workspace started successfully!
         except Exception as e:
             print(f"❌ Error starting containers: {e}")
             return False
+
+    def _cleanup_existing_containers(self):
+        """Clean up existing containers and networks to prevent conflicts."""
+        try:
+            print("🧹 Cleaning up existing containers and networks...")
+            
+            # Stop and remove existing hive containers
+            containers_to_remove = [
+                "hive-postgres-workspace", "hive-postgres-agent", "hive-postgres-genie",
+                "hive-agents-agent", "hive-genie"
+            ]
+            
+            for container in containers_to_remove:
+                try:
+                    # Stop container if running
+                    secure_subprocess_call(
+                        ["docker", "stop", container],
+                        capture_output=True,
+                        timeout=30
+                    )
+                    # Remove container
+                    secure_subprocess_call(
+                        ["docker", "rm", container],
+                        capture_output=True,
+                        timeout=30
+                    )
+                except Exception:
+                    # Container might not exist, continue
+                    pass
+            
+            # Remove orphaned networks
+            networks_to_remove = [
+                "hive_workspace_network", "hive_agent_network", "hive_genie_network"
+            ]
+            
+            for network in networks_to_remove:
+                try:
+                    secure_subprocess_call(
+                        ["docker", "network", "rm", network],
+                        capture_output=True,
+                        timeout=30
+                    )
+                except Exception:
+                    # Network might not exist or be in use, continue
+                    pass
+                    
+            print("✅ Cleanup completed")
+            
+        except Exception:
+            # Don't fail initialization if cleanup fails
+            print("⚠️ Cleanup had some issues, but continuing...")
+            pass
