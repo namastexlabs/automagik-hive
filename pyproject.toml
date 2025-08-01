@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.1.0a4"
+version = "0.1.0a8"
 description = "Automagik Multi-Agent Framework - Extensible Agent Creation System"
 readme = "README.md"
 license = "MIT"
@@ -345,7 +345,7 @@ exclude_lines = [
 # Hatchling Build Configuration
 # ============================================================================
 [tool.hatch.build.targets.wheel]
-packages = ["ai", "api", "lib", "cli"]
+packages = ["ai", "api", "lib", "cli", "docker"]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -353,6 +353,7 @@ include = [
     "/api", 
     "/lib",
     "/cli",
+    "/docker",
     "/tests",
     "/README.md",
     "/pyproject.toml",
@@ -364,5 +365,6 @@ dev = [
     "pathlib>=1.0.1",
     "pip-audit>=2.9.0",
     "safety>=3.6.0",
+    "twine>=6.1.0",
     "types-pyyaml>=6.0.12.20250516",
 ]
