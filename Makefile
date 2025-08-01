@@ -920,6 +920,19 @@ publish: ## 📦 Build and publish alpha release to PyPI
 	git push origin dev; \
 	git push origin "v$$CURRENT_VERSION"; \
 	$(call print_status,Publishing to PyPI...); \
+	if [ -f ".env" ]; then \
+		PYPI_USERNAME=$$(grep '^PYPI_USERNAME=' .env | cut -d'=' -f2 | tr -d ' '); \
+		PYPI_TOKEN=$$(grep '^PYPI_API_TOKEN=' .env | cut -d'=' -f2 | tr -d ' '); \
+		if [ -n "$$PYPI_USERNAME" ] && [ -n "$$PYPI_TOKEN" ] && [ "$$PYPI_TOKEN" != "your-pypi-api-token-here" ]; then \
+			$(call print_status,Using PyPI credentials from .env file...); \
+			export TWINE_USERNAME="$$PYPI_USERNAME"; \
+			export TWINE_PASSWORD="$$PYPI_TOKEN"; \
+		else \
+			$(call print_warning,PyPI credentials not found in .env - will prompt for input); \
+		fi; \
+	else \
+		$(call print_warning,.env file not found - will prompt for PyPI credentials); \
+	fi; \
 	if command -v twine >/dev/null 2>&1; then \
 		twine upload dist/*; \
 	else \

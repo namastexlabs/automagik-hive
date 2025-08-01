@@ -10,6 +10,7 @@ import json
 import os
 import secrets
 import shutil
+import subprocess
 from pathlib import Path
 
 from cli.core.docker_service import DockerService
@@ -105,6 +106,19 @@ class InitCommands:
             current_step += 1
             self._create_data_directories(workspace_path, container_services)
 
+            # Step 8.5: Start all selected services
+            current_step += 1
+            if not self._start_docker_containers(workspace_path, container_services, postgres_config):
+                print("⚠️ Service startup failed but workspace configuration is complete")
+                print("You can manually start services later using:")
+                for service in container_services:
+                    if service == "postgres":
+                        print(f"  uvx automagik-hive --postgres-start {workspace_path}")
+                    elif service == "agent":
+                        print(f"  uvx automagik-hive --agent-serve {workspace_path}")
+                    elif service == "genie":
+                        print(f"  uvx automagik-hive --genie-serve {workspace_path}")
+
             # Step 9: Comprehensive workspace validation
             current_step += 1
             is_valid, success_messages, error_messages = (
@@ -119,12 +133,7 @@ class InitCommands:
                 pass
 
             if not is_valid:
-
-                recovery_response = input("\nContinue anyway? (y/N): ").strip().lower()
-                if recovery_response != "y":
-                    return self._handle_initialization_failure(
-                        "User chose to stop due to validation issues", current_step
-                    )
+                print("⚠️ Some validation issues found, but continuing with initialization...")
 
             # Step 10: Enhanced success message with next steps
             current_step += 1
@@ -190,27 +199,11 @@ class InitCommands:
             # Enhanced directory existence check
             if workspace_path.exists():
                 if any(workspace_path.iterdir()):
-
-                    # Show directory contents for user awareness
-                    try:
-                        existing_files = list(workspace_path.iterdir())[
-                            :5
-                        ]  # Show first 5 items
-                        for _item in existing_files:
-                            pass
-                        if len(list(workspace_path.iterdir())) > 5:
-                            pass
-                    except Exception:
-                        pass
-
-                    response = input("Continue anyway? (y/N): ").strip().lower()
-                    if response != "y":
-                        return None
-
+                    print(f"📁 Directory '{workspace_path}' already exists - merging configuration")
                     # Check for permission issues with existing files
                     self._check_and_fix_permissions(workspace_path)
                 else:
-                    pass
+                    print(f"📁 Using existing empty directory '{workspace_path}'")
 
             return workspace_path
         except SecurityError:
@@ -231,22 +224,10 @@ class InitCommands:
 
     def _select_container_services(self) -> list[str]:
         """Interactive container services selection."""
-        print("\n🐳 Container Services Setup")
-        print("=" * 50)
-        print("Select which services to include in your workspace:")
-        print()
-        print("1. Basic Setup - PostgreSQL only")
-        print("   • PostgreSQL database with pgvector extension")
-        print("   • Ideal for simple AI applications")
-        print()
-        print("2. Full Development Suite")
-        print("   • PostgreSQL database")
-        print("   • Agent Development Environment (port 38886)")
-        print("   • Genie Consultation Service (port 48886)")
-        print()
-        print("3. Custom Selection")
-        print("   • Choose individual services")
-        print()
+        print("\n🐳 Services")
+        print("1. PostgreSQL only")
+        print("2. Full suite (PostgreSQL + Agent + Genie)")
+        print("3. Custom selection")
         
         while True:
             try:
@@ -285,10 +266,10 @@ class InitCommands:
         except (EOFError, KeyboardInterrupt):
             pass
 
-        # Genie consultation service
+        # Genie development assistant service
         try:
             genie_choice = (
-                input("🧞 Genie Consultation Service? (y/N): ").strip().lower()
+                input("🧞 Genie Development Assistant? (y/N): ").strip().lower()
             )
             if genie_choice == "y":
                 services.append("genie")
@@ -309,15 +290,9 @@ class InitCommands:
                     test_file.touch()
                     test_file.unlink()  # Remove test file
                 except PermissionError:
-
-                    # Ask user if they want to attempt fixing permissions
-                    fix_response = (
-                        input("Attempt to fix permissions automatically? (y/N): ")
-                        .strip()
-                        .lower()
-                    )
-                    if fix_response == "y":
-                        try:
+                    print("🔧 Fixing data directory permissions...")
+                    # Automatically attempt to fix permissions
+                    try:
                             # SECURITY: Use secure subprocess call with validation
                             uid = os.getuid() if hasattr(os, "getuid") else 1000
                             gid = os.getgid() if hasattr(os, "getgid") else 1000
@@ -337,38 +312,24 @@ class InitCommands:
                                 ]
                             )
 
-                            if result.returncode == 0:
-                                pass
-                            else:
-                                pass
-                        except (SecurityError, subprocess.SubprocessError):
-                            pass
-                        except Exception:
-                            pass
+                        if result.returncode == 0:
+                            print("✅ Permissions fixed successfully")
+                        else:
+                            print("⚠️ Permission fix failed, but continuing...")
+                    except (SecurityError, subprocess.SubprocessError):
+                        print("⚠️ Permission fix failed, but continuing...")
+                    except Exception:
+                        print("⚠️ Permission fix failed, but continuing...")
 
         except Exception:
             pass
 
     def _setup_postgres_interactively(self) -> dict[str, str] | None:
         """Interactive PostgreSQL setup with user choice."""
-        print("\n🗄️ PostgreSQL Database Setup")
-        print("=" * 50)
-        print("Choose how to set up your PostgreSQL database:")
-        print()
+        print("\n🗄️ PostgreSQL Setup")
         print("1. Docker PostgreSQL (Recommended)")
-        print("   • Automatic setup using Docker")
-        print("   • Includes pgvector extension")
-        print("   • Isolated and easy to manage")
-        print()
-        print("2. External PostgreSQL")
-        print("   • Connect to existing PostgreSQL server")
-        print("   • Requires manual pgvector setup")
-        print("   • You'll need connection details")
-        print()
+        print("2. External PostgreSQL")  
         print("3. Manual Configuration")
-        print("   • Skip setup, configure manually later")
-        print("   • You'll need to edit .env file")
-        print()
         
         while True:
             try:
@@ -604,6 +565,18 @@ class InitCommands:
             xai_key = input("X.AI API Key (for Grok models): ").strip()
             if xai_key:
                 api_keys["xai_api_key"] = xai_key
+
+            # LangWatch integration
+            langwatch_choice = input("\nEnable LangWatch monitoring? (y/N): ").strip().lower()
+            if langwatch_choice == "y":
+                langwatch_key = input("LangWatch API Key: ").strip()
+                if langwatch_key:
+                    api_keys["langwatch_api_key"] = langwatch_key
+                    api_keys["langwatch_enabled"] = "true"
+                else:
+                    print("⚠️ LangWatch API key required for monitoring")
+            else:
+                api_keys["langwatch_enabled"] = "false"
 
         except (EOFError, KeyboardInterrupt):
             return {}
@@ -1179,3 +1152,92 @@ echo 🎉 Workspace started successfully!
         if not is_valid:
             pass
 
+    def _start_docker_containers(
+        self,
+        workspace_path: Path,
+        container_services: list[str],
+        postgres_config: dict[str, str]
+    ) -> bool:
+        """Start all selected services (containers and background processes)."""
+        try:
+            print("\n🚀 Starting services...")
+            print("=" * 30)
+            
+            success = True
+            
+            # Change to workspace directory for docker-compose
+            original_cwd = os.getcwd()
+            os.chdir(workspace_path)
+            
+            try:
+                for service in container_services:
+                    if service == "postgres" and postgres_config["type"] == "docker":
+                        print("🗄️ Starting PostgreSQL container...")
+                        result = secure_subprocess_call(
+                            ["docker", "compose", "up", "-d", "postgres"],
+                            capture_output=True,
+                            timeout=120
+                        )
+                        if result.returncode == 0:
+                            print("✅ PostgreSQL container started successfully")
+                        else:
+                            print(f"❌ Failed to start PostgreSQL container: {result.stderr}")
+                            success = False
+                    
+                    elif service == "agent":
+                        print("🤖 Starting Agent Development Environment...")
+                        try:
+                            # Start agent service using the CLI commands
+                            result = secure_subprocess_call(
+                                ["uvx", "automagik-hive", "--agent-install", str(workspace_path)],
+                                capture_output=True,
+                                timeout=60
+                            )
+                            if result.returncode == 0:
+                                result = secure_subprocess_call(
+                                    ["uvx", "automagik-hive", "--agent-serve", str(workspace_path)],
+                                    capture_output=True,
+                                    timeout=30
+                                )
+                                if result.returncode == 0:
+                                    print("✅ Agent Development Environment started on port 38886")
+                                else:
+                                    print("⚠️ Agent configured but failed to start (use --agent-serve)")
+                                    success = False
+                            else:
+                                print("⚠️ Agent installation failed")
+                                success = False
+                        except Exception as e:
+                            print(f"⚠️ Agent setup error: {e}")
+                            success = False
+                    
+                    elif service == "genie":
+                        print("🧞 Starting Genie Development Assistant...")
+                        try:
+                            result = secure_subprocess_call(
+                                ["uvx", "automagik-hive", "--genie-serve", str(workspace_path)],
+                                capture_output=True,
+                                timeout=30
+                            )
+                            if result.returncode == 0:
+                                print("✅ Genie Development Assistant started on port 48886")
+                            else:
+                                print("⚠️ Genie configured but failed to start (use --genie-serve)")
+                                success = False
+                        except Exception as e:
+                            print(f"⚠️ Genie setup error: {e}")
+                            success = False
+                
+            finally:
+                os.chdir(original_cwd)
+            
+            if success:
+                print("🎉 All selected services started successfully!")
+            else:
+                print("⚠️ Some services failed to start")
+            
+            return success
+            
+        except Exception as e:
+            print(f"❌ Error starting containers: {e}")
+            return False
