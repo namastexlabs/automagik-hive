@@ -163,12 +163,14 @@ def main() -> int:
     # Validate arguments
     is_valid, error_msg = validate_arguments(args)
     if not is_valid:
+        print(f"Error: {error_msg}", file=sys.stderr)
         return 1
 
     # Initialize command loader
     try:
         commands = LazyCommandLoader()
-    except Exception:
+    except Exception as e:
+        print(f"Error initializing CLI: {e}", file=sys.stderr)
         return 1
 
     try:
@@ -206,18 +208,18 @@ def main() -> int:
 
         if args.status:
             status = commands.service_manager.get_status(args.status)
-            for component in status:
-                pass
+            for component, state in status.items():
+                print(f"{component}: {state}")
             return 0 if all(v == "healthy" for v in status.values()) else 1
 
         if args.health:
             health = commands.unified_installer.health_check(args.health)
-            for component in health:
-                pass
+            for component, state in health.items():
+                print(f"{component}: {'✓' if state else '✗'}")
             return 0 if all(health.values()) else 1
 
         if args.logs is not None:
-            component = args.logs[0] if args.logs else "all"
+            component = args.logs[0] if args.logs and len(args.logs) > 0 else "all"
             lines = int(args.logs[1]) if len(args.logs) > 1 else 50
             return 0 if commands.service_manager.show_logs(component, lines) else 1
 
@@ -231,7 +233,8 @@ def main() -> int:
     except KeyboardInterrupt:
         return 130
 
-    except Exception:
+    except Exception as e:
+        print(f"CLI error: {e}", file=sys.stderr)
         return 1
 
 

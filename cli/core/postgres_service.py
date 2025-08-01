@@ -6,6 +6,7 @@ for CLI commands, wrapping the PostgreSQLManager functionality.
 
 import sys
 from pathlib import Path
+from typing import Any, Dict
 
 # Import PostgreSQLManager directly to avoid package conflicts
 docker_lib_path = Path(__file__).parent.parent.parent / "docker" / "lib"
@@ -23,7 +24,7 @@ class PostgreSQLService:
     with integrated credential handling and workspace validation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.credential_service = CredentialService()
         self.postgres_manager = PostgreSQLManager(self.credential_service)
 
@@ -41,9 +42,10 @@ class PostgreSQLService:
         if not workspace.exists():
             return False
 
-        return self.postgres_manager.setup_postgres_container(
+        result = self.postgres_manager.setup_postgres_container(
             interactive=interactive, workspace_path=str(workspace)
         )
+        return bool(result)
 
     def start_postgres(self, workspace_path: str) -> bool:
         """Start PostgreSQL container for existing workspace.
@@ -58,7 +60,8 @@ class PostgreSQLService:
         if not self._validate_workspace(workspace):
             return False
 
-        return self.postgres_manager.start_container(str(workspace))
+        result = self.postgres_manager.start_container(str(workspace))
+        return bool(result)
 
     def stop_postgres(self, workspace_path: str) -> bool:
         """Stop PostgreSQL container.
@@ -73,7 +76,8 @@ class PostgreSQLService:
         if not self._validate_workspace(workspace):
             return False
 
-        return self.postgres_manager.stop_container(str(workspace))
+        result = self.postgres_manager.stop_container(str(workspace))
+        return bool(result)
 
     def restart_postgres(self, workspace_path: str) -> bool:
         """Restart PostgreSQL container.
@@ -88,7 +92,8 @@ class PostgreSQLService:
         if not self._validate_workspace(workspace):
             return False
 
-        return self.postgres_manager.restart_container(str(workspace))
+        result = self.postgres_manager.restart_container(str(workspace))
+        return bool(result)
 
     def get_postgres_status(self, workspace_path: str) -> str:
         """Get human-readable PostgreSQL status.
@@ -153,9 +158,10 @@ class PostgreSQLService:
         if not self._validate_workspace(workspace):
             return False
 
-        return self.postgres_manager.validate_container_health(str(workspace))
+        result = self.postgres_manager.validate_container_health(str(workspace))
+        return bool(result)
 
-    def get_postgres_connection_info(self, workspace_path: str) -> dict | None:
+    def get_postgres_connection_info(self, workspace_path: str) -> Dict[str, Any] | None:
         """Get PostgreSQL connection information.
 
         Args:

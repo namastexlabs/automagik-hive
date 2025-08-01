@@ -9,13 +9,13 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Match
 
 
 class TemplateProcessor:
     """Advanced template processing with workspace-specific configuration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.placeholder_patterns = {
             "simple": r"\{\{(\w+)\}\}",  # {{variable}}
             "nested": r"\{\{(\w+)\.(\w+)\}\}",  # {{object.property}}
@@ -73,7 +73,7 @@ class TemplateProcessor:
     ) -> str:
         """Process simple {{variable}} placeholders."""
 
-        def replace_simple(match):
+        def replace_simple(match: Match[str]) -> str:
             key = match.group(1)
             value = context.get(key, f"MISSING_{key}")
             if str(value).startswith("MISSING_"):
@@ -87,7 +87,7 @@ class TemplateProcessor:
     ) -> str:
         """Process nested {{object.property}} placeholders."""
 
-        def replace_nested(match):
+        def replace_nested(match: Match[str]) -> str:
             obj_key, prop_key = match.group(1), match.group(2)
             obj = context.get(obj_key, {})
 
@@ -108,7 +108,7 @@ class TemplateProcessor:
     def _process_environment_variables(self, content: str) -> str:
         """Process ${ENV_VAR} environment variable placeholders."""
 
-        def replace_env(match):
+        def replace_env(match: Match[str]) -> str:
             env_var = match.group(1)
             value = os.getenv(env_var, f"MISSING_ENV_{env_var}")
             if value == f"MISSING_ENV_{env_var}":
@@ -120,7 +120,7 @@ class TemplateProcessor:
     def _process_conditional_blocks(self, content: str, context: dict[str, Any]) -> str:
         """Process {{#if condition}}content{{/if}} conditional blocks."""
 
-        def replace_conditional(match):
+        def replace_conditional(match: Match[str]) -> str:
             condition = match.group(1)
             block_content = match.group(2)
 
@@ -151,7 +151,7 @@ class TemplateProcessor:
     def _process_loop_blocks(self, content: str, context: dict[str, Any]) -> str:
         """Process {{#each items}}content{{/each}} loop blocks."""
 
-        def replace_loop(match):
+        def replace_loop(match: Match[str]) -> str:
             items_key = match.group(1)
             block_content = match.group(2)
 

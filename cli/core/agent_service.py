@@ -204,7 +204,7 @@ class AgentService:
         # Reinstall
         return self.install_agent_environment(str(workspace))
 
-    def _validate_workspace(self, workspace: Path, check_env: bool = True) -> bool:  # noqa: ARG002
+    def _validate_workspace(self, workspace: Path, check_env: bool = True) -> bool:
         """Validate workspace directory and required files."""
         if not workspace.exists():
             return False

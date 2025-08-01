@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Re-export the specific fixtures needed for registry tests
-from tests.fixtures.config_fixtures import sample_agent_config  # noqa: F401
-from tests.fixtures.service_fixtures import mock_file_system_ops  # noqa: F401
+from tests.fixtures.config_fixtures import sample_agent_config
+from tests.fixtures.service_fixtures import mock_file_system_ops
 
 
 @pytest.fixture(autouse=True)

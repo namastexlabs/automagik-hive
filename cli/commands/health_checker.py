@@ -260,7 +260,7 @@ class HealthChecker:
                         resp = requests.get(f"{base_url}{endpoint}", timeout=5)
                         endpoints_status[endpoint] = resp.status_code
                     except Exception:
-                        endpoints_status[endpoint] = "unreachable"
+                        endpoints_status[endpoint] = 503  # Service Unavailable
 
                 return HealthCheckResult(
                     service=f"{component}-api",
@@ -749,7 +749,7 @@ class HealthChecker:
         return services
 
     def _check_service_with_retries(
-        self, service_name: str, config: dict[str, Any], progress: Progress, task
+        self, service_name: str, config: dict[str, Any], progress: Progress, task: Any
     ) -> HealthCheckResult:
         """Check service with retry logic.
 
@@ -894,7 +894,7 @@ class HealthChecker:
             )
 
     def _check_agent_dependencies(
-        self, containers: list[dict]
+        self, containers: list[dict[str, Any]]
     ) -> list[HealthCheckResult]:
         """Check agent component dependencies.
 
@@ -958,7 +958,7 @@ class HealthChecker:
         return results
 
     def _check_genie_dependencies(
-        self, containers: list[dict]
+        self, containers: list[dict[str, Any]]
     ) -> list[HealthCheckResult]:
         """Check genie component dependencies.
 
@@ -1022,7 +1022,7 @@ class HealthChecker:
         return results
 
     def _check_cross_component_dependencies(
-        self, containers: list[dict]
+        self, containers: list[dict[str, Any]]
     ) -> list[HealthCheckResult]:
         """Check cross-component dependencies.
 

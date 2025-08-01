@@ -14,6 +14,7 @@ CRITICAL SECURITY FEATURES:
 import re
 import subprocess
 from pathlib import Path
+from typing import Any
 
 
 class SecurityError(Exception):
@@ -236,8 +237,8 @@ class SecureSubprocessExecutor:
         args: list[str],
         cwd: str | Path | None = None,
         env: dict[str, str] | None = None,
-        **kwargs,
-    ) -> subprocess.CompletedProcess:
+        **kwargs: Any,
+    ) -> subprocess.CompletedProcess[bytes]:
         """Execute subprocess with security validation.
 
         Args:
@@ -394,7 +395,9 @@ def secure_resolve_workspace(workspace_path: str | Path | None = None) -> Path:
     return SecurePathValidator.validate_workspace_path(workspace_path)
 
 
-def secure_subprocess_call(args: list[str], **kwargs) -> subprocess.CompletedProcess:
+def secure_subprocess_call(
+    args: list[str], **kwargs: Any
+) -> subprocess.CompletedProcess[bytes]:
     """Secure wrapper for subprocess calls with validation.
 
     Args:
@@ -427,7 +430,7 @@ def validate_user_input_path(path: str | Path) -> Path:
 
 
 # Security test functions for penetration testing
-def test_path_traversal_protection():
+def test_path_traversal_protection() -> bool:
     """Test path traversal attack prevention."""
     malicious_paths = [
         "../../../etc/passwd",
@@ -451,7 +454,7 @@ def test_path_traversal_protection():
     return True
 
 
-def test_command_injection_protection():
+def test_command_injection_protection() -> bool:
     """Test command injection prevention."""
     malicious_commands = [
         ["tail", "-f", "/var/log/auth.log; cat /etc/passwd"],

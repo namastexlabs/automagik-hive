@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 class LazyCommandLoader:
     """Simplified lazy loading for the 3 core command managers.
+
     Phase 3 finalized - removed complex legacy command classes.
     """
 
