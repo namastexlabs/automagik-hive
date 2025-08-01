@@ -50,6 +50,7 @@ class RootWhitelist:
             ".gitattributes",
             ".editorconfig",
             ".pre-commit-config.yaml",
+            ".mcp.json",
 
             # Standard directories
             ".github/",
