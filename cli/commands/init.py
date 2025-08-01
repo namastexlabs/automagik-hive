@@ -361,15 +361,41 @@ volumes:
         mcp_file.write_text(json.dumps(mcp_config, indent=2))
         
     def _create_ai_structure(self, workspace_path: Path):
-        """Create ai/ directory structure."""
+        """Create ai/ directory structure with template components."""
         ai_path = workspace_path / "ai"
+        ai_path.mkdir(parents=True, exist_ok=True)
         
-        # Create directories
-        for subdir in ["agents", "teams", "workflows", "tools"]:
-            (ai_path / subdir).mkdir(parents=True, exist_ok=True)
-            
         # Create README files
         (ai_path / "README.md").write_text("# AI Components\n\nCustom agents, teams, workflows, and tools for your workspace.\n")
+        
+        # Copy template components from package
+        package_ai_path = Path(__file__).parent.parent.parent / "ai"
+        if package_ai_path.exists():
+            print("📋 Copying template AI components...")
+            
+            # Create subdirectories and copy templates
+            for subdir in ["agents", "teams", "workflows", "tools"]:
+                # Create the subdirectory
+                (ai_path / subdir).mkdir(parents=True, exist_ok=True)
+                
+                # Copy template component if it exists
+                template_name = f"template-{subdir[:-1]}"  # Remove 's' from plural
+                source_template = package_ai_path / subdir / template_name
+                
+                if source_template.exists():
+                    dest_template = ai_path / subdir / template_name
+                    try:
+                        shutil.copytree(source_template, dest_template, dirs_exist_ok=True)
+                        print(f"✅ Copied {template_name}")
+                    except Exception as e:
+                        print(f"⚠️ Could not copy {template_name}: {e}")
+                        # Create empty directory as fallback
+                        dest_template.mkdir(parents=True, exist_ok=True)
+        else:
+            print("⚠️ Package AI templates not found - creating empty directories")
+            # Fallback: create empty directories
+            for subdir in ["agents", "teams", "workflows", "tools"]:
+                (ai_path / subdir).mkdir(parents=True, exist_ok=True)
         
     def _create_gitignore(self, workspace_path: Path):
         """Create .gitignore file."""

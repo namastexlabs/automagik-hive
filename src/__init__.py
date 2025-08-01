@@ -1,0 +1,1 @@
+"""Source package for Automagik Hive pre-commit hook system."""
