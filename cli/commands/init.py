@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional
 
 from cli.core.docker_service import DockerService
 from cli.core.postgres_service import PostgreSQLService
-from cli.core.templates import ContainerTemplateManager, ContainerCredentials
+from cli.core.mcp_config_manager import MCPConfigManager
 
 
 class InitCommands:
@@ -28,8 +28,7 @@ class InitCommands:
     def __init__(self):
         self.docker_service = DockerService()
         self.postgres_service = PostgreSQLService()
-        self.template_processor = TemplateProcessor()
-        self.mcp_generator = MCPConfigGenerator(self.template_processor)
+        self.mcp_config_manager = MCPConfigManager()
 
     def init_workspace(self, workspace_name: str | None = None) -> bool:
         """Initialize a new workspace with interactive setup.
@@ -378,6 +377,8 @@ class InitCommands:
 
     # NOTE: _convert_to_container_credentials removed - focusing on MCP configuration
 
+    # NOTE: _convert_to_container_credentials method removed for MCP configuration focus
+
     def _generate_secure_string(self, length: int) -> str:
         """Generate cryptographically secure random string."""
         # Use URL-safe base64 encoding for secure random strings
@@ -429,9 +430,9 @@ class InitCommands:
             # Create .env file
             self._create_env_file(workspace_path, credentials, api_keys)
 
-            # Create container templates (for Docker PostgreSQL)
+            # Create docker-compose.yml (only for Docker PostgreSQL)
             if postgres_config["type"] == "docker":
-                self._create_container_templates(workspace_path, credentials, postgres_config, container_services)
+                self._create_docker_compose_file(workspace_path, credentials)
 
             # Copy .claude/ directory if available
             self._copy_claude_directory(workspace_path)
@@ -629,32 +630,33 @@ volumes:
         credentials: Dict[str, str], 
         postgres_config: Optional[Dict[str, str]] = None
     ):
-        """Create advanced multi-server MCP configuration with health checking."""
-        print("\n🔧 Setting up advanced MCP integration...")
+        """Create advanced multi-server MCP configuration with dynamic template processing."""
+        print("\n🔧 Setting up advanced MCP integration with template processing...")
         
         try:
-            # Generate comprehensive MCP configuration
-            mcp_config = self.mcp_config_manager.generate_mcp_config(
-                workspace_path=workspace_path,
-                credentials=credentials,
-                ide_type="claude-code",
-                include_fallbacks=True,
-                health_check=False  # Skip health checks during init for speed
-            )
+            # Create comprehensive template context
+            template_context = self.template_processor.create_workspace_context(workspace_path, postgres_config)
             
-            # Write configuration
-            success = self.mcp_config_manager.write_mcp_config(
-                workspace_path=workspace_path,
-                mcp_config=mcp_config
-            )
+            # Add credentials to context
+            template_context.update({
+                "hive_api_key": credentials.get("hive_api_key", ""),
+                "database_user": credentials.get("postgres_user", "hive_user"),
+                "database_password": credentials.get("postgres_password", "")
+            })
             
-            if success:
+            # Generate dynamic MCP configuration
+            mcp_config = self.mcp_generator.generate_mcp_config(template_context)
+            
+            # Write configuration with validation
+            mcp_file = workspace_path / ".mcp.json"
+            if self.mcp_generator.write_mcp_config(mcp_config, mcp_file):
                 print("✅ Advanced MCP configuration created successfully")
-                print("   • Multi-server support enabled")
-                print("   • Auto-detection configured")
-                print("   • Fallback configurations included")
+                print("   • Dynamic workspace-specific URLs generated")
+                print("   • PostgreSQL connection auto-configured")
+                print("   • Template validation passed")
+                print("   • Fallback configuration available")
             else:
-                raise Exception("Failed to write MCP configuration")
+                raise Exception("MCP configuration validation failed")
                 
         except Exception as e:
             print(f"⚠️ Advanced MCP configuration failed: {e}")
