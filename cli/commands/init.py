@@ -604,9 +604,9 @@ class InitCommands:
             # Create .env file
             self._create_env_file(workspace_path, credentials, api_keys)
 
-            # Create docker-compose.yml (only for Docker PostgreSQL)
+            # Create docker-compose files for selected services
             if postgres_config["type"] == "docker":
-                self._create_docker_compose_file(workspace_path, credentials)
+                self._create_docker_compose_files(workspace_path, credentials, container_services, postgres_config)
 
             # Copy .claude/ directory if available
             self._copy_claude_directory(workspace_path)
@@ -735,15 +735,102 @@ HIVE_DEV_MODE=true
         for _service_type, _file_path in generated_files.items():
             pass
 
-    def _create_docker_compose_file(
+    def _create_docker_compose_files(
+        self, 
+        workspace_path: Path, 
+        credentials: dict[str, str],
+        container_services: list[str],
+        postgres_config: dict[str, str]
+    ):
+        """Create docker-compose files for selected services using templates."""
+        template_dir = Path(__file__).parent.parent.parent / "docker" / "templates"
+        
+        if not template_dir.exists():
+            # Fallback to basic compose file
+            self._create_basic_docker_compose_file(workspace_path, credentials)
+            return
+        
+        # Always create workspace compose for PostgreSQL
+        if "postgres" in container_services:
+            self._copy_and_customize_template(
+                template_dir / "workspace.yml",
+                workspace_path / "docker-compose.yml", 
+                credentials
+            )
+        
+        # Create agent compose file if selected
+        if "agent" in container_services:
+            self._copy_and_customize_template(
+                template_dir / "agent.yml",
+                workspace_path / "docker-compose-agent.yml",
+                credentials
+            )
+            
+        # Create genie compose file if selected  
+        if "genie" in container_services:
+            self._copy_and_customize_template(
+                template_dir / "genie.yml",
+                workspace_path / "docker-compose-genie.yml",
+                credentials
+            )
+
+    def _copy_and_customize_template(
+        self, 
+        template_path: Path, 
+        dest_path: Path, 
+        credentials: dict[str, str]
+    ):
+        """Copy template and customize with credentials."""
+        try:
+            if template_path.exists():
+                template_content = template_path.read_text()
+                
+                # Replace template variables with actual credentials
+                if "postgres_user" in credentials:
+                    template_content = template_content.replace(
+                        "${POSTGRES_USER:-workspace}", credentials["postgres_user"]
+                    )
+                    template_content = template_content.replace(
+                        "${POSTGRES_PASSWORD:-workspace}", credentials["postgres_password"]
+                    )
+                    template_content = template_content.replace(
+                        "${POSTGRES_USER:-agent}", credentials["postgres_user"]
+                    )
+                    template_content = template_content.replace(
+                        "${POSTGRES_PASSWORD:-agent}", credentials["postgres_password"]
+                    )
+                    template_content = template_content.replace(
+                        "${POSTGRES_USER:-genie}", credentials["postgres_user"]
+                    )
+                    template_content = template_content.replace(
+                        "${POSTGRES_PASSWORD:-genie}", credentials["postgres_password"]
+                    )
+                
+                # Add user/group settings for proper permissions
+                import os
+                uid = os.getuid() if hasattr(os, "getuid") else 1000
+                gid = os.getgid() if hasattr(os, "getgid") else 1000
+                template_content = template_content.replace(
+                    "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}", f"{uid}:{gid}"
+                )
+                
+                dest_path.write_text(template_content)
+            else:
+                # Fallback for missing template
+                self._create_basic_docker_compose_file(dest_path.parent, credentials)
+        except Exception:
+            # Fallback on any template processing error
+            self._create_basic_docker_compose_file(dest_path.parent, credentials)
+    
+    def _create_basic_docker_compose_file(
         self, workspace_path: Path, credentials: dict[str, str]
     ):
-        """Create docker-compose.yml file with proper user/group settings."""
+        """Create basic docker-compose.yml file as fallback."""
         import os
 
         # Get current user ID and group ID to avoid root ownership issues
-        uid = os.getuid()
-        gid = os.getgid()
+        uid = os.getuid() if hasattr(os, "getuid") else 1000
+        gid = os.getgid() if hasattr(os, "getgid") else 1000
 
         compose_content = f"""# Automagik Hive Docker Compose Configuration
 # Generated by uvx automagik-hive --init
@@ -1188,23 +1275,38 @@ echo 🎉 Workspace started successfully!
                             success = False
                     
                     elif service == "agent":
-                        print("🤖 Configuring Agent Development Environment...")
-                        print("📝 Agent environment configured - use 'uvx automagik-hive --agent-serve' to start")
-                        # Note: Actual agent service startup requires separate command for security
+                        print("🤖 Starting Agent Development Environment...")
+                        result = secure_subprocess_call(
+                            ["docker", "compose", "-f", "docker-compose-agent.yml", "up", "-d"],
+                            capture_output=True,
+                            timeout=120
+                        )
+                        if result.returncode == 0:
+                            print("✅ Agent Development Environment started on port 38886")
+                        else:
+                            print(f"⚠️ Failed to start Agent environment: {result.stderr}")
+                            success = False
                     
                     elif service == "genie":
-                        print("🧞 Configuring Genie Development Assistant...")
-                        print("📝 Genie environment configured - use 'uvx automagik-hive --genie-serve' to start")
-                        # Note: Actual genie service startup requires separate command for security
+                        print("🧞 Starting Genie Development Assistant...")
+                        result = secure_subprocess_call(
+                            ["docker", "compose", "-f", "docker-compose-genie.yml", "up", "-d"],
+                            capture_output=True,
+                            timeout=120
+                        )
+                        if result.returncode == 0:
+                            print("✅ Genie Development Assistant started on port 48886")
+                        else:
+                            print(f"⚠️ Failed to start Genie assistant: {result.stderr}")
+                            success = False
                 
             finally:
                 os.chdir(original_cwd)
             
             if success:
-                print("🎉 All selected services configured successfully!")
-                print("💡 Use the provided commands above to start individual services")
+                print("🎉 All selected services started successfully!")
             else:
-                print("⚠️ Some services had configuration issues")
+                print("⚠️ Some services failed to start")
             
             return success
             
