@@ -8,6 +8,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from cli.commands.agent import AgentCommands
 from cli.commands.init import InitCommands
 from cli.commands.postgres import PostgreSQLCommands
 from cli.commands.workspace import WorkspaceCommands
@@ -40,9 +41,19 @@ Core Commands:
   uvx automagik-hive --postgres-logs           # Show PostgreSQL container logs
   uvx automagik-hive --postgres-health         # Check PostgreSQL health
 
+  # Agent environment management (LLM-optimized)
+  uvx automagik-hive --agent-install           # Install agent environment (ports 38886/35532)
+  uvx automagik-hive --agent-serve             # Start agent server in background
+  uvx automagik-hive --agent-stop              # Stop agent server cleanly
+  uvx automagik-hive --agent-restart           # Restart agent server
+  uvx automagik-hive --agent-logs              # Show agent server logs
+  uvx automagik-hive --agent-status            # Check agent environment status
+  uvx automagik-hive --agent-reset             # Reset agent environment
+
   # With specific workspace
   uvx automagik-hive --postgres-status ./my-workspace
   uvx automagik-hive --postgres-logs ./my-workspace --tail 100
+  uvx automagik-hive --agent-status ./my-workspace
 
 Note: T1.5 Core Command Implementation - Essential UVX functionality ready.
         """
@@ -94,6 +105,44 @@ Note: T1.5 Core Command Implementation - Essential UVX functionality ready.
         help="Check PostgreSQL health and connectivity"
     )
 
+    # Agent environment management commands
+    agent_group = parser.add_argument_group("Agent Environment Management (LLM-Optimized)")
+    agent_group.add_argument(
+        "--agent-install",
+        action="store_true",
+        help="Install agent environment with isolated ports (38886/35532)"
+    )
+    agent_group.add_argument(
+        "--agent-serve",
+        action="store_true",
+        help="Start agent server in background (non-blocking)"
+    )
+    agent_group.add_argument(
+        "--agent-stop",
+        action="store_true",
+        help="Stop agent server cleanly"
+    )
+    agent_group.add_argument(
+        "--agent-restart",
+        action="store_true",
+        help="Restart agent server"
+    )
+    agent_group.add_argument(
+        "--agent-logs",
+        action="store_true",
+        help="Show agent server logs"
+    )
+    agent_group.add_argument(
+        "--agent-status",
+        action="store_true",
+        help="Check agent environment status"
+    )
+    agent_group.add_argument(
+        "--agent-reset",
+        action="store_true",
+        help="Reset agent environment (destructive reinstall)"
+    )
+
     # Common options
     parser.add_argument(
         "workspace",
@@ -141,6 +190,7 @@ def main() -> int:
     init_commands = InitCommands()
     workspace_commands = WorkspaceCommands()
     postgres_commands = PostgreSQLCommands()
+    agent_commands = AgentCommands()
 
     # Handle core workspace commands (T1.5)
     if args.init:
@@ -172,7 +222,9 @@ def main() -> int:
     # Handle workspace startup command (T1.5)
     elif args.workspace and not any([
         args.postgres_status, args.postgres_start, args.postgres_stop,
-        args.postgres_restart, args.postgres_logs, args.postgres_health
+        args.postgres_restart, args.postgres_logs, args.postgres_health,
+        args.agent_install, args.agent_serve, args.agent_stop,
+        args.agent_restart, args.agent_logs, args.agent_status, args.agent_reset
     ]):
         # This is a workspace startup command
         workspace_path = args.workspace
@@ -206,6 +258,35 @@ def main() -> int:
 
     elif args.postgres_health:
         success = postgres_commands.postgres_health(args.workspace or ".")
+        return 0 if success else 1
+
+    # Handle Agent commands
+    elif args.agent_install:
+        success = agent_commands.install(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.agent_serve:
+        success = agent_commands.serve(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.agent_stop:
+        success = agent_commands.stop(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.agent_restart:
+        success = agent_commands.restart(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.agent_logs:
+        success = agent_commands.logs(args.workspace or ".", args.tail)
+        return 0 if success else 1
+
+    elif args.agent_status:
+        success = agent_commands.status(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.agent_reset:
+        success = agent_commands.reset(args.workspace or ".")
         return 0 if success else 1
 
     else:

@@ -595,7 +595,8 @@ def app() -> FastAPI:
     return get_app()
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for Automagik Hive server."""
     import uvicorn
 
     # Get server configuration from unified config
@@ -624,3 +625,7 @@ if __name__ == "__main__":
 
     # Use uvicorn with factory function to support reload
     uvicorn.run("api.serve:app", host=host, port=port, reload=reload, factory=True)
+
+
+if __name__ == "__main__":
+    main()

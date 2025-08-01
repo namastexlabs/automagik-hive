@@ -292,12 +292,9 @@ class WorkspaceCommands:
                 print("📋 Server logs will appear below...")
                 print("⏹️ Press Ctrl+C to quit\n")
 
-                # Add uvicorn as an explicit dependency to avoid the warning
+                # Use the dedicated server entry point
                 result = subprocess.run([
-                    "uvx", "--with", "uvicorn", "--from", "automagik-hive", "python", "-m", "uvicorn",
-                    "api.serve:app",
-                    "--host", host,
-                    "--port", port
+                    "uvx", "automagik-hive-server"
                 ], check=False, env=env, cwd=workspace)
 
             os.chdir(original_cwd)

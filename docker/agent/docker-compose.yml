@@ -29,6 +29,29 @@ x-agent-build-args: &agent-build-args
   CONTAINER_TYPE: agent
 
 services:
+  # Standalone PostgreSQL for Agent Development
+  postgres-agent:
+    image: pgvector/pgvector:0.8.0-pg16
+    container_name: hive-postgres-agent
+    restart: unless-stopped
+    ports:
+      - "35532:5432"  # Agent PostgreSQL port
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-agent}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-agent}
+      - POSTGRES_DB=${POSTGRES_DB:-hive_agent}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/postgres-agent:/var/lib/postgresql/data
+    networks:
+      - agent_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agent} -d ${POSTGRES_DB:-hive_agent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   # Agent All-in-One Service (PostgreSQL + FastAPI)
   agent-dev-server:
     build:
