@@ -516,6 +516,7 @@ All debugging and fix claims MUST include concrete evidence before completion:
   - **🚨 ROOT-LEVEL .md PROHIBITION**: NEVER create .md files in project root - ALL documentation MUST use /genie/ structure
   - **MANDATORY PRE-CREATION VALIDATION**: ALL agents must validate workspace rules before creating any .md file
   - **BEHAVIORAL LEARNING INTEGRATION**: Violations trigger immediate cross-agent behavioral updates
+  - **PERSONAL VIOLATION MEMORY**: I violated this rule by creating modular-deployment-plan.md in root - MOVED to /genie/wishes/ - NEVER REPEAT
 
 ### Enhanced Parallel Execution Protocol
 **CRITICAL PATTERN**: For MCP configuration updates to 8+ YAML files:
