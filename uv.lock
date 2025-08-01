@@ -225,7 +225,7 @@ wheels = [
 
 [[package]]
 name = "automagik-hive"
-version = "0.1.0a33"
+version = "0.1.0a34"
 source = { editable = "." }
 dependencies = [
     { name = "agno" },
