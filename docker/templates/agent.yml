@@ -1,61 +1,29 @@
 # =============================================================================
-# Automagik Hive Agent All-in-One Container - Unified Architecture
+# Automagik Hive Agent Database - Simplified Architecture  
 # =============================================================================
 #
-# Unified Agent development environment with:
-# - Internal PostgreSQL database with pgvector extension (localhost:5432)
-# - Agent application service for development testing (port 38886)
-# - Supervisord process management within single container
-# - Complete self-containment - no inter-container dependencies
-# - Eliminates "unhealthy" container issues from separate architecture
+# Simple PostgreSQL database with pgvector extension for agent development.
+# This provides the database backend that the agent API connects to.
 #
 # Usage:
-#   docker-compose -f docker/templates/agent.yml up -d
-#   uvx automagik-hive --agent-dev
+#   docker-compose -f docker/agent/docker-compose.yml up -d
+#   
+# The agent API runs separately via: uvx automagik-hive --agent-dev
 #
 # =============================================================================
 
 services:
-  # Agent All-in-One Container - PostgreSQL + FastAPI Unified
-  agent-all-in-one:
+  # Agent PostgreSQL Database with pgvector extension
+  hive-postgres-agent:
     image: pgvector/pgvector:pg16
-    container_name: hive-agent-unified
+    container_name: hive-postgres-agent
     restart: unless-stopped
     ports:
-      - "38886:38886"
+      - "35532:5432"
     environment:
-      # Unified container configuration
-      - HIVE_SERVICE_MODE=agent
-      - HIVE_API_PORT=38886
-      - RUNTIME_ENV=dev
-      - HIVE_LOG_LEVEL=info
-      - HIVE_DEV_MODE=true
-      # Performance optimizations
-      - PYTHONUNBUFFERED=1
-      - PYTHONDONTWRITEBYTECODE=1
+      - POSTGRES_DB=hive_agent
+      - POSTGRES_USER=agent
+      - POSTGRES_PASSWORD=agent_secure_password
     volumes:
       - ./data/postgres-agent:/var/lib/postgresql/data
-      - ./logs/agent:/var/log/hive
-    networks:
-      - agent_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:38886/api/v1/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
-# Agent network configuration (isolated)
-networks:
-  agent_network:
-    driver: bridge
-    name: hive_agent_network
-
-# Agent persistent volumes
-volumes:
-  agent_app_logs:
-    driver: local
-    name: hive_agent_logs
-  agent_app_data:
-    driver: local
-    name: hive_agent_data

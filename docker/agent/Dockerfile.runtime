@@ -1,0 +1,100 @@
+# ===========================================================================
+# Automagik Hive Agent Runtime Container
+# Python 3.12 + PostgreSQL + pgvector + automagik-hive from PyPI
+# External Port: 38886, Internal PostgreSQL: 5432
+# ===========================================================================
+
+FROM python:3.12-slim
+
+# Install system dependencies including PostgreSQL 16 with pgvector
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg2 \
+    curl \
+    supervisor \
+    sudo \
+    gosu \
+    && wget -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y \
+    postgresql-16 \
+    postgresql-contrib-16 \
+    postgresql-16-pgvector \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install automagik-hive from PyPI (latest available)
+RUN pip install automagik-hive==0.1.0a43
+
+# Create application user (non-root)
+RUN useradd -m -u 1000 -s /bin/bash agent && \
+    usermod -aG sudo agent && \
+    echo 'agent ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Set up PostgreSQL directories with proper permissions
+RUN mkdir -p /var/lib/postgresql/data/pgdata && \
+    chown -R 1000:1000 /var/lib/postgresql && \
+    chmod 750 /var/lib/postgresql/data
+
+# Configure PostgreSQL (basic config)
+RUN echo "listen_addresses = '*'" >> /etc/postgresql/16/main/postgresql.conf && \
+    echo "port = 5432" >> /etc/postgresql/16/main/postgresql.conf && \
+    echo "max_connections = 100" >> /etc/postgresql/16/main/postgresql.conf && \
+    echo "shared_buffers = 128MB" >> /etc/postgresql/16/main/postgresql.conf
+
+# Configure pg_hba.conf for local connections
+RUN echo "local   all             all                                     trust" > /etc/postgresql/16/main/pg_hba.conf && \
+    echo "host    all             all             127.0.0.1/32            trust" >> /etc/postgresql/16/main/pg_hba.conf && \
+    echo "host    all             all             ::1/128                 trust" >> /etc/postgresql/16/main/pg_hba.conf
+
+# Configure supervisord
+RUN echo "[supervisord]" > /etc/supervisor/conf.d/supervisord.conf && \
+    echo "nodaemon=true" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "user=agent" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "logfile=/var/log/supervisor/supervisord.log" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "[program:postgresql]" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "command=/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/data/pgdata -c config_file=/etc/postgresql/16/main/postgresql.conf" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "user=agent" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "autostart=true" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "autorestart=true" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "priority=100" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "[program:hive-agent]" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "command=python -m uvicorn api.serve:app --host 0.0.0.0 --port 38886 --workers 2" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "user=agent" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "autostart=true" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "autorestart=true" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "environment=HIVE_DATABASE_URL=\"postgresql+psycopg://agent:agent_secure_password@localhost:5432/hive_agent\",HIVE_API_PORT=\"38886\",HIVE_SERVICE_MODE=\"agent\"" >> /etc/supervisor/conf.d/supervisord.conf && \
+    echo "priority=200" >> /etc/supervisor/conf.d/supervisord.conf
+
+# Create log directories
+RUN mkdir -p /var/log/supervisor /var/log/postgresql /var/log/hive && \
+    chown -R 1000:1000 /var/log/supervisor /var/log/postgresql /var/log/hive
+
+# Create entrypoint script for initialization
+RUN echo '#!/bin/bash' > /entrypoint.sh && \
+    echo 'set -e' >> /entrypoint.sh && \
+    echo '' >> /entrypoint.sh && \
+    echo '# Initialize PostgreSQL if needed' >> /entrypoint.sh && \
+    echo 'if [ ! -s "/var/lib/postgresql/data/pgdata/PG_VERSION" ]; then' >> /entrypoint.sh && \
+    echo '  echo "Initializing PostgreSQL database..."' >> /entrypoint.sh && \
+    echo '  sudo -u agent /usr/lib/postgresql/16/bin/initdb -D /var/lib/postgresql/data/pgdata' >> /entrypoint.sh && \
+    echo 'fi' >> /entrypoint.sh && \
+    echo '' >> /entrypoint.sh && \
+    echo '# Start supervisord' >> /entrypoint.sh && \
+    echo 'exec "$@"' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+# Expose Agent API port
+EXPOSE 38886
+
+# Health check for both PostgreSQL and FastAPI
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:38886/api/v1/health || exit 1
+
+# Switch to application user and start
+USER 1000:1000
+
+# Start supervisord (manages PostgreSQL + FastAPI)
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
