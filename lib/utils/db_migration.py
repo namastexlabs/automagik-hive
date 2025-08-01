@@ -19,6 +19,66 @@ from alembic.script import ScriptDirectory
 from lib.logging import logger
 
 
+def _find_alembic_config() -> Path:
+    """
+    Find alembic.ini with UVX-aware path resolution.
+    
+    CRITICAL FIX: In UVX environments, __file__ points to the installed package
+    location, not the workspace directory. This function implements multiple
+    strategies to locate alembic.ini in the correct location.
+    
+    Returns:
+        Path: Path to alembic.ini file
+        
+    Raises:
+        FileNotFoundError: If alembic.ini cannot be found
+    """
+    # Strategy 1: Try current working directory (UVX workspace context)
+    cwd_config = Path.cwd() / "alembic.ini"
+    if cwd_config.exists():
+        logger.debug(f"Found alembic.ini in workspace: {cwd_config}")
+        return cwd_config
+    
+    # Strategy 2: Try relative to this file (development context)
+    dev_config = Path(__file__).parent.parent.parent / "alembic.ini"
+    if dev_config.exists():
+        logger.debug(f"Found alembic.ini in development: {dev_config}")
+        return dev_config
+    
+    # Strategy 3: Search upward from current directory
+    current_path = Path.cwd()
+    while current_path != current_path.parent:
+        alembic_ini = current_path / "alembic.ini"
+        if alembic_ini.exists():
+            logger.debug(f"Found alembic.ini via upward search: {alembic_ini}")
+            return alembic_ini
+        current_path = current_path.parent
+    
+    # Strategy 4: Search common locations where workspace might be
+    common_locations = [
+        Path.home() / "workspace",
+        Path("/tmp"),
+        Path("/workspace"),  # Docker context
+    ]
+    
+    for base_path in common_locations:
+        if base_path.exists():
+            for potential_workspace in base_path.glob("*/alembic.ini"):
+                if potential_workspace.exists():
+                    logger.debug(f"Found alembic.ini in common location: {potential_workspace}")
+                    return potential_workspace
+    
+    # If all strategies fail, provide helpful error message
+    raise FileNotFoundError(
+        "Could not locate alembic.ini file. This is required for database migrations.\n"
+        f"Searched locations:\n"
+        f"  - Current directory: {Path.cwd() / 'alembic.ini'}\n"
+        f"  - Development path: {Path(__file__).parent.parent.parent / 'alembic.ini'}\n"
+        f"  - Upward search from: {Path.cwd()}\n"
+        "For UVX workspaces, ensure you're running from a directory that contains alembic.ini"
+    )
+
+
 def _ensure_environment_loaded():
     """
     Ensure environment variables are loaded consistently across all environments.
@@ -164,8 +224,8 @@ async def check_and_run_migrations() -> bool:
 def _check_migration_status(conn) -> bool:
     """Check if database schema needs migration updates."""
     try:
-        # Get Alembic configuration
-        alembic_cfg_path = Path(__file__).parent.parent.parent / "alembic.ini"
+        # Get Alembic configuration with UVX-aware path resolution
+        alembic_cfg_path = _find_alembic_config()
         alembic_cfg = Config(str(alembic_cfg_path))
 
         # Get current database revision (configure with hive schema)
@@ -204,8 +264,8 @@ async def _run_migrations() -> bool:
 
         def run_alembic():
             try:
-                # Get Alembic configuration
-                alembic_cfg_path = Path(__file__).parent.parent.parent / "alembic.ini"
+                # Get Alembic configuration with UVX-aware path resolution
+                alembic_cfg_path = _find_alembic_config()
                 alembic_cfg = Config(str(alembic_cfg_path))
 
                 # Run migration
