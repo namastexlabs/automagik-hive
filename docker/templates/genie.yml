@@ -18,10 +18,7 @@
 services:
   # Genie All-in-One Container - PostgreSQL + FastAPI Unified
   genie-all-in-one:
-    build:
-      context: .
-      dockerfile: docker/genie/Dockerfile.unified
-      target: genie-production
+    image: pgvector/pgvector:pg16
     container_name: hive-genie-unified
     restart: unless-stopped
     ports:

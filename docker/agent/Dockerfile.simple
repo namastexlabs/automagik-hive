@@ -1,0 +1,64 @@
+# ===========================================================================
+# Automagik Hive Agent All-in-One Container - Simple Installation
+# PostgreSQL + FastAPI unified in single container with supervisord
+# External Port: 38886, Internal PostgreSQL: 5432
+# ===========================================================================
+
+FROM ubuntu:22.04
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.12 \
+    python3.12-venv \
+    python3-pip \
+    postgresql-16 \
+    postgresql-contrib-16 \
+    postgresql-16-pgvector \
+    supervisor \
+    curl \
+    sudo \
+    gosu \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install automagik-hive from PyPI
+RUN pip3 install automagik-hive==0.1.0a44
+
+# Create application user (non-root)
+RUN useradd -m -u 1000 -s /bin/bash agent && \
+    usermod -aG sudo agent && \
+    echo 'agent ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Set up PostgreSQL directories with proper permissions
+RUN mkdir -p /var/lib/postgresql/data/pgdata && \
+    chown -R 1000:1000 /var/lib/postgresql && \
+    chmod 750 /var/lib/postgresql/data
+
+# Configure PostgreSQL
+COPY postgresql.conf /etc/postgresql/16/main/
+COPY pg_hba.conf /etc/postgresql/16/main/
+
+# Configure supervisord
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create log directories
+RUN mkdir -p /var/log/supervisor /var/log/postgresql /var/log/hive && \
+    chown -R 1000:1000 /var/log/supervisor /var/log/postgresql /var/log/hive
+
+# Create entrypoint script for initialization
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose Agent API port
+EXPOSE 38886
+
+# Health check for both PostgreSQL and FastAPI
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:38886/api/v1/health && \
+        pg_isready -h localhost -p 5432 -U agent -d hive_agent
+
+# Switch to application user and start
+USER 1000:1000
+
+# Start supervisord (manages PostgreSQL + FastAPI)
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

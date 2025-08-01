@@ -18,10 +18,7 @@
 services:
   # Agent All-in-One Container - PostgreSQL + FastAPI Unified
   agent-all-in-one:
-    build:
-      context: .
-      dockerfile: docker/agent/Dockerfile.unified
-      target: agent-production
+    image: pgvector/pgvector:pg16
     container_name: hive-agent-unified
     restart: unless-stopped
     ports:
