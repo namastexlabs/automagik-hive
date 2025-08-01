@@ -70,9 +70,9 @@ class ContainerTemplateManager:
             package_templates_dir: Path to package templates directory
         """
         if package_templates_dir is None:
-            # Default to templates/ directory in package root
+            # Default to docker/templates/ directory in package root
             package_root = Path(__file__).parent.parent.parent
-            package_templates_dir = package_root / "templates"
+            package_templates_dir = package_root / "docker" / "templates"
 
         self.templates_dir = package_templates_dir
 
@@ -92,7 +92,7 @@ class ContainerTemplateManager:
         Returns:
             Path to generated docker-compose.yml file
         """
-        template_path = self.templates_dir / "docker-compose-workspace.yml"
+        template_path = self.templates_dir / "workspace.yml"
         output_path = workspace_path / "docker-compose.yml"
 
         # Load template
@@ -126,7 +126,7 @@ class ContainerTemplateManager:
         Returns:
             Path to generated docker-compose-genie.yml file
         """
-        template_path = self.templates_dir / "docker-compose-genie.yml"
+        template_path = self.templates_dir / "genie.yml"
         output_path = workspace_path / "genie" / "docker-compose-genie.yml"
 
         # Ensure genie directory exists
@@ -155,29 +155,30 @@ class ContainerTemplateManager:
 
         return output_path
 
-    def copy_agent_template(
+    def generate_agent_compose(
         self,
         workspace_path: Path,
-        credentials: ContainerCredentials
+        credentials: ContainerCredentials,
+        custom_config: dict[str, Any] | None = None
     ) -> Path:
-        """Copy and customize existing agent Docker Compose template.
+        """Generate agent development Docker Compose file.
         
         Args:
             workspace_path: Target workspace directory
             credentials: Database and API credentials
+            custom_config: Optional custom configuration overrides
             
         Returns:
-            Path to agent docker-compose-agent.yml file
+            Path to generated docker-compose-agent.yml file
         """
-        # Use existing docker-compose-agent.yml from package root
-        source_path = self.templates_dir.parent / "docker-compose-agent.yml"
+        template_path = self.templates_dir / "agent.yml"
         output_path = workspace_path / "agent-dev" / "docker-compose-agent.yml"
 
         # Ensure agent-dev directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Load existing template
-        compose_config = self._load_template(source_path)
+        # Load template
+        compose_config = self._load_template(template_path)
 
         # Apply credentials with agent-specific adjustments
         agent_credentials = ContainerCredentials(
@@ -189,6 +190,10 @@ class ContainerTemplateManager:
             postgres_gid=credentials.postgres_gid
         )
         self._apply_credentials(compose_config, agent_credentials, "agent")
+
+        # Apply custom configuration
+        if custom_config:
+            self._merge_config(compose_config, custom_config)
 
         # Write generated file
         self._write_compose_file(output_path, compose_config)
@@ -221,8 +226,8 @@ class ContainerTemplateManager:
             workspace_path, credentials
         )
 
-        # Copy agent compose
-        generated_files["agent"] = self.copy_agent_template(
+        # Generate agent compose
+        generated_files["agent"] = self.generate_agent_compose(
             workspace_path, credentials
         )
 

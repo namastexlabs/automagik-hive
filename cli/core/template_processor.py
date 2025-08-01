@@ -54,12 +54,12 @@ class TemplateProcessor:
         try:
             processed_content = content
             
-            # Process in order of complexity (simple → complex)
+            # Process in order of complexity (loops and conditionals first, then variables)
+            processed_content = self._process_loop_blocks(processed_content, context)
+            processed_content = self._process_conditional_blocks(processed_content, context)
             processed_content = self._process_simple_placeholders(processed_content, context)
             processed_content = self._process_nested_placeholders(processed_content, context)
             processed_content = self._process_environment_variables(processed_content)
-            processed_content = self._process_conditional_blocks(processed_content, context)
-            processed_content = self._process_loop_blocks(processed_content, context)
             
             return processed_content
             
@@ -153,8 +153,12 @@ class TemplateProcessor:
                 item_context['first'] = (i == 0)
                 item_context['last'] = (i == len(items) - 1)
                 
-                # Process the block content with item context
-                processed_block = self.process_template_content(block_content, item_context)
+                # Process the block content with simple replacements only (avoid recursion)
+                processed_block = self._process_simple_placeholders(block_content, item_context)
+                processed_block = self._process_nested_placeholders(processed_block, item_context)
+                processed_block = self._process_environment_variables(processed_block)
+                processed_block = self._process_conditional_blocks(processed_block, item_context)
+                
                 result_parts.append(processed_block)
             
             return "".join(result_parts)
@@ -413,6 +417,9 @@ class MCPConfigGenerator:
             if not self.validate_mcp_config(config):
                 print("❌ MCP configuration validation failed, cannot write config")
                 return False
+            
+            # Ensure parent directory exists
+            output_path.parent.mkdir(parents=True, exist_ok=True)
             
             output_path.write_text(json.dumps(config, indent=2))
             print(f"✅ Created MCP configuration: {output_path}")

@@ -1,0 +1,98 @@
+# =============================================================================
+# Automagik Hive Agent Development Environment - Docker Compose Configuration
+# =============================================================================
+#
+# Agent development environment with:
+# - Isolated PostgreSQL database with pgvector extension (port 35532)
+# - Agent application service for development testing (port 38886)  
+# - Complete isolation from main workspace
+# - Volume persistence for agent development
+#
+# Usage:
+#   docker-compose -f agent-dev/docker-compose-agent.yml up -d
+#   uvx automagik-hive --agent-dev
+#
+# =============================================================================
+
+services:
+  # Agent development application service
+  app-agent:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: production
+    container_name: hive-agents-agent
+    restart: unless-stopped
+    ports:
+      - "38886:38886"
+    environment:
+      # Agent database connection
+      - HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-agent}:${POSTGRES_PASSWORD:-agent}@postgres-agent:5432/${POSTGRES_DB:-hive_agent}
+      - RUNTIME_ENV=dev
+      - HIVE_LOG_LEVEL=info
+      - HIVE_API_HOST=0.0.0.0
+      - HIVE_API_PORT=38886
+      - HIVE_API_WORKERS=2
+      # Development optimizations
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - HIVE_DEV_MODE=true
+    volumes:
+      - agent_app_logs:/app/logs
+      - agent_app_data:/app/data
+    depends_on:
+      postgres-agent:
+        condition: service_healthy
+    networks:
+      - agent_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:38886/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Agent PostgreSQL database with pgvector extension
+  postgres-agent:
+    image: agnohq/pgvector:16
+    container_name: hive-postgres-agent
+    restart: unless-stopped
+    user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-agent}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-agent}
+      - POSTGRES_DB=hive_agent
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ../data/postgres-agent:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=128MB
+      -c effective_cache_size=512MB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+    ports:
+      - "35532:5432"
+    networks:
+      - agent_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Agent network configuration (isolated)
+networks:
+  agent_network:
+    driver: bridge
+    name: hive_agent_network
+
+# Agent persistent volumes
+volumes:
+  agent_app_logs:
+    driver: local
+    name: hive_agent_logs
+  agent_app_data:
+    driver: local
+    name: hive_agent_data

@@ -118,6 +118,12 @@ Core Commands:
   uvx automagik-hive --agent-status            # Check agent environment status
   uvx automagik-hive --agent-reset             # Reset agent environment
 
+  # MCP Integration Testing
+  uvx automagik-hive --mcp-test                # Run full MCP test suite
+  uvx automagik-hive --mcp-test-config         # Test MCP configuration generation
+  uvx automagik-hive --mcp-test-health         # Test MCP server health checks
+  uvx automagik-hive --mcp-test-ide            # Test IDE-specific configurations
+
   # Uninstallation commands (DESTRUCTIVE)
   uvx automagik-hive --uninstall               # Remove current workspace data
   uvx automagik-hive --uninstall-global        # Remove ALL components (DANGEROUS)
@@ -199,6 +205,29 @@ Note: T1.5 Core Command Implementation - Essential UVX functionality ready.
         "--agent-reset",
         action="store_true",
         help="Reset agent environment (destructive reinstall)",
+    )
+
+    # MCP Integration Testing commands
+    mcp_group = parser.add_argument_group("MCP Integration Testing")
+    mcp_group.add_argument(
+        "--mcp-test",
+        action="store_true",
+        help="Run complete MCP configuration test suite",
+    )
+    mcp_group.add_argument(
+        "--mcp-test-config",
+        action="store_true",
+        help="Test MCP configuration generation only",
+    )
+    mcp_group.add_argument(
+        "--mcp-test-health",
+        action="store_true",
+        help="Test MCP server health checks only",
+    )
+    mcp_group.add_argument(
+        "--mcp-test-ide",
+        action="store_true",
+        help="Test IDE-specific configuration generation only",
     )
 
     # Uninstallation commands
@@ -294,6 +323,10 @@ def main() -> int:
             args.agent_logs,
             args.agent_status,
             args.agent_reset,
+            args.mcp_test,
+            args.mcp_test_config,
+            args.mcp_test_health,
+            args.mcp_test_ide,
             args.uninstall,
             args.uninstall_global,
         ]
@@ -357,6 +390,23 @@ def main() -> int:
 
     elif args.agent_reset:
         success = commands.agent_commands.reset(args.workspace or ".")
+        return 0 if success else 1
+
+    # Handle MCP Integration Testing commands
+    elif args.mcp_test:
+        success = commands.mcp_test_commands.run_full_test_suite(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.mcp_test_config:
+        success = commands.mcp_test_commands.test_mcp_generation(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.mcp_test_health:
+        success = commands.mcp_test_commands.test_health_checks(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.mcp_test_ide:
+        success = commands.mcp_test_commands.test_ide_configs(args.workspace or ".")
         return 0 if success else 1
 
     # Handle Uninstallation commands
