@@ -5,8 +5,12 @@ against root-level organization rules. It orchestrates domain entities
 and implements the main validation workflow.
 """
 
-from ..domain.entities import FileChange, HookValidationResult, ValidationResult
-from ..domain.value_objects import GenieStructure, RootWhitelist, ValidationConfig
+from src.hooks.domain.entities import FileChange, HookValidationResult, ValidationResult
+from src.hooks.domain.value_objects import (
+    GenieStructure,
+    RootWhitelist,
+    ValidationConfig,
+)
 
 
 class ValidatePreCommitUseCase:

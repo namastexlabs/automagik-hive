@@ -83,7 +83,7 @@ class ComponentVersionService:
         db = await self._get_db_service()
 
         query = """
-        INSERT INTO hive.component_versions 
+        INSERT INTO hive.component_versions
         (component_id, component_type, version, config, description, created_by, is_active)
         VALUES (%(component_id)s, %(component_type)s, %(version)s, %(config)s, %(description)s, %(created_by)s, %(is_active)s)
         RETURNING id
@@ -111,7 +111,7 @@ class ComponentVersionService:
         db = await self._get_db_service()
 
         query = """
-        SELECT id, component_id, component_type, version, config, description, 
+        SELECT id, component_id, component_type, version, config, description,
                is_active, created_at, created_by
         FROM hive.component_versions
         WHERE component_id = %(component_id)s AND version = %(version)s
@@ -142,7 +142,7 @@ class ComponentVersionService:
         db = await self._get_db_service()
 
         query = """
-        SELECT id, component_id, component_type, version, config, description, 
+        SELECT id, component_id, component_type, version, config, description,
                is_active, created_at, created_by
         FROM hive.component_versions
         WHERE component_id = %(component_id)s AND is_active = true
@@ -185,7 +185,7 @@ class ComponentVersionService:
             ),
             # Record history
             (
-                """INSERT INTO hive.version_history 
+                """INSERT INTO hive.version_history
                    (component_id, to_version, action, description, changed_by)
                    VALUES (%(component_id)s, %(version)s, 'activated', 'Version activated', %(changed_by)s)""",
                 {
@@ -206,7 +206,7 @@ class ComponentVersionService:
         db = await self._get_db_service()
 
         query = """
-        SELECT id, component_id, component_type, version, config, description, 
+        SELECT id, component_id, component_type, version, config, description,
                is_active, created_at, created_by
         FROM hive.component_versions
         WHERE component_id = %(component_id)s
@@ -245,7 +245,7 @@ class ComponentVersionService:
         db = await self._get_db_service()
 
         query = """
-        INSERT INTO hive.version_history 
+        INSERT INTO hive.version_history
         (component_id, from_version, to_version, action, description, changed_by)
         VALUES (%(component_id)s, %(from_version)s, %(to_version)s, %(action)s, %(description)s, %(changed_by)s)
         RETURNING id

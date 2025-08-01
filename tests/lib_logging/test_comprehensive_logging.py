@@ -85,9 +85,9 @@ class TestBatchLogger:
         assert hasattr(logger, "log_level")
 
         # Test runtime mode switching
-        assert logger.startup_mode == True
+        assert logger.startup_mode
         logger.set_runtime_mode()
-        assert logger.startup_mode == False
+        assert not logger.startup_mode
 
 
 class TestLoggingConfig:

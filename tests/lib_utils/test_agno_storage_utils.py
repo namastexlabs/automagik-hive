@@ -50,7 +50,7 @@ class TestStorageTypeMapping:
         """Test that storage type mapping values are properly formatted."""
         result = get_storage_type_mapping()
 
-        for storage_type, module_path in result.items():
+        for module_path in result.values():
             # Should be in format "module.path.ClassName"
             assert "." in module_path
             assert module_path.startswith("agno.storage.")
@@ -68,7 +68,7 @@ class TestStorageTypeMapping:
         assert result1 == result2
         # Should return the same dictionary structure
         assert result1.keys() == result2.keys()
-        assert all(result1[k] == result2[k] for k in result1.keys())
+        assert all(result1[k] == result2[k] for k in result1)
 
 
 class TestGetStorageClass:
@@ -218,7 +218,7 @@ class TestCreateDynamicStorage:
         with patch("inspect.signature") as mock_signature:
             mock_signature.return_value.parameters = {"self": Mock()}
 
-            result = create_dynamic_storage(
+            create_dynamic_storage(
                 storage_config={},  # No type specified
                 component_id="test-component",
                 component_mode="agent",

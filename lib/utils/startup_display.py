@@ -94,10 +94,7 @@ class StartupDisplay:
         """Add database migration status to display."""
         if migration_result.get("success"):
             action = migration_result.get("action", "completed")
-            if action == "none_required":
-                status = "✅ Up to date"
-            else:
-                status = "✅ Applied"
+            status = "✅ Up to date" if action == "none_required" else "✅ Applied"
 
             self.migration_status = {
                 "status": status,

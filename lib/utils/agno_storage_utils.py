@@ -109,7 +109,7 @@ def create_dynamic_storage(
     storage_params = {}
 
     # 4. Auto-map ALL compatible parameters using introspection
-    for param_name, param in sig.parameters.items():
+    for param_name in sig.parameters:
         if param_name == "self":
             continue
         if param_name == "mode":

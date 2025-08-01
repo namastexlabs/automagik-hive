@@ -6,6 +6,7 @@ specifically addressing the issue where RuntimeError is raised when agent runs
 are not found in memory (typically after server restarts).
 """
 
+import contextlib
 import traceback
 
 from fastapi import Request, Response
@@ -35,8 +36,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
             Response: Either the normal response or a graceful error response
         """
         try:
-            response = await call_next(request)
-            return response
+            return await call_next(request)
 
         except RuntimeError as e:
             # Check if this is the specific agent run error we're handling
@@ -74,10 +74,8 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
         # Extract run_id from error message if possible
         run_id = None
         if "run ID " in error_message:
-            try:
+            with contextlib.suppress(IndexError, AttributeError):
                 run_id = error_message.split("run ID ")[1].strip()
-            except (IndexError, AttributeError):
-                pass
 
         # Extract session and agent info from URL
         session_id = None

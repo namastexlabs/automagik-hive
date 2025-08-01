@@ -589,7 +589,7 @@ class AgnoTeamProxy:
             except Exception as e:
                 # Log original execution failure separately from metrics
                 logger.error(f"🤖 Team {component_id} execution failed: {e}")
-                raise e  # Re-raise the original exception
+                raise  # Re-raise the original exception
 
         # Replace the run method
         team.run = wrapped_run

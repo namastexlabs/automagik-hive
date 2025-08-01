@@ -215,9 +215,7 @@ class TemplateTool(BaseTool):
         }
 
         # Merge with provided options (provided options take precedence)
-        merged_options = {**default_options, **options}
-
-        return merged_options
+        return {**default_options, **options}
 
     def get_execution_history(self) -> list:
         """Get tool execution history"""
@@ -238,7 +236,7 @@ class TemplateTool(BaseTool):
         base_info = self.get_info()
 
         # Add template-specific status information
-        template_status = {
+        return {
             **base_info,
             "execution_count": len(self._execution_history),
             "resource_cache_size": len(self._resource_cache),
@@ -251,5 +249,3 @@ class TemplateTool(BaseTool):
                 "debug_mode": self.debug_mode,
             },
         }
-
-        return template_status

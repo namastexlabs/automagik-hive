@@ -292,7 +292,7 @@ class TestMetricsServicePerformance:
         service, mock_storage = mock_metrics_service
 
         # Get initial stats
-        initial_stats = service.get_stats()
+        service.get_stats()
 
         # Process metrics in smaller batches
         for batch in range(3):

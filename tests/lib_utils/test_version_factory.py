@@ -554,7 +554,7 @@ class TestVersionFactoryAgentCreation:
             patch.object(factory, "_apply_team_inheritance", return_value=config),
             patch.object(factory, "_load_agent_tools", return_value=[]),
             patch("lib.utils.agno_proxy.get_agno_proxy") as mock_proxy_func,
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
         ):
             mock_proxy = MagicMock()
             mock_proxy.create_agent = AsyncMock(return_value=mock_agent)
@@ -577,8 +577,7 @@ class TestTeamInheritance:
 
     @pytest.fixture
     def mock_version_service(self):
-        service = MagicMock()
-        return service
+        return MagicMock()
 
     @pytest.fixture
     def factory(self, mock_version_service):
@@ -645,7 +644,7 @@ class TestTeamInheritance:
             patch(
                 "lib.utils.version_factory.get_yaml_cache_manager"
             ) as mock_cache_mgr_func,
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
         ):
             mock_cache_mgr = MagicMock()
             mock_cache_mgr.get_agent_team_mapping.return_value = None
@@ -743,8 +742,7 @@ class TestAgentToolsLoading:
 
     @pytest.fixture
     def mock_version_service(self):
-        service = MagicMock()
-        return service
+        return MagicMock()
 
     @pytest.fixture
     def factory(self, mock_version_service):
@@ -771,7 +769,7 @@ class TestAgentToolsLoading:
 
         with (
             patch("importlib.import_module", return_value=mock_module) as mock_import,
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
             patch("builtins.hasattr") as mock_hasattr,
         ):
             # Mock hasattr to return True for our test tools
@@ -853,7 +851,7 @@ class TestAgentToolsLoading:
 
         with (
             patch("importlib.import_module", side_effect=ImportError("No module")),
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
             patch.dict("os.environ", {"HIVE_STRICT_VALIDATION": "false"}),
         ):
             tools = factory._load_agent_tools("test-agent", config)
@@ -877,7 +875,7 @@ class TestAgentToolsLoading:
 
         with (
             patch("importlib.import_module", return_value=mock_module),
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
         ):
             tools = factory._load_agent_tools("test-agent", config)
 
@@ -905,8 +903,7 @@ class TestTeamCreation:
 
     @pytest.fixture
     def mock_version_service(self):
-        service = MagicMock()
-        return service
+        return MagicMock()
 
     @pytest.fixture
     def factory(self, mock_version_service):
@@ -932,7 +929,7 @@ class TestTeamCreation:
                 factory, "_validate_team_inheritance", return_value=config
             ) as mock_validate,
             patch("lib.utils.agno_proxy.get_agno_team_proxy") as mock_proxy_func,
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
         ):
             mock_proxy = MagicMock()
             mock_proxy.create_team = AsyncMock(return_value=mock_team)
@@ -1021,8 +1018,7 @@ class TestWorkflowCreation:
 
     @pytest.fixture
     def mock_version_service(self):
-        service = MagicMock()
-        return service
+        return MagicMock()
 
     @pytest.fixture
     def factory(self, mock_version_service):
@@ -1050,7 +1046,7 @@ class TestWorkflowCreation:
             patch(
                 "lib.utils.version_factory.get_agno_workflow_proxy"
             ) as mock_proxy_func,
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
         ):
             mock_proxy = MagicMock()
             mock_proxy.create_workflow = AsyncMock(return_value=mock_workflow)
@@ -1127,8 +1123,7 @@ class TestYamlFallback:
 
     @pytest.fixture
     def mock_version_service(self):
-        service = MagicMock()
-        return service
+        return MagicMock()
 
     @pytest.fixture
     def factory(self, mock_version_service):
@@ -1169,7 +1164,7 @@ class TestYamlFallback:
             patch.object(
                 factory, "_create_agent", return_value=mock_agent
             ) as mock_create,
-            patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.logger"),
         ):
             result = await factory._create_component_from_yaml(
                 component_id="yaml-agent",

@@ -467,7 +467,7 @@ def _detect_symbol_type(line: str, symbol_name: str) -> str:
         return "function"
     if " = " in line and not line_lower.startswith(("if ", "for ", "while ")):
         return "variable"
-    if line_lower.startswith("import ") or line_lower.startswith("from "):
+    if line_lower.startswith(("import ", "from ")):
         return "import"
 
     # JavaScript/TypeScript patterns
@@ -553,11 +553,7 @@ def _extract_symbols_from_file(
 
         for line_num, line in enumerate(lines, 1):
             line_stripped = line.strip()
-            if (
-                not line_stripped
-                or line_stripped.startswith("#")
-                or line_stripped.startswith("//")
-            ):
+            if not line_stripped or line_stripped.startswith(("#", "//")):
                 continue
 
             symbol = _parse_symbol_definition(line_stripped, line_num)

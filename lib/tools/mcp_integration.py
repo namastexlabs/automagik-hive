@@ -214,7 +214,7 @@ def test_mcp_connection(server_name: str) -> bool:
         True if connection successful, False otherwise
     """
     try:
-        tools = create_mcp_tools_sync(server_name)
+        create_mcp_tools_sync(server_name)
         logger.info(f"🌐 MCP server {server_name} connection test: SUCCESS")
         return True
     except Exception as e:

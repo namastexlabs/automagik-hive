@@ -1,5 +1,4 @@
-"""
-Workspace Manager - Interactive workspace initialization and management.
+"""Workspace Manager - Interactive workspace initialization and management.
 
 Handles:
 - Interactive workspace creation prompts
@@ -12,7 +11,6 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional, Tuple
 
 from cli.core.template_processor import TemplateProcessor
 
@@ -23,9 +21,8 @@ class WorkspaceManager:
     def __init__(self):
         self.template_processor = TemplateProcessor()
 
-    def prompt_workspace_choice(self) -> Tuple[str, str]:
-        """
-        Interactive workspace choice prompt with enhanced UX.
+    def prompt_workspace_choice(self) -> tuple[str, str]:
+        """Interactive workspace choice prompt with enhanced UX.
 
         Returns:
             Tuple[str, str]: (action, path) where action is:
@@ -33,12 +30,6 @@ class WorkspaceManager:
             - 'existing': Use existing workspace, path is workspace path
             - 'skip': Skip workspace setup, path is empty
         """
-        print("\n🧞 All services are healthy!")
-        print("\nChoose workspace option:")
-        print("1. 📁 Initialize new workspace")
-        print("2. 📂 Select existing workspace")
-        print("3. ⏭️  Skip workspace setup (use --init later)")
-
         while True:
             try:
                 choice = input("\nEnter choice (1-3): ").strip()
@@ -46,53 +37,34 @@ class WorkspaceManager:
                 if choice == "1":
                     return self._handle_new_workspace_choice()
 
-                elif choice == "2":
+                if choice == "2":
                     return self._handle_existing_workspace_choice()
 
-                elif choice == "3":
-                    print("\n⏭️ Skip Workspace Setup")
-                    print("━" * 25)
-                    print("Services are running and ready.")
-                    print("\nInitialize workspace later with:")
-                    print("  uvx automagik-hive --init [workspace-name]")
+                if choice == "3":
                     return ("skip", "")
 
-                else:
-                    print("❌ Invalid choice. Please enter 1, 2, or 3.")
-                    continue
+                continue
 
             except KeyboardInterrupt:
-                print("\n⏭️  Workspace setup cancelled")
                 return ("skip", "")
             except EOFError:
-                print("\n⏭️  Workspace setup cancelled")
                 return ("skip", "")
 
-    def _handle_new_workspace_choice(self) -> Tuple[str, str]:
+    def _handle_new_workspace_choice(self) -> tuple[str, str]:
         """Handle new workspace creation choice."""
-        print("\n📁 Initialize New Workspace")
-        print("━" * 30)
-
         while True:
             name = input("Workspace name: ").strip()
             if not name:
-                print("❌ Workspace name cannot be empty")
                 continue
 
             # Validate workspace name
             if not self._validate_workspace_name(name):
-                print(
-                    "❌ Invalid workspace name. Use letters, numbers, hyphens, and underscores only."
-                )
                 continue
 
             workspace_path = Path.cwd() / name
             if workspace_path.exists():
-                print(f"📂 Directory '{name}' already exists")
-
                 # Check if it's already a valid workspace
                 if self.validate_existing_workspace(str(workspace_path)):
-                    print("✅ Directory is already a valid workspace")
                     return ("existing", str(workspace_path))
 
                 # Ask to initialize existing directory
@@ -106,66 +78,46 @@ class WorkspaceManager:
                     )
                     if convert in ["y", "yes"]:
                         return ("existing", str(workspace_path))
-                    else:
-                        print("Please choose a different workspace name.")
-                        continue
+                    continue
                 except (KeyboardInterrupt, EOFError):
-                    print("\n⏭️  Workspace initialization cancelled")
                     return ("skip", "")
 
-            print(f"📍 Location: {workspace_path}")
             return ("new", name)
 
-    def _handle_existing_workspace_choice(self) -> Tuple[str, str]:
+    def _handle_existing_workspace_choice(self) -> tuple[str, str]:
         """Handle existing workspace selection choice."""
-        print("\n📂 Select Existing Workspace")
-        print("━" * 30)
-
         while True:
             path = input("Workspace path: ").strip()
             if not path:
-                print("❌ Workspace path cannot be empty")
                 continue
 
             workspace_path = Path(path).resolve()
 
             if not workspace_path.exists():
-                print(f"❌ Path does not exist: {workspace_path}")
                 continue
 
             if not workspace_path.is_dir():
-                print(f"❌ Path is not a directory: {workspace_path}")
                 continue
 
-            print(f"\n🔍 Checking workspace: {workspace_path}")
-
             if self.validate_existing_workspace(str(workspace_path)):
-                print("✅ Valid workspace found")
                 return ("existing", str(workspace_path))
-            else:
-                print("❌ Invalid workspace (missing .env or required structure)")
 
-                try:
-                    convert = (
-                        input(
-                            "Would you like to initialize this folder as a workspace? (y/N): "
-                        )
-                        .strip()
-                        .lower()
+            try:
+                convert = (
+                    input(
+                        "Would you like to initialize this folder as a workspace? (y/N): "
                     )
-                    if convert in ["y", "yes"]:
-                        print("✅ Initializing existing folder as workspace...")
-                        return ("existing", str(workspace_path))
-                    else:
-                        print("Please select a different workspace path.")
-                        continue
-                except (KeyboardInterrupt, EOFError):
-                    print("\n⏭️  Workspace selection cancelled")
-                    return ("skip", "")
+                    .strip()
+                    .lower()
+                )
+                if convert in ["y", "yes"]:
+                    return ("existing", str(workspace_path))
+                continue
+            except (KeyboardInterrupt, EOFError):
+                return ("skip", "")
 
-    def initialize_workspace(self, name: Optional[str] = None) -> bool:
-        """
-        Initialize new workspace with optional name prompt.
+    def initialize_workspace(self, name: str | None = None) -> bool:
+        """Initialize new workspace with optional name prompt.
 
         Args:
             name: Workspace name. If None, prompts user for name.
@@ -178,18 +130,14 @@ class WorkspaceManager:
             if name is None:
                 name = input("Workspace name: ").strip()
                 if not name:
-                    print("❌ Workspace name cannot be empty")
                     return False
 
             workspace_path = Path.cwd() / name
 
             # Check if workspace already exists
             if workspace_path.exists():
-                print(f"📂 Directory '{name}' already exists")
-
                 # Check if it's already a valid workspace
                 if self.validate_existing_workspace(str(workspace_path)):
-                    print("✅ Directory is already a valid workspace")
                     return True
 
                 # Ask to initialize existing directory
@@ -203,23 +151,18 @@ class WorkspaceManager:
                     )
                     if convert in ["y", "yes"]:
                         return self.initialize_existing_folder(str(workspace_path))
-                    else:
-                        print("⏭️  Workspace initialization cancelled")
-                        return False
+                    return False
                 except (KeyboardInterrupt, EOFError):
-                    print("\n⏭️  Workspace initialization cancelled")
                     return False
 
             # Create new workspace
             return self._create_new_workspace(workspace_path, name)
 
-        except Exception as e:
-            print(f"❌ Error initializing workspace: {e}")
+        except Exception:
             return False
 
     def start_workspace_server(self, workspace_path: str) -> bool:
-        """
-        Start workspace server with dependency auto-detection.
+        """Start workspace server with dependency auto-detection.
 
         Auto-detects missing dependencies (genie, agent, database) and prompts
         to install if needed before starting the server.
@@ -233,12 +176,9 @@ class WorkspaceManager:
         workspace_path = Path(workspace_path).resolve()
 
         if not workspace_path.exists():
-            print(f"❌ Workspace path does not exist: {workspace_path}")
             return False
 
         if not self.validate_existing_workspace(str(workspace_path)):
-            print(f"❌ Invalid workspace: {workspace_path}")
-
             # Offer to initialize
             try:
                 convert = (
@@ -254,19 +194,15 @@ class WorkspaceManager:
                 else:
                     return False
             except (KeyboardInterrupt, EOFError):
-                print("\n⏭️  Workspace server startup cancelled")
                 return False
 
         # Change to workspace directory
         os.chdir(workspace_path)
-        print(f"📁 Changed to workspace: {workspace_path}")
 
         # Auto-detect missing dependencies
         missing_deps = self._detect_missing_dependencies()
 
         if missing_deps:
-            print(f"\n⚠️  Missing dependencies detected: {', '.join(missing_deps)}")
-
             try:
                 install = (
                     input("Would you like to install missing dependencies? (y/N): ")
@@ -275,22 +211,17 @@ class WorkspaceManager:
                 )
                 if install in ["y", "yes"]:
                     if not self._install_missing_dependencies(missing_deps):
-                        print("❌ Failed to install dependencies")
                         return False
                 else:
-                    print(
-                        "⚠️  Starting server without all dependencies may cause issues"
-                    )
+                    pass
             except (KeyboardInterrupt, EOFError):
-                print("\n⏭️  Workspace server startup cancelled")
                 return False
 
         # Start workspace server
         return self._start_server(workspace_path)
 
     def validate_existing_workspace(self, path: str) -> bool:
-        """
-        Check if path is a valid workspace with comprehensive health validation.
+        """Check if path is a valid workspace with comprehensive health validation.
 
         Args:
             path: Path to check
@@ -465,8 +396,7 @@ class WorkspaceManager:
         return bool(re.match(pattern, name)) and len(name) > 0 and len(name) <= 100
 
     def initialize_existing_folder(self, path: str) -> bool:
-        """
-        Convert existing folder to workspace.
+        """Convert existing folder to workspace.
 
         Args:
             path: Path to existing folder
@@ -477,22 +407,12 @@ class WorkspaceManager:
         workspace_path = Path(path)
         folder_name = workspace_path.name
 
-        print(f"📁 Initialize Existing Workspace")
-        print("━" * 30)
-        print(f"Workspace name: {folder_name}")
-        print(f"📍 Location: {workspace_path}")
-
         return self._create_workspace_structure(workspace_path, folder_name)
 
     # Private implementation methods
 
     def _create_new_workspace(self, workspace_path: Path, name: str) -> bool:
         """Create new workspace from scratch."""
-        print(f"📁 Initialize New Workspace")
-        print("━" * 30)
-        print(f"Workspace name: {name}")
-        print(f"📍 Location: {workspace_path}")
-
         try:
             # Create workspace directory
             workspace_path.mkdir(parents=True, exist_ok=True)
@@ -500,15 +420,12 @@ class WorkspaceManager:
             # Create workspace structure
             return self._create_workspace_structure(workspace_path, name)
 
-        except Exception as e:
-            print(f"❌ Error creating workspace: {e}")
+        except Exception:
             return False
 
     def _create_workspace_structure(self, workspace_path: Path, name: str) -> bool:
         """Create complete workspace structure and configuration."""
         try:
-            print("✅ Creating workspace structure...")
-
             # Create comprehensive directory structure
             directories = [
                 "ai/agents",
@@ -535,28 +452,19 @@ class WorkspaceManager:
             for directory in directories:
                 (workspace_path / directory).mkdir(parents=True, exist_ok=True)
 
-            print("✅ Copying template files...")
             self._copy_template_files(workspace_path, name)
 
-            print("✅ Configuring MCP integration...")
             self._setup_mcp_integration(workspace_path)
 
-            print("✅ Setting up agent templates...")
             self._setup_agent_templates(workspace_path)
 
-            print("✅ Creating configuration files...")
             self._create_config_files(workspace_path, name)
 
-            print("✅ Setting up Docker integration...")
             self._setup_docker_integration(workspace_path, name)
-
-            print("✅ Workspace ready!")
-            print(f"\n🚀 Next: cd {workspace_path.name}")
 
             return True
 
-        except Exception as e:
-            print(f"❌ Error creating workspace structure: {e}")
+        except Exception:
             return False
 
     def _copy_template_files(self, workspace_path: Path, name: str) -> None:
@@ -677,7 +585,7 @@ class WorkspaceManager:
     def _create_fallback_files(self, workspace_path: Path, name: str) -> None:
         """Create fallback files when templates are not available."""
         # Create basic pyproject.toml
-        pyproject_content = f'''[project]
+        pyproject_content = f"""[project]
 name = "{name}"
 version = "0.1.0"
 description = "Automagik Hive workspace for {name}"
@@ -691,7 +599,7 @@ requires-python = ">=3.12"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-'''
+"""
         (workspace_path / "pyproject.toml").write_text(pyproject_content)
 
         # Create basic .env file
@@ -724,14 +632,14 @@ uvx automagik-hive --install
 # Start this workspace
 uvx automagik-hive .
 
-# View status  
+# View status
 uvx automagik-hive --status
 ```
 
 ## Services
 
 - **Agent API**: http://localhost:38886
-- **Genie API**: http://localhost:48886  
+- **Genie API**: http://localhost:48886
 - **Workspace**: Local uvx server at http://127.0.0.1:8000
 
 ## Development
@@ -895,7 +803,7 @@ version: '3.8'
 
 services:
   workspace:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: {name.lower().replace("_", "-")}-workspace
@@ -1027,6 +935,7 @@ coverage/
                     "--format",
                     "{{.Names}}",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -1048,6 +957,7 @@ coverage/
                     "--format",
                     "{{.Names}}",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -1078,7 +988,7 @@ coverage/
 
             with psycopg.connect(
                 "postgresql://localhost:35532/hive_agent", connect_timeout=5
-            ) as conn:
+            ):
                 pass
         except Exception:
             if "agent" not in missing_dbs:
@@ -1090,7 +1000,7 @@ coverage/
 
             with psycopg.connect(
                 "postgresql://localhost:48532/hive_genie", connect_timeout=5
-            ) as conn:
+            ):
                 pass
         except Exception:
             if "genie" not in missing_dbs:
@@ -1117,79 +1027,66 @@ coverage/
             total_count = len(dependencies)
 
             for dep in dependencies:
-                print(f"📦 Installing {dep}...")
-
                 if dep in ["agent", "genie"]:
                     # Install Docker services
                     result = subprocess.run(
                         ["uvx", "automagik-hive", "--install", dep],
+                        check=False,
                         capture_output=True,
                         text=True,
                         timeout=300,
                     )
 
                     if result.returncode == 0:
-                        print(f"✅ {dep} services installed successfully")
                         success_count += 1
                     else:
-                        print(f"❌ Failed to install {dep}: {result.stderr}")
+                        pass
 
                 elif dep in ["agent-db", "genie-db"]:
                     # Database connectivity issues - try to restart services
                     service_name = dep.replace("-db", "")
-                    print(
-                        f"🔄 Restarting {service_name} services for database connectivity..."
-                    )
 
                     result = subprocess.run(
                         ["uvx", "automagik-hive", "--restart", service_name],
+                        check=False,
                         capture_output=True,
                         text=True,
                         timeout=120,
                     )
 
                     if result.returncode == 0:
-                        print(f"✅ {service_name} database connectivity restored")
                         success_count += 1
                     else:
-                        print(f"❌ Failed to restart {service_name}: {result.stderr}")
+                        pass
 
                 elif dep == "python-deps":
                     # Install Python dependencies
-                    print("📦 Installing Python dependencies...")
                     result = subprocess.run(
-                        ["uv", "sync"], capture_output=True, text=True, timeout=180
+                        ["uv", "sync"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=180,
                     )
 
                     if result.returncode == 0:
-                        print("✅ Python dependencies installed successfully")
                         success_count += 1
                     else:
-                        print(
-                            f"❌ Failed to install Python dependencies: {result.stderr}"
-                        )
+                        pass
 
                 else:
-                    print(f"⚠️  Unknown dependency type: {dep}")
+                    pass
 
             if success_count == total_count:
-                print("✅ All dependencies installed successfully")
                 return True
-            else:
-                print(
-                    f"⚠️  {success_count}/{total_count} dependencies installed successfully"
-                )
-                return success_count > 0  # Partial success is still considered success
+            return success_count > 0  # Partial success is still considered success
 
-        except Exception as e:
-            print(f"❌ Error installing dependencies: {e}")
+        except Exception:
             return False
 
     def _start_server(self, workspace_path: Path) -> bool:
         """Start the workspace server."""
         try:
-            print("🚀 Starting workspace server...")
-
             # Start server process
             cmd = ["uvx", "automagik-hive", "serve"]
             process = subprocess.Popen(
@@ -1200,22 +1097,14 @@ coverage/
                 start_new_session=True,
             )
 
-            print("✅ Workspace server started")
-            print(f"📍 Working directory: {workspace_path}")
-            print("🌐 Server will be available at: http://localhost:8000")
-            print("\n💡 Use Ctrl+C to stop the server")
-
             # Wait for the process (this will block)
             try:
                 process.wait()
             except KeyboardInterrupt:
-                print("\n🛑 Stopping workspace server...")
                 process.terminate()
                 process.wait()
-                print("✅ Workspace server stopped")
 
             return True
 
-        except Exception as e:
-            print(f"❌ Error starting server: {e}")
+        except Exception:
             return False

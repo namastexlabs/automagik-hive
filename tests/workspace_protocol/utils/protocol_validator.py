@@ -251,7 +251,7 @@ class ProtocolValidator:
         return ValidationResult(True, "Context ingestion compliance is valid")
 
     def validate_artifact_lifecycle_compliance(
-        self, json_response: dict[str, Any], expected_phase: str = None
+        self, json_response: dict[str, Any], expected_phase: str | None = None
     ) -> ValidationResult:
         """
         Validate that artifacts are created in appropriate lifecycle directories.
@@ -379,7 +379,7 @@ class ProtocolValidator:
         return ValidationResult(True, "Response conciseness is appropriate")
 
     def run_comprehensive_validation(
-        self, task_prompt: str, agent_response: str, expected_phase: str = None
+        self, task_prompt: str, agent_response: str, expected_phase: str | None = None
     ) -> dict[str, ValidationResult]:
         """
         Run comprehensive validation on agent response.
@@ -450,7 +450,9 @@ class ProtocolValidator:
         return passed_checks / total_checks
 
     def generate_validation_report(
-        self, validation_results: dict[str, ValidationResult], agent_name: str = None
+        self,
+        validation_results: dict[str, ValidationResult],
+        agent_name: str | None = None,
     ) -> str:
         """
         Generate human-readable validation report.

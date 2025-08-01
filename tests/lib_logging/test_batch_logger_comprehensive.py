@@ -565,7 +565,7 @@ class TestBatchLoggerGlobalFunctions:
     @patch("lib.logging.batch_logger.batch_logger")
     def test_global_startup_logging(self, mock_batch_logger):
         """Test global startup_logging function (line 234)."""
-        context_manager = startup_logging()
+        startup_logging()
         mock_batch_logger.startup_context.assert_called_once()
 
 

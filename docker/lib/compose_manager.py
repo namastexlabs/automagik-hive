@@ -13,7 +13,7 @@ import yaml
 
 
 class ServiceStatus(Enum):
-    """Docker Compose service status states"""
+    """Docker Compose service status states."""
 
     RUNNING = "running"
     STOPPED = "stopped"
@@ -26,7 +26,7 @@ class ServiceStatus(Enum):
 
 @dataclass
 class ServiceInfo:
-    """Docker Compose service information"""
+    """Docker Compose service information."""
 
     name: str
     status: ServiceStatus
@@ -59,30 +59,22 @@ class DockerComposeManager:
         try:
             compose_file_path = Path(workspace_path) / self.compose_file
             if not compose_file_path.exists():
-                print(f"❌ {self.compose_file} not found in {workspace_path}")
                 return False
 
-            print(f"🚀 Starting {service} service...")
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "up", "-d", service],
+                [*compose_cmd, "-f", str(compose_file_path), "up", "-d", service],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=120,
             )
 
-            if result.returncode == 0:
-                print(f"✅ {service} service started successfully")
-                return True
-            print(f"❌ Failed to start {service} service: {result.stderr}")
-            return False
+            return result.returncode == 0
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error starting {service} service: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
     def stop_service(self, service: str, workspace_path: str = ".") -> bool:
@@ -98,30 +90,22 @@ class DockerComposeManager:
         try:
             compose_file_path = Path(workspace_path) / self.compose_file
             if not compose_file_path.exists():
-                print(f"❌ {self.compose_file} not found in {workspace_path}")
                 return False
 
-            print(f"🛑 Stopping {service} service...")
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "stop", service],
+                [*compose_cmd, "-f", str(compose_file_path), "stop", service],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
 
-            if result.returncode == 0:
-                print(f"✅ {service} service stopped successfully")
-                return True
-            print(f"❌ Failed to stop {service} service: {result.stderr}")
-            return False
+            return result.returncode == 0
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error stopping {service} service: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
     def restart_service(self, service: str, workspace_path: str = ".") -> bool:
@@ -137,30 +121,22 @@ class DockerComposeManager:
         try:
             compose_file_path = Path(workspace_path) / self.compose_file
             if not compose_file_path.exists():
-                print(f"❌ {self.compose_file} not found in {workspace_path}")
                 return False
 
-            print(f"🔄 Restarting {service} service...")
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "restart", service],
+                [*compose_cmd, "-f", str(compose_file_path), "restart", service],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=120,
             )
 
-            if result.returncode == 0:
-                print(f"✅ {service} service restarted successfully")
-                return True
-            print(f"❌ Failed to restart {service} service: {result.stderr}")
-            return False
+            return result.returncode == 0
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error restarting {service} service: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
     def get_service_logs(
@@ -185,8 +161,15 @@ class DockerComposeManager:
             if not compose_cmd:
                 return None
             result = subprocess.run(
-                compose_cmd
-                + ["-f", str(compose_file_path), "logs", "--tail", str(tail), service],
+                [
+                    *compose_cmd,
+                    "-f",
+                    str(compose_file_path),
+                    "logs",
+                    "--tail",
+                    str(tail),
+                    service,
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -213,16 +196,13 @@ class DockerComposeManager:
         try:
             compose_file_path = Path(workspace_path) / self.compose_file
             if not compose_file_path.exists():
-                print(f"❌ {self.compose_file} not found in {workspace_path}")
                 return False
 
-            print(f"📡 Streaming {service} logs (Ctrl+C to stop)...")
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "logs", "-f", service],
+                [*compose_cmd, "-f", str(compose_file_path), "logs", "-f", service],
                 check=False,
                 timeout=None,
             )  # No timeout for streaming
@@ -230,10 +210,8 @@ class DockerComposeManager:
             return True
 
         except KeyboardInterrupt:
-            print(f"\n🛑 Stopped streaming {service} logs")
             return True
-        except subprocess.SubprocessError as e:
-            print(f"❌ Error streaming {service} logs: {e}")
+        except subprocess.SubprocessError:
             return False
 
     def get_service_status(
@@ -257,7 +235,7 @@ class DockerComposeManager:
             if not compose_cmd:
                 return ServiceStatus.NOT_EXISTS
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "ps", service],
+                [*compose_cmd, "-f", str(compose_file_path), "ps", service],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -349,8 +327,8 @@ class DockerComposeManager:
                     container_name=container_name,
                 )
 
-        except Exception as e:
-            print(f"⚠️ Warning: Could not get all services status: {e}")
+        except Exception:
+            pass
 
         return services
 
@@ -366,30 +344,22 @@ class DockerComposeManager:
         try:
             compose_file_path = Path(workspace_path) / self.compose_file
             if not compose_file_path.exists():
-                print(f"❌ {self.compose_file} not found in {workspace_path}")
                 return False
 
-            print("🚀 Starting all services...")
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "up", "-d"],
+                [*compose_cmd, "-f", str(compose_file_path), "up", "-d"],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=180,
             )
 
-            if result.returncode == 0:
-                print("✅ All services started successfully")
-                return True
-            print(f"❌ Failed to start services: {result.stderr}")
-            return False
+            return result.returncode == 0
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error starting all services: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
     def stop_all_services(self, workspace_path: str = ".") -> bool:
@@ -404,30 +374,22 @@ class DockerComposeManager:
         try:
             compose_file_path = Path(workspace_path) / self.compose_file
             if not compose_file_path.exists():
-                print(f"❌ {self.compose_file} not found in {workspace_path}")
                 return False
 
-            print("🛑 Stopping all services...")
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "down"],
+                [*compose_cmd, "-f", str(compose_file_path), "down"],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=120,
             )
 
-            if result.returncode == 0:
-                print("✅ All services stopped successfully")
-                return True
-            print(f"❌ Failed to stop services: {result.stderr}")
-            return False
+            return result.returncode == 0
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error stopping all services: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
     def validate_compose_file(self, workspace_path: str = ".") -> bool:
@@ -449,7 +411,7 @@ class DockerComposeManager:
             if not compose_cmd:
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "config"],
+                [*compose_cmd, "-f", str(compose_file_path), "config"],
                 check=False,
                 capture_output=True,
                 text=True,

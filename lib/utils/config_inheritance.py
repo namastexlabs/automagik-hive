@@ -220,7 +220,7 @@ class ConfigInheritanceManager:
             inherited_params = []
 
             for category, defaults in team_defaults.items():
-                for param, value in defaults.items():
+                for param in defaults:
                     original_has = (
                         category in original_configs[agent_id]
                         and param in original_configs[agent_id][category]

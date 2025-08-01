@@ -9,14 +9,13 @@ Streamlined command loading with only the 3 core managers:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .unified_installer import UnifiedInstaller
     from .service_manager import ServiceManager
+    from .unified_installer import UnifiedInstaller
     from .workspace_manager import WorkspaceManager
 
 
 class LazyCommandLoader:
-    """
-    Simplified lazy loading for the 3 core command managers.
+    """Simplified lazy loading for the 3 core command managers.
     Phase 3 finalized - removed complex legacy command classes.
     """
 

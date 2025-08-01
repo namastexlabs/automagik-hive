@@ -46,11 +46,7 @@ def setup_foundational_services(
         )
 
         if verbose:
-            print(f"🔧 Setting up foundational services in: {workspace_path}")
-            print(f"   PostgreSQL port: {postgres_port}")
-            print(f"   Database: {postgres_database}")
-            print(f"   API port: {api_port}")
-            print(f"   Include app service: {include_app}")
+            pass
 
         # Initialize Docker Compose service
         compose_service = DockerComposeService(workspace_path)
@@ -64,21 +60,7 @@ def setup_foundational_services(
         )
 
         if verbose:
-            print(f"✅ Docker Compose template: {compose_path}")
-            print(f"✅ Environment file: {env_path}")
-            print(f"✅ PostgreSQL data directory: {data_dir}")
-            print("✅ Security configurations updated")
-
-        print("\n🐳 Foundational services containerization complete!")
-        print(f"   Workspace: {workspace_path}")
-        print(f"   PostgreSQL: agnohq/pgvector:16 on port {postgres_port}")
-        print(f"   Database: {postgres_database} with pgvector extensions")
-        print("   Credentials: Securely generated and saved to .env")
-
-        print("\n🚀 Next steps:")
-        print("   1. Edit .env and add your AI provider API keys")
-        print("   2. Start services: docker-compose up -d")
-        print("   3. Verify health: docker-compose ps")
+            pass
 
         logger.info("Foundational services setup completed successfully")
         return True
@@ -86,7 +68,7 @@ def setup_foundational_services(
     except Exception as e:
         logger.error("Foundational services setup failed", error=str(e))
         if verbose:
-            print(f"❌ Setup failed: {e}")
+            pass
         return False
 
 
@@ -111,9 +93,7 @@ def generate_postgres_container_template(
         logger.info("Generating PostgreSQL container template", port=postgres_port)
 
         if verbose:
-            print("🐳 Generating PostgreSQL container template")
-            print(f"   Port: {postgres_port}")
-            print(f"   Database: {postgres_database}")
+            pass
 
         # Initialize service
         workspace_path = output_path.parent if output_path else Path.cwd()
@@ -127,18 +107,10 @@ def generate_postgres_container_template(
         )
 
         # Save template
-        saved_path = compose_service.save_docker_compose_template(
-            compose_config, output_path
-        )
+        compose_service.save_docker_compose_template(compose_config, output_path)
 
         if verbose:
-            print(f"✅ PostgreSQL template saved: {saved_path}")
-
-        print("🐳 PostgreSQL container template generated!")
-        print(f"   File: {saved_path}")
-        print("   Image: agnohq/pgvector:16")
-        print(f"   Port: {postgres_port}:5432")
-        print("   Extensions: pgvector for AI embeddings")
+            pass
 
         logger.info("PostgreSQL container template generated successfully")
         return True
@@ -146,7 +118,7 @@ def generate_postgres_container_template(
     except Exception as e:
         logger.error("PostgreSQL template generation failed", error=str(e))
         if verbose:
-            print(f"❌ Template generation failed: {e}")
+            pass
         return False
 
 
@@ -173,10 +145,7 @@ def generate_workspace_credentials(
         logger.info("Generating workspace credentials", workspace=str(workspace_path))
 
         if verbose:
-            print("🔐 Generating secure workspace credentials")
-            print(f"   Workspace: {workspace_path}")
-            print(f"   PostgreSQL port: {postgres_port}")
-            print(f"   Database: {postgres_database}")
+            pass
 
         # Initialize service
         compose_service = DockerComposeService(workspace_path)
@@ -189,21 +158,10 @@ def generate_workspace_credentials(
         )
 
         # Save environment file
-        env_path = compose_service.save_environment_file(env_content)
+        compose_service.save_environment_file(env_content)
 
         if verbose:
-            print(f"✅ Environment file saved: {env_path}")
-            print("✅ PostgreSQL credentials generated")
-            print("✅ API key generated with hive_ prefix")
-            print("✅ Database URL constructed")
-
-        print("🔐 Workspace credentials generated!")
-        print(f"   Environment file: {env_path}")
-        print("   PostgreSQL: Secure 16-char base64 credentials")
-        print("   API Key: hive_[32-char secure token]")
-        print("   Database URL: postgresql+psycopg://...")
-
-        print("\n⚠️  Remember to add your AI provider API keys to .env")
+            pass
 
         logger.info("Workspace credentials generated successfully")
         return True
@@ -211,7 +169,7 @@ def generate_workspace_credentials(
     except Exception as e:
         logger.error("Workspace credentials generation failed", error=str(e))
         if verbose:
-            print(f"❌ Credentials generation failed: {e}")
+            pass
         return False
 
 
@@ -236,24 +194,16 @@ def setup_postgres_data_directories(
         )
 
         if verbose:
-            print("📁 Setting up PostgreSQL data directories")
-            print(f"   Workspace: {workspace_path}")
-            print(f"   Data path: {postgres_data_path}")
+            pass
 
         # Initialize service
         compose_service = DockerComposeService(workspace_path)
 
         # Create data directories
-        data_dir = compose_service.create_data_directories(postgres_data_path)
+        compose_service.create_data_directories(postgres_data_path)
 
         if verbose:
-            print(f"✅ PostgreSQL data directory created: {data_dir}")
-            print("✅ Directory permissions set: 755")
-
-        print("📁 PostgreSQL data directories ready!")
-        print(f"   Data directory: {data_dir}")
-        print("   Volume persistence: Enabled")
-        print("   Cross-platform: UID/GID handling configured")
+            pass
 
         logger.info("PostgreSQL data directories setup completed")
         return True
@@ -261,7 +211,7 @@ def setup_postgres_data_directories(
     except Exception as e:
         logger.error("PostgreSQL data directories setup failed", error=str(e))
         if verbose:
-            print(f"❌ Data directories setup failed: {e}")
+            pass
         return False
 
 
@@ -279,8 +229,7 @@ def validate_docker_compose_setup(workspace_path: Path, verbose: bool = False) -
         logger.info("Validating Docker Compose setup", workspace=str(workspace_path))
 
         if verbose:
-            print("🔍 Validating Docker Compose setup")
-            print(f"   Workspace: {workspace_path}")
+            pass
 
         # Check required files
         compose_file = workspace_path / "docker-compose.yml"
@@ -299,18 +248,13 @@ def validate_docker_compose_setup(workspace_path: Path, verbose: bool = False) -
         all_valid = all(validation_results.values())
 
         if verbose:
-            print("\n📋 Validation Results:")
-            for item, valid in validation_results.items():
-                status = "✅" if valid else "❌"
-                print(f"   {status} {item}")
+            for _item, _valid in validation_results.items():
+                pass
 
         if all_valid:
-            print("✅ Docker Compose setup validation passed!")
-            print("   All required files and directories present")
-            print("   Security permissions properly configured")
+            pass
         else:
-            print("❌ Docker Compose setup validation failed!")
-            print("   Run setup command to create missing components")
+            pass
 
         logger.info("Docker Compose setup validation completed", valid=all_valid)
         return all_valid
@@ -318,7 +262,7 @@ def validate_docker_compose_setup(workspace_path: Path, verbose: bool = False) -
     except Exception as e:
         logger.error("Docker Compose setup validation failed", error=str(e))
         if verbose:
-            print(f"❌ Validation failed: {e}")
+            pass
         return False
 
 

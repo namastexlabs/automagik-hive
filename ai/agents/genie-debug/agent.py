@@ -59,7 +59,7 @@ def get_genie_debug(
     )
 
     # Create the enhanced Genie Debug agent
-    agent = Agent(
+    return Agent(
         name=agent_config["name"],
         agent_id=agent_config["agent_id"],
         model=f"{model_config['provider']}:{model_config['id']}",
@@ -84,8 +84,6 @@ def get_genie_debug(
         # Debug mode for development
         debug_mode=debug_mode,
     )
-
-    return agent
 
 
 # Export the factory function for registry

@@ -69,8 +69,8 @@ class TestEnvironmentManager:
             try:
                 if Path(temp_dir).exists():
                     shutil.rmtree(temp_dir)
-            except Exception as e:
-                print(f"Warning: Failed to cleanup {temp_dir}: {e}")
+            except Exception:
+                pass
         self.temp_dirs.clear()
 
     def start_coverage_tracking(self):
@@ -111,13 +111,11 @@ def test_environment_manager():
     coverage_percentage = manager.stop_coverage_tracking()
     manager.cleanup_temp_workspaces()
 
-    print(f"\n📊 CLI Test Coverage: {coverage_percentage:.2f}%")
-
     # Enforce coverage threshold
     if coverage_percentage < 95.0:
-        print(f"⚠️  Coverage {coverage_percentage:.2f}% below 95% threshold")
+        pass
     else:
-        print(f"✅ Coverage threshold met: {coverage_percentage:.2f}%")
+        pass
 
 
 @pytest.fixture
@@ -581,7 +579,7 @@ services:
       - HIVE_API_PORT=8886
     depends_on:
       - postgres
-    
+
   postgres:
     image: postgres:15
     ports:

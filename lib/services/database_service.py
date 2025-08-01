@@ -82,10 +82,9 @@ class DatabaseService:
 
     async def execute_transaction(self, operations: list[tuple]) -> None:
         """Execute multiple operations in a transaction."""
-        async with self.get_connection() as conn:
-            async with conn.transaction():
-                for query, params in operations:
-                    await conn.execute(query, params)
+        async with self.get_connection() as conn, conn.transaction():
+            for query, params in operations:
+                await conn.execute(query, params)
 
 
 # Global database service instance

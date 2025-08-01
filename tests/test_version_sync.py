@@ -4,6 +4,7 @@ Test version synchronization across all UVX components.
 Ensures all version references use the same source of truth from pyproject.toml.
 """
 
+import contextlib
 import re
 from pathlib import Path
 
@@ -134,17 +135,9 @@ def test_version_format_compatibility(version_string):
 
 if __name__ == "__main__":
     # CLI for manual testing
-    print("=== Version Synchronization Test ===")
 
     version_info = get_version_info()
-    print(f"Project Version: {version_info['version']}")
-    print(f"CLI Version: {cli_version}")
-    print(f"API Version: {api_settings.version}")
-    print(f"Source: {version_info['source']}")
 
     # Run basic validation
-    try:
+    with contextlib.suppress(AssertionError):
         test_all_components_same_version()
-        print("✅ All components synchronized!")
-    except AssertionError as e:
-        print(f"❌ Version sync error: {e}")

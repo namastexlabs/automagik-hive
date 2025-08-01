@@ -68,7 +68,7 @@ class TestInitCommandsBasic:
     def test_init_workspace_with_name_success(self, temp_workspace_dir, mock_services):
         """Test successful workspace initialization with provided name."""
         workspace_name = "test-workspace"
-        workspace_path = temp_workspace_dir / workspace_name
+        temp_workspace_dir / workspace_name
 
         # Mock user inputs for interactive setup
         user_inputs = [
@@ -298,8 +298,8 @@ class TestInitCommandsCredentialGeneration:
     def mock_services(self):
         """Mock services for credential testing."""
         with (
-            patch("cli.commands.init.DockerService") as mock_docker,
-            patch("cli.commands.init.PostgreSQLService") as mock_postgres,
+            patch("cli.commands.init.DockerService"),
+            patch("cli.commands.init.PostgreSQLService"),
         ):
             yield {"docker": Mock(), "postgres": Mock()}
 

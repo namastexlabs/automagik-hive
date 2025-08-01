@@ -912,7 +912,7 @@ class TestAgentEnvironmentConvenienceFunctions:
             mock_env.ensure_agent_api_key.return_value = True
             mock_env_class.return_value = mock_env
 
-            result = create_agent_environment(temp_workspace, force=True)
+            create_agent_environment(temp_workspace, force=True)
 
         # Should fail initially - force parameter handling not implemented
         mock_env.generate_env_agent.assert_called_once_with(force=True)

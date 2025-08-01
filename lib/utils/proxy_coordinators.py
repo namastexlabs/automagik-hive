@@ -603,7 +603,7 @@ class AgnoCoordinatorProxy:
             except Exception as e:
                 # Log original execution failure separately from metrics
                 logger.error(f"🎯 Agent {component_id} execution failed: {e}")
-                raise e  # Re-raise the original exception
+                raise  # Re-raise the original exception
 
         # Replace both sync and async run methods for comprehensive coverage
         agent.run = wrapped_run
@@ -668,7 +668,7 @@ class AgnoCoordinatorProxy:
                 except Exception as e:
                     # Log original execution failure separately from metrics
                     logger.error(f"🎯 Agent {component_id} async execution failed: {e}")
-                    raise e  # Re-raise the original exception
+                    raise  # Re-raise the original exception
 
             agent.arun = wrapped_arun
             logger.debug(

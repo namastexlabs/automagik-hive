@@ -41,7 +41,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             document_count=len(documents),
         )
 
-    def _load_csv_as_documents(self, csv_path: Path = None) -> list[Document]:
+    def _load_csv_as_documents(self, csv_path: Path | None = None) -> list[Document]:
         """Load CSV file and create one document per row."""
         documents = []
 
@@ -188,10 +188,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
         class AgnoBatchFilter:
             def filter(self, record):
                 msg = record.getMessage()
-                return not (
-                    msg.startswith("Inserted batch of")
-                    or msg.startswith("Upserted batch of")
-                )
+                return not (msg.startswith(("Inserted batch of", "Upserted batch of")))
 
         batch_filter = AgnoBatchFilter()
         agno_logger.addFilter(batch_filter)

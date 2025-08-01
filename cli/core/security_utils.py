@@ -272,6 +272,7 @@ class SecureSubprocessExecutor:
         # Execute with validated parameters
         return subprocess.run(
             validated_args,
+            check=False,
             cwd=str(validated_cwd) if validated_cwd else None,
             env=env,
             **kwargs,

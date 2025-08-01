@@ -712,7 +712,7 @@ class TestEdgeCasesAndErrorHandling:
                 "lib.config.models.get_provider_registry", return_value=mock_registry
             ):
                 # Empty string should use default
-                result = resolver.resolve_model("")
+                resolver.resolve_model("")
 
                 # Should have used fallback
                 mock_registry.detect_provider.assert_called_once_with("fallback-model")
@@ -735,7 +735,7 @@ class TestEdgeCasesAndErrorHandling:
             with patch(
                 "lib.config.models.get_provider_registry", return_value=mock_registry
             ):
-                result = resolver.resolve_model(None)
+                resolver.resolve_model(None)
 
                 mock_registry.detect_provider.assert_called_once_with("default-model")
                 mock_class.assert_called_once_with(id="default-model")

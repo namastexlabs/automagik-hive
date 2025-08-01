@@ -501,7 +501,7 @@ def get_startup_display_with_results(startup_results: StartupResults) -> Any:
     startup_display = create_startup_display()
 
     # Add teams from registries
-    for team_id in startup_results.registries.teams.keys():
+    for team_id in startup_results.registries.teams:
         team_name = team_id.replace("-", " ").title()
         startup_display.add_team(team_id, team_name, 0, version=1, status="✅")
 
@@ -514,7 +514,7 @@ def get_startup_display_with_results(startup_results: StartupResults) -> Any:
         startup_display.add_agent(agent_id, agent_name, version=version, status="✅")
 
     # Add workflows from registries
-    for workflow_id in startup_results.registries.workflows.keys():
+    for workflow_id in startup_results.registries.workflows:
         workflow_name = workflow_id.replace("-", " ").title()
         startup_display.add_workflow(workflow_id, workflow_name, version=1, status="✅")
 

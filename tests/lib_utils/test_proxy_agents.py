@@ -367,7 +367,7 @@ class TestConfigurationProcessing:
                 return_value="mock_storage",
             ) as mock_storage_handler,
         ):
-            processed = proxy._process_config(config, "test-agent", None)
+            proxy._process_config(config, "test-agent", None)
 
             mock_model_handler.assert_called_once()
             mock_agent_handler.assert_called_once()
@@ -893,7 +893,7 @@ class TestEdgeCasesAndErrorHandling:
         with patch.object(
             proxy, "_handle_knowledge_filter", return_value="mock_kb"
         ) as mock_handler:
-            agent = await proxy.create_agent(
+            await proxy.create_agent(
                 component_id="test-agent",
                 config=config,
             )
@@ -964,7 +964,7 @@ class TestEdgeCasesAndErrorHandling:
             mock_agent.metadata = {}
             mock_agent_class.return_value = mock_agent
 
-            agent = await proxy.create_agent(
+            await proxy.create_agent(
                 component_id="test-agent",
                 config=config,
             )

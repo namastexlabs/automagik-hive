@@ -48,7 +48,7 @@ class AgentRequest(BaseValidatedRequest):
     stream: bool = Field(False, description="Whether to stream the response")
 
     @validator("message")
-    def sanitize_message(cls, v):
+    def sanitize_message(self, v):
         """Sanitize message content."""
         if not v or not v.strip():
             raise ValueError("Message cannot be empty")
@@ -58,7 +58,7 @@ class AgentRequest(BaseValidatedRequest):
         return re.sub(r'[<>"\']', "", v.strip())
 
     @validator("context")
-    def validate_context(cls, v):
+    def validate_context(self, v):
         """Validate context dictionary."""
         if v is None:
             return v
@@ -109,7 +109,7 @@ class TeamRequest(BaseValidatedRequest):
     stream: bool = Field(False, description="Whether to stream the response")
 
     @validator("task")
-    def sanitize_task(cls, v):
+    def sanitize_task(self, v):
         """Sanitize task description."""
         if not v or not v.strip():
             raise ValueError("Task cannot be empty")
@@ -147,7 +147,7 @@ class WorkflowRequest(BaseValidatedRequest):
     )
 
     @validator("input_data")
-    def validate_input_data(cls, v):
+    def validate_input_data(self, v):
         """Validate workflow input data."""
         if len(str(v)) > 10000:
             raise ValueError("Input data too large (max 10000 characters)")

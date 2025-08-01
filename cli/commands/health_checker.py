@@ -12,16 +12,15 @@ Provides detailed health validation for:
 from __future__ import annotations
 
 import json
-import os
-import psutil
-import requests
 import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
+import psutil
 import psycopg
+import requests
 from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
@@ -38,9 +37,9 @@ class HealthCheckResult:
     component: str
     status: str  # "healthy", "unhealthy", "warning", "unknown"
     message: str
-    details: Dict[str, Any] = field(default_factory=dict)
-    response_time_ms: Optional[float] = None
-    remediation: Optional[str] = None
+    details: dict[str, Any] = field(default_factory=dict)
+    response_time_ms: float | None = None
+    remediation: str | None = None
 
 
 @dataclass
@@ -81,7 +80,7 @@ class HealthChecker:
 
     def comprehensive_health_check(
         self, component: str = "all"
-    ) -> Dict[str, HealthCheckResult]:
+    ) -> dict[str, HealthCheckResult]:
         """Perform comprehensive health check for specified component.
 
         Args:
@@ -172,7 +171,7 @@ class HealthChecker:
 
             # Check database size and connections
             cursor.execute("""
-                SELECT 
+                SELECT
                     pg_size_pretty(pg_database_size(current_database())) as size,
                     (SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()) as connections
             """)
@@ -276,19 +275,18 @@ class HealthChecker:
                     },
                     response_time_ms=response_time,
                 )
-            else:
-                return HealthCheckResult(
-                    service=f"{component}-api",
-                    component=component,
-                    status="unhealthy",
-                    message=f"API returned status {health_response.status_code}",
-                    details={
-                        "port": port,
-                        "status_code": health_response.status_code,
-                        "response": health_response.text[:200],
-                    },
-                    remediation=f"Check {component} API container logs: docker logs {config['container_prefix']}-api",
-                )
+            return HealthCheckResult(
+                service=f"{component}-api",
+                component=component,
+                status="unhealthy",
+                message=f"API returned status {health_response.status_code}",
+                details={
+                    "port": port,
+                    "status_code": health_response.status_code,
+                    "response": health_response.text[:200],
+                },
+                remediation=f"Check {component} API container logs: docker logs {config['container_prefix']}-api",
+            )
 
         except requests.exceptions.ConnectionError:
             return HealthCheckResult(
@@ -465,7 +463,7 @@ class HealthChecker:
 
     def service_interdependency_check(
         self, component: str = "all"
-    ) -> List[HealthCheckResult]:
+    ) -> list[HealthCheckResult]:
         """Check service interdependencies for specified component.
 
         Args:
@@ -567,7 +565,7 @@ class HealthChecker:
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
 
-            usage = ResourceUsage(
+            ResourceUsage(
                 cpu_percent=cpu_percent,
                 memory_percent=memory.percent,
                 disk_usage_percent=disk.percent,
@@ -635,7 +633,7 @@ class HealthChecker:
             )
 
     def generate_health_report(
-        self, results: Dict[str, HealthCheckResult], component: str
+        self, results: dict[str, HealthCheckResult], component: str
     ) -> str:
         """Generate detailed health report with actionable diagnostics.
 
@@ -722,7 +720,7 @@ class HealthChecker:
 
         return "\n".join(report_lines)
 
-    def _get_services_for_component(self, component: str) -> Dict[str, Dict[str, Any]]:
+    def _get_services_for_component(self, component: str) -> dict[str, dict[str, Any]]:
         """Get services to check for specified component.
 
         Args:
@@ -751,7 +749,7 @@ class HealthChecker:
         return services
 
     def _check_service_with_retries(
-        self, service_name: str, config: Dict[str, Any], progress: Progress, task
+        self, service_name: str, config: dict[str, Any], progress: Progress, task
     ) -> HealthCheckResult:
         """Check service with retry logic.
 
@@ -877,14 +875,13 @@ class HealthChecker:
                     message="Docker network 'hive-network' exists",
                     details={"network": "hive-network"},
                 )
-            else:
-                return HealthCheckResult(
-                    service="docker-network",
-                    component="infrastructure",
-                    status="unhealthy",
-                    message="Docker network 'hive-network' not found",
-                    remediation="Create network with: docker network create hive-network",
-                )
+            return HealthCheckResult(
+                service="docker-network",
+                component="infrastructure",
+                status="unhealthy",
+                message="Docker network 'hive-network' not found",
+                remediation="Create network with: docker network create hive-network",
+            )
 
         except Exception as e:
             return HealthCheckResult(
@@ -897,8 +894,8 @@ class HealthChecker:
             )
 
     def _check_agent_dependencies(
-        self, containers: List[Dict]
-    ) -> List[HealthCheckResult]:
+        self, containers: list[dict]
+    ) -> list[HealthCheckResult]:
         """Check agent component dependencies.
 
         Args:
@@ -961,8 +958,8 @@ class HealthChecker:
         return results
 
     def _check_genie_dependencies(
-        self, containers: List[Dict]
-    ) -> List[HealthCheckResult]:
+        self, containers: list[dict]
+    ) -> list[HealthCheckResult]:
         """Check genie component dependencies.
 
         Args:
@@ -1025,8 +1022,8 @@ class HealthChecker:
         return results
 
     def _check_cross_component_dependencies(
-        self, containers: List[Dict]
-    ) -> List[HealthCheckResult]:
+        self, containers: list[dict]
+    ) -> list[HealthCheckResult]:
         """Check cross-component dependencies.
 
         Args:
@@ -1064,7 +1061,7 @@ class HealthChecker:
         return icons.get(status, "❓")
 
     def _display_health_report(
-        self, results: Dict[str, HealthCheckResult], component: str
+        self, results: dict[str, HealthCheckResult], component: str
     ) -> None:
         """Display comprehensive health report.
 
@@ -1211,8 +1208,7 @@ class HealthChecker:
 
             if critical_issues == 0:
                 return 0  # All healthy or just warnings
-            else:
-                return 1  # Critical issues found
+            return 1  # Critical issues found
 
         except Exception as e:
             logger.error(f"Health check CLI failed: {e}")

@@ -406,7 +406,7 @@ POSTGRES_PASSWORD=real_test_password_456
             yield workspace
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() == "true",
+        os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() != "true",
         reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable.",
     )
     def test_real_postgres_container_lifecycle(
@@ -473,7 +473,7 @@ POSTGRES_PASSWORD=real_test_password_456
                 pass
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() == "true",
+        os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() != "true",
         reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable.",
     )
     def test_real_postgres_database_connection(
@@ -569,7 +569,7 @@ POSTGRES_PASSWORD=real_test_password_456
                 pass
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() == "true",
+        os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() != "true",
         reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable.",
     )
     def test_real_postgres_schema_management(self, docker_client, temp_workspace_real):
@@ -601,8 +601,8 @@ POSTGRES_PASSWORD=real_test_password_456
 
             # Verify schemas exist
             cursor.execute("""
-                SELECT schema_name 
-                FROM information_schema.schemata 
+                SELECT schema_name
+                FROM information_schema.schemata
                 WHERE schema_name IN ('hive', 'agno');
             """)
             schemas = cursor.fetchall()
@@ -634,8 +634,8 @@ POSTGRES_PASSWORD=real_test_password_456
 
             # Verify tables exist
             cursor.execute("""
-                SELECT table_schema, table_name 
-                FROM information_schema.tables 
+                SELECT table_schema, table_name
+                FROM information_schema.tables
                 WHERE table_schema IN ('hive', 'agno');
             """)
             tables = cursor.fetchall()

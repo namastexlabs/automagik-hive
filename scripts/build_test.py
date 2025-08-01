@@ -7,23 +7,14 @@ from pathlib import Path
 
 
 def main():
-    print("🧞 Automagik Hive - Build Test")
-    print("=" * 40)
-
     # Clean and build
-    print("🧹 Cleaning...")
     subprocess.run(["rm", "-rf", "dist"], check=True)
 
-    print("🏗️ Building...")
     subprocess.run(["uv", "build"], check=True)
 
     # Check files exist
     wheel_files = list(Path("dist").glob("*.whl"))
-    tar_files = list(Path("dist").glob("*.tar.gz"))
-
-    print(
-        f"✅ Built {len(wheel_files)} wheel(s) and {len(tar_files)} source distribution(s)"
-    )
+    list(Path("dist").glob("*.tar.gz"))
 
     # Check wheel contents
     if wheel_files:
@@ -36,9 +27,8 @@ def main():
         )
 
         if "cli/" in result.stdout and "entry_points.txt" in result.stdout:
-            print("✅ CLI module and entry points included")
+            pass
         else:
-            print("❌ CLI module or entry points missing")
             return False
 
         # Check entry points content
@@ -63,15 +53,10 @@ def main():
         )
         if entry_file.exists():
             content = entry_file.read_text()
-            print(f"📋 Entry points:\n{content}")
             if "automagik-hive = cli.main:main" in content:
-                print("✅ Entry point correctly configured")
+                pass
             else:
-                print("❌ Entry point incorrect")
                 return False
-
-    print("\n🎉 Build test successful!")
-    print("📦 Package is ready for PyPI publishing")
 
     return True
 

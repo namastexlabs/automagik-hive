@@ -90,15 +90,10 @@ class UninstallCommands:
         # Step 4: Remove cached data
         success &= self._remove_cached_data()
 
-        print("\n" + "=" * 70)
         if success:
-            print("✅ GLOBAL UNINSTALL COMPLETED SUCCESSFULLY")
-            print("🧹 All Automagik Hive components have been removed")
+            pass
         else:
-            print("⚠️  PARTIAL UNINSTALL - SOME COMPONENTS COULD NOT BE REMOVED")
-            print("💡 You may need to manually clean up remaining files")
-            print("🔍 Check the output above for specific errors")
-        print("=" * 70)
+            pass
 
         return success
 
@@ -181,37 +176,24 @@ class UninstallCommands:
 
     def _confirm_global_destruction(self) -> bool:
         """Confirm global destruction with comprehensive warnings."""
-        print("\n" + "=" * 70)
-        print("🚨 GLOBAL DESTRUCTION WARNING")
-        print("=" * 70)
-        print("The following paths will be PERMANENTLY DELETED:")
-        print()
-
         # Get actual paths that will be deleted
         workspaces = self._find_all_workspaces()
         containers = self._find_automagik_containers()
 
         # Show ACTUAL workspace paths that will be deleted
         if workspaces:
-            print(f"📁 WORKSPACE DIRECTORIES ({len(workspaces)} found):")
-            for workspace in workspaces:
-                print(f"   🗂️  {workspace.absolute()}")
-            print()
+            for _workspace in workspaces:
+                pass
         else:
             # Show where we looked for workspaces (limited safe search)
             search_paths = [Path("/tmp"), Path.home() / ".automagik-hive"]
-            print("📁 WORKSPACE SEARCH PATHS (none found):")
             for search_path in search_paths:
                 status = "✅ checked" if search_path.exists() else "⚠️  path missing"
-                print(f"   {status}: {search_path.absolute()}")
-            print()
 
         # Show ACTUAL container names that will be removed
         if containers:
-            print(f"🐳 DOCKER CONTAINERS ({len(containers)} found):")
-            for container in containers:
-                print(f"   📦 {container}")
-            print()
+            for _container in containers:
+                pass
 
         # Show ACTUAL data directories that exist and will be deleted
         data_dirs_to_check = [
@@ -226,16 +208,11 @@ class UninstallCommands:
 
         existing_data_dirs = [d for d in data_dirs_to_check if d.exists()]
         if existing_data_dirs:
-            print(f"🗄️  DATA DIRECTORIES ({len(existing_data_dirs)} found):")
             for data_dir in existing_data_dirs:
-                print(f"   📁 {data_dir.absolute()}")
-            print()
+                pass
         else:
-            print("🗄️  FILE PATHS CHECKED (none found to delete):")
             for data_dir in data_dirs_to_check:
                 status = "✅ not found" if not data_dir.exists() else "📁 exists"
-                print(f"   {status}: {data_dir.absolute()}")
-            print()
 
         # Show Docker volumes that will be removed
         try:
@@ -259,13 +236,10 @@ class UninstallCommands:
 
             all_volumes = list(set(all_volumes))
             if all_volumes:
-                print(f"💾 DOCKER VOLUMES ({len(all_volumes)} found):")
-                for volume in all_volumes:
-                    print(f"   🗃️  {volume}")
-                print()
+                for _volume in all_volumes:
+                    pass
         except Exception:
-            print("⚠️  Could not check Docker volumes")
-            print()
+            pass
 
         total_items = (
             len(workspaces)
@@ -273,10 +247,6 @@ class UninstallCommands:
             + len(existing_data_dirs)
             + len(all_volumes if "all_volumes" in locals() else [])
         )
-
-        print(f"📊 TOTAL ITEMS TO DELETE: {total_items}")
-        print("⚠️  This action CANNOT be undone!")
-        print("=" * 70)
 
         while True:
             confirm1 = input("Type 'I UNDERSTAND' to proceed: ").strip()
@@ -490,28 +460,20 @@ class UninstallCommands:
         workspaces = self._find_all_workspaces()
 
         if not workspaces:
-            print("📁 No Automagik Hive workspaces found to remove")
             return True
 
-        print(f"🧹 Removing {len(workspaces)} workspace(s)...")
         success = True
         for workspace in workspaces:
             try:
-                print(f"   🗂️  Removing workspace: {workspace}")
-
                 # Stop containers first
                 compose_file = workspace / "docker-compose.yml"
                 if compose_file.exists():
-                    print(f"   🐳 Stopping containers in {workspace.name}...")
                     self._stop_workspace_containers(workspace)
 
                 # Remove directory
-                print(f"   🗑️  Deleting directory: {workspace}")
                 shutil.rmtree(workspace, ignore_errors=True)
-                print(f"   ✅ Workspace removed: {workspace}")
 
-            except Exception as e:
-                print(f"   ❌ Failed to remove workspace {workspace}: {e}")
+            except Exception:
                 success = False
 
         return success
@@ -542,7 +504,6 @@ class UninstallCommands:
             all_container_ids = list(set(all_container_ids))
 
             if all_container_ids:
-                print(f"🐳 Stopping {len(all_container_ids)} container(s)...")
                 # Stop containers
                 result = subprocess.run(
                     ["docker", "stop", *all_container_ids],
@@ -551,13 +512,10 @@ class UninstallCommands:
                     text=True,
                 )
                 if result.returncode == 0:
-                    print("   ✅ Containers stopped successfully")
+                    pass
                 else:
-                    print(
-                        f"   ⚠️  Some containers may have failed to stop: {result.stderr}"
-                    )
+                    pass
 
-                print(f"🗑️  Removing {len(all_container_ids)} container(s)...")
                 # Remove containers
                 result = subprocess.run(
                     ["docker", "rm", "-f", *all_container_ids],
@@ -566,14 +524,12 @@ class UninstallCommands:
                     text=True,
                 )
                 if result.returncode == 0:
-                    print("   ✅ Containers removed successfully")
+                    pass
                 else:
-                    print(
-                        f"   ⚠️  Some containers may have failed to remove: {result.stderr}"
-                    )
+                    pass
 
             else:
-                print("🐳 No Automagik Hive containers found to remove")
+                pass
 
             # Remove volumes for both patterns
             all_volumes = []
@@ -596,7 +552,6 @@ class UninstallCommands:
             # Remove duplicates and remove volumes
             all_volumes = list(set(all_volumes))
             if all_volumes:
-                print(f"💾 Removing {len(all_volumes)} Docker volume(s)...")
                 result = subprocess.run(
                     ["docker", "volume", "rm", "-f", *all_volumes],
                     check=False,
@@ -604,13 +559,11 @@ class UninstallCommands:
                     text=True,
                 )
                 if result.returncode == 0:
-                    print("   ✅ Volumes removed successfully")
+                    pass
                 else:
-                    print(
-                        f"   ⚠️  Some volumes may have failed to remove: {result.stderr}"
-                    )
+                    pass
             else:
-                print("💾 No Automagik Hive volumes found to remove")
+                pass
 
             return True
 
@@ -631,17 +584,12 @@ class UninstallCommands:
 
         existing_dirs = [d for d in agent_dirs if d.exists()]
         if not existing_dirs:
-            print("🏠 No agent environment directories found to remove")
             return True
 
-        print(f"🏠 Removing {len(existing_dirs)} agent environment director(ies)...")
         for agent_dir in existing_dirs:
             try:
-                print(f"   📁 Removing: {agent_dir}")
                 shutil.rmtree(agent_dir, ignore_errors=True)
-                print(f"   ✅ Removed: {agent_dir}")
-            except Exception as e:
-                print(f"   ❌ Failed to remove {agent_dir}: {e}")
+            except Exception:
                 success = False
 
         return success
@@ -659,17 +607,12 @@ class UninstallCommands:
 
         existing_cache_dirs = [d for d in cache_dirs if d.exists()]
         if not existing_cache_dirs:
-            print("🗂️  No cache directories found to remove")
             return True
 
-        print(f"🗂️  Removing {len(existing_cache_dirs)} cache director(ies)...")
         for cache_dir in existing_cache_dirs:
             try:
-                print(f"   📁 Removing: {cache_dir}")
                 shutil.rmtree(cache_dir, ignore_errors=True)
-                print(f"   ✅ Removed: {cache_dir}")
-            except Exception as e:
-                print(f"   ❌ Failed to remove {cache_dir}: {e}")
+            except Exception:
                 success = False
 
         return success

@@ -148,14 +148,12 @@ class TestCSVHotReloadManagerInitialization:
         with patch(
             "lib.knowledge.csv_hot_reload.OpenAIEmbedder"
         ) as mock_embedder_class:
-            with patch("lib.knowledge.csv_hot_reload.PgVector") as mock_vector_class:
-                with patch(
-                    "lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"
-                ) as mock_kb_class:
+            with patch("lib.knowledge.csv_hot_reload.PgVector"):
+                with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"):
                     mock_embedder = Mock()
                     mock_embedder_class.return_value = mock_embedder
 
-                    manager = CSVHotReloadManager(csv_path=str(self.csv_file))
+                    CSVHotReloadManager(csv_path=str(self.csv_file))
 
                     # Should use default embedder
                     mock_embedder_class.assert_called_with(id="text-embedding-3-small")
@@ -174,16 +172,12 @@ class TestCSVHotReloadManagerInitialization:
             with patch(
                 "lib.knowledge.csv_hot_reload.OpenAIEmbedder"
             ) as mock_embedder_class:
-                with patch(
-                    "lib.knowledge.csv_hot_reload.PgVector"
-                ) as mock_vector_class:
-                    with patch(
-                        "lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"
-                    ) as mock_kb_class:
+                with patch("lib.knowledge.csv_hot_reload.PgVector"):
+                    with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"):
                         mock_embedder = Mock()
                         mock_embedder_class.return_value = mock_embedder
 
-                        manager = CSVHotReloadManager(csv_path=str(self.csv_file))
+                        CSVHotReloadManager(csv_path=str(self.csv_file))
 
                         # Should use default embedder when import fails
                         mock_embedder_class.assert_called_with(
@@ -344,7 +338,7 @@ class TestCSVHotReloadManagerFileWatching:
         # Create manager and mock the reload method
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
 
-        with patch.object(manager, "_reload_knowledge_base") as mock_reload:
+        with patch.object(manager, "_reload_knowledge_base"):
             with patch("watchdog.observers.Observer"):
                 with patch(
                     "watchdog.events.FileSystemEventHandler"
@@ -716,7 +710,7 @@ class TestCSVHotReloadErrorHandling:
     @patch("lib.knowledge.csv_hot_reload.logger")
     def test_logging_during_initialization(self, mock_logger):
         """Test that appropriate logging occurs during initialization."""
-        manager = CSVHotReloadManager(csv_path=str(self.csv_file))
+        CSVHotReloadManager(csv_path=str(self.csv_file))
 
         # Verify initialization logging
         mock_logger.info.assert_called()

@@ -325,9 +325,9 @@ class AsyncMetricsService:
 
             # Use async collect in a safe way
             try:
-                loop = asyncio.get_running_loop()
+                asyncio.get_running_loop()
                 # Create task for async collection
-                task = asyncio.create_task(
+                asyncio.create_task(
                     self.collect_metrics(agent_name, execution_type, metrics)
                 )
 

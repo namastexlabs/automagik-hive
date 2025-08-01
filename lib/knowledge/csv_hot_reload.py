@@ -30,7 +30,7 @@ class CSVHotReloadManager:
     incremental loading capabilities.
     """
 
-    def __init__(self, csv_path: str = None):
+    def __init__(self, csv_path: str | None = None):
         """Initialize with centralized config or fallback path."""
         if csv_path is None:
             # Use centralized config like knowledge_factory.py

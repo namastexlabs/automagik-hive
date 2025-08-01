@@ -78,7 +78,7 @@ uninstall-containers-only-enhanced:
 	@if [ -f "logs/agent-server.pid" ]; then kill -TERM $$(cat logs/agent-server.pid) 2>/dev/null || true; fi
 	@echo "Containers and processes stopped"
 
-.PHONY: uninstall-clean-enhanced  
+.PHONY: uninstall-clean-enhanced
 uninstall-clean-enhanced:
 	@echo "Enhanced clean uninstall - removing containers, images, and venv..."
 	@$(MAKE) uninstall-containers-only-enhanced

@@ -1,4 +1,4 @@
-"""Generic Notification System
+"""Generic Notification System.
 
 Simple notification system for monitoring alerts and system events.
 Designed to be easily extensible for different notification methods.
@@ -15,7 +15,7 @@ from lib.logging import logger
 
 
 class NotificationLevel(str, Enum):
-    """Notification severity levels"""
+    """Notification severity levels."""
 
     INFO = "info"
     WARNING = "warning"
@@ -25,7 +25,7 @@ class NotificationLevel(str, Enum):
 
 @dataclass
 class NotificationMessage:
-    """Standard notification message format"""
+    """Standard notification message format."""
 
     title: str
     message: str
@@ -42,28 +42,28 @@ class NotificationMessage:
 
 
 class NotificationProvider(ABC):
-    """Abstract base class for notification providers"""
+    """Abstract base class for notification providers."""
 
     @abstractmethod
     async def send(self, notification: NotificationMessage) -> bool:
-        """Send a notification"""
+        """Send a notification."""
 
     @abstractmethod
     def is_available(self) -> bool:
-        """Check if provider is available"""
+        """Check if provider is available."""
 
 
 class WhatsAppProvider(NotificationProvider):
-    """WhatsApp notification provider using pooled MCP connections"""
+    """WhatsApp notification provider using pooled MCP connections."""
 
-    def __init__(self, group_id: str = None):
+    def __init__(self, group_id: str | None = None):
         self.group_id = group_id or os.getenv("WHATSAPP_NOTIFICATION_GROUP")
         self._last_notification: dict[str, float] = {}
         self.cooldown_seconds = 300
         # No connection manager needed in simple implementation
 
     async def send(self, notification: NotificationMessage) -> bool:
-        """Send notification via WhatsApp using pooled MCP connections"""
+        """Send notification via WhatsApp using pooled MCP connections."""
         # Check if WhatsApp notifications are enabled
         enabled = (
             os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
@@ -81,15 +81,12 @@ class WhatsAppProvider(NotificationProvider):
             )
             current_time = time.time()
 
-            if cooldown_key in self._last_notification:
-                if (
-                    current_time - self._last_notification[cooldown_key]
-                    < self.cooldown_seconds
-                ):
-                    logger.debug(
-                        f"📱 Notification {cooldown_key} in cooldown, skipping"
-                    )
-                    return False
+            if cooldown_key in self._last_notification and (
+                current_time - self._last_notification[cooldown_key]
+                < self.cooldown_seconds
+            ):
+                logger.debug(f"📱 Notification {cooldown_key} in cooldown, skipping")
+                return False
 
             # Format message with emoji
             emoji = self._get_emoji(notification.level)
@@ -145,7 +142,7 @@ class WhatsAppProvider(NotificationProvider):
             return False
 
     def is_available(self) -> bool:
-        """Check if WhatsApp provider is available"""
+        """Check if WhatsApp provider is available."""
         try:
             # Simple check - if we can import the MCP catalog, assume WhatsApp is available
             return True
@@ -153,7 +150,7 @@ class WhatsAppProvider(NotificationProvider):
             return False
 
     def _get_emoji(self, level: NotificationLevel) -> str:
-        """Get emoji for notification level"""
+        """Get emoji for notification level."""
         emoji_map = {
             NotificationLevel.INFO: "ℹ️",
             NotificationLevel.WARNING: "⚠️",
@@ -164,14 +161,14 @@ class WhatsAppProvider(NotificationProvider):
 
 
 class LogProvider(NotificationProvider):
-    """Log provider for notifications"""
+    """Log provider for notifications."""
 
     def __init__(self, logger_name: str = "notifications"):
         # Use the unified logger instead of creating a separate one
         self.logger = logger
 
     async def send(self, notification: NotificationMessage) -> bool:
-        """Send notification via logging"""
+        """Send notification via logging."""
         try:
             level_map = {
                 NotificationLevel.INFO: self.logger.info,
@@ -191,12 +188,12 @@ class LogProvider(NotificationProvider):
             return False
 
     def is_available(self) -> bool:
-        """Log provider is always available"""
+        """Log provider is always available."""
         return True
 
 
 class NotificationService:
-    """Central notification service"""
+    """Central notification service."""
 
     def __init__(self):
         self.providers: dict[str, NotificationProvider] = {}
@@ -211,14 +208,14 @@ class NotificationService:
             self.default_provider = "whatsapp"
 
     def register_provider(self, name: str, provider: NotificationProvider):
-        """Register a notification provider"""
+        """Register a notification provider."""
         self.providers[name] = provider
         logger.info(f"📱 Registered notification provider: {name}")
 
     async def send(
-        self, notification: NotificationMessage, provider_name: str = None
+        self, notification: NotificationMessage, provider_name: str | None = None
     ) -> bool:
-        """Send notification using specified or default provider"""
+        """Send notification using specified or default provider."""
         if provider_name is None:
             provider_name = self.default_provider
 
@@ -242,14 +239,14 @@ class NotificationService:
         source: str,
         level: NotificationLevel = NotificationLevel.WARNING,
     ) -> bool:
-        """Convenience method for sending alerts"""
+        """Convenience method for sending alerts."""
         notification = NotificationMessage(
             title=title, message=message, level=level, source=source
         )
         return await self.send(notification)
 
     def get_available_providers(self) -> dict[str, bool]:
-        """Get list of available providers"""
+        """Get list of available providers."""
         return {
             name: provider.is_available() for name, provider in self.providers.items()
         }
@@ -260,7 +257,7 @@ _notification_service = NotificationService()
 
 
 def get_notification_service() -> NotificationService:
-    """Get global notification service instance"""
+    """Get global notification service instance."""
     return _notification_service
 
 
@@ -271,20 +268,20 @@ async def send_notification(
     source: str,
     level: NotificationLevel = NotificationLevel.INFO,
 ) -> bool:
-    """Send a notification using the global service"""
+    """Send a notification using the global service."""
     return await get_notification_service().send_alert(title, message, source, level)
 
 
 async def send_critical_alert(title: str, message: str, source: str) -> bool:
-    """Send a critical alert"""
+    """Send a critical alert."""
     return await send_notification(title, message, source, NotificationLevel.CRITICAL)
 
 
 async def send_warning_alert(title: str, message: str, source: str) -> bool:
-    """Send a warning alert"""
+    """Send a warning alert."""
     return await send_notification(title, message, source, NotificationLevel.WARNING)
 
 
 async def send_error_alert(title: str, message: str, source: str) -> bool:
-    """Send an error alert"""
+    """Send an error alert."""
     return await send_notification(title, message, source, NotificationLevel.ERROR)

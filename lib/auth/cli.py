@@ -24,13 +24,9 @@ def show_current_key() -> None:
 
     if key:
         logger.info("Current API key retrieved", key_length=len(key))
-        print(f"Current API Key: {key}")
-        print("\nUsage example:")
-        port = os.getenv("HIVE_API_PORT", "8886")
-        print(f'curl -H "x-api-key: {key}" http://localhost:{port}/playground/status')
+        os.getenv("HIVE_API_PORT", "8886")
     else:
         logger.warning("No API key found")
-        print("No API key found. Run the server once to generate a key automatically.")
 
 
 def regenerate_key() -> None:
@@ -38,7 +34,6 @@ def regenerate_key() -> None:
     init_service = AuthInitService()
     new_key = init_service.regenerate_key()
     logger.info("New API key generated", key_length=len(new_key))
-    print(f"✅ New API key generated: {new_key}")
 
 
 def show_auth_status() -> None:
@@ -46,13 +41,9 @@ def show_auth_status() -> None:
     auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
 
     logger.info("Auth status requested", auth_disabled=auth_disabled)
-    print("🔐 Automagik Hive Authentication Status")
-    print("=" * 40)
-    print(f"Authentication: {'DISABLED' if auth_disabled else 'ENABLED'}")
 
     if auth_disabled:
         logger.warning("Authentication disabled - development mode")
-        print("⚠️  Running in development mode - no authentication required")
     else:
         show_current_key()
 
@@ -81,11 +72,6 @@ def generate_postgres_credentials(
     logger.info(
         "PostgreSQL credentials generated via CLI", database=database, port=port
     )
-    print("✅ PostgreSQL credentials generated:")
-    print(f"   User: {creds['user']}")
-    print(f"   Password: {creds['password']}")
-    print(f"   Database: {creds['database']}")
-    print(f"   URL: {creds['url']}")
 
     return creds
 
@@ -120,12 +106,6 @@ def generate_complete_workspace_credentials(
     logger.info(
         "Complete workspace credentials generated", workspace_path=str(workspace_path)
     )
-    print("✅ Complete workspace credentials generated:")
-    print(f"   PostgreSQL User: {creds['postgres_user']}")
-    print(f"   PostgreSQL Password: {creds['postgres_password']}")
-    print(f"   PostgreSQL Database: {creds['postgres_database']}")
-    print(f"   PostgreSQL URL: {creds['postgres_url']}")
-    print(f"   API Key: {creds['api_key']}")
 
     return creds
 
@@ -148,11 +128,6 @@ def generate_agent_credentials(
     creds = credential_service.generate_agent_credentials(port, database)
 
     logger.info("Agent credentials generated via CLI", database=database, port=port)
-    print("✅ Agent credentials generated:")
-    print(f"   User: {creds['user']} (unified)")
-    print(f"   Password: {creds['password']} (unified)")
-    print(f"   Database: {creds['database']}")
-    print(f"   URL: {creds['url']}")
 
     return creds
 
@@ -168,46 +143,20 @@ def show_credential_status(env_file: Path | None = None) -> None:
     status = credential_service.get_credential_status()
 
     logger.info("Credential status requested")
-    print("🔐 Automagik Hive Credential Status")
-    print("=" * 45)
-
-    print(
-        f"Environment File: {'✅ EXISTS' if status['env_file_exists'] else '❌ MISSING'}"
-    )
-    print(
-        f"PostgreSQL: {'✅ CONFIGURED' if status['postgres_configured'] else '❌ NOT CONFIGURED'}"
-    )
-    print(
-        f"API Key: {'✅ CONFIGURED' if status['api_key_configured'] else '❌ NOT CONFIGURED'}"
-    )
 
     if status.get("validation"):
-        print("\nValidation Results:")
         validation = status["validation"]
         if "postgres_user_valid" in validation:
-            print(
-                f"  PostgreSQL User: {'✅ VALID' if validation['postgres_user_valid'] else '❌ INVALID'}"
-            )
+            pass
         if "postgres_password_valid" in validation:
-            print(
-                f"  PostgreSQL Password: {'✅ VALID' if validation['postgres_password_valid'] else '❌ INVALID'}"
-            )
+            pass
         if "postgres_url_valid" in validation:
-            print(
-                f"  PostgreSQL URL: {'✅ VALID' if validation['postgres_url_valid'] else '❌ INVALID'}"
-            )
+            pass
         if "api_key_valid" in validation:
-            print(
-                f"  API Key Format: {'✅ VALID' if validation['api_key_valid'] else '❌ INVALID'}"
-            )
+            pass
 
     if status["postgres_configured"]:
-        print("\nPostgreSQL Details:")
-        pg = status["postgres_credentials"]
-        print(f"  User: {'✅' if pg['has_user'] else '❌'}")
-        print(f"  Password: {'✅' if pg['has_password'] else '❌'}")
-        print(f"  Database: {'✅' if pg['has_database'] else '❌'}")
-        print(f"  URL: {'✅' if pg['has_url'] else '❌'}")
+        status["postgres_credentials"]
 
 
 def sync_mcp_credentials(
@@ -224,7 +173,6 @@ def sync_mcp_credentials(
     credential_service.sync_mcp_config_with_credentials(mcp_file)
 
     logger.info("MCP configuration synchronized with credentials")
-    print("✅ MCP configuration updated with current credentials")
 
 
 if __name__ == "__main__":

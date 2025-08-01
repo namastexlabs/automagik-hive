@@ -46,7 +46,7 @@ class TestGenieEndToEndWorkflow:
 
             # Create complete Genie workspace structure
             (workspace / "docker-compose-genie.yml").write_text("""
-version: '3.8' 
+version: '3.8'
 
 services:
   genie-server:
@@ -60,7 +60,7 @@ services:
       - "48886:48886"
     environment:
       - HIVE_DATABASE_URL=postgresql+psycopg://genie:genie@localhost:5432/hive_genie
-      - RUNTIME_ENV=prd  
+      - RUNTIME_ENV=prd
       - HIVE_LOG_LEVEL=info
       - HIVE_API_HOST=0.0.0.0
       - HIVE_API_PORT=48886

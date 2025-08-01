@@ -737,8 +737,9 @@ class TestAgentServiceBackgroundProcessManagement:
                         return
                     # Process gone after force kill
                     raise ProcessLookupError
-                if (
-                    sig == signal.SIGTERM or sig == signal.SIGKILL
+                if sig in (
+                    signal.SIGTERM,
+                    signal.SIGKILL,
                 ):  # Graceful shutdown (ignored)
                     return
 

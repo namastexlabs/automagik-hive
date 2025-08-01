@@ -12,6 +12,6 @@ class MCPException(Exception):
 class MCPConnectionError(MCPException):
     """Exception raised when MCP connection fails"""
 
-    def __init__(self, message: str, server_name: str = None):
+    def __init__(self, message: str, server_name: str | None = None):
         super().__init__(message)
         self.server_name = server_name

@@ -15,16 +15,16 @@ from .connection_manager import (
 from .exceptions import MCPConnectionError, MCPException
 
 __all__ = [
-    # MCP interface
-    "get_mcp_tools",
-    "get_mcp_connection_manager",
-    "shutdown_mcp_connection_manager",
     # Catalog
     "MCPCatalog",
-    "MCPServerConfig",
-    # Configuration
-    "get_mcp_settings",
+    "MCPConnectionError",
     # Exceptions
     "MCPException",
-    "MCPConnectionError",
+    "MCPServerConfig",
+    "get_mcp_connection_manager",
+    # Configuration
+    "get_mcp_settings",
+    # MCP interface
+    "get_mcp_tools",
+    "shutdown_mcp_connection_manager",
 ]

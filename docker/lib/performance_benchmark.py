@@ -15,7 +15,7 @@ from docker_sdk_poc import DockerSDKManager
 
 @dataclass
 class BenchmarkResult:
-    """Single benchmark measurement result"""
+    """Single benchmark measurement result."""
 
     operation: str
     method: str  # 'subprocess' or 'sdk'
@@ -27,7 +27,7 @@ class BenchmarkResult:
 
 @dataclass
 class BenchmarkSuite:
-    """Complete benchmark suite results"""
+    """Complete benchmark suite results."""
 
     results: list[BenchmarkResult]
     summary: dict[str, Any]
@@ -35,13 +35,13 @@ class BenchmarkSuite:
 
 @contextmanager
 def timer():
-    """Context manager for timing operations"""
+    """Context manager for timing operations."""
     start = time.perf_counter()
     yield lambda: time.perf_counter() - start
 
 
 class DockerBenchmark:
-    """Docker SDK vs Subprocess performance benchmark"""
+    """Docker SDK vs Subprocess performance benchmark."""
 
     def __init__(self):
         self.sdk_manager = DockerSDKManager()
@@ -50,17 +50,15 @@ class DockerBenchmark:
     def benchmark_container_listing(
         self, iterations: int = 10
     ) -> list[BenchmarkResult]:
-        """Benchmark container listing operations"""
+        """Benchmark container listing operations."""
         results = []
-
-        print(f"🏃‍♂️ Benchmarking container listing ({iterations} iterations)")
 
         # Subprocess approach
         subprocess_times = []
-        for i in range(iterations):
+        for _i in range(iterations):
             with timer() as get_time:
                 try:
-                    result = subprocess.run(
+                    subprocess.run(
                         [
                             "docker",
                             "ps",
@@ -94,10 +92,10 @@ class DockerBenchmark:
 
         # SDK approach
         sdk_times = []
-        for i in range(iterations):
+        for _i in range(iterations):
             with timer() as get_time:
                 try:
-                    containers = self.sdk_manager.list_containers(all=True)
+                    self.sdk_manager.list_containers(all=True)
                     success = True
                     error = None
                 except Exception as e:
@@ -120,39 +118,31 @@ class DockerBenchmark:
         # Print comparison
         avg_subprocess = sum(subprocess_times) / len(subprocess_times)
         avg_sdk = sum(sdk_times) / len(sdk_times)
-        speedup = avg_subprocess / avg_sdk if avg_sdk > 0 else 0
-
-        print(f"  📊 Subprocess avg: {avg_subprocess:.4f}s")
-        print(f"  📊 SDK avg: {avg_sdk:.4f}s")
-        print(f"  🚀 SDK speedup: {speedup:.2f}x")
+        avg_subprocess / avg_sdk if avg_sdk > 0 else 0
 
         return results
 
     def benchmark_container_info(
         self, container_name: str = "postgres", iterations: int = 10
     ) -> list[BenchmarkResult]:
-        """Benchmark getting container information"""
+        """Benchmark getting container information."""
         results = []
-
-        print(f"🔍 Benchmarking container info retrieval ({iterations} iterations)")
 
         # Find a container to test with
         try:
             test_containers = self.sdk_manager.list_containers(all=True)
             if not test_containers:
-                print("⚠️ No containers found for info benchmark")
                 return results
             test_container = test_containers[0].name
         except Exception:
-            print("⚠️ Could not find test container")
             return results
 
         # Subprocess approach
         subprocess_times = []
-        for i in range(iterations):
+        for _i in range(iterations):
             with timer() as get_time:
                 try:
-                    result = subprocess.run(
+                    subprocess.run(
                         ["docker", "inspect", test_container],
                         capture_output=True,
                         text=True,
@@ -180,7 +170,7 @@ class DockerBenchmark:
 
         # SDK approach
         sdk_times = []
-        for i in range(iterations):
+        for _i in range(iterations):
             with timer() as get_time:
                 try:
                     info = self.sdk_manager.get_container_info(test_container)
@@ -206,39 +196,31 @@ class DockerBenchmark:
         # Print comparison
         avg_subprocess = sum(subprocess_times) / len(subprocess_times)
         avg_sdk = sum(sdk_times) / len(sdk_times)
-        speedup = avg_subprocess / avg_sdk if avg_sdk > 0 else 0
-
-        print(f"  📊 Subprocess avg: {avg_subprocess:.4f}s")
-        print(f"  📊 SDK avg: {avg_sdk:.4f}s")
-        print(f"  🚀 SDK speedup: {speedup:.2f}x")
+        avg_subprocess / avg_sdk if avg_sdk > 0 else 0
 
         return results
 
     def benchmark_log_retrieval(
         self, container_name: str | None = None, iterations: int = 5
     ) -> list[BenchmarkResult]:
-        """Benchmark log retrieval operations"""
+        """Benchmark log retrieval operations."""
         results = []
-
-        print(f"📋 Benchmarking log retrieval ({iterations} iterations)")
 
         # Find a container to test with
         try:
             test_containers = self.sdk_manager.list_containers(all=True)
             if not test_containers:
-                print("⚠️ No containers found for log benchmark")
                 return results
             test_container = container_name or test_containers[0].name
         except Exception:
-            print("⚠️ Could not find test container")
             return results
 
         # Subprocess approach
         subprocess_times = []
-        for i in range(iterations):
+        for _i in range(iterations):
             with timer() as get_time:
                 try:
-                    result = subprocess.run(
+                    subprocess.run(
                         ["docker", "logs", "--tail", "50", test_container],
                         capture_output=True,
                         text=True,
@@ -266,7 +248,7 @@ class DockerBenchmark:
 
         # SDK approach
         sdk_times = []
-        for i in range(iterations):
+        for _i in range(iterations):
             with timer() as get_time:
                 try:
                     logs = self.sdk_manager.get_container_logs(test_container, tail=50)
@@ -292,21 +274,13 @@ class DockerBenchmark:
         # Print comparison
         avg_subprocess = sum(subprocess_times) / len(subprocess_times)
         avg_sdk = sum(sdk_times) / len(sdk_times)
-        speedup = avg_subprocess / avg_sdk if avg_sdk > 0 else 0
-
-        print(f"  📊 Subprocess avg: {avg_subprocess:.4f}s")
-        print(f"  📊 SDK avg: {avg_sdk:.4f}s")
-        print(f"  🚀 SDK speedup: {speedup:.2f}x")
+        avg_subprocess / avg_sdk if avg_sdk > 0 else 0
 
         return results
 
     def run_comprehensive_benchmark(self) -> BenchmarkSuite:
-        """Run comprehensive benchmark suite"""
-        print("🏁 Starting Comprehensive Docker SDK vs Subprocess Benchmark")
-        print("=" * 60)
-
+        """Run comprehensive benchmark suite."""
         if not self.sdk_manager.is_available:
-            print("❌ Docker SDK not available - cannot run benchmarks")
             return BenchmarkSuite(results=[], summary={})
 
         all_results = []
@@ -358,81 +332,58 @@ class DockerBenchmark:
         }
 
         # Print final summary
-        print("\n📈 BENCHMARK SUMMARY")
-        print("=" * 30)
-        print(f"Total operations: {summary['total_operations']}")
-        print(
-            f"Subprocess avg: {summary['subprocess_avg_duration']:.4f}s (success: {summary['subprocess_success_rate']:.1%})"
-        )
-        print(
-            f"SDK avg: {summary['sdk_avg_duration']:.4f}s (success: {summary['sdk_success_rate']:.1%})"
-        )
-        print(f"Overall speedup: {summary['overall_speedup']:.2f}x")
-        print(
-            f"Error reduction: {summary['subprocess_error_count']} → {summary['sdk_error_count']} errors"
-        )
 
         return BenchmarkSuite(results=all_results, summary=summary)
 
     def demonstrate_error_handling(self):
-        """Demonstrate superior error handling with Docker SDK"""
-        print("\n🛡️ Error Handling Demonstration")
-        print("=" * 35)
-
+        """Demonstrate superior error handling with Docker SDK."""
         # Test 1: Non-existent container
-        print("Test 1: Non-existent container")
 
         # Subprocess approach
         try:
-            result = subprocess.run(
+            subprocess.run(
                 ["docker", "inspect", "non-existent-container-12345"],
                 capture_output=True,
                 text=True,
                 timeout=10,
                 check=True,
             )
-            print("  Subprocess: Unexpected success")
-        except subprocess.CalledProcessError as e:
-            print(f"  Subprocess: Exception thrown - {e}")
+        except subprocess.CalledProcessError:
+            pass
         except subprocess.TimeoutExpired:
-            print("  Subprocess: Timeout exception")
+            pass
 
         # SDK approach
         try:
             info = self.sdk_manager.get_container_info("non-existent-container-12345")
             if info is None:
-                print("  SDK: Graceful None return (no exception)")
+                pass
             else:
-                print("  SDK: Unexpected success")
-        except Exception as e:
-            print(f"  SDK: Exception - {e}")
+                pass
+        except Exception:
+            pass
 
         # Test 2: Invalid operation
-        print("\nTest 2: Invalid Docker command")
 
         # Subprocess approach
         try:
-            result = subprocess.run(
+            subprocess.run(
                 ["docker", "invalid-command", "test"],
                 capture_output=True,
                 text=True,
                 timeout=10,
                 check=True,
             )
-            print("  Subprocess: Unexpected success")
-        except subprocess.CalledProcessError as e:
-            print(f"  Subprocess: Exception thrown - return code {e.returncode}")
+        except subprocess.CalledProcessError:
+            pass
         except subprocess.TimeoutExpired:
-            print("  Subprocess: Timeout exception")
+            pass
 
         # SDK approach has built-in method validation
-        print("  SDK: Invalid operations prevented at compile time (type safety)")
-
-        print("\n✅ Error handling demonstration completed")
 
 
 def run_benchmark():
-    """Run the complete benchmark suite"""
+    """Run the complete benchmark suite."""
     benchmark = DockerBenchmark()
 
     # Run performance benchmarks

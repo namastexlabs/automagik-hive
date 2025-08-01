@@ -539,11 +539,11 @@ class TestAGNOConfigValidator:
         assert len(configs) >= 1  # Should have at least test-team
 
         # Check team configs
-        team_keys = [key for key in configs.keys() if key.startswith("team:")]
+        team_keys = [key for key in configs if key.startswith("team:")]
         assert len(team_keys) >= 1
 
         # Check agent configs
-        agent_keys = [key for key in configs.keys() if key.startswith("agent:")]
+        agent_keys = [key for key in configs if key.startswith("agent:")]
         assert len(agent_keys) >= 1
 
     def test_collect_all_configurations_with_invalid_files(

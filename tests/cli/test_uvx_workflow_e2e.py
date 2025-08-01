@@ -36,8 +36,8 @@ class TestUVXWorkflowEndToEnd:
         try:
             if Path(temp_dir).exists():
                 shutil.rmtree(temp_dir)
-        except Exception as e:
-            print(f"Warning: Failed to cleanup temp directory {temp_dir}: {e}")
+        except Exception:
+            pass
 
     @pytest.fixture
     def mock_docker_environment(self):
@@ -305,7 +305,7 @@ class TestRealAgentServerValidation:
             return False
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
+        os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_health_endpoint(self, agent_server_available):
@@ -322,7 +322,7 @@ class TestRealAgentServerValidation:
         assert health_data["status"] in ["healthy", "ok", "ready"]
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
+        os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_api_endpoints(self, agent_server_available):
@@ -349,7 +349,7 @@ class TestRealAgentServerValidation:
             pytest.skip("Agents endpoint not available")
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
+        os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_command_status_against_real_server(self, temp_workspace_dir):
@@ -404,7 +404,7 @@ class TestRealPostgreSQLIntegration:
             return False
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_POSTGRES", "").lower() == "true",
+        os.environ.get("TEST_REAL_POSTGRES", "").lower() != "true",
         reason="Real PostgreSQL testing disabled. Set TEST_REAL_POSTGRES=true to enable.",
     )
     def test_postgres_container_connection(self, postgres_container_available):
@@ -433,7 +433,7 @@ class TestRealPostgreSQLIntegration:
         conn.close()
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_POSTGRES", "").lower() == "true",
+        os.environ.get("TEST_REAL_POSTGRES", "").lower() != "true",
         reason="Real PostgreSQL testing disabled. Set TEST_REAL_POSTGRES=true to enable.",
     )
     def test_postgres_schema_validation(self, postgres_container_available):
@@ -454,8 +454,8 @@ class TestRealPostgreSQLIntegration:
 
         # Check for expected schemas
         cursor.execute("""
-            SELECT schema_name 
-            FROM information_schema.schemata 
+            SELECT schema_name
+            FROM information_schema.schemata
             WHERE schema_name IN ('hive', 'agno', 'public');
         """)
         schemas = cursor.fetchall()
@@ -466,14 +466,14 @@ class TestRealPostgreSQLIntegration:
 
         # Check for expected tables if they exist
         cursor.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
+            SELECT table_name
+            FROM information_schema.tables
             WHERE table_schema = 'public';
         """)
         tables = cursor.fetchall()
 
         # Tables may or may not exist depending on initialization
-        table_names = [row[0] for row in tables]
+        [row[0] for row in tables]
 
         cursor.close()
         conn.close()
@@ -521,7 +521,7 @@ class TestWorkflowPerformanceBenchmarks:
             start_time = time.time()
 
             with patch(
-                "sys.argv", ["automagik-hive"] + command_args + [str(workspace_path)]
+                "sys.argv", ["automagik-hive", *command_args, str(workspace_path)]
             ):
                 result = main()
 
@@ -555,7 +555,7 @@ services:
             start_time = time.time()
 
             with patch(
-                "sys.argv", ["automagik-hive"] + command_args + [str(workspace_path)]
+                "sys.argv", ["automagik-hive", *command_args, str(workspace_path)]
             ):
                 result = main()
 
@@ -611,7 +611,7 @@ class TestWorkflowErrorRecovery:
 
         for command_args in commands_to_test:
             with patch(
-                "sys.argv", ["automagik-hive"] + command_args + [str(workspace_path)]
+                "sys.argv", ["automagik-hive", *command_args, str(workspace_path)]
             ):
                 result = main()
 
@@ -636,7 +636,7 @@ class TestWorkflowErrorRecovery:
 
         for command_args in commands_to_test:
             with patch(
-                "sys.argv", ["automagik-hive"] + command_args + [str(workspace_path)]
+                "sys.argv", ["automagik-hive", *command_args, str(workspace_path)]
             ):
                 result = main()
 

@@ -119,6 +119,4 @@ def _get_version_source() -> str:
 
 if __name__ == "__main__":
     # CLI for testing version detection
-    import json
-
-    print(json.dumps(get_version_info(), indent=2))
+    pass

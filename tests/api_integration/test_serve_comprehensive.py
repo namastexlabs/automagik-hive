@@ -99,8 +99,8 @@ class TestFastAPIAppCreation:
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
             patch("api.serve.get_server_config") as mock_server_config,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
-            patch("rich.console.Console") as mock_console,
+            patch("lib.logging.set_runtime_mode"),
+            patch("rich.console.Console"),
         ):
             # Setup mocks
             mock_startup_results = MagicMock()
@@ -161,7 +161,7 @@ class TestFastAPIAppCreation:
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results with no teams
             mock_startup_results = MagicMock()
@@ -247,7 +247,7 @@ class TestFastAPIAppCreation:
             patch("api.serve.Playground") as mock_playground,
             patch("agno.agent.Agent") as mock_agent_class,
             patch("lib.config.models.resolve_model") as mock_resolve_model,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -315,8 +315,8 @@ class TestFastAPIAppCreation:
             patch("api.serve.Playground") as mock_playground,
             patch("fastapi.APIRouter") as mock_api_router,
             patch("fastapi.Depends") as mock_depends,
-            patch("lib.auth.dependencies.require_api_key") as mock_require_api_key,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.auth.dependencies.require_api_key"),
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results with auth enabled
             mock_startup_results = MagicMock()
@@ -353,7 +353,7 @@ class TestFastAPIAppCreation:
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify that authentication dependencies are used when auth is enabled
             mock_api_router.assert_any_call(dependencies=[mock_depends.return_value])
@@ -455,11 +455,10 @@ class TestFastAPIAppCreation:
             if (
                 hasattr(patch_obj, "attribute")
                 and patch_obj.attribute == "create_automagik_api"
-            ):
-                if hasattr(patch_obj, "temp_original"):
-                    # Temporarily restore the original function
-                    patch_obj.stop()
-                    break
+            ) and hasattr(patch_obj, "temp_original"):
+                # Temporarily restore the original function
+                patch_obj.stop()
+                break
 
         try:
             with (
@@ -582,7 +581,7 @@ class TestLifespanManagement:
                 "common.startup_notifications.send_shutdown_notification"
             ) as mock_shutdown_notif,
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}),
-            patch("asyncio.sleep") as mock_sleep,
+            patch("asyncio.sleep"),
         ):
             # Setup mocks
             mock_catalog_instance = MagicMock()
@@ -619,7 +618,7 @@ class TestLifespanManagement:
                 "common.startup_notifications.send_shutdown_notification"
             ) as mock_shutdown_notif,
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}),
-            patch("asyncio.sleep") as mock_sleep,
+            patch("asyncio.sleep"),
         ):
             # Setup mocks with failures
             mock_catalog_instance = MagicMock()
@@ -686,7 +685,7 @@ class TestStartupOrchestration:
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup comprehensive startup results
             mock_startup_results = MagicMock()
@@ -730,7 +729,7 @@ class TestStartupOrchestration:
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify orchestrated startup was called
             mock_startup.assert_called_once()
@@ -756,7 +755,7 @@ class TestStartupOrchestration:
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup minimal mocks
             mock_startup_results = MagicMock()
@@ -789,7 +788,7 @@ class TestStartupOrchestration:
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify quiet mode was passed to orchestrated startup
             mock_startup.assert_called_once()
@@ -819,7 +818,7 @@ class TestStartupOrchestration:
     def test_database_migration_error_handling(self):
         """Test graceful handling of database migration errors."""
         with (
-            patch("lib.utils.db_migration.check_and_run_migrations") as mock_migrations,
+            patch("lib.utils.db_migration.check_and_run_migrations"),
             patch("asyncio.get_running_loop") as mock_get_loop,
             patch("asyncio.run") as mock_asyncio_run,
         ):
@@ -853,7 +852,7 @@ class TestMiddlewareConfiguration:
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
             patch("api.settings.api_settings") as mock_api_settings,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -933,7 +932,7 @@ class TestMiddlewareConfiguration:
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
             patch("api.settings.api_settings") as mock_api_settings,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -996,7 +995,7 @@ class TestErrorHandlingAndFallbacks:
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
             patch("api.serve.display_simple_status") as mock_simple_display,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -1052,7 +1051,7 @@ class TestErrorHandlingAndFallbacks:
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
             patch("api.serve.display_simple_status") as mock_simple_display,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -1109,7 +1108,7 @@ class TestErrorHandlingAndFallbacks:
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
             patch("api.routes.v1_router.v1_router") as mock_v1_router,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -1167,7 +1166,7 @@ class TestErrorHandlingAndFallbacks:
             patch(
                 "ai.workflows.registry.is_workflow_registered"
             ) as mock_is_workflow_registered,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -1228,7 +1227,7 @@ class TestProductionFeatures:
             patch("rich.console.Console") as mock_console,
             patch("rich.table.Table") as mock_table,
             patch("lib.config.server_config.get_server_config") as mock_server_config,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -1272,7 +1271,7 @@ class TestProductionFeatures:
             mock_table.return_value = mock_table_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify development URLs table was created and displayed
             mock_table.assert_called()
@@ -1281,7 +1280,7 @@ class TestProductionFeatures:
     def test_main_execution_development(self):
         """Test main execution in development mode."""
         with (
-            patch("uvicorn.run") as mock_uvicorn_run,
+            patch("uvicorn.run"),
             patch("lib.config.server_config.get_server_config") as mock_get_config,
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}),
         ):
@@ -1310,7 +1309,7 @@ class TestProductionFeatures:
     def test_main_execution_production(self):
         """Test main execution in production mode."""
         with (
-            patch("uvicorn.run") as mock_uvicorn_run,
+            patch("uvicorn.run"),
             patch("lib.config.server_config.get_server_config") as mock_get_config,
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}),
         ):
@@ -1333,7 +1332,7 @@ class TestProductionFeatures:
     def test_main_execution_disable_reload(self):
         """Test main execution with reload disabled."""
         with (
-            patch("uvicorn.run") as mock_uvicorn_run,
+            patch("uvicorn.run"),
             patch("lib.config.server_config.get_server_config") as mock_get_config,
             patch.dict(
                 os.environ,
@@ -1457,7 +1456,7 @@ class TestEventLoopHandling:
         async def test_with_loop():
             with (
                 patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
-                patch("api.serve._async_create_automagik_api") as mock_async_create,
+                patch("api.serve._async_create_automagik_api"),
             ):
                 # Setup executor to raise an error
                 mock_executor.side_effect = Exception("ThreadPoolExecutor failed")
@@ -1478,7 +1477,7 @@ class TestEventLoopHandling:
         def test_thread_execution():
             with (
                 patch("asyncio.new_event_loop") as mock_new_loop,
-                patch("asyncio.set_event_loop") as mock_set_loop,
+                patch("asyncio.set_event_loop"),
                 patch("api.serve._async_create_automagik_api") as mock_async_create,
                 patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
             ):
@@ -1529,7 +1528,7 @@ class TestIntegrationValidation:
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -1568,7 +1567,7 @@ class TestIntegrationValidation:
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify playground was created with correct components
             mock_playground.assert_called_once()
@@ -1596,7 +1595,7 @@ class TestIntegrationValidation:
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results with metrics service
             mock_metrics_service = MagicMock()
@@ -1634,7 +1633,7 @@ class TestIntegrationValidation:
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify agent registry was called with metrics service
             mock_agent_registry.get_agent.assert_called()
@@ -1653,7 +1652,7 @@ class TestIntegrationValidation:
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_metrics_service = MagicMock()
@@ -1693,7 +1692,7 @@ class TestIntegrationValidation:
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify create_team was called with metrics service for each team
             assert mock_create_team.call_count == 2  # Two teams
@@ -1713,7 +1712,7 @@ class TestIntegrationValidation:
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}),
-            patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
+            patch("lib.logging.set_runtime_mode"),
         ):
             # Setup startup results
             mock_startup_results = MagicMock()
@@ -1753,7 +1752,7 @@ class TestIntegrationValidation:
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
-            app = await api.serve._async_create_automagik_api()
+            await api.serve._async_create_automagik_api()
 
             # Verify get_workflow was called for each workflow with debug mode
             assert mock_get_workflow.call_count == 3  # Three workflows

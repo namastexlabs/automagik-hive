@@ -152,7 +152,7 @@ class TestAgentRegistry:
     async def test_agent_registry_get_agent_success(self, mock_database_layer):
         """Test successfully getting an agent."""
         agent_id = "test-agent"
-        mock_agent = mock_database_layer["agent"]
+        mock_database_layer["agent"]
 
         with patch("ai.agents.registry._discover_agents", return_value=[agent_id]):
             agent = await AgentRegistry.get_agent(
@@ -481,7 +481,7 @@ class TestAgentRegistryIntegration:
     async def test_full_agent_lifecycle(self, sample_agent_config, mock_database_layer):
         """Test full agent lifecycle from discovery to creation."""
         agent_id = "integration-agent"
-        mock_agent = mock_database_layer["agent"]
+        mock_database_layer["agent"]
 
         # Mock the entire flow
         config_with_id = sample_agent_config.copy()

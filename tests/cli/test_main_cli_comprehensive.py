@@ -12,6 +12,7 @@ This test suite validates:
 """
 
 import argparse
+import contextlib
 from unittest.mock import Mock, patch
 
 import pytest
@@ -540,7 +541,7 @@ class TestCLIErrorHandling:
         ]
 
         for command_args in commands_to_test:
-            with patch("sys.argv", ["automagik-hive"] + command_args):
+            with patch("sys.argv", ["automagik-hive", *command_args]):
                 result = main()
 
                 # Should fail initially - error code handling not implemented
@@ -820,10 +821,8 @@ class TestCLIPerformanceAndReliability:
             patch("cli.main.UninstallCommands"),
         ):
             with patch("sys.argv", ["automagik-hive", "--help"]):
-                try:
+                with contextlib.suppress(SystemExit):
                     main()
-                except SystemExit:
-                    pass
 
         elapsed = time.time() - start_time
 
@@ -875,7 +874,7 @@ class TestCLIPerformanceAndReliability:
             patch("cli.main.UninstallCommands"),
         ):
             parser = create_parser()
-            args = parser.parse_args([])
+            parser.parse_args([])
 
         gc.collect()
         final_objects = len(gc.get_objects())
@@ -901,7 +900,7 @@ class TestCLIPerformanceAndReliability:
 
                 with patch("sys.argv", ["automagik-hive", "--init"]):
                     # Should fail initially - robust exception handling not implemented
-                    if isinstance(exception, (KeyboardInterrupt, SystemExit)):
+                    if isinstance(exception, KeyboardInterrupt | SystemExit):
                         with pytest.raises(type(exception)):
                             main()
                     else:

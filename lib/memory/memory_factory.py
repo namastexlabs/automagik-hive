@@ -37,7 +37,7 @@ def _load_memory_config() -> dict[str, Any]:
 
 
 def create_memory_instance(
-    table_name: str, db_url: str = None, model_id: str = None
+    table_name: str, db_url: str | None = None, model_id: str | None = None
 ) -> Memory:
     """
     Create Memory instance with PostgresMemoryDb backend.
@@ -96,11 +96,11 @@ def create_memory_instance(
         ) from e
 
 
-def create_agent_memory(agent_id: str, db_url: str = None) -> Memory:
+def create_agent_memory(agent_id: str, db_url: str | None = None) -> Memory:
     """Create Memory instance for an agent."""
     return create_memory_instance(f"agent_memories_{agent_id}", db_url)
 
 
-def create_team_memory(team_id: str, db_url: str = None) -> Memory:
+def create_team_memory(team_id: str, db_url: str | None = None) -> Memory:
     """Create Memory instance for a team."""
     return create_memory_instance(f"team_memories_{team_id}", db_url)

@@ -114,14 +114,12 @@ services:
                             # Mock file existence checks
                             def exists_side_effect(path_self):
                                 path_str = str(path_self)
-                                if (
+                                return bool(
                                     ".env.agent" in path_str
                                     or ".venv" in path_str
                                     or "logs/agent-server.pid" in path_str
                                     or "logs/agent-server.log" in path_str
-                                ):
-                                    return True
-                                return False
+                                )
 
                             mock_exists.side_effect = exists_side_effect
 
@@ -228,8 +226,8 @@ services:
         for command_name, mock_returns in failure_scenarios:
             with patch.object(
                 commands.agent_service,
-                list(mock_returns.keys())[0],
-                return_value=list(mock_returns.values())[0],
+                next(iter(mock_returns.keys())),
+                return_value=next(iter(mock_returns.values())),
             ):
                 # Should fail initially - error propagation not implemented
                 method = getattr(commands, command_name)
@@ -426,7 +424,7 @@ install-agent:
             mock_run.return_value.returncode = 0
 
             # Test container operations through both methods
-            commands = AgentCommands()
+            AgentCommands()
             service = AgentService()
 
             # Both should use the same compose file and container names

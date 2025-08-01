@@ -27,7 +27,7 @@ class AgnoVersionSyncService:
     - If same version but different config → DB wins
     """
 
-    def __init__(self, db_url: str = None):
+    def __init__(self, db_url: str | None = None):
         """Initialize with database URL"""
         self.db_url = db_url or os.getenv("HIVE_DATABASE_URL")
         if not self.db_url:
@@ -347,7 +347,7 @@ class AgnoVersionSyncService:
                     logger.info("Restored backup file", yaml_file=yaml_file)
                 except Exception as restore_error:
                     logger.error("Could not restore backup", error=str(restore_error))
-            raise e
+            raise
 
     def validate_yaml_update(self, yaml_file: str, expected_config: dict[str, Any]):
         """Validate that YAML file was updated correctly"""

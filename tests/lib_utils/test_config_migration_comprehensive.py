@@ -705,7 +705,7 @@ class TestMigrateConfigurationsFunction:
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
 
-            result = migrate_configurations()
+            migrate_configurations()
 
             # Should use defaults
             mock_migrator_class.assert_called_once_with("ai", True)
@@ -743,7 +743,7 @@ class TestMigrateConfigurationsFunction:
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
 
-            result = migrate_configurations(dry_run=False)
+            migrate_configurations(dry_run=False)
 
             mock_migrator_class.assert_called_once_with("ai", False)
 
@@ -760,7 +760,7 @@ class TestMigrateConfigurationsFunction:
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
 
-            result = migrate_configurations(base_path="/custom/path")
+            migrate_configurations(base_path="/custom/path")
 
             mock_migrator_class.assert_called_once_with("/custom/path", True)
 

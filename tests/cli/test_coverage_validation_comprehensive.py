@@ -105,13 +105,13 @@ class TestCoverageValidationFramework:
         import cli.main
 
         # Create parser and execute basic functionality
-        parser = cli.main.create_parser()
+        cli.main.create_parser()
 
         # Initialize command classes
-        agent_commands = cli.commands.agent.AgentCommands()
-        init_commands = cli.commands.init.InitCommands()
-        postgres_commands = cli.commands.postgres.PostgreSQLCommands()
-        workspace_commands = cli.commands.workspace.WorkspaceCommands()
+        cli.commands.agent.AgentCommands()
+        cli.commands.init.InitCommands()
+        cli.commands.postgres.PostgreSQLCommands()
+        cli.commands.workspace.WorkspaceCommands()
 
         coverage_instance.stop()
         coverage_instance.save()
@@ -153,7 +153,7 @@ class TestCoverageValidationFramework:
 
         # Log missing coverage for debugging
         if missing_coverage_files:
-            print(f"Files with missing coverage: {missing_coverage_files}")
+            pass
 
         # For now, we accept some missing coverage but track it
         assert isinstance(missing_coverage_files, list)
@@ -169,7 +169,7 @@ class TestPerformanceBenchmarkValidation:
         # Import and initialize CLI
         import cli.main
 
-        parser = cli.main.create_parser()
+        cli.main.create_parser()
 
         startup_time = time.time() - start_time
 
@@ -238,7 +238,7 @@ class TestPerformanceBenchmarkValidation:
             for command_args in commands_to_test:
                 start_time = time.time()
 
-                with patch("sys.argv", ["automagik-hive"] + command_args):
+                with patch("sys.argv", ["automagik-hive", *command_args]):
                     result = main()
 
                 command_time = time.time() - start_time
@@ -265,7 +265,7 @@ class TestPerformanceBenchmarkValidation:
         # Import and use CLI
         import cli.main
 
-        parser = cli.main.create_parser()
+        cli.main.create_parser()
 
         # Create command instances
         from cli.commands.agent import AgentCommands
@@ -273,10 +273,10 @@ class TestPerformanceBenchmarkValidation:
         from cli.commands.postgres import PostgreSQLCommands
         from cli.commands.workspace import WorkspaceCommands
 
-        agent_commands = AgentCommands()
-        init_commands = InitCommands()
-        postgres_commands = PostgreSQLCommands()
-        workspace_commands = WorkspaceCommands()
+        AgentCommands()
+        InitCommands()
+        PostgreSQLCommands()
+        WorkspaceCommands()
 
         # Force garbage collection and measure final memory
         gc.collect()
@@ -302,7 +302,7 @@ class TestPerformanceBenchmarkValidation:
             with patch("cli.main.PostgreSQLCommands") as mock_postgres:
                 mock_postgres.return_value.postgres_status.return_value = True
 
-                with patch("sys.argv", ["automagik-hive"] + command_args):
+                with patch("sys.argv", ["automagik-hive", *command_args]):
                     result = main()
 
             execution_time = time.time() - start_time
@@ -348,7 +348,7 @@ class TestRealAgentServerValidation:
             return False
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
+        os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_connectivity_validation(self, agent_server_check):
@@ -364,7 +364,7 @@ class TestRealAgentServerValidation:
         assert "status" in health_data
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
+        os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_endpoints_comprehensive(self, agent_server_check):
@@ -397,7 +397,7 @@ class TestRealAgentServerValidation:
                 pytest.fail(f"Failed to connect to {endpoint}: {e}")
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
+        os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_performance_validation(self, agent_server_check):
@@ -422,7 +422,7 @@ class TestRealAgentServerValidation:
             assert response_time < 2.0, f"Endpoint {endpoint} took {response_time:.3f}s"
 
     @pytest.mark.skipif(
-        not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
+        os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_concurrent_requests(self, agent_server_check):
@@ -458,7 +458,7 @@ class TestRealAgentServerValidation:
         for thread in threads:
             thread.join()
 
-        total_time = time.time() - start_time
+        time.time() - start_time
 
         # Should fail initially - concurrent load testing not implemented
         assert len(results) == num_concurrent_requests
@@ -492,7 +492,7 @@ class TestErrorScenarioCoverageValidation:
 
         for command_args, expected_exception in error_scenarios:
             with pytest.raises(expected_exception):
-                with patch("sys.argv", ["automagik-hive"] + command_args):
+                with patch("sys.argv", ["automagik-hive", *command_args]):
                     main()
 
         # Should fail initially - error handling coverage not complete
@@ -517,7 +517,7 @@ class TestErrorScenarioCoverageValidation:
             ]
 
             for command_args in failure_commands:
-                with patch("sys.argv", ["automagik-hive"] + command_args):
+                with patch("sys.argv", ["automagik-hive", *command_args]):
                     result = main()
 
                 # Should fail initially - failure scenario handling not complete
@@ -538,7 +538,7 @@ class TestErrorScenarioCoverageValidation:
 
                 with patch("sys.argv", ["automagik-hive", "--init"]):
                     # Should fail initially - exception handling not complete
-                    if isinstance(exception, (MemoryError, KeyboardInterrupt)):
+                    if isinstance(exception, MemoryError | KeyboardInterrupt):
                         with pytest.raises(type(exception)):
                             main()
                     else:
@@ -741,7 +741,7 @@ class TestCoverageReportingAndValidation:
         # Execute CLI functionality to measure coverage
         import cli.main
 
-        parser = cli.main.create_parser()
+        cli.main.create_parser()
 
         # Execute various CLI paths
         from cli.commands.agent import AgentCommands
@@ -810,14 +810,13 @@ class TestCoverageReportingAndValidation:
         )
 
         # Log coverage status
-        if total_coverage >= thresholds["excellent"]:
-            print(f"✅ Excellent coverage: {total_coverage}%")
-        elif total_coverage >= thresholds["target"]:
-            print(f"🎯 Target coverage achieved: {total_coverage}%")
+        if (
+            total_coverage >= thresholds["excellent"]
+            or total_coverage >= thresholds["target"]
+        ):
+            pass
         else:
-            print(
-                f"⚠️  Coverage below target: {total_coverage}% (target: {thresholds['target']}%)"
-            )
+            pass
 
     def test_coverage_by_module_validation(self):
         """Test coverage validation by individual modules."""
@@ -860,10 +859,8 @@ class TestCoverageReportingAndValidation:
         assert len(cli_modules) >= 5, "Should have coverage for at least 5 CLI modules"
 
         # Log module coverage
-        for module, covered in module_coverage.items():
-            module_name = module.split("/")[-1]
-            status = "✅" if covered else "❌"
-            print(f"{status} {module_name}")
+        for module in module_coverage:
+            module.split("/")[-1]
 
     def test_integration_test_coverage_validation(self):
         """Test that integration tests provide adequate coverage."""
@@ -889,13 +886,13 @@ class TestCoverageReportingAndValidation:
 
             # Execute integration scenario
             with patch("sys.argv", ["automagik-hive", "--init"]):
-                result = main()
+                main()
 
             with patch("sys.argv", ["automagik-hive", "--postgres-status"]):
-                result = main()
+                main()
 
             with patch("sys.argv", ["automagik-hive", "--agent-status"]):
-                result = main()
+                main()
 
         cov.stop()
         cov.save()

@@ -31,8 +31,7 @@ class TestAgnoVersionSyncService:
     @pytest.fixture
     def mock_version_service(self):
         """Mock AgnoVersionService."""
-        mock = AsyncMock()
-        return mock
+        return AsyncMock()
 
     @pytest.fixture
     def mock_sync_service(self, mock_version_service):
@@ -1191,7 +1190,7 @@ class TestEdgeCasesAndErrorHandling:
                     config_file = f.name
 
                 try:
-                    component_type = list(config.keys())[0]
+                    component_type = next(iter(config.keys()))
 
                     # Mock version service
                     service.version_service = AsyncMock()
@@ -1404,9 +1403,6 @@ async def test_store_successful_patterns():
         sys.path.append("/home/namastex/workspace/automagik-hive")
 
         # Store pattern in memory for future reference
-        print(
-            "Test Creation Pattern: Version Sync Service - Comprehensive coverage achieved 204 lines with systematic approach using fixtures for mocking, temporary files for YAML testing, edge case validation, error simulation, and integration scenarios. Successful techniques: AsyncMock for async methods, patch.dict for environment variables, tempfile for safe file operations, glob mocking for file discovery, and thorough error path testing."
-        )
     except Exception:
         # If memory storage fails, just pass - this is not critical for test functionality
         pass

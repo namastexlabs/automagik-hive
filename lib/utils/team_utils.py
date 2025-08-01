@@ -42,9 +42,7 @@ class TeamUtils:
             text = text.replace(original, replacement)
 
         # Remove extra spaces
-        text = " ".join(text.split())
-
-        return text
+        return " ".join(text.split())
 
 
 class ResponseFormatter:

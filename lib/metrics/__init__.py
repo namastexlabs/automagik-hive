@@ -65,27 +65,27 @@ from .langwatch_integration import (
 
 # Public API
 __all__ = [
-    # Configuration
-    "MetricsConfig",
-    "load_metrics_config",
-    "validate_environment_config",
-    "get_configuration_summary",
-    # Async Service with AGNO Native Metrics
-    "AsyncMetricsService",
-    "get_metrics_service",
-    "initialize_metrics_service",
-    "shutdown_metrics_service",
     # AGNO Native Metrics Bridge
     "AgnoMetricsBridge",
+    # Async Service with AGNO Native Metrics
+    "AsyncMetricsService",
+    "DualPathMetricsCoordinator",
     # LangWatch Integration
     "LangWatchManager",
-    "DualPathMetricsCoordinator",
-    "initialize_langwatch",
+    # Configuration
+    "MetricsConfig",
+    "get_configuration_summary",
     "get_langwatch_manager",
-    "initialize_dual_path_metrics",
     "get_metrics_coordinator",
-    "shutdown_langwatch_integration",
+    "get_metrics_service",
+    "initialize_dual_path_metrics",
+    "initialize_langwatch",
+    "initialize_metrics_service",
+    "load_metrics_config",
     "setup_langwatch_global",
+    "shutdown_langwatch_integration",
+    "shutdown_metrics_service",
+    "validate_environment_config",
 ]
 
 # Version
@@ -96,7 +96,11 @@ _validation_error = validate_environment_config()
 if _validation_error:
     import warnings
 
-    warnings.warn(f"Metrics configuration issue: {_validation_error}", RuntimeWarning)
+    warnings.warn(
+        f"Metrics configuration issue: {_validation_error}",
+        RuntimeWarning,
+        stacklevel=2,
+    )
 
 
 def _check_langwatch_availability() -> bool:

@@ -291,12 +291,10 @@ class TestRowBasedCSVDocumentCreation:
 
             # Check debug logging calls for business unit summary
             debug_calls = mock_logger.debug.call_args_list
-            bu_logged = False
             for call_args in debug_calls:
                 if len(
                     call_args[0]
                 ) > 0 and "✓ engineering: 2 documents processed" in str(call_args):
-                    bu_logged = True
                     break
             # Note: The exact format might vary, so we check that some logging occurred
             assert len(debug_calls) > 0
@@ -383,10 +381,10 @@ class TestRowBasedCSVErrorHandling:
         empty_csv = Path(self.temp_dir) / "empty.csv"
 
         # Create empty file
-        with open(empty_csv, "w") as f:
+        with open(empty_csv, "w"):
             pass
 
-        with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
+        with patch("lib.knowledge.row_based_csv_knowledge.logger"):
             kb = RowBasedCSVKnowledgeBase(str(empty_csv), self.mock_vector_db)
 
             # Should handle gracefully
@@ -502,7 +500,7 @@ class TestRowBasedCSVVectorOperations:
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
 
-        with patch("agno.utils.log.log_info") as mock_log_info:
+        with patch("agno.utils.log.log_info"):
             kb.load(recreate=False)
 
             # Should not drop or create collection
@@ -638,7 +636,7 @@ class TestRowBasedCSVHotReload:
             writer.writerows(initial_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        initial_count = len(kb.documents)
+        len(kb.documents)
 
         # Update CSV file
         updated_data = [
@@ -1068,8 +1066,7 @@ class TestRowBasedCSVPerformanceAndMemory:
         original_open = open
 
         def mock_open(*args, **kwargs):
-            file_handle = original_open(*args, **kwargs)
-            return file_handle
+            return original_open(*args, **kwargs)
 
         with patch("builtins.open", side_effect=mock_open) as mock_open_func:
             kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)

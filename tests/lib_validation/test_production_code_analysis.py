@@ -31,11 +31,6 @@ def test_production_code_import_analysis():
         or "PydanticUserError" in error_message
     ), f"Unexpected error type: {error_message}"
 
-    print("\n📋 Production Code Analysis:")
-    print(f"   Import Error: {error_message[:100]}...")
-    print("   Issue: Pydantic V1 syntax incompatible with V2 environment")
-    print("   Status: Production code requires V1 syntax migration")
-
 
 def test_production_validation_logic_verification():
     """Verify our test models match production validation logic exactly."""
@@ -57,11 +52,6 @@ def test_production_validation_logic_verification():
     for input_text, expected in test_cases:
         result = re.sub(production_pattern, "", input_text)
         assert result == expected, f"Sanitization logic mismatch for {input_text}"
-
-    print("\n✅ Validation Logic Verification:")
-    print(f"   Sanitization pattern: {production_pattern}")
-    print(f"   Test cases verified: {len(test_cases)}")
-    print("   Status: Test models match production logic exactly")
 
 
 def test_production_dangerous_keys_verification():
@@ -89,12 +79,6 @@ def test_production_dangerous_keys_verification():
         assert is_dangerous == should_be_dangerous, (
             f"Dangerous key logic mismatch for {key}"
         )
-
-    print("\n🔒 Security Logic Verification:")
-    print(f"   Dangerous keys: {production_dangerous_keys}")
-    print("   Detection method: Case-insensitive substring matching")
-    print(f"   Test cases verified: {len(test_keys)}")
-    print("   Status: Security logic matches production exactly")
 
 
 def test_production_field_constraints_documentation():
@@ -157,16 +141,9 @@ def test_production_field_constraints_documentation():
         },
     }
 
-    print("\n📐 Field Constraints Documentation:")
-    for model, fields in constraints.items():
-        print(f"   {model}:")
-        for field, constraint in fields.items():
-            print(f"     {field}: {constraint}")
-
-    print("\n✅ Coverage Achievement:")
-    print("   Target: 71 uncovered lines")
-    print("   Strategy: Production-equivalent validation testing")
-    print("   Validation: All critical logic paths covered through functional testing")
+    for fields in constraints.values():
+        for _field, _constraint in fields.items():
+            pass
 
     # Verify we have the expected number of constraints
     total_constraints = sum(len(fields) for fields in constraints.values())
@@ -209,18 +186,9 @@ def test_coverage_strategy_documentation():
         ],
     }
 
-    print("\n🎯 Comprehensive Coverage Strategy:")
-    for area, items in coverage_areas.items():
-        print(f"   {area}: {len(items)} items")
-        for item in items:
-            print(f"     • {item}")
+    for items in coverage_areas.values():
+        for _item in items:
+            pass
 
     total_coverage_items = sum(len(items) for items in coverage_areas.values())
     assert total_coverage_items >= 20, "Should cover all major validation aspects"
-
-    print("\n📊 Coverage Summary:")
-    print(f"   Total test categories: {len(coverage_areas)}")
-    print(f"   Total coverage items: {total_coverage_items}")
-    print("   Test methods created: 52")
-    print("   Production logic equivalence: 100%")
-    print("   Status: Comprehensive validation coverage achieved")

@@ -6,6 +6,7 @@ Safely removes redundant parameters while preserving intentional overrides.
 """
 
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -99,7 +100,7 @@ class AGNOConfigMigrator:
             return result
 
         # Analyze inheritance opportunities
-        manager = ConfigInheritanceManager()
+        ConfigInheritanceManager()
         migration_plan = self._create_migration_plan(team_config, member_configs)
 
         # Apply migration
@@ -323,7 +324,7 @@ class AGNOConfigMigrator:
                 [
                     "",
                     "📊 Migration Summary:",
-                    f"  • Teams processed: {len(set(log['team_id'] for log in self.migration_log))}",
+                    f"  • Teams processed: {len({log['team_id'] for log in self.migration_log})}",
                     f"  • Agents migrated: {len(self.migration_log)}",
                     f"  • Parameters removed: {total_removed}",
                     f"  • Overrides preserved: {total_preserved}",
@@ -384,4 +385,4 @@ if __name__ == "__main__":
         result = migrate_configurations(
             args.path, dry_run=not args.execute, team_id=args.team
         )
-        exit(0 if not result["errors"] else 1)
+        sys.exit(0 if not result["errors"] else 1)

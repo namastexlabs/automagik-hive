@@ -246,9 +246,12 @@ def insert_after_symbol(
 
         # Insert after the symbol
         insertion_point = end_line + 1
-        modified_lines = (
-            lines[:insertion_point] + [""] + new_lines + lines[insertion_point:]
-        )
+        modified_lines = [
+            *lines[:insertion_point],
+            "",
+            *new_lines,
+            *lines[insertion_point:],
+        ]
         modified_content = "\n".join(modified_lines)
 
         # Validate syntax for Python files
@@ -497,10 +500,7 @@ def _is_safe_path(path: str) -> bool:
         return False
 
     normalized = os.path.normpath(path)
-    if normalized.startswith("..") or "/.." in normalized:
-        return False
-
-    return True
+    return not (normalized.startswith("..") or "/.." in normalized)
 
 
 def _is_safe_command(command: str) -> bool:
@@ -530,11 +530,7 @@ def _is_safe_command(command: str) -> bool:
     ]
 
     command_lower = command.lower()
-    for pattern in dangerous_patterns:
-        if pattern in command_lower:
-            return False
-
-    return True
+    return all(pattern not in command_lower for pattern in dangerous_patterns)
 
 
 def _create_backup(file_path: Path) -> Path:

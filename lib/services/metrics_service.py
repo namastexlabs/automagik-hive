@@ -44,7 +44,7 @@ class MetricsService:
         db = await get_db_service()
 
         query = """
-        INSERT INTO hive.agent_metrics 
+        INSERT INTO hive.agent_metrics
         (timestamp, agent_name, execution_type, metrics, version)
         VALUES (%(timestamp)s, %(agent_name)s, %(execution_type)s, %(metrics)s, %(version)s)
         RETURNING id
@@ -136,7 +136,7 @@ class MetricsService:
         db = await get_db_service()
 
         base_query = """
-        SELECT 
+        SELECT
             COUNT(*) as total_executions,
             COUNT(DISTINCT agent_name) as unique_agents,
             COUNT(DISTINCT execution_type) as unique_execution_types,

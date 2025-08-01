@@ -1,5 +1,4 @@
-"""
-Unified Workflow State Machine for Automagik Hive - Phase 2 Implementation.
+"""Unified Workflow State Machine for Automagik Hive - Phase 2 Implementation.
 
 Orchestrates the complete install→start→health→workspace workflow with:
 - State machine implementation for unified workflow progression
@@ -15,8 +14,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from rich.console import Console
@@ -26,6 +24,9 @@ from rich.table import Table
 
 from .service_manager import ServiceManager
 from .workspace_manager import WorkspaceManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class WorkflowState(Enum):
@@ -60,12 +61,12 @@ class WorkflowStep:
     name: str
     description: str
     function: Callable[..., bool]
-    args: Tuple[Any, ...] = field(default_factory=tuple)
-    kwargs: Dict[str, Any] = field(default_factory=dict)
+    args: tuple[Any, ...] = field(default_factory=tuple)
+    kwargs: dict[str, Any] = field(default_factory=dict)
     required: bool = True
-    rollback_function: Optional[Callable[..., bool]] = None
-    rollback_args: Tuple[Any, ...] = field(default_factory=tuple)
-    rollback_kwargs: Dict[str, Any] = field(default_factory=dict)
+    rollback_function: Callable[..., bool] | None = None
+    rollback_args: tuple[Any, ...] = field(default_factory=tuple)
+    rollback_kwargs: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -74,16 +75,15 @@ class WorkflowProgress:
 
     current_step: int = 0
     total_steps: int = 0
-    completed_steps: List[str] = field(default_factory=list)
-    failed_steps: List[str] = field(default_factory=list)
-    error_messages: List[str] = field(default_factory=list)
-    start_time: Optional[float] = None
-    end_time: Optional[float] = None
+    completed_steps: list[str] = field(default_factory=list)
+    failed_steps: list[str] = field(default_factory=list)
+    error_messages: list[str] = field(default_factory=list)
+    start_time: float | None = None
+    end_time: float | None = None
 
 
 class WorkflowOrchestrator:
-    """
-    Unified workflow state machine for install→start→health→workspace flow.
+    """Unified workflow state machine for install→start→health→workspace flow.
 
     Provides comprehensive orchestration of the complete Automagik Hive deployment
     workflow with state management, error recovery, and component-specific handling.
@@ -101,8 +101,8 @@ class WorkflowOrchestrator:
         self.progress = WorkflowProgress()
 
         # Workflow steps registry
-        self.workflow_steps: List[WorkflowStep] = []
-        self.state_transitions: Dict[WorkflowState, List[WorkflowState]] = {
+        self.workflow_steps: list[WorkflowStep] = []
+        self.state_transitions: dict[WorkflowState, list[WorkflowState]] = {
             WorkflowState.INITIAL: [WorkflowState.INSTALLING],
             WorkflowState.INSTALLING: [WorkflowState.INSTALLED, WorkflowState.FAILED],
             WorkflowState.INSTALLED: [WorkflowState.STARTING, WorkflowState.FAILED],
@@ -130,8 +130,7 @@ class WorkflowOrchestrator:
         }
 
     def execute_unified_workflow(self, component: str = "all") -> bool:
-        """
-        Execute the complete unified workflow for specified component.
+        """Execute the complete unified workflow for specified component.
 
         Orchestrates the full install→start→health→workspace flow with
         state machine progression, error handling, and rollback capabilities.
@@ -163,9 +162,8 @@ class WorkflowOrchestrator:
             self.console.print(f"❌ [bold red]Workflow failed:[/bold red] {e}")
             return False
 
-    def get_workflow_status(self) -> Dict[str, Any]:
-        """
-        Get current workflow status and progress information.
+    def get_workflow_status(self) -> dict[str, Any]:
+        """Get current workflow status and progress information.
 
         Returns:
             dict: Comprehensive workflow status including state, progress, and metrics
@@ -198,8 +196,7 @@ class WorkflowOrchestrator:
         }
 
     def rollback_workflow(self) -> bool:
-        """
-        Execute workflow rollback to clean up partial installation.
+        """Execute workflow rollback to clean up partial installation.
 
         Returns:
             bool: True if rollback completed successfully
@@ -244,9 +241,8 @@ class WorkflowOrchestrator:
             self.console.print(f"❌ [bold red]Rollback failed:[/bold red] {e}")
             return False
 
-    def validate_workflow_dependencies(self, component: str) -> Tuple[bool, List[str]]:
-        """
-        Validate workflow dependencies before execution.
+    def validate_workflow_dependencies(self, component: str) -> tuple[bool, list[str]]:
+        """Validate workflow dependencies before execution.
 
         Args:
             component: Component to validate dependencies for
@@ -509,10 +505,7 @@ class WorkflowOrchestrator:
             if step.name in ["validate_dependencies", "install_infrastructure"]
         ]
 
-        for step in install_steps:
-            if not self._execute_workflow_step(step):
-                return False
-        return True
+        return all(self._execute_workflow_step(step) for step in install_steps)
 
     def _execute_start_phase(self) -> bool:
         """Execute the service startup phase of the workflow."""
@@ -520,10 +513,7 @@ class WorkflowOrchestrator:
             step for step in self.workflow_steps if step.name == "start_services"
         ]
 
-        for step in start_steps:
-            if not self._execute_workflow_step(step):
-                return False
-        return True
+        return all(self._execute_workflow_step(step) for step in start_steps)
 
     def _execute_health_phase(self) -> bool:
         """Execute the health check phase of the workflow."""
@@ -531,10 +521,7 @@ class WorkflowOrchestrator:
             step for step in self.workflow_steps if step.name.startswith("health_check")
         ]
 
-        for step in health_steps:
-            if not self._execute_workflow_step(step):
-                return False
-        return True
+        return all(self._execute_workflow_step(step) for step in health_steps)
 
     def _execute_workspace_phase(self) -> bool:
         """Execute the workspace setup phase of the workflow."""
@@ -563,24 +550,20 @@ class WorkflowOrchestrator:
             if success:
                 self.progress.completed_steps.append(step.name)
                 return True
-            else:
-                if step.required:
-                    self.progress.failed_steps.append(step.name)
-                    self.progress.error_messages.append(
-                        f"Required step failed: {step.name}"
-                    )
-                    return False
-                else:
-                    # Optional step failure is not fatal
-                    logger.warning(f"Optional step failed: {step.name}")
-                    return True
+            if step.required:
+                self.progress.failed_steps.append(step.name)
+                self.progress.error_messages.append(
+                    f"Required step failed: {step.name}"
+                )
+                return False
+            # Optional step failure is not fatal
+            logger.warning(f"Optional step failed: {step.name}")
+            return True
 
         except Exception as e:
             logger.error(f"Workflow step execution failed: {step.name}: {e}")
             self.progress.failed_steps.append(step.name)
-            self.progress.error_messages.append(
-                f"Step exception: {step.name}: {str(e)}"
-            )
+            self.progress.error_messages.append(f"Step exception: {step.name}: {e!s}")
             return False
 
     def _transition_state(self, new_state: WorkflowState) -> bool:
@@ -656,12 +639,11 @@ class WorkflowOrchestrator:
         duration = self.progress.end_time - self.progress.start_time
         if duration < 60:
             return f"{duration:.1f}s"
-        else:
-            minutes = int(duration // 60)
-            seconds = int(duration % 60)
-            return f"{minutes}m {seconds}s"
+        minutes = int(duration // 60)
+        seconds = int(duration % 60)
+        return f"{minutes}m {seconds}s"
 
-    def _find_step_by_name(self, step_name: str) -> Optional[WorkflowStep]:
+    def _find_step_by_name(self, step_name: str) -> WorkflowStep | None:
         """Find workflow step by name."""
         for step in self.workflow_steps:
             if step.name == step_name:
@@ -741,9 +723,9 @@ class WorkflowOrchestrator:
 
             if action == "skip":
                 return True  # Successful skip
-            elif action == "new":
+            if action == "new":
                 return self.workspace_manager.initialize_workspace(path)
-            elif action == "existing":
+            if action == "existing":
                 return self.workspace_manager.validate_existing_workspace(path)
 
             return False

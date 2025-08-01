@@ -84,10 +84,7 @@ class RootWhitelist:
         """
         import fnmatch
 
-        for pattern in self.patterns:
-            if fnmatch.fnmatch(file_path, pattern):
-                return True
-        return False
+        return any(fnmatch.fnmatch(file_path, pattern) for pattern in self.patterns)
 
 
 @dataclass(frozen=True)

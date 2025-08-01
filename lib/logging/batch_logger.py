@@ -82,7 +82,7 @@ class BatchLogger:
         else:
             logger.info(f"🤖 Agent {component_id} ready")
 
-    def log_team_member_loaded(self, member_name: str, team_id: str = None):
+    def log_team_member_loaded(self, member_name: str, team_id: str | None = None):
         """Log team member loading (batched during startup)."""
         if self._should_log_verbose():
             logger.info(f"🤖 Loaded team member: {member_name}")
@@ -127,7 +127,7 @@ class BatchLogger:
         # Model resolution summary
         if self.batches["model_resolved"]:
             models = self.batches["model_resolved"]
-            unique_providers = set(provider for _, provider in models)
+            unique_providers = {provider for _, provider in models}
             logger.info(
                 f"Model resolution: {len(models)} operations across {len(unique_providers)} providers"
             )
@@ -149,9 +149,7 @@ class BatchLogger:
             )
 
         # Team member loading summary
-        team_keys = [
-            key for key in self.batches.keys() if key.startswith("team_members")
-        ]
+        team_keys = [key for key in self.batches if key.startswith("team_members")]
         for team_key in team_keys:
             members = self.batches[team_key]
             if team_key == "team_members":
@@ -168,7 +166,7 @@ class BatchLogger:
         if self.batches["csv_processing"]:
             csv_ops = self.batches["csv_processing"]
             total_docs = sum(count for _, count in csv_ops)
-            sources = len(set(source for source, _ in csv_ops))
+            sources = len({source for source, _ in csv_ops})
             logger.info(
                 f"Knowledge base: {sources} sources, {total_docs} documents loaded"
             )
@@ -214,7 +212,7 @@ def log_agent_created(component_id: str, parameter_count: int):
     batch_logger.log_agent_created(component_id, parameter_count)
 
 
-def log_team_member_loaded(member_name: str, team_id: str = None):
+def log_team_member_loaded(member_name: str, team_id: str | None = None):
     """Convenience function for team member loading."""
     batch_logger.log_team_member_loaded(member_name, team_id)
 

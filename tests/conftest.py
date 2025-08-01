@@ -220,10 +220,7 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
         # Configure async service methods with dynamic responses
         async def mock_get_version(component_id, version_num):
             # Return None for non-existent components to trigger 404 responses
-            if (
-                component_id == "non-existent"
-                or component_id == "non-existent-component"
-            ):
+            if component_id in {"non-existent", "non-existent-component"}:
                 return None
             # Return stored version if it exists, otherwise create default
             key = f"{component_id}-{version_num}"
@@ -250,10 +247,7 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
 
         async def mock_get_active_version(component_id):
             # Return None for non-existent components
-            if (
-                component_id == "non-existent"
-                or component_id == "non-existent-component"
-            ):
+            if component_id in {"non-existent", "non-existent-component"}:
                 return None
             # Return the first version for this component
             for k, v in created_versions.items():

@@ -54,9 +54,9 @@ def _check_knowledge_base_exists(
 
 def create_knowledge_base(
     config: dict[str, Any] | None = None,
-    db_url: str = None,
+    db_url: str | None = None,
     num_documents: int = 10,
-    csv_path: str = None,
+    csv_path: str | None = None,
 ) -> RowBasedCSVKnowledgeBase:
     """
     Create configurable shared knowledge base
@@ -216,9 +216,9 @@ def _load_knowledge_config() -> dict[str, Any]:
 
 def get_knowledge_base(
     config: dict[str, Any] | None = None,
-    db_url: str = None,
+    db_url: str | None = None,
     num_documents: int = 10,
-    csv_path: str = None,
+    csv_path: str | None = None,
 ) -> RowBasedCSVKnowledgeBase:
     """Get the shared knowledge base"""
     return create_knowledge_base(config, db_url, num_documents, csv_path)

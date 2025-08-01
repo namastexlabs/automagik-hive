@@ -263,7 +263,7 @@ class TestCheckMigrationStatus:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             # Mock Alembic components
-            with patch("lib.utils.db_migration.Config") as mock_config:
+            with patch("lib.utils.db_migration.Config"):
                 with patch(
                     "lib.utils.db_migration.MigrationContext"
                 ) as mock_migration_context:
@@ -301,7 +301,7 @@ class TestCheckMigrationStatus:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             # Mock Alembic components
-            with patch("lib.utils.db_migration.Config") as mock_config:
+            with patch("lib.utils.db_migration.Config"):
                 with patch(
                     "lib.utils.db_migration.MigrationContext"
                 ) as mock_migration_context:
@@ -333,7 +333,7 @@ class TestCheckMigrationStatus:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             # Mock Alembic components
-            with patch("lib.utils.db_migration.Config") as mock_config:
+            with patch("lib.utils.db_migration.Config"):
                 with patch(
                     "lib.utils.db_migration.MigrationContext"
                 ) as mock_migration_context:
@@ -392,7 +392,7 @@ class TestRunMigrations:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             # Mock Alembic components
-            with patch("lib.utils.db_migration.Config") as mock_config:
+            with patch("lib.utils.db_migration.Config"):
                 with patch("lib.utils.db_migration.command") as mock_command:
                     mock_command.upgrade.return_value = None
 
@@ -415,7 +415,7 @@ class TestRunMigrations:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             # Mock Alembic components
-            with patch("lib.utils.db_migration.Config") as mock_config:
+            with patch("lib.utils.db_migration.Config"):
                 with patch("lib.utils.db_migration.command") as mock_command:
                     mock_command.upgrade.side_effect = Exception("Alembic error")
 
@@ -675,7 +675,7 @@ class TestErrorHandlingAndEdgeCases:
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
-            with patch("lib.utils.db_migration.Config") as mock_config:
+            with patch("lib.utils.db_migration.Config"):
                 with patch(
                     "lib.utils.db_migration.MigrationContext"
                 ) as mock_migration_context:
@@ -762,7 +762,7 @@ class TestLoggingAndMonitoring:
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
-            with patch("lib.utils.db_migration.Config") as mock_config:
+            with patch("lib.utils.db_migration.Config"):
                 with patch(
                     "lib.utils.db_migration.MigrationContext"
                 ) as mock_migration_context:

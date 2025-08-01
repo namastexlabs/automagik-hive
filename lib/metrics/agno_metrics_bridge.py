@@ -103,10 +103,7 @@ class AgnoMetricsBridge:
             return True
 
         # Check for direct run_response with metrics
-        if hasattr(response, "metrics") and isinstance(response.metrics, dict):
-            return True
-
-        return False
+        return bool(hasattr(response, "metrics") and isinstance(response.metrics, dict))
 
     def _extract_agno_native_metrics(self, response: Any) -> dict[str, Any]:
         """
@@ -197,7 +194,7 @@ class AgnoMetricsBridge:
                             metrics[metric_name] = (
                                 sum(metric_values)
                                 if all(
-                                    isinstance(v, (int, float)) for v in metric_values
+                                    isinstance(v, int | float) for v in metric_values
                                 )
                                 else metric_values[-1]
                             )

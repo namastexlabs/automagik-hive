@@ -64,8 +64,8 @@ class ApiSettings(BaseSettings):
 
     @field_validator("cors_origin_list", mode="before")
     def set_cors_origin_list(
-        cls: type["ApiSettings"], _cors_origin_list: Any, info: FieldValidationInfo
-    ) -> list[str]:  # noqa: N805
+        self: type["ApiSettings"], _cors_origin_list: Any, info: FieldValidationInfo
+    ) -> list[str]:
         """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
         environment = info.data.get(
             "environment", os.getenv("HIVE_ENVIRONMENT", "development")

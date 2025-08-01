@@ -589,7 +589,7 @@ class TestConfigInheritanceManager:
         self, mock_logger, manager, sample_team_config, sample_agent_configs
     ):
         """Test that appropriate logging occurs during inheritance."""
-        enhanced = manager.apply_inheritance(sample_team_config, sample_agent_configs)
+        manager.apply_inheritance(sample_team_config, sample_agent_configs)
 
         # Check that debug logging occurred
         assert mock_logger.debug.called

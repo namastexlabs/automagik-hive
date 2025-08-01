@@ -117,7 +117,7 @@ class MigrationService:
                 command.upgrade(cfg, target_revision)
 
                 # Get final status
-                script = ScriptDirectory.from_config(cfg)
+                ScriptDirectory.from_config(cfg)
                 from sqlalchemy import create_engine
 
                 sync_url = self._convert_to_sync_url(self.db_url)

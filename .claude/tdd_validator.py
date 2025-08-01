@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Custom TDD Validator for Claude Code hooks
-Validates that code changes follow Test-Driven Development principles
+Validates that code changes follow Test-Driven Development principles.
 """
 
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def run_tests():
-    """Run pytest and return results"""
+    """Run pytest and return results."""
     try:
         result = subprocess.run(
             ["uv", "run", "pytest", "--tb=short", "-q"],
@@ -30,7 +30,7 @@ def run_tests():
 
 
 def validate_tdd_cycle(tool, file_path, content):
-    """Validate TDD cycle based on file changes"""
+    """Validate TDD cycle based on file changes."""
     # Allow non-Python files to pass through
     if not file_path.endswith(".py"):
         return {"allowed": True, "reason": "Non-Python file"}
@@ -83,7 +83,7 @@ def validate_tdd_cycle(tool, file_path, content):
 
 
 def main():
-    """Main hook entry point"""
+    """Main hook entry point."""
     try:
         # Read JSON input from stdin
         input_data = json.loads(sys.stdin.read())
@@ -103,7 +103,6 @@ def main():
                         tool, file_path, edit.get("new_string", "")
                     )
                     if not result["allowed"]:
-                        print(json.dumps({"reason": result["reason"]}))
                         sys.exit(1)
             else:
                 file_path = tool_input.get("file_path", "")
@@ -113,16 +112,13 @@ def main():
 
                 result = validate_tdd_cycle(tool, file_path, content)
                 if not result["allowed"]:
-                    print(json.dumps({"reason": result["reason"]}))
                     sys.exit(1)
 
         # If we get here, the change is allowed
-        print(json.dumps({"reason": ""}))
         sys.exit(0)
 
-    except Exception as e:
+    except Exception:
         # On any error, allow the operation but log the error
-        print(json.dumps({"reason": f"TDD Validator Error: {e!s} - Operation allowed"}))
         sys.exit(0)
 
 

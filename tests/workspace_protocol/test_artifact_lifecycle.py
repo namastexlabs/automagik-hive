@@ -49,7 +49,7 @@ class TestArtifactLifecycle:
 
         # Cleanup any test files created during testing
         for file_path in test_files:
-            if isinstance(file_path, (str, Path)) and os.path.exists(file_path):
+            if isinstance(file_path, str | Path) and os.path.exists(file_path):
                 os.unlink(file_path)
 
     @pytest.mark.parametrize(
@@ -84,7 +84,7 @@ class TestArtifactLifecycle:
 
         # Arrange
         task_prompt = """
-Create an initial analysis and brainstorming document for implementing a new 
+Create an initial analysis and brainstorming document for implementing a new
 user authentication system with multi-factor authentication support.
 
 This should be an initial draft/analysis phase.
@@ -151,7 +151,7 @@ This should be an initial draft/analysis phase.
 
 ## Initial Brainstorming
 - Multi-factor authentication
-- JWT token management  
+- JWT token management
 - Session handling
 - Password policies
 
@@ -226,7 +226,7 @@ This file should be deleted when the task is completed successfully.
         task_prompt = f"""
 Context: @{test_wish_path}
 
-Complete the simple task described in the context file. 
+Complete the simple task described in the context file.
 This is a straightforward completion test.
 """
 
@@ -263,7 +263,7 @@ This is a straightforward completion test.
 Create a comprehensive system architecture document for a microservices-based
 e-commerce platform with the following components:
 - User authentication service
-- Product catalog service  
+- Product catalog service
 - Shopping cart service
 - Payment processing service
 - Order management service

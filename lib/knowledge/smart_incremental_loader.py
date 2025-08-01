@@ -28,7 +28,7 @@ class SmartIncrementalLoader:
     4. Preserve existing vectors while adding only new content
     """
 
-    def __init__(self, csv_path: str = None, kb=None):
+    def __init__(self, csv_path: str | None = None, kb=None):
         # Load configuration first
         self.config = self._load_config()
 
@@ -80,8 +80,8 @@ class SmartIncrementalLoader:
                 # Check if table exists in agno schema
                 result = conn.execute(
                     text("""
-                    SELECT COUNT(*) as count 
-                    FROM information_schema.tables 
+                    SELECT COUNT(*) as count
+                    FROM information_schema.tables
                     WHERE table_name = :table_name
                     AND table_schema = 'agno'
                 """),
@@ -95,8 +95,8 @@ class SmartIncrementalLoader:
                 # Check if content_hash column exists
                 result = conn.execute(
                     text("""
-                    SELECT COUNT(*) as count 
-                    FROM information_schema.columns 
+                    SELECT COUNT(*) as count
+                    FROM information_schema.columns
                     WHERE table_name = :table_name AND column_name = 'content_hash'
                 """),
                     {"table_name": self.table_name},
@@ -115,8 +115,7 @@ class SmartIncrementalLoader:
                 # Get existing content hashes from agno schema
                 query = "SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL"
                 result = conn.execute(text(query))
-                existing_hashes = {row[0] for row in result.fetchall()}
-                return existing_hashes
+                return {row[0] for row in result.fetchall()}
 
         except Exception as e:
             from lib.logging import logger
@@ -154,7 +153,7 @@ class SmartIncrementalLoader:
             with engine.connect() as conn:
                 # Add content_hash column if it doesn't exist
                 alter_query = """
-                    ALTER TABLE agno.knowledge_base 
+                    ALTER TABLE agno.knowledge_base
                     ADD COLUMN IF NOT EXISTS content_hash VARCHAR(32)
                 """
                 conn.execute(text(alter_query))
@@ -362,15 +361,13 @@ class SmartIncrementalLoader:
 
             load_time = (datetime.now() - start_time).total_seconds()
 
-            result = {
+            return {
                 "strategy": "incremental_update",
                 "new_rows_processed": processed_count,
                 "rows_removed": removed_count,
                 "load_time_seconds": load_time,
                 "embedding_tokens_used": f"Only {processed_count} new entries (cost savings!)",
             }
-
-            return result
 
         except Exception as e:
             return {"error": f"Incremental update failed: {e}"}
@@ -420,8 +417,8 @@ class SmartIncrementalLoader:
 
                 # Update the hash for rows matching this content (use content column, not document)
                 update_query = """
-                    UPDATE agno.knowledge_base 
-                    SET content_hash = :hash 
+                    UPDATE agno.knowledge_base
+                    SET content_hash = :hash
                     WHERE content LIKE :problem_pattern
                     AND content_hash IS NULL
                 """

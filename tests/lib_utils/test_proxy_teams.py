@@ -330,9 +330,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
             mock_storage.return_value = MagicMock()
             mock_team.return_value = {"name": "Custom Team"}
 
-            result = await proxy._process_config(
-                config, "test-team", "postgresql://test_db"
-            )
+            await proxy._process_config(config, "test-team", "postgresql://test_db")
 
             mock_model.assert_called_once()
             mock_storage.assert_called_once()

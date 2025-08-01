@@ -17,7 +17,7 @@ from lib.auth.credential_service import CredentialService
 
 
 class ContainerStatus(Enum):
-    """PostgreSQL container status states"""
+    """PostgreSQL container status states."""
 
     RUNNING = "running"
     STOPPED = "stopped"
@@ -28,7 +28,7 @@ class ContainerStatus(Enum):
 
 @dataclass
 class PostgreSQLConfig:
-    """PostgreSQL container configuration"""
+    """PostgreSQL container configuration."""
 
     container_name: str = "hive-postgres"
     image: str = "agnohq/pgvector:16"
@@ -76,12 +76,10 @@ class PostgreSQLManager:
             True if setup successful, False otherwise
         """
         if interactive:
-            print("\n🐳 Optional Docker PostgreSQL Setup")
             choice = input(
                 "Would you like to set up Docker PostgreSQL with secure credentials? (Y/n): "
             )
             if choice.lower() in ["n", "no"]:
-                print("Skipping Docker PostgreSQL setup")
                 return False
 
         # Check Docker availability
@@ -97,14 +95,7 @@ class PostgreSQLManager:
             return False
 
         # Start PostgreSQL container
-        if not self._start_postgres_service(workspace_path):
-            return False
-
-        print("✅ PostgreSQL container started with secure credentials!")
-        print(
-            "💡 Run 'uvx automagik-hive ./workspace' to start the full development environment"
-        )
-        return True
+        return self._start_postgres_service(workspace_path)
 
     def check_container_status(self) -> ContainerStatus:
         """Check PostgreSQL container status.
@@ -175,27 +166,20 @@ class PostgreSQLManager:
         try:
             compose_file = Path(workspace_path) / "docker-compose.yml"
             if not compose_file.exists():
-                print(f"❌ docker-compose.yml not found in {workspace_path}")
                 return False
 
-            print("🛑 Stopping PostgreSQL container...")
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file), "stop", "postgres"],
+                [*compose_cmd, "-f", str(compose_file), "stop", "postgres"],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
 
-            if result.returncode == 0:
-                print("✅ PostgreSQL container stopped successfully")
-                return True
-            print(f"❌ Failed to stop PostgreSQL container: {result.stderr}")
-            return False
+            return result.returncode == 0
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error stopping PostgreSQL container: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
     def restart_container(self, workspace_path: str = ".") -> bool:
@@ -210,27 +194,20 @@ class PostgreSQLManager:
         try:
             compose_file = Path(workspace_path) / "docker-compose.yml"
             if not compose_file.exists():
-                print(f"❌ docker-compose.yml not found in {workspace_path}")
                 return False
 
-            print("🔄 Restarting PostgreSQL container...")
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file), "restart", "postgres"],
+                [*compose_cmd, "-f", str(compose_file), "restart", "postgres"],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
 
-            if result.returncode == 0:
-                print("✅ PostgreSQL container restarted successfully")
-                return True
-            print(f"❌ Failed to restart PostgreSQL container: {result.stderr}")
-            return False
+            return result.returncode == 0
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error restarting PostgreSQL container: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
     def get_container_logs(
@@ -252,8 +229,15 @@ class PostgreSQLManager:
 
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
-                compose_cmd
-                + ["-f", str(compose_file), "logs", "--tail", str(tail), "postgres"],
+                [
+                    *compose_cmd,
+                    "-f",
+                    str(compose_file),
+                    "logs",
+                    "--tail",
+                    str(tail),
+                    "postgres",
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -342,7 +326,6 @@ class PostgreSQLManager:
                 timeout=5,
             )
             if result.returncode != 0:
-                print("❌ Docker not found. Please install Docker first.")
                 return False
 
             # Check if Docker daemon is running
@@ -354,19 +337,13 @@ class PostgreSQLManager:
                 timeout=10,
             )
             if result.returncode != 0:
-                print("❌ Docker daemon not running. Please start Docker first.")
                 return False
 
             # Store compose command for later use
             self._compose_cmd = self._get_compose_command()
-            if not self._compose_cmd:
-                print("❌ Docker Compose not found. Please install Docker Compose.")
-                return False
-
-            return True
+            return self._compose_cmd
 
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-            print("❌ Error checking Docker availability")
             return False
 
     def _setup_credentials(self, workspace_path: str) -> bool:
@@ -382,7 +359,6 @@ class PostgreSQLManager:
             env_file = Path(workspace_path) / ".env"
 
             # Generate PostgreSQL credentials
-            print("🔐 Setting up PostgreSQL credentials...")
 
             # Temporarily change to workspace directory to use existing credential service
             import os
@@ -403,14 +379,9 @@ class PostgreSQLManager:
             finally:
                 os.chdir(original_cwd)
 
-            print("✅ PostgreSQL credentials generated and saved")
-            print(f"   User: {credentials['user']}")
-            print(f"   Database: {credentials['database']}")
-
             return True
 
-        except Exception as e:
-            print(f"❌ Error setting up credentials: {e}")
+        except Exception:
             return False
 
     def _fix_data_permissions(self, workspace_path: str) -> bool:
@@ -437,7 +408,6 @@ class PostgreSQLManager:
                 # Check if directory is owned by root
                 stat_info = data_dir.stat()
                 if stat_info.st_uid == 0:  # root owned
-                    print("💡 Fixing PostgreSQL data directory permissions...")
                     try:
                         shutil.chown(data_dir, uid, gid)
                     except PermissionError:
@@ -449,8 +419,7 @@ class PostgreSQLManager:
 
             return True
 
-        except Exception as e:
-            print(f"⚠️ Warning: Could not fix data directory permissions: {e}")
+        except Exception:
             # Don't fail setup for permission issues
             return True
 
@@ -519,7 +488,6 @@ class PostgreSQLManager:
         try:
             compose_file = Path(workspace_path) / "docker-compose.yml"
             if not compose_file.exists():
-                print(f"❌ docker-compose.yml not found in {workspace_path}")
                 return False
 
             # Set environment variables for docker-compose
@@ -549,10 +517,9 @@ class PostgreSQLManager:
                 finally:
                     os.chdir(original_cwd)
 
-            print("🐳 Starting PostgreSQL container...")
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file), "up", "-d", "postgres"],
+                [*compose_cmd, "-f", str(compose_file), "up", "-d", "postgres"],
                 check=False,
                 env=env,
                 capture_output=True,
@@ -562,17 +529,13 @@ class PostgreSQLManager:
 
             if result.returncode == 0:
                 # Wait for container to be healthy
-                print("⏳ Waiting for PostgreSQL to be ready...")
                 for _ in range(30):  # Wait up to 30 seconds
                     if self.validate_container_health(workspace_path):
                         return True
                     time.sleep(1)
 
-                print("⚠️ PostgreSQL container started but health check failed")
                 return True  # Container started, even if health check timed out
-            print(f"❌ Failed to start PostgreSQL container: {result.stderr}")
             return False
 
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
-            print(f"❌ Error starting PostgreSQL container: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False

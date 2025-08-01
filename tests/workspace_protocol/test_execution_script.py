@@ -50,21 +50,16 @@ class WorkspaceProtocolTestExecutor:
         Returns:
             Comprehensive test results and compliance report
         """
-        print("🧪 GENIE TESTING MAKER: INITIATING WORKSPACE PROTOCOL VALIDATION")
-        print("=" * 80)
 
         start_time = datetime.now()
 
         # Phase 1: Static compliance check
-        print("\n📋 Phase 1: Static Protocol Compliance Check")
         static_results = self.run_static_compliance_check()
 
         # Phase 2: Functional validation tests
-        print("\n🔧 Phase 2: Functional Protocol Validation")
         functional_results = self.run_functional_validation_tests()
 
         # Phase 3: Integration testing
-        print("\n🔄 Phase 3: Cross-Agent Integration Tests")
         integration_results = self.run_integration_tests()
 
         end_time = datetime.now()
@@ -93,16 +88,13 @@ class WorkspaceProtocolTestExecutor:
         results = {}
 
         for agent_name in self.target_agents:
-            print(f"  Checking {agent_name}...")
-
             compliance_result = self.agent_tester.validate_agent_protocol_compliance(
                 agent_name
             )
             results[agent_name] = compliance_result
 
-            status = "✓" if compliance_result["compliant"] else "❌"
-            score = compliance_result.get("compliance_score", 0)
-            print(f"    {status} {agent_name}: {score:.1%} compliant")
+            "✓" if compliance_result["compliant"] else "❌"
+            compliance_result.get("compliance_score", 0)
 
         # Calculate overall static compliance
         total_agents = len(results)
@@ -150,8 +142,6 @@ class WorkspaceProtocolTestExecutor:
         results = {}
 
         for scenario in test_scenarios:
-            print(f"\n  Running {scenario['name']}...")
-
             scenario_results = scenario["test_func"]()
             results[scenario["name"]] = {
                 "description": scenario["description"],
@@ -159,8 +149,7 @@ class WorkspaceProtocolTestExecutor:
                 "pass_rate": self._calculate_scenario_pass_rate(scenario_results),
             }
 
-            pass_rate = results[scenario["name"]]["pass_rate"]
-            print(f"    Pass Rate: {pass_rate:.1%}")
+            results[scenario["name"]]["pass_rate"]
 
         return results
 
@@ -188,8 +177,6 @@ class WorkspaceProtocolTestExecutor:
         results = {}
 
         for scenario in integration_scenarios:
-            print(f"\n  Running {scenario['name']}...")
-
             scenario_results = scenario["test_func"]()
             results[scenario["name"]] = {
                 "description": scenario["description"],
@@ -197,8 +184,7 @@ class WorkspaceProtocolTestExecutor:
                 "pass_rate": self._calculate_scenario_pass_rate(scenario_results),
             }
 
-            pass_rate = results[scenario["name"]]["pass_rate"]
-            print(f"    Pass Rate: {pass_rate:.1%}")
+            results[scenario["name"]]["pass_rate"]
 
         return results
 
@@ -217,7 +203,7 @@ class WorkspaceProtocolTestExecutor:
 - Feature B integration
 - Quality validation
 
-## Success Criteria  
+## Success Criteria
 - All tests pass
 - Code coverage >85%
 """)
@@ -498,12 +484,10 @@ This should trigger consistent error handling across all agents.
         """Test artifact coordination between agents."""
 
         # This would test multi-agent workflows, simplified for now
-        results = {
+        return {
             "coordination_test": "Not implemented - requires multi-agent workflow testing",
             "status": "skipped",
         }
-
-        return results
 
     def _calculate_scenario_pass_rate(self, scenario_results: dict[str, Any]) -> float:
         """Calculate pass rate for a test scenario."""
@@ -514,7 +498,7 @@ This should trigger consistent error handling across all agents.
         total_tests = 0
         passed_tests = 0
 
-        for agent_name, agent_result in scenario_results.items():
+        for agent_result in scenario_results.values():
             if isinstance(agent_result, dict):
                 if "compliance_score" in agent_result:
                     total_tests += 1
@@ -547,7 +531,7 @@ This should trigger consistent error handling across all agents.
 
         # Functional test metrics
         functional_pass_rates = []
-        for scenario_name, scenario_data in functional_results.items():
+        for scenario_data in functional_results.values():
             functional_pass_rates.append(scenario_data.get("pass_rate", 0.0))
 
         avg_functional_pass_rate = (
@@ -558,7 +542,7 @@ This should trigger consistent error handling across all agents.
 
         # Integration test metrics
         integration_pass_rates = []
-        for scenario_name, scenario_data in integration_results.items():
+        for scenario_data in integration_results.values():
             integration_pass_rates.append(scenario_data.get("pass_rate", 0.0))
 
         avg_integration_pass_rate = (
@@ -600,44 +584,11 @@ This should trigger consistent error handling across all agents.
 
         summary = comprehensive_results["summary"]
 
-        print("\n" + "=" * 80)
-        print("🎯 WORKSPACE PROTOCOL VALIDATION COMPLETE")
-        print("=" * 80)
-
-        print("\n📊 OVERALL RESULTS:")
-        print(f"Compliance Level: {summary['compliance_level']}")
-        print(f"Overall Score: {summary['overall_compliance']:.1%}")
-        print(
-            f"Execution Time: {comprehensive_results['execution_time_seconds']:.1f} seconds"
-        )
-
-        print("\n📋 DETAILED BREAKDOWN:")
-        print(f"Static Compliance: {summary['static_compliance']:.1%}")
-        print(f"Functional Tests: {summary['functional_pass_rate']:.1%}")
-        print(f"Integration Tests: {summary['integration_pass_rate']:.1%}")
-
-        print("\n🎯 COVERAGE:")
-        print(f"Agents Tested: {summary['total_agents_tested']}")
-        print(f"Test Categories: {summary['test_categories_completed']}")
-
         # Display recommendations based on compliance level
-        if summary["overall_compliance"] < 0.70:
-            print("\n🚨 CRITICAL ACTIONS REQUIRED:")
-            print("- Immediate manual intervention needed")
-            print("- Apply workspace protocol template to non-compliant agents")
-            print("- Re-run validation after fixes")
-        elif summary["overall_compliance"] < 0.85:
-            print("\n⚠️  IMPROVEMENT RECOMMENDATIONS:")
-            print("- Review failed test cases")
-            print("- Update agent configurations")
-            print("- Focus on functional test improvements")
+        if summary["overall_compliance"] < 0.70 or summary["overall_compliance"] < 0.85:
+            pass
         else:
-            print("\n✅ EXCELLENT COMPLIANCE:")
-            print("- Workspace protocol successfully implemented")
-            print("- System ready for production use")
-            print("- Recommend continuous monitoring")
-
-        print("\n" + "=" * 80)
+            pass
 
 
 def main():
@@ -652,8 +603,6 @@ def main():
     )
     with open(results_file, "w") as f:
         json.dump(results, f, indent=2, default=str)
-
-    print(f"\n📁 Detailed results saved to: {results_file}")
 
     return results
 

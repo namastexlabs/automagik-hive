@@ -1,4 +1,4 @@
-"""Startup Notifications
+"""Startup Notifications.
 
 Handles notifications when the server starts up and shuts down.
 """
@@ -11,7 +11,7 @@ from .notifications import NotificationLevel, send_notification
 
 
 async def send_startup_notification(startup_display=None):
-    """Send enhanced notification when server starts"""
+    """Send enhanced notification when server starts."""
     try:
         # Add a small delay to ensure MCP connection manager is ready
         await asyncio.sleep(0.5)
@@ -36,7 +36,7 @@ async def send_startup_notification(startup_display=None):
 
 
 def _build_startup_message(startup_display=None):
-    """Build rich startup notification message"""
+    """Build rich startup notification message."""
     from datetime import datetime
 
     from lib.config.server_config import get_server_config
@@ -138,7 +138,7 @@ def _build_startup_message(startup_display=None):
 
 
 async def send_shutdown_notification():
-    """Send notification when server shuts down"""
+    """Send notification when server shuts down."""
     try:
         # Use asyncio.create_task to isolate the notification sending
         async def isolated_send():
@@ -157,7 +157,7 @@ async def send_shutdown_notification():
 
 
 async def send_error_notification(error_message: str, source: str = "server-error"):
-    """Send notification when server encounters an error"""
+    """Send notification when server encounters an error."""
     try:
         await send_notification(
             title="Automagik Hive Server Error",
@@ -171,7 +171,7 @@ async def send_error_notification(error_message: str, source: str = "server-erro
 
 
 async def send_mcp_server_error(server_name: str, error_message: str):
-    """Send notification when MCP server encounters an error"""
+    """Send notification when MCP server encounters an error."""
     try:
         await send_notification(
             title=f"MCP Server Error: {server_name}",
@@ -185,7 +185,7 @@ async def send_mcp_server_error(server_name: str, error_message: str):
 
 
 async def send_health_check_notification(component: str, status: str, message: str):
-    """Send notification for health check results"""
+    """Send notification for health check results."""
     try:
         level = (
             NotificationLevel.INFO if status == "healthy" else NotificationLevel.WARNING
@@ -206,7 +206,7 @@ async def send_health_check_notification(component: str, status: str, message: s
 async def notify_system_event(
     title: str, message: str, level: NotificationLevel = NotificationLevel.INFO
 ):
-    """Generic system event notification"""
+    """Generic system event notification."""
     try:
         await send_notification(
             title=title, message=message, source="system-event", level=level
@@ -219,7 +219,7 @@ async def notify_system_event(
 async def notify_critical_error(
     title: str, message: str, source: str = "critical-error"
 ):
-    """Critical error notification"""
+    """Critical error notification."""
     try:
         await send_notification(
             title=title,
@@ -235,7 +235,7 @@ async def notify_critical_error(
 async def notify_performance_issue(
     component: str, metric: str, value: str, threshold: str
 ):
-    """Performance issue notification"""
+    """Performance issue notification."""
     try:
         await send_notification(
             title=f"Performance Issue: {component}",
@@ -249,7 +249,7 @@ async def notify_performance_issue(
 
 
 async def notify_user_action(action: str, user_id: str, details: str = ""):
-    """User action notification for important events"""
+    """User action notification for important events."""
     try:
         message = f"User {user_id} performed action: {action}"
         if details:
@@ -269,7 +269,7 @@ async def notify_user_action(action: str, user_id: str, details: str = ""):
 async def notify_security_event(
     event_type: str, message: str, source: str = "security"
 ):
-    """Security event notification"""
+    """Security event notification."""
     try:
         await send_notification(
             title=f"Security Event: {event_type}",
@@ -284,20 +284,20 @@ async def notify_security_event(
 
 # Quick notification shortcuts
 async def notify_info(title: str, message: str, source: str = "info"):
-    """Quick info notification"""
+    """Quick info notification."""
     await send_notification(title, message, source, NotificationLevel.INFO)
 
 
 async def notify_warning(title: str, message: str, source: str = "warning"):
-    """Quick warning notification"""
+    """Quick warning notification."""
     await send_notification(title, message, source, NotificationLevel.WARNING)
 
 
 async def notify_error(title: str, message: str, source: str = "error"):
-    """Quick error notification"""
+    """Quick error notification."""
     await send_notification(title, message, source, NotificationLevel.ERROR)
 
 
 async def notify_critical(title: str, message: str, source: str = "critical"):
-    """Quick critical notification"""
+    """Quick critical notification."""
     await send_notification(title, message, source, NotificationLevel.CRITICAL)

@@ -104,7 +104,7 @@ def clean_environment() -> Generator[None, None, None]:
     # Clear environment variables that might interfere with tests
     config_vars = [
         var
-        for var in os.environ.keys()
+        for var in os.environ
         if var.startswith("HIVE_")
         or var in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "LANGWATCH_API_KEY"]
     ]

@@ -52,7 +52,9 @@ class YAMLCacheManager:
     modification times.
     """
 
-    def __init__(self, max_cache_size: int = 1000, enable_hot_reload: bool = None):
+    def __init__(
+        self, max_cache_size: int = 1000, enable_hot_reload: bool | None = None
+    ):
         """
         Initialize the YAML cache manager.
 

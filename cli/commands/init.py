@@ -45,11 +45,6 @@ class InitCommands:
             True if initialization successful, False otherwise
         """
         # Display welcome message
-        print("\n🧞 Welcome to Automagik Hive Workspace Initialization!")
-        print("=" * 60)
-        print("This will guide you through setting up a new AI workspace")
-        print("with database, services, and configuration files.")
-        print("=" * 60)
 
         current_step = 0
 
@@ -113,20 +108,11 @@ class InitCommands:
             )
 
             # Show service startup instructions
-            print("\n🚀 Next Steps - Start Your Services:")
-            print("=" * 40)
             for service in container_services:
-                if service == "postgres" and postgres_config["type"] == "docker":
-                    print("📁 PostgreSQL: Already started via Docker Compose")
-                elif service == "agent":
-                    print(
-                        f"🤖 Agent Environment: uvx automagik-hive --agent-serve {workspace_path}"
-                    )
-                elif service == "genie":
-                    print(
-                        f"🧞 Genie Assistant: uvx automagik-hive --genie-serve {workspace_path}"
-                    )
-            print("\n💡 Tip: You can also use the generated start.sh script!")
+                if (
+                    service == "postgres" and postgres_config["type"] == "docker"
+                ) or service in {"agent", "genie"}:
+                    pass
 
             # Step 9: Comprehensive workspace validation
             current_step += 1
@@ -142,9 +128,7 @@ class InitCommands:
                 pass
 
             if not is_valid:
-                print(
-                    "⚠️ Some validation issues found, but continuing with initialization..."
-                )
+                pass
 
             # Step 10: Enhanced success message with next steps
             current_step += 1
@@ -193,35 +177,26 @@ class InitCommands:
                 workspace_path = secure_resolve_workspace(workspace_name)
             else:
                 # Interactive workspace name input with platform-specific examples
-                example = self._get_platform_specific_example()
-                print("\n📁 Workspace Path Setup")
-                print("Enter the path where you'd like to create your workspace.")
-                print(f"Example: {example}")
-                print()
+                self._get_platform_specific_example()
 
                 while True:
                     name = input("Workspace path: ").strip()
                     if not name:
-                        print("❌ Please enter a workspace path.")
                         continue
                     try:
                         # Secure validation of user input
                         workspace_path = secure_resolve_workspace(name)
                         break
                     except SecurityError:
-                        print("❌ Invalid path. Please enter a valid workspace path.")
                         continue
 
             # Enhanced directory existence check
             if workspace_path.exists():
                 if any(workspace_path.iterdir()):
-                    print(
-                        f"📁 Directory '{workspace_path}' already exists - merging configuration"
-                    )
                     # Check for permission issues with existing files
                     self._check_and_fix_permissions(workspace_path)
                 else:
-                    print(f"📁 Using existing empty directory '{workspace_path}'")
+                    pass
 
             return workspace_path
         except SecurityError:
@@ -242,28 +217,18 @@ class InitCommands:
 
     def _select_container_services(self) -> list[str]:
         """Interactive container services selection."""
-        print("\n🐳 Services")
-        print("1. PostgreSQL only")
-        print("2. Full suite (PostgreSQL + Agent + Genie)")
-        print("3. Custom selection")
-
         while True:
             try:
                 choice = input("Enter your choice (1-3): ").strip()
 
                 if choice == "1":
-                    print("✅ Selected: Basic PostgreSQL setup")
                     return ["postgres"]
                 if choice == "2":
-                    print("✅ Selected: Full development suite")
                     return ["postgres", "agent", "genie"]
                 if choice == "3":
-                    print("✅ Selected: Custom service selection")
                     return self._custom_service_selection()
-                print("❌ Invalid choice. Please enter 1, 2, or 3.")
 
             except (EOFError, KeyboardInterrupt):
-                print("\n⚠️ Using default: Basic PostgreSQL setup")
                 return ["postgres"]  # Default to basic PostgreSQL
 
     def _custom_service_selection(self) -> list[str]:
@@ -307,7 +272,6 @@ class InitCommands:
                     test_file.touch()
                     test_file.unlink()  # Remove test file
                 except PermissionError:
-                    print("🔧 Fixing data directory permissions...")
                     # Automatically attempt to fix permissions
                     try:
                         # SECURITY: Use secure subprocess call with validation
@@ -328,44 +292,34 @@ class InitCommands:
                         )
 
                         if result.returncode == 0:
-                            print("✅ Permissions fixed successfully")
+                            pass
                         else:
-                            print("⚠️ Permission fix failed, but continuing...")
+                            pass
                     except (SecurityError, subprocess.SubprocessError):
-                        print("⚠️ Permission fix failed, but continuing...")
+                        pass
                     except Exception:
-                        print("⚠️ Permission fix failed, but continuing...")
+                        pass
 
         except Exception:
             pass
 
     def _setup_postgres_interactively(self) -> dict[str, str] | None:
         """Interactive PostgreSQL setup with user choice."""
-        print("\n🗄️ PostgreSQL Setup")
-        print("1. Docker PostgreSQL (Recommended)")
-        print("2. External PostgreSQL")
-        print("3. Manual Configuration")
-
         while True:
             try:
                 choice = input("Enter your choice (1-3): ").strip()
 
                 if choice == "1":
-                    print("✅ Selected: Docker PostgreSQL setup")
                     return self._setup_docker_postgres()
                 if choice == "2":
-                    print("✅ Selected: External PostgreSQL connection")
                     return self._setup_external_postgres()
                 if choice == "3":
-                    print("✅ Selected: Manual configuration")
                     return {
                         "type": "manual",
                         "database_url": "postgresql+psycopg://user:pass@localhost:5432/hive",
                     }
-                print("❌ Invalid choice. Please enter 1, 2, or 3.")
 
             except (EOFError, KeyboardInterrupt):
-                print("\n⚠️ Setup cancelled")
                 return None
 
     def _setup_docker_postgres(self) -> dict[str, str] | None:
@@ -585,7 +539,7 @@ class InitCommands:
                     api_keys["langwatch_api_key"] = langwatch_key
                     api_keys["langwatch_enabled"] = "true"
                 else:
-                    print("⚠️ LangWatch API key required for monitoring")
+                    pass
             else:
                 api_keys["langwatch_enabled"] = "false"
 
@@ -783,9 +737,8 @@ HIVE_DEV_MODE=true
                     unified_agent_template,
                     agent_docker_dir / "docker-compose.unified.yml",
                 )
-                print("✅ Copied unified agent compose file")
             else:
-                print("⚠️ Unified agent template not found, using fallback")
+                pass
 
             # Copy unified container build files for agent
             self._copy_unified_container_files("agent", workspace_path, credentials)
@@ -806,9 +759,8 @@ HIVE_DEV_MODE=true
                     unified_genie_template,
                     genie_docker_dir / "docker-compose.unified.yml",
                 )
-                print("✅ Copied unified genie compose file")
             else:
-                print("⚠️ Unified genie template not found, using fallback")
+                pass
 
             # Copy unified container build files for genie
             self._copy_unified_container_files("genie", workspace_path, credentials)
@@ -1142,7 +1094,6 @@ Thumbs.db
                         test_file.touch()
                         test_file.unlink()
                     except (PermissionError, OSError):
-                        print(f"🧹 Cleaning up data directory: {subdir}")
                         # Remove problematic directory
                         try:
                             import shutil
@@ -1360,9 +1311,6 @@ echo 🎉 Workspace started successfully!
     ) -> bool:
         """Start Docker containers and configure other services."""
         try:
-            print("\n🚀 Starting services...")
-            print("=" * 30)
-
             success = True
 
             # Change to workspace directory for docker-compose
@@ -1375,7 +1323,6 @@ echo 🎉 Workspace started successfully!
             try:
                 for service in container_services:
                     if service == "postgres" and postgres_config["type"] == "docker":
-                        print("🗄️ Starting PostgreSQL container...")
                         result = secure_subprocess_call(
                             [
                                 "docker",
@@ -1389,15 +1336,11 @@ echo 🎉 Workspace started successfully!
                             timeout=120,
                         )
                         if result.returncode == 0:
-                            print("✅ PostgreSQL container started successfully")
+                            pass
                         else:
-                            print(
-                                f"❌ Failed to start PostgreSQL container: {result.stderr}"
-                            )
                             success = False
 
                     elif service == "agent":
-                        print("🤖 Starting Agent Database Container...")
                         # Check if the compose file exists
                         agent_compose_file = (
                             workspace_path
@@ -1406,12 +1349,6 @@ echo 🎉 Workspace started successfully!
                             / "docker-compose.unified.yml"
                         )
                         if not agent_compose_file.exists():
-                            print(
-                                f"❌ Agent compose file not found: {agent_compose_file}"
-                            )
-                            print(
-                                "💡 Make sure you selected agent service during initialization"
-                            )
                             success = False
                             continue
 
@@ -1430,18 +1367,11 @@ echo 🎉 Workspace started successfully!
                             timeout=120,
                         )
                         if result.returncode == 0:
-                            print("✅ Agent Database Container started on port 35532")
+                            pass
                         else:
-                            print(
-                                f"⚠️ Failed to start Agent container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}"
-                            )
-                            print(
-                                "💡 Check that docker/agent/docker-compose.unified.yml contains the correct service definition"
-                            )
                             success = False
 
                     elif service == "genie":
-                        print("🧞 Starting Genie Database Container...")
                         # Check if the compose file exists
                         genie_compose_file = (
                             workspace_path
@@ -1450,12 +1380,6 @@ echo 🎉 Workspace started successfully!
                             / "docker-compose.unified.yml"
                         )
                         if not genie_compose_file.exists():
-                            print(
-                                f"❌ Genie compose file not found: {genie_compose_file}"
-                            )
-                            print(
-                                "💡 Make sure you selected genie service during initialization"
-                            )
                             success = False
                             continue
 
@@ -1474,35 +1398,26 @@ echo 🎉 Workspace started successfully!
                             timeout=120,
                         )
                         if result.returncode == 0:
-                            print("✅ Genie Database Container started on port 48532")
+                            pass
                         else:
-                            print(
-                                f"⚠️ Failed to start Genie container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}"
-                            )
-                            print(
-                                "💡 Check that docker/genie/docker-compose.unified.yml contains the correct service definition"
-                            )
                             success = False
 
             finally:
                 os.chdir(original_cwd)
 
             if success:
-                print("🎉 All selected services started successfully!")
+                pass
             else:
-                print("⚠️ Some services failed to start")
+                pass
 
             return success
 
-        except Exception as e:
-            print(f"❌ Error starting containers: {e}")
+        except Exception:
             return False
 
     def _cleanup_existing_containers(self):
         """Clean up existing containers and networks to prevent conflicts."""
         try:
-            print("🧹 Cleaning up existing containers and networks...")
-
             # Stop and remove existing hive containers (both old and new architectures)
             containers_to_remove = [
                 "hive-postgres-workspace",
@@ -1547,8 +1462,6 @@ echo 🎉 Workspace started successfully!
                     # Network might not exist or be in use, continue
                     pass
 
-            print("✅ Cleanup completed")
-
         except Exception:
             # Don't fail initialization if cleanup fails
-            print("⚠️ Cleanup had some issues, but continuing...")
+            pass

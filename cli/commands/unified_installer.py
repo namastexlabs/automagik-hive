@@ -1,5 +1,4 @@
-"""
-Unified installer for Automagik Hive - Enhanced Phase 2 Implementation.
+"""Unified installer for Automagik Hive - Enhanced Phase 2 Implementation.
 
 Handles install → start → health → workspace workflow with:
 - Complete workflow orchestration integration via WorkflowOrchestrator
@@ -13,9 +12,8 @@ Handles install → start → health → workspace workflow with:
 from __future__ import annotations
 
 import subprocess
-import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from loguru import logger
 from rich.console import Console
@@ -29,8 +27,7 @@ from .workflow_orchestrator import WorkflowOrchestrator
 
 
 class UnifiedInstaller:
-    """
-    Unified installer that executes the complete deployment workflow.
+    """Unified installer that executes the complete deployment workflow.
 
     Enhanced Phase 2 implementation with workflow orchestration integration,
     providing seamless progression through all deployment phases with
@@ -45,8 +42,7 @@ class UnifiedInstaller:
         self.workflow_orchestrator = WorkflowOrchestrator()
 
     def install_with_workflow(self, component: str = "all") -> bool:
-        """
-        Execute full install → start → health → workspace workflow.
+        """Execute full install → start → health → workspace workflow.
 
         Enhanced Phase 2 implementation using WorkflowOrchestrator for
         comprehensive state machine-driven deployment with error recovery.
@@ -82,11 +78,10 @@ class UnifiedInstaller:
                     )
                 )
                 return True
-            else:
-                # Display workflow status for troubleshooting
-                status = self.workflow_orchestrator.get_workflow_status()
-                self._display_failure_recovery_options(status)
-                return False
+            # Display workflow status for troubleshooting
+            status = self.workflow_orchestrator.get_workflow_status()
+            self._display_failure_recovery_options(status)
+            return False
 
         except KeyboardInterrupt:
             self.console.print("\n⏹️ [yellow]Installation cancelled by user[/yellow]")
@@ -99,8 +94,7 @@ class UnifiedInstaller:
             return False
 
     def rollback_installation(self, component: str = "all") -> bool:
-        """
-        Rollback partial installation to clean state.
+        """Rollback partial installation to clean state.
 
         Args:
             component: Component to rollback ('all', 'workspace', 'agent', 'genie')
@@ -147,9 +141,8 @@ class UnifiedInstaller:
             self.console.print(f"❌ [bold red]Rollback failed:[/bold red] {e}")
             return False
 
-    def get_installation_status(self) -> Dict[str, Any]:
-        """
-        Get current installation status and progress.
+    def get_installation_status(self) -> dict[str, Any]:
+        """Get current installation status and progress.
 
         Returns:
             dict: Comprehensive installation status
@@ -157,8 +150,7 @@ class UnifiedInstaller:
         return self.workflow_orchestrator.get_workflow_status()
 
     def validate_installation_requirements(self, component: str = "all") -> bool:
-        """
-        Validate installation requirements before starting.
+        """Validate installation requirements before starting.
 
         Args:
             component: Component to validate requirements for
@@ -184,7 +176,7 @@ class UnifiedInstaller:
 
     # Enhanced error handling and recovery methods
 
-    def _display_failure_recovery_options(self, status: Dict[str, Any]) -> None:
+    def _display_failure_recovery_options(self, status: dict[str, Any]) -> None:
         """Display failure analysis and recovery options."""
         self.console.print(
             Panel.fit(
@@ -235,7 +227,7 @@ class UnifiedInstaller:
         try:
             # Start uvx process
             cmd = ["uvx", "automagik-hive", "serve"]
-            process = subprocess.Popen(
+            subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -406,10 +398,7 @@ class UnifiedInstaller:
                     return False
 
             # Generate docker-compose.yml with appropriate profiles
-            if not self._create_docker_compose_file(component):
-                return False
-
-            return True
+            return self._create_docker_compose_file(component)
 
         except Exception as e:
             logger.error(f"Configuration generation failed: {e}")
@@ -438,7 +427,7 @@ POSTGRES_USER=hive
 POSTGRES_PASSWORD=hive
 POSTGRES_DB=hive_core
 """,
-                ".env.agent": """# Agent Environment Configuration  
+                ".env.agent": """# Agent Environment Configuration
 HIVE_DATABASE_URL=postgresql://hive:hive@localhost:35532/hive_agent
 POSTGRES_USER=hive
 POSTGRES_PASSWORD=hive
@@ -446,7 +435,7 @@ POSTGRES_DB=hive_agent
 HIVE_API_PORT=38886
 """,
                 ".env.genie": """# Genie Environment Configuration
-HIVE_DATABASE_URL=postgresql://hive:hive@localhost:48532/hive_genie  
+HIVE_DATABASE_URL=postgresql://hive:hive@localhost:48532/hive_genie
 POSTGRES_USER=hive
 POSTGRES_PASSWORD=hive
 POSTGRES_DB=hive_genie
@@ -553,7 +542,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # Genie Stack  
+  # Genie Stack
   hive-genie-postgres:
     image: postgres:16-alpine
     profiles: ["genie", "all"]
@@ -689,7 +678,7 @@ services:
             if critical_issues == 0:
                 # All services healthy or just warnings - continue
                 return True
-            elif critical_issues <= total_services // 3:
+            if critical_issues <= total_services // 3:
                 # Less than 1/3 services unhealthy - show warning but continue
                 self.console.print(
                     Panel.fit(
@@ -701,18 +690,17 @@ services:
                     )
                 )
                 return True
-            else:
-                # Too many critical issues - stop workflow
-                self.console.print(
-                    Panel.fit(
-                        f"🚨 [red]Health check failed with {critical_issues} critical issues[/red]\n"
-                        "Installation workflow stopped to prevent further issues.\n"
-                        "Please address the problems above and try again.",
-                        title="Health Check Failed",
-                        border_style="red",
-                    )
+            # Too many critical issues - stop workflow
+            self.console.print(
+                Panel.fit(
+                    f"🚨 [red]Health check failed with {critical_issues} critical issues[/red]\n"
+                    "Installation workflow stopped to prevent further issues.\n"
+                    "Please address the problems above and try again.",
+                    title="Health Check Failed",
+                    border_style="red",
                 )
-                return False
+            )
+            return False
 
         except Exception as e:
             logger.error(f"Comprehensive health check failed: {e}")
@@ -758,13 +746,12 @@ services:
 
                 if choice == "1":
                     return self._initialize_new_workspace()
-                elif choice == "2":
+                if choice == "2":
                     return self._select_existing_workspace()
-                elif choice == "3":
+                if choice == "3":
                     self._show_skip_message()
                     return True
-                else:
-                    self.console.print("❌ Invalid choice. Please enter 1, 2, or 3.")
+                self.console.print("❌ Invalid choice. Please enter 1, 2, or 3.")
 
         except KeyboardInterrupt:
             self.console.print("\n⏭️ Workspace setup skipped.")
@@ -800,9 +787,8 @@ services:
                 self.console.print("✅ Workspace ready!")
                 self.console.print(f"\n🚀 Next: cd {workspace_name}")
                 return True
-            else:
-                self.console.print("❌ Workspace creation failed.")
-                return False
+            self.console.print("❌ Workspace creation failed.")
+            return False
 
         except Exception as e:
             logger.error(f"New workspace creation failed: {e}")
@@ -829,34 +815,29 @@ services:
             if self._validate_workspace(path):
                 self.console.print("✅ Valid workspace found!")
                 return True
-            else:
-                self.console.print(
-                    "❌ Invalid workspace (missing .env or docker-compose.yml)"
+            self.console.print(
+                "❌ Invalid workspace (missing .env or docker-compose.yml)"
+            )
+
+            # Offer to initialize existing folder
+            initialize = (
+                self.console.input(
+                    "\nWould you like to initialize this folder as a workspace? (y/N): "
                 )
+                .strip()
+                .lower()
+            )
 
-                # Offer to initialize existing folder
-                initialize = (
-                    self.console.input(
-                        "\nWould you like to initialize this folder as a workspace? (y/N): "
-                    )
-                    .strip()
-                    .lower()
-                )
+            if initialize in ["y", "yes"]:
+                self.console.print("✅ Initializing existing folder as workspace...")
+                success = self.init_commands.initialize_workspace(str(path))
 
-                if initialize in ["y", "yes"]:
-                    self.console.print(
-                        "✅ Initializing existing folder as workspace..."
-                    )
-                    success = self.init_commands.initialize_workspace(str(path))
-
-                    if success:
-                        self.console.print("✅ Workspace ready!")
-                        return True
-                    else:
-                        self.console.print("❌ Workspace initialization failed.")
-                        return False
-                else:
-                    return False
+                if success:
+                    self.console.print("✅ Workspace ready!")
+                    return True
+                self.console.print("❌ Workspace initialization failed.")
+                return False
+            return False
 
         except Exception as e:
             logger.error(f"Existing workspace selection failed: {e}")
@@ -878,11 +859,7 @@ services:
             # Check for essential workspace files
             required_files = [".env", "docker-compose.yml"]
 
-            for file_name in required_files:
-                if not (path / file_name).exists():
-                    return False
-
-            return True
+            return all((path / file_name).exists() for file_name in required_files)
 
         except Exception:
             return False

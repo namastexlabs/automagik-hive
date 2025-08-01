@@ -5,6 +5,7 @@ Comprehensive validation suite for AGNO team and agent configurations.
 Detects configuration drift, validates inheritance, and ensures compliance.
 """
 
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -132,7 +133,6 @@ class AGNOConfigValidator:
     def detect_configuration_drift(self) -> ValidationResult:
         """Detect configuration drift across teams and agents."""
         result = ValidationResult(is_valid=True, errors=[], warnings=[], suggestions=[])
-        drift_patterns = {}
 
         # Collect all configurations
         all_configs = self._collect_all_configurations()
@@ -298,10 +298,10 @@ class AGNOConfigValidator:
             except Exception:
                 continue
 
-        all_agents = set(
+        all_agents = {
             agent_path.parent.name
             for agent_path in self.agents_path.glob("*/config.yaml")
-        )
+        }
         orphaned_agents = all_agents - all_team_members
 
         if orphaned_agents:
@@ -388,10 +388,10 @@ class AGNOConfigValidator:
             except Exception:
                 continue
 
-        all_agents = set(
+        all_agents = {
             agent_path.parent.name
             for agent_path in self.agents_path.glob("*/config.yaml")
-        )
+        }
 
         return list(all_agents - all_team_members)
 
@@ -480,4 +480,4 @@ if __name__ == "__main__":
     else:
         result = validate_configurations(args.path, args.verbose)
 
-    exit(0 if result.is_valid else 1)
+    sys.exit(0 if result.is_valid else 1)

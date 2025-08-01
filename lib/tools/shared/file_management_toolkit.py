@@ -163,7 +163,7 @@ def create_text_file(
 
             # Verify content was written correctly
             written_size = file_path.stat().st_size
-            expected_size = len(content.encode(encoding))
+            len(content.encode(encoding))
 
             result_msg = f"✅ File created: {relative_path} ({written_size} bytes)"
 
@@ -178,11 +178,11 @@ def create_text_file(
 
             return result_msg
 
-        except Exception as write_error:
+        except Exception:
             # Cleanup temporary file if it exists
             if temp_file and os.path.exists(temp_file.name):
                 os.unlink(temp_file.name)
-            raise write_error
+            raise
 
     except Exception as e:
         return f"Error creating file '{relative_path}': {e!s}"
@@ -642,9 +642,7 @@ def insert_at_line(
         if insert_idx < 0:
             return "Error: line_number must be >= 1"
 
-        if insert_idx > total_lines:
-            # Allow inserting at end of file
-            insert_idx = total_lines
+        insert_idx = min(insert_idx, total_lines)
 
         # Prepare content to insert
         insert_lines = content.splitlines(keepends=True)
@@ -690,10 +688,7 @@ def _is_safe_path(path: str) -> bool:
 
     # Check for dangerous paths
     dangerous_patterns = ["/etc/", "/root/", "/home/", "C:\\", "/usr/", "/var/"]
-    if any(pattern in normalized for pattern in dangerous_patterns):
-        return False
-
-    return True
+    return not any(pattern in normalized for pattern in dangerous_patterns)
 
 
 def _get_file_info(file_path: Path) -> dict[str, Any]:

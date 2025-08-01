@@ -44,8 +44,7 @@ class AgentTester:
             # In a real implementation, this would invoke the agent through the Task tool
             return self._simulate_agent_execution(agent_name, task_prompt)
 
-        except Exception as e:
-            print(f"Error executing agent {agent_name}: {e}")
+        except Exception:
             return None
 
     def _simulate_agent_execution(self, agent_name: str, task_prompt: str) -> str:
@@ -73,7 +72,7 @@ class AgentTester:
                 content = f.read()
 
             # Parse agent metadata and configuration
-            config = {
+            return {
                 "exists": True,
                 "content": content,
                 "has_workspace_protocol": "WORKSPACE INTERACTION PROTOCOL" in content,
@@ -83,10 +82,7 @@ class AgentTester:
                 and "/genie/wishes/" in content,
             }
 
-            return config
-
-        except Exception as e:
-            print(f"Error reading agent config for {agent_name}: {e}")
+        except Exception:
             return {"exists": False}
 
     def _generate_simulated_response(
@@ -101,7 +97,7 @@ class AgentTester:
 
             [This would be a long response with content directly in the text
             instead of following the workspace protocol]
-            
+
             Let me create the necessary files and provide recommendations.
             """
 
@@ -283,8 +279,8 @@ lifecycle directories.
             try:
                 if os.path.exists(artifact_path):
                     os.unlink(artifact_path)
-            except Exception as e:
-                print(f"Warning: Could not clean up test artifact {artifact_path}: {e}")
+            except Exception:
+                pass
 
     def generate_compliance_report(self, results: dict[str, Any]) -> str:
         """Generate human-readable compliance report."""

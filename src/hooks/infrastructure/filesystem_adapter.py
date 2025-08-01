@@ -96,8 +96,7 @@ class FileSystemAdapter:
 
             return True
 
-        except Exception as e:
-            print(f"Warning: Failed to create bypass flag: {e}")
+        except Exception:
             return False
 
     def remove_bypass_flag(self) -> bool:
@@ -110,8 +109,7 @@ class FileSystemAdapter:
             if self.bypass_file.exists():
                 self.bypass_file.unlink()
             return True
-        except Exception as e:
-            print(f"Warning: Failed to remove bypass flag: {e}")
+        except Exception:
             return False
 
     def get_bypass_info(self) -> dict[str, Any] | None:
@@ -169,8 +167,8 @@ class FileSystemAdapter:
             with open(self.metrics_file, "w") as f:
                 json.dump(existing_metrics, f, indent=2)
 
-        except Exception as e:
-            print(f"Warning: Failed to record metrics: {e}")
+        except Exception:
+            pass
 
     def get_validation_metrics(self, days: int = 7) -> dict[str, Any]:
         """Get validation metrics for the specified number of days.
@@ -223,7 +221,6 @@ class FileSystemAdapter:
             }
 
         except Exception as e:
-            print(f"Warning: Failed to get metrics: {e}")
             return {"total_validations": 0, "error": str(e)}
 
     def _read_bypass_info(self) -> dict[str, Any] | None:

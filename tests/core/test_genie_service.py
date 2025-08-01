@@ -440,7 +440,7 @@ class TestGenieServiceContainerOperations:
         assert logs_dir.exists()
 
         # Should fail initially - volume validation not implemented
-        result = service.serve_genie(temp_workspace)
+        service.serve_genie(temp_workspace)
         assert mock_docker_operations.start_service.called
 
     def test_genie_container_supervisor_integration(
@@ -530,7 +530,7 @@ class TestGenieServiceCredentialManagement:
         if env_file.exists():
             # Check file permissions are secure
             file_mode = oct(env_file.stat().st_mode)[-3:]
-            assert file_mode == "600" or file_mode == "644"  # Secure permissions
+            assert file_mode in {"600", "644"}  # Secure permissions
 
     def test_credential_validation(self, temp_workspace):
         """Test Genie credential validation."""

@@ -8,7 +8,7 @@ and maps Git status codes to domain entities.
 import os
 import subprocess
 
-from ..domain.entities import FileChange, FileOperation
+from src.hooks.domain.entities import FileChange, FileOperation
 
 
 class GitAdapter:
@@ -72,9 +72,8 @@ class GitAdapter:
                     )
                     changes.append(change)
 
-                except ValueError as e:
+                except ValueError:
                     # Skip malformed lines but continue processing
-                    print(f"Warning: Skipping malformed Git status line: {line} ({e})")
                     continue
 
             return changes
@@ -238,7 +237,7 @@ class GitAdapter:
             return os.path.isdir(full_path)
 
         # For non-existent paths, assume directory if ends with /
-        return path.endswith("/") or path.endswith("\\")
+        return path.endswith(("/", "\\"))
 
     def get_current_branch(self) -> str:
         """Get name of current Git branch.

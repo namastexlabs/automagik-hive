@@ -37,7 +37,7 @@ This is a valid context file for workspace protocol testing.
 
 ## Requirements
 - Feature A implementation
-- Feature B integration  
+- Feature B integration
 - Quality validation
 
 ## Success Criteria

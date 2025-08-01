@@ -294,7 +294,7 @@ POSTGRES_PORT=5432
 HIVE_API_PORT=8886
 HIVE_API_KEY=valid_key
 
-# Database Configuration  
+# Database Configuration
 POSTGRES_PORT=5432
 POSTGRES_DB=hive
 """,
@@ -370,7 +370,7 @@ services:
     environment:
       - HIVE_API_PORT=8886
     command: uvicorn api.serve:app --host 0.0.0.0 --port 8886
-  
+
   postgres:
     image: postgres:15
     ports:
@@ -676,7 +676,7 @@ services:
       - "${HIVE_API_PORT}:8886"
     environment:
       - HIVE_API_PORT=${HIVE_API_PORT}
-  
+
   postgres:
     image: postgres:15
     ports:

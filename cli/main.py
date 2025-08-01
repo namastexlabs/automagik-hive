@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Automagik Hive CLI - Main Entry Point
+"""Automagik Hive CLI - Main Entry Point.
 
 PHASE 3 FINALIZED - Simplified 8-command structure for managing Automagik Hive components:
 - Exactly 8 core commands: install, init, start, stop, restart, status, health, logs, uninstall
@@ -11,7 +10,6 @@ PHASE 3 FINALIZED - Simplified 8-command structure for managing Automagik Hive c
 import argparse
 import sys
 from pathlib import Path
-from typing import Optional
 
 from cli.commands import LazyCommandLoader
 
@@ -118,9 +116,8 @@ Examples:
     return parser
 
 
-def validate_arguments(args: argparse.Namespace) -> tuple[bool, Optional[str]]:
+def validate_arguments(args: argparse.Namespace) -> tuple[bool, str | None]:
     """Simplified argument validation - Phase 3 finalized."""
-
     # Count active commands
     commands = [
         args.install,
@@ -166,14 +163,12 @@ def main() -> int:
     # Validate arguments
     is_valid, error_msg = validate_arguments(args)
     if not is_valid:
-        print(f"Error: {error_msg}", file=sys.stderr)
         return 1
 
     # Initialize command loader
     try:
         commands = LazyCommandLoader()
-    except Exception as e:
-        print(f"CLI initialization failed: {e}", file=sys.stderr)
+    except Exception:
         return 1
 
     try:
@@ -188,58 +183,55 @@ def main() -> int:
             )
 
         # The 8 core commands
-        elif args.install:
+        if args.install:
             return (
                 0
                 if commands.unified_installer.install_with_workflow(args.install)
                 else 1
             )
 
-        elif args.init is not None:
+        if args.init is not None:
             return (
                 0 if commands.workspace_manager.initialize_workspace(args.init) else 1
             )
 
-        elif args.start:
+        if args.start:
             return 0 if commands.service_manager.start_services(args.start) else 1
 
-        elif args.stop:
+        if args.stop:
             return 0 if commands.service_manager.stop_services(args.stop) else 1
 
-        elif args.restart:
+        if args.restart:
             return 0 if commands.service_manager.restart_services(args.restart) else 1
 
-        elif args.status:
+        if args.status:
             status = commands.service_manager.get_status(args.status)
-            for component, state in status.items():
-                print(f"{component}: {state}")
+            for component in status:
+                pass
             return 0 if all(v == "healthy" for v in status.values()) else 1
 
-        elif args.health:
+        if args.health:
             health = commands.unified_installer.health_check(args.health)
-            for component, is_healthy in health.items():
-                print(f"{component}: {'✅ healthy' if is_healthy else '❌ unhealthy'}")
+            for component in health:
+                pass
             return 0 if all(health.values()) else 1
 
-        elif args.logs is not None:
+        if args.logs is not None:
             component = args.logs[0] if args.logs else "all"
             lines = int(args.logs[1]) if len(args.logs) > 1 else 50
             return 0 if commands.service_manager.show_logs(component, lines) else 1
 
-        elif args.uninstall:
+        if args.uninstall:
             return 0 if commands.service_manager.uninstall(args.uninstall) else 1
 
         # No command - show help
-        else:
-            parser.print_help()
-            return 0
+        parser.print_help()
+        return 0
 
     except KeyboardInterrupt:
-        print("\nCancelled", file=sys.stderr)
         return 130
 
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+    except Exception:
         return 1
 
 

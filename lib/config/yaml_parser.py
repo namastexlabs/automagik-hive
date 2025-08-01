@@ -11,8 +11,8 @@ from typing import Any
 import yaml
 
 from lib.logging import logger
+from lib.mcp.catalog import MCPCatalog
 
-from ..mcp.catalog import MCPCatalog
 from .schemas import AgentConfig, AgentConfigMCP, MCPToolConfig, TeamConfig
 
 

@@ -54,7 +54,7 @@ class ProviderRegistry:
             # Scan agno.models namespace for provider modules
             import agno.models
 
-            for importer, modname, ispkg in pkgutil.iter_modules(agno.models.__path__):
+            for _importer, modname, ispkg in pkgutil.iter_modules(agno.models.__path__):
                 # Skip internal modules, keep packages (actual providers)
                 if not modname.startswith("_") and ispkg:
                     providers.add(modname)

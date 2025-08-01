@@ -136,7 +136,7 @@ class TestMigrationStatusCheck:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
@@ -171,7 +171,7 @@ class TestMigrationStatusCheck:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
@@ -208,7 +208,7 @@ class TestMigrationStatusCheck:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
@@ -258,7 +258,7 @@ class TestMigrationStatusCheck:
         mock_script = Mock()
         mock_script.get_current_head.return_value = "head_revision_123"
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
@@ -287,7 +287,7 @@ class TestMigrationStatusCheck:
         with patch.object(
             service, "_get_alembic_config", side_effect=Exception("No URL")
         ):
-            with patch("lib.services.migration_service.logger") as mock_logger:
+            with patch("lib.services.migration_service.logger"):
                 result = await service.check_migration_status()
 
                 assert result["success"] is False
@@ -408,7 +408,7 @@ class TestMigrationExecution:
     @pytest.mark.asyncio
     async def test_run_migrations_alembic_command_error(self):
         """Test migration execution handles Alembic command errors."""
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.command.upgrade",
                 side_effect=Exception("Alembic error"),
@@ -432,7 +432,7 @@ class TestMigrationExecution:
         """Test migration execution handles database connection errors."""
         mock_script = Mock()
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch("lib.services.migration_service.command.upgrade"):
                 with patch(
                     "lib.services.migration_service.ScriptDirectory.from_config",
@@ -442,9 +442,7 @@ class TestMigrationExecution:
                         "sqlalchemy.create_engine",
                         side_effect=Exception("Connection failed"),
                     ):
-                        with patch(
-                            "lib.services.migration_service.logger"
-                        ) as mock_logger:
+                        with patch("lib.services.migration_service.logger"):
                             result = await self.service.run_migrations()
 
                             assert result["success"] is False
@@ -463,7 +461,7 @@ class TestMigrationExecution:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch("lib.services.migration_service.command.upgrade"):
                 with patch(
                     "lib.services.migration_service.ScriptDirectory.from_config",
@@ -474,9 +472,7 @@ class TestMigrationExecution:
                             "lib.services.migration_service.MigrationContext.configure",
                             side_effect=Exception("Context error"),
                         ):
-                            with patch(
-                                "lib.services.migration_service.logger"
-                            ) as mock_logger:
+                            with patch("lib.services.migration_service.logger"):
                                 result = await self.service.run_migrations()
 
                                 assert result["success"] is False
@@ -932,14 +928,14 @@ class TestErrorScenarios:
     @pytest.mark.asyncio
     async def test_sqlalchemy_import_error(self):
         """Test handling of SQLAlchemy import errors."""
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch("lib.services.migration_service.ScriptDirectory.from_config"):
                 # Mock import error for create_engine
                 with patch(
                     "sqlalchemy.create_engine",
                     side_effect=ImportError("SQLAlchemy not found"),
                 ):
-                    with patch("lib.services.migration_service.logger") as mock_logger:
+                    with patch("lib.services.migration_service.logger"):
                         result = await self.service.check_migration_status()
 
                         assert result["success"] is False
@@ -950,7 +946,7 @@ class TestErrorScenarios:
         """Test handling of database timeout errors."""
         import sqlalchemy.exc
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch("lib.services.migration_service.ScriptDirectory.from_config"):
                 with patch(
                     "sqlalchemy.create_engine",
@@ -958,7 +954,7 @@ class TestErrorScenarios:
                         "statement", "params", "orig"
                     ),
                 ):
-                    with patch("lib.services.migration_service.logger") as mock_logger:
+                    with patch("lib.services.migration_service.logger"):
                         result = await self.service.check_migration_status()
 
                         assert result["success"] is False
@@ -967,12 +963,12 @@ class TestErrorScenarios:
     @pytest.mark.asyncio
     async def test_alembic_script_directory_error(self):
         """Test handling of Alembic script directory errors."""
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 side_effect=Exception("Script directory not found"),
             ):
-                with patch("lib.services.migration_service.logger") as mock_logger:
+                with patch("lib.services.migration_service.logger"):
                     result = await self.service.check_migration_status()
 
                     assert result["success"] is False
@@ -1003,7 +999,7 @@ class TestDatabaseIntegrationPatterns:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
@@ -1078,7 +1074,7 @@ class TestDatabaseIntegrationPatterns:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(service, "_get_alembic_config") as mock_cfg:
+        with patch.object(service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
@@ -1120,7 +1116,7 @@ class TestConcurrencyAndThreadSafety:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
+        with patch.object(self.service, "_get_alembic_config"):
             with patch(
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
@@ -1156,10 +1152,8 @@ class TestConcurrencyAndThreadSafety:
         mock_context_manager.__exit__ = Mock(return_value=None)
         mock_engine.connect.return_value = mock_context_manager
 
-        with patch.object(self.service, "_get_alembic_config") as mock_cfg:
-            with patch(
-                "lib.services.migration_service.command.upgrade"
-            ) as mock_upgrade:
+        with patch.object(self.service, "_get_alembic_config"):
+            with patch("lib.services.migration_service.command.upgrade"):
                 with patch(
                     "lib.services.migration_service.ScriptDirectory.from_config",
                     return_value=mock_script,

@@ -235,7 +235,7 @@ class TestErrorHandlingPaths:
             # This would be executed during module import
             # We can test the logic directly
             try:
-                loop = asyncio.get_running_loop()
+                asyncio.get_running_loop()
             except RuntimeError:
                 # No event loop running, safe to run directly
                 try:
@@ -258,7 +258,7 @@ class TestErrorHandlingPaths:
 
             # Should handle errors gracefully
             try:
-                loop = asyncio.get_running_loop()
+                asyncio.get_running_loop()
             except RuntimeError:
                 try:
                     asyncio.run(mock_migrations())
@@ -327,7 +327,7 @@ class TestAsyncEventLoopHandling:
             asyncio.set_event_loop(new_loop)
             try:
                 # This simulates the thread execution pattern
-                result = new_loop.run_until_complete(asyncio.sleep(0))
+                new_loop.run_until_complete(asyncio.sleep(0))
                 return "success"
             finally:
                 new_loop.close()
