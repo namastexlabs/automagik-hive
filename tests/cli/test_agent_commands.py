@@ -10,11 +10,9 @@ Test Categories:
 - Cross-platform compatibility testing patterns
 """
 
-import os
-import subprocess
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -91,7 +89,7 @@ class TestAgentCommands:
         result = commands.install()
 
         # Should fail initially - default path resolution not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_agent_service.install_agent_environment.assert_called_once_with(expected_path)
         assert result is True
 
@@ -127,7 +125,7 @@ class TestAgentCommands:
         result = commands.serve()
 
         # Should fail initially - default workspace handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_agent_service.serve_agent.assert_called_once_with(expected_path)
         assert result is True
 
@@ -163,7 +161,7 @@ class TestAgentCommands:
         result = commands.stop()
 
         # Should fail initially - default workspace handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_agent_service.stop_agent.assert_called_once_with(expected_path)
         assert result is True
 
@@ -199,7 +197,7 @@ class TestAgentCommands:
         result = commands.restart()
 
         # Should fail initially - default workspace handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_agent_service.restart_agent.assert_called_once_with(expected_path)
         assert result is True
 
@@ -237,7 +235,7 @@ class TestAgentCommands:
         result = commands.logs()
 
         # Should fail initially - default parameter handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_agent_service.show_agent_logs.assert_called_once_with(expected_path, 50)
         assert result is True
 
@@ -327,7 +325,7 @@ class TestAgentCommands:
         result = commands.reset()
 
         # Should fail initially - default workspace handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_agent_service.reset_agent_environment.assert_called_once_with(expected_path)
         assert result is True
 
@@ -512,7 +510,7 @@ class TestAgentCommandsErrorHandling:
         )
 
         commands = AgentCommands()
-        
+
         # Should fail initially - exception handling not implemented
         with pytest.raises(FileNotFoundError):
             commands.install("/invalid/workspace/path")
@@ -524,7 +522,7 @@ class TestAgentCommandsErrorHandling:
         )
 
         commands = AgentCommands()
-        
+
         # Should fail initially - permission error handling not implemented
         with pytest.raises(PermissionError):
             commands.serve("/restricted/path")
@@ -537,7 +535,7 @@ class TestAgentCommandsErrorHandling:
         result = commands.stop(None)
 
         # Should fail initially - None handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_agent_service_with_exceptions.stop_agent.assert_called_once_with(expected_path)
         assert result is True
 
@@ -635,7 +633,7 @@ class TestAgentCommandsCrossPlatform:
             commands = AgentCommands()
             result = commands.restart("/Users/user/workspace")
 
-        # Should fail initially - macOS path handling not implemented  
+        # Should fail initially - macOS path handling not implemented
         assert result is True
         expected_path = str(Path("/Users/user/workspace").resolve())
         mock_service.restart_agent.assert_called_once_with(expected_path)
@@ -648,9 +646,9 @@ class TestAgentCommandsCrossPlatform:
             mock_service_class.return_value = mock_service
 
             commands = AgentCommands()
-            
+
             test_paths = [".", "..", "./workspace", "../workspace", "~/workspace"]
-            
+
             for test_path in test_paths:
                 # Should fail initially - relative path normalization not implemented
                 try:
@@ -671,7 +669,7 @@ class TestAgentCommandsCrossPlatform:
 
             commands = AgentCommands()
             unicode_path = "/tmp/测试工作空间"
-            
+
             # Should fail initially - Unicode path handling not implemented
             try:
                 result = commands.install(unicode_path)
@@ -697,7 +695,7 @@ class TestAgentCommandsPrintOutput:
             commands.install("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🤖 Installing agent environment in workspace" in captured.out
             assert "✅ Agent environment installation completed successfully" in captured.out
@@ -713,7 +711,7 @@ class TestAgentCommandsPrintOutput:
             commands.serve("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🚀 Starting agent server in workspace" in captured.out
             assert "✅ Agent server started successfully" in captured.out
@@ -729,7 +727,7 @@ class TestAgentCommandsPrintOutput:
             commands.stop("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🛑 Stopping agent server in workspace" in captured.out
             assert "✅ Agent server stopped successfully" in captured.out
@@ -745,7 +743,7 @@ class TestAgentCommandsPrintOutput:
             commands.restart("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🔄 Restarting agent server in workspace" in captured.out
             assert "✅ Agent server restarted successfully" in captured.out
@@ -761,7 +759,7 @@ class TestAgentCommandsPrintOutput:
             commands.logs("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "📋 Showing agent logs from workspace" in captured.out
 
@@ -780,7 +778,7 @@ class TestAgentCommandsPrintOutput:
                 commands.status("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - table formatting not implemented
             assert "📊 Agent Environment Status:" in captured.out
             assert "┌─────────────────────────┬──────────────────────────────────────┐" in captured.out
@@ -801,7 +799,7 @@ class TestAgentCommandsPrintOutput:
             commands.reset("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🔄 Resetting agent environment in workspace" in captured.out
             assert "✅ Agent environment reset completed successfully" in captured.out
@@ -818,7 +816,7 @@ class TestAgentCommandsPrintOutput:
             mock_service_class.return_value = mock_service
 
             commands = AgentCommands()
-            
+
             # Test all failure scenarios
             commands.install("test")
             commands.serve("test")
@@ -827,7 +825,7 @@ class TestAgentCommandsPrintOutput:
             commands.reset("test")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - error messages not implemented
             assert "❌ Agent environment installation failed" in captured.out
             assert "❌ Failed to start agent server" in captured.out

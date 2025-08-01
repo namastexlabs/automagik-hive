@@ -451,7 +451,7 @@ class DockerComposeManager:
         """
         if self._compose_cmd is not None:
             return self._compose_cmd
-            
+
         # Try modern 'docker compose' first (Docker v2+)
         try:
             result = subprocess.run(
@@ -463,17 +463,17 @@ class DockerComposeManager:
                 return self._compose_cmd
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             pass
-            
+
         # Fallback to legacy 'docker-compose'
         try:
             result = subprocess.run(
                 ["docker-compose", "--version"],
-                check=False, capture_output=True, text=True, timeout=5 
+                check=False, capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:
                 self._compose_cmd = ["docker-compose"]
                 return self._compose_cmd
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             pass
-            
+
         return None

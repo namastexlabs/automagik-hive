@@ -1,61 +1,44 @@
 # =============================================================================
-# Automagik Hive Genie Development Assistant - Docker Compose Configuration
+# Automagik Hive Genie All-in-One Container - Unified Architecture
 # =============================================================================
 #
-# All-in-one Genie consultation service with:
-# - Internal PostgreSQL database with pgvector extension
-# - FastAPI application for wish fulfillment orchestration
-# - Complete isolation from main workspace
-# - Port 48886 for Genie consultation API
+# Unified Genie consultation service with:
+# - Internal PostgreSQL database with pgvector extension (localhost:5432)
+# - FastAPI application for wish fulfillment orchestration (port 48886)
+# - Supervisord process management within single container
+# - Complete self-containment - no inter-container dependencies
+# - Eliminates "unhealthy" container issues from separate architecture
 #
 # Usage:
-#   docker-compose -f docker-compose-genie.yml up -d
+#   docker-compose -f docker/templates/genie.yml up -d
 #   uvx automagik-hive --genie-serve
 #
 # =============================================================================
 
-# Shared build arguments for consistent builds
-x-build-args: &build-args
-  BUILD_VERSION: ${BUILD_VERSION:-latest}
-  BUILD_DATE: ${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
-  GIT_SHA: ${GIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo "unknown")}
-  API_PORT: 48886
-
 services:
-  # Genie consultation service with integrated PostgreSQL
-  genie-server:
+  # Genie All-in-One Container - PostgreSQL + FastAPI Unified
+  genie-all-in-one:
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-        <<: *build-args
-      platforms:
-        - linux/amd64
-      target: production
-    container_name: hive-genie
+      dockerfile: docker/genie/Dockerfile.unified
+      target: genie-production
+    container_name: hive-genie-unified
     restart: unless-stopped
     ports:
       - "48886:48886"
     environment:
-      # Genie database connection (internal PostgreSQL)
-      - HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-genie}:${POSTGRES_PASSWORD:-genie}@genie-postgres:5432/${POSTGRES_DB:-hive_genie}
+      # Unified container configuration
+      - HIVE_SERVICE_MODE=genie  
+      - HIVE_API_PORT=48886
+      - HIVE_GENIE_ENABLED=true
       - RUNTIME_ENV=prd
       - HIVE_LOG_LEVEL=info
-      - HIVE_API_HOST=0.0.0.0
-      - HIVE_API_PORT=48886
-      - HIVE_API_WORKERS=${API_WORKERS:-2}
-      # Genie-specific configuration
-      - HIVE_SERVICE_MODE=genie
-      - HIVE_GENIE_ENABLED=true
       # Performance optimizations
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
-      - genie_app_logs:/app/logs
-      - genie_app_data:/app/data
-    depends_on:
-      genie-postgres:
-        condition: service_healthy
+      - ./data/postgres-genie:/var/lib/postgresql/data
+      - ./logs/genie:/var/log/hive
     networks:
       - genie_network
     healthcheck:
@@ -64,37 +47,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-  # Genie PostgreSQL database with pgvector extension
-  genie-postgres:
-    image: agnohq/pgvector:16
-    container_name: hive-postgres-genie
-    restart: unless-stopped
-    user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-genie}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-genie}
-      - POSTGRES_DB=hive_genie
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    volumes:
-      - ./data/postgres-genie:/var/lib/postgresql/data
-    command: >
-      postgres
-      -c max_connections=100
-      -c shared_buffers=128MB
-      -c effective_cache_size=512MB
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-    # Internal port only - no external exposure needed
-    expose:
-      - "5432"
-    networks:
-      - genie_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-genie}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 # Genie network configuration (isolated)
 networks:

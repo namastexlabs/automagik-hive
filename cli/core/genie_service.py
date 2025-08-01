@@ -5,7 +5,6 @@ for CLI commands, wrapping Docker Compose and process management functionality.
 """
 
 import os
-import secrets
 import subprocess
 import sys
 import time
@@ -32,10 +31,13 @@ class GenieService:
     """
 
     def __init__(self) -> None:
-        self.compose_manager = DockerComposeManager("docker/genie/docker-compose.yml")
-        self.genie_compose_file = "docker/genie/docker-compose.yml"
+        # Use unified container architecture
+        self.compose_manager = DockerComposeManager("docker/genie/docker-compose.unified.yml")
+        self.genie_compose_file = "docker/genie/docker-compose.unified.yml"
         self.genie_port = 48886
         self.logs_dir = Path("logs")
+        # Unified container uses single service name
+        self.genie_service_name = "genie-all-in-one"
 
     def serve_genie(self, workspace_path: str) -> bool:
         """Start Genie server using docker-compose (non-blocking).
@@ -55,8 +57,8 @@ class GenieService:
         except SecurityError:
             return False
 
-        # Check if already running
-        genie_status = self.compose_manager.get_service_status("genie-server", str(workspace))
+        # Check if already running (using unified service name)
+        genie_status = self.compose_manager.get_service_status(self.genie_service_name, str(workspace))
         if genie_status.name == "RUNNING":
             return True
 
@@ -72,12 +74,12 @@ class GenieService:
             True if stopped successfully, False otherwise
         """
         workspace = workspace_path or "."
-        genie_status = self.compose_manager.get_service_status("genie-server", workspace)
+        genie_status = self.compose_manager.get_service_status(self.genie_service_name, workspace)
 
         if genie_status.name != "RUNNING":
             return True
 
-        return bool(self.compose_manager.stop_service("genie-server", workspace))
+        return bool(self.compose_manager.stop_service(self.genie_service_name, workspace))
 
     def restart_genie(self, workspace_path: str) -> bool:
         """Restart Genie server using docker-compose.
@@ -88,7 +90,7 @@ class GenieService:
         Returns:
             True if restarted successfully, False otherwise
         """
-        return bool(self.compose_manager.restart_service("genie-server", workspace_path))
+        return bool(self.compose_manager.restart_service(self.genie_service_name, workspace_path))
 
     def show_genie_logs(
         self,
@@ -105,7 +107,7 @@ class GenieService:
             True if logs displayed, False otherwise
         """
         workspace = workspace_path or "."
-        logs = self.compose_manager.get_service_logs("genie-server", tail, workspace)
+        logs = self.compose_manager.get_service_logs(self.genie_service_name, tail, workspace)
 
         if logs:
             if logs.strip():
@@ -127,12 +129,14 @@ class GenieService:
         status = {}
         workspace = workspace_path or "."
 
-        # Check Genie server status using compose
-        genie_status = self.compose_manager.get_service_status("genie-server", workspace)
+        # Check unified Genie service status
+        genie_status = self.compose_manager.get_service_status(self.genie_service_name, workspace)
         if genie_status.name == "RUNNING":
-            status["genie-server"] = f"✅ Running (Port: {self.genie_port})"
+            status["genie-unified"] = f"✅ Running (Port: {self.genie_port})"
+            status["genie-postgres"] = "✅ Running (Built-in database)"
         else:
-            status["genie-server"] = "🛑 Stopped"
+            status["genie-unified"] = "🛑 Stopped"
+            status["genie-postgres"] = "🛑 Stopped"
 
         return status
 
@@ -149,36 +153,22 @@ class GenieService:
         return genie_compose_file.exists()
 
     def _start_genie_compose(self, workspace_path: str) -> bool:
-        """Start Genie server using docker-compose."""
+        """Start unified Genie container using docker-compose."""
         workspace = Path(workspace_path)
 
         try:
+            # Create data directories for persistence
+            self._setup_genie_data_directories(str(workspace))
+
             # Prepare environment variables
             env = os.environ.copy()
 
-            # Generate Genie-specific credentials
-            postgres_user = "genie"
-            postgres_password = secrets.token_urlsafe(16)
-            postgres_db = "hive_genie"
-
-            env.update({
-                "POSTGRES_USER": postgres_user,
-                "POSTGRES_PASSWORD": postgres_password,
-                "POSTGRES_DB": postgres_db,
-                "POSTGRES_UID": str(os.getuid() if hasattr(os, "getuid") else 1000),
-                "POSTGRES_GID": str(os.getgid() if hasattr(os, "getgid") else 1000),
-            })
-
-            # Create data directory
-            data_dir = workspace / "data" / "postgres-genie"
-            data_dir.mkdir(parents=True, exist_ok=True)
-
-            # Start Genie container
+            # Start unified Genie service
             cmd = [
                 "docker", "compose",
                 "-f", self.genie_compose_file,
                 "up", "-d",
-                "genie-server"
+                self.genie_service_name
             ]
 
             result = secure_subprocess_call(
@@ -189,11 +179,11 @@ class GenieService:
                 # Wait for service to be ready
                 time.sleep(5)
 
-                genie_status = self.compose_manager.get_service_status("genie-server", str(workspace))
+                genie_status = self.compose_manager.get_service_status(self.genie_service_name, str(workspace))
                 if genie_status.name == "RUNNING":
 
                     # Show startup logs
-                    logs = self.compose_manager.get_service_logs("genie-server", tail=20, workspace_path=str(workspace))
+                    logs = self.compose_manager.get_service_logs(self.genie_service_name, tail=20, workspace_path=str(workspace))
                     if logs and logs.strip():
                         pass
                     else:
@@ -206,7 +196,23 @@ class GenieService:
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError):
             return False
 
+    def _setup_genie_data_directories(self, workspace_path: str) -> bool:
+        """Setup data directories for unified Genie container."""
+        workspace = Path(workspace_path)
+
+        try:
+            # Create data directories
+            data_dir = workspace / "data" / "postgres-genie"
+            data_dir.mkdir(parents=True, exist_ok=True)
+
+            logs_dir = workspace / "logs" / "genie"
+            logs_dir.mkdir(parents=True, exist_ok=True)
+
+            return True
+        except OSError:
+            return False
+
     def _is_genie_running(self, workspace_path: str = ".") -> bool:
-        """Check if Genie server is running using docker-compose."""
-        genie_status = self.compose_manager.get_service_status("genie-server", workspace_path)
+        """Check if unified Genie container is running using docker-compose."""
+        genie_status = self.compose_manager.get_service_status(self.genie_service_name, workspace_path)
         return genie_status.name == "RUNNING"

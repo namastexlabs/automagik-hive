@@ -8,7 +8,6 @@ import base64
 import contextlib
 import json
 import os
-import re
 import secrets
 import shutil
 import subprocess
@@ -51,7 +50,7 @@ class InitCommands:
         print("This will guide you through setting up a new AI workspace")
         print("with database, services, and configuration files.")
         print("=" * 60)
-        
+
         current_step = 0
 
         try:
@@ -110,13 +109,13 @@ class InitCommands:
             # Step 8.5: Start all selected services
             current_step += 1
             self._start_docker_containers(workspace_path, container_services, postgres_config)
-            
+
             # Show service startup instructions
             print("\n🚀 Next Steps - Start Your Services:")
             print("=" * 40)
             for service in container_services:
                 if service == "postgres" and postgres_config["type"] == "docker":
-                    print(f"📁 PostgreSQL: Already started via Docker Compose")
+                    print("📁 PostgreSQL: Already started via Docker Compose")
                 elif service == "agent":
                     print(f"🤖 Agent Environment: uvx automagik-hive --agent-serve {workspace_path}")
                 elif service == "genie":
@@ -182,7 +181,7 @@ class InitCommands:
             else:
                 # Interactive workspace name input with platform-specific examples
                 example = self._get_platform_specific_example()
-                print(f"\n📁 Workspace Path Setup")
+                print("\n📁 Workspace Path Setup")
                 print("Enter the path where you'd like to create your workspace.")
                 print(f"Example: {example}")
                 print()
@@ -232,7 +231,7 @@ class InitCommands:
         print("1. PostgreSQL only")
         print("2. Full suite (PostgreSQL + Agent + Genie)")
         print("3. Custom selection")
-        
+
         while True:
             try:
                 choice = input("Enter your choice (1-3): ").strip()
@@ -246,8 +245,7 @@ class InitCommands:
                 if choice == "3":
                     print("✅ Selected: Custom service selection")
                     return self._custom_service_selection()
-                else:
-                    print("❌ Invalid choice. Please enter 1, 2, or 3.")
+                print("❌ Invalid choice. Please enter 1, 2, or 3.")
 
             except (EOFError, KeyboardInterrupt):
                 print("\n⚠️ Using default: Basic PostgreSQL setup")
@@ -332,9 +330,9 @@ class InitCommands:
         """Interactive PostgreSQL setup with user choice."""
         print("\n🗄️ PostgreSQL Setup")
         print("1. Docker PostgreSQL (Recommended)")
-        print("2. External PostgreSQL")  
+        print("2. External PostgreSQL")
         print("3. Manual Configuration")
-        
+
         while True:
             try:
                 choice = input("Enter your choice (1-3): ").strip()
@@ -351,8 +349,7 @@ class InitCommands:
                         "type": "manual",
                         "database_url": "postgresql+psycopg://user:pass@localhost:5432/hive",
                     }
-                else:
-                    print("❌ Invalid choice. Please enter 1, 2, or 3.")
+                print("❌ Invalid choice. Please enter 1, 2, or 3.")
 
             except (EOFError, KeyboardInterrupt):
                 print("\n⚠️ Setup cancelled")
@@ -737,91 +734,80 @@ HIVE_DEV_MODE=true
             pass
 
     def _create_docker_compose_files(
-        self, 
-        workspace_path: Path, 
+        self,
+        workspace_path: Path,
         credentials: dict[str, str],
         container_services: list[str],
         postgres_config: dict[str, str]
     ):
         """Create docker-compose files for selected services using templates."""
         template_dir = Path(__file__).parent.parent.parent / "docker" / "templates"
-        
+
         if not template_dir.exists():
             # Fallback to basic compose file
             self._create_basic_docker_compose_file(workspace_path, credentials)
             return
-        
+
         # Always create workspace compose for PostgreSQL
         if "postgres" in container_services:
             self._copy_and_customize_template(
                 template_dir / "workspace.yml",
-                workspace_path / "docker-compose.yml", 
-                credentials
-            )
-        
-        # Create agent compose file if selected
-        if "agent" in container_services:
-            self._copy_and_customize_template(
-                template_dir / "agent.yml",
-                workspace_path / "docker-compose-agent.yml",
-                credentials
-            )
-            
-        # Create genie compose file if selected  
-        if "genie" in container_services:
-            self._copy_and_customize_template(
-                template_dir / "genie.yml",
-                workspace_path / "docker-compose-genie.yml",
+                workspace_path / "docker-compose.yml",
                 credentials
             )
 
+        # Create agent directory structure and unified compose file if selected
+        if "agent" in container_services:
+            # Create docker/agent directory in workspace
+            agent_docker_dir = workspace_path / "docker" / "agent"
+            agent_docker_dir.mkdir(parents=True, exist_ok=True)
+
+            # Use the unified template (templates are already unified)
+            agent_template = template_dir / "agent.yml"
+
+            if agent_template.exists():
+                self._copy_and_customize_template(
+                    agent_template,
+                    agent_docker_dir / "docker-compose.unified.yml",
+                    credentials
+                )
+            
+            # Copy unified container build files for agent
+            self._copy_unified_container_files("agent", workspace_path, credentials)
+
+        # Create genie directory structure and unified compose file if selected
+        if "genie" in container_services:
+            # Create docker/genie directory in workspace
+            genie_docker_dir = workspace_path / "docker" / "genie"
+            genie_docker_dir.mkdir(parents=True, exist_ok=True)
+
+            # Use the unified template (templates are already unified)
+            genie_template = template_dir / "genie.yml"
+
+            if genie_template.exists():
+                self._copy_and_customize_template(
+                    genie_template,
+                    genie_docker_dir / "docker-compose.unified.yml",
+                    credentials
+                )
+            
+            # Copy unified container build files for genie
+            self._copy_unified_container_files("genie", workspace_path, credentials)
+
     def _copy_and_customize_template(
-        self, 
-        template_path: Path, 
-        dest_path: Path, 
+        self,
+        template_path: Path,
+        dest_path: Path,
         credentials: dict[str, str]
     ):
         """Copy template and customize with credentials."""
         try:
             if template_path.exists():
                 template_content = template_path.read_text()
-                
-                # Replace build sections with pre-built image for UVX distribution
-                if "build:" in template_content:
-                    # Replace build section with image for agent/genie services
-                    # Find and replace build sections while maintaining proper YAML indentation
-                    lines = template_content.split('\n')
-                    new_lines = []
-                    i = 0
-                    while i < len(lines):
-                        line = lines[i]
-                        if 'build:' in line:
-                            # Found build section, get the indentation level
-                            build_indent = len(line) - len(line.lstrip())
-                            # For UVX distribution, comment out complex services until Docker image is published
-                            new_lines.append(' ' * build_indent + '# Docker image not yet published - use local development instead')  
-                            new_lines.append(' ' * build_indent + '# image: agnohq/automagik-hive:latest')
-                            new_lines.append(' ' * build_indent + 'image: hello-world  # Placeholder - service disabled for UVX distribution')
-                            # Skip all build-related lines until we reach the next property at same or lesser indentation
-                            i += 1
-                            while i < len(lines):
-                                next_line = lines[i]
-                                if next_line.strip() == '':
-                                    # Skip empty lines
-                                    i += 1
-                                    continue
-                                next_indent = len(next_line) - len(next_line.lstrip())
-                                if next_indent <= build_indent and next_line.strip():
-                                    # Found next property at same or lesser indentation - stop skipping
-                                    break
-                                # Skip this line as it's part of the build section
-                                i += 1
-                            continue
-                        else:
-                            new_lines.append(line)
-                        i += 1
-                    template_content = '\n'.join(new_lines)
-                
+
+                # Keep build sections for unified containers - they need to be built locally
+                # The unified containers have proper Dockerfiles and should be built, not replaced with placeholders
+
                 # Replace template variables with actual credentials
                 if "postgres_user" in credentials:
                     template_content = template_content.replace(
@@ -842,7 +828,7 @@ HIVE_DEV_MODE=true
                     template_content = template_content.replace(
                         "${POSTGRES_PASSWORD:-genie}", credentials["postgres_password"]
                     )
-                
+
                 # Add user/group settings for proper permissions
                 import os
                 uid = os.getuid() if hasattr(os, "getuid") else 1000
@@ -850,7 +836,7 @@ HIVE_DEV_MODE=true
                 template_content = template_content.replace(
                     "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}", f"{uid}:{gid}"
                 )
-                
+
                 dest_path.write_text(template_content)
             else:
                 # Fallback for missing template
@@ -858,7 +844,52 @@ HIVE_DEV_MODE=true
         except Exception:
             # Fallback on any template processing error
             self._create_basic_docker_compose_file(dest_path.parent, credentials)
-    
+
+    def _copy_unified_container_files(
+        self,
+        service_type: str,
+        workspace_path: Path,
+        credentials: dict[str, str]
+    ):
+        """Copy all unified container build files to workspace."""
+        try:
+            # Source directory in the package
+            source_dir = Path(__file__).parent.parent.parent / "docker" / service_type
+            
+            # Destination directory in workspace
+            dest_dir = workspace_path / "docker" / service_type
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Files to copy for unified containers
+            files_to_copy = [
+                "Dockerfile.unified",
+                "supervisord.conf", 
+                "entrypoint.sh",
+                "health-monitor.sh",
+                "pg_hba.conf",
+                "postgresql.conf"
+            ]
+            
+            for filename in files_to_copy:
+                source_file = source_dir / filename
+                dest_file = dest_dir / filename
+                
+                if source_file.exists():
+                    # Copy file content and customize if needed
+                    content = source_file.read_text()
+                    
+                    # Make executable files executable
+                    if filename.endswith(".sh"):
+                        dest_file.write_text(content)
+                        dest_file.chmod(0o755)
+                    else:
+                        dest_file.write_text(content)
+                        
+        except Exception:
+            # Don't fail initialization if file copying fails
+            # The containers might still work with pre-built images
+            pass
+
     def _create_basic_docker_compose_file(
         self, workspace_path: Path, credentials: dict[str, str]
     ):
@@ -1088,7 +1119,7 @@ Thumbs.db
             # Create directories with explicit permissions
             for subdir in base_dirs:
                 dir_path = data_path / subdir
-                
+
                 # Remove existing directory if it has permission issues
                 if dir_path.exists():
                     try:
@@ -1104,12 +1135,12 @@ Thumbs.db
                             shutil.rmtree(dir_path)
                         except Exception:
                             pass
-                
+
                 # Create directory with proper permissions
                 dir_path.mkdir(parents=True, exist_ok=True)
                 # Set permissions to allow current user read/write/execute
                 dir_path.chmod(0o755)
-                
+
                 # For PostgreSQL directories, ensure proper ownership
                 if "postgres" in subdir:
                     try:
@@ -1317,16 +1348,16 @@ echo 🎉 Workspace started successfully!
         try:
             print("\n🚀 Starting services...")
             print("=" * 30)
-            
+
             success = True
-            
+
             # Change to workspace directory for docker-compose
             original_cwd = os.getcwd()
             os.chdir(workspace_path)
-            
+
             # Clean up any conflicting containers and networks first
             self._cleanup_existing_containers()
-            
+
             try:
                 for service in container_services:
                     if service == "postgres" and postgres_config["type"] == "docker":
@@ -1341,43 +1372,43 @@ echo 🎉 Workspace started successfully!
                         else:
                             print(f"❌ Failed to start PostgreSQL container: {result.stderr}")
                             success = False
-                    
+
                     elif service == "agent":
-                        print("🤖 Starting Agent Development Environment...")
+                        print("🤖 Starting Agent All-in-One Container...")
                         result = secure_subprocess_call(
-                            ["docker", "compose", "-f", "docker-compose-agent.yml", "up", "-d", "--remove-orphans"],
+                            ["docker", "compose", "-f", "docker/agent/docker-compose.unified.yml", "up", "-d", "agent-all-in-one", "--remove-orphans"],
                             capture_output=True,
                             timeout=120
                         )
                         if result.returncode == 0:
-                            print("✅ Agent Development Environment started on port 38886")
+                            print("✅ Agent All-in-One Container started on port 38886")
                         else:
-                            print(f"⚠️ Failed to start Agent environment: {result.stderr}")
+                            print(f"⚠️ Failed to start Agent container: {result.stderr}")
                             success = False
-                    
+
                     elif service == "genie":
-                        print("🧞 Starting Genie Development Assistant...")
+                        print("🧞 Starting Genie All-in-One Container...")
                         result = secure_subprocess_call(
-                            ["docker", "compose", "-f", "docker-compose-genie.yml", "up", "-d", "--remove-orphans"],
+                            ["docker", "compose", "-f", "docker/genie/docker-compose.unified.yml", "up", "-d", "genie-all-in-one", "--remove-orphans"],
                             capture_output=True,
                             timeout=120
                         )
                         if result.returncode == 0:
-                            print("✅ Genie Development Assistant started on port 48886")
+                            print("✅ Genie All-in-One Container started on port 48886")
                         else:
-                            print(f"⚠️ Failed to start Genie assistant: {result.stderr}")
+                            print(f"⚠️ Failed to start Genie container: {result.stderr}")
                             success = False
-                
+
             finally:
                 os.chdir(original_cwd)
-            
+
             if success:
                 print("🎉 All selected services started successfully!")
             else:
                 print("⚠️ Some services failed to start")
-            
+
             return success
-            
+
         except Exception as e:
             print(f"❌ Error starting containers: {e}")
             return False
@@ -1386,13 +1417,14 @@ echo 🎉 Workspace started successfully!
         """Clean up existing containers and networks to prevent conflicts."""
         try:
             print("🧹 Cleaning up existing containers and networks...")
-            
-            # Stop and remove existing hive containers
+
+            # Stop and remove existing hive containers (both old and new architectures)
             containers_to_remove = [
                 "hive-postgres-workspace", "hive-postgres-agent", "hive-postgres-genie",
-                "hive-agents-agent", "hive-genie"
+                "hive-agents-agent", "hive-genie", "hive-agent-dev-server",
+                "hive-agent-unified", "hive-genie-unified"
             ]
-            
+
             for container in containers_to_remove:
                 try:
                     # Stop container if running
@@ -1410,12 +1442,12 @@ echo 🎉 Workspace started successfully!
                 except Exception:
                     # Container might not exist, continue
                     pass
-            
+
             # Remove orphaned networks
             networks_to_remove = [
                 "hive_workspace_network", "hive_agent_network", "hive_genie_network"
             ]
-            
+
             for network in networks_to_remove:
                 try:
                     secure_subprocess_call(
@@ -1426,10 +1458,9 @@ echo 🎉 Workspace started successfully!
                 except Exception:
                     # Network might not exist or be in use, continue
                     pass
-                    
+
             print("✅ Cleanup completed")
-            
+
         except Exception:
             # Don't fail initialization if cleanup fails
             print("⚠️ Cleanup had some issues, but continuing...")
-            pass

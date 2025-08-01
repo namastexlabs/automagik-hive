@@ -11,24 +11,20 @@ Key Benefits:
 - No shell injection vulnerabilities
 """
 
-import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import docker
 from docker.errors import (
     APIError,
-    BuildError,
     ContainerError,
     DockerException,
     ImageNotFound,
     NotFound,
 )
 from docker.models.containers import Container
-from docker.models.services import Service
 
 
 class ContainerState(Enum):
@@ -50,10 +46,10 @@ class ContainerInfo:
     image: str
     state: ContainerState
     status: str
-    ports: Dict[str, Any]
-    labels: Dict[str, str]
+    ports: dict[str, Any]
+    labels: dict[str, str]
     created: str
-    started: Optional[str] = None
+    started: str | None = None
 
 
 @dataclass
@@ -62,8 +58,8 @@ class ServiceHealth:
     name: str
     container_id: str
     state: ContainerState
-    health_status: Optional[str]
-    last_health_check: Optional[str]
+    health_status: str | None
+    last_health_check: str | None
     is_ready: bool
 
 
@@ -98,7 +94,7 @@ class DockerSDKManager:
         """Check if Docker is available and SDK is connected."""
         return self._available and self.client is not None
 
-    def get_container_info(self, name_or_id: str) -> Optional[ContainerInfo]:
+    def get_container_info(self, name_or_id: str) -> ContainerInfo | None:
         """Get detailed container information using Docker SDK.
         
         Args:
@@ -112,9 +108,9 @@ class DockerSDKManager:
 
         try:
             container = self.client.containers.get(name_or_id)
-            
+
             # Parse state enum
-            state_str = container.attrs['State']['Status']
+            state_str = container.attrs["State"]["Status"]
             try:
                 state = ContainerState(state_str)
             except ValueError:
@@ -126,10 +122,10 @@ class DockerSDKManager:
                 image=container.image.tags[0] if container.image.tags else container.image.id[:12],
                 state=state,
                 status=container.status,
-                ports=container.attrs['NetworkSettings']['Ports'] or {},
+                ports=container.attrs["NetworkSettings"]["Ports"] or {},
                 labels=container.labels,
-                created=container.attrs['Created'],
-                started=container.attrs['State'].get('StartedAt')
+                created=container.attrs["Created"],
+                started=container.attrs["State"].get("StartedAt")
             )
 
         except NotFound:
@@ -142,13 +138,13 @@ class DockerSDKManager:
         self,
         image: str,
         name: str,
-        ports: Optional[Dict[str, int]] = None,
-        environment: Optional[Dict[str, str]] = None,
-        volumes: Optional[Dict[str, Dict[str, str]]] = None,
-        labels: Optional[Dict[str, str]] = None,
-        restart_policy: Optional[Dict[str, Any]] = None,
+        ports: dict[str, int] | None = None,
+        environment: dict[str, str] | None = None,
+        volumes: dict[str, dict[str, str]] | None = None,
+        labels: dict[str, str] | None = None,
+        restart_policy: dict[str, Any] | None = None,
         detach: bool = True
-    ) -> Optional[Container]:
+    ) -> Container | None:
         """Start container using Docker SDK.
         
         Args:
@@ -171,19 +167,18 @@ class DockerSDKManager:
             # Check if container already exists
             try:
                 existing = self.client.containers.get(name)
-                if existing.status == 'running':
+                if existing.status == "running":
                     print(f"✅ Container '{name}' already running")
                     return existing
-                else:
-                    print(f"🔄 Starting existing container '{name}'")
-                    existing.start()
-                    return existing
+                print(f"🔄 Starting existing container '{name}'")
+                existing.start()
+                return existing
             except NotFound:
                 pass  # Container doesn't exist, create new one
 
             # Create new container
             print(f"🚀 Creating container '{name}' from image '{image}'")
-            
+
             container = self.client.containers.run(
                 image=image,
                 name=name,
@@ -224,14 +219,14 @@ class DockerSDKManager:
 
         try:
             container = self.client.containers.get(name_or_id)
-            
-            if container.status != 'running':
+
+            if container.status != "running":
                 print(f"✅ Container '{name_or_id}' already stopped")
                 return True
 
             print(f"🛑 Stopping container '{name_or_id}' (timeout: {timeout}s)")
             container.stop(timeout=timeout)
-            
+
             print(f"✅ Container '{name_or_id}' stopped successfully")
             return True
 
@@ -257,10 +252,10 @@ class DockerSDKManager:
 
         try:
             container = self.client.containers.get(name_or_id)
-            
+
             print(f"🔄 Restarting container '{name_or_id}'")
             container.restart(timeout=timeout)
-            
+
             print(f"✅ Container '{name_or_id}' restarted successfully")
             return True
 
@@ -277,7 +272,7 @@ class DockerSDKManager:
         tail: int = 50,
         follow: bool = False,
         timestamps: bool = False
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get container logs using Docker SDK.
         
         Args:
@@ -294,15 +289,15 @@ class DockerSDKManager:
 
         try:
             container = self.client.containers.get(name_or_id)
-            
+
             logs = container.logs(
                 tail=tail,
                 follow=follow,
                 timestamps=timestamps,
                 stream=False  # Return as bytes, not generator
             )
-            
-            return logs.decode('utf-8', errors='replace')
+
+            return logs.decode("utf-8", errors="replace")
 
         except NotFound:
             print(f"❌ Container not found: {name_or_id}")
@@ -332,27 +327,27 @@ class DockerSDKManager:
 
         try:
             container = self.client.containers.get(name_or_id)
-            
+
             start_time = time.time()
             while time.time() - start_time < timeout:
                 # Reload container state
                 container.reload()
-                
-                state = container.attrs['State']
-                
+
+                state = container.attrs["State"]
+
                 # Check if container is running
-                if state['Status'] != 'running':
+                if state["Status"] != "running":
                     print(f"❌ Container '{name_or_id}' is not running: {state['Status']}")
                     return False
-                
+
                 # Check health if available
-                health = state.get('Health')
+                health = state.get("Health")
                 if health:
-                    health_status = health.get('Status')
-                    if health_status == 'healthy':
+                    health_status = health.get("Status")
+                    if health_status == "healthy":
                         print(f"✅ Container '{name_or_id}' is healthy")
                         return True
-                    elif health_status == 'unhealthy':
+                    if health_status == "unhealthy":
                         print(f"❌ Container '{name_or_id}' is unhealthy")
                         return False
                     # Still starting, continue waiting
@@ -360,9 +355,9 @@ class DockerSDKManager:
                     # No health check defined, just check if running
                     print(f"✅ Container '{name_or_id}' is running (no health check)")
                     return True
-                
+
                 time.sleep(check_interval)
-            
+
             print(f"⏰ Timeout waiting for container '{name_or_id}' to become healthy")
             return False
 
@@ -373,7 +368,7 @@ class DockerSDKManager:
             print(f"❌ Docker API error checking health: {e}")
             return False
 
-    def list_containers(self, all: bool = False) -> List[ContainerInfo]:
+    def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         """List containers using Docker SDK.
         
         Args:
@@ -387,11 +382,11 @@ class DockerSDKManager:
 
         try:
             containers = self.client.containers.list(all=all)
-            
+
             container_list = []
             for container in containers:
                 try:
-                    state_str = container.attrs['State']['Status']
+                    state_str = container.attrs["State"]["Status"]
                     try:
                         state = ContainerState(state_str)
                     except ValueError:
@@ -403,24 +398,24 @@ class DockerSDKManager:
                         image=container.image.tags[0] if container.image.tags else container.image.id[:12],
                         state=state,
                         status=container.status,
-                        ports=container.attrs['NetworkSettings']['Ports'] or {},
+                        ports=container.attrs["NetworkSettings"]["Ports"] or {},
                         labels=container.labels,
-                        created=container.attrs['Created'],
-                        started=container.attrs['State'].get('StartedAt')
+                        created=container.attrs["Created"],
+                        started=container.attrs["State"].get("StartedAt")
                     )
                     container_list.append(info)
-                    
+
                 except Exception as e:
                     print(f"⚠️ Warning: Could not parse container {container.name}: {e}")
                     continue
-            
+
             return container_list
 
         except APIError as e:
             print(f"❌ Docker API error listing containers: {e}")
             return []
 
-    def prune_containers(self) -> Dict[str, Any]:
+    def prune_containers(self) -> dict[str, Any]:
         """Remove stopped containers using Docker SDK.
         
         Returns:
@@ -431,10 +426,10 @@ class DockerSDKManager:
 
         try:
             result = self.client.containers.prune()
-            
-            deleted_count = len(result.get('ContainersDeleted', []))
-            space_reclaimed = result.get('SpaceReclaimed', 0)
-            
+
+            deleted_count = len(result.get("ContainersDeleted", []))
+            space_reclaimed = result.get("SpaceReclaimed", 0)
+
             print(f"🧹 Pruned {deleted_count} containers, reclaimed {space_reclaimed} bytes")
             return result
 
@@ -442,7 +437,7 @@ class DockerSDKManager:
             print(f"❌ Docker API error pruning containers: {e}")
             return {}
 
-    def get_service_health(self, service_name: str) -> Optional[ServiceHealth]:
+    def get_service_health(self, service_name: str) -> ServiceHealth | None:
         """Get comprehensive service health information.
         
         Args:
@@ -460,17 +455,17 @@ class DockerSDKManager:
 
         try:
             container = self.client.containers.get(service_name)
-            state = container.attrs['State']
-            health = state.get('Health', {})
-            
+            state = container.attrs["State"]
+            health = state.get("Health", {})
+
             return ServiceHealth(
                 name=service_name,
                 container_id=container_info.id,
                 state=container_info.state,
-                health_status=health.get('Status'),
-                last_health_check=health.get('Log', [{}])[-1].get('Start') if health.get('Log') else None,
-                is_ready=container_info.state == ContainerState.RUNNING and 
-                        (health.get('Status') in ['healthy', None])  # No health check or healthy
+                health_status=health.get("Status"),
+                last_health_check=health.get("Log", [{}])[-1].get("Start") if health.get("Log") else None,
+                is_ready=container_info.state == ContainerState.RUNNING and
+                        (health.get("Status") in ["healthy", None])  # No health check or healthy
             )
 
         except (NotFound, APIError) as e:
@@ -487,30 +482,29 @@ class DockerSDKManager:
 # Proof-of-concept usage examples
 def demonstrate_sdk_vs_subprocess():
     """Demonstrate Docker SDK advantages over subprocess calls."""
-    
     print("🧪 Docker SDK Proof-of-Concept Demonstration")
     print("=" * 50)
-    
+
     # Initialize SDK manager
     sdk = DockerSDKManager()
-    
+
     if not sdk.is_available:
         print("❌ Docker SDK not available - skipping demonstration")
         return False
-    
+
     print("✅ Docker SDK connected successfully")
-    
+
     # Example 1: List containers with rich metadata
     print("\n📋 Example 1: List containers with structured data")
     containers = sdk.list_containers(all=True)
-    
+
     for container in containers[:3]:  # Show first 3
         print(f"  🐳 {container.name}")
         print(f"     ID: {container.id}")
         print(f"     Image: {container.image}")
         print(f"     State: {container.state.value}")
         print(f"     Ports: {list(container.ports.keys())}")
-    
+
     # Example 2: Type-safe error handling
     print("\n🛡️ Example 2: Type-safe error handling")
     try:
@@ -520,23 +514,23 @@ def demonstrate_sdk_vs_subprocess():
             print("  ✅ Gracefully handled missing container (no exception thrown)")
     except Exception as e:
         print(f"  ❌ Unexpected error: {e}")
-    
+
     # Example 3: Programmatic access to container metadata
     print("\n🔍 Example 3: Rich container inspection")
-    postgres_containers = [c for c in containers if 'postgres' in c.name.lower()]
-    
+    postgres_containers = [c for c in containers if "postgres" in c.name.lower()]
+
     if postgres_containers:
         container = postgres_containers[0]
         print(f"  🐘 Found PostgreSQL container: {container.name}")
         print(f"     Created: {container.created}")
         print(f"     Labels: {container.labels}")
-        
+
         # Get service health
         health = sdk.get_service_health(container.name)
         if health:
             print(f"     Health Status: {health.health_status or 'No health check'}")
             print(f"     Ready: {health.is_ready}")
-    
+
     print("\n✅ Docker SDK demonstration completed")
     return True
 

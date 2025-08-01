@@ -12,13 +12,11 @@ This configuration supports:
 - Coverage validation and reporting
 """
 
-import os
 import shutil
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Generator
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -53,18 +51,18 @@ except ImportError:
 
 class TestEnvironmentManager:
     """Manages test environment setup and teardown."""
-    
+
     def __init__(self):
         self.temp_dirs = []
         self.mock_patches = []
         self.coverage_instance = None
-    
+
     def create_temp_workspace(self, name: str = "test-workspace") -> Path:
         """Create a temporary workspace directory."""
         temp_dir = tempfile.mkdtemp(prefix=f"cli_test_{name}_")
         self.temp_dirs.append(temp_dir)
         return Path(temp_dir)
-    
+
     def cleanup_temp_workspaces(self):
         """Clean up all temporary workspace directories."""
         for temp_dir in self.temp_dirs:
@@ -74,22 +72,22 @@ class TestEnvironmentManager:
             except Exception as e:
                 print(f"Warning: Failed to cleanup {temp_dir}: {e}")
         self.temp_dirs.clear()
-    
+
     def start_coverage_tracking(self):
         """Start coverage tracking for CLI modules."""
         if coverage is not None:
             self.coverage_instance = coverage.Coverage(
-                source=['cli'],
+                source=["cli"],
                 omit=[
-                    '*/tests/*',
-                    '*/test_*',
-                    '*/__pycache__/*',
-                    '*/venv/*',
-                    '*/.venv/*'
+                    "*/tests/*",
+                    "*/test_*",
+                    "*/__pycache__/*",
+                    "*/venv/*",
+                    "*/.venv/*"
                 ]
             )
             self.coverage_instance.start()
-    
+
     def stop_coverage_tracking(self) -> float:
         """Stop coverage tracking and return coverage percentage."""
         if self.coverage_instance:
@@ -103,18 +101,18 @@ class TestEnvironmentManager:
 def test_environment_manager():
     """Session-scoped test environment manager."""
     manager = TestEnvironmentManager()
-    
+
     # Start coverage tracking at session start
     manager.start_coverage_tracking()
-    
+
     yield manager
-    
+
     # Cleanup at session end
     coverage_percentage = manager.stop_coverage_tracking()
     manager.cleanup_temp_workspaces()
-    
+
     print(f"\n📊 CLI Test Coverage: {coverage_percentage:.2f}%")
-    
+
     # Enforce coverage threshold
     if coverage_percentage < 95.0:
         print(f"⚠️  Coverage {coverage_percentage:.2f}% below 95% threshold")
@@ -126,7 +124,7 @@ def test_environment_manager():
 def temp_workspace(test_environment_manager):
     """Create a temporary workspace directory for testing."""
     workspace = test_environment_manager.create_temp_workspace()
-    
+
     # Create basic workspace structure
     (workspace / "docker-compose.yml").write_text("""
 version: '3.8'
@@ -139,7 +137,7 @@ services:
       - HIVE_API_PORT=8886
     command: uvicorn api.serve:app --host 0.0.0.0 --port 8886
 """)
-    
+
     (workspace / ".env").write_text("""
 HIVE_API_PORT=8886
 HIVE_API_KEY=test_workspace_key_fixture
@@ -148,20 +146,20 @@ POSTGRES_DB=hive
 POSTGRES_USER=hive
 POSTGRES_PASSWORD=test_password_fixture
 """)
-    
+
     # Create data directories
     (workspace / "data").mkdir()
     (workspace / "logs").mkdir()
     (workspace / "backups").mkdir()
-    
-    yield workspace
+
+    return workspace
 
 
 @pytest.fixture
 def temp_workspace_postgres(test_environment_manager):
     """Create a temporary workspace with PostgreSQL configuration."""
     workspace = test_environment_manager.create_temp_workspace("postgres")
-    
+
     # Create PostgreSQL-focused docker-compose.yml
     (workspace / "docker-compose.yml").write_text("""
 version: '3.8'
@@ -182,7 +180,7 @@ services:
 volumes:
   postgres_data:
 """)
-    
+
     (workspace / ".env").write_text("""
 POSTGRES_PORT=35540
 POSTGRES_DB=hive_test
@@ -190,15 +188,15 @@ POSTGRES_USER=hive_test
 POSTGRES_PASSWORD=test_password_postgres
 HIVE_API_PORT=8886
 """)
-    
-    yield workspace
+
+    return workspace
 
 
 @pytest.fixture
 def temp_workspace_agent(test_environment_manager):
     """Create a temporary workspace with agent configuration."""
     workspace = test_environment_manager.create_temp_workspace("agent")
-    
+
     # Create agent-focused configuration
     (workspace / ".env.agent").write_text("""
 HIVE_API_PORT=38886
@@ -208,7 +206,7 @@ POSTGRES_USER=hive_agent
 POSTGRES_PASSWORD=agent_test_password
 HIVE_API_KEY=agent_test_key_fixture
 """)
-    
+
     # Create logs directory with sample log file
     logs_dir = workspace / "logs"
     logs_dir.mkdir()
@@ -217,8 +215,8 @@ HIVE_API_KEY=agent_test_key_fixture
 2024-01-01 10:00:01 INFO: Database connection established
 2024-01-01 10:00:02 INFO: Agent server ready on port 38886
 """)
-    
-    yield workspace
+
+    return workspace
 
 
 @pytest.fixture
@@ -226,7 +224,7 @@ def mock_docker_service():
     """Mock Docker service for comprehensive testing."""
     with patch("cli.core.docker_service.DockerService") as mock_docker_class:
         mock_docker = Mock()
-        
+
         # Configure default behaviors
         mock_docker.is_docker_available.return_value = True
         mock_docker.is_compose_file_valid.return_value = True
@@ -237,7 +235,7 @@ def mock_docker_service():
         mock_docker.start_container.return_value = True
         mock_docker.stop_container.return_value = True
         mock_docker.restart_container.return_value = True
-        
+
         # Configure status responses
         mock_docker.get_compose_status.return_value = {
             "app": {
@@ -249,7 +247,7 @@ def mock_docker_service():
                 "memory_usage": "128MB"
             },
             "postgres": {
-                "status": "running", 
+                "status": "running",
                 "health": "healthy",
                 "port": "5432",
                 "uptime": "1 hour",
@@ -257,14 +255,14 @@ def mock_docker_service():
                 "memory_usage": "64MB"
             }
         }
-        
+
         mock_docker.get_container_status.return_value = {
             "status": "running",
             "health": "healthy",
             "ports": ["8886:8886"],
             "uptime": "1 hour"
         }
-        
+
         # Configure logs
         mock_docker.get_compose_logs.return_value = {
             "app": [
@@ -273,15 +271,15 @@ def mock_docker_service():
             ],
             "postgres": [
                 "2024-01-01 10:00:00 LOG: Database initialized",
-                "2024-01-01 10:00:01 LOG: Ready to accept connections"  
+                "2024-01-01 10:00:01 LOG: Ready to accept connections"
             ]
         }
-        
+
         mock_docker.get_container_logs.return_value = """
 2024-01-01 10:00:00 INFO: Container started
 2024-01-01 10:00:01 INFO: Service ready
 """
-        
+
         mock_docker_class.return_value = mock_docker
         yield mock_docker
 
@@ -291,14 +289,14 @@ def mock_postgres_service():
     """Mock PostgreSQL service for comprehensive testing."""
     with patch("cli.core.postgres_service.PostgreSQLService") as mock_postgres_class:
         mock_postgres = Mock()
-        
+
         # Configure default behaviors
         mock_postgres.is_postgres_running.return_value = True
         mock_postgres.start_postgres.return_value = True
         mock_postgres.stop_postgres.return_value = True
         mock_postgres.restart_postgres.return_value = True
         mock_postgres.check_connection.return_value = True
-        
+
         # Configure connection info
         mock_postgres.get_connection_info.return_value = {
             "host": "localhost",
@@ -307,7 +305,7 @@ def mock_postgres_service():
             "user": "hive",
             "password": "test_password"
         }
-        
+
         # Configure status
         mock_postgres.get_postgres_status.return_value = {
             "status": "running",
@@ -316,7 +314,7 @@ def mock_postgres_service():
             "connections": 5,
             "uptime": "1 hour"
         }
-        
+
         mock_postgres_class.return_value = mock_postgres
         yield mock_postgres
 
@@ -333,9 +331,9 @@ def mock_all_services(mock_docker_service, mock_postgres_service):
 @pytest.fixture
 def mock_user_inputs():
     """Factory for creating mock user input sequences."""
-    def _create_input_mock(inputs: List[str]):
+    def _create_input_mock(inputs: list[str]):
         return patch("builtins.input", side_effect=inputs)
-    
+
     return _create_input_mock
 
 
@@ -346,29 +344,29 @@ def performance_timer():
         def __init__(self):
             self.start_time = None
             self.measurements = {}
-        
+
         def start(self, label: str = "default"):
             self.start_time = time.time()
             return self
-        
+
         def stop(self, label: str = "default", max_time: float = 10.0) -> float:
             if self.start_time is None:
                 raise ValueError("Timer not started")
-                
+
             elapsed = time.time() - self.start_time
             self.measurements[label] = elapsed
-            
+
             assert elapsed < max_time, f"Performance check failed: {label} took {elapsed:.3f}s (max: {max_time}s)"
-            
+
             self.start_time = None
             return elapsed
-        
-        def get_measurement(self, label: str) -> Optional[float]:
+
+        def get_measurement(self, label: str) -> float | None:
             return self.measurements.get(label)
-        
-        def get_all_measurements(self) -> Dict[str, float]:
+
+        def get_all_measurements(self) -> dict[str, float]:
             return self.measurements.copy()
-    
+
     return PerformanceTimer()
 
 
@@ -428,13 +426,13 @@ def cli_test_configuration():
                 "database_connection": 15.0,
                 "file_operations": 10.0
             }
-            
+
             self.coverage_thresholds = {
                 "minimum": 85.0,
                 "target": 95.0,
                 "excellent": 98.0
             }
-            
+
             self.test_data = {
                 "valid_api_keys": {
                     "OPENAI_API_KEY": "sk-test-openai-key-12345",
@@ -452,38 +450,38 @@ def cli_test_configuration():
                     "JWT_SECRET": "test_jwt_secret_abcdef"
                 }
             }
-            
+
             self.port_ranges = {
                 "api_ports": range(8880, 8900),
                 "postgres_ports": range(5430, 5450),
                 "agent_ports": range(38880, 38900),
                 "agent_postgres_ports": range(35530, 35550)
             }
-        
+
         def get_timeout(self, operation: str) -> float:
             return self.test_timeouts.get(operation, 30.0)
-        
+
         def get_coverage_threshold(self, level: str) -> float:
             return self.coverage_thresholds.get(level, 95.0)
-        
+
         def get_test_api_key(self, provider: str, valid: bool = True) -> str:
             source = self.test_data["valid_api_keys"] if valid else self.test_data["invalid_api_keys"]
             return source.get(provider, "")
-        
+
         def get_available_port(self, port_type: str) -> int:
             port_range = self.port_ranges.get(port_type, range(8000, 9000))
-            
+
             import socket
             for port in port_range:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     try:
-                        s.bind(('localhost', port))
+                        s.bind(("localhost", port))
                         return port
                     except OSError:
                         continue
-            
+
             raise RuntimeError(f"No available ports in range for {port_type}")
-    
+
     return CLITestConfig()
 
 
@@ -493,26 +491,26 @@ def workspace_factory(test_environment_manager):
     class WorkspaceFactory:
         def __init__(self, env_manager):
             self.env_manager = env_manager
-        
+
         def create_minimal_workspace(self, name: str = "minimal") -> Path:
             """Create minimal workspace with basic files."""
             workspace = self.env_manager.create_temp_workspace(name)
-            
+
             (workspace / "docker-compose.yml").write_text("""
 version: '3.8'
 services:
   app:
     image: python:3.11
 """)
-            
+
             (workspace / ".env").write_text("HIVE_API_PORT=8886\n")
-            
+
             return workspace
-        
+
         def create_postgres_workspace(self, name: str = "postgres", port: int = 5432) -> Path:
             """Create workspace with PostgreSQL configuration."""
             workspace = self.env_manager.create_temp_workspace(name)
-            
+
             (workspace / "docker-compose.yml").write_text(f"""
 version: '3.8'
 services:
@@ -525,20 +523,20 @@ services:
       POSTGRES_USER: hive
       POSTGRES_PASSWORD: test_password
 """)
-            
+
             (workspace / ".env").write_text(f"""
 POSTGRES_PORT={port}
 POSTGRES_DB=hive
 POSTGRES_USER=hive
 POSTGRES_PASSWORD=test_password
 """)
-            
+
             return workspace
-        
+
         def create_agent_workspace(self, name: str = "agent", api_port: int = 38886, db_port: int = 35532) -> Path:
             """Create workspace with agent configuration."""
             workspace = self.env_manager.create_temp_workspace(name)
-            
+
             (workspace / ".env.agent").write_text(f"""
 HIVE_API_PORT={api_port}
 POSTGRES_PORT={db_port}
@@ -547,18 +545,18 @@ POSTGRES_USER=hive_agent
 POSTGRES_PASSWORD=agent_password
 HIVE_API_KEY=agent_test_key
 """)
-            
+
             # Create logs directory
             logs_dir = workspace / "logs"
             logs_dir.mkdir()
             (logs_dir / "agent-server.log").write_text("Agent server log content")
-            
+
             return workspace
-        
+
         def create_full_workspace(self, name: str = "full") -> Path:
             """Create complete workspace with all configurations."""
             workspace = self.env_manager.create_temp_workspace(name)
-            
+
             # Create docker-compose.yml with all services
             (workspace / "docker-compose.yml").write_text("""
 version: '3.8'
@@ -586,7 +584,7 @@ services:
 volumes:
   postgres_data:
 """)
-            
+
             # Create .env file
             (workspace / ".env").write_text("""
 HIVE_API_PORT=8886
@@ -598,7 +596,7 @@ POSTGRES_PASSWORD=full_workspace_password
 OPENAI_API_KEY=sk-test-openai-key
 ANTHROPIC_API_KEY=sk-ant-test-key
 """)
-            
+
             # Create .env.agent file
             (workspace / ".env.agent").write_text("""
 HIVE_API_PORT=38886
@@ -608,20 +606,20 @@ POSTGRES_USER=hive_agent
 POSTGRES_PASSWORD=agent_full_password
 HIVE_API_KEY=agent_full_key
 """)
-            
+
             # Create directory structure
             for dir_name in ["data", "logs", "backups", "config"]:
                 (workspace / dir_name).mkdir()
-            
+
             return workspace
-        
+
         def create_invalid_workspace(self, name: str = "invalid") -> Path:
             """Create workspace with invalid configuration for testing error handling."""
             workspace = self.env_manager.create_temp_workspace(name)
-            
+
             # Create invalid docker-compose.yml
             (workspace / "docker-compose.yml").write_text("invalid: yaml: content [")
-            
+
             # Create malformed .env file
             (workspace / ".env").write_text("""
 INVALID LINE WITHOUT EQUALS
@@ -629,9 +627,9 @@ INVALID LINE WITHOUT EQUALS
 KEY_WITHOUT_VALUE=
 MULTIPLE=EQUALS=SIGNS=HERE
 """)
-            
+
             return workspace
-    
+
     return WorkspaceFactory(test_environment_manager)
 
 
@@ -639,63 +637,63 @@ MULTIPLE=EQUALS=SIGNS=HERE
 def cli_assertion_helpers():
     """Helper functions for CLI test assertions."""
     class CLIAssertionHelpers:
-        
+
         @staticmethod
-        def assert_workspace_structure(workspace_path: Path, expected_files: List[str]):
+        def assert_workspace_structure(workspace_path: Path, expected_files: list[str]):
             """Assert that workspace has expected file structure."""
             for expected_file in expected_files:
                 file_path = workspace_path / expected_file
                 assert file_path.exists(), f"Expected file {expected_file} not found in workspace"
-        
+
         @staticmethod
-        def assert_env_file_content(env_file: Path, expected_vars: Dict[str, str]):
+        def assert_env_file_content(env_file: Path, expected_vars: dict[str, str]):
             """Assert that .env file contains expected variables."""
             if not env_file.exists():
                 pytest.fail(f"Env file {env_file} does not exist")
-                
+
             env_content = env_file.read_text()
-            
+
             for key, expected_value in expected_vars.items():
                 if expected_value is not None:
                     assert f"{key}={expected_value}" in env_content, f"Expected {key}={expected_value} in env file"
                 else:
                     assert f"{key}=" in env_content, f"Expected {key} to be present in env file"
-        
+
         @staticmethod
         def assert_docker_compose_valid(compose_file: Path):
             """Assert that docker-compose.yml is valid YAML."""
             if not compose_file.exists():
                 pytest.fail(f"Docker compose file {compose_file} does not exist")
-                
+
             try:
                 import yaml
                 with open(compose_file) as f:
                     compose_data = yaml.safe_load(f)
-                    
+
                 assert "version" in compose_data, "Docker compose file missing version"
                 assert "services" in compose_data, "Docker compose file missing services"
-                
+
             except ImportError:
                 pytest.skip("PyYAML not available for docker-compose validation")
             except yaml.YAMLError as e:
                 pytest.fail(f"Docker compose file is not valid YAML: {e}")
-        
+
         @staticmethod
-        def assert_command_output_contains(captured_output: str, expected_strings: List[str]):
+        def assert_command_output_contains(captured_output: str, expected_strings: list[str]):
             """Assert that command output contains expected strings."""
             for expected_string in expected_strings:
                 assert expected_string in captured_output, f"Expected '{expected_string}' in output: {captured_output}"
-        
+
         @staticmethod
         def assert_performance_within_limits(execution_time: float, max_time: float, operation: str):
             """Assert that operation completed within performance limits."""
             assert execution_time <= max_time, f"{operation} took {execution_time:.3f}s, expected under {max_time}s"
-        
+
         @staticmethod
         def assert_coverage_threshold_met(coverage_percentage: float, threshold: float = 95.0):
             """Assert that coverage threshold is met."""
             assert coverage_percentage >= threshold, f"Coverage {coverage_percentage:.2f}% below threshold {threshold}%"
-    
+
     return CLIAssertionHelpers()
 
 
@@ -720,22 +718,22 @@ def pytest_collection_modifyitems(config, items):
         # Add markers based on test names and paths
         if "test_real_" in item.name or "real_server" in item.name:
             item.add_marker(pytest.mark.real_server)
-            
+
         if "test_postgres" in item.name and "real" in item.name:
             item.add_marker(pytest.mark.real_postgres)
-            
+
         if "performance" in item.name or "benchmark" in item.name:
             item.add_marker(pytest.mark.performance)
-            
+
         if "coverage" in item.name:
             item.add_marker(pytest.mark.coverage)
-            
+
         if "e2e" in item.name or "workflow" in item.name:
             item.add_marker(pytest.mark.e2e)
-            
+
         if "cross_platform" in item.name or "platform" in item.name:
             item.add_marker(pytest.mark.cross_platform)
-            
+
         # Mark slow tests
         if any(marker in item.name for marker in ["comprehensive", "full_lifecycle", "concurrent"]):
             item.add_marker(pytest.mark.slow)
@@ -747,27 +745,27 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     terminalreporter.write_line("")
     terminalreporter.write_line("🧪 CLI Comprehensive Test Suite Summary", bold=True)
     terminalreporter.write_line("=" * 50)
-    
+
     # Get test statistics
     stats = terminalreporter.stats
-    passed = len(stats.get('passed', []))
-    failed = len(stats.get('failed', []))
-    skipped = len(stats.get('skipped', []))
-    errors = len(stats.get('error', []))
-    
+    passed = len(stats.get("passed", []))
+    failed = len(stats.get("failed", []))
+    skipped = len(stats.get("skipped", []))
+    errors = len(stats.get("error", []))
+
     total = passed + failed + skipped + errors
-    
+
     if total > 0:
-        terminalreporter.write_line(f"📊 Test Results:")
+        terminalreporter.write_line("📊 Test Results:")
         terminalreporter.write_line(f"   ✅ Passed: {passed}")
         terminalreporter.write_line(f"   ❌ Failed: {failed}")
         terminalreporter.write_line(f"   ⏭️  Skipped: {skipped}")
         terminalreporter.write_line(f"   🚨 Errors: {errors}")
         terminalreporter.write_line(f"   📈 Total: {total}")
-        
+
         success_rate = (passed / total) * 100 if total > 0 else 0
         terminalreporter.write_line(f"   🎯 Success Rate: {success_rate:.1f}%")
-    
+
     terminalreporter.write_line("")
     terminalreporter.write_line("🎯 Coverage Target: >95% for CLI components")
     terminalreporter.write_line("🚀 Real Server Tests: Set TEST_REAL_AGENT_SERVER=true to enable")

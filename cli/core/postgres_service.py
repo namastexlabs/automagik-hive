@@ -12,6 +12,7 @@ docker_lib_path = Path(__file__).parent.parent.parent / "docker" / "lib"
 sys.path.insert(0, str(docker_lib_path))
 
 from postgres_manager import ContainerStatus, PostgreSQLManager
+
 from lib.auth.credential_service import CredentialService
 
 

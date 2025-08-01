@@ -70,7 +70,7 @@ class LazyCommandLoader:
 
             self._agent_commands = AgentCommands()
         return self._agent_commands
-    
+
     @property
     def genie_commands(self) -> "GenieCommands":
         """Lazy load GenieCommands only when needed."""

@@ -21,11 +21,9 @@ GenieService Methods Tested:
 8. _generate_genie_credentials() - Generate secure Genie credentials
 """
 
-import os
-import subprocess
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -90,7 +88,7 @@ HIVE_API_KEY=genie_test_key_123
     def test_genie_service_initialization(self, mock_compose_manager):
         """Test GenieService initializes with correct configuration."""
         service = GenieService()
-        
+
         # Should fail initially - GenieService class not implemented yet
         assert hasattr(service, "compose_manager")
         assert service.genie_port == 48886
@@ -145,7 +143,7 @@ HIVE_API_KEY=genie_test_key_123
     def test_serve_genie_invalid_workspace(self, mock_compose_manager):
         """Test serve with invalid workspace path."""
         service = GenieService()
-        
+
         # Should fail initially - workspace validation not implemented
         with pytest.raises(Exception):  # Could be SecurityError or other validation error
             service.serve_genie("/invalid/workspace/path")
@@ -254,7 +252,7 @@ HIVE_API_KEY=genie_test_key_123
         """Test successful Genie status retrieval."""
         # Mock comprehensive status response
         mock_services_status = {
-            "genie-server": Mock(status=Mock(name="RUNNING"), 
+            "genie-server": Mock(status=Mock(name="RUNNING"),
                                container_id="abc123",
                                ports=["0.0.0.0:48886->48886/tcp"])
         }
@@ -308,7 +306,7 @@ class TestGenieServiceValidation:
     def test_validate_genie_environment_valid_workspace(self, temp_workspace):
         """Test validation with valid Genie workspace."""
         service = GenieService()
-        
+
         # Should fail initially - _validate_genie_environment method not implemented
         result = service._validate_genie_environment(Path(temp_workspace))
         assert result is True
@@ -317,7 +315,7 @@ class TestGenieServiceValidation:
         """Test validation with missing docker-compose-genie.yml."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            
+
             service = GenieService()
             # Should fail initially - compose file validation not implemented
             result = service._validate_genie_environment(workspace)
@@ -329,7 +327,7 @@ class TestGenieServiceValidation:
             workspace = Path(temp_dir)
             # Create compose file but not env file
             (workspace / "docker-compose-genie.yml").write_text("version: '3.8'")
-            
+
             service = GenieService()
             # Should fail initially - env file validation not implemented
             result = service._validate_genie_environment(workspace)
@@ -338,7 +336,7 @@ class TestGenieServiceValidation:
     def test_validate_genie_environment_invalid_workspace_path(self):
         """Test validation with invalid workspace path."""
         service = GenieService()
-        
+
         # Should fail initially - path validation not implemented
         with pytest.raises(Exception):  # Could be SecurityError or FileNotFoundError
             service._validate_genie_environment(Path("/nonexistent/path"))
@@ -349,7 +347,7 @@ class TestGenieServiceValidation:
         mock_resolve.side_effect = Exception("Security validation failed")
 
         service = GenieService()
-        
+
         # Should fail initially - security error handling not implemented
         with pytest.raises(Exception):
             service.serve_genie("../../invalid/path")
@@ -383,10 +381,10 @@ class TestGenieServiceContainerOperations:
     def test_genie_container_port_48886_validation(self, mock_docker_operations, temp_workspace):
         """Test Genie container uses correct port 48886."""
         service = GenieService()
-        
+
         # Should fail initially - port validation not implemented
         assert service.genie_port == 48886
-        
+
         # Test port is used in container operations
         service.serve_genie(temp_workspace)
         assert mock_docker_operations.start_service.called
@@ -411,11 +409,11 @@ class TestGenieServiceContainerOperations:
     def test_genie_container_volume_persistence(self, mock_docker_operations, temp_workspace):
         """Test Genie container volume persistence."""
         service = GenieService()
-        
+
         # Check volume directories exist
         data_dir = Path(temp_workspace) / "data" / "postgres-genie"
         logs_dir = Path(temp_workspace) / "logs"
-        
+
         assert data_dir.exists()
         assert logs_dir.exists()
 
@@ -464,7 +462,7 @@ class TestGenieServiceCredentialManagement:
     def test_generate_genie_credentials(self, temp_workspace):
         """Test Genie credential generation."""
         service = GenieService()
-        
+
         # Should fail initially - _generate_genie_credentials method not implemented
         result = service._generate_genie_credentials(temp_workspace)
         assert result is True
@@ -480,7 +478,7 @@ class TestGenieServiceCredentialManagement:
     def test_setup_genie_postgres_credentials(self, temp_workspace):
         """Test PostgreSQL credential setup for Genie."""
         service = GenieService()
-        
+
         # Should fail initially - _setup_genie_postgres method not implemented
         result = service._setup_genie_postgres(temp_workspace)
         assert result is True
@@ -488,7 +486,7 @@ class TestGenieServiceCredentialManagement:
     def test_genie_api_key_generation(self, temp_workspace):
         """Test Genie API key generation."""
         service = GenieService()
-        
+
         # Should fail initially - API key generation not implemented
         api_key = service._generate_genie_api_key(temp_workspace)
         assert api_key is not None
@@ -498,10 +496,10 @@ class TestGenieServiceCredentialManagement:
     def test_secure_credential_storage(self, temp_workspace):
         """Test secure storage of Genie credentials."""
         service = GenieService()
-        
+
         # Should fail initially - secure storage not implemented
         service._generate_genie_credentials(temp_workspace)
-        
+
         env_file = Path(temp_workspace) / ".env.genie"
         if env_file.exists():
             # Check file permissions are secure
@@ -511,7 +509,7 @@ class TestGenieServiceCredentialManagement:
     def test_credential_validation(self, temp_workspace):
         """Test Genie credential validation."""
         service = GenieService()
-        
+
         # Should fail initially - credential validation not implemented
         result = service._validate_genie_credentials(temp_workspace)
         assert result in [True, False]  # Should return boolean
@@ -523,7 +521,7 @@ class TestGenieServiceErrorHandling:
     def test_workspace_not_exists_error(self):
         """Test handling when workspace doesn't exist."""
         service = GenieService()
-        
+
         # Should fail initially - workspace existence check not implemented
         with pytest.raises(Exception):  # Could be FileNotFoundError or custom error
             service.serve_genie("/nonexistent/workspace")
@@ -531,10 +529,10 @@ class TestGenieServiceErrorHandling:
     def test_docker_compose_file_corrupted(self):
         """Test handling when docker-compose-genie.yml is corrupted."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir) 
+            workspace = Path(temp_dir)
             # Create corrupted compose file
             (workspace / "docker-compose-genie.yml").write_text("invalid: yaml: content:")
-            
+
             service = GenieService()
             # Should fail initially - compose file validation not implemented
             with pytest.raises(Exception):
@@ -579,7 +577,7 @@ class TestGenieServiceErrorHandling:
     def test_disk_space_insufficient_error(self):
         """Test handling when insufficient disk space for container volumes."""
         service = GenieService()
-        
+
         # Should fail initially - disk space check not implemented
         # This would typically be caught during container startup
         result = service.serve_genie("/tmp/test_workspace")
@@ -625,14 +623,14 @@ class TestGenieServiceCrossPlatform:
     def test_path_handling_cross_platform(self, temp_workspace):
         """Test path handling works across platforms."""
         service = GenieService()
-        
+
         # Test various path formats
         test_paths = [
             temp_workspace,
             str(Path(temp_workspace)),
             Path(temp_workspace).resolve(),
         ]
-        
+
         for test_path in test_paths:
             # Should fail initially - cross-platform path normalization not implemented
             try:

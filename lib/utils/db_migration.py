@@ -38,13 +38,13 @@ def _find_alembic_config() -> Path:
     if cwd_config.exists():
         logger.debug(f"Found alembic.ini in workspace: {cwd_config}")
         return cwd_config
-    
+
     # Strategy 2: Try relative to this file (development context)
     dev_config = Path(__file__).parent.parent.parent / "alembic.ini"
     if dev_config.exists():
         logger.debug(f"Found alembic.ini in development: {dev_config}")
         return dev_config
-    
+
     # Strategy 3: Search upward from current directory
     current_path = Path.cwd()
     while current_path != current_path.parent:
@@ -53,21 +53,21 @@ def _find_alembic_config() -> Path:
             logger.debug(f"Found alembic.ini via upward search: {alembic_ini}")
             return alembic_ini
         current_path = current_path.parent
-    
+
     # Strategy 4: Search common locations where workspace might be
     common_locations = [
         Path.home() / "workspace",
         Path("/tmp"),
         Path("/workspace"),  # Docker context
     ]
-    
+
     for base_path in common_locations:
         if base_path.exists():
             for potential_workspace in base_path.glob("*/alembic.ini"):
                 if potential_workspace.exists():
                     logger.debug(f"Found alembic.ini in common location: {potential_workspace}")
                     return potential_workspace
-    
+
     # If all strategies fail, provide helpful error message
     raise FileNotFoundError(
         "Could not locate alembic.ini file. This is required for database migrations.\n"

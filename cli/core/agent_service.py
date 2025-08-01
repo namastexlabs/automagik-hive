@@ -32,14 +32,14 @@ class AgentService:
     """
 
     def __init__(self) -> None:
-        self.compose_manager = DockerComposeManager("docker/agent/docker-compose.yml")
-        self.agent_compose_file = "docker/agent/docker-compose.yml"
+        # Use unified container architecture
+        self.compose_manager = DockerComposeManager("docker/agent/docker-compose.unified.yml")
+        self.agent_compose_file = "docker/agent/docker-compose.unified.yml"
         self.agent_port = 38886
-        self.agent_postgres_port = 35532
+        self.agent_postgres_port = 35532  # Keep for backward compatibility
         self.logs_dir = Path("logs")
-        # Remove PID file dependencies - using compose services now
-        # self.pid_file = self.logs_dir / "agent-server.pid"
-        # self.log_file = self.logs_dir / "agent-server.log"
+        # Unified container uses single service name
+        self.agent_service_name = "agent-all-in-one"
 
     def install_agent_environment(self, workspace_path: str) -> bool:
         """Install complete agent environment with isolated ports and database.
@@ -65,9 +65,8 @@ class AgentService:
             return False
 
 
-        # Setup agent PostgreSQL
-        if not self._setup_agent_postgres(str(workspace)):
-            return False
+        # Note: In unified architecture, PostgreSQL is built into the container
+        # We still need to create data directories for persistence
 
 
         # Generate agent API key
@@ -91,9 +90,9 @@ class AgentService:
         except SecurityError:
             return False
 
-        # Check if already running
+        # Check if already running (using unified service name)
         agent_status = self.compose_manager.get_service_status(
-            "agent-dev-server", str(workspace)
+            self.agent_service_name, str(workspace)
         )
         if agent_status.name == "RUNNING":
             return True
@@ -111,13 +110,13 @@ class AgentService:
         """
         workspace = workspace_path or "."
         agent_status = self.compose_manager.get_service_status(
-            "agent-dev-server", workspace
+            self.agent_service_name, workspace
         )
 
         if agent_status.name != "RUNNING":
             return True
 
-        return bool(self.compose_manager.stop_service("agent-dev-server", workspace))
+        return bool(self.compose_manager.stop_service(self.agent_service_name, workspace))
 
     def restart_agent(self, workspace_path: str) -> bool:
         """Restart agent server using docker-compose.
@@ -128,7 +127,7 @@ class AgentService:
         Returns:
             True if restarted successfully, False otherwise
         """
-        return bool(self.compose_manager.restart_service("agent-dev-server", workspace_path))
+        return bool(self.compose_manager.restart_service(self.agent_service_name, workspace_path))
 
     def show_agent_logs(
         self,
@@ -146,7 +145,7 @@ class AgentService:
         """
         workspace = workspace_path or "."
         logs = self.compose_manager.get_service_logs(
-            "agent-dev-server", tail, workspace
+            self.agent_service_name, tail, workspace
         )
 
         if logs:
@@ -169,22 +168,15 @@ class AgentService:
         status = {}
         workspace = workspace_path or "."
 
-        # Check agent server status using compose
+        # Check unified agent service status
         agent_status = self.compose_manager.get_service_status(
-            "agent-dev-server", workspace
+            self.agent_service_name, workspace
         )
         if agent_status.name == "RUNNING":
-            status["agent-server"] = f"✅ Running (Port: {self.agent_port})"
+            status["agent-unified"] = f"✅ Running (Port: {self.agent_port})"
+            status["agent-postgres"] = "✅ Running (Built-in database)"
         else:
-            status["agent-server"] = "🛑 Stopped"
-
-        # Check agent postgres status
-        postgres_status = self.compose_manager.get_service_status(
-            "postgres-agent", workspace
-        )
-        if postgres_status.name == "RUNNING":
-            status["agent-postgres"] = f"✅ Running (Port: {self.agent_postgres_port})"
-        else:
+            status["agent-unified"] = "🛑 Stopped"
             status["agent-postgres"] = "🛑 Stopped"
 
         return status
@@ -266,67 +258,19 @@ class AgentService:
         except OSError:
             return False
 
-    def _setup_agent_postgres(self, workspace_path: str) -> bool:
-        """Setup agent PostgreSQL container."""
+    def _setup_agent_data_directories(self, workspace_path: str) -> bool:
+        """Setup data directories for unified agent container."""
         workspace = Path(workspace_path)
 
-        # Generate credentials
-        if not self._generate_agent_postgres_credentials(str(workspace)):
-            return False
-
-        # Extract database URL from .env.agent
-        env_agent = workspace / ".env.agent"
         try:
-            with open(env_agent) as f:
-                content = f.read()
-
-            # Find database URL
-            for line in content.split("\n"):
-                if line.startswith("HIVE_DATABASE_URL="):
-                    db_url = line.split("=", 1)[1]
-                    break
-            else:
-                return False
-
-            # Parse database URL
-            # postgresql+psycopg://user:pass@localhost:35532/hive_agent
-            url_part = db_url.split("://", 1)[1]  # user:pass@localhost:35532/hive_agent
-            credentials_part = url_part.split("@", 1)[0]  # user:pass
-            postgres_user = credentials_part.split(":", 1)[0]
-            postgres_password = credentials_part.split(":", 1)[1]
-            postgres_db = url_part.split("/")[-1]  # hive_agent
-
-            # Set environment variables for docker-compose
-            env = os.environ.copy()
-            env.update(
-                {
-                    "POSTGRES_USER": postgres_user,
-                    "POSTGRES_PASSWORD": postgres_password,
-                    "POSTGRES_DB": postgres_db,
-                    "POSTGRES_UID": str(os.getuid() if hasattr(os, "getuid") else 1000),
-                    "POSTGRES_GID": str(os.getgid() if hasattr(os, "getgid") else 1000),
-                }
-            )
-
-            # Create data directory
+            # Create data directories
             data_dir = workspace / "data" / "postgres-agent"
             data_dir.mkdir(parents=True, exist_ok=True)
 
-            # Start container using secure subprocess call
-            cmd = [
-                "docker",
-                "compose",
-                "-f",
-                self.agent_compose_file,
-                "up",
-                "-d",
-                "postgres-agent",
-            ]
+            logs_dir = workspace / "logs" / "agent"
+            logs_dir.mkdir(parents=True, exist_ok=True)
 
-            result = secure_subprocess_call(cmd, cwd=workspace, env=env)
-
-            return result.returncode == 0
-
+            return True
         except OSError:
             return False
 
@@ -387,10 +331,13 @@ class AgentService:
             return False
 
     def _start_agent_compose(self, workspace_path: str) -> bool:
-        """Start agent server using docker-compose."""
+        """Start unified agent container using docker-compose."""
         workspace = Path(workspace_path)
 
         try:
+            # Create data directories for persistence
+            self._setup_agent_data_directories(str(workspace))
+
             # Prepare environment variables from .env.agent
             env = os.environ.copy()
             env_agent = workspace / ".env.agent"
@@ -407,41 +354,7 @@ class AgentService:
                             key, value = stripped_line.split("=", 1)
                             env[key] = value
 
-            # Extract database credentials for docker-compose
-            if "HIVE_DATABASE_URL" in env:
-                db_url = env["HIVE_DATABASE_URL"]
-                # Parse: postgresql+psycopg://user:pass@localhost:35532/hive_agent
-                if "://" in db_url:
-                    url_part = db_url.split("://", 1)[1]
-                    if "@" in url_part:
-                        credentials_part = url_part.split("@", 1)[0]
-                        if ":" in credentials_part:
-                            postgres_user, postgres_password = credentials_part.split(
-                                ":", 1
-                            )
-                            postgres_db = (
-                                url_part.split("/")[-1]
-                                if "/" in url_part
-                                else "hive_agent"
-                            )
-
-                            env.update(
-                                {
-                                    "POSTGRES_USER": postgres_user,
-                                    "POSTGRES_PASSWORD": postgres_password,
-                                    "POSTGRES_DB": postgres_db,
-                                }
-                            )
-
-            # Set UID/GID for PostgreSQL
-            env.update(
-                {
-                    "POSTGRES_UID": str(os.getuid() if hasattr(os, "getuid") else 1000),
-                    "POSTGRES_GID": str(os.getgid() if hasattr(os, "getgid") else 1000),
-                }
-            )
-
-            # Start both postgres and agent services
+            # Start unified agent service
             cmd = [
                 "docker",
                 "compose",
@@ -449,8 +362,7 @@ class AgentService:
                 self.agent_compose_file,
                 "up",
                 "-d",
-                "postgres-agent",
-                "agent-dev-server",
+                self.agent_service_name,
             ]
 
             result = secure_subprocess_call(cmd, cwd=workspace, env=env, timeout=120)
@@ -460,13 +372,13 @@ class AgentService:
                 time.sleep(5)
 
                 agent_status = self.compose_manager.get_service_status(
-                    "agent-dev-server", str(workspace)
+                    self.agent_service_name, str(workspace)
                 )
                 if agent_status.name == "RUNNING":
 
                     # Show startup logs
                     logs = self.compose_manager.get_service_logs(
-                        "agent-dev-server", tail=20, workspace_path=str(workspace)
+                        self.agent_service_name, tail=20, workspace_path=str(workspace)
                     )
                     if logs and logs.strip():
                         pass
@@ -481,13 +393,13 @@ class AgentService:
             return False
 
     def _stop_agent_compose(self, workspace_path: str) -> bool:
-        """Stop agent server using docker-compose."""
-        return self.compose_manager.stop_service("agent-dev-server", workspace_path)
+        """Stop unified agent container using docker-compose."""
+        return self.compose_manager.stop_service(self.agent_service_name, workspace_path)
 
     def _is_agent_running(self, workspace_path: str = ".") -> bool:
-        """Check if agent server is running using docker-compose."""
+        """Check if unified agent container is running using docker-compose."""
         agent_status = self.compose_manager.get_service_status(
-            "agent-dev-server", workspace_path
+            self.agent_service_name, workspace_path
         )
         return agent_status.name == "RUNNING"
 

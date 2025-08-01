@@ -1,0 +1,30 @@
+services:
+  genie-all-in-one:
+    build:
+      context: ../..
+      dockerfile: docker/genie/Dockerfile.unified
+      target: genie-production
+    container_name: hive-genie-unified
+    restart: unless-stopped
+    ports:
+      - "48886:48886"
+    environment:
+      - HIVE_SERVICE_MODE=genie
+      - HIVE_API_PORT=48886
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../../data/postgres-genie:/var/lib/postgresql/data
+      - ../../logs/genie:/var/log/hive
+    networks:
+      - genie_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:48886/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  genie_network:
+    driver: bridge
+    name: hive_genie_network

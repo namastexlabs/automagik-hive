@@ -12,16 +12,11 @@ This test suite validates:
 """
 
 import argparse
-import subprocess
-import sys
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from typing import Any, Dict, List
+from unittest.mock import Mock, patch
 
 import pytest
 
-from cli.main import create_parser, main, app
+from cli.main import app, create_parser, main
 
 
 class TestCLIParserConstruction:
@@ -30,7 +25,7 @@ class TestCLIParserConstruction:
     def test_create_parser_returns_valid_parser(self):
         """Test that create_parser returns a properly configured ArgumentParser."""
         parser = create_parser()
-        
+
         # Should fail initially - parser construction not validated
         assert isinstance(parser, argparse.ArgumentParser)
         assert parser.prog == "automagik-hive"
@@ -39,19 +34,19 @@ class TestCLIParserConstruction:
     def test_parser_help_output_contains_all_commands(self, capsys):
         """Test that parser help contains all expected commands."""
         parser = create_parser()
-        
+
         with pytest.raises(SystemExit):
             parser.parse_args(["--help"])
-            
+
         captured = capsys.readouterr()
-        
+
         # Should fail initially - help output not properly formatted
         help_text = captured.out
-        
+
         # Core commands
         assert "--init" in help_text
         assert "--serve" in help_text
-        
+
         # PostgreSQL commands
         assert "--postgres-status" in help_text
         assert "--postgres-start" in help_text
@@ -59,7 +54,7 @@ class TestCLIParserConstruction:
         assert "--postgres-restart" in help_text
         assert "--postgres-logs" in help_text
         assert "--postgres-health" in help_text
-        
+
         # Agent commands
         assert "--agent-install" in help_text
         assert "--agent-serve" in help_text
@@ -68,7 +63,7 @@ class TestCLIParserConstruction:
         assert "--agent-logs" in help_text
         assert "--agent-status" in help_text
         assert "--agent-reset" in help_text
-        
+
         # Uninstall commands
         assert "--uninstall" in help_text
         assert "--uninstall-global" in help_text
@@ -76,23 +71,23 @@ class TestCLIParserConstruction:
     def test_parser_version_output(self, capsys):
         """Test that parser version flag works correctly."""
         parser = create_parser()
-        
+
         with pytest.raises(SystemExit):
             parser.parse_args(["--version"])
-            
+
         captured = capsys.readouterr()
-        
+
         # Should fail initially - version output not implemented
         assert captured.out.strip()  # Version string should not be empty
 
     def test_parser_accepts_workspace_argument(self):
         """Test that parser correctly handles workspace positional argument."""
         parser = create_parser()
-        
+
         # Test with workspace argument
         args = parser.parse_args(["./test-workspace"])
         assert args.workspace == "./test-workspace"
-        
+
         # Test without workspace argument
         args = parser.parse_args([])
         assert args.workspace is None
@@ -101,7 +96,7 @@ class TestCLIParserConstruction:
         """Test that optional arguments have correct default values."""
         parser = create_parser()
         args = parser.parse_args([])
-        
+
         # Should fail initially - default values not set correctly
         assert args.tail == 50
         assert args.host == "0.0.0.0"
@@ -119,24 +114,24 @@ class TestCLICommandRouting:
              patch("cli.main.PostgreSQLCommands") as mock_postgres, \
              patch("cli.main.AgentCommands") as mock_agent, \
              patch("cli.main.UninstallCommands") as mock_uninstall:
-            
+
             # Configure mock instances
             mock_init_instance = Mock()
             mock_workspace_instance = Mock()
             mock_postgres_instance = Mock()
             mock_agent_instance = Mock()
             mock_uninstall_instance = Mock()
-            
+
             mock_init.return_value = mock_init_instance
             mock_workspace.return_value = mock_workspace_instance
             mock_postgres.return_value = mock_postgres_instance
             mock_agent.return_value = mock_agent_instance
             mock_uninstall.return_value = mock_uninstall_instance
-            
+
             yield {
                 "init": mock_init_instance,
                 "workspace": mock_workspace_instance,
-                "postgres": mock_postgres_instance, 
+                "postgres": mock_postgres_instance,
                 "agent": mock_agent_instance,
                 "uninstall": mock_uninstall_instance
             }
@@ -144,10 +139,10 @@ class TestCLICommandRouting:
     def test_init_command_routing(self, mock_command_handlers):
         """Test --init command routing and execution."""
         mock_command_handlers["init"].init_workspace.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--init"]):
             result = main()
-            
+
         # Should fail initially - init command routing not implemented
         assert result == 0
         mock_command_handlers["init"].init_workspace.assert_called_once_with(None)
@@ -155,10 +150,10 @@ class TestCLICommandRouting:
     def test_init_command_with_workspace_name(self, mock_command_handlers):
         """Test --init command with workspace name."""
         mock_command_handlers["init"].init_workspace.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--init", "my-workspace"]):
             result = main()
-            
+
         # Should fail initially - workspace parameter passing not implemented
         assert result == 0
         mock_command_handlers["init"].init_workspace.assert_called_once_with("my-workspace")
@@ -166,10 +161,10 @@ class TestCLICommandRouting:
     def test_init_command_failure(self, mock_command_handlers):
         """Test --init command failure handling."""
         mock_command_handlers["init"].init_workspace.return_value = False
-        
+
         with patch("sys.argv", ["automagik-hive", "--init"]):
             result = main()
-            
+
         # Should fail initially - error handling not implemented
         assert result == 1
 
@@ -177,14 +172,14 @@ class TestCLICommandRouting:
         """Test --serve command routing."""
         with patch("subprocess.run") as mock_subprocess:
             mock_subprocess.return_value = None
-            
+
             with patch("sys.argv", ["automagik-hive", "--serve"]):
                 result = main()
-                
+
         # Should fail initially - serve command not implemented
         assert result == 0
         mock_subprocess.assert_called_once()
-        
+
         # Verify correct uvicorn command
         call_args = mock_subprocess.call_args[0][0]
         assert call_args[:4] == ["uv", "run", "uvicorn", "api.serve:app"]
@@ -193,10 +188,10 @@ class TestCLICommandRouting:
         """Test --serve command with custom host and port."""
         with patch("subprocess.run") as mock_subprocess:
             mock_subprocess.return_value = None
-            
+
             with patch("sys.argv", ["automagik-hive", "--serve", "--host", "127.0.0.1", "--port", "9000"]):
                 result = main()
-                
+
         # Should fail initially - custom host/port not implemented
         assert result == 0
         call_args = mock_subprocess.call_args[0][0]
@@ -209,10 +204,10 @@ class TestCLICommandRouting:
         """Test --serve command handles KeyboardInterrupt gracefully."""
         with patch("subprocess.run") as mock_subprocess:
             mock_subprocess.side_effect = KeyboardInterrupt()
-            
+
             with patch("sys.argv", ["automagik-hive", "--serve"]):
                 result = main()
-                
+
         # Should fail initially - KeyboardInterrupt handling not implemented
         assert result == 0
 
@@ -220,21 +215,21 @@ class TestCLICommandRouting:
         """Test --serve command handles OSError."""
         with patch("subprocess.run") as mock_subprocess:
             mock_subprocess.side_effect = OSError("Command not found")
-            
+
             with patch("sys.argv", ["automagik-hive", "--serve"]):
                 result = main()
-                
+
         # Should fail initially - OSError handling not implemented
         assert result == 1
 
     def test_workspace_startup_routing(self, mock_command_handlers):
         """Test workspace startup command routing."""
         mock_command_handlers["workspace"].start_workspace.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "./test-workspace"]):
             with patch("pathlib.Path.is_dir", return_value=True):
                 result = main()
-                
+
         # Should fail initially - workspace startup not implemented
         assert result == 0
         mock_command_handlers["workspace"].start_workspace.assert_called_once_with("./test-workspace")
@@ -242,11 +237,11 @@ class TestCLICommandRouting:
     def test_workspace_startup_with_absolute_path(self, mock_command_handlers):
         """Test workspace startup with absolute path."""
         mock_command_handlers["workspace"].start_workspace.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "/absolute/path/workspace"]):
             with patch("pathlib.Path.is_dir", return_value=True):
                 result = main()
-                
+
         # Should fail initially - absolute path handling not implemented
         assert result == 0
         mock_command_handlers["workspace"].start_workspace.assert_called_once_with("/absolute/path/workspace")
@@ -256,17 +251,17 @@ class TestCLICommandRouting:
         with patch("sys.argv", ["automagik-hive", "invalid-workspace"]):
             with patch("pathlib.Path.is_dir", return_value=False):
                 result = main()
-                
+
         # Should fail initially - invalid path handling not implemented
         assert result == 1
 
     def test_postgres_status_command(self, mock_command_handlers):
         """Test --postgres-status command routing."""
         mock_command_handlers["postgres"].postgres_status.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-status"]):
             result = main()
-            
+
         # Should fail initially - postgres status not implemented
         assert result == 0
         mock_command_handlers["postgres"].postgres_status.assert_called_once_with(".")
@@ -274,10 +269,10 @@ class TestCLICommandRouting:
     def test_postgres_status_with_workspace(self, mock_command_handlers):
         """Test --postgres-status command with workspace."""
         mock_command_handlers["postgres"].postgres_status.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-status", "./workspace"]):
             result = main()
-            
+
         # Should fail initially - workspace parameter not passed
         assert result == 0
         mock_command_handlers["postgres"].postgres_status.assert_called_once_with("./workspace")
@@ -285,10 +280,10 @@ class TestCLICommandRouting:
     def test_postgres_start_command(self, mock_command_handlers):
         """Test --postgres-start command routing."""
         mock_command_handlers["postgres"].postgres_start.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-start"]):
             result = main()
-            
+
         # Should fail initially - postgres start not implemented
         assert result == 0
         mock_command_handlers["postgres"].postgres_start.assert_called_once_with(".")
@@ -296,10 +291,10 @@ class TestCLICommandRouting:
     def test_postgres_stop_command(self, mock_command_handlers):
         """Test --postgres-stop command routing."""
         mock_command_handlers["postgres"].postgres_stop.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-stop"]):
             result = main()
-            
+
         # Should fail initially - postgres stop not implemented
         assert result == 0
         mock_command_handlers["postgres"].postgres_stop.assert_called_once_with(".")
@@ -307,10 +302,10 @@ class TestCLICommandRouting:
     def test_postgres_restart_command(self, mock_command_handlers):
         """Test --postgres-restart command routing."""
         mock_command_handlers["postgres"].postgres_restart.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-restart"]):
             result = main()
-            
+
         # Should fail initially - postgres restart not implemented
         assert result == 0
         mock_command_handlers["postgres"].postgres_restart.assert_called_once_with(".")
@@ -318,10 +313,10 @@ class TestCLICommandRouting:
     def test_postgres_logs_command(self, mock_command_handlers):
         """Test --postgres-logs command routing."""
         mock_command_handlers["postgres"].postgres_logs.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-logs"]):
             result = main()
-            
+
         # Should fail initially - postgres logs not implemented
         assert result == 0
         mock_command_handlers["postgres"].postgres_logs.assert_called_once_with(".", 50)
@@ -329,10 +324,10 @@ class TestCLICommandRouting:
     def test_postgres_logs_with_custom_tail(self, mock_command_handlers):
         """Test --postgres-logs command with custom tail count."""
         mock_command_handlers["postgres"].postgres_logs.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-logs", "--tail", "100"]):
             result = main()
-            
+
         # Should fail initially - custom tail not implemented
         assert result == 0
         mock_command_handlers["postgres"].postgres_logs.assert_called_once_with(".", 100)
@@ -340,10 +335,10 @@ class TestCLICommandRouting:
     def test_postgres_health_command(self, mock_command_handlers):
         """Test --postgres-health command routing."""
         mock_command_handlers["postgres"].postgres_health.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--postgres-health"]):
             result = main()
-            
+
         # Should fail initially - postgres health not implemented
         assert result == 0
         mock_command_handlers["postgres"].postgres_health.assert_called_once_with(".")
@@ -351,10 +346,10 @@ class TestCLICommandRouting:
     def test_agent_install_command(self, mock_command_handlers):
         """Test --agent-install command routing."""
         mock_command_handlers["agent"].install.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-install"]):
             result = main()
-            
+
         # Should fail initially - agent install not implemented
         assert result == 0
         mock_command_handlers["agent"].install.assert_called_once_with(".")
@@ -362,10 +357,10 @@ class TestCLICommandRouting:
     def test_agent_serve_command(self, mock_command_handlers):
         """Test --agent-serve command routing."""
         mock_command_handlers["agent"].serve.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-serve"]):
             result = main()
-            
+
         # Should fail initially - agent serve not implemented
         assert result == 0
         mock_command_handlers["agent"].serve.assert_called_once_with(".")
@@ -373,10 +368,10 @@ class TestCLICommandRouting:
     def test_agent_stop_command(self, mock_command_handlers):
         """Test --agent-stop command routing."""
         mock_command_handlers["agent"].stop.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-stop"]):
             result = main()
-            
+
         # Should fail initially - agent stop not implemented
         assert result == 0
         mock_command_handlers["agent"].stop.assert_called_once_with(".")
@@ -384,10 +379,10 @@ class TestCLICommandRouting:
     def test_agent_restart_command(self, mock_command_handlers):
         """Test --agent-restart command routing."""
         mock_command_handlers["agent"].restart.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-restart"]):
             result = main()
-            
+
         # Should fail initially - agent restart not implemented
         assert result == 0
         mock_command_handlers["agent"].restart.assert_called_once_with(".")
@@ -395,10 +390,10 @@ class TestCLICommandRouting:
     def test_agent_logs_command(self, mock_command_handlers):
         """Test --agent-logs command routing."""
         mock_command_handlers["agent"].logs.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-logs"]):
             result = main()
-            
+
         # Should fail initially - agent logs not implemented
         assert result == 0
         mock_command_handlers["agent"].logs.assert_called_once_with(".", 50)
@@ -406,10 +401,10 @@ class TestCLICommandRouting:
     def test_agent_logs_with_custom_tail(self, mock_command_handlers):
         """Test --agent-logs command with custom tail count."""
         mock_command_handlers["agent"].logs.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-logs", "--tail", "200"]):
             result = main()
-            
+
         # Should fail initially - custom tail not passed to agent logs
         assert result == 0
         mock_command_handlers["agent"].logs.assert_called_once_with(".", 200)
@@ -417,10 +412,10 @@ class TestCLICommandRouting:
     def test_agent_status_command(self, mock_command_handlers):
         """Test --agent-status command routing."""
         mock_command_handlers["agent"].status.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-status"]):
             result = main()
-            
+
         # Should fail initially - agent status not implemented
         assert result == 0
         mock_command_handlers["agent"].status.assert_called_once_with(".")
@@ -428,10 +423,10 @@ class TestCLICommandRouting:
     def test_agent_reset_command(self, mock_command_handlers):
         """Test --agent-reset command routing."""
         mock_command_handlers["agent"].reset.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--agent-reset"]):
             result = main()
-            
+
         # Should fail initially - agent reset not implemented
         assert result == 0
         mock_command_handlers["agent"].reset.assert_called_once_with(".")
@@ -439,10 +434,10 @@ class TestCLICommandRouting:
     def test_uninstall_command(self, mock_command_handlers):
         """Test --uninstall command routing."""
         mock_command_handlers["uninstall"].uninstall_current_workspace.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--uninstall"]):
             result = main()
-            
+
         # Should fail initially - uninstall not implemented
         assert result == 0
         mock_command_handlers["uninstall"].uninstall_current_workspace.assert_called_once()
@@ -450,10 +445,10 @@ class TestCLICommandRouting:
     def test_uninstall_global_command(self, mock_command_handlers):
         """Test --uninstall-global command routing."""
         mock_command_handlers["uninstall"].uninstall_global.return_value = True
-        
+
         with patch("sys.argv", ["automagik-hive", "--uninstall-global"]):
             result = main()
-            
+
         # Should fail initially - global uninstall not implemented
         assert result == 0
         mock_command_handlers["uninstall"].uninstall_global.assert_called_once()
@@ -462,9 +457,9 @@ class TestCLICommandRouting:
         """Test that no command shows help message."""
         with patch("sys.argv", ["automagik-hive"]):
             result = main()
-            
+
         captured = capsys.readouterr()
-        
+
         # Should fail initially - help display not implemented
         assert result == 0
         assert "usage:" in captured.out
@@ -482,7 +477,7 @@ class TestCLIErrorHandling:
              patch("cli.main.PostgreSQLCommands") as mock_postgres, \
              patch("cli.main.AgentCommands") as mock_agent, \
              patch("cli.main.UninstallCommands") as mock_uninstall:
-            
+
             # Configure all mock instances to return False (failure)
             mock_init.return_value.init_workspace.return_value = False
             mock_workspace.return_value.start_workspace.return_value = False
@@ -501,7 +496,7 @@ class TestCLIErrorHandling:
             mock_agent.return_value.reset.return_value = False
             mock_uninstall.return_value.uninstall_current_workspace.return_value = False
             mock_uninstall.return_value.uninstall_global.return_value = False
-            
+
             yield
 
     def test_all_command_failures_return_exit_code_1(self, mock_failing_commands):
@@ -524,11 +519,11 @@ class TestCLIErrorHandling:
             ["--uninstall"],
             ["--uninstall-global"]
         ]
-        
+
         for command_args in commands_to_test:
             with patch("sys.argv", ["automagik-hive"] + command_args):
                 result = main()
-                
+
                 # Should fail initially - error code handling not implemented
                 assert result == 1, f"Command {command_args} should return exit code 1 on failure"
 
@@ -537,7 +532,7 @@ class TestCLIErrorHandling:
         with patch("sys.argv", ["automagik-hive", "./test-workspace"]):
             with patch("pathlib.Path.is_dir", return_value=True):
                 result = main()
-                
+
         # Should fail initially - workspace startup failure not handled
         assert result == 1
 
@@ -567,9 +562,9 @@ class TestCLIAppFunction:
         """Test that app() function calls main() and returns result."""
         with patch("cli.main.main") as mock_main:
             mock_main.return_value = 42
-            
+
             result = app()
-            
+
         # Should fail initially - app function not implemented
         assert result == 42
         mock_main.assert_called_once()
@@ -586,13 +581,13 @@ class TestCLICommandCombinations:
              patch("cli.main.PostgreSQLCommands") as mock_postgres, \
              patch("cli.main.AgentCommands") as mock_agent, \
              patch("cli.main.UninstallCommands") as mock_uninstall:
-            
+
             mock_init.return_value.init_workspace.return_value = True
             mock_workspace.return_value.start_workspace.return_value = True
             mock_postgres.return_value.postgres_status.return_value = True
             mock_agent.return_value.install.return_value = True
             mock_uninstall.return_value.uninstall_current_workspace.return_value = True
-            
+
             yield {
                 "init": mock_init.return_value,
                 "workspace": mock_workspace.return_value,
@@ -605,7 +600,7 @@ class TestCLICommandCombinations:
         """Test workspace argument passed to postgres commands."""
         with patch("sys.argv", ["automagik-hive", "--postgres-status", "./my-workspace"]):
             result = main()
-            
+
         # Should fail initially - workspace parameter not passed correctly
         assert result == 0
         mock_command_handlers["postgres"].postgres_status.assert_called_once_with("./my-workspace")
@@ -614,7 +609,7 @@ class TestCLICommandCombinations:
         """Test workspace argument passed to agent commands."""
         with patch("sys.argv", ["automagik-hive", "--agent-status", "./agent-workspace"]):
             result = main()
-            
+
         # Should fail initially - workspace parameter not passed correctly
         assert result == 0
         mock_command_handlers["agent"].status.assert_called_once_with("./agent-workspace")
@@ -625,7 +620,7 @@ class TestCLICommandCombinations:
         with patch("sys.argv", ["automagik-hive", "--postgres-status", "./workspace"]):
             with patch("pathlib.Path.is_dir", return_value=True):
                 result = main()
-                
+
         # Should fail initially - command precedence not implemented correctly
         assert result == 0
         # postgres_status should be called, not start_workspace
@@ -636,7 +631,7 @@ class TestCLICommandCombinations:
         """Test --init command with workspace argument."""
         with patch("sys.argv", ["automagik-hive", "--init", "my-new-workspace"]):
             result = main()
-            
+
         # Should fail initially - workspace argument not passed to init
         assert result == 0
         mock_command_handlers["init"].init_workspace.assert_called_once_with("my-new-workspace")
@@ -645,7 +640,7 @@ class TestCLICommandCombinations:
         """Test that '.' is used as default workspace when none specified."""
         commands_using_workspace = [
             "--postgres-status",
-            "--postgres-start", 
+            "--postgres-start",
             "--postgres-stop",
             "--postgres-restart",
             "--postgres-health",
@@ -656,11 +651,11 @@ class TestCLICommandCombinations:
             "--agent-status",
             "--agent-reset"
         ]
-        
+
         for command in commands_using_workspace:
             with patch("sys.argv", ["automagik-hive", command]):
                 result = main()
-                
+
                 # Should fail initially - default workspace not implemented
                 assert result == 0, f"Command {command} should succeed with default workspace"
 
@@ -669,17 +664,17 @@ class TestCLICommandCombinations:
         # Test postgres logs with tail
         with patch("sys.argv", ["automagik-hive", "--postgres-logs", "--tail", "75"]):
             result = main()
-            
+
         assert result == 0
         mock_command_handlers["postgres"].postgres_logs.assert_called_once_with(".", 75)
-        
+
         # Reset mock
         mock_command_handlers["postgres"].reset_mock()
-        
+
         # Test agent logs with tail
         with patch("sys.argv", ["automagik-hive", "--agent-logs", "--tail", "150"]):
             result = main()
-            
+
         # Should fail initially - tail parameter not passed correctly
         assert result == 0
         mock_command_handlers["agent"].logs.assert_called_once_with(".", 150)
@@ -697,16 +692,16 @@ class TestCLICrossplatformCompatibility:
     def test_windows_path_handling(self, mock_platform_detection):
         """Test CLI handles Windows paths correctly."""
         mock_platform_detection.return_value = "Windows"
-        
+
         with patch("cli.main.WorkspaceCommands") as mock_workspace_class:
             mock_workspace = Mock()
             mock_workspace.start_workspace.return_value = True
             mock_workspace_class.return_value = mock_workspace
-            
+
             with patch("sys.argv", ["automagik-hive", "C:\\Windows\\Workspace"]):
                 with patch("pathlib.Path.is_dir", return_value=True):
                     result = main()
-                    
+
         # Should fail initially - Windows path handling not implemented
         assert result == 0
         mock_workspace.start_workspace.assert_called_once_with("C:\\Windows\\Workspace")
@@ -714,16 +709,16 @@ class TestCLICrossplatformCompatibility:
     def test_unix_path_handling(self, mock_platform_detection):
         """Test CLI handles Unix paths correctly."""
         mock_platform_detection.return_value = "Linux"
-        
+
         with patch("cli.main.WorkspaceCommands") as mock_workspace_class:
             mock_workspace = Mock()
             mock_workspace.start_workspace.return_value = True
             mock_workspace_class.return_value = mock_workspace
-            
+
             with patch("sys.argv", ["automagik-hive", "/home/user/workspace"]):
                 with patch("pathlib.Path.is_dir", return_value=True):
                     result = main()
-                    
+
         # Should fail initially - Unix path handling not implemented
         assert result == 0
         mock_workspace.start_workspace.assert_called_once_with("/home/user/workspace")
@@ -731,15 +726,15 @@ class TestCLICrossplatformCompatibility:
     def test_macos_path_handling(self, mock_platform_detection):
         """Test CLI handles macOS paths correctly."""
         mock_platform_detection.return_value = "Darwin"
-        
+
         with patch("cli.main.AgentCommands") as mock_agent_class:
             mock_agent = Mock()
             mock_agent.install.return_value = True
             mock_agent_class.return_value = mock_agent
-            
+
             with patch("sys.argv", ["automagik-hive", "--agent-install", "/Users/user/workspace"]):
                 result = main()
-                    
+
         # Should fail initially - macOS path handling not implemented
         assert result == 0
         mock_agent.install.assert_called_once_with("/Users/user/workspace")
@@ -747,20 +742,20 @@ class TestCLICrossplatformCompatibility:
     def test_relative_path_resolution(self):
         """Test that relative paths are handled consistently across platforms."""
         relative_paths = [".", "..", "./workspace", "../workspace"]
-        
+
         for path in relative_paths:
             with patch("cli.main.PostgreSQLCommands") as mock_postgres_class:
                 mock_postgres = Mock()
                 mock_postgres.postgres_status.return_value = True
                 mock_postgres_class.return_value = mock_postgres
-                
+
                 with patch("sys.argv", ["automagik-hive", "--postgres-status", path]):
                     result = main()
-                    
+
                 # Should fail initially - relative path resolution not implemented
                 assert result == 0
                 mock_postgres.postgres_status.assert_called_once_with(path)
-                
+
                 # Path should be passed as-is to command handler for resolution
                 assert mock_postgres.postgres_status.call_args[0][0] == path
 
@@ -771,78 +766,77 @@ class TestCLIPerformanceAndReliability:
     def test_command_handler_initialization_efficiency(self):
         """Test that command handlers are initialized efficiently."""
         import time
-        
+
         start_time = time.time()
-        
+
         with patch("cli.main.InitCommands"), \
              patch("cli.main.WorkspaceCommands"), \
              patch("cli.main.PostgreSQLCommands"), \
              patch("cli.main.AgentCommands"), \
              patch("cli.main.UninstallCommands"):
-            
+
             with patch("sys.argv", ["automagik-hive", "--help"]):
                 try:
                     main()
                 except SystemExit:
                     pass
-                    
+
         elapsed = time.time() - start_time
-        
+
         # Should fail initially - initialization not optimized
         assert elapsed < 1.0, "Command handler initialization should be fast"
 
     def test_argument_parsing_performance(self):
         """Test argument parsing performance."""
         import time
-        
+
         start_time = time.time()
-        
+
         parser = create_parser()
-        
+
         # Parse various argument combinations
         test_args = [
             [],
             ["--help"],
-            ["--version"], 
+            ["--version"],
             ["--init"],
             ["--postgres-status"],
             ["--agent-install", "./workspace", "--tail", "100"]
         ]
-        
+
         for args in test_args:
             try:
                 parser.parse_args(args)
             except SystemExit:
                 pass  # Expected for --help and --version
-                
+
         elapsed = time.time() - start_time
-        
+
         # Should fail initially - parsing not optimized
         assert elapsed < 0.5, "Argument parsing should be fast"
 
     def test_memory_usage_reasonable(self):
         """Test that CLI doesn't consume excessive memory."""
         import gc
-        import sys
-        
+
         # Force garbage collection
         gc.collect()
         initial_objects = len(gc.get_objects())
-        
+
         with patch("cli.main.InitCommands"), \
              patch("cli.main.WorkspaceCommands"), \
              patch("cli.main.PostgreSQLCommands"), \
              patch("cli.main.AgentCommands"), \
              patch("cli.main.UninstallCommands"):
-            
+
             parser = create_parser()
             args = parser.parse_args([])
-            
+
         gc.collect()
         final_objects = len(gc.get_objects())
-        
+
         object_increase = final_objects - initial_objects
-        
+
         # Should fail initially - memory usage not optimized
         assert object_increase < 1000, "CLI should not create excessive objects"
 
@@ -855,11 +849,11 @@ class TestCLIPerformanceAndReliability:
             ("OS error", OSError("System error")),
             ("Import error", ImportError("Module not found")),
         ]
-        
+
         for scenario_name, exception in exception_scenarios:
             with patch("cli.main.InitCommands") as mock_init:
                 mock_init.side_effect = exception
-                
+
                 with patch("sys.argv", ["automagik-hive", "--init"]):
                     # Should fail initially - robust exception handling not implemented
                     if isinstance(exception, (KeyboardInterrupt, SystemExit)):

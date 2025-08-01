@@ -18,21 +18,19 @@ Genie Commands Tested:
 5. status() - Check Genie container status
 """
 
-import os
-import subprocess
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from cli.commands.genie import (
     GenieCommands,
-    genie_serve_cmd,
-    genie_stop_cmd,
-    genie_restart_cmd,
     genie_logs_cmd,
+    genie_restart_cmd,
+    genie_serve_cmd,
     genie_status_cmd,
+    genie_stop_cmd,
 )
 
 
@@ -74,10 +72,10 @@ HIVE_API_PORT=48886
     def test_genie_commands_initialization(self, mock_genie_service):
         """Test GenieCommands initializes with lazy-loaded GenieService."""
         commands = GenieCommands()
-        
+
         # Should fail initially - lazy loading not implemented yet
         assert commands._genie_service is None
-        
+
         # Access property to trigger lazy loading
         service = commands.genie_service
         assert service is not None
@@ -117,7 +115,7 @@ HIVE_API_PORT=48886
         result = commands.serve()
 
         # Should fail initially - default path resolution not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_genie_service.serve_genie.assert_called_once_with(expected_path)
         assert result is True
 
@@ -126,7 +124,7 @@ HIVE_API_PORT=48886
         # Mock secure_resolve_workspace to raise SecurityError
         with patch("cli.commands.genie.secure_resolve_workspace") as mock_secure:
             mock_secure.side_effect = Exception("Security validation failed")
-            
+
             commands = GenieCommands()
             result = commands.serve("/invalid/../path")
 
@@ -165,7 +163,7 @@ HIVE_API_PORT=48886
         result = commands.stop()
 
         # Should fail initially - default workspace handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_genie_service.stop_genie.assert_called_once_with(expected_path)
         assert result is True
 
@@ -201,7 +199,7 @@ HIVE_API_PORT=48886
         result = commands.restart()
 
         # Should fail initially - default workspace handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_genie_service.restart_genie.assert_called_once_with(expected_path)
         assert result is True
 
@@ -239,7 +237,7 @@ HIVE_API_PORT=48886
         result = commands.logs()
 
         # Should fail initially - default parameter handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_genie_service.show_genie_logs.assert_called_once_with(expected_path, 50)
         assert result is True
 
@@ -357,7 +355,7 @@ class TestGenieCommandsCLIIntegration:
 
         result = genie_stop_cmd("test_workspace")
 
-        # Should fail initially - error code handling not implemented  
+        # Should fail initially - error code handling not implemented
         assert result == 1
         assert mock_genie_commands.stop.called
 
@@ -440,7 +438,7 @@ class TestGenieCommandsErrorHandling:
         )
 
         commands = GenieCommands()
-        
+
         # Should fail initially - exception handling not implemented
         with pytest.raises(FileNotFoundError):
             commands.serve("/invalid/workspace/path")
@@ -452,7 +450,7 @@ class TestGenieCommandsErrorHandling:
         )
 
         commands = GenieCommands()
-        
+
         # Should fail initially - permission error handling not implemented
         with pytest.raises(PermissionError):
             commands.stop("/restricted/path")
@@ -465,7 +463,7 @@ class TestGenieCommandsErrorHandling:
         result = commands.restart(None)
 
         # Should fail initially - None handling not implemented
-        expected_path = str(Path(".").resolve())
+        expected_path = str(Path().resolve())
         mock_genie_service_with_exceptions.restart_genie.assert_called_once_with(expected_path)
         assert result is True
 
@@ -563,7 +561,7 @@ class TestGenieCommandsCrossPlatform:
             commands = GenieCommands()
             result = commands.restart("/Users/user/workspace")
 
-        # Should fail initially - macOS path handling not implemented  
+        # Should fail initially - macOS path handling not implemented
         assert result is True
         expected_path = str(Path("/Users/user/workspace").resolve())
         mock_service.restart_genie.assert_called_once_with(expected_path)
@@ -576,9 +574,9 @@ class TestGenieCommandsCrossPlatform:
             mock_service_class.return_value = mock_service
 
             commands = GenieCommands()
-            
+
             test_paths = [".", "..", "./workspace", "../workspace", "~/workspace"]
-            
+
             for test_path in test_paths:
                 # Should fail initially - relative path normalization not implemented
                 try:
@@ -599,7 +597,7 @@ class TestGenieCommandsCrossPlatform:
 
             commands = GenieCommands()
             unicode_path = "/tmp/魔法工作空间"
-            
+
             # Should fail initially - Unicode path handling not implemented
             try:
                 result = commands.serve(unicode_path)
@@ -625,7 +623,7 @@ class TestGenieCommandsPrintOutput:
             commands.serve("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🧞 Starting Genie server in workspace" in captured.out
             assert "✅ Genie server started successfully" in captured.out
@@ -641,7 +639,7 @@ class TestGenieCommandsPrintOutput:
             commands.stop("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🛑 Stopping Genie server in workspace" in captured.out
             assert "✅ Genie server stopped successfully" in captured.out
@@ -657,7 +655,7 @@ class TestGenieCommandsPrintOutput:
             commands.restart("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "🔄 Restarting Genie server in workspace" in captured.out
             assert "✅ Genie server restarted successfully" in captured.out
@@ -673,7 +671,7 @@ class TestGenieCommandsPrintOutput:
             commands.logs("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - print messages not implemented
             assert "📋 Showing Genie logs from workspace" in captured.out
 
@@ -692,7 +690,7 @@ class TestGenieCommandsPrintOutput:
                 commands.status("test_workspace")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - table formatting not implemented
             assert "📊 Genie Container Status:" in captured.out
             assert "┌─────────────────────────┬──────────────────────────────────────┐" in captured.out
@@ -712,14 +710,14 @@ class TestGenieCommandsPrintOutput:
             mock_service_class.return_value = mock_service
 
             commands = GenieCommands()
-            
+
             # Test all failure scenarios
             commands.serve("test")
             commands.stop("test")
             commands.restart("test")
 
             captured = capsys.readouterr()
-            
+
             # Should fail initially - error messages not implemented
             assert "❌ Failed to start Genie server" in captured.out
             assert "❌ Failed to stop Genie server" in captured.out

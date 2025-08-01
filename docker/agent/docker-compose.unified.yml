@@ -1,0 +1,30 @@
+services:
+  agent-all-in-one:
+    build:
+      context: ../..
+      dockerfile: docker/agent/Dockerfile.unified
+      target: agent-production
+    container_name: hive-agent-unified
+    restart: unless-stopped
+    ports:
+      - "38886:38886"
+    environment:
+      - HIVE_SERVICE_MODE=agent
+      - HIVE_API_PORT=38886
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../../data/postgres-agent:/var/lib/postgresql/data
+      - ../../logs/agent:/var/log/hive
+    networks:
+      - agent_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:38886/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  agent_network:
+    driver: bridge
+    name: hive_agent_network
