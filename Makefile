@@ -858,9 +858,84 @@ hook-status: ## 📊 Show pre-commit hook status and metrics
 	fi
 
 # ===========================================
-# 🧹 Phony Targets
+# 🚀 Release & Publishing (Alpha)
 # ===========================================
-.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall install-agent agent agent-stop agent-restart agent-logs agent-status install-hooks uninstall-hooks bypass-hooks restore-hooks test-hooks hook-status
+.PHONY: bump
+bump: ## 🏷️ Bump alpha version and prepare for release
+	@$(call print_status,Bumping alpha version...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	if echo "$$CURRENT_VERSION" | grep -q "a[0-9]*$$"; then \
+		ALPHA_NUM=$$(echo "$$CURRENT_VERSION" | grep -o "a[0-9]*$$" | sed 's/a//'); \
+		NEW_ALPHA_NUM=$$((ALPHA_NUM + 1)); \
+		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/a[0-9]*$$//'); \
+		NEW_VERSION="$${BASE_VERSION}a$${NEW_ALPHA_NUM}"; \
+	else \
+		$(call print_error,Current version is not an alpha version: $$CURRENT_VERSION); \
+		echo -e "$(FONT_YELLOW)💡 Only alpha versions can be bumped with this command$(FONT_RESET)"; \
+		exit 1; \
+	fi; \
+	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
+	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
+	$(call print_success,Version bumped to $$NEW_VERSION); \
+	echo -e "$(FONT_CYAN)💡 Next: make publish$(FONT_RESET)"
+
+.PHONY: publish
+publish: ## 📦 Build and publish alpha release to PyPI
+	@$(call print_status,Publishing alpha release...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	if ! echo "$$CURRENT_VERSION" | grep -q "a[0-9]*$$"; then \
+		$(call print_error,Not an alpha version: $$CURRENT_VERSION); \
+		echo -e "$(FONT_YELLOW)💡 Only alpha versions can be published with this command$(FONT_RESET)"; \
+		exit 1; \
+	fi; \
+	$(call print_status,Building package for version $$CURRENT_VERSION); \
+	rm -rf dist/ build/ *.egg-info/; \
+	if command -v uv >/dev/null 2>&1; then \
+		uv build; \
+	else \
+		$(call print_error,uv not found - required for building); \
+		exit 1; \
+	fi; \
+	$(call print_status,Committing version bump...); \
+	git add pyproject.toml; \
+	git commit -m "bump: alpha version $$CURRENT_VERSION" \
+		-m "🏷️ ALPHA RELEASE PREPARATION:" \
+		-m "- Bumped version to $$CURRENT_VERSION" \
+		-m "- Ready for PyPI publication via 'make publish'" \
+		-m "- UVX testing enabled with: uvx automagik-hive@$$CURRENT_VERSION" \
+		-m "" \
+		-m "🚀 TESTING COMMAND:" \
+		-m "uvx automagik-hive@$$CURRENT_VERSION --version" \
+		--trailer "Co-Authored-By: Automagik Genie <genie@namastex.ai>"; \
+	$(call print_status,Creating and pushing git tag...); \
+	git tag "v$$CURRENT_VERSION" -m "Alpha release v$$CURRENT_VERSION"; \
+	git push origin dev; \
+	git push origin "v$$CURRENT_VERSION"; \
+	$(call print_status,Publishing to PyPI...); \
+	if command -v twine >/dev/null 2>&1; then \
+		twine upload dist/*; \
+	else \
+		$(call print_warning,twine not found - installing...); \
+		uv add --dev twine; \
+		uv run twine upload dist/*; \
+	fi; \
+	$(call print_success,Alpha release $$CURRENT_VERSION published!); \
+	echo -e "$(FONT_CYAN)🚀 Test with: uvx automagik-hive@$$CURRENT_VERSION --version$(FONT_RESET)"; \
+	echo -e "$(FONT_CYAN)🧪 UVX Genie commands: uvx automagik-hive@$$CURRENT_VERSION --genie-serve$(FONT_RESET)"; \
+	echo -e "$(FONT_YELLOW)💡 Wait 5-10 minutes for PyPI propagation$(FONT_RESET)"
+
+# ===========================================
+# 🧹 Phony Targets  
+# ===========================================
+.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall install-agent agent agent-stop agent-restart agent-logs agent-status install-hooks uninstall-hooks bypass-hooks restore-hooks test-hooks hook-status bump publish
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================
