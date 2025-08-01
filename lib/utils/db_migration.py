@@ -19,18 +19,71 @@ from alembic.script import ScriptDirectory
 from lib.logging import logger
 
 
+def _ensure_environment_loaded():
+    """
+    Ensure environment variables are loaded consistently across all environments.
+    
+    CRITICAL FIX: This function handles UVX environments where working directory
+    differs from development, preventing .env file loading issues.
+    """
+    try:
+        from dotenv import load_dotenv
+
+        # Try to find and load environment files using multiple strategies
+        current_dir = Path(__file__).parent
+
+        # Strategy 1: Look in project root (go up to find project root)
+        project_root = current_dir
+        while project_root.parent != project_root:
+            env_file = project_root / ".env"
+            env_agent_file = project_root / ".env.agent"
+
+            if env_file.exists():
+                load_dotenv(dotenv_path=env_file)
+                logger.debug(f"Loaded environment from {env_file}")
+                return
+            if env_agent_file.exists():
+                load_dotenv(dotenv_path=env_agent_file)
+                logger.debug(f"Loaded environment from {env_agent_file}")
+                return
+
+            # Look for pyproject.toml as project root indicator
+            if (project_root / "pyproject.toml").exists():
+                break
+
+            project_root = project_root.parent
+
+        # Strategy 2: Try loading from current working directory (fallback)
+        load_dotenv()
+        logger.debug("Using default dotenv loading (CWD-based)")
+
+    except ImportError:
+        logger.debug("python-dotenv not available, using system environment variables")
+    except Exception as e:
+        logger.warning(f"Environment loading failed: {e}")
+
+
 async def check_and_run_migrations() -> bool:
     """
     Check if database migrations are needed and run them if necessary.
+    
+    CRITICAL FIX: Ensures consistent environment loading across all environments.
 
     Returns:
         bool: True if migrations were run, False if not needed
     """
     try:
+        # CRITICAL FIX: Ensure environment variables are loaded before migration check
+        # This handles UVX environments where .env may not be auto-loaded
+        _ensure_environment_loaded()
+
         # Get database URL
         db_url = os.getenv("HIVE_DATABASE_URL")
         if not db_url:
-            logger.warning("HIVE_DATABASE_URL not set, skipping migration check")
+            logger.warning(
+                "HIVE_DATABASE_URL not set, skipping migration check. "
+                "This may indicate environment loading issues in UVX environments."
+            )
             return False
 
         # Use the same URL format - SQLAlchemy will handle the driver

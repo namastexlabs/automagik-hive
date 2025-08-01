@@ -9,9 +9,28 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Load environment variables from .env file
+# CRITICAL FIX: Use explicit file path to ensure consistent loading across all environments
 try:
+    import os
+    from pathlib import Path
+
     from dotenv import load_dotenv
-    load_dotenv()
+
+    # Find project root (alembic/ is in project root) and load environment files
+    # This makes loading independent of current working directory (fixes UVX issues)
+    project_dir = Path(__file__).parent.parent
+
+    # Try to load .env first (development/production)
+    dotenv_path = project_dir / ".env"
+    if dotenv_path.exists():
+        load_dotenv(dotenv_path=dotenv_path)
+    else:
+        # Fallback to .env.agent (agent workspace)
+        dotenv_agent_path = project_dir / ".env.agent"
+        if dotenv_agent_path.exists():
+            load_dotenv(dotenv_path=dotenv_agent_path)
+        # If neither exists, rely on system environment variables
+
 except ImportError:
     pass  # dotenv not available, use system env vars
 
@@ -29,15 +48,19 @@ from lib.models import Base
 
 target_metadata = Base.metadata
 
-# Get database URL from environment
+# Get database URL from environment with enhanced error handling
 def get_url():
     db_url = os.getenv("HIVE_DATABASE_URL")
     if not db_url:
-        raise ValueError("HIVE_DATABASE_URL environment variable must be set")
+        # Enhanced error message for UVX debugging
+        raise ValueError(
+            "HIVE_DATABASE_URL environment variable must be set. "
+            "This error often occurs in UVX environments when .env files cannot be found. "
+            "Ensure your .env file is properly configured or set HIVE_DATABASE_URL as a system environment variable."
+        )
 
     # Convert psycopg:// to postgresql+psycopg:// for SQLAlchemy async
-    if db_url.startswith("postgresql+psycopg://"):
-        return db_url.replace("postgresql+psycopg://", "postgresql+psycopg://")
+    # FIXED: Remove redundant replacement for postgresql+psycopg://
     if db_url.startswith("postgresql://"):
         return db_url.replace("postgresql://", "postgresql+psycopg://")
     return db_url
