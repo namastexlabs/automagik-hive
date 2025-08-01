@@ -101,7 +101,7 @@ class AgentEnvironment:
         # Read template content
         with open(self.env_example_path) as f:
             content = f.read()
-            
+
         # Handle empty template with default configuration
         if not content.strip():
             content = """# AGENT ENVIRONMENT CONFIGURATION
@@ -111,7 +111,7 @@ class AgentEnvironment:
 HIVE_API_PORT=8886
 HIVE_API_HOST=0.0.0.0
 
-# Database Configuration  
+# Database Configuration
 HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive
 
 # Security

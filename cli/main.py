@@ -25,60 +25,76 @@ from lib.utils.version_reader import get_cli_version_string
 
 class LazyCommandLoader:
     """Lazy loader for CLI command classes to optimize startup performance."""
-    
+
     def __init__(self):
         self._init_commands = None
         self._workspace_commands = None
         self._postgres_commands = None
         self._agent_commands = None
+        self._genie_commands = None
         self._uninstall_commands = None
         self._mcp_test_commands = None
-    
+
     @property
     def init_commands(self) -> "InitCommands":
         """Lazy load InitCommands only when needed."""
         if self._init_commands is None:
             from cli.commands.init import InitCommands
+
             self._init_commands = InitCommands()
         return self._init_commands
-    
+
     @property
     def workspace_commands(self) -> "WorkspaceCommands":
         """Lazy load WorkspaceCommands only when needed."""
         if self._workspace_commands is None:
             from cli.commands.workspace import WorkspaceCommands
+
             self._workspace_commands = WorkspaceCommands()
         return self._workspace_commands
-    
+
     @property
     def postgres_commands(self) -> "PostgreSQLCommands":
         """Lazy load PostgreSQLCommands only when needed."""
         if self._postgres_commands is None:
             from cli.commands.postgres import PostgreSQLCommands
+
             self._postgres_commands = PostgreSQLCommands()
         return self._postgres_commands
-    
+
     @property
     def agent_commands(self) -> "AgentCommands":
         """Lazy load AgentCommands only when needed."""
         if self._agent_commands is None:
             from cli.commands.agent import AgentCommands
+
             self._agent_commands = AgentCommands()
         return self._agent_commands
     
+    @property
+    def genie_commands(self) -> "GenieCommands":
+        """Lazy load GenieCommands only when needed."""
+        if self._genie_commands is None:
+            from cli.commands.genie import GenieCommands
+
+            self._genie_commands = GenieCommands()
+        return self._genie_commands
+
     @property
     def uninstall_commands(self) -> "UninstallCommands":
         """Lazy load UninstallCommands only when needed."""
         if self._uninstall_commands is None:
             from cli.commands.uninstall import UninstallCommands
+
             self._uninstall_commands = UninstallCommands()
         return self._uninstall_commands
-    
+
     @property
     def mcp_test_commands(self) -> "MCPTestCommands":
         """Lazy load MCPTestCommands only when needed."""
         if self._mcp_test_commands is None:
             from cli.commands.mcp_test import MCPTestCommands
+
             self._mcp_test_commands = MCPTestCommands()
         return self._mcp_test_commands
 
@@ -117,6 +133,13 @@ Core Commands:
   uvx automagik-hive --agent-logs              # Show agent server logs
   uvx automagik-hive --agent-status            # Check agent environment status
   uvx automagik-hive --agent-reset             # Reset agent environment
+
+  # Genie container management (Phase 1)
+  uvx automagik-hive --genie-serve             # Start Genie container (port 48886)
+  uvx automagik-hive --genie-stop              # Stop Genie container
+  uvx automagik-hive --genie-restart           # Restart Genie container
+  uvx automagik-hive --genie-logs              # Show Genie container logs
+  uvx automagik-hive --genie-status            # Check Genie container status
 
   # MCP Integration Testing
   uvx automagik-hive --mcp-test                # Run full MCP test suite
@@ -205,6 +228,26 @@ Note: T1.5 Core Command Implementation - Essential UVX functionality ready.
         "--agent-reset",
         action="store_true",
         help="Reset agent environment (destructive reinstall)",
+    )
+
+    # Genie container management commands
+    genie_group = parser.add_argument_group("Genie Container Management (Phase 1)")
+    genie_group.add_argument(
+        "--genie-serve",
+        action="store_true",
+        help="Start Genie container (port 48886)",
+    )
+    genie_group.add_argument(
+        "--genie-stop", action="store_true", help="Stop Genie container"
+    )
+    genie_group.add_argument(
+        "--genie-restart", action="store_true", help="Restart Genie container"
+    )
+    genie_group.add_argument(
+        "--genie-logs", action="store_true", help="Show Genie container logs"
+    )
+    genie_group.add_argument(
+        "--genie-status", action="store_true", help="Check Genie container status"
     )
 
     # MCP Integration Testing commands
@@ -323,6 +366,11 @@ def main() -> int:
             args.agent_logs,
             args.agent_status,
             args.agent_reset,
+            args.genie_serve,
+            args.genie_stop,
+            args.genie_restart,
+            args.genie_logs,
+            args.genie_status,
             args.mcp_test,
             args.mcp_test_config,
             args.mcp_test_health,
@@ -356,7 +404,9 @@ def main() -> int:
         return 0 if success else 1
 
     elif args.postgres_logs:
-        success = commands.postgres_commands.postgres_logs(args.workspace or ".", args.tail)
+        success = commands.postgres_commands.postgres_logs(
+            args.workspace or ".", args.tail
+        )
         return 0 if success else 1
 
     elif args.postgres_health:
@@ -390,6 +440,27 @@ def main() -> int:
 
     elif args.agent_reset:
         success = commands.agent_commands.reset(args.workspace or ".")
+        return 0 if success else 1
+
+    # Handle Genie commands
+    elif args.genie_serve:
+        success = commands.genie_commands.serve(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.genie_stop:
+        success = commands.genie_commands.stop(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.genie_restart:
+        success = commands.genie_commands.restart(args.workspace or ".")
+        return 0 if success else 1
+
+    elif args.genie_logs:
+        success = commands.genie_commands.logs(args.workspace or ".", args.tail)
+        return 0 if success else 1
+
+    elif args.genie_status:
+        success = commands.genie_commands.status(args.workspace or ".")
         return 0 if success else 1
 
     # Handle MCP Integration Testing commands

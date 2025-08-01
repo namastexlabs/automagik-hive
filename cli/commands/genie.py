@@ -1,7 +1,7 @@
-"""Agent CLI Commands for Automagik Hive.
+"""Genie CLI Commands for Automagik Hive.
 
-This module provides CLI commands for Agent environment management,
-integrating with the Agent service layer for high-level operations.
+This module provides CLI commands for Genie container management,
+integrating with the Genie service layer for high-level operations.
 """
 
 import subprocess
@@ -14,53 +14,30 @@ from cli.core.security_utils import (
 )
 
 if TYPE_CHECKING:
-    from cli.core.agent_service import AgentService
+    from cli.core.genie_service import GenieService
 
 
-class AgentCommands:
-    """Agent CLI command implementations.
+class GenieCommands:
+    """Genie CLI command implementations.
 
-    Provides user-friendly CLI commands for Agent environment
+    Provides user-friendly CLI commands for Genie container
     lifecycle management and workspace validation.
     """
 
     def __init__(self) -> None:
-        self._agent_service = None
+        self._genie_service = None
 
     @property
-    def agent_service(self) -> "AgentService":
-        """Lazy load AgentService only when needed."""
-        if self._agent_service is None:
-            from cli.core.agent_service import AgentService
+    def genie_service(self) -> "GenieService":
+        """Lazy load GenieService only when needed."""
+        if self._genie_service is None:
+            from cli.core.genie_service import GenieService
 
-            self._agent_service = AgentService()
-        return self._agent_service
-
-    def install(self, workspace_path: str | None = None) -> bool:
-        """Install complete agent environment with isolated ports and database.
-
-        Args:
-            workspace_path: Path to workspace (default: current directory)
-
-        Returns:
-            True if installation successful, False otherwise
-        """
-        try:
-            # Secure workspace path validation
-            workspace = secure_resolve_workspace(workspace_path)
-            result = bool(self.agent_service.install_agent_environment(str(workspace)))
-
-            if result:
-                pass
-            else:
-                pass
-
-            return result
-        except SecurityError:
-            return False
+            self._genie_service = GenieService()
+        return self._genie_service
 
     def serve(self, workspace_path: str | None = None) -> bool:
-        """Start agent server in background (non-blocking).
+        """Start Genie server in background (non-blocking).
 
         Args:
             workspace_path: Path to workspace (default: current directory)
@@ -71,7 +48,7 @@ class AgentCommands:
         try:
             # Secure workspace path validation
             workspace = secure_resolve_workspace(workspace_path)
-            result = bool(self.agent_service.serve_agent(str(workspace)))
+            result = bool(self.genie_service.serve_genie(str(workspace)))
 
             if result:
                 pass
@@ -83,7 +60,7 @@ class AgentCommands:
             return False
 
     def stop(self, workspace_path: str | None = None) -> bool:
-        """Stop agent server cleanly.
+        """Stop Genie server cleanly.
 
         Args:
             workspace_path: Path to workspace (default: current directory)
@@ -94,7 +71,7 @@ class AgentCommands:
         try:
             # Secure workspace path validation
             workspace = secure_resolve_workspace(workspace_path)
-            result = bool(self.agent_service.stop_agent(str(workspace)))
+            result = bool(self.genie_service.stop_genie(str(workspace)))
 
             if result:
                 pass
@@ -106,7 +83,7 @@ class AgentCommands:
             return False
 
     def restart(self, workspace_path: str | None = None) -> bool:
-        """Restart agent server.
+        """Restart Genie server.
 
         Args:
             workspace_path: Path to workspace (default: current directory)
@@ -117,7 +94,7 @@ class AgentCommands:
         try:
             # Secure workspace path validation
             workspace = secure_resolve_workspace(workspace_path)
-            result = bool(self.agent_service.restart_agent(str(workspace)))
+            result = bool(self.genie_service.restart_genie(str(workspace)))
 
             if result:
                 pass
@@ -129,7 +106,7 @@ class AgentCommands:
             return False
 
     def logs(self, workspace_path: str | None = None, tail: int = 50) -> bool:
-        """Show agent server logs.
+        """Show Genie server logs.
 
         Args:
             workspace_path: Path to workspace (default: current directory)
@@ -141,13 +118,13 @@ class AgentCommands:
         try:
             # Secure workspace path validation
             workspace = secure_resolve_workspace(workspace_path)
-            return bool(self.agent_service.show_agent_logs(str(workspace), tail))
+            return bool(self.genie_service.show_genie_logs(str(workspace), tail))
 
         except SecurityError:
             return False
 
     def status(self, workspace_path: str | None = None) -> bool:
-        """Check agent environment status.
+        """Check Genie container status.
 
         Args:
             workspace_path: Path to workspace (default: current directory)
@@ -158,7 +135,7 @@ class AgentCommands:
         try:
             # Secure workspace path validation
             workspace = secure_resolve_workspace(workspace_path)
-            status_info = self.agent_service.get_agent_status(str(workspace))
+            status_info = self.genie_service.get_genie_status(str(workspace))
 
             # Print table header
 
@@ -169,7 +146,7 @@ class AgentCommands:
 
 
             # Show recent activity if available
-            log_path = workspace / "logs" / "agent-server.log"
+            log_path = workspace / "logs" / "genie-server.log"
             if log_path.exists():
                 try:
                     # Use secure subprocess call to read log file
@@ -190,75 +167,38 @@ class AgentCommands:
         except SecurityError:
             return False
 
-    def reset(self, workspace_path: str | None = None) -> bool:
-        """Reset agent environment (destructive reinstall).
-
-        Args:
-            workspace_path: Path to workspace (default: current directory)
-
-        Returns:
-            True if reset successful, False otherwise
-        """
-        try:
-            # Secure workspace path validation
-            workspace = secure_resolve_workspace(workspace_path)
-            result = bool(self.agent_service.reset_agent_environment(str(workspace)))
-
-            if result:
-                pass
-            else:
-                pass
-
-            return result
-        except SecurityError:
-            return False
-
 
 # Convenience functions for direct CLI usage
-def agent_install_cmd(workspace: str | None = None) -> int:
-    """CLI entry point for agent install command."""
-    commands = AgentCommands()
-    success = commands.install(workspace)
-    return 0 if success else 1
-
-
-def agent_serve_cmd(workspace: str | None = None) -> int:
-    """CLI entry point for agent serve command."""
-    commands = AgentCommands()
+def genie_serve_cmd(workspace: str | None = None) -> int:
+    """CLI entry point for genie serve command."""
+    commands = GenieCommands()
     success = commands.serve(workspace)
     return 0 if success else 1
 
 
-def agent_stop_cmd(workspace: str | None = None) -> int:
-    """CLI entry point for agent stop command."""
-    commands = AgentCommands()
+def genie_stop_cmd(workspace: str | None = None) -> int:
+    """CLI entry point for genie stop command."""
+    commands = GenieCommands()
     success = commands.stop(workspace)
     return 0 if success else 1
 
 
-def agent_restart_cmd(workspace: str | None = None) -> int:
-    """CLI entry point for agent restart command."""
-    commands = AgentCommands()
+def genie_restart_cmd(workspace: str | None = None) -> int:
+    """CLI entry point for genie restart command."""
+    commands = GenieCommands()
     success = commands.restart(workspace)
     return 0 if success else 1
 
 
-def agent_logs_cmd(workspace: str | None = None, tail: int = 50) -> int:
-    """CLI entry point for agent logs command."""
-    commands = AgentCommands()
+def genie_logs_cmd(workspace: str | None = None, tail: int = 50) -> int:
+    """CLI entry point for genie logs command."""
+    commands = GenieCommands()
     success = commands.logs(workspace, tail)
     return 0 if success else 1
 
 
-def agent_status_cmd(workspace: str | None = None) -> int:
-    """CLI entry point for agent status command."""
-    commands = AgentCommands()
+def genie_status_cmd(workspace: str | None = None) -> int:
+    """CLI entry point for genie status command."""
+    commands = GenieCommands()
     success = commands.status(workspace)
-    return 0 if success else 1
-
-
-def agent_reset_cmd(workspace: str | None = None) -> int:
-    """CLI entry point for agent reset command."""
-    commands = AgentCommands()
-    success = commands.reset(workspace)
     return 0 if success else 1

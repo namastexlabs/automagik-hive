@@ -4,15 +4,20 @@ This module provides high-level PostgreSQL service operations
 for CLI commands, wrapping the PostgreSQLManager functionality.
 """
 
+import sys
 from pathlib import Path
 
-from docker.lib.postgres_manager import ContainerStatus, PostgreSQLManager
+# Import PostgreSQLManager directly to avoid package conflicts
+docker_lib_path = Path(__file__).parent.parent.parent / "docker" / "lib"
+sys.path.insert(0, str(docker_lib_path))
+
+from postgres_manager import ContainerStatus, PostgreSQLManager
 from lib.auth.credential_service import CredentialService
 
 
 class PostgreSQLService:
     """High-level PostgreSQL service operations for CLI.
-    
+
     Provides user-friendly PostgreSQL container management
     with integrated credential handling and workspace validation.
     """
@@ -23,30 +28,28 @@ class PostgreSQLService:
 
     def setup_postgres(self, workspace_path: str, interactive: bool = True) -> bool:
         """Setup PostgreSQL for workspace initialization.
-        
+
         Args:
             workspace_path: Path to workspace directory
             interactive: Whether to prompt user for confirmation
-            
+
         Returns:
             True if setup successful, False otherwise
         """
         workspace = Path(workspace_path)
         if not workspace.exists():
-            print(f"❌ Workspace directory does not exist: {workspace_path}")
             return False
 
         return self.postgres_manager.setup_postgres_container(
-            interactive=interactive,
-            workspace_path=str(workspace)
+            interactive=interactive, workspace_path=str(workspace)
         )
 
     def start_postgres(self, workspace_path: str) -> bool:
         """Start PostgreSQL container for existing workspace.
-        
+
         Args:
             workspace_path: Path to workspace directory
-            
+
         Returns:
             True if started successfully, False otherwise
         """
@@ -58,10 +61,10 @@ class PostgreSQLService:
 
     def stop_postgres(self, workspace_path: str) -> bool:
         """Stop PostgreSQL container.
-        
+
         Args:
             workspace_path: Path to workspace directory
-            
+
         Returns:
             True if stopped successfully, False otherwise
         """
@@ -73,10 +76,10 @@ class PostgreSQLService:
 
     def restart_postgres(self, workspace_path: str) -> bool:
         """Restart PostgreSQL container.
-        
+
         Args:
             workspace_path: Path to workspace directory
-            
+
         Returns:
             True if restarted successfully, False otherwise
         """
@@ -88,10 +91,10 @@ class PostgreSQLService:
 
     def get_postgres_status(self, workspace_path: str) -> str:
         """Get human-readable PostgreSQL status.
-        
+
         Args:
             workspace_path: Path to workspace directory
-            
+
         Returns:
             Human-readable status string
         """
@@ -106,7 +109,7 @@ class PostgreSQLService:
             ContainerStatus.STOPPED: "🛑 Stopped",
             ContainerStatus.NOT_EXISTS: "❌ Not created",
             ContainerStatus.UNHEALTHY: "⚠️ Unhealthy",
-            ContainerStatus.STARTING: "⏳ Starting"
+            ContainerStatus.STARTING: "⏳ Starting",
         }
 
         base_status = status_messages.get(status, "❓ Unknown")
@@ -121,11 +124,11 @@ class PostgreSQLService:
 
     def show_postgres_logs(self, workspace_path: str, tail: int = 50) -> bool:
         """Show PostgreSQL container logs.
-        
+
         Args:
             workspace_path: Path to workspace directory
             tail: Number of lines to show
-            
+
         Returns:
             True if logs displayed, False if error
         """
@@ -134,20 +137,14 @@ class PostgreSQLService:
             return False
 
         logs = self.postgres_manager.get_container_logs(tail, str(workspace))
-        if logs:
-            print(f"📋 PostgreSQL Logs (last {tail} lines):")
-            print("-" * 50)
-            print(logs)
-            return True
-        print("❌ Could not retrieve PostgreSQL logs")
-        return False
+        return bool(logs)
 
     def validate_postgres_health(self, workspace_path: str) -> bool:
         """Validate PostgreSQL health and connectivity.
-        
+
         Args:
             workspace_path: Path to workspace directory
-            
+
         Returns:
             True if healthy and connectable, False otherwise
         """
@@ -159,10 +156,10 @@ class PostgreSQLService:
 
     def get_postgres_connection_info(self, workspace_path: str) -> dict | None:
         """Get PostgreSQL connection information.
-        
+
         Args:
             workspace_path: Path to workspace directory
-            
+
         Returns:
             Dict with connection info, None if error
         """
@@ -175,10 +172,13 @@ class PostgreSQLService:
         try:
             # Temporarily change to workspace directory to use existing credential service
             import os
+
             original_cwd = os.getcwd()
             try:
                 os.chdir(str(workspace))
-                credentials = self.credential_service.extract_postgres_credentials_from_env()
+                credentials = (
+                    self.credential_service.extract_postgres_credentials_from_env()
+                )
                 if not credentials:
                     return None
 
@@ -188,7 +188,7 @@ class PostgreSQLService:
                     "database": credentials.get("database", "hive"),
                     "user": credentials.get("user"),
                     "password": credentials.get("password"),
-                    "url": credentials.get("url")
+                    "url": credentials.get("url"),
                 }
             finally:
                 os.chdir(original_cwd)
@@ -198,34 +198,28 @@ class PostgreSQLService:
 
     def _validate_workspace(self, workspace: Path, check_compose: bool = True) -> bool:
         """Validate workspace directory and required files.
-        
+
         Args:
             workspace: Path to workspace directory
             check_compose: Whether to check for docker-compose.yml
-            
+
         Returns:
             True if valid workspace, False otherwise
         """
         if not workspace.exists():
-            print(f"❌ Workspace directory does not exist: {workspace}")
             return False
 
         if not workspace.is_dir():
-            print(f"❌ Workspace path is not a directory: {workspace}")
             return False
 
         # Check for required files
         env_file = workspace / ".env"
         if not env_file.exists():
-            print(f"❌ Missing .env file in workspace: {workspace}")
-            print("💡 Run 'uvx automagik-hive --init' to initialize workspace")
             return False
 
         if check_compose:
             compose_file = workspace / "docker-compose.yml"
             if not compose_file.exists():
-                print(f"❌ Missing docker-compose.yml in workspace: {workspace}")
-                print("💡 Run 'uvx automagik-hive --init' to initialize workspace")
                 return False
 
         return True

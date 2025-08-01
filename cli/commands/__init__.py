@@ -8,8 +8,4 @@ from .init import InitCommands
 from .postgres import PostgreSQLCommands
 from .workspace import WorkspaceCommands
 
-__all__ = [
-    "InitCommands",
-    "PostgreSQLCommands",
-    "WorkspaceCommands"
-]
+__all__ = ["InitCommands", "PostgreSQLCommands", "WorkspaceCommands"]

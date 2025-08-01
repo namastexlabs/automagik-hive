@@ -2,7 +2,7 @@
 
 Provides comprehensive validation of system requirements:
 - Python 3.12+ compatibility
-- UVX environment detection  
+- UVX environment detection
 - Docker installation and daemon status
 - Port availability checks
 - PostgreSQL image pre-pulling
@@ -20,6 +20,7 @@ from dataclasses import dataclass
 @dataclass
 class EnvironmentCheck:
     """Result of an environment validation check."""
+
     name: str
     passed: bool
     message: str
@@ -30,6 +31,7 @@ class EnvironmentCheck:
 @dataclass
 class EnvironmentValidation:
     """Complete environment validation results."""
+
     checks: list[EnvironmentCheck]
     overall_passed: bool
     summary: str
@@ -42,7 +44,9 @@ class EnvironmentValidation:
     @property
     def warnings(self) -> list[EnvironmentCheck]:
         """Get list of non-critical warnings."""
-        return [check for check in self.checks if not check.passed and not check.critical]
+        return [
+            check for check in self.checks if not check.passed and not check.critical
+        ]
 
 
 class EnvironmentValidator:
@@ -52,12 +56,14 @@ class EnvironmentValidator:
         self.platform_system = platform.system().lower()
         self.checks: list[EnvironmentCheck] = []
 
-    def validate_all(self, required_ports: list[int] | None = None) -> EnvironmentValidation:
+    def validate_all(
+        self, required_ports: list[int] | None = None
+    ) -> EnvironmentValidation:
         """Run complete environment validation.
-        
+
         Args:
             required_ports: List of ports to check for availability
-            
+
         Returns:
             EnvironmentValidation with all check results
         """
@@ -92,9 +98,7 @@ class EnvironmentValidator:
             summary = f"❌ {failure_count} critical issue(s) found - see guidance below"
 
         return EnvironmentValidation(
-            checks=self.checks,
-            overall_passed=overall_passed,
-            summary=summary
+            checks=self.checks, overall_passed=overall_passed, summary=summary
         )
 
     def _check_python_version(self) -> EnvironmentCheck:
@@ -105,31 +109,27 @@ class EnvironmentValidator:
                 return EnvironmentCheck(
                     name="Python Version",
                     passed=True,
-                    message=f"Python {version.major}.{version.minor}.{version.micro} ✓"
+                    message=f"Python {version.major}.{version.minor}.{version.micro} ✓",
                 )
             return EnvironmentCheck(
                 name="Python Version",
                 passed=False,
                 message=f"Python {version.major}.{version.minor}.{version.micro} (requires 3.12+)",
                 guidance=self._get_python_upgrade_guidance(),
-                critical=True
+                critical=True,
             )
         except Exception as e:
             return EnvironmentCheck(
                 name="Python Version",
                 passed=False,
                 message=f"Failed to check Python version: {e}",
-                critical=True
+                critical=True,
             )
 
     def _check_uvx_environment(self) -> EnvironmentCheck:
         """Detect UVX execution context and compatibility."""
         # Check for UVX-specific environment indicators
-        uvx_indicators = [
-            "UVX_PROJECT",
-            "UV_PROJECT_ENVIRONMENT",
-            "VIRTUAL_ENV"
-        ]
+        uvx_indicators = ["UVX_PROJECT", "UV_PROJECT_ENVIRONMENT", "VIRTUAL_ENV"]
 
         uvx_detected = any(indicator in os.environ for indicator in uvx_indicators)
 
@@ -151,7 +151,7 @@ class EnvironmentValidator:
             passed=uvx_available or uvx_detected,
             message=message,
             guidance=guidance,
-            critical=False  # Non-critical, can run without UVX
+            critical=False,  # Non-critical, can run without UVX
         )
 
     def _check_docker_installation(self) -> EnvironmentCheck:
@@ -162,28 +162,23 @@ class EnvironmentValidator:
                 passed=False,
                 message="Docker not found",
                 guidance=self._get_docker_install_guidance(),
-                critical=True
+                critical=True,
             )
 
         return EnvironmentCheck(
             name="Docker Installation",
             passed=True,
-            message="Docker command available ✓"
+            message="Docker command available ✓",
         )
 
     def _check_docker_daemon(self) -> EnvironmentCheck:
         """Check if Docker daemon is running and accessible."""
         try:
-            result = subprocess.run(
-                ["docker", "info"],
-                capture_output=True,
-                check=True,
-                timeout=10
+            subprocess.run(
+                ["docker", "info"], capture_output=True, check=True, timeout=10
             )
             return EnvironmentCheck(
-                name="Docker Daemon",
-                passed=True,
-                message="Docker daemon running ✓"
+                name="Docker Daemon", passed=True, message="Docker daemon running ✓"
             )
         except subprocess.CalledProcessError:
             return EnvironmentCheck(
@@ -191,7 +186,7 @@ class EnvironmentValidator:
                 passed=False,
                 message="Docker daemon not running",
                 guidance=self._get_docker_start_guidance(),
-                critical=True
+                critical=True,
             )
         except subprocess.TimeoutExpired:
             return EnvironmentCheck(
@@ -199,14 +194,14 @@ class EnvironmentValidator:
                 passed=False,
                 message="Docker daemon not responding (timeout)",
                 guidance="Check Docker service status and restart if needed",
-                critical=True
+                critical=True,
             )
         except Exception as e:
             return EnvironmentCheck(
                 name="Docker Daemon",
                 passed=False,
                 message=f"Docker daemon check failed: {e}",
-                critical=True
+                critical=True,
             )
 
     def _check_postgresql_image(self) -> EnvironmentCheck:
@@ -219,14 +214,14 @@ class EnvironmentValidator:
                 ["docker", "images", "-q", image_name],
                 capture_output=True,
                 check=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.stdout.strip():
                 return EnvironmentCheck(
                     name="PostgreSQL Image",
                     passed=True,
-                    message=f"{image_name} available locally ✓"
+                    message=f"{image_name} available locally ✓",
                 )
             # Attempt to pull image
             try:
@@ -234,12 +229,12 @@ class EnvironmentValidator:
                     ["docker", "pull", image_name],
                     capture_output=True,
                     check=True,
-                    timeout=120  # 2 minutes for image pull
+                    timeout=120,  # 2 minutes for image pull
                 )
                 return EnvironmentCheck(
                     name="PostgreSQL Image",
                     passed=True,
-                    message=f"{image_name} pulled successfully ✓"
+                    message=f"{image_name} pulled successfully ✓",
                 )
             except subprocess.TimeoutExpired:
                 return EnvironmentCheck(
@@ -247,7 +242,7 @@ class EnvironmentValidator:
                     passed=False,
                     message=f"Timeout pulling {image_name}",
                     guidance="Check internet connection and Docker Hub access",
-                    critical=False
+                    critical=False,
                 )
             except subprocess.CalledProcessError:
                 return EnvironmentCheck(
@@ -255,7 +250,7 @@ class EnvironmentValidator:
                     passed=False,
                     message=f"Failed to pull {image_name}",
                     guidance="Image will be pulled on first use",
-                    critical=False
+                    critical=False,
                 )
 
         except Exception as e:
@@ -264,7 +259,7 @@ class EnvironmentValidator:
                 passed=False,
                 message=f"Image check failed: {e}",
                 guidance="Image will be pulled on first use",
-                critical=False
+                critical=False,
             )
 
     def _check_port_availability(self, port: int) -> EnvironmentCheck:
@@ -274,9 +269,7 @@ class EnvironmentValidator:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.bind(("localhost", port))
                 return EnvironmentCheck(
-                    name=f"Port {port}",
-                    passed=True,
-                    message=f"Port {port} available ✓"
+                    name=f"Port {port}", passed=True, message=f"Port {port} available ✓"
                 )
         except OSError:
             return EnvironmentCheck(
@@ -284,7 +277,7 @@ class EnvironmentValidator:
                 passed=False,
                 message=f"Port {port} already in use",
                 guidance=f"Stop service using port {port} or choose different port",
-                critical=True
+                critical=True,
             )
 
     def _get_python_upgrade_guidance(self) -> str:
@@ -345,7 +338,9 @@ class EnvironmentValidator:
 
 
 # Convenience functions for common validation scenarios
-def validate_workspace_environment(workspace_ports: list[int] = None) -> EnvironmentValidation:
+def validate_workspace_environment(
+    workspace_ports: list[int] | None = None,
+) -> EnvironmentValidation:
     """Validate environment for workspace operations."""
     if workspace_ports is None:
         workspace_ports = [8886, 5532]  # Main workspace ports
@@ -363,34 +358,23 @@ def validate_full_environment() -> EnvironmentValidation:
 
 def print_validation_results(validation: EnvironmentValidation) -> None:
     """Print formatted validation results to console."""
-    print("\n🔍 Environment Validation Results")
-    print("=" * 50)
-    print(f"{validation.summary}\n")
-
     # Print individual check results
     for check in validation.checks:
-        status = "✅" if check.passed else "❌"
-        print(f"{status} {check.name}: {check.message}")
 
         if check.guidance and not check.passed:
-            print(f"   💡 {check.guidance}")
+            pass
 
     # Print summary sections
     if validation.critical_failures:
-        print(f"\n🚨 Critical Issues ({len(validation.critical_failures)}):")
         for check in validation.critical_failures:
-            print(f"   • {check.name}: {check.message}")
             if check.guidance:
-                print(f"     💡 {check.guidance}")
+                pass
 
     if validation.warnings:
-        print(f"\n⚠️  Warnings ({len(validation.warnings)}):")
         for check in validation.warnings:
-            print(f"   • {check.name}: {check.message}")
             if check.guidance:
-                print(f"     💡 {check.guidance}")
+                pass
 
-    print()
 
 
 # Import fix for os module

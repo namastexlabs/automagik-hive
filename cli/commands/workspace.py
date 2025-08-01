@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class WorkspaceCommands:
     """Workspace startup CLI command implementations.
-    
+
     Provides workspace validation and startup functionality
     for existing Automagik Hive workspaces.
     """
@@ -26,35 +26,36 @@ class WorkspaceCommands:
         self._docker_service = None
         self._postgres_service = None
         self._compose_cmd = None  # Cached compose command
-    
+
     @property
     def docker_service(self) -> "DockerService":
         """Lazy load DockerService only when needed."""
         if self._docker_service is None:
             from cli.core.docker_service import DockerService
+
             self._docker_service = DockerService()
         return self._docker_service
-    
+
     @property
     def postgres_service(self) -> "PostgreSQLService":
         """Lazy load PostgreSQLService only when needed."""
         if self._postgres_service is None:
             from cli.core.postgres_service import PostgreSQLService
+
             self._postgres_service = PostgreSQLService()
         return self._postgres_service
 
     def start_workspace(self, workspace_path: str) -> bool:
         """Start an existing workspace server.
-        
+
         Args:
             workspace_path: Path to workspace directory
-            
+
         Returns:
             True if startup successful, False otherwise
         """
         workspace = Path(workspace_path).resolve()
 
-        print(f"🚀 Starting Automagik Hive workspace: {workspace}")
 
         # Step 1: Validate workspace structure
         if not self._validate_workspace(workspace):
@@ -81,19 +82,11 @@ class WorkspaceCommands:
         self._show_startup_success(workspace, env_config)
 
         # Step 7: Start FastAPI server (blocking)
-        print("\n🚀 Starting application server...")
-        if not self._start_fastapi_server(workspace, env_config):
-            return False
-
-        return True
+        return self._start_fastapi_server(workspace, env_config)
 
     def _validate_workspace(self, workspace: Path) -> bool:
         """Validate workspace structure and required files."""
-        print("🔍 Validating workspace structure...")
-
         if not workspace.exists() or not workspace.is_dir():
-            print(f"❌ Workspace directory '{workspace}' does not exist")
-            print("💡 Use 'uvx automagik-hive --init' to create a new workspace")
             return False
 
         # Check for required files
@@ -105,8 +98,6 @@ class WorkspaceCommands:
                 missing_files.append(file)
 
         if missing_files:
-            print(f"❌ Missing required files: {', '.join(missing_files)}")
-            print("💡 Use 'uvx automagik-hive --init' to initialize the workspace")
             return False
 
         # Check for optional but recommended files
@@ -119,33 +110,19 @@ class WorkspaceCommands:
                 missing_optional.append(file)
 
         if missing_optional:
-            print(f"⚠️ Optional components missing: {', '.join(missing_optional)}")
-            print("   (Workspace will still function, but with reduced capabilities)")
+            pass
 
-        print("✅ Workspace structure validated")
         return True
 
     def _check_docker_setup(self) -> bool:
         """Check Docker availability."""
-        print("🐳 Checking Docker setup...")
-
         if not self.docker_service.is_docker_available():
-            print("❌ Docker is not available")
-            print("💡 Please install Docker to use this workspace")
             return False
 
-        if not self.docker_service.is_docker_running():
-            print("❌ Docker daemon is not running")
-            print("💡 Please start Docker and try again")
-            return False
-
-        print("✅ Docker is available and running")
-        return True
+        return self.docker_service.is_docker_running()
 
     def _load_env_config(self, workspace: Path) -> dict[str, str] | None:
         """Load environment configuration from .env file."""
-        print("📋 Loading environment configuration...")
-
         env_file = workspace / ".env"
 
         try:
@@ -163,24 +140,18 @@ class WorkspaceCommands:
             missing_vars = [var for var in required_vars if var not in env_config]
 
             if missing_vars:
-                print(f"❌ Missing required environment variables: {', '.join(missing_vars)}")
                 return None
 
-            print("✅ Environment configuration loaded")
             return env_config
 
-        except Exception as e:
-            print(f"❌ Failed to load .env file: {e}")
+        except Exception:
             return None
 
     def _start_postgres_service(self, workspace: Path) -> bool:
         """Start PostgreSQL service using Docker Compose."""
-        print("🗄️ Starting PostgreSQL service...")
-
         compose_file = workspace / "docker-compose.yml"
 
         if not compose_file.exists():
-            print("⚠️ docker-compose.yml not found, trying PostgreSQL container management...")
             # Fall back to direct PostgreSQL management
             return self.postgres_service.start_postgres(str(workspace))
 
@@ -190,29 +161,28 @@ class WorkspaceCommands:
             os.chdir(workspace)
 
             # Start PostgreSQL service only
-            result = subprocess.run([
-                "docker", "compose", "up", "-d", "postgres"
-            ], check=False, capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                ["docker", "compose", "up", "-d", "postgres"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             os.chdir(original_cwd)
 
             if result.returncode != 0:
-                print(f"❌ Failed to start PostgreSQL service: {result.stderr}")
                 return False
 
             # Wait for PostgreSQL to be ready
-            print("⏳ Waiting for PostgreSQL to be ready...")
-            for i in range(30):  # Wait up to 30 seconds
+            for _i in range(30):  # Wait up to 30 seconds
                 if self._check_postgres_health(workspace):
-                    print("✅ PostgreSQL service started successfully")
                     return True
                 time.sleep(1)
 
-            print("❌ PostgreSQL service did not become ready in time")
             return False
 
-        except Exception as e:
-            print(f"❌ Failed to start PostgreSQL service: {e}")
+        except Exception:
             return False
 
     def _check_postgres_health(self, workspace: Path) -> bool:
@@ -223,9 +193,12 @@ class WorkspaceCommands:
             if not compose_cmd:
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(workspace / "docker-compose.yml"), 
-                               "exec", "-T", "postgres", "pg_isready", "-U", "hive"],
-                check=False, capture_output=True, text=True, timeout=5)
+                [*compose_cmd, "-f", str(workspace / "docker-compose.yml"), "exec", "-T", "postgres", "pg_isready", "-U", "hive"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
 
             return result.returncode == 0
 
@@ -234,65 +207,70 @@ class WorkspaceCommands:
 
     def _get_compose_command(self) -> list[str] | None:
         """Get the appropriate Docker Compose command with fallback.
-        
+
         Returns:
             List of command parts for docker compose, None if not available
         """
         if self._compose_cmd is not None:
             return self._compose_cmd
-            
+
         # Try modern 'docker compose' first (Docker v2+)
         try:
             result = subprocess.run(
                 ["docker", "compose", "version"],
-                check=False, capture_output=True, text=True, timeout=5
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0:
                 self._compose_cmd = ["docker", "compose"]
                 return self._compose_cmd
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             pass
-            
+
         # Fallback to legacy 'docker-compose'
         try:
             result = subprocess.run(
                 ["docker-compose", "--version"],
-                check=False, capture_output=True, text=True, timeout=5 
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0:
                 self._compose_cmd = ["docker-compose"]
                 return self._compose_cmd
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             pass
-            
+
         return None
 
-    def _validate_database_connection(self, workspace: Path, env_config: dict[str, str]) -> bool:
+    def _validate_database_connection(
+        self, workspace: Path, env_config: dict[str, str]
+    ) -> bool:
         """Validate database connection using environment configuration."""
-        print("🔌 Validating database connection...")
-
         database_url = env_config.get("DATABASE_URL")
         if not database_url:
-            print("❌ DATABASE_URL not found in environment configuration")
             return False
 
         # Check if PostgreSQL container is running first
         try:
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(workspace / "docker-compose.yml"),
-                               "ps", "--services", "--filter", "status=running"],
-                check=False, capture_output=True, text=True, timeout=10)
+                [*compose_cmd, "-f", str(workspace / "docker-compose.yml"), "ps", "--services", "--filter", "status=running"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
             if "postgres" not in result.stdout:
-                print("❌ PostgreSQL container is not running")
                 return False
 
-        except Exception as e:
-            print(f"❌ Could not check container status: {e}")
+        except Exception:
             return False
 
         # Try a simple connection test
@@ -300,29 +278,26 @@ class WorkspaceCommands:
             postgres_user = env_config.get("POSTGRES_USER")
             compose_cmd = self._get_compose_command()
             if not compose_cmd:
-                print("❌ Docker Compose not available")
                 return False
             result = subprocess.run(
-                compose_cmd + ["-f", str(workspace / "docker-compose.yml"),
-                               "exec", "-T", "postgres", "pg_isready", "-U", postgres_user, "-d", "hive"],
-                check=False, capture_output=True, text=True, timeout=10)
+                [*compose_cmd, "-f", str(workspace / "docker-compose.yml"), "exec", "-T", "postgres", "pg_isready", "-U", postgres_user, "-d", "hive"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
             if result.returncode == 0:
-                print("✅ Database connection validated")
                 return True
-            print("⚠️ Database not fully ready yet, but will continue...")
-            print("💡 The server will wait for the database to be ready")
             return True  # Continue anyway - the app will wait
 
-        except Exception as e:
-            print(f"⚠️ Could not test database connection: {e}")
-            print("💡 Continuing anyway - the server will handle connection retries")
+        except Exception:
             return True  # Continue anyway - let the app handle connection issues
 
-    def _start_fastapi_server(self, workspace: Path, env_config: dict[str, str]) -> bool:
+    def _start_fastapi_server(
+        self, workspace: Path, env_config: dict[str, str]
+    ) -> bool:
         """Start FastAPI server for the workspace."""
-        print("🌐 Starting FastAPI server...")
-
         try:
             # Change to workspace directory
             original_cwd = os.getcwd()
@@ -336,71 +311,63 @@ class WorkspaceCommands:
             host = env_config.get("HIVE_HOST", "0.0.0.0")
             port = env_config.get("HIVE_PORT", "8886")
 
-            print(f"🚀 Starting server on {host}:{port}")
-            print("📋 Server logs will appear below...")
-            print("⏹️ Press Ctrl+C to stop the server\n")
 
             # Check if we're inside the automagik-hive package directory
             # If so, we can start the server directly
             if (workspace / "api" / "serve.py").exists():
                 # We're in the package directory, can start directly
-                result = subprocess.run([
-                    "uv", "run", "uvicorn", "api.serve:app",
-                    "--host", host,
-                    "--port", port,
-                    "--reload"
-                ], check=False, env=env, cwd=workspace)
+                subprocess.run(
+                    [
+                        "uv",
+                        "run",
+                        "uvicorn",
+                        "api.serve:app",
+                        "--host",
+                        host,
+                        "--port",
+                        port,
+                        "--reload",
+                    ],
+                    check=False,
+                    env=env,
+                    cwd=workspace,
+                )
             else:
                 # We're in a workspace directory, start via uvicorn directly
-                print("📍 Starting via installed package...")
-                print(f"🚀 Starting Automagik Hive server on {host}:{port}")
-                print("📋 Server logs will appear below...")
-                print("⏹️ Press Ctrl+C to quit\n")
 
                 # Use the dedicated server entry point from automagik-hive package
-                result = subprocess.run([
-                    "uvx", "--from", "automagik-hive", "automagik-hive-server"
-                ], check=False, env=env, cwd=workspace)
+                subprocess.run(
+                    ["uvx", "--from", "automagik-hive", "automagik-hive-server"],
+                    check=False,
+                    env=env,
+                    cwd=workspace,
+                )
 
             os.chdir(original_cwd)
 
             # If we get here, the server was stopped
-            print("\n🛑 Server stopped")
             return True
 
         except KeyboardInterrupt:
-            print("\n🛑 Server stopped by user")
             os.chdir(original_cwd)
             return True
 
-        except Exception as e:
-            print(f"❌ Failed to start FastAPI server: {e}")
-            print("💡 Try running 'docker compose up' manually in the workspace directory")
+        except Exception:
             os.chdir(original_cwd)
             return False
 
     def _show_startup_success(self, workspace: Path, env_config: dict[str, str]):
         """Show startup success message and connection info."""
-        host = env_config.get("HIVE_HOST", "0.0.0.0")
-        port = env_config.get("HIVE_PORT", "8886")
+        env_config.get("HIVE_HOST", "0.0.0.0")
+        env_config.get("HIVE_PORT", "8886")
 
-        print(f"\n🎉 Automagik Hive workspace '{workspace.name}' is starting!")
-        print("\n📋 Connection Information:")
-        print(f"   🔗 API Server: http://localhost:{port}")
-        print("   🖺 PostgreSQL: localhost:5532")
-        print(f"   📁 Workspace: {workspace}")
-        print("\n🔧 Available Services:")
-        print("   • PostgreSQL + pgvector (for AI embeddings)")
-        print("   • FastAPI server (for agent orchestration)")
-        print("   • Claude Code integration (via .mcp.json)")
-        print("\n✨ Your magical development environment is ready!")
 
     def validate_workspace_path(self, path: str) -> bool:
         """Validate if a path looks like a workspace path.
-        
+
         Args:
             path: Path to check
-            
+
         Returns:
             True if path looks like a workspace path
         """
@@ -411,11 +378,8 @@ class WorkspaceCommands:
             return True
 
         # Check if it starts with relative path indicators
-        if path.startswith("./") or path.startswith("../") or path.startswith("~/"):
+        if path.startswith(("./", "../", "~/")):
             return True
 
         # Check if it's an absolute path
-        if workspace.is_absolute():
-            return True
-
-        return False
+        return bool(workspace.is_absolute())

@@ -2,7 +2,7 @@
 
 Implements the expert-recommended Docker Compose multi-container architecture:
 - Main Workspace: UVX CLI + Docker PostgreSQL (port 8886 + 5532)
-- Genie Container: All-in-one PostgreSQL + FastAPI (port 48886)  
+- Genie Container: All-in-one PostgreSQL + FastAPI (port 48886)
 - Agent Container: All-in-one PostgreSQL + FastAPI (port 35532)
 
 Provides high-level orchestration of environment validation and container deployment.
@@ -22,6 +22,7 @@ from .templates import ContainerCredentials, ContainerTemplateManager
 @dataclass
 class ContainerStrategy:
     """Container orchestration strategy configuration."""
+
     name: str
     description: str
     services: list[str]
@@ -39,29 +40,35 @@ class ContainerOrchestrator:
             description="UVX CLI with Docker PostgreSQL",
             services=["postgres"],
             ports={"workspace": 8886, "postgres": 5532},
-            validation_ports=[8886, 5532]
+            validation_ports=[8886, 5532],
         ),
         "genie": ContainerStrategy(
             name="Genie Consultation",
             description="All-in-one Genie service container",
             services=["genie-server", "genie-postgres"],
             ports={"genie": 48886},
-            validation_ports=[48886]
+            validation_ports=[48886],
         ),
         "agent": ContainerStrategy(
             name="Agent Development",
             description="Agent development environment container",
             services=["app-agent", "postgres-agent"],
             ports={"agent": 35532},
-            validation_ports=[35532]
+            validation_ports=[35532],
         ),
         "full": ContainerStrategy(
             name="Full System",
             description="Complete multi-container system",
-            services=["postgres", "genie-server", "genie-postgres", "app-agent", "postgres-agent"],
+            services=[
+                "postgres",
+                "genie-server",
+                "genie-postgres",
+                "app-agent",
+                "postgres-agent",
+            ],
             ports={"workspace": 8886, "postgres": 5532, "genie": 48886, "agent": 35532},
-            validation_ports=[8886, 5532, 48886, 35532]
-        )
+            validation_ports=[8886, 5532, 48886, 35532],
+        ),
     }
 
     def __init__(self):
@@ -73,22 +80,24 @@ class ContainerOrchestrator:
         workspace_path: Path,
         strategy: str = "workspace",
         credentials: ContainerCredentials | None = None,
-        interactive: bool = True
+        interactive: bool = True,
     ) -> tuple[bool, EnvironmentValidation, dict[str, Path] | None]:
         """Validate environment and prepare workspace with containers.
-        
+
         Args:
             workspace_path: Target workspace directory
             strategy: Container strategy ("workspace", "genie", "agent", "full")
             credentials: Container credentials (generated if not provided)
             interactive: Whether to print results and prompt user
-            
+
         Returns:
             Tuple of (success, validation_results, generated_files)
         """
         # Get strategy configuration
         if strategy not in self.STRATEGIES:
-            raise ValueError(f"Unknown strategy: {strategy}. Available: {list(self.STRATEGIES.keys())}")
+            raise ValueError(
+                f"Unknown strategy: {strategy}. Available: {list(self.STRATEGIES.keys())}"
+            )
 
         strategy_config = self.STRATEGIES[strategy]
 
@@ -101,7 +110,7 @@ class ContainerOrchestrator:
         # If validation failed, return early
         if not validation.overall_passed:
             if interactive:
-                print("🚨 Environment validation failed. Please resolve issues above before continuing.")
+                pass
             return False, validation, None
 
         # Generate credentials if not provided
@@ -115,29 +124,25 @@ class ContainerOrchestrator:
             )
 
             if interactive:
-                print(f"✅ Workspace prepared with {strategy} container strategy")
-                print("📁 Generated files:")
-                for template_type, file_path in generated_files.items():
-                    print(f"   • {template_type}: {file_path}")
+                for _template_type, _file_path in generated_files.items():
+                    pass
 
             return True, validation, generated_files
 
-        except Exception as e:
+        except Exception:
             if interactive:
-                print(f"❌ Failed to prepare workspace: {e}")
+                pass
             return False, validation, None
 
     def validate_container_environment(
-        self,
-        strategy: str = "workspace",
-        interactive: bool = True
+        self, strategy: str = "workspace", interactive: bool = True
     ) -> EnvironmentValidation:
         """Validate environment for specific container strategy.
-        
+
         Args:
             strategy: Container strategy to validate for
             interactive: Whether to print results
-            
+
         Returns:
             Environment validation results
         """
@@ -148,11 +153,6 @@ class ContainerOrchestrator:
         validation = self.env_validator.validate_all(strategy_config.validation_ports)
 
         if interactive:
-            print(f"🐳 Container Strategy: {strategy_config.name}")
-            print(f"📝 Description: {strategy_config.description}")
-            print(f"🔌 Services: {', '.join(strategy_config.services)}")
-            print(f"🌐 Ports: {', '.join(f'{k}:{v}' for k, v in strategy_config.ports.items())}")
-            print()
             print_validation_results(validation)
 
         return validation
@@ -166,10 +166,7 @@ class ContainerOrchestrator:
         return self.STRATEGIES.copy()
 
     def _prepare_workspace_containers(
-        self,
-        workspace_path: Path,
-        strategy: str,
-        credentials: ContainerCredentials
+        self, workspace_path: Path, strategy: str, credentials: ContainerCredentials
     ) -> dict[str, Path]:
         """Prepare workspace with appropriate container templates."""
         # Create workspace directory
@@ -182,8 +179,10 @@ class ContainerOrchestrator:
         generated_files = {}
 
         if strategy in ["workspace", "full"]:
-            generated_files["workspace"] = self.template_manager.generate_workspace_compose(
-                workspace_path, credentials
+            generated_files["workspace"] = (
+                self.template_manager.generate_workspace_compose(
+                    workspace_path, credentials
+                )
             )
 
         if strategy in ["genie", "full"]:
@@ -212,7 +211,7 @@ class ContainerOrchestrator:
             postgres_user=postgres_user,
             postgres_password=postgres_password,
             postgres_db="hive",
-            hive_api_key=hive_api_key
+            hive_api_key=hive_api_key,
         )
 
 
@@ -230,12 +229,10 @@ def validate_full_system_environment(interactive: bool = True) -> EnvironmentVal
 
 
 def prepare_workspace_with_strategy(
-    workspace_path: Path,
-    strategy: str = "workspace",
-    interactive: bool = True
+    workspace_path: Path, strategy: str = "workspace", interactive: bool = True
 ) -> tuple[bool, dict[str, Path]]:
     """Prepare workspace with specific container strategy.
-    
+
     Returns:
         Tuple of (success, generated_files)
     """
