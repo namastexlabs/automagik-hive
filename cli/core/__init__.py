@@ -12,6 +12,14 @@ from .environment import (
     validate_workspace_environment,
 )
 from .templates import ContainerCredentials, ContainerTemplateManager
+from .agent_environment import (
+    AgentEnvironment,
+    AgentCredentials,
+    create_agent_environment,
+    validate_agent_environment,
+    get_agent_ports,
+    cleanup_agent_environment,
+)
 
 # Import existing services (with graceful fallback for dependencies)
 try:
@@ -32,6 +40,13 @@ __all__ = [
     "ContainerTemplateManager",
     "ContainerCredentials",
     "ContainerOrchestrator",
+    # Agent Environment Management
+    "AgentEnvironment",
+    "AgentCredentials",
+    "create_agent_environment",
+    "validate_agent_environment",
+    "get_agent_ports",
+    "cleanup_agent_environment",
     # Legacy services (when available)
     "PostgreSQLService",
     "DockerService",

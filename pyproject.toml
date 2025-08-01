@@ -100,6 +100,7 @@ Documentation = "https://docs.automagik.ai"
 
 [project.scripts]
 automagik-hive = "cli.main:main"
+automagik-hive-server = "api.serve:main"
 
 [build-system]
 requires = ["hatchling"]

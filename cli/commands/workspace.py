@@ -286,10 +286,16 @@ class WorkspaceCommands:
                     "--reload"
                 ], check=False, env=env, cwd=workspace)
             else:
-                # We're in a workspace directory, start via package
+                # We're in a workspace directory, start via uvicorn directly
                 print("📍 Starting via installed package...")
+                print(f"🚀 Starting Automagik Hive server on {host}:{port}")
+                print("📋 Server logs will appear below...")
+                print("⏹️ Press Ctrl+C to quit\n")
+
+                # Add uvicorn as an explicit dependency to avoid the warning
                 result = subprocess.run([
-                    "uvx", "automagik-hive", "--serve",
+                    "uvx", "--with", "uvicorn", "--from", "automagik-hive", "python", "-m", "uvicorn",
+                    "api.serve:app",
                     "--host", host,
                     "--port", port
                 ], check=False, env=env, cwd=workspace)
