@@ -263,13 +263,8 @@ class WorkflowOrchestrator:
                 if result.returncode != 0:
                     missing_deps.append("docker")
 
-                result = subprocess.run(
-                    ["docker-compose", "--version"],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if result.returncode != 0:
+                # Check Docker Compose availability (modern and legacy support)
+                if not self._check_docker_compose_available():
                     missing_deps.append("docker-compose")
 
             # Check uvx availability for workspace components
@@ -293,6 +288,51 @@ class WorkflowOrchestrator:
         except Exception as e:
             logger.error(f"Dependency validation failed: {e}")
             return False, ["validation_error"]
+
+    def _check_docker_compose_available(self) -> bool:
+        """Check if Docker Compose is available (modern or legacy).
+        
+        Tries modern 'docker compose' first, then falls back to legacy 'docker-compose'.
+        
+        Returns:
+            bool: True if either version is available
+        """
+        try:
+            import subprocess
+            
+            # Try modern 'docker compose' first (Docker v2+)
+            try:
+                result = subprocess.run(
+                    ["docker", "compose", "version"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result.returncode == 0:
+                    return True
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+                pass
+
+            # Fallback to legacy 'docker-compose'
+            try:
+                result = subprocess.run(
+                    ["docker-compose", "--version"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result.returncode == 0:
+                    return True
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+                pass
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Docker Compose availability check failed: {e}")
+            return False
 
     # Private implementation methods
 
