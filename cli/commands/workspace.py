@@ -23,6 +23,7 @@ class WorkspaceCommands:
     def __init__(self):
         self.docker_service = DockerService()
         self.postgres_service = PostgreSQLService()
+        self._compose_cmd = None  # Cached compose command
 
     def start_workspace(self, workspace_path: str) -> bool:
         """Start an existing workspace server.
@@ -200,15 +201,53 @@ class WorkspaceCommands:
         """Check if PostgreSQL is healthy and accepting connections."""
         try:
             # Try to connect using pg_isready or similar
-            result = subprocess.run([
-                "docker", "compose", "-f", str(workspace / "docker-compose.yml"),
-                "exec", "-T", "postgres", "pg_isready", "-U", "hive"
-            ], check=False, capture_output=True, text=True, timeout=5)
+            compose_cmd = self._get_compose_command()
+            if not compose_cmd:
+                return False
+            result = subprocess.run(
+                compose_cmd + ["-f", str(workspace / "docker-compose.yml"), 
+                               "exec", "-T", "postgres", "pg_isready", "-U", "hive"],
+                check=False, capture_output=True, text=True, timeout=5)
 
             return result.returncode == 0
 
         except Exception:
             return False
+
+    def _get_compose_command(self) -> list[str] | None:
+        """Get the appropriate Docker Compose command with fallback.
+        
+        Returns:
+            List of command parts for docker compose, None if not available
+        """
+        if self._compose_cmd is not None:
+            return self._compose_cmd
+            
+        # Try modern 'docker compose' first (Docker v2+)
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "version"],
+                check=False, capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                self._compose_cmd = ["docker", "compose"]
+                return self._compose_cmd
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+            
+        # Fallback to legacy 'docker-compose'
+        try:
+            result = subprocess.run(
+                ["docker-compose", "--version"],
+                check=False, capture_output=True, text=True, timeout=5 
+            )
+            if result.returncode == 0:
+                self._compose_cmd = ["docker-compose"]
+                return self._compose_cmd
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+            
+        return None
 
     def _validate_database_connection(self, workspace: Path, env_config: dict[str, str]) -> bool:
         """Validate database connection using environment configuration."""
@@ -221,10 +260,14 @@ class WorkspaceCommands:
 
         # Check if PostgreSQL container is running first
         try:
-            result = subprocess.run([
-                "docker", "compose", "-f", str(workspace / "docker-compose.yml"),
-                "ps", "--services", "--filter", "status=running"
-            ], check=False, capture_output=True, text=True, timeout=10)
+            compose_cmd = self._get_compose_command()
+            if not compose_cmd:
+                print("❌ Docker Compose not available")
+                return False
+            result = subprocess.run(
+                compose_cmd + ["-f", str(workspace / "docker-compose.yml"),
+                               "ps", "--services", "--filter", "status=running"],
+                check=False, capture_output=True, text=True, timeout=10)
 
             if "postgres" not in result.stdout:
                 print("❌ PostgreSQL container is not running")
@@ -237,10 +280,14 @@ class WorkspaceCommands:
         # Try a simple connection test
         try:
             postgres_user = env_config.get("POSTGRES_USER")
-            result = subprocess.run([
-                "docker", "compose", "-f", str(workspace / "docker-compose.yml"),
-                "exec", "-T", "postgres", "pg_isready", "-U", postgres_user, "-d", "hive"
-            ], check=False, capture_output=True, text=True, timeout=10)
+            compose_cmd = self._get_compose_command()
+            if not compose_cmd:
+                print("❌ Docker Compose not available")
+                return False
+            result = subprocess.run(
+                compose_cmd + ["-f", str(workspace / "docker-compose.yml"),
+                               "exec", "-T", "postgres", "pg_isready", "-U", postgres_user, "-d", "hive"],
+                check=False, capture_output=True, text=True, timeout=10)
 
             if result.returncode == 0:
                 print("✅ Database connection validated")

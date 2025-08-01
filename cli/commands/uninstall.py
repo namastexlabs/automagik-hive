@@ -267,11 +267,14 @@ class UninstallCommands:
 
     def _stop_workspace_containers(self, workspace: Path) -> bool:
         """Stop and remove containers for a specific workspace."""
+        success = True
+        
         try:
+            # Step 1: Try docker compose down first (for workspace-managed containers)
             original_cwd = os.getcwd()
             os.chdir(workspace)
             
-            # Stop and remove containers with volumes
+            print("🔄 Stopping workspace containers via docker compose...")
             result = subprocess.run([
                 "docker", "compose", "down", "-v", "--remove-orphans"
             ], check=False, capture_output=True, text=True)
@@ -279,15 +282,50 @@ class UninstallCommands:
             os.chdir(original_cwd)
             
             if result.returncode == 0:
-                print("✅ Docker containers and volumes removed")
-                return True
+                print("✅ Docker compose containers stopped")
             else:
-                print(f"⚠️ Docker cleanup warning: {result.stderr}")
-                return True  # Continue even if Docker cleanup has issues
+                print(f"⚠️ Docker compose cleanup warning: {result.stderr}")
                 
         except Exception as e:
-            print(f"❌ Error stopping containers: {e}")
-            return False
+            print(f"⚠️ Docker compose cleanup error: {e}")
+            success = False
+        
+        # Step 2: Also find and remove any hive-related containers that might be orphaned
+        try:
+            print("🔍 Finding and removing all hive-related containers...")
+            all_container_ids = []
+            
+            # Get container IDs for hive-related containers
+            for filter_name in ["hive", "automagik"]:
+                result = subprocess.run([
+                    "docker", "ps", "-aq", "--filter", f"name={filter_name}"
+                ], check=False, capture_output=True, text=True)
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    container_ids = [id.strip() for id in result.stdout.strip().split('\n') if id.strip()]
+                    all_container_ids.extend(container_ids)
+            
+            # Remove duplicates
+            all_container_ids = list(set(all_container_ids))
+            
+            if all_container_ids:
+                print(f"🛑 Stopping {len(all_container_ids)} hive containers...")
+                subprocess.run(["docker", "stop"] + all_container_ids, 
+                             check=False, capture_output=True)
+                
+                print(f"🗑️ Removing {len(all_container_ids)} hive containers...")
+                subprocess.run(["docker", "rm", "-f"] + all_container_ids, 
+                             check=False, capture_output=True)
+                
+                print(f"✅ Removed {len(all_container_ids)} hive containers")
+            else:
+                print("📄 No additional hive containers found")
+            
+        except Exception as e:
+            print(f"⚠️ Error removing hive containers: {e}")
+            success = False
+        
+        return success
 
     def _find_all_workspaces(self) -> list[Path]:
         """Find all Automagik Hive workspaces on the system."""
@@ -329,16 +367,21 @@ class UninstallCommands:
     def _find_automagik_containers(self) -> list[str]:
         """Find all Automagik Hive Docker containers."""
         try:
-            result = subprocess.run([
-                "docker", "ps", "-a", "--format", "{{.Names}}", 
-                "--filter", "name=automagik"
-            ], check=False, capture_output=True, text=True)
+            # Look for containers with "hive" or "automagik" in the name
+            containers = []
             
-            if result.returncode == 0:
-                containers = [name.strip() for name in result.stdout.split('\n') if name.strip()]
-                return containers
-            else:
-                return []
+            for filter_name in ["hive", "automagik"]:
+                result = subprocess.run([
+                    "docker", "ps", "-a", "--format", "{{.Names}}", 
+                    "--filter", f"name={filter_name}"
+                ], check=False, capture_output=True, text=True)
+                
+                if result.returncode == 0:
+                    found_containers = [name.strip() for name in result.stdout.split('\n') if name.strip()]
+                    containers.extend(found_containers)
+            
+            # Remove duplicates and return
+            return list(set(containers))
                 
         except Exception:
             return []
@@ -377,34 +420,56 @@ class UninstallCommands:
         print("\n🐳 Removing Docker containers and volumes...")
         
         try:
-            # Remove all automagik containers
-            result = subprocess.run([
-                "docker", "ps", "-aq", "--filter", "name=automagik"
-            ], check=False, capture_output=True, text=True)
+            all_container_ids = []
             
-            if result.returncode == 0 and result.stdout.strip():
-                container_ids = result.stdout.strip().split('\n')
+            # Get container IDs for both "hive" and "automagik" patterns
+            for filter_name in ["hive", "automagik"]:
+                result = subprocess.run([
+                    "docker", "ps", "-aq", "--filter", f"name={filter_name}"
+                ], check=False, capture_output=True, text=True)
                 
+                if result.returncode == 0 and result.stdout.strip():
+                    container_ids = [id.strip() for id in result.stdout.strip().split('\n') if id.strip()]
+                    all_container_ids.extend(container_ids)
+            
+            # Remove duplicates
+            all_container_ids = list(set(all_container_ids))
+            
+            if all_container_ids:
                 # Stop containers
-                subprocess.run(["docker", "stop"] + container_ids, 
+                print(f"🛑 Stopping {len(all_container_ids)} containers...")
+                subprocess.run(["docker", "stop"] + all_container_ids, 
                              check=False, capture_output=True)
                 
                 # Remove containers
-                subprocess.run(["docker", "rm", "-f"] + container_ids, 
+                print(f"🗑️ Removing {len(all_container_ids)} containers...")
+                subprocess.run(["docker", "rm", "-f"] + all_container_ids, 
                              check=False, capture_output=True)
                 
-                print(f"✅ Removed {len(container_ids)} containers")
+                print(f"✅ Removed {len(all_container_ids)} containers")
+            else:
+                print("📄 No Automagik Hive containers found")
             
-            # Remove volumes
-            result = subprocess.run([
-                "docker", "volume", "ls", "-q", "--filter", "name=automagik"
-            ], check=False, capture_output=True, text=True)
+            # Remove volumes for both patterns
+            all_volumes = []
+            for filter_name in ["hive", "automagik"]:
+                result = subprocess.run([
+                    "docker", "volume", "ls", "-q", "--filter", f"name={filter_name}"
+                ], check=False, capture_output=True, text=True)
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    volume_names = [vol.strip() for vol in result.stdout.strip().split('\n') if vol.strip()]
+                    all_volumes.extend(volume_names)
             
-            if result.returncode == 0 and result.stdout.strip():
-                volume_names = result.stdout.strip().split('\n')
-                subprocess.run(["docker", "volume", "rm", "-f"] + volume_names,
+            # Remove duplicates and remove volumes
+            all_volumes = list(set(all_volumes))
+            if all_volumes:
+                print(f"📦 Removing {len(all_volumes)} volumes...")
+                subprocess.run(["docker", "volume", "rm", "-f"] + all_volumes,
                              check=False, capture_output=True)
-                print(f"✅ Removed {len(volume_names)} volumes")
+                print(f"✅ Removed {len(all_volumes)} volumes")
+            else:
+                print("📄 No Automagik Hive volumes found")
             
             return True
             

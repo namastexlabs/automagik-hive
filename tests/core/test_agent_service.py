@@ -424,12 +424,11 @@ class TestAgentServiceCredentialsGeneration:
                 
                 result = service._generate_agent_postgres_credentials(str(workspace))
 
-        # Should fail initially - credential generation not implemented
-        assert result is True
-        
-        content = env_agent.read_text()
-        assert "generated_token" in content
-        assert "hive_agent" in content
+            assert result is True
+            
+            content = env_agent.read_text()
+            assert "generated_token" in content
+            assert "hive_agent" in content
 
     def test_generate_agent_postgres_credentials_missing_env_file(self, mock_compose_manager):
         """Test credential generation fails when .env.agent is missing."""
@@ -475,11 +474,10 @@ class TestAgentServiceCredentialsGeneration:
                 
                 result = service._generate_agent_api_key(str(workspace))
 
-        # Should fail initially - API key generation not implemented
-        assert result is True
-        
-        content = env_agent.read_text()
-        assert "hive_agent_new_api_token" in content
+            assert result is True
+            
+            content = env_agent.read_text()
+            assert "hive_agent_new_api_token" in content
 
     def test_generate_agent_api_key_missing_env_file(self, mock_compose_manager):
         """Test API key generation fails when .env.agent is missing."""
@@ -700,7 +698,7 @@ class TestAgentServiceBackgroundProcessManagement:
             def mock_kill(pid, sig):
                 kill_calls.append((pid, sig))
                 if sig == 0:  # Process existence check
-                    if len(kill_calls) <= 51:  # Process exists for first 51 checks
+                    if len(kill_calls) <= 52:  # Process exists through all graceful checks
                         return
                     else:  # Process gone after force kill
                         raise ProcessLookupError()
@@ -1018,7 +1016,9 @@ class TestAgentServiceIntegration:
         
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            (workspace / "docker-compose.yml").write_text("version: '3.8'\n")
+            # Create expected directory structure
+            (workspace / "docker" / "agent").mkdir(parents=True)
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
             (workspace / ".env.example").write_text(
                 "HIVE_API_PORT=8886\n"
                 "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"
@@ -1073,7 +1073,9 @@ class TestAgentServiceIntegration:
         # Test recovery from partial installation failure
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            (workspace / "docker-compose.yml").write_text("version: '3.8'\n")
+            # Create expected directory structure
+            (workspace / "docker" / "agent").mkdir(parents=True)
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
             (workspace / ".env.example").write_text("HIVE_API_PORT=8886\n")
             
             # First attempt fails at postgres setup

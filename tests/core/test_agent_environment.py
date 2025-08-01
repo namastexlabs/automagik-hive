@@ -962,6 +962,7 @@ class TestAgentEnvironmentCrossPlatform:
 
     def test_agent_environment_windows_paths(self):
         """Test AgentEnvironment with Windows-style paths."""
+        import os
         if os.name == 'nt':  # Only run on Windows
             workspace = Path("C:\\Users\\test\\workspace")
         else:

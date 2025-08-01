@@ -51,6 +51,7 @@ class PostgreSQLManager:
     def __init__(self, credential_service: CredentialService | None = None):
         self.credential_service = credential_service or CredentialService()
         self.config = PostgreSQLConfig()
+        self._compose_cmd = None  # Cached compose command
 
     def setup_postgres_container(self, interactive: bool = True, workspace_path: str = ".") -> bool:
         """Setup PostgreSQL container with secure credentials.
@@ -159,9 +160,10 @@ class PostgreSQLManager:
                 return False
 
             print("🛑 Stopping PostgreSQL container...")
-            result = subprocess.run([
-                "docker-compose", "-f", str(compose_file), "stop", "postgres"
-            ], check=False, capture_output=True, text=True, timeout=30)
+            compose_cmd = self._get_compose_command()
+            result = subprocess.run(
+                compose_cmd + ["-f", str(compose_file), "stop", "postgres"],
+                check=False, capture_output=True, text=True, timeout=30)
 
             if result.returncode == 0:
                 print("✅ PostgreSQL container stopped successfully")
@@ -189,9 +191,10 @@ class PostgreSQLManager:
                 return False
 
             print("🔄 Restarting PostgreSQL container...")
-            result = subprocess.run([
-                "docker-compose", "-f", str(compose_file), "restart", "postgres"
-            ], check=False, capture_output=True, text=True, timeout=60)
+            compose_cmd = self._get_compose_command()
+            result = subprocess.run(
+                compose_cmd + ["-f", str(compose_file), "restart", "postgres"],
+                check=False, capture_output=True, text=True, timeout=60)
 
             if result.returncode == 0:
                 print("✅ PostgreSQL container restarted successfully")
@@ -218,9 +221,10 @@ class PostgreSQLManager:
             if not compose_file.exists():
                 return None
 
-            result = subprocess.run([
-                "docker-compose", "-f", str(compose_file), "logs", "--tail", str(tail), "postgres"
-            ], check=False, capture_output=True, text=True, timeout=30)
+            compose_cmd = self._get_compose_command()
+            result = subprocess.run(
+                compose_cmd + ["-f", str(compose_file), "logs", "--tail", str(tail), "postgres"],
+                check=False, capture_output=True, text=True, timeout=30)
 
             if result.returncode == 0:
                 return result.stdout
@@ -294,11 +298,10 @@ class PostgreSQLManager:
                 print("❌ Docker daemon not running. Please start Docker first.")
                 return False
 
-            # Check if docker-compose is available
-            result = subprocess.run(["docker-compose", "--version"],
-                                  check=False, capture_output=True, text=True, timeout=5)
-            if result.returncode != 0:
-                print("❌ docker-compose not found. Please install docker-compose.")
+            # Store compose command for later use
+            self._compose_cmd = self._get_compose_command()
+            if not self._compose_cmd:
+                print("❌ Docker Compose not found. Please install Docker Compose.")
                 return False
 
             return True
@@ -400,6 +403,41 @@ class PostgreSQLManager:
         # Windows/WSL
         return 1000, 1000
 
+    def _get_compose_command(self) -> list[str] | None:
+        """Get the appropriate Docker Compose command with fallback.
+        
+        Returns:
+            List of command parts for docker compose, None if not available
+        """
+        if self._compose_cmd is not None:
+            return self._compose_cmd
+            
+        # Try modern 'docker compose' first (Docker v2+)
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "version"],
+                check=False, capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                self._compose_cmd = ["docker", "compose"]
+                return self._compose_cmd
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+            
+        # Fallback to legacy 'docker-compose'
+        try:
+            result = subprocess.run(
+                ["docker-compose", "--version"],
+                check=False, capture_output=True, text=True, timeout=5 
+            )
+            if result.returncode == 0:
+                self._compose_cmd = ["docker-compose"]
+                return self._compose_cmd
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+            
+        return None
+
     def _start_postgres_service(self, workspace_path: str) -> bool:
         """Start PostgreSQL service using docker-compose.
         
@@ -439,9 +477,10 @@ class PostgreSQLManager:
                     os.chdir(original_cwd)
 
             print("🐳 Starting PostgreSQL container...")
-            result = subprocess.run([
-                "docker-compose", "-f", str(compose_file), "up", "-d", "postgres"
-            ], check=False, env=env, capture_output=True, text=True, timeout=120)
+            compose_cmd = self._get_compose_command()
+            result = subprocess.run(
+                compose_cmd + ["-f", str(compose_file), "up", "-d", "postgres"],
+                check=False, env=env, capture_output=True, text=True, timeout=120)
 
             if result.returncode == 0:
                 # Wait for container to be healthy

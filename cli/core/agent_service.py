@@ -266,7 +266,10 @@ class AgentService:
         env_example = workspace / ".env.example"
         env_agent = workspace / ".env.agent"
 
-        if not env_example.exists():
+        try:
+            if not env_example.exists():
+                return False
+        except (OSError, PermissionError):
             return False
 
         try:

@@ -246,8 +246,14 @@ class TestFunctionalParityMakeVsUvx:
             workspace = Path(temp_dir)
             
             # Create basic required files
-            (workspace / "docker-compose.yml").write_text("version: '3.8'\n")
-            (workspace / ".env.example").write_text("HIVE_API_PORT=8886\n")
+            (workspace / "docker").mkdir()
+            (workspace / "docker" / "agent").mkdir()
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
+            (workspace / ".env.example").write_text(
+                "HIVE_API_PORT=8886\n"
+                "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"
+                "HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:8886\n"
+            )
             
             # Create mock Makefile
             (workspace / "Makefile").write_text("""

@@ -42,7 +42,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-hive_agent}
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - ./data/postgres-agent:/var/lib/postgresql/data
+      - ../../data/postgres-agent:/var/lib/postgresql/data
     networks:
       - agent_network
     healthcheck:
@@ -86,7 +86,7 @@ services:
       # Supervisord configuration
       - SUPERVISOR_LOG_LEVEL=info
     volumes:
-      - ./data/postgres-agent:/var/lib/postgresql/data  # PostgreSQL persistence
+      - ../../data/postgres-agent:/var/lib/postgresql/data  # PostgreSQL persistence
       - agent_app_logs:/app/logs                        # Application logs
       - agent_app_data:/app/data                        # Application data
       - agent_supervisor_logs:/var/log/supervisor       # Supervisor logs

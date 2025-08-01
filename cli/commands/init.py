@@ -5,12 +5,17 @@ workspace creation with API key collection and Docker Compose setup.
 """
 
 import base64
+import json
+import os
+import re
 import secrets
 import shutil
 from pathlib import Path
+from typing import Dict, Any, Optional
 
 from cli.core.docker_service import DockerService
 from cli.core.postgres_service import PostgreSQLService
+from cli.core.template_processor import TemplateProcessor, MCPConfigGenerator
 
 
 class InitCommands:
@@ -23,6 +28,10 @@ class InitCommands:
     def __init__(self):
         self.docker_service = DockerService()
         self.postgres_service = PostgreSQLService()
+        self.template_processor = TemplateProcessor()
+        self.mcp_generator = MCPConfigGenerator(self.template_processor)
+        self.mcp_config_manager = MCPConfigManager()
+        self.template_manager = ContainerTemplateManager()
 
     def init_workspace(self, workspace_name: str | None = None) -> bool:
         """Initialize a new workspace with interactive setup.
@@ -55,22 +64,26 @@ class InitCommands:
         if not postgres_config:
             return False
 
-        # Step 4: Generate secure credentials
+        # Step 4: Container services selection
+        container_services = self._select_container_services()
+        print(f"📦 Selected container services: {', '.join(container_services)}")
+
+        # Step 5: Generate secure credentials
         credentials = self._generate_credentials(postgres_config)
         print("🔐 Generated secure credentials")
 
-        # Step 5: Collect API keys interactively
+        # Step 6: Collect API keys interactively
         api_keys = self._collect_api_keys()
 
-        # Step 6: Create workspace files
-        if not self._create_workspace_files(workspace_path, credentials, api_keys, postgres_config):
+        # Step 7: Create workspace files and containers
+        if not self._create_workspace_files(workspace_path, credentials, api_keys, postgres_config, container_services):
             return False
 
-        # Step 7: Create data directories
-        self._create_data_directories(workspace_path)
+        # Step 8: Create data directories
+        self._create_data_directories(workspace_path, container_services)
 
-        # Step 8: Success message
-        self._show_success_message(workspace_path)
+        # Step 9: Success message
+        self._show_success_message(workspace_path, container_services)
 
         return True
 
@@ -100,6 +113,64 @@ class InitCommands:
             self._check_and_fix_permissions(workspace_path)
 
         return workspace_path
+
+    def _select_container_services(self) -> list[str]:
+        """Interactive container services selection."""
+        print("\n📦 Container Services Selection")
+        print("Choose your container services configuration:")
+        print("1. 🗄️ PostgreSQL Only - Basic database service (Recommended)")
+        print("2. 🚀 Full Stack - PostgreSQL + Agent Development + Genie Consultation")
+        print("3. 🎯 Custom - Select specific services")
+
+        while True:
+            try:
+                choice = input("\nEnter your choice (1-3): ").strip()
+
+                if choice == "1":
+                    print("✅ Selected: PostgreSQL database service")
+                    return ["postgres"]
+                if choice == "2":
+                    print("✅ Selected: Full stack - PostgreSQL + Agent + Genie services")
+                    return ["postgres", "agent", "genie"]
+                if choice == "3":
+                    return self._custom_service_selection()
+                print("❌ Invalid choice. Please enter 1, 2, or 3.")
+
+            except (EOFError, KeyboardInterrupt):
+                print("\n❌ Service selection cancelled")
+                return ["postgres"]  # Default to basic PostgreSQL
+
+    def _custom_service_selection(self) -> list[str]:
+        """Custom service selection with individual choices."""
+        print("\n🎯 Custom Service Selection")
+        print("Select which services to include (y/N):")
+        
+        services = []
+        
+        # PostgreSQL is always included
+        services.append("postgres")
+        print("✅ PostgreSQL Database - Always included")
+        
+        # Agent development environment
+        try:
+            agent_choice = input("🤖 Agent Development Environment? (y/N): ").strip().lower()
+            if agent_choice == "y":
+                services.append("agent")
+                print("✅ Added Agent Development Environment")
+        except (EOFError, KeyboardInterrupt):
+            pass
+        
+        # Genie consultation service
+        try:
+            genie_choice = input("🧞 Genie Consultation Service? (y/N): ").strip().lower()
+            if genie_choice == "y":
+                services.append("genie")
+                print("✅ Added Genie Consultation Service")
+        except (EOFError, KeyboardInterrupt):
+            pass
+        
+        print(f"\n📋 Selected services: {', '.join(services)}")
+        return services
 
     def _check_and_fix_permissions(self, workspace_path: Path):
         """Check and fix permission issues with existing workspace files."""
@@ -307,6 +378,17 @@ class InitCommands:
             "hive_api_key": hive_api_key
         }
 
+    def _convert_to_container_credentials(self, credentials: dict[str, str], postgres_config: dict[str, str]) -> ContainerCredentials:
+        """Convert credentials dict to ContainerCredentials object."""
+        return ContainerCredentials(
+            postgres_user=credentials.get("postgres_user", "workspace"),
+            postgres_password=credentials.get("postgres_password", "secure_password"),
+            postgres_db=postgres_config.get("database", "hive"),
+            hive_api_key=credentials["hive_api_key"],
+            postgres_uid=str(os.getuid() if hasattr(os, 'getuid') else 1000),
+            postgres_gid=str(os.getgid() if hasattr(os, 'getgid') else 1000)
+        )
+
     def _generate_secure_string(self, length: int) -> str:
         """Generate cryptographically secure random string."""
         # Use URL-safe base64 encoding for secure random strings
@@ -352,21 +434,21 @@ class InitCommands:
 
         return api_keys
 
-    def _create_workspace_files(self, workspace_path: Path, credentials: dict[str, str], api_keys: dict[str, str], postgres_config: dict[str, str]) -> bool:
+    def _create_workspace_files(self, workspace_path: Path, credentials: dict[str, str], api_keys: dict[str, str], postgres_config: dict[str, str], container_services: list[str]) -> bool:
         """Create workspace configuration files."""
         try:
             # Create .env file
             self._create_env_file(workspace_path, credentials, api_keys)
 
-            # Create docker-compose.yml (only for Docker PostgreSQL)
+            # Create container templates (for Docker PostgreSQL)
             if postgres_config["type"] == "docker":
-                self._create_docker_compose_file(workspace_path, credentials)
+                self._create_container_templates(workspace_path, credentials, postgres_config, container_services)
 
             # Copy .claude/ directory if available
             self._copy_claude_directory(workspace_path)
 
-            # Create .mcp.json for Claude Code integration
-            self._create_mcp_config(workspace_path)
+            # Create .mcp.json for Claude Code integration with multi-server support
+            self._create_advanced_mcp_config(workspace_path, credentials, postgres_config)
 
             # Create ai/ directory structure
             self._create_ai_structure(workspace_path)
@@ -438,6 +520,46 @@ HIVE_DEV_MODE=true
 
         # Set secure permissions
         env_file.chmod(0o600)
+
+    def _create_container_templates(self, workspace_path: Path, credentials: dict[str, str], postgres_config: dict[str, str], container_services: list[str]):
+        """Create container templates using the template system."""
+        print("🏗️ Generating container templates...")
+        
+        # Convert to ContainerCredentials
+        container_credentials = self._convert_to_container_credentials(credentials, postgres_config)
+        
+        # Create required directories first
+        self.template_manager.create_required_directories(workspace_path)
+        
+        generated_files = {}
+        
+        # Generate templates based on selected services
+        if "postgres" in container_services or len(container_services) == 1:
+            # Main workspace compose file
+            print("📦 Generating main workspace docker-compose.yml...")
+            generated_files["workspace"] = self.template_manager.generate_workspace_compose(
+                workspace_path, container_credentials
+            )
+        
+        if "agent" in container_services:
+            # Agent development environment
+            print("🤖 Generating agent development environment...")
+            generated_files["agent"] = self.template_manager.copy_agent_template(
+                workspace_path, container_credentials
+            )
+        
+        if "genie" in container_services:
+            # Genie consultation service
+            print("🧞 Generating genie consultation service...")
+            generated_files["genie"] = self.template_manager.generate_genie_compose(
+                workspace_path, container_credentials
+            )
+        
+        print(f"✅ Generated {len(generated_files)} container template(s)")
+        
+        # Show generated files
+        for service_type, file_path in generated_files.items():
+            print(f"   • {service_type}: {file_path.name}")
 
     def _create_docker_compose_file(self, workspace_path: Path, credentials: dict[str, str]):
         """Create docker-compose.yml file with proper user/group settings."""
@@ -512,28 +634,66 @@ volumes:
         else:
             print("⚠️ .claude/ directory not found - Claude Code integration not available")
 
-    def _create_mcp_config(self, workspace_path: Path):
-        """Create .mcp.json for Claude Code integration."""
-        mcp_config = {
-            "servers": {
-                "automagik-hive": {
-                    "command": "uv",
-                    "args": ["run", "uvicorn", "api.serve:app", "--host", "127.0.0.1", "--port", "8886"],
-                    "env": {
-                        "DATABASE_URL": "postgresql+psycopg://localhost:5532/hive",
-                        "HIVE_DATABASE_URL": "postgresql+psycopg://localhost:5532/hive"
-                    }
-                },
+    def _create_advanced_mcp_config(
+        self, 
+        workspace_path: Path, 
+        credentials: Dict[str, str], 
+        postgres_config: Optional[Dict[str, str]] = None
+    ):
+        """Create advanced multi-server MCP configuration with health checking."""
+        print("\n🔧 Setting up advanced MCP integration...")
+        
+        try:
+            # Generate comprehensive MCP configuration
+            mcp_config = self.mcp_config_manager.generate_mcp_config(
+                workspace_path=workspace_path,
+                credentials=credentials,
+                ide_type="claude-code",
+                include_fallbacks=True,
+                health_check=False  # Skip health checks during init for speed
+            )
+            
+            # Write configuration
+            success = self.mcp_config_manager.write_mcp_config(
+                workspace_path=workspace_path,
+                mcp_config=mcp_config
+            )
+            
+            if success:
+                print("✅ Advanced MCP configuration created successfully")
+                print("   • Multi-server support enabled")
+                print("   • Auto-detection configured")
+                print("   • Fallback configurations included")
+            else:
+                raise Exception("Failed to write MCP configuration")
+                
+        except Exception as e:
+            print(f"⚠️ Advanced MCP configuration failed: {e}")
+            print("🔄 Falling back to basic configuration...")
+            self._create_basic_mcp_fallback(workspace_path, credentials)
+
+    def _create_basic_mcp_fallback(self, workspace_path: Path, credentials: Dict[str, str]):
+        """Create basic MCP configuration as fallback."""
+        basic_config = {
+            "mcpServers": {
                 "postgres": {
-                    "command": "uv",
-                    "args": ["run", "mcp-server-postgres", "--connection-string", "postgresql://localhost:5532/hive"]
+                    "command": "npx",
+                    "args": ["-y", "@modelcontextprotocol/server-postgres"]
+                },
+                "automagik-hive": {
+                    "command": "echo",
+                    "args": ["Automagik Hive server not configured - set up manually"]
                 }
             }
         }
-
+        
+        # Add database URL to postgres if available
+        if "database_url" in credentials:
+            basic_config["mcpServers"]["postgres"]["args"].append(credentials["database_url"])
+        
         mcp_file = workspace_path / ".mcp.json"
-        import json
-        mcp_file.write_text(json.dumps(mcp_config, indent=2))
+        mcp_file.write_text(json.dumps(basic_config, indent=2))
+        print("✅ Basic MCP fallback configuration created")
 
     def _create_ai_structure(self, workspace_path: Path):
         """Create ai/ directory structure with template components."""
@@ -607,19 +767,30 @@ Thumbs.db
         gitignore_file = workspace_path / ".gitignore"
         gitignore_file.write_text(gitignore_content)
 
-    def _create_data_directories(self, workspace_path: Path):
+    def _create_data_directories(self, workspace_path: Path, container_services: list[str]):
         """Create data directories for persistence with proper permissions."""
         data_path = workspace_path / "data"
 
         try:
+            # Base directories
+            base_dirs = ["logs"]
+            
+            # Add service-specific directories
+            if "postgres" in container_services or len(container_services) == 1:
+                base_dirs.append("postgres")
+            if "agent" in container_services:
+                base_dirs.append("postgres-agent")
+            if "genie" in container_services:
+                base_dirs.append("postgres-genie")
+
             # Create directories with explicit permissions
-            for subdir in ["postgres", "logs"]:
+            for subdir in base_dirs:
                 dir_path = data_path / subdir
                 dir_path.mkdir(parents=True, exist_ok=True)
                 # Set permissions to allow current user read/write/execute
                 dir_path.chmod(0o755)
 
-            print("✅ Created data directories")
+            print(f"✅ Created data directories for {len(base_dirs)} service(s)")
 
         except PermissionError as e:
             print(f"❌ Permission error creating data directories: {e}")
@@ -628,7 +799,7 @@ Thumbs.db
             # Don't fail the entire initialization for this
             print("⚠️ Continuing without data directories - you may need to create them manually")
 
-    def _create_startup_script(self, workspace_path: Path, postgres_config: dict[str, str]):
+    def _create_startup_script(self, workspace_path: Path, postgres_config: dict[str, str], container_services: list[str] = None):
         """Create convenience startup script."""
         if postgres_config["type"] == "docker":
             startup_script = """#!/bin/bash
@@ -767,3 +938,297 @@ echo 🎉 Workspace started successfully!
         print("   ├── ai/                  # Your AI components")
         print("   └── data/                # Persistent data volumes")
         print("\n✨ Your magical development environment is ready!")
+
+    # ========== ADVANCED TEMPLATE PROCESSING SYSTEM ==========
+    
+    def _load_workspace_config(self, workspace_path: Path) -> Dict[str, Any]:
+        """Load workspace-specific configuration for template processing."""
+        config = {
+            "workspace_name": workspace_path.name,
+            "workspace_path": str(workspace_path.absolute()),
+            "default_host": "127.0.0.1",
+            "default_port": 8886,
+            "default_db_port": 5532,
+            "database_name": "hive"
+        }
+        
+        # Try to load existing .env for additional context
+        env_file = workspace_path / ".env"
+        if env_file.exists():
+            config.update(self._parse_env_file(env_file))
+        
+        return config
+    
+    def _parse_env_file(self, env_file: Path) -> Dict[str, str]:
+        """Parse .env file for template variables."""
+        env_vars = {}
+        try:
+            for line in env_file.read_text().splitlines():
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+        except Exception as e:
+            print(f"⚠️ Warning: Could not parse .env file: {e}")
+        
+        return env_vars
+    
+    def _create_template_context(self, workspace_path: Path, postgres_config: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Create comprehensive template context for dynamic configuration generation."""
+        context = {
+            # Workspace information
+            "workspace_name": workspace_path.name,
+            "workspace_path": str(workspace_path.absolute()),
+            
+            # Server configuration
+            "host": "127.0.0.1",
+            "api_port": 8886,
+            "mcp_port": 8887,
+            
+            # Database configuration
+            "db_host": "localhost",
+            "db_port": 5532,
+            "db_name": "hive",
+            "db_user": "hive_user",
+            
+            # Service endpoints
+            "api_base_url": "http://127.0.0.1:8886",
+            "mcp_base_url": "http://127.0.0.1:8887",
+        }
+        
+        # Override with postgres configuration if provided
+        if postgres_config:
+            if postgres_config.get("type") == "docker":
+                context["db_port"] = postgres_config.get("port", 5532)
+            elif postgres_config.get("type") == "external":
+                # Parse external connection details
+                host = postgres_config.get("host", "localhost")
+                port = postgres_config.get("port", "5432") 
+                context["db_host"] = host
+                context["db_port"] = int(port)
+        
+        # Generate dynamic URLs
+        context.update(self._generate_dynamic_urls(context))
+        
+        return context
+    
+    def _generate_dynamic_urls(self, context: Dict[str, Any]) -> Dict[str, str]:
+        """Generate dynamic URLs based on workspace configuration."""
+        db_host = context["db_host"]
+        db_port = context["db_port"]
+        db_name = context["db_name"]
+        
+        return {
+            "database_url": f"postgresql+psycopg://{db_host}:{db_port}/{db_name}",
+            "postgres_connection_string": f"postgresql://{db_host}:{db_port}/{db_name}",
+            "api_endpoint": f"http://{context['host']}:{context['api_port']}",
+            "mcp_endpoint": f"http://{context['host']}:{context['mcp_port']}"
+        }
+    
+    def _generate_dynamic_mcp_config(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate dynamic MCP configuration using template context."""
+        config = {
+            "servers": {
+                "automagik-hive": {
+                    "command": "uv",
+                    "args": [
+                        "run", "uvicorn", "api.serve:app", 
+                        "--host", context["host"], 
+                        "--port", str(context["api_port"])
+                    ],
+                    "env": {
+                        "DATABASE_URL": context["database_url"],
+                        "HIVE_DATABASE_URL": context["database_url"]
+                    }
+                },
+                "postgres": {
+                    "command": "uv",
+                    "args": [
+                        "run", "mcp-server-postgres", 
+                        "--connection-string", context["postgres_connection_string"]
+                    ]
+                }
+            }
+        }
+        
+        # Add optional servers based on workspace configuration
+        if context.get("enable_additional_mcps", False):
+            config["servers"].update(self._generate_additional_mcp_servers(context))
+        
+        return config
+    
+    def _generate_additional_mcp_servers(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate additional MCP servers based on workspace needs."""
+        additional_servers = {}
+        
+        # Add filesystem MCP if needed
+        if context.get("enable_filesystem_mcp", True):
+            additional_servers["filesystem"] = {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-filesystem", context["workspace_path"]]
+            }
+        
+        # Add git MCP if workspace is a git repository
+        if (Path(context["workspace_path"]) / ".git").exists():
+            additional_servers["git"] = {
+                "command": "npx", 
+                "args": ["-y", "@modelcontextprotocol/server-git", "--repository", context["workspace_path"]]
+            }
+        
+        return additional_servers
+    
+    def _validate_mcp_config(self, config: Dict[str, Any]) -> bool:
+        """Validate MCP configuration structure and required fields."""
+        try:
+            # Check top-level structure
+            if "servers" not in config:
+                print("❌ MCP config validation failed: missing 'servers' key")
+                return False
+            
+            servers = config["servers"]
+            if not isinstance(servers, dict):
+                print("❌ MCP config validation failed: 'servers' must be a dictionary")
+                return False
+            
+            # Validate each server configuration
+            for server_name, server_config in servers.items():
+                if not self._validate_server_config(server_name, server_config):
+                    return False
+            
+            print("✅ MCP configuration validation passed")
+            return True
+            
+        except Exception as e:
+            print(f"❌ MCP config validation error: {e}")
+            return False
+    
+    def _validate_server_config(self, server_name: str, config: Dict[str, Any]) -> bool:
+        """Validate individual server configuration."""
+        required_fields = ["command", "args"]
+        
+        for field in required_fields:
+            if field not in config:
+                print(f"❌ Server '{server_name}' missing required field: {field}")
+                return False
+        
+        # Validate command exists (basic check)
+        command = config["command"]
+        if not isinstance(command, str) or not command.strip():
+            print(f"❌ Server '{server_name}' has invalid command")
+            return False
+        
+        # Validate args is a list
+        args = config["args"]
+        if not isinstance(args, list):
+            print(f"❌ Server '{server_name}' args must be a list")
+            return False
+        
+        return True
+    
+    def _create_fallback_mcp_config(self, workspace_path: Path):
+        """Create fallback MCP configuration if dynamic generation fails."""
+        print("🔄 Creating fallback MCP configuration...")
+        
+        fallback_config = {
+            "servers": {
+                "automagik-hive": {
+                    "command": "uv",
+                    "args": ["run", "uvicorn", "api.serve:app", "--host", "127.0.0.1", "--port", "8886"],
+                    "env": {
+                        "DATABASE_URL": "postgresql+psycopg://localhost:5532/hive",
+                        "HIVE_DATABASE_URL": "postgresql+psycopg://localhost:5532/hive"
+                    }
+                },
+                "postgres": {
+                    "command": "uv",
+                    "args": ["run", "mcp-server-postgres", "--connection-string", "postgresql://localhost:5532/hive"]
+                }
+            }
+        }
+        
+        mcp_file = workspace_path / ".mcp.json"
+        mcp_file.write_text(json.dumps(fallback_config, indent=2))
+        print("✅ Created fallback .mcp.json configuration")
+    
+    def _process_template_placeholders(self, template_content: str, context: Dict[str, Any]) -> str:
+        """Advanced placeholder replacement with validation."""
+        try:
+            # Define placeholder patterns
+            patterns = {
+                'simple': r'\{\{(\w+)\}\}',                    # {{variable}}
+                'nested': r'\{\{(\w+)\.(\w+)\}\}',             # {{object.property}}
+                'env': r'\$\{(\w+)\}',                         # ${ENV_VAR}
+                'conditional': r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}',  # {{#if condition}}content{{/if}}
+            }
+            
+            processed_content = template_content
+            
+            # Process simple placeholders
+            def replace_simple(match):
+                key = match.group(1)
+                value = context.get(key, f"MISSING_{key}")
+                if value == f"MISSING_{key}":
+                    print(f"⚠️ Warning: Missing template variable: {key}")
+                return str(value)
+            
+            processed_content = re.sub(patterns['simple'], replace_simple, processed_content)
+            
+            # Process nested placeholders
+            def replace_nested(match):
+                obj_key, prop_key = match.group(1), match.group(2)
+                obj = context.get(obj_key, {})
+                if isinstance(obj, dict):
+                    value = obj.get(prop_key, f"MISSING_{obj_key}.{prop_key}")
+                else:
+                    value = f"MISSING_{obj_key}.{prop_key}"
+                
+                if str(value).startswith("MISSING_"):
+                    print(f"⚠️ Warning: Missing nested template variable: {obj_key}.{prop_key}")
+                return str(value)
+            
+            processed_content = re.sub(patterns['nested'], replace_nested, processed_content)
+            
+            # Process environment variables
+            def replace_env(match):
+                env_var = match.group(1)
+                import os
+                value = os.getenv(env_var, f"MISSING_ENV_{env_var}")
+                if value == f"MISSING_ENV_{env_var}":
+                    print(f"⚠️ Warning: Missing environment variable: {env_var}")
+                return str(value)
+            
+            processed_content = re.sub(patterns['env'], replace_env, processed_content)
+            
+            # Process conditional blocks
+            def replace_conditional(match):
+                condition = match.group(1)
+                content = match.group(2)
+                if context.get(condition, False):
+                    return content
+                return ""
+            
+            processed_content = re.sub(patterns['conditional'], replace_conditional, processed_content, flags=re.DOTALL)
+            
+            return processed_content
+            
+        except Exception as e:
+            print(f"❌ Template processing error: {e}")
+            return template_content  # Return original on error
+    
+    def _validate_template_processing(self, processed_content: str) -> bool:
+        """Validate that template processing completed successfully."""
+        # Check for unprocessed placeholders
+        unprocessed_patterns = [
+            r'\{\{\w+\}\}',           # {{variable}}
+            r'\{\{\w+\.\w+\}\}',      # {{object.property}}
+            r'\$\{\w+\}',             # ${ENV_VAR}
+            r'MISSING_\w+',           # Missing variables
+        ]
+        
+        for pattern in unprocessed_patterns:
+            matches = re.findall(pattern, processed_content)
+            if matches:
+                print(f"⚠️ Warning: Unprocessed template placeholders found: {matches}")
+                return False
+        
+        return True

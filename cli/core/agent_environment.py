@@ -101,6 +101,22 @@ class AgentEnvironment:
         # Read template content
         with open(self.env_example_path) as f:
             content = f.read()
+            
+        # Handle empty template with default configuration
+        if not content.strip():
+            content = """# AGENT ENVIRONMENT CONFIGURATION
+# Generated from empty template - using defaults
+
+# API Configuration
+HIVE_API_PORT=8886
+HIVE_API_HOST=0.0.0.0
+
+# Database Configuration  
+HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive
+
+# Security
+HIVE_API_KEY=your-hive-api-key-here
+"""
 
         # Apply agent-specific transformations
         content = self._apply_port_mappings(content)

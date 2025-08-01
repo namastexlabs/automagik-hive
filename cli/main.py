@@ -8,13 +8,69 @@ import argparse
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from cli.commands.agent import AgentCommands
-from cli.commands.init import InitCommands
-from cli.commands.postgres import PostgreSQLCommands
-from cli.commands.uninstall import UninstallCommands
-from cli.commands.workspace import WorkspaceCommands
+# Lazy import typing for command classes
+if TYPE_CHECKING:
+    from cli.commands.agent import AgentCommands
+    from cli.commands.init import InitCommands
+    from cli.commands.postgres import PostgreSQLCommands
+    from cli.commands.uninstall import UninstallCommands
+    from cli.commands.workspace import WorkspaceCommands
+
+# Import only lightweight utilities at startup
 from lib.utils.version_reader import get_cli_version_string
+
+
+class LazyCommandLoader:
+    """Lazy loader for CLI command classes to optimize startup performance."""
+    
+    def __init__(self):
+        self._init_commands = None
+        self._workspace_commands = None
+        self._postgres_commands = None
+        self._agent_commands = None
+        self._uninstall_commands = None
+    
+    @property
+    def init_commands(self) -> "InitCommands":
+        """Lazy load InitCommands only when needed."""
+        if self._init_commands is None:
+            from cli.commands.init import InitCommands
+            self._init_commands = InitCommands()
+        return self._init_commands
+    
+    @property
+    def workspace_commands(self) -> "WorkspaceCommands":
+        """Lazy load WorkspaceCommands only when needed."""
+        if self._workspace_commands is None:
+            from cli.commands.workspace import WorkspaceCommands
+            self._workspace_commands = WorkspaceCommands()
+        return self._workspace_commands
+    
+    @property
+    def postgres_commands(self) -> "PostgreSQLCommands":
+        """Lazy load PostgreSQLCommands only when needed."""
+        if self._postgres_commands is None:
+            from cli.commands.postgres import PostgreSQLCommands
+            self._postgres_commands = PostgreSQLCommands()
+        return self._postgres_commands
+    
+    @property
+    def agent_commands(self) -> "AgentCommands":
+        """Lazy load AgentCommands only when needed."""
+        if self._agent_commands is None:
+            from cli.commands.agent import AgentCommands
+            self._agent_commands = AgentCommands()
+        return self._agent_commands
+    
+    @property
+    def uninstall_commands(self) -> "UninstallCommands":
+        """Lazy load UninstallCommands only when needed."""
+        if self._uninstall_commands is None:
+            from cli.commands.uninstall import UninstallCommands
+            self._uninstall_commands = UninstallCommands()
+        return self._uninstall_commands
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -181,16 +237,12 @@ def main() -> int:
     parser = create_parser()
     args = parser.parse_args()
 
-    # Initialize command handlers
-    init_commands = InitCommands()
-    workspace_commands = WorkspaceCommands()
-    postgres_commands = PostgreSQLCommands()
-    agent_commands = AgentCommands()
-    uninstall_commands = UninstallCommands()
+    # Initialize lazy command loader
+    commands = LazyCommandLoader()
 
     # Handle core workspace commands (T1.5)
     if args.init:
-        success = init_commands.init_workspace(args.workspace)
+        success = commands.init_commands.init_workspace(args.workspace)
         return 0 if success else 1
 
     # Handle direct server startup
@@ -239,71 +291,71 @@ def main() -> int:
         # This is a workspace startup command
         workspace_path = args.workspace
         if Path(workspace_path).is_dir() or workspace_path.startswith(("./", "/")):
-            success = workspace_commands.start_workspace(workspace_path)
+            success = commands.workspace_commands.start_workspace(workspace_path)
             return 0 if success else 1
         return 1
 
     # Handle PostgreSQL commands
     elif args.postgres_status:
-        success = postgres_commands.postgres_status(args.workspace or ".")
+        success = commands.postgres_commands.postgres_status(args.workspace or ".")
         return 0 if success else 1
 
     elif args.postgres_start:
-        success = postgres_commands.postgres_start(args.workspace or ".")
+        success = commands.postgres_commands.postgres_start(args.workspace or ".")
         return 0 if success else 1
 
     elif args.postgres_stop:
-        success = postgres_commands.postgres_stop(args.workspace or ".")
+        success = commands.postgres_commands.postgres_stop(args.workspace or ".")
         return 0 if success else 1
 
     elif args.postgres_restart:
-        success = postgres_commands.postgres_restart(args.workspace or ".")
+        success = commands.postgres_commands.postgres_restart(args.workspace or ".")
         return 0 if success else 1
 
     elif args.postgres_logs:
-        success = postgres_commands.postgres_logs(args.workspace or ".", args.tail)
+        success = commands.postgres_commands.postgres_logs(args.workspace or ".", args.tail)
         return 0 if success else 1
 
     elif args.postgres_health:
-        success = postgres_commands.postgres_health(args.workspace or ".")
+        success = commands.postgres_commands.postgres_health(args.workspace or ".")
         return 0 if success else 1
 
     # Handle Agent commands
     elif args.agent_install:
-        success = agent_commands.install(args.workspace or ".")
+        success = commands.agent_commands.install(args.workspace or ".")
         return 0 if success else 1
 
     elif args.agent_serve:
-        success = agent_commands.serve(args.workspace or ".")
+        success = commands.agent_commands.serve(args.workspace or ".")
         return 0 if success else 1
 
     elif args.agent_stop:
-        success = agent_commands.stop(args.workspace or ".")
+        success = commands.agent_commands.stop(args.workspace or ".")
         return 0 if success else 1
 
     elif args.agent_restart:
-        success = agent_commands.restart(args.workspace or ".")
+        success = commands.agent_commands.restart(args.workspace or ".")
         return 0 if success else 1
 
     elif args.agent_logs:
-        success = agent_commands.logs(args.workspace or ".", args.tail)
+        success = commands.agent_commands.logs(args.workspace or ".", args.tail)
         return 0 if success else 1
 
     elif args.agent_status:
-        success = agent_commands.status(args.workspace or ".")
+        success = commands.agent_commands.status(args.workspace or ".")
         return 0 if success else 1
 
     elif args.agent_reset:
-        success = agent_commands.reset(args.workspace or ".")
+        success = commands.agent_commands.reset(args.workspace or ".")
         return 0 if success else 1
 
     # Handle Uninstallation commands
     elif args.uninstall:
-        success = uninstall_commands.uninstall_current_workspace()
+        success = commands.uninstall_commands.uninstall_current_workspace()
         return 0 if success else 1
 
     elif args.uninstall_global:
-        success = uninstall_commands.uninstall_global()
+        success = commands.uninstall_commands.uninstall_global()
         return 0 if success else 1
 
     else:
