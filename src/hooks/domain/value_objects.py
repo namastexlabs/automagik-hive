@@ -69,6 +69,7 @@ class RootWhitelist:
             # Language specific
             "package.json",
             "yarn.lock",
+            "uv.lock",
             "Cargo.toml",
             "go.mod",
             
@@ -148,19 +149,21 @@ class GenieStructure:
         """
         filename_lower = filename.lower()
         
-        # Pattern-based suggestions
+        # Pattern-based suggestions (order matters - more specific patterns first)
         if any(word in filename_lower for word in ["plan", "wish", "todo"]):
             return f"/genie/wishes/{filename}"
         elif any(word in filename_lower for word in ["design", "architecture", "ddd", "spec"]):
             return f"/genie/docs/{filename}"
         elif any(word in filename_lower for word in ["idea", "analysis", "brain", "think"]):
             return f"/genie/ideas/{filename}"
+        elif any(word in filename_lower for word in ["experiment", "prototype", "trial"]):
+            return f"/genie/experiments/{filename}"
         elif any(word in filename_lower for word in ["report", "complete", "summary", "result"]):
             return f"/genie/reports/{filename}"
-        elif any(word in filename_lower for word in ["experiment", "prototype", "test", "trial"]):
-            return f"/genie/experiments/{filename}"
         elif any(word in filename_lower for word in ["learn", "knowledge", "pattern", "wisdom"]):
             return f"/genie/knowledge/{filename}"
+        elif any(word in filename_lower for word in ["test"]):
+            return f"/genie/experiments/{filename}"
         else:
             # Default to docs for unclassified files
             return f"/genie/docs/{filename}"

@@ -1,0 +1,95 @@
+tool:
+  name: "🔧 Template Tool"
+  tool_id: "template-tool"
+  version: 1
+  description: >
+    TEMPLATE TOOL - A foundational template for creating new specialized tools.
+    This configuration serves as a starting point for building domain-specific
+    tools with standardized patterns, configuration management, and execution frameworks.
+  
+  category: "template"
+  tags:
+    - "template"
+    - "foundation"
+    - "development"
+    - "pattern"
+  
+  enabled: true
+  
+  # Tool dependencies (packages, services, etc.)
+  dependencies: []
+  
+  # Integration configuration
+  integration:
+    # MCP servers this tool might interact with
+    mcp_servers: []
+    
+    # API endpoints this tool might use
+    api_endpoints: {}
+    
+    # Database connections this tool might need
+    databases: []
+  
+  # Tool-specific parameters
+  parameters:
+    # Example parameters - customize for your tool
+    timeout_seconds: 30
+    max_retries: 3
+    debug_mode: false
+    
+    # Template-specific settings
+    template_version: "1.0.0"
+    customization_guide: true
+
+# Tool metadata and documentation
+metadata:
+  author: "Automagik Hive"
+  created_date: "2025-08-01"
+  last_modified: "2025-08-01"
+  license: "MIT"
+  
+  # Usage examples
+  examples:
+    - name: "Basic Usage"
+      description: "How to use this template tool"
+      code: |
+        from ai.tools import get_tool
+        
+        tool = get_tool("template-tool")
+        result = tool.execute(input_data="example")
+        print(result)
+    
+    - name: "Custom Configuration"
+      description: "Using tool with custom parameters"
+      code: |
+        tool = get_tool("template-tool", 
+                       timeout_seconds=60,
+                       debug_mode=True)
+        result = tool.execute(input_data="example")
+
+# Expected inputs and outputs (for documentation)
+interface:
+  inputs:
+    - name: "input_data"
+      type: "str"
+      required: true
+      description: "Primary input data for tool processing"
+    
+    - name: "options"
+      type: "dict"
+      required: false
+      description: "Optional configuration overrides"
+  
+  outputs:
+    - name: "result"
+      type: "dict"
+      description: "Tool execution result with status and data"
+    
+    - name: "metadata"
+      type: "dict"
+      description: "Execution metadata and diagnostics"
+
+# Success criteria for template usage
+success_criteria: >
+  Template configured ✓ Patterns standardized ✓ Customization ready ✓
+  Foundational tool template prepared for specialized development!

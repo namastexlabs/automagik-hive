@@ -232,6 +232,7 @@ class InitCommands:
 
 # === Database Configuration ===
 DATABASE_URL={credentials['database_url']}
+HIVE_DATABASE_URL={credentials['database_url']}
 POSTGRES_USER={credentials['postgres_user']}
 POSTGRES_PASSWORD={credentials['postgres_password']}
 POSTGRES_DB=hive
@@ -265,6 +266,7 @@ MCP_SERVER_PORT=8887
 # === Development Settings ===
 ENVIRONMENT=development
 LOG_LEVEL=INFO
+HIVE_DEV_MODE=true
 """
         
         env_file = workspace_path / ".env"
@@ -346,7 +348,8 @@ volumes:
                     "command": "uv",
                     "args": ["run", "uvicorn", "api.serve:app", "--host", "127.0.0.1", "--port", "8886"],
                     "env": {
-                        "DATABASE_URL": "postgresql+psycopg://localhost:5532/hive"
+                        "DATABASE_URL": "postgresql+psycopg://localhost:5532/hive",
+                        "HIVE_DATABASE_URL": "postgresql+psycopg://localhost:5532/hive"
                     }
                 },
                 "postgres": {
