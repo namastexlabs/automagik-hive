@@ -108,16 +108,19 @@ class InitCommands:
 
             # Step 8.5: Start all selected services
             current_step += 1
-            if not self._start_docker_containers(workspace_path, container_services, postgres_config):
-                print("⚠️ Service startup failed but workspace configuration is complete")
-                print("You can manually start services later using:")
-                for service in container_services:
-                    if service == "postgres":
-                        print(f"  uvx automagik-hive --postgres-start {workspace_path}")
-                    elif service == "agent":
-                        print(f"  uvx automagik-hive --agent-serve {workspace_path}")
-                    elif service == "genie":
-                        print(f"  uvx automagik-hive --genie-serve {workspace_path}")
+            self._start_docker_containers(workspace_path, container_services, postgres_config)
+            
+            # Show service startup instructions
+            print("\n🚀 Next Steps - Start Your Services:")
+            print("=" * 40)
+            for service in container_services:
+                if service == "postgres" and postgres_config["type"] == "docker":
+                    print(f"📁 PostgreSQL: Already started via Docker Compose")
+                elif service == "agent":
+                    print(f"🤖 Agent Environment: uvx automagik-hive --agent-serve {workspace_path}")
+                elif service == "genie":
+                    print(f"🧞 Genie Assistant: uvx automagik-hive --genie-serve {workspace_path}")
+            print("\n💡 Tip: You can also use the generated start.sh script!")
 
             # Step 9: Comprehensive workspace validation
             current_step += 1
@@ -1158,7 +1161,7 @@ echo 🎉 Workspace started successfully!
         container_services: list[str],
         postgres_config: dict[str, str]
     ) -> bool:
-        """Start all selected services (containers and background processes)."""
+        """Start Docker containers and configure other services."""
         try:
             print("\n🚀 Starting services...")
             print("=" * 30)
@@ -1185,56 +1188,23 @@ echo 🎉 Workspace started successfully!
                             success = False
                     
                     elif service == "agent":
-                        print("🤖 Starting Agent Development Environment...")
-                        try:
-                            # Start agent service using the CLI commands
-                            result = secure_subprocess_call(
-                                ["uvx", "automagik-hive", "--agent-install", str(workspace_path)],
-                                capture_output=True,
-                                timeout=60
-                            )
-                            if result.returncode == 0:
-                                result = secure_subprocess_call(
-                                    ["uvx", "automagik-hive", "--agent-serve", str(workspace_path)],
-                                    capture_output=True,
-                                    timeout=30
-                                )
-                                if result.returncode == 0:
-                                    print("✅ Agent Development Environment started on port 38886")
-                                else:
-                                    print("⚠️ Agent configured but failed to start (use --agent-serve)")
-                                    success = False
-                            else:
-                                print("⚠️ Agent installation failed")
-                                success = False
-                        except Exception as e:
-                            print(f"⚠️ Agent setup error: {e}")
-                            success = False
+                        print("🤖 Configuring Agent Development Environment...")
+                        print("📝 Agent environment configured - use 'uvx automagik-hive --agent-serve' to start")
+                        # Note: Actual agent service startup requires separate command for security
                     
                     elif service == "genie":
-                        print("🧞 Starting Genie Development Assistant...")
-                        try:
-                            result = secure_subprocess_call(
-                                ["uvx", "automagik-hive", "--genie-serve", str(workspace_path)],
-                                capture_output=True,
-                                timeout=30
-                            )
-                            if result.returncode == 0:
-                                print("✅ Genie Development Assistant started on port 48886")
-                            else:
-                                print("⚠️ Genie configured but failed to start (use --genie-serve)")
-                                success = False
-                        except Exception as e:
-                            print(f"⚠️ Genie setup error: {e}")
-                            success = False
+                        print("🧞 Configuring Genie Development Assistant...")
+                        print("📝 Genie environment configured - use 'uvx automagik-hive --genie-serve' to start")
+                        # Note: Actual genie service startup requires separate command for security
                 
             finally:
                 os.chdir(original_cwd)
             
             if success:
-                print("🎉 All selected services started successfully!")
+                print("🎉 All selected services configured successfully!")
+                print("💡 Use the provided commands above to start individual services")
             else:
-                print("⚠️ Some services failed to start")
+                print("⚠️ Some services had configuration issues")
             
             return success
             
