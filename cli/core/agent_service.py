@@ -4,16 +4,23 @@ This module provides high-level Agent service operations
 for CLI commands, wrapping Docker Compose and process management functionality.
 """
 
-import builtins
-import contextlib
 import os
 import secrets
-import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 
-from docker.lib.compose_manager import DockerComposeManager
+# Import DockerComposeManager directly to avoid package conflicts
+docker_lib_path = Path(__file__).parent.parent.parent / "docker" / "lib"
+sys.path.insert(0, str(docker_lib_path))
+
+from compose_manager import DockerComposeManager
+from cli.core.security_utils import (
+    secure_resolve_workspace,
+    secure_subprocess_call,
+    SecurityError,
+)
 
 
 class AgentService:
@@ -24,13 +31,14 @@ class AgentService:
     """
 
     def __init__(self) -> None:
-        self.compose_manager = DockerComposeManager()
+        self.compose_manager = DockerComposeManager("docker/agent/docker-compose.yml")
         self.agent_compose_file = "docker/agent/docker-compose.yml"
         self.agent_port = 38886
         self.agent_postgres_port = 35532
         self.logs_dir = Path("logs")
-        self.pid_file = self.logs_dir / "agent-server.pid"
-        self.log_file = self.logs_dir / "agent-server.log"
+        # Remove PID file dependencies - using compose services now
+        # self.pid_file = self.logs_dir / "agent-server.pid"
+        # self.log_file = self.logs_dir / "agent-server.log"
 
     def install_agent_environment(self, workspace_path: str) -> bool:
         """Install complete agent environment with isolated ports and database.
@@ -41,14 +49,19 @@ class AgentService:
         Returns:
             True if installation successful, False otherwise
         """
-        workspace = Path(workspace_path).resolve()
-        print(f"🤖 Installing agent environment in workspace: {workspace}")
-        
-        if not self._validate_workspace(workspace, check_env=False):
-            print("❌ Workspace validation failed")
-            return False
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"🤖 Installing agent environment in workspace: {workspace}")
+            
+            if not self._validate_workspace(workspace, check_env=False):
+                print("❌ Workspace validation failed")
+                return False
 
-        print("✅ Workspace validation passed")
+            print("✅ Workspace validation passed")
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
+            return False
 
         # Create agent environment file
         print("📝 Creating agent environment file...")
@@ -76,7 +89,7 @@ class AgentService:
             return False
 
     def serve_agent(self, workspace_path: str) -> bool:
-        """Start agent server in background (non-blocking).
+        """Start agent server using docker-compose (non-blocking).
 
         Args:
             workspace_path: Path to workspace directory
@@ -84,24 +97,29 @@ class AgentService:
         Returns:
             True if started successfully, False otherwise
         """
-        workspace = Path(workspace_path).resolve()
-        print(f"🚀 Starting agent server in workspace: {workspace}")
-        
-        if not self._validate_agent_environment(workspace):
-            print("❌ Agent environment validation failed")
-            print("💡 Run 'uvx automagik-hive --agent-install' first to set up the environment")
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"🚀 Starting agent server in workspace: {workspace}")
+            
+            if not self._validate_agent_environment(workspace):
+                print("❌ Agent environment validation failed")
+                print("💡 Run 'uvx automagik-hive --agent-install' first to set up the environment")
+                return False
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
             return False
 
         # Check if already running
-        if self._is_agent_running():
-            pid = self._get_agent_pid()
-            print(f"✅ Agent server is already running (PID: {pid}, Port: {self.agent_port})")
+        agent_status = self.compose_manager.get_service_status("agent-dev-server", str(workspace))
+        if agent_status.name == "RUNNING":
+            print(f"✅ Agent server is already running (Port: {self.agent_port})")
             return True
 
-        return self._start_agent_background(str(workspace))
+        return self._start_agent_compose(str(workspace))
 
-    def stop_agent(self, workspace_path: str | None = None) -> bool:  # noqa: ARG002
-        """Stop agent server cleanly.
+    def stop_agent(self, workspace_path: str | None = None) -> bool:
+        """Stop agent server using docker-compose.
 
         Args:
             workspace_path: Path to workspace directory (optional)
@@ -109,11 +127,14 @@ class AgentService:
         Returns:
             True if stopped successfully, False otherwise
         """
-        if not self._is_agent_running():
+        workspace = workspace_path or "."
+        agent_status = self.compose_manager.get_service_status("agent-dev-server", workspace)
+        
+        if agent_status.name != "RUNNING":
             print("🛑 Agent server is not running")
             return True
             
-        if self._stop_agent_background():
+        if self.compose_manager.stop_service("agent-dev-server", workspace):
             print("✅ Agent server stopped successfully")
             return True
         else:
@@ -121,7 +142,7 @@ class AgentService:
             return False
 
     def restart_agent(self, workspace_path: str) -> bool:
-        """Restart agent server.
+        """Restart agent server using docker-compose.
 
         Args:
             workspace_path: Path to workspace directory
@@ -129,16 +150,19 @@ class AgentService:
         Returns:
             True if restarted successfully, False otherwise
         """
-        self._stop_agent_background()
-        time.sleep(2)
-        return self.serve_agent(workspace_path)
+        if self.compose_manager.restart_service("agent-dev-server", workspace_path):
+            print(f"✅ Agent server restarted successfully (Port: {self.agent_port})")
+            return True
+        else:
+            print("❌ Failed to restart agent server")
+            return False
 
     def show_agent_logs(
         self,
-        workspace_path: str | None = None,  # noqa: ARG002
+        workspace_path: str | None = None,
         tail: int = 50,
     ) -> bool:
-        """Show agent logs (non-blocking).
+        """Show agent logs using docker-compose (non-blocking).
 
         Args:
             workspace_path: Path to workspace directory (optional)
@@ -147,34 +171,23 @@ class AgentService:
         Returns:
             True if logs displayed, False otherwise
         """
-        if self.log_file.exists():
-            try:
-                result = subprocess.run(
-                    ["tail", f"-{tail}", str(self.log_file)],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if result.returncode == 0:
-                    print(f"\n📝 Agent Server Logs (last {tail} lines):")
-                    print("=" * 50)
-                    if result.stdout.strip():
-                        print(result.stdout.strip())
-                    else:
-                        print("No log content available")
-                    return True
-                else:
-                    print(f"❌ Error reading log file (exit code: {result.returncode})")
-                    return False
-            except (OSError, subprocess.SubprocessError, Exception) as e:
-                print(f"❌ Error executing tail command: {e}")
-                return False
+        workspace = workspace_path or "."
+        logs = self.compose_manager.get_service_logs("agent-dev-server", tail, workspace)
+        
+        if logs:
+            print(f"\n📝 Agent Server Logs (last {tail} lines):")
+            print("=" * 50)
+            if logs.strip():
+                print(logs.strip())
+            else:
+                print("No log content available")
+            return True
         else:
-            print(f"❌ Log file not found: {self.log_file}")
+            print("❌ Could not retrieve agent server logs")
             return False
 
     def get_agent_status(self, workspace_path: str | None = None) -> dict[str, str]:
-        """Get agent environment status.
+        """Get agent environment status using docker-compose.
 
         Args:
             workspace_path: Path to workspace directory (optional)
@@ -183,20 +196,17 @@ class AgentService:
             Dict with service status information
         """
         status = {}
+        workspace = workspace_path or "."
 
-        # Check agent server status
-        if self._is_agent_running():
-            pid = self._get_agent_pid()
-            status["agent-server"] = f"✅ Running (PID: {pid}, Port: {self.agent_port})"
+        # Check agent server status using compose
+        agent_status = self.compose_manager.get_service_status("agent-dev-server", workspace)
+        if agent_status.name == "RUNNING":
+            status["agent-server"] = f"✅ Running (Port: {self.agent_port})"
         else:
             status["agent-server"] = "🛑 Stopped"
 
         # Check agent postgres status
-        workspace = workspace_path or "."
-        postgres_status = self.compose_manager.get_service_status(
-            "postgres-agent", str(Path(workspace).resolve())
-        )
-
+        postgres_status = self.compose_manager.get_service_status("postgres-agent", workspace)
         if postgres_status.name == "RUNNING":
             status["agent-postgres"] = f"✅ Running (Port: {self.agent_postgres_port})"
         else:
@@ -339,7 +349,7 @@ class AgentService:
             data_dir = workspace / "data" / "postgres-agent"
             data_dir.mkdir(parents=True, exist_ok=True)
 
-            # Start container
+            # Start container using secure subprocess call
             cmd = [
                 "docker",
                 "compose",
@@ -350,8 +360,8 @@ class AgentService:
                 "postgres-agent",
             ]
 
-            result = subprocess.run(
-                cmd, cwd=workspace, env=env, capture_output=True, text=True, check=False
+            result = secure_subprocess_call(
+                cmd, cwd=workspace, env=env
             )
 
             return result.returncode == 0
@@ -415,177 +425,124 @@ class AgentService:
         except OSError:
             return False
 
-    def _start_agent_background(self, workspace_path: str) -> bool:
-        """Start agent server in background."""
+    def _start_agent_compose(self, workspace_path: str) -> bool:
+        """Start agent server using docker-compose."""
         workspace = Path(workspace_path)
-        self.logs_dir.mkdir(exist_ok=True)
-
+        
         try:
-            # Prepare environment
+            # Prepare environment variables from .env.agent
             env = os.environ.copy()
-
-            # Load .env.agent variables
             env_agent = workspace / ".env.agent"
-            with open(env_agent) as f:
-                for env_line in f:
-                    stripped_line = env_line.strip()
-                    if (
-                        stripped_line
-                        and not stripped_line.startswith("#")
-                        and "=" in stripped_line
-                    ):
-                        key, value = stripped_line.split("=", 1)
-                        env[key] = value
+            
+            if env_agent.exists():
+                with open(env_agent) as f:
+                    for env_line in f:
+                        stripped_line = env_line.strip()
+                        if (
+                            stripped_line
+                            and not stripped_line.startswith("#")
+                            and "=" in stripped_line
+                        ):
+                            key, value = stripped_line.split("=", 1)
+                            env[key] = value
 
-            # Start server process
-            with open(self.log_file, "w") as log_f:
-                process = subprocess.Popen(
-                    ["uv", "run", "python", "api/serve.py"],
-                    cwd=workspace,
-                    env=env,
-                    stdout=log_f,
-                    stderr=subprocess.STDOUT,
-                    start_new_session=True,
-                )
+            # Extract database credentials for docker-compose
+            if "HIVE_DATABASE_URL" in env:
+                db_url = env["HIVE_DATABASE_URL"]
+                # Parse: postgresql+psycopg://user:pass@localhost:35532/hive_agent
+                if "://" in db_url:
+                    url_part = db_url.split("://", 1)[1]
+                    if "@" in url_part:
+                        credentials_part = url_part.split("@", 1)[0]
+                        if":" in credentials_part:
+                            postgres_user, postgres_password = credentials_part.split(":", 1)
+                            postgres_db = url_part.split("/")[-1] if "/" in url_part else "hive_agent"
+                            
+                            env.update({
+                                "POSTGRES_USER": postgres_user,
+                                "POSTGRES_PASSWORD": postgres_password,
+                                "POSTGRES_DB": postgres_db,
+                            })
 
-            # Save PID
-            with open(self.pid_file, "w") as pid_f:
-                pid_f.write(str(process.pid))
+            # Set UID/GID for PostgreSQL
+            env.update({
+                "POSTGRES_UID": str(os.getuid() if hasattr(os, "getuid") else 1000),
+                "POSTGRES_GID": str(os.getgid() if hasattr(os, "getgid") else 1000),
+            })
 
-            # Wait a moment to check if it started successfully
-            time.sleep(3)
-
-            if self._is_agent_running():
-                pid = self._get_agent_pid()
-                print(f"✅ Agent server started successfully (PID: {pid}, Port: {self.agent_port})")
-
-                # Show startup logs
-                try:
-                    result = subprocess.run(
-                        ["head", "-20", str(self.log_file)],
-                        capture_output=True,
-                        text=True,
-                        check=False,
-                    )
-                    if result.returncode == 0 and result.stdout.strip():
+            # Start both postgres and agent services
+            cmd = [
+                "docker", "compose",
+                "-f", self.agent_compose_file,
+                "up", "-d",
+                "postgres-agent", "agent-dev-server"
+            ]
+            
+            result = secure_subprocess_call(
+                cmd, cwd=workspace, env=env, timeout=120
+            )
+            
+            if result.returncode == 0:
+                # Wait for services to be ready
+                time.sleep(5)
+                
+                agent_status = self.compose_manager.get_service_status("agent-dev-server", str(workspace))
+                if agent_status.name == "RUNNING":
+                    print(f"✅ Agent server started successfully (Port: {self.agent_port})")
+                    
+                    # Show startup logs
+                    logs = self.compose_manager.get_service_logs("agent-dev-server", tail=20, workspace_path=str(workspace))
+                    if logs and logs.strip():
                         print(f"\n📝 Startup Logs:")
                         print("-" * 40)
-                        print(result.stdout.strip())
+                        print(logs.strip())
                     else:
                         print(f"📝 No startup logs available yet")
-                except (OSError, subprocess.SubprocessError):
-                    print(f"📝 Could not read startup logs")
-
-                return True
-            return False
-
-        except OSError:
-            return False
-
-    def _stop_agent_background(self) -> bool:
-        """Stop agent server running in background."""
-        if not self.pid_file.exists():
-            return False
-
-        try:
-            with open(self.pid_file) as f:
-                pid = int(f.read().strip())
-
-            # Check if process is running
-            try:
-                os.kill(pid, 0)  # Signal 0 just checks if process exists
-            except ProcessLookupError:
-                self.pid_file.unlink(missing_ok=True)
-                return False
-
-            # Try graceful shutdown first
-            os.kill(pid, signal.SIGTERM)
-
-            # Wait up to 5 seconds for graceful shutdown
-            for _ in range(50):
-                try:
-                    os.kill(pid, 0)
-                    time.sleep(0.1)
-                except ProcessLookupError:
-                    break
+                    
+                    return True
+                else:
+                    print(f"❌ Agent server failed to start properly")
+                    return False
             else:
-                # Force kill if still running
-                with contextlib.suppress(ProcessLookupError):
-                    os.kill(pid, signal.SIGKILL)
-
-            self.pid_file.unlink(missing_ok=True)
-            return True
-
-        except OSError:
+                print(f"❌ Failed to start agent services: {result.stderr}")
+                return False
+                
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
+            print(f"❌ Error starting agent service: {e}")
             return False
 
-    def _is_agent_running(self) -> bool:
-        """Check if agent server is running."""
-        if not self.pid_file.exists():
-            return False
+    def _stop_agent_compose(self, workspace_path: str) -> bool:
+        """Stop agent server using docker-compose."""
+        return self.compose_manager.stop_service("agent-dev-server", workspace_path)
 
-        try:
-            with open(self.pid_file) as f:
-                pid = int(f.read().strip())
-            os.kill(pid, 0)  # Signal 0 just checks if process exists
-            return True
-        except (ProcessLookupError, ValueError, OSError):
-            self.pid_file.unlink(missing_ok=True)
-            return False
+    def _is_agent_running(self, workspace_path: str = ".") -> bool:
+        """Check if agent server is running using docker-compose."""
+        agent_status = self.compose_manager.get_service_status("agent-dev-server", workspace_path)
+        return agent_status.name == "RUNNING"
 
+    # PID-based methods are no longer needed with docker-compose
+    # Keeping for backward compatibility but they return None/False
     def _get_agent_pid(self) -> int | None:
-        """Get agent server PID if running."""
-        if not self.pid_file.exists():
-            return None
-
-        try:
-            with open(self.pid_file) as f:
-                pid = int(f.read().strip())
-            os.kill(pid, 0)  # Check if process exists
-            return pid
-        except (ProcessLookupError, ValueError, OSError):
-            self.pid_file.unlink(missing_ok=True)
-            return None
+        """Get agent server PID - deprecated with docker-compose."""
+        return None
 
     def _cleanup_agent_environment(self, workspace_path: str) -> bool:
-        """Clean up existing agent environment."""
+        """Clean up existing agent environment using docker-compose."""
         workspace = Path(workspace_path)
 
-        # Stop agent server
+        # Stop all agent services using compose
         try:
-            self._stop_agent_background()
+            self.compose_manager.stop_all_services(str(workspace))
         except Exception:
             pass  # Continue cleanup even if stop fails
-
-        # Stop agent containers
-        with contextlib.suppress(builtins.BaseException):
-            subprocess.run(
-                ["docker", "compose", "-f", self.agent_compose_file, "down"],
-                cwd=workspace,
-                capture_output=True,
-                check=False,
-            )
-
-        # Remove containers
-        with contextlib.suppress(builtins.BaseException):
-            subprocess.run(
-                [
-                    "docker",
-                    "container",
-                    "rm",
-                    "hive-agents-agent",
-                    "hive-postgres-agent",
-                ],
-                capture_output=True,
-                check=False,
-            )
 
         # Clean up files
         try:
             (workspace / ".env.agent").unlink(missing_ok=True)
-            (workspace / "data" / "postgres-agent").rmdir() if (
-                workspace / "data" / "postgres-agent"
-            ).exists() else None
+            data_dir = workspace / "data" / "postgres-agent"
+            if data_dir.exists() and data_dir.is_dir():
+                import shutil
+                shutil.rmtree(data_dir, ignore_errors=True)
         except (OSError, FileNotFoundError):
             pass
 

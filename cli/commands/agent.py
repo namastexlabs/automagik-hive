@@ -8,6 +8,12 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from cli.core.security_utils import (
+    secure_resolve_workspace,
+    secure_subprocess_call,
+    SecurityError,
+)
+
 if TYPE_CHECKING:
     from cli.core.agent_service import AgentService
 
@@ -39,18 +45,21 @@ class AgentCommands:
         Returns:
             True if installation successful, False otherwise
         """
-        workspace = workspace_path or "."
-        workspace = str(Path(workspace).resolve())
-
-        print(f"🤖 Installing agent environment in workspace: {workspace}")
-        result = bool(self.agent_service.install_agent_environment(workspace))
-        
-        if result:
-            print("✅ Agent environment installation completed successfully")
-        else:
-            print("❌ Agent environment installation failed")
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"🤖 Installing agent environment in workspace: {workspace}")
+            result = bool(self.agent_service.install_agent_environment(str(workspace)))
             
-        return result
+            if result:
+                print("✅ Agent environment installation completed successfully")
+            else:
+                print("❌ Agent environment installation failed")
+                
+            return result
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
+            return False
 
     def serve(self, workspace_path: str | None = None) -> bool:
         """Start agent server in background (non-blocking).
@@ -61,18 +70,21 @@ class AgentCommands:
         Returns:
             True if started successfully, False otherwise
         """
-        workspace = workspace_path or "."
-        workspace = str(Path(workspace).resolve())
-
-        print(f"🚀 Starting agent server in workspace: {workspace}")
-        result = bool(self.agent_service.serve_agent(workspace))
-        
-        if result:
-            print("✅ Agent server started successfully")
-        else:
-            print("❌ Failed to start agent server")
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"🚀 Starting agent server in workspace: {workspace}")
+            result = bool(self.agent_service.serve_agent(str(workspace)))
             
-        return result
+            if result:
+                print("✅ Agent server started successfully")
+            else:
+                print("❌ Failed to start agent server")
+                
+            return result
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
+            return False
 
     def stop(self, workspace_path: str | None = None) -> bool:
         """Stop agent server cleanly.
@@ -83,18 +95,21 @@ class AgentCommands:
         Returns:
             True if stopped successfully, False otherwise
         """
-        workspace = workspace_path or "."
-        workspace = str(Path(workspace).resolve())
-
-        print(f"🛑 Stopping agent server in workspace: {workspace}")
-        result = bool(self.agent_service.stop_agent(workspace))
-        
-        if result:
-            print("✅ Agent server stopped successfully")
-        else:
-            print("❌ Failed to stop agent server")
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"🛑 Stopping agent server in workspace: {workspace}")
+            result = bool(self.agent_service.stop_agent(str(workspace)))
             
-        return result
+            if result:
+                print("✅ Agent server stopped successfully")
+            else:
+                print("❌ Failed to stop agent server")
+                
+            return result
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
+            return False
 
     def restart(self, workspace_path: str | None = None) -> bool:
         """Restart agent server.
@@ -105,18 +120,21 @@ class AgentCommands:
         Returns:
             True if restarted successfully, False otherwise
         """
-        workspace = workspace_path or "."
-        workspace = str(Path(workspace).resolve())
-
-        print(f"🔄 Restarting agent server in workspace: {workspace}")
-        result = bool(self.agent_service.restart_agent(workspace))
-        
-        if result:
-            print("✅ Agent server restarted successfully")
-        else:
-            print("❌ Failed to restart agent server")
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"🔄 Restarting agent server in workspace: {workspace}")
+            result = bool(self.agent_service.restart_agent(str(workspace)))
             
-        return result
+            if result:
+                print("✅ Agent server restarted successfully")
+            else:
+                print("❌ Failed to restart agent server")
+                
+            return result
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
+            return False
 
     def logs(self, workspace_path: str | None = None, tail: int = 50) -> bool:
         """Show agent server logs.
@@ -128,13 +146,16 @@ class AgentCommands:
         Returns:
             True if logs displayed, False otherwise
         """
-        workspace = workspace_path or "."
-        workspace = str(Path(workspace).resolve())
-
-        print(f"📋 Showing agent logs from workspace: {workspace}")
-        result = bool(self.agent_service.show_agent_logs(workspace, tail))
-        
-        return result
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"📋 Showing agent logs from workspace: {workspace}")
+            result = bool(self.agent_service.show_agent_logs(str(workspace), tail))
+            
+            return result
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
+            return False
 
     def status(self, workspace_path: str | None = None) -> bool:
         """Check agent environment status.
@@ -145,33 +166,33 @@ class AgentCommands:
         Returns:
             True if status displayed, False otherwise
         """
-        workspace = workspace_path or "."
-        workspace = str(Path(workspace).resolve())
-
-        status_info = self.agent_service.get_agent_status(workspace)
-        
-        # Print table header
-        print("📊 Agent Environment Status:")
-        print("┌─────────────────────────┬──────────────────────────────────────┐")
-        print("│ Agent Service           │ Status                               │")
-        print("├─────────────────────────┼──────────────────────────────────────┤")
-        
-        # Print status info
-        for service, status in status_info.items():
-            service_formatted = service.replace("-", " ").title()[:23].ljust(23)
-            status_formatted = f"{status[:35]}".ljust(35)  # 35 chars + 1 space
-            print(f"│ {service_formatted} │ {status_formatted} │")
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            status_info = self.agent_service.get_agent_status(str(workspace))
             
-        print("└─────────────────────────┴──────────────────────────────────────┘")
+            # Print table header
+            print("📊 Agent Environment Status:")
+            print("┌─────────────────────────┬──────────────────────────────────────┐")
+            print("│ Agent Service           │ Status                               │")
+            print("├─────────────────────────┼──────────────────────────────────────┤")
+            
+            # Print status info
+            for service, status in status_info.items():
+                service_formatted = service.replace("-", " ").title()[:23].ljust(23)
+                status_formatted = f"{status[:35]}".ljust(35)  # 35 chars + 1 space
+                print(f"│ {service_formatted} │ {status_formatted} │")
+                
+            print("└─────────────────────────┴──────────────────────────────────────┘")
 
         # Show recent activity if available
-        if Path("logs/agent-server.log").exists():
+        log_path = workspace / "logs" / "agent-server.log"
+        if log_path.exists():
             try:
-                result = subprocess.run(
-                    ["tail", "-5", "logs/agent-server.log"],
-                    capture_output=True,
-                    text=True,
-                    check=False,
+                # Use secure subprocess call to read log file
+                result = secure_subprocess_call(
+                    ["tail", "-5", str(log_path)],
+                    cwd=workspace
                 )
                 if result.returncode == 0 and result.stdout.strip():
                     print(f"\n📝 Recent Activity (last 5 lines):")
@@ -180,10 +201,10 @@ class AgentCommands:
                         print(f"  {line}")
                 else:
                     print(f"\n📝 Log file exists but no recent activity")
-            except (OSError, subprocess.SubprocessError, Exception):
+            except (OSError, subprocess.SubprocessError, SecurityError, Exception):
                 print(f"\n❌ Error reading log file")
         else:
-            print(f"\n📝 No log file found at logs/agent-server.log")
+            print(f"\n📝 No log file found at {log_path}")
 
         return True
 
@@ -196,18 +217,21 @@ class AgentCommands:
         Returns:
             True if reset successful, False otherwise
         """
-        workspace = workspace_path or "."
-        workspace = str(Path(workspace).resolve())
-
-        print(f"🔄 Resetting agent environment in workspace: {workspace}")
-        result = bool(self.agent_service.reset_agent_environment(workspace))
-        
-        if result:
-            print("✅ Agent environment reset completed successfully")
-        else:
-            print("❌ Agent environment reset failed")
+        try:
+            # Secure workspace path validation
+            workspace = secure_resolve_workspace(workspace_path)
+            print(f"🔄 Resetting agent environment in workspace: {workspace}")
+            result = bool(self.agent_service.reset_agent_environment(str(workspace)))
             
-        return result
+            if result:
+                print("✅ Agent environment reset completed successfully")
+            else:
+                print("❌ Agent environment reset failed")
+                
+            return result
+        except SecurityError as e:
+            print(f"❌ Security validation failed: {e}")
+            return False
 
 
 # Convenience functions for direct CLI usage
