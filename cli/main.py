@@ -12,6 +12,7 @@ from pathlib import Path
 from cli.commands.agent import AgentCommands
 from cli.commands.init import InitCommands
 from cli.commands.postgres import PostgreSQLCommands
+from cli.commands.uninstall import UninstallCommands
 from cli.commands.workspace import WorkspaceCommands
 from lib.utils.version_reader import get_cli_version_string
 
@@ -50,6 +51,10 @@ Core Commands:
   uvx automagik-hive --agent-logs              # Show agent server logs
   uvx automagik-hive --agent-status            # Check agent environment status
   uvx automagik-hive --agent-reset             # Reset agent environment
+
+  # Uninstallation commands (DESTRUCTIVE)
+  uvx automagik-hive --uninstall ./workspace   # Remove specific workspace
+  uvx automagik-hive --uninstall-global        # Remove ALL components (DANGEROUS)
 
   # With specific workspace
   uvx automagik-hive --postgres-status ./my-workspace
@@ -130,6 +135,19 @@ Note: T1.5 Core Command Implementation - Essential UVX functionality ready.
         help="Reset agent environment (destructive reinstall)",
     )
 
+    # Uninstallation commands
+    uninstall_group = parser.add_argument_group("Uninstallation Commands (DESTRUCTIVE)")
+    uninstall_group.add_argument(
+        "--uninstall",
+        action="store_true",
+        help="Remove specific workspace with all data (DESTRUCTIVE - requires workspace path)",
+    )
+    uninstall_group.add_argument(
+        "--uninstall-global",
+        action="store_true",
+        help="Remove ALL Automagik Hive components globally (EXTREMELY DESTRUCTIVE)",
+    )
+
     # Common options
     parser.add_argument(
         "workspace",
@@ -168,6 +186,7 @@ def main() -> int:
     workspace_commands = WorkspaceCommands()
     postgres_commands = PostgreSQLCommands()
     agent_commands = AgentCommands()
+    uninstall_commands = UninstallCommands()
 
     # Handle core workspace commands (T1.5)
     if args.init:
@@ -213,6 +232,8 @@ def main() -> int:
             args.agent_logs,
             args.agent_status,
             args.agent_reset,
+            args.uninstall,
+            args.uninstall_global,
         ]
     ):
         # This is a workspace startup command
@@ -274,6 +295,15 @@ def main() -> int:
 
     elif args.agent_reset:
         success = agent_commands.reset(args.workspace or ".")
+        return 0 if success else 1
+
+    # Handle Uninstallation commands
+    elif args.uninstall:
+        success = uninstall_commands.uninstall_workspace(args.workspace)
+        return 0 if success else 1
+
+    elif args.uninstall_global:
+        success = uninstall_commands.uninstall_global()
         return 0 if success else 1
 
     else:

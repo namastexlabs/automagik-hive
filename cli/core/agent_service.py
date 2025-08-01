@@ -42,19 +42,38 @@ class AgentService:
             True if installation successful, False otherwise
         """
         workspace = Path(workspace_path).resolve()
+        print(f"🤖 Installing agent environment in workspace: {workspace}")
+        
         if not self._validate_workspace(workspace, check_env=False):
+            print("❌ Workspace validation failed")
             return False
+
+        print("✅ Workspace validation passed")
 
         # Create agent environment file
+        print("📝 Creating agent environment file...")
         if not self._create_agent_env_file(str(workspace)):
+            print("❌ Failed to create agent environment file")
             return False
+
+        print("✅ Agent environment file created")
 
         # Setup agent PostgreSQL
+        print("🐘 Setting up agent PostgreSQL...")
         if not self._setup_agent_postgres(str(workspace)):
+            print("❌ Failed to setup agent PostgreSQL")
             return False
 
+        print("✅ Agent PostgreSQL setup completed")
+
         # Generate agent API key
-        return self._generate_agent_api_key(str(workspace))
+        print("🔑 Generating agent API key...")
+        if self._generate_agent_api_key(str(workspace)):
+            print("✅ Agent environment installation completed successfully!")
+            return True
+        else:
+            print("❌ Failed to generate agent API key")
+            return False
 
     def serve_agent(self, workspace_path: str) -> bool:
         """Start agent server in background (non-blocking).
@@ -71,7 +90,8 @@ class AgentService:
 
         # Check if already running
         if self._is_agent_running():
-            self._get_agent_pid()
+            pid = self._get_agent_pid()
+            print(f"✅ Agent server is already running (PID: {pid}, Port: {self.agent_port})")
             return True
 
         return self._start_agent_background(str(workspace))
@@ -85,7 +105,16 @@ class AgentService:
         Returns:
             True if stopped successfully, False otherwise
         """
-        return self._stop_agent_background()
+        if not self._is_agent_running():
+            print("🛑 Agent server is not running")
+            return True
+            
+        if self._stop_agent_background():
+            print("✅ Agent server stopped successfully")
+            return True
+        else:
+            print("❌ Failed to stop agent server")
+            return False
 
     def restart_agent(self, workspace_path: str) -> bool:
         """Restart agent server.
@@ -122,10 +151,22 @@ class AgentService:
                     text=True,
                     check=False,
                 )
-                return result.returncode == 0
-            except (OSError, subprocess.SubprocessError):
+                if result.returncode == 0:
+                    print(f"\n📝 Agent Server Logs (last {tail} lines):")
+                    print("=" * 50)
+                    if result.stdout.strip():
+                        print(result.stdout.strip())
+                    else:
+                        print("No log content available")
+                    return True
+                else:
+                    print(f"❌ Error reading log file (exit code: {result.returncode})")
+                    return False
+            except (OSError, subprocess.SubprocessError) as e:
+                print(f"❌ Error executing tail command: {e}")
                 return False
         else:
+            print(f"❌ Log file not found: {self.log_file}")
             return False
 
     def get_agent_status(self, workspace_path: str | None = None) -> dict[str, str]:
@@ -179,14 +220,26 @@ class AgentService:
     def _validate_workspace(self, workspace: Path, check_env: bool = True) -> bool:  # noqa: ARG002
         """Validate workspace directory and required files."""
         if not workspace.exists():
+            print(f"❌ Workspace directory does not exist: {workspace}")
             return False
 
         if not workspace.is_dir():
+            print(f"❌ Workspace path is not a directory: {workspace}")
             return False
 
-        # Check for docker-compose.yml
-        compose_file = workspace / "docker-compose.yml"
-        return compose_file.exists()
+        # Check for agent docker-compose.yml
+        agent_compose_file = workspace / self.agent_compose_file
+        if not agent_compose_file.exists():
+            print(f"❌ Agent docker-compose file not found: {agent_compose_file}")
+            return False
+
+        # Check for .env.example file
+        env_example = workspace / ".env.example"
+        if not env_example.exists():
+            print(f"❌ .env.example file not found: {env_example}")
+            return False
+
+        return True
 
     def _validate_agent_environment(self, workspace: Path) -> bool:
         """Validate agent environment is properly set up."""
@@ -391,7 +444,8 @@ class AgentService:
             time.sleep(3)
 
             if self._is_agent_running():
-                self._get_agent_pid()
+                pid = self._get_agent_pid()
+                print(f"✅ Agent server started successfully (PID: {pid}, Port: {self.agent_port})")
 
                 # Show startup logs
                 try:
@@ -402,11 +456,13 @@ class AgentService:
                         check=False,
                     )
                     if result.returncode == 0 and result.stdout.strip():
-                        pass
+                        print(f"\n📝 Startup Logs:")
+                        print("-" * 40)
+                        print(result.stdout.strip())
                     else:
-                        pass
+                        print(f"📝 No startup logs available yet")
                 except (OSError, subprocess.SubprocessError):
-                    pass
+                    print(f"📝 Could not read startup logs")
 
                 return True
             return False

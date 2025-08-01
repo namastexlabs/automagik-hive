@@ -32,7 +32,15 @@ class AgentCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        return bool(self.agent_service.install_agent_environment(workspace))
+        print(f"🤖 Installing agent environment in workspace: {workspace}")
+        result = bool(self.agent_service.install_agent_environment(workspace))
+        
+        if result:
+            print("✅ Agent environment installation completed successfully")
+        else:
+            print("❌ Agent environment installation failed")
+            
+        return result
 
     def serve(self, workspace_path: str | None = None) -> bool:
         """Start agent server in background (non-blocking).
@@ -46,7 +54,15 @@ class AgentCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        return bool(self.agent_service.serve_agent(workspace))
+        print(f"🚀 Starting agent server in workspace: {workspace}")
+        result = bool(self.agent_service.serve_agent(workspace))
+        
+        if result:
+            print("✅ Agent server started successfully")
+        else:
+            print("❌ Failed to start agent server")
+            
+        return result
 
     def stop(self, workspace_path: str | None = None) -> bool:
         """Stop agent server cleanly.
@@ -60,7 +76,15 @@ class AgentCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        return bool(self.agent_service.stop_agent(workspace))
+        print(f"🛑 Stopping agent server in workspace: {workspace}")
+        result = bool(self.agent_service.stop_agent(workspace))
+        
+        if result:
+            print("✅ Agent server stopped successfully")
+        else:
+            print("❌ Failed to stop agent server")
+            
+        return result
 
     def restart(self, workspace_path: str | None = None) -> bool:
         """Restart agent server.
@@ -74,7 +98,15 @@ class AgentCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        return bool(self.agent_service.restart_agent(workspace))
+        print(f"🔄 Restarting agent server in workspace: {workspace}")
+        result = bool(self.agent_service.restart_agent(workspace))
+        
+        if result:
+            print("✅ Agent server restarted successfully")
+        else:
+            print("❌ Failed to restart agent server")
+            
+        return result
 
     def logs(self, workspace_path: str | None = None, tail: int = 50) -> bool:
         """Show agent server logs.
@@ -89,7 +121,10 @@ class AgentCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        return bool(self.agent_service.show_agent_logs(workspace, tail))
+        print(f"📋 Showing agent logs from workspace: {workspace}")
+        result = bool(self.agent_service.show_agent_logs(workspace, tail))
+        
+        return result
 
     def status(self, workspace_path: str | None = None) -> bool:
         """Check agent environment status.
@@ -104,10 +139,20 @@ class AgentCommands:
         workspace = str(Path(workspace).resolve())
 
         status_info = self.agent_service.get_agent_status(workspace)
-
+        
+        # Print table header
+        print("📊 Agent Environment Status:")
+        print("┌─────────────────────────┬──────────────────────────────────────┐")
+        print("│ Agent Service           │ Status                               │")
+        print("├─────────────────────────┼──────────────────────────────────────┤")
+        
+        # Print status info
         for service, status in status_info.items():
-            service.replace("-", " ").title()[:23]
-            status[:36]
+            service_formatted = service.replace("-", " ").title()[:23].ljust(23)
+            status_formatted = f"{status[:35]}".ljust(35)  # 35 chars + 1 space
+            print(f"│ {service_formatted} │ {status_formatted} │")
+            
+        print("└─────────────────────────┴──────────────────────────────────────┘")
 
         # Show recent activity if available
         if Path("logs/agent-server.log").exists():
@@ -119,12 +164,16 @@ class AgentCommands:
                     check=False,
                 )
                 if result.returncode == 0 and result.stdout.strip():
-                    for _line in result.stdout.strip().split("\n"):
-                        pass
+                    print(f"\n📝 Recent Activity (last 5 lines):")
+                    print("-" * 45)
+                    for line in result.stdout.strip().split("\n"):
+                        print(f"  {line}")
                 else:
-                    pass
-            except (OSError, subprocess.SubprocessError):
-                pass
+                    print(f"\n📝 Log file exists but no recent activity")
+            except (OSError, subprocess.SubprocessError, Exception):
+                print(f"\n❌ Error reading log file")
+        else:
+            print(f"\n📝 No log file found at logs/agent-server.log")
 
         return True
 
@@ -140,7 +189,15 @@ class AgentCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-        return bool(self.agent_service.reset_agent_environment(workspace))
+        print(f"🔄 Resetting agent environment in workspace: {workspace}")
+        result = bool(self.agent_service.reset_agent_environment(workspace))
+        
+        if result:
+            print("✅ Agent environment reset completed successfully")
+        else:
+            print("❌ Agent environment reset failed")
+            
+        return result
 
 
 # Convenience functions for direct CLI usage
