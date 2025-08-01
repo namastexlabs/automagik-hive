@@ -319,12 +319,12 @@ class TestComponentVersionService:
         """Test deleting a version - method not implemented in source."""
         # Since delete_version method doesn't exist, we expect AttributeError
         service = ComponentVersionService()
-        
+
         with pytest.raises(AttributeError, match="'ComponentVersionService' object has no attribute 'delete_version'"):
             await service.delete_version("test-agent", 1, "deleter")
-            
+
         # Verify the method is missing (expected behavior)
-        assert not hasattr(service, 'delete_version')
+        assert not hasattr(service, "delete_version")
 
 
 class TestComponentVersionServiceEdgeCases:
@@ -418,7 +418,7 @@ class TestComponentVersionServiceEdgeCases:
             )
 
         assert version_id == 999
-        
+
         # Check the method was called correctly
         call_args = mock_db.fetch_one.call_args
         # The parameters are passed as second positional argument

@@ -2,12 +2,12 @@
 # Filesystem-driven tool loading via version factory pattern
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from lib.logging import logger
 
 
-def _discover_tools() -> List[str]:
+def _discover_tools() -> list[str]:
     """Dynamically discover available tools from filesystem"""
     import yaml
 
@@ -43,7 +43,7 @@ class ToolRegistry:
     """
 
     @classmethod
-    def _get_available_tools(cls) -> List[str]:
+    def _get_available_tools(cls) -> list[str]:
         """Get all available tool IDs"""
         return _discover_tools()
 
@@ -89,25 +89,25 @@ class ToolRegistry:
         spec = importlib.util.spec_from_file_location(f"tools.{tool_id}", tool_file)
         if spec is None or spec.loader is None:
             raise ImportError(f"Failed to load tool module: {tool_file}")
-            
+
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
         # Get tool class (assumes class name follows ToolNameTool pattern)
-        tool_class_name = ''.join(word.capitalize() for word in tool_id.split('-')) + 'Tool'
-        
+        tool_class_name = "".join(word.capitalize() for word in tool_id.split("-")) + "Tool"
+
         if not hasattr(module, tool_class_name):
             # Fallback: look for any class that inherits from BaseTool
             from .base_tool import BaseTool
             tool_class = None
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if (isinstance(attr, type) and 
-                    issubclass(attr, BaseTool) and 
+                if (isinstance(attr, type) and
+                    issubclass(attr, BaseTool) and
                     attr != BaseTool):
                     tool_class = attr
                     break
-            
+
             if tool_class is None:
                 raise ImportError(f"No tool class found in module: {tool_file}")
         else:
@@ -117,7 +117,7 @@ class ToolRegistry:
         return tool_class(config_path=config_file, **kwargs)
 
     @classmethod
-    def get_all_tools(cls, **kwargs) -> Dict[str, Any]:
+    def get_all_tools(cls, **kwargs) -> dict[str, Any]:
         """
         Get all available tools.
 
@@ -137,12 +137,12 @@ class ToolRegistry:
         return tools
 
     @classmethod
-    def list_available_tools(cls) -> List[str]:
+    def list_available_tools(cls) -> list[str]:
         """Get list of available tool IDs."""
         return cls._get_available_tools()
 
     @classmethod
-    def get_tool_info(cls, tool_id: str) -> Dict[str, Any]:
+    def get_tool_info(cls, tool_id: str) -> dict[str, Any]:
         """
         Get tool information without instantiating the tool.
         
@@ -153,22 +153,22 @@ class ToolRegistry:
             Dictionary with tool metadata
         """
         import yaml
-        
+
         tool_path = Path(f"ai/tools/{tool_id}")
         config_file = tool_path / "config.yaml"
-        
+
         if not config_file.exists():
             return {"error": f"Tool config not found: {tool_id}"}
-            
+
         try:
             with open(config_file) as f:
                 config = yaml.safe_load(f)
                 return config.get("tool", {})
         except Exception as e:
-            return {"error": f"Failed to load tool config: {str(e)}"}
+            return {"error": f"Failed to load tool config: {e!s}"}
 
     @classmethod
-    def list_tools_by_category(cls, category: str) -> List[str]:
+    def list_tools_by_category(cls, category: str) -> list[str]:
         """
         List tools filtered by category.
         
@@ -180,12 +180,12 @@ class ToolRegistry:
         """
         tools_in_category = []
         available_tools = cls._get_available_tools()
-        
+
         for tool_id in available_tools:
             tool_info = cls.get_tool_info(tool_id)
             if tool_info.get("category") == category:
                 tools_in_category.append(tool_id)
-                
+
         return sorted(tools_in_category)
 
 
@@ -205,7 +205,7 @@ def get_tool(tool_id: str, version: int | None = None, **kwargs) -> Any:
     return ToolRegistry.get_tool(tool_id=tool_id, version=version, **kwargs)
 
 
-def get_all_tools(**kwargs) -> Dict[str, Any]:
+def get_all_tools(**kwargs) -> dict[str, Any]:
     """
     Get all available tools.
 
@@ -215,6 +215,6 @@ def get_all_tools(**kwargs) -> Dict[str, Any]:
     return ToolRegistry.get_all_tools(**kwargs)
 
 
-def list_available_tools() -> List[str]:
+def list_available_tools() -> list[str]:
     """Get list of available tool IDs."""
     return ToolRegistry.list_available_tools()

@@ -124,7 +124,7 @@ def mock_component_registries() -> Generator[
         # Mock the version factory method to return mock agent directly, but fail for non-existent components
         patch(
             "lib.utils.version_factory.VersionFactory.create_versioned_component",
-            new_callable=lambda: AsyncMock(side_effect=lambda component_id, **kwargs: 
+            new_callable=lambda: AsyncMock(side_effect=lambda component_id, **kwargs:
                 None if component_id == "non-existent-component" else mock_agent),
         ),
     ]
@@ -205,7 +205,7 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
 
         # Track created versions to maintain state consistency
         created_versions = {}
-        
+
         # Configure async service methods with dynamic responses
         async def mock_get_version(component_id, version_num):
             # Return None for non-existent components to trigger 404 responses
@@ -216,7 +216,7 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
             if key in created_versions:
                 return created_versions[key]
             return create_mock_version(component_id)
-        
+
         async def mock_create_version(component_id, config=None, **kwargs):
             # Store the version with the provided config
             version_num = kwargs.get("version", 1)
@@ -224,12 +224,12 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
             mock_version = create_mock_version(component_id, config)
             created_versions[key] = mock_version
             return mock_version
-        
+
         async def mock_list_versions(component_id):
             # Return all versions for this component
             versions = [v for k, v in created_versions.items() if k.startswith(f"{component_id}-")]
             return versions if versions else [create_mock_version(component_id)]
-        
+
         async def mock_get_active_version(component_id):
             # Return None for non-existent components
             if component_id == "non-existent" or component_id == "non-existent-component":

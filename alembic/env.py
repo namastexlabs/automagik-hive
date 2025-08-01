@@ -26,6 +26,7 @@ if config.config_file_name is not None:
 
 # Import hive models for autogenerate support
 from lib.models import Base
+
 target_metadata = Base.metadata
 
 # Get database URL from environment
@@ -33,14 +34,13 @@ def get_url():
     db_url = os.getenv("HIVE_DATABASE_URL")
     if not db_url:
         raise ValueError("HIVE_DATABASE_URL environment variable must be set")
-    
+
     # Convert psycopg:// to postgresql+psycopg:// for SQLAlchemy async
     if db_url.startswith("postgresql+psycopg://"):
         return db_url.replace("postgresql+psycopg://", "postgresql+psycopg://")
-    elif db_url.startswith("postgresql://"):
+    if db_url.startswith("postgresql://"):
         return db_url.replace("postgresql://", "postgresql+psycopg://")
-    else:
-        return db_url
+    return db_url
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -76,7 +76,7 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     context.configure(
-        connection=connection, 
+        connection=connection,
         target_metadata=target_metadata,
         version_table_schema="hive",  # Store alembic version table in hive schema
         include_schemas=True,  # Include schema in generated SQL
@@ -105,7 +105,7 @@ async def run_async_migrations() -> None:
         # Create hive schema if it doesn't exist
         await connection.execute(text("CREATE SCHEMA IF NOT EXISTS hive"))
         await connection.commit()
-        
+
         # Run migrations
         await connection.run_sync(do_run_migrations)
 
@@ -114,7 +114,6 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-
     asyncio.run(run_async_migrations())
 
 

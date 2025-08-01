@@ -13,11 +13,9 @@ Focus areas:
 """
 
 import csv
-import os
 import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 from agno.document.base import Document
@@ -33,7 +31,7 @@ class TestRowBasedCSVKnowledgeInitialization:
         """Set up test environment with temp directory and mock vector db."""
         self.temp_dir = tempfile.mkdtemp()
         self.csv_file = Path(self.temp_dir) / "test_knowledge.csv"
-        
+
         # Create mock vector database that passes type validation
         self.mock_vector_db = MagicMock(spec=VectorDb)
         self.mock_vector_db.exists.return_value = False
@@ -90,7 +88,7 @@ class TestRowBasedCSVKnowledgeInitialization:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Should handle missing columns gracefully
         assert len(kb.documents) == 2
         doc = kb.documents[0]
@@ -114,10 +112,10 @@ class TestRowBasedCSVKnowledgeInitialization:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Should create documents for rows with some content
         assert len(kb.documents) >= 1
-        
+
         # Check metadata handling for empty values
         for doc in kb.documents:
             assert isinstance(doc.meta_data["business_unit"], str)
@@ -128,10 +126,10 @@ class TestRowBasedCSVKnowledgeInitialization:
     def test_initialization_with_nonexistent_file(self):
         """Test initialization with non-existent CSV file."""
         nonexistent_file = "/non/existent/file.csv"
-        
+
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             kb = RowBasedCSVKnowledgeBase(nonexistent_file, self.mock_vector_db)
-            
+
             # Should create empty knowledge base
             assert len(kb.documents) == 0
             # Should log warning about missing file
@@ -153,10 +151,10 @@ class TestRowBasedCSVKnowledgeInitialization:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Should create documents for each row with content
         documents = kb.documents
-        
+
         # Find specific documents by content
         for doc in documents:
             if "Problem only" in doc.content:
@@ -264,11 +262,11 @@ class TestRowBasedCSVDocumentCreation:
 
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-            
+
             # Check that business unit counting works
             documents = kb.documents
             assert len(documents) == 6
-            
+
             # Check debug logging calls for business unit summary
             debug_calls = mock_logger.debug.call_args_list
             bu_logged = False
@@ -298,7 +296,7 @@ class TestRowBasedCSVDocumentCreation:
         assert "**Solution:** Solution with spaces" in doc.content
         assert "**Business Unit:** tech" in doc.content
         assert "**Typification:** programming" in doc.content
-        
+
         # Check that metadata values are also stripped
         assert doc.meta_data["business_unit"] == "tech"
         assert doc.meta_data["typification"] == "programming"
@@ -321,14 +319,14 @@ class TestRowBasedCSVErrorHandling:
         """Test handling of CSV read errors."""
         # Create a file that will cause read errors
         bad_csv_file = Path(self.temp_dir) / "bad.csv"
-        
+
         # Create a file with invalid encoding or structure
         with open(bad_csv_file, "wb") as f:
-            f.write(b'\xff\xfe\x00\x00')  # Invalid UTF-8 bytes
+            f.write(b"\xff\xfe\x00\x00")  # Invalid UTF-8 bytes
 
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             kb = RowBasedCSVKnowledgeBase(str(bad_csv_file), self.mock_vector_db)
-            
+
             # Should handle error gracefully and create empty knowledge base
             assert len(kb.documents) == 0
             # Should log error
@@ -337,50 +335,50 @@ class TestRowBasedCSVErrorHandling:
     def test_file_permission_error(self):
         """Test handling of file permission errors."""
         csv_file = Path(self.temp_dir) / "protected.csv"
-        
+
         # Create file first
         with open(csv_file, "w") as f:
             f.write("problem,solution\ntest,test")
-        
+
         # Mock open to raise PermissionError
         with patch("builtins.open", side_effect=PermissionError("Permission denied")):
             with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
                 kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
-                
+
                 assert len(kb.documents) == 0
                 mock_logger.error.assert_called_once()
 
     def test_empty_csv_file(self):
         """Test handling of completely empty CSV file."""
         empty_csv = Path(self.temp_dir) / "empty.csv"
-        
+
         # Create empty file
         with open(empty_csv, "w") as f:
             pass
 
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             kb = RowBasedCSVKnowledgeBase(str(empty_csv), self.mock_vector_db)
-            
+
             # Should handle gracefully
             assert len(kb.documents) == 0
 
     def test_csv_with_only_headers(self):
         """Test CSV file with only header row."""
         headers_only_csv = Path(self.temp_dir) / "headers_only.csv"
-        
+
         with open(headers_only_csv, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(["problem", "solution", "business_unit", "typification"])
 
         kb = RowBasedCSVKnowledgeBase(str(headers_only_csv), self.mock_vector_db)
-        
+
         # Should create empty document list (no data rows)
         assert len(kb.documents) == 0
 
     def test_malformed_csv_handling(self):
         """Test handling of malformed CSV content."""
         malformed_csv = Path(self.temp_dir) / "malformed.csv"
-        
+
         # Create CSV with malformed content
         with open(malformed_csv, "w") as f:
             f.write('problem,solution\n"unclosed quote,data\nmore,data')
@@ -426,11 +424,11 @@ class TestRowBasedCSVVectorOperations:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Test load with recreate
         with patch("agno.utils.log.log_info") as mock_log_info:
             kb.load(recreate=True)
-            
+
             # Should drop and create collection
             self.mock_vector_db.drop.assert_called_once()
             self.mock_vector_db.create.assert_called_once()
@@ -449,10 +447,10 @@ class TestRowBasedCSVVectorOperations:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), None)
-        
+
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             kb.load()
-            
+
             # Should log warning and return early
             mock_logger.warning.assert_called_once_with("No vector db provided")
 
@@ -472,10 +470,10 @@ class TestRowBasedCSVVectorOperations:
         self.mock_vector_db.exists.return_value = True
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         with patch("agno.utils.log.log_info") as mock_log_info:
             kb.load(recreate=False)
-            
+
             # Should not drop or create collection
             self.mock_vector_db.drop.assert_not_called()
             self.mock_vector_db.create.assert_not_called()
@@ -493,15 +491,15 @@ class TestRowBasedCSVVectorOperations:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Mock progress bar to avoid actual tqdm output
         with patch("lib.knowledge.row_based_csv_knowledge.tqdm") as mock_tqdm:
             mock_pbar = MagicMock()
             mock_tqdm.return_value.__enter__ = MagicMock(return_value=mock_pbar)
             mock_tqdm.return_value.__exit__ = MagicMock(return_value=None)
-            
+
             kb.load(upsert=True)
-            
+
             # Should call upsert instead of insert
             self.mock_vector_db.upsert.assert_called()
             self.mock_vector_db.insert.assert_not_called()
@@ -518,16 +516,16 @@ class TestRowBasedCSVVectorOperations:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Mock progress bar to capture calls
         with patch("lib.knowledge.row_based_csv_knowledge.tqdm") as mock_tqdm:
             mock_pbar = MagicMock()
             mock_tqdm.return_value.__enter__ = MagicMock(return_value=mock_pbar)
             mock_tqdm.return_value.__exit__ = MagicMock(return_value=None)
-            
+
             # Force documents to be "new" by setting skip_existing=False
             kb.load(skip_existing=False)
-            
+
             # Should create progress bar
             mock_tqdm.assert_called_once()
             args, kwargs = mock_tqdm.call_args
@@ -546,12 +544,12 @@ class TestRowBasedCSVVectorOperations:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         with patch("agno.utils.log.logger") as mock_agno_logger:
             with patch("lib.knowledge.row_based_csv_knowledge.tqdm"):
                 # Force documents to be loaded by setting skip_existing=False
                 kb.load(skip_existing=False)
-                
+
                 # Should add and remove filter
                 mock_agno_logger.addFilter.assert_called_once()
                 mock_agno_logger.removeFilter.assert_called_once()
@@ -570,12 +568,12 @@ class TestRowBasedCSVVectorOperations:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             with patch("lib.knowledge.row_based_csv_knowledge.tqdm"):
                 # Force documents to be loaded by setting skip_existing=False
                 kb.load(skip_existing=False)
-                
+
                 # Should log business unit summary
                 debug_calls = mock_logger.debug.call_args_list
                 assert len(debug_calls) > 0
@@ -609,7 +607,7 @@ class TestRowBasedCSVHotReload:
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
         initial_count = len(kb.documents)
-        
+
         # Update CSV file
         updated_data = [
             ["problem", "solution"],
@@ -624,7 +622,7 @@ class TestRowBasedCSVHotReload:
         # Test reload
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             kb.reload_from_csv()
-            
+
             # Should have new document count
             assert len(kb.documents) == 2
             # Should log success
@@ -643,12 +641,12 @@ class TestRowBasedCSVHotReload:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Mock _load_csv_as_documents to raise exception
         with patch.object(kb, "_load_csv_as_documents", side_effect=Exception("Load error")):
             with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
                 kb.reload_from_csv()
-                
+
                 # Should log error
                 mock_logger.error.assert_called_once()
 
@@ -679,9 +677,9 @@ class TestRowBasedCSVFilterValidation:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         valid_filters, invalid_keys = kb.validate_filters(None)
-        
+
         assert valid_filters == {}
         assert invalid_keys == []
 
@@ -697,9 +695,9 @@ class TestRowBasedCSVFilterValidation:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         valid_filters, invalid_keys = kb.validate_filters({})
-        
+
         assert valid_filters == {}
         assert invalid_keys == []
 
@@ -715,16 +713,16 @@ class TestRowBasedCSVFilterValidation:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Ensure no metadata filters are tracked
         if hasattr(kb, "valid_metadata_filters"):
             delattr(kb, "valid_metadata_filters")
-        
+
         test_filters = {"business_unit": "tech", "has_problem": True}
-        
+
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             valid_filters, invalid_keys = kb.validate_filters(test_filters)
-            
+
             assert valid_filters == {}
             assert invalid_keys == ["business_unit", "has_problem"]
             mock_logger.debug.assert_called()
@@ -741,19 +739,19 @@ class TestRowBasedCSVFilterValidation:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Mock valid metadata filters
         kb.valid_metadata_filters = {"business_unit", "row_index", "source", "has_problem", "has_solution"}
-        
+
         test_filters = {
-            "business_unit": "tech", 
+            "business_unit": "tech",
             "has_problem": True,
             "invalid_key": "value"
         }
-        
+
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             valid_filters, invalid_keys = kb.validate_filters(test_filters)
-            
+
             assert valid_filters == {"business_unit": "tech", "has_problem": True}
             assert invalid_keys == ["invalid_key"]
             mock_logger.debug.assert_called()
@@ -770,18 +768,18 @@ class TestRowBasedCSVFilterValidation:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
-        
+
         # Mock valid metadata filters
         kb.valid_metadata_filters = {"business_unit", "row_index"}
-        
+
         test_filters = {
             "meta_data.business_unit": "tech",
             "meta_data.invalid_key": "value",
             "row_index": 1
         }
-        
+
         valid_filters, invalid_keys = kb.validate_filters(test_filters)
-        
+
         # Should handle prefixed keys correctly
         assert "meta_data.business_unit" in valid_filters
         assert "row_index" in valid_filters
@@ -804,7 +802,7 @@ class TestRowBasedCSVAdvancedCases:
     def test_special_characters_in_content(self):
         """Test handling of special characters in CSV content."""
         csv_file = Path(self.temp_dir) / "special_chars.csv"
-        
+
         test_data = [
             ["problem", "solution", "business_unit"],
             ["What is AI? 🤖", "AI is artificial intelligence! 🧠", "tech"],
@@ -817,10 +815,10 @@ class TestRowBasedCSVAdvancedCases:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
-        
+
         # Should handle special characters correctly
         assert len(kb.documents) == 3
-        
+
         # Check that special characters are preserved
         contents = [doc.content for doc in kb.documents]
         assert any("🤖" in content for content in contents)
@@ -830,11 +828,11 @@ class TestRowBasedCSVAdvancedCases:
     def test_very_long_content(self):
         """Test handling of very long content in CSV rows."""
         csv_file = Path(self.temp_dir) / "long_content.csv"
-        
+
         # Create very long content
         long_problem = "This is a very long problem description. " * 100
         long_solution = "This is a very long solution description. " * 100
-        
+
         test_data = [
             ["problem", "solution"],
             [long_problem, long_solution],
@@ -846,24 +844,24 @@ class TestRowBasedCSVAdvancedCases:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
-        
+
         # Should handle long content
         assert len(kb.documents) == 2
-        
+
         # Find the long content document
         long_doc = None
         for doc in kb.documents:
             if len(doc.content) > 1000:
                 long_doc = doc
                 break
-        
+
         assert long_doc is not None
         assert "This is a very long problem description." in long_doc.content
 
     def test_unicode_and_encoding_handling(self):
         """Test handling of Unicode characters and different encodings."""
         csv_file = Path(self.temp_dir) / "unicode.csv"
-        
+
         test_data = [
             ["problem", "solution", "business_unit"],
             ["Café question", "Résponse française", "international"],
@@ -876,10 +874,10 @@ class TestRowBasedCSVAdvancedCases:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
-        
+
         # Should handle Unicode correctly
         assert len(kb.documents) == 3
-        
+
         # Check Unicode preservation
         contents = [doc.content for doc in kb.documents]
         assert any("Café" in content for content in contents)
@@ -889,7 +887,7 @@ class TestRowBasedCSVAdvancedCases:
     def test_load_csv_as_documents_parameter_handling(self):
         """Test _load_csv_as_documents with different parameter scenarios."""
         csv_file = Path(self.temp_dir) / "param_test.csv"
-        
+
         test_data = [
             ["problem", "solution"],
             ["Test Q", "Test A"],
@@ -900,31 +898,31 @@ class TestRowBasedCSVAdvancedCases:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
-        
+
         # Test with explicit path parameter
         documents1 = kb._load_csv_as_documents(csv_file)
         assert len(documents1) == 1
-        
+
         # Test with None parameter (should use stored path)
         documents2 = kb._load_csv_as_documents(None)
         assert len(documents2) == 1
-        
+
         # Test with no stored path (simulate missing _csv_path)
         original_path = kb._csv_path
         object.__setattr__(kb, "_csv_path", None)
-        
+
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
             documents3 = kb._load_csv_as_documents(None)
             assert len(documents3) == 0
             mock_logger.error.assert_called_once()
-        
+
         # Restore original path
         object.__setattr__(kb, "_csv_path", original_path)
 
     def test_document_content_with_newlines_and_formatting(self):
         """Test document content formatting with newlines and structure."""
         csv_file = Path(self.temp_dir) / "formatting_test.csv"
-        
+
         test_data = [
             ["problem", "solution", "business_unit", "typification"],
             ["Multi\nline\nproblem", "Multi\nline\nsolution", "tech", "complex"],
@@ -936,11 +934,11 @@ class TestRowBasedCSVAdvancedCases:
 
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
         doc = kb.documents[0]
-        
+
         # Check that content is properly formatted with double newlines between sections
         content_parts = doc.content.split("\n\n")
         assert len(content_parts) == 4  # Problem, Solution, Typification, Business Unit
-        
+
         # Check individual sections in the correct order (based on actual code)
         assert content_parts[0].startswith("**Problem:**")
         assert content_parts[1].startswith("**Solution:**")
@@ -964,7 +962,7 @@ class TestRowBasedCSVPerformanceAndMemory:
     def test_large_dataset_handling(self):
         """Test handling of reasonably large datasets."""
         csv_file = Path(self.temp_dir) / "large_dataset.csv"
-        
+
         # Create larger dataset (not too large for CI)
         test_data = [["problem", "solution", "business_unit"]]
         for i in range(100):
@@ -979,7 +977,7 @@ class TestRowBasedCSVPerformanceAndMemory:
         start_time = time.time()
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
         end_time = time.time()
-        
+
         # Should complete reasonably quickly
         assert end_time - start_time < 5.0  # 5 seconds max
         assert len(kb.documents) == 100
@@ -987,7 +985,7 @@ class TestRowBasedCSVPerformanceAndMemory:
     def test_memory_efficient_document_creation(self):
         """Test that document creation doesn't hold unnecessary references."""
         csv_file = Path(self.temp_dir) / "memory_test.csv"
-        
+
         test_data = [
             ["problem", "solution"],
             ["Q1", "A1"],
@@ -999,7 +997,7 @@ class TestRowBasedCSVPerformanceAndMemory:
             writer.writerows(test_data)
 
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
-        
+
         # Check that documents don't reference the entire CSV data
         for doc in kb.documents:
             # Each document should be self-contained
@@ -1010,7 +1008,7 @@ class TestRowBasedCSVPerformanceAndMemory:
     def test_csv_reader_resource_cleanup(self):
         """Test that CSV file handles are properly closed."""
         csv_file = Path(self.temp_dir) / "resource_test.csv"
-        
+
         test_data = [
             ["problem", "solution"],
             ["Q1", "A1"],
@@ -1022,17 +1020,17 @@ class TestRowBasedCSVPerformanceAndMemory:
 
         # Mock open to track file handle usage
         original_open = open
-        
+
         def mock_open(*args, **kwargs):
             file_handle = original_open(*args, **kwargs)
             return file_handle
 
         with patch("builtins.open", side_effect=mock_open) as mock_open_func:
             kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
-            
+
             # File should be opened for reading
             mock_open_func.assert_called()
-            
+
             # Verify documents were created (indicating successful reading and closing)
             assert len(kb.documents) == 1
 

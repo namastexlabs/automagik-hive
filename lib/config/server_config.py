@@ -54,7 +54,7 @@ class ServerConfig:
             raise ValueError(
                 f"Invalid environment: {self.environment}. Must be one of: development, staging, production."
             )
-            
+
         # Production security validation
         if self.environment == "production":
             import os

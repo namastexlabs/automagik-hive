@@ -17,10 +17,10 @@ class AuthService:
         # Initialize API key on startup
         self.init_service = AuthInitService()
         self.api_key = self.init_service.ensure_api_key()
-        
+
         # Production security override: ALWAYS enable auth in production
         self.environment = os.getenv("HIVE_ENVIRONMENT", "development").lower()
-        
+
         if self.environment == "production":
             # Production override: ALWAYS enable authentication regardless of HIVE_AUTH_DISABLED
             self.auth_disabled = False
@@ -67,7 +67,7 @@ class AuthService:
     def get_auth_status(self) -> dict[str, str | bool]:
         """Get current authentication status and configuration."""
         raw_auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "true").lower() == "true"
-        
+
         return {
             "environment": self.environment,
             "auth_enabled": not self.auth_disabled,

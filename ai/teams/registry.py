@@ -225,12 +225,11 @@ async def get_team(team_id: str, version: int | None = None, **kwargs: Any) -> T
 
     # Call the factory function (may or may not be async)
     result = team_factory(**kwargs)
-    
+
     # If the result is awaitable, await it; otherwise return it directly
-    if hasattr(result, '__await__'):
+    if hasattr(result, "__await__"):
         return await result
-    else:
-        return result
+    return result
 
 
 def list_available_teams() -> list[str]:

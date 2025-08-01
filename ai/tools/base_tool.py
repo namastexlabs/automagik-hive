@@ -3,7 +3,7 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -13,19 +13,19 @@ from lib.logging import logger
 
 class ToolConfig(BaseModel):
     """Configuration model for tool metadata"""
-    
+
     tool_id: str = Field(..., description="Unique tool identifier")
     name: str = Field(..., description="Human-readable tool name")
     description: str = Field(..., description="Tool description and purpose")
     version: int = Field(default=1, description="Tool version number")
     category: str = Field(default="general", description="Tool category")
-    tags: List[str] = Field(default_factory=list, description="Tool tags")
-    dependencies: List[str] = Field(default_factory=list, description="Required dependencies")
+    tags: list[str] = Field(default_factory=list, description="Tool tags")
+    dependencies: list[str] = Field(default_factory=list, description="Required dependencies")
     enabled: bool = Field(default=True, description="Whether tool is enabled")
-    
+
     # Integration settings
-    integration: Dict[str, Any] = Field(default_factory=dict, description="Integration configuration")
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="Tool-specific parameters")
+    integration: dict[str, Any] = Field(default_factory=dict, description="Integration configuration")
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Tool-specific parameters")
 
 
 class BaseTool(ABC):
@@ -47,11 +47,11 @@ class BaseTool(ABC):
         self.config_path = config_path
         self.config: ToolConfig | None = None
         self._is_initialized = False
-        
+
         # Load configuration if path provided
         if config_path and config_path.exists():
             self.load_config()
-            
+
         # Initialize tool-specific setup
         self.initialize(**kwargs)
 
@@ -60,17 +60,17 @@ class BaseTool(ABC):
         if not self.config_path or not self.config_path.exists():
             logger.warning("Tool configuration file not found", path=self.config_path)
             return
-            
+
         try:
             with open(self.config_path) as f:
                 config_data = yaml.safe_load(f)
-                
+
             # Extract tool configuration section
             if "tool" in config_data:
                 self.config = ToolConfig(**config_data["tool"])
             else:
                 logger.warning("No 'tool' section found in configuration", path=self.config_path)
-                
+
         except Exception as e:
             logger.error("Failed to load tool configuration", path=self.config_path, error=str(e))
 
@@ -85,7 +85,6 @@ class BaseTool(ABC):
         Args:
             **kwargs: Tool-specific initialization parameters
         """
-        pass
 
     @abstractmethod
     def execute(self, *args, **kwargs) -> Any:
@@ -102,7 +101,6 @@ class BaseTool(ABC):
         Returns:
             Tool execution result
         """
-        pass
 
     def validate_config(self) -> bool:
         """
@@ -114,15 +112,15 @@ class BaseTool(ABC):
         if not self.config:
             logger.warning("No configuration loaded for tool")
             return False
-            
+
         # Basic validation
         if not self.config.tool_id or not self.config.name:
             logger.warning("Tool missing required fields", config=self.config)
             return False
-            
+
         return True
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """
         Get tool information dictionary.
         
@@ -135,7 +133,7 @@ class BaseTool(ABC):
                 "name": "Unknown Tool",
                 "status": "no_config"
             }
-            
+
         return {
             "tool_id": self.config.tool_id,
             "name": self.config.name,
@@ -152,7 +150,7 @@ class BaseTool(ABC):
         """Check if tool is enabled"""
         return self.config.enabled if self.config else False
 
-    def get_dependencies(self) -> List[str]:
+    def get_dependencies(self) -> list[str]:
         """Get tool dependencies"""
         return self.config.dependencies if self.config else []
 

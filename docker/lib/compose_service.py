@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Docker Compose Service for UVX Automagik Hive.
+"""Docker Compose Service for UVX Automagik Hive.
 
 Implements T1.7: Foundational Services Containerization with PostgreSQL container 
 and credential management within Docker Compose strategy.
@@ -14,9 +13,7 @@ Key Features:
 """
 
 import os
-import shutil
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 import yaml
 
@@ -27,24 +24,22 @@ from lib.logging import logger
 class DockerComposeService:
     """Service for Docker Compose template generation and management."""
 
-    def __init__(self, workspace_path: Optional[Path] = None) -> None:
-        """
-        Initialize Docker Compose service.
+    def __init__(self, workspace_path: Path | None = None) -> None:
+        """Initialize Docker Compose service.
         
         Args:
             workspace_path: Path to workspace directory
         """
         self.workspace_path = workspace_path or Path.cwd()
         self.credential_service = CredentialService()
-        
+
     def generate_postgresql_service_template(
         self,
         external_port: int = 5532,
         database: str = "hive",
         volume_path: str = "./data/postgres"
-    ) -> Dict:
-        """
-        Generate PostgreSQL service definition for Docker Compose template.
+    ) -> dict:
+        """Generate PostgreSQL service definition for Docker Compose template.
         
         Based on existing docker-compose.yml PostgreSQL service with:
         - agnohq/pgvector:16 image (same as production)
@@ -61,9 +56,9 @@ class DockerComposeService:
         Returns:
             PostgreSQL service definition dictionary
         """
-        logger.info("Generating PostgreSQL service template", 
+        logger.info("Generating PostgreSQL service template",
                    external_port=external_port, database=database)
-        
+
         service_config = {
             "image": "agnohq/pgvector:16",
             "container_name": "hive-postgres",
@@ -81,7 +76,7 @@ class DockerComposeService:
             "command": [
                 "postgres",
                 "-c", "max_connections=200",
-                "-c", "shared_buffers=256MB", 
+                "-c", "shared_buffers=256MB",
                 "-c", "effective_cache_size=1GB"
             ],
             "ports": [
@@ -97,7 +92,7 @@ class DockerComposeService:
                 "retries": 5
             }
         }
-        
+
         logger.info("PostgreSQL service template generated successfully")
         return service_config
 
@@ -106,9 +101,8 @@ class DockerComposeService:
         postgres_port: int = 5532,
         postgres_database: str = "hive",
         include_app_service: bool = False
-    ) -> Dict:
-        """
-        Generate complete Docker Compose template with PostgreSQL service.
+    ) -> dict:
+        """Generate complete Docker Compose template with PostgreSQL service.
         
         Based on existing docker-compose.yml patterns with foundational services:
         - PostgreSQL with pgvector extension
@@ -126,7 +120,7 @@ class DockerComposeService:
         """
         logger.info("Generating complete Docker Compose template",
                    postgres_port=postgres_port, include_app=include_app_service)
-        
+
         # Base compose structure
         compose_config = {
             "services": {},
@@ -144,23 +138,23 @@ class DockerComposeService:
                 }
             }
         }
-        
+
         # Add PostgreSQL service (foundational)
         compose_config["services"]["postgres"] = self.generate_postgresql_service_template(
             external_port=postgres_port,
             database=postgres_database
         )
-        
+
         # Optionally add application service (for complete setup)
         if include_app_service:
             compose_config["services"]["app"] = self._generate_app_service_template(
                 postgres_port=postgres_port
             )
-        
+
         logger.info("Complete Docker Compose template generated")
         return compose_config
 
-    def _generate_app_service_template(self, postgres_port: int = 5532) -> Dict:
+    def _generate_app_service_template(self, postgres_port: int = 5532) -> dict:
         """Generate application service template (optional)."""
         return {
             "build": {
@@ -210,13 +204,12 @@ class DockerComposeService:
 
     def generate_workspace_environment_file(
         self,
-        credentials: Optional[Dict[str, str]] = None,
+        credentials: dict[str, str] | None = None,
         postgres_port: int = 5532,
         postgres_database: str = "hive",
         api_port: int = 8886
     ) -> str:
-        """
-        Generate .env file content for workspace with secure credentials.
+        """Generate .env file content for workspace with secure credentials.
         
         Integrates with existing credential management system to create
         complete environment configuration for Docker Compose.
@@ -230,9 +223,9 @@ class DockerComposeService:
         Returns:
             Complete .env file content as string
         """
-        logger.info("Generating workspace environment file", 
+        logger.info("Generating workspace environment file",
                    postgres_port=postgres_port, api_port=api_port)
-        
+
         # Generate credentials if not provided
         if not credentials:
             credentials = self.credential_service.setup_complete_credentials(
@@ -240,11 +233,11 @@ class DockerComposeService:
                 postgres_port=postgres_port,
                 postgres_database=postgres_database
             )
-        
+
         # Cross-platform UID/GID handling (like existing Makefile)
-        uid = os.getuid() if hasattr(os, 'getuid') else 1000
-        gid = os.getgid() if hasattr(os, 'getgid') else 1000
-        
+        uid = os.getuid() if hasattr(os, "getuid") else 1000
+        gid = os.getgid() if hasattr(os, "getgid") else 1000
+
         env_content = f"""# =============================================================================
 # Automagik Hive Workspace Environment Configuration  
 # Generated by UVX CLI - DO NOT EDIT MANUALLY
@@ -309,17 +302,16 @@ EVOLUTION_API_BASE_URL=your-evolution-api-url
 EVOLUTION_API_KEY=your-evolution-api-key
 EVOLUTION_API_INSTANCE=your-instance-name
 """
-        
+
         logger.info("Workspace environment file content generated")
         return env_content
 
     def save_docker_compose_template(
         self,
-        compose_config: Dict,
-        output_path: Optional[Path] = None
+        compose_config: dict,
+        output_path: Path | None = None
     ) -> Path:
-        """
-        Save Docker Compose configuration to file.
+        """Save Docker Compose configuration to file.
         
         Args:
             compose_config: Docker Compose configuration dictionary
@@ -330,14 +322,14 @@ EVOLUTION_API_INSTANCE=your-instance-name
         """
         if not output_path:
             output_path = self.workspace_path / "docker-compose.yml"
-        
+
         logger.info("Saving Docker Compose template", output_path=str(output_path))
-        
+
         # Ensure directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Save YAML with proper formatting
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             yaml.dump(
                 compose_config,
                 f,
@@ -345,17 +337,16 @@ EVOLUTION_API_INSTANCE=your-instance-name
                 indent=2,
                 sort_keys=False
             )
-        
+
         logger.info("Docker Compose template saved successfully")
         return output_path
 
     def save_environment_file(
         self,
         env_content: str,
-        output_path: Optional[Path] = None
+        output_path: Path | None = None
     ) -> Path:
-        """
-        Save environment file content to .env file.
+        """Save environment file content to .env file.
         
         Args:
             env_content: Environment file content
@@ -366,25 +357,24 @@ EVOLUTION_API_INSTANCE=your-instance-name
         """
         if not output_path:
             output_path = self.workspace_path / ".env"
-        
+
         logger.info("Saving environment file", output_path=str(output_path))
-        
+
         # Ensure directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Save with proper permissions (600 for security)
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(env_content)
-        
+
         # Set secure permissions (user read/write only)
         output_path.chmod(0o600)
-        
+
         logger.info("Environment file saved with secure permissions")
         return output_path
 
     def create_data_directories(self, postgres_data_path: str = "./data/postgres") -> Path:
-        """
-        Create required data directories for PostgreSQL persistence.
+        """Create required data directories for PostgreSQL persistence.
         
         Args:
             postgres_data_path: Path for PostgreSQL data directory
@@ -392,33 +382,32 @@ EVOLUTION_API_INSTANCE=your-instance-name
         Returns:
             Path to created postgres data directory
         """
-        data_dir = self.workspace_path / postgres_data_path.lstrip('./')
+        data_dir = self.workspace_path / postgres_data_path.lstrip("./")
         logger.info("Creating PostgreSQL data directory", path=str(data_dir))
-        
+
         # Create directory with proper permissions
         data_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Set appropriate permissions for PostgreSQL
         try:
             data_dir.chmod(0o755)
             logger.info("PostgreSQL data directory created with proper permissions")
         except OSError as e:
             logger.warning("Could not set directory permissions", error=str(e))
-        
+
         return data_dir
 
-    def update_gitignore_for_security(self, gitignore_path: Optional[Path] = None) -> None:
-        """
-        Update .gitignore to exclude sensitive files.
+    def update_gitignore_for_security(self, gitignore_path: Path | None = None) -> None:
+        """Update .gitignore to exclude sensitive files.
         
         Args:
             gitignore_path: Path to .gitignore file (default: .gitignore in workspace)
         """
         if not gitignore_path:
             gitignore_path = self.workspace_path / ".gitignore"
-        
+
         logger.info("Updating .gitignore for security", path=str(gitignore_path))
-        
+
         # Security exclusions to add
         security_exclusions = [
             "\n# =============================================================================",
@@ -430,11 +419,11 @@ EVOLUTION_API_INSTANCE=your-instance-name
             ".env.local",
             ".env.*.local",
             "",
-            "# PostgreSQL data directories", 
+            "# PostgreSQL data directories",
             "data/postgres/",
             "data/postgres-*/",
             "",
-            "# Docker volumes and logs", 
+            "# Docker volumes and logs",
             "logs/",
             "*.log",
             "",
@@ -463,22 +452,22 @@ EVOLUTION_API_INSTANCE=your-instance-name
             "*.egg",
             "",
         ]
-        
+
         # Read existing .gitignore content
         existing_content = ""
         if gitignore_path.exists():
-            with open(gitignore_path, 'r') as f:
+            with open(gitignore_path) as f:
                 existing_content = f.read()
-        
+
         # Check if UVX security section already exists
         if "UVX Automagik Hive - Security Exclusions" in existing_content:
             logger.info(".gitignore already contains UVX security exclusions")
             return
-        
+
         # Append security exclusions
-        with open(gitignore_path, 'a') as f:
-            f.write('\n'.join(security_exclusions))
-        
+        with open(gitignore_path, "a") as f:
+            f.write("\n".join(security_exclusions))
+
         logger.info(".gitignore updated with security exclusions")
 
     def setup_foundational_services(
@@ -487,9 +476,8 @@ EVOLUTION_API_INSTANCE=your-instance-name
         postgres_database: str = "hive",
         api_port: int = 8886,
         include_app_service: bool = False
-    ) -> Tuple[Path, Path, Path]:
-        """
-        Complete setup of foundational services containerization.
+    ) -> tuple[Path, Path, Path]:
+        """Complete setup of foundational services containerization.
         
         This is the main method for T1.7 implementation, providing:
         - PostgreSQL container service definition
@@ -509,15 +497,15 @@ EVOLUTION_API_INSTANCE=your-instance-name
             Tuple of (docker-compose.yml path, .env path, data directory path)
         """
         logger.info("Setting up foundational services containerization")
-        
+
         # 1. Generate secure credentials
         logger.info("Generating secure credentials for workspace")
         credentials = self.credential_service.setup_complete_credentials(
             postgres_host="localhost",
-            postgres_port=postgres_port,  
+            postgres_port=postgres_port,
             postgres_database=postgres_database
         )
-        
+
         # 2. Generate Docker Compose template
         logger.info("Generating Docker Compose template")
         compose_config = self.generate_complete_docker_compose_template(
@@ -525,7 +513,7 @@ EVOLUTION_API_INSTANCE=your-instance-name
             postgres_database=postgres_database,
             include_app_service=include_app_service
         )
-        
+
         # 3. Generate environment file
         logger.info("Generating workspace environment file")
         env_content = self.generate_workspace_environment_file(
@@ -534,21 +522,21 @@ EVOLUTION_API_INSTANCE=your-instance-name
             postgres_database=postgres_database,
             api_port=api_port
         )
-        
+
         # 4. Create data directories
-        logger.info("Creating PostgreSQL data directories") 
+        logger.info("Creating PostgreSQL data directories")
         data_dir = self.create_data_directories()
-        
+
         # 5. Save configuration files
         compose_path = self.save_docker_compose_template(compose_config)
         env_path = self.save_environment_file(env_content)
-        
+
         # 6. Update .gitignore for security
         self.update_gitignore_for_security()
-        
+
         logger.info("Foundational services containerization setup complete",
                    compose_path=str(compose_path),
-                   env_path=str(env_path), 
+                   env_path=str(env_path),
                    data_path=str(data_dir))
-        
+
         return compose_path, env_path, data_dir

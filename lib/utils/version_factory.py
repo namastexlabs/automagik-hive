@@ -295,7 +295,7 @@ class VersionFactory:
     def _load_agent_tools(self, component_id: str, config: dict[str, Any]) -> list:
         """Load tools from YAML config via central registry (replaces tools.py approach)."""
         import os
-        
+
         # Import the new tool registry
         from lib.tools.registry import ToolRegistry
 
@@ -309,7 +309,7 @@ class VersionFactory:
         try:
             # Get tool configurations from YAML
             tool_configs = config.get("tools", [])
-            
+
             if tool_configs:
                 # Validate tool configurations
                 for tool_config in tool_configs:
@@ -319,10 +319,10 @@ class VersionFactory:
                             logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
                             raise ValueError(f"Agent {component_id} tool validation failed: {error_msg}")
                         logger.warning(f"{error_msg}")
-                
+
                 # Load tools via central registry
                 tools = ToolRegistry.load_tools(tool_configs)
-                
+
                 # Extract tool names for better logging (sorted for deterministic output)
                 tool_names = []
                 for tool_config in tool_configs:
@@ -330,14 +330,14 @@ class VersionFactory:
                         tool_names.append(tool_config)
                     elif isinstance(tool_config, dict) and "name" in tool_config:
                         tool_names.append(tool_config["name"])
-                
+
                 if tool_names:
                     # Sort tool names alphabetically for consistent display
                     sorted_tool_names = sorted(tool_names)
                     logger.info(f"Loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}")
                 else:
                     logger.info(f"Loaded {len(tools)} tools for agent {component_id} via central registry")
-                
+
             else:
                 # No tools configured - that's okay for agents without specific tool requirements
                 logger.debug(f"No tools configured for agent {component_id}")
@@ -370,11 +370,11 @@ class VersionFactory:
         # Tool config can be just a string (tool name) or dict with name + description
         if isinstance(tool_config, str):
             return True  # Simple string format is valid
-            
+
         if isinstance(tool_config, dict):
             required_fields = ["name"]
             return all(field in tool_config for field in required_fields)
-            
+
         return False
 
     async def _create_team(

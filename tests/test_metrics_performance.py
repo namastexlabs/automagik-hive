@@ -36,13 +36,13 @@ class TestMetricsServicePerformance:
 
         # Cleanup with shorter timeout
         try:
-            if hasattr(service, '_shutdown_event'):
+            if hasattr(service, "_shutdown_event"):
                 service._shutdown_event.set()
-            if hasattr(service, 'processing_task') and service.processing_task:
+            if hasattr(service, "processing_task") and service.processing_task:
                 service.processing_task.cancel()
                 try:
                     await asyncio.wait_for(service.processing_task, timeout=1.0)
-                except (asyncio.TimeoutError, asyncio.CancelledError):
+                except (TimeoutError, asyncio.CancelledError):
                     pass  # Expected for cancelled tasks
             service._initialized = False
         except Exception:
@@ -249,7 +249,7 @@ class TestMetricsServicePerformance:
         # Note: shutdown is already called in fixture cleanup
         stats = service.get_stats()
         assert "total_collected" in stats  # Basic functionality test
-        
+
         # Service should still report valid stats
         assert stats["total_collected"] >= 0
 
@@ -267,7 +267,7 @@ class TestMetricsServicePerformance:
         mock_response.usage.output_tokens = 50
         mock_response.usage.total_tokens = 150
 
-        # Test sync wrapper performance  
+        # Test sync wrapper performance
         start_time = time.perf_counter()
         try:
             service.collect_from_response(
@@ -310,7 +310,7 @@ class TestMetricsServicePerformance:
 
         # Basic functionality test
         assert final_stats["total_collected"] >= 10, "Should have collected some metrics"
-        
+
         # Queue should be reasonable
         assert final_stats["queue_size"] <= 100, (
             f"Queue size {final_stats['queue_size']} within limits"

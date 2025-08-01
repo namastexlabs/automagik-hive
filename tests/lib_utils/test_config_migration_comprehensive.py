@@ -13,11 +13,8 @@ Tests cover:
 
 import shutil
 import tempfile
-import time
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
-from typing import Any
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
@@ -33,12 +30,12 @@ class TestAGNOConfigMigrator:
         """Create temporary directory structure for testing."""
         temp_dir = tempfile.mkdtemp()
         base_path = Path(temp_dir)
-        
+
         # Create directory structure
         (base_path / "teams").mkdir()
         (base_path / "agents").mkdir()
         (base_path / "backups").mkdir()
-        
+
         yield base_path
         shutil.rmtree(temp_dir)
 
@@ -138,7 +135,7 @@ class TestAGNOConfigMigrator:
     def test_migrator_initialization_defaults(self):
         """Test migrator initialization with default parameters."""
         migrator = AGNOConfigMigrator()
-        
+
         assert migrator.base_path == Path("ai")
         assert migrator.dry_run is True
         assert migrator.migration_log == []
@@ -147,18 +144,18 @@ class TestAGNOConfigMigrator:
     def test_migrator_initialization_custom_path(self, temp_directory):
         """Test migrator initialization with custom base path."""
         migrator = AGNOConfigMigrator(str(temp_directory), dry_run=False)
-        
+
         assert migrator.base_path == temp_directory
         assert migrator.dry_run is False
         assert migrator.migration_log == []
 
     def test_migrator_backup_directory_naming(self):
         """Test backup directory includes timestamp."""
-        with patch('lib.utils.config_migration.datetime') as mock_datetime:
+        with patch("lib.utils.config_migration.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-            
+
             migrator = AGNOConfigMigrator("test", dry_run=True)
-            
+
             assert "config_migration_20240101_120000" in str(migrator.backup_dir)
 
     def test_create_backup_success(self, migrator_execute, temp_directory, sample_team_config, sample_agent_configs):
@@ -269,7 +266,7 @@ class TestAGNOConfigMigrator:
         # Setup agent config file
         agent_dir = temp_directory / "agents" / "test-agent"
         agent_dir.mkdir(parents=True)
-        
+
         original_config = {
             "agent": {"agent_id": "test-agent", "name": "Test Agent"},
             "memory": {
@@ -279,7 +276,7 @@ class TestAGNOConfigMigrator:
             },
             "display": {"markdown": True}
         }
-        
+
         with open(agent_dir / "config.yaml", "w") as f:
             yaml.dump(original_config, f)
 
@@ -314,12 +311,12 @@ class TestAGNOConfigMigrator:
         # Setup agent config file
         agent_dir = temp_directory / "agents" / "test-agent"
         agent_dir.mkdir(parents=True)
-        
+
         original_config = {
             "agent": {"agent_id": "test-agent"},
             "memory": {"enable_user_memories": True}  # Only one param that will be removed
         }
-        
+
         with open(agent_dir / "config.yaml", "w") as f:
             yaml.dump(original_config, f)
 
@@ -346,7 +343,7 @@ class TestAGNOConfigMigrator:
             "memory": {"num_history_runs": 3},
             "display": {"markdown": False}
         }
-        
+
         comments = [
             {
                 "path": "memory.num_history_runs",
@@ -369,9 +366,9 @@ class TestAGNOConfigMigrator:
     def test_generate_config_with_no_comments(self, migrator_dry_run):
         """Test YAML generation without comments."""
         config = {"agent": {"agent_id": "test-agent"}}
-        
+
         result = migrator_dry_run._generate_config_with_comments(config, [])
-        
+
         # Should be regular YAML without comments
         assert "# INTENTIONAL OVERRIDE" not in result
         assert "agent_id: test-agent" in result
@@ -410,7 +407,7 @@ class TestAGNOConfigMigrator:
     def test_migrate_team_no_members(self, migrator_dry_run, temp_directory):
         """Test team migration with no members configured."""
         team_config = {"team": {"name": "empty-team"}}  # No members
-        
+
         team_dir = temp_directory / "teams" / "empty-team"
         team_dir.mkdir(parents=True)
         with open(team_dir / "config.yaml", "w") as f:
@@ -490,7 +487,7 @@ class TestAGNOConfigMigrator:
     def test_migrate_all_teams_no_teams(self, migrator_dry_run, temp_directory):
         """Test migration when no teams exist."""
         # Empty teams directory
-        
+
         result = migrator_dry_run.migrate_all_teams()
 
         # Should complete without errors but process nothing
@@ -507,7 +504,7 @@ class TestAGNOConfigMigrator:
         with open(team_dir / "config.yaml", "w") as f:
             yaml.dump(sample_team_config, f)
 
-        with patch.object(migrator_execute, '_create_backup') as mock_backup:
+        with patch.object(migrator_execute, "_create_backup") as mock_backup:
             migrator_execute.migrate_all_teams()
             mock_backup.assert_called_once()
 
@@ -516,21 +513,21 @@ class TestAGNOConfigMigrator:
         # Create a fake backup directory structure
         backup_dir = temp_directory / "test_backup"
         backup_dir.mkdir()
-        
+
         (backup_dir / "teams").mkdir()
         (backup_dir / "agents").mkdir()
-        
+
         # Add some test files
         with open(backup_dir / "teams" / "team1.yaml", "w") as f:
             yaml.dump({"team": "config"}, f)
-        
+
         with open(backup_dir / "agents" / "agent1.yaml", "w") as f:
             yaml.dump({"agent": "config"}, f)
 
         # Create target directories with different content
         (temp_directory / "teams").mkdir(exist_ok=True)
         (temp_directory / "agents").mkdir(exist_ok=True)
-        
+
         with open(temp_directory / "teams" / "existing.yaml", "w") as f:
             f.write("existing content")
 
@@ -553,7 +550,7 @@ class TestAGNOConfigMigrator:
         backup_dir = temp_directory / "partial_backup"
         backup_dir.mkdir()
         (backup_dir / "teams").mkdir()
-        
+
         with open(backup_dir / "teams" / "team1.yaml", "w") as f:
             yaml.dump({"team": "config"}, f)
 
@@ -580,7 +577,7 @@ class TestAGNOConfigMigrator:
                 "preserved_overrides": ["memory.num_history_runs"]
             },
             {
-                "team_id": "team-1", 
+                "team_id": "team-1",
                 "member_id": "agent-2",
                 "removed_params": ["model.provider"],
                 "preserved_overrides": ["model.temperature", "display.show_tool_calls"]
@@ -617,7 +614,7 @@ class TestAGNOConfigMigrator:
         migrator_dry_run.migration_log = [
             {
                 "team_id": "team-1",
-                "member_id": "agent-1", 
+                "member_id": "agent-1",
                 "removed_params": ["param1", "param2", "param3"],  # 3 removed
                 "preserved_overrides": ["override1", "override2"]  # 2 preserved
             }
@@ -648,7 +645,7 @@ class TestAGNOConfigMigrator:
 
         # Verify migration log structure (may be empty if no changes needed)
         assert isinstance(migrator_dry_run.migration_log, list)
-        
+
         # If agents were processed, check log entry structure
         if result["agents_processed"] > 0:
             for log_entry in migrator_dry_run.migration_log:
@@ -674,7 +671,7 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_default_params(self):
         """Test migrate_configurations with default parameters."""
-        with patch('lib.utils.config_migration.AGNOConfigMigrator') as mock_migrator_class:
+        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
                 "teams_processed": 1,
@@ -691,7 +688,7 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_specific_team(self):
         """Test migrate_configurations with specific team."""
-        with patch('lib.utils.config_migration.AGNOConfigMigrator') as mock_migrator_class:
+        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_team.return_value = {
                 "teams_processed": 1,
@@ -708,7 +705,7 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_execute_mode(self):
         """Test migrate_configurations in execute mode."""
-        with patch('lib.utils.config_migration.AGNOConfigMigrator') as mock_migrator_class:
+        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
                 "teams_processed": 1,
@@ -723,10 +720,10 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_custom_path(self):
         """Test migrate_configurations with custom base path."""
-        with patch('lib.utils.config_migration.AGNOConfigMigrator') as mock_migrator_class:
+        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
-                "teams_processed": 1, 
+                "teams_processed": 1,
                 "errors": []
             }
             mock_migrator.generate_migration_report.return_value = "Test report"
@@ -738,7 +735,7 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_with_errors(self):
         """Test migrate_configurations when migrations have errors."""
-        with patch('lib.utils.config_migration.AGNOConfigMigrator') as mock_migrator_class:
+        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
                 "teams_processed": 1,
@@ -812,7 +809,7 @@ class TestEdgeCasesAndErrorHandling:
         migrator = AGNOConfigMigrator("test", dry_run=True)
 
         # Mock the import to raise ImportError
-        with patch('builtins.__import__', side_effect=ImportError("Module not found")):
+        with patch("builtins.__import__", side_effect=ImportError("Module not found")):
             # Should raise ImportError when trying to import the module
             with pytest.raises(ImportError):
                 migrator._create_migration_plan({}, {})
@@ -824,7 +821,7 @@ class TestEdgeCasesAndErrorHandling:
         # Setup agent directory without write permissions
         agent_dir = temp_directory / "agents" / "test-agent"
         agent_dir.mkdir(parents=True)
-        
+
         config_file = agent_dir / "config.yaml"
         with open(config_file, "w") as f:
             yaml.dump({"agent": {"agent_id": "test-agent"}}, f)
@@ -851,7 +848,7 @@ class TestEdgeCasesAndErrorHandling:
         migrator = AGNOConfigMigrator(str(temp_directory), dry_run=False)
 
         # Mock backup directory creation to fail
-        with patch('pathlib.Path.mkdir', side_effect=PermissionError("Permission denied")):
+        with patch("pathlib.Path.mkdir", side_effect=PermissionError("Permission denied")):
             with pytest.raises(PermissionError):
                 migrator._create_backup()
 
@@ -872,7 +869,7 @@ class TestEdgeCasesAndErrorHandling:
         # Create existing target directories with files
         (temp_directory / "teams").mkdir(exist_ok=True)
         (temp_directory / "agents").mkdir(exist_ok=True)
-        
+
         with open(temp_directory / "teams" / "existing_team.yaml", "w") as f:
             yaml.dump({"team": "existing"}, f)
 
@@ -933,7 +930,7 @@ class TestEdgeCasesAndErrorHandling:
                 "comment": "Override comment"
             },
             {
-                "path": "memory.param_with_colons", 
+                "path": "memory.param_with_colons",
                 "comment": "Another override"
             }
         ]
@@ -952,7 +949,7 @@ class TestMainScriptExecution:
     def test_main_script_argument_parsing(self):
         """Test argument parsing functionality."""
         import argparse
-        
+
         # Test the argument parser directly
         parser = argparse.ArgumentParser(description="AGNO Configuration Migrator")
         parser.add_argument("--path", default="ai", help="Base path to AI configurations")
@@ -976,8 +973,11 @@ class TestMainScriptExecution:
     def test_main_script_logic_simulation(self):
         """Test main script logic through simulation."""
         # Simulate the main script logic without actually executing it
-        from lib.utils.config_migration import migrate_configurations, AGNOConfigMigrator
-        
+        from lib.utils.config_migration import (
+            AGNOConfigMigrator,
+            migrate_configurations,
+        )
+
         # Test normal migration path
         result = migrate_configurations("ai", dry_run=True, team_id=None)
         assert "errors" in result
@@ -989,7 +989,7 @@ class TestMainScriptExecution:
     def test_main_script_error_handling(self):
         """Test error handling in main script scenarios."""
         from lib.utils.config_migration import migrate_configurations
-        
+
         # Test actual error handling by creating invalid setup
         result = migrate_configurations("non/existent/path", dry_run=True, team_id=None)
         # Should handle errors gracefully and return result structure
@@ -998,9 +998,9 @@ class TestMainScriptExecution:
     def test_main_script_restore_functionality(self):
         """Test restore functionality that would be called from main script."""
         from lib.utils.config_migration import AGNOConfigMigrator
-        
-        with patch.object(AGNOConfigMigrator, 'restore_from_backup') as mock_restore:
+
+        with patch.object(AGNOConfigMigrator, "restore_from_backup") as mock_restore:
             migrator = AGNOConfigMigrator("test", dry_run=False)
             migrator.restore_from_backup("/test/backup")
-            
+
             mock_restore.assert_called_once_with("/test/backup")

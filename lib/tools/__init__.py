@@ -9,7 +9,7 @@ Central registry and integration point for all tools in the system:
 This eliminates the need for individual tools.py files per agent.
 """
 
-from .registry import ToolRegistry
 from .mcp_integration import RealMCPTool, create_mcp_tool, validate_mcp_name
+from .registry import ToolRegistry
 
-__all__ = ["ToolRegistry", "RealMCPTool", "create_mcp_tool", "validate_mcp_name"]
+__all__ = ["RealMCPTool", "ToolRegistry", "create_mcp_tool", "validate_mcp_name"]

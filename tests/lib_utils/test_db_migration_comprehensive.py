@@ -14,19 +14,15 @@ Tests cover:
 import asyncio
 import concurrent.futures
 import os
-import tempfile
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch, mock_open
-from typing import Any
+from unittest.mock import Mock, patch
 
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 
 from lib.utils.db_migration import (
-    check_and_run_migrations,
     _check_migration_status,
     _run_migrations,
+    check_and_run_migrations,
     run_migrations_sync,
 )
 
@@ -40,7 +36,7 @@ class TestCheckAndRunMigrations:
         with patch.dict(os.environ, {}, clear=True):
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = await check_and_run_migrations()
-                
+
                 assert result is False
                 mock_logger.warning.assert_called_once_with(
                     "HIVE_DATABASE_URL not set, skipping migration check"
@@ -50,7 +46,7 @@ class TestCheckAndRunMigrations:
     async def test_check_and_run_migrations_database_connection_failure(self):
         """Test migration check when database connection fails."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 mock_engine = Mock()
@@ -59,10 +55,10 @@ class TestCheckAndRunMigrations:
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 with patch("lib.utils.db_migration.logger") as mock_logger:
                     result = await check_and_run_migrations()
-                    
+
                     assert result is False
                     # Check that error was called with expected message
                     error_calls = mock_logger.error.call_args_list
@@ -76,7 +72,7 @@ class TestCheckAndRunMigrations:
     async def test_check_and_run_migrations_schema_missing(self):
         """Test migration execution when hive schema is missing."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 # Mock database connection
@@ -89,14 +85,14 @@ class TestCheckAndRunMigrations:
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 # Mock migration execution
                 with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                     mock_run_migrations.return_value = True
-                    
+
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
-                        
+
                         assert result is True
                         mock_logger.info.assert_called_with("Database schema missing, running migrations...")
                         mock_run_migrations.assert_called_once()
@@ -105,32 +101,32 @@ class TestCheckAndRunMigrations:
     async def test_check_and_run_migrations_table_missing(self):
         """Test migration execution when component_versions table is missing."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 # Mock database connection
                 mock_engine = Mock()
                 mock_connection = Mock()
-                
+
                 # First call returns schema exists, second call returns no table
                 mock_result_schema = Mock()
                 mock_result_schema.fetchone.return_value = ("hive",)
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = None
-                
+
                 mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 # Mock migration execution
                 with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                     mock_run_migrations.return_value = True
-                    
+
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
-                        
+
                         assert result is True
                         mock_logger.info.assert_called_with("Required tables missing, running migrations...")
                         mock_run_migrations.assert_called_once()
@@ -139,36 +135,36 @@ class TestCheckAndRunMigrations:
     async def test_check_and_run_migrations_migration_needed(self):
         """Test migration execution when database schema is outdated."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 # Mock database connection
                 mock_engine = Mock()
                 mock_connection = Mock()
-                
+
                 # Mock schema and table exist
                 mock_result_schema = Mock()
                 mock_result_schema.fetchone.return_value = ("hive",)
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
-                
+
                 mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 # Mock migration status check
                 with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
                     mock_check_status.return_value = True  # Migration needed
-                    
+
                     # Mock migration execution
                     with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                         mock_run_migrations.return_value = True
-                        
+
                         with patch("lib.utils.db_migration.logger") as mock_logger:
                             result = await check_and_run_migrations()
-                            
+
                             assert result is True
                             mock_logger.info.assert_called_with("Database schema outdated, running migrations...")
                             mock_run_migrations.assert_called_once()
@@ -177,32 +173,32 @@ class TestCheckAndRunMigrations:
     async def test_check_and_run_migrations_up_to_date(self):
         """Test migration check when database schema is up to date."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 # Mock database connection
                 mock_engine = Mock()
                 mock_connection = Mock()
-                
+
                 # Mock schema and table exist
                 mock_result_schema = Mock()
                 mock_result_schema.fetchone.return_value = ("hive",)
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
-                
+
                 mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 # Mock migration status check
                 with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
                     mock_check_status.return_value = False  # No migration needed
-                    
+
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
-                        
+
                         assert result is False
                         mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
 
@@ -210,14 +206,14 @@ class TestCheckAndRunMigrations:
     async def test_check_and_run_migrations_general_exception(self):
         """Test migration check when general exception occurs."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 mock_create_engine.side_effect = Exception("Unexpected error")
-                
+
                 with patch("lib.utils.db_migration.logger") as mock_logger:
                     result = await check_and_run_migrations()
-                    
+
                     assert result is False
                     mock_logger.error.assert_called_with("Migration check failed", error="Unexpected error")
 
@@ -228,31 +224,31 @@ class TestCheckMigrationStatus:
     def test_check_migration_status_migration_needed(self):
         """Test migration status when migration is needed."""
         mock_connection = Mock()
-        
+
         # Mock Alembic configuration path
         with patch("lib.utils.db_migration.Path") as mock_path:
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
-            
+
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
                 with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
                     with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-                        
+
                         # Mock current revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
                         mock_migration_context.configure.return_value = mock_context
-                        
+
                         # Mock head revision
                         mock_script_dir = Mock()
                         mock_script_dir.get_current_head.return_value = "xyz789"
                         mock_script_directory.from_config.return_value = mock_script_dir
-                        
+
                         with patch("lib.utils.db_migration.logger") as mock_logger:
                             result = _check_migration_status(mock_connection)
-                            
+
                             assert result is True
                             mock_logger.info.assert_called_with(
                                 "Migration status",
@@ -263,60 +259,60 @@ class TestCheckMigrationStatus:
     def test_check_migration_status_up_to_date(self):
         """Test migration status when database is up to date."""
         mock_connection = Mock()
-        
+
         # Mock Alembic configuration path
         with patch("lib.utils.db_migration.Path") as mock_path:
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
-            
+
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
                 with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
                     with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-                        
+
                         # Mock same revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
                         mock_migration_context.configure.return_value = mock_context
-                        
+
                         # Mock head revision
                         mock_script_dir = Mock()
                         mock_script_dir.get_current_head.return_value = "abc123"
                         mock_script_directory.from_config.return_value = mock_script_dir
-                        
+
                         result = _check_migration_status(mock_connection)
-                        
+
                         assert result is False
 
     def test_check_migration_status_no_current_revision(self):
         """Test migration status when no current revision exists."""
         mock_connection = Mock()
-        
+
         # Mock Alembic configuration path
         with patch("lib.utils.db_migration.Path") as mock_path:
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
-            
+
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
                 with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
                     with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-                        
+
                         # Mock no current revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = None
                         mock_migration_context.configure.return_value = mock_context
-                        
+
                         # Mock head revision
                         mock_script_dir = Mock()
                         mock_script_dir.get_current_head.return_value = "xyz789"
                         mock_script_directory.from_config.return_value = mock_script_dir
-                        
+
                         with patch("lib.utils.db_migration.logger") as mock_logger:
                             result = _check_migration_status(mock_connection)
-                            
+
                             assert result is True
                             mock_logger.info.assert_called_with(
                                 "Migration status",
@@ -327,14 +323,14 @@ class TestCheckMigrationStatus:
     def test_check_migration_status_exception(self):
         """Test migration status when exception occurs."""
         mock_connection = Mock()
-        
+
         # Mock Alembic configuration path to raise exception
         with patch("lib.utils.db_migration.Path") as mock_path:
             mock_path.return_value.parent.parent.parent.__truediv__.side_effect = Exception("Config error")
-            
+
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = _check_migration_status(mock_connection)
-                
+
                 assert result is True  # Assume migration needed on error
                 mock_logger.warning.assert_called_with("Could not check migration status", error="Config error")
 
@@ -350,15 +346,15 @@ class TestRunMigrations:
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
-            
+
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
                 with patch("lib.utils.db_migration.command") as mock_command:
                     mock_command.upgrade.return_value = None
-                    
+
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await _run_migrations()
-                        
+
                         assert result is True
                         mock_logger.info.assert_called_with("Database migrations completed successfully")
                         mock_command.upgrade.assert_called_once()
@@ -371,15 +367,15 @@ class TestRunMigrations:
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
-            
+
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
                 with patch("lib.utils.db_migration.command") as mock_command:
                     mock_command.upgrade.side_effect = Exception("Alembic error")
-                    
+
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await _run_migrations()
-                        
+
                         assert result is False
                         mock_logger.error.assert_any_call("Alembic migration failed", error="Alembic error")
                         mock_logger.error.assert_any_call("Database migrations failed")
@@ -394,10 +390,10 @@ class TestRunMigrations:
             mock_context_manager.__enter__ = Mock(return_value=Mock(submit=Mock(return_value=mock_future)))
             mock_context_manager.__exit__ = Mock(return_value=None)
             mock_executor.return_value = mock_context_manager
-            
+
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = await _run_migrations()
-                
+
                 assert result is False
                 mock_logger.error.assert_called_with("Migration execution failed", error="Migration timed out")
 
@@ -407,10 +403,10 @@ class TestRunMigrations:
         # Mock concurrent.futures to raise exception
         with patch("concurrent.futures.ThreadPoolExecutor") as mock_executor:
             mock_executor.side_effect = Exception("Thread pool error")
-            
+
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = await _run_migrations()
-                
+
                 assert result is False
                 mock_logger.error.assert_called_with("Migration execution failed", error="Thread pool error")
 
@@ -422,9 +418,9 @@ class TestRunMigrationsSync:
         """Test synchronous migration wrapper success."""
         with patch("lib.utils.db_migration.asyncio.run") as mock_asyncio_run:
             mock_asyncio_run.return_value = True
-            
+
             result = run_migrations_sync()
-            
+
             assert result is True
             mock_asyncio_run.assert_called_once()
 
@@ -432,11 +428,11 @@ class TestRunMigrationsSync:
         """Test synchronous migration wrapper with RuntimeError (already in event loop)."""
         with patch("asyncio.run") as mock_asyncio_run:
             mock_asyncio_run.side_effect = RuntimeError("Event loop already running")
-            
+
             # Simply test that RuntimeError is caught and function returns result
             # The actual implementation may use asyncio.run without the thread logic in some cases
             result = run_migrations_sync()
-            
+
             # Should handle RuntimeError gracefully - result depends on mock implementation
             assert isinstance(result, bool)
 
@@ -444,9 +440,9 @@ class TestRunMigrationsSync:
         """Test synchronous migration wrapper with event loop creation failure."""
         with patch("asyncio.run") as mock_asyncio_run:
             mock_asyncio_run.return_value = False
-            
+
             result = run_migrations_sync()
-            
+
             assert result is False
             mock_asyncio_run.assert_called_once()
 
@@ -458,7 +454,7 @@ class TestDatabaseMigrationIntegration:
     async def test_full_migration_workflow_new_database(self):
         """Test complete migration workflow for new database."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 # Mock database connection - no schema exists
@@ -471,14 +467,14 @@ class TestDatabaseMigrationIntegration:
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 # Mock successful migration
                 with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                     mock_run_migrations.return_value = True
-                    
+
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
-                        
+
                         assert result is True
                         mock_logger.info.assert_called_with("Database schema missing, running migrations...")
 
@@ -486,32 +482,32 @@ class TestDatabaseMigrationIntegration:
     async def test_full_migration_workflow_existing_database(self):
         """Test complete migration workflow for existing up-to-date database."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 # Mock database connection - schema and table exist
                 mock_engine = Mock()
                 mock_connection = Mock()
-                
+
                 # Mock schema and table exist
                 mock_result_schema = Mock()
                 mock_result_schema.fetchone.return_value = ("hive",)
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
-                
+
                 mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 # Mock up-to-date migration status
                 with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
                     mock_check_status.return_value = False  # No migration needed
-                    
+
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
-                        
+
                         assert result is False
                         mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
 
@@ -528,7 +524,7 @@ class TestErrorHandlingAndEdgeCases:
             "sqlite:///test.db",
             "mysql://test:test@localhost:3306/test_db"
         ]
-        
+
         for db_url in test_urls:
             with patch.dict(os.environ, {"HIVE_DATABASE_URL": db_url}):
                 with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
@@ -537,7 +533,7 @@ class TestErrorHandlingAndEdgeCases:
                     mock_connection.__enter__ = Mock(side_effect=OperationalError("Connection failed", None, None))
                     mock_engine.connect.return_value = mock_connection
                     mock_create_engine.return_value = mock_engine
-                    
+
                     result = await check_and_run_migrations()
                     assert result is False
                     mock_create_engine.assert_called_once_with(db_url)
@@ -545,20 +541,20 @@ class TestErrorHandlingAndEdgeCases:
     def test_alembic_configuration_path_variations(self):
         """Test migration status check with different alembic.ini path scenarios."""
         mock_connection = Mock()
-        
+
         # Test with different path structures
         with patch("lib.utils.db_migration.Path") as mock_path:
             # Mock path that doesn't exist
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="/nonexistent/alembic.ini")
-            
+
             with patch("lib.utils.db_migration.Config") as mock_config:
                 mock_config.side_effect = Exception("Config file not found")
-                
+
                 with patch("lib.utils.db_migration.logger") as mock_logger:
                     result = _check_migration_status(mock_connection)
-                    
+
                     assert result is True  # Assume migration needed on error
                     mock_logger.warning.assert_called_with(
                         "Could not check migration status", error="Config file not found"
@@ -570,7 +566,7 @@ class TestErrorHandlingAndEdgeCases:
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": ""}):
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = await check_and_run_migrations()
-                
+
                 assert result is False
                 mock_logger.warning.assert_called_once_with(
                     "HIVE_DATABASE_URL not set, skipping migration check"
@@ -580,43 +576,43 @@ class TestErrorHandlingAndEdgeCases:
     async def test_concurrent_migration_execution(self):
         """Test concurrent migration execution scenarios."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         async def run_migration():
             with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
                 with patch("lib.utils.db_migration.create_engine"):
                     with patch("lib.utils.db_migration._run_migrations", return_value=True):
                         return await check_and_run_migrations()
-        
+
         # Run multiple migrations concurrently
         tasks = [run_migration() for _ in range(3)]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # Should handle concurrent execution without errors
         assert all(isinstance(result, bool) for result in results)
 
     def test_migration_status_with_version_table_schema(self):
         """Test migration status check uses correct version table schema configuration."""
         mock_connection = Mock()
-        
+
         with patch("lib.utils.db_migration.Path") as mock_path:
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
-            
+
             with patch("lib.utils.db_migration.Config") as mock_config:
                 with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
                     with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-                        
+
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
                         mock_migration_context.configure.return_value = mock_context
-                        
+
                         mock_script_dir = Mock()
                         mock_script_dir.get_current_head.return_value = "abc123"
                         mock_script_directory.from_config.return_value = mock_script_dir
-                        
+
                         result = _check_migration_status(mock_connection)
-                        
+
                         # Verify correct schema configuration
                         mock_migration_context.configure.assert_called_once_with(
                             mock_connection, opts={"version_table_schema": "hive"}
@@ -629,10 +625,10 @@ class TestErrorHandlingAndEdgeCases:
         with patch("concurrent.futures.ThreadPoolExecutor") as mock_executor:
             # Mock thread pool executor failure during instantiation
             mock_executor.side_effect = Exception("Thread pool creation failed")
-            
+
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = await _run_migrations()
-                
+
                 assert result is False
                 mock_logger.error.assert_called_with(
                     "Migration execution failed", error="Thread pool creation failed"
@@ -646,55 +642,55 @@ class TestLoggingAndMonitoring:
     async def test_migration_logging_levels(self):
         """Test appropriate logging levels are used for different scenarios."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
-        
+
         # Test debug logging for up-to-date database
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 mock_engine = Mock()
                 mock_connection = Mock()
-                
+
                 mock_result_schema = Mock()
                 mock_result_schema.fetchone.return_value = ("hive",)
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
-                
+
                 mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
-                
+
                 with patch("lib.utils.db_migration._check_migration_status", return_value=False):
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         await check_and_run_migrations()
-                        
+
                         # Verify debug level used for up-to-date status
                         mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
 
     def test_migration_status_detailed_logging(self):
         """Test detailed logging in migration status checking."""
         mock_connection = Mock()
-        
+
         with patch("lib.utils.db_migration.Path") as mock_path:
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
-            
+
             with patch("lib.utils.db_migration.Config") as mock_config:
                 with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
                     with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-                        
+
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "old_revision"
                         mock_migration_context.configure.return_value = mock_context
-                        
+
                         mock_script_dir = Mock()
                         mock_script_dir.get_current_head.return_value = "new_revision"
                         mock_script_directory.from_config.return_value = mock_script_dir
-                        
+
                         with patch("lib.utils.db_migration.logger") as mock_logger:
                             result = _check_migration_status(mock_connection)
-                            
+
                             assert result is True
                             # Verify detailed logging with revision information
                             mock_logger.info.assert_called_with(
@@ -718,7 +714,7 @@ async def test_store_successful_patterns():
         "Integration testing for complete migration workflows from new to existing databases",
         "Edge case testing for URL schemes, configuration paths, and concurrent execution"
     ]
-    
+
     for pattern in patterns:
         pytest.test_patterns = getattr(pytest, "test_patterns", [])
         pytest.test_patterns.append(f"Database Migration Pattern: {pattern}")

@@ -148,7 +148,7 @@ class BidirectionalSync:
                 config=yaml_config,
                 description=f"Created from YAML sync for {component_id}",
             )
-            
+
             # Set as active
             await self.version_service.set_active_version(
                 component_id=component_id,
@@ -190,7 +190,7 @@ class BidirectionalSync:
                 config=yaml_config,
                 description=f"Updated from YAML sync for {component_id}",
             )
-            
+
             # Set as active
             await self.version_service.set_active_version(
                 component_id=component_id,

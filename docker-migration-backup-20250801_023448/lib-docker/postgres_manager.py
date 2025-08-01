@@ -1,5 +1,4 @@
-"""
-PostgreSQL Container Management for Automagik Hive.
+"""PostgreSQL Container Management for Automagik Hive.
 
 This module provides PostgreSQL container lifecycle management with pgvector,
 replicating and extending the excellent Makefile setup_docker_postgres functionality.
@@ -10,10 +9,9 @@ import platform
 import shutil
 import subprocess
 import time
-from pathlib import Path
-from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 from lib.auth.credential_service import CredentialService
 
@@ -36,7 +34,7 @@ class PostgreSQLConfig:
     internal_port: int = 5432
     database: str = "hive"
     data_dir: str = "./data/postgres"
-    
+
     # Performance settings (from existing docker-compose.yml)
     max_connections: int = 200
     shared_buffers: str = "256MB"
@@ -44,20 +42,18 @@ class PostgreSQLConfig:
 
 
 class PostgreSQLManager:
-    """
-    PostgreSQL container lifecycle management with pgvector.
+    """PostgreSQL container lifecycle management with pgvector.
     
     Replicates the excellent setup_docker_postgres Makefile functionality
     while providing CLI-compatible container operations.
     """
-    
-    def __init__(self, credential_service: Optional[CredentialService] = None):
+
+    def __init__(self, credential_service: CredentialService | None = None):
         self.credential_service = credential_service or CredentialService()
         self.config = PostgreSQLConfig()
-        
+
     def setup_postgres_container(self, interactive: bool = True, workspace_path: str = ".") -> bool:
-        """
-        Setup PostgreSQL container with secure credentials.
+        """Setup PostgreSQL container with secure credentials.
         
         Replicates setup_docker_postgres Makefile function:
         - Interactive user choice (if interactive=True)
@@ -77,33 +73,32 @@ class PostgreSQLManager:
         if interactive:
             print("\n🐳 Optional Docker PostgreSQL Setup")
             choice = input("Would you like to set up Docker PostgreSQL with secure credentials? (Y/n): ")
-            if choice.lower() in ['n', 'no']:
+            if choice.lower() in ["n", "no"]:
                 print("Skipping Docker PostgreSQL setup")
                 return False
-                
+
         # Check Docker availability
         if not self._check_docker():
             return False
-            
+
         # Generate or use existing credentials
         if not self._setup_credentials(workspace_path):
             return False
-            
+
         # Fix data directory permissions
         if not self._fix_data_permissions(workspace_path):
             return False
-            
+
         # Start PostgreSQL container
         if not self._start_postgres_service(workspace_path):
             return False
-            
+
         print("✅ PostgreSQL container started with secure credentials!")
         print("💡 Run 'uvx automagik-hive ./workspace' to start the full development environment")
         return True
-        
+
     def check_container_status(self) -> ContainerStatus:
-        """
-        Check PostgreSQL container status.
+        """Check PostgreSQL container status.
         
         Returns:
             ContainerStatus indicating current state
@@ -113,35 +108,32 @@ class PostgreSQLManager:
             result = subprocess.run([
                 "docker", "ps", "-a", "--filter", f"name={self.config.container_name}",
                 "--format", "{{.Status}}"
-            ], capture_output=True, text=True, timeout=10)
-            
+            ], check=False, capture_output=True, text=True, timeout=10)
+
             if result.returncode != 0:
                 return ContainerStatus.NOT_EXISTS
-                
+
             status_output = result.stdout.strip()
             if not status_output:
                 return ContainerStatus.NOT_EXISTS
-                
+
             # Parse Docker status
             if "Up" in status_output:
                 # Check health if available
                 if "healthy" in status_output:
                     return ContainerStatus.RUNNING
-                elif "unhealthy" in status_output:
+                if "unhealthy" in status_output:
                     return ContainerStatus.UNHEALTHY
-                elif "starting" in status_output:
+                if "starting" in status_output:
                     return ContainerStatus.STARTING
-                else:
-                    return ContainerStatus.RUNNING
-            else:
-                return ContainerStatus.STOPPED
-                
+                return ContainerStatus.RUNNING
+            return ContainerStatus.STOPPED
+
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return ContainerStatus.NOT_EXISTS
-            
+
     def start_container(self, workspace_path: str = ".") -> bool:
-        """
-        Start PostgreSQL container using docker-compose.
+        """Start PostgreSQL container using docker-compose.
         
         Args:
             workspace_path: Path to workspace with docker-compose.yml
@@ -150,10 +142,9 @@ class PostgreSQLManager:
             True if started successfully, False otherwise
         """
         return self._start_postgres_service(workspace_path)
-        
+
     def stop_container(self, workspace_path: str = ".") -> bool:
-        """
-        Stop PostgreSQL container gracefully.
+        """Stop PostgreSQL container gracefully.
         
         Args:
             workspace_path: Path to workspace with docker-compose.yml
@@ -166,26 +157,24 @@ class PostgreSQLManager:
             if not compose_file.exists():
                 print(f"❌ docker-compose.yml not found in {workspace_path}")
                 return False
-                
+
             print("🛑 Stopping PostgreSQL container...")
             result = subprocess.run([
                 "docker-compose", "-f", str(compose_file), "stop", "postgres"
-            ], capture_output=True, text=True, timeout=30)
-            
+            ], check=False, capture_output=True, text=True, timeout=30)
+
             if result.returncode == 0:
                 print("✅ PostgreSQL container stopped successfully")
                 return True
-            else:
-                print(f"❌ Failed to stop PostgreSQL container: {result.stderr}")
-                return False
-                
+            print(f"❌ Failed to stop PostgreSQL container: {result.stderr}")
+            return False
+
         except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
             print(f"❌ Error stopping PostgreSQL container: {e}")
             return False
-            
+
     def restart_container(self, workspace_path: str = ".") -> bool:
-        """
-        Restart PostgreSQL container.
+        """Restart PostgreSQL container.
         
         Args:
             workspace_path: Path to workspace with docker-compose.yml
@@ -198,26 +187,24 @@ class PostgreSQLManager:
             if not compose_file.exists():
                 print(f"❌ docker-compose.yml not found in {workspace_path}")
                 return False
-                
+
             print("🔄 Restarting PostgreSQL container...")
             result = subprocess.run([
                 "docker-compose", "-f", str(compose_file), "restart", "postgres"
-            ], capture_output=True, text=True, timeout=60)
-            
+            ], check=False, capture_output=True, text=True, timeout=60)
+
             if result.returncode == 0:
                 print("✅ PostgreSQL container restarted successfully")
                 return True
-            else:
-                print(f"❌ Failed to restart PostgreSQL container: {result.stderr}")
-                return False
-                
+            print(f"❌ Failed to restart PostgreSQL container: {result.stderr}")
+            return False
+
         except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
             print(f"❌ Error restarting PostgreSQL container: {e}")
             return False
-            
-    def get_container_logs(self, tail: int = 50, workspace_path: str = ".") -> Optional[str]:
-        """
-        Get PostgreSQL container logs.
+
+    def get_container_logs(self, tail: int = 50, workspace_path: str = ".") -> str | None:
+        """Get PostgreSQL container logs.
         
         Args:
             tail: Number of lines to retrieve
@@ -230,22 +217,20 @@ class PostgreSQLManager:
             compose_file = Path(workspace_path) / "docker-compose.yml"
             if not compose_file.exists():
                 return None
-                
+
             result = subprocess.run([
                 "docker-compose", "-f", str(compose_file), "logs", "--tail", str(tail), "postgres"
-            ], capture_output=True, text=True, timeout=30)
-            
+            ], check=False, capture_output=True, text=True, timeout=30)
+
             if result.returncode == 0:
                 return result.stdout
-            else:
-                return None
-                
+            return None
+
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return None
-            
+
     def validate_container_health(self, workspace_path: str = ".") -> bool:
-        """
-        Validate PostgreSQL container is healthy and accepting connections.
+        """Validate PostgreSQL container is healthy and accepting connections.
         
         Args:
             workspace_path: Path to workspace
@@ -257,14 +242,14 @@ class PostgreSQLManager:
         status = self.check_container_status()
         if status != ContainerStatus.RUNNING:
             return False
-            
+
         # Try to connect to database
         try:
             # Extract credentials from environment
             env_file = Path(workspace_path) / ".env"
             if not env_file.exists():
                 return False
-                
+
             # Temporarily change to workspace directory to use existing credential service
             import os
             original_cwd = os.getcwd()
@@ -275,21 +260,20 @@ class PostgreSQLManager:
                 os.chdir(original_cwd)
             if not credentials.get("user") or not credentials.get("password"):
                 return False
-                
+
             # Test connection using pg_isready equivalent
             result = subprocess.run([
                 "docker", "exec", self.config.container_name,
                 "pg_isready", "-U", credentials["user"], "-d", self.config.database
-            ], capture_output=True, text=True, timeout=10)
-            
+            ], check=False, capture_output=True, text=True, timeout=10)
+
             return result.returncode == 0
-            
+
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
-            
+
     def _check_docker(self) -> bool:
-        """
-        Check Docker availability and daemon status.
+        """Check Docker availability and daemon status.
         Replicates check_docker Makefile function.
         
         Returns:
@@ -297,35 +281,34 @@ class PostgreSQLManager:
         """
         try:
             # Check if docker command exists
-            result = subprocess.run(["docker", "--version"], 
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["docker", "--version"],
+                                  check=False, capture_output=True, text=True, timeout=5)
             if result.returncode != 0:
                 print("❌ Docker not found. Please install Docker first.")
                 return False
-                
+
             # Check if Docker daemon is running
-            result = subprocess.run(["docker", "info"], 
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["docker", "info"],
+                                  check=False, capture_output=True, text=True, timeout=10)
             if result.returncode != 0:
                 print("❌ Docker daemon not running. Please start Docker first.")
                 return False
-                
+
             # Check if docker-compose is available
-            result = subprocess.run(["docker-compose", "--version"], 
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["docker-compose", "--version"],
+                                  check=False, capture_output=True, text=True, timeout=5)
             if result.returncode != 0:
                 print("❌ docker-compose not found. Please install docker-compose.")
                 return False
-                
+
             return True
-            
+
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             print("❌ Error checking Docker availability")
             return False
-            
+
     def _setup_credentials(self, workspace_path: str) -> bool:
-        """
-        Setup PostgreSQL credentials using CredentialService.
+        """Setup PostgreSQL credentials using CredentialService.
         
         Args:
             workspace_path: Path to workspace
@@ -335,10 +318,10 @@ class PostgreSQLManager:
         """
         try:
             env_file = Path(workspace_path) / ".env"
-            
+
             # Generate PostgreSQL credentials
             print("🔐 Setting up PostgreSQL credentials...")
-            
+
             # Temporarily change to workspace directory to use existing credential service
             import os
             original_cwd = os.getcwd()
@@ -349,25 +332,24 @@ class PostgreSQLManager:
                     port=self.config.external_port,  # 5532
                     database=self.config.database
                 )
-                
+
                 # Save credentials to .env file
                 self.credential_service.save_credentials_to_env(credentials, str(env_file))
             finally:
                 os.chdir(original_cwd)
-            
+
             print("✅ PostgreSQL credentials generated and saved")
             print(f"   User: {credentials['user']}")
             print(f"   Database: {credentials['database']}")
-            
+
             return True
-            
+
         except Exception as e:
             print(f"❌ Error setting up credentials: {e}")
             return False
-            
+
     def _fix_data_permissions(self, workspace_path: str) -> bool:
-        """
-        Fix PostgreSQL data directory permissions.
+        """Fix PostgreSQL data directory permissions.
         Replicates Makefile permission fixing logic.
         
         Args:
@@ -378,13 +360,13 @@ class PostgreSQLManager:
         """
         try:
             data_dir = Path(workspace_path) / self.config.data_dir
-            
+
             # Create data directory if it doesn't exist
             data_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Get cross-platform UID/GID
             uid, gid = self._get_postgres_uid_gid()
-            
+
             # Fix ownership on Linux/macOS
             if platform.system() in ["Linux", "Darwin"]:
                 # Check if directory is owned by root
@@ -398,17 +380,16 @@ class PostgreSQLManager:
                         subprocess.run([
                             "sudo", "chown", "-R", f"{uid}:{gid}", str(data_dir)
                         ], check=True)
-                        
+
             return True
-            
+
         except Exception as e:
             print(f"⚠️ Warning: Could not fix data directory permissions: {e}")
             # Don't fail setup for permission issues
             return True
-            
-    def _get_postgres_uid_gid(self) -> Tuple[int, int]:
-        """
-        Get UID/GID for PostgreSQL container.
+
+    def _get_postgres_uid_gid(self) -> tuple[int, int]:
+        """Get UID/GID for PostgreSQL container.
         Replicates cross-platform logic from Makefile.
         
         Returns:
@@ -416,12 +397,11 @@ class PostgreSQLManager:
         """
         if platform.system() in ["Linux", "Darwin"]:
             return os.getuid(), os.getgid()
-        else:  # Windows/WSL
-            return 1000, 1000
-            
+        # Windows/WSL
+        return 1000, 1000
+
     def _start_postgres_service(self, workspace_path: str) -> bool:
-        """
-        Start PostgreSQL service using docker-compose.
+        """Start PostgreSQL service using docker-compose.
         
         Args:
             workspace_path: Path to workspace
@@ -434,15 +414,15 @@ class PostgreSQLManager:
             if not compose_file.exists():
                 print(f"❌ docker-compose.yml not found in {workspace_path}")
                 return False
-                
+
             # Set environment variables for docker-compose
             env = os.environ.copy()
-            
+
             # Add UID/GID for cross-platform compatibility
             uid, gid = self._get_postgres_uid_gid()
             env["POSTGRES_UID"] = str(uid)
             env["POSTGRES_GID"] = str(gid)
-            
+
             # Extract credentials from .env file
             env_file = Path(workspace_path) / ".env"
             if env_file.exists():
@@ -457,12 +437,12 @@ class PostgreSQLManager:
                         env["POSTGRES_DB"] = credentials.get("database", self.config.database)
                 finally:
                     os.chdir(original_cwd)
-                    
+
             print("🐳 Starting PostgreSQL container...")
             result = subprocess.run([
                 "docker-compose", "-f", str(compose_file), "up", "-d", "postgres"
-            ], env=env, capture_output=True, text=True, timeout=120)
-            
+            ], check=False, env=env, capture_output=True, text=True, timeout=120)
+
             if result.returncode == 0:
                 # Wait for container to be healthy
                 print("⏳ Waiting for PostgreSQL to be ready...")
@@ -470,13 +450,12 @@ class PostgreSQLManager:
                     if self.validate_container_health(workspace_path):
                         return True
                     time.sleep(1)
-                    
+
                 print("⚠️ PostgreSQL container started but health check failed")
                 return True  # Container started, even if health check timed out
-            else:
-                print(f"❌ Failed to start PostgreSQL container: {result.stderr}")
-                return False
-                
+            print(f"❌ Failed to start PostgreSQL container: {result.stderr}")
+            return False
+
         except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
             print(f"❌ Error starting PostgreSQL container: {e}")
             return False

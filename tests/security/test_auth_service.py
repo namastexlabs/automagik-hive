@@ -201,7 +201,7 @@ class TestAuthServiceSecurity:
 
         # Run multiple iterations to get average timing and reduce variance
         num_iterations = 5
-        
+
         # Measure average timing for correct key
         correct_times = []
         for _ in range(num_iterations):
@@ -218,9 +218,9 @@ class TestAuthServiceSecurity:
                 result = await service.validate_api_key(incorrect_key)
                 incorrect_times.append(time.perf_counter() - start_time)
                 assert not result
-            
+
             incorrect_time = sum(incorrect_times) / len(incorrect_times)
-            
+
             # More generous threshold for CI/container environments
             # Timing attacks require microsecond precision - 50x variance is acceptable
             time_ratio = max(correct_time, incorrect_time) / min(

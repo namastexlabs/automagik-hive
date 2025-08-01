@@ -14,8 +14,7 @@ async def get_template_team(
     user_id: str | None = None,
     debug_mode: bool = False,
 ) -> Team:
-    """
-    Create template team using factory pattern.
+    """Create template team using factory pattern.
 
     This is a comprehensive template team showcasing all 74 Agno Team parameters
     and their proper usage patterns.

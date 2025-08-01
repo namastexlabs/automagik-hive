@@ -7,7 +7,6 @@ are not found in memory (typically after server restarts).
 """
 
 import traceback
-from typing import Any, Dict
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -23,7 +22,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
     This middleware catches RuntimeError exceptions related to missing agent runs
     and provides user-friendly error responses instead of 500 Internal Server Errors.
     """
-    
+
     async def dispatch(self, request: Request, call_next) -> Response:
         """
         Process the request and handle agent run-related errors.
@@ -38,16 +37,15 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
             return response
-            
+
         except RuntimeError as e:
             # Check if this is the specific agent run error we're handling
             error_message = str(e)
             if "No runs found for run ID" in error_message:
                 return await self._handle_missing_run_error(request, error_message)
-            else:
-                # Re-raise other RuntimeErrors
-                raise
-                
+            # Re-raise other RuntimeErrors
+            raise
+
         except Exception as e:
             # Handle other unexpected errors gracefully
             logger.error(
@@ -59,7 +57,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
             )
             # Let other errors propagate normally
             raise
-    
+
     async def _handle_missing_run_error(self, request: Request, error_message: str) -> JSONResponse:
         """
         Handle missing agent run errors with user-friendly responses.
@@ -78,12 +76,12 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                 run_id = error_message.split("run ID ")[1].strip()
             except (IndexError, AttributeError):
                 pass
-        
+
         # Extract session and agent info from URL
         session_id = None
         agent_id = None
         path_parts = request.url.path.split("/")
-        
+
         if "agents" in path_parts:
             try:
                 agent_index = path_parts.index("agents")
@@ -91,7 +89,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                     agent_id = path_parts[agent_index + 1]
             except (ValueError, IndexError):
                 pass
-        
+
         # Try to get session_id from query params or form data
         if request.method == "POST":
             # Session ID might be in form data, but we can't easily access it here
@@ -99,7 +97,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
             pass
         else:
             session_id = request.query_params.get("session_id")
-        
+
         # Log the error using both general and session-specific loggers
         logger.warning(
             "Agent run session not found - likely due to server restart",
@@ -111,7 +109,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
             user_agent=request.headers.get("user-agent"),
             original_error=error_message
         )
-        
+
         # Log using session lifecycle logger if we have the required info
         if run_id and agent_id:
             session_logger.log_run_continuation_failure(
@@ -121,7 +119,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                 error=error_message,
                 error_type="RunNotFound"
             )
-        
+
         # Create user-friendly error response
         error_response = {
             "error": "session_expired",
@@ -139,18 +137,18 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                     "endpoint": self._get_new_conversation_endpoint(request)
                 },
                 {
-                    "action": "view_conversation_history", 
+                    "action": "view_conversation_history",
                     "description": "View your previous conversations with this agent",
                     "endpoint": self._get_conversation_history_endpoint(request)
                 }
             ]
         }
-        
+
         return JSONResponse(
             status_code=410,  # 410 Gone - resource no longer available
             content=error_response
         )
-    
+
     def _get_new_conversation_endpoint(self, request: Request) -> str:
         """Get the endpoint to start a new conversation."""
         # Extract agent_id from the URL path
@@ -163,9 +161,9 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                     return f"/playground/agents/{agent_id}/runs"
             except (ValueError, IndexError):
                 pass
-        
+
         return "/playground/agents"
-    
+
     def _get_conversation_history_endpoint(self, request: Request) -> str:
         """Get the endpoint to view conversation history."""
         # Extract agent_id from the URL path
@@ -178,7 +176,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                     return f"/playground/agents/{agent_id}/sessions"
             except (ValueError, IndexError):
                 pass
-        
+
         return "/playground/agents"
 
 

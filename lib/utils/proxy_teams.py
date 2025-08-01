@@ -432,7 +432,7 @@ class AgnoTeamProxy:
         """
         if not mcp_servers_config:
             return []
-            
+
         # Agno handles MCP integration natively - just pass server names
         logger.info(f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}")
         return mcp_servers_config
@@ -463,13 +463,13 @@ class AgnoTeamProxy:
         """
         if not tools_config:
             return []
-            
+
         # Process native Agno tools from YAML configuration
         from lib.tools.registry import ToolRegistry
-        
+
         processed_tools = []
         loaded_tool_names = []
-        
+
         for tool_config in tools_config:
             if isinstance(tool_config, dict) and "name" in tool_config:
                 tool_name = tool_config["name"]
@@ -487,10 +487,10 @@ class AgnoTeamProxy:
                 # Handle other tool formats or pass through as-is
                 processed_tools.append(tool_config)
                 loaded_tool_names.append(str(tool_config))
-        
+
         if loaded_tool_names:
             logger.info(f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}")
-        
+
         return processed_tools
 
     def _handle_custom_metadata(

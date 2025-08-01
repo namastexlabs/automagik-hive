@@ -6,7 +6,7 @@ them with database timestamps for bidirectional sync decision making.
 """
 
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from lib.config.settings import settings
@@ -56,22 +56,21 @@ class FileSyncTracker:
         try:
             yaml_path = self._get_yaml_path(component_id)
             yaml_mtime = datetime.fromtimestamp(os.path.getmtime(yaml_path))
-            
+
             # Handle both datetime objects and ISO string timestamps
             if isinstance(db_created_at, str):
                 # Parse ISO format timestamp string
                 from datetime import datetime as dt
-                db_created_at = dt.fromisoformat(db_created_at.replace('Z', '+00:00'))
-            
+                db_created_at = dt.fromisoformat(db_created_at.replace("Z", "+00:00"))
+
             # Ensure both datetimes have the same timezone awareness
             if db_created_at.tzinfo is not None and yaml_mtime.tzinfo is None:
                 # DB datetime is timezone-aware, YAML datetime is naive - convert YAML to UTC
-                from datetime import timezone
-                yaml_mtime = yaml_mtime.replace(tzinfo=timezone.utc)
+                yaml_mtime = yaml_mtime.replace(tzinfo=UTC)
             elif db_created_at.tzinfo is None and yaml_mtime.tzinfo is not None:
                 # YAML datetime is timezone-aware, DB datetime is naive
                 yaml_mtime = yaml_mtime.replace(tzinfo=None)
-            
+
             return yaml_mtime > db_created_at
         except (FileNotFoundError, OSError):
             # If YAML file doesn't exist or can't be accessed, consider DB as source of truth

@@ -6,7 +6,7 @@ Testing the uncovered lines: 32-33, 37, 50-92, 114-119, 124-125, 130-131
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -107,7 +107,7 @@ class TestEmojiLoaderComprehensive:
 
         # Test with non-existent config path
         loader = EmojiLoader("/non/existent/path.yaml")
-        
+
         # Should handle missing file gracefully
         assert loader._config == {}
 
@@ -121,13 +121,13 @@ class TestEmojiLoaderComprehensive:
             f.write("invalid: yaml: content: [")
 
         loader = EmojiLoader(str(invalid_yaml_file))
-        
+
         # Should handle invalid YAML gracefully
         assert loader._config == {}
 
     def test_auto_emoji_function_with_config(self, temp_directory):
         """Test auto_emoji function with valid config."""
-        from lib.utils.emoji_loader import auto_emoji, EmojiLoader
+        from lib.utils.emoji_loader import EmojiLoader, auto_emoji
 
         # Create proper config file
         config_file = temp_directory / "emoji_config.yaml"
@@ -149,19 +149,19 @@ class TestEmojiLoaderComprehensive:
         }
         with open(config_file, "w") as f:
             yaml.dump(config, f)
-        
+
         # Reset the global loader and force creation with our config
         with patch("lib.utils.emoji_loader._loader", None):
             # Create a real loader with our config
             test_loader = EmojiLoader(str(config_file))
-            
+
             with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
                 # Test message with matching keywords
                 result = auto_emoji("Database query successful", "/path/to/file.py")
                 # Should contain emoji or be unchanged
                 assert isinstance(result, str)
                 assert len(result) >= len("Database query successful")
-                
+
                 # Test message with directory pattern
                 result = auto_emoji("Processing", "api/routes.py")
                 assert isinstance(result, str)
@@ -169,13 +169,13 @@ class TestEmojiLoaderComprehensive:
 
     def test_auto_emoji_function_without_config(self):
         """Test auto_emoji function without config."""
-        from lib.utils.emoji_loader import auto_emoji, EmojiLoader
+        from lib.utils.emoji_loader import EmojiLoader, auto_emoji
 
         # Force no config by using non-existent file
         with patch("lib.utils.emoji_loader._loader", None):
             # Create a real loader with no config
             test_loader = EmojiLoader("/non/existent/path.yaml")
-            
+
             with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
                 # Should return original message when no config
                 message = "Test message"
@@ -204,9 +204,9 @@ class TestEmojiLoaderComprehensive:
         }
         with open(config_file, "w") as f:
             yaml.dump(config, f)
-        
+
         loader = EmojiLoader(str(config_file))
-        
+
         # Test pattern matching via get_emoji method
         test_cases = [
             ("api/routes.py", "API endpoint ready", "🌐"),
@@ -243,24 +243,25 @@ class TestEmojiLoaderComprehensive:
         # Config should be loaded during initialization
         assert hasattr(loader, "_config")
         assert loader._config is not None or loader._config == {}
-        
+
         # Test that config loading doesn't fail
         assert isinstance(loader._config, dict)
 
     def test_emoji_loader_file_permissions_error(self, temp_directory):
         """Test handling of file permission errors."""
-        from lib.utils.emoji_loader import EmojiLoader
         import os
         import stat
-        
+
+        from lib.utils.emoji_loader import EmojiLoader
+
         # Create a file and remove read permissions
         restricted_file = temp_directory / "restricted.yaml"
         with open(restricted_file, "w") as f:
             f.write("test: config")
-        
+
         # Remove read permissions
         os.chmod(restricted_file, stat.S_IWRITE)
-        
+
         try:
             loader = EmojiLoader(str(restricted_file))
             # Should handle permission error gracefully
@@ -277,9 +278,9 @@ class TestEmojiLoaderComprehensive:
         invalid_file = temp_directory / "invalid.yaml"
         with open(invalid_file, "w") as f:
             f.write("invalid: yaml: content: { [ unclosed")
-            
+
         loader = EmojiLoader(str(invalid_file))
-        
+
         # Should handle YAML error gracefully
         assert loader._config == {}
 
@@ -291,29 +292,29 @@ class TestEmojiLoaderComprehensive:
         empty_file = temp_directory / "empty.yaml"
         with open(empty_file, "w") as f:
             f.write("")
-            
+
         loader = EmojiLoader(str(empty_file))
-        
+
         # Should handle empty file gracefully
         assert loader._config == {}
 
     def test_auto_emoji_edge_cases(self):
         """Test auto_emoji with edge cases."""
-        from lib.utils.emoji_loader import auto_emoji, EmojiLoader
+        from lib.utils.emoji_loader import EmojiLoader, auto_emoji
 
         # Force a clean loader with empty config
         with patch("lib.utils.emoji_loader._loader", None):
             test_loader = EmojiLoader("/non/existent/path.yaml")
-            
+
             with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
                 # Test with empty message
                 result = auto_emoji("", "/path/to/file.py")
                 assert result == ""
-        
+
                 # Test with empty file path
                 result = auto_emoji("Test message", "")
                 assert result == "Test message"
-                
+
                 # Test normal case
                 result = auto_emoji("Test message", "/path/to/file.py")
                 assert isinstance(result, str)
@@ -335,19 +336,19 @@ class TestEmojiLoaderComprehensive:
         }
         with open(config_file, "w") as f:
             yaml.dump(config, f)
-        
+
         loader = EmojiLoader(str(config_file))
-        
+
         # Config should have required sections
         assert "resource_types" in loader._config
-        
+
         # Resource types should be dict
         assert isinstance(loader._config["resource_types"], dict)
         assert isinstance(loader._config["resource_types"]["directories"], dict)
 
     def test_emoji_loader_multiple_pattern_matches(self, temp_directory):
         """Test behavior with multiple pattern matches."""
-        from lib.utils.emoji_loader import auto_emoji, EmojiLoader
+        from lib.utils.emoji_loader import EmojiLoader, auto_emoji
 
         # Create config with overlapping patterns
         config_file = temp_directory / "multi_config.yaml"
@@ -367,10 +368,10 @@ class TestEmojiLoaderComprehensive:
         }
         with open(config_file, "w") as f:
             yaml.dump(config, f)
-        
+
         with patch("lib.utils.emoji_loader._loader", None):
             test_loader = EmojiLoader(str(config_file))
-            
+
             with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
                 # Message that could match multiple patterns
                 message = "Database API test successful"
@@ -406,9 +407,9 @@ class TestEmojiLoaderComprehensive:
 
     def test_emoji_loader_unicode_handling(self, temp_directory):
         """Test Unicode emoji handling."""
-        from lib.utils.emoji_loader import auto_emoji, EmojiLoader
+        from lib.utils.emoji_loader import EmojiLoader, auto_emoji
 
-        # Create config file  
+        # Create config file
         config_file = temp_directory / "unicode_config.yaml"
         config = {
             "resource_types": {
@@ -419,10 +420,10 @@ class TestEmojiLoaderComprehensive:
         }
         with open(config_file, "w") as f:
             yaml.dump(config, f)
-        
+
         with patch("lib.utils.emoji_loader._loader", None):
             test_loader = EmojiLoader(str(config_file))
-            
+
             with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
                 # Test with Unicode characters in message
                 unicode_message = "测试消息 with émojis"
@@ -442,7 +443,7 @@ class TestEmojiLoaderComprehensive:
             yaml.dump(config, f)
 
         loader = EmojiLoader(str(config_file))
-        
+
         # Config should be loaded and consistent
         first_config = loader._config
         second_config = loader._config

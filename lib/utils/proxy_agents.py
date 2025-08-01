@@ -328,7 +328,7 @@ class AgnoAgentProxy:
         self._merge_mcp_tools_with_regular_tools(processed, component_id)
 
         return processed
-    
+
     def _merge_mcp_tools_with_regular_tools(
         self, processed: dict[str, Any], component_id: str
     ) -> None:
@@ -342,20 +342,20 @@ class AgnoAgentProxy:
         mcp_tools = processed.pop("mcp_tools", [])
         if not mcp_tools:
             return
-            
+
         # Get existing tools (could be None, list, or other types)
         existing_tools = processed.get("tools", [])
-        
+
         # Normalize existing tools to list
         if existing_tools is None:
             existing_tools = []
         elif not isinstance(existing_tools, list):
             existing_tools = [existing_tools]
-            
+
         # Add MCP tools to the list
         combined_tools = existing_tools + mcp_tools
         processed["tools"] = combined_tools
-        
+
         logger.debug(
             f"🌐 Merged {len(mcp_tools)} MCP tool instances with {len(existing_tools)} regular tools for agent {component_id}"
         )
@@ -372,7 +372,7 @@ class AgnoAgentProxy:
 
         # Define Agno-specific parameters that should NOT be passed to underlying model classes
         agno_agent_params = {
-            "reasoning", "reasoning_model", "reasoning_agent", 
+            "reasoning", "reasoning_model", "reasoning_agent",
             "reasoning_min_steps", "reasoning_max_steps"
         }
 
@@ -566,10 +566,10 @@ class AgnoAgentProxy:
         """
         if not mcp_servers_config:
             return {}
-            
+
         mcp_tools = []
         processed_servers = []
-        
+
         for server_pattern in mcp_servers_config:
             try:
                 # Parse granular pattern: "server_name:tool_pattern"
@@ -579,29 +579,29 @@ class AgnoAgentProxy:
                     # Legacy format: just server name (all tools)
                     server_name = server_pattern
                     tool_pattern = "*"
-                
+
                 # Create MCPTools with granular control
                 mcp_tool = self._create_mcp_tool_with_filters(
                     server_name, tool_pattern, component_id
                 )
-                
+
                 if mcp_tool:
                     mcp_tools.append(mcp_tool)
                     processed_servers.append(f"{server_name}:{tool_pattern}")
-                    
+
             except Exception as e:
                 logger.warning(
                     f"🌐 Failed to configure MCP server pattern '{server_pattern}' for {component_id}: {e}"
                 )
                 continue
-                
+
         logger.info(
             f"🌐 Configured {len(mcp_tools)} MCP tool instances for agent {component_id}: {', '.join(processed_servers)}"
         )
-        
+
         # Return as dictionary to be merged with other tools
         return {"mcp_tools": mcp_tools} if mcp_tools else {}
-    
+
     def _create_mcp_tool_with_filters(
         self, server_name: str, tool_pattern: str, component_id: str
     ) -> object | None:
@@ -617,22 +617,23 @@ class AgnoAgentProxy:
             MCPTools instance with appropriate filters, or None if failed
         """
         try:
-            from lib.mcp import MCPCatalog
             from agno.tools.mcp import MCPTools
-            
+
+            from lib.mcp import MCPCatalog
+
             # Get server configuration
             catalog = MCPCatalog()
             if not catalog.has_server(server_name):
                 logger.error(f"🌐 Unknown MCP server '{server_name}' for agent {component_id}")
                 return None
-                
+
             server_config = catalog.get_server_config(server_name)
-            
+
             # Prepare MCPTools parameters
             mcp_params = {
                 "env": server_config.env or {},
             }
-            
+
             # Configure based on server type
             if server_config.is_sse_server:
                 mcp_params.update({
@@ -650,7 +651,7 @@ class AgnoAgentProxy:
             else:
                 logger.error(f"🌐 Unknown server type for '{server_name}' for agent {component_id}")
                 return None
-                
+
             # Apply granular tool filtering
             if tool_pattern != "*":
                 # Specific tool pattern: include only the requested tool
@@ -659,10 +660,10 @@ class AgnoAgentProxy:
                 logger.debug(f"🌐 Filtering MCP server '{server_name}' to include only tool: {tool_pattern}")
             else:
                 logger.debug(f"🌐 Including all tools from MCP server '{server_name}'")
-                
+
             # Create MCPTools instance
             return MCPTools(**mcp_params)
-            
+
         except Exception as e:
             logger.error(f"🌐 Failed to create MCP tool for {server_name}:{tool_pattern} - {e}")
             return None

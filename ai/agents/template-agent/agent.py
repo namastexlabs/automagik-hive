@@ -2,8 +2,8 @@
 Template Agent - Foundational agent template for specialized agent development
 """
 
-from typing import List
 from agno import Agent
+
 
 def get_template_agent() -> Agent:
     """

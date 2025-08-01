@@ -328,7 +328,6 @@ class TestYAMLCacheManager:
         """Test thread safety of cache operations."""
         # DISABLED: This test causes infinite hanging due to race conditions
         # TODO: Redesign with proper threading.Lock usage around cache operations
-        pass
 
     def test_memory_management_large_cache(self):
         """Test cache behavior with large numbers of entries."""

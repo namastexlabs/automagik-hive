@@ -1,8 +1,9 @@
 """Comprehensive tests for ai/agents/registry.py."""
 
+from unittest.mock import MagicMock, mock_open, patch
+
 import pytest
 import yaml
-from unittest.mock import MagicMock, mock_open, patch, AsyncMock
 
 from ai.agents.registry import (
     AgentRegistry,
@@ -164,7 +165,7 @@ class TestAgentRegistry:
 
         # Check that an agent was returned (may not be same object due to mocking layers)
         assert agent is not None
-        assert hasattr(agent, 'run') or hasattr(agent, 'metadata')
+        assert hasattr(agent, "run") or hasattr(agent, "metadata")
 
     @pytest.mark.asyncio
     async def test_agent_registry_get_agent_not_found(self):
@@ -190,7 +191,7 @@ class TestAgentRegistry:
         # Check that agents have expected properties
         for agent in agents.values():
             assert agent is not None
-            assert hasattr(agent, 'run') or hasattr(agent, 'metadata')
+            assert hasattr(agent, "run") or hasattr(agent, "metadata")
 
     @pytest.mark.asyncio
     async def test_agent_registry_get_all_agents_with_failures(self, mock_database_layer):
@@ -425,7 +426,7 @@ class TestAgentRegistryEdgeCases:
 
         # Verify agent was returned
         assert agent is not None
-        assert hasattr(agent, 'run') or hasattr(agent, 'metadata')
+        assert hasattr(agent, "run") or hasattr(agent, "metadata")
 
     @pytest.mark.asyncio
     async def test_get_team_agents_empty_list(self):
@@ -446,7 +447,7 @@ class TestAgentRegistryEdgeCases:
         """Test MCP catalog creation error handling."""
         # Clear existing catalog to ensure fresh creation
         AgentRegistry._mcp_catalog = None
-        
+
         with patch("ai.agents.registry.MCPCatalog", side_effect=Exception("MCP error")):
             with pytest.raises(Exception, match="MCP error"):
                 AgentRegistry.get_mcp_catalog()

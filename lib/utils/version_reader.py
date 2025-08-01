@@ -7,7 +7,6 @@ Uses pyproject.toml as the authoritative source with multiple fallback strategie
 
 import re
 from pathlib import Path
-from typing import Optional
 
 
 def get_project_version() -> str:
@@ -28,22 +27,22 @@ def get_project_version() -> str:
         return importlib.metadata.version("automagik-hive")
     except Exception:
         pass
-    
+
     # Fall back to parsing pyproject.toml
     try:
         project_root = Path(__file__).parent.parent.parent
         pyproject_path = project_root / "pyproject.toml"
-        
+
         if pyproject_path.exists():
             content = pyproject_path.read_text(encoding="utf-8")
-            
+
             # Look for version = "x.y.z" pattern
             version_match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', content)
             if version_match:
                 return version_match.group(1)
     except Exception:
         pass
-    
+
     # Ultimate fallback
     return "0.1.0-dev"
 
@@ -77,7 +76,7 @@ def get_version_info() -> dict[str, str]:
         Dictionary with version details
     """
     version = get_project_version()
-    
+
     return {
         "version": version,
         "cli_version": get_cli_version_string(),
@@ -100,19 +99,19 @@ def _get_version_source() -> str:
         return "importlib.metadata"
     except Exception:
         pass
-    
+
     # Try pyproject.toml
     try:
         project_root = Path(__file__).parent.parent.parent
         pyproject_path = project_root / "pyproject.toml"
-        
+
         if pyproject_path.exists():
             content = pyproject_path.read_text(encoding="utf-8")
             if re.search(r'version\s*=\s*["\']([^"\']+)["\']', content):
                 return "pyproject.toml"
     except Exception:
         pass
-    
+
     return "fallback"
 
 

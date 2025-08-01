@@ -6,7 +6,6 @@ objects with no external dependencies.
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
 from enum import Enum
 
 
@@ -35,10 +34,10 @@ class FileChange:
     path: str
     operation: FileOperation
     is_root_level: bool
-    file_extension: Optional[str]
+    file_extension: str | None
     is_directory: bool
-    
-    def get_suggested_path(self) -> Optional[str]:
+
+    def get_suggested_path(self) -> str | None:
         """Generate suggested alternative path based on file type.
         
         Returns:
@@ -46,23 +45,22 @@ class FileChange:
         """
         if not self.is_root_level:
             return None
-            
+
         if self.file_extension == ".md":
             if "readme" in self.path.lower():
                 return None  # README.md is allowed at root
-            elif any(word in self.path.lower() for word in ["plan", "wish", "todo"]):
+            if any(word in self.path.lower() for word in ["plan", "wish", "todo"]):
                 return f"/genie/wishes/{self.path}"
-            elif any(word in self.path.lower() for word in ["design", "architecture", "ddd"]):
+            if any(word in self.path.lower() for word in ["design", "architecture", "ddd"]):
                 return f"/genie/docs/{self.path}"
-            elif any(word in self.path.lower() for word in ["idea", "analysis", "brain"]):
+            if any(word in self.path.lower() for word in ["idea", "analysis", "brain"]):
                 return f"/genie/ideas/{self.path}"
-            elif any(word in self.path.lower() for word in ["report", "complete", "summary"]):
+            if any(word in self.path.lower() for word in ["report", "complete", "summary"]):
                 return f"/genie/reports/{self.path}"
-            else:
-                return f"/genie/docs/{self.path}"
-        elif self.is_directory:
+            return f"/genie/docs/{self.path}"
+        if self.is_directory:
             return f"/lib/{self.path}/"
-        
+
         return None
 
 
@@ -76,7 +74,7 @@ class ValidationRule:
     pattern: str
     rule_type: str  # "allow" or "block"
     description: str
-    applies_to: List[FileOperation]
+    applies_to: list[FileOperation]
 
 
 @dataclass
@@ -87,27 +85,26 @@ class HookValidationResult:
     categorized files, error messages, and user-friendly suggestions.
     """
     result: ValidationResult
-    blocked_files: List[FileChange]
-    allowed_files: List[FileChange]
-    bypass_files: List[FileChange]
-    error_messages: List[str]
-    suggestions: List[str]
-    
+    blocked_files: list[FileChange]
+    allowed_files: list[FileChange]
+    bypass_files: list[FileChange]
+    error_messages: list[str]
+    suggestions: list[str]
+
     @property
     def has_violations(self) -> bool:
         """Check if validation found any violations."""
         return len(self.blocked_files) > 0
-    
+
     @property
     def total_files_processed(self) -> int:
         """Get total number of files processed."""
         return len(self.blocked_files) + len(self.allowed_files) + len(self.bypass_files)
-    
+
     def get_summary(self) -> str:
         """Get a human-readable summary of validation results."""
         if self.result == ValidationResult.BYPASS:
             return f"BYPASS: {self.total_files_processed} files processed with validation disabled"
-        elif self.result == ValidationResult.BLOCKED:
+        if self.result == ValidationResult.BLOCKED:
             return f"BLOCKED: {len(self.blocked_files)} violations found, {len(self.allowed_files)} files allowed"
-        else:
-            return f"ALLOWED: All {self.total_files_processed} files passed validation"
+        return f"ALLOWED: All {self.total_files_processed} files passed validation"

@@ -6,7 +6,8 @@ Replaces the broken placeholder proxy system with actual MCP server integration.
 """
 
 import re
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from agno.tools.mcp import MCPTools
 from agno.utils.log import logger
@@ -22,8 +23,8 @@ class RealMCPTool:
     Provides proper integration between YAML tool configurations and
     actual MCP server connections via the connection manager.
     """
-    
-    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, name: str, config: dict[str, Any] | None = None):
         """
         Initialize real MCP tool.
         
@@ -36,22 +37,22 @@ class RealMCPTool:
         self._server_name = None
         self._tool_name = None
         self._mcp_tools = None
-        
+
         # Parse the name to extract server and tool
         self._parse_name()
-        
+
     def _parse_name(self) -> None:
         """Parse MCP tool name to extract server and tool names."""
         if not self.name.startswith("mcp__"):
             raise ValueError(f"Invalid MCP tool name: {self.name}. Must start with 'mcp__'")
-            
+
         parts = self.name.split("__")
         if len(parts) < 3:
             raise ValueError(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
-            
+
         self._server_name = parts[1]
         self._tool_name = "__".join(parts[2:])  # Rejoin in case tool name has underscores
-        
+
     def validate_name(self) -> bool:
         """
         Validate MCP tool name format.
@@ -65,13 +66,13 @@ class RealMCPTool:
         if not self.name.startswith("mcp__"):
             logger.warning(f"MCP tool name must start with 'mcp__': {self.name}")
             return False
-            
+
         # Pattern: mcp__server__tool_name (allows underscores and dashes in server/tool names)
         pattern = r"^mcp__[a-zA-Z0-9_-]+__[a-zA-Z0-9_]+$"
         if not re.match(pattern, self.name):
             logger.warning(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
             return False
-        
+
         # Validate against actual MCP catalog instead of hardcoded list
         try:
             from lib.mcp.catalog import MCPCatalog
@@ -80,10 +81,10 @@ class RealMCPTool:
                 logger.info(f"MCP server '{self._server_name}' not in MCP catalog, but format is valid")
         except Exception as e:
             logger.debug(f"Could not validate server against catalog: {e}")
-            
+
         return True
-    
-    def get_mcp_tools(self) -> Optional[MCPTools]:
+
+    def get_mcp_tools(self) -> MCPTools | None:
         """
         Get the actual MCP tools instance for this server.
         
@@ -92,21 +93,21 @@ class RealMCPTool:
         """
         if self._mcp_tools:
             return self._mcp_tools
-            
+
         try:
             # Create real MCP connection
             self._mcp_tools = create_mcp_tools_sync(self._server_name)
             logger.debug(f"🌐 Connected to MCP server: {self._server_name}")
             return self._mcp_tools
-            
+
         except MCPConnectionError as e:
             logger.error(f"🌐 Failed to connect to MCP server {self._server_name}: {e}")
             return None
         except Exception as e:
             logger.error(f"🌐 Unexpected error connecting to MCP server {self._server_name}: {e}")
             return None
-    
-    def get_tool_function(self) -> Optional[Callable]:
+
+    def get_tool_function(self) -> Callable | None:
         """
         Get the actual MCP tool function with proper functionality.
         
@@ -119,20 +120,20 @@ class RealMCPTool:
         if not mcp_tools:
             logger.error(f"🌐 Cannot get tool function - no MCP connection for {self.name}")
             return None
-            
+
         try:
             # Return the MCPTools instance - Agno knows how to use this
             logger.debug(f"🌐 Retrieved MCP tools instance for: {self.name}")
             return mcp_tools
-            
+
         except Exception as e:
             logger.error(f"🌐 Error retrieving MCP tools for {self.name}: {e}")
             return None
-    
+
     def __str__(self) -> str:
         """String representation of the real MCP tool."""
         return f"RealMCPTool(name={self.name}, server={self._server_name}, tool={self._tool_name})"
-    
+
     def __repr__(self) -> str:
         """Detailed representation of the real MCP tool."""
         return f"RealMCPTool(name='{self.name}', server='{self._server_name}', tool='{self._tool_name}', config={self.config})"
@@ -156,7 +157,7 @@ def validate_mcp_name(name: str) -> bool:
         return False
 
 
-def create_mcp_tool(name: str, config: Optional[Dict[str, Any]] = None) -> RealMCPTool:
+def create_mcp_tool(name: str, config: dict[str, Any] | None = None) -> RealMCPTool:
     """
     Factory function to create real MCP tools.
     
@@ -170,7 +171,7 @@ def create_mcp_tool(name: str, config: Optional[Dict[str, Any]] = None) -> RealM
     return RealMCPTool(name, config)
 
 
-def get_available_mcp_servers() -> List[str]:
+def get_available_mcp_servers() -> list[str]:
     """
     Get list of available MCP servers from the catalog.
     

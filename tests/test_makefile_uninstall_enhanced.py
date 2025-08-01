@@ -13,53 +13,52 @@ This test suite validates that the make uninstall command properly cleans up:
 - Log files and PID tracking files
 """
 
-import subprocess
 import os
-import tempfile
 import shutil
+import tempfile
+
 import pytest
-from unittest.mock import patch, MagicMock, call
 
 
 class TestMakefileUninstallEnhanced:
     """Test comprehensive infrastructure cleanup for make uninstall"""
-    
+
     def setup_method(self):
         """Set up test environment"""
         self.test_dir = tempfile.mkdtemp()
         self.original_dir = os.getcwd()
         os.chdir(self.test_dir)
-        
+
         # Create mock project structure
         self.create_mock_project_structure()
-        
+
     def teardown_method(self):
         """Clean up test environment"""
         os.chdir(self.original_dir)
         shutil.rmtree(self.test_dir, ignore_errors=True)
-        
+
     def create_mock_project_structure(self):
         """Create mock project files and directories"""
         # Create data directories
         os.makedirs("data/postgres", exist_ok=True)
         os.makedirs("data/postgres-agent", exist_ok=True)
         os.makedirs("logs", exist_ok=True)
-        
+
         # Create environment files
         with open(".env", "w") as f:
             f.write("HIVE_API_PORT=8886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n")
         with open(".env.agent", "w") as f:
             f.write("HIVE_API_PORT=38886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n")
-            
+
         # Create log and PID files
         with open("logs/agent-server.pid", "w") as f:
             f.write("12345")
         with open("logs/agent-server.log", "w") as f:
             f.write("Agent server logs")
-            
+
         # Create mock Makefile with enhanced uninstall targets
         self.create_enhanced_makefile()
-        
+
     def create_enhanced_makefile(self):
         """Create Makefile with enhanced uninstall functionality"""
         makefile_content = """
@@ -101,9 +100,9 @@ uninstall-purge-enhanced:
     def test_uninstall_containers_only_enhanced_stops_all_services(self):
         """Test that containers-only uninstall includes agent infrastructure"""
         # Check that the actual project Makefile has enhanced container cleanup
-        with open("/home/namastex/workspace/automagik-hive/Makefile", "r") as f:
+        with open("/home/namastex/workspace/automagik-hive/Makefile") as f:
             makefile_content = f.read()
-            
+
         # Verify the enhanced uninstall-containers-only target exists and includes agent cleanup
         assert "docker-compose-agent.yml down" in makefile_content
         assert "hive-agents-agent hive-postgres-agent" in makefile_content
@@ -112,9 +111,9 @@ uninstall-purge-enhanced:
     def test_uninstall_clean_enhanced_removes_agent_infrastructure(self):
         """Test that clean uninstall removes agent infrastructure"""
         # Check that the actual project Makefile has enhanced clean uninstall
-        with open("/home/namastex/workspace/automagik-hive/Makefile", "r") as f:
+        with open("/home/namastex/workspace/automagik-hive/Makefile") as f:
             makefile_content = f.read()
-            
+
         # Verify the enhanced uninstall-clean target includes agent infrastructure cleanup
         assert "docker image rm automagik-hive-app" in makefile_content
         assert "automagik-hive_agent_app_logs automagik-hive_agent_app_data" in makefile_content
@@ -124,19 +123,19 @@ uninstall-purge-enhanced:
     def test_uninstall_purge_enhanced_removes_all_data(self):
         """Test that purge removes all data including agent data"""
         # Check that the actual project Makefile has enhanced purge
-        with open("/home/namastex/workspace/automagik-hive/Makefile", "r") as f:
+        with open("/home/namastex/workspace/automagik-hive/Makefile") as f:
             makefile_content = f.read()
-            
+
         # Verify enhanced purge includes agent data in warning messages and description
         assert "main and agent databases" in makefile_content
         assert "Agent database size to be deleted" in makefile_content
         assert "All containers (main + agent)" in makefile_content
         assert "Agent environment files" in makefile_content
-        
+
         # Check purge script is enhanced
-        with open("/home/namastex/workspace/automagik-hive/scripts/purge.sh", "r") as f:
+        with open("/home/namastex/workspace/automagik-hive/scripts/purge.sh") as f:
             purge_content = f.read()
-            
+
         assert "docker-compose-agent.yml down" in purge_content
         assert "hive-agents-agent hive-postgres-agent" in purge_content
         assert "Enhanced full purge complete" in purge_content
@@ -144,30 +143,30 @@ uninstall-purge-enhanced:
     def test_agent_infrastructure_cleanup_components_identified(self):
         """Test that all agent infrastructure components are identified"""
         components = {
-            'containers': ['hive-agents', 'hive-postgres', 'hive-agents-agent', 'hive-postgres-agent'],
-            'compose_files': ['docker-compose.yml', 'docker-compose-agent.yml'],
-            'images': ['automagik-hive-app'],
-            'volumes': ['automagik-hive_app_logs', 'automagik-hive_app_data', 
-                       'automagik-hive_agent_app_logs', 'automagik-hive_agent_app_data'],
-            'data_dirs': ['./data/postgres', './data/postgres-agent'],
-            'env_files': ['.env.agent'],
-            'log_files': ['logs/agent-server.pid', 'logs/agent-server.log']
+            "containers": ["hive-agents", "hive-postgres", "hive-agents-agent", "hive-postgres-agent"],
+            "compose_files": ["docker-compose.yml", "docker-compose-agent.yml"],
+            "images": ["automagik-hive-app"],
+            "volumes": ["automagik-hive_app_logs", "automagik-hive_app_data",
+                       "automagik-hive_agent_app_logs", "automagik-hive_agent_app_data"],
+            "data_dirs": ["./data/postgres", "./data/postgres-agent"],
+            "env_files": [".env.agent"],
+            "log_files": ["logs/agent-server.pid", "logs/agent-server.log"]
         }
-        
+
         # Verify all components are properly identified
-        assert len(components['containers']) == 4
-        assert len(components['compose_files']) == 2
-        assert len(components['data_dirs']) == 2
-        assert 'hive-agents-agent' in components['containers']
-        assert 'hive-postgres-agent' in components['containers']
+        assert len(components["containers"]) == 4
+        assert len(components["compose_files"]) == 2
+        assert len(components["data_dirs"]) == 2
+        assert "hive-agents-agent" in components["containers"]
+        assert "hive-postgres-agent" in components["containers"]
 
     def test_makefile_enhanced_targets_exist(self):
         """Test that enhanced uninstall targets exist in Makefile"""
-        with open("Makefile", "r") as f:
+        with open("Makefile") as f:
             makefile_content = f.read()
-            
+
         assert "uninstall-containers-only-enhanced" in makefile_content
-        assert "uninstall-clean-enhanced" in makefile_content  
+        assert "uninstall-clean-enhanced" in makefile_content
         assert "uninstall-purge-enhanced" in makefile_content
         assert "docker compose -f docker-compose-agent.yml down" in makefile_content
         assert "hive-agents-agent hive-postgres-agent" in makefile_content
@@ -176,17 +175,17 @@ uninstall-purge-enhanced:
         """Test that agent processes are properly stopped"""
         # Verify PID file handling logic
         assert os.path.exists("logs/agent-server.pid")
-        
-        with open("logs/agent-server.pid", "r") as f:
+
+        with open("logs/agent-server.pid") as f:
             pid = f.read().strip()
-            
+
         assert pid == "12345"
-        
+
         # Test cleanup removes PID file
         cleanup_commands = [
             "rm -f .env.agent logs/agent-server.pid logs/agent-server.log"
         ]
-        
+
         for cmd in cleanup_commands:
             assert "logs/agent-server.pid" in cmd
 

@@ -78,12 +78,12 @@ class TestBatchLogger:
         # Test the actual configuration that works
         logger = BatchLogger()
         assert logger is not None
-        
+
         # Test environment-based configuration
         assert hasattr(logger, "startup_mode")
         assert hasattr(logger, "verbose")
         assert hasattr(logger, "log_level")
-        
+
         # Test runtime mode switching
         assert logger.startup_mode == True
         logger.set_runtime_mode()
@@ -109,17 +109,17 @@ class TestLoggingConfig:
         # Test environment-based configuration that the real setup_logging uses
         import os
         original_level = os.environ.get("HIVE_LOG_LEVEL")
-        
+
         try:
             # Test setting log level via environment
             os.environ["HIVE_LOG_LEVEL"] = "DEBUG"
             setup_logging()
             assert True  # Should not crash
-            
+
             os.environ["HIVE_LOG_LEVEL"] = "INFO"
             setup_logging()
             assert True  # Should not crash
-            
+
         except Exception as e:
             pytest.fail(f"setup_logging() with environment vars should not crash: {e}")
         finally:

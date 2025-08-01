@@ -5,9 +5,8 @@ This module provides comprehensive logging for agent session lifecycle events,
 helping with monitoring, debugging, and preventing session-related issues.
 """
 
-import time
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from lib.logging import logger
 
@@ -19,17 +18,16 @@ class SessionLifecycleLogger:
     This class provides structured logging for agent sessions, runs, and
     conversation management to help with debugging and monitoring.
     """
-    
+
     def __init__(self):
         """Initialize the session lifecycle logger."""
-        pass
-    
+
     def log_session_start(
         self,
         session_id: str,
         agent_id: str,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        user_id: str | None = None,
+        metadata: dict[str, Any] | None = None
     ) -> None:
         """
         Log the start of a new agent session.
@@ -49,14 +47,14 @@ class SessionLifecycleLogger:
             timestamp=datetime.utcnow().isoformat(),
             metadata=metadata or {}
         )
-    
+
     def log_run_creation(
         self,
         run_id: str,
         session_id: str,
         agent_id: str,
-        user_message: Optional[str] = None,
-        user_id: Optional[str] = None
+        user_message: str | None = None,
+        user_id: str | None = None
     ) -> None:
         """
         Log the creation of a new agent run.
@@ -78,13 +76,13 @@ class SessionLifecycleLogger:
             message_length=len(user_message) if user_message else 0,
             timestamp=datetime.utcnow().isoformat()
         )
-    
+
     def log_run_continuation_attempt(
         self,
         run_id: str,
         session_id: str,
         agent_id: str,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         has_tools: bool = False
     ) -> None:
         """
@@ -107,14 +105,14 @@ class SessionLifecycleLogger:
             has_tools=has_tools,
             timestamp=datetime.utcnow().isoformat()
         )
-    
+
     def log_run_continuation_success(
         self,
         run_id: str,
         session_id: str,
         agent_id: str,
-        user_id: Optional[str] = None,
-        response_length: Optional[int] = None
+        user_id: str | None = None,
+        response_length: int | None = None
     ) -> None:
         """
         Log successful run continuation.
@@ -136,7 +134,7 @@ class SessionLifecycleLogger:
             response_length=response_length,
             timestamp=datetime.utcnow().isoformat()
         )
-    
+
     def log_run_continuation_failure(
         self,
         run_id: str,
@@ -144,7 +142,7 @@ class SessionLifecycleLogger:
         agent_id: str,
         error: str,
         error_type: str,
-        user_id: Optional[str] = None
+        user_id: str | None = None
     ) -> None:
         """
         Log failed run continuation.
@@ -168,14 +166,14 @@ class SessionLifecycleLogger:
             error_type=error_type,
             timestamp=datetime.utcnow().isoformat()
         )
-    
+
     def log_session_cleanup(
         self,
         session_id: str,
         agent_id: str,
         reason: str,
-        user_id: Optional[str] = None,
-        run_count: Optional[int] = None
+        user_id: str | None = None,
+        run_count: int | None = None
     ) -> None:
         """
         Log session cleanup events.
@@ -197,14 +195,14 @@ class SessionLifecycleLogger:
             run_count=run_count,
             timestamp=datetime.utcnow().isoformat()
         )
-    
+
     def log_memory_status(
         self,
         agent_id: str,
         session_count: int,
         run_count: int,
         memory_type: str,
-        additional_info: Optional[Dict[str, Any]] = None
+        additional_info: dict[str, Any] | None = None
     ) -> None:
         """
         Log current memory status for monitoring.
@@ -226,11 +224,11 @@ class SessionLifecycleLogger:
             additional_info=additional_info or {},
             timestamp=datetime.utcnow().isoformat()
         )
-    
+
     def log_server_restart_detection(
         self,
-        detected_at: Optional[str] = None,
-        affected_sessions: Optional[int] = None
+        detected_at: str | None = None,
+        affected_sessions: int | None = None
     ) -> None:
         """
         Log detection of server restart that affects sessions.
@@ -254,7 +252,7 @@ session_logger = SessionLifecycleLogger()
 
 
 # Convenience functions for easy import and use
-def log_session_start(session_id: str, agent_id: str, user_id: Optional[str] = None, **kwargs) -> None:
+def log_session_start(session_id: str, agent_id: str, user_id: str | None = None, **kwargs) -> None:
     """Convenience function to log session start."""
     session_logger.log_session_start(session_id, agent_id, user_id, kwargs)
 

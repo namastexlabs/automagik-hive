@@ -5,12 +5,10 @@ Tests that all agents properly implement context file ingestion protocol
 according to the standardized workspace interaction requirements.
 """
 
-import pytest
-import tempfile
 import os
-from pathlib import Path
-from typing import Dict, List, Any
-from unittest.mock import patch, MagicMock
+import tempfile
+
+import pytest
 
 from tests.workspace_protocol.utils.agent_tester import AgentTester
 from tests.workspace_protocol.utils.protocol_validator import ProtocolValidator
@@ -32,7 +30,7 @@ class TestContextIngestion:
     @pytest.fixture
     def valid_context_file(self):
         """Create a valid temporary context file for testing."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("""# Test Context File
 
 This is a valid context file for workspace protocol testing.
@@ -60,7 +58,7 @@ This is a valid context file for workspace protocol testing.
         """Create multiple temporary context files for testing."""
         files = []
         for i in range(3):
-            with tempfile.NamedTemporaryFile(mode='w', suffix=f'_context_{i}.md', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=f"_context_{i}.md", delete=False) as f:
                 f.write(f"""# Context File {i+1}
 
 Content for context file number {i+1}.
@@ -71,16 +69,16 @@ This tests multiple context file handling.
 - Requirement {i+1}B
 """)
                 files.append(f.name)
-        
+
         yield files
-        
+
         for file_path in files:
             if os.path.exists(file_path):
                 os.unlink(file_path)
 
     @pytest.mark.parametrize("agent_name", [
         "genie-dev-planner",
-        "genie-dev-designer", 
+        "genie-dev-designer",
         "genie-dev-coder",
         "genie-dev-fixer",
         "genie-testing-maker",
@@ -95,10 +93,10 @@ This tests multiple context file handling.
         "genie-agent-enhancer",
         "claude"
     ])
-    def test_valid_context_file_processing(self, agent_tester, protocol_validator, 
+    def test_valid_context_file_processing(self, agent_tester, protocol_validator,
                                          valid_context_file, agent_name):
         """Test agent processes valid context file correctly."""
-        
+
         # Arrange
         context_reference = f"Context: @{valid_context_file}"
         task_prompt = f"""
@@ -109,25 +107,25 @@ Create a technical plan based on the context file requirements.
 
         # Act
         response = agent_tester.execute_agent_task(agent_name, task_prompt)
-        
+
         # Assert
         assert response is not None, f"Agent {agent_name} returned no response"
-        
+
         # Validate JSON response format
         json_data = protocol_validator.extract_json_response(response)
         assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
-        
+
         # Validate context validation flag
         assert json_data.get("context_validated") is True, \
             f"Agent {agent_name} did not validate context correctly"
-        
+
         # Validate status is success or in_progress (not error)
         assert json_data.get("status") in ["success", "in_progress"], \
             f"Agent {agent_name} reported error status for valid context file"
 
     @pytest.mark.parametrize("agent_name", [
         "genie-dev-planner",
-        "genie-dev-designer", 
+        "genie-dev-designer",
         "genie-dev-coder",
         "genie-dev-fixer",
         "genie-testing-maker",
@@ -145,7 +143,7 @@ Create a technical plan based on the context file requirements.
     def test_missing_context_file_error_handling(self, agent_tester, protocol_validator,
                                                invalid_context_path, agent_name):
         """Test agent properly handles missing context file with error response."""
-        
+
         # Arrange
         context_reference = f"Context: @{invalid_context_path}"
         task_prompt = f"""
@@ -156,26 +154,26 @@ Create a technical plan based on the context file requirements.
 
         # Act
         response = agent_tester.execute_agent_task(agent_name, task_prompt)
-        
+
         # Assert
         assert response is not None, f"Agent {agent_name} returned no response"
-        
+
         # Validate JSON response format
         json_data = protocol_validator.extract_json_response(response)
         assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
-        
+
         # Validate error status
         assert json_data.get("status") == "error", \
             f"Agent {agent_name} did not report error status for missing context file"
-        
+
         # Validate context validation flag is false
         assert json_data.get("context_validated") is False, \
             f"Agent {agent_name} incorrectly validated missing context file"
-        
+
         # Validate error message exists
         assert "message" in json_data, \
             f"Agent {agent_name} did not provide error message"
-        
+
         # Validate error message mentions context file issue
         error_message = json_data.get("message", "").lower()
         assert any(keyword in error_message for keyword in ["context", "file", "access"]), \
@@ -183,7 +181,7 @@ Create a technical plan based on the context file requirements.
 
     @pytest.mark.parametrize("agent_name", [
         "genie-dev-planner",
-        "genie-dev-designer", 
+        "genie-dev-designer",
         "genie-dev-coder",
         "genie-dev-fixer",
         "genie-testing-maker",
@@ -201,9 +199,9 @@ Create a technical plan based on the context file requirements.
     def test_multiple_context_file_management(self, agent_tester, protocol_validator,
                                             multiple_context_files, agent_name):
         """Test agent processes multiple context files correctly."""
-        
+
         # Arrange
-        context_references = "\n".join([f"Context: @{file_path}" 
+        context_references = "\n".join([f"Context: @{file_path}"
                                       for file_path in multiple_context_files])
         task_prompt = f"""
 {context_references}
@@ -213,18 +211,18 @@ Create a technical plan integrating requirements from all context files.
 
         # Act
         response = agent_tester.execute_agent_task(agent_name, task_prompt)
-        
+
         # Assert
         assert response is not None, f"Agent {agent_name} returned no response"
-        
+
         # Validate JSON response format
         json_data = protocol_validator.extract_json_response(response)
         assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
-        
+
         # Validate context validation flag
         assert json_data.get("context_validated") is True, \
             f"Agent {agent_name} did not validate multiple context files correctly"
-        
+
         # Validate status is success or in_progress (not error)
         assert json_data.get("status") in ["success", "in_progress"], \
             f"Agent {agent_name} reported error status for valid multiple context files"
@@ -232,10 +230,10 @@ Create a technical plan integrating requirements from all context files.
     def test_context_content_integration_quality(self, agent_tester, protocol_validator,
                                                 valid_context_file):
         """Test that agents actually use context file content, not just validate access."""
-        
+
         # Create context file with specific, unique requirements
-        unique_context_path = valid_context_file.replace('.md', '_unique.md')
-        with open(unique_context_path, 'w') as f:
+        unique_context_path = valid_context_file.replace(".md", "_unique.md")
+        with open(unique_context_path, "w") as f:
             f.write("""# Unique Context Requirements
 
 ## CRITICAL UNIQUE REQUIREMENT
@@ -260,18 +258,18 @@ Create a technical specification based on the context file requirements.
 
             # Act
             response = agent_tester.execute_agent_task(agent_name, task_prompt)
-            
+
             # Assert context integration
             assert response is not None
             response_text = str(response).lower()
-            
+
             # Check that unique context markers appear in response or artifacts
             unique_markers = [
                 "special_validation_flag",
-                "unique_context_marker", 
+                "unique_context_marker",
                 "context_integration_test"
             ]
-            
+
             # At least one unique marker should be referenced
             marker_found = any(marker.lower() in response_text for marker in unique_markers)
             assert marker_found, \
@@ -283,10 +281,10 @@ Create a technical specification based on the context file requirements.
 
     def test_context_file_access_validation_timing(self, agent_tester, protocol_validator):
         """Test that agents validate context file access BEFORE task execution."""
-        
+
         # This test ensures agents fail fast on context issues
         # rather than proceeding with task and failing later
-        
+
         agent_name = "genie-dev-planner"
         invalid_context = "/definitely/does/not/exist/invalid.md"
         context_reference = f"Context: @{invalid_context}"
@@ -304,16 +302,16 @@ Create a comprehensive technical specification with:
         # Measure response time - should be fast for immediate context validation failure
         import time
         start_time = time.time()
-        
+
         response = agent_tester.execute_agent_task(agent_name, task_prompt)
-        
+
         end_time = time.time()
         response_time = end_time - start_time
-        
+
         # Validate quick failure (context validation should be immediate)
         assert response_time < 10.0, \
             f"Agent {agent_name} took too long ({response_time:.2f}s) to detect context file error"
-        
+
         # Validate error response
         json_data = protocol_validator.extract_json_response(response)
         assert json_data is not None

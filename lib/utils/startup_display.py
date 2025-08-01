@@ -162,7 +162,7 @@ class StartupDisplay:
         if not self.sync_results:
             # Check if dev mode is enabled to show appropriate message
             from lib.versioning.dev_mode import DevMode
-            
+
             if DevMode.is_enabled():
                 console.print("\n[bold blue]ℹ️ Development Mode:[/bold blue]")
                 console.print(

@@ -6,7 +6,6 @@ logic about what files are allowed and where they should be placed.
 """
 
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass(frozen=True)
@@ -16,10 +15,10 @@ class RootWhitelist:
     This value object defines which files and directories are permitted
     at the project root level. All patterns support shell-style wildcards.
     """
-    patterns: List[str]
-    
+    patterns: list[str]
+
     @classmethod
-    def default(cls) -> 'RootWhitelist':
+    def default(cls) -> "RootWhitelist":
         """Create default whitelist based on common project files.
         
         Returns:
@@ -31,53 +30,53 @@ class RootWhitelist:
             "requirements*.txt",
             "setup.py",
             "setup.cfg",
-            
+
             # Documentation (specific allowed files)
             "README.md",
             "CHANGELOG.md",
             "CLAUDE.md",
             "LICENSE",
             "LICENSE.*",
-            
+
             # Build and deployment
             "Makefile",
             "Dockerfile*",
             "docker-compose*.yml",
             "docker-compose*.yaml",
-            
+
             # Configuration files
             ".env.example",
             ".gitignore",
             ".gitattributes",
             ".editorconfig",
             ".pre-commit-config.yaml",
-            
+
             # Standard directories
             ".github/",
             ".claude/",
             "scripts/",
             "templates/",
-            
+
             # Shell scripts (common at root)
             "*.sh",
-            
+
             # CI/CD files
             ".gitlab-ci.yml",
             "Jenkinsfile",
             "azure-pipelines.yml",
-            
+
             # Language specific
             "package.json",
             "yarn.lock",
             "uv.lock",
             "Cargo.toml",
             "go.mod",
-            
+
             # IDE files that may legitimately be at root
             ".vscode/",
             ".idea/",
         ])
-    
+
     def matches_pattern(self, file_path: str) -> bool:
         """Check if a file path matches any whitelisted pattern.
         
@@ -88,7 +87,7 @@ class RootWhitelist:
             True if file matches any pattern, False otherwise.
         """
         import fnmatch
-        
+
         for pattern in self.patterns:
             if fnmatch.fnmatch(file_path, pattern):
                 return True
@@ -102,10 +101,10 @@ class GenieStructure:
     This value object defines the allowed subdirectories within the
     /genie/ workspace and their intended purposes.
     """
-    allowed_paths: List[str]
-    
+    allowed_paths: list[str]
+
     @classmethod
-    def default(cls) -> 'GenieStructure':
+    def default(cls) -> "GenieStructure":
         """Create default genie structure based on CLAUDE.md rules.
         
         Returns:
@@ -119,7 +118,7 @@ class GenieStructure:
             "/genie/experiments/", # Prototype and test files
             "/genie/knowledge/",   # Learning and wisdom storage
         ])
-    
+
     def is_valid_genie_path(self, file_path: str) -> bool:
         """Check if a file path follows proper /genie/ structure.
         
@@ -131,13 +130,13 @@ class GenieStructure:
         """
         if not file_path.startswith("/genie/"):
             return False
-        
+
         for allowed_path in self.allowed_paths:
             if file_path.startswith(allowed_path):
                 return True
-        
+
         return False
-    
+
     def get_suggested_genie_path(self, filename: str) -> str:
         """Suggest appropriate /genie/ path based on filename patterns.
         
@@ -148,25 +147,24 @@ class GenieStructure:
             Suggested full path within genie structure.
         """
         filename_lower = filename.lower()
-        
+
         # Pattern-based suggestions (order matters - more specific patterns first)
         if any(word in filename_lower for word in ["plan", "wish", "todo"]):
             return f"/genie/wishes/{filename}"
-        elif any(word in filename_lower for word in ["design", "architecture", "ddd", "spec"]):
+        if any(word in filename_lower for word in ["design", "architecture", "ddd", "spec"]):
             return f"/genie/docs/{filename}"
-        elif any(word in filename_lower for word in ["idea", "analysis", "brain", "think"]):
+        if any(word in filename_lower for word in ["idea", "analysis", "brain", "think"]):
             return f"/genie/ideas/{filename}"
-        elif any(word in filename_lower for word in ["experiment", "prototype", "trial"]):
+        if any(word in filename_lower for word in ["experiment", "prototype", "trial"]):
             return f"/genie/experiments/{filename}"
-        elif any(word in filename_lower for word in ["report", "complete", "summary", "result"]):
+        if any(word in filename_lower for word in ["report", "complete", "summary", "result"]):
             return f"/genie/reports/{filename}"
-        elif any(word in filename_lower for word in ["learn", "knowledge", "pattern", "wisdom"]):
+        if any(word in filename_lower for word in ["learn", "knowledge", "pattern", "wisdom"]):
             return f"/genie/knowledge/{filename}"
-        elif any(word in filename_lower for word in ["test"]):
+        if any(word in filename_lower for word in ["test"]):
             return f"/genie/experiments/{filename}"
-        else:
-            # Default to docs for unclassified files
-            return f"/genie/docs/{filename}"
+        # Default to docs for unclassified files
+        return f"/genie/docs/{filename}"
 
 
 @dataclass(frozen=True)
@@ -177,12 +175,12 @@ class ValidationConfig:
     the behavior of the validation system.
     """
     enforce_genie_structure: bool
-    allow_root_md_files: List[str]
-    custom_whitelist_patterns: List[str]
+    allow_root_md_files: list[str]
+    custom_whitelist_patterns: list[str]
     strict_mode: bool
-    
+
     @classmethod
-    def default(cls) -> 'ValidationConfig':
+    def default(cls) -> "ValidationConfig":
         """Create default validation configuration.
         
         Returns:
@@ -194,7 +192,7 @@ class ValidationConfig:
             custom_whitelist_patterns=[],
             strict_mode=True
         )
-    
+
     def is_allowed_root_md(self, filename: str) -> bool:
         """Check if markdown file is allowed at root level.
         

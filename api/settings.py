@@ -1,5 +1,5 @@
 import os
-from typing import Any, Type
+from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_core.core_schema import FieldValidationInfo
@@ -34,7 +34,7 @@ class ApiSettings(BaseSettings):
     cors_origin_list: list[str] | None = Field(None, validate_default=True)
 
     @field_validator("environment")
-    def validate_environment(cls: Type["ApiSettings"], environment: str) -> str:  # noqa: N805
+    def validate_environment(cls: type["ApiSettings"], environment: str) -> str:  # noqa: N805
         """Validate environment and enforce production security requirements."""
 
         valid_environments = ["development", "staging", "production"]
@@ -50,14 +50,14 @@ class ApiSettings(BaseSettings):
                     "Production environment requires a valid HIVE_API_KEY. "
                     "Update your .env file with a secure API key."
                 )
-            
+
             # Note: Authentication is automatically enabled in production regardless of HIVE_AUTH_DISABLED
             # This is handled in AuthService, no validation needed here
-            
+
         return environment
 
     @field_validator("cors_origin_list", mode="before")
-    def set_cors_origin_list(cls: Type["ApiSettings"], _cors_origin_list: Any, info: FieldValidationInfo) -> list[str]:  # noqa: N805
+    def set_cors_origin_list(cls: type["ApiSettings"], _cors_origin_list: Any, info: FieldValidationInfo) -> list[str]:  # noqa: N805
         """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
         environment = info.data.get(
             "environment", os.getenv("HIVE_ENVIRONMENT", "development")

@@ -1,15 +1,14 @@
 # Template Tool Implementation
 # Foundational template for creating new specialized tools
 
-from typing import Any, Dict, Optional
+from typing import Any
 
-from lib.logging import logger
 from ai.tools.base_tool import BaseTool
+from lib.logging import logger
 
 
 class TemplateTool(BaseTool):
-    """
-    Template Tool - Foundational template for specialized tool development.
+    """Template Tool - Foundational template for specialized tool development.
     
     This tool provides standard patterns for tool initialization, configuration
     management, execution frameworks, and result handling that can be customized
@@ -17,8 +16,7 @@ class TemplateTool(BaseTool):
     """
 
     def initialize(self, **kwargs) -> None:
-        """
-        Initialize template tool functionality.
+        """Initialize template tool functionality.
         
         This method handles template-specific initialization and can be
         customized for specialized tool requirements.
@@ -30,22 +28,22 @@ class TemplateTool(BaseTool):
         self.timeout_seconds = kwargs.get("timeout_seconds", 30)
         self.max_retries = kwargs.get("max_retries", 3)
         self.debug_mode = kwargs.get("debug_mode", False)
-        
+
         # Load configuration parameters if available
         if self.config:
             params = self.config.parameters
             self.timeout_seconds = params.get("timeout_seconds", self.timeout_seconds)
             self.max_retries = params.get("max_retries", self.max_retries)
             self.debug_mode = params.get("debug_mode", self.debug_mode)
-        
+
         # Template-specific initialization
         self._setup_template_resources()
-        
+
         # Mark as initialized
         self._is_initialized = True
-        
+
         if self.debug_mode:
-            logger.info("Template tool initialized", 
+            logger.info("Template tool initialized",
                        tool_id=self.config.tool_id if self.config else "template-tool",
                        timeout=self.timeout_seconds,
                        max_retries=self.max_retries)
@@ -55,16 +53,15 @@ class TemplateTool(BaseTool):
         # Template resource initialization
         self._resource_cache = {}
         self._execution_history = []
-        
+
         # Example: Initialize any required services, connections, etc.
         # This is where you would set up database connections, API clients,
         # file systems, or other resources your tool needs
-        
+
         logger.debug("Template resources initialized")
 
-    def execute(self, input_data: str, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Execute the template tool functionality.
+    def execute(self, input_data: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute the template tool functionality.
         
         This is the main execution method that should be customized for
         each specific tool implementation.
@@ -78,17 +75,17 @@ class TemplateTool(BaseTool):
         """
         if not self._is_initialized:
             raise RuntimeError("Tool not initialized. Call initialize() first.")
-        
+
         # Merge options with default configuration
         execution_options = self._merge_options(options or {})
-        
+
         # Record execution start
         execution_id = len(self._execution_history) + 1
-        
+
         try:
             # Template execution logic
             result = self._process_input(input_data, execution_options)
-            
+
             # Prepare success response
             response = {
                 "status": "success",
@@ -101,7 +98,7 @@ class TemplateTool(BaseTool):
                     "execution_time": "placeholder"  # In real implementation, measure actual time
                 }
             }
-            
+
             # Store execution history
             self._execution_history.append({
                 "execution_id": execution_id,
@@ -109,14 +106,14 @@ class TemplateTool(BaseTool):
                 "input_data": input_data[:100] + "..." if len(str(input_data)) > 100 else input_data,
                 "result_summary": str(result)[:100] + "..." if len(str(result)) > 100 else str(result)
             })
-            
+
             if self.debug_mode:
                 logger.info("Template tool execution completed",
                            execution_id=execution_id,
                            status="success")
-            
+
             return response
-            
+
         except Exception as e:
             # Handle execution errors
             error_response = {
@@ -129,7 +126,7 @@ class TemplateTool(BaseTool):
                     "options_used": execution_options
                 }
             }
-            
+
             # Store error in execution history
             self._execution_history.append({
                 "execution_id": execution_id,
@@ -137,16 +134,15 @@ class TemplateTool(BaseTool):
                 "input_data": input_data[:100] + "..." if len(str(input_data)) > 100 else input_data,
                 "error": str(e)
             })
-            
+
             logger.error("Template tool execution failed",
                         execution_id=execution_id,
                         error=str(e))
-            
+
             return error_response
 
-    def _process_input(self, input_data: str, options: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Process input data according to template logic.
+    def _process_input(self, input_data: str, options: dict[str, Any]) -> dict[str, Any]:
+        """Process input data according to template logic.
         
         This method should be customized for each specific tool implementation.
         
@@ -158,7 +154,7 @@ class TemplateTool(BaseTool):
             Processed result
         """
         # TEMPLATE IMPLEMENTATION - CUSTOMIZE FOR YOUR TOOL
-        
+
         # Example processing logic
         processed_data = {
             "original_input": input_data,
@@ -167,32 +163,32 @@ class TemplateTool(BaseTool):
             "options_applied": options,
             "template_version": self.config.parameters.get("template_version", "1.0.0") if self.config else "1.0.0"
         }
-        
+
         # Example: Apply any transformations, calculations, or business logic here
         if "transform" in options:
             processed_data["transformation"] = f"Applied {options['transform']} to: {input_data}"
-        
-        if "analyze" in options and options["analyze"]:
+
+        if options.get("analyze"):
             processed_data["analysis"] = {
                 "input_type": type(input_data).__name__,
                 "input_length": len(str(input_data)),
                 "contains_numbers": any(char.isdigit() for char in str(input_data)),
                 "contains_letters": any(char.isalpha() for char in str(input_data))
             }
-        
+
         return processed_data
 
-    def _merge_options(self, options: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_options(self, options: dict[str, Any]) -> dict[str, Any]:
         """Merge execution options with default configuration"""
         default_options = {
             "timeout": self.timeout_seconds,
             "retries": self.max_retries,
             "debug": self.debug_mode
         }
-        
+
         # Merge with provided options (provided options take precedence)
         merged_options = {**default_options, **options}
-        
+
         return merged_options
 
     def get_execution_history(self) -> list:
@@ -204,15 +200,14 @@ class TemplateTool(BaseTool):
         self._execution_history.clear()
         logger.info("Execution history cleared")
 
-    def get_status(self) -> Dict[str, Any]:
-        """
-        Get tool status information.
+    def get_status(self) -> dict[str, Any]:
+        """Get tool status information.
         
         Returns:
             Dictionary with current tool status and statistics
         """
         base_info = self.get_info()
-        
+
         # Add template-specific status information
         template_status = {
             **base_info,
@@ -225,5 +220,5 @@ class TemplateTool(BaseTool):
                 "debug_mode": self.debug_mode
             }
         }
-        
+
         return template_status

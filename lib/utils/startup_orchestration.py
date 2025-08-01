@@ -277,16 +277,16 @@ async def run_version_synchronization(
     """
     # Check if dev mode is enabled (single feature flag)
     from lib.versioning.dev_mode import DevMode
-    
+
     if DevMode.is_enabled():
         logger.info(
-            "🔄 Version synchronization skipped - DEV MODE enabled", 
+            "🔄 Version synchronization skipped - DEV MODE enabled",
             mode=DevMode.get_mode_description(),
             discovered_components=registries.summary,
             note="Using YAML-only configuration"
         )
         return None
-    
+
     if not db_url:
         logger.warning(
             "Version synchronization skipped - HIVE_DATABASE_URL not configured"

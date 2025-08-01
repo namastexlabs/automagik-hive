@@ -1,5 +1,4 @@
-"""
-Template Workflow - Comprehensive Agno Workflows 2.0 Example
+"""Template Workflow - Comprehensive Agno Workflows 2.0 Example
 ============================================================
 
 This template demonstrates all key features of Agno Workflows 2.0:
@@ -23,7 +22,6 @@ from lib.logging import logger
 
 def create_template_model():
     """Create model for template workflow using dynamic resolution"""
-
     return resolve_model(
         model_id=get_default_model_id(),  # Use environment-based default
         temperature=0.7,
@@ -199,7 +197,6 @@ def execute_completion_step(step_input: StepInput) -> StepOutput:
 # Factory function to create workflow
 def get_template_workflow_workflow(**kwargs) -> Workflow:
     """Factory function to create template workflow"""
-
     # Create workflow with step-based architecture
     workflow = Workflow(
         name="template_workflow",
@@ -241,7 +238,6 @@ if __name__ == "__main__":
 
     async def test_template_workflow():
         """Test template workflow execution"""
-
         test_input = """
         This is a test input for the template workflow.
         It demonstrates the step-based execution pattern with:

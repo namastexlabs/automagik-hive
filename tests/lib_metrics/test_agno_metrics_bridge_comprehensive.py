@@ -6,8 +6,7 @@ Focuses on metrics bridge functionality, Agno integration, metric collection,
 and bridge patterns for improved test coverage.
 """
 
-import pytest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 from lib.metrics.agno_metrics_bridge import AgnoMetricsBridge
 from lib.metrics.config import MetricsConfig
@@ -53,35 +52,35 @@ class TestAgnoResponseDetection:
         mock_response = Mock()
         mock_response.run_response = Mock()
         mock_response.run_response.metrics = {"input_tokens": [100], "output_tokens": [50]}
-        
+
         bridge = AgnoMetricsBridge()
         assert bridge._is_agno_response(mock_response) is True
 
     def test_is_agno_response_with_session_metrics(self):
         """Test detection of AGNO response with session_metrics."""
         # Mock AGNO response with session_metrics only (no run_response)
-        mock_response = Mock(spec=['session_metrics'])
+        mock_response = Mock(spec=["session_metrics"])
         mock_response.session_metrics = Mock()
         mock_response.session_metrics.input_tokens = 100
-        
+
         bridge = AgnoMetricsBridge()
         assert bridge._is_agno_response(mock_response) is True
 
     def test_is_agno_response_with_direct_metrics(self):
         """Test detection of AGNO response with direct metrics."""
         # Mock AGNO response with direct metrics dict only (no run_response or session_metrics)
-        mock_response = Mock(spec=['metrics'])
+        mock_response = Mock(spec=["metrics"])
         mock_response.metrics = {"input_tokens": 100, "output_tokens": 50}
-        
+
         bridge = AgnoMetricsBridge()
         assert bridge._is_agno_response(mock_response) is True
 
     def test_is_agno_response_without_run_response_attr(self):
         """Test detection fails when run_response missing metrics attr."""
         # Mock response with run_response but no metrics - use spec to avoid attributes
-        mock_response = Mock(spec=['run_response'])
+        mock_response = Mock(spec=["run_response"])
         mock_response.run_response = Mock(spec=[])  # run_response without metrics
-        
+
         bridge = AgnoMetricsBridge()
         assert bridge._is_agno_response(mock_response) is False
 
@@ -92,7 +91,7 @@ class TestAgnoResponseDetection:
         mock_response.metrics = "not_a_dict"
         del mock_response.run_response
         del mock_response.session_metrics
-        
+
         bridge = AgnoMetricsBridge()
         assert bridge._is_agno_response(mock_response) is False
 
@@ -104,7 +103,7 @@ class TestAgnoResponseDetection:
         del mock_response.run_response
         del mock_response.session_metrics
         del mock_response.metrics
-        
+
         bridge = AgnoMetricsBridge()
         assert bridge._is_agno_response(mock_response) is False
 
@@ -138,10 +137,10 @@ class TestAgnoNativeMetricsExtraction:
         mock_session_metrics.time = 2.5
         mock_session_metrics.time_to_first_token = 0.8
         mock_response.session_metrics = mock_session_metrics
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Verify all session metrics are extracted
         assert metrics["input_tokens"] == 150
         assert metrics["output_tokens"] == 75
@@ -168,10 +167,10 @@ class TestAgnoNativeMetricsExtraction:
         mock_session_metrics.completion_tokens_details = {"text": 40, "audio": 10}
         mock_session_metrics.additional_metrics = {"custom_metric": 42}
         mock_response.session_metrics = mock_session_metrics
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Verify detailed metrics are extracted
         assert metrics["prompt_tokens_details"] == {"reasoning": 20, "cached": 10}
         assert metrics["completion_tokens_details"] == {"text": 40, "audio": 10}
@@ -180,7 +179,7 @@ class TestAgnoNativeMetricsExtraction:
     def test_extract_agno_native_metrics_with_run_response_metrics(self):
         """Test extraction from run_response.metrics (secondary method)."""
         # Mock AGNO response with run_response.metrics - use spec to control attributes
-        mock_response = Mock(spec=['run_response'])
+        mock_response = Mock(spec=["run_response"])
         mock_response.run_response = Mock()
         mock_response.run_response.metrics = {
             "input_tokens": [100, 50, 25],  # List values to sum
@@ -188,10 +187,10 @@ class TestAgnoNativeMetricsExtraction:
             "time": [1.2, 0.8],
             "custom_metric": ["value1", "value2"],  # Non-summable, use last value
         }
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Verify list aggregation
         assert metrics["input_tokens"] == 175  # 100 + 50 + 25
         assert metrics["output_tokens"] == 50   # 30 + 20
@@ -208,10 +207,10 @@ class TestAgnoNativeMetricsExtraction:
             "string_list": ["a", "b", "c"],       # Non-numeric list
         }
         del mock_response.session_metrics
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Should use last value for non-summable lists
         assert metrics["mixed_tokens"] == 50  # Last valid value
         assert metrics["string_list"] == "c"  # Last value
@@ -227,10 +226,10 @@ class TestAgnoNativeMetricsExtraction:
             "string_value": "test",  # String value
         }
         del mock_response.session_metrics
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Should extract single values directly
         assert metrics["single_value"] == 42
         assert metrics["zero_value"] == 0
@@ -247,10 +246,10 @@ class TestAgnoNativeMetricsExtraction:
         }
         del mock_response.session_metrics
         del mock_response.run_response
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Verify direct metrics are extracted
         assert metrics["input_tokens"] == 200
         assert metrics["output_tokens"] == 100
@@ -264,10 +263,10 @@ class TestAgnoNativeMetricsExtraction:
         mock_response.metrics = {"input_tokens": 100}
         del mock_response.session_metrics
         del mock_response.run_response
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         assert metrics["model"] == "gpt-4-turbo"
 
     def test_extract_agno_native_metrics_with_run_response_model(self):
@@ -279,10 +278,10 @@ class TestAgnoNativeMetricsExtraction:
         mock_response.metrics = {"input_tokens": 100}
         del mock_response.session_metrics
         del mock_response.model
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         assert metrics["model"] == "claude-3-opus"
 
     def test_extract_agno_native_metrics_with_response_content(self):
@@ -293,10 +292,10 @@ class TestAgnoNativeMetricsExtraction:
         mock_response.metrics = {"input_tokens": 100}
         del mock_response.session_metrics
         del mock_response.run_response
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         assert metrics["response_length"] == len("This is a test response content")
 
     def test_extract_agno_native_metrics_with_run_response_content(self):
@@ -308,10 +307,10 @@ class TestAgnoNativeMetricsExtraction:
         mock_response.metrics = {"input_tokens": 100}
         del mock_response.session_metrics
         del mock_response.content
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         assert metrics["response_length"] == len("Run response content")
 
 
@@ -323,10 +322,10 @@ class TestBasicMetricsExtraction:
         mock_response = Mock()
         mock_response.content = "This is basic response content"
         mock_response.model = "basic-model"
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_basic_metrics(mock_response)
-        
+
         assert metrics["response_length"] == len("This is basic response content")
         assert metrics["model"] == "basic-model"
 
@@ -338,10 +337,10 @@ class TestBasicMetricsExtraction:
         mock_usage.output_tokens = 60
         mock_usage.total_tokens = 180
         mock_response.usage = mock_usage
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_basic_metrics(mock_response)
-        
+
         assert metrics["input_tokens"] == 120
         assert metrics["output_tokens"] == 60
         assert metrics["total_tokens"] == 180
@@ -353,10 +352,10 @@ class TestBasicMetricsExtraction:
         del mock_response.content
         del mock_response.model
         del mock_response.usage
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_basic_metrics(mock_response)
-        
+
         # Should return empty dict without errors
         assert metrics == {}
 
@@ -368,14 +367,14 @@ class TestConfigurationFiltering:
         """Test filtering without configuration returns all metrics."""
         bridge = AgnoMetricsBridge(config=None)
         bridge.config = None
-        
+
         test_metrics = {
             "input_tokens": 100,
             "output_tokens": 50,
             "time": 1.5,
             "model": "gpt-4"
         }
-        
+
         filtered = bridge._filter_by_config(test_metrics)
         assert filtered == test_metrics
 
@@ -389,14 +388,14 @@ class TestConfigurationFiltering:
             collect_content=False
         )
         bridge = AgnoMetricsBridge(config=config)
-        
+
         test_metrics = {
             "model": "gpt-4",
             "response_length": 100,
             "input_tokens": 50,  # Should be filtered out
             "time": 1.5         # Should be filtered out
         }
-        
+
         filtered = bridge._filter_by_config(test_metrics)
         assert "model" in filtered
         assert "response_length" in filtered
@@ -407,7 +406,7 @@ class TestConfigurationFiltering:
         """Test filtering of token metrics."""
         config = MetricsConfig(collect_tokens=True, collect_time=False)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         test_metrics = {
             "input_tokens": 100,
             "output_tokens": 50,
@@ -424,9 +423,9 @@ class TestConfigurationFiltering:
             "completion_tokens_details": {"text": 50},
             "time": 1.5  # Should be filtered out
         }
-        
+
         filtered = bridge._filter_by_config(test_metrics)
-        
+
         # All token metrics should be included
         token_fields = [
             "input_tokens", "output_tokens", "total_tokens", "prompt_tokens",
@@ -436,7 +435,7 @@ class TestConfigurationFiltering:
         ]
         for field in token_fields:
             assert field in filtered
-        
+
         # Time should be filtered out since collect_time=False
         assert "time" not in filtered
 
@@ -444,13 +443,13 @@ class TestConfigurationFiltering:
         """Test filtering of time metrics."""
         config = MetricsConfig(collect_time=True, collect_tokens=False)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         test_metrics = {
             "time": 2.5,
             "time_to_first_token": 0.8,
             "input_tokens": 100,  # Should be filtered out
         }
-        
+
         filtered = bridge._filter_by_config(test_metrics)
         assert "time" in filtered
         assert "time_to_first_token" in filtered
@@ -460,14 +459,14 @@ class TestConfigurationFiltering:
         """Test filtering of tool metrics."""
         config = MetricsConfig(collect_tools=True, collect_tokens=False)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         test_metrics = {
             "tools": ["tool1", "tool2"],
             "tool_calls": 3,
             "tool_executions": 2,
             "input_tokens": 100,  # Should be filtered out
         }
-        
+
         filtered = bridge._filter_by_config(test_metrics)
         assert "tools" in filtered
         assert "tool_calls" in filtered
@@ -478,14 +477,14 @@ class TestConfigurationFiltering:
         """Test filtering of event metrics."""
         config = MetricsConfig(collect_events=True, collect_tokens=False)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         test_metrics = {
             "events": ["event1", "event2"],
             "messages": ["msg1", "msg2"],
             "message_count": 2,
             "input_tokens": 100,  # Should be filtered out
         }
-        
+
         filtered = bridge._filter_by_config(test_metrics)
         assert "events" in filtered
         assert "messages" in filtered
@@ -496,14 +495,14 @@ class TestConfigurationFiltering:
         """Test filtering of content metrics."""
         config = MetricsConfig(collect_content=True, collect_tokens=False)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         test_metrics = {
             "additional_metrics": {"custom": "value"},
             "content_type": "text",
             "content_size": 1024,
             "input_tokens": 100,  # Should be filtered out
         }
-        
+
         filtered = bridge._filter_by_config(test_metrics)
         assert "additional_metrics" in filtered
         assert "content_type" in filtered
@@ -521,14 +520,14 @@ class TestExtractMetricsMainMethod:
         mock_response.session_metrics = Mock()
         mock_response.session_metrics.input_tokens = 100
         mock_response.session_metrics.output_tokens = 50
-        
+
         bridge = AgnoMetricsBridge()
-        
-        with patch.object(bridge, '_is_agno_response', return_value=True) as mock_is_agno, \
-             patch.object(bridge, '_extract_agno_native_metrics', return_value={"input_tokens": 100}) as mock_extract_agno:
-            
+
+        with patch.object(bridge, "_is_agno_response", return_value=True) as mock_is_agno, \
+             patch.object(bridge, "_extract_agno_native_metrics", return_value={"input_tokens": 100}) as mock_extract_agno:
+
             metrics = bridge.extract_metrics(mock_response)
-            
+
             mock_is_agno.assert_called_once_with(mock_response)
             mock_extract_agno.assert_called_once_with(mock_response)
             assert metrics == {"input_tokens": 100}
@@ -537,14 +536,14 @@ class TestExtractMetricsMainMethod:
         """Test extract_metrics with non-AGNO response."""
         mock_response = Mock()
         mock_response.content = "Basic response"
-        
+
         bridge = AgnoMetricsBridge()
-        
-        with patch.object(bridge, '_is_agno_response', return_value=False) as mock_is_agno, \
-             patch.object(bridge, '_extract_basic_metrics', return_value={"response_length": 14}) as mock_extract_basic:
-            
+
+        with patch.object(bridge, "_is_agno_response", return_value=False) as mock_is_agno, \
+             patch.object(bridge, "_extract_basic_metrics", return_value={"response_length": 14}) as mock_extract_basic:
+
             metrics = bridge.extract_metrics(mock_response)
-            
+
             mock_is_agno.assert_called_once_with(mock_response)
             mock_extract_basic.assert_called_once_with(mock_response)
             assert metrics == {"response_length": 14}
@@ -554,15 +553,15 @@ class TestExtractMetricsMainMethod:
         mock_response = Mock()
         mock_response.session_metrics = Mock()
         mock_response.session_metrics.input_tokens = 100
-        
+
         bridge = AgnoMetricsBridge()
         yaml_overrides = {"custom_field": "custom_value", "input_tokens": 200}
-        
-        with patch.object(bridge, '_is_agno_response', return_value=True), \
-             patch.object(bridge, '_extract_agno_native_metrics', return_value={"input_tokens": 100}):
-            
+
+        with patch.object(bridge, "_is_agno_response", return_value=True), \
+             patch.object(bridge, "_extract_agno_native_metrics", return_value={"input_tokens": 100}):
+
             metrics = bridge.extract_metrics(mock_response, yaml_overrides=yaml_overrides)
-            
+
             # YAML overrides should be applied
             assert metrics["custom_field"] == "custom_value"
             assert metrics["input_tokens"] == 200  # Override should win
@@ -571,58 +570,58 @@ class TestExtractMetricsMainMethod:
         """Test extract_metrics with configuration filtering."""
         config = MetricsConfig(collect_tokens=True, collect_time=False)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         mock_response = Mock()
-        
-        with patch.object(bridge, '_is_agno_response', return_value=True), \
-             patch.object(bridge, '_extract_agno_native_metrics', return_value={"input_tokens": 100, "time": 1.5}), \
-             patch.object(bridge, '_filter_by_config', return_value={"input_tokens": 100}) as mock_filter:
-            
+
+        with patch.object(bridge, "_is_agno_response", return_value=True), \
+             patch.object(bridge, "_extract_agno_native_metrics", return_value={"input_tokens": 100, "time": 1.5}), \
+             patch.object(bridge, "_filter_by_config", return_value={"input_tokens": 100}) as mock_filter:
+
             metrics = bridge.extract_metrics(mock_response)
-            
+
             mock_filter.assert_called_once_with({"input_tokens": 100, "time": 1.5})
             assert metrics == {"input_tokens": 100}
 
     def test_extract_metrics_error_handling(self):
         """Test extract_metrics error handling."""
         mock_response = Mock()
-        
+
         bridge = AgnoMetricsBridge()
-        
+
         # Mock _is_agno_response to raise an exception
-        with patch.object(bridge, '_is_agno_response', side_effect=Exception("Test error")):
+        with patch.object(bridge, "_is_agno_response", side_effect=Exception("Test error")):
             metrics = bridge.extract_metrics(mock_response)
-            
+
             # Should return empty dict on error
             assert metrics == {}
 
     def test_extract_metrics_logging_agno_response(self):
         """Test extract_metrics logs correct message for AGNO response."""
         mock_response = Mock()
-        
+
         bridge = AgnoMetricsBridge()
-        
-        with patch.object(bridge, '_is_agno_response', return_value=True), \
-             patch.object(bridge, '_extract_agno_native_metrics', return_value={"input_tokens": 100, "output_tokens": 50}), \
-             patch('lib.metrics.agno_metrics_bridge.logger') as mock_logger:
-            
+
+        with patch.object(bridge, "_is_agno_response", return_value=True), \
+             patch.object(bridge, "_extract_agno_native_metrics", return_value={"input_tokens": 100, "output_tokens": 50}), \
+             patch("lib.metrics.agno_metrics_bridge.logger") as mock_logger:
+
             bridge.extract_metrics(mock_response)
-            
+
             # Should log AGNO native metrics message
             mock_logger.debug.assert_called_with("🔧 Extracted 2 AGNO native metrics fields")
 
     def test_extract_metrics_logging_basic_response(self):
         """Test extract_metrics logs correct message for basic response."""
         mock_response = Mock()
-        
+
         bridge = AgnoMetricsBridge()
-        
-        with patch.object(bridge, '_is_agno_response', return_value=False), \
-             patch.object(bridge, '_extract_basic_metrics', return_value={"response_length": 100}), \
-             patch('lib.metrics.agno_metrics_bridge.logger') as mock_logger:
-            
+
+        with patch.object(bridge, "_is_agno_response", return_value=False), \
+             patch.object(bridge, "_extract_basic_metrics", return_value={"response_length": 100}), \
+             patch("lib.metrics.agno_metrics_bridge.logger") as mock_logger:
+
             bridge.extract_metrics(mock_response)
-            
+
             # Should log basic metrics fallback message
             mock_logger.debug.assert_called_with("🔧 Using basic metrics fallback - 1 fields")
 
@@ -634,13 +633,13 @@ class TestGetMetricsInfo:
         """Test get_metrics_info returns correct structure."""
         bridge = AgnoMetricsBridge()
         info = bridge.get_metrics_info()
-        
+
         # Verify top-level structure
         assert "bridge_version" in info
         assert "metrics_source" in info
         assert "capabilities" in info
         assert "advantages_over_manual" in info
-        
+
         # Verify version and source
         assert info["bridge_version"] == "1.0.0"
         assert info["metrics_source"] == "agno_native"
@@ -649,9 +648,9 @@ class TestGetMetricsInfo:
         """Test get_metrics_info capabilities section."""
         bridge = AgnoMetricsBridge()
         info = bridge.get_metrics_info()
-        
+
         capabilities = info["capabilities"]
-        
+
         # Verify capabilities structure
         assert "token_metrics" in capabilities
         assert "timing_metrics" in capabilities
@@ -660,7 +659,7 @@ class TestGetMetricsInfo:
         assert "configuration_filtering" in capabilities
         assert "yaml_overrides" in capabilities
         assert "fallback_support" in capabilities
-        
+
         # Verify specific capabilities
         assert capabilities["configuration_filtering"] is True
         assert capabilities["yaml_overrides"] is True
@@ -670,9 +669,9 @@ class TestGetMetricsInfo:
         """Test get_metrics_info token metrics list."""
         bridge = AgnoMetricsBridge()
         info = bridge.get_metrics_info()
-        
+
         token_metrics = info["capabilities"]["token_metrics"]
-        
+
         # Verify comprehensive token metrics support
         expected_tokens = [
             "input_tokens", "output_tokens", "total_tokens", "prompt_tokens",
@@ -680,7 +679,7 @@ class TestGetMetricsInfo:
             "output_audio_tokens", "cached_tokens", "cache_write_tokens",
             "reasoning_tokens"
         ]
-        
+
         for token_type in expected_tokens:
             assert token_type in token_metrics
 
@@ -688,13 +687,13 @@ class TestGetMetricsInfo:
         """Test get_metrics_info advantages section."""
         bridge = AgnoMetricsBridge()
         info = bridge.get_metrics_info()
-        
+
         advantages = info["advantages_over_manual"]
-        
+
         # Verify advantages list is comprehensive
         assert isinstance(advantages, list)
         assert len(advantages) > 5  # Should have multiple advantages
-        
+
         # Verify key advantages are mentioned
         advantages_text = " ".join(advantages).lower()
         assert "comprehensive" in advantages_text
@@ -710,7 +709,7 @@ class TestEdgeCasesAndErrorHandling:
         """Test extract_metrics handles None response."""
         bridge = AgnoMetricsBridge()
         metrics = bridge.extract_metrics(None)
-        
+
         # Should handle gracefully and return empty dict
         assert metrics == {}
 
@@ -721,15 +720,15 @@ class TestEdgeCasesAndErrorHandling:
             def __init__(self):
                 self.input_tokens = 100
                 # All other attributes will raise AttributeError
-        
+
         class MockResponse:
             def __init__(self):
                 self.session_metrics = MockSessionMetrics()
-        
+
         mock_response = MockResponse()
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Should extract available attributes and use 0 for missing ones
         assert metrics["input_tokens"] == 100
         assert metrics["output_tokens"] == 0  # Default value from getattr
@@ -741,10 +740,10 @@ class TestEdgeCasesAndErrorHandling:
         mock_response.run_response = Mock()
         mock_response.run_response.metrics = {}  # Empty dict
         del mock_response.session_metrics
-        
+
         bridge = AgnoMetricsBridge()
         metrics = bridge._extract_agno_native_metrics(mock_response)
-        
+
         # Should handle empty metrics dict
         assert isinstance(metrics, dict)
 
@@ -752,12 +751,12 @@ class TestEdgeCasesAndErrorHandling:
         """Test filtering handles missing metrics gracefully."""
         config = MetricsConfig(collect_tokens=True)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         # Metrics dict missing expected fields
         test_metrics = {"unexpected_field": "value"}
-        
+
         filtered = bridge._filter_by_config(test_metrics)
-        
+
         # Should not crash and should handle gracefully
         assert isinstance(filtered, dict)
         assert "unexpected_field" not in filtered  # Should be filtered out
@@ -779,7 +778,7 @@ class TestIntegrationScenarios:
         mock_response.session_metrics = mock_session_metrics
         mock_response.model = "gpt-4"
         mock_response.content = "This is a comprehensive test response"
-        
+
         # Test with full configuration
         config = MetricsConfig(
             collect_tokens=True,
@@ -789,12 +788,12 @@ class TestIntegrationScenarios:
             collect_content=True
         )
         bridge = AgnoMetricsBridge(config=config)
-        
+
         # Test extraction with YAML overrides
         yaml_overrides = {"experiment_id": "test_123", "custom_metric": 42}
-        
+
         metrics = bridge.extract_metrics(mock_response, yaml_overrides=yaml_overrides)
-        
+
         # Verify comprehensive metrics extraction
         assert metrics["input_tokens"] == 150
         assert metrics["output_tokens"] == 75
@@ -809,22 +808,22 @@ class TestIntegrationScenarios:
     def test_basic_response_fallback_workflow(self):
         """Test complete workflow with basic non-AGNO response."""
         # Create basic response mock without AGNO attributes
-        mock_response = Mock(spec=['content', 'model', 'usage'])
+        mock_response = Mock(spec=["content", "model", "usage"])
         mock_response.content = "Basic response content"
         mock_response.model = "basic-model"
         mock_usage = Mock()
         mock_usage.input_tokens = 80
         mock_usage.output_tokens = 40
         mock_response.usage = mock_usage
-        
+
         config = MetricsConfig(collect_tokens=True)
         bridge = AgnoMetricsBridge(config=config)
-        
+
         # Ensure it's not detected as AGNO response
         assert bridge._is_agno_response(mock_response) is False
-        
+
         metrics = bridge.extract_metrics(mock_response)
-        
+
         # Verify basic metrics extraction
         assert metrics["response_length"] == len("Basic response content")
         assert metrics["model"] == "basic-model"

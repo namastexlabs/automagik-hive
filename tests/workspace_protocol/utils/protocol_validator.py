@@ -6,11 +6,10 @@ standardized workspace interaction protocols.
 """
 
 import json
-import re
 import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union, Tuple
+import re
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -18,7 +17,7 @@ class ValidationResult:
     """Result of a protocol validation check."""
     passed: bool
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 class ProtocolValidator:
@@ -30,7 +29,7 @@ class ProtocolValidator:
         self.valid_statuses = ["success", "error", "in_progress"]
         self.valid_directories = ["/genie/ideas/", "/genie/wishes/"]
 
-    def extract_json_response(self, response: str) -> Optional[Dict[str, Any]]:
+    def extract_json_response(self, response: str) -> dict[str, Any] | None:
         """
         Extract JSON response object from agent response text.
         
@@ -49,7 +48,7 @@ class ProtocolValidator:
             r'\{[^{}]*"status"[^{}]*\}',
             r'\{.*?"status".*?\}',
             # Look for JSON blocks in code fences
-            r'```json\s*(\{.*?\})\s*```',
+            r"```json\s*(\{.*?\})\s*```",
             r'```\s*(\{.*?"status".*?\})\s*```'
         ]
 
@@ -58,7 +57,7 @@ class ProtocolValidator:
             for match in matches:
                 try:
                     # If pattern captured group, use that; otherwise use full match
-                    json_text = match if isinstance(match, str) and match.startswith('{') else match
+                    json_text = match if isinstance(match, str) and match.startswith("{") else match
                     return json.loads(json_text)
                 except json.JSONDecodeError:
                     continue
@@ -71,7 +70,7 @@ class ProtocolValidator:
 
         return None
 
-    def validate_json_response_format(self, json_data: Dict[str, Any]) -> ValidationResult:
+    def validate_json_response_format(self, json_data: dict[str, Any]) -> ValidationResult:
         """
         Validate that JSON response follows required format.
         
@@ -92,7 +91,7 @@ class ProtocolValidator:
 
         if missing_fields:
             return ValidationResult(
-                False, 
+                False,
                 f"Missing required fields: {', '.join(missing_fields)}",
                 {"missing_fields": missing_fields}
             )
@@ -134,7 +133,7 @@ class ProtocolValidator:
 
         return ValidationResult(True, "JSON response format is valid")
 
-    def validate_artifact_paths(self, artifacts: List[str]) -> ValidationResult:
+    def validate_artifact_paths(self, artifacts: list[str]) -> ValidationResult:
         """
         Validate that artifact paths follow workspace protocol requirements.
         
@@ -163,7 +162,7 @@ class ProtocolValidator:
                 wrong_directory_paths.append(artifact_path)
 
             # Check if file extension is appropriate
-            if "/genie/" in artifact_path and not artifact_path.endswith('.md'):
+            if "/genie/" in artifact_path and not artifact_path.endswith(".md"):
                 invalid_paths.append(artifact_path)
 
         errors = []
@@ -186,8 +185,8 @@ class ProtocolValidator:
 
         return ValidationResult(True, "All artifact paths are valid")
 
-    def validate_context_ingestion_compliance(self, task_prompt: str, 
-                                            json_response: Dict[str, Any]) -> ValidationResult:
+    def validate_context_ingestion_compliance(self, task_prompt: str,
+                                            json_response: dict[str, Any]) -> ValidationResult:
         """
         Validate that agent properly handled context file ingestion.
         
@@ -230,18 +229,17 @@ class ProtocolValidator:
                     {"missing_files": missing_files, "status": status}
                 )
 
-        else:
-            # If files exist, agent should validate successfully (unless other errors)
-            if context_validated is not True and status != "error":
-                return ValidationResult(
-                    False,
-                    "context_validated should be True when context files are accessible",
-                    {"context_files": context_files}
-                )
+        # If files exist, agent should validate successfully (unless other errors)
+        elif context_validated is not True and status != "error":
+            return ValidationResult(
+                False,
+                "context_validated should be True when context files are accessible",
+                {"context_files": context_files}
+            )
 
         return ValidationResult(True, "Context ingestion compliance is valid")
 
-    def validate_artifact_lifecycle_compliance(self, json_response: Dict[str, Any],
+    def validate_artifact_lifecycle_compliance(self, json_response: dict[str, Any],
                                              expected_phase: str = None) -> ValidationResult:
         """
         Validate that artifacts are created in appropriate lifecycle directories.
@@ -305,17 +303,17 @@ class ProtocolValidator:
         violations = []
 
         # Check for pip usage (should use uv instead)
-        if re.search(r'\bpip\s+install\b', response_text, re.IGNORECASE):
+        if re.search(r"\bpip\s+install\b", response_text, re.IGNORECASE):
             violations.append("Found 'pip install' recommendation, should use 'uv add' instead")
 
         # Check for direct python usage (should use 'uv run python')
-        if re.search(r'\bpython\s+[^\s]', response_text) and not re.search(r'uv run python', response_text):
+        if re.search(r"\bpython\s+[^\s]", response_text) and not re.search(r"uv run python", response_text):
             violations.append("Found direct 'python' usage, should use 'uv run python' instead")
 
         # Check for relative paths in file operations
         relative_path_patterns = [
             r'["\']\.\/[^"\']*["\']',  # "./path"
-            r'["\'][^"\'\/][^"\']*\.py["\']',  # "script.py" 
+            r'["\'][^"\'\/][^"\']*\.py["\']',  # "script.py"
         ]
 
         for pattern in relative_path_patterns:
@@ -353,7 +351,7 @@ class ProtocolValidator:
         return ValidationResult(True, "Response conciseness is appropriate")
 
     def run_comprehensive_validation(self, task_prompt: str, agent_response: str,
-                                   expected_phase: str = None) -> Dict[str, ValidationResult]:
+                                   expected_phase: str = None) -> dict[str, ValidationResult]:
         """
         Run comprehensive validation on agent response.
         
@@ -396,7 +394,7 @@ class ProtocolValidator:
 
         return results
 
-    def calculate_compliance_score(self, validation_results: Dict[str, ValidationResult]) -> float:
+    def calculate_compliance_score(self, validation_results: dict[str, ValidationResult]) -> float:
         """
         Calculate overall compliance score from validation results.
         
@@ -414,7 +412,7 @@ class ProtocolValidator:
 
         return passed_checks / total_checks
 
-    def generate_validation_report(self, validation_results: Dict[str, ValidationResult],
+    def generate_validation_report(self, validation_results: dict[str, ValidationResult],
                                  agent_name: str = None) -> str:
         """
         Generate human-readable validation report.
@@ -427,35 +425,35 @@ class ProtocolValidator:
             Formatted validation report
         """
         compliance_score = self.calculate_compliance_score(validation_results)
-        
+
         report = f"""
 WORKSPACE PROTOCOL VALIDATION REPORT
 {'=' * 50}
 """
-        
+
         if agent_name:
             report += f"Agent: {agent_name}\n"
-        
+
         report += f"Overall Compliance: {compliance_score:.1%}\n\n"
 
         for category, result in validation_results.items():
             status = "✓ PASS" if result.passed else "❌ FAIL"
             report += f"{category.replace('_', ' ').title():20} {status:10} {result.message}\n"
-            
+
             if not result.passed and result.details:
                 for key, value in result.details.items():
                     report += f"    {key}: {value}\n"
 
         return report
 
-    def _extract_context_files_from_prompt(self, task_prompt: str) -> List[str]:
+    def _extract_context_files_from_prompt(self, task_prompt: str) -> list[str]:
         """Extract context file paths from task prompt."""
         context_files = []
-        
-        for line in task_prompt.split('\n'):
+
+        for line in task_prompt.split("\n"):
             line = line.strip()
-            if line.startswith('Context: @'):
-                context_path = line[len('Context: @'):]
+            if line.startswith("Context: @"):
+                context_path = line[len("Context: @"):]
                 context_files.append(context_path)
-                
+
         return context_files

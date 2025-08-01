@@ -5,9 +5,8 @@ the pre-commit validation system. It handles detection of staged changes
 and maps Git status codes to domain entities.
 """
 
-import subprocess
 import os
-from typing import List, Optional
+import subprocess
 
 from ..domain.entities import FileChange, FileOperation
 
@@ -19,16 +18,16 @@ class GitAdapter:
     and convert Git information into domain entities that can be used
     by the validation system.
     """
-    
-    def __init__(self, repo_path: Optional[str] = None):
+
+    def __init__(self, repo_path: str | None = None):
         """Initialize Git adapter with optional repository path.
         
         Args:
             repo_path: Path to Git repository, uses current directory if None
         """
         self.repo_path = repo_path or os.getcwd()
-    
-    def get_staged_changes(self) -> List[FileChange]:
+
+    def get_staged_changes(self) -> list[FileChange]:
         """Get list of staged file changes from Git.
         
         Returns:
@@ -46,24 +45,24 @@ class GitAdapter:
                 text=True,
                 check=True
             )
-            
+
             if not result.stdout.strip():
                 return []
-            
+
             changes = []
-            for line in result.stdout.strip().split('\n'):
+            for line in result.stdout.strip().split("\n"):
                 if not line:
                     continue
-                
+
                 try:
                     # Parse Git status line (e.g., "A\tfilename.py" or "M\tpath/file.txt")
-                    parts = line.split('\t', 1)
+                    parts = line.split("\t", 1)
                     if len(parts) != 2:
                         continue
-                        
+
                     status, path = parts
                     operation = self._map_git_status(status)
-                    
+
                     change = FileChange(
                         path=path,
                         operation=operation,
@@ -72,23 +71,22 @@ class GitAdapter:
                         is_directory=self._is_directory(path)
                     )
                     changes.append(change)
-                    
+
                 except ValueError as e:
                     # Skip malformed lines but continue processing
                     print(f"Warning: Skipping malformed Git status line: {line} ({e})")
                     continue
-                
+
             return changes
-            
+
         except subprocess.CalledProcessError as e:
             if e.returncode == 128:
                 raise RuntimeError("Not a Git repository or Git not found")
-            else:
-                raise RuntimeError(f"Git command failed with code {e.returncode}: {e.stderr}")
+            raise RuntimeError(f"Git command failed with code {e.returncode}: {e.stderr}")
         except FileNotFoundError:
             raise RuntimeError("Git command not found. Please ensure Git is installed and in PATH")
-    
-    def get_all_changes(self, compare_ref: str = "HEAD") -> List[FileChange]:
+
+    def get_all_changes(self, compare_ref: str = "HEAD") -> list[FileChange]:
         """Get all changes compared to a specific reference.
         
         Args:
@@ -105,22 +103,22 @@ class GitAdapter:
                 text=True,
                 check=True
             )
-            
+
             if not result.stdout.strip():
                 return []
-            
+
             changes = []
-            for line in result.stdout.strip().split('\n'):
+            for line in result.stdout.strip().split("\n"):
                 if not line:
                     continue
-                
-                parts = line.split('\t', 1)
+
+                parts = line.split("\t", 1)
                 if len(parts) != 2:
                     continue
-                    
+
                 status, path = parts
                 operation = self._map_git_status(status)
-                
+
                 change = FileChange(
                     path=path,
                     operation=operation,
@@ -129,12 +127,12 @@ class GitAdapter:
                     is_directory=self._is_directory(path)
                 )
                 changes.append(change)
-                
+
             return changes
-            
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Git diff command failed: {e}")
-    
+
     def is_git_repository(self) -> bool:
         """Check if current directory is a Git repository.
         
@@ -151,7 +149,7 @@ class GitAdapter:
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
-    
+
     def get_repository_root(self) -> str:
         """Get the root directory of the Git repository.
         
@@ -172,7 +170,7 @@ class GitAdapter:
             return result.stdout.strip()
         except subprocess.CalledProcessError:
             raise RuntimeError("Not in a Git repository")
-    
+
     def _map_git_status(self, status: str) -> FileOperation:
         """Map Git status code to FileOperation enum.
         
@@ -183,19 +181,19 @@ class GitAdapter:
             Corresponding FileOperation enum value
         """
         # Handle multi-character status codes (e.g., "R100")
-        first_char = status[0] if status else 'M'
-        
+        first_char = status[0] if status else "M"
+
         mapping = {
-            'A': FileOperation.CREATE,
-            'M': FileOperation.MODIFY,
-            'D': FileOperation.DELETE,
-            'R': FileOperation.RENAME,
-            'C': FileOperation.CREATE,  # Copy treated as create
-            'T': FileOperation.MODIFY,  # Type change treated as modify
+            "A": FileOperation.CREATE,
+            "M": FileOperation.MODIFY,
+            "D": FileOperation.DELETE,
+            "R": FileOperation.RENAME,
+            "C": FileOperation.CREATE,  # Copy treated as create
+            "T": FileOperation.MODIFY,  # Type change treated as modify
         }
-        
+
         return mapping.get(first_char, FileOperation.MODIFY)
-    
+
     def _is_root_level(self, path: str) -> bool:
         """Check if file path is at repository root level.
         
@@ -206,10 +204,10 @@ class GitAdapter:
             True if file is at root level (no directory separators)
         """
         # Normalize path separators for cross-platform compatibility
-        normalized_path = path.replace('\\', '/')
-        return '/' not in normalized_path
-    
-    def _get_extension(self, path: str) -> Optional[str]:
+        normalized_path = path.replace("\\", "/")
+        return "/" not in normalized_path
+
+    def _get_extension(self, path: str) -> str | None:
         """Extract file extension from path.
         
         Args:
@@ -220,7 +218,7 @@ class GitAdapter:
         """
         _, ext = os.path.splitext(path)
         return ext if ext else None
-    
+
     def _is_directory(self, path: str) -> bool:
         """Determine if path represents a directory.
         
@@ -234,10 +232,10 @@ class GitAdapter:
         full_path = os.path.join(self.repo_path, path)
         if os.path.exists(full_path):
             return os.path.isdir(full_path)
-        
+
         # For non-existent paths, assume directory if ends with /
-        return path.endswith('/') or path.endswith('\\')
-    
+        return path.endswith("/") or path.endswith("\\")
+
     def get_current_branch(self) -> str:
         """Get name of current Git branch.
         
@@ -269,7 +267,7 @@ class GitAdapter:
                 return result.stdout.strip()
             except subprocess.CalledProcessError:
                 raise RuntimeError("Unable to determine current Git branch")
-    
+
     def has_staged_changes(self) -> bool:
         """Check if repository has any staged changes.
         
@@ -279,7 +277,7 @@ class GitAdapter:
         try:
             result = subprocess.run(
                 ["git", "diff", "--cached", "--quiet"],
-                cwd=self.repo_path,
+                check=False, cwd=self.repo_path,
                 capture_output=True
             )
             # Git diff --quiet returns 0 if no differences, 1 if differences

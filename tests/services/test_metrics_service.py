@@ -186,7 +186,7 @@ class TestMetricsService:
         mock_result = AsyncMock()
         mock_result.rowcount = 5
         mock_connection.execute.return_value = mock_result
-        
+
         # Create proper async context manager class
         class MockConnectionAsyncContext:
             async def __aenter__(self):

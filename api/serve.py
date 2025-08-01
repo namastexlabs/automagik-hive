@@ -7,9 +7,10 @@ Production-ready API endpoint using V2 Ana Team architecture
 import asyncio
 import os
 import sys
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from agno.playground import Playground
 from fastapi import FastAPI
@@ -298,12 +299,12 @@ async def _async_create_automagik_api():
         for agent_id, agent_instance in startup_results.registries.agents.items():
             try:
                 # Add metrics service to existing agent if available
-                if hasattr(agent_instance, 'metrics_service') and startup_results.services.metrics_service:
+                if hasattr(agent_instance, "metrics_service") and startup_results.services.metrics_service:
                     agent_instance.metrics_service = startup_results.services.metrics_service
-                
+
                 agents_list.append(agent_instance)
                 logger.debug(f"Agent {agent_id} reused from orchestrated startup")
-                
+
             except Exception as e:
                 logger.warning(
                     f"Failed to configure agent {agent_id} from orchestrated startup: {e}"
@@ -521,9 +522,9 @@ async def _async_create_automagik_api():
 
     # Add custom agent run error handler middleware
     from lib.middleware import AgentRunErrorHandler
-    
+
     app.add_middleware(AgentRunErrorHandler)
-    
+
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,

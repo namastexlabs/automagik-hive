@@ -1,5 +1,4 @@
-"""
-CLI package for Automagik Hive.
+"""CLI package for Automagik Hive.
 
 This package provides command-line interface capabilities for the UVX transformation,
 enabling workspace initialization, container management, and development workflows.

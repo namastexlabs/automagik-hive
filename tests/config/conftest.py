@@ -7,8 +7,8 @@ isolation, singleton management, and environment variable mocking.
 
 import os
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Generator
 from unittest.mock import Mock, patch
 
 import pytest
@@ -19,12 +19,12 @@ def temp_project_dir() -> Generator[Path, None, None]:
     """Create a temporary project directory for testing."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-        
+
         # Create basic project structure
         (temp_path / "data").mkdir(exist_ok=True)
         (temp_path / "logs").mkdir(exist_ok=True)
         (temp_path / "lib" / "config").mkdir(parents=True, exist_ok=True)
-        
+
         yield temp_path
 
 
@@ -33,15 +33,15 @@ def clean_singleton() -> Generator[None, None, None]:
     """Clean singleton instances before and after tests."""
     # Import here to avoid circular imports
     from lib.config.settings import Settings
-    
+
     # Clear any existing singleton instance before test
-    if hasattr(Settings, '_instance'):
+    if hasattr(Settings, "_instance"):
         Settings._instance = None
-    
+
     yield
-    
+
     # Clear singleton instance after test
-    if hasattr(Settings, '_instance'):
+    if hasattr(Settings, "_instance"):
         Settings._instance = None
 
 
@@ -100,19 +100,19 @@ def clean_environment() -> Generator[None, None, None]:
     """Clean environment variables for isolated testing."""
     # Store original environment
     original_env = os.environ.copy()
-    
+
     # Clear environment variables that might interfere with tests
     config_vars = [
-        var for var in os.environ.keys() 
-        if var.startswith('HIVE_') or var in ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'LANGWATCH_API_KEY']
+        var for var in os.environ.keys()
+        if var.startswith("HIVE_") or var in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "LANGWATCH_API_KEY"]
     ]
-    
+
     for var in config_vars:
         if var in os.environ:
             del os.environ[var]
-    
+
     yield
-    
+
     # Restore original environment
     os.environ.clear()
     os.environ.update(original_env)
@@ -124,21 +124,21 @@ def mock_settings_file(temp_project_dir: Path) -> Generator[Path, None, None]:
     settings_file = temp_project_dir / "lib" / "config" / "settings.py"
     settings_file.parent.mkdir(parents=True, exist_ok=True)
     settings_file.touch()
-    
+
     with patch("lib.config.settings.__file__", str(settings_file)):
         yield settings_file
 
 
 @pytest.fixture
 def isolated_settings(
-    temp_project_dir: Path, 
-    clean_singleton: None, 
+    temp_project_dir: Path,
+    clean_singleton: None,
     mock_settings_file: Path
-) -> Generator[None, None, None]:
+) -> None:
     """Provide isolated settings environment for testing."""
     # This fixture combines temp directory, clean singleton, and mock settings file
     # for comprehensive settings isolation
-    yield
+    return
 
 
 # Server Config specific fixtures
@@ -147,15 +147,15 @@ def clean_server_singleton() -> Generator[None, None, None]:
     """Clean server config singleton instances before and after tests."""
     try:
         from lib.config.server_config import ServerConfig
-        
+
         # Clear any existing singleton instance before test
-        if hasattr(ServerConfig, '_instance'):
+        if hasattr(ServerConfig, "_instance"):
             ServerConfig._instance = None
-        
+
         yield
-        
+
         # Clear singleton instance after test
-        if hasattr(ServerConfig, '_instance'):
+        if hasattr(ServerConfig, "_instance"):
             ServerConfig._instance = None
     except ImportError:
         # If ServerConfig doesn't exist, just yield
@@ -179,14 +179,14 @@ def server_mock_env_vars() -> dict[str, str]:
 @pytest.fixture
 def mock_pathlib_file_operations() -> Generator[dict[str, Mock], None, None]:
     """Mock pathlib file operations for testing directory creation."""
-    with patch('pathlib.Path.mkdir') as mock_mkdir:
-        with patch('pathlib.Path.exists') as mock_exists:
-            with patch('pathlib.Path.touch') as mock_touch:
+    with patch("pathlib.Path.mkdir") as mock_mkdir:
+        with patch("pathlib.Path.exists") as mock_exists:
+            with patch("pathlib.Path.touch") as mock_touch:
                 # Configure mocks to simulate successful operations
                 mock_mkdir.return_value = None
                 mock_exists.return_value = True
                 mock_touch.return_value = None
-                
+
                 yield {
                     "mkdir": mock_mkdir,
                     "exists": mock_exists,

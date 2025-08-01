@@ -105,7 +105,10 @@ class TestServeConfiguration:
     def test_startup_display_import(self):
         """Test startup display utilities import."""
         # These are imported from lib.utils.startup_display in api.serve
-        from lib.utils.startup_display import create_startup_display, display_simple_status
+        from lib.utils.startup_display import (
+            create_startup_display,
+            display_simple_status,
+        )
 
         assert callable(create_startup_display)
         assert callable(display_simple_status)
@@ -182,7 +185,6 @@ class TestServeModuleFunctionality:
         """Test startup display integration."""
         mock_display.return_value = MagicMock()
 
-        import api.serve
 
         # Startup display should be importable from lib.utils.startup_display
         from lib.utils.startup_display import create_startup_display
@@ -217,7 +219,7 @@ class TestServeErrorHandling:
         """Test graceful handling of missing dotenv."""
         # Test that serve.py has proper try/except for dotenv import
         # We can see from the source that it has: try: from dotenv import load_dotenv except ImportError: pass
-        
+
         # Import should work even if dotenv is not available
         try:
             import api.serve

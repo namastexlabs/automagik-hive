@@ -8,6 +8,7 @@ Create Date: 2025-07-20 16:39:36.382070
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -37,7 +38,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         schema="hive",
     )
-    
+
     # Create indexes for component_versions
     op.create_index("idx_component_versions_component_id", "component_versions", ["component_id"], schema="hive")
     op.create_index("idx_component_versions_component_type", "component_versions", ["component_type"], schema="hive")
@@ -57,7 +58,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         schema="hive",
     )
-    
+
     # Create indexes for version_history
     op.create_index("idx_version_history_component_id", "version_history", ["component_id"], schema="hive")
 
@@ -74,7 +75,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         schema="hive",
     )
-    
+
     # Create indexes for agent_metrics
     op.create_index("idx_agent_metrics_timestamp", "agent_metrics", ["timestamp"], schema="hive")
     op.create_index("idx_agent_metrics_agent_name", "agent_metrics", ["agent_name"], schema="hive")
@@ -87,6 +88,6 @@ def downgrade() -> None:
     op.drop_table("agent_metrics", schema="hive")
     op.drop_table("version_history", schema="hive")
     op.drop_table("component_versions", schema="hive")
-    
+
     # Drop schema (only if empty)
     op.execute("DROP SCHEMA IF EXISTS hive CASCADE")

@@ -1,12 +1,13 @@
-"""
-Startup Notifications
+"""Startup Notifications
 
 Handles notifications when the server starts up and shuts down.
 """
 
 import asyncio
-from .notifications import send_notification, NotificationLevel
+
 from lib.logging import logger
+
+from .notifications import NotificationLevel, send_notification
 
 
 async def send_startup_notification(startup_display=None):
@@ -14,10 +15,10 @@ async def send_startup_notification(startup_display=None):
     try:
         # Add a small delay to ensure MCP connection manager is ready
         await asyncio.sleep(0.5)
-        
+
         # Build rich startup message
         message = _build_startup_message(startup_display)
-        
+
         # Use asyncio.create_task to isolate the notification sending
         async def isolated_send():
             await send_notification(
@@ -26,7 +27,7 @@ async def send_startup_notification(startup_display=None):
                 source="server-startup",
                 level=NotificationLevel.INFO
             )
-        
+
         # Run in isolated task to prevent context manager conflicts
         await asyncio.create_task(isolated_send())
         logger.info("Startup notification sent")
@@ -36,16 +37,16 @@ async def send_startup_notification(startup_display=None):
 
 def _build_startup_message(startup_display=None):
     """Build rich startup notification message"""
-    import os
     from datetime import datetime
+
     from lib.config.server_config import get_server_config
-    
+
     # Basic system info
     config = get_server_config()
     environment = config.environment
     port = config.port
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     message_parts = [
         "🎯 *Automagik Hive Multi-Agent System*",
         f"📅 Started: {timestamp}",
@@ -53,14 +54,14 @@ def _build_startup_message(startup_display=None):
         f"🌐 Port: {port}",
         ""
     ]
-    
+
     if startup_display:
         # Add component status
         total_agents = len(startup_display.agents)
-        total_teams = len(startup_display.teams) 
+        total_teams = len(startup_display.teams)
         total_workflows = len(startup_display.workflows)
         total_errors = len(startup_display.errors)
-        
+
         message_parts.extend([
             "📊 *System Components:*",
             f"🤖 Agents: {total_agents}",
@@ -68,25 +69,25 @@ def _build_startup_message(startup_display=None):
             f"⚡ Workflows: {total_workflows}",
             ""
         ])
-        
+
         # Add agents with versions
         if startup_display.agents:
             message_parts.append("🤖 *Active Agents:*")
             for agent_id, info in startup_display.agents.items():
                 status_icon = "✅" if info["status"] == "✅" else "❌"
-                version_info = f"v{info['version']}" if info['version'] != "latest" else "latest"
+                version_info = f"v{info['version']}" if info["version"] != "latest" else "latest"
                 message_parts.append(f"{status_icon} {agent_id} ({version_info})")
             message_parts.append("")
-        
+
         # Add workflows with versions
         if startup_display.workflows:
             message_parts.append("⚡ *Active Workflows:*")
             for workflow_id, info in startup_display.workflows.items():
                 status_icon = "✅" if info["status"] == "✅" else "❌"
-                version_info = f"v{info['version']}" if info['version'] != "latest" else "latest"
+                version_info = f"v{info['version']}" if info["version"] != "latest" else "latest"
                 message_parts.append(f"{status_icon} {workflow_id} ({version_info})")
             message_parts.append("")
-        
+
         # Add error summary if any
         if startup_display.errors:
             message_parts.extend([
@@ -98,12 +99,12 @@ def _build_startup_message(startup_display=None):
             if total_errors > 3:
                 message_parts.append(f"... and {total_errors - 3} more issues")
             message_parts.append("")
-        
+
         # System status summary
-        successful_components = sum(1 for items in [startup_display.agents, startup_display.teams, startup_display.workflows] 
+        successful_components = sum(1 for items in [startup_display.agents, startup_display.teams, startup_display.workflows]
                                   for item in items.values() if item["status"] == "✅")
         total_components = total_agents + total_teams + total_workflows
-        
+
         if total_errors == 0:
             message_parts.append("✅ *All systems operational*")
         else:
@@ -113,15 +114,15 @@ def _build_startup_message(startup_display=None):
             "✅ Server started successfully",
             "📊 Component details unavailable"
         ])
-    
+
     # Import here to avoid circular imports
     from lib.config.server_config import get_server_config
-    
+
     message_parts.extend([
         "",
         f"🔗 API: {get_server_config().get_base_url()}"
     ])
-    
+
     return "\n".join(message_parts)
 
 
@@ -136,7 +137,7 @@ async def send_shutdown_notification():
                 source="server-shutdown",
                 level=NotificationLevel.WARNING
             )
-        
+
         # Run in isolated task to prevent context manager conflicts
         await asyncio.create_task(isolated_send())
         logger.info("Shutdown notification sent")
@@ -176,7 +177,7 @@ async def send_health_check_notification(component: str, status: str, message: s
     """Send notification for health check results"""
     try:
         level = NotificationLevel.INFO if status == "healthy" else NotificationLevel.WARNING
-        
+
         await send_notification(
             title=f"Health Check: {component}",
             message=f"Component '{component}' is {status}. {message}",
@@ -237,7 +238,7 @@ async def notify_user_action(action: str, user_id: str, details: str = ""):
         message = f"User {user_id} performed action: {action}"
         if details:
             message += f". Details: {details}"
-            
+
         await send_notification(
             title="Important User Action",
             message=message,

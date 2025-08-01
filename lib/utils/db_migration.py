@@ -78,7 +78,7 @@ async def check_and_run_migrations() -> bool:
         except OperationalError as e:
             error_str = str(e)
             logger.error("🚨 Database connection failed", error=error_str)
-            
+
             # Provide specific guidance based on error type
             if "password authentication failed" in error_str:
                 logger.error("❌ CRITICAL: Database authentication failed!")
@@ -99,7 +99,7 @@ async def check_and_run_migrations() -> bool:
                 logger.error("❌ CRITICAL: Database connection error!")
                 logger.error("📝 ACTION REQUIRED: Fix database configuration")
                 logger.error("🔧 Check your HIVE_DATABASE_URL in .env files")
-            
+
             logger.error("🛑 Startup cannot continue without database access")
             return False
 

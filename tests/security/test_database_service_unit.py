@@ -147,12 +147,12 @@ class TestDatabaseServiceUnit:
 
             # Mock the get_connection context manager
             mock_connection = AsyncMock()
-            
+
             # Create proper async context manager mock
             @asynccontextmanager
             async def mock_get_connection():
                 yield mock_connection
-                
+
             service.get_connection = mock_get_connection
 
             query = "INSERT INTO test (name) VALUES (%(name)s)"
@@ -180,14 +180,14 @@ class TestDatabaseServiceUnit:
             @asynccontextmanager
             async def mock_cursor_context(*args, **kwargs):
                 yield mock_cursor
-                
+
             mock_connection.cursor = mock_cursor_context
 
             # Create proper async context manager for connection
             @asynccontextmanager
             async def mock_get_connection():
                 yield mock_connection
-                
+
             service.get_connection = mock_get_connection
 
             query = "SELECT * FROM test WHERE id = %(id)s"
@@ -220,14 +220,14 @@ class TestDatabaseServiceUnit:
             @asynccontextmanager
             async def mock_cursor_context(*args, **kwargs):
                 yield mock_cursor
-                
+
             mock_connection.cursor = mock_cursor_context
 
             # Create proper async context manager for connection
             @asynccontextmanager
             async def mock_get_connection():
                 yield mock_connection
-                
+
             service.get_connection = mock_get_connection
 
             query = "SELECT * FROM test"
@@ -250,19 +250,19 @@ class TestDatabaseServiceUnit:
             # Mock connection with transaction
             mock_connection = AsyncMock()
             mock_transaction = AsyncMock()
-            
+
             # Create proper async context manager for transaction
             @asynccontextmanager
             async def mock_transaction_context():
                 yield mock_transaction
-                
+
             mock_connection.transaction = mock_transaction_context
 
             # Create proper async context manager for connection
             @asynccontextmanager
             async def mock_get_connection():
                 yield mock_connection
-                
+
             service.get_connection = mock_get_connection
 
             operations = [

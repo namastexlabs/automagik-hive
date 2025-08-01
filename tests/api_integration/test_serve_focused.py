@@ -5,9 +5,7 @@ Tests real code paths with minimal mocking to achieve better coverage.
 
 import asyncio
 import os
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -23,7 +21,7 @@ class TestServeModuleFunctions:
     def test_create_simple_sync_api_real_execution(self):
         """Test real execution of _create_simple_sync_api function."""
         app = api.serve._create_simple_sync_api()
-        
+
         # Verify the app was created
         assert isinstance(app, FastAPI)
         assert app.title == "Automagik Hive Multi-Agent System"
@@ -51,10 +49,10 @@ class TestServeModuleFunctions:
         # Test lifespan function creation
         mock_startup_display = MagicMock()
         lifespan_func = api.serve.create_lifespan(mock_startup_display)
-        
+
         # Verify it returns a function
         assert callable(lifespan_func)
-        
+
         # Test that it's an async context manager
         mock_app = MagicMock(spec=FastAPI)
         lifespan_cm = lifespan_func(mock_app)
@@ -88,7 +86,7 @@ class TestServeModuleFunctions:
         # Reset global instance
         original_instance = api.serve._app_instance
         api.serve._app_instance = None
-        
+
         try:
             with patch("api.serve.create_automagik_api") as mock_create:
                 mock_app = MagicMock(spec=FastAPI)
@@ -133,7 +131,7 @@ class TestServeModuleFunctions:
             # Setup mock app
             mock_app = MagicMock(spec=FastAPI)
             mock_async_create.return_value = mock_app
-            
+
             # Test no event loop path
             mock_get_loop.side_effect = RuntimeError("No event loop")
             mock_asyncio_run.return_value = mock_app
@@ -159,7 +157,7 @@ class TestEnvironmentConfiguration:
                 environment == "development"
                 and os.getenv("DISABLE_RELOAD", "false").lower() != "true"
             )
-            
+
             assert environment == "development"
             assert reload is True
 
@@ -171,7 +169,7 @@ class TestEnvironmentConfiguration:
                 environment == "development"
                 and os.getenv("DISABLE_RELOAD", "false").lower() != "true"
             )
-            
+
             assert environment == "production"
             assert reload is False
 
@@ -186,7 +184,7 @@ class TestEnvironmentConfiguration:
                 environment == "development"
                 and os.getenv("DISABLE_RELOAD", "false").lower() != "true"
             )
-            
+
             assert environment == "development"
             assert reload is False
 
@@ -199,7 +197,7 @@ class TestEnvironmentConfiguration:
         }):
             log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
             agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
-            
+
             assert log_level == "DEBUG"
             assert agno_log_level == "INFO"
 
@@ -211,7 +209,7 @@ class TestEnvironmentConfiguration:
         with patch.dict(os.environ, env_without_logs, clear=True):
             log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
             agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
-            
+
             assert log_level == "INFO"
             assert agno_log_level == "WARNING"
 
@@ -284,7 +282,7 @@ class TestProductionFeatures:
         with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}):
             environment = os.getenv("HIVE_ENVIRONMENT", "production")
             is_development = environment == "development"
-            
+
             assert is_development is True
 
     def test_production_features_detection(self):
@@ -292,7 +290,7 @@ class TestProductionFeatures:
         with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}):
             environment = os.getenv("HIVE_ENVIRONMENT", "production")
             is_development = environment == "development"
-            
+
             assert is_development is False
 
     def test_reloader_context_detection(self):
@@ -304,12 +302,12 @@ class TestProductionFeatures:
             is_reloader_context = os.getenv("RUN_MAIN") == "true"
             environment = os.getenv("HIVE_ENVIRONMENT", "production")
             is_development = environment == "development"
-            
+
             # Skip verbose logging for reloader context
             if is_reloader_context and is_development:
                 # This would reduce log verbosity
                 pass
-            
+
             assert is_reloader_context is True
             assert is_development is True
 
@@ -348,11 +346,11 @@ class TestAsyncEventLoopHandling:
         async def test_async_patterns():
             # Test sleep (used in notifications)
             await asyncio.sleep(0)
-            
+
             # Test task creation (used in lifespan)
             async def dummy_task():
                 return "completed"
-            
+
             task = asyncio.create_task(dummy_task())
             result = await task
             assert result == "completed"
@@ -370,9 +368,10 @@ class TestModuleImports:
         from agno.playground import Playground
         from fastapi import FastAPI
         from starlette.middleware.cors import CORSMiddleware
+
         from lib.config.server_config import get_server_config
         from lib.logging import logger, setup_logging
-        
+
         assert Playground is not None
         assert FastAPI is not None
         assert CORSMiddleware is not None
@@ -396,7 +395,7 @@ class TestModuleImports:
         from ai.agents.registry import AgentRegistry
         from ai.workflows.registry import get_workflow
         from lib.utils.version_factory import create_team
-        
+
         assert AgentRegistry is not None
         assert callable(get_workflow)
         assert callable(create_team)
@@ -414,12 +413,12 @@ class TestConfigurationPatterns:
             "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["*"],
         }
-        
+
         assert isinstance(cors_config["allow_origins"], list)
         assert isinstance(cors_config["allow_credentials"], bool)
         assert isinstance(cors_config["allow_methods"], list)
         assert isinstance(cors_config["allow_headers"], list)
-        
+
         # Verify method list contains expected methods
         assert "GET" in cors_config["allow_methods"]
         assert "POST" in cors_config["allow_methods"]
@@ -430,7 +429,7 @@ class TestConfigurationPatterns:
         # Test patterns for host/port configuration
         default_host = "0.0.0.0"
         default_port = 8886
-        
+
         assert isinstance(default_host, str)
         assert isinstance(default_port, int)
         assert default_port > 0
@@ -444,7 +443,7 @@ class TestConfigurationPatterns:
             "description": "Multi-Agent System with intelligent routing",
             "version": "1.0.0"
         }
-        
+
         assert isinstance(app_config["title"], str)
         assert isinstance(app_config["description"], str)
         assert isinstance(app_config["version"], str)
