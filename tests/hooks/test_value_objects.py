@@ -33,11 +33,13 @@ class TestRootWhitelist:
             "Dockerfile*",
             "docker-compose*.yml",
             ".gitignore",
-            "*.sh"
+            "*.sh",
         ]
 
         for pattern in expected_patterns:
-            assert pattern in whitelist.patterns, f"Pattern {pattern} not found in whitelist"
+            assert pattern in whitelist.patterns, (
+                f"Pattern {pattern} not found in whitelist"
+            )
 
     def test_whitelist_immutability(self):
         """Test that RootWhitelist is immutable."""
@@ -67,7 +69,9 @@ class TestRootWhitelist:
         # Test docker-compose patterns
         assert whitelist.matches_pattern("docker-compose.yml") is True
         assert whitelist.matches_pattern("docker-compose-agent.yml") is True
-        assert whitelist.matches_pattern("docker-compose.dev.yaml") is False  # Different extension
+        assert (
+            whitelist.matches_pattern("docker-compose.dev.yaml") is False
+        )  # Different extension
 
         # Test shell script patterns
         assert whitelist.matches_pattern("setup.sh") is True
@@ -118,11 +122,13 @@ class TestGenieStructure:
             "/genie/wishes/",
             "/genie/reports/",
             "/genie/experiments/",
-            "/genie/knowledge/"
+            "/genie/knowledge/",
         ]
 
         for path in expected_paths:
-            assert path in structure.allowed_paths, f"Path {path} not found in structure"
+            assert path in structure.allowed_paths, (
+                f"Path {path} not found in structure"
+            )
 
     def test_genie_structure_immutability(self):
         """Test that GenieStructure is immutable."""
@@ -141,11 +147,13 @@ class TestGenieStructure:
             "/genie/wishes/feature-plan.md",
             "/genie/reports/completion.md",
             "/genie/experiments/prototype.py",
-            "/genie/knowledge/patterns.md"
+            "/genie/knowledge/patterns.md",
         ]
 
         for path in valid_paths:
-            assert structure.is_valid_genie_path(path) is True, f"Path {path} should be valid"
+            assert structure.is_valid_genie_path(path) is True, (
+                f"Path {path} should be valid"
+            )
 
     def test_is_valid_genie_path_invalid(self):
         """Test is_valid_genie_path for invalid paths."""
@@ -157,70 +165,64 @@ class TestGenieStructure:
             "/genie/",  # Just genie root
             "/genie",  # No trailing slash
             "genie/docs/file.md",  # No leading slash
-            "/custom/docs/file.md"  # Different root
+            "/custom/docs/file.md",  # Different root
         ]
 
         for path in invalid_paths:
-            assert structure.is_valid_genie_path(path) is False, f"Path {path} should be invalid"
+            assert structure.is_valid_genie_path(path) is False, (
+                f"Path {path} should be invalid"
+            )
 
     def test_get_suggested_genie_path_plan_words(self):
         """Test suggestion generation for plan-related files."""
         structure = GenieStructure.default()
 
-        plan_files = [
-            "feature-plan.md",
-            "todo-list.md",
-            "wish-implementation.md"
-        ]
+        plan_files = ["feature-plan.md", "todo-list.md", "wish-implementation.md"]
 
         for filename in plan_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/wishes/"), f"Wrong suggestion for {filename}"
+            assert suggestion.startswith("/genie/wishes/"), (
+                f"Wrong suggestion for {filename}"
+            )
             assert suggestion.endswith(filename)
 
     def test_get_suggested_genie_path_design_words(self):
         """Test suggestion generation for design-related files."""
         structure = GenieStructure.default()
 
-        design_files = [
-            "system-design.md",
-            "architecture-spec.md",
-            "ddd-document.md"
-        ]
+        design_files = ["system-design.md", "architecture-spec.md", "ddd-document.md"]
 
         for filename in design_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/docs/"), f"Wrong suggestion for {filename}"
+            assert suggestion.startswith("/genie/docs/"), (
+                f"Wrong suggestion for {filename}"
+            )
             assert suggestion.endswith(filename)
 
     def test_get_suggested_genie_path_idea_words(self):
         """Test suggestion generation for idea-related files."""
         structure = GenieStructure.default()
 
-        idea_files = [
-            "brainstorm-ideas.md",
-            "analysis-notes.md",
-            "thinking-session.md"
-        ]
+        idea_files = ["brainstorm-ideas.md", "analysis-notes.md", "thinking-session.md"]
 
         for filename in idea_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/ideas/"), f"Wrong suggestion for {filename}"
+            assert suggestion.startswith("/genie/ideas/"), (
+                f"Wrong suggestion for {filename}"
+            )
             assert suggestion.endswith(filename)
 
     def test_get_suggested_genie_path_report_words(self):
         """Test suggestion generation for report-related files."""
         structure = GenieStructure.default()
 
-        report_files = [
-            "completion-report.md",
-            "summary-results.md",
-            "final-report.md"
-        ]
+        report_files = ["completion-report.md", "summary-results.md", "final-report.md"]
 
         for filename in report_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/reports/"), f"Wrong suggestion for {filename}"
+            assert suggestion.startswith("/genie/reports/"), (
+                f"Wrong suggestion for {filename}"
+            )
             assert suggestion.endswith(filename)
 
     def test_get_suggested_genie_path_experiment_words(self):
@@ -230,12 +232,14 @@ class TestGenieStructure:
         experiment_files = [
             "prototype-test.py",
             "trial-implementation.md",
-            "experiment-results.md"
+            "experiment-results.md",
         ]
 
         for filename in experiment_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/experiments/"), f"Wrong suggestion for {filename}"
+            assert suggestion.startswith("/genie/experiments/"), (
+                f"Wrong suggestion for {filename}"
+            )
             assert suggestion.endswith(filename)
 
     def test_get_suggested_genie_path_knowledge_words(self):
@@ -245,27 +249,27 @@ class TestGenieStructure:
         knowledge_files = [
             "learning-patterns.md",
             "wisdom-insights.md",
-            "knowledge-base.md"
+            "knowledge-base.md",
         ]
 
         for filename in knowledge_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/knowledge/"), f"Wrong suggestion for {filename}"
+            assert suggestion.startswith("/genie/knowledge/"), (
+                f"Wrong suggestion for {filename}"
+            )
             assert suggestion.endswith(filename)
 
     def test_get_suggested_genie_path_default(self):
         """Test suggestion generation defaults to docs for unclassified files."""
         structure = GenieStructure.default()
 
-        generic_files = [
-            "random-file.md",
-            "unclassified.txt",
-            "misc-document.md"
-        ]
+        generic_files = ["random-file.md", "unclassified.txt", "misc-document.md"]
 
         for filename in generic_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/docs/"), f"Should default to docs for {filename}"
+            assert suggestion.startswith("/genie/docs/"), (
+                f"Should default to docs for {filename}"
+            )
             assert suggestion.endswith(filename)
 
 
@@ -291,7 +295,7 @@ class TestValidationConfig:
             enforce_genie_structure=True,
             allow_root_md_files=["test.md"],
             custom_whitelist_patterns=["*.test"],
-            strict_mode=False
+            strict_mode=False,
         )
 
         with pytest.raises(AttributeError):
@@ -304,7 +308,9 @@ class TestValidationConfig:
         allowed_files = ["README.md", "CHANGELOG.md", "CLAUDE.md"]
 
         for filename in allowed_files:
-            assert config.is_allowed_root_md(filename) is True, f"{filename} should be allowed"
+            assert config.is_allowed_root_md(filename) is True, (
+                f"{filename} should be allowed"
+            )
 
     def test_is_allowed_root_md_invalid(self):
         """Test is_allowed_root_md for disallowed files."""
@@ -315,11 +321,13 @@ class TestValidationConfig:
             "notes.md",
             "custom.md",
             "readme.md",  # Case sensitive
-            "README.MD"   # Case sensitive
+            "README.MD",  # Case sensitive
         ]
 
         for filename in disallowed_files:
-            assert config.is_allowed_root_md(filename) is False, f"{filename} should not be allowed"
+            assert config.is_allowed_root_md(filename) is False, (
+                f"{filename} should not be allowed"
+            )
 
     def test_custom_allowed_md_files(self):
         """Test custom allowed MD files configuration."""
@@ -327,12 +335,14 @@ class TestValidationConfig:
             enforce_genie_structure=True,
             allow_root_md_files=["README.md", "CUSTOM.md"],
             custom_whitelist_patterns=[],
-            strict_mode=True
+            strict_mode=True,
         )
 
         assert custom_config.is_allowed_root_md("README.md") is True
         assert custom_config.is_allowed_root_md("CUSTOM.md") is True
-        assert custom_config.is_allowed_root_md("CHANGELOG.md") is False  # Not in custom list
+        assert (
+            custom_config.is_allowed_root_md("CHANGELOG.md") is False
+        )  # Not in custom list
 
     def test_non_strict_mode(self):
         """Test configuration with strict mode disabled."""
@@ -340,7 +350,7 @@ class TestValidationConfig:
             enforce_genie_structure=False,
             allow_root_md_files=["README.md"],
             custom_whitelist_patterns=["*.custom"],
-            strict_mode=False
+            strict_mode=False,
         )
 
         assert config.enforce_genie_structure is False
@@ -354,7 +364,7 @@ class TestValidationConfig:
             enforce_genie_structure=True,
             allow_root_md_files=["README.md"],
             custom_whitelist_patterns=custom_patterns,
-            strict_mode=True
+            strict_mode=True,
         )
 
         assert config.custom_whitelist_patterns == custom_patterns

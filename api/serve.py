@@ -299,8 +299,13 @@ async def _async_create_automagik_api():
         for agent_id, agent_instance in startup_results.registries.agents.items():
             try:
                 # Add metrics service to existing agent if available
-                if hasattr(agent_instance, "metrics_service") and startup_results.services.metrics_service:
-                    agent_instance.metrics_service = startup_results.services.metrics_service
+                if (
+                    hasattr(agent_instance, "metrics_service")
+                    and startup_results.services.metrics_service
+                ):
+                    agent_instance.metrics_service = (
+                        startup_results.services.metrics_service
+                    )
 
                 agents_list.append(agent_instance)
                 logger.debug(f"Agent {agent_id} reused from orchestrated startup")

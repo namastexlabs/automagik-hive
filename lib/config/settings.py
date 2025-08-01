@@ -16,7 +16,9 @@ class Settings:
     def __init__(self) -> None:
         # Project paths
         self.project_root = Path(__file__).parent.parent.parent
-        self.BASE_DIR = self.project_root  # Alias for compatibility with FileSyncTracker
+        self.BASE_DIR = (
+            self.project_root
+        )  # Alias for compatibility with FileSyncTracker
         self.data_dir = self.project_root / "data"
         self.logs_dir = self.project_root / "logs"
 

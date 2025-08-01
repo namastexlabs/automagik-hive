@@ -57,9 +57,7 @@ class DatabaseService:
         async with self.pool.connection() as conn:
             yield conn
 
-    async def execute(
-        self, query: str, params: dict[str, Any] | None = None
-    ) -> None:
+    async def execute(self, query: str, params: dict[str, Any] | None = None) -> None:
         """Execute a query without returning results."""
         async with self.get_connection() as conn:
             await conn.execute(query, params)

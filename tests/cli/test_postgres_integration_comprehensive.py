@@ -77,7 +77,7 @@ HIVE_API_PORT=8886
             mock_docker.get_container_status.return_value = {
                 "status": "running",
                 "health": "healthy",
-                "ports": ["35534:5432"]
+                "ports": ["35534:5432"],
             }
             mock_docker_class.return_value = mock_docker
             yield mock_docker
@@ -102,7 +102,9 @@ HIVE_API_PORT=8886
         assert result is True
         mock_docker_service.start_container.assert_called_once()
 
-    def test_postgres_start_command_already_running(self, temp_workspace, mock_docker_service):
+    def test_postgres_start_command_already_running(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test PostgreSQL start when container already running."""
         mock_docker_service.is_container_running.return_value = True
 
@@ -125,7 +127,9 @@ HIVE_API_PORT=8886
         assert result is True
         mock_docker_service.stop_container.assert_called_once()
 
-    def test_postgres_stop_command_not_running(self, temp_workspace, mock_docker_service):
+    def test_postgres_stop_command_not_running(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test PostgreSQL stop when container not running."""
         mock_docker_service.is_container_running.return_value = False
 
@@ -136,7 +140,9 @@ HIVE_API_PORT=8886
         assert result is True
         mock_docker_service.stop_container.assert_not_called()
 
-    def test_postgres_restart_command_success(self, temp_workspace, mock_docker_service):
+    def test_postgres_restart_command_success(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test successful PostgreSQL container restart."""
         mock_docker_service.restart_container.return_value = True
 
@@ -153,7 +159,7 @@ HIVE_API_PORT=8886
             "status": "running",
             "health": "healthy",
             "ports": ["35534:5432"],
-            "uptime": "2 hours"
+            "uptime": "2 hours",
         }
 
         commands = PostgreSQLCommands()
@@ -169,7 +175,7 @@ HIVE_API_PORT=8886
             "status": "stopped",
             "health": "unknown",
             "ports": [],
-            "uptime": "0"
+            "uptime": "0",
         }
 
         commands = PostgreSQLCommands()
@@ -193,11 +199,12 @@ HIVE_API_PORT=8886
         # Should fail initially - logs display not implemented
         assert result is True
         mock_docker_service.get_container_logs.assert_called_once_with(
-            container_name="hive-postgres-test",
-            tail=50
+            container_name="hive-postgres-test", tail=50
         )
 
-    def test_postgres_logs_command_custom_tail(self, temp_workspace, mock_docker_service):
+    def test_postgres_logs_command_custom_tail(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test PostgreSQL logs command with custom tail count."""
         mock_docker_service.get_container_logs.return_value = "Mock logs"
 
@@ -207,15 +214,14 @@ HIVE_API_PORT=8886
         # Should fail initially - custom tail not implemented
         assert result is True
         mock_docker_service.get_container_logs.assert_called_once_with(
-            container_name="hive-postgres-test",
-            tail=100
+            container_name="hive-postgres-test", tail=100
         )
 
     def test_postgres_health_command_healthy(self, temp_workspace, mock_docker_service):
         """Test PostgreSQL health check when healthy."""
         mock_docker_service.get_container_status.return_value = {
             "status": "running",
-            "health": "healthy"
+            "health": "healthy",
         }
 
         with patch("cli.commands.postgres.psycopg2.connect") as mock_connect:
@@ -232,11 +238,13 @@ HIVE_API_PORT=8886
         assert result is True
         mock_connect.assert_called_once()
 
-    def test_postgres_health_command_connection_failed(self, temp_workspace, mock_docker_service):
+    def test_postgres_health_command_connection_failed(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test PostgreSQL health check when connection fails."""
         mock_docker_service.get_container_status.return_value = {
             "status": "running",
-            "health": "unhealthy"
+            "health": "unhealthy",
         }
 
         with patch("cli.commands.postgres.psycopg2.connect") as mock_connect:
@@ -297,7 +305,7 @@ class TestPostgreSQLServiceCore:
         """Test PostgreSQL service gets connection information."""
         mock_docker_service.get_container_status.return_value = {
             "status": "running",
-            "ports": ["35534:5432"]
+            "ports": ["35534:5432"],
         }
 
         service = PostgreSQLService()
@@ -321,7 +329,7 @@ class TestPostgreSQLServiceCore:
                 port=35534,
                 database="hive_test",
                 user="hive_test",
-                password="test_password_123"
+                password="test_password_123",
             )
 
         # Should fail initially - connection check not implemented
@@ -339,7 +347,7 @@ class TestPostgreSQLServiceCore:
                 port=35534,
                 database="hive_test",
                 user="hive_test",
-                password="wrong_password"
+                password="wrong_password",
             )
 
         # Should fail initially - connection failure handling not implemented
@@ -399,9 +407,11 @@ POSTGRES_PASSWORD=real_test_password_456
 
     @pytest.mark.skipif(
         not os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() == "true",
-        reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable."
+        reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable.",
     )
-    def test_real_postgres_container_lifecycle(self, docker_client, temp_workspace_real):
+    def test_real_postgres_container_lifecycle(
+        self, docker_client, temp_workspace_real
+    ):
         """Test complete PostgreSQL container lifecycle with real containers."""
         commands = PostgreSQLCommands()
         workspace_path = str(temp_workspace_real)
@@ -409,7 +419,9 @@ POSTGRES_PASSWORD=real_test_password_456
         try:
             # Clean up any existing test container
             try:
-                existing_container = docker_client.containers.get("hive-postgres-real-test")
+                existing_container = docker_client.containers.get(
+                    "hive-postgres-real-test"
+                )
                 existing_container.stop()
                 existing_container.remove()
             except docker.errors.NotFound:
@@ -462,9 +474,11 @@ POSTGRES_PASSWORD=real_test_password_456
 
     @pytest.mark.skipif(
         not os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() == "true",
-        reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable."
+        reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable.",
     )
-    def test_real_postgres_database_connection(self, docker_client, temp_workspace_real):
+    def test_real_postgres_database_connection(
+        self, docker_client, temp_workspace_real
+    ):
         """Test real database connection and operations."""
         commands = PostgreSQLCommands()
         workspace_path = str(temp_workspace_real)
@@ -484,7 +498,7 @@ POSTGRES_PASSWORD=real_test_password_456
                         database="hive_real_test",
                         user="hive_real_test",
                         password="real_test_password_456",
-                        connect_timeout=5
+                        connect_timeout=5,
                     )
                     conn.close()
                     break
@@ -492,7 +506,9 @@ POSTGRES_PASSWORD=real_test_password_456
                     if attempt < max_attempts - 1:
                         time.sleep(2)
                     else:
-                        pytest.fail("PostgreSQL container failed to start within timeout")
+                        pytest.fail(
+                            "PostgreSQL container failed to start within timeout"
+                        )
 
             # Test connection and basic operations
             conn = psycopg2.connect(
@@ -500,7 +516,7 @@ POSTGRES_PASSWORD=real_test_password_456
                 port=35535,
                 database="hive_real_test",
                 user="hive_real_test",
-                password="real_test_password_456"
+                password="real_test_password_456",
             )
 
             cursor = conn.cursor()
@@ -522,12 +538,17 @@ POSTGRES_PASSWORD=real_test_password_456
             """)
 
             # Test data insertion
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO test_table (name) VALUES (%s);
-            """, ("Test Entry",))
+            """,
+                ("Test Entry",),
+            )
 
             # Test data retrieval
-            cursor.execute("SELECT id, name FROM test_table WHERE name = %s;", ("Test Entry",))
+            cursor.execute(
+                "SELECT id, name FROM test_table WHERE name = %s;", ("Test Entry",)
+            )
             result = cursor.fetchone()
             # Should fail initially - real data operations not tested
             assert result is not None
@@ -549,7 +570,7 @@ POSTGRES_PASSWORD=real_test_password_456
 
     @pytest.mark.skipif(
         not os.environ.get("TEST_REAL_POSTGRES_CONTAINERS", "").lower() == "true",
-        reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable."
+        reason="Real PostgreSQL container testing disabled. Set TEST_REAL_POSTGRES_CONTAINERS=true to enable.",
     )
     def test_real_postgres_schema_management(self, docker_client, temp_workspace_real):
         """Test PostgreSQL schema creation and management."""
@@ -569,7 +590,7 @@ POSTGRES_PASSWORD=real_test_password_456
                 port=35535,
                 database="hive_real_test",
                 user="hive_real_test",
-                password="real_test_password_456"
+                password="real_test_password_456",
             )
 
             cursor = conn.cursor()
@@ -694,7 +715,7 @@ class TestPostgreSQLErrorHandling:
                 database="hive_test",
                 user="hive_test",
                 password="test_password",
-                timeout=1
+                timeout=1,
             )
 
         # Should fail initially - timeout handling not implemented
@@ -703,7 +724,9 @@ class TestPostgreSQLErrorHandling:
     def test_postgres_service_authentication_error(self):
         """Test PostgreSQL service authentication error handling."""
         with patch("cli.core.postgres_service.psycopg2.connect") as mock_connect:
-            mock_connect.side_effect = psycopg2.OperationalError("authentication failed")
+            mock_connect.side_effect = psycopg2.OperationalError(
+                "authentication failed"
+            )
 
             service = PostgreSQLService()
             result = service.check_connection(
@@ -711,7 +734,7 @@ class TestPostgreSQLErrorHandling:
                 port=35534,
                 database="hive_test",
                 user="wrong_user",
-                password="wrong_password"
+                password="wrong_password",
             )
 
         # Should fail initially - authentication error handling not implemented
@@ -759,7 +782,7 @@ class TestPostgreSQLPrintOutput:
                 "ports": ["35534:5432"],
                 "uptime": "2 hours",
                 "memory_usage": "45MB",
-                "cpu_usage": "2.1%"
+                "cpu_usage": "2.1%",
             }
             mock_docker_class.return_value = mock_docker
 
@@ -792,19 +815,22 @@ class TestPostgreSQLPrintOutput:
 
     def test_postgres_health_print_detailed_info(self, capsys):
         """Test PostgreSQL health command prints detailed information."""
-        with patch("cli.core.postgres_service.DockerService") as mock_docker_class, \
-             patch("cli.commands.postgres.psycopg2.connect") as mock_connect:
-
+        with (
+            patch("cli.core.postgres_service.DockerService") as mock_docker_class,
+            patch("cli.commands.postgres.psycopg2.connect") as mock_connect,
+        ):
             mock_docker = Mock()
             mock_docker.get_container_status.return_value = {
                 "status": "running",
-                "health": "healthy"
+                "health": "healthy",
             }
             mock_docker_class.return_value = mock_docker
 
             mock_conn = Mock()
             mock_cursor = Mock()
-            mock_cursor.fetchone.return_value = ("PostgreSQL 15.5 on x86_64-pc-linux-gnu",)
+            mock_cursor.fetchone.return_value = (
+                "PostgreSQL 15.5 on x86_64-pc-linux-gnu",
+            )
             mock_conn.cursor.return_value = mock_cursor
             mock_connect.return_value = mock_conn
 

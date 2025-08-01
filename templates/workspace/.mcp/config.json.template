@@ -1,0 +1,47 @@
+{
+  "servers": {
+    "automagik-hive": {
+      "command": "uv",
+      "args": [
+        "run",
+        "uvicorn",
+        "api.serve:app",
+        "--host",
+        "{{api_host}}",
+        "--port",
+        "{{api_port}}"
+      ],
+      "env": {
+        "DATABASE_URL": "{{database_url}}",
+        "HIVE_DATABASE_URL": "{{database_url}}",
+        "WORKSPACE_NAME": "{{workspace_name}}"
+      }
+    },
+    "postgres": {
+      "command": "uv",
+      "args": [
+        "run",
+        "mcp-server-postgres",
+        "--connection-string",
+        "{{postgres_connection_string}}"
+      ]
+    }{{#if enable_filesystem_mcp}},
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "{{workspace_path}}"
+      ]
+    }{{/if}}{{#if enable_git_mcp}},
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "{{workspace_path}}"
+      ]
+    }{{/if}}
+  }
+}

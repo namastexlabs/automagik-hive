@@ -67,7 +67,7 @@ POSTGRES_PASSWORD=workspace_password
             mock_docker.stop_compose_services.return_value = True
             mock_docker.get_compose_status.return_value = {
                 "app": {"status": "running", "health": "healthy"},
-                "postgres": {"status": "running", "health": "healthy"}
+                "postgres": {"status": "running", "health": "healthy"},
             }
             mock_docker_class.return_value = mock_docker
             yield mock_docker
@@ -103,7 +103,9 @@ POSTGRES_PASSWORD=workspace_password
         # Should fail initially - missing compose file handling not implemented
         assert result is False
 
-    def test_start_workspace_invalid_compose_file(self, temp_workspace, mock_docker_service):
+    def test_start_workspace_invalid_compose_file(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace startup with invalid docker-compose.yml."""
         # Overwrite with invalid YAML
         (temp_workspace / "docker-compose.yml").write_text("invalid: yaml: content [")
@@ -116,7 +118,9 @@ POSTGRES_PASSWORD=workspace_password
         # Should fail initially - invalid compose handling not implemented
         assert result is False
 
-    def test_start_workspace_docker_unavailable(self, temp_workspace, mock_docker_service):
+    def test_start_workspace_docker_unavailable(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace startup when Docker is unavailable."""
         mock_docker_service.is_docker_available.return_value = False
 
@@ -126,7 +130,9 @@ POSTGRES_PASSWORD=workspace_password
         # Should fail initially - Docker unavailable handling not implemented
         assert result is False
 
-    def test_start_workspace_service_start_failure(self, temp_workspace, mock_docker_service):
+    def test_start_workspace_service_start_failure(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace startup with service start failure."""
         mock_docker_service.start_compose_services.return_value = False
 
@@ -136,7 +142,9 @@ POSTGRES_PASSWORD=workspace_password
         # Should fail initially - service start failure handling not implemented
         assert result is False
 
-    def test_start_workspace_with_env_file_missing(self, temp_workspace, mock_docker_service):
+    def test_start_workspace_with_env_file_missing(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace startup with missing .env file."""
         # Remove .env file
         (temp_workspace / ".env").unlink()
@@ -148,7 +156,9 @@ POSTGRES_PASSWORD=workspace_password
         # This might still succeed if defaults are used
         assert result in [True, False]
 
-    def test_start_workspace_with_invalid_env_file(self, temp_workspace, mock_docker_service):
+    def test_start_workspace_with_invalid_env_file(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace startup with invalid .env file."""
         # Create invalid .env file
         (temp_workspace / ".env").write_text("""
@@ -184,7 +194,9 @@ class TestWorkspaceValidation:
             mock_docker_class.return_value = mock_docker
             yield mock_docker
 
-    def test_validate_workspace_configuration_valid(self, temp_workspace, mock_docker_service):
+    def test_validate_workspace_configuration_valid(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace configuration validation with valid setup."""
         # Create valid configuration
         compose_content = """
@@ -206,7 +218,9 @@ services:
         # Should fail initially - validation method not implemented
         assert result is True
 
-    def test_validate_workspace_configuration_missing_files(self, temp_workspace, mock_docker_service):
+    def test_validate_workspace_configuration_missing_files(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace configuration validation with missing files."""
         # No files created
 
@@ -216,7 +230,9 @@ services:
         # Should fail initially - missing files validation not implemented
         assert result is False
 
-    def test_validate_workspace_configuration_compose_validation(self, temp_workspace, mock_docker_service):
+    def test_validate_workspace_configuration_compose_validation(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test docker-compose.yml validation."""
         compose_files = [
             # Valid compose file
@@ -241,23 +257,29 @@ services:
   app:
     image: python:3.11
     ports: [invalid
-"""
+""",
         ]
 
         expected_results = [True, False, False]
 
-        for i, (compose_content, expected) in enumerate(zip(compose_files, expected_results, strict=False)):
+        for i, (compose_content, expected) in enumerate(
+            zip(compose_files, expected_results, strict=False)
+        ):
             (temp_workspace / "docker-compose.yml").write_text(compose_content)
 
             mock_docker_service.is_compose_file_valid.return_value = expected
 
             commands = WorkspaceCommands()
-            result = commands._validate_compose_file(str(temp_workspace / "docker-compose.yml"))
+            result = commands._validate_compose_file(
+                str(temp_workspace / "docker-compose.yml")
+            )
 
             # Should fail initially - compose validation not implemented
             assert result == expected, f"Compose file {i} validation failed"
 
-    def test_validate_workspace_configuration_env_validation(self, temp_workspace, mock_docker_service):
+    def test_validate_workspace_configuration_env_validation(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test .env file validation."""
         env_files = [
             # Valid env file
@@ -285,12 +307,14 @@ HIVE_API_KEY=
             """
 INVALID LINE
 MISSING=VALUE=TOO_MANY_EQUALS
-"""
+""",
         ]
 
         expected_results = [True, True, False, False]
 
-        for i, (env_content, expected) in enumerate(zip(env_files, expected_results, strict=False)):
+        for i, (env_content, expected) in enumerate(
+            zip(env_files, expected_results, strict=False)
+        ):
             (temp_workspace / ".env").write_text(env_content)
 
             commands = WorkspaceCommands()
@@ -302,7 +326,9 @@ MISSING=VALUE=TOO_MANY_EQUALS
     def test_validate_workspace_permissions(self, temp_workspace, mock_docker_service):
         """Test workspace permissions validation."""
         # Create configuration files
-        (temp_workspace / "docker-compose.yml").write_text("version: '3.8'\nservices: {}")
+        (temp_workspace / "docker-compose.yml").write_text(
+            "version: '3.8'\nservices: {}"
+        )
         (temp_workspace / ".env").write_text("HIVE_API_PORT=8886")
 
         # Test with proper permissions
@@ -382,7 +408,7 @@ POSTGRES_PASSWORD=hive_password
         mock_docker_service.start_compose_services.return_value = True
         mock_docker_service.get_compose_status.return_value = {
             "app": {"status": "running", "health": "healthy"},
-            "postgres": {"status": "running", "health": "healthy"}
+            "postgres": {"status": "running", "health": "healthy"},
         }
 
         commands = WorkspaceCommands()
@@ -392,12 +418,14 @@ POSTGRES_PASSWORD=hive_password
         assert result is True
         mock_docker_service.start_compose_services.assert_called_once()
 
-    def test_start_server_services_partial_failure(self, temp_workspace, mock_docker_service):
+    def test_start_server_services_partial_failure(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test server services startup with partial failure."""
         mock_docker_service.start_compose_services.return_value = True
         mock_docker_service.get_compose_status.return_value = {
             "app": {"status": "running", "health": "healthy"},
-            "postgres": {"status": "failed", "health": "unhealthy"}
+            "postgres": {"status": "failed", "health": "unhealthy"},
         }
 
         commands = WorkspaceCommands()
@@ -410,7 +438,7 @@ POSTGRES_PASSWORD=hive_password
         """Test server health check with all services healthy."""
         mock_docker_service.get_compose_status.return_value = {
             "app": {"status": "running", "health": "healthy", "port": "8887"},
-            "postgres": {"status": "running", "health": "healthy", "port": "5433"}
+            "postgres": {"status": "running", "health": "healthy", "port": "5433"},
         }
 
         commands = WorkspaceCommands()
@@ -419,11 +447,13 @@ POSTGRES_PASSWORD=hive_password
         # Should fail initially - health check not implemented
         assert result is True
 
-    def test_check_server_health_unhealthy_services(self, temp_workspace, mock_docker_service):
+    def test_check_server_health_unhealthy_services(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test server health check with unhealthy services."""
         mock_docker_service.get_compose_status.return_value = {
             "app": {"status": "running", "health": "unhealthy", "port": "8887"},
-            "postgres": {"status": "stopped", "health": "unknown", "port": "5433"}
+            "postgres": {"status": "stopped", "health": "unknown", "port": "5433"},
         }
 
         commands = WorkspaceCommands()
@@ -439,18 +469,18 @@ POSTGRES_PASSWORD=hive_password
             # First check - services starting
             {
                 "app": {"status": "starting", "health": "unknown"},
-                "postgres": {"status": "starting", "health": "unknown"}
+                "postgres": {"status": "starting", "health": "unknown"},
             },
             # Second check - app ready, postgres still starting
             {
                 "app": {"status": "running", "health": "healthy"},
-                "postgres": {"status": "starting", "health": "unknown"}
+                "postgres": {"status": "starting", "health": "unknown"},
             },
             # Third check - both ready
             {
                 "app": {"status": "running", "health": "healthy"},
-                "postgres": {"status": "running", "health": "healthy"}
-            }
+                "postgres": {"status": "running", "health": "healthy"},
+            },
         ]
 
         mock_docker_service.get_compose_status.side_effect = health_responses
@@ -466,7 +496,7 @@ POSTGRES_PASSWORD=hive_password
         # Mock services that never become ready
         mock_docker_service.get_compose_status.return_value = {
             "app": {"status": "starting", "health": "unknown"},
-            "postgres": {"status": "starting", "health": "unknown"}
+            "postgres": {"status": "starting", "health": "unknown"},
         }
 
         commands = WorkspaceCommands()
@@ -626,7 +656,7 @@ HIVE_API_KEY=partial_key
 
         # Should have defaults for missing values
         assert "POSTGRES_PORT" in merged_env  # Default value
-        assert "POSTGRES_DB" in merged_env    # Default value
+        assert "POSTGRES_DB" in merged_env  # Default value
 
     def test_environment_variable_substitution(self, temp_workspace):
         """Test environment variable substitution in compose files."""
@@ -657,7 +687,9 @@ services:
         (temp_workspace / "docker-compose.yml").write_text(compose_content)
 
         commands = WorkspaceCommands()
-        resolved_compose = commands._resolve_environment_substitution(str(temp_workspace))
+        resolved_compose = commands._resolve_environment_substitution(
+            str(temp_workspace)
+        )
 
         # Should fail initially - environment substitution not implemented
         assert resolved_compose is not None
@@ -704,7 +736,9 @@ POSTGRES_PORT=5437
             mock_docker_class.return_value = mock_docker
             yield mock_docker
 
-    def test_get_workspace_status_all_running(self, temp_workspace, mock_docker_service):
+    def test_get_workspace_status_all_running(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace status with all services running."""
         mock_docker_service.get_compose_status.return_value = {
             "app": {
@@ -713,7 +747,7 @@ POSTGRES_PORT=5437
                 "port": "8892",
                 "uptime": "2 hours",
                 "cpu_usage": "5.2%",
-                "memory_usage": "128MB"
+                "memory_usage": "128MB",
             },
             "postgres": {
                 "status": "running",
@@ -721,8 +755,8 @@ POSTGRES_PORT=5437
                 "port": "5437",
                 "uptime": "2 hours",
                 "cpu_usage": "1.8%",
-                "memory_usage": "45MB"
-            }
+                "memory_usage": "45MB",
+            },
         }
 
         commands = WorkspaceCommands()
@@ -735,19 +769,13 @@ POSTGRES_PORT=5437
         assert status["app"]["status"] == "running"
         assert status["postgres"]["status"] == "running"
 
-    def test_get_workspace_status_mixed_states(self, temp_workspace, mock_docker_service):
+    def test_get_workspace_status_mixed_states(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace status with mixed service states."""
         mock_docker_service.get_compose_status.return_value = {
-            "app": {
-                "status": "running",
-                "health": "healthy",
-                "port": "8892"
-            },
-            "postgres": {
-                "status": "stopped",
-                "health": "unknown",
-                "port": "5437"
-            }
+            "app": {"status": "running", "health": "healthy", "port": "8892"},
+            "postgres": {"status": "stopped", "health": "unknown", "port": "5437"},
         }
 
         commands = WorkspaceCommands()
@@ -758,11 +786,13 @@ POSTGRES_PORT=5437
         assert status["app"]["status"] == "running"
         assert status["postgres"]["status"] == "stopped"
 
-    def test_get_workspace_status_all_stopped(self, temp_workspace, mock_docker_service):
+    def test_get_workspace_status_all_stopped(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test workspace status with all services stopped."""
         mock_docker_service.get_compose_status.return_value = {
             "app": {"status": "stopped", "health": "unknown"},
-            "postgres": {"status": "stopped", "health": "unknown"}
+            "postgres": {"status": "stopped", "health": "unknown"},
         }
 
         commands = WorkspaceCommands()
@@ -778,12 +808,12 @@ POSTGRES_PORT=5437
             "app": [
                 "2024-01-01 10:00:00 INFO: Starting API server",
                 "2024-01-01 10:00:01 INFO: Server started on port 8886",
-                "2024-01-01 10:00:02 INFO: Ready to accept connections"
+                "2024-01-01 10:00:02 INFO: Ready to accept connections",
             ],
             "postgres": [
                 "2024-01-01 10:00:00 LOG: starting PostgreSQL 15.5",
-                "2024-01-01 10:00:01 LOG: database system is ready"
-            ]
+                "2024-01-01 10:00:01 LOG: database system is ready",
+            ],
         }
 
         mock_docker_service.get_compose_logs.return_value = mock_logs
@@ -810,26 +840,27 @@ POSTGRES_PORT=5437
         # Should fail initially - custom tail not implemented
         assert logs is not None
         mock_docker_service.get_compose_logs.assert_called_once_with(
-            str(temp_workspace),
-            tail=100
+            str(temp_workspace), tail=100
         )
 
-    def test_monitor_workspace_health_continuous(self, temp_workspace, mock_docker_service):
+    def test_monitor_workspace_health_continuous(
+        self, temp_workspace, mock_docker_service
+    ):
         """Test continuous workspace health monitoring."""
         # Mock health status that changes over time
         health_responses = [
             {
                 "app": {"status": "starting", "health": "unknown"},
-                "postgres": {"status": "starting", "health": "unknown"}
+                "postgres": {"status": "starting", "health": "unknown"},
             },
             {
                 "app": {"status": "running", "health": "healthy"},
-                "postgres": {"status": "running", "health": "healthy"}
+                "postgres": {"status": "running", "health": "healthy"},
             },
             {
                 "app": {"status": "running", "health": "unhealthy"},
-                "postgres": {"status": "running", "health": "healthy"}
-            }
+                "postgres": {"status": "running", "health": "healthy"},
+            },
         ]
 
         mock_docker_service.get_compose_status.side_effect = health_responses
@@ -844,7 +875,7 @@ POSTGRES_PORT=5437
         # Should fail initially - health monitoring not implemented
         assert len(health_results) == 3
         assert health_results[0] is False  # Starting
-        assert health_results[1] is True   # All healthy
+        assert health_results[1] is True  # All healthy
         assert health_results[2] is False  # App unhealthy
 
 
@@ -868,7 +899,9 @@ class TestWorkspaceErrorHandling:
             workspace = Path(temp_dir)
 
             # Create files but make directory read-only
-            (workspace / "docker-compose.yml").write_text("version: '3.8'\nservices: {}")
+            (workspace / "docker-compose.yml").write_text(
+                "version: '3.8'\nservices: {}"
+            )
             workspace.chmod(0o444)
 
             try:
@@ -888,12 +921,16 @@ class TestWorkspaceErrorHandling:
         with patch("cli.commands.workspace.DockerService") as mock_docker_class:
             mock_docker = Mock()
             mock_docker.is_docker_available.return_value = False
-            mock_docker.start_compose_services.side_effect = Exception("Docker daemon not running")
+            mock_docker.start_compose_services.side_effect = Exception(
+                "Docker daemon not running"
+            )
             mock_docker_class.return_value = mock_docker
 
             with tempfile.TemporaryDirectory() as temp_dir:
                 workspace = Path(temp_dir)
-                (workspace / "docker-compose.yml").write_text("version: '3.8'\nservices: {}")
+                (workspace / "docker-compose.yml").write_text(
+                    "version: '3.8'\nservices: {}"
+                )
 
                 commands = WorkspaceCommands()
                 result = commands.start_workspace(str(workspace))
@@ -907,7 +944,9 @@ class TestWorkspaceErrorHandling:
             workspace = Path(temp_dir)
 
             # Create corrupted docker-compose.yml
-            (workspace / "docker-compose.yml").write_text("corrupted binary data: \x00\x01\x02")
+            (workspace / "docker-compose.yml").write_text(
+                "corrupted binary data: \x00\x01\x02"
+            )
 
             commands = WorkspaceCommands()
             result = commands.start_workspace(str(workspace))
@@ -921,7 +960,9 @@ class TestWorkspaceErrorHandling:
             mock_docker = Mock()
             mock_docker.is_docker_available.return_value = True
             mock_docker.is_compose_file_valid.return_value = True
-            mock_docker.start_compose_services.side_effect = Exception("Port already in use")
+            mock_docker.start_compose_services.side_effect = Exception(
+                "Port already in use"
+            )
             mock_docker_class.return_value = mock_docker
 
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -951,8 +992,16 @@ services:
 
             # Mock dependency failure scenario
             mock_docker.get_compose_status.return_value = {
-                "postgres": {"status": "failed", "health": "unhealthy", "error": "Connection refused"},
-                "app": {"status": "running", "health": "unhealthy", "error": "Cannot connect to database"}
+                "postgres": {
+                    "status": "failed",
+                    "health": "unhealthy",
+                    "error": "Connection refused",
+                },
+                "app": {
+                    "status": "running",
+                    "health": "unhealthy",
+                    "error": "Cannot connect to database",
+                },
             }
 
             mock_docker_class.return_value = mock_docker
@@ -985,7 +1034,9 @@ class TestWorkspacePrintOutput:
         """Create temporary workspace for print testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            (workspace / "docker-compose.yml").write_text("version: '3.8'\nservices: {}")
+            (workspace / "docker-compose.yml").write_text(
+                "version: '3.8'\nservices: {}"
+            )
             (workspace / ".env").write_text("HIVE_API_PORT=8893")
             yield workspace
 
@@ -1021,13 +1072,9 @@ class TestWorkspacePrintOutput:
                     "health": "healthy",
                     "port": "8893",
                     "uptime": "1 hour",
-                    "memory_usage": "156MB"
+                    "memory_usage": "156MB",
                 },
-                "postgres": {
-                    "status": "stopped",
-                    "health": "unknown",
-                    "port": "5438"
-                }
+                "postgres": {"status": "stopped", "health": "unknown", "port": "5438"},
             }
             mock_docker_class.return_value = mock_docker
 
@@ -1051,11 +1098,9 @@ class TestWorkspacePrintOutput:
             mock_docker.get_compose_logs.return_value = {
                 "app": [
                     "2024-01-01 10:00:00 INFO: Application started",
-                    "2024-01-01 10:00:01 INFO: Ready to serve requests"
+                    "2024-01-01 10:00:01 INFO: Ready to serve requests",
                 ],
-                "postgres": [
-                    "2024-01-01 10:00:00 LOG: Database initialized"
-                ]
+                "postgres": ["2024-01-01 10:00:00 LOG: Database initialized"],
             }
             mock_docker_class.return_value = mock_docker
 
@@ -1082,4 +1127,7 @@ class TestWorkspacePrintOutput:
 
         # Should fail initially - error messages not implemented
         assert "❌" in captured.out
-        assert "Workspace not found" in captured.out or "Failed to start workspace" in captured.out
+        assert (
+            "Workspace not found" in captured.out
+            or "Failed to start workspace" in captured.out
+        )

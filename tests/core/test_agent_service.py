@@ -75,7 +75,9 @@ class TestAgentServiceInstallation:
             )
             yield str(workspace)
 
-    def test_install_agent_environment_success(self, mock_compose_manager, temp_workspace):
+    def test_install_agent_environment_success(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test successful agent environment installation."""
         service = AgentService()
 
@@ -83,13 +85,17 @@ class TestAgentServiceInstallation:
         with patch.object(service, "_validate_workspace", return_value=True):
             with patch.object(service, "_create_agent_env_file", return_value=True):
                 with patch.object(service, "_setup_agent_postgres", return_value=True):
-                    with patch.object(service, "_generate_agent_api_key", return_value=True):
+                    with patch.object(
+                        service, "_generate_agent_api_key", return_value=True
+                    ):
                         result = service.install_agent_environment(temp_workspace)
 
         # Should fail initially - installation orchestration not implemented
         assert result is True
 
-    def test_install_agent_environment_workspace_validation_failure(self, mock_compose_manager, temp_workspace):
+    def test_install_agent_environment_workspace_validation_failure(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test installation fails when workspace validation fails."""
         service = AgentService()
 
@@ -99,7 +105,9 @@ class TestAgentServiceInstallation:
         # Should fail initially - validation failure handling not implemented
         assert result is False
 
-    def test_install_agent_environment_env_file_creation_failure(self, mock_compose_manager, temp_workspace):
+    def test_install_agent_environment_env_file_creation_failure(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test installation fails when env file creation fails."""
         service = AgentService()
 
@@ -110,7 +118,9 @@ class TestAgentServiceInstallation:
         # Should fail initially - env file failure handling not implemented
         assert result is False
 
-    def test_install_agent_environment_postgres_setup_failure(self, mock_compose_manager, temp_workspace):
+    def test_install_agent_environment_postgres_setup_failure(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test installation fails when postgres setup fails."""
         service = AgentService()
 
@@ -122,14 +132,18 @@ class TestAgentServiceInstallation:
         # Should fail initially - postgres failure handling not implemented
         assert result is False
 
-    def test_install_agent_environment_api_key_generation_failure(self, mock_compose_manager, temp_workspace):
+    def test_install_agent_environment_api_key_generation_failure(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test installation fails when API key generation fails."""
         service = AgentService()
 
         with patch.object(service, "_validate_workspace", return_value=True):
             with patch.object(service, "_create_agent_env_file", return_value=True):
                 with patch.object(service, "_setup_agent_postgres", return_value=True):
-                    with patch.object(service, "_generate_agent_api_key", return_value=False):
+                    with patch.object(
+                        service, "_generate_agent_api_key", return_value=False
+                    ):
                         result = service.install_agent_environment(temp_workspace)
 
         # Should fail initially - API key failure handling not implemented
@@ -155,7 +169,9 @@ class TestAgentServiceValidation:
             workspace = Path(temp_dir)
             # Create expected directory structure
             (workspace / "docker" / "agent").mkdir(parents=True)
-            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text(
+                "version: '3.8'\n"
+            )
             (workspace / ".env.example").write_text("HIVE_API_PORT=8886\n")
 
             result = service._validate_workspace(workspace)
@@ -327,7 +343,9 @@ class TestAgentServicePostgresSetup:
                 "HIVE_DATABASE_URL=postgresql+psycopg://testuser:testpass@localhost:35532/hive_agent\n"
             )
 
-            with patch.object(service, "_generate_agent_postgres_credentials", return_value=True):
+            with patch.object(
+                service, "_generate_agent_postgres_credentials", return_value=True
+            ):
                 with patch("subprocess.run") as mock_subprocess:
                     mock_subprocess.return_value.returncode = 0
 
@@ -336,12 +354,16 @@ class TestAgentServicePostgresSetup:
         # Should fail initially - postgres setup not implemented
         assert result is True
 
-    def test_setup_agent_postgres_credential_generation_failure(self, mock_compose_manager):
+    def test_setup_agent_postgres_credential_generation_failure(
+        self, mock_compose_manager
+    ):
         """Test postgres setup fails when credential generation fails."""
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.object(service, "_generate_agent_postgres_credentials", return_value=False):
+            with patch.object(
+                service, "_generate_agent_postgres_credentials", return_value=False
+            ):
                 result = service._setup_agent_postgres(str(temp_dir))
 
         # Should fail initially - credential failure handling not implemented
@@ -352,7 +374,9 @@ class TestAgentServicePostgresSetup:
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.object(service, "_generate_agent_postgres_credentials", return_value=True):
+            with patch.object(
+                service, "_generate_agent_postgres_credentials", return_value=True
+            ):
                 result = service._setup_agent_postgres(str(temp_dir))
 
         # Should fail initially - missing env file handling not implemented
@@ -367,7 +391,9 @@ class TestAgentServicePostgresSetup:
             env_agent = workspace / ".env.agent"
             env_agent.write_text("INVALID_CONFIG=test\n")
 
-            with patch.object(service, "_generate_agent_postgres_credentials", return_value=True):
+            with patch.object(
+                service, "_generate_agent_postgres_credentials", return_value=True
+            ):
                 result = service._setup_agent_postgres(str(workspace))
 
         # Should fail initially - invalid URL handling not implemented
@@ -384,7 +410,9 @@ class TestAgentServicePostgresSetup:
                 "HIVE_DATABASE_URL=postgresql+psycopg://testuser:testpass@localhost:35532/hive_agent\n"
             )
 
-            with patch.object(service, "_generate_agent_postgres_credentials", return_value=True):
+            with patch.object(
+                service, "_generate_agent_postgres_credentials", return_value=True
+            ):
                 with patch("subprocess.run") as mock_subprocess:
                     mock_subprocess.return_value.returncode = 1
                     mock_subprocess.return_value.stderr = "Docker error"
@@ -428,7 +456,9 @@ class TestAgentServiceCredentialsGeneration:
             assert "generated_token" in content
             assert "hive_agent" in content
 
-    def test_generate_agent_postgres_credentials_missing_env_file(self, mock_compose_manager):
+    def test_generate_agent_postgres_credentials_missing_env_file(
+        self, mock_compose_manager
+    ):
         """Test credential generation fails when .env.agent is missing."""
         service = AgentService()
 
@@ -438,7 +468,9 @@ class TestAgentServiceCredentialsGeneration:
         # Should fail initially - missing file handling not implemented
         assert result is False
 
-    def test_generate_agent_postgres_credentials_read_write_error(self, mock_compose_manager):
+    def test_generate_agent_postgres_credentials_read_write_error(
+        self, mock_compose_manager
+    ):
         """Test credential generation handles read/write errors."""
         service = AgentService()
 
@@ -505,7 +537,9 @@ class TestAgentServiceServerManagement:
 
         with patch.object(service, "_validate_agent_environment", return_value=True):
             with patch.object(service, "_is_agent_running", return_value=False):
-                with patch.object(service, "_start_agent_background", return_value=True):
+                with patch.object(
+                    service, "_start_agent_background", return_value=True
+                ):
                     result = service.serve_agent("test_workspace")
 
         # Should fail initially - serve orchestration not implemented
@@ -693,14 +727,19 @@ class TestAgentServiceBackgroundProcessManagement:
             service.pid_file.write_text("1234")
 
             kill_calls = []
+
             def mock_kill(pid, sig):
                 kill_calls.append((pid, sig))
                 if sig == 0:  # Process existence check
-                    if len(kill_calls) <= 52:  # Process exists through all graceful checks
+                    if (
+                        len(kill_calls) <= 52
+                    ):  # Process exists through all graceful checks
                         return
                     # Process gone after force kill
                     raise ProcessLookupError
-                if sig == signal.SIGTERM or sig == signal.SIGKILL:  # Graceful shutdown (ignored)
+                if (
+                    sig == signal.SIGTERM or sig == signal.SIGKILL
+                ):  # Graceful shutdown (ignored)
                     return
 
             with patch("os.kill", side_effect=mock_kill):
@@ -886,7 +925,7 @@ class TestAgentServiceLogsAndStatus:
         # Should fail initially - status retrieval not implemented
         expected_status = {
             "agent-server": "✅ Running (PID: 1234, Port: 38886)",
-            "agent-postgres": "✅ Running (Port: 35532)"
+            "agent-postgres": "✅ Running (Port: 35532)",
         }
         assert result == expected_status
 
@@ -902,10 +941,7 @@ class TestAgentServiceLogsAndStatus:
             result = service.get_agent_status("test_workspace")
 
         # Should fail initially - stopped status handling not implemented
-        expected_status = {
-            "agent-server": "🛑 Stopped",
-            "agent-postgres": "🛑 Stopped"
-        }
+        expected_status = {"agent-server": "🛑 Stopped", "agent-postgres": "🛑 Stopped"}
         assert result == expected_status
 
     def test_get_agent_status_mixed_states(self, mock_compose_manager):
@@ -922,7 +958,7 @@ class TestAgentServiceLogsAndStatus:
         # Should fail initially - mixed states handling not implemented
         expected_status = {
             "agent-server": "🛑 Stopped",
-            "agent-postgres": "✅ Running (Port: 35532)"
+            "agent-postgres": "✅ Running (Port: 35532)",
         }
         assert result == expected_status
 
@@ -987,7 +1023,9 @@ class TestAgentServiceResetAndCleanup:
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.object(service, "_stop_agent_background", side_effect=Exception("Stop error")):
+            with patch.object(
+                service, "_stop_agent_background", side_effect=Exception("Stop error")
+            ):
                 with patch("subprocess.run", side_effect=Exception("Docker error")):
                     result = service._cleanup_agent_environment(str(temp_dir))
 
@@ -1014,7 +1052,9 @@ class TestAgentServiceIntegration:
             workspace = Path(temp_dir)
             # Create expected directory structure
             (workspace / "docker" / "agent").mkdir(parents=True)
-            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text(
+                "version: '3.8'\n"
+            )
             (workspace / ".env.example").write_text(
                 "HIVE_API_PORT=8886\n"
                 "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"
@@ -1023,14 +1063,27 @@ class TestAgentServiceIntegration:
 
             # Mock all operations to succeed
             with patch.object(service, "_setup_agent_postgres", return_value=True):
-                with patch.object(service, "_generate_agent_api_key", return_value=True):
-                    with patch.object(service, "_start_agent_background", return_value=True):
-                        with patch.object(service, "_is_agent_running", return_value=False):
-                            with patch.object(service, "_validate_agent_environment", return_value=True):
-                                with patch.object(service, "_stop_agent_background", return_value=True):
-
+                with patch.object(
+                    service, "_generate_agent_api_key", return_value=True
+                ):
+                    with patch.object(
+                        service, "_start_agent_background", return_value=True
+                    ):
+                        with patch.object(
+                            service, "_is_agent_running", return_value=False
+                        ):
+                            with patch.object(
+                                service,
+                                "_validate_agent_environment",
+                                return_value=True,
+                            ):
+                                with patch.object(
+                                    service, "_stop_agent_background", return_value=True
+                                ):
                                     # Install
-                                    install_result = service.install_agent_environment(str(workspace))
+                                    install_result = service.install_agent_environment(
+                                        str(workspace)
+                                    )
                                     assert install_result is True
 
                                     # Serve
@@ -1042,7 +1095,9 @@ class TestAgentServiceIntegration:
                                     assert stop_result is True
 
                                     # Reset
-                                    reset_result = service.reset_agent_environment(str(workspace))
+                                    reset_result = service.reset_agent_environment(
+                                        str(workspace)
+                                    )
                                     assert reset_result is True
 
     def test_concurrent_agent_operations(self, mock_compose_manager):
@@ -1053,7 +1108,6 @@ class TestAgentServiceIntegration:
         with patch.object(service, "_validate_agent_environment", return_value=True):
             with patch.object(service, "_is_agent_running", side_effect=[True, True]):
                 with patch.object(service, "_get_agent_pid", return_value=1234):
-
                     # First serve should return True (already running)
                     result1 = service.serve_agent("test_workspace")
                     assert result1 is True
@@ -1071,7 +1125,9 @@ class TestAgentServiceIntegration:
             workspace = Path(temp_dir)
             # Create expected directory structure
             (workspace / "docker" / "agent").mkdir(parents=True)
-            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text(
+                "version: '3.8'\n"
+            )
             (workspace / ".env.example").write_text("HIVE_API_PORT=8886\n")
 
             # First attempt fails at postgres setup
@@ -1083,7 +1139,9 @@ class TestAgentServiceIntegration:
             # Second attempt succeeds
             with patch.object(service, "_create_agent_env_file", return_value=True):
                 with patch.object(service, "_setup_agent_postgres", return_value=True):
-                    with patch.object(service, "_generate_agent_api_key", return_value=True):
+                    with patch.object(
+                        service, "_generate_agent_api_key", return_value=True
+                    ):
                         result2 = service.install_agent_environment(str(workspace))
                         assert result2 is True
 
@@ -1095,14 +1153,13 @@ class TestAgentServiceIntegration:
             "/unix/absolute/path",
             "relative/path",
             "./current/relative",
-            "../parent/relative"
+            "../parent/relative",
         ]
 
         if os.name == "nt":  # Windows
-            test_paths.extend([
-                "C:\\Windows\\absolute\\path",
-                "relative\\windows\\path"
-            ])
+            test_paths.extend(
+                ["C:\\Windows\\absolute\\path", "relative\\windows\\path"]
+            )
 
         for test_path in test_paths:
             # Should fail initially - cross-platform path handling not implemented
@@ -1112,9 +1169,15 @@ class TestAgentServiceIntegration:
 
                 # Test with mock validation that always succeeds
                 with patch.object(service, "_validate_workspace", return_value=True):
-                    with patch.object(service, "_create_agent_env_file", return_value=True):
-                        with patch.object(service, "_setup_agent_postgres", return_value=True):
-                            with patch.object(service, "_generate_agent_api_key", return_value=True):
+                    with patch.object(
+                        service, "_create_agent_env_file", return_value=True
+                    ):
+                        with patch.object(
+                            service, "_setup_agent_postgres", return_value=True
+                        ):
+                            with patch.object(
+                                service, "_generate_agent_api_key", return_value=True
+                            ):
                                 result = service.install_agent_environment(test_path)
                                 assert result is True
             except Exception:

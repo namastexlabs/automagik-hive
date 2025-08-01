@@ -43,7 +43,6 @@ class MCPTestCommands:
                 health_check=False,  # Skip health checks for testing
             )
 
-
             # Display generated configuration
             for _server_name in mcp_config.get("mcpServers", {}):
                 pass
@@ -114,7 +113,6 @@ class MCPTestCommands:
 
         try:
             for ide_type in ide_types:
-
                 mcp_config = self.mcp_config_manager.generate_mcp_config(
                     workspace_path=workspace_path_obj,
                     credentials=test_credentials,
@@ -187,7 +185,6 @@ class MCPTestCommands:
         total_tests = len(tests)
 
         for _test_name, test_func in tests:
-
             try:
                 if test_func(workspace_path):
                     passed_tests += 1
@@ -195,7 +192,6 @@ class MCPTestCommands:
                     pass
             except Exception:
                 pass
-
 
         if passed_tests == total_tests:
             pass

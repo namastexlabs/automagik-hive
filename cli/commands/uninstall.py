@@ -55,7 +55,6 @@ class UninstallCommands:
         """
         current_dir = Path.cwd()
 
-
         # Check if this looks like a workspace
         if not self._is_automagik_workspace(current_dir):
             return False
@@ -132,7 +131,6 @@ class UninstallCommands:
         """Clean up UVX workspace data."""
         success = True
 
-
         # Step 1: Stop and remove Docker containers
         compose_file = workspace / "docker-compose.yml"
         if compose_file.exists():
@@ -171,7 +169,6 @@ class UninstallCommands:
         logs_dir = workspace / "logs"
         if logs_dir.exists():
             pass
-
 
         while True:
             confirm = input(
@@ -224,7 +221,7 @@ class UninstallCommands:
             Path.cwd() / "data",
             Path.home() / ".cache" / "automagik-hive",
             Path("/tmp") / "automagik-hive",
-            Path.cwd() / "__pycache__"
+            Path.cwd() / "__pycache__",
         ]
 
         existing_data_dirs = [d for d in data_dirs_to_check if d.exists()]
@@ -243,14 +240,21 @@ class UninstallCommands:
         # Show Docker volumes that will be removed
         try:
             import subprocess
+
             all_volumes = []
             for filter_name in ["hive", "automagik"]:
                 result = subprocess.run(
                     ["docker", "volume", "ls", "-q", "--filter", f"name={filter_name}"],
-                    check=False, capture_output=True, text=True,
+                    check=False,
+                    capture_output=True,
+                    text=True,
                 )
                 if result.returncode == 0 and result.stdout.strip():
-                    volume_names = [vol.strip() for vol in result.stdout.strip().split("\n") if vol.strip()]
+                    volume_names = [
+                        vol.strip()
+                        for vol in result.stdout.strip().split("\n")
+                        if vol.strip()
+                    ]
                     all_volumes.extend(volume_names)
 
             all_volumes = list(set(all_volumes))
@@ -263,7 +267,12 @@ class UninstallCommands:
             print("⚠️  Could not check Docker volumes")
             print()
 
-        total_items = len(workspaces) + len(containers) + len(existing_data_dirs) + len(all_volumes if "all_volumes" in locals() else [])
+        total_items = (
+            len(workspaces)
+            + len(containers)
+            + len(existing_data_dirs)
+            + len(all_volumes if "all_volumes" in locals() else [])
+        )
 
         print(f"📊 TOTAL ITEMS TO DELETE: {total_items}")
         print("⚠️  This action CANNOT be undone!")
@@ -284,7 +293,6 @@ class UninstallCommands:
     def _remove_workspace_completely(self, workspace: Path) -> bool:
         """Remove workspace and all associated resources."""
         success = True
-
 
         # Step 1: Stop and remove Docker containers
         compose_file = workspace / "docker-compose.yml"
@@ -394,26 +402,43 @@ class UninstallCommands:
                                 with open(env_file) as f:
                                     content = f.read()
                                     # Must have BOTH hive-specific variables AND automagik references
-                                    has_hive_vars = any(var in content for var in [
-                                        "HIVE_API_KEY", "HIVE_API_PORT", "HIVE_DB_HOST",
-                                        "HIVE_AUTH_DISABLED", "HIVE_ENVIRONMENT"
-                                    ])
+                                    has_hive_vars = any(
+                                        var in content
+                                        for var in [
+                                            "HIVE_API_KEY",
+                                            "HIVE_API_PORT",
+                                            "HIVE_DB_HOST",
+                                            "HIVE_AUTH_DISABLED",
+                                            "HIVE_ENVIRONMENT",
+                                        ]
+                                    )
                                     has_automagik = "automagik" in content.lower()
 
                                     # Also check docker-compose.yml for hive-specific services
                                     compose_content = ""
                                     try:
-                                        with open(workspace_dir / "docker-compose.yml") as f:
+                                        with open(
+                                            workspace_dir / "docker-compose.yml"
+                                        ) as f:
                                             compose_content = f.read()
                                     except Exception:
                                         continue
 
-                                    has_hive_services = any(service in compose_content for service in [
-                                        "hive-postgres", "hive-agents", "hive-genie"
-                                    ])
+                                    has_hive_services = any(
+                                        service in compose_content
+                                        for service in [
+                                            "hive-postgres",
+                                            "hive-agents",
+                                            "hive-genie",
+                                        ]
+                                    )
 
                                     # Only include if it has multiple Automagik Hive indicators
-                                    if has_hive_vars and has_automagik and has_hive_services:
+                                    if (
+                                        has_hive_vars
+                                        and has_automagik
+                                        and has_hive_services
+                                    ):
                                         workspaces.append(workspace_dir)
                             except Exception:
                                 continue
@@ -528,7 +553,9 @@ class UninstallCommands:
                 if result.returncode == 0:
                     print("   ✅ Containers stopped successfully")
                 else:
-                    print(f"   ⚠️  Some containers may have failed to stop: {result.stderr}")
+                    print(
+                        f"   ⚠️  Some containers may have failed to stop: {result.stderr}"
+                    )
 
                 print(f"🗑️  Removing {len(all_container_ids)} container(s)...")
                 # Remove containers
@@ -541,7 +568,9 @@ class UninstallCommands:
                 if result.returncode == 0:
                     print("   ✅ Containers removed successfully")
                 else:
-                    print(f"   ⚠️  Some containers may have failed to remove: {result.stderr}")
+                    print(
+                        f"   ⚠️  Some containers may have failed to remove: {result.stderr}"
+                    )
 
             else:
                 print("🐳 No Automagik Hive containers found to remove")
@@ -577,7 +606,9 @@ class UninstallCommands:
                 if result.returncode == 0:
                     print("   ✅ Volumes removed successfully")
                 else:
-                    print(f"   ⚠️  Some volumes may have failed to remove: {result.stderr}")
+                    print(
+                        f"   ⚠️  Some volumes may have failed to remove: {result.stderr}"
+                    )
             else:
                 print("💾 No Automagik Hive volumes found to remove")
 

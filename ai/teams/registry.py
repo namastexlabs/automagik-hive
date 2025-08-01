@@ -127,9 +127,7 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
                     f"ai.teams.{team_name}.team", team_file
                 )
                 if spec is None or spec.loader is None:
-                    logger.warning(
-                        "Failed to create module spec", team_name=team_name
-                    )
+                    logger.warning("Failed to create module spec", team_name=team_name)
                     continue
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)

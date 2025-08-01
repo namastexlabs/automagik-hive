@@ -4,7 +4,6 @@ FastAPI authentication dependencies.
 Provides dependency injection for x-api-key authentication.
 """
 
-
 from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyHeader
 

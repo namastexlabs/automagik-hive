@@ -19,7 +19,7 @@ class CredentialService:
     def __init__(self, env_file: Path | None = None) -> None:
         """
         Initialize credential service.
-        
+
         Args:
             env_file: Path to environment file (defaults to .env)
         """
@@ -31,24 +31,21 @@ class CredentialService:
         self.api_key_var = "HIVE_API_KEY"
 
     def generate_postgres_credentials(
-        self,
-        host: str = "localhost",
-        port: int = 5532,
-        database: str = "hive"
+        self, host: str = "localhost", port: int = 5532, database: str = "hive"
     ) -> dict[str, str]:
         """
         Generate secure PostgreSQL credentials.
-        
+
         Replicates Makefile generate_postgres_credentials function:
         - PostgreSQL User: Random base64 string (16 chars)
         - PostgreSQL Password: Random base64 string (16 chars)
         - Database URL: postgresql+psycopg://user:pass@host:port/database
-        
+
         Args:
             host: Database host (default: localhost)
             port: Database port (default: 5532)
             database: Database name (default: hive)
-            
+
         Returns:
             Dict containing user, password, database, and full URL
         """
@@ -59,7 +56,9 @@ class CredentialService:
         password = self._generate_secure_token(16, safe_chars=True)
 
         # Construct database URL
-        database_url = f"postgresql+psycopg://{user}:{password}@{host}:{port}/{database}"
+        database_url = (
+            f"postgresql+psycopg://{user}:{password}@{host}:{port}/{database}"
+        )
 
         credentials = {
             "user": user,
@@ -67,7 +66,7 @@ class CredentialService:
             "database": database,
             "host": host,
             "port": str(port),
-            "url": database_url
+            "url": database_url,
         }
 
         logger.info(
@@ -76,7 +75,7 @@ class CredentialService:
             password_length=len(password),
             database=database,
             host=host,
-            port=port
+            port=port,
         )
 
         return credentials
@@ -84,10 +83,10 @@ class CredentialService:
     def generate_hive_api_key(self) -> str:
         """
         Generate secure Hive API key.
-        
+
         Replicates Makefile generate_hive_api_key function:
         - API Key: hive_[32-char secure token]
-        
+
         Returns:
             Generated API key with hive_ prefix
         """
@@ -102,21 +101,19 @@ class CredentialService:
         return api_key
 
     def generate_agent_credentials(
-        self,
-        port: int = 35532,
-        database: str = "hive_agent"
+        self, port: int = 35532, database: str = "hive_agent"
     ) -> dict[str, str]:
         """
         Generate agent-specific credentials with unified user/pass from main.
-        
+
         Replicates Makefile use_unified_credentials_for_agent function:
         - Reuses main PostgreSQL user/password
         - Changes port and database name
-        
+
         Args:
             port: Agent database port (default: 35532)
             database: Agent database name (default: hive_agent)
-            
+
         Returns:
             Dict containing agent credentials
         """
@@ -133,20 +130,18 @@ class CredentialService:
                 "database": database,
                 "host": "localhost",
                 "port": str(port),
-                "url": f"postgresql+psycopg://{main_creds['user']}:{main_creds['password']}@localhost:{port}/{database}"
+                "url": f"postgresql+psycopg://{main_creds['user']}:{main_creds['password']}@localhost:{port}/{database}",
             }
 
             logger.info(
                 "Agent credentials generated using unified approach",
                 database=database,
-                port=port
+                port=port,
             )
         else:
             # Generate new credentials if main not available
             agent_creds = self.generate_postgres_credentials(
-                host="localhost",
-                port=port,
-                database=database
+                host="localhost", port=port, database=database
             )
 
             logger.info("Agent credentials generated (new credentials)")
@@ -156,9 +151,9 @@ class CredentialService:
     def extract_postgres_credentials_from_env(self) -> dict[str, str | None]:
         """
         Extract PostgreSQL credentials from .env file.
-        
+
         Replicates Makefile extract_postgres_credentials_from_env function.
-        
+
         Returns:
             Dict containing extracted credentials (may contain None values)
         """
@@ -168,7 +163,7 @@ class CredentialService:
             "database": None,
             "host": None,
             "port": None,
-            "url": None
+            "url": None,
         }
 
         if not self.env_file.exists():
@@ -197,7 +192,9 @@ class CredentialService:
                         if parsed.port:
                             credentials["port"] = str(parsed.port)
                         if parsed.path and len(parsed.path) > 1:
-                            credentials["database"] = parsed.path[1:]  # Remove leading /
+                            credentials["database"] = parsed.path[
+                                1:
+                            ]  # Remove leading /
 
                         logger.info("PostgreSQL credentials extracted from .env")
                         break
@@ -210,9 +207,9 @@ class CredentialService:
     def extract_hive_api_key_from_env(self) -> str | None:
         """
         Extract Hive API key from .env file.
-        
+
         Replicates Makefile extract_hive_api_key_from_env function.
-        
+
         Returns:
             API key if found, None otherwise
         """
@@ -240,11 +237,11 @@ class CredentialService:
         self,
         postgres_creds: dict[str, str] | None = None,
         api_key: str | None = None,
-        create_if_missing: bool = True
+        create_if_missing: bool = True,
     ) -> None:
         """
         Save credentials to .env file.
-        
+
         Args:
             postgres_creds: PostgreSQL credentials dict
             api_key: Hive API key
@@ -293,15 +290,12 @@ class CredentialService:
             logger.error("Failed to save credentials to .env file", error=str(e))
             raise
 
-    def sync_mcp_config_with_credentials(
-        self,
-        mcp_file: Path | None = None
-    ) -> None:
+    def sync_mcp_config_with_credentials(self, mcp_file: Path | None = None) -> None:
         """
         Update .mcp.json with current credentials.
-        
+
         Replicates Makefile sync_mcp_config_with_credentials function.
-        
+
         Args:
             mcp_file: Path to MCP config file (defaults to .mcp.json)
         """
@@ -326,13 +320,15 @@ class CredentialService:
             if postgres_creds["url"]:
                 # Replace any existing PostgreSQL connection string
                 import re
+
                 pattern = r"postgresql\+psycopg://[^@]*@"
-                replacement = f'postgresql+psycopg://{postgres_creds["user"]}:{postgres_creds["password"]}@'
+                replacement = f"postgresql+psycopg://{postgres_creds['user']}:{postgres_creds['password']}@"
                 mcp_content = re.sub(pattern, replacement, mcp_content)
 
             # Update API key
             if api_key:
                 import re
+
                 pattern = r'"HIVE_API_KEY":\s*"[^"]*"'
                 replacement = f'"HIVE_API_KEY": "{api_key}"'
                 mcp_content = re.sub(pattern, replacement, mcp_content)
@@ -344,17 +340,15 @@ class CredentialService:
             logger.error("Failed to update MCP config", error=str(e))
 
     def validate_credentials(
-        self,
-        postgres_creds: dict[str, str] | None = None,
-        api_key: str | None = None
+        self, postgres_creds: dict[str, str] | None = None, api_key: str | None = None
     ) -> dict[str, bool]:
         """
         Validate credential format and security.
-        
+
         Args:
             postgres_creds: PostgreSQL credentials to validate
             api_key: API key to validate
-            
+
         Returns:
             Dict with validation results
         """
@@ -363,28 +357,27 @@ class CredentialService:
         if postgres_creds:
             # Validate PostgreSQL credentials
             results["postgres_user_valid"] = (
-                postgres_creds.get("user") is not None and
-                len(postgres_creds["user"]) >= 12 and
-                postgres_creds["user"].isalnum()
+                postgres_creds.get("user") is not None
+                and len(postgres_creds["user"]) >= 12
+                and postgres_creds["user"].isalnum()
             )
 
             results["postgres_password_valid"] = (
-                postgres_creds.get("password") is not None and
-                len(postgres_creds["password"]) >= 12 and
-                postgres_creds["password"].isalnum()
+                postgres_creds.get("password") is not None
+                and len(postgres_creds["password"]) >= 12
+                and postgres_creds["password"].isalnum()
             )
 
-            results["postgres_url_valid"] = (
-                postgres_creds.get("url") is not None and
-                postgres_creds["url"].startswith("postgresql+psycopg://")
-            )
+            results["postgres_url_valid"] = postgres_creds.get(
+                "url"
+            ) is not None and postgres_creds["url"].startswith("postgresql+psycopg://")
 
         if api_key:
             # Validate API key
             results["api_key_valid"] = (
-                api_key is not None and
-                api_key.startswith("hive_") and
-                len(api_key) > 37  # hive_ (5) + token (32+)
+                api_key is not None
+                and api_key.startswith("hive_")
+                and len(api_key) > 37  # hive_ (5) + token (32+)
             )
 
         logger.info("Credential validation completed", results=results)
@@ -393,18 +386,20 @@ class CredentialService:
     def _generate_secure_token(self, length: int = 16, safe_chars: bool = False) -> str:
         """
         Generate cryptographically secure random token.
-        
+
         Args:
             length: Desired token length
             safe_chars: If True, generate base64 without special characters
-            
+
         Returns:
             Secure random token
         """
         if safe_chars:
             # Use openssl-like approach from Makefile
             # Generate base64 and remove special characters, trim to length
-            token = secrets.token_urlsafe(length + 8)  # Generate extra to account for trimming
+            token = secrets.token_urlsafe(
+                length + 8
+            )  # Generate extra to account for trimming
             # Remove URL-safe characters that might cause issues
             token = token.replace("-", "").replace("_", "")
             return token[:length]
@@ -413,7 +408,7 @@ class CredentialService:
     def get_credential_status(self) -> dict[str, any]:
         """
         Get current status of all credentials.
-        
+
         Returns:
             Dict with credential status information
         """
@@ -422,15 +417,19 @@ class CredentialService:
 
         status = {
             "env_file_exists": self.env_file.exists(),
-            "postgres_configured": bool(postgres_creds["user"] and postgres_creds["password"]),
+            "postgres_configured": bool(
+                postgres_creds["user"] and postgres_creds["password"]
+            ),
             "api_key_configured": bool(api_key),
             "postgres_credentials": {
                 "has_user": bool(postgres_creds["user"]),
                 "has_password": bool(postgres_creds["password"]),
                 "has_database": bool(postgres_creds["database"]),
-                "has_url": bool(postgres_creds["url"])
+                "has_url": bool(postgres_creds["url"]),
             },
-            "api_key_format_valid": bool(api_key and api_key.startswith("hive_")) if api_key else False
+            "api_key_format_valid": bool(api_key and api_key.startswith("hive_"))
+            if api_key
+            else False,
         }
 
         # Validate credentials if they exist
@@ -444,16 +443,16 @@ class CredentialService:
         self,
         postgres_host: str = "localhost",
         postgres_port: int = 5532,
-        postgres_database: str = "hive"
+        postgres_database: str = "hive",
     ) -> dict[str, str]:
         """
         Generate complete set of credentials for new workspace.
-        
+
         Args:
             postgres_host: PostgreSQL host
             postgres_port: PostgreSQL port
             postgres_database: PostgreSQL database name
-            
+
         Returns:
             Dict with all generated credentials
         """
@@ -461,9 +460,7 @@ class CredentialService:
 
         # Generate PostgreSQL credentials
         postgres_creds = self.generate_postgres_credentials(
-            host=postgres_host,
-            port=postgres_port,
-            database=postgres_database
+            host=postgres_host, port=postgres_port, database=postgres_database
         )
 
         # Generate API key
@@ -482,13 +479,13 @@ class CredentialService:
             "postgres_host": postgres_creds["host"],
             "postgres_port": postgres_creds["port"],
             "postgres_url": postgres_creds["url"],
-            "api_key": api_key
+            "api_key": api_key,
         }
 
         logger.info(
             "Complete credentials setup finished",
             postgres_database=postgres_database,
-            postgres_port=postgres_port
+            postgres_port=postgres_port,
         )
 
         return complete_creds

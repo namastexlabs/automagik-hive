@@ -108,6 +108,7 @@ class TestLoggingConfig:
         """Test LoggingConfig with different parameters."""
         # Test environment-based configuration that the real setup_logging uses
         import os
+
         original_level = os.environ.get("HIVE_LOG_LEVEL")
 
         try:

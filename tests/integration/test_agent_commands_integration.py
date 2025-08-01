@@ -1,6 +1,6 @@
 """Integration Test Suite for Agent Commands.
 
-Tests integration scenarios, functional parity between make vs uvx commands, 
+Tests integration scenarios, functional parity between make vs uvx commands,
 and end-to-end agent management workflows with >95% coverage.
 Follows TDD Red-Green-Refactor approach with failing tests first.
 
@@ -98,7 +98,6 @@ services:
             with patch("subprocess.Popen") as mock_popen:
                 with patch("os.kill") as mock_kill:
                     with patch("time.sleep"):
-
                         # Configure mocks for successful operations
                         mock_run.return_value.returncode = 0
                         mock_run.return_value.stdout = "Container started"
@@ -115,7 +114,12 @@ services:
                             # Mock file existence checks
                             def exists_side_effect(path_self):
                                 path_str = str(path_self)
-                                if ".env.agent" in path_str or ".venv" in path_str or "logs/agent-server.pid" in path_str or "logs/agent-server.log" in path_str:
+                                if (
+                                    ".env.agent" in path_str
+                                    or ".venv" in path_str
+                                    or "logs/agent-server.pid" in path_str
+                                    or "logs/agent-server.log" in path_str
+                                ):
                                     return True
                                 return False
 
@@ -125,7 +129,9 @@ services:
                                 # Mock file operations
                                 mock_file = Mock()
                                 mock_file.read.return_value = "12345"
-                                mock_open.return_value.__enter__.return_value = mock_file
+                                mock_open.return_value.__enter__.return_value = (
+                                    mock_file
+                                )
 
                                 # Should fail initially - integration not implemented
                                 # Step 1: Install agent environment
@@ -189,7 +195,6 @@ services:
             with patch("subprocess.Popen") as mock_popen:
                 with patch("pathlib.Path.exists", return_value=True):
                     with patch("builtins.open", create=True) as mock_open:
-
                         mock_run.return_value.returncode = 0
                         mock_process = Mock()
                         mock_process.pid = 12345
@@ -221,9 +226,11 @@ services:
         ]
 
         for command_name, mock_returns in failure_scenarios:
-            with patch.object(commands.agent_service, list(mock_returns.keys())[0],
-                             return_value=list(mock_returns.values())[0]):
-
+            with patch.object(
+                commands.agent_service,
+                list(mock_returns.keys())[0],
+                return_value=list(mock_returns.values())[0],
+            ):
                 # Should fail initially - error propagation not implemented
                 method = getattr(commands, command_name)
                 result = method(temp_workspace)
@@ -242,7 +249,9 @@ class TestFunctionalParityMakeVsUvx:
             # Create basic required files
             (workspace / "docker").mkdir()
             (workspace / "docker" / "agent").mkdir()
-            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("version: '3.8'\n")
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text(
+                "version: '3.8'\n"
+            )
             (workspace / ".env.example").write_text(
                 "HIVE_API_PORT=8886\n"
                 "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"
@@ -288,9 +297,13 @@ install-agent:
             mock_run.return_value.stdout = "Started successfully"
 
             # Test make command behavior
-            make_result = subprocess.run([
-                "make", "agent"
-            ], check=False, cwd=temp_workspace_with_makefile, capture_output=True, text=True)
+            make_result = subprocess.run(
+                ["make", "agent"],
+                check=False,
+                cwd=temp_workspace_with_makefile,
+                capture_output=True,
+                text=True,
+            )
 
             # Test uvx command behavior
             commands = AgentCommands()
@@ -316,9 +329,13 @@ install-agent:
             mock_run.return_value.stdout = "Log line 2\nLog line 3\n"
 
             # Test make command
-            make_result = subprocess.run([
-                "make", "agent-logs"
-            ], check=False, cwd=temp_workspace_with_makefile, capture_output=True, text=True)
+            make_result = subprocess.run(
+                ["make", "agent-logs"],
+                check=False,
+                cwd=temp_workspace_with_makefile,
+                capture_output=True,
+                text=True,
+            )
 
             # Test uvx command
             commands = AgentCommands()
@@ -336,14 +353,21 @@ install-agent:
             mock_run.return_value.stdout = "postgres-agent   Up"
 
             # Test make command
-            make_result = subprocess.run([
-                "make", "agent-status"
-            ], check=False, cwd=temp_workspace_with_makefile, capture_output=True, text=True)
+            make_result = subprocess.run(
+                ["make", "agent-status"],
+                check=False,
+                cwd=temp_workspace_with_makefile,
+                capture_output=True,
+                text=True,
+            )
 
             # Test uvx command
             commands = AgentCommands()
-            with patch.object(commands.agent_service, "get_agent_status",
-                             return_value={"agent-postgres": "✅ Running"}):
+            with patch.object(
+                commands.agent_service,
+                "get_agent_status",
+                return_value={"agent-postgres": "✅ Running"},
+            ):
                 uvx_result = commands.status(temp_workspace_with_makefile)
 
             # Should fail initially - status parity not implemented
@@ -366,6 +390,7 @@ install-agent:
 
         # Verify these match the expected agent ports
         from cli.core.agent_environment import get_agent_ports
+
         ports = get_agent_ports(Path(temp_workspace_with_makefile))
         assert ports["api_port"] == 38886
         assert ports["postgres_port"] == 35532
@@ -461,7 +486,6 @@ class TestEndToEndAgentWorkflows:
             with patch("subprocess.Popen") as mock_popen:
                 with patch("os.kill") as mock_kill:
                     with patch("time.sleep"):
-
                         # Configure successful operations
                         mock_run.return_value.returncode = 0
                         mock_run.return_value.stdout = "Success"
@@ -512,7 +536,6 @@ class TestEndToEndAgentWorkflows:
         # Should fail initially - CI workflow not implemented
         with patch("subprocess.run") as mock_run:
             with patch("subprocess.Popen") as mock_popen:
-
                 mock_run.return_value.returncode = 0
                 mock_process = Mock()
                 mock_process.pid = 12345
@@ -540,7 +563,6 @@ class TestEndToEndAgentWorkflows:
 
         # Should fail initially - error recovery not implemented
         with patch("subprocess.run") as mock_run:
-
             # Scenario 1: Installation failure -> retry -> success
             mock_run.return_value.returncode = 1  # Failure
             install_result1 = commands.install(complete_workspace)
@@ -556,7 +578,9 @@ class TestEndToEndAgentWorkflows:
             assert serve_result1 is False
 
             # Reset environment
-            with patch.object(commands.agent_service, "reset_agent_environment", return_value=True):
+            with patch.object(
+                commands.agent_service, "reset_agent_environment", return_value=True
+            ):
                 reset_result = commands.reset(complete_workspace)
                 assert reset_result is True
 
@@ -572,7 +596,6 @@ class TestEndToEndAgentWorkflows:
         with patch("subprocess.run") as mock_run:
             with patch("subprocess.Popen") as mock_popen:
                 with patch("pathlib.Path.exists", return_value=True):
-
                     mock_run.return_value.returncode = 0
                     mock_process = Mock()
                     mock_process.pid = 12345
@@ -710,11 +733,14 @@ class TestCrossPlatformCompatibility:
         """Test environment variable handling across platforms."""
 
         # Should fail initially - environment variable handling not implemented
-        with patch.dict(os.environ, {
-            "HOME": "/home/user",
-            "USERPROFILE": "C:\\Users\\user",
-            "PATH": "/usr/bin:/bin",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "HOME": "/home/user",
+                "USERPROFILE": "C:\\Users\\user",
+                "PATH": "/usr/bin:/bin",
+            },
+        ):
             commands = AgentCommands()
 
             with patch("subprocess.run") as mock_run:
@@ -842,6 +868,7 @@ class TestPerformanceAndScalability:
                 # Basic memory usage should be reasonable
                 # (This is a placeholder - real implementation would use psutil)
                 import sys
+
                 memory_usage = sys.getsizeof(commands)
                 assert memory_usage < 1024 * 1024  # Less than 1MB
 

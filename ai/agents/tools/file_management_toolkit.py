@@ -677,6 +677,7 @@ def insert_at_line(
 
 # Helper functions
 
+
 def _is_safe_path(path: str) -> bool:
     """Check if the path is safe (relative, within project, no traversal)"""
     if os.path.isabs(path):
@@ -684,7 +685,7 @@ def _is_safe_path(path: str) -> bool:
 
     # Check for path traversal attempts
     normalized = os.path.normpath(path)
-    if normalized.startswith("..") or "/.." in normalized or "\\..\\": in normalized:
+    if normalized.startswith("..") or "/.." in normalized or "\\..\\" in normalized:
         return False
 
     # Check for dangerous paths

@@ -4,7 +4,6 @@ Cleaned up version removing 75% of dead code
 """
 
 
-
 class TeamUtils:
     """Minimal utility functions for team operations - only used functions"""
 

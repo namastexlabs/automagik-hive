@@ -20,20 +20,16 @@ class SecurityError(Exception):
     """Base exception for security-related errors."""
 
 
-
 class PathTraversalError(SecurityError):
     """Raised when path traversal attack is detected."""
-
 
 
 class CommandInjectionError(SecurityError):
     """Raised when command injection attempt is detected."""
 
 
-
 class InputValidationError(SecurityError):
     """Raised when input validation fails."""
-
 
 
 class SecurePathValidator:
@@ -120,9 +116,7 @@ class SecurePathValidator:
         return resolved_path
 
     @classmethod
-    def validate_file_path(
-        cls, path: str | Path, must_exist: bool = False
-    ) -> Path:
+    def validate_file_path(cls, path: str | Path, must_exist: bool = False) -> Path:
         """Validate file path for security.
 
         Args:

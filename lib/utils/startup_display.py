@@ -247,9 +247,7 @@ class StartupDisplay:
 
         console.print(f"\n{summary_text}")
 
-    def _get_version_info(
-        self, component_id: str, component_type: str
-    ) -> str | None:
+    def _get_version_info(self, component_id: str, component_type: str) -> str | None:
         """Extract version information from sync results, with YAML fallback."""
         # Try to get version from sync results first
         if self.sync_results:

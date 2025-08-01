@@ -42,7 +42,9 @@ class FileSyncTracker:
 
         raise FileNotFoundError(f"YAML config not found for component: {component_id}")
 
-    def yaml_newer_than_db(self, component_id: str, db_created_at: datetime | str) -> bool:
+    def yaml_newer_than_db(
+        self, component_id: str, db_created_at: datetime | str
+    ) -> bool:
         """
         Compare YAML file modification time with database timestamp.
 
@@ -61,6 +63,7 @@ class FileSyncTracker:
             if isinstance(db_created_at, str):
                 # Parse ISO format timestamp string
                 from datetime import datetime as dt
+
                 db_created_at = dt.fromisoformat(db_created_at.replace("Z", "+00:00"))
 
             # Ensure both datetimes have the same timezone awareness

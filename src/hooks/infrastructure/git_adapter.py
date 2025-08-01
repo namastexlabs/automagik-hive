@@ -13,7 +13,7 @@ from ..domain.entities import FileChange, FileOperation
 
 class GitAdapter:
     """Adapter for Git operations and staged file detection.
-    
+
     This class provides methods to interact with Git repository state
     and convert Git information into domain entities that can be used
     by the validation system.
@@ -21,7 +21,7 @@ class GitAdapter:
 
     def __init__(self, repo_path: str | None = None):
         """Initialize Git adapter with optional repository path.
-        
+
         Args:
             repo_path: Path to Git repository, uses current directory if None
         """
@@ -29,10 +29,10 @@ class GitAdapter:
 
     def get_staged_changes(self) -> list[FileChange]:
         """Get list of staged file changes from Git.
-        
+
         Returns:
             List of FileChange objects representing staged modifications
-            
+
         Raises:
             RuntimeError: If Git command fails or repository is invalid
         """
@@ -43,7 +43,7 @@ class GitAdapter:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             if not result.stdout.strip():
@@ -68,7 +68,7 @@ class GitAdapter:
                         operation=operation,
                         is_root_level=self._is_root_level(path),
                         file_extension=self._get_extension(path),
-                        is_directory=self._is_directory(path)
+                        is_directory=self._is_directory(path),
                     )
                     changes.append(change)
 
@@ -82,16 +82,20 @@ class GitAdapter:
         except subprocess.CalledProcessError as e:
             if e.returncode == 128:
                 raise RuntimeError("Not a Git repository or Git not found")
-            raise RuntimeError(f"Git command failed with code {e.returncode}: {e.stderr}")
+            raise RuntimeError(
+                f"Git command failed with code {e.returncode}: {e.stderr}"
+            )
         except FileNotFoundError:
-            raise RuntimeError("Git command not found. Please ensure Git is installed and in PATH")
+            raise RuntimeError(
+                "Git command not found. Please ensure Git is installed and in PATH"
+            )
 
     def get_all_changes(self, compare_ref: str = "HEAD") -> list[FileChange]:
         """Get all changes compared to a specific reference.
-        
+
         Args:
             compare_ref: Git reference to compare against (default: HEAD)
-            
+
         Returns:
             List of FileChange objects representing all modifications
         """
@@ -101,7 +105,7 @@ class GitAdapter:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             if not result.stdout.strip():
@@ -124,7 +128,7 @@ class GitAdapter:
                     operation=operation,
                     is_root_level=self._is_root_level(path),
                     file_extension=self._get_extension(path),
-                    is_directory=self._is_directory(path)
+                    is_directory=self._is_directory(path),
                 )
                 changes.append(change)
 
@@ -135,7 +139,7 @@ class GitAdapter:
 
     def is_git_repository(self) -> bool:
         """Check if current directory is a Git repository.
-        
+
         Returns:
             True if directory contains a valid Git repository
         """
@@ -144,7 +148,7 @@ class GitAdapter:
                 ["git", "rev-parse", "--git-dir"],
                 cwd=self.repo_path,
                 capture_output=True,
-                check=True
+                check=True,
             )
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -152,10 +156,10 @@ class GitAdapter:
 
     def get_repository_root(self) -> str:
         """Get the root directory of the Git repository.
-        
+
         Returns:
             Absolute path to repository root
-            
+
         Raises:
             RuntimeError: If not in a Git repository
         """
@@ -165,7 +169,7 @@ class GitAdapter:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError:
@@ -173,10 +177,10 @@ class GitAdapter:
 
     def _map_git_status(self, status: str) -> FileOperation:
         """Map Git status code to FileOperation enum.
-        
+
         Args:
             status: Git status code (A, M, D, R, etc.)
-            
+
         Returns:
             Corresponding FileOperation enum value
         """
@@ -196,10 +200,10 @@ class GitAdapter:
 
     def _is_root_level(self, path: str) -> bool:
         """Check if file path is at repository root level.
-        
+
         Args:
             path: File path relative to repository root
-            
+
         Returns:
             True if file is at root level (no directory separators)
         """
@@ -209,10 +213,10 @@ class GitAdapter:
 
     def _get_extension(self, path: str) -> str | None:
         """Extract file extension from path.
-        
+
         Args:
             path: File path to extract extension from
-            
+
         Returns:
             File extension including dot (e.g., '.py'), or None if no extension
         """
@@ -221,10 +225,10 @@ class GitAdapter:
 
     def _is_directory(self, path: str) -> bool:
         """Determine if path represents a directory.
-        
+
         Args:
             path: File path to check
-            
+
         Returns:
             True if path represents a directory
         """
@@ -238,10 +242,10 @@ class GitAdapter:
 
     def get_current_branch(self) -> str:
         """Get name of current Git branch.
-        
+
         Returns:
             Name of current branch
-            
+
         Raises:
             RuntimeError: If unable to determine branch name
         """
@@ -251,7 +255,7 @@ class GitAdapter:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError:
@@ -262,7 +266,7 @@ class GitAdapter:
                     cwd=self.repo_path,
                     capture_output=True,
                     text=True,
-                    check=True
+                    check=True,
                 )
                 return result.stdout.strip()
             except subprocess.CalledProcessError:
@@ -270,15 +274,16 @@ class GitAdapter:
 
     def has_staged_changes(self) -> bool:
         """Check if repository has any staged changes.
-        
+
         Returns:
             True if there are staged changes, False otherwise
         """
         try:
             result = subprocess.run(
                 ["git", "diff", "--cached", "--quiet"],
-                check=False, cwd=self.repo_path,
-                capture_output=True
+                check=False,
+                cwd=self.repo_path,
+                capture_output=True,
             )
             # Git diff --quiet returns 0 if no differences, 1 if differences
             return result.returncode != 0

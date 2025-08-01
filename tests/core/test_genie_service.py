@@ -6,14 +6,14 @@ Follows TDD Red-Green-Refactor approach with failing tests first.
 Test Categories:
 - Unit tests: Individual service method testing
 - Integration tests: Docker Compose integration and container management
-- Mock tests: Container operations and filesystem interactions  
+- Mock tests: Container operations and filesystem interactions
 - Security tests: Workspace validation and path security
 - Container lifecycle tests: Real docker-compose integration patterns
 
 GenieService Methods Tested:
 1. serve_genie() - Start Genie all-in-one container on port 48886
 2. stop_genie() - Stop Genie container cleanly
-3. restart_genie() - Restart Genie container  
+3. restart_genie() - Restart Genie container
 4. show_genie_logs() - Display Genie container logs
 5. get_genie_status() - Get comprehensive Genie container status
 6. _validate_genie_environment() - Validate Genie workspace environment
@@ -126,7 +126,9 @@ HIVE_API_KEY=genie_test_key_123
         # Should not call start_service if already running
         mock_compose_manager.start_service.assert_not_called()
 
-    def test_serve_genie_container_start_failure(self, mock_compose_manager, temp_workspace):
+    def test_serve_genie_container_start_failure(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test serve when container fails to start."""
         mock_status = Mock()
         mock_status.name = "STOPPED"
@@ -145,7 +147,9 @@ HIVE_API_KEY=genie_test_key_123
         service = GenieService()
 
         # Should fail initially - workspace validation not implemented
-        with pytest.raises(Exception):  # Could be SecurityError or other validation error
+        with pytest.raises(
+            Exception
+        ):  # Could be SecurityError or other validation error
             service.serve_genie("/invalid/workspace/path")
 
     def test_stop_genie_success(self, mock_compose_manager, temp_workspace):
@@ -213,7 +217,9 @@ HIVE_API_KEY=genie_test_key_123
 
     def test_show_genie_logs_success(self, mock_compose_manager, temp_workspace):
         """Test successful Genie logs display."""
-        mock_compose_manager.get_service_logs.return_value = "Genie server log line 1\nGenie server log line 2"
+        mock_compose_manager.get_service_logs.return_value = (
+            "Genie server log line 1\nGenie server log line 2"
+        )
 
         service = GenieService()
         result = service.show_genie_logs(temp_workspace, tail=50)
@@ -252,9 +258,11 @@ HIVE_API_KEY=genie_test_key_123
         """Test successful Genie status retrieval."""
         # Mock comprehensive status response
         mock_services_status = {
-            "genie-server": Mock(status=Mock(name="RUNNING"),
-                               container_id="abc123",
-                               ports=["0.0.0.0:48886->48886/tcp"])
+            "genie-server": Mock(
+                status=Mock(name="RUNNING"),
+                container_id="abc123",
+                ports=["0.0.0.0:48886->48886/tcp"],
+            )
         }
         mock_compose_manager.get_all_services_status.return_value = mock_services_status
 
@@ -266,7 +274,9 @@ HIVE_API_KEY=genie_test_key_123
         assert "genie-server" in result
         assert mock_compose_manager.get_all_services_status.called
 
-    def test_get_genie_status_container_not_found(self, mock_compose_manager, temp_workspace):
+    def test_get_genie_status_container_not_found(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test status when Genie container doesn't exist."""
         mock_compose_manager.get_all_services_status.return_value = {}
 
@@ -277,11 +287,12 @@ HIVE_API_KEY=genie_test_key_123
         assert isinstance(result, dict)
         assert len(result) >= 0  # Should handle empty status gracefully
 
-    def test_get_genie_status_with_health_check(self, mock_compose_manager, temp_workspace):
+    def test_get_genie_status_with_health_check(
+        self, mock_compose_manager, temp_workspace
+    ):
         """Test status includes health check information."""
         mock_services_status = {
-            "genie-server": Mock(status=Mock(name="RUNNING"),
-                               health_status="healthy")
+            "genie-server": Mock(status=Mock(name="RUNNING"), health_status="healthy")
         }
         mock_compose_manager.get_all_services_status.return_value = mock_services_status
 
@@ -300,7 +311,9 @@ class TestGenieServiceValidation:
     def mock_security_utils(self):
         """Mock security utilities for testing."""
         with patch("cli.core.genie_service.secure_resolve_workspace") as mock_resolve:
-            with patch("cli.core.genie_service.secure_subprocess_call") as mock_subprocess:
+            with patch(
+                "cli.core.genie_service.secure_subprocess_call"
+            ) as mock_subprocess:
                 yield mock_resolve, mock_subprocess
 
     def test_validate_genie_environment_valid_workspace(self, temp_workspace):
@@ -364,7 +377,9 @@ class TestGenieServiceContainerOperations:
             mock_compose_class.return_value = mock_compose
             yield mock_compose
 
-    def test_genie_all_in_one_container_management(self, mock_docker_operations, temp_workspace):
+    def test_genie_all_in_one_container_management(
+        self, mock_docker_operations, temp_workspace
+    ):
         """Test management of all-in-one container (PostgreSQL + FastAPI)."""
         # Mock all-in-one container status
         mock_status = Mock()
@@ -378,7 +393,9 @@ class TestGenieServiceContainerOperations:
         assert result is True
         assert mock_docker_operations.get_service_status.called
 
-    def test_genie_container_port_48886_validation(self, mock_docker_operations, temp_workspace):
+    def test_genie_container_port_48886_validation(
+        self, mock_docker_operations, temp_workspace
+    ):
         """Test Genie container uses correct port 48886."""
         service = GenieService()
 
@@ -389,15 +406,18 @@ class TestGenieServiceContainerOperations:
         service.serve_genie(temp_workspace)
         assert mock_docker_operations.start_service.called
 
-    def test_genie_container_network_isolation(self, mock_docker_operations, temp_workspace):
+    def test_genie_container_network_isolation(
+        self, mock_docker_operations, temp_workspace
+    ):
         """Test Genie container network isolation."""
         mock_services_status = {
             "genie-server": Mock(
-                networks=["hive_genie_network"],
-                status=Mock(name="RUNNING")
+                networks=["hive_genie_network"], status=Mock(name="RUNNING")
             )
         }
-        mock_docker_operations.get_all_services_status.return_value = mock_services_status
+        mock_docker_operations.get_all_services_status.return_value = (
+            mock_services_status
+        )
 
         service = GenieService()
         result = service.get_genie_status(temp_workspace)
@@ -406,7 +426,9 @@ class TestGenieServiceContainerOperations:
         assert isinstance(result, dict)
         assert mock_docker_operations.get_all_services_status.called
 
-    def test_genie_container_volume_persistence(self, mock_docker_operations, temp_workspace):
+    def test_genie_container_volume_persistence(
+        self, mock_docker_operations, temp_workspace
+    ):
         """Test Genie container volume persistence."""
         service = GenieService()
 
@@ -421,16 +443,20 @@ class TestGenieServiceContainerOperations:
         result = service.serve_genie(temp_workspace)
         assert mock_docker_operations.start_service.called
 
-    def test_genie_container_supervisor_integration(self, mock_docker_operations, temp_workspace):
+    def test_genie_container_supervisor_integration(
+        self, mock_docker_operations, temp_workspace
+    ):
         """Test Genie container supervisor process management."""
         # Mock supervisor status in all-in-one container
         mock_services_status = {
             "genie-server": Mock(
                 processes=["postgresql", "fastapi", "supervisor"],
-                status=Mock(name="RUNNING")
+                status=Mock(name="RUNNING"),
             )
         }
-        mock_docker_operations.get_all_services_status.return_value = mock_services_status
+        mock_docker_operations.get_all_services_status.return_value = (
+            mock_services_status
+        )
 
         service = GenieService()
         result = service.get_genie_status(temp_workspace)
@@ -531,7 +557,9 @@ class TestGenieServiceErrorHandling:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             # Create corrupted compose file
-            (workspace / "docker-compose-genie.yml").write_text("invalid: yaml: content:")
+            (workspace / "docker-compose-genie.yml").write_text(
+                "invalid: yaml: content:"
+            )
 
             service = GenieService()
             # Should fail initially - compose file validation not implemented
@@ -542,7 +570,9 @@ class TestGenieServiceErrorHandling:
         """Test handling when container takes too long to start."""
         with patch("cli.core.genie_service.DockerComposeManager") as mock_compose_class:
             mock_compose = Mock()
-            mock_compose.start_service.side_effect = Exception("Container start timeout")
+            mock_compose.start_service.side_effect = Exception(
+                "Container start timeout"
+            )
             mock_compose_class.return_value = mock_compose
 
             service = GenieService()
@@ -554,7 +584,9 @@ class TestGenieServiceErrorHandling:
         """Test handling when insufficient permissions for Docker operations."""
         with patch("cli.core.genie_service.DockerComposeManager") as mock_compose_class:
             mock_compose = Mock()
-            mock_compose.start_service.side_effect = PermissionError("Docker permission denied")
+            mock_compose.start_service.side_effect = PermissionError(
+                "Docker permission denied"
+            )
             mock_compose_class.return_value = mock_compose
 
             service = GenieService()
@@ -566,7 +598,9 @@ class TestGenieServiceErrorHandling:
         """Test handling when port 48886 is already in use."""
         with patch("cli.core.genie_service.DockerComposeManager") as mock_compose_class:
             mock_compose = Mock()
-            mock_compose.start_service.side_effect = Exception("Port 48886 already in use")
+            mock_compose.start_service.side_effect = Exception(
+                "Port 48886 already in use"
+            )
             mock_compose_class.return_value = mock_compose
 
             service = GenieService()

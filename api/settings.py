@@ -39,13 +39,19 @@ class ApiSettings(BaseSettings):
 
         valid_environments = ["development", "staging", "production"]
         if environment not in valid_environments:
-            raise ValueError(f"Invalid environment: {environment}. Must be one of: {valid_environments}")
+            raise ValueError(
+                f"Invalid environment: {environment}. Must be one of: {valid_environments}"
+            )
 
         # Production security validation
         if environment == "production":
             # Ensure critical production settings are configured
             api_key = os.getenv("HIVE_API_KEY")
-            if not api_key or api_key.strip() == "" or api_key in ["your-hive-api-key-here"]:
+            if (
+                not api_key
+                or api_key.strip() == ""
+                or api_key in ["your-hive-api-key-here"]
+            ):
                 raise ValueError(
                     "Production environment requires a valid HIVE_API_KEY. "
                     "Update your .env file with a secure API key."
@@ -57,7 +63,9 @@ class ApiSettings(BaseSettings):
         return environment
 
     @field_validator("cors_origin_list", mode="before")
-    def set_cors_origin_list(cls: type["ApiSettings"], _cors_origin_list: Any, info: FieldValidationInfo) -> list[str]:  # noqa: N805
+    def set_cors_origin_list(
+        cls: type["ApiSettings"], _cors_origin_list: Any, info: FieldValidationInfo
+    ) -> list[str]:  # noqa: N805
         """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
         environment = info.data.get(
             "environment", os.getenv("HIVE_ENVIRONMENT", "development")

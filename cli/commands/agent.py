@@ -167,7 +167,6 @@ class AgentCommands:
                 service.replace("-", " ").title()[:23].ljust(23)
                 f"{status[:35]}".ljust(35)  # 35 chars + 1 space
 
-
             # Show recent activity if available
             log_path = workspace / "logs" / "agent-server.log"
             if log_path.exists():

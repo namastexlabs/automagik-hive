@@ -24,6 +24,7 @@ def run_command(cmd: list[str]) -> subprocess.CompletedProcess:
             print(f"Error: {e.stderr}")
         sys.exit(1)
 
+
 def validate_pyproject() -> str:
     """Validate pyproject.toml configuration."""
     print("🔍 Validating pyproject.toml...")
@@ -56,6 +57,7 @@ def validate_pyproject() -> str:
     print("❌ Version not found")
     sys.exit(1)
 
+
 def build_and_validate() -> None:
     """Build package and validate contents."""
     print("🏗️ Building package...")
@@ -77,15 +79,17 @@ def build_and_validate() -> None:
         print("❌ No source distribution found")
         sys.exit(1)
 
-    print(f"✅ Found {len(wheel_files)} wheel(s) and {len(tar_files)} source distribution(s)")
+    print(
+        f"✅ Found {len(wheel_files)} wheel(s) and {len(tar_files)} source distribution(s)"
+    )
 
     # Validate wheel contents
     wheel_file = wheel_files[0]
     print(f"🔍 Validating wheel: {wheel_file.name}")
 
-    result = run_command([
-        "python", "-m", "zipfile", "-l", str(wheel_file)
-    ])
+    result = run_command(
+        ["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)]
+    )
 
     wheel_contents = result.stdout
 
@@ -104,11 +108,22 @@ def build_and_validate() -> None:
     print("✅ Entry points file included")
 
     # Extract and check entry points content
-    run_command([
-        "python", "-m", "zipfile", "-e", str(wheel_file), "/tmp/wheel_check"
-    ])
+    run_command(
+        [
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "zipfile",
+            "-e",
+            str(wheel_file),
+            "/tmp/wheel_check",
+        ]
+    )
 
-    entry_points_file = Path("/tmp/wheel_check") / f"{wheel_file.stem}.dist-info" / "entry_points.txt"
+    entry_points_file = (
+        Path("/tmp/wheel_check") / f"{wheel_file.stem}.dist-info" / "entry_points.txt"
+    )
 
     if entry_points_file.exists():
         with open(entry_points_file) as f:
@@ -124,6 +139,7 @@ def build_and_validate() -> None:
         print("❌ Could not read entry points file")
         sys.exit(1)
 
+
 def main():
     """Main validation workflow."""
     print("🧞 Automagik Hive - Build Validation")
@@ -138,6 +154,7 @@ def main():
     print("1. Test publish: python scripts/publish.py --test")
     print("2. Production publish: python scripts/publish.py --prod")
     print("3. Test install: uvx automagik-hive --help")
+
 
 if __name__ == "__main__":
     main()

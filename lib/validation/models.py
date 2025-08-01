@@ -171,10 +171,8 @@ class HealthRequest(BaseValidatedRequest):
     """Request model for health check (minimal validation)."""
 
 
-
 class VersionRequest(BaseValidatedRequest):
     """Request model for version info (minimal validation)."""
-
 
 
 # Common response models

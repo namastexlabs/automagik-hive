@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Docker Compose Service for UVX Automagik Hive.
 
-Implements T1.7: Foundational Services Containerization with PostgreSQL container 
+Implements T1.7: Foundational Services Containerization with PostgreSQL container
 and credential management within Docker Compose strategy.
 
 Key Features:
@@ -26,7 +26,7 @@ class DockerComposeService:
 
     def __init__(self, workspace_path: Path | None = None) -> None:
         """Initialize Docker Compose service.
-        
+
         Args:
             workspace_path: Path to workspace directory
         """
@@ -37,27 +37,30 @@ class DockerComposeService:
         self,
         external_port: int = 5532,
         database: str = "hive",
-        volume_path: str = "./data/postgres"
+        volume_path: str = "./data/postgres",
     ) -> dict:
         """Generate PostgreSQL service definition for Docker Compose template.
-        
+
         Based on existing docker-compose.yml PostgreSQL service with:
         - agnohq/pgvector:16 image (same as production)
-        - Port 5532 (external) → 5432 (container) 
+        - Port 5532 (external) → 5432 (container)
         - pgvector extensions for AI embeddings
         - Health checks with pg_isready
         - Volume persistence
-        
+
         Args:
             external_port: External port mapping (default: 5532)
             database: Database name (default: hive)
             volume_path: Volume mount path (default: ./data/postgres)
-            
+
         Returns:
             PostgreSQL service definition dictionary
         """
-        logger.info("Generating PostgreSQL service template",
-                   external_port=external_port, database=database)
+        logger.info(
+            "Generating PostgreSQL service template",
+            external_port=external_port,
+            database=database,
+        )
 
         service_config = {
             "image": "agnohq/pgvector:16",
@@ -68,29 +71,26 @@ class DockerComposeService:
                 "POSTGRES_USER=${POSTGRES_USER}",
                 "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}",
                 f"POSTGRES_DB={database}",
-                "PGDATA=/var/lib/postgresql/data/pgdata"
+                "PGDATA=/var/lib/postgresql/data/pgdata",
             ],
-            "volumes": [
-                f"{volume_path}:/var/lib/postgresql/data"
-            ],
+            "volumes": [f"{volume_path}:/var/lib/postgresql/data"],
             "command": [
                 "postgres",
-                "-c", "max_connections=200",
-                "-c", "shared_buffers=256MB",
-                "-c", "effective_cache_size=1GB"
+                "-c",
+                "max_connections=200",
+                "-c",
+                "shared_buffers=256MB",
+                "-c",
+                "effective_cache_size=1GB",
             ],
-            "ports": [
-                f"{external_port}:5432"
-            ],
-            "networks": [
-                "app_network"
-            ],
+            "ports": [f"{external_port}:5432"],
+            "networks": ["app_network"],
             "healthcheck": {
                 "test": ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"],
                 "interval": "10s",
                 "timeout": "5s",
-                "retries": 5
-            }
+                "retries": 5,
+            },
         }
 
         logger.info("PostgreSQL service template generated successfully")
@@ -100,49 +100,45 @@ class DockerComposeService:
         self,
         postgres_port: int = 5532,
         postgres_database: str = "hive",
-        include_app_service: bool = False
+        include_app_service: bool = False,
     ) -> dict:
         """Generate complete Docker Compose template with PostgreSQL service.
-        
+
         Based on existing docker-compose.yml patterns with foundational services:
         - PostgreSQL with pgvector extension
-        - Networks and volumes configuration  
+        - Networks and volumes configuration
         - Health checks and dependencies
         - Optional application service
-        
+
         Args:
             postgres_port: PostgreSQL external port
             postgres_database: PostgreSQL database name
             include_app_service: Whether to include application service
-            
+
         Returns:
             Complete Docker Compose configuration dictionary
         """
-        logger.info("Generating complete Docker Compose template",
-                   postgres_port=postgres_port, include_app=include_app_service)
+        logger.info(
+            "Generating complete Docker Compose template",
+            postgres_port=postgres_port,
+            include_app=include_app_service,
+        )
 
         # Base compose structure
         compose_config = {
             "services": {},
-            "networks": {
-                "app_network": {
-                    "driver": "bridge"
-                }
-            },
+            "networks": {"app_network": {"driver": "bridge"}},
             "volumes": {
-                "app_logs": {
-                    "driver": "local"
-                },
-                "app_data": {
-                    "driver": "local"
-                }
-            }
+                "app_logs": {"driver": "local"},
+                "app_data": {"driver": "local"},
+            },
         }
 
         # Add PostgreSQL service (foundational)
-        compose_config["services"]["postgres"] = self.generate_postgresql_service_template(
-            external_port=postgres_port,
-            database=postgres_database
+        compose_config["services"]["postgres"] = (
+            self.generate_postgresql_service_template(
+                external_port=postgres_port, database=postgres_database
+            )
         )
 
         # Optionally add application service (for complete setup)
@@ -162,15 +158,13 @@ class DockerComposeService:
                 "dockerfile": "Dockerfile",
                 "args": {
                     "BUILD_VERSION": "${BUILD_VERSION:-latest}",
-                    "API_PORT": "${HIVE_API_PORT:-8886}"
+                    "API_PORT": "${HIVE_API_PORT:-8886}",
                 },
-                "target": "production"
+                "target": "production",
             },
             "container_name": "hive-agents",
             "restart": "unless-stopped",
-            "ports": [
-                "${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"
-            ],
+            "ports": ["${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"],
             "environment": [
                 "HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hive}",
                 "RUNTIME_ENV=prd",
@@ -179,27 +173,23 @@ class DockerComposeService:
                 "HIVE_API_PORT=${HIVE_API_PORT:-8886}",
                 "HIVE_API_WORKERS=${API_WORKERS:-4}",
                 "PYTHONUNBUFFERED=1",
-                "PYTHONDONTWRITEBYTECODE=1"
+                "PYTHONDONTWRITEBYTECODE=1",
             ],
-            "volumes": [
-                "app_logs:/app/logs",
-                "app_data:/app/data"
-            ],
-            "depends_on": {
-                "postgres": {
-                    "condition": "service_healthy"
-                }
-            },
-            "networks": [
-                "app_network"
-            ],
+            "volumes": ["app_logs:/app/logs", "app_data:/app/data"],
+            "depends_on": {"postgres": {"condition": "service_healthy"}},
+            "networks": ["app_network"],
             "healthcheck": {
-                "test": ["CMD", "curl", "-f", "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health"],
+                "test": [
+                    "CMD",
+                    "curl",
+                    "-f",
+                    "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health",
+                ],
                 "interval": "30s",
                 "timeout": "10s",
                 "retries": 3,
-                "start_period": "60s"
-            }
+                "start_period": "60s",
+            },
         }
 
     def generate_workspace_environment_file(
@@ -207,31 +197,34 @@ class DockerComposeService:
         credentials: dict[str, str] | None = None,
         postgres_port: int = 5532,
         postgres_database: str = "hive",
-        api_port: int = 8886
+        api_port: int = 8886,
     ) -> str:
         """Generate .env file content for workspace with secure credentials.
-        
+
         Integrates with existing credential management system to create
         complete environment configuration for Docker Compose.
-        
+
         Args:
             credentials: Pre-generated credentials (optional)
             postgres_port: PostgreSQL port
-            postgres_database: PostgreSQL database name  
+            postgres_database: PostgreSQL database name
             api_port: API server port
-            
+
         Returns:
             Complete .env file content as string
         """
-        logger.info("Generating workspace environment file",
-                   postgres_port=postgres_port, api_port=api_port)
+        logger.info(
+            "Generating workspace environment file",
+            postgres_port=postgres_port,
+            api_port=api_port,
+        )
 
         # Generate credentials if not provided
         if not credentials:
             credentials = self.credential_service.setup_complete_credentials(
                 postgres_host="localhost",
                 postgres_port=postgres_port,
-                postgres_database=postgres_database
+                postgres_database=postgres_database,
             )
 
         # Cross-platform UID/GID handling (like existing Makefile)
@@ -244,20 +237,20 @@ class DockerComposeService:
 # =============================================================================
 
 # PostgreSQL Database Configuration
-POSTGRES_USER={credentials['postgres_user']}
-POSTGRES_PASSWORD={credentials['postgres_password']}  
+POSTGRES_USER={credentials["postgres_user"]}
+POSTGRES_PASSWORD={credentials["postgres_password"]}  
 POSTGRES_DB={postgres_database}
 POSTGRES_UID={uid}
 POSTGRES_GID={gid}
 
 # Database Connection
-HIVE_DATABASE_URL={credentials['postgres_url']}
+HIVE_DATABASE_URL={credentials["postgres_url"]}
 
 # API Server Configuration  
 HIVE_API_PORT={api_port}
 HIVE_API_HOST=0.0.0.0
 HIVE_API_WORKERS=4
-HIVE_API_KEY={credentials['api_key']}
+HIVE_API_KEY={credentials["api_key"]}
 
 # Runtime Configuration
 RUNTIME_ENV=dev
@@ -307,16 +300,14 @@ EVOLUTION_API_INSTANCE=your-instance-name
         return env_content
 
     def save_docker_compose_template(
-        self,
-        compose_config: dict,
-        output_path: Path | None = None
+        self, compose_config: dict, output_path: Path | None = None
     ) -> Path:
         """Save Docker Compose configuration to file.
-        
+
         Args:
             compose_config: Docker Compose configuration dictionary
             output_path: Output file path (default: docker-compose.yml in workspace)
-            
+
         Returns:
             Path to saved file
         """
@@ -331,27 +322,21 @@ EVOLUTION_API_INSTANCE=your-instance-name
         # Save YAML with proper formatting
         with open(output_path, "w") as f:
             yaml.dump(
-                compose_config,
-                f,
-                default_flow_style=False,
-                indent=2,
-                sort_keys=False
+                compose_config, f, default_flow_style=False, indent=2, sort_keys=False
             )
 
         logger.info("Docker Compose template saved successfully")
         return output_path
 
     def save_environment_file(
-        self,
-        env_content: str,
-        output_path: Path | None = None
+        self, env_content: str, output_path: Path | None = None
     ) -> Path:
         """Save environment file content to .env file.
-        
+
         Args:
             env_content: Environment file content
             output_path: Output file path (default: .env in workspace)
-            
+
         Returns:
             Path to saved file
         """
@@ -373,12 +358,14 @@ EVOLUTION_API_INSTANCE=your-instance-name
         logger.info("Environment file saved with secure permissions")
         return output_path
 
-    def create_data_directories(self, postgres_data_path: str = "./data/postgres") -> Path:
+    def create_data_directories(
+        self, postgres_data_path: str = "./data/postgres"
+    ) -> Path:
         """Create required data directories for PostgreSQL persistence.
-        
+
         Args:
             postgres_data_path: Path for PostgreSQL data directory
-            
+
         Returns:
             Path to created postgres data directory
         """
@@ -399,7 +386,7 @@ EVOLUTION_API_INSTANCE=your-instance-name
 
     def update_gitignore_for_security(self, gitignore_path: Path | None = None) -> None:
         """Update .gitignore to exclude sensitive files.
-        
+
         Args:
             gitignore_path: Path to .gitignore file (default: .gitignore in workspace)
         """
@@ -475,24 +462,24 @@ EVOLUTION_API_INSTANCE=your-instance-name
         postgres_port: int = 5532,
         postgres_database: str = "hive",
         api_port: int = 8886,
-        include_app_service: bool = False
+        include_app_service: bool = False,
     ) -> tuple[Path, Path, Path]:
         """Complete setup of foundational services containerization.
-        
+
         This is the main method for T1.7 implementation, providing:
         - PostgreSQL container service definition
         - Secure credential generation and management
         - Docker Compose template generation
-        - Environment file creation  
+        - Environment file creation
         - Data directory setup
         - Security configurations
-        
+
         Args:
             postgres_port: PostgreSQL external port (default: 5532)
             postgres_database: PostgreSQL database name (default: hive)
             api_port: API server port (default: 8886)
             include_app_service: Include application service in compose
-            
+
         Returns:
             Tuple of (docker-compose.yml path, .env path, data directory path)
         """
@@ -503,7 +490,7 @@ EVOLUTION_API_INSTANCE=your-instance-name
         credentials = self.credential_service.setup_complete_credentials(
             postgres_host="localhost",
             postgres_port=postgres_port,
-            postgres_database=postgres_database
+            postgres_database=postgres_database,
         )
 
         # 2. Generate Docker Compose template
@@ -511,7 +498,7 @@ EVOLUTION_API_INSTANCE=your-instance-name
         compose_config = self.generate_complete_docker_compose_template(
             postgres_port=postgres_port,
             postgres_database=postgres_database,
-            include_app_service=include_app_service
+            include_app_service=include_app_service,
         )
 
         # 3. Generate environment file
@@ -520,7 +507,7 @@ EVOLUTION_API_INSTANCE=your-instance-name
             credentials=credentials,
             postgres_port=postgres_port,
             postgres_database=postgres_database,
-            api_port=api_port
+            api_port=api_port,
         )
 
         # 4. Create data directories
@@ -534,9 +521,11 @@ EVOLUTION_API_INSTANCE=your-instance-name
         # 6. Update .gitignore for security
         self.update_gitignore_for_security()
 
-        logger.info("Foundational services containerization setup complete",
-                   compose_path=str(compose_path),
-                   env_path=str(env_path),
-                   data_path=str(data_dir))
+        logger.info(
+            "Foundational services containerization setup complete",
+            compose_path=str(compose_path),
+            env_path=str(env_path),
+            data_path=str(data_dir),
+        )
 
         return compose_path, env_path, data_dir

@@ -40,13 +40,13 @@ class WorkspaceProtocolTestExecutor:
             "genie-claudemd",
             "genie-agent-creator",
             "genie-agent-enhancer",
-            "claude"
+            "claude",
         ]
 
     def run_full_validation_suite(self) -> dict[str, Any]:
         """
         Execute complete validation suite across all agents.
-        
+
         Returns:
             Comprehensive test results and compliance report
         """
@@ -77,7 +77,9 @@ class WorkspaceProtocolTestExecutor:
             "static_compliance": static_results,
             "functional_validation": functional_results,
             "integration_tests": integration_results,
-            "summary": self.generate_summary_metrics(static_results, functional_results, integration_results)
+            "summary": self.generate_summary_metrics(
+                static_results, functional_results, integration_results
+            ),
         }
 
         # Generate and display final report
@@ -93,7 +95,9 @@ class WorkspaceProtocolTestExecutor:
         for agent_name in self.target_agents:
             print(f"  Checking {agent_name}...")
 
-            compliance_result = self.agent_tester.validate_agent_protocol_compliance(agent_name)
+            compliance_result = self.agent_tester.validate_agent_protocol_compliance(
+                agent_name
+            )
             results[agent_name] = compliance_result
 
             status = "✓" if compliance_result["compliant"] else "❌"
@@ -109,7 +113,7 @@ class WorkspaceProtocolTestExecutor:
             "overall_compliance": overall_compliance,
             "total_agents": total_agents,
             "compliant_agents": compliant_agents,
-            "agent_results": results
+            "agent_results": results,
         }
 
     def run_functional_validation_tests(self) -> dict[str, Any]:
@@ -119,28 +123,28 @@ class WorkspaceProtocolTestExecutor:
             {
                 "name": "valid_context_processing",
                 "description": "Test processing of valid context files",
-                "test_func": self._test_valid_context_processing
+                "test_func": self._test_valid_context_processing,
             },
             {
                 "name": "missing_context_error_handling",
                 "description": "Test error handling for missing context files",
-                "test_func": self._test_missing_context_error_handling
+                "test_func": self._test_missing_context_error_handling,
             },
             {
                 "name": "artifact_lifecycle_management",
                 "description": "Test artifact creation and lifecycle management",
-                "test_func": self._test_artifact_lifecycle_management
+                "test_func": self._test_artifact_lifecycle_management,
             },
             {
                 "name": "json_response_format_compliance",
                 "description": "Test JSON response format adherence",
-                "test_func": self._test_json_response_format_compliance
+                "test_func": self._test_json_response_format_compliance,
             },
             {
                 "name": "technical_standards_enforcement",
                 "description": "Test technical standards enforcement",
-                "test_func": self._test_technical_standards_enforcement
-            }
+                "test_func": self._test_technical_standards_enforcement,
+            },
         ]
 
         results = {}
@@ -152,7 +156,7 @@ class WorkspaceProtocolTestExecutor:
             results[scenario["name"]] = {
                 "description": scenario["description"],
                 "results": scenario_results,
-                "pass_rate": self._calculate_scenario_pass_rate(scenario_results)
+                "pass_rate": self._calculate_scenario_pass_rate(scenario_results),
             }
 
             pass_rate = results[scenario["name"]]["pass_rate"]
@@ -167,18 +171,18 @@ class WorkspaceProtocolTestExecutor:
             {
                 "name": "protocol_consistency_across_agents",
                 "description": "Validate protocol consistency across all agents",
-                "test_func": self._test_protocol_consistency
+                "test_func": self._test_protocol_consistency,
             },
             {
                 "name": "error_propagation_handling",
                 "description": "Test error handling propagation across agent boundaries",
-                "test_func": self._test_error_propagation
+                "test_func": self._test_error_propagation,
             },
             {
                 "name": "artifact_coordination",
                 "description": "Test artifact coordination between agents",
-                "test_func": self._test_artifact_coordination
-            }
+                "test_func": self._test_artifact_coordination,
+            },
         ]
 
         results = {}
@@ -190,7 +194,7 @@ class WorkspaceProtocolTestExecutor:
             results[scenario["name"]] = {
                 "description": scenario["description"],
                 "results": scenario_results,
-                "pass_rate": self._calculate_scenario_pass_rate(scenario_results)
+                "pass_rate": self._calculate_scenario_pass_rate(scenario_results),
             }
 
             pass_rate = results[scenario["name"]]["pass_rate"]
@@ -223,7 +227,11 @@ class WorkspaceProtocolTestExecutor:
 
         try:
             # Test subset of agents for performance
-            test_agents = ["genie-dev-planner", "genie-dev-designer", "genie-testing-maker"]
+            test_agents = [
+                "genie-dev-planner",
+                "genie-dev-designer",
+                "genie-testing-maker",
+            ]
 
             for agent_name in test_agents:
                 task_prompt = f"""
@@ -233,14 +241,18 @@ Create a technical plan based on the context file requirements.
 """
 
                 response = self.agent_tester.execute_agent_task(agent_name, task_prompt)
-                validation_results = self.protocol_validator.run_comprehensive_validation(
-                    task_prompt, response or ""
+                validation_results = (
+                    self.protocol_validator.run_comprehensive_validation(
+                        task_prompt, response or ""
+                    )
                 )
 
                 results[agent_name] = {
                     "response_received": response is not None,
                     "validation_results": validation_results,
-                    "compliance_score": self.protocol_validator.calculate_compliance_score(validation_results)
+                    "compliance_score": self.protocol_validator.calculate_compliance_score(
+                        validation_results
+                    ),
                 }
 
         finally:
@@ -276,10 +288,16 @@ Create a technical plan based on the context file requirements.
             results[agent_name] = {
                 "response_received": response is not None,
                 "json_extracted": json_data is not None,
-                "error_status_correct": json_data.get("status") == "error" if json_data else False,
-                "context_validated_false": json_data.get("context_validated") is False if json_data else False,
+                "error_status_correct": json_data.get("status") == "error"
+                if json_data
+                else False,
+                "context_validated_false": json_data.get("context_validated") is False
+                if json_data
+                else False,
                 "validation_results": validation_results,
-                "compliance_score": self.protocol_validator.calculate_compliance_score(validation_results)
+                "compliance_score": self.protocol_validator.calculate_compliance_score(
+                    validation_results
+                ),
             }
 
         return results
@@ -300,7 +318,9 @@ Consider different notification channels and delivery mechanisms.
 This is initial exploration.
 """
 
-            ideas_response = self.agent_tester.execute_agent_task(agent_name, ideas_prompt)
+            ideas_response = self.agent_tester.execute_agent_task(
+                agent_name, ideas_prompt
+            )
             ideas_validation = self.protocol_validator.run_comprehensive_validation(
                 ideas_prompt, ideas_response or "", expected_phase="ideas"
             )
@@ -311,7 +331,9 @@ Create a detailed implementation plan for the user notification system.
 This should be execution-ready with specific requirements.
 """
 
-            wishes_response = self.agent_tester.execute_agent_task(agent_name, wishes_prompt)
+            wishes_response = self.agent_tester.execute_agent_task(
+                agent_name, wishes_prompt
+            )
             wishes_validation = self.protocol_validator.run_comprehensive_validation(
                 wishes_prompt, wishes_response or "", expected_phase="wishes"
             )
@@ -320,13 +342,17 @@ This should be execution-ready with specific requirements.
                 "ideas_phase": {
                     "response_received": ideas_response is not None,
                     "validation_results": ideas_validation,
-                    "compliance_score": self.protocol_validator.calculate_compliance_score(ideas_validation)
+                    "compliance_score": self.protocol_validator.calculate_compliance_score(
+                        ideas_validation
+                    ),
                 },
                 "wishes_phase": {
                     "response_received": wishes_response is not None,
                     "validation_results": wishes_validation,
-                    "compliance_score": self.protocol_validator.calculate_compliance_score(wishes_validation)
-                }
+                    "compliance_score": self.protocol_validator.calculate_compliance_score(
+                        wishes_validation
+                    ),
+                },
             }
 
         return results
@@ -345,14 +371,16 @@ for user profile management. This is a straightforward task.
 
             response = self.agent_tester.execute_agent_task(agent_name, task_prompt)
             json_data = self.protocol_validator.extract_json_response(response or "")
-            json_validation = self.protocol_validator.validate_json_response_format(json_data)
+            json_validation = self.protocol_validator.validate_json_response_format(
+                json_data
+            )
 
             results[agent_name] = {
                 "response_received": response is not None,
                 "json_extracted": json_data is not None,
                 "json_valid": json_validation.passed,
                 "json_details": json_data,
-                "validation_message": json_validation.message
+                "validation_message": json_validation.message,
             }
 
         return results
@@ -372,13 +400,19 @@ including package management, code formatting, and testing frameworks.
 """
 
             response = self.agent_tester.execute_agent_task(agent_name, task_prompt)
-            standards_validation = self.protocol_validator.validate_technical_standards_compliance(response or "")
+            standards_validation = (
+                self.protocol_validator.validate_technical_standards_compliance(
+                    response or ""
+                )
+            )
 
             results[agent_name] = {
                 "response_received": response is not None,
                 "standards_compliant": standards_validation.passed,
                 "validation_message": standards_validation.message,
-                "violations": standards_validation.details.get("violations", []) if standards_validation.details else []
+                "violations": standards_validation.details.get("violations", [])
+                if standards_validation.details
+                else [],
             }
 
         return results
@@ -390,12 +424,18 @@ including package management, code formatting, and testing frameworks.
         all_agent_configs = {}
 
         for agent_name in self.target_agents:
-            compliance_result = self.agent_tester.validate_agent_protocol_compliance(agent_name)
+            compliance_result = self.agent_tester.validate_agent_protocol_compliance(
+                agent_name
+            )
             all_agent_configs[agent_name] = compliance_result
 
         # Analyze consistency
-        protocol_features = ["has_workspace_protocol", "has_json_response_format",
-                           "has_context_validation", "has_artifact_lifecycle"]
+        protocol_features = [
+            "has_workspace_protocol",
+            "has_json_response_format",
+            "has_context_validation",
+            "has_artifact_lifecycle",
+        ]
 
         consistency_results = {}
 
@@ -414,7 +454,7 @@ including package management, code formatting, and testing frameworks.
             consistency_results[feature] = {
                 "consistency_rate": consistency_rate,
                 "agents_with_feature": agents_with_feature,
-                "agents_without_feature": agents_without_feature
+                "agents_without_feature": agents_without_feature,
             }
 
         return consistency_results
@@ -441,9 +481,15 @@ This should trigger consistent error handling across all agents.
             results[agent_name] = {
                 "response_received": response is not None,
                 "json_extracted": json_data is not None,
-                "error_status": json_data.get("status") == "error" if json_data else False,
-                "context_validated_false": json_data.get("context_validated") is False if json_data else False,
-                "has_error_message": bool(json_data.get("message")) if json_data else False
+                "error_status": json_data.get("status") == "error"
+                if json_data
+                else False,
+                "context_validated_false": json_data.get("context_validated") is False
+                if json_data
+                else False,
+                "has_error_message": bool(json_data.get("message"))
+                if json_data
+                else False,
             }
 
         return results
@@ -454,7 +500,7 @@ This should trigger consistent error handling across all agents.
         # This would test multi-agent workflows, simplified for now
         results = {
             "coordination_test": "Not implemented - requires multi-agent workflow testing",
-            "status": "skipped"
+            "status": "skipped",
         }
 
         return results
@@ -476,7 +522,10 @@ This should trigger consistent error handling across all agents.
                         passed_tests += 1
                 elif "error_status_correct" in agent_result:  # Error handling test
                     total_tests += 1
-                    if agent_result["error_status_correct"] and agent_result["context_validated_false"]:
+                    if (
+                        agent_result["error_status_correct"]
+                        and agent_result["context_validated_false"]
+                    ):
                         passed_tests += 1
                 elif "standards_compliant" in agent_result:  # Standards test
                     total_tests += 1
@@ -485,9 +534,12 @@ This should trigger consistent error handling across all agents.
 
         return passed_tests / total_tests if total_tests > 0 else 0.0
 
-    def generate_summary_metrics(self, static_results: dict[str, Any],
-                                functional_results: dict[str, Any],
-                                integration_results: dict[str, Any]) -> dict[str, Any]:
+    def generate_summary_metrics(
+        self,
+        static_results: dict[str, Any],
+        functional_results: dict[str, Any],
+        integration_results: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate comprehensive summary metrics."""
 
         # Static compliance metrics
@@ -498,17 +550,27 @@ This should trigger consistent error handling across all agents.
         for scenario_name, scenario_data in functional_results.items():
             functional_pass_rates.append(scenario_data.get("pass_rate", 0.0))
 
-        avg_functional_pass_rate = sum(functional_pass_rates) / len(functional_pass_rates) if functional_pass_rates else 0.0
+        avg_functional_pass_rate = (
+            sum(functional_pass_rates) / len(functional_pass_rates)
+            if functional_pass_rates
+            else 0.0
+        )
 
         # Integration test metrics
         integration_pass_rates = []
         for scenario_name, scenario_data in integration_results.items():
             integration_pass_rates.append(scenario_data.get("pass_rate", 0.0))
 
-        avg_integration_pass_rate = sum(integration_pass_rates) / len(integration_pass_rates) if integration_pass_rates else 0.0
+        avg_integration_pass_rate = (
+            sum(integration_pass_rates) / len(integration_pass_rates)
+            if integration_pass_rates
+            else 0.0
+        )
 
         # Overall compliance calculation
-        overall_compliance = (static_compliance + avg_functional_pass_rate + avg_integration_pass_rate) / 3
+        overall_compliance = (
+            static_compliance + avg_functional_pass_rate + avg_integration_pass_rate
+        ) / 3
 
         # Determine compliance level
         if overall_compliance >= 0.95:
@@ -529,7 +591,8 @@ This should trigger consistent error handling across all agents.
             "functional_pass_rate": avg_functional_pass_rate,
             "integration_pass_rate": avg_integration_pass_rate,
             "total_agents_tested": len(self.target_agents),
-            "test_categories_completed": len(functional_results) + len(integration_results)
+            "test_categories_completed": len(functional_results)
+            + len(integration_results),
         }
 
     def display_final_report(self, comprehensive_results: dict[str, Any]):
@@ -544,7 +607,9 @@ This should trigger consistent error handling across all agents.
         print("\n📊 OVERALL RESULTS:")
         print(f"Compliance Level: {summary['compliance_level']}")
         print(f"Overall Score: {summary['overall_compliance']:.1%}")
-        print(f"Execution Time: {comprehensive_results['execution_time_seconds']:.1f} seconds")
+        print(
+            f"Execution Time: {comprehensive_results['execution_time_seconds']:.1f} seconds"
+        )
 
         print("\n📋 DETAILED BREAKDOWN:")
         print(f"Static Compliance: {summary['static_compliance']:.1%}")
@@ -582,7 +647,9 @@ def main():
     results = executor.run_full_validation_suite()
 
     # Save results to file
-    results_file = Path("/home/namastex/workspace/automagik-hive/genie/wishes/workspace-protocol-validation-results.json")
+    results_file = Path(
+        "/home/namastex/workspace/automagik-hive/genie/wishes/workspace-protocol-validation-results.json"
+    )
     with open(results_file, "w") as f:
         json.dump(results, f, indent=2, default=str)
 

@@ -416,17 +416,17 @@ class AgnoTeamProxy:
     ) -> list[str]:
         """
         Handle MCP servers configuration using Agno's native integration.
-        
+
         Agno provides native MCP support via the mcp_servers parameter, eliminating
         the need for manual tool conversion. Just pass the server names directly.
-        
+
         Args:
             mcp_servers_config: List of MCP server names from YAML
             config: Full team configuration
             component_id: Team identifier
             db_url: Database URL
             **kwargs: Additional parameters
-            
+
         Returns:
             List of MCP server names for Agno's native integration
         """
@@ -434,7 +434,9 @@ class AgnoTeamProxy:
             return []
 
         # Agno handles MCP integration natively - just pass server names
-        logger.info(f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}")
+        logger.info(
+            f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}"
+        )
         return mcp_servers_config
 
     def _handle_tools_config(
@@ -447,17 +449,17 @@ class AgnoTeamProxy:
     ) -> list[dict[str, Any] | str | object]:
         """
         Handle native Agno tools configuration.
-        
+
         MCP tools are now handled by _handle_mcp_servers using Agno's native integration.
         This method handles native Agno tools like CalculatorTools(), custom @tool functions, etc.
-        
+
         Args:
             tools_config: List of native Agno tool objects or configurations from YAML
             config: Full team configuration
             component_id: Team identifier
             db_url: Database URL
             **kwargs: Additional parameters
-            
+
         Returns:
             List of native Agno tools (passed directly to Agno Team constructor)
         """
@@ -489,7 +491,9 @@ class AgnoTeamProxy:
                 loaded_tool_names.append(str(tool_config))
 
         if loaded_tool_names:
-            logger.info(f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}")
+            logger.info(
+                f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}"
+            )
 
         return processed_tools
 

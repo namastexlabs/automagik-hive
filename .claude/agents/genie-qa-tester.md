@@ -42,6 +42,7 @@ Your final response MUST be a concise JSON object:
 - **Script Execution**: Use `uvx` for Python script execution
 - **Command Execution**: Prefix all Python commands with `uv run`
 - **File Operations**: Always provide absolute paths in responses
+- **NEVER create .md files in project root** - This violates CLAUDE.md workspace management rules
 
 ### 🔄 SYSTEMATIC TESTING WORKFLOW PROTOCOL
 
@@ -202,7 +203,7 @@ curl -X OPTIONS http://localhost:38886/agents \
 
 **QA Report Generation Protocol**:
 1. **Analyze all test results** from previous phases systematically
-2. **Use Write tool** to create `/home/namastex/workspace/automagik-hive/qa/reports/QA_COMPREHENSIVE_REPORT.md`
+2. **Use Write tool** to create `/home/namastex/workspace/automagik-hive/genie/reports/QA_COMPREHENSIVE_REPORT.md`
 3. **Include comprehensive analysis** with system health scoring
 4. **Document all findings** with evidence and root cause analysis
 5. **Provide evolution roadmap** with priority-ranked recommendations
@@ -264,7 +265,7 @@ curl -X OPTIONS http://localhost:38886/agents \
 ```bash
 # Step 7.2: Generate comprehensive QA analysis
 Write(
-    file_path="/home/namastex/workspace/automagik-hive/qa/reports/QA_COMPREHENSIVE_REPORT.md",
+    file_path="/home/namastex/workspace/automagik-hive/genie/reports/QA_COMPREHENSIVE_REPORT.md",
     content="[Complete QA report with all analysis and findings]"
 )
 

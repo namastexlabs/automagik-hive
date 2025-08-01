@@ -11,6 +11,7 @@ from enum import Enum
 
 class FileOperation(Enum):
     """Enumeration of possible file operations detected by Git."""
+
     CREATE = "create"
     MODIFY = "modify"
     DELETE = "delete"
@@ -19,6 +20,7 @@ class FileOperation(Enum):
 
 class ValidationResult(Enum):
     """Enumeration of validation outcomes."""
+
     ALLOWED = "allowed"
     BLOCKED = "blocked"
     BYPASS = "bypass"
@@ -27,10 +29,11 @@ class ValidationResult(Enum):
 @dataclass
 class FileChange:
     """Core entity representing a file system change detected by Git.
-    
+
     This entity encapsulates all information about a file change needed
     for validation decisions, including path analysis and suggestions.
     """
+
     path: str
     operation: FileOperation
     is_root_level: bool
@@ -39,7 +42,7 @@ class FileChange:
 
     def get_suggested_path(self) -> str | None:
         """Generate suggested alternative path based on file type.
-        
+
         Returns:
             Suggested path for the file, or None if no suggestion available.
         """
@@ -51,11 +54,15 @@ class FileChange:
                 return None  # README.md is allowed at root
             if any(word in self.path.lower() for word in ["plan", "wish", "todo"]):
                 return f"/genie/wishes/{self.path}"
-            if any(word in self.path.lower() for word in ["design", "architecture", "ddd"]):
+            if any(
+                word in self.path.lower() for word in ["design", "architecture", "ddd"]
+            ):
                 return f"/genie/docs/{self.path}"
             if any(word in self.path.lower() for word in ["idea", "analysis", "brain"]):
                 return f"/genie/ideas/{self.path}"
-            if any(word in self.path.lower() for word in ["report", "complete", "summary"]):
+            if any(
+                word in self.path.lower() for word in ["report", "complete", "summary"]
+            ):
                 return f"/genie/reports/{self.path}"
             return f"/genie/docs/{self.path}"
         if self.is_directory:
@@ -67,10 +74,11 @@ class FileChange:
 @dataclass
 class ValidationRule:
     """Core entity defining validation rules for file operations.
-    
+
     Represents a single validation rule that can be applied to determine
     whether a file operation should be allowed or blocked.
     """
+
     pattern: str
     rule_type: str  # "allow" or "block"
     description: str
@@ -80,10 +88,11 @@ class ValidationRule:
 @dataclass
 class HookValidationResult:
     """Result of pre-commit hook validation containing all outcomes.
-    
+
     This entity aggregates the complete validation result including
     categorized files, error messages, and user-friendly suggestions.
     """
+
     result: ValidationResult
     blocked_files: list[FileChange]
     allowed_files: list[FileChange]
@@ -99,7 +108,9 @@ class HookValidationResult:
     @property
     def total_files_processed(self) -> int:
         """Get total number of files processed."""
-        return len(self.blocked_files) + len(self.allowed_files) + len(self.bypass_files)
+        return (
+            len(self.blocked_files) + len(self.allowed_files) + len(self.bypass_files)
+        )
 
     def get_summary(self) -> str:
         """Get a human-readable summary of validation results."""

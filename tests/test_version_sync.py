@@ -29,7 +29,9 @@ def test_pyproject_toml_version_format():
 
     # Validate version format (PEP 440 compliant)
     version_pattern = r"^(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?$"
-    assert re.match(version_pattern, version), f"Version '{version}' should be PEP 440 compliant"
+    assert re.match(version_pattern, version), (
+        f"Version '{version}' should be PEP 440 compliant"
+    )
 
 
 def test_version_reader_consistency():
@@ -59,6 +61,7 @@ def test_cli_version_sync():
 
     # Test CLI version string format
     from lib.utils.version_reader import get_cli_version_string
+
     cli_version_string = get_cli_version_string()
 
     assert project_version in cli_version_string
@@ -105,17 +108,21 @@ def test_version_source_priority():
     if version_info["source"] == "importlib.metadata":
         # Package is installed in development mode
         import importlib.metadata
+
         installed_version = importlib.metadata.version("automagik-hive")
         assert version_info["version"] == installed_version
 
 
-@pytest.mark.parametrize("version_string", [
-    "0.1.0",      # Basic release
-    "0.1.0a1",    # Alpha pre-release
-    "0.1.0b1",    # Beta pre-release
-    "0.1.0rc1",   # Release candidate
-    "1.2.3",      # Standard semantic version
-])
+@pytest.mark.parametrize(
+    "version_string",
+    [
+        "0.1.0",  # Basic release
+        "0.1.0a1",  # Alpha pre-release
+        "0.1.0b1",  # Beta pre-release
+        "0.1.0rc1",  # Release candidate
+        "1.2.3",  # Standard semantic version
+    ],
+)
 def test_version_format_compatibility(version_string):
     """Test that various version formats work with the version reader."""
     # This is a unit test to ensure our version parsing is robust

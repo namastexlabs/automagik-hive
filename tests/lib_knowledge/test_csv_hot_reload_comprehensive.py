@@ -39,6 +39,7 @@ class TestCSVHotReloadManagerInitialization:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_initialization_with_explicit_path(self):
@@ -78,7 +79,9 @@ class TestCSVHotReloadManagerInitialization:
     def test_initialization_no_path_no_config(self):
         """Test initialization when no path provided and no config available."""
         # Test the full fallback chain when config loading completely fails
-        with patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config") as mock_config:
+        with patch(
+            "lib.knowledge.csv_hot_reload.load_global_knowledge_config"
+        ) as mock_config:
             mock_config.side_effect = ImportError("Version factory not available")
 
             manager = CSVHotReloadManager()
@@ -86,7 +89,9 @@ class TestCSVHotReloadManagerInitialization:
             # Should use the default fallback path
             assert "knowledge_rag.csv" in str(manager.csv_path)
 
-    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     @patch("lib.knowledge.csv_hot_reload.PgVector")
     @patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder")
     @patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase")
@@ -96,9 +101,7 @@ class TestCSVHotReloadManagerInitialization:
     ):
         """Test successful knowledge base initialization."""
         # Mock configuration
-        mock_config = {
-            "vector_db": {"embedder": "text-embedding-3-large"}
-        }
+        mock_config = {"vector_db": {"embedder": "text-embedding-3-large"}}
         mock_load_config.return_value = mock_config
 
         # Mock dependencies
@@ -120,11 +123,10 @@ class TestCSVHotReloadManagerInitialization:
             table_name="knowledge_base",
             schema="agno",
             db_url="postgresql://test:test@localhost:5432/test",
-            embedder=mock_embedder
+            embedder=mock_embedder,
         )
         mock_kb_class.assert_called_once_with(
-            csv_path=str(self.csv_file),
-            vector_db=mock_vector_db
+            csv_path=str(self.csv_file), vector_db=mock_vector_db
         )
 
         # Verify load was called since file exists
@@ -132,16 +134,24 @@ class TestCSVHotReloadManagerInitialization:
 
         assert manager.knowledge_base is mock_kb
 
-    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     @patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config")
-    def test_knowledge_base_initialization_embedder_config_fallback(self, mock_load_config):
+    def test_knowledge_base_initialization_embedder_config_fallback(
+        self, mock_load_config
+    ):
         """Test fallback embedder configuration when global config fails."""
         # Make embedder config loading fail
         mock_load_config.side_effect = Exception("Embedder config failed")
 
-        with patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder") as mock_embedder_class:
+        with patch(
+            "lib.knowledge.csv_hot_reload.OpenAIEmbedder"
+        ) as mock_embedder_class:
             with patch("lib.knowledge.csv_hot_reload.PgVector") as mock_vector_class:
-                with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase") as mock_kb_class:
+                with patch(
+                    "lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"
+                ) as mock_kb_class:
                     mock_embedder = Mock()
                     mock_embedder_class.return_value = mock_embedder
 
@@ -150,23 +160,35 @@ class TestCSVHotReloadManagerInitialization:
                     # Should use default embedder
                     mock_embedder_class.assert_called_with(id="text-embedding-3-small")
 
-    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     def test_embedder_import_error_fallback(self):
         """Test fallback when embedder import fails."""
         # Test the embedder import error handling path
-        with patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config") as mock_config:
+        with patch(
+            "lib.knowledge.csv_hot_reload.load_global_knowledge_config"
+        ) as mock_config:
             mock_config.side_effect = ImportError("OpenAIEmbedder import failed")
 
-            with patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder") as mock_embedder_class:
-                with patch("lib.knowledge.csv_hot_reload.PgVector") as mock_vector_class:
-                    with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase") as mock_kb_class:
+            with patch(
+                "lib.knowledge.csv_hot_reload.OpenAIEmbedder"
+            ) as mock_embedder_class:
+                with patch(
+                    "lib.knowledge.csv_hot_reload.PgVector"
+                ) as mock_vector_class:
+                    with patch(
+                        "lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"
+                    ) as mock_kb_class:
                         mock_embedder = Mock()
                         mock_embedder_class.return_value = mock_embedder
 
                         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
 
                         # Should use default embedder when import fails
-                        mock_embedder_class.assert_called_with(id="text-embedding-3-small")
+                        mock_embedder_class.assert_called_with(
+                            id="text-embedding-3-small"
+                        )
 
     def test_knowledge_base_initialization_no_database_url(self):
         """Test knowledge base initialization failure when database URL is missing."""
@@ -177,7 +199,9 @@ class TestCSVHotReloadManagerInitialization:
             # Knowledge base should not be initialized
             assert manager.knowledge_base is None
 
-    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     @patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase")
     def test_knowledge_base_initialization_general_failure(self, mock_kb_class):
         """Test handling of general initialization failures."""
@@ -206,6 +230,7 @@ class TestCSVHotReloadManagerFileWatching:
         if hasattr(self, "manager") and self.manager:
             self.manager.stop_watching()
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_start_watching_when_not_running(self):
@@ -321,7 +346,9 @@ class TestCSVHotReloadManagerFileWatching:
 
         with patch.object(manager, "_reload_knowledge_base") as mock_reload:
             with patch("watchdog.observers.Observer"):
-                with patch("watchdog.events.FileSystemEventHandler") as mock_handler_class:
+                with patch(
+                    "watchdog.events.FileSystemEventHandler"
+                ) as mock_handler_class:
                     # Capture the handler instance when start_watching is called
                     handler_instance = None
 
@@ -357,6 +384,7 @@ class TestCSVHotReloadManagerReloading:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_reload_knowledge_base_success(self):
@@ -408,6 +436,7 @@ class TestCSVHotReloadManagerStatus:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_get_status_stopped(self):
@@ -462,21 +491,28 @@ class TestCSVHotReloadManagerIntegration:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     def test_full_workflow_start_watch_reload_stop(self):
         """Test complete workflow of starting, watching, reloading, and stopping."""
         with patch("lib.knowledge.csv_hot_reload.PgVector"):
             with patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder"):
-                with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase") as mock_kb_class:
+                with patch(
+                    "lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"
+                ) as mock_kb_class:
                     mock_kb = Mock()
                     mock_kb_class.return_value = mock_kb
 
                     manager = CSVHotReloadManager(csv_path=str(self.csv_file))
 
                     # Verify knowledge base was initialized and loaded
-                    mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
+                    mock_kb.load.assert_called_once_with(
+                        recreate=False, skip_existing=True
+                    )
 
                     # Start watching
                     with patch("watchdog.observers.Observer") as mock_observer_class:
@@ -558,6 +594,7 @@ class TestCSVHotReloadCLIInterface:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @patch("lib.knowledge.csv_hot_reload.CSVHotReloadManager")
@@ -653,6 +690,7 @@ class TestCSVHotReloadErrorHandling:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_initialization_with_nonexistent_csv(self):
@@ -685,7 +723,9 @@ class TestCSVHotReloadErrorHandling:
 
         # Check that the log message contains expected information
         log_calls = mock_logger.info.call_args_list
-        init_call = next((call for call in log_calls if "initialized" in str(call)), None)
+        init_call = next(
+            (call for call in log_calls if "initialized" in str(call)), None
+        )
         assert init_call is not None
 
     @patch("lib.knowledge.csv_hot_reload.logger")
@@ -766,6 +806,7 @@ class TestCSVHotReloadPerformance:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_rapid_start_stop_cycles(self):

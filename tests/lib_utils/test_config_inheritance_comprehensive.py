@@ -152,17 +152,31 @@ class TestConfigInheritanceManager:
         """Test that parameter sets are properly defined."""
         # Team-only parameters
         expected_team_only = {
-            "mode", "enable_agentic_context", "share_member_interactions",
-            "team_session_state", "get_member_information_tool", "members",
-            "show_members_responses", "stream_member_events"
+            "mode",
+            "enable_agentic_context",
+            "share_member_interactions",
+            "team_session_state",
+            "get_member_information_tool",
+            "members",
+            "show_members_responses",
+            "stream_member_events",
         }
         assert expected_team_only == manager.TEAM_ONLY_PARAMETERS
 
         # Agent-only parameters
         expected_agent_only = {
-            "agent_id", "name", "role", "instructions", "tools", "table_name",
-            "description", "goal", "success_criteria", "expected_output",
-            "introduction", "additional_context"
+            "agent_id",
+            "name",
+            "role",
+            "instructions",
+            "tools",
+            "table_name",
+            "description",
+            "goal",
+            "success_criteria",
+            "expected_output",
+            "introduction",
+            "additional_context",
         }
         assert expected_agent_only == manager.AGENT_ONLY_PARAMETERS
 
@@ -310,9 +324,13 @@ class TestConfigInheritanceManager:
         assert "new_param" not in original_agent_config["memory"]
         assert "new_category" not in original_agent_config
 
-    def test_apply_inheritance_full_workflow(self, manager, sample_team_config, sample_agent_configs):
+    def test_apply_inheritance_full_workflow(
+        self, manager, sample_team_config, sample_agent_configs
+    ):
         """Test complete inheritance workflow."""
-        enhanced_configs = manager.apply_inheritance(sample_team_config, sample_agent_configs)
+        enhanced_configs = manager.apply_inheritance(
+            sample_team_config, sample_agent_configs
+        )
 
         assert len(enhanced_configs) == 3
         assert "agent1" in enhanced_configs
@@ -360,13 +378,17 @@ class TestConfigInheritanceManager:
 
             mock_apply.side_effect = side_effect
 
-            enhanced = manager.apply_inheritance(sample_team_config, problem_agent_configs)
+            enhanced = manager.apply_inheritance(
+                sample_team_config, problem_agent_configs
+            )
 
             # Should have both agents, bad one as fallback
             assert len(enhanced) == 2
             assert enhanced["bad_agent"] == problem_agent_configs["bad_agent"]
 
-    def test_validate_configuration_team_only_violations(self, manager, sample_team_config):
+    def test_validate_configuration_team_only_violations(
+        self, manager, sample_team_config
+    ):
         """Test validation of team-only parameter violations."""
         invalid_agent_configs = {
             "agent1": {
@@ -380,7 +402,9 @@ class TestConfigInheritanceManager:
             },
         }
 
-        errors = manager.validate_configuration(sample_team_config, invalid_agent_configs)
+        errors = manager.validate_configuration(
+            sample_team_config, invalid_agent_configs
+        )
 
         assert len(errors) >= 3  # At least 3 violations
         error_text = " ".join(errors)
@@ -402,7 +426,9 @@ class TestConfigInheritanceManager:
             },
         }
 
-        errors = manager.validate_configuration(sample_team_config, invalid_agent_configs)
+        errors = manager.validate_configuration(
+            sample_team_config, invalid_agent_configs
+        )
 
         assert len(errors) >= 2
         error_text = " ".join(errors)
@@ -415,7 +441,9 @@ class TestConfigInheritanceManager:
             "agent2": {"memory": {"num_history_runs": 10}},
             "agent3": {"memory": {"num_history_runs": 15}},
             "agent4": {"memory": {"num_history_runs": 20}},
-            "agent5": {"memory": {"num_history_runs": 25}},  # 5 different values > 3 limit
+            "agent5": {
+                "memory": {"num_history_runs": 25}
+            },  # 5 different values > 3 limit
         }
 
         errors = manager._check_configuration_drift(agent_configs_with_drift)
@@ -449,16 +477,24 @@ class TestConfigInheritanceManager:
 
         assert len(errors) == 0  # Should not error on missing configs
 
-    def test_validate_configuration_comprehensive(self, manager, sample_team_config, sample_agent_configs):
+    def test_validate_configuration_comprehensive(
+        self, manager, sample_team_config, sample_agent_configs
+    ):
         """Test comprehensive validation with valid configs."""
-        errors = manager.validate_configuration(sample_team_config, sample_agent_configs)
+        errors = manager.validate_configuration(
+            sample_team_config, sample_agent_configs
+        )
 
         # Should have no errors with valid configs
         assert len(errors) == 0
 
-    def test_generate_inheritance_report_with_inheritance(self, manager, sample_team_config, sample_agent_configs):
+    def test_generate_inheritance_report_with_inheritance(
+        self, manager, sample_team_config, sample_agent_configs
+    ):
         """Test inheritance report generation when parameters are inherited."""
-        enhanced_configs = manager.apply_inheritance(sample_team_config, sample_agent_configs)
+        enhanced_configs = manager.apply_inheritance(
+            sample_team_config, sample_agent_configs
+        )
 
         report = manager.generate_inheritance_report(
             sample_team_config, sample_agent_configs, enhanced_configs
@@ -468,13 +504,20 @@ class TestConfigInheritanceManager:
         assert "parameters inherited" in report
         assert "across 3 agents" in report
 
-    def test_generate_inheritance_report_no_inheritance(self, manager, sample_team_config):
+    def test_generate_inheritance_report_no_inheritance(
+        self, manager, sample_team_config
+    ):
         """Test inheritance report when no parameters are inherited."""
         # Agents already have all parameters
         complete_agent_configs = {
             "agent1": {
                 "agent": {"agent_id": "agent1", "name": "Agent 1"},
-                "model": {"provider": "anthropic", "id": "claude", "temperature": 0.8, "max_tokens": 3000},
+                "model": {
+                    "provider": "anthropic",
+                    "id": "claude",
+                    "temperature": 0.8,
+                    "max_tokens": 3000,
+                },
                 "memory": {
                     "enable_user_memories": False,
                     "add_memory_references": False,
@@ -532,7 +575,9 @@ class TestConfigInheritanceManager:
 
         enhanced = manager.apply_inheritance(team_config, original_configs)
 
-        report = manager.generate_inheritance_report(team_config, original_configs, enhanced)
+        report = manager.generate_inheritance_report(
+            team_config, original_configs, enhanced
+        )
 
         assert "Configuration inheritance:" in report
         assert "agent1(4)" in report  # 4 inherited parameters
@@ -540,7 +585,9 @@ class TestConfigInheritanceManager:
         # agent3 should not appear as it inherited 0 parameters
 
     @patch("lib.utils.config_inheritance.logger")
-    def test_logging_behavior(self, mock_logger, manager, sample_team_config, sample_agent_configs):
+    def test_logging_behavior(
+        self, mock_logger, manager, sample_team_config, sample_agent_configs
+    ):
         """Test that appropriate logging occurs during inheritance."""
         enhanced = manager.apply_inheritance(sample_team_config, sample_agent_configs)
 
@@ -771,7 +818,11 @@ class TestDeepMergeFunction:
         expected = {
             "level1": {
                 "level2": {
-                    "level3": {"param1": "value1", "param2": "overridden", "param3": "new"},
+                    "level3": {
+                        "param1": "value1",
+                        "param2": "overridden",
+                        "param3": "new",
+                    },
                     "other": "value",
                     "new_key": "new_value",
                 },
@@ -975,7 +1026,9 @@ class TestLoadTeamWithInheritance:
 
         # Should have validation errors
         assert len(result["validation_errors"]) > 0
-        assert any("team-only parameter" in error for error in result["validation_errors"])
+        assert any(
+            "team-only parameter" in error for error in result["validation_errors"]
+        )
 
     @patch("lib.utils.config_inheritance.logger")
     def test_load_team_with_inheritance_logging(self, mock_logger, temp_ai_structure):
@@ -991,7 +1044,10 @@ class TestLoadTeamWithInheritance:
         # If there were validation errors, warning should be logged
         if result["validation_errors"]:
             warning_calls = [call[0][0] for call in mock_logger.warning.call_args_list]
-            assert any("Configuration validation errors" in warning for warning in warning_calls)
+            assert any(
+                "Configuration validation errors" in warning
+                for warning in warning_calls
+            )
 
 
 class TestEdgeCasesAndPerformance:
@@ -1049,7 +1105,9 @@ class TestEdgeCasesAndPerformance:
         for agent_id, config in enhanced.items():
             # Should have inherited team parameters
             assert len(config.get("memory", {})) == 7  # All memory parameters inherited
-            assert len(config.get("display", {})) == 5  # All display parameters inherited
+            assert (
+                len(config.get("display", {})) == 5
+            )  # All display parameters inherited
             assert config["model"]["temperature"] == 0.5  # Override
             assert config["model"]["provider"] == "anthropic"  # Inherited
 
@@ -1090,7 +1148,7 @@ class TestEdgeCasesAndPerformance:
                         }
                     }
                 }
-            }
+            },
         }
 
         team_defaults = {"model": {"provider": "anthropic"}}
@@ -1101,7 +1159,9 @@ class TestEdgeCasesAndPerformance:
         )
 
         # Original should be unchanged
-        assert len(nested_config["level1"]["level2"]["level3"]["level4"]["data"]) == 1000
+        assert (
+            len(nested_config["level1"]["level2"]["level3"]["level4"]["data"]) == 1000
+        )
         assert len(enhanced["level1"]["level2"]["level3"]["level4"]["data"]) == 1000
 
         # Should be different objects
@@ -1128,7 +1188,9 @@ class TestEdgeCasesAndPerformance:
             },
         }
 
-        enhanced = manager.apply_inheritance(team_config, {"unicode-agent": agent_config})
+        enhanced = manager.apply_inheritance(
+            team_config, {"unicode-agent": agent_config}
+        )
 
         # Should preserve unicode correctly
         enhanced_agent = enhanced["unicode-agent"]

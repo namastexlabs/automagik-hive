@@ -19,7 +19,7 @@ from lib.mcp.exceptions import MCPConnectionError
 class RealMCPTool:
     """
     Real MCP tool wrapper that connects to actual MCP servers.
-    
+
     Provides proper integration between YAML tool configurations and
     actual MCP server connections via the connection manager.
     """
@@ -27,7 +27,7 @@ class RealMCPTool:
     def __init__(self, name: str, config: dict[str, Any] | None = None):
         """
         Initialize real MCP tool.
-        
+
         Args:
             name: MCP tool name (e.g., "mcp__genie_memory__search_memory")
             config: Optional configuration dictionary
@@ -44,22 +44,28 @@ class RealMCPTool:
     def _parse_name(self) -> None:
         """Parse MCP tool name to extract server and tool names."""
         if not self.name.startswith("mcp__"):
-            raise ValueError(f"Invalid MCP tool name: {self.name}. Must start with 'mcp__'")
+            raise ValueError(
+                f"Invalid MCP tool name: {self.name}. Must start with 'mcp__'"
+            )
 
         parts = self.name.split("__")
         if len(parts) < 3:
-            raise ValueError(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
+            raise ValueError(
+                f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name"
+            )
 
         self._server_name = parts[1]
-        self._tool_name = "__".join(parts[2:])  # Rejoin in case tool name has underscores
+        self._tool_name = "__".join(
+            parts[2:]
+        )  # Rejoin in case tool name has underscores
 
     def validate_name(self) -> bool:
         """
         Validate MCP tool name format.
-        
+
         Expected format: mcp__server__tool_name
         Standard servers: automagik_forge, postgres, zen, etc.
-        
+
         Returns:
             True if name is valid, False otherwise
         """
@@ -70,15 +76,20 @@ class RealMCPTool:
         # Pattern: mcp__server__tool_name (allows underscores and dashes in server/tool names)
         pattern = r"^mcp__[a-zA-Z0-9_-]+__[a-zA-Z0-9_]+$"
         if not re.match(pattern, self.name):
-            logger.warning(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
+            logger.warning(
+                f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name"
+            )
             return False
 
         # Validate against actual MCP catalog instead of hardcoded list
         try:
             from lib.mcp.catalog import MCPCatalog
+
             catalog = MCPCatalog()
             if not catalog.has_server(self._server_name):
-                logger.info(f"MCP server '{self._server_name}' not in MCP catalog, but format is valid")
+                logger.info(
+                    f"MCP server '{self._server_name}' not in MCP catalog, but format is valid"
+                )
         except Exception as e:
             logger.debug(f"Could not validate server against catalog: {e}")
 
@@ -87,7 +98,7 @@ class RealMCPTool:
     def get_mcp_tools(self) -> MCPTools | None:
         """
         Get the actual MCP tools instance for this server.
-        
+
         Returns:
             MCPTools instance or None if connection fails
         """
@@ -104,13 +115,15 @@ class RealMCPTool:
             logger.error(f"🌐 Failed to connect to MCP server {self._server_name}: {e}")
             return None
         except Exception as e:
-            logger.error(f"🌐 Unexpected error connecting to MCP server {self._server_name}: {e}")
+            logger.error(
+                f"🌐 Unexpected error connecting to MCP server {self._server_name}: {e}"
+            )
             return None
 
     def get_tool_function(self) -> Callable | None:
         """
         Get the actual MCP tool function with proper functionality.
-        
+
         Returns:
             Real callable tool function or None if not available
         """
@@ -118,7 +131,9 @@ class RealMCPTool:
         # Agno will handle the tool execution internally
         mcp_tools = self.get_mcp_tools()
         if not mcp_tools:
-            logger.error(f"🌐 Cannot get tool function - no MCP connection for {self.name}")
+            logger.error(
+                f"🌐 Cannot get tool function - no MCP connection for {self.name}"
+            )
             return None
 
         try:
@@ -142,10 +157,10 @@ class RealMCPTool:
 def validate_mcp_name(name: str) -> bool:
     """
     Standalone function to validate MCP tool names.
-    
+
     Args:
         name: MCP tool name to validate
-        
+
     Returns:
         True if valid, False otherwise
     """
@@ -160,11 +175,11 @@ def validate_mcp_name(name: str) -> bool:
 def create_mcp_tool(name: str, config: dict[str, Any] | None = None) -> RealMCPTool:
     """
     Factory function to create real MCP tools.
-    
+
     Args:
         name: MCP tool name
         config: Optional configuration
-        
+
     Returns:
         RealMCPTool instance
     """
@@ -174,12 +189,13 @@ def create_mcp_tool(name: str, config: dict[str, Any] | None = None) -> RealMCPT
 def get_available_mcp_servers() -> list[str]:
     """
     Get list of available MCP servers from the catalog.
-    
+
     Returns:
         List of server names
     """
     try:
         from lib.mcp.catalog import MCPCatalog
+
         catalog = MCPCatalog()
         return catalog.list_servers()
     except Exception as e:
@@ -190,10 +206,10 @@ def get_available_mcp_servers() -> list[str]:
 def test_mcp_connection(server_name: str) -> bool:
     """
     Test connection to an MCP server.
-    
+
     Args:
         server_name: Name of the MCP server to test
-        
+
     Returns:
         True if connection successful, False otherwise
     """

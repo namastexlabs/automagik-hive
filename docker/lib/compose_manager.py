@@ -14,6 +14,7 @@ import yaml
 
 class ServiceStatus(Enum):
     """Docker Compose service status states"""
+
     RUNNING = "running"
     STOPPED = "stopped"
     RESTARTING = "restarting"
@@ -26,6 +27,7 @@ class ServiceStatus(Enum):
 @dataclass
 class ServiceInfo:
     """Docker Compose service information"""
+
     name: str
     status: ServiceStatus
     ports: list[str]
@@ -35,7 +37,7 @@ class ServiceInfo:
 
 class DockerComposeManager:
     """Docker Compose orchestration for multi-service container management.
-    
+
     Provides high-level operations for managing PostgreSQL and other services
     using existing docker-compose.yml files as foundation.
     """
@@ -46,11 +48,11 @@ class DockerComposeManager:
 
     def start_service(self, service: str, workspace_path: str = ".") -> bool:
         """Start specific service from docker-compose.yml.
-        
+
         Args:
             service: Service name (e.g., 'postgres', 'app')
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             True if started successfully, False otherwise
         """
@@ -67,7 +69,11 @@ class DockerComposeManager:
                 return False
             result = subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "up", "-d", service],
-                check=False, capture_output=True, text=True, timeout=120)
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
 
             if result.returncode == 0:
                 print(f"✅ {service} service started successfully")
@@ -81,11 +87,11 @@ class DockerComposeManager:
 
     def stop_service(self, service: str, workspace_path: str = ".") -> bool:
         """Stop specific service from docker-compose.yml.
-        
+
         Args:
             service: Service name (e.g., 'postgres', 'app')
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             True if stopped successfully, False otherwise
         """
@@ -102,7 +108,11 @@ class DockerComposeManager:
                 return False
             result = subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "stop", service],
-                check=False, capture_output=True, text=True, timeout=60)
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 print(f"✅ {service} service stopped successfully")
@@ -116,11 +126,11 @@ class DockerComposeManager:
 
     def restart_service(self, service: str, workspace_path: str = ".") -> bool:
         """Restart specific service from docker-compose.yml.
-        
+
         Args:
             service: Service name (e.g., 'postgres', 'app')
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             True if restarted successfully, False otherwise
         """
@@ -137,7 +147,11 @@ class DockerComposeManager:
                 return False
             result = subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "restart", service],
-                check=False, capture_output=True, text=True, timeout=120)
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
 
             if result.returncode == 0:
                 print(f"✅ {service} service restarted successfully")
@@ -149,14 +163,16 @@ class DockerComposeManager:
             print(f"❌ Error restarting {service} service: {e}")
             return False
 
-    def get_service_logs(self, service: str, tail: int = 50, workspace_path: str = ".") -> str | None:
+    def get_service_logs(
+        self, service: str, tail: int = 50, workspace_path: str = "."
+    ) -> str | None:
         """Get logs for specific service.
-        
+
         Args:
             service: Service name (e.g., 'postgres', 'app')
             tail: Number of lines to retrieve
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             Service logs as string, None if error
         """
@@ -169,8 +185,13 @@ class DockerComposeManager:
             if not compose_cmd:
                 return None
             result = subprocess.run(
-                compose_cmd + ["-f", str(compose_file_path), "logs", "--tail", str(tail), service],
-                check=False, capture_output=True, text=True, timeout=30)
+                compose_cmd
+                + ["-f", str(compose_file_path), "logs", "--tail", str(tail), service],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode == 0:
                 return result.stdout
@@ -181,11 +202,11 @@ class DockerComposeManager:
 
     def stream_service_logs(self, service: str, workspace_path: str = ".") -> bool:
         """Stream logs for specific service (non-blocking).
-        
+
         Args:
             service: Service name (e.g., 'postgres', 'app')
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             True if streaming started successfully, False otherwise
         """
@@ -202,7 +223,9 @@ class DockerComposeManager:
                 return False
             subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "logs", "-f", service],
-                check=False, timeout=None)  # No timeout for streaming
+                check=False,
+                timeout=None,
+            )  # No timeout for streaming
 
             return True
 
@@ -213,13 +236,15 @@ class DockerComposeManager:
             print(f"❌ Error streaming {service} logs: {e}")
             return False
 
-    def get_service_status(self, service: str, workspace_path: str = ".") -> ServiceStatus:
+    def get_service_status(
+        self, service: str, workspace_path: str = "."
+    ) -> ServiceStatus:
         """Get status of specific service.
-        
+
         Args:
             service: Service name (e.g., 'postgres', 'app')
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             ServiceStatus indicating current state
         """
@@ -233,7 +258,11 @@ class DockerComposeManager:
                 return ServiceStatus.NOT_EXISTS
             result = subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "ps", service],
-                check=False, capture_output=True, text=True, timeout=10)
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
             if result.returncode != 0:
                 return ServiceStatus.NOT_EXISTS
@@ -271,12 +300,14 @@ class DockerComposeManager:
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return ServiceStatus.NOT_EXISTS
 
-    def get_all_services_status(self, workspace_path: str = ".") -> dict[str, ServiceInfo]:
+    def get_all_services_status(
+        self, workspace_path: str = "."
+    ) -> dict[str, ServiceInfo]:
         """Get status of all services in docker-compose.yml.
-        
+
         Args:
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             Dict mapping service names to ServiceInfo
         """
@@ -315,7 +346,7 @@ class DockerComposeManager:
                     status=status,
                     ports=ports,
                     image=image,
-                    container_name=container_name
+                    container_name=container_name,
                 )
 
         except Exception as e:
@@ -325,10 +356,10 @@ class DockerComposeManager:
 
     def start_all_services(self, workspace_path: str = ".") -> bool:
         """Start all services from docker-compose.yml.
-        
+
         Args:
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             True if all services started successfully, False otherwise
         """
@@ -345,7 +376,11 @@ class DockerComposeManager:
                 return False
             result = subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "up", "-d"],
-                check=False, capture_output=True, text=True, timeout=180)
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
 
             if result.returncode == 0:
                 print("✅ All services started successfully")
@@ -359,10 +394,10 @@ class DockerComposeManager:
 
     def stop_all_services(self, workspace_path: str = ".") -> bool:
         """Stop all services from docker-compose.yml.
-        
+
         Args:
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             True if all services stopped successfully, False otherwise
         """
@@ -379,7 +414,11 @@ class DockerComposeManager:
                 return False
             result = subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "down"],
-                check=False, capture_output=True, text=True, timeout=120)
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
 
             if result.returncode == 0:
                 print("✅ All services stopped successfully")
@@ -393,10 +432,10 @@ class DockerComposeManager:
 
     def validate_compose_file(self, workspace_path: str = ".") -> bool:
         """Validate docker-compose.yml file syntax and structure.
-        
+
         Args:
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             True if valid, False otherwise
         """
@@ -411,7 +450,11 @@ class DockerComposeManager:
                 return False
             result = subprocess.run(
                 compose_cmd + ["-f", str(compose_file_path), "config"],
-                check=False, capture_output=True, text=True, timeout=30)
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             return result.returncode == 0
 
@@ -420,10 +463,10 @@ class DockerComposeManager:
 
     def get_compose_services(self, workspace_path: str = ".") -> list[str]:
         """Get list of service names from docker-compose.yml.
-        
+
         Args:
             workspace_path: Path to workspace with docker-compose.yml
-            
+
         Returns:
             List of service names
         """
@@ -445,7 +488,7 @@ class DockerComposeManager:
 
     def _get_compose_command(self) -> list[str] | None:
         """Get the appropriate Docker Compose command with fallback.
-        
+
         Returns:
             List of command parts for docker compose, None if not available
         """
@@ -456,7 +499,10 @@ class DockerComposeManager:
         try:
             result = subprocess.run(
                 ["docker", "compose", "version"],
-                check=False, capture_output=True, text=True, timeout=5
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0:
                 self._compose_cmd = ["docker", "compose"]
@@ -468,7 +514,10 @@ class DockerComposeManager:
         try:
             result = subprocess.run(
                 ["docker-compose", "--version"],
-                check=False, capture_output=True, text=True, timeout=5
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0:
                 self._compose_cmd = ["docker-compose"]

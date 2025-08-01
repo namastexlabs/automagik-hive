@@ -39,7 +39,7 @@ class TestStorageTypeMapping:
             "dynamodb",
             "json",
             "yaml",
-            "singlestore"
+            "singlestore",
         ]
 
         for storage_type in expected_types:
@@ -176,7 +176,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_basic_success(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_basic_success(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test successful dynamic storage creation."""
         # Mock storage class and signature
         mock_storage_class = Mock()
@@ -187,7 +189,10 @@ class TestCreateDynamicStorage:
         # Mock signature with basic parameters
         mock_param = Mock()
         mock_param.name = "db_url"
-        mock_signature.return_value.parameters = {"self": mock_param, "db_url": mock_param}
+        mock_signature.return_value.parameters = {
+            "self": mock_param,
+            "db_url": mock_param,
+        }
 
         storage_config = {"type": "postgres", "db_url": "test://url"}
 
@@ -195,7 +200,7 @@ class TestCreateDynamicStorage:
             storage_config=storage_config,
             component_id="test-component",
             component_mode="agent",
-            db_url="test://url"
+            db_url="test://url",
         )
 
         assert result == mock_storage_instance
@@ -217,14 +222,16 @@ class TestCreateDynamicStorage:
                 storage_config={},  # No type specified
                 component_id="test-component",
                 component_mode="agent",
-                db_url=None
+                db_url=None,
             )
 
         mock_get_storage_class.assert_called_once_with("postgres")
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_mode_parameter(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_mode_parameter(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test that mode parameter is automatically set from component_mode."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -235,14 +242,14 @@ class TestCreateDynamicStorage:
         mock_param = Mock()
         mock_signature.return_value.parameters = {
             "self": mock_param,
-            "mode": mock_param
+            "mode": mock_param,
         }
 
         create_dynamic_storage(
             storage_config={"type": "postgres"},
             component_id="test-component",
             component_mode="team",
-            db_url=None
+            db_url=None,
         )
 
         # Verify mode was passed correctly
@@ -251,7 +258,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_schema_parameter(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_schema_parameter(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test that schema parameter defaults to 'agno'."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -262,14 +271,14 @@ class TestCreateDynamicStorage:
         mock_param = Mock()
         mock_signature.return_value.parameters = {
             "self": mock_param,
-            "schema": mock_param
+            "schema": mock_param,
         }
 
         create_dynamic_storage(
             storage_config={"type": "postgres"},
             component_id="test-component",
             component_mode="agent",
-            db_url=None
+            db_url=None,
         )
 
         # Verify schema was set to 'agno'
@@ -278,7 +287,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_table_name_generation(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_table_name_generation(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test automatic table name generation."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -289,14 +300,14 @@ class TestCreateDynamicStorage:
         mock_param = Mock()
         mock_signature.return_value.parameters = {
             "self": mock_param,
-            "table_name": mock_param
+            "table_name": mock_param,
         }
 
         create_dynamic_storage(
             storage_config={"type": "postgres"},
             component_id="my-agent",
             component_mode="agent",
-            db_url=None
+            db_url=None,
         )
 
         # Verify table name was generated
@@ -305,7 +316,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_config_override(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_config_override(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test that YAML config parameters override defaults."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -317,20 +330,20 @@ class TestCreateDynamicStorage:
         mock_signature.return_value.parameters = {
             "self": mock_param,
             "table_name": mock_param,
-            "custom_param": mock_param
+            "custom_param": mock_param,
         }
 
         storage_config = {
             "type": "postgres",
             "table_name": "custom_table",
-            "custom_param": "custom_value"
+            "custom_param": "custom_value",
         }
 
         create_dynamic_storage(
             storage_config=storage_config,
             component_id="test-component",
             component_mode="agent",
-            db_url=None
+            db_url=None,
         )
 
         # Verify config parameters were used
@@ -340,7 +353,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_db_url_parameter(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_db_url_parameter(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test db_url parameter handling."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -351,14 +366,14 @@ class TestCreateDynamicStorage:
         mock_param = Mock()
         mock_signature.return_value.parameters = {
             "self": mock_param,
-            "db_url": mock_param
+            "db_url": mock_param,
         }
 
         create_dynamic_storage(
             storage_config={"type": "postgres"},
             component_id="test-component",
             component_mode="agent",
-            db_url="postgresql://test:test@localhost/db"
+            db_url="postgresql://test:test@localhost/db",
         )
 
         # Verify db_url was passed
@@ -367,7 +382,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_signature_introspection_error(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_signature_introspection_error(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test handling of signature introspection errors."""
         mock_storage_class = Mock()
         mock_get_storage_class.return_value = mock_storage_class
@@ -380,7 +397,7 @@ class TestCreateDynamicStorage:
                 storage_config={"type": "postgres"},
                 component_id="test-component",
                 component_mode="agent",
-                db_url=None
+                db_url=None,
             )
 
         error_message = str(exc_info.value)
@@ -388,7 +405,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_instantiation_error(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_instantiation_error(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test handling of storage instantiation errors."""
         mock_storage_class = Mock()
         mock_storage_class.side_effect = Exception("Storage instantiation failed")
@@ -403,13 +422,15 @@ class TestCreateDynamicStorage:
                 storage_config={"type": "postgres"},
                 component_id="test-component",
                 component_mode="agent",
-                db_url=None
+                db_url=None,
             )
 
     @patch("lib.utils.agno_storage_utils.logger")
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_logging(self, mock_signature, mock_get_storage_class, mock_logger):
+    def test_create_dynamic_storage_logging(
+        self, mock_signature, mock_get_storage_class, mock_logger
+    ):
         """Test debug logging during storage creation."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -424,7 +445,7 @@ class TestCreateDynamicStorage:
             storage_config={"type": "postgres"},
             component_id="test-component",
             component_mode="agent",
-            db_url=None
+            db_url=None,
         )
 
         # Verify debug logging was called
@@ -432,8 +453,12 @@ class TestCreateDynamicStorage:
 
         # Check for specific log messages
         debug_calls = [call[0][0] for call in mock_logger.debug.call_args_list]
-        creation_log = any("Creating postgres storage for agent" in msg for msg in debug_calls)
-        success_log = any("Successfully created postgres storage" in msg for msg in debug_calls)
+        creation_log = any(
+            "Creating postgres storage for agent" in msg for msg in debug_calls
+        )
+        success_log = any(
+            "Successfully created postgres storage" in msg for msg in debug_calls
+        )
 
         assert creation_log
         assert success_log
@@ -441,7 +466,9 @@ class TestCreateDynamicStorage:
     @patch("lib.utils.agno_storage_utils.logger")
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_error_logging(self, mock_signature, mock_get_storage_class, mock_logger):
+    def test_create_dynamic_storage_error_logging(
+        self, mock_signature, mock_get_storage_class, mock_logger
+    ):
         """Test error logging during storage creation failure."""
         mock_storage_class = Mock()
         mock_storage_class.side_effect = Exception("Test error")
@@ -456,7 +483,7 @@ class TestCreateDynamicStorage:
                 storage_config={"type": "postgres"},
                 component_id="test-component",
                 component_mode="agent",
-                db_url=None
+                db_url=None,
             )
 
         # Verify error logging
@@ -468,7 +495,9 @@ class TestCreateDynamicStorage:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_create_dynamic_storage_complex_parameters(self, mock_signature, mock_get_storage_class):
+    def test_create_dynamic_storage_complex_parameters(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test handling of complex parameter combinations."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -486,7 +515,7 @@ class TestCreateDynamicStorage:
             "host": mock_param,
             "port": mock_param,
             "database": mock_param,
-            "custom_config": mock_param
+            "custom_config": mock_param,
         }
 
         storage_config = {
@@ -494,14 +523,14 @@ class TestCreateDynamicStorage:
             "host": "localhost",
             "port": 5432,
             "database": "test_db",
-            "custom_config": {"key": "value"}
+            "custom_config": {"key": "value"},
         }
 
         result = create_dynamic_storage(
             storage_config=storage_config,
             component_id="complex-component",
             component_mode="workflow",
-            db_url="postgresql://test:test@localhost/db"
+            db_url="postgresql://test:test@localhost/db",
         )
 
         # Verify all parameters were mapped correctly
@@ -540,7 +569,7 @@ class TestGetSupportedStorageTypes:
             "dynamodb",
             "json",
             "yaml",
-            "singlestore"
+            "singlestore",
         ]
 
         for expected_type in expected_types:
@@ -648,7 +677,7 @@ class TestValidateStorageConfig:
             "table_name": "custom_table",
             "pool_size": 10,
             "max_overflow": 20,
-            "custom_settings": {"key": "value"}
+            "custom_settings": {"key": "value"},
         }
 
         result = validate_storage_config(config)
@@ -658,8 +687,13 @@ class TestValidateStorageConfig:
         assert len(result["config_keys"]) == 7
 
         expected_keys = [
-            "type", "db_url", "schema", "table_name",
-            "pool_size", "max_overflow", "custom_settings"
+            "type",
+            "db_url",
+            "schema",
+            "table_name",
+            "pool_size",
+            "max_overflow",
+            "custom_settings",
         ]
         for key in expected_keys:
             assert key in result["config_keys"]
@@ -677,7 +711,7 @@ class TestValidateStorageConfig:
             "storage_type",
             "is_supported",
             "supported_types",
-            "config_keys"
+            "config_keys",
         ]
 
         for key in required_keys:
@@ -699,7 +733,9 @@ class TestIntegrationScenarios:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_integration_agent_storage_creation(self, mock_signature, mock_get_storage_class):
+    def test_integration_agent_storage_creation(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test complete agent storage creation flow."""
         # Mock storage class
         mock_storage_class = Mock()
@@ -714,20 +750,20 @@ class TestIntegrationScenarios:
             "mode": mock_param,
             "schema": mock_param,
             "table_name": mock_param,
-            "db_url": mock_param
+            "db_url": mock_param,
         }
 
         # Typical agent configuration
         storage_config = {
             "type": "postgres",
-            "db_url": "postgresql://localhost:5432/hive"
+            "db_url": "postgresql://localhost:5432/hive",
         }
 
         result = create_dynamic_storage(
             storage_config=storage_config,
             component_id="code-assistant",
             component_mode="agent",
-            db_url="postgresql://localhost:5432/hive"
+            db_url="postgresql://localhost:5432/hive",
         )
 
         # Verify agent-specific parameters
@@ -741,7 +777,9 @@ class TestIntegrationScenarios:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_integration_team_storage_creation(self, mock_signature, mock_get_storage_class):
+    def test_integration_team_storage_creation(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test complete team storage creation flow."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -753,7 +791,7 @@ class TestIntegrationScenarios:
         mock_signature.return_value.parameters = {
             "self": mock_param,
             "mode": mock_param,
-            "table_name": mock_param
+            "table_name": mock_param,
         }
 
         storage_config = {"type": "sqlite"}
@@ -762,7 +800,7 @@ class TestIntegrationScenarios:
             storage_config=storage_config,
             component_id="development-team",
             component_mode="team",
-            db_url=None
+            db_url=None,
         )
 
         # Verify team-specific parameters
@@ -774,7 +812,9 @@ class TestIntegrationScenarios:
 
     @patch("lib.utils.agno_storage_utils.get_storage_class")
     @patch("inspect.signature")
-    def test_integration_workflow_storage_creation(self, mock_signature, mock_get_storage_class):
+    def test_integration_workflow_storage_creation(
+        self, mock_signature, mock_get_storage_class
+    ):
         """Test complete workflow storage creation flow."""
         mock_storage_class = Mock()
         mock_storage_instance = Mock()
@@ -788,7 +828,7 @@ class TestIntegrationScenarios:
             "mode": mock_param,
             "schema": mock_param,
             "table_name": mock_param,
-            "connection_string": mock_param
+            "connection_string": mock_param,
         }
 
         storage_config = {"type": "mongodb", "connection_string": "mongodb://localhost"}
@@ -797,7 +837,7 @@ class TestIntegrationScenarios:
             storage_config=storage_config,
             component_id="data-pipeline",
             component_mode="workflow",
-            db_url=None
+            db_url=None,
         )
 
         # Verify workflow-specific parameters
@@ -815,7 +855,7 @@ class TestIntegrationScenarios:
         storage_config = {
             "type": "postgres",
             "db_url": "postgresql://localhost:5432/test",
-            "pool_size": 5
+            "pool_size": 5,
         }
 
         validation_result = validate_storage_config(storage_config)
@@ -825,9 +865,10 @@ class TestIntegrationScenarios:
         assert "error" not in validation_result
 
         # Then attempt storage creation with mocking
-        with patch("lib.utils.agno_storage_utils.get_storage_class") as mock_get_class, \
-             patch("inspect.signature") as mock_signature:
-
+        with (
+            patch("lib.utils.agno_storage_utils.get_storage_class") as mock_get_class,
+            patch("inspect.signature") as mock_signature,
+        ):
             mock_storage_class = Mock()
             mock_storage_instance = Mock()
             mock_storage_class.return_value = mock_storage_instance
@@ -838,14 +879,14 @@ class TestIntegrationScenarios:
             mock_signature.return_value.parameters = {
                 "self": mock_param,
                 "db_url": mock_param,
-                "pool_size": mock_param
+                "pool_size": mock_param,
             }
 
             result = create_dynamic_storage(
                 storage_config=storage_config,
                 component_id="test-component",
                 component_mode="agent",
-                db_url="postgresql://localhost:5432/test"
+                db_url="postgresql://localhost:5432/test",
             )
 
             assert result == mock_storage_instance
@@ -867,7 +908,7 @@ class TestIntegrationScenarios:
                 storage_config=storage_config,
                 component_id="test-component",
                 component_mode="agent",
-                db_url=None
+                db_url=None,
             )
 
     def test_storage_type_consistency(self):

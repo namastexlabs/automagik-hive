@@ -16,6 +16,7 @@ from lib.logging import logger
 
 class NotificationLevel(str, Enum):
     """Notification severity levels"""
+
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -25,6 +26,7 @@ class NotificationLevel(str, Enum):
 @dataclass
 class NotificationMessage:
     """Standard notification message format"""
+
     title: str
     message: str
     level: NotificationLevel
@@ -63,19 +65,30 @@ class WhatsAppProvider(NotificationProvider):
     async def send(self, notification: NotificationMessage) -> bool:
         """Send notification via WhatsApp using pooled MCP connections"""
         # Check if WhatsApp notifications are enabled
-        enabled = os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
+        enabled = (
+            os.getenv("HIVE_WHATSAPP_NOTIFICATIONS_ENABLED", "false").lower() == "true"
+        )
         if not enabled:
-            logger.debug("WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED")
+            logger.debug(
+                "WhatsApp notifications disabled via HIVE_WHATSAPP_NOTIFICATIONS_ENABLED"
+            )
             return False
 
         try:
             # Check cooldown to prevent spam
-            cooldown_key = f"{notification.source}:{notification.level}:{notification.title}"
+            cooldown_key = (
+                f"{notification.source}:{notification.level}:{notification.title}"
+            )
             current_time = time.time()
 
             if cooldown_key in self._last_notification:
-                if current_time - self._last_notification[cooldown_key] < self.cooldown_seconds:
-                    logger.debug(f"📱 Notification {cooldown_key} in cooldown, skipping")
+                if (
+                    current_time - self._last_notification[cooldown_key]
+                    < self.cooldown_seconds
+                ):
+                    logger.debug(
+                        f"📱 Notification {cooldown_key} in cooldown, skipping"
+                    )
                     return False
 
             # Format message with emoji
@@ -89,21 +102,26 @@ class WhatsAppProvider(NotificationProvider):
                 # Get MCP tools directly
                 async with get_mcp_tools("whatsapp_notifications") as tools:
                     # Debug: Check what tools are available
-                    logger.debug(f"📱 Available MCP tools: {list(tools.functions.keys())}")
+                    logger.debug(
+                        f"📱 Available MCP tools: {list(tools.functions.keys())}"
+                    )
 
                     # Send WhatsApp message using MCP tools (agno pattern)
                     if "send_text_message" in tools.functions:
                         tool_function = tools.functions["send_text_message"]
                         # Call the MCP tool entrypoint with proper parameters
                         # The tool_name is already bound via partial, so we only pass agent and kwargs
-                        result = await tool_function.entrypoint(None,
+                        result = await tool_function.entrypoint(
+                            None,
                             instance="SofIA",
                             message=formatted_message,
-                            number=self.group_id
+                            number=self.group_id,
                         )
                     else:
                         available_tools = list(tools.functions.keys())
-                        raise ValueError(f"send_text_message tool not available in MCP server. Available tools: {available_tools}")
+                        raise ValueError(
+                            f"send_text_message tool not available in MCP server. Available tools: {available_tools}"
+                        )
 
                     logger.info(f"📱 Sent WhatsApp notification: {notification.title}")
                     logger.info(f"📱 Message delivered to group: {self.group_id}")
@@ -140,7 +158,7 @@ class WhatsAppProvider(NotificationProvider):
             NotificationLevel.INFO: "ℹ️",
             NotificationLevel.WARNING: "⚠️",
             NotificationLevel.CRITICAL: "🚨",
-            NotificationLevel.ERROR: "❌"
+            NotificationLevel.ERROR: "❌",
         }
         return emoji_map.get(level, "📢")
 
@@ -159,11 +177,13 @@ class LogProvider(NotificationProvider):
                 NotificationLevel.INFO: self.logger.info,
                 NotificationLevel.WARNING: self.logger.warning,
                 NotificationLevel.CRITICAL: self.logger.critical,
-                NotificationLevel.ERROR: self.logger.error
+                NotificationLevel.ERROR: self.logger.error,
             }
 
             log_func = level_map.get(notification.level, self.logger.info)
-            log_func(f"[{notification.source}] {notification.title}: {notification.message}")
+            log_func(
+                f"[{notification.source}] {notification.title}: {notification.message}"
+            )
             return True
 
         except Exception as e:
@@ -195,7 +215,9 @@ class NotificationService:
         self.providers[name] = provider
         logger.info(f"📱 Registered notification provider: {name}")
 
-    async def send(self, notification: NotificationMessage, provider_name: str = None) -> bool:
+    async def send(
+        self, notification: NotificationMessage, provider_name: str = None
+    ) -> bool:
         """Send notification using specified or default provider"""
         if provider_name is None:
             provider_name = self.default_provider
@@ -206,25 +228,31 @@ class NotificationService:
             return False
 
         if not provider.is_available():
-            logger.warning(f"📱 Provider {provider_name} not available, falling back to log")
+            logger.warning(
+                f"📱 Provider {provider_name} not available, falling back to log"
+            )
             provider = self.providers.get("log")
 
         return await provider.send(notification)
 
-    async def send_alert(self, title: str, message: str, source: str,
-                        level: NotificationLevel = NotificationLevel.WARNING) -> bool:
+    async def send_alert(
+        self,
+        title: str,
+        message: str,
+        source: str,
+        level: NotificationLevel = NotificationLevel.WARNING,
+    ) -> bool:
         """Convenience method for sending alerts"""
         notification = NotificationMessage(
-            title=title,
-            message=message,
-            level=level,
-            source=source
+            title=title, message=message, level=level, source=source
         )
         return await self.send(notification)
 
     def get_available_providers(self) -> dict[str, bool]:
         """Get list of available providers"""
-        return {name: provider.is_available() for name, provider in self.providers.items()}
+        return {
+            name: provider.is_available() for name, provider in self.providers.items()
+        }
 
 
 # Global notification service instance
@@ -237,8 +265,12 @@ def get_notification_service() -> NotificationService:
 
 
 # Convenience functions
-async def send_notification(title: str, message: str, source: str,
-                           level: NotificationLevel = NotificationLevel.INFO) -> bool:
+async def send_notification(
+    title: str,
+    message: str,
+    source: str,
+    level: NotificationLevel = NotificationLevel.INFO,
+) -> bool:
     """Send a notification using the global service"""
     return await get_notification_service().send_alert(title, message, source, level)
 

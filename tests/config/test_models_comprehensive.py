@@ -97,7 +97,9 @@ class TestDefaultModelIdResolution:
             with pytest.raises(ModelResolutionError) as exc_info:
                 resolver.get_default_model_id()
 
-            assert "HIVE_DEFAULT_MODEL environment variable is required" in str(exc_info.value)
+            assert "HIVE_DEFAULT_MODEL environment variable is required" in str(
+                exc_info.value
+            )
 
 
 class TestProviderDetection:
@@ -111,7 +113,9 @@ class TestProviderDetection:
         mock_registry = Mock()
         mock_registry.detect_provider.return_value = "openai"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             provider = resolver._detect_provider("gpt-4o-mini")
             assert provider == "openai"
             mock_registry.detect_provider.assert_called_once_with("gpt-4o-mini")
@@ -123,7 +127,9 @@ class TestProviderDetection:
         mock_registry = Mock()
         mock_registry.detect_provider.return_value = "openai"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             # Call twice
             provider1 = resolver._detect_provider("gpt-4o-mini")
             provider2 = resolver._detect_provider("gpt-4o-mini")
@@ -138,9 +144,15 @@ class TestProviderDetection:
 
         mock_registry = Mock()
         mock_registry.detect_provider.return_value = None
-        mock_registry.get_available_providers.return_value = {"openai", "anthropic", "google"}
+        mock_registry.get_available_providers.return_value = {
+            "openai",
+            "anthropic",
+            "google",
+        }
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             with pytest.raises(ModelResolutionError) as exc_info:
                 resolver._detect_provider("unknown-model")
 
@@ -162,10 +174,14 @@ class TestModelClassDiscovery:
         mock_class.__name__ = "OpenAIChat"
         mock_registry.resolve_model_class.return_value = mock_class
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             discovered_class = resolver._discover_model_class("openai", "gpt-4o-mini")
             assert discovered_class == mock_class
-            mock_registry.resolve_model_class.assert_called_once_with("openai", "gpt-4o-mini")
+            mock_registry.resolve_model_class.assert_called_once_with(
+                "openai", "gpt-4o-mini"
+            )
 
     def test_discover_model_class_cache_behavior(self):
         """Test model class discovery uses caching."""
@@ -176,14 +192,18 @@ class TestModelClassDiscovery:
         mock_class.__name__ = "Claude"
         mock_registry.resolve_model_class.return_value = mock_class
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             # Call twice
             class1 = resolver._discover_model_class("anthropic", "claude-3-sonnet")
             class2 = resolver._discover_model_class("anthropic", "claude-3-sonnet")
 
             assert class1 == class2 == mock_class
             # Should only call registry once due to caching
-            mock_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
+            mock_registry.resolve_model_class.assert_called_once_with(
+                "anthropic", "claude-3-sonnet"
+            )
 
     def test_discover_model_class_failure_raises_error(self):
         """Test model class discovery failure raises ModelResolutionError."""
@@ -193,7 +213,9 @@ class TestModelClassDiscovery:
         mock_registry.resolve_model_class.return_value = None
         mock_registry.get_provider_classes.return_value = ["OpenAIChat", "OpenAI"]
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             with pytest.raises(ModelResolutionError) as exc_info:
                 resolver._discover_model_class("openai", "gpt-4o-mini")
 
@@ -220,7 +242,9 @@ class TestModelResolution:
         mock_class.return_value = mock_instance
         mock_class.__name__ = "MockModelClass"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             result = resolver.resolve_model("gpt-4o-mini", temperature=0.7)
 
             assert result == mock_instance
@@ -240,21 +264,29 @@ class TestModelResolution:
         mock_class.return_value = mock_instance
         mock_class.__name__ = "MockClaudeClass"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             with patch.dict(os.environ, {"HIVE_DEFAULT_MODEL": "claude-3-sonnet"}):
                 result = resolver.resolve_model(max_tokens=1000)
 
                 assert result == mock_instance
-                mock_class.assert_called_once_with(id="claude-3-sonnet", max_tokens=1000)
+                mock_class.assert_called_once_with(
+                    id="claude-3-sonnet", max_tokens=1000
+                )
 
     def test_resolve_model_provider_detection_failure(self):
         """Test model resolution failure due to provider detection error."""
         resolver = ModelResolver()
 
         mock_registry = Mock()
-        mock_registry.detect_provider.side_effect = ModelResolutionError("Provider detection failed")
+        mock_registry.detect_provider.side_effect = ModelResolutionError(
+            "Provider detection failed"
+        )
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             with pytest.raises(ModelResolutionError) as exc_info:
                 resolver.resolve_model("unknown-model")
 
@@ -266,9 +298,13 @@ class TestModelResolution:
 
         mock_registry = Mock()
         mock_registry.detect_provider.return_value = "openai"
-        mock_registry.resolve_model_class.side_effect = ModelResolutionError("Class discovery failed")
+        mock_registry.resolve_model_class.side_effect = ModelResolutionError(
+            "Class discovery failed"
+        )
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             with pytest.raises(ModelResolutionError) as exc_info:
                 resolver.resolve_model("gpt-4o-mini")
 
@@ -285,7 +321,9 @@ class TestModelResolution:
         mock_registry.detect_provider.return_value = "openai"
         mock_registry.resolve_model_class.return_value = mock_class
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             with pytest.raises(ModelResolutionError) as exc_info:
                 resolver.resolve_model("gpt-4o-mini")
 
@@ -306,7 +344,9 @@ class TestModelValidation:
         mock_registry.detect_provider.return_value = "openai"
         mock_registry.resolve_model_class.return_value = mock_class
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             is_available = resolver.validate_model_availability("gpt-4o-mini")
             assert is_available is True
 
@@ -315,9 +355,13 @@ class TestModelValidation:
         resolver = ModelResolver()
 
         mock_registry = Mock()
-        mock_registry.detect_provider.side_effect = ModelResolutionError("Provider not found")
+        mock_registry.detect_provider.side_effect = ModelResolutionError(
+            "Provider not found"
+        )
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             is_available = resolver.validate_model_availability("unknown-model")
             assert is_available is False
 
@@ -327,9 +371,13 @@ class TestModelValidation:
 
         mock_registry = Mock()
         mock_registry.detect_provider.return_value = "openai"
-        mock_registry.resolve_model_class.side_effect = ModelResolutionError("Class not found")
+        mock_registry.resolve_model_class.side_effect = ModelResolutionError(
+            "Class not found"
+        )
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             is_available = resolver.validate_model_availability("gpt-unknown")
             assert is_available is False
 
@@ -344,7 +392,9 @@ class TestCacheManagement:
         # Mock the registry
         mock_registry = Mock()
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             resolver.clear_cache()
 
             # Verify registry cache is cleared
@@ -382,13 +432,17 @@ class TestConvenienceFunctions:
             with pytest.raises(ModelResolutionError) as exc_info:
                 get_default_provider()
 
-            assert "HIVE_DEFAULT_PROVIDER environment variable is required" in str(exc_info.value)
+            assert "HIVE_DEFAULT_PROVIDER environment variable is required" in str(
+                exc_info.value
+            )
 
     def test_resolve_model_function(self):
         """Test resolve_model convenience function."""
         mock_instance = Mock()
 
-        with patch.object(model_resolver, "resolve_model", return_value=mock_instance) as mock_resolve:
+        with patch.object(
+            model_resolver, "resolve_model", return_value=mock_instance
+        ) as mock_resolve:
             result = resolve_model("gpt-4o-mini", temperature=0.5)
 
             assert result == mock_instance
@@ -396,7 +450,9 @@ class TestConvenienceFunctions:
 
     def test_validate_model_function(self):
         """Test validate_model convenience function."""
-        with patch.object(model_resolver, "validate_model_availability", return_value=True) as mock_validate:
+        with patch.object(
+            model_resolver, "validate_model_availability", return_value=True
+        ) as mock_validate:
             result = validate_model("gpt-4o-mini")
 
             assert result is True
@@ -426,7 +482,10 @@ class TestEnvironmentValidation:
 
     def test_validate_required_environment_variables_both_present(self):
         """Test validation with both environment variables present."""
-        with patch.dict(os.environ, {"HIVE_DEFAULT_MODEL": "gpt-4o-mini", "HIVE_DEFAULT_PROVIDER": "openai"}):
+        with patch.dict(
+            os.environ,
+            {"HIVE_DEFAULT_MODEL": "gpt-4o-mini", "HIVE_DEFAULT_PROVIDER": "openai"},
+        ):
             # Should not log warning when both are present
             validate_required_environment_variables()
 
@@ -443,7 +502,7 @@ class TestPortugueseLanguageConfiguration:
             "greeting",
             "error_message",
             "escalation_message",
-            "feedback_request"
+            "feedback_request",
         }
 
         assert set(PORTUGUESE_PROMPTS.keys()) == expected_keys
@@ -480,9 +539,18 @@ class TestPortugueseLanguageConfiguration:
     def test_get_portuguese_prompt_valid_keys(self):
         """Test get_portuguese_prompt returns correct values for valid keys."""
         assert get_portuguese_prompt("greeting") == PORTUGUESE_PROMPTS["greeting"]
-        assert get_portuguese_prompt("error_message") == PORTUGUESE_PROMPTS["error_message"]
-        assert get_portuguese_prompt("escalation_message") == PORTUGUESE_PROMPTS["escalation_message"]
-        assert get_portuguese_prompt("feedback_request") == PORTUGUESE_PROMPTS["feedback_request"]
+        assert (
+            get_portuguese_prompt("error_message")
+            == PORTUGUESE_PROMPTS["error_message"]
+        )
+        assert (
+            get_portuguese_prompt("escalation_message")
+            == PORTUGUESE_PROMPTS["escalation_message"]
+        )
+        assert (
+            get_portuguese_prompt("feedback_request")
+            == PORTUGUESE_PROMPTS["feedback_request"]
+        )
 
         # Test system instructions (multi-line)
         system_instructions = get_portuguese_prompt("system_instructions")
@@ -525,13 +593,21 @@ class TestIntegrationScenarios:
         mock_class.return_value = mock_instance
         mock_class.__name__ = "OpenAIChat"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
-            result = resolver.resolve_model("gpt-4o-mini", temperature=0.7, max_tokens=1000)
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
+            result = resolver.resolve_model(
+                "gpt-4o-mini", temperature=0.7, max_tokens=1000
+            )
 
             # Verify complete chain
             mock_registry.detect_provider.assert_called_once_with("gpt-4o-mini")
-            mock_registry.resolve_model_class.assert_called_once_with("openai", "gpt-4o-mini")
-            mock_class.assert_called_once_with(id="gpt-4o-mini", temperature=0.7, max_tokens=1000)
+            mock_registry.resolve_model_class.assert_called_once_with(
+                "openai", "gpt-4o-mini"
+            )
+            mock_class.assert_called_once_with(
+                id="gpt-4o-mini", temperature=0.7, max_tokens=1000
+            )
             assert result == mock_instance
 
     def test_end_to_end_model_resolution_anthropic(self):
@@ -547,12 +623,16 @@ class TestIntegrationScenarios:
         mock_class.return_value = mock_instance
         mock_class.__name__ = "Claude"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             with patch.dict(os.environ, {"HIVE_DEFAULT_MODEL": "claude-3-sonnet"}):
                 result = resolver.resolve_model()  # Use default
 
                 mock_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
-                mock_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
+                mock_registry.resolve_model_class.assert_called_once_with(
+                    "anthropic", "claude-3-sonnet"
+                )
                 mock_class.assert_called_once_with(id="claude-3-sonnet")
                 assert result == mock_instance
 
@@ -574,10 +654,12 @@ class TestIntegrationScenarios:
             "max_tokens": 2000,
             "top_p": 0.95,
             "frequency_penalty": 0.5,
-            "presence_penalty": 0.3
+            "presence_penalty": 0.3,
         }
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             result = resolver.resolve_model("gemini-pro", **config_overrides)
 
             expected_config = {"id": "gemini-pro", **config_overrides}
@@ -603,7 +685,9 @@ class TestEdgeCasesAndErrorHandling:
 
         special_model_id = "custom-model_v2.1-beta@test"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             result = resolver.resolve_model(special_model_id)
 
             mock_registry.detect_provider.assert_called_once_with(special_model_id)
@@ -624,7 +708,9 @@ class TestEdgeCasesAndErrorHandling:
             mock_class.return_value = mock_instance
             mock_class.__name__ = "OpenAI"
 
-            with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+            with patch(
+                "lib.config.models.get_provider_registry", return_value=mock_registry
+            ):
                 # Empty string should use default
                 result = resolver.resolve_model("")
 
@@ -646,7 +732,9 @@ class TestEdgeCasesAndErrorHandling:
             mock_class.return_value = mock_instance
             mock_class.__name__ = "Claude"
 
-            with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+            with patch(
+                "lib.config.models.get_provider_registry", return_value=mock_registry
+            ):
                 result = resolver.resolve_model(None)
 
                 mock_registry.detect_provider.assert_called_once_with("default-model")
@@ -669,10 +757,12 @@ class TestEdgeCasesAndErrorHandling:
             "temperature": 0.7,
             "max_tokens": None,
             "top_p": 0.9,
-            "timeout": None
+            "timeout": None,
         }
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             result = resolver.resolve_model("gpt-4o-mini", **config_with_nones)
 
             expected_config = {"id": "gpt-4o-mini", **config_with_nones}
@@ -707,7 +797,9 @@ class TestLRUCacheDecoratorBehavior:
         mock_registry = Mock()
         mock_registry.detect_provider.return_value = "openai"
 
-        with patch("lib.config.models.get_provider_registry", return_value=mock_registry):
+        with patch(
+            "lib.config.models.get_provider_registry", return_value=mock_registry
+        ):
             # Make some calls to populate cache
             resolver._detect_provider("gpt-4o-mini")
             resolver._detect_provider("gpt-3.5-turbo")

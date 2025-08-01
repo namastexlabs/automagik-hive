@@ -206,7 +206,9 @@ class TestAgentRegistry:
     @patch("ai.agents.registry.create_agent")
     @patch("ai.agents.registry._discover_agents")
     @pytest.mark.asyncio
-    async def test_get_all_agents_with_failures(self, mock_discover, mock_create) -> None:
+    async def test_get_all_agents_with_failures(
+        self, mock_discover, mock_create
+    ) -> None:
         """Test getting all agents with some failures."""
         mock_discover.return_value = ["agent-1", "agent-2", "agent-3"]
         mock_agent1 = Mock()

@@ -38,18 +38,31 @@ def mock_database_layer():
 
     patches = [
         # Mock version services
-        patch("lib.versioning.agno_version_service.AgnoVersionService", return_value=mock_version_service),
-        patch("lib.services.component_version_service.ComponentVersionService", return_value=mock_component_service),
-        patch("lib.services.database_service.get_db_service", return_value=mock_db_service),
-
+        patch(
+            "lib.versioning.agno_version_service.AgnoVersionService",
+            return_value=mock_version_service,
+        ),
+        patch(
+            "lib.services.component_version_service.ComponentVersionService",
+            return_value=mock_component_service,
+        ),
+        patch(
+            "lib.services.database_service.get_db_service", return_value=mock_db_service
+        ),
         # Mock version factory - These need to be AsyncMock since they are async functions
-        patch("lib.utils.version_factory.create_agent", new_callable=AsyncMock, return_value=mock_agent),
-        patch("lib.utils.version_factory.VersionFactory.create_versioned_component", new_callable=AsyncMock, return_value=mock_agent),
-
+        patch(
+            "lib.utils.version_factory.create_agent",
+            new_callable=AsyncMock,
+            return_value=mock_agent,
+        ),
+        patch(
+            "lib.utils.version_factory.VersionFactory.create_versioned_component",
+            new_callable=AsyncMock,
+            return_value=mock_agent,
+        ),
         # Mock database migrations and connections
         patch("lib.utils.db_migration.check_and_run_migrations", return_value=False),
         patch("lib.services.database_service.DatabaseService"),
-
         # Mock Agno framework dependencies
         patch("agno.agent.Agent", return_value=mock_agent),
         patch("agno.team.Team", return_value=mock_agent),

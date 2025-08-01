@@ -52,25 +52,34 @@ class TestArtifactLifecycle:
             if isinstance(file_path, (str, Path)) and os.path.exists(file_path):
                 os.unlink(file_path)
 
-    @pytest.mark.parametrize("agent_name", [
-        "genie-dev-planner",
-        "genie-dev-designer",
-        "genie-dev-coder",
-        "genie-dev-fixer",
-        "genie-testing-maker",
-        "genie-testing-fixer",
-        "genie-quality-ruff",
-        "genie-quality-mypy",
-        "genie-clone",
-        "genie-self-learn",
-        "genie-qa-tester",
-        "genie-claudemd",
-        "genie-agent-creator",
-        "genie-agent-enhancer",
-        "claude"
-    ])
-    def test_ideas_phase_artifact_creation(self, agent_tester, protocol_validator,
-                                         ideas_directory, cleanup_test_artifacts, agent_name):
+    @pytest.mark.parametrize(
+        "agent_name",
+        [
+            "genie-dev-planner",
+            "genie-dev-designer",
+            "genie-dev-coder",
+            "genie-dev-fixer",
+            "genie-testing-maker",
+            "genie-testing-fixer",
+            "genie-quality-ruff",
+            "genie-quality-mypy",
+            "genie-clone",
+            "genie-self-learn",
+            "genie-qa-tester",
+            "genie-claudemd",
+            "genie-agent-creator",
+            "genie-agent-enhancer",
+            "claude",
+        ],
+    )
+    def test_ideas_phase_artifact_creation(
+        self,
+        agent_tester,
+        protocol_validator,
+        ideas_directory,
+        cleanup_test_artifacts,
+        agent_name,
+    ):
         """Test agent creates initial artifacts in /genie/ideas/ directory."""
 
         # Arrange
@@ -89,7 +98,9 @@ This should be an initial draft/analysis phase.
 
         # Validate JSON response format
         json_data = protocol_validator.extract_json_response(response)
-        assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
+        assert json_data is not None, (
+            f"Agent {agent_name} did not return valid JSON response"
+        )
 
         # Check for artifacts in response
         artifacts = json_data.get("artifacts", [])
@@ -100,26 +111,37 @@ This should be an initial draft/analysis phase.
 
             # For initial brainstorming, should prefer ideas directory
             if json_data.get("status") == "in_progress":
-                assert len(ideas_artifacts) > 0, \
+                assert len(ideas_artifacts) > 0, (
                     f"Agent {agent_name} should create initial artifacts in /genie/ideas/ during brainstorming"
+                )
 
             # Validate artifact files actually exist
             for artifact_path in artifacts:
                 cleanup_test_artifacts.append(artifact_path)
                 if os.path.isabs(artifact_path):  # Only check absolute paths
-                    assert os.path.exists(artifact_path), \
+                    assert os.path.exists(artifact_path), (
                         f"Agent {agent_name} reported artifact {artifact_path} but file does not exist"
+                    )
 
-    @pytest.mark.parametrize("agent_name", [
-        "genie-dev-planner",
-        "genie-dev-designer",
-        "genie-dev-coder",
-        "genie-testing-maker",
-        "genie-clone"
-    ])
-    def test_wishes_phase_migration(self, agent_tester, protocol_validator,
-                                  ideas_directory, wishes_directory,
-                                  cleanup_test_artifacts, agent_name):
+    @pytest.mark.parametrize(
+        "agent_name",
+        [
+            "genie-dev-planner",
+            "genie-dev-designer",
+            "genie-dev-coder",
+            "genie-testing-maker",
+            "genie-clone",
+        ],
+    )
+    def test_wishes_phase_migration(
+        self,
+        agent_tester,
+        protocol_validator,
+        ideas_directory,
+        wishes_directory,
+        cleanup_test_artifacts,
+        agent_name,
+    ):
         """Test agent migrates refined plans to /genie/wishes/ directory."""
 
         # Arrange - Create initial idea file
@@ -155,7 +177,9 @@ This should be ready for implementation.
 
         # Validate JSON response format
         json_data = protocol_validator.extract_json_response(response)
-        assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
+        assert json_data is not None, (
+            f"Agent {agent_name} did not return valid JSON response"
+        )
 
         # Check for artifacts in response
         artifacts = json_data.get("artifacts", [])
@@ -163,17 +187,20 @@ This should be ready for implementation.
         if artifacts and json_data.get("status") == "success":
             # Validate execution-ready artifacts are in wishes directory
             wishes_artifacts = [a for a in artifacts if "/genie/wishes/" in a]
-            assert len(wishes_artifacts) > 0, \
+            assert len(wishes_artifacts) > 0, (
                 f"Agent {agent_name} should create execution-ready artifacts in /genie/wishes/"
+            )
 
             # Validate artifact files actually exist
             for artifact_path in wishes_artifacts:
                 cleanup_test_artifacts.append(artifact_path)
-                assert os.path.exists(artifact_path), \
+                assert os.path.exists(artifact_path), (
                     f"Agent {agent_name} reported wishes artifact {artifact_path} but file does not exist"
+                )
 
-    def test_completion_protocol_deletion(self, agent_tester, protocol_validator,
-                                        wishes_directory, cleanup_test_artifacts):
+    def test_completion_protocol_deletion(
+        self, agent_tester, protocol_validator, wishes_directory, cleanup_test_artifacts
+    ):
         """Test agent deletes artifacts from wishes upon task completion."""
 
         # Arrange - Create a wishes file that should be deleted upon completion
@@ -211,13 +238,16 @@ This is a straightforward completion test.
 
         # Validate JSON response format
         json_data = protocol_validator.extract_json_response(response)
-        assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
+        assert json_data is not None, (
+            f"Agent {agent_name} did not return valid JSON response"
+        )
 
         # If task is completed successfully
         if json_data.get("status") == "success":
             # The wishes file should be deleted per protocol
-            assert not os.path.exists(test_wish_path), \
+            assert not os.path.exists(test_wish_path), (
                 f"Agent {agent_name} did not delete wishes artifact upon completion"
+            )
 
         # Clean up if file still exists (for partial completion or errors)
         if os.path.exists(test_wish_path):
@@ -254,7 +284,9 @@ This should be a detailed, comprehensive document.
 
         # Validate JSON response format (should be concise)
         json_data = protocol_validator.extract_json_response(response)
-        assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
+        assert json_data is not None, (
+            f"Agent {agent_name} did not return valid JSON response"
+        )
 
         # Response should be concise JSON, not large document
         response_text = str(response)
@@ -262,8 +294,9 @@ This should be a detailed, comprehensive document.
 
         # Response should be reasonably short (just JSON + brief summary)
         # Large documents should be in artifact files, not response text
-        assert response_length < 2000, \
+        assert response_length < 2000, (
             f"Agent {agent_name} output large content directly ({response_length} chars) instead of using artifacts"
+        )
 
         # If artifacts were created, they should contain the actual content
         artifacts = json_data.get("artifacts", [])
@@ -274,8 +307,9 @@ This should be a detailed, comprehensive document.
                         artifact_content = f.read()
 
                     # Artifact should contain substantial content
-                    assert len(artifact_content) > response_length, \
+                    assert len(artifact_content) > response_length, (
                         f"Agent {agent_name} artifact should contain more content than response text"
+                    )
 
     def test_artifact_path_consistency(self, agent_tester, protocol_validator):
         """Test that artifact paths reported in JSON responses are consistent and valid."""
@@ -301,30 +335,42 @@ Include authentication, validation, and error handling requirements.
 
         # Validate JSON response format
         json_data = protocol_validator.extract_json_response(response)
-        assert json_data is not None, f"Agent {agent_name} did not return valid JSON response"
+        assert json_data is not None, (
+            f"Agent {agent_name} did not return valid JSON response"
+        )
 
         # Check artifact path consistency
         artifacts = json_data.get("artifacts", [])
 
         for artifact_path in artifacts:
             # Path should be absolute
-            assert os.path.isabs(artifact_path), \
+            assert os.path.isabs(artifact_path), (
                 f"Agent {agent_name} reported relative path {artifact_path}, should be absolute"
+            )
 
             # Path should be in expected directories
             valid_directories = ["/genie/ideas/", "/genie/wishes/"]
-            is_valid_location = any(valid_dir in artifact_path for valid_dir in valid_directories)
-            assert is_valid_location, \
+            is_valid_location = any(
+                valid_dir in artifact_path for valid_dir in valid_directories
+            )
+            assert is_valid_location, (
                 f"Agent {agent_name} created artifact in invalid location {artifact_path}"
+            )
 
             # Path should use .md extension for markdown files
             if "/genie/" in artifact_path:
-                assert artifact_path.endswith(".md"), \
+                assert artifact_path.endswith(".md"), (
                     f"Agent {agent_name} artifact {artifact_path} should use .md extension"
+                )
 
-    def test_lifecycle_state_progression(self, agent_tester, protocol_validator,
-                                       ideas_directory, wishes_directory,
-                                       cleanup_test_artifacts):
+    def test_lifecycle_state_progression(
+        self,
+        agent_tester,
+        protocol_validator,
+        ideas_directory,
+        wishes_directory,
+        cleanup_test_artifacts,
+    ):
         """Test complete lifecycle progression from ideas to wishes to deletion."""
 
         # This is an integration test of the full lifecycle
@@ -346,7 +392,9 @@ This is initial exploration.
         # Should have created something in ideas if status is in_progress
         if json_data1.get("status") == "in_progress" and artifacts1:
             ideas_artifacts = [a for a in artifacts1 if "/genie/ideas/" in a]
-            assert len(ideas_artifacts) > 0, "Phase 1 should create artifacts in ideas directory"
+            assert len(ideas_artifacts) > 0, (
+                "Phase 1 should create artifacts in ideas directory"
+            )
 
             # Track for cleanup
             cleanup_test_artifacts.extend(artifacts1)
@@ -367,7 +415,9 @@ ready for development execution.
 
             if json_data2.get("status") == "success" and artifacts2:
                 wishes_artifacts = [a for a in artifacts2 if "/genie/wishes/" in a]
-                assert len(wishes_artifacts) > 0, "Phase 2 should create artifacts in wishes directory"
+                assert len(wishes_artifacts) > 0, (
+                    "Phase 2 should create artifacts in wishes directory"
+                )
 
                 # Track for cleanup
                 cleanup_test_artifacts.extend(artifacts2)
@@ -380,7 +430,9 @@ Mark this caching system implementation plan as completed.
 The plan is ready and task is finished.
 """
 
-                response3 = agent_tester.execute_agent_task(agent_name, completion_prompt)
+                response3 = agent_tester.execute_agent_task(
+                    agent_name, completion_prompt
+                )
                 json_data3 = protocol_validator.extract_json_response(response3)
 
                 assert json_data3 is not None
@@ -388,5 +440,6 @@ The plan is ready and task is finished.
                 # If marked as complete, wishes artifact should be deleted
                 if json_data3.get("status") == "success":
                     for wishes_path in wishes_artifacts:
-                        assert not os.path.exists(wishes_path), \
+                        assert not os.path.exists(wishes_path), (
                             f"Wishes artifact {wishes_path} should be deleted upon completion"
+                        )

@@ -41,34 +41,46 @@ class TestBatchLoggerCore:
     @pytest.fixture
     def mock_environment_verbose(self):
         """Mock environment for verbose logging tests."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "true", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "true", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             yield
 
     @pytest.fixture
     def mock_environment_debug(self):
         """Mock environment for debug logging tests."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "DEBUG"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "DEBUG"}
+        ):
             yield
 
     @pytest.fixture
     def mock_environment_quiet(self):
         """Mock environment for quiet logging tests."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             yield
 
-    def test_verbose_logging_environment_detection(self, clean_logger, mock_environment_verbose):
+    def test_verbose_logging_environment_detection(
+        self, clean_logger, mock_environment_verbose
+    ):
         """Test verbose logging detection via environment variables."""
         logger_instance = BatchLogger()
         assert logger_instance._should_log_verbose() is True
         assert logger_instance.verbose is True
 
-    def test_debug_logging_environment_detection(self, clean_logger, mock_environment_debug):
+    def test_debug_logging_environment_detection(
+        self, clean_logger, mock_environment_debug
+    ):
         """Test debug logging detection via environment variables."""
         logger_instance = BatchLogger()
         assert logger_instance._should_log_verbose() is True
         assert logger_instance.log_level == "DEBUG"
 
-    def test_quiet_logging_environment_detection(self, clean_logger, mock_environment_quiet):
+    def test_quiet_logging_environment_detection(
+        self, clean_logger, mock_environment_quiet
+    ):
         """Test normal logging mode via environment variables."""
         logger_instance = BatchLogger()
         assert logger_instance._should_log_verbose() is False
@@ -82,7 +94,9 @@ class TestBatchLoggerVerboseMode:
     @pytest.fixture
     def verbose_logger(self):
         """Create logger in verbose mode."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "true", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "true", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
             yield logger_instance
 
@@ -92,7 +106,9 @@ class TestBatchLoggerVerboseMode:
         verbose_logger.log_agent_inheritance("test_agent_verbose")
 
         # In verbose mode, should log immediately with debug level
-        mock_logger.debug.assert_called_once_with("Applied inheritance to agent test_agent_verbose")
+        mock_logger.debug.assert_called_once_with(
+            "Applied inheritance to agent test_agent_verbose"
+        )
 
         # Should not batch in verbose mode
         assert "agent_inheritance" not in verbose_logger.batches
@@ -106,7 +122,7 @@ class TestBatchLoggerVerboseMode:
         mock_logger.info.assert_called_once_with(
             "Model resolved successfully",
             model_id="test_model",
-            provider="test_provider"
+            provider="test_provider",
         )
 
         # Should not batch in verbose mode
@@ -155,7 +171,9 @@ class TestBatchLoggerVerboseMode:
         verbose_logger.log_csv_processing("test_source.csv", 100)
 
         # In verbose mode, should log immediately with info level
-        mock_logger.info.assert_called_once_with("test_source.csv: 100 documents processed")
+        mock_logger.info.assert_called_once_with(
+            "test_source.csv: 100 documents processed"
+        )
 
         # Should not batch in verbose mode
         assert "csv_processing" not in verbose_logger.batches
@@ -167,7 +185,9 @@ class TestBatchLoggerRuntimeMode:
     @pytest.fixture
     def runtime_logger(self):
         """Create logger in runtime mode."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
             logger_instance.set_runtime_mode()  # Switch to runtime mode
             yield logger_instance
@@ -178,7 +198,9 @@ class TestBatchLoggerRuntimeMode:
         runtime_logger.log_agent_inheritance("runtime_agent")
 
         # In runtime mode, should log immediately with debug level
-        mock_logger.debug.assert_called_once_with("Applied inheritance to agent runtime_agent")
+        mock_logger.debug.assert_called_once_with(
+            "Applied inheritance to agent runtime_agent"
+        )
 
     @patch("lib.logging.batch_logger.logger")
     def test_log_model_resolved_runtime(self, mock_logger, runtime_logger):
@@ -194,7 +216,9 @@ class TestBatchLoggerRuntimeMode:
         runtime_logger.log_storage_created("memory", "runtime_component")
 
         # In runtime mode, should log immediately with debug level
-        mock_logger.debug.assert_called_once_with("🔧 Storage created: runtime_component")
+        mock_logger.debug.assert_called_once_with(
+            "🔧 Storage created: runtime_component"
+        )
 
     @patch("lib.logging.batch_logger.logger")
     def test_log_agent_created_runtime(self, mock_logger, runtime_logger):
@@ -227,7 +251,9 @@ class TestBatchLoggerAdvancedOperations:
     @pytest.fixture
     def startup_logger(self):
         """Create logger in startup mode for batching tests."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
             # Ensure we're in startup mode
             logger_instance.startup_mode = True
@@ -254,13 +280,21 @@ class TestBatchLoggerAdvancedOperations:
     @patch("lib.logging.batch_logger.logger")
     def test_log_once_with_kwargs(self, mock_logger, startup_logger):
         """Test log_once with keyword arguments."""
-        startup_logger.log_once("Message with kwargs", level="error", component="test", count=42)
-        mock_logger.error.assert_called_once_with("Message with kwargs", component="test", count=42)
+        startup_logger.log_once(
+            "Message with kwargs", level="error", component="test", count=42
+        )
+        mock_logger.error.assert_called_once_with(
+            "Message with kwargs", component="test", count=42
+        )
 
         # Reset and try same message with different kwargs - should log again
         mock_logger.reset_mock()
-        startup_logger.log_once("Message with kwargs", level="error", component="different", count=24)
-        mock_logger.error.assert_called_once_with("Message with kwargs", component="different", count=24)
+        startup_logger.log_once(
+            "Message with kwargs", level="error", component="different", count=24
+        )
+        mock_logger.error.assert_called_once_with(
+            "Message with kwargs", component="different", count=24
+        )
 
     @patch("lib.logging.batch_logger.logger")
     def test_log_team_member_loaded_with_team_id(self, mock_logger, startup_logger):
@@ -282,7 +316,9 @@ class TestBatchLoggerFlushOperations:
     @pytest.fixture
     def populated_logger(self):
         """Create logger with populated batches for flush testing."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
             logger_instance.startup_mode = True
 
@@ -320,8 +356,11 @@ class TestBatchLoggerFlushOperations:
         populated_logger._flush_startup_batches()
 
         # Verify storage summary was logged
-        storage_calls = [call for call in mock_logger.info.call_args_list
-                        if "Storage initialization:" in str(call)]
+        storage_calls = [
+            call
+            for call in mock_logger.info.call_args_list
+            if "Storage initialization:" in str(call)
+        ]
         assert len(storage_calls) == 1
 
         # Should contain Counter dict with storage types
@@ -334,8 +373,11 @@ class TestBatchLoggerFlushOperations:
         populated_logger._flush_startup_batches()
 
         # Verify agent creation summary was logged
-        agent_calls = [call for call in mock_logger.info.call_args_list
-                      if "Created 3 agents:" in str(call)]
+        agent_calls = [
+            call
+            for call in mock_logger.info.call_args_list
+            if "Created 3 agents:" in str(call)
+        ]
         assert len(agent_calls) == 1
 
         # Should contain agent names and average parameters
@@ -350,8 +392,11 @@ class TestBatchLoggerFlushOperations:
         populated_logger._flush_startup_batches()
 
         # Verify generic team members summary was logged
-        team_calls = [call for call in mock_logger.info.call_args_list
-                     if "Loaded 2 team members:" in str(call)]
+        team_calls = [
+            call
+            for call in mock_logger.info.call_args_list
+            if "Loaded 2 team members:" in str(call)
+        ]
         assert len(team_calls) == 1
 
         # Should contain member names
@@ -360,17 +405,25 @@ class TestBatchLoggerFlushOperations:
         assert "member1, member2" in call_str
 
     @patch("lib.logging.batch_logger.logger")
-    def test_flush_team_members_specific_teams_summary(self, mock_logger, populated_logger):
+    def test_flush_team_members_specific_teams_summary(
+        self, mock_logger, populated_logger
+    ):
         """Test specific team members summary flushing (lines 162-165)."""
         populated_logger._flush_startup_batches()
 
         # Verify team-specific summaries were logged
-        team_x_calls = [call for call in mock_logger.info.call_args_list
-                       if "Team team_x: 2 members loaded" in str(call)]
+        team_x_calls = [
+            call
+            for call in mock_logger.info.call_args_list
+            if "Team team_x: 2 members loaded" in str(call)
+        ]
         assert len(team_x_calls) == 1
 
-        team_y_calls = [call for call in mock_logger.info.call_args_list
-                       if "Team team_y: 1 members loaded" in str(call)]
+        team_y_calls = [
+            call
+            for call in mock_logger.info.call_args_list
+            if "Team team_y: 1 members loaded" in str(call)
+        ]
         assert len(team_y_calls) == 1
 
         # Check member lists in team summaries
@@ -385,8 +438,11 @@ class TestBatchLoggerFlushOperations:
         populated_logger._flush_startup_batches()
 
         # Verify CSV processing summary was logged
-        csv_calls = [call for call in mock_logger.info.call_args_list
-                    if "Knowledge base:" in str(call)]
+        csv_calls = [
+            call
+            for call in mock_logger.info.call_args_list
+            if "Knowledge base:" in str(call)
+        ]
         assert len(csv_calls) == 1
 
         # Should contain source count and total documents
@@ -402,7 +458,9 @@ class TestBatchLoggerContextManager:
     @patch("lib.logging.batch_logger.logger")
     def test_startup_context_manager(self, mock_logger):
         """Test startup context manager functionality (lines 182-186)."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
 
             # Initially in startup mode
@@ -427,7 +485,9 @@ class TestBatchLoggerContextManager:
     @patch("lib.logging.batch_logger.logger")
     def test_startup_context_exception_handling(self, mock_logger):
         """Test startup context manager exception handling."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
 
             # Test that context manager properly cleans up even with exceptions
@@ -455,18 +515,24 @@ class TestBatchLoggerGlobalFunctions:
     def test_global_log_model_resolved(self, mock_batch_logger):
         """Test global log_model_resolved function (line 204)."""
         log_model_resolved("global_model", "global_provider")
-        mock_batch_logger.log_model_resolved.assert_called_once_with("global_model", "global_provider")
+        mock_batch_logger.log_model_resolved.assert_called_once_with(
+            "global_model", "global_provider"
+        )
 
         # Test with default provider
         mock_batch_logger.reset_mock()
         log_model_resolved("model_only")
-        mock_batch_logger.log_model_resolved.assert_called_once_with("model_only", "unknown")
+        mock_batch_logger.log_model_resolved.assert_called_once_with(
+            "model_only", "unknown"
+        )
 
     @patch("lib.logging.batch_logger.batch_logger")
     def test_global_log_storage_created(self, mock_batch_logger):
         """Test global log_storage_created function (line 209)."""
         log_storage_created("global_storage", "global_component")
-        mock_batch_logger.log_storage_created.assert_called_once_with("global_storage", "global_component")
+        mock_batch_logger.log_storage_created.assert_called_once_with(
+            "global_storage", "global_component"
+        )
 
     @patch("lib.logging.batch_logger.batch_logger")
     def test_global_log_agent_created(self, mock_batch_logger):
@@ -478,13 +544,17 @@ class TestBatchLoggerGlobalFunctions:
     def test_global_log_team_member_loaded(self, mock_batch_logger):
         """Test global log_team_member_loaded function (line 219)."""
         log_team_member_loaded("global_member", "global_team")
-        mock_batch_logger.log_team_member_loaded.assert_called_once_with("global_member", "global_team")
+        mock_batch_logger.log_team_member_loaded.assert_called_once_with(
+            "global_member", "global_team"
+        )
 
     @patch("lib.logging.batch_logger.batch_logger")
     def test_global_log_csv_processing(self, mock_batch_logger):
         """Test global log_csv_processing function (line 224)."""
         log_csv_processing("global_source.csv", 100)
-        mock_batch_logger.log_csv_processing.assert_called_once_with("global_source.csv", 100)
+        mock_batch_logger.log_csv_processing.assert_called_once_with(
+            "global_source.csv", 100
+        )
 
     @patch("lib.logging.batch_logger.batch_logger")
     def test_global_set_runtime_mode(self, mock_batch_logger):
@@ -505,7 +575,9 @@ class TestBatchLoggerEdgeCases:
     @pytest.fixture
     def edge_case_logger(self):
         """Create logger for edge case testing."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
             yield logger_instance
 
@@ -551,8 +623,11 @@ class TestBatchLoggerEdgeCases:
         edge_case_logger._flush_startup_batches()
 
         # Should handle zero parameters correctly
-        agent_calls = [call for call in mock_logger.info.call_args_list
-                      if "Created 1 agents:" in str(call)]
+        agent_calls = [
+            call
+            for call in mock_logger.info.call_args_list
+            if "Created 1 agents:" in str(call)
+        ]
         assert len(agent_calls) == 1
         assert "avg 0 params" in str(agent_calls[0])
 
@@ -580,10 +655,14 @@ class TestBatchLoggerEdgeCases:
         assert len(generic_calls) == 1
 
         # Check for team-specific calls
-        team_a_calls = [s for s in team_call_strs if "Team team_a: 2 members loaded" in s]
+        team_a_calls = [
+            s for s in team_call_strs if "Team team_a: 2 members loaded" in s
+        ]
         assert len(team_a_calls) == 1
 
-        team_b_calls = [s for s in team_call_strs if "Team team_b: 1 members loaded" in s]
+        team_b_calls = [
+            s for s in team_call_strs if "Team team_b: 1 members loaded" in s
+        ]
         assert len(team_b_calls) == 1
 
     def test_environment_variable_edge_cases(self):
@@ -602,9 +681,11 @@ class TestBatchLoggerEdgeCases:
 
         for test_case in test_cases:
             # Convert boolean values to strings for environment variables
-            env_dict = {k: str(v) if isinstance(v, bool) else v
-                       for k, v in test_case.items()
-                       if not k.startswith("expected_")}
+            env_dict = {
+                k: str(v) if isinstance(v, bool) else v
+                for k, v in test_case.items()
+                if not k.startswith("expected_")
+            }
 
             with patch.dict(os.environ, env_dict):
                 logger_instance = BatchLogger()
@@ -622,7 +703,9 @@ class TestBatchLoggerPerformance:
 
     def test_batch_logging_performance(self):
         """Test batch logging performance with large volumes."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
 
             start_time = time.time()
@@ -648,7 +731,9 @@ class TestBatchLoggerPerformance:
     @patch("lib.logging.batch_logger.logger")
     def test_flush_performance(self, mock_logger):
         """Test flush performance with large batches."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             logger_instance = BatchLogger()
 
             # Create large batches
@@ -677,14 +762,20 @@ class TestBatchLoggerIntegration:
 
     def test_full_lifecycle_integration(self):
         """Test full lifecycle from startup to runtime with real logging."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             # Capture log output
             log_capture = StringIO()
 
             with patch("lib.logging.batch_logger.logger") as mock_logger:
                 # Configure mock to capture calls
-                mock_logger.info.side_effect = lambda msg, **kwargs: log_capture.write(f"INFO: {msg}\n")
-                mock_logger.debug.side_effect = lambda msg, **kwargs: log_capture.write(f"DEBUG: {msg}\n")
+                mock_logger.info.side_effect = lambda msg, **kwargs: log_capture.write(
+                    f"INFO: {msg}\n"
+                )
+                mock_logger.debug.side_effect = lambda msg, **kwargs: log_capture.write(
+                    f"DEBUG: {msg}\n"
+                )
 
                 # Create logger and simulate startup sequence
                 logger_instance = BatchLogger()
@@ -729,11 +820,15 @@ class TestBatchLoggerIntegration:
 
     def test_context_manager_integration(self):
         """Test context manager integration with real workflow."""
-        with patch.dict(os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}):
+        with patch.dict(
+            os.environ, {"HIVE_VERBOSE_LOGS": "false", "HIVE_LOG_LEVEL": "INFO"}
+        ):
             log_capture = StringIO()
 
             with patch("lib.logging.batch_logger.logger") as mock_logger:
-                mock_logger.info.side_effect = lambda msg, **kwargs: log_capture.write(f"INFO: {msg}\n")
+                mock_logger.info.side_effect = lambda msg, **kwargs: log_capture.write(
+                    f"INFO: {msg}\n"
+                )
 
                 logger_instance = BatchLogger()
 
@@ -745,7 +840,9 @@ class TestBatchLoggerIntegration:
                     # Add data during startup
                     logger_instance.log_agent_inheritance("context_agent_1")
                     logger_instance.log_agent_inheritance("context_agent_2")
-                    logger_instance.log_model_resolved("context_model", "context_provider")
+                    logger_instance.log_model_resolved(
+                        "context_model", "context_provider"
+                    )
 
                     # No logging yet
                     assert log_capture.getvalue() == ""
@@ -753,5 +850,8 @@ class TestBatchLoggerIntegration:
                 # After context, should be flushed and in runtime mode
                 assert logger_instance.startup_mode is False
                 log_output = log_capture.getvalue()
-                assert "Applied inheritance to 2 agents: context_agent_1, context_agent_2" in log_output
+                assert (
+                    "Applied inheritance to 2 agents: context_agent_1, context_agent_2"
+                    in log_output
+                )
                 assert "Model resolution: 1 operations across 1 providers" in log_output

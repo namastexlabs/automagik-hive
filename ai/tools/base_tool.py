@@ -20,18 +20,24 @@ class ToolConfig(BaseModel):
     version: int = Field(default=1, description="Tool version number")
     category: str = Field(default="general", description="Tool category")
     tags: list[str] = Field(default_factory=list, description="Tool tags")
-    dependencies: list[str] = Field(default_factory=list, description="Required dependencies")
+    dependencies: list[str] = Field(
+        default_factory=list, description="Required dependencies"
+    )
     enabled: bool = Field(default=True, description="Whether tool is enabled")
 
     # Integration settings
-    integration: dict[str, Any] = Field(default_factory=dict, description="Integration configuration")
-    parameters: dict[str, Any] = Field(default_factory=dict, description="Tool-specific parameters")
+    integration: dict[str, Any] = Field(
+        default_factory=dict, description="Integration configuration"
+    )
+    parameters: dict[str, Any] = Field(
+        default_factory=dict, description="Tool-specific parameters"
+    )
 
 
 class BaseTool(ABC):
     """
     Base class for all Automagik Hive tools.
-    
+
     Provides common functionality for tool registration, configuration management,
     and standardized tool interface patterns.
     """
@@ -39,7 +45,7 @@ class BaseTool(ABC):
     def __init__(self, config_path: Path | None = None, **kwargs):
         """
         Initialize base tool with configuration.
-        
+
         Args:
             config_path: Path to tool configuration file
             **kwargs: Additional initialization parameters
@@ -69,19 +75,23 @@ class BaseTool(ABC):
             if "tool" in config_data:
                 self.config = ToolConfig(**config_data["tool"])
             else:
-                logger.warning("No 'tool' section found in configuration", path=self.config_path)
+                logger.warning(
+                    "No 'tool' section found in configuration", path=self.config_path
+                )
 
         except Exception as e:
-            logger.error("Failed to load tool configuration", path=self.config_path, error=str(e))
+            logger.error(
+                "Failed to load tool configuration", path=self.config_path, error=str(e)
+            )
 
     @abstractmethod
     def initialize(self, **kwargs) -> None:
         """
         Initialize tool-specific functionality.
-        
+
         This method should be implemented by each tool to handle
         tool-specific initialization requirements.
-        
+
         Args:
             **kwargs: Tool-specific initialization parameters
         """
@@ -90,14 +100,14 @@ class BaseTool(ABC):
     def execute(self, *args, **kwargs) -> Any:
         """
         Execute the main tool functionality.
-        
+
         This method should be implemented by each tool to provide
         the core tool execution logic.
-        
+
         Args:
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Tool execution result
         """
@@ -105,7 +115,7 @@ class BaseTool(ABC):
     def validate_config(self) -> bool:
         """
         Validate tool configuration.
-        
+
         Returns:
             True if configuration is valid, False otherwise
         """
@@ -123,16 +133,12 @@ class BaseTool(ABC):
     def get_info(self) -> dict[str, Any]:
         """
         Get tool information dictionary.
-        
+
         Returns:
             Dictionary containing tool metadata and status
         """
         if not self.config:
-            return {
-                "tool_id": "unknown",
-                "name": "Unknown Tool",
-                "status": "no_config"
-            }
+            return {"tool_id": "unknown", "name": "Unknown Tool", "status": "no_config"}
 
         return {
             "tool_id": self.config.tool_id,
@@ -143,7 +149,7 @@ class BaseTool(ABC):
             "tags": self.config.tags,
             "enabled": self.config.enabled,
             "status": "ready" if self._is_initialized else "not_initialized",
-            "config_path": str(self.config_path) if self.config_path else None
+            "config_path": str(self.config_path) if self.config_path else None,
         }
 
     def is_enabled(self) -> bool:

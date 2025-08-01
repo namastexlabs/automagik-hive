@@ -7,7 +7,7 @@ standardized workspace interaction protocol.
 
 Test Categories:
 - Context File Ingestion: Validate @filepath pattern handling
-- Artifact Lifecycle: Test /genie/ideas/ → /genie/wishes/ → DELETE progression  
+- Artifact Lifecycle: Test /genie/ideas/ → /genie/wishes/ → DELETE progression
 - JSON Response Format: Ensure structured response compliance
 - Technical Standards: Validate enforcement of development standards
 - Cross-Agent Coordination: Test protocol consistency across agents
@@ -15,10 +15,10 @@ Test Categories:
 Usage:
     # Run all workspace protocol tests
     uv run pytest tests/workspace_protocol/ -v
-    
+
     # Run specific test category
     uv run pytest tests/workspace_protocol/test_context_ingestion.py -v
-    
+
     # Run comprehensive validation script
     uv run python tests/workspace_protocol/test_execution_script.py
 

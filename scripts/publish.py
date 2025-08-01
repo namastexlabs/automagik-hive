@@ -27,6 +27,7 @@ def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProce
             sys.exit(1)
         return e
 
+
 def check_pypi_token() -> bool:
     """Check if PYPI_TOKEN is configured."""
     token = os.getenv("PYPI_TOKEN")
@@ -41,6 +42,7 @@ def check_pypi_token() -> bool:
 
     print("✅ PYPI_TOKEN configured")
     return True
+
 
 def validate_version() -> str:
     """Get and validate the current version."""
@@ -60,15 +62,18 @@ def validate_version() -> str:
     print("❌ Version not found in pyproject.toml")
     sys.exit(1)
 
+
 def clean_dist() -> None:
     """Clean the dist directory."""
     print("🧹 Cleaning dist directory...")
     run_command(["rm", "-rf", "dist"])
 
+
 def build_package() -> None:
     """Build the package."""
     print("🏗️ Building package...")
     run_command(["uv", "build"])
+
 
 def validate_build() -> None:
     """Validate the built package."""
@@ -90,13 +95,15 @@ def validate_build() -> None:
         print("❌ No source distribution found")
         sys.exit(1)
 
-    print(f"✅ Found {len(wheel_files)} wheel(s) and {len(tar_files)} source distribution(s)")
+    print(
+        f"✅ Found {len(wheel_files)} wheel(s) and {len(tar_files)} source distribution(s)"
+    )
 
     # Check wheel contents for CLI module
     wheel_file = wheel_files[0]
-    result = run_command([
-        "python", "-m", "zipfile", "-l", str(wheel_file)
-    ], check=False)
+    result = run_command(
+        ["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)], check=False
+    )
 
     if "cli/" not in result.stdout:
         print("❌ CLI module not found in wheel")
@@ -111,34 +118,50 @@ def validate_build() -> None:
 
     print("✅ Entry points configured in wheel")
 
+
 def publish_to_testpypi() -> None:
     """Publish to Test PyPI first."""
     print("🧪 Publishing to Test PyPI...")
 
     # Use uvx to run twine for publishing
-    run_command([
-        "uvx", "twine", "upload",
-        "--repository", "testpypi",
-        "--username", "__token__",
-        "--password", os.getenv("PYPI_TOKEN", ""),
-        "dist/*"
-    ])
+    run_command(
+        [
+            "uvx",
+            "twine",
+            "upload",
+            "--repository",
+            "testpypi",
+            "--username",
+            "__token__",
+            "--password",
+            os.getenv("PYPI_TOKEN", ""),
+            "dist/*",
+        ]
+    )
 
     print("✅ Published to Test PyPI")
+
 
 def publish_to_pypi() -> None:
     """Publish to production PyPI."""
     print("🚀 Publishing to PyPI...")
 
     # Use uvx to run twine for publishing
-    run_command([
-        "uvx", "twine", "upload",
-        "--username", "__token__",
-        "--password", os.getenv("PYPI_TOKEN", ""),
-        "dist/*"
-    ])
+    run_command(
+        [
+            "uvx",
+            "twine",
+            "upload",
+            "--username",
+            "__token__",
+            "--password",
+            os.getenv("PYPI_TOKEN", ""),
+            "dist/*",
+        ]
+    )
 
     print("✅ Published to PyPI")
+
 
 def main():
     """Main publishing workflow."""
@@ -192,6 +215,7 @@ def main():
     except Exception as e:
         print(f"❌ Publishing failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

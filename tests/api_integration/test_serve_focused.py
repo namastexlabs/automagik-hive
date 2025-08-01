@@ -148,10 +148,14 @@ class TestEnvironmentConfiguration:
 
     def test_main_execution_configuration_development(self):
         """Test main execution configuration for development."""
-        with patch.dict(os.environ, {
-            "HIVE_ENVIRONMENT": "development",
-            "DISABLE_RELOAD": "false"  # Explicitly set to false
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "HIVE_ENVIRONMENT": "development",
+                "DISABLE_RELOAD": "false",  # Explicitly set to false
+            },
+            clear=False,
+        ):
             environment = os.getenv("HIVE_ENVIRONMENT", "production")
             reload = (
                 environment == "development"
@@ -175,10 +179,9 @@ class TestEnvironmentConfiguration:
 
     def test_main_execution_configuration_disable_reload(self):
         """Test main execution with reload disabled."""
-        with patch.dict(os.environ, {
-            "HIVE_ENVIRONMENT": "development",
-            "DISABLE_RELOAD": "true"
-        }):
+        with patch.dict(
+            os.environ, {"HIVE_ENVIRONMENT": "development", "DISABLE_RELOAD": "true"}
+        ):
             environment = os.getenv("HIVE_ENVIRONMENT", "production")
             reload = (
                 environment == "development"
@@ -191,10 +194,9 @@ class TestEnvironmentConfiguration:
     def test_log_level_configuration(self):
         """Test log level configuration from environment."""
         # Test with custom values
-        with patch.dict(os.environ, {
-            "HIVE_LOG_LEVEL": "DEBUG",
-            "AGNO_LOG_LEVEL": "INFO"
-        }):
+        with patch.dict(
+            os.environ, {"HIVE_LOG_LEVEL": "DEBUG", "AGNO_LOG_LEVEL": "INFO"}
+        ):
             log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
             agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
 
@@ -203,7 +205,8 @@ class TestEnvironmentConfiguration:
 
         # Test with defaults
         env_without_logs = {
-            k: v for k, v in os.environ.items()
+            k: v
+            for k, v in os.environ.items()
             if k not in ["HIVE_LOG_LEVEL", "AGNO_LOG_LEVEL"]
         }
         with patch.dict(os.environ, env_without_logs, clear=True):
@@ -269,6 +272,7 @@ class TestErrorHandlingPaths:
         # This is tested by importing the module
         try:
             import api.serve
+
             assert api.serve is not None
         except ImportError:
             pytest.fail("serve.py should handle missing dotenv gracefully")
@@ -295,10 +299,9 @@ class TestProductionFeatures:
 
     def test_reloader_context_detection(self):
         """Test reloader context detection."""
-        with patch.dict(os.environ, {
-            "HIVE_ENVIRONMENT": "development",
-            "RUN_MAIN": "true"
-        }):
+        with patch.dict(
+            os.environ, {"HIVE_ENVIRONMENT": "development", "RUN_MAIN": "true"}
+        ):
             is_reloader_context = os.getenv("RUN_MAIN") == "true"
             environment = os.getenv("HIVE_ENVIRONMENT", "production")
             is_development = environment == "development"
@@ -317,6 +320,7 @@ class TestAsyncEventLoopHandling:
 
     def test_thread_pool_executor_usage(self):
         """Test thread pool executor usage pattern."""
+
         def test_thread_function():
             # Create a new event loop in a separate thread
             new_loop = asyncio.new_event_loop()
@@ -343,6 +347,7 @@ class TestAsyncEventLoopHandling:
 
     def test_asyncio_operations(self):
         """Test basic asyncio operations used in serve.py."""
+
         async def test_async_patterns():
             # Test sleep (used in notifications)
             await asyncio.sleep(0)
@@ -384,6 +389,7 @@ class TestModuleImports:
         # Test that serve.py can handle missing optional imports
         try:
             from dotenv import load_dotenv
+
             assert callable(load_dotenv)
         except ImportError:
             # Should be handled gracefully
@@ -441,7 +447,7 @@ class TestConfigurationPatterns:
         app_config = {
             "title": "Automagik Hive Multi-Agent System",
             "description": "Multi-Agent System with intelligent routing",
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
         assert isinstance(app_config["title"], str)

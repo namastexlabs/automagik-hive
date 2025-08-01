@@ -156,7 +156,9 @@ class BidirectionalSync:
             )
 
             if not version_id:
-                raise ValueError(f"Failed to create database version for {component_id}")
+                raise ValueError(
+                    f"Failed to create database version for {component_id}"
+                )
 
             logger.info(f"Created database version {version} for {component_id}")
         except Exception as e:
@@ -198,7 +200,9 @@ class BidirectionalSync:
             )
 
             if not version_id:
-                raise ValueError(f"Failed to update database from YAML for {component_id}")
+                raise ValueError(
+                    f"Failed to update database from YAML for {component_id}"
+                )
 
             logger.info(
                 f"Updated database version {version} for {component_id} from YAML"

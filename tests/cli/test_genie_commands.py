@@ -5,14 +5,14 @@ Follows TDD Red-Green-Refactor approach with failing tests first.
 
 Test Categories:
 - Unit tests: Individual command method testing
-- Integration tests: CLI argument parsing and error handling  
+- Integration tests: CLI argument parsing and error handling
 - Mock tests: Docker and filesystem operations
 - Cross-platform compatibility testing patterns
 - Container lifecycle testing with real docker-compose integration
 
 Genie Commands Tested:
 1. serve() - Start Genie server on port 48886
-2. stop() - Stop Genie server cleanly  
+2. stop() - Stop Genie server cleanly
 3. restart() - Restart Genie server
 4. logs() - Display Genie server logs
 5. status() - Check Genie container status
@@ -283,13 +283,18 @@ HIVE_API_PORT=48886
         assert result is True
         assert mock_genie_service.get_genie_status.called
 
-    def test_genie_status_command_subprocess_error(self, mock_genie_service, temp_workspace):
+    def test_genie_status_command_subprocess_error(
+        self, mock_genie_service, temp_workspace
+    ):
         """Test Genie status check when subprocess fails."""
         mock_status = {"genie-server": "✅ Running"}
         mock_genie_service.get_genie_status.return_value = mock_status
 
         with patch("pathlib.Path.exists", return_value=True):
-            with patch("cli.commands.genie.secure_subprocess_call", side_effect=Exception("Subprocess error")):
+            with patch(
+                "cli.commands.genie.secure_subprocess_call",
+                side_effect=Exception("Subprocess error"),
+            ):
                 commands = GenieCommands()
                 result = commands.status(temp_workspace)
 
@@ -431,7 +436,9 @@ class TestGenieCommandsErrorHandling:
             mock_service_class.return_value = mock_service
             yield mock_service
 
-    def test_genie_commands_with_invalid_workspace_path(self, mock_genie_service_with_exceptions):
+    def test_genie_commands_with_invalid_workspace_path(
+        self, mock_genie_service_with_exceptions
+    ):
         """Test commands with invalid workspace paths."""
         mock_genie_service_with_exceptions.serve_genie.side_effect = FileNotFoundError(
             "Workspace not found"
@@ -443,7 +450,9 @@ class TestGenieCommandsErrorHandling:
         with pytest.raises(FileNotFoundError):
             commands.serve("/invalid/workspace/path")
 
-    def test_genie_commands_with_permission_errors(self, mock_genie_service_with_exceptions):
+    def test_genie_commands_with_permission_errors(
+        self, mock_genie_service_with_exceptions
+    ):
         """Test commands with permission errors."""
         mock_genie_service_with_exceptions.stop_genie.side_effect = PermissionError(
             "Permission denied"
@@ -455,7 +464,9 @@ class TestGenieCommandsErrorHandling:
         with pytest.raises(PermissionError):
             commands.stop("/restricted/path")
 
-    def test_genie_commands_with_none_workspace(self, mock_genie_service_with_exceptions):
+    def test_genie_commands_with_none_workspace(
+        self, mock_genie_service_with_exceptions
+    ):
         """Test commands with None workspace parameter."""
         mock_genie_service_with_exceptions.restart_genie.return_value = True
 
@@ -464,10 +475,14 @@ class TestGenieCommandsErrorHandling:
 
         # Should fail initially - None handling not implemented
         expected_path = str(Path().resolve())
-        mock_genie_service_with_exceptions.restart_genie.assert_called_once_with(expected_path)
+        mock_genie_service_with_exceptions.restart_genie.assert_called_once_with(
+            expected_path
+        )
         assert result is True
 
-    def test_genie_status_command_empty_status(self, mock_genie_service_with_exceptions):
+    def test_genie_status_command_empty_status(
+        self, mock_genie_service_with_exceptions
+    ):
         """Test status command with empty status response."""
         mock_genie_service_with_exceptions.get_genie_status.return_value = {}
 
@@ -479,7 +494,9 @@ class TestGenieCommandsErrorHandling:
         assert result is True
         assert mock_genie_service_with_exceptions.get_genie_status.called
 
-    def test_genie_logs_command_with_zero_tail(self, mock_genie_service_with_exceptions):
+    def test_genie_logs_command_with_zero_tail(
+        self, mock_genie_service_with_exceptions
+    ):
         """Test logs command with zero tail parameter."""
         mock_genie_service_with_exceptions.show_genie_logs.return_value = True
 
@@ -492,7 +509,9 @@ class TestGenieCommandsErrorHandling:
             str(Path("test_workspace").resolve()), 0
         )
 
-    def test_genie_logs_command_with_negative_tail(self, mock_genie_service_with_exceptions):
+    def test_genie_logs_command_with_negative_tail(
+        self, mock_genie_service_with_exceptions
+    ):
         """Test logs command with negative tail parameter."""
         mock_genie_service_with_exceptions.show_genie_logs.return_value = True
 
@@ -681,7 +700,7 @@ class TestGenieCommandsPrintOutput:
             mock_service = Mock()
             mock_service.get_genie_status.return_value = {
                 "genie-server": "✅ Running (PID: 1234, Port: 48886)",
-                "genie-postgres": "🛑 Stopped"
+                "genie-postgres": "🛑 Stopped",
             }
             mock_service_class.return_value = mock_service
 
@@ -693,12 +712,30 @@ class TestGenieCommandsPrintOutput:
 
             # Should fail initially - table formatting not implemented
             assert "📊 Genie Container Status:" in captured.out
-            assert "┌─────────────────────────┬──────────────────────────────────────┐" in captured.out
-            assert "│ Genie Service           │ Status                               │" in captured.out
-            assert "├─────────────────────────┼──────────────────────────────────────┤" in captured.out
-            assert "│ Genie Server            │ ✅ Running (PID: 1234, Port: 48886) │" in captured.out
-            assert "│ Genie Postgres          │ 🛑 Stopped                           │" in captured.out
-            assert "└─────────────────────────┴──────────────────────────────────────┘" in captured.out
+            assert (
+                "┌─────────────────────────┬──────────────────────────────────────┐"
+                in captured.out
+            )
+            assert (
+                "│ Genie Service           │ Status                               │"
+                in captured.out
+            )
+            assert (
+                "├─────────────────────────┼──────────────────────────────────────┤"
+                in captured.out
+            )
+            assert (
+                "│ Genie Server            │ ✅ Running (PID: 1234, Port: 48886) │"
+                in captured.out
+            )
+            assert (
+                "│ Genie Postgres          │ 🛑 Stopped                           │"
+                in captured.out
+            )
+            assert (
+                "└─────────────────────────┴──────────────────────────────────────┘"
+                in captured.out
+            )
 
     def test_failure_print_messages(self, capsys):
         """Test failure scenarios print appropriate error messages."""
@@ -735,7 +772,9 @@ class TestGenieCommandsContainerIntegration:
             mock_service_class.return_value = mock_service
             yield mock_service
 
-    def test_genie_container_port_validation(self, mock_genie_service_container_ops, temp_workspace):
+    def test_genie_container_port_validation(
+        self, mock_genie_service_container_ops, temp_workspace
+    ):
         """Test Genie container uses correct port 48886."""
         mock_status = {
             "genie-server": "✅ Running (Port: 48886)",
@@ -749,7 +788,9 @@ class TestGenieCommandsContainerIntegration:
         # Should fail initially - port validation logic not implemented
         assert mock_genie_service_container_ops.get_genie_status.called
 
-    def test_genie_all_in_one_container_status(self, mock_genie_service_container_ops, temp_workspace):
+    def test_genie_all_in_one_container_status(
+        self, mock_genie_service_container_ops, temp_workspace
+    ):
         """Test status check for all-in-one container (PostgreSQL + FastAPI)."""
         # Simulate all-in-one container status
         mock_status = {
@@ -766,7 +807,9 @@ class TestGenieCommandsContainerIntegration:
         assert result is True
         assert mock_genie_service_container_ops.get_genie_status.called
 
-    def test_genie_container_health_check_integration(self, mock_genie_service_container_ops, temp_workspace):
+    def test_genie_container_health_check_integration(
+        self, mock_genie_service_container_ops, temp_workspace
+    ):
         """Test integration with container health check endpoint."""
         # Mock health check response scenario
         mock_genie_service_container_ops.get_genie_status.return_value = {
@@ -781,7 +824,9 @@ class TestGenieCommandsContainerIntegration:
         assert result is True
         assert mock_genie_service_container_ops.get_genie_status.called
 
-    def test_genie_container_supervisor_logs(self, mock_genie_service_container_ops, temp_workspace):
+    def test_genie_container_supervisor_logs(
+        self, mock_genie_service_container_ops, temp_workspace
+    ):
         """Test supervisor logs access in all-in-one container."""
         mock_genie_service_container_ops.show_genie_logs.return_value = True
 
@@ -794,7 +839,9 @@ class TestGenieCommandsContainerIntegration:
             str(Path(temp_workspace).resolve()), 20
         )
 
-    def test_genie_container_resource_limits(self, mock_genie_service_container_ops, temp_workspace):
+    def test_genie_container_resource_limits(
+        self, mock_genie_service_container_ops, temp_workspace
+    ):
         """Test status includes container resource information."""
         mock_status = {
             "genie-server": "✅ Running (Memory: 512M/2G, CPU: 0.3/1.0)",
@@ -809,7 +856,9 @@ class TestGenieCommandsContainerIntegration:
         assert result is True
         assert mock_genie_service_container_ops.get_genie_status.called
 
-    def test_genie_container_network_isolation(self, mock_genie_service_container_ops, temp_workspace):
+    def test_genie_container_network_isolation(
+        self, mock_genie_service_container_ops, temp_workspace
+    ):
         """Test Genie network isolation validation."""
         mock_status = {
             "network": "hive_genie_network (isolated)",
@@ -824,7 +873,9 @@ class TestGenieCommandsContainerIntegration:
         assert result is True
         assert mock_genie_service_container_ops.get_genie_status.called
 
-    def test_genie_container_volume_persistence(self, mock_genie_service_container_ops, temp_workspace):
+    def test_genie_container_volume_persistence(
+        self, mock_genie_service_container_ops, temp_workspace
+    ):
         """Test Genie container volume persistence validation."""
         mock_status = {
             "volumes": "3 volumes mounted (logs, data, supervisor)",

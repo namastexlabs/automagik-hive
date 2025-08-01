@@ -78,7 +78,7 @@ def mock_invalid_env_vars() -> dict[str, str]:
     return {
         "HIVE_METRICS_BATCH_SIZE": "999999",  # Too high, should clamp to 10000
         "HIVE_METRICS_FLUSH_INTERVAL": "-1",  # Too low, should clamp to 0.1
-        "HIVE_METRICS_QUEUE_SIZE": "5",       # Too low, should clamp to 10
+        "HIVE_METRICS_QUEUE_SIZE": "5",  # Too low, should clamp to 10
     }
 
 
@@ -103,8 +103,10 @@ def clean_environment() -> Generator[None, None, None]:
 
     # Clear environment variables that might interfere with tests
     config_vars = [
-        var for var in os.environ.keys()
-        if var.startswith("HIVE_") or var in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "LANGWATCH_API_KEY"]
+        var
+        for var in os.environ.keys()
+        if var.startswith("HIVE_")
+        or var in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "LANGWATCH_API_KEY"]
     ]
 
     for var in config_vars:
@@ -131,9 +133,7 @@ def mock_settings_file(temp_project_dir: Path) -> Generator[Path, None, None]:
 
 @pytest.fixture
 def isolated_settings(
-    temp_project_dir: Path,
-    clean_singleton: None,
-    mock_settings_file: Path
+    temp_project_dir: Path, clean_singleton: None, mock_settings_file: Path
 ) -> None:
     """Provide isolated settings environment for testing."""
     # This fixture combines temp directory, clean singleton, and mock settings file

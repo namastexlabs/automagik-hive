@@ -309,7 +309,9 @@ class TestMetricsServicePerformance:
         final_stats = service.get_stats()
 
         # Basic functionality test
-        assert final_stats["total_collected"] >= 10, "Should have collected some metrics"
+        assert final_stats["total_collected"] >= 10, (
+            "Should have collected some metrics"
+        )
 
         # Queue should be reasonable
         assert final_stats["queue_size"] <= 100, (

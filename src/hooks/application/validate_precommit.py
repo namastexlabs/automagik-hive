@@ -5,14 +5,13 @@ against root-level organization rules. It orchestrates domain entities
 and implements the main validation workflow.
 """
 
-
 from ..domain.entities import FileChange, HookValidationResult, ValidationResult
 from ..domain.value_objects import GenieStructure, RootWhitelist, ValidationConfig
 
 
 class ValidatePreCommitUseCase:
     """Core use case for pre-commit validation.
-    
+
     This class implements the main business logic for validating file changes
     against organizational rules. It processes file changes and determines
     whether to allow, block, or bypass validation.
@@ -22,10 +21,10 @@ class ValidatePreCommitUseCase:
         self,
         whitelist: RootWhitelist,
         genie_structure: GenieStructure,
-        config: ValidationConfig = None
+        config: ValidationConfig = None,
     ):
         """Initialize validation use case with configuration.
-        
+
         Args:
             whitelist: Allowed root-level file patterns
             genie_structure: Valid genie workspace structure
@@ -36,16 +35,14 @@ class ValidatePreCommitUseCase:
         self.config = config or ValidationConfig.default()
 
     def execute(
-        self,
-        file_changes: list[FileChange],
-        bypass_flag: bool = False
+        self, file_changes: list[FileChange], bypass_flag: bool = False
     ) -> HookValidationResult:
         """Execute pre-commit validation on file changes.
-        
+
         Args:
             file_changes: List of file changes to validate
             bypass_flag: Whether to bypass validation (emergency mode)
-            
+
         Returns:
             HookValidationResult containing validation outcome and details
         """
@@ -82,15 +79,15 @@ class ValidatePreCommitUseCase:
             allowed_files=allowed_files,
             bypass_files=[],
             error_messages=error_messages,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
     def _validate_file_change(self, change: FileChange) -> dict:
         """Validate a single file change against all rules.
-        
+
         Args:
             change: FileChange to validate
-            
+
         Returns:
             Dictionary with validation result and error message
         """
@@ -108,28 +105,28 @@ class ValidatePreCommitUseCase:
                 return {"blocked": False, "error_message": ""}
             return {
                 "blocked": True,
-                "error_message": self._generate_md_error_message(change)
+                "error_message": self._generate_md_error_message(change),
             }
 
         # Special handling for directories
         if change.is_directory:
             return {
                 "blocked": True,
-                "error_message": self._generate_directory_error_message(change)
+                "error_message": self._generate_directory_error_message(change),
             }
 
         # Block all other root-level files
         return {
             "blocked": True,
-            "error_message": self._generate_generic_error_message(change)
+            "error_message": self._generate_generic_error_message(change),
         }
 
     def _generate_md_error_message(self, change: FileChange) -> str:
         """Generate error message for blocked markdown files.
-        
+
         Args:
             change: FileChange for markdown file
-            
+
         Returns:
             Human-readable error message
         """
@@ -143,10 +140,10 @@ class ValidatePreCommitUseCase:
 
     def _generate_directory_error_message(self, change: FileChange) -> str:
         """Generate error message for blocked directories.
-        
+
         Args:
             change: FileChange for directory
-            
+
         Returns:
             Human-readable error message
         """
@@ -158,10 +155,10 @@ class ValidatePreCommitUseCase:
 
     def _generate_generic_error_message(self, change: FileChange) -> str:
         """Generate error message for other blocked files.
-        
+
         Args:
             change: FileChange for blocked file
-            
+
         Returns:
             Human-readable error message
         """
@@ -173,41 +170,53 @@ class ValidatePreCommitUseCase:
 
     def _get_additional_suggestions(self, change: FileChange) -> list[str]:
         """Get additional context-specific suggestions for blocked files.
-        
+
         Args:
             change: FileChange that was blocked
-            
+
         Returns:
             List of additional suggestion strings
         """
         suggestions = []
 
         if change.file_extension == ".py":
-            suggestions.append("🐍 Python files belong in /lib/, /api/, or /ai/ directories")
+            suggestions.append(
+                "🐍 Python files belong in /lib/, /api/, or /ai/ directories"
+            )
         elif change.file_extension in [".yaml", ".yml"]:
-            suggestions.append("⚙️ Configuration files should be in appropriate service directories")
+            suggestions.append(
+                "⚙️ Configuration files should be in appropriate service directories"
+            )
         elif change.file_extension == ".json":
-            suggestions.append("📄 JSON files should be in /lib/config/ or relevant service directory")
+            suggestions.append(
+                "📄 JSON files should be in /lib/config/ or relevant service directory"
+            )
         elif change.file_extension in [".txt", ".log"]:
-            suggestions.append("📝 Text files should be in /docs/ or appropriate subdirectory")
+            suggestions.append(
+                "📝 Text files should be in /docs/ or appropriate subdirectory"
+            )
 
         # File-specific suggestions based on name patterns
         filename_lower = change.path.lower()
         if "test" in filename_lower:
             suggestions.append("🧪 Test files belong in /tests/ directory")
         elif "config" in filename_lower:
-            suggestions.append("⚙️ Configuration files belong in /lib/config/ or service directories")
+            suggestions.append(
+                "⚙️ Configuration files belong in /lib/config/ or service directories"
+            )
         elif "script" in filename_lower:
             suggestions.append("📜 Scripts should be in /scripts/ directory")
 
         return suggestions
 
-    def _create_bypass_result(self, file_changes: list[FileChange]) -> HookValidationResult:
+    def _create_bypass_result(
+        self, file_changes: list[FileChange]
+    ) -> HookValidationResult:
         """Create validation result for bypass scenario.
-        
+
         Args:
             file_changes: List of file changes being bypassed
-            
+
         Returns:
             HookValidationResult indicating bypass mode
         """
@@ -218,12 +227,12 @@ class ValidatePreCommitUseCase:
             bypass_files=file_changes,
             error_messages=[
                 "⚠️ BYPASS ACTIVE: Root-level file restrictions temporarily disabled",
-                f"📊 Processing {len(file_changes)} files without validation"
+                f"📊 Processing {len(file_changes)} files without validation",
             ],
             suggestions=[
                 "🔧 Remember to remove bypass flag after emergency fix",
-                "📋 Review bypassed files for proper organization later"
-            ]
+                "📋 Review bypassed files for proper organization later",
+            ],
         )
 
 
@@ -238,7 +247,7 @@ class ValidationMetrics:
 
     def record_validation(self, result: HookValidationResult):
         """Record metrics from a validation result.
-        
+
         Args:
             result: HookValidationResult to extract metrics from
         """
@@ -257,7 +266,7 @@ class ValidationMetrics:
 
     def get_summary(self) -> dict:
         """Get summary of collected metrics.
-        
+
         Returns:
             Dictionary containing validation metrics
         """
@@ -267,7 +276,8 @@ class ValidationMetrics:
             "bypassed_count": self.bypassed_count,
             "success_rate": (
                 (self.total_validations - self.blocked_count) / self.total_validations
-                if self.total_validations > 0 else 1.0
+                if self.total_validations > 0
+                else 1.0
             ),
-            "file_type_stats": self.file_type_stats
+            "file_type_stats": self.file_type_stats,
         }

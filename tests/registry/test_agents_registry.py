@@ -194,7 +194,9 @@ class TestAgentRegistry:
             assert hasattr(agent, "run") or hasattr(agent, "metadata")
 
     @pytest.mark.asyncio
-    async def test_agent_registry_get_all_agents_with_failures(self, mock_database_layer):
+    async def test_agent_registry_get_all_agents_with_failures(
+        self, mock_database_layer
+    ):
         """Test getting all agents when some fail to load."""
         agent_ids = ["agent-1", "agent-2", "agent-3"]
         mock_agent = mock_database_layer["agent"]
@@ -212,7 +214,7 @@ class TestAgentRegistry:
                     (_ for _ in ()).throw(Exception("Failed to create agent"))
                     if agent_id == "agent-2"
                     else mock_agent
-                )
+                ),
             ):
                 with patch("ai.agents.registry.logger") as mock_logger:
                     agents = await AgentRegistry.get_all_agents()

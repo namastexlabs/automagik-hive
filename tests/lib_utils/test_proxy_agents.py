@@ -37,7 +37,6 @@ class TestProxyAgentsImports:
     def test_utility_imports(self):
         """Test utility imports."""
 
-
         assert Path is not None
         assert yaml is not None
 
@@ -135,7 +134,9 @@ class TestAgnoAgentProxyInitialization:
 
     def test_parameter_discovery_fallback(self):
         """Test parameter discovery fallback when introspection fails."""
-        with patch("inspect.signature", side_effect=Exception("Mock inspection failure")):
+        with patch(
+            "inspect.signature", side_effect=Exception("Mock inspection failure")
+        ):
             proxy = AgnoAgentProxy()
 
             # Should fallback to hardcoded parameters
@@ -219,7 +220,9 @@ class TestAgnoAgentProxyCreateAgent:
 
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
-    async def test_create_agent_basic(self, mock_resolve_model, mock_agent_class, proxy, sample_config):
+    async def test_create_agent_basic(
+        self, mock_resolve_model, mock_agent_class, proxy, sample_config
+    ):
         """Test basic agent creation."""
         mock_resolve_model.return_value = "mock_model"
         mock_agent = MagicMock()
@@ -237,7 +240,9 @@ class TestAgnoAgentProxyCreateAgent:
 
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
-    async def test_create_agent_with_session_and_debug(self, mock_resolve_model, mock_agent_class, proxy, sample_config):
+    async def test_create_agent_with_session_and_debug(
+        self, mock_resolve_model, mock_agent_class, proxy, sample_config
+    ):
         """Test agent creation with session_id and debug_mode."""
         mock_resolve_model.return_value = "mock_model"
         mock_agent = MagicMock()
@@ -270,7 +275,9 @@ class TestAgnoAgentProxyCreateAgent:
 
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
-    async def test_create_agent_with_metrics_service(self, mock_resolve_model, mock_agent_class, proxy, sample_config):
+    async def test_create_agent_with_metrics_service(
+        self, mock_resolve_model, mock_agent_class, proxy, sample_config
+    ):
         """Test agent creation with metrics service."""
         mock_resolve_model.return_value = "mock_model"
         mock_agent = MagicMock()
@@ -289,9 +296,14 @@ class TestAgnoAgentProxyCreateAgent:
         assert agent is not None
         assert agent.metadata.get("metrics_service") == mock_metrics
 
-    @patch("lib.utils.proxy_agents.Agent", side_effect=Exception("Mock agent creation error"))
+    @patch(
+        "lib.utils.proxy_agents.Agent",
+        side_effect=Exception("Mock agent creation error"),
+    )
     @patch("lib.config.models.resolve_model")
-    async def test_create_agent_creation_error(self, mock_resolve_model, mock_agent_class, proxy, sample_config):
+    async def test_create_agent_creation_error(
+        self, mock_resolve_model, mock_agent_class, proxy, sample_config
+    ):
         """Test create_agent error handling."""
         mock_resolve_model.return_value = "mock_model"
         with pytest.raises(Exception, match="Mock agent creation error"):
@@ -341,10 +353,20 @@ class TestConfigurationProcessing:
             "storage": {"type": "sqlite"},
         }
 
-        with patch("lib.utils.proxy_agents.AgnoAgentProxy._handle_model_config", return_value="mock_model") as mock_model_handler, \
-             patch("lib.utils.proxy_agents.AgnoAgentProxy._handle_agent_metadata", return_value={"name": "Test Agent"}) as mock_agent_handler, \
-             patch("lib.utils.proxy_agents.AgnoAgentProxy._handle_storage_config", return_value="mock_storage") as mock_storage_handler:
-
+        with (
+            patch(
+                "lib.utils.proxy_agents.AgnoAgentProxy._handle_model_config",
+                return_value="mock_model",
+            ) as mock_model_handler,
+            patch(
+                "lib.utils.proxy_agents.AgnoAgentProxy._handle_agent_metadata",
+                return_value={"name": "Test Agent"},
+            ) as mock_agent_handler,
+            patch(
+                "lib.utils.proxy_agents.AgnoAgentProxy._handle_storage_config",
+                return_value="mock_storage",
+            ) as mock_storage_handler,
+        ):
             processed = proxy._process_config(config, "test-agent", None)
 
             mock_model_handler.assert_called_once()
@@ -395,9 +417,7 @@ class TestCustomParameterHandlers:
             "custom_param": "value",
         }
 
-        result = proxy._handle_model_config(
-            model_config, {}, "test-agent", None
-        )
+        result = proxy._handle_model_config(model_config, {}, "test-agent", None)
 
         mock_resolve_model.assert_called_once_with(
             model_id="claude-sonnet-4-20250514",
@@ -452,9 +472,7 @@ class TestCustomParameterHandlers:
 
     def test_handle_memory_config_none(self, proxy):
         """Test memory configuration handler with None config."""
-        result = proxy._handle_memory_config(
-            None, {}, "test-agent", "test://db"
-        )
+        result = proxy._handle_memory_config(None, {}, "test-agent", "test://db")
 
         assert result is None
 
@@ -466,9 +484,7 @@ class TestCustomParameterHandlers:
             "role": "test_role",
         }
 
-        result = proxy._handle_agent_metadata(
-            agent_config, {}, "test-agent", None
-        )
+        result = proxy._handle_agent_metadata(agent_config, {}, "test-agent", None)
 
         expected = {
             "name": "Test Agent",
@@ -481,9 +497,7 @@ class TestCustomParameterHandlers:
         """Test agent metadata handler with default values."""
         agent_config = {}
 
-        result = proxy._handle_agent_metadata(
-            agent_config, {}, "test-agent", None
-        )
+        result = proxy._handle_agent_metadata(agent_config, {}, "test-agent", None)
 
         assert result["name"] == "Agent test-agent"
         assert result["description"] is None
@@ -507,9 +521,7 @@ class TestCustomParameterHandlers:
             "unsupported_param": "ignored",
         }
 
-        result = proxy._handle_display_section(
-            display_config, {}, "test-agent", None
-        )
+        result = proxy._handle_display_section(display_config, {}, "test-agent", None)
 
         expected = {
             "markdown": True,
@@ -520,15 +532,15 @@ class TestCustomParameterHandlers:
 
     def test_handle_display_section_invalid(self, proxy):
         """Test display section handler with invalid config."""
-        result = proxy._handle_display_section(
-            "not_a_dict", {}, "test-agent", None
-        )
+        result = proxy._handle_display_section("not_a_dict", {}, "test-agent", None)
 
         assert result == {}
 
     @patch("lib.knowledge.knowledge_factory.get_knowledge_base")
     @patch("lib.utils.version_factory.load_global_knowledge_config")
-    def test_handle_knowledge_filter_success(self, mock_load_global, mock_get_kb, proxy):
+    def test_handle_knowledge_filter_success(
+        self, mock_load_global, mock_get_kb, proxy
+    ):
         """Test knowledge filter handler success path."""
         mock_load_global.return_value = {
             "csv_file_path": "test.csv",
@@ -545,7 +557,10 @@ class TestCustomParameterHandlers:
         assert result == "mock_knowledge_base"
         mock_get_kb.assert_called_once()
 
-    @patch("lib.utils.version_factory.load_global_knowledge_config", side_effect=Exception("Config error"))
+    @patch(
+        "lib.utils.version_factory.load_global_knowledge_config",
+        side_effect=Exception("Config error"),
+    )
     def test_handle_knowledge_filter_config_error(self, mock_load_global, proxy):
         """Test knowledge filter handler when global config fails."""
         knowledge_filter = {"max_results": 10}
@@ -560,7 +575,10 @@ class TestCustomParameterHandlers:
         """Test knowledge filter handler without db_url."""
         knowledge_filter = {"max_results": 10}
 
-        with patch("lib.utils.version_factory.load_global_knowledge_config", return_value={"csv_file_path": "test.csv"}):
+        with patch(
+            "lib.utils.version_factory.load_global_knowledge_config",
+            return_value={"csv_file_path": "test.csv"},
+        ):
             result = proxy._handle_knowledge_filter(
                 knowledge_filter, {}, "test-agent", None
             )
@@ -568,7 +586,9 @@ class TestCustomParameterHandlers:
         assert result is None
 
     @patch("lib.utils.version_factory.load_global_knowledge_config")
-    def test_handle_knowledge_filter_warns_agent_csv_path(self, mock_load_global, proxy):
+    def test_handle_knowledge_filter_warns_agent_csv_path(
+        self, mock_load_global, proxy
+    ):
         """Test knowledge filter handler warns about agent-level csv_file_path."""
         mock_load_global.return_value = {"csv_file_path": "global.csv"}
 
@@ -582,7 +602,9 @@ class TestCustomParameterHandlers:
         )
 
         # Should still process but warn about the agent-level path
-        assert result is None  # Will be None because mocked get_knowledge_base isn't called
+        assert (
+            result is None
+        )  # Will be None because mocked get_knowledge_base isn't called
 
 
 class TestMetricsWrapping:
@@ -608,7 +630,9 @@ class TestMetricsWrapping:
         metrics.collect_from_response = MagicMock(return_value=True)
         return metrics
 
-    def test_wrap_agent_with_metrics_sync(self, proxy, mock_agent, mock_metrics_service):
+    def test_wrap_agent_with_metrics_sync(
+        self, proxy, mock_agent, mock_metrics_service
+    ):
         """Test wrapping agent with metrics for synchronous execution."""
         config = {"agent": {"name": "Test Agent"}}
 
@@ -629,7 +653,9 @@ class TestMetricsWrapping:
         # Verify metrics collection was called
         mock_metrics_service.collect_from_response.assert_called_once()
 
-    async def test_wrap_agent_with_metrics_async(self, proxy, mock_agent, mock_metrics_service):
+    async def test_wrap_agent_with_metrics_async(
+        self, proxy, mock_agent, mock_metrics_service
+    ):
         """Test wrapping agent with metrics for asynchronous execution."""
         config = {"agent": {"name": "Test Agent"}}
 
@@ -645,7 +671,9 @@ class TestMetricsWrapping:
         mock_agent.arun.assert_called_once_with("test_input")
 
         # Verify metrics collection was called
-        assert mock_metrics_service.collect_from_response.call_count == 2  # Called from both sync and async
+        assert (
+            mock_metrics_service.collect_from_response.call_count == 2
+        )  # Called from both sync and async
 
     def test_wrap_agent_without_arun(self, proxy, mock_metrics_service):
         """Test wrapping agent that doesn't have arun method."""
@@ -664,9 +692,13 @@ class TestMetricsWrapping:
         assert hasattr(wrapped_agent, "run")
         assert not hasattr(wrapped_agent, "arun")
 
-    def test_wrapped_run_with_metrics_error(self, proxy, mock_agent, mock_metrics_service):
+    def test_wrapped_run_with_metrics_error(
+        self, proxy, mock_agent, mock_metrics_service
+    ):
         """Test wrapped run method when metrics collection fails."""
-        mock_metrics_service.collect_from_response.side_effect = Exception("Metrics error")
+        mock_metrics_service.collect_from_response.side_effect = Exception(
+            "Metrics error"
+        )
         config = {"agent": {"name": "Test Agent"}}
 
         wrapped_agent = proxy._wrap_agent_with_metrics(
@@ -797,9 +829,14 @@ class TestMetadataCreation:
         # All custom parameters should have empty defaults
         custom_params = metadata["custom_parameters"]
         for param_name in [
-            "knowledge_filter", "suggested_actions", "escalation_triggers",
-            "streaming_config", "events_config", "context_config",
-            "display_config", "display"
+            "knowledge_filter",
+            "suggested_actions",
+            "escalation_triggers",
+            "streaming_config",
+            "events_config",
+            "context_config",
+            "display_config",
+            "display",
         ]:
             assert custom_params[param_name] == {}
 
@@ -839,7 +876,9 @@ class TestEdgeCasesAndErrorHandling:
         return AgnoAgentProxy()
 
     @patch("lib.utils.proxy_agents.Agent")
-    async def test_create_agent_with_knowledge_filter_special_handling(self, mock_agent_class, proxy):
+    async def test_create_agent_with_knowledge_filter_special_handling(
+        self, mock_agent_class, proxy
+    ):
         """Test create_agent with knowledge_filter special handling."""
         mock_agent = MagicMock()
         mock_agent.metadata = {}
@@ -851,7 +890,9 @@ class TestEdgeCasesAndErrorHandling:
         }
 
         # Mock the knowledge filter handler to return a knowledge base
-        with patch.object(proxy, "_handle_knowledge_filter", return_value="mock_kb") as mock_handler:
+        with patch.object(
+            proxy, "_handle_knowledge_filter", return_value="mock_kb"
+        ) as mock_handler:
             agent = await proxy.create_agent(
                 component_id="test-agent",
                 config=config,
@@ -915,9 +956,10 @@ class TestEdgeCasesAndErrorHandling:
                 "another_param": "value",
             }
 
-        with patch.object(proxy, "_process_config", side_effect=mock_process_config), \
-             patch("lib.utils.proxy_agents.Agent") as mock_agent_class:
-
+        with (
+            patch.object(proxy, "_process_config", side_effect=mock_process_config),
+            patch("lib.utils.proxy_agents.Agent") as mock_agent_class,
+        ):
             mock_agent = MagicMock()
             mock_agent.metadata = {}
             mock_agent_class.return_value = mock_agent
@@ -937,16 +979,23 @@ class TestEdgeCasesAndErrorHandling:
         """Test knowledge filter handler when no csv_file_path in global config."""
         knowledge_filter = {"max_results": 10}
 
-        with patch("lib.utils.version_factory.load_global_knowledge_config", return_value={}):
+        with patch(
+            "lib.utils.version_factory.load_global_knowledge_config", return_value={}
+        ):
             result = proxy._handle_knowledge_filter(
                 knowledge_filter, {}, "test-agent", "test://db"
             )
 
         assert result is None
 
-    @patch("lib.knowledge.knowledge_factory.get_knowledge_base", side_effect=Exception("KB creation failed"))
+    @patch(
+        "lib.knowledge.knowledge_factory.get_knowledge_base",
+        side_effect=Exception("KB creation failed"),
+    )
     @patch("lib.utils.version_factory.load_global_knowledge_config")
-    def test_handle_knowledge_filter_kb_creation_failure(self, mock_load_global, mock_get_kb, proxy):
+    def test_handle_knowledge_filter_kb_creation_failure(
+        self, mock_load_global, mock_get_kb, proxy
+    ):
         """Test knowledge filter handler when knowledge base creation fails."""
         mock_load_global.return_value = {"csv_file_path": "test.csv"}
         knowledge_filter = {"max_results": 10}
@@ -1004,10 +1053,7 @@ class TestEdgeCasesAndErrorHandling:
         metrics_service = MagicMock()
         metrics_service.collect_from_response = MagicMock(return_value=True)
 
-        config = {
-            "metrics_enabled": True,
-            "agent": {"metrics_enabled": True}
-        }
+        config = {"metrics_enabled": True, "agent": {"metrics_enabled": True}}
 
         wrapped_agent = proxy._wrap_agent_with_metrics(
             agent, "test-agent", config, metrics_service
@@ -1106,7 +1152,10 @@ class TestComprehensiveIntegration:
         metadata = proxy._create_metadata(config, "comprehensive-test-agent")
         assert metadata["version"] == 3
         assert metadata["agent_id"] == "comprehensive-test-agent"
-        assert metadata["custom_parameters"]["suggested_actions"] == ["action1", "action2"]
+        assert metadata["custom_parameters"]["suggested_actions"] == [
+            "action1",
+            "action2",
+        ]
         assert metadata["custom_parameters"]["escalation_triggers"] == {"threshold": 10}
 
     @patch("lib.utils.proxy_agents.Agent")

@@ -128,7 +128,6 @@ class MCPConfigManager:
                 mcp_config, available_servers, credentials
             )
 
-
         return mcp_config
 
     def _detect_available_servers(
@@ -145,7 +144,6 @@ class MCPConfigManager:
         available_servers = {}
 
         for server_name, server_config in self.mcp_servers.items():
-
             # Skip health check if disabled
             if not health_check:
                 available_servers[server_name] = {
@@ -531,7 +529,8 @@ class MCPConfigManager:
         try:
             result = subprocess.run(
                 ["npx", "-y", "@upstash/context7-mcp", "--help"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 timeout=30,
             )
             return result.returncode == 0, "NPM package available"
@@ -545,7 +544,8 @@ class MCPConfigManager:
         try:
             result = subprocess.run(
                 ["uvx", "automagik-tools@0.7.8", "tool", "evolution-api", "--help"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 timeout=30,
             )
             return result.returncode == 0, "WhatsApp tool available"
@@ -559,7 +559,8 @@ class MCPConfigManager:
         try:
             result = subprocess.run(
                 ["uvx", "automagik-tools@0.7.8", "tool", "wait", "--help"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 timeout=30,
             )
             return result.returncode == 0, "Wait tool available"
@@ -598,18 +599,13 @@ class MCPConfigManager:
         health_results = {}
 
         for server_name, server_config in self.mcp_servers.items():
-
             is_healthy, status_message = server_config["health_check"](
                 workspace_path, credentials
             )
 
             health_results[server_name] = (is_healthy, status_message)
 
-
-        sum(
-            1 for is_healthy, _ in health_results.values() if is_healthy
-        )
+        sum(1 for is_healthy, _ in health_results.values() if is_healthy)
         len(health_results)
-
 
         return health_results

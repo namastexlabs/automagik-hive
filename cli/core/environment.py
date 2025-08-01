@@ -360,7 +360,6 @@ def print_validation_results(validation: EnvironmentValidation) -> None:
     """Print formatted validation results to console."""
     # Print individual check results
     for check in validation.checks:
-
         if check.guidance and not check.passed:
             pass
 
@@ -374,7 +373,6 @@ def print_validation_results(validation: EnvironmentValidation) -> None:
         for check in validation.warnings:
             if check.guidance:
                 pass
-
 
 
 # Import fix for os module

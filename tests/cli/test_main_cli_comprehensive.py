@@ -109,12 +109,13 @@ class TestCLICommandRouting:
     @pytest.fixture
     def mock_command_handlers(self):
         """Mock all command handler classes."""
-        with patch("cli.main.InitCommands") as mock_init, \
-             patch("cli.main.WorkspaceCommands") as mock_workspace, \
-             patch("cli.main.PostgreSQLCommands") as mock_postgres, \
-             patch("cli.main.AgentCommands") as mock_agent, \
-             patch("cli.main.UninstallCommands") as mock_uninstall:
-
+        with (
+            patch("cli.main.InitCommands") as mock_init,
+            patch("cli.main.WorkspaceCommands") as mock_workspace,
+            patch("cli.main.PostgreSQLCommands") as mock_postgres,
+            patch("cli.main.AgentCommands") as mock_agent,
+            patch("cli.main.UninstallCommands") as mock_uninstall,
+        ):
             # Configure mock instances
             mock_init_instance = Mock()
             mock_workspace_instance = Mock()
@@ -133,7 +134,7 @@ class TestCLICommandRouting:
                 "workspace": mock_workspace_instance,
                 "postgres": mock_postgres_instance,
                 "agent": mock_agent_instance,
-                "uninstall": mock_uninstall_instance
+                "uninstall": mock_uninstall_instance,
             }
 
     def test_init_command_routing(self, mock_command_handlers):
@@ -156,7 +157,9 @@ class TestCLICommandRouting:
 
         # Should fail initially - workspace parameter passing not implemented
         assert result == 0
-        mock_command_handlers["init"].init_workspace.assert_called_once_with("my-workspace")
+        mock_command_handlers["init"].init_workspace.assert_called_once_with(
+            "my-workspace"
+        )
 
     def test_init_command_failure(self, mock_command_handlers):
         """Test --init command failure handling."""
@@ -189,7 +192,10 @@ class TestCLICommandRouting:
         with patch("subprocess.run") as mock_subprocess:
             mock_subprocess.return_value = None
 
-            with patch("sys.argv", ["automagik-hive", "--serve", "--host", "127.0.0.1", "--port", "9000"]):
+            with patch(
+                "sys.argv",
+                ["automagik-hive", "--serve", "--host", "127.0.0.1", "--port", "9000"],
+            ):
                 result = main()
 
         # Should fail initially - custom host/port not implemented
@@ -232,7 +238,9 @@ class TestCLICommandRouting:
 
         # Should fail initially - workspace startup not implemented
         assert result == 0
-        mock_command_handlers["workspace"].start_workspace.assert_called_once_with("./test-workspace")
+        mock_command_handlers["workspace"].start_workspace.assert_called_once_with(
+            "./test-workspace"
+        )
 
     def test_workspace_startup_with_absolute_path(self, mock_command_handlers):
         """Test workspace startup with absolute path."""
@@ -244,7 +252,9 @@ class TestCLICommandRouting:
 
         # Should fail initially - absolute path handling not implemented
         assert result == 0
-        mock_command_handlers["workspace"].start_workspace.assert_called_once_with("/absolute/path/workspace")
+        mock_command_handlers["workspace"].start_workspace.assert_called_once_with(
+            "/absolute/path/workspace"
+        )
 
     def test_workspace_startup_invalid_path(self, mock_command_handlers):
         """Test workspace startup with invalid path."""
@@ -275,7 +285,9 @@ class TestCLICommandRouting:
 
         # Should fail initially - workspace parameter not passed
         assert result == 0
-        mock_command_handlers["postgres"].postgres_status.assert_called_once_with("./workspace")
+        mock_command_handlers["postgres"].postgres_status.assert_called_once_with(
+            "./workspace"
+        )
 
     def test_postgres_start_command(self, mock_command_handlers):
         """Test --postgres-start command routing."""
@@ -330,7 +342,9 @@ class TestCLICommandRouting:
 
         # Should fail initially - custom tail not implemented
         assert result == 0
-        mock_command_handlers["postgres"].postgres_logs.assert_called_once_with(".", 100)
+        mock_command_handlers["postgres"].postgres_logs.assert_called_once_with(
+            ".", 100
+        )
 
     def test_postgres_health_command(self, mock_command_handlers):
         """Test --postgres-health command routing."""
@@ -433,14 +447,18 @@ class TestCLICommandRouting:
 
     def test_uninstall_command(self, mock_command_handlers):
         """Test --uninstall command routing."""
-        mock_command_handlers["uninstall"].uninstall_current_workspace.return_value = True
+        mock_command_handlers[
+            "uninstall"
+        ].uninstall_current_workspace.return_value = True
 
         with patch("sys.argv", ["automagik-hive", "--uninstall"]):
             result = main()
 
         # Should fail initially - uninstall not implemented
         assert result == 0
-        mock_command_handlers["uninstall"].uninstall_current_workspace.assert_called_once()
+        mock_command_handlers[
+            "uninstall"
+        ].uninstall_current_workspace.assert_called_once()
 
     def test_uninstall_global_command(self, mock_command_handlers):
         """Test --uninstall-global command routing."""
@@ -472,12 +490,13 @@ class TestCLIErrorHandling:
     @pytest.fixture
     def mock_failing_commands(self):
         """Mock command handlers that return failure."""
-        with patch("cli.main.InitCommands") as mock_init, \
-             patch("cli.main.WorkspaceCommands") as mock_workspace, \
-             patch("cli.main.PostgreSQLCommands") as mock_postgres, \
-             patch("cli.main.AgentCommands") as mock_agent, \
-             patch("cli.main.UninstallCommands") as mock_uninstall:
-
+        with (
+            patch("cli.main.InitCommands") as mock_init,
+            patch("cli.main.WorkspaceCommands") as mock_workspace,
+            patch("cli.main.PostgreSQLCommands") as mock_postgres,
+            patch("cli.main.AgentCommands") as mock_agent,
+            patch("cli.main.UninstallCommands") as mock_uninstall,
+        ):
             # Configure all mock instances to return False (failure)
             mock_init.return_value.init_workspace.return_value = False
             mock_workspace.return_value.start_workspace.return_value = False
@@ -517,7 +536,7 @@ class TestCLIErrorHandling:
             ["--agent-status"],
             ["--agent-reset"],
             ["--uninstall"],
-            ["--uninstall-global"]
+            ["--uninstall-global"],
         ]
 
         for command_args in commands_to_test:
@@ -525,7 +544,9 @@ class TestCLIErrorHandling:
                 result = main()
 
                 # Should fail initially - error code handling not implemented
-                assert result == 1, f"Command {command_args} should return exit code 1 on failure"
+                assert result == 1, (
+                    f"Command {command_args} should return exit code 1 on failure"
+                )
 
     def test_workspace_startup_failure(self, mock_failing_commands):
         """Test workspace startup failure returns exit code 1."""
@@ -544,7 +565,9 @@ class TestCLIErrorHandling:
 
     def test_malformed_tail_argument(self):
         """Test handling of malformed --tail argument."""
-        with patch("sys.argv", ["automagik-hive", "--postgres-logs", "--tail", "not-a-number"]):
+        with patch(
+            "sys.argv", ["automagik-hive", "--postgres-logs", "--tail", "not-a-number"]
+        ):
             with pytest.raises(SystemExit):
                 main()
 
@@ -576,12 +599,13 @@ class TestCLICommandCombinations:
     @pytest.fixture
     def mock_command_handlers(self):
         """Mock all command handler classes for combination testing."""
-        with patch("cli.main.InitCommands") as mock_init, \
-             patch("cli.main.WorkspaceCommands") as mock_workspace, \
-             patch("cli.main.PostgreSQLCommands") as mock_postgres, \
-             patch("cli.main.AgentCommands") as mock_agent, \
-             patch("cli.main.UninstallCommands") as mock_uninstall:
-
+        with (
+            patch("cli.main.InitCommands") as mock_init,
+            patch("cli.main.WorkspaceCommands") as mock_workspace,
+            patch("cli.main.PostgreSQLCommands") as mock_postgres,
+            patch("cli.main.AgentCommands") as mock_agent,
+            patch("cli.main.UninstallCommands") as mock_uninstall,
+        ):
             mock_init.return_value.init_workspace.return_value = True
             mock_workspace.return_value.start_workspace.return_value = True
             mock_postgres.return_value.postgres_status.return_value = True
@@ -593,28 +617,38 @@ class TestCLICommandCombinations:
                 "workspace": mock_workspace.return_value,
                 "postgres": mock_postgres.return_value,
                 "agent": mock_agent.return_value,
-                "uninstall": mock_uninstall.return_value
+                "uninstall": mock_uninstall.return_value,
             }
 
     def test_workspace_argument_with_postgres_command(self, mock_command_handlers):
         """Test workspace argument passed to postgres commands."""
-        with patch("sys.argv", ["automagik-hive", "--postgres-status", "./my-workspace"]):
+        with patch(
+            "sys.argv", ["automagik-hive", "--postgres-status", "./my-workspace"]
+        ):
             result = main()
 
         # Should fail initially - workspace parameter not passed correctly
         assert result == 0
-        mock_command_handlers["postgres"].postgres_status.assert_called_once_with("./my-workspace")
+        mock_command_handlers["postgres"].postgres_status.assert_called_once_with(
+            "./my-workspace"
+        )
 
     def test_workspace_argument_with_agent_command(self, mock_command_handlers):
         """Test workspace argument passed to agent commands."""
-        with patch("sys.argv", ["automagik-hive", "--agent-status", "./agent-workspace"]):
+        with patch(
+            "sys.argv", ["automagik-hive", "--agent-status", "./agent-workspace"]
+        ):
             result = main()
 
         # Should fail initially - workspace parameter not passed correctly
         assert result == 0
-        mock_command_handlers["agent"].status.assert_called_once_with("./agent-workspace")
+        mock_command_handlers["agent"].status.assert_called_once_with(
+            "./agent-workspace"
+        )
 
-    def test_workspace_startup_has_precedence_over_other_commands(self, mock_command_handlers):
+    def test_workspace_startup_has_precedence_over_other_commands(
+        self, mock_command_handlers
+    ):
         """Test that workspace startup is detected correctly."""
         # This tests the logic that prevents workspace startup when other commands are present
         with patch("sys.argv", ["automagik-hive", "--postgres-status", "./workspace"]):
@@ -634,9 +668,13 @@ class TestCLICommandCombinations:
 
         # Should fail initially - workspace argument not passed to init
         assert result == 0
-        mock_command_handlers["init"].init_workspace.assert_called_once_with("my-new-workspace")
+        mock_command_handlers["init"].init_workspace.assert_called_once_with(
+            "my-new-workspace"
+        )
 
-    def test_default_workspace_dot_used_when_none_specified(self, mock_command_handlers):
+    def test_default_workspace_dot_used_when_none_specified(
+        self, mock_command_handlers
+    ):
         """Test that '.' is used as default workspace when none specified."""
         commands_using_workspace = [
             "--postgres-status",
@@ -649,7 +687,7 @@ class TestCLICommandCombinations:
             "--agent-stop",
             "--agent-restart",
             "--agent-status",
-            "--agent-reset"
+            "--agent-reset",
         ]
 
         for command in commands_using_workspace:
@@ -657,7 +695,9 @@ class TestCLICommandCombinations:
                 result = main()
 
                 # Should fail initially - default workspace not implemented
-                assert result == 0, f"Command {command} should succeed with default workspace"
+                assert result == 0, (
+                    f"Command {command} should succeed with default workspace"
+                )
 
     def test_postgres_logs_and_agent_logs_tail_parameter(self, mock_command_handlers):
         """Test that --tail parameter is correctly passed to log commands."""
@@ -732,7 +772,10 @@ class TestCLICrossplatformCompatibility:
             mock_agent.install.return_value = True
             mock_agent_class.return_value = mock_agent
 
-            with patch("sys.argv", ["automagik-hive", "--agent-install", "/Users/user/workspace"]):
+            with patch(
+                "sys.argv",
+                ["automagik-hive", "--agent-install", "/Users/user/workspace"],
+            ):
                 result = main()
 
         # Should fail initially - macOS path handling not implemented
@@ -769,12 +812,13 @@ class TestCLIPerformanceAndReliability:
 
         start_time = time.time()
 
-        with patch("cli.main.InitCommands"), \
-             patch("cli.main.WorkspaceCommands"), \
-             patch("cli.main.PostgreSQLCommands"), \
-             patch("cli.main.AgentCommands"), \
-             patch("cli.main.UninstallCommands"):
-
+        with (
+            patch("cli.main.InitCommands"),
+            patch("cli.main.WorkspaceCommands"),
+            patch("cli.main.PostgreSQLCommands"),
+            patch("cli.main.AgentCommands"),
+            patch("cli.main.UninstallCommands"),
+        ):
             with patch("sys.argv", ["automagik-hive", "--help"]):
                 try:
                     main()
@@ -801,7 +845,7 @@ class TestCLIPerformanceAndReliability:
             ["--version"],
             ["--init"],
             ["--postgres-status"],
-            ["--agent-install", "./workspace", "--tail", "100"]
+            ["--agent-install", "./workspace", "--tail", "100"],
         ]
 
         for args in test_args:
@@ -823,12 +867,13 @@ class TestCLIPerformanceAndReliability:
         gc.collect()
         initial_objects = len(gc.get_objects())
 
-        with patch("cli.main.InitCommands"), \
-             patch("cli.main.WorkspaceCommands"), \
-             patch("cli.main.PostgreSQLCommands"), \
-             patch("cli.main.AgentCommands"), \
-             patch("cli.main.UninstallCommands"):
-
+        with (
+            patch("cli.main.InitCommands"),
+            patch("cli.main.WorkspaceCommands"),
+            patch("cli.main.PostgreSQLCommands"),
+            patch("cli.main.AgentCommands"),
+            patch("cli.main.UninstallCommands"),
+        ):
             parser = create_parser()
             args = parser.parse_args([])
 
@@ -862,4 +907,6 @@ class TestCLIPerformanceAndReliability:
                     else:
                         # Other exceptions should be handled gracefully
                         result = main()
-                        assert isinstance(result, int), f"Should return exit code for {scenario_name}"
+                        assert isinstance(result, int), (
+                            f"Should return exit code for {scenario_name}"
+                        )

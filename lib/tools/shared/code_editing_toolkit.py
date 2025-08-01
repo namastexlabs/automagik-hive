@@ -490,6 +490,7 @@ def validate_code_syntax(file_path: str, language: str | None = None) -> str:
 
 # Helper functions
 
+
 def _is_safe_path(path: str) -> bool:
     """Check if the path is safe (relative, within project, no traversal)"""
     if os.path.isabs(path):
@@ -573,16 +574,14 @@ def _find_symbol_definition(
     return None
 
 
-def _find_symbol_line(
-    content: str, symbol_name: str, symbol_type: str
-) -> int | None:
+def _find_symbol_line(content: str, symbol_name: str, symbol_type: str) -> int | None:
     """Find the line number where a symbol is defined"""
     lines = content.splitlines()
 
     for i, line in enumerate(lines):
-        if (
-            symbol_type == "function" and f"def {symbol_name}(" in line
-        ) or (symbol_type == "class" and f"class {symbol_name}" in line):
+        if (symbol_type == "function" and f"def {symbol_name}(" in line) or (
+            symbol_type == "class" and f"class {symbol_name}" in line
+        ):
             return i
         if symbol_type == "variable" and f"{symbol_name} =" in line:
             return i

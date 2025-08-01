@@ -455,6 +455,7 @@ def get_symbols_overview(
 
 # Helper functions
 
+
 def _detect_symbol_type(line: str, symbol_name: str) -> str:
     """Detect the type of symbol from its context in the line"""
     line_lower = line.strip().lower()

@@ -3,7 +3,7 @@ Comprehensive tests for lib/utils/config_migration.py targeting 164 uncovered li
 
 Tests cover:
 - Configuration migration workflows
-- Version upgrades and schema transformations  
+- Version upgrades and schema transformations
 - Backward compatibility validation
 - Team and agent configuration inheritance
 - Migration planning and execution
@@ -46,28 +46,25 @@ class TestAGNOConfigMigrator:
             "team": {
                 "name": "test-team",
                 "mode": "route",
-                "members": ["agent-1", "agent-2", "agent-3"]
+                "members": ["agent-1", "agent-2", "agent-3"],
             },
             "memory": {
                 "enable_user_memories": True,
                 "add_memory_references": False,
-                "num_history_runs": 5
+                "num_history_runs": 5,
             },
             "display": {
                 "markdown": True,
                 "show_tool_calls": False,
-                "add_datetime_to_instructions": True
+                "add_datetime_to_instructions": True,
             },
             "model": {
                 "provider": "anthropic",
                 "id": "claude-3-5-sonnet-20241022",
                 "temperature": 0.7,
-                "max_tokens": 4000
+                "max_tokens": 4000,
             },
-            "knowledge": {
-                "search_knowledge": True,
-                "references_format": "markdown"
-            }
+            "knowledge": {"search_knowledge": True, "references_format": "markdown"},
         }
 
     @pytest.fixture
@@ -78,48 +75,48 @@ class TestAGNOConfigMigrator:
                 "agent": {
                     "agent_id": "agent-1",
                     "name": "Agent One",
-                    "role": "Primary Agent"
+                    "role": "Primary Agent",
                 },
                 "memory": {
                     "enable_user_memories": True,  # Same as team (redundant)
                     "add_memory_references": False,  # Same as team (redundant)
-                    "num_history_runs": 3  # Different from team (override)
+                    "num_history_runs": 3,  # Different from team (override)
                 },
                 "display": {
                     "markdown": True,  # Same as team (redundant)
-                    "show_tool_calls": True  # Different from team (override)
+                    "show_tool_calls": True,  # Different from team (override)
                 },
                 "model": {
                     "provider": "anthropic",  # Same as team (redundant)
-                    "temperature": 0.9  # Different from team (override)
-                }
+                    "temperature": 0.9,  # Different from team (override)
+                },
             },
             "agent-2": {
                 "agent": {
                     "agent_id": "agent-2",
                     "name": "Agent Two",
-                    "role": "Secondary Agent"
+                    "role": "Secondary Agent",
                 },
                 "memory": {
                     "enable_user_memories": True,  # Same as team (redundant)
-                    "num_history_runs": 5  # Same as team (redundant)
+                    "num_history_runs": 5,  # Same as team (redundant)
                 },
                 "display": {
                     "markdown": False,  # Different from team (override)
-                    "add_datetime_to_instructions": True  # Same as team (redundant)
-                }
+                    "add_datetime_to_instructions": True,  # Same as team (redundant)
+                },
             },
             "agent-3": {
                 "agent": {
                     "agent_id": "agent-3",
                     "name": "Agent Three",
-                    "role": "Tertiary Agent"
+                    "role": "Tertiary Agent",
                 },
                 "knowledge": {
                     "search_knowledge": True,  # Same as team (redundant)
-                    "references_format": "json"  # Different from team (override)
-                }
-            }
+                    "references_format": "json",  # Different from team (override)
+                },
+            },
         }
 
     @pytest.fixture
@@ -158,7 +155,9 @@ class TestAGNOConfigMigrator:
 
             assert "config_migration_20240101_120000" in str(migrator.backup_dir)
 
-    def test_create_backup_success(self, migrator_execute, temp_directory, sample_team_config, sample_agent_configs):
+    def test_create_backup_success(
+        self, migrator_execute, temp_directory, sample_team_config, sample_agent_configs
+    ):
         """Test successful backup creation."""
         # Setup test directories and files
         team_dir = temp_directory / "teams" / "test-team"
@@ -203,9 +202,13 @@ class TestAGNOConfigMigrator:
         assert (migrator_execute.backup_dir / "migration_info.yaml").exists()
         # When source directories don't exist, backup should not create them either
 
-    def test_create_migration_plan_with_redundant_params(self, migrator_dry_run, sample_team_config, sample_agent_configs):
+    def test_create_migration_plan_with_redundant_params(
+        self, migrator_dry_run, sample_team_config, sample_agent_configs
+    ):
         """Test migration plan creation identifying redundant parameters."""
-        plan = migrator_dry_run._create_migration_plan(sample_team_config, sample_agent_configs)
+        plan = migrator_dry_run._create_migration_plan(
+            sample_team_config, sample_agent_configs
+        )
 
         # Verify plan structure
         assert "agent-1" in plan
@@ -235,9 +238,7 @@ class TestAGNOConfigMigrator:
         """Test migration plan when team has no inheritable parameters."""
         team_config = {"team": {"name": "simple-team", "members": ["agent-1"]}}
         agent_configs = {
-            "agent-1": {
-                "agent": {"agent_id": "agent-1", "name": "Simple Agent"}
-            }
+            "agent-1": {"agent": {"agent_id": "agent-1", "name": "Simple Agent"}}
         }
 
         plan = migrator_dry_run._create_migration_plan(team_config, agent_configs)
@@ -246,7 +247,9 @@ class TestAGNOConfigMigrator:
         assert plan["agent-1"]["removable_params"] == []
         assert plan["agent-1"]["preserved_overrides"] == []
 
-    def test_create_migration_plan_missing_category(self, migrator_dry_run, sample_team_config):
+    def test_create_migration_plan_missing_category(
+        self, migrator_dry_run, sample_team_config
+    ):
         """Test migration plan when agent missing category present in team."""
         agent_configs = {
             "agent-1": {
@@ -255,13 +258,17 @@ class TestAGNOConfigMigrator:
             }
         }
 
-        plan = migrator_dry_run._create_migration_plan(sample_team_config, agent_configs)
+        plan = migrator_dry_run._create_migration_plan(
+            sample_team_config, agent_configs
+        )
 
         # Should have empty plan since agent has no matching categories
         assert plan["agent-1"]["removable_params"] == []
         assert plan["agent-1"]["preserved_overrides"] == []
 
-    def test_apply_migration_to_agent_removes_redundant(self, migrator_execute, temp_directory):
+    def test_apply_migration_to_agent_removes_redundant(
+        self, migrator_execute, temp_directory
+    ):
         """Test applying migration removes redundant parameters."""
         # Setup agent config file
         agent_dir = temp_directory / "agents" / "test-agent"
@@ -272,9 +279,9 @@ class TestAGNOConfigMigrator:
             "memory": {
                 "enable_user_memories": True,
                 "add_memory_references": False,
-                "num_history_runs": 5
+                "num_history_runs": 5,
             },
-            "display": {"markdown": True}
+            "display": {"markdown": True},
         }
 
         with open(agent_dir / "config.yaml", "w") as f:
@@ -287,9 +294,9 @@ class TestAGNOConfigMigrator:
             "comments_to_add": [
                 {
                     "path": "memory.num_history_runs",
-                    "comment": "INTENTIONAL OVERRIDE: num_history_runs differs from team default (3)"
+                    "comment": "INTENTIONAL OVERRIDE: num_history_runs differs from team default (3)",
                 }
-            ]
+            ],
         }
 
         # Apply migration
@@ -306,7 +313,9 @@ class TestAGNOConfigMigrator:
         # Preserved parameters should remain
         assert updated_config["memory"]["num_history_runs"] == 5
 
-    def test_apply_migration_empty_category_removal(self, migrator_execute, temp_directory):
+    def test_apply_migration_empty_category_removal(
+        self, migrator_execute, temp_directory
+    ):
         """Test that empty categories are removed after parameter removal."""
         # Setup agent config file
         agent_dir = temp_directory / "agents" / "test-agent"
@@ -314,7 +323,9 @@ class TestAGNOConfigMigrator:
 
         original_config = {
             "agent": {"agent_id": "test-agent"},
-            "memory": {"enable_user_memories": True}  # Only one param that will be removed
+            "memory": {
+                "enable_user_memories": True
+            },  # Only one param that will be removed
         }
 
         with open(agent_dir / "config.yaml", "w") as f:
@@ -324,7 +335,7 @@ class TestAGNOConfigMigrator:
         plan = {
             "removable_params": ["memory.enable_user_memories"],
             "preserved_overrides": [],
-            "comments_to_add": []
+            "comments_to_add": [],
         }
 
         # Apply migration
@@ -341,18 +352,18 @@ class TestAGNOConfigMigrator:
         config = {
             "agent": {"agent_id": "test-agent"},
             "memory": {"num_history_runs": 3},
-            "display": {"markdown": False}
+            "display": {"markdown": False},
         }
 
         comments = [
             {
                 "path": "memory.num_history_runs",
-                "comment": "INTENTIONAL OVERRIDE: num_history_runs differs from team default (5)"
+                "comment": "INTENTIONAL OVERRIDE: num_history_runs differs from team default (5)",
             },
             {
                 "path": "display.markdown",
-                "comment": "INTENTIONAL OVERRIDE: markdown differs from team default (True)"
-            }
+                "comment": "INTENTIONAL OVERRIDE: markdown differs from team default (True)",
+            },
         ]
 
         result = migrator_dry_run._generate_config_with_comments(config, comments)
@@ -373,7 +384,9 @@ class TestAGNOConfigMigrator:
         assert "# INTENTIONAL OVERRIDE" not in result
         assert "agent_id: test-agent" in result
 
-    def test_migrate_team_success(self, migrator_dry_run, temp_directory, sample_team_config, sample_agent_configs):
+    def test_migrate_team_success(
+        self, migrator_dry_run, temp_directory, sample_team_config, sample_agent_configs
+    ):
         """Test successful team migration."""
         # Setup test files
         team_dir = temp_directory / "teams" / "test-team"
@@ -420,7 +433,9 @@ class TestAGNOConfigMigrator:
         assert "No member configs found" in result["warnings"][0]
         assert result["agents_processed"] == 0
 
-    def test_migrate_team_missing_member_configs(self, migrator_dry_run, temp_directory, sample_team_config):
+    def test_migrate_team_missing_member_configs(
+        self, migrator_dry_run, temp_directory, sample_team_config
+    ):
         """Test team migration when member config files are missing."""
         # Setup team config with members but no agent files
         team_dir = temp_directory / "teams" / "test-team"
@@ -441,7 +456,9 @@ class TestAGNOConfigMigrator:
         with pytest.raises(FileNotFoundError):
             migrator_dry_run.migrate_team("non-existent-team")
 
-    def test_migrate_all_teams_success(self, migrator_dry_run, temp_directory, sample_team_config, sample_agent_configs):
+    def test_migrate_all_teams_success(
+        self, migrator_dry_run, temp_directory, sample_team_config, sample_agent_configs
+    ):
         """Test successful migration of all teams."""
         # Setup multiple teams
         for team_id in ["team-1", "team-2"]:
@@ -496,7 +513,9 @@ class TestAGNOConfigMigrator:
         assert result["parameters_removed"] == 0
         assert result["errors"] == []
 
-    def test_migrate_all_teams_creates_backup_in_execute_mode(self, migrator_execute, temp_directory, sample_team_config):
+    def test_migrate_all_teams_creates_backup_in_execute_mode(
+        self, migrator_execute, temp_directory, sample_team_config
+    ):
         """Test that backup is created in execute mode but not dry run."""
         # Setup minimal team
         team_dir = temp_directory / "teams" / "test-team"
@@ -537,7 +556,9 @@ class TestAGNOConfigMigrator:
         # Verify restoration
         assert (temp_directory / "teams" / "team1.yaml").exists()
         assert (temp_directory / "agents" / "agent1.yaml").exists()
-        assert not (temp_directory / "teams" / "existing.yaml").exists()  # Should be replaced
+        assert not (
+            temp_directory / "teams" / "existing.yaml"
+        ).exists()  # Should be replaced
 
     def test_restore_from_backup_missing_backup_dir(self, migrator_execute):
         """Test restoration fails with missing backup directory."""
@@ -574,14 +595,14 @@ class TestAGNOConfigMigrator:
                 "team_id": "team-1",
                 "member_id": "agent-1",
                 "removed_params": ["memory.enable_user_memories", "display.markdown"],
-                "preserved_overrides": ["memory.num_history_runs"]
+                "preserved_overrides": ["memory.num_history_runs"],
             },
             {
                 "team_id": "team-1",
                 "member_id": "agent-2",
                 "removed_params": ["model.provider"],
-                "preserved_overrides": ["model.temperature", "display.show_tool_calls"]
-            }
+                "preserved_overrides": ["model.temperature", "display.show_tool_calls"],
+            },
         ]
 
         report = migrator_dry_run.generate_migration_report()
@@ -616,7 +637,7 @@ class TestAGNOConfigMigrator:
                 "team_id": "team-1",
                 "member_id": "agent-1",
                 "removed_params": ["param1", "param2", "param3"],  # 3 removed
-                "preserved_overrides": ["override1", "override2"]  # 2 preserved
+                "preserved_overrides": ["override1", "override2"],  # 2 preserved
             }
         ]
 
@@ -625,7 +646,9 @@ class TestAGNOConfigMigrator:
         # Should calculate 3/(3+2) = 60% reduction
         assert "Configuration reduction: 60.0%" in report
 
-    def test_migration_log_tracking(self, migrator_dry_run, temp_directory, sample_team_config, sample_agent_configs):
+    def test_migration_log_tracking(
+        self, migrator_dry_run, temp_directory, sample_team_config, sample_agent_configs
+    ):
         """Test that migration log is properly populated during migration."""
         # Setup test files
         team_dir = temp_directory / "teams" / "test-team"
@@ -671,11 +694,13 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_default_params(self):
         """Test migrate_configurations with default parameters."""
-        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
+        with patch(
+            "lib.utils.config_migration.AGNOConfigMigrator"
+        ) as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
                 "teams_processed": 1,
-                "errors": []
+                "errors": [],
             }
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
@@ -688,11 +713,13 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_specific_team(self):
         """Test migrate_configurations with specific team."""
-        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
+        with patch(
+            "lib.utils.config_migration.AGNOConfigMigrator"
+        ) as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_team.return_value = {
                 "teams_processed": 1,
-                "errors": []
+                "errors": [],
             }
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
@@ -705,11 +732,13 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_execute_mode(self):
         """Test migrate_configurations in execute mode."""
-        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
+        with patch(
+            "lib.utils.config_migration.AGNOConfigMigrator"
+        ) as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
                 "teams_processed": 1,
-                "errors": []
+                "errors": [],
             }
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
@@ -720,11 +749,13 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_custom_path(self):
         """Test migrate_configurations with custom base path."""
-        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
+        with patch(
+            "lib.utils.config_migration.AGNOConfigMigrator"
+        ) as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
                 "teams_processed": 1,
-                "errors": []
+                "errors": [],
             }
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
@@ -735,11 +766,13 @@ class TestMigrateConfigurationsFunction:
 
     def test_migrate_configurations_with_errors(self):
         """Test migrate_configurations when migrations have errors."""
-        with patch("lib.utils.config_migration.AGNOConfigMigrator") as mock_migrator_class:
+        with patch(
+            "lib.utils.config_migration.AGNOConfigMigrator"
+        ) as mock_migrator_class:
             mock_migrator = Mock()
             mock_migrator.migrate_all_teams.return_value = {
                 "teams_processed": 1,
-                "errors": ["Migration failed for team-1"]
+                "errors": ["Migration failed for team-1"],
             }
             mock_migrator.generate_migration_report.return_value = "Test report"
             mock_migrator_class.return_value = mock_migrator
@@ -832,7 +865,7 @@ class TestEdgeCasesAndErrorHandling:
         plan = {
             "removable_params": ["memory.enable_user_memories"],
             "preserved_overrides": [],
-            "comments_to_add": []
+            "comments_to_add": [],
         }
 
         try:
@@ -848,7 +881,9 @@ class TestEdgeCasesAndErrorHandling:
         migrator = AGNOConfigMigrator(str(temp_directory), dry_run=False)
 
         # Mock backup directory creation to fail
-        with patch("pathlib.Path.mkdir", side_effect=PermissionError("Permission denied")):
+        with patch(
+            "pathlib.Path.mkdir", side_effect=PermissionError("Permission denied")
+        ):
             with pytest.raises(PermissionError):
                 migrator._create_backup()
 
@@ -887,11 +922,7 @@ class TestEdgeCasesAndErrorHandling:
         team_config = {
             "memory": {
                 "enable_user_memories": True,
-                "nested": {
-                    "deep": {
-                        "value": "team_default"
-                    }
-                }
+                "nested": {"deep": {"value": "team_default"}},
             }
         }
 
@@ -902,7 +933,7 @@ class TestEdgeCasesAndErrorHandling:
                     "deep": {
                         "value": "agent_override"  # Different from team
                     }
-                }
+                },
             }
         }
 
@@ -920,19 +951,13 @@ class TestEdgeCasesAndErrorHandling:
         config = {
             "memory": {
                 "param_with_special-chars": "value",
-                "param_with_colons": "value"
+                "param_with_colons": "value",
             }
         }
 
         comments = [
-            {
-                "path": "memory.param_with_special-chars",
-                "comment": "Override comment"
-            },
-            {
-                "path": "memory.param_with_colons",
-                "comment": "Another override"
-            }
+            {"path": "memory.param_with_special-chars", "comment": "Override comment"},
+            {"path": "memory.param_with_colons", "comment": "Another override"},
         ]
 
         # Test that the method handles special characters without crashing
@@ -952,9 +977,15 @@ class TestMainScriptExecution:
 
         # Test the argument parser directly
         parser = argparse.ArgumentParser(description="AGNO Configuration Migrator")
-        parser.add_argument("--path", default="ai", help="Base path to AI configurations")
+        parser.add_argument(
+            "--path", default="ai", help="Base path to AI configurations"
+        )
         parser.add_argument("--team", help="Migrate specific team only")
-        parser.add_argument("--execute", action="store_true", help="Execute migration (default is dry run)")
+        parser.add_argument(
+            "--execute",
+            action="store_true",
+            help="Execute migration (default is dry run)",
+        )
         parser.add_argument("--restore", help="Restore from backup directory")
 
         # Test default arguments
@@ -965,7 +996,9 @@ class TestMainScriptExecution:
         assert args.restore is None
 
         # Test custom arguments
-        args = parser.parse_args(["--path", "custom", "--team", "test-team", "--execute"])
+        args = parser.parse_args(
+            ["--path", "custom", "--team", "test-team", "--execute"]
+        )
         assert args.path == "custom"
         assert args.team == "test-team"
         assert args.execute is True

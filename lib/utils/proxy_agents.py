@@ -334,7 +334,7 @@ class AgnoAgentProxy:
     ) -> None:
         """
         Merge MCP tools with regular tools in the processed configuration.
-        
+
         Args:
             processed: Processed configuration dictionary (modified in-place)
             component_id: Agent identifier for logging
@@ -372,8 +372,11 @@ class AgnoAgentProxy:
 
         # Define Agno-specific parameters that should NOT be passed to underlying model classes
         agno_agent_params = {
-            "reasoning", "reasoning_model", "reasoning_agent",
-            "reasoning_min_steps", "reasoning_max_steps"
+            "reasoning",
+            "reasoning_model",
+            "reasoning_agent",
+            "reasoning_min_steps",
+            "reasoning_max_steps",
         }
 
         # Use dynamic model resolution to support all providers
@@ -385,7 +388,8 @@ class AgnoAgentProxy:
             **{
                 k: v
                 for k, v in model_config.items()
-                if k not in ["id", "temperature", "max_tokens"] and k not in agno_agent_params
+                if k not in ["id", "temperature", "max_tokens"]
+                and k not in agno_agent_params
             },
         )
 
@@ -549,18 +553,18 @@ class AgnoAgentProxy:
     ) -> dict[str, Any]:
         """
         Handle MCP servers configuration with granular tool control.
-        
+
         Supports both legacy format and new granular patterns:
         - "server_name" - All tools from server (legacy)
         - "server_name:*" - All tools from server (explicit)
         - "server_name:tool_name" - Only specific tool from server
-        
+
         Args:
             mcp_servers_config: List of MCP server patterns from YAML
             config: Full agent configuration
             component_id: Agent identifier
             db_url: Database URL
-            
+
         Returns:
             Dictionary with 'mcp_tools' key containing list of configured MCPTools instances
         """
@@ -607,12 +611,12 @@ class AgnoAgentProxy:
     ) -> object | None:
         """
         Create MCPTools instance with granular tool filtering.
-        
+
         Args:
             server_name: MCP server name
             tool_pattern: Tool pattern ("*" for all, "specific_tool" for one tool)
             component_id: Agent identifier for logging
-            
+
         Returns:
             MCPTools instance with appropriate filters, or None if failed
         """
@@ -624,7 +628,9 @@ class AgnoAgentProxy:
             # Get server configuration
             catalog = MCPCatalog()
             if not catalog.has_server(server_name):
-                logger.error(f"🌐 Unknown MCP server '{server_name}' for agent {component_id}")
+                logger.error(
+                    f"🌐 Unknown MCP server '{server_name}' for agent {component_id}"
+                )
                 return None
 
             server_config = catalog.get_server_config(server_name)
@@ -636,20 +642,18 @@ class AgnoAgentProxy:
 
             # Configure based on server type
             if server_config.is_sse_server:
-                mcp_params.update({
-                    "url": server_config.url,
-                    "transport": "sse"
-                })
+                mcp_params.update({"url": server_config.url, "transport": "sse"})
             elif server_config.is_command_server:
                 command_parts = [server_config.command]
                 if server_config.args:
                     command_parts.extend(server_config.args)
-                mcp_params.update({
-                    "command": " ".join(command_parts),
-                    "transport": "stdio"
-                })
+                mcp_params.update(
+                    {"command": " ".join(command_parts), "transport": "stdio"}
+                )
             else:
-                logger.error(f"🌐 Unknown server type for '{server_name}' for agent {component_id}")
+                logger.error(
+                    f"🌐 Unknown server type for '{server_name}' for agent {component_id}"
+                )
                 return None
 
             # Apply granular tool filtering
@@ -657,7 +661,9 @@ class AgnoAgentProxy:
                 # Specific tool pattern: include only the requested tool
                 # Note: The actual tool name in MCP is just the tool name, not prefixed
                 mcp_params["include_tools"] = [tool_pattern]
-                logger.debug(f"🌐 Filtering MCP server '{server_name}' to include only tool: {tool_pattern}")
+                logger.debug(
+                    f"🌐 Filtering MCP server '{server_name}' to include only tool: {tool_pattern}"
+                )
             else:
                 logger.debug(f"🌐 Including all tools from MCP server '{server_name}'")
 
@@ -665,7 +671,9 @@ class AgnoAgentProxy:
             return MCPTools(**mcp_params)
 
         except Exception as e:
-            logger.error(f"🌐 Failed to create MCP tool for {server_name}:{tool_pattern} - {e}")
+            logger.error(
+                f"🌐 Failed to create MCP tool for {server_name}:{tool_pattern} - {e}"
+            )
             return None
 
     def _create_metadata(

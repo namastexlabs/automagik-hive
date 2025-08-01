@@ -148,10 +148,16 @@ CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
             def mock_get_all_services_status(workspace):
                 return {
                     "genie-server": Mock(
-                        status=Mock(name="RUNNING" if container_state["running"] else "STOPPED"),
+                        status=Mock(
+                            name="RUNNING" if container_state["running"] else "STOPPED"
+                        ),
                         container_id=container_state["container_id"],
-                        ports=["0.0.0.0:48886->48886/tcp"] if container_state["running"] else [],
-                        health_status="healthy" if container_state["running"] else "unhealthy"
+                        ports=["0.0.0.0:48886->48886/tcp"]
+                        if container_state["running"]
+                        else [],
+                        health_status="healthy"
+                        if container_state["running"]
+                        else "unhealthy",
                     )
                 }
 
@@ -162,7 +168,9 @@ CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
             mock_compose.start_service = mock_start_service
             mock_compose.stop_service = mock_stop_service
-            mock_compose.restart_service = lambda s, w: mock_stop_service(s, w) and mock_start_service(s, w)
+            mock_compose.restart_service = lambda s, w: mock_stop_service(
+                s, w
+            ) and mock_start_service(s, w)
             mock_compose.get_service_status = mock_get_status
             mock_compose.get_all_services_status = mock_get_all_services_status
             mock_compose.get_service_logs = mock_get_logs
@@ -170,7 +178,9 @@ CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
             mock_compose_class.return_value = mock_compose
             yield mock_compose, container_state
 
-    def test_complete_genie_serve_workflow(self, integration_workspace, mock_docker_compose_integration):
+    def test_complete_genie_serve_workflow(
+        self, integration_workspace, mock_docker_compose_integration
+    ):
         """Test complete Genie serve workflow from CLI to container."""
         mock_compose, container_state = mock_docker_compose_integration
 
@@ -188,7 +198,9 @@ CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
         status = commands.status(integration_workspace)
         assert status is True
 
-    def test_complete_genie_stop_workflow(self, integration_workspace, mock_docker_compose_integration):
+    def test_complete_genie_stop_workflow(
+        self, integration_workspace, mock_docker_compose_integration
+    ):
         """Test complete Genie stop workflow from CLI to container."""
         mock_compose, container_state = mock_docker_compose_integration
 
@@ -205,7 +217,9 @@ CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
         assert container_state["running"] is False
         assert mock_compose.stop_service.called
 
-    def test_complete_genie_restart_workflow(self, integration_workspace, mock_docker_compose_integration):
+    def test_complete_genie_restart_workflow(
+        self, integration_workspace, mock_docker_compose_integration
+    ):
         """Test complete Genie restart workflow with state persistence."""
         mock_compose, container_state = mock_docker_compose_integration
 
@@ -225,7 +239,9 @@ CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
         # Container should maintain state (same ID in this mock)
         assert container_state["container_id"] == original_container_id
 
-    def test_genie_logs_integration_workflow(self, integration_workspace, mock_docker_compose_integration):
+    def test_genie_logs_integration_workflow(
+        self, integration_workspace, mock_docker_compose_integration
+    ):
         """Test Genie logs integration from container to CLI display."""
         mock_compose, container_state = mock_docker_compose_integration
 
@@ -245,7 +261,9 @@ CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
         result = commands.logs(integration_workspace, tail=10)
         assert result is True  # Should handle stopped container gracefully
 
-    def test_genie_status_integration_workflow(self, integration_workspace, mock_docker_compose_integration):
+    def test_genie_status_integration_workflow(
+        self, integration_workspace, mock_docker_compose_integration
+    ):
         """Test Genie status integration with formatted CLI output."""
         mock_compose, container_state = mock_docker_compose_integration
 
@@ -278,7 +296,9 @@ class TestGenieContainerNetworkingIntegration:
             with patch("urllib.request.urlopen") as mock_urlopen:
                 yield mock_socket, mock_urlopen
 
-    def test_port_48886_accessibility_integration(self, integration_workspace, mock_network_validation):
+    def test_port_48886_accessibility_integration(
+        self, integration_workspace, mock_network_validation
+    ):
         """Test port 48886 is accessible after Genie container start."""
         mock_socket, mock_urlopen = mock_network_validation
 
@@ -297,13 +317,17 @@ class TestGenieContainerNetworkingIntegration:
             # In real integration, would test actual port connection
             # commands._validate_port_accessibility(48886)
 
-    def test_genie_health_endpoint_integration(self, integration_workspace, mock_network_validation):
+    def test_genie_health_endpoint_integration(
+        self, integration_workspace, mock_network_validation
+    ):
         """Test Genie health endpoint integration via HTTP."""
         mock_socket, mock_urlopen = mock_network_validation
 
         # Mock successful health check response
         mock_response = Mock()
-        mock_response.read.return_value = b'{"status": "healthy", "services": {"postgres": "ok", "api": "ok"}}'
+        mock_response.read.return_value = (
+            b'{"status": "healthy", "services": {"postgres": "ok", "api": "ok"}}'
+        )
         mock_urlopen.return_value.__enter__.return_value = mock_response
 
         with patch("cli.core.genie_service.DockerComposeManager"):
@@ -323,7 +347,7 @@ class TestGenieContainerNetworkingIntegration:
                 "genie-server": Mock(
                     networks=["hive_genie_network"],
                     network_mode="bridge",
-                    isolated=True
+                    isolated=True,
                 )
             }
             mock_compose_class.return_value = mock_compose
@@ -509,7 +533,7 @@ class TestGeniePerformanceIntegration:
                 "genie-server": Mock(
                     memory_usage="512MB / 2GB",
                     cpu_usage="25%",
-                    status=Mock(name="RUNNING")
+                    status=Mock(name="RUNNING"),
                 )
             }
             mock_compose_class.return_value = mock_compose
@@ -532,6 +556,7 @@ class TestGenieIntegrationErrorHandling:
 
             # Simulate container crash during operation
             call_count = 0
+
             def crash_then_recover(service, workspace):
                 nonlocal call_count
                 call_count += 1
@@ -570,7 +595,9 @@ class TestGenieIntegrationErrorHandling:
         """Test disk space exhaustion integration."""
         with patch("cli.core.genie_service.DockerComposeManager") as mock_compose_class:
             mock_compose = Mock()
-            mock_compose.start_service.side_effect = Exception("No space left on device")
+            mock_compose.start_service.side_effect = Exception(
+                "No space left on device"
+            )
             mock_compose_class.return_value = mock_compose
 
             commands = GenieCommands()

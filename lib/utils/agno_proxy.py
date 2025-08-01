@@ -81,7 +81,11 @@ def reset_proxy_instances():
     This forces the next call to get_*_proxy() functions to create
     fresh instances with current Agno class signatures.
     """
-    global _agno_agent_proxy, _agno_team_proxy, _agno_workflow_proxy, _agno_coordinator_proxy
+    global \
+        _agno_agent_proxy, \
+        _agno_team_proxy, \
+        _agno_workflow_proxy, \
+        _agno_coordinator_proxy
     _agno_agent_proxy = None
     _agno_team_proxy = None
     _agno_workflow_proxy = None
@@ -155,7 +159,6 @@ async def create_team(*args, **kwargs):
 async def create_workflow(*args, **kwargs):
     """Legacy compatibility wrapper for workflow creation."""
     return await get_agno_workflow_proxy().create_workflow(*args, **kwargs)
-
 
 
 def get_agno_coordinator_proxy():

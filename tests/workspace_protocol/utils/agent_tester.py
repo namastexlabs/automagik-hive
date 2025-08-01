@@ -17,20 +17,23 @@ class AgentTester:
 
     def __init__(self):
         """Initialize agent tester with default configuration."""
-        self.agents_directory = Path("/home/namastex/workspace/automagik-hive/.claude/agents")
+        self.agents_directory = Path(
+            "/home/namastex/workspace/automagik-hive/.claude/agents"
+        )
         self.workspace_root = Path("/home/namastex/workspace/automagik-hive")
         self.test_timeout = 60  # seconds
 
-    def execute_agent_task(self, agent_name: str, task_prompt: str,
-                          timeout: int | None = None) -> str | None:
+    def execute_agent_task(
+        self, agent_name: str, task_prompt: str, timeout: int | None = None
+    ) -> str | None:
         """
         Execute a task using the specified agent.
-        
+
         Args:
             agent_name: Name of the agent to test (e.g., 'genie-dev-planner')
             task_prompt: The task prompt to send to the agent
             timeout: Optional timeout override in seconds
-            
+
         Returns:
             Agent response as string, or None if execution failed
         """
@@ -48,7 +51,7 @@ class AgentTester:
     def _simulate_agent_execution(self, agent_name: str, task_prompt: str) -> str:
         """
         Simulate agent execution for testing purposes.
-        
+
         In actual implementation, this would be replaced with real agent invocation.
         """
 
@@ -76,7 +79,8 @@ class AgentTester:
                 "has_workspace_protocol": "WORKSPACE INTERACTION PROTOCOL" in content,
                 "has_json_response_format": '"status":' in content,
                 "has_context_validation": "context_validated" in content,
-                "has_artifact_lifecycle": "/genie/ideas/" in content and "/genie/wishes/" in content
+                "has_artifact_lifecycle": "/genie/ideas/" in content
+                and "/genie/wishes/" in content,
             }
 
             return config
@@ -85,8 +89,9 @@ class AgentTester:
             print(f"Error reading agent config for {agent_name}: {e}")
             return {"exists": False}
 
-    def _generate_simulated_response(self, agent_name: str, task_prompt: str,
-                                   agent_config: dict[str, Any]) -> str:
+    def _generate_simulated_response(
+        self, agent_name: str, task_prompt: str, agent_config: dict[str, Any]
+    ) -> str:
         """Generate simulated agent response based on configuration and task."""
 
         # Check if agent has workspace protocol implemented
@@ -117,16 +122,13 @@ class AgentTester:
             response = {
                 "status": "error",
                 "message": error_message,
-                "context_validated": False
+                "context_validated": False,
             }
         else:
             # Determine appropriate status and artifacts based on task type
             status, artifacts = self._determine_task_outcome(agent_name, task_prompt)
 
-            response = {
-                "status": status,
-                "context_validated": True
-            }
+            response = {"status": status, "context_validated": True}
 
             if artifacts:
                 response["artifacts"] = artifacts
@@ -136,7 +138,9 @@ class AgentTester:
             if status == "success":
                 response["summary"] = "Task completed successfully."
             elif status == "in_progress":
-                response["summary"] = "Analysis complete, refining into actionable plan."
+                response["summary"] = (
+                    "Analysis complete, refining into actionable plan."
+                )
 
         return json.dumps(response, indent=2)
 
@@ -147,12 +151,14 @@ class AgentTester:
         for line in task_prompt.split("\n"):
             line = line.strip()
             if line.startswith("Context: @"):
-                context_path = line[len("Context: @"):]
+                context_path = line[len("Context: @") :]
                 context_files.append(context_path)
 
         return context_files
 
-    def _determine_task_outcome(self, agent_name: str, task_prompt: str) -> tuple[str, list[str]]:
+    def _determine_task_outcome(
+        self, agent_name: str, task_prompt: str
+    ) -> tuple[str, list[str]]:
         """Determine appropriate task outcome and artifacts based on agent and task type."""
 
         # Simple heuristics for simulation
@@ -194,7 +200,7 @@ Generated for workspace protocol testing.
 
 ## Artifact Details
 - Path: {artifact_path}
-- Created: {time.strftime('%Y-%m-%d %H:%M:%S')}
+- Created: {time.strftime("%Y-%m-%d %H:%M:%S")}
 - Purpose: Protocol validation testing
 
 ## Test Content
@@ -206,7 +212,7 @@ lifecycle directories.
     def validate_agent_protocol_compliance(self, agent_name: str) -> dict[str, Any]:
         """
         Validate that an agent implements the workspace protocol correctly.
-        
+
         Returns:
             Dictionary with compliance status and details
         """
@@ -216,14 +222,16 @@ lifecycle directories.
             return {
                 "compliant": False,
                 "error": f"Agent {agent_name} does not exist",
-                "checks": {}
+                "checks": {},
             }
 
         checks = {
             "has_workspace_protocol": agent_config.get("has_workspace_protocol", False),
-            "has_json_response_format": agent_config.get("has_json_response_format", False),
+            "has_json_response_format": agent_config.get(
+                "has_json_response_format", False
+            ),
             "has_context_validation": agent_config.get("has_context_validation", False),
-            "has_artifact_lifecycle": agent_config.get("has_artifact_lifecycle", False)
+            "has_artifact_lifecycle": agent_config.get("has_artifact_lifecycle", False),
         }
 
         compliance_score = sum(checks.values()) / len(checks)
@@ -232,7 +240,7 @@ lifecycle directories.
             "compliant": compliance_score >= 0.75,  # 75% compliance threshold
             "compliance_score": compliance_score,
             "checks": checks,
-            "agent_name": agent_name
+            "agent_name": agent_name,
         }
 
     def get_available_agents(self) -> list[str]:
@@ -266,7 +274,7 @@ lifecycle directories.
             "overall_compliance": overall_compliance,
             "total_agents": total_agents,
             "compliant_agents": compliant_agents,
-            "results": results
+            "results": results,
         }
 
     def cleanup_test_artifacts(self, artifact_paths: list[str]):
@@ -285,8 +293,8 @@ lifecycle directories.
 WORKSPACE PROTOCOL COMPLIANCE REPORT
 ====================================
 
-Overall Compliance: {results['overall_compliance']:.1%}
-Compliant Agents: {results['compliant_agents']}/{results['total_agents']}
+Overall Compliance: {results["overall_compliance"]:.1%}
+Compliant Agents: {results["compliant_agents"]}/{results["total_agents"]}
 
 AGENT DETAILS:
 """

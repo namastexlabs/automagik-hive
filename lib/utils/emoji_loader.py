@@ -19,7 +19,9 @@ class EmojiLoader:
     def __init__(self, config_path: str | None = None) -> None:
         if config_path is None:
             current_dir = Path(__file__).parent
-            config_path_resolved: Path = current_dir.parent / "config" / "emoji_mappings.yaml"
+            config_path_resolved: Path = (
+                current_dir.parent / "config" / "emoji_mappings.yaml"
+            )
         else:
             config_path_resolved = Path(config_path)
 

@@ -14,7 +14,7 @@ from lib.logging import logger
 class SessionLifecycleLogger:
     """
     Logger for tracking agent session lifecycle events.
-    
+
     This class provides structured logging for agent sessions, runs, and
     conversation management to help with debugging and monitoring.
     """
@@ -27,11 +27,11 @@ class SessionLifecycleLogger:
         session_id: str,
         agent_id: str,
         user_id: str | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Log the start of a new agent session.
-        
+
         Args:
             session_id: Unique identifier for the session
             agent_id: ID of the agent being used
@@ -45,7 +45,7 @@ class SessionLifecycleLogger:
             user_id=user_id,
             event="session_start",
             timestamp=datetime.utcnow().isoformat(),
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
     def log_run_creation(
@@ -54,11 +54,11 @@ class SessionLifecycleLogger:
         session_id: str,
         agent_id: str,
         user_message: str | None = None,
-        user_id: str | None = None
+        user_id: str | None = None,
     ) -> None:
         """
         Log the creation of a new agent run.
-        
+
         Args:
             run_id: Unique identifier for the run
             session_id: Session this run belongs to
@@ -74,7 +74,7 @@ class SessionLifecycleLogger:
             user_id=user_id,
             event="run_created",
             message_length=len(user_message) if user_message else 0,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
 
     def log_run_continuation_attempt(
@@ -83,11 +83,11 @@ class SessionLifecycleLogger:
         session_id: str,
         agent_id: str,
         user_id: str | None = None,
-        has_tools: bool = False
+        has_tools: bool = False,
     ) -> None:
         """
         Log an attempt to continue an existing run.
-        
+
         Args:
             run_id: The run ID being continued
             session_id: Session this run belongs to
@@ -103,7 +103,7 @@ class SessionLifecycleLogger:
             user_id=user_id,
             event="run_continuation_attempt",
             has_tools=has_tools,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
 
     def log_run_continuation_success(
@@ -112,11 +112,11 @@ class SessionLifecycleLogger:
         session_id: str,
         agent_id: str,
         user_id: str | None = None,
-        response_length: int | None = None
+        response_length: int | None = None,
     ) -> None:
         """
         Log successful run continuation.
-        
+
         Args:
             run_id: The run ID that was continued
             session_id: Session this run belongs to
@@ -132,7 +132,7 @@ class SessionLifecycleLogger:
             user_id=user_id,
             event="run_continuation_success",
             response_length=response_length,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
 
     def log_run_continuation_failure(
@@ -142,11 +142,11 @@ class SessionLifecycleLogger:
         agent_id: str,
         error: str,
         error_type: str,
-        user_id: str | None = None
+        user_id: str | None = None,
     ) -> None:
         """
         Log failed run continuation.
-        
+
         Args:
             run_id: The run ID that failed to continue
             session_id: Session this run belongs to
@@ -164,7 +164,7 @@ class SessionLifecycleLogger:
             event="run_continuation_failure",
             error=error,
             error_type=error_type,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
 
     def log_session_cleanup(
@@ -173,11 +173,11 @@ class SessionLifecycleLogger:
         agent_id: str,
         reason: str,
         user_id: str | None = None,
-        run_count: int | None = None
+        run_count: int | None = None,
     ) -> None:
         """
         Log session cleanup events.
-        
+
         Args:
             session_id: Session being cleaned up
             agent_id: ID of the agent
@@ -193,7 +193,7 @@ class SessionLifecycleLogger:
             event="session_cleanup",
             reason=reason,
             run_count=run_count,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
 
     def log_memory_status(
@@ -202,11 +202,11 @@ class SessionLifecycleLogger:
         session_count: int,
         run_count: int,
         memory_type: str,
-        additional_info: dict[str, Any] | None = None
+        additional_info: dict[str, Any] | None = None,
     ) -> None:
         """
         Log current memory status for monitoring.
-        
+
         Args:
             agent_id: ID of the agent
             session_count: Number of active sessions
@@ -222,17 +222,15 @@ class SessionLifecycleLogger:
             run_count=run_count,
             memory_type=memory_type,
             additional_info=additional_info or {},
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
 
     def log_server_restart_detection(
-        self,
-        detected_at: str | None = None,
-        affected_sessions: int | None = None
+        self, detected_at: str | None = None, affected_sessions: int | None = None
     ) -> None:
         """
         Log detection of server restart that affects sessions.
-        
+
         Args:
             detected_at: When the restart was detected
             affected_sessions: Estimated number of affected sessions
@@ -243,7 +241,7 @@ class SessionLifecycleLogger:
             detected_at=detected_at or datetime.utcnow().isoformat(),
             affected_sessions=affected_sessions,
             impact="All in-memory agent runs will be lost",
-            recommendation="Users will need to start new conversations"
+            recommendation="Users will need to start new conversations",
         )
 
 
@@ -252,7 +250,9 @@ session_logger = SessionLifecycleLogger()
 
 
 # Convenience functions for easy import and use
-def log_session_start(session_id: str, agent_id: str, user_id: str | None = None, **kwargs) -> None:
+def log_session_start(
+    session_id: str, agent_id: str, user_id: str | None = None, **kwargs
+) -> None:
     """Convenience function to log session start."""
     session_logger.log_session_start(session_id, agent_id, user_id, kwargs)
 
@@ -262,16 +262,24 @@ def log_run_creation(run_id: str, session_id: str, agent_id: str, **kwargs) -> N
     session_logger.log_run_creation(run_id, session_id, agent_id, **kwargs)
 
 
-def log_run_continuation_attempt(run_id: str, session_id: str, agent_id: str, **kwargs) -> None:
+def log_run_continuation_attempt(
+    run_id: str, session_id: str, agent_id: str, **kwargs
+) -> None:
     """Convenience function to log run continuation attempt."""
     session_logger.log_run_continuation_attempt(run_id, session_id, agent_id, **kwargs)
 
 
-def log_run_continuation_success(run_id: str, session_id: str, agent_id: str, **kwargs) -> None:
+def log_run_continuation_success(
+    run_id: str, session_id: str, agent_id: str, **kwargs
+) -> None:
     """Convenience function to log run continuation success."""
     session_logger.log_run_continuation_success(run_id, session_id, agent_id, **kwargs)
 
 
-def log_run_continuation_failure(run_id: str, session_id: str, agent_id: str, error: str, **kwargs) -> None:
+def log_run_continuation_failure(
+    run_id: str, session_id: str, agent_id: str, error: str, **kwargs
+) -> None:
     """Convenience function to log run continuation failure."""
-    session_logger.log_run_continuation_failure(run_id, session_id, agent_id, error, type(error).__name__, **kwargs)
+    session_logger.log_run_continuation_failure(
+        run_id, session_id, agent_id, error, type(error).__name__, **kwargs
+    )

@@ -83,9 +83,7 @@ class TestDockerComposeService:
     def test_generate_postgresql_service_template_custom(self, compose_service):
         """Test PostgreSQL service template with custom parameters."""
         service_config = compose_service.generate_postgresql_service_template(
-            external_port=5433,
-            database="custom_db",
-            volume_path="./custom/data"
+            external_port=5433, database="custom_db", volume_path="./custom/data"
         )
 
         # Check custom parameters
@@ -93,12 +91,12 @@ class TestDockerComposeService:
         assert "POSTGRES_DB=custom_db" in service_config["environment"]
         assert "./custom/data:/var/lib/postgresql/data" in service_config["volumes"]
 
-    def test_generate_complete_docker_compose_template_postgres_only(self, compose_service):
+    def test_generate_complete_docker_compose_template_postgres_only(
+        self, compose_service
+    ):
         """Test complete Docker Compose template with PostgreSQL only."""
         compose_config = compose_service.generate_complete_docker_compose_template(
-            postgres_port=5532,
-            postgres_database="hive",
-            include_app_service=False
+            postgres_port=5532, postgres_database="hive", include_app_service=False
         )
 
         # Check structure
@@ -127,9 +125,7 @@ class TestDockerComposeService:
     def test_generate_complete_docker_compose_template_with_app(self, compose_service):
         """Test complete Docker Compose template with application service."""
         compose_config = compose_service.generate_complete_docker_compose_template(
-            postgres_port=5532,
-            postgres_database="hive",
-            include_app_service=True
+            postgres_port=5532, postgres_database="hive", include_app_service=True
         )
 
         # Check both services present
@@ -153,21 +149,24 @@ class TestDockerComposeService:
             "postgres_user": "test_user",
             "postgres_password": "test_pass",
             "postgres_url": "postgresql+psycopg://test_user:test_pass@localhost:5532/hive",
-            "api_key": "hive_test_api_key_12345"
+            "api_key": "hive_test_api_key_12345",
         }
 
         env_content = compose_service.generate_workspace_environment_file(
             credentials=mock_creds,
             postgres_port=5532,
             postgres_database="hive",
-            api_port=8886
+            api_port=8886,
         )
 
         # Verify credentials are in environment file
         assert "POSTGRES_USER=test_user" in env_content
         assert "POSTGRES_PASSWORD=test_pass" in env_content
         assert "POSTGRES_DB=hive" in env_content
-        assert "HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@localhost:5532/hive" in env_content
+        assert (
+            "HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@localhost:5532/hive"
+            in env_content
+        )
         assert "HIVE_API_KEY=hive_test_api_key_12345" in env_content
 
         # Check API configuration
@@ -196,7 +195,7 @@ class TestDockerComposeService:
             "postgres_user": "generated_user",
             "postgres_password": "generated_pass",
             "postgres_url": "postgresql+psycopg://generated_user:generated_pass@localhost:5532/hive",
-            "api_key": "hive_generated_api_key"
+            "api_key": "hive_generated_api_key",
         }
         mock_credentials.return_value = mock_creds
 
@@ -204,14 +203,12 @@ class TestDockerComposeService:
             credentials=None,  # Should trigger generation
             postgres_port=5532,
             postgres_database="hive",
-            api_port=8886
+            api_port=8886,
         )
 
         # Verify credential service was called
         mock_credentials.assert_called_once_with(
-            postgres_host="localhost",
-            postgres_port=5532,
-            postgres_database="hive"
+            postgres_host="localhost", postgres_port=5532, postgres_database="hive"
         )
 
         # Verify generated credentials in output
@@ -223,19 +220,16 @@ class TestDockerComposeService:
         # Generate test config
         compose_config = {
             "services": {
-                "postgres": {
-                    "image": "agnohq/pgvector:16",
-                    "ports": ["5532:5432"]
-                }
+                "postgres": {"image": "agnohq/pgvector:16", "ports": ["5532:5432"]}
             },
-            "networks": {
-                "app_network": {"driver": "bridge"}
-            }
+            "networks": {"app_network": {"driver": "bridge"}},
         }
 
         # Save template
         output_path = temp_workspace / "test-compose.yml"
-        saved_path = compose_service.save_docker_compose_template(compose_config, output_path)
+        saved_path = compose_service.save_docker_compose_template(
+            compose_config, output_path
+        )
 
         # Verify file was saved
         assert saved_path == output_path
@@ -248,7 +242,9 @@ class TestDockerComposeService:
         assert saved_config["services"]["postgres"]["image"] == "agnohq/pgvector:16"
         assert saved_config["networks"]["app_network"]["driver"] == "bridge"
 
-    def test_save_docker_compose_template_default_path(self, compose_service, temp_workspace):
+    def test_save_docker_compose_template_default_path(
+        self, compose_service, temp_workspace
+    ):
         """Test saving Docker Compose template with default path."""
         compose_config = {"services": {"test": {"image": "test"}}}
 
@@ -306,7 +302,9 @@ HIVE_API_KEY=hive_test_key"""
         dir_permissions = expected_dir.stat().st_mode & 0o777
         assert dir_permissions == 0o755
 
-    def test_create_data_directories_already_exists(self, compose_service, temp_workspace):
+    def test_create_data_directories_already_exists(
+        self, compose_service, temp_workspace
+    ):
         """Test creating data directories when they already exist."""
         data_path = "./data/postgres"
         expected_dir = temp_workspace / "data/postgres"
@@ -319,7 +317,9 @@ HIVE_API_KEY=hive_test_key"""
         assert created_dir == expected_dir
         assert expected_dir.exists()
 
-    def test_update_gitignore_for_security_new_file(self, compose_service, temp_workspace):
+    def test_update_gitignore_for_security_new_file(
+        self, compose_service, temp_workspace
+    ):
         """Test updating .gitignore for security with new file."""
         gitignore_path = temp_workspace / ".gitignore"
 
@@ -337,7 +337,9 @@ HIVE_API_KEY=hive_test_key"""
         assert "data/postgres/" in content
         assert "__pycache__/" in content
 
-    def test_update_gitignore_for_security_existing_file(self, compose_service, temp_workspace):
+    def test_update_gitignore_for_security_existing_file(
+        self, compose_service, temp_workspace
+    ):
         """Test updating .gitignore for security with existing file."""
         gitignore_path = temp_workspace / ".gitignore"
 
@@ -356,7 +358,9 @@ HIVE_API_KEY=hive_test_key"""
         assert "UVX Automagik Hive - Security Exclusions" in content
         assert ".env" in content
 
-    def test_update_gitignore_for_security_already_updated(self, compose_service, temp_workspace):
+    def test_update_gitignore_for_security_already_updated(
+        self, compose_service, temp_workspace
+    ):
         """Test updating .gitignore when already contains UVX exclusions."""
         gitignore_path = temp_workspace / ".gitignore"
 
@@ -376,14 +380,16 @@ HIVE_API_KEY=hive_test_key"""
         assert gitignore_path.stat().st_size == original_size
 
     @patch.object(CredentialService, "setup_complete_credentials")
-    def test_setup_foundational_services_complete(self, mock_credentials, compose_service, temp_workspace):
+    def test_setup_foundational_services_complete(
+        self, mock_credentials, compose_service, temp_workspace
+    ):
         """Test complete foundational services setup."""
         # Mock credentials
         mock_creds = {
             "postgres_user": "setup_user",
             "postgres_password": "setup_pass",
             "postgres_url": "postgresql+psycopg://setup_user:setup_pass@localhost:5532/hive",
-            "api_key": "hive_setup_key"
+            "api_key": "hive_setup_key",
         }
         mock_credentials.return_value = mock_creds
 
@@ -392,14 +398,12 @@ HIVE_API_KEY=hive_test_key"""
             postgres_port=5532,
             postgres_database="hive",
             api_port=8886,
-            include_app_service=False
+            include_app_service=False,
         )
 
         # Verify credential service was called
         mock_credentials.assert_called_once_with(
-            postgres_host="localhost",
-            postgres_port=5532,
-            postgres_database="hive"
+            postgres_host="localhost", postgres_port=5532, postgres_database="hive"
         )
 
         # Verify files were created
@@ -439,28 +443,34 @@ HIVE_API_KEY=hive_test_key"""
             gitignore_content = f.read()
         assert "UVX Automagik Hive - Security Exclusions" in gitignore_content
 
-    def test_setup_foundational_services_custom_parameters(self, compose_service, temp_workspace):
+    def test_setup_foundational_services_custom_parameters(
+        self, compose_service, temp_workspace
+    ):
         """Test foundational services setup with custom parameters."""
-        with patch.object(CredentialService, "setup_complete_credentials") as mock_creds:
+        with patch.object(
+            CredentialService, "setup_complete_credentials"
+        ) as mock_creds:
             mock_creds.return_value = {
                 "postgres_user": "custom_user",
                 "postgres_password": "custom_pass",
                 "postgres_url": "postgresql+psycopg://custom_user:custom_pass@localhost:5433/custom_db",
-                "api_key": "hive_custom_key"
+                "api_key": "hive_custom_key",
             }
 
-            compose_path, env_path, data_dir = compose_service.setup_foundational_services(
-                postgres_port=5433,
-                postgres_database="custom_db",
-                api_port=8887,
-                include_app_service=True
+            compose_path, env_path, data_dir = (
+                compose_service.setup_foundational_services(
+                    postgres_port=5433,
+                    postgres_database="custom_db",
+                    api_port=8887,
+                    include_app_service=True,
+                )
             )
 
             # Verify custom parameters were used
             mock_creds.assert_called_once_with(
                 postgres_host="localhost",
                 postgres_port=5433,
-                postgres_database="custom_db"
+                postgres_database="custom_db",
             )
 
             # Verify docker-compose.yml has custom port

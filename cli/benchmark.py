@@ -26,7 +26,6 @@ class BenchmarkSuite:
         """Run comprehensive performance benchmark."""
         timestamp = datetime.now().isoformat()
 
-
         # Run benchmark suite
         results = self.profiler.benchmark_startup_times(iterations)
 
@@ -55,16 +54,11 @@ class BenchmarkSuite:
         results["import_times_ms"]
         results["memory_mb"]
 
-
-
-
-
         avg_startup = startup_stats["average"]
         if avg_startup < 5.0 or avg_startup < 10.0 or avg_startup < 20.0:
             pass
         else:
             pass
-
 
     def _save_results(self, results: dict, timestamp: str):
         """Save benchmark results to JSON file."""
@@ -75,7 +69,6 @@ class BenchmarkSuite:
         with open(filepath, "w") as f:
             json.dump(results, f, indent=2)
 
-
     def compare_with_baseline(self, baseline_file: Path | None = None) -> dict:
         """Compare current performance with baseline."""
         if baseline_file is None:
@@ -84,7 +77,6 @@ class BenchmarkSuite:
             if not baseline_files:
                 return {}
             baseline_file = max(baseline_files, key=lambda p: p.stat().st_mtime)
-
 
         # Load baseline
         with open(baseline_file) as f:
@@ -141,8 +133,6 @@ class BenchmarkSuite:
             pass
         else:
             pass
-
-
 
     def regression_test(self, threshold_ms: float = 10.0) -> bool:
         """Test for performance regression."""

@@ -9,7 +9,6 @@ class MCPException(Exception):
     """Base exception for MCP operations"""
 
 
-
 class MCPConnectionError(MCPException):
     """Exception raised when MCP connection fails"""
 

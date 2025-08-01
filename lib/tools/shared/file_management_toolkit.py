@@ -677,6 +677,7 @@ def insert_at_line(
 
 # Helper functions
 
+
 def _is_safe_path(path: str) -> bool:
     """Check if the path is safe (relative, within project, no traversal)"""
     if os.path.isabs(path):

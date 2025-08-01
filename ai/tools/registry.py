@@ -48,12 +48,7 @@ class ToolRegistry:
         return _discover_tools()
 
     @classmethod
-    def get_tool(
-        cls,
-        tool_id: str,
-        version: int | None = None,
-        **kwargs
-    ) -> Any:
+    def get_tool(cls, tool_id: str, version: int | None = None, **kwargs) -> Any:
         """
         Get tool instance by ID.
 
@@ -72,9 +67,7 @@ class ToolRegistry:
         available_tools = cls._get_available_tools()
 
         if tool_id not in available_tools:
-            raise KeyError(
-                f"Tool '{tool_id}' not found. Available: {available_tools}"
-            )
+            raise KeyError(f"Tool '{tool_id}' not found. Available: {available_tools}")
 
         # Load tool from filesystem
         tool_path = Path(f"ai/tools/{tool_id}")
@@ -86,6 +79,7 @@ class ToolRegistry:
 
         # Dynamic import of tool module
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(f"tools.{tool_id}", tool_file)
         if spec is None or spec.loader is None:
             raise ImportError(f"Failed to load tool module: {tool_file}")
@@ -94,17 +88,22 @@ class ToolRegistry:
         spec.loader.exec_module(module)
 
         # Get tool class (assumes class name follows ToolNameTool pattern)
-        tool_class_name = "".join(word.capitalize() for word in tool_id.split("-")) + "Tool"
+        tool_class_name = (
+            "".join(word.capitalize() for word in tool_id.split("-")) + "Tool"
+        )
 
         if not hasattr(module, tool_class_name):
             # Fallback: look for any class that inherits from BaseTool
             from .base_tool import BaseTool
+
             tool_class = None
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if (isinstance(attr, type) and
-                    issubclass(attr, BaseTool) and
-                    attr != BaseTool):
+                if (
+                    isinstance(attr, type)
+                    and issubclass(attr, BaseTool)
+                    and attr != BaseTool
+                ):
                     tool_class = attr
                     break
 
@@ -145,10 +144,10 @@ class ToolRegistry:
     def get_tool_info(cls, tool_id: str) -> dict[str, Any]:
         """
         Get tool information without instantiating the tool.
-        
+
         Args:
             tool_id: Tool identifier
-            
+
         Returns:
             Dictionary with tool metadata
         """
@@ -171,10 +170,10 @@ class ToolRegistry:
     def list_tools_by_category(cls, category: str) -> list[str]:
         """
         List tools filtered by category.
-        
+
         Args:
             category: Tool category to filter by
-            
+
         Returns:
             List of tool IDs in the specified category
         """

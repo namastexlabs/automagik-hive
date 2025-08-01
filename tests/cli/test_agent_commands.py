@@ -4,7 +4,7 @@ Tests for the AgentCommands class covering all 7 command methods with >95% cover
 Follows TDD Red-Green-Refactor approach with failing tests first.
 
 Test Categories:
-- Unit tests: Individual command method testing  
+- Unit tests: Individual command method testing
 - Integration tests: CLI argument parsing and error handling
 - Mock tests: Docker and filesystem operations
 - Cross-platform compatibility testing patterns
@@ -90,7 +90,9 @@ class TestAgentCommands:
 
         # Should fail initially - default path resolution not implemented
         expected_path = str(Path().resolve())
-        mock_agent_service.install_agent_environment.assert_called_once_with(expected_path)
+        mock_agent_service.install_agent_environment.assert_called_once_with(
+            expected_path
+        )
         assert result is True
 
     def test_agent_serve_command_success(self, mock_agent_service, temp_workspace):
@@ -279,7 +281,9 @@ class TestAgentCommands:
         assert result is True
         assert mock_agent_service.get_agent_status.called
 
-    def test_agent_status_command_subprocess_error(self, mock_agent_service, temp_workspace):
+    def test_agent_status_command_subprocess_error(
+        self, mock_agent_service, temp_workspace
+    ):
         """Test agent status check when subprocess fails."""
         mock_status = {"agent-server": "✅ Running"}
         mock_agent_service.get_agent_status.return_value = mock_status
@@ -326,7 +330,9 @@ class TestAgentCommands:
 
         # Should fail initially - default workspace handling not implemented
         expected_path = str(Path().resolve())
-        mock_agent_service.reset_agent_environment.assert_called_once_with(expected_path)
+        mock_agent_service.reset_agent_environment.assert_called_once_with(
+            expected_path
+        )
         assert result is True
 
 
@@ -503,10 +509,12 @@ class TestAgentCommandsErrorHandling:
             mock_service_class.return_value = mock_service
             yield mock_service
 
-    def test_agent_commands_with_invalid_workspace_path(self, mock_agent_service_with_exceptions):
+    def test_agent_commands_with_invalid_workspace_path(
+        self, mock_agent_service_with_exceptions
+    ):
         """Test commands with invalid workspace paths."""
-        mock_agent_service_with_exceptions.install_agent_environment.side_effect = FileNotFoundError(
-            "Workspace not found"
+        mock_agent_service_with_exceptions.install_agent_environment.side_effect = (
+            FileNotFoundError("Workspace not found")
         )
 
         commands = AgentCommands()
@@ -515,7 +523,9 @@ class TestAgentCommandsErrorHandling:
         with pytest.raises(FileNotFoundError):
             commands.install("/invalid/workspace/path")
 
-    def test_agent_commands_with_permission_errors(self, mock_agent_service_with_exceptions):
+    def test_agent_commands_with_permission_errors(
+        self, mock_agent_service_with_exceptions
+    ):
         """Test commands with permission errors."""
         mock_agent_service_with_exceptions.serve_agent.side_effect = PermissionError(
             "Permission denied"
@@ -527,7 +537,9 @@ class TestAgentCommandsErrorHandling:
         with pytest.raises(PermissionError):
             commands.serve("/restricted/path")
 
-    def test_agent_commands_with_none_workspace(self, mock_agent_service_with_exceptions):
+    def test_agent_commands_with_none_workspace(
+        self, mock_agent_service_with_exceptions
+    ):
         """Test commands with None workspace parameter."""
         mock_agent_service_with_exceptions.stop_agent.return_value = True
 
@@ -536,10 +548,14 @@ class TestAgentCommandsErrorHandling:
 
         # Should fail initially - None handling not implemented
         expected_path = str(Path().resolve())
-        mock_agent_service_with_exceptions.stop_agent.assert_called_once_with(expected_path)
+        mock_agent_service_with_exceptions.stop_agent.assert_called_once_with(
+            expected_path
+        )
         assert result is True
 
-    def test_agent_status_command_empty_status(self, mock_agent_service_with_exceptions):
+    def test_agent_status_command_empty_status(
+        self, mock_agent_service_with_exceptions
+    ):
         """Test status command with empty status response."""
         mock_agent_service_with_exceptions.get_agent_status.return_value = {}
 
@@ -551,7 +567,9 @@ class TestAgentCommandsErrorHandling:
         assert result is True
         assert mock_agent_service_with_exceptions.get_agent_status.called
 
-    def test_agent_logs_command_with_zero_tail(self, mock_agent_service_with_exceptions):
+    def test_agent_logs_command_with_zero_tail(
+        self, mock_agent_service_with_exceptions
+    ):
         """Test logs command with zero tail parameter."""
         mock_agent_service_with_exceptions.show_agent_logs.return_value = True
 
@@ -564,7 +582,9 @@ class TestAgentCommandsErrorHandling:
             str(Path("test_workspace").resolve()), 0
         )
 
-    def test_agent_logs_command_with_negative_tail(self, mock_agent_service_with_exceptions):
+    def test_agent_logs_command_with_negative_tail(
+        self, mock_agent_service_with_exceptions
+    ):
         """Test logs command with negative tail parameter."""
         mock_agent_service_with_exceptions.show_agent_logs.return_value = True
 
@@ -674,7 +694,9 @@ class TestAgentCommandsCrossPlatform:
             try:
                 result = commands.install(unicode_path)
                 expected_path = str(Path(unicode_path).resolve())
-                mock_service.install_agent_environment.assert_called_once_with(expected_path)
+                mock_service.install_agent_environment.assert_called_once_with(
+                    expected_path
+                )
                 assert result is True
             except Exception:
                 # Expected to fail initially with Unicode paths
@@ -698,7 +720,10 @@ class TestAgentCommandsPrintOutput:
 
             # Should fail initially - print messages not implemented
             assert "🤖 Installing agent environment in workspace" in captured.out
-            assert "✅ Agent environment installation completed successfully" in captured.out
+            assert (
+                "✅ Agent environment installation completed successfully"
+                in captured.out
+            )
 
     def test_agent_serve_print_messages(self, capsys):
         """Test serve command print messages."""
@@ -769,7 +794,7 @@ class TestAgentCommandsPrintOutput:
             mock_service = Mock()
             mock_service.get_agent_status.return_value = {
                 "agent-server": "✅ Running (PID: 1234)",
-                "agent-postgres": "🛑 Stopped"
+                "agent-postgres": "🛑 Stopped",
             }
             mock_service_class.return_value = mock_service
 
@@ -781,12 +806,30 @@ class TestAgentCommandsPrintOutput:
 
             # Should fail initially - table formatting not implemented
             assert "📊 Agent Environment Status:" in captured.out
-            assert "┌─────────────────────────┬──────────────────────────────────────┐" in captured.out
-            assert "│ Agent Service           │ Status                               │" in captured.out
-            assert "├─────────────────────────┼──────────────────────────────────────┤" in captured.out
-            assert "│ Agent Server            │ ✅ Running (PID: 1234)               │" in captured.out
-            assert "│ Agent Postgres          │ 🛑 Stopped                           │" in captured.out
-            assert "└─────────────────────────┴──────────────────────────────────────┘" in captured.out
+            assert (
+                "┌─────────────────────────┬──────────────────────────────────────┐"
+                in captured.out
+            )
+            assert (
+                "│ Agent Service           │ Status                               │"
+                in captured.out
+            )
+            assert (
+                "├─────────────────────────┼──────────────────────────────────────┤"
+                in captured.out
+            )
+            assert (
+                "│ Agent Server            │ ✅ Running (PID: 1234)               │"
+                in captured.out
+            )
+            assert (
+                "│ Agent Postgres          │ 🛑 Stopped                           │"
+                in captured.out
+            )
+            assert (
+                "└─────────────────────────┴──────────────────────────────────────┘"
+                in captured.out
+            )
 
     def test_agent_reset_print_messages(self, capsys):
         """Test reset command print messages."""

@@ -72,7 +72,9 @@ def get_workflow_registry() -> dict[str, Callable[..., Workflow]]:
     return _WORKFLOW_REGISTRY
 
 
-def get_workflow(workflow_id: str, version: int | None = None, **kwargs: Any) -> Workflow:
+def get_workflow(
+    workflow_id: str, version: int | None = None, **kwargs: Any
+) -> Workflow:
     """
     Retrieve and instantiate a workflow by its ID.
 

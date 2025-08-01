@@ -33,7 +33,9 @@ class AgentService:
 
     def __init__(self) -> None:
         # Use unified container architecture
-        self.compose_manager = DockerComposeManager("docker/agent/docker-compose.unified.yml")
+        self.compose_manager = DockerComposeManager(
+            "docker/agent/docker-compose.unified.yml"
+        )
         self.agent_compose_file = "docker/agent/docker-compose.unified.yml"
         self.agent_port = 38886
         self.agent_postgres_port = 35532  # Keep for backward compatibility
@@ -64,10 +66,8 @@ class AgentService:
         if not self._create_agent_env_file(str(workspace)):
             return False
 
-
         # Note: In unified architecture, PostgreSQL is built into the container
         # We still need to create data directories for persistence
-
 
         # Generate agent API key
         return bool(self._generate_agent_api_key(str(workspace)))
@@ -116,7 +116,9 @@ class AgentService:
         if agent_status.name != "RUNNING":
             return True
 
-        return bool(self.compose_manager.stop_service(self.agent_service_name, workspace))
+        return bool(
+            self.compose_manager.stop_service(self.agent_service_name, workspace)
+        )
 
     def restart_agent(self, workspace_path: str) -> bool:
         """Restart agent server using docker-compose.
@@ -127,7 +129,11 @@ class AgentService:
         Returns:
             True if restarted successfully, False otherwise
         """
-        return bool(self.compose_manager.restart_service(self.agent_service_name, workspace_path))
+        return bool(
+            self.compose_manager.restart_service(
+                self.agent_service_name, workspace_path
+            )
+        )
 
     def show_agent_logs(
         self,
@@ -375,7 +381,6 @@ class AgentService:
                     self.agent_service_name, str(workspace)
                 )
                 if agent_status.name == "RUNNING":
-
                     # Show startup logs
                     logs = self.compose_manager.get_service_logs(
                         self.agent_service_name, tail=20, workspace_path=str(workspace)
@@ -394,7 +399,9 @@ class AgentService:
 
     def _stop_agent_compose(self, workspace_path: str) -> bool:
         """Stop unified agent container using docker-compose."""
-        return self.compose_manager.stop_service(self.agent_service_name, workspace_path)
+        return self.compose_manager.stop_service(
+            self.agent_service_name, workspace_path
+        )
 
     def _is_agent_running(self, workspace_path: str = ".") -> bool:
         """Check if unified agent container is running using docker-compose."""

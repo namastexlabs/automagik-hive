@@ -2,6 +2,7 @@
 """Custom TDD Validator for Claude Code hooks
 Validates that code changes follow Test-Driven Development principles
 """
+
 import json
 import os
 import subprocess
@@ -14,17 +15,19 @@ def run_tests():
     try:
         result = subprocess.run(
             ["uv", "run", "pytest", "--tb=short", "-q"],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
-            cwd=Path.cwd()
+            cwd=Path.cwd(),
         )
         return {
             "success": result.returncode == 0,
             "output": result.stdout + result.stderr,
-            "has_failures": "FAILED" in result.stdout
+            "has_failures": "FAILED" in result.stdout,
         }
     except Exception as e:
         return {"success": False, "output": str(e), "has_failures": False}
+
 
 def validate_tdd_cycle(tool, file_path, content):
     """Validate TDD cycle based on file changes"""
@@ -47,7 +50,7 @@ def validate_tdd_cycle(tool, file_path, content):
             f"test_{base_name}.py",
             f"{base_name}_test.py",
             f"tests/test_{base_name}.py",
-            f"tests/{base_name}_test.py"
+            f"tests/{base_name}_test.py",
         ]
 
         has_tests = any(os.path.exists(pattern) for pattern in test_patterns)
@@ -55,7 +58,7 @@ def validate_tdd_cycle(tool, file_path, content):
         if not has_tests:
             return {
                 "allowed": False,
-                "reason": f"RED PHASE VIOLATION: Creating implementation file '{file_path}' without corresponding tests. Create tests first!"
+                "reason": f"RED PHASE VIOLATION: Creating implementation file '{file_path}' without corresponding tests. Create tests first!",
             }
 
     # Run tests to check current state
@@ -63,17 +66,21 @@ def validate_tdd_cycle(tool, file_path, content):
 
     # If tests are failing, we're in RED phase - implementation changes are allowed
     if test_results["has_failures"]:
-        return {"allowed": True, "reason": "GREEN PHASE: Tests failing, implementation changes allowed"}
+        return {
+            "allowed": True,
+            "reason": "GREEN PHASE: Tests failing, implementation changes allowed",
+        }
 
     # If all tests pass, new implementation should be accompanied by new failing tests
     # This is a simplified check - in practice, you might want more sophisticated logic
     if "def " in content and not test_results["has_failures"]:
         return {
             "allowed": True,  # Allow but warn
-            "reason": "REFACTOR PHASE: All tests passing, ensure new functionality has corresponding failing tests first"
+            "reason": "REFACTOR PHASE: All tests passing, ensure new functionality has corresponding failing tests first",
         }
 
     return {"allowed": True, "reason": "Change approved"}
+
 
 def main():
     """Main hook entry point"""
@@ -92,21 +99,21 @@ def main():
                 file_path = tool_input.get("file_path", "")
 
                 for edit in edits:
-                    result = validate_tdd_cycle(tool, file_path, edit.get("new_string", ""))
+                    result = validate_tdd_cycle(
+                        tool, file_path, edit.get("new_string", "")
+                    )
                     if not result["allowed"]:
-                        print(json.dumps({
-                            "reason": result["reason"]
-                        }))
+                        print(json.dumps({"reason": result["reason"]}))
                         sys.exit(1)
             else:
                 file_path = tool_input.get("file_path", "")
-                content = tool_input.get("content", "") or tool_input.get("new_string", "")
+                content = tool_input.get("content", "") or tool_input.get(
+                    "new_string", ""
+                )
 
                 result = validate_tdd_cycle(tool, file_path, content)
                 if not result["allowed"]:
-                    print(json.dumps({
-                        "reason": result["reason"]
-                    }))
+                    print(json.dumps({"reason": result["reason"]}))
                     sys.exit(1)
 
         # If we get here, the change is allowed
@@ -115,10 +122,9 @@ def main():
 
     except Exception as e:
         # On any error, allow the operation but log the error
-        print(json.dumps({
-            "reason": f"TDD Validator Error: {e!s} - Operation allowed"
-        }))
+        print(json.dumps({"reason": f"TDD Validator Error: {e!s} - Operation allowed"}))
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

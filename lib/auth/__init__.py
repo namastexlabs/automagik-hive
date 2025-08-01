@@ -15,5 +15,5 @@ __all__ = [
     "AuthService",
     "CredentialService",
     "optional_api_key",
-    "require_api_key"
+    "require_api_key",
 ]

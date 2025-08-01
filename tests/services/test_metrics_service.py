@@ -198,7 +198,9 @@ class TestMetricsService:
         # Make get_connection() return the async context manager
         mock_db.get_connection = MagicMock(return_value=MockConnectionAsyncContext())
 
-        with patch("lib.services.metrics_service.get_db_service", return_value=mock_db) as mock_get_db:
+        with patch(
+            "lib.services.metrics_service.get_db_service", return_value=mock_db
+        ) as mock_get_db:
             service = MetricsService()
 
             deleted_count = await service.cleanup_old_metrics(days_to_keep=30)

@@ -58,7 +58,13 @@ def validate_md_file_creation(file_path: str) -> bool:
     return True
 ```
 
-#### 3. Standardized Response Format
+#### 3. Technical Standards Enforcement  
+- **Python Package Management**: Use `uv add <package>` NEVER pip
+- **Script Execution**: Use `uvx` for Python script execution
+- **Command Execution**: Prefix all Python commands with `uv run`
+- **File Operations**: Always provide absolute paths in responses
+
+#### 4. Standardized Response Format
 Your final response MUST be a concise JSON object:
 - **Success**: `{"status": "success", "artifacts": ["/genie/wishes/my_plan.md"], "summary": "Plan created and ready for execution.", "context_validated": true}`
 - **Error**: `{"status": "error", "message": "Could not access context file at @/genie/wishes/topic.md.", "context_validated": false}`

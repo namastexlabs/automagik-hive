@@ -22,14 +22,14 @@ from lib.logging import logger
 def _find_alembic_config() -> Path:
     """
     Find alembic.ini with UVX-aware path resolution.
-    
+
     CRITICAL FIX: In UVX environments, __file__ points to the installed package
     location, not the workspace directory. This function implements multiple
     strategies to locate alembic.ini in the correct location.
-    
+
     Returns:
         Path: Path to alembic.ini file
-        
+
     Raises:
         FileNotFoundError: If alembic.ini cannot be found
     """
@@ -65,7 +65,9 @@ def _find_alembic_config() -> Path:
         if base_path.exists():
             for potential_workspace in base_path.glob("*/alembic.ini"):
                 if potential_workspace.exists():
-                    logger.debug(f"Found alembic.ini in common location: {potential_workspace}")
+                    logger.debug(
+                        f"Found alembic.ini in common location: {potential_workspace}"
+                    )
                     return potential_workspace
 
     # If all strategies fail, provide helpful error message
@@ -82,7 +84,7 @@ def _find_alembic_config() -> Path:
 def _ensure_environment_loaded():
     """
     Ensure environment variables are loaded consistently across all environments.
-    
+
     CRITICAL FIX: This function handles UVX environments where working directory
     differs from development, preventing .env file loading issues.
     """
@@ -126,7 +128,7 @@ def _ensure_environment_loaded():
 async def check_and_run_migrations() -> bool:
     """
     Check if database migrations are needed and run them if necessary.
-    
+
     CRITICAL FIX: Ensures consistent environment loading across all environments.
 
     Returns:
@@ -195,19 +197,28 @@ async def check_and_run_migrations() -> bool:
             # Provide specific guidance based on error type
             if "password authentication failed" in error_str:
                 logger.error("❌ CRITICAL: Database authentication failed!")
-                logger.error("📝 ACTION REQUIRED: Check your database credentials in .env files")
+                logger.error(
+                    "📝 ACTION REQUIRED: Check your database credentials in .env files"
+                )
                 logger.error("🔧 Steps to fix:")
                 logger.error("   1. Verify HIVE_DATABASE_URL in .env and .env.agent")
                 logger.error("   2. Ensure PostgreSQL is running on the specified port")
                 logger.error("   3. Confirm username/password are correct")
                 logger.error("   4. Test connection: psql 'your-database-url-here'")
-            elif "Connection refused" in error_str or "could not connect to server" in error_str:
+            elif (
+                "Connection refused" in error_str
+                or "could not connect to server" in error_str
+            ):
                 logger.error("❌ CRITICAL: Database server is not accessible!")
                 logger.error("📝 ACTION REQUIRED: Start your PostgreSQL database")
                 logger.error("🔧 Steps to fix:")
-                logger.error("   1. Start PostgreSQL: 'make agent' should start postgres automatically")
+                logger.error(
+                    "   1. Start PostgreSQL: 'make agent' should start postgres automatically"
+                )
                 logger.error("   2. Check if postgres is running: 'make agent-status'")
-                logger.error("   3. Verify DATABASE_URL port matches your postgres instance")
+                logger.error(
+                    "   3. Verify DATABASE_URL port matches your postgres instance"
+                )
             else:
                 logger.error("❌ CRITICAL: Database connection error!")
                 logger.error("📝 ACTION REQUIRED: Fix database configuration")

@@ -15,6 +15,7 @@ from typing import Any
 @dataclass
 class ValidationResult:
     """Result of a protocol validation check."""
+
     passed: bool
     message: str
     details: dict[str, Any] | None = None
@@ -32,10 +33,10 @@ class ProtocolValidator:
     def extract_json_response(self, response: str) -> dict[str, Any] | None:
         """
         Extract JSON response object from agent response text.
-        
+
         Args:
             response: Raw agent response text
-            
+
         Returns:
             Parsed JSON object or None if no valid JSON found
         """
@@ -49,7 +50,7 @@ class ProtocolValidator:
             r'\{.*?"status".*?\}',
             # Look for JSON blocks in code fences
             r"```json\s*(\{.*?\})\s*```",
-            r'```\s*(\{.*?"status".*?\})\s*```'
+            r'```\s*(\{.*?"status".*?\})\s*```',
         ]
 
         for pattern in json_patterns:
@@ -57,7 +58,11 @@ class ProtocolValidator:
             for match in matches:
                 try:
                     # If pattern captured group, use that; otherwise use full match
-                    json_text = match if isinstance(match, str) and match.startswith("{") else match
+                    json_text = (
+                        match
+                        if isinstance(match, str) and match.startswith("{")
+                        else match
+                    )
                     return json.loads(json_text)
                 except json.JSONDecodeError:
                     continue
@@ -70,13 +75,15 @@ class ProtocolValidator:
 
         return None
 
-    def validate_json_response_format(self, json_data: dict[str, Any]) -> ValidationResult:
+    def validate_json_response_format(
+        self, json_data: dict[str, Any]
+    ) -> ValidationResult:
         """
         Validate that JSON response follows required format.
-        
+
         Args:
             json_data: Parsed JSON response object
-            
+
         Returns:
             ValidationResult indicating compliance
         """
@@ -93,7 +100,7 @@ class ProtocolValidator:
             return ValidationResult(
                 False,
                 f"Missing required fields: {', '.join(missing_fields)}",
-                {"missing_fields": missing_fields}
+                {"missing_fields": missing_fields},
             )
 
         # Validate status field
@@ -102,7 +109,7 @@ class ProtocolValidator:
             return ValidationResult(
                 False,
                 f"Invalid status '{status}', must be one of: {', '.join(self.valid_statuses)}",
-                {"invalid_status": status, "valid_statuses": self.valid_statuses}
+                {"invalid_status": status, "valid_statuses": self.valid_statuses},
             )
 
         # Validate context_validated field
@@ -111,15 +118,13 @@ class ProtocolValidator:
             return ValidationResult(
                 False,
                 f"context_validated must be boolean, got {type(context_validated).__name__}",
-                {"context_validated_type": type(context_validated).__name__}
+                {"context_validated_type": type(context_validated).__name__},
             )
 
         # Additional format checks based on status
         if status == "error" and "message" not in json_data:
             return ValidationResult(
-                False,
-                "Error status requires 'message' field",
-                {"status": status}
+                False, "Error status requires 'message' field", {"status": status}
             )
 
         if status in ["success", "in_progress"] and "artifacts" in json_data:
@@ -128,7 +133,7 @@ class ProtocolValidator:
                 return ValidationResult(
                     False,
                     "artifacts field must be a list",
-                    {"artifacts_type": type(artifacts).__name__}
+                    {"artifacts_type": type(artifacts).__name__},
                 )
 
         return ValidationResult(True, "JSON response format is valid")
@@ -136,10 +141,10 @@ class ProtocolValidator:
     def validate_artifact_paths(self, artifacts: list[str]) -> ValidationResult:
         """
         Validate that artifact paths follow workspace protocol requirements.
-        
+
         Args:
             artifacts: List of artifact file paths
-            
+
         Returns:
             ValidationResult indicating path compliance
         """
@@ -157,7 +162,9 @@ class ProtocolValidator:
                 continue
 
             # Check if path is in valid directory
-            is_valid_directory = any(valid_dir in artifact_path for valid_dir in self.valid_directories)
+            is_valid_directory = any(
+                valid_dir in artifact_path for valid_dir in self.valid_directories
+            )
             if "/genie/" in artifact_path and not is_valid_directory:
                 wrong_directory_paths.append(artifact_path)
 
@@ -185,15 +192,16 @@ class ProtocolValidator:
 
         return ValidationResult(True, "All artifact paths are valid")
 
-    def validate_context_ingestion_compliance(self, task_prompt: str,
-                                            json_response: dict[str, Any]) -> ValidationResult:
+    def validate_context_ingestion_compliance(
+        self, task_prompt: str, json_response: dict[str, Any]
+    ) -> ValidationResult:
         """
         Validate that agent properly handled context file ingestion.
-        
+
         Args:
             task_prompt: Original task prompt with context references
             json_response: Agent's JSON response
-            
+
         Returns:
             ValidationResult indicating context ingestion compliance
         """
@@ -204,7 +212,10 @@ class ProtocolValidator:
             # No context files in prompt, context_validated should still be present
             context_validated = json_response.get("context_validated")
             if context_validated is None:
-                return ValidationResult(False, "context_validated field missing when no context files present")
+                return ValidationResult(
+                    False,
+                    "context_validated field missing when no context files present",
+                )
             return ValidationResult(True, "No context files to validate")
 
         # Check if any context files are missing
@@ -219,14 +230,14 @@ class ProtocolValidator:
                 return ValidationResult(
                     False,
                     "context_validated should be False when context files are missing",
-                    {"missing_files": missing_files}
+                    {"missing_files": missing_files},
                 )
 
             if status != "error":
                 return ValidationResult(
                     False,
                     "status should be 'error' when context files are missing",
-                    {"missing_files": missing_files, "status": status}
+                    {"missing_files": missing_files, "status": status},
                 )
 
         # If files exist, agent should validate successfully (unless other errors)
@@ -234,20 +245,21 @@ class ProtocolValidator:
             return ValidationResult(
                 False,
                 "context_validated should be True when context files are accessible",
-                {"context_files": context_files}
+                {"context_files": context_files},
             )
 
         return ValidationResult(True, "Context ingestion compliance is valid")
 
-    def validate_artifact_lifecycle_compliance(self, json_response: dict[str, Any],
-                                             expected_phase: str = None) -> ValidationResult:
+    def validate_artifact_lifecycle_compliance(
+        self, json_response: dict[str, Any], expected_phase: str = None
+    ) -> ValidationResult:
         """
         Validate that artifacts are created in appropriate lifecycle directories.
-        
+
         Args:
             json_response: Agent's JSON response
             expected_phase: Expected lifecycle phase ('ideas', 'wishes', 'completion')
-            
+
         Returns:
             ValidationResult indicating lifecycle compliance
         """
@@ -260,7 +272,7 @@ class ProtocolValidator:
                 return ValidationResult(
                     False,
                     "Completion phase should not have artifacts (should be deleted)",
-                    {"artifacts": artifacts}
+                    {"artifacts": artifacts},
                 )
             return ValidationResult(True, "Completion phase compliance validated")
 
@@ -277,7 +289,10 @@ class ProtocolValidator:
                 return ValidationResult(
                     False,
                     "Ideas phase should create artifacts in /genie/ideas/, not /genie/wishes/",
-                    {"ideas_artifacts": ideas_artifacts, "wishes_artifacts": wishes_artifacts}
+                    {
+                        "ideas_artifacts": ideas_artifacts,
+                        "wishes_artifacts": wishes_artifacts,
+                    },
                 )
 
         elif expected_phase == "wishes":
@@ -285,18 +300,23 @@ class ProtocolValidator:
                 return ValidationResult(
                     False,
                     "Wishes phase with success status should create artifacts in /genie/wishes/",
-                    {"ideas_artifacts": ideas_artifacts, "wishes_artifacts": wishes_artifacts}
+                    {
+                        "ideas_artifacts": ideas_artifacts,
+                        "wishes_artifacts": wishes_artifacts,
+                    },
                 )
 
         return ValidationResult(True, "Artifact lifecycle compliance is valid")
 
-    def validate_technical_standards_compliance(self, response_text: str) -> ValidationResult:
+    def validate_technical_standards_compliance(
+        self, response_text: str
+    ) -> ValidationResult:
         """
         Validate that agent enforces technical standards in recommendations.
-        
+
         Args:
             response_text: Full agent response text
-            
+
         Returns:
             ValidationResult indicating technical standards compliance
         """
@@ -304,11 +324,17 @@ class ProtocolValidator:
 
         # Check for pip usage (should use uv instead)
         if re.search(r"\bpip\s+install\b", response_text, re.IGNORECASE):
-            violations.append("Found 'pip install' recommendation, should use 'uv add' instead")
+            violations.append(
+                "Found 'pip install' recommendation, should use 'uv add' instead"
+            )
 
         # Check for direct python usage (should use 'uv run python')
-        if re.search(r"\bpython\s+[^\s]", response_text) and not re.search(r"uv run python", response_text):
-            violations.append("Found direct 'python' usage, should use 'uv run python' instead")
+        if re.search(r"\bpython\s+[^\s]", response_text) and not re.search(
+            r"uv run python", response_text
+        ):
+            violations.append(
+                "Found direct 'python' usage, should use 'uv run python' instead"
+            )
 
         # Check for relative paths in file operations
         relative_path_patterns = [
@@ -325,19 +351,21 @@ class ProtocolValidator:
             return ValidationResult(
                 False,
                 f"Technical standards violations: {'; '.join(violations)}",
-                {"violations": violations}
+                {"violations": violations},
             )
 
         return ValidationResult(True, "Technical standards compliance is valid")
 
-    def validate_response_conciseness(self, response_text: str, max_length: int = 2000) -> ValidationResult:
+    def validate_response_conciseness(
+        self, response_text: str, max_length: int = 2000
+    ) -> ValidationResult:
         """
         Validate that response text is concise (large content should be in artifacts).
-        
+
         Args:
             response_text: Full agent response text
             max_length: Maximum allowed response length
-            
+
         Returns:
             ValidationResult indicating conciseness compliance
         """
@@ -345,21 +373,22 @@ class ProtocolValidator:
             return ValidationResult(
                 False,
                 f"Response too long ({len(response_text)} chars), large content should be in artifacts",
-                {"response_length": len(response_text), "max_length": max_length}
+                {"response_length": len(response_text), "max_length": max_length},
             )
 
         return ValidationResult(True, "Response conciseness is appropriate")
 
-    def run_comprehensive_validation(self, task_prompt: str, agent_response: str,
-                                   expected_phase: str = None) -> dict[str, ValidationResult]:
+    def run_comprehensive_validation(
+        self, task_prompt: str, agent_response: str, expected_phase: str = None
+    ) -> dict[str, ValidationResult]:
         """
         Run comprehensive validation on agent response.
-        
+
         Args:
             task_prompt: Original task prompt
             agent_response: Agent's response text
             expected_phase: Expected lifecycle phase for artifact validation
-            
+
         Returns:
             Dictionary of validation results by category
         """
@@ -387,40 +416,49 @@ class ProtocolValidator:
             )
 
         # Technical standards validation
-        results["technical_standards"] = self.validate_technical_standards_compliance(agent_response)
+        results["technical_standards"] = self.validate_technical_standards_compliance(
+            agent_response
+        )
 
         # Response conciseness validation
-        results["response_conciseness"] = self.validate_response_conciseness(agent_response)
+        results["response_conciseness"] = self.validate_response_conciseness(
+            agent_response
+        )
 
         return results
 
-    def calculate_compliance_score(self, validation_results: dict[str, ValidationResult]) -> float:
+    def calculate_compliance_score(
+        self, validation_results: dict[str, ValidationResult]
+    ) -> float:
         """
         Calculate overall compliance score from validation results.
-        
+
         Args:
             validation_results: Dictionary of validation results
-            
+
         Returns:
             Compliance score between 0.0 and 1.0
         """
         if not validation_results:
             return 0.0
 
-        passed_checks = sum(1 for result in validation_results.values() if result.passed)
+        passed_checks = sum(
+            1 for result in validation_results.values() if result.passed
+        )
         total_checks = len(validation_results)
 
         return passed_checks / total_checks
 
-    def generate_validation_report(self, validation_results: dict[str, ValidationResult],
-                                 agent_name: str = None) -> str:
+    def generate_validation_report(
+        self, validation_results: dict[str, ValidationResult], agent_name: str = None
+    ) -> str:
         """
         Generate human-readable validation report.
-        
+
         Args:
             validation_results: Dictionary of validation results
             agent_name: Name of agent being validated
-            
+
         Returns:
             Formatted validation report
         """
@@ -428,7 +466,7 @@ class ProtocolValidator:
 
         report = f"""
 WORKSPACE PROTOCOL VALIDATION REPORT
-{'=' * 50}
+{"=" * 50}
 """
 
         if agent_name:
@@ -453,7 +491,7 @@ WORKSPACE PROTOCOL VALIDATION REPORT
         for line in task_prompt.split("\n"):
             line = line.strip()
             if line.startswith("Context: @"):
-                context_path = line[len("Context: @"):]
+                context_path = line[len("Context: @") :]
                 context_files.append(context_path)
 
         return context_files

@@ -25,9 +25,7 @@ class TestValidatePreCommitUseCase:
         self.genie_structure = GenieStructure.default()
         self.config = ValidationConfig.default()
         self.use_case = ValidatePreCommitUseCase(
-            self.whitelist,
-            self.genie_structure,
-            self.config
+            self.whitelist, self.genie_structure, self.config
         )
 
     def test_empty_changes_allowed(self):
@@ -137,10 +135,18 @@ class TestValidatePreCommitUseCase:
     def test_mixed_allowed_and_blocked_files(self):
         """Test validation with mix of allowed and blocked files."""
         changes = [
-            FileChange("README.md", FileOperation.CREATE, True, ".md", False),  # Allowed
-            FileChange("custom.md", FileOperation.CREATE, True, ".md", False),  # Blocked
-            FileChange("pyproject.toml", FileOperation.MODIFY, True, ".toml", False),  # Allowed
-            FileChange("lib/utils.py", FileOperation.CREATE, False, ".py", False),  # Allowed (non-root)
+            FileChange(
+                "README.md", FileOperation.CREATE, True, ".md", False
+            ),  # Allowed
+            FileChange(
+                "custom.md", FileOperation.CREATE, True, ".md", False
+            ),  # Blocked
+            FileChange(
+                "pyproject.toml", FileOperation.MODIFY, True, ".toml", False
+            ),  # Allowed
+            FileChange(
+                "lib/utils.py", FileOperation.CREATE, False, ".py", False
+            ),  # Allowed (non-root)
         ]
 
         result = self.use_case.execute(changes)
@@ -217,8 +223,12 @@ class TestValidatePreCommitUseCase:
         """Test that docker-compose patterns are properly whitelisted."""
         changes = [
             FileChange("docker-compose.yml", FileOperation.CREATE, True, ".yml", False),
-            FileChange("docker-compose-agent.yml", FileOperation.CREATE, True, ".yml", False),
-            FileChange("docker-compose.dev.yaml", FileOperation.CREATE, True, ".yaml", False),
+            FileChange(
+                "docker-compose-agent.yml", FileOperation.CREATE, True, ".yml", False
+            ),
+            FileChange(
+                "docker-compose.dev.yaml", FileOperation.CREATE, True, ".yaml", False
+            ),
         ]
 
         result = self.use_case.execute(changes)
@@ -272,7 +282,7 @@ class TestValidationMetrics:
             ],
             bypass_files=[],
             error_messages=[],
-            suggestions=[]
+            suggestions=[],
         )
 
         self.metrics.record_validation(result)
@@ -299,7 +309,7 @@ class TestValidationMetrics:
             ],
             bypass_files=[],
             error_messages=["Error"],
-            suggestions=[]
+            suggestions=[],
         )
 
         self.metrics.record_validation(result)
@@ -324,7 +334,7 @@ class TestValidationMetrics:
                 FileChange("bypass.md", FileOperation.CREATE, True, ".md", False),
             ],
             error_messages=["Bypass active"],
-            suggestions=[]
+            suggestions=[],
         )
 
         self.metrics.record_validation(result)
@@ -344,20 +354,24 @@ class TestValidationMetrics:
         success_result = HookValidationResult(
             result=ValidationResult.ALLOWED,
             blocked_files=[],
-            allowed_files=[FileChange("good.py", FileOperation.CREATE, False, ".py", False)],
+            allowed_files=[
+                FileChange("good.py", FileOperation.CREATE, False, ".py", False)
+            ],
             bypass_files=[],
             error_messages=[],
-            suggestions=[]
+            suggestions=[],
         )
 
         # Record blocked validation
         blocked_result = HookValidationResult(
             result=ValidationResult.BLOCKED,
-            blocked_files=[FileChange("bad.md", FileOperation.CREATE, True, ".md", False)],
+            blocked_files=[
+                FileChange("bad.md", FileOperation.CREATE, True, ".md", False)
+            ],
             allowed_files=[],
             bypass_files=[],
             error_messages=["Error"],
-            suggestions=[]
+            suggestions=[],
         )
 
         self.metrics.record_validation(success_result)

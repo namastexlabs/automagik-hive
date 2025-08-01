@@ -83,8 +83,8 @@ class TestEnvironmentManager:
                     "*/test_*",
                     "*/__pycache__/*",
                     "*/venv/*",
-                    "*/.venv/*"
-                ]
+                    "*/.venv/*",
+                ],
             )
             self.coverage_instance.start()
 
@@ -244,7 +244,7 @@ def mock_docker_service():
                 "port": "8886",
                 "uptime": "1 hour",
                 "cpu_usage": "2.5%",
-                "memory_usage": "128MB"
+                "memory_usage": "128MB",
             },
             "postgres": {
                 "status": "running",
@@ -252,27 +252,27 @@ def mock_docker_service():
                 "port": "5432",
                 "uptime": "1 hour",
                 "cpu_usage": "1.2%",
-                "memory_usage": "64MB"
-            }
+                "memory_usage": "64MB",
+            },
         }
 
         mock_docker.get_container_status.return_value = {
             "status": "running",
             "health": "healthy",
             "ports": ["8886:8886"],
-            "uptime": "1 hour"
+            "uptime": "1 hour",
         }
 
         # Configure logs
         mock_docker.get_compose_logs.return_value = {
             "app": [
                 "2024-01-01 10:00:00 INFO: Application started",
-                "2024-01-01 10:00:01 INFO: Ready to serve requests"
+                "2024-01-01 10:00:01 INFO: Ready to serve requests",
             ],
             "postgres": [
                 "2024-01-01 10:00:00 LOG: Database initialized",
-                "2024-01-01 10:00:01 LOG: Ready to accept connections"
-            ]
+                "2024-01-01 10:00:01 LOG: Ready to accept connections",
+            ],
         }
 
         mock_docker.get_container_logs.return_value = """
@@ -303,7 +303,7 @@ def mock_postgres_service():
             "port": 5432,
             "database": "hive",
             "user": "hive",
-            "password": "test_password"
+            "password": "test_password",
         }
 
         # Configure status
@@ -312,7 +312,7 @@ def mock_postgres_service():
             "port": 5432,
             "database": "hive",
             "connections": 5,
-            "uptime": "1 hour"
+            "uptime": "1 hour",
         }
 
         mock_postgres_class.return_value = mock_postgres
@@ -322,15 +322,13 @@ def mock_postgres_service():
 @pytest.fixture
 def mock_all_services(mock_docker_service, mock_postgres_service):
     """Mock all CLI services for comprehensive testing."""
-    return {
-        "docker": mock_docker_service,
-        "postgres": mock_postgres_service
-    }
+    return {"docker": mock_docker_service, "postgres": mock_postgres_service}
 
 
 @pytest.fixture
 def mock_user_inputs():
     """Factory for creating mock user input sequences."""
+
     def _create_input_mock(inputs: list[str]):
         return patch("builtins.input", side_effect=inputs)
 
@@ -340,6 +338,7 @@ def mock_user_inputs():
 @pytest.fixture
 def performance_timer():
     """Utility for measuring test performance."""
+
     class PerformanceTimer:
         def __init__(self):
             self.start_time = None
@@ -356,7 +355,9 @@ def performance_timer():
             elapsed = time.time() - self.start_time
             self.measurements[label] = elapsed
 
-            assert elapsed < max_time, f"Performance check failed: {label} took {elapsed:.3f}s (max: {max_time}s)"
+            assert elapsed < max_time, (
+                f"Performance check failed: {label} took {elapsed:.3f}s (max: {max_time}s)"
+            )
 
             self.start_time = None
             return elapsed
@@ -394,7 +395,7 @@ def real_postgres_available():
             database="hive_agent",
             user="hive_agent",
             password="agent_password",
-            connect_timeout=5
+            connect_timeout=5,
         )
         conn.close()
         return True
@@ -418,44 +419,45 @@ def docker_client():
 @pytest.fixture
 def cli_test_configuration():
     """CLI test configuration and utilities."""
+
     class CLITestConfig:
         def __init__(self):
             self.test_timeouts = {
                 "command_execution": 30.0,
                 "server_startup": 60.0,
                 "database_connection": 15.0,
-                "file_operations": 10.0
+                "file_operations": 10.0,
             }
 
             self.coverage_thresholds = {
                 "minimum": 85.0,
                 "target": 95.0,
-                "excellent": 98.0
+                "excellent": 98.0,
             }
 
             self.test_data = {
                 "valid_api_keys": {
                     "OPENAI_API_KEY": "sk-test-openai-key-12345",
                     "ANTHROPIC_API_KEY": "sk-ant-test-key-67890",
-                    "GOOGLE_API_KEY": "AIza-test-google-key-abcdef"
+                    "GOOGLE_API_KEY": "AIza-test-google-key-abcdef",
                 },
                 "invalid_api_keys": {
                     "OPENAI_API_KEY": "invalid-openai-key",
                     "ANTHROPIC_API_KEY": "invalid-ant-key",
-                    "GOOGLE_API_KEY": "invalid-google-key"
+                    "GOOGLE_API_KEY": "invalid-google-key",
                 },
                 "test_credentials": {
                     "POSTGRES_PASSWORD": "test_password_12345",
                     "HIVE_API_KEY": "hive_test_key_67890",
-                    "JWT_SECRET": "test_jwt_secret_abcdef"
-                }
+                    "JWT_SECRET": "test_jwt_secret_abcdef",
+                },
             }
 
             self.port_ranges = {
                 "api_ports": range(8880, 8900),
                 "postgres_ports": range(5430, 5450),
                 "agent_ports": range(38880, 38900),
-                "agent_postgres_ports": range(35530, 35550)
+                "agent_postgres_ports": range(35530, 35550),
             }
 
         def get_timeout(self, operation: str) -> float:
@@ -465,13 +467,18 @@ def cli_test_configuration():
             return self.coverage_thresholds.get(level, 95.0)
 
         def get_test_api_key(self, provider: str, valid: bool = True) -> str:
-            source = self.test_data["valid_api_keys"] if valid else self.test_data["invalid_api_keys"]
+            source = (
+                self.test_data["valid_api_keys"]
+                if valid
+                else self.test_data["invalid_api_keys"]
+            )
             return source.get(provider, "")
 
         def get_available_port(self, port_type: str) -> int:
             port_range = self.port_ranges.get(port_type, range(8000, 9000))
 
             import socket
+
             for port in port_range:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     try:
@@ -488,6 +495,7 @@ def cli_test_configuration():
 @pytest.fixture
 def workspace_factory(test_environment_manager):
     """Factory for creating different types of test workspaces."""
+
     class WorkspaceFactory:
         def __init__(self, env_manager):
             self.env_manager = env_manager
@@ -507,7 +515,9 @@ services:
 
             return workspace
 
-        def create_postgres_workspace(self, name: str = "postgres", port: int = 5432) -> Path:
+        def create_postgres_workspace(
+            self, name: str = "postgres", port: int = 5432
+        ) -> Path:
             """Create workspace with PostgreSQL configuration."""
             workspace = self.env_manager.create_temp_workspace(name)
 
@@ -533,7 +543,9 @@ POSTGRES_PASSWORD=test_password
 
             return workspace
 
-        def create_agent_workspace(self, name: str = "agent", api_port: int = 38886, db_port: int = 35532) -> Path:
+        def create_agent_workspace(
+            self, name: str = "agent", api_port: int = 38886, db_port: int = 35532
+        ) -> Path:
             """Create workspace with agent configuration."""
             workspace = self.env_manager.create_temp_workspace(name)
 
@@ -636,14 +648,16 @@ MULTIPLE=EQUALS=SIGNS=HERE
 @pytest.fixture
 def cli_assertion_helpers():
     """Helper functions for CLI test assertions."""
-    class CLIAssertionHelpers:
 
+    class CLIAssertionHelpers:
         @staticmethod
         def assert_workspace_structure(workspace_path: Path, expected_files: list[str]):
             """Assert that workspace has expected file structure."""
             for expected_file in expected_files:
                 file_path = workspace_path / expected_file
-                assert file_path.exists(), f"Expected file {expected_file} not found in workspace"
+                assert file_path.exists(), (
+                    f"Expected file {expected_file} not found in workspace"
+                )
 
         @staticmethod
         def assert_env_file_content(env_file: Path, expected_vars: dict[str, str]):
@@ -655,9 +669,13 @@ def cli_assertion_helpers():
 
             for key, expected_value in expected_vars.items():
                 if expected_value is not None:
-                    assert f"{key}={expected_value}" in env_content, f"Expected {key}={expected_value} in env file"
+                    assert f"{key}={expected_value}" in env_content, (
+                        f"Expected {key}={expected_value} in env file"
+                    )
                 else:
-                    assert f"{key}=" in env_content, f"Expected {key} to be present in env file"
+                    assert f"{key}=" in env_content, (
+                        f"Expected {key} to be present in env file"
+                    )
 
         @staticmethod
         def assert_docker_compose_valid(compose_file: Path):
@@ -667,11 +685,14 @@ def cli_assertion_helpers():
 
             try:
                 import yaml
+
                 with open(compose_file) as f:
                     compose_data = yaml.safe_load(f)
 
                 assert "version" in compose_data, "Docker compose file missing version"
-                assert "services" in compose_data, "Docker compose file missing services"
+                assert "services" in compose_data, (
+                    "Docker compose file missing services"
+                )
 
             except ImportError:
                 pytest.skip("PyYAML not available for docker-compose validation")
@@ -679,20 +700,32 @@ def cli_assertion_helpers():
                 pytest.fail(f"Docker compose file is not valid YAML: {e}")
 
         @staticmethod
-        def assert_command_output_contains(captured_output: str, expected_strings: list[str]):
+        def assert_command_output_contains(
+            captured_output: str, expected_strings: list[str]
+        ):
             """Assert that command output contains expected strings."""
             for expected_string in expected_strings:
-                assert expected_string in captured_output, f"Expected '{expected_string}' in output: {captured_output}"
+                assert expected_string in captured_output, (
+                    f"Expected '{expected_string}' in output: {captured_output}"
+                )
 
         @staticmethod
-        def assert_performance_within_limits(execution_time: float, max_time: float, operation: str):
+        def assert_performance_within_limits(
+            execution_time: float, max_time: float, operation: str
+        ):
             """Assert that operation completed within performance limits."""
-            assert execution_time <= max_time, f"{operation} took {execution_time:.3f}s, expected under {max_time}s"
+            assert execution_time <= max_time, (
+                f"{operation} took {execution_time:.3f}s, expected under {max_time}s"
+            )
 
         @staticmethod
-        def assert_coverage_threshold_met(coverage_percentage: float, threshold: float = 95.0):
+        def assert_coverage_threshold_met(
+            coverage_percentage: float, threshold: float = 95.0
+        ):
             """Assert that coverage threshold is met."""
-            assert coverage_percentage >= threshold, f"Coverage {coverage_percentage:.2f}% below threshold {threshold}%"
+            assert coverage_percentage >= threshold, (
+                f"Coverage {coverage_percentage:.2f}% below threshold {threshold}%"
+            )
 
     return CLIAssertionHelpers()
 
@@ -701,14 +734,18 @@ def cli_assertion_helpers():
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "unit: Unit tests for individual components")
-    config.addinivalue_line("markers", "integration: Integration tests across components")
+    config.addinivalue_line(
+        "markers", "integration: Integration tests across components"
+    )
     config.addinivalue_line("markers", "e2e: End-to-end workflow tests")
     config.addinivalue_line("markers", "performance: Performance and benchmark tests")
     config.addinivalue_line("markers", "real_server: Tests requiring real agent server")
     config.addinivalue_line("markers", "real_postgres: Tests requiring real PostgreSQL")
     config.addinivalue_line("markers", "slow: Slow tests that take significant time")
     config.addinivalue_line("markers", "coverage: Coverage validation tests")
-    config.addinivalue_line("markers", "cross_platform: Cross-platform compatibility tests")
+    config.addinivalue_line(
+        "markers", "cross_platform: Cross-platform compatibility tests"
+    )
 
 
 # Configure test collection and execution
@@ -735,7 +772,10 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.cross_platform)
 
         # Mark slow tests
-        if any(marker in item.name for marker in ["comprehensive", "full_lifecycle", "concurrent"]):
+        if any(
+            marker in item.name
+            for marker in ["comprehensive", "full_lifecycle", "concurrent"]
+        ):
             item.add_marker(pytest.mark.slow)
 
 
@@ -768,6 +808,10 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
     terminalreporter.write_line("")
     terminalreporter.write_line("🎯 Coverage Target: >95% for CLI components")
-    terminalreporter.write_line("🚀 Real Server Tests: Set TEST_REAL_AGENT_SERVER=true to enable")
-    terminalreporter.write_line("🐘 Real PostgreSQL Tests: Set TEST_REAL_POSTGRES=true to enable")
+    terminalreporter.write_line(
+        "🚀 Real Server Tests: Set TEST_REAL_AGENT_SERVER=true to enable"
+    )
+    terminalreporter.write_line(
+        "🐘 Real PostgreSQL Tests: Set TEST_REAL_POSTGRES=true to enable"
+    )
     terminalreporter.write_line("")

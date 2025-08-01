@@ -114,8 +114,16 @@ def mock_component_registries() -> Generator[
             "ai.workflows.registry.list_available_workflows",
             return_value=list(mock_workflows.keys()),
         ),
-        patch("lib.utils.version_factory.create_agent", new_callable=AsyncMock, return_value=mock_agent),
-        patch("lib.utils.version_factory.create_team", new_callable=AsyncMock, return_value=mock_agent),
+        patch(
+            "lib.utils.version_factory.create_agent",
+            new_callable=AsyncMock,
+            return_value=mock_agent,
+        ),
+        patch(
+            "lib.utils.version_factory.create_team",
+            new_callable=AsyncMock,
+            return_value=mock_agent,
+        ),
         patch("ai.workflows.registry.get_workflow", return_value=mock_agent),
         # Mock the database services to avoid actual database connections
         patch("lib.services.database_service.get_db_service", return_value=AsyncMock()),
@@ -124,8 +132,11 @@ def mock_component_registries() -> Generator[
         # Mock the version factory method to return mock agent directly, but fail for non-existent components
         patch(
             "lib.utils.version_factory.VersionFactory.create_versioned_component",
-            new_callable=lambda: AsyncMock(side_effect=lambda component_id, **kwargs:
-                None if component_id == "non-existent-component" else mock_agent),
+            new_callable=lambda: AsyncMock(
+                side_effect=lambda component_id, **kwargs: None
+                if component_id == "non-existent-component"
+                else mock_agent
+            ),
         ),
     ]
 
@@ -209,7 +220,10 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
         # Configure async service methods with dynamic responses
         async def mock_get_version(component_id, version_num):
             # Return None for non-existent components to trigger 404 responses
-            if component_id == "non-existent" or component_id == "non-existent-component":
+            if (
+                component_id == "non-existent"
+                or component_id == "non-existent-component"
+            ):
                 return None
             # Return stored version if it exists, otherwise create default
             key = f"{component_id}-{version_num}"
@@ -227,12 +241,19 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
 
         async def mock_list_versions(component_id):
             # Return all versions for this component
-            versions = [v for k, v in created_versions.items() if k.startswith(f"{component_id}-")]
+            versions = [
+                v
+                for k, v in created_versions.items()
+                if k.startswith(f"{component_id}-")
+            ]
             return versions if versions else [create_mock_version(component_id)]
 
         async def mock_get_active_version(component_id):
             # Return None for non-existent components
-            if component_id == "non-existent" or component_id == "non-existent-component":
+            if (
+                component_id == "non-existent"
+                or component_id == "non-existent-component"
+            ):
                 return None
             # Return the first version for this component
             for k, v in created_versions.items():

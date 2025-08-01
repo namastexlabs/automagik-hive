@@ -1,0 +1,154 @@
+# {{workspace_name}}
+
+Automagik Hive workspace for multi-agent AI development.
+
+## Quick Start
+
+```bash
+# Start all services
+uvx automagik-hive --install
+
+# Start this workspace
+uvx automagik-hive .
+
+# View status  
+uvx automagik-hive --status
+```
+
+## Services
+
+- **Agent API**: {{agent_api_url}}
+- **Genie API**: {{genie_api_url}}
+- **Workspace**: Local uvx server at http://{{api_host}}:{{api_port}}
+
+## Development
+
+```bash
+# Install dependencies
+uv sync
+
+# Run tests
+uv run pytest
+
+# Format code
+uv run ruff check --fix
+
+# Type checking
+uv run mypy .
+
+# Run all quality checks
+make lint
+```
+
+## Project Structure
+
+```
+{{workspace_name}}/
+├── ai/                    # AI components
+│   ├── agents/           # Individual AI agents
+│   ├── teams/            # Agent teams
+│   ├── workflows/        # AI workflows
+│   └── tools/            # Shared tools
+├── api/                  # API layer
+│   ├── routes/           # API endpoints
+│   └── dependencies/     # API dependencies
+├── lib/                  # Shared libraries
+│   ├── config/           # Configuration management
+│   ├── knowledge/        # Knowledge base
+│   ├── utils/            # Utilities
+│   ├── services/         # Business services
+│   └── models/           # Data models
+├── tests/                # Test suites
+├── logs/                 # Application logs
+└── .mcp/                 # MCP configurations
+```
+
+## Features
+
+{{#if mcp_enabled}}
+- ✅ MCP (Model Context Protocol) integration
+{{/if}}
+{{#if is_git_repo}}
+- ✅ Git repository with MCP integration
+{{/if}}
+{{#if has_docker}}
+- ✅ Docker support with compose files
+{{/if}}
+{{#if has_uv}}
+- ✅ UV package management
+{{/if}}
+
+## Configuration
+
+Configuration is managed through environment variables in `.env` file and Python settings in `lib/config/settings.py`.
+
+### Environment Variables
+
+- `WORKSPACE_NAME`: Name of this workspace
+- `ENVIRONMENT`: Runtime environment (development/production)
+- `DATABASE_URL`: Primary database connection string
+- `API_HOST`/`API_PORT`: API server configuration
+- `MCP_ENABLED`: Enable MCP integration
+
+## Commands
+
+Use the included Makefile for common operations:
+
+```bash
+make help          # Show available commands
+make install       # Install all services
+make start         # Start services
+make stop          # Stop services  
+make status        # Check status
+make health        # Run health checks
+make test          # Run tests
+make lint          # Run linting
+make format        # Format code
+make clean         # Clean temporary files
+```
+
+## MCP Integration
+
+{{#if mcp_enabled}}
+This workspace includes Model Context Protocol (MCP) integration for enhanced AI capabilities:
+
+- **Automagik Hive Server**: Core agent functionality
+- **Postgres Server**: Database operations
+{{#if enable_filesystem_mcp}}
+- **Filesystem Server**: File system operations
+{{/if}}
+{{#if enable_git_mcp}}
+- **Git Server**: Version control operations
+{{/if}}
+
+MCP configuration is automatically generated in `.mcp/` directory.
+{{/if}}
+
+## Docker Support
+
+{{#if has_docker}}
+This workspace includes Docker support:
+
+```bash
+# Build and run with Docker Compose
+docker-compose -f docker-compose.workspace.yml up -d
+
+# View logs
+docker-compose -f docker-compose.workspace.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.workspace.yml down
+```
+{{/if}}
+
+## Development Workflow
+
+1. **Setup**: Run `make install` to initialize all services
+2. **Develop**: Create agents, teams, and workflows in respective directories
+3. **Test**: Use `make test` to run the test suite
+4. **Quality**: Use `make lint` and `make format` for code quality
+5. **Deploy**: Use Docker compose for containerized deployment
+
+## Support
+
+For documentation and support, visit the [Automagik Hive repository](https://github.com/namastex/automagik-hive).

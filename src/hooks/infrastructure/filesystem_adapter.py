@@ -14,14 +14,14 @@ from typing import Any
 
 class FileSystemAdapter:
     """Adapter for file system operations and bypass management.
-    
+
     This class handles file system interactions needed for the validation
     system, including bypass flag creation/removal and project path resolution.
     """
 
     def __init__(self, project_root: str | None = None):
         """Initialize filesystem adapter with project root.
-        
+
         Args:
             project_root: Root directory of project, uses current directory if None
         """
@@ -32,7 +32,7 @@ class FileSystemAdapter:
 
     def check_bypass_flag(self) -> bool:
         """Check if bypass flag exists and is still valid.
-        
+
         Returns:
             True if valid bypass flag exists, False otherwise
         """
@@ -52,18 +52,15 @@ class FileSystemAdapter:
             return False
 
     def create_bypass_flag(
-        self,
-        reason: str,
-        duration_hours: int = 1,
-        created_by: str | None = None
+        self, reason: str, duration_hours: int = 1, created_by: str | None = None
     ) -> bool:
         """Create bypass flag with metadata and expiration.
-        
+
         Args:
             reason: Reason for creating bypass
             duration_hours: How long bypass should last (default: 1 hour)
             created_by: Who created the bypass (auto-detected if None)
-            
+
         Returns:
             True if bypass flag was created successfully
         """
@@ -81,7 +78,9 @@ class FileSystemAdapter:
                 "duration_hours": duration_hours,
                 "created_by": created_by,
                 "created_at": datetime.now().isoformat(),
-                "expires_at": (datetime.now() + timedelta(hours=duration_hours)).isoformat()
+                "expires_at": (
+                    datetime.now() + timedelta(hours=duration_hours)
+                ).isoformat(),
             }
 
             # Write bypass file
@@ -103,7 +102,7 @@ class FileSystemAdapter:
 
     def remove_bypass_flag(self) -> bool:
         """Remove bypass flag if it exists.
-        
+
         Returns:
             True if bypass flag was removed or didn't exist
         """
@@ -117,7 +116,7 @@ class FileSystemAdapter:
 
     def get_bypass_info(self) -> dict[str, Any] | None:
         """Get bypass flag information if it exists.
-        
+
         Returns:
             Dictionary with bypass information, or None if no bypass
         """
@@ -125,7 +124,7 @@ class FileSystemAdapter:
 
     def get_project_root(self) -> str:
         """Get absolute path to project root directory.
-        
+
         Returns:
             Absolute path to project root
         """
@@ -146,7 +145,7 @@ class FileSystemAdapter:
 
     def record_validation_metrics(self, metrics: dict[str, Any]) -> None:
         """Record validation metrics to file.
-        
+
         Args:
             metrics: Dictionary containing validation metrics
         """
@@ -175,10 +174,10 @@ class FileSystemAdapter:
 
     def get_validation_metrics(self, days: int = 7) -> dict[str, Any]:
         """Get validation metrics for the specified number of days.
-        
+
         Args:
             days: Number of days to look back for metrics
-            
+
         Returns:
             Dictionary with aggregated metrics
         """
@@ -217,7 +216,10 @@ class FileSystemAdapter:
                 "bypass_rate": bypassed / total if total > 0 else 0.0,
                 "avg_files_per_validation": sum(
                     m.get("files_checked", 0) for m in recent_metrics
-                ) / total if total > 0 else 0.0
+                )
+                / total
+                if total > 0
+                else 0.0,
             }
 
         except Exception as e:
@@ -226,7 +228,7 @@ class FileSystemAdapter:
 
     def _read_bypass_info(self) -> dict[str, Any] | None:
         """Read bypass information from bypass flag file.
-        
+
         Returns:
             Dictionary with bypass info, or None if file doesn't exist or is invalid
         """
@@ -256,10 +258,10 @@ class FileSystemAdapter:
 
     def _is_bypass_expired(self, bypass_info: dict[str, Any]) -> bool:
         """Check if bypass has expired based on its metadata.
-        
+
         Args:
             bypass_info: Dictionary containing bypass information
-            
+
         Returns:
             True if bypass has expired
         """
@@ -272,18 +274,19 @@ class FileSystemAdapter:
 
     def _get_git_user(self) -> str | None:
         """Get current Git user name.
-        
+
         Returns:
             Git user name, or None if unable to determine
         """
         try:
             import subprocess
+
             result = subprocess.run(
                 ["git", "config", "user.name"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except Exception:

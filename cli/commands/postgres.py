@@ -42,7 +42,6 @@ class PostgreSQLCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-
         status = self.postgres_service.get_postgres_status(workspace)
 
         # Show connection info if running
@@ -65,7 +64,6 @@ class PostgreSQLCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-
         return bool(self.postgres_service.start_postgres(workspace))
 
     def postgres_stop(self, workspace_path: str | None = None) -> bool:
@@ -80,7 +78,6 @@ class PostgreSQLCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-
         return bool(self.postgres_service.stop_postgres(workspace))
 
     def postgres_restart(self, workspace_path: str | None = None) -> bool:
@@ -94,7 +91,6 @@ class PostgreSQLCommands:
         """
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
-
 
         return bool(self.postgres_service.restart_postgres(workspace))
 
@@ -111,7 +107,6 @@ class PostgreSQLCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-
         return self.postgres_service.show_postgres_logs(workspace, tail)
 
     def postgres_health(self, workspace_path: str | None = None) -> bool:
@@ -126,7 +121,6 @@ class PostgreSQLCommands:
         workspace = workspace_path or "."
         workspace = str(Path(workspace).resolve())
 
-
         return bool(self.postgres_service.validate_postgres_health(workspace))
 
     def postgres_setup(self, workspace_path: str, interactive: bool = True) -> bool:
@@ -140,7 +134,6 @@ class PostgreSQLCommands:
             True if setup successful, False otherwise
         """
         workspace = str(Path(workspace_path).resolve())
-
 
         return bool(self.postgres_service.setup_postgres(workspace, interactive))
 

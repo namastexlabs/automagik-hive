@@ -1,7 +1,7 @@
 """
 Genie Dev Agent - Development Domain Specialist
 
-This agent provides intelligent routing and coordination for development tasks within 
+This agent provides intelligent routing and coordination for development tasks within
 the Automagik Hive ecosystem, delegating to specialized .claude/agents for focused execution.
 """
 
@@ -16,7 +16,7 @@ async def get_genie_dev_agent(**kwargs: Any) -> Agent:
     """
     Create genie dev agent with intelligent development task routing.
 
-    This factory function creates a development domain specialist that analyzes 
+    This factory function creates a development domain specialist that analyzes
     development requests and routes them to appropriate .claude/agents:
 
     - 30-run memory for development pattern recognition and task evolution
@@ -27,7 +27,7 @@ async def get_genie_dev_agent(**kwargs: Any) -> Agent:
 
     The agent routes to these specialized .claude/agents:
     - genie-dev-planner: Requirements analysis and technical specifications
-    - genie-dev-designer: System architecture and design decisions  
+    - genie-dev-designer: System architecture and design decisions
     - genie-dev-coder: Code implementation and feature development
     - genie-dev-fixer: Debugging, error resolution, and issue fixes
 
@@ -64,7 +64,7 @@ async def get_genie_dev_agent(**kwargs: Any) -> Agent:
 
         # System design and architecture
         agent = await get_genie_dev_agent(
-            project_context="enterprise AI platform", 
+            project_context="enterprise AI platform",
             task_type="design",
             feature_requirements="real-time agent orchestration",
             technical_constraints=["microservices", "event-driven"],
@@ -83,7 +83,7 @@ async def get_genie_dev_agent(**kwargs: Any) -> Agent:
         # Bug fixing and debugging
         agent = await get_genie_dev_agent(
             project_context="payment processing service",
-            task_type="fixing", 
+            task_type="fixing",
             issue_description="intermittent timeout errors in payment flow",
             legacy_code_context={
                 "framework": "fastapi with sqlalchemy",

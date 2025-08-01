@@ -21,7 +21,7 @@ async def get_genie_quality_agent(**kwargs: Any) -> Agent:
 
     Strategic Routing Intelligence:
     - Simple formatting tasks → genie-quality-ruff (.claude/agents)
-    - Type safety focused → genie-quality-mypy (.claude/agents)  
+    - Type safety focused → genie-quality-mypy (.claude/agents)
     - Comprehensive operations → genie-quality-format (.claude/agents)
 
     Args:

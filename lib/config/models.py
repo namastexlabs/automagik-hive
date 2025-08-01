@@ -33,7 +33,6 @@ class ModelResolutionError(Exception):
     """Raised when model resolution fails."""
 
 
-
 class ModelResolver:
     """
     Zero-configuration model resolver with dynamic provider discovery.

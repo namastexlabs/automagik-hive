@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -18,7 +17,7 @@ async def get_genie_team(
     Create the magical Genie team using factory pattern.
 
     Provides comprehensive development capabilities through charismatic,
-    relentless coordination of specialized agents. GENIE commands an army 
+    relentless coordination of specialized agents. GENIE commands an army
     of specialists to fulfill all coding wishes!
 
     Args:

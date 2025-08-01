@@ -51,7 +51,9 @@ class TestCheckAndRunMigrations:
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 mock_engine = Mock()
                 mock_connection = Mock()
-                mock_connection.__enter__ = Mock(side_effect=OperationalError("Connection failed", None, None))
+                mock_connection.__enter__ = Mock(
+                    side_effect=OperationalError("Connection failed", None, None)
+                )
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
@@ -87,14 +89,18 @@ class TestCheckAndRunMigrations:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration execution
-                with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
+                with patch(
+                    "lib.utils.db_migration._run_migrations"
+                ) as mock_run_migrations:
                     mock_run_migrations.return_value = True
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with("Database schema missing, running migrations...")
+                        mock_logger.info.assert_called_with(
+                            "Database schema missing, running migrations..."
+                        )
                         mock_run_migrations.assert_called_once()
 
     @pytest.mark.asyncio
@@ -114,21 +120,28 @@ class TestCheckAndRunMigrations:
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = None
 
-                mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
+                mock_connection.execute.side_effect = [
+                    mock_result_schema,
+                    mock_result_table,
+                ]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration execution
-                with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
+                with patch(
+                    "lib.utils.db_migration._run_migrations"
+                ) as mock_run_migrations:
                     mock_run_migrations.return_value = True
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with("Required tables missing, running migrations...")
+                        mock_logger.info.assert_called_with(
+                            "Required tables missing, running migrations..."
+                        )
                         mock_run_migrations.assert_called_once()
 
     @pytest.mark.asyncio
@@ -148,25 +161,34 @@ class TestCheckAndRunMigrations:
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
 
-                mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
+                mock_connection.execute.side_effect = [
+                    mock_result_schema,
+                    mock_result_table,
+                ]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration status check
-                with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
+                with patch(
+                    "lib.utils.db_migration._check_migration_status"
+                ) as mock_check_status:
                     mock_check_status.return_value = True  # Migration needed
 
                     # Mock migration execution
-                    with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
+                    with patch(
+                        "lib.utils.db_migration._run_migrations"
+                    ) as mock_run_migrations:
                         mock_run_migrations.return_value = True
 
                         with patch("lib.utils.db_migration.logger") as mock_logger:
                             result = await check_and_run_migrations()
 
                             assert result is True
-                            mock_logger.info.assert_called_with("Database schema outdated, running migrations...")
+                            mock_logger.info.assert_called_with(
+                                "Database schema outdated, running migrations..."
+                            )
                             mock_run_migrations.assert_called_once()
 
     @pytest.mark.asyncio
@@ -186,21 +208,28 @@ class TestCheckAndRunMigrations:
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
 
-                mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
+                mock_connection.execute.side_effect = [
+                    mock_result_schema,
+                    mock_result_table,
+                ]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration status check
-                with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
+                with patch(
+                    "lib.utils.db_migration._check_migration_status"
+                ) as mock_check_status:
                     mock_check_status.return_value = False  # No migration needed
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is False
-                        mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
+                        mock_logger.debug.assert_called_with(
+                            "Database schema up to date, skipping migrations"
+                        )
 
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_general_exception(self):
@@ -215,7 +244,9 @@ class TestCheckAndRunMigrations:
                     result = await check_and_run_migrations()
 
                     assert result is False
-                    mock_logger.error.assert_called_with("Migration check failed", error="Unexpected error")
+                    mock_logger.error.assert_called_with(
+                        "Migration check failed", error="Unexpected error"
+                    )
 
 
 class TestCheckMigrationStatus:
@@ -233,9 +264,12 @@ class TestCheckMigrationStatus:
 
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
-                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
-                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-
+                with patch(
+                    "lib.utils.db_migration.MigrationContext"
+                ) as mock_migration_context:
+                    with patch(
+                        "lib.utils.db_migration.ScriptDirectory"
+                    ) as mock_script_directory:
                         # Mock current revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
@@ -253,7 +287,7 @@ class TestCheckMigrationStatus:
                             mock_logger.info.assert_called_with(
                                 "Migration status",
                                 current_revision="abc123",
-                                head_revision="xyz789"
+                                head_revision="xyz789",
                             )
 
     def test_check_migration_status_up_to_date(self):
@@ -268,9 +302,12 @@ class TestCheckMigrationStatus:
 
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
-                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
-                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-
+                with patch(
+                    "lib.utils.db_migration.MigrationContext"
+                ) as mock_migration_context:
+                    with patch(
+                        "lib.utils.db_migration.ScriptDirectory"
+                    ) as mock_script_directory:
                         # Mock same revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
@@ -297,9 +334,12 @@ class TestCheckMigrationStatus:
 
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config") as mock_config:
-                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
-                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-
+                with patch(
+                    "lib.utils.db_migration.MigrationContext"
+                ) as mock_migration_context:
+                    with patch(
+                        "lib.utils.db_migration.ScriptDirectory"
+                    ) as mock_script_directory:
                         # Mock no current revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = None
@@ -317,7 +357,7 @@ class TestCheckMigrationStatus:
                             mock_logger.info.assert_called_with(
                                 "Migration status",
                                 current_revision="None",
-                                head_revision="xyz789"
+                                head_revision="xyz789",
                             )
 
     def test_check_migration_status_exception(self):
@@ -326,13 +366,17 @@ class TestCheckMigrationStatus:
 
         # Mock Alembic configuration path to raise exception
         with patch("lib.utils.db_migration.Path") as mock_path:
-            mock_path.return_value.parent.parent.parent.__truediv__.side_effect = Exception("Config error")
+            mock_path.return_value.parent.parent.parent.__truediv__.side_effect = (
+                Exception("Config error")
+            )
 
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = _check_migration_status(mock_connection)
 
                 assert result is True  # Assume migration needed on error
-                mock_logger.warning.assert_called_with("Could not check migration status", error="Config error")
+                mock_logger.warning.assert_called_with(
+                    "Could not check migration status", error="Config error"
+                )
 
 
 class TestRunMigrations:
@@ -356,7 +400,9 @@ class TestRunMigrations:
                         result = await _run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with("Database migrations completed successfully")
+                        mock_logger.info.assert_called_with(
+                            "Database migrations completed successfully"
+                        )
                         mock_command.upgrade.assert_called_once()
 
     @pytest.mark.asyncio
@@ -377,7 +423,9 @@ class TestRunMigrations:
                         result = await _run_migrations()
 
                         assert result is False
-                        mock_logger.error.assert_any_call("Alembic migration failed", error="Alembic error")
+                        mock_logger.error.assert_any_call(
+                            "Alembic migration failed", error="Alembic error"
+                        )
                         mock_logger.error.assert_any_call("Database migrations failed")
 
     @pytest.mark.asyncio
@@ -385,9 +433,13 @@ class TestRunMigrations:
         """Test migration execution with timeout error."""
         with patch("concurrent.futures.ThreadPoolExecutor") as mock_executor:
             mock_future = Mock()
-            mock_future.result.side_effect = concurrent.futures.TimeoutError("Migration timed out")
+            mock_future.result.side_effect = concurrent.futures.TimeoutError(
+                "Migration timed out"
+            )
             mock_context_manager = Mock()
-            mock_context_manager.__enter__ = Mock(return_value=Mock(submit=Mock(return_value=mock_future)))
+            mock_context_manager.__enter__ = Mock(
+                return_value=Mock(submit=Mock(return_value=mock_future))
+            )
             mock_context_manager.__exit__ = Mock(return_value=None)
             mock_executor.return_value = mock_context_manager
 
@@ -395,7 +447,9 @@ class TestRunMigrations:
                 result = await _run_migrations()
 
                 assert result is False
-                mock_logger.error.assert_called_with("Migration execution failed", error="Migration timed out")
+                mock_logger.error.assert_called_with(
+                    "Migration execution failed", error="Migration timed out"
+                )
 
     @pytest.mark.asyncio
     async def test_run_migrations_general_exception(self):
@@ -408,7 +462,9 @@ class TestRunMigrations:
                 result = await _run_migrations()
 
                 assert result is False
-                mock_logger.error.assert_called_with("Migration execution failed", error="Thread pool error")
+                mock_logger.error.assert_called_with(
+                    "Migration execution failed", error="Thread pool error"
+                )
 
 
 class TestRunMigrationsSync:
@@ -469,14 +525,18 @@ class TestDatabaseMigrationIntegration:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock successful migration
-                with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
+                with patch(
+                    "lib.utils.db_migration._run_migrations"
+                ) as mock_run_migrations:
                     mock_run_migrations.return_value = True
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with("Database schema missing, running migrations...")
+                        mock_logger.info.assert_called_with(
+                            "Database schema missing, running migrations..."
+                        )
 
     @pytest.mark.asyncio
     async def test_full_migration_workflow_existing_database(self):
@@ -495,21 +555,28 @@ class TestDatabaseMigrationIntegration:
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
 
-                mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
+                mock_connection.execute.side_effect = [
+                    mock_result_schema,
+                    mock_result_table,
+                ]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
 
                 # Mock up-to-date migration status
-                with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
+                with patch(
+                    "lib.utils.db_migration._check_migration_status"
+                ) as mock_check_status:
                     mock_check_status.return_value = False  # No migration needed
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is False
-                        mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
+                        mock_logger.debug.assert_called_with(
+                            "Database schema up to date, skipping migrations"
+                        )
 
 
 class TestErrorHandlingAndEdgeCases:
@@ -522,15 +589,19 @@ class TestErrorHandlingAndEdgeCases:
             "postgresql+psycopg://test:test@localhost:5432/test_db",
             "postgresql+asyncpg://test:test@localhost:5432/test_db",
             "sqlite:///test.db",
-            "mysql://test:test@localhost:3306/test_db"
+            "mysql://test:test@localhost:3306/test_db",
         ]
 
         for db_url in test_urls:
             with patch.dict(os.environ, {"HIVE_DATABASE_URL": db_url}):
-                with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
+                with patch(
+                    "lib.utils.db_migration.create_engine"
+                ) as mock_create_engine:
                     mock_engine = Mock()
                     mock_connection = Mock()
-                    mock_connection.__enter__ = Mock(side_effect=OperationalError("Connection failed", None, None))
+                    mock_connection.__enter__ = Mock(
+                        side_effect=OperationalError("Connection failed", None, None)
+                    )
                     mock_engine.connect.return_value = mock_connection
                     mock_create_engine.return_value = mock_engine
 
@@ -547,7 +618,9 @@ class TestErrorHandlingAndEdgeCases:
             # Mock path that doesn't exist
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
-            mock_alembic_path.__truediv__ = Mock(return_value="/nonexistent/alembic.ini")
+            mock_alembic_path.__truediv__ = Mock(
+                return_value="/nonexistent/alembic.ini"
+            )
 
             with patch("lib.utils.db_migration.Config") as mock_config:
                 mock_config.side_effect = Exception("Config file not found")
@@ -557,7 +630,8 @@ class TestErrorHandlingAndEdgeCases:
 
                     assert result is True  # Assume migration needed on error
                     mock_logger.warning.assert_called_with(
-                        "Could not check migration status", error="Config file not found"
+                        "Could not check migration status",
+                        error="Config file not found",
                     )
 
     @pytest.mark.asyncio
@@ -580,7 +654,9 @@ class TestErrorHandlingAndEdgeCases:
         async def run_migration():
             with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
                 with patch("lib.utils.db_migration.create_engine"):
-                    with patch("lib.utils.db_migration._run_migrations", return_value=True):
+                    with patch(
+                        "lib.utils.db_migration._run_migrations", return_value=True
+                    ):
                         return await check_and_run_migrations()
 
         # Run multiple migrations concurrently
@@ -600,9 +676,12 @@ class TestErrorHandlingAndEdgeCases:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             with patch("lib.utils.db_migration.Config") as mock_config:
-                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
-                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-
+                with patch(
+                    "lib.utils.db_migration.MigrationContext"
+                ) as mock_migration_context:
+                    with patch(
+                        "lib.utils.db_migration.ScriptDirectory"
+                    ) as mock_script_directory:
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
                         mock_migration_context.configure.return_value = mock_context
@@ -654,18 +733,25 @@ class TestLoggingAndMonitoring:
                 mock_result_table = Mock()
                 mock_result_table.fetchone.return_value = ("component_versions",)
 
-                mock_connection.execute.side_effect = [mock_result_schema, mock_result_table]
+                mock_connection.execute.side_effect = [
+                    mock_result_schema,
+                    mock_result_table,
+                ]
                 mock_connection.__enter__ = Mock(return_value=mock_connection)
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
 
-                with patch("lib.utils.db_migration._check_migration_status", return_value=False):
+                with patch(
+                    "lib.utils.db_migration._check_migration_status", return_value=False
+                ):
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         await check_and_run_migrations()
 
                         # Verify debug level used for up-to-date status
-                        mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
+                        mock_logger.debug.assert_called_with(
+                            "Database schema up to date, skipping migrations"
+                        )
 
     def test_migration_status_detailed_logging(self):
         """Test detailed logging in migration status checking."""
@@ -677,9 +763,12 @@ class TestLoggingAndMonitoring:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             with patch("lib.utils.db_migration.Config") as mock_config:
-                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
-                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
-
+                with patch(
+                    "lib.utils.db_migration.MigrationContext"
+                ) as mock_migration_context:
+                    with patch(
+                        "lib.utils.db_migration.ScriptDirectory"
+                    ) as mock_script_directory:
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "old_revision"
                         mock_migration_context.configure.return_value = mock_context
@@ -696,7 +785,7 @@ class TestLoggingAndMonitoring:
                             mock_logger.info.assert_called_with(
                                 "Migration status",
                                 current_revision="old_revision",
-                                head_revision="new_revision"
+                                head_revision="new_revision",
                             )
 
 
@@ -712,7 +801,7 @@ async def test_store_successful_patterns():
         "Thread pool execution testing with concurrent futures and event loop management",
         "Logging verification for different severity levels and detailed status reporting",
         "Integration testing for complete migration workflows from new to existing databases",
-        "Edge case testing for URL schemes, configuration paths, and concurrent execution"
+        "Edge case testing for URL schemes, configuration paths, and concurrent execution",
     ]
 
     for pattern in patterns:

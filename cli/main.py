@@ -1,507 +1,246 @@
-"""Main CLI Entry Point for Automagik Hive.
+#!/usr/bin/env python3
+"""
+Automagik Hive CLI - Main Entry Point
 
-This module provides the primary CLI interface for the UVX transformation,
-with PostgreSQL container management integration as the foundation.
+PHASE 3 FINALIZED - Simplified 8-command structure for managing Automagik Hive components:
+- Exactly 8 core commands: install, init, start, stop, restart, status, health, logs, uninstall
+- Consistent component parameter handling: all|workspace|agent|genie
+- Streamlined implementation without complex variations
 """
 
 import argparse
-import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Optional
 
-# Lazy import typing for command classes
-if TYPE_CHECKING:
-    from cli.commands.agent import AgentCommands
-    from cli.commands.init import InitCommands
-    from cli.commands.mcp_test import MCPTestCommands
-    from cli.commands.postgres import PostgreSQLCommands
-    from cli.commands.uninstall import UninstallCommands
-    from cli.commands.workspace import WorkspaceCommands
-
-# Import only lightweight utilities at startup
-from lib.utils.version_reader import get_cli_version_string
-
-
-class LazyCommandLoader:
-    """Lazy loader for CLI command classes to optimize startup performance."""
-
-    def __init__(self):
-        self._init_commands = None
-        self._workspace_commands = None
-        self._postgres_commands = None
-        self._agent_commands = None
-        self._genie_commands = None
-        self._uninstall_commands = None
-        self._mcp_test_commands = None
-
-    @property
-    def init_commands(self) -> "InitCommands":
-        """Lazy load InitCommands only when needed."""
-        if self._init_commands is None:
-            from cli.commands.init import InitCommands
-
-            self._init_commands = InitCommands()
-        return self._init_commands
-
-    @property
-    def workspace_commands(self) -> "WorkspaceCommands":
-        """Lazy load WorkspaceCommands only when needed."""
-        if self._workspace_commands is None:
-            from cli.commands.workspace import WorkspaceCommands
-
-            self._workspace_commands = WorkspaceCommands()
-        return self._workspace_commands
-
-    @property
-    def postgres_commands(self) -> "PostgreSQLCommands":
-        """Lazy load PostgreSQLCommands only when needed."""
-        if self._postgres_commands is None:
-            from cli.commands.postgres import PostgreSQLCommands
-
-            self._postgres_commands = PostgreSQLCommands()
-        return self._postgres_commands
-
-    @property
-    def agent_commands(self) -> "AgentCommands":
-        """Lazy load AgentCommands only when needed."""
-        if self._agent_commands is None:
-            from cli.commands.agent import AgentCommands
-
-            self._agent_commands = AgentCommands()
-        return self._agent_commands
-
-    @property
-    def genie_commands(self) -> "GenieCommands":
-        """Lazy load GenieCommands only when needed."""
-        if self._genie_commands is None:
-            from cli.commands.genie import GenieCommands
-
-            self._genie_commands = GenieCommands()
-        return self._genie_commands
-
-    @property
-    def uninstall_commands(self) -> "UninstallCommands":
-        """Lazy load UninstallCommands only when needed."""
-        if self._uninstall_commands is None:
-            from cli.commands.uninstall import UninstallCommands
-
-            self._uninstall_commands = UninstallCommands()
-        return self._uninstall_commands
-
-    @property
-    def mcp_test_commands(self) -> "MCPTestCommands":
-        """Lazy load MCPTestCommands only when needed."""
-        if self._mcp_test_commands is None:
-            from cli.commands.mcp_test import MCPTestCommands
-
-            self._mcp_test_commands = MCPTestCommands()
-        return self._mcp_test_commands
+from cli.commands import LazyCommandLoader
 
 
 def create_parser() -> argparse.ArgumentParser:
-    """Create the main CLI argument parser.
-
-    Returns:
-        ArgumentParser configured with core commands
-    """
+    """Create streamlined argument parser for exactly 8 core commands."""
     parser = argparse.ArgumentParser(
         prog="automagik-hive",
-        description="Automagik Hive CLI - UVX Development Environment (T1.5 Implementation)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Automagik Hive - Multi-agent AI framework CLI (Phase 3 Finalized)",
         epilog="""
-Core Commands:
-  # Workspace initialization and startup
-  uvx automagik-hive --init                    # Interactive workspace initialization
-  uvx automagik-hive ./my-workspace             # Start existing workspace server
-  uvx automagik-hive --help                    # Show this help message
-  uvx automagik-hive --version                 # Show version information
-
-  # PostgreSQL container management
-  uvx automagik-hive --postgres-status         # Check PostgreSQL container status
-  uvx automagik-hive --postgres-start          # Start PostgreSQL container
-  uvx automagik-hive --postgres-stop           # Stop PostgreSQL container
-  uvx automagik-hive --postgres-restart        # Restart PostgreSQL container
-  uvx automagik-hive --postgres-logs           # Show PostgreSQL container logs
-  uvx automagik-hive --postgres-health         # Check PostgreSQL health
-
-  # Agent environment management (LLM-optimized)
-  uvx automagik-hive --agent-install           # Install agent environment (ports 38886/35532)
-  uvx automagik-hive --agent-serve             # Start agent server in background
-  uvx automagik-hive --agent-stop              # Stop agent server cleanly
-  uvx automagik-hive --agent-restart           # Restart agent server
-  uvx automagik-hive --agent-logs              # Show agent server logs
-  uvx automagik-hive --agent-status            # Check agent environment status
-  uvx automagik-hive --agent-reset             # Reset agent environment
-
-  # Genie container management (Phase 1)
-  uvx automagik-hive --genie-serve             # Start Genie container (port 48886)
-  uvx automagik-hive --genie-stop              # Stop Genie container
-  uvx automagik-hive --genie-restart           # Restart Genie container
-  uvx automagik-hive --genie-logs              # Show Genie container logs
-  uvx automagik-hive --genie-status            # Check Genie container status
-
-  # MCP Integration Testing
-  uvx automagik-hive --mcp-test                # Run full MCP test suite
-  uvx automagik-hive --mcp-test-config         # Test MCP configuration generation
-  uvx automagik-hive --mcp-test-health         # Test MCP server health checks
-  uvx automagik-hive --mcp-test-ide            # Test IDE-specific configurations
-
-  # Uninstallation commands (DESTRUCTIVE)
-  uvx automagik-hive --uninstall               # Remove current workspace data
-  uvx automagik-hive --uninstall-global        # Remove ALL components (DANGEROUS)
-
-  # With specific workspace
-  uvx automagik-hive --postgres-status ./my-workspace
-  uvx automagik-hive --postgres-logs ./my-workspace --tail 100
-  uvx automagik-hive --agent-status ./my-workspace
-
-Note: T1.5 Core Command Implementation - Essential UVX functionality ready.
+Examples:
+  %(prog)s --install                    # Install all components
+  %(prog)s --install agent             # Install agent services only
+  %(prog)s --init my-project           # Initialize new workspace
+  %(prog)s ./my-workspace              # Start existing workspace server
+  %(prog)s --start agent               # Start agent services only
+  %(prog)s --logs genie 100            # Show genie logs (100 lines)
         """,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # Core workspace commands (T1.5)
-    core_group = parser.add_argument_group("Core Workspace Commands")
-    core_group.add_argument(
+    # THE 8 CORE COMMANDS - NO COMPLEX VARIATIONS
+
+    parser.add_argument(
+        "--install",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Install and start services (default: all)",
+    )
+
+    parser.add_argument(
         "--init",
-        action="store_true",
-        help="Interactive workspace initialization with API key collection",
-    )
-    core_group.add_argument(
-        "--serve",
-        action="store_true",
-        help="Start FastAPI server directly (used internally)",
+        nargs="?",
+        const=None,
+        metavar="WORKSPACE_NAME",
+        help="Initialize workspace (prompts for name if not provided)",
     )
 
-    # PostgreSQL container management commands
-    postgres_group = parser.add_argument_group("PostgreSQL Container Management")
-    postgres_group.add_argument(
-        "--postgres-status",
-        action="store_true",
-        help="Check PostgreSQL container status and connection info",
-    )
-    postgres_group.add_argument(
-        "--postgres-start", action="store_true", help="Start PostgreSQL container"
-    )
-    postgres_group.add_argument(
-        "--postgres-stop", action="store_true", help="Stop PostgreSQL container"
-    )
-    postgres_group.add_argument(
-        "--postgres-restart", action="store_true", help="Restart PostgreSQL container"
-    )
-    postgres_group.add_argument(
-        "--postgres-logs", action="store_true", help="Show PostgreSQL container logs"
-    )
-    postgres_group.add_argument(
-        "--postgres-health",
-        action="store_true",
-        help="Check PostgreSQL health and connectivity",
+    parser.add_argument(
+        "--start",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Start services (default: all)",
     )
 
-    # Agent environment management commands
-    agent_group = parser.add_argument_group(
-        "Agent Environment Management (LLM-Optimized)"
-    )
-    agent_group.add_argument(
-        "--agent-install",
-        action="store_true",
-        help="Install agent environment with isolated ports (38886/35532)",
-    )
-    agent_group.add_argument(
-        "--agent-serve",
-        action="store_true",
-        help="Start agent server in background (non-blocking)",
-    )
-    agent_group.add_argument(
-        "--agent-stop", action="store_true", help="Stop agent server cleanly"
-    )
-    agent_group.add_argument(
-        "--agent-restart", action="store_true", help="Restart agent server"
-    )
-    agent_group.add_argument(
-        "--agent-logs", action="store_true", help="Show agent server logs"
-    )
-    agent_group.add_argument(
-        "--agent-status", action="store_true", help="Check agent environment status"
-    )
-    agent_group.add_argument(
-        "--agent-reset",
-        action="store_true",
-        help="Reset agent environment (destructive reinstall)",
+    parser.add_argument(
+        "--stop",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Stop services (default: all)",
     )
 
-    # Genie container management commands
-    genie_group = parser.add_argument_group("Genie Container Management (Phase 1)")
-    genie_group.add_argument(
-        "--genie-serve",
-        action="store_true",
-        help="Start Genie container (port 48886)",
-    )
-    genie_group.add_argument(
-        "--genie-stop", action="store_true", help="Stop Genie container"
-    )
-    genie_group.add_argument(
-        "--genie-restart", action="store_true", help="Restart Genie container"
-    )
-    genie_group.add_argument(
-        "--genie-logs", action="store_true", help="Show Genie container logs"
-    )
-    genie_group.add_argument(
-        "--genie-status", action="store_true", help="Check Genie container status"
+    parser.add_argument(
+        "--restart",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Restart services (default: all)",
     )
 
-    # MCP Integration Testing commands
-    mcp_group = parser.add_argument_group("MCP Integration Testing")
-    mcp_group.add_argument(
-        "--mcp-test",
-        action="store_true",
-        help="Run complete MCP configuration test suite",
-    )
-    mcp_group.add_argument(
-        "--mcp-test-config",
-        action="store_true",
-        help="Test MCP configuration generation only",
-    )
-    mcp_group.add_argument(
-        "--mcp-test-health",
-        action="store_true",
-        help="Test MCP server health checks only",
-    )
-    mcp_group.add_argument(
-        "--mcp-test-ide",
-        action="store_true",
-        help="Test IDE-specific configuration generation only",
+    parser.add_argument(
+        "--status",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Show service status (default: all)",
     )
 
-    # Uninstallation commands
-    uninstall_group = parser.add_argument_group("Uninstallation Commands (DESTRUCTIVE)")
-    uninstall_group.add_argument(
+    parser.add_argument(
+        "--health",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Run health checks (default: all)",
+    )
+
+    parser.add_argument(
+        "--logs",
+        nargs="*",
+        default=None,
+        metavar=("COMPONENT", "LINES"),
+        help="Show service logs: --logs [component] [lines] (default: all, 50 lines)",
+    )
+
+    parser.add_argument(
         "--uninstall",
-        action="store_true",
-        help="Remove current workspace data and containers (DESTRUCTIVE)",
-    )
-    uninstall_group.add_argument(
-        "--uninstall-global",
-        action="store_true",
-        help="Remove ALL Automagik Hive components globally (EXTREMELY DESTRUCTIVE)",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Uninstall components (default: all)",
     )
 
-    # Common options
+    # Positional argument for workspace path
     parser.add_argument(
         "workspace",
         nargs="?",
         default=None,
-        help="Path to workspace directory (for startup) or workspace name (for init)",
+        help="Path to workspace directory for server startup",
     )
-    parser.add_argument(
-        "--tail", type=int, default=50, help="Number of log lines to show (default: 50)"
-    )
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0",
-        help="Host to bind server to (default: 0.0.0.0)",
-    )
-    parser.add_argument(
-        "--port", type=int, default=8886, help="Port to bind server to (default: 8886)"
-    )
-    parser.add_argument("--version", action="version", version=get_cli_version_string())
 
     return parser
 
 
-def main() -> int:
-    """Main CLI entry point.
+def validate_arguments(args: argparse.Namespace) -> tuple[bool, Optional[str]]:
+    """Simplified argument validation - Phase 3 finalized."""
 
-    Returns:
-        Exit code (0 for success, 1 for failure)
-    """
+    # Count active commands
+    commands = [
+        args.install,
+        args.init,
+        args.start,
+        args.stop,
+        args.restart,
+        args.status,
+        args.health,
+        args.logs is not None,
+        args.uninstall,
+    ]
+    command_count = sum(1 for cmd in commands if cmd)
+
+    # Only one command allowed
+    if command_count > 1:
+        return False, "Only one command allowed at a time"
+
+    # Simple logs validation
+    if args.logs is not None:
+        if len(args.logs) > 2:
+            return False, "--logs [component] [lines] format expected"
+        if args.logs and args.logs[0] not in ["all", "workspace", "agent", "genie"]:
+            return False, f"Invalid component: {args.logs[0]}"
+        if len(args.logs) > 1 and not args.logs[1].isdigit():
+            return False, f"Lines must be a number: {args.logs[1]}"
+
+    # Workspace path validation
+    if args.workspace:
+        if command_count > 0:
+            return False, "Workspace path conflicts with commands"
+        if not Path(args.workspace).exists():
+            return False, f"Path not found: {args.workspace}"
+
+    return True, None
+
+
+def main() -> int:
+    """Simplified main CLI entry point - Phase 3 finalized."""
     parser = create_parser()
     args = parser.parse_args()
 
-    # Initialize lazy command loader
-    commands = LazyCommandLoader()
-
-    # Handle core workspace commands (T1.5)
-    if args.init:
-        success = commands.init_commands.init_workspace(args.workspace)
-        return 0 if success else 1
-
-    # Handle direct server startup
-    if args.serve:
-        try:
-            subprocess.run(
-                [
-                    "uv",
-                    "run",
-                    "uvicorn",
-                    "api.serve:app",
-                    "--host",
-                    args.host,
-                    "--port",
-                    str(args.port),
-                    "--reload",
-                ],
-                check=False,
-            )
-            return 0
-        except KeyboardInterrupt:
-            return 0
-        except (OSError, subprocess.SubprocessError):
-            return 1
-
-    # Handle workspace startup command (T1.5)
-    elif args.workspace and not any(
-        [
-            args.postgres_status,
-            args.postgres_start,
-            args.postgres_stop,
-            args.postgres_restart,
-            args.postgres_logs,
-            args.postgres_health,
-            args.agent_install,
-            args.agent_serve,
-            args.agent_stop,
-            args.agent_restart,
-            args.agent_logs,
-            args.agent_status,
-            args.agent_reset,
-            args.genie_serve,
-            args.genie_stop,
-            args.genie_restart,
-            args.genie_logs,
-            args.genie_status,
-            args.mcp_test,
-            args.mcp_test_config,
-            args.mcp_test_health,
-            args.mcp_test_ide,
-            args.uninstall,
-            args.uninstall_global,
-        ]
-    ):
-        # This is a workspace startup command
-        workspace_path = args.workspace
-        if Path(workspace_path).is_dir() or workspace_path.startswith(("./", "/")):
-            success = commands.workspace_commands.start_workspace(workspace_path)
-            return 0 if success else 1
+    # Validate arguments
+    is_valid, error_msg = validate_arguments(args)
+    if not is_valid:
+        print(f"Error: {error_msg}", file=sys.stderr)
         return 1
 
-    # Handle PostgreSQL commands
-    elif args.postgres_status:
-        success = commands.postgres_commands.postgres_status(args.workspace or ".")
-        return 0 if success else 1
+    # Initialize command loader
+    try:
+        commands = LazyCommandLoader()
+    except Exception as e:
+        print(f"CLI initialization failed: {e}", file=sys.stderr)
+        return 1
 
-    elif args.postgres_start:
-        success = commands.postgres_commands.postgres_start(args.workspace or ".")
-        return 0 if success else 1
+    try:
+        # Route to command handlers - simplified logic
 
-    elif args.postgres_stop:
-        success = commands.postgres_commands.postgres_stop(args.workspace or ".")
-        return 0 if success else 1
+        # Workspace path (positional)
+        if args.workspace:
+            return (
+                0
+                if commands.workspace_manager.start_workspace_server(args.workspace)
+                else 1
+            )
 
-    elif args.postgres_restart:
-        success = commands.postgres_commands.postgres_restart(args.workspace or ".")
-        return 0 if success else 1
+        # The 8 core commands
+        elif args.install:
+            return (
+                0
+                if commands.unified_installer.install_with_workflow(args.install)
+                else 1
+            )
 
-    elif args.postgres_logs:
-        success = commands.postgres_commands.postgres_logs(
-            args.workspace or ".", args.tail
-        )
-        return 0 if success else 1
+        elif args.init is not None:
+            return (
+                0 if commands.workspace_manager.initialize_workspace(args.init) else 1
+            )
 
-    elif args.postgres_health:
-        success = commands.postgres_commands.postgres_health(args.workspace or ".")
-        return 0 if success else 1
+        elif args.start:
+            return 0 if commands.service_manager.start_services(args.start) else 1
 
-    # Handle Agent commands
-    elif args.agent_install:
-        success = commands.agent_commands.install(args.workspace or ".")
-        return 0 if success else 1
+        elif args.stop:
+            return 0 if commands.service_manager.stop_services(args.stop) else 1
 
-    elif args.agent_serve:
-        success = commands.agent_commands.serve(args.workspace or ".")
-        return 0 if success else 1
+        elif args.restart:
+            return 0 if commands.service_manager.restart_services(args.restart) else 1
 
-    elif args.agent_stop:
-        success = commands.agent_commands.stop(args.workspace or ".")
-        return 0 if success else 1
+        elif args.status:
+            status = commands.service_manager.get_status(args.status)
+            for component, state in status.items():
+                print(f"{component}: {state}")
+            return 0 if all(v == "healthy" for v in status.values()) else 1
 
-    elif args.agent_restart:
-        success = commands.agent_commands.restart(args.workspace or ".")
-        return 0 if success else 1
+        elif args.health:
+            health = commands.unified_installer.health_check(args.health)
+            for component, is_healthy in health.items():
+                print(f"{component}: {'✅ healthy' if is_healthy else '❌ unhealthy'}")
+            return 0 if all(health.values()) else 1
 
-    elif args.agent_logs:
-        success = commands.agent_commands.logs(args.workspace or ".", args.tail)
-        return 0 if success else 1
+        elif args.logs is not None:
+            component = args.logs[0] if args.logs else "all"
+            lines = int(args.logs[1]) if len(args.logs) > 1 else 50
+            return 0 if commands.service_manager.show_logs(component, lines) else 1
 
-    elif args.agent_status:
-        success = commands.agent_commands.status(args.workspace or ".")
-        return 0 if success else 1
+        elif args.uninstall:
+            return 0 if commands.service_manager.uninstall(args.uninstall) else 1
 
-    elif args.agent_reset:
-        success = commands.agent_commands.reset(args.workspace or ".")
-        return 0 if success else 1
+        # No command - show help
+        else:
+            parser.print_help()
+            return 0
 
-    # Handle Genie commands
-    elif args.genie_serve:
-        success = commands.genie_commands.serve(args.workspace or ".")
-        return 0 if success else 1
+    except KeyboardInterrupt:
+        print("\nCancelled", file=sys.stderr)
+        return 130
 
-    elif args.genie_stop:
-        success = commands.genie_commands.stop(args.workspace or ".")
-        return 0 if success else 1
-
-    elif args.genie_restart:
-        success = commands.genie_commands.restart(args.workspace or ".")
-        return 0 if success else 1
-
-    elif args.genie_logs:
-        success = commands.genie_commands.logs(args.workspace or ".", args.tail)
-        return 0 if success else 1
-
-    elif args.genie_status:
-        success = commands.genie_commands.status(args.workspace or ".")
-        return 0 if success else 1
-
-    # Handle MCP Integration Testing commands
-    elif args.mcp_test:
-        success = commands.mcp_test_commands.run_full_test_suite(args.workspace or ".")
-        return 0 if success else 1
-
-    elif args.mcp_test_config:
-        success = commands.mcp_test_commands.test_mcp_generation(args.workspace or ".")
-        return 0 if success else 1
-
-    elif args.mcp_test_health:
-        success = commands.mcp_test_commands.test_health_checks(args.workspace or ".")
-        return 0 if success else 1
-
-    elif args.mcp_test_ide:
-        success = commands.mcp_test_commands.test_ide_configs(args.workspace or ".")
-        return 0 if success else 1
-
-    # Handle Uninstallation commands
-    elif args.uninstall:
-        success = commands.uninstall_commands.uninstall_current_workspace()
-        return 0 if success else 1
-
-    elif args.uninstall_global:
-        success = commands.uninstall_commands.uninstall_global()
-        return 0 if success else 1
-
-    else:
-        # No command specified, show help
-        parser.print_help()
-        return 0
-
-
-def app() -> int:
-    """Main application entry point for typer integration.
-
-    Returns:
-        Exit code (0 for success, 1 for failure)
-    """
-    return main()
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

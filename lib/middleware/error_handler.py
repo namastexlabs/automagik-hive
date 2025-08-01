@@ -18,7 +18,7 @@ from lib.logging import logger, session_logger
 class AgentRunErrorHandler(BaseHTTPMiddleware):
     """
     Custom middleware to handle agent run session management errors gracefully.
-    
+
     This middleware catches RuntimeError exceptions related to missing agent runs
     and provides user-friendly error responses instead of 500 Internal Server Errors.
     """
@@ -26,11 +26,11 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         """
         Process the request and handle agent run-related errors.
-        
+
         Args:
             request: The incoming HTTP request
             call_next: The next middleware/handler in the chain
-            
+
         Returns:
             Response: Either the normal response or a graceful error response
         """
@@ -53,19 +53,21 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                 error=str(e),
                 path=request.url.path,
                 method=request.method,
-                traceback=traceback.format_exc()
+                traceback=traceback.format_exc(),
             )
             # Let other errors propagate normally
             raise
 
-    async def _handle_missing_run_error(self, request: Request, error_message: str) -> JSONResponse:
+    async def _handle_missing_run_error(
+        self, request: Request, error_message: str
+    ) -> JSONResponse:
         """
         Handle missing agent run errors with user-friendly responses.
-        
+
         Args:
             request: The HTTP request that caused the error
             error_message: The original error message
-            
+
         Returns:
             JSONResponse: User-friendly error response
         """
@@ -107,7 +109,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
             path=request.url.path,
             method=request.method,
             user_agent=request.headers.get("user-agent"),
-            original_error=error_message
+            original_error=error_message,
         )
 
         # Log using session lifecycle logger if we have the required info
@@ -117,7 +119,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                 session_id=session_id or "unknown",
                 agent_id=agent_id,
                 error=error_message,
-                error_type="RunNotFound"
+                error_type="RunNotFound",
             )
 
         # Create user-friendly error response
@@ -128,25 +130,25 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
                 "reason": "The agent run session was not found in memory",
                 "likely_cause": "Server restart or session cleanup",
                 "run_id": run_id,
-                "suggested_action": "Please start a new conversation"
+                "suggested_action": "Please start a new conversation",
             },
             "recovery_options": [
                 {
                     "action": "start_new_conversation",
                     "description": "Begin a fresh conversation with the agent",
-                    "endpoint": self._get_new_conversation_endpoint(request)
+                    "endpoint": self._get_new_conversation_endpoint(request),
                 },
                 {
                     "action": "view_conversation_history",
                     "description": "View your previous conversations with this agent",
-                    "endpoint": self._get_conversation_history_endpoint(request)
-                }
-            ]
+                    "endpoint": self._get_conversation_history_endpoint(request),
+                },
+            ],
         }
 
         return JSONResponse(
             status_code=410,  # 410 Gone - resource no longer available
-            content=error_response
+            content=error_response,
         )
 
     def _get_new_conversation_endpoint(self, request: Request) -> str:
@@ -183,7 +185,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
 def create_agent_run_error_handler() -> AgentRunErrorHandler:
     """
     Factory function to create the agent run error handler middleware.
-    
+
     Returns:
         AgentRunErrorHandler: Configured middleware instance
     """

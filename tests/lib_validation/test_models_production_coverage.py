@@ -36,10 +36,7 @@ class ProductionAgentRequest(ProductionBaseValidatedRequest):
     """Production-equivalent AgentRequest for testing validation logic."""
 
     message: str = Field(
-        ...,
-        min_length=1,
-        max_length=10000,
-        description="Message to send to the agent"
+        ..., min_length=1, max_length=10000, description="Message to send to the agent"
     )
     session_id: str | None = Field(
         None,
@@ -90,10 +87,7 @@ class ProductionTeamRequest(ProductionBaseValidatedRequest):
     """Production-equivalent TeamRequest for testing validation logic."""
 
     task: str = Field(
-        ...,
-        min_length=1,
-        max_length=5000,
-        description="Task description for the team"
+        ..., min_length=1, max_length=5000, description="Task description for the team"
     )
     team_id: str | None = Field(
         None,
@@ -241,7 +235,9 @@ class TestProductionAgentRequestValidation:
 
     def test_message_sanitization_html_removal(self):
         """Test HTML tag removal - Line coverage: sanitize_message method."""
-        request = ProductionAgentRequest(message='Hello <script>alert("xss")</script> world')
+        request = ProductionAgentRequest(
+            message='Hello <script>alert("xss")</script> world'
+        )
         assert request.message == "Hello scriptalert(xss)/script world"
         assert "<script>" not in request.message
         assert "</script>" not in request.message
@@ -266,8 +262,10 @@ class TestProductionAgentRequestValidation:
             ProductionAgentRequest(message="")
         # Pydantic V2 triggers min_length before custom validator
         error_str = str(exc_info.value)
-        assert ("Message cannot be empty" in error_str or
-                "String should have at least 1 character" in error_str)
+        assert (
+            "Message cannot be empty" in error_str
+            or "String should have at least 1 character" in error_str
+        )
 
     def test_message_whitespace_only_validation(self):
         """Test whitespace-only message validation - Line coverage: sanitize_message error path."""
@@ -370,7 +368,7 @@ class TestProductionTeamRequestValidation:
 
     def test_task_sanitization_logic(self):
         """Test task sanitization - Line coverage: sanitize_task method."""
-        request = ProductionTeamRequest(task='Task <with> "quotes" and \'apostrophes\'')
+        request = ProductionTeamRequest(task="Task <with> \"quotes\" and 'apostrophes'")
         assert "<" not in request.task
         assert ">" not in request.task
         assert '"' not in request.task
@@ -383,8 +381,10 @@ class TestProductionTeamRequestValidation:
             ProductionTeamRequest(task="")
         # Pydantic V2 triggers min_length before custom validator
         error_str = str(exc_info.value)
-        assert ("Task cannot be empty" in error_str or
-                "String should have at least 1 character" in error_str)
+        assert (
+            "Task cannot be empty" in error_str
+            or "String should have at least 1 character" in error_str
+        )
 
     def test_task_whitespace_validation(self):
         """Test whitespace-only task validation - Line coverage: sanitize_task error path."""
@@ -442,25 +442,13 @@ class TestProductionWorkflowRequestValidation:
 
     def test_input_data_recursive_validation_safe(self):
         """Test recursive validation with safe structure - Line coverage: check_dict_recursive."""
-        safe_nested = {
-            "level1": {
-                "level2": {
-                    "level3": {"safe_key": "safe_value"}
-                }
-            }
-        }
+        safe_nested = {"level1": {"level2": {"level3": {"safe_key": "safe_value"}}}}
         request = ProductionWorkflowRequest(workflow_id="test", input_data=safe_nested)
         assert request.input_data == safe_nested
 
     def test_input_data_recursive_validation_dangerous(self):
         """Test recursive dangerous key detection - Line coverage: check_dict_recursive error path."""
-        dangerous_nested = {
-            "safe": {
-                "level2": {
-                    "__import__": "dangerous_nested"
-                }
-            }
-        }
+        dangerous_nested = {"safe": {"level2": {"__import__": "dangerous_nested"}}}
         with pytest.raises(ValidationError) as exc_info:
             ProductionWorkflowRequest(workflow_id="test", input_data=dangerous_nested)
         assert "Invalid input key" in str(exc_info.value)
@@ -530,7 +518,7 @@ class TestProductionResponseModels:
         response = ProductionErrorResponse(
             error="Validation failed",
             detail="Invalid input data",
-            error_code="VALIDATION_ERROR"
+            error_code="VALIDATION_ERROR",
         )
         assert response.error == "Validation failed"
         assert response.detail == "Invalid input data"
@@ -548,7 +536,7 @@ class TestProductionResponseModels:
         response = ProductionSuccessResponse(
             success=False,
             message="Operation completed",
-            data={"result": "success", "count": 42}
+            data={"result": "success", "count": 42},
         )
         assert response.success is False
         assert response.message == "Operation completed"
@@ -593,9 +581,7 @@ class TestProductionValidationEdgeCases:
     def test_model_serialization(self):
         """Test model serialization - Line coverage: model methods."""
         request = ProductionAgentRequest(
-            message="test message",
-            session_id="test-session",
-            context={"key": "value"}
+            message="test message", session_id="test-session", context={"key": "value"}
         )
 
         data = request.model_dump()
@@ -641,13 +627,7 @@ class TestProductionSecurityValidation:
         # Test multiple levels of nesting
         complex_dangerous = {
             "level1": {
-                "level2": {
-                    "level3": {
-                        "level4": {
-                            "__import__": "deeply_nested_danger"
-                        }
-                    }
-                }
+                "level2": {"level3": {"level4": {"__import__": "deeply_nested_danger"}}}
             }
         }
 
@@ -685,7 +665,7 @@ class TestProductionValidationIntegration:
             session_id="valid-session_123",
             user_id="user-456",
             context={"safe_key": "safe_value", "nested": {"also_safe": "value"}},
-            stream=True
+            stream=True,
         )
 
         # Verify sanitization occurred
@@ -693,7 +673,10 @@ class TestProductionValidationIntegration:
         # Verify other fields
         assert request.session_id == "valid-session_123"
         assert request.user_id == "user-456"
-        assert request.context == {"safe_key": "safe_value", "nested": {"also_safe": "value"}}
+        assert request.context == {
+            "safe_key": "safe_value",
+            "nested": {"also_safe": "value"},
+        }
         assert request.stream is True
 
     def test_workflow_request_full_validation_chain(self):
@@ -702,15 +685,11 @@ class TestProductionValidationIntegration:
             workflow_id="test-workflow_123",
             input_data={
                 "param1": "value1",
-                "nested": {
-                    "level2": {
-                        "safe_param": "safe_value"
-                    }
-                },
-                "list_param": [1, 2, 3]  # Lists are not recursively checked
+                "nested": {"level2": {"safe_param": "safe_value"}},
+                "list_param": [1, 2, 3],  # Lists are not recursively checked
             },
             session_id="workflow-session",
-            user_id="workflow-user"
+            user_id="workflow-user",
         )
 
         assert request.workflow_id == "test-workflow_123"
@@ -759,7 +738,7 @@ def test_production_sanitization_patterns():
         ("hello<world>", "helloworld"),
         ('test"quote"test', "testquotetest"),
         ("test'apostrophe'test", "testapostrophetest"),
-        ('mixed<">\' test', "mixed test"),
+        ("mixed<\">' test", "mixed test"),
         ("normal text", "normal text"),
     ]
 
@@ -785,8 +764,12 @@ def test_production_dangerous_keys_logic():
     ]
 
     for key, should_be_dangerous in test_keys:
-        is_dangerous = any(danger in str(key).lower() for danger in production_dangerous_keys)
-        assert is_dangerous == should_be_dangerous, f"Dangerous key logic mismatch for {key}"
+        is_dangerous = any(
+            danger in str(key).lower() for danger in production_dangerous_keys
+        )
+        assert is_dangerous == should_be_dangerous, (
+            f"Dangerous key logic mismatch for {key}"
+        )
 
 
 def test_production_size_limits():

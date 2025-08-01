@@ -108,7 +108,9 @@ class InitCommands:
 
             # Step 8.5: Start all selected services
             current_step += 1
-            self._start_docker_containers(workspace_path, container_services, postgres_config)
+            self._start_docker_containers(
+                workspace_path, container_services, postgres_config
+            )
 
             # Show service startup instructions
             print("\n🚀 Next Steps - Start Your Services:")
@@ -117,9 +119,13 @@ class InitCommands:
                 if service == "postgres" and postgres_config["type"] == "docker":
                     print("📁 PostgreSQL: Already started via Docker Compose")
                 elif service == "agent":
-                    print(f"🤖 Agent Environment: uvx automagik-hive --agent-serve {workspace_path}")
+                    print(
+                        f"🤖 Agent Environment: uvx automagik-hive --agent-serve {workspace_path}"
+                    )
                 elif service == "genie":
-                    print(f"🧞 Genie Assistant: uvx automagik-hive --genie-serve {workspace_path}")
+                    print(
+                        f"🧞 Genie Assistant: uvx automagik-hive --genie-serve {workspace_path}"
+                    )
             print("\n💡 Tip: You can also use the generated start.sh script!")
 
             # Step 9: Comprehensive workspace validation
@@ -136,7 +142,9 @@ class InitCommands:
                 pass
 
             if not is_valid:
-                print("⚠️ Some validation issues found, but continuing with initialization...")
+                print(
+                    "⚠️ Some validation issues found, but continuing with initialization..."
+                )
 
             # Step 10: Enhanced success message with next steps
             current_step += 1
@@ -165,7 +173,12 @@ class InitCommands:
 
     def _handle_initialization_failure(self, reason: str, step: int) -> bool:
         """Handle initialization failure with helpful recovery suggestions."""
-        if "path" in reason.lower() or "docker" in reason.lower() or "postgres" in reason.lower() or "permission" in reason.lower():
+        if (
+            "path" in reason.lower()
+            or "docker" in reason.lower()
+            or "postgres" in reason.lower()
+            or "permission" in reason.lower()
+        ):
             pass
         else:
             pass
@@ -202,7 +215,9 @@ class InitCommands:
             # Enhanced directory existence check
             if workspace_path.exists():
                 if any(workspace_path.iterdir()):
-                    print(f"📁 Directory '{workspace_path}' already exists - merging configuration")
+                    print(
+                        f"📁 Directory '{workspace_path}' already exists - merging configuration"
+                    )
                     # Check for permission issues with existing files
                     self._check_and_fix_permissions(workspace_path)
                 else:
@@ -295,29 +310,27 @@ class InitCommands:
                     print("🔧 Fixing data directory permissions...")
                     # Automatically attempt to fix permissions
                     try:
-                            # SECURITY: Use secure subprocess call with validation
-                            uid = os.getuid() if hasattr(os, "getuid") else 1000
-                            gid = os.getgid() if hasattr(os, "getgid") else 1000
+                        # SECURITY: Use secure subprocess call with validation
+                        uid = os.getuid() if hasattr(os, "getuid") else 1000
+                        gid = os.getgid() if hasattr(os, "getgid") else 1000
 
-                            # Validate the data path before using it in subprocess
-                            validated_data_path = secure_resolve_workspace(
-                                str(data_path)
-                            )
+                        # Validate the data path before using it in subprocess
+                        validated_data_path = secure_resolve_workspace(str(data_path))
 
-                            result = secure_subprocess_call(
-                                [
-                                    "sudo",
-                                    "chown",
-                                    "-R",
-                                    f"{uid}:{gid}",
-                                    str(validated_data_path),
-                                ]
-                            )
+                        result = secure_subprocess_call(
+                            [
+                                "sudo",
+                                "chown",
+                                "-R",
+                                f"{uid}:{gid}",
+                                str(validated_data_path),
+                            ]
+                        )
 
-                            if result.returncode == 0:
-                                print("✅ Permissions fixed successfully")
-                            else:
-                                print("⚠️ Permission fix failed, but continuing...")
+                        if result.returncode == 0:
+                            print("✅ Permissions fixed successfully")
+                        else:
+                            print("⚠️ Permission fix failed, but continuing...")
                     except (SecurityError, subprocess.SubprocessError):
                         print("⚠️ Permission fix failed, but continuing...")
                     except Exception:
@@ -360,7 +373,6 @@ class InitCommands:
         # Check Docker availability
         if not self._check_docker_setup():
             return None
-
 
         return {
             "type": "docker",
@@ -454,7 +466,6 @@ class InitCommands:
         # Check Docker daemon
         daemon_status = docker_check["daemon"]
         if daemon_status["running"]:
-
             # Show daemon info if available
             daemon_info = daemon_status.get("info", {})
             if daemon_info:
@@ -483,8 +494,6 @@ class InitCommands:
         for _i, _step in enumerate(installation_guide["post_install"], 1):
             pass
 
-
-
     def _show_daemon_troubleshooting(self, docker_check: dict):
         """Show Docker daemon troubleshooting guidance."""
         platform_system = docker_check["platform"]["system"].lower()
@@ -497,7 +506,6 @@ class InitCommands:
                 pass
             else:
                 pass
-
 
     def _generate_credentials(self, postgres_config: dict[str, str]) -> dict[str, str]:
         """Generate secure credentials for the workspace."""
@@ -568,7 +576,9 @@ class InitCommands:
                 api_keys["xai_api_key"] = xai_key
 
             # LangWatch integration
-            langwatch_choice = input("\nEnable LangWatch monitoring? (y/N): ").strip().lower()
+            langwatch_choice = (
+                input("\nEnable LangWatch monitoring? (y/N): ").strip().lower()
+            )
             if langwatch_choice == "y":
                 langwatch_key = input("LangWatch API Key: ").strip()
                 if langwatch_key:
@@ -604,7 +614,9 @@ class InitCommands:
 
             # Create docker-compose files for selected services
             if postgres_config["type"] == "docker":
-                self._create_docker_compose_files(workspace_path, credentials, container_services, postgres_config)
+                self._create_docker_compose_files(
+                    workspace_path, credentials, container_services, postgres_config
+                )
 
             # Copy .claude/ directory if available
             self._copy_claude_directory(workspace_path)
@@ -728,7 +740,6 @@ HIVE_DEV_MODE=true
                 workspace_path, container_credentials
             )
 
-
         # Show generated files
         for _service_type, _file_path in generated_files.items():
             pass
@@ -738,7 +749,7 @@ HIVE_DEV_MODE=true
         workspace_path: Path,
         credentials: dict[str, str],
         container_services: list[str],
-        postgres_config: dict[str, str]
+        postgres_config: dict[str, str],
     ):
         """Create docker-compose files for selected services using templates."""
         template_dir = Path(__file__).parent.parent.parent / "docker" / "templates"
@@ -753,7 +764,7 @@ HIVE_DEV_MODE=true
             self._copy_and_customize_template(
                 template_dir / "workspace.yml",
                 workspace_path / "docker-compose.yml",
-                credentials
+                credentials,
             )
 
         # Create agent directory structure and unified compose file if selected
@@ -768,11 +779,14 @@ HIVE_DEV_MODE=true
 
             if unified_agent_template.exists():
                 # Copy the unified compose file directly
-                shutil.copy2(unified_agent_template, agent_docker_dir / "docker-compose.unified.yml")
+                shutil.copy2(
+                    unified_agent_template,
+                    agent_docker_dir / "docker-compose.unified.yml",
+                )
                 print("✅ Copied unified agent compose file")
             else:
                 print("⚠️ Unified agent template not found, using fallback")
-            
+
             # Copy unified container build files for agent
             self._copy_unified_container_files("agent", workspace_path, credentials)
 
@@ -788,19 +802,19 @@ HIVE_DEV_MODE=true
 
             if unified_genie_template.exists():
                 # Copy the unified compose file directly
-                shutil.copy2(unified_genie_template, genie_docker_dir / "docker-compose.unified.yml")
+                shutil.copy2(
+                    unified_genie_template,
+                    genie_docker_dir / "docker-compose.unified.yml",
+                )
                 print("✅ Copied unified genie compose file")
             else:
                 print("⚠️ Unified genie template not found, using fallback")
-            
+
             # Copy unified container build files for genie
             self._copy_unified_container_files("genie", workspace_path, credentials)
 
     def _copy_and_customize_template(
-        self,
-        template_path: Path,
-        dest_path: Path,
-        credentials: dict[str, str]
+        self, template_path: Path, dest_path: Path, credentials: dict[str, str]
     ):
         """Copy template and customize with credentials."""
         try:
@@ -816,7 +830,8 @@ HIVE_DEV_MODE=true
                         "${POSTGRES_USER:-workspace}", credentials["postgres_user"]
                     )
                     template_content = template_content.replace(
-                        "${POSTGRES_PASSWORD:-workspace}", credentials["postgres_password"]
+                        "${POSTGRES_PASSWORD:-workspace}",
+                        credentials["postgres_password"],
                     )
                     template_content = template_content.replace(
                         "${POSTGRES_USER:-agent}", credentials["postgres_user"]
@@ -833,6 +848,7 @@ HIVE_DEV_MODE=true
 
                 # Add user/group settings for proper permissions
                 import os
+
                 uid = os.getuid() if hasattr(os, "getuid") else 1000
                 gid = os.getgid() if hasattr(os, "getgid") else 1000
                 template_content = template_content.replace(
@@ -848,45 +864,42 @@ HIVE_DEV_MODE=true
             self._create_basic_docker_compose_file(dest_path.parent, credentials)
 
     def _copy_unified_container_files(
-        self,
-        service_type: str,
-        workspace_path: Path,
-        credentials: dict[str, str]
+        self, service_type: str, workspace_path: Path, credentials: dict[str, str]
     ):
         """Copy all unified container build files to workspace."""
         try:
             # Source directory in the package
             source_dir = Path(__file__).parent.parent.parent / "docker" / service_type
-            
+
             # Destination directory in workspace
             dest_dir = workspace_path / "docker" / service_type
             dest_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Files to copy for unified containers
             files_to_copy = [
                 "Dockerfile.unified",
-                "supervisord.conf", 
+                "supervisord.conf",
                 "entrypoint.sh",
                 "health-monitor.sh",
                 "pg_hba.conf",
-                "postgresql.conf"
+                "postgresql.conf",
             ]
-            
+
             for filename in files_to_copy:
                 source_file = source_dir / filename
                 dest_file = dest_dir / filename
-                
+
                 if source_file.exists():
                     # Copy file content and customize if needed
                     content = source_file.read_text()
-                    
+
                     # Make executable files executable
                     if filename.endswith(".sh"):
                         dest_file.write_text(content)
                         dest_file.chmod(0o755)
                     else:
                         dest_file.write_text(content)
-                        
+
         except Exception:
             # Don't fail initialization if file copying fails
             # The containers might still work with pre-built images
@@ -1041,7 +1054,6 @@ volumes:
         # Copy template components from package
         package_ai_path = Path(__file__).parent.parent.parent / "ai"
         if package_ai_path.exists():
-
             # Create subdirectories and copy templates
             for subdir in ["agents", "teams", "workflows", "tools"]:
                 # Create the subdirectory
@@ -1134,6 +1146,7 @@ Thumbs.db
                         # Remove problematic directory
                         try:
                             import shutil
+
                             shutil.rmtree(dir_path)
                         except Exception:
                             pass
@@ -1147,6 +1160,7 @@ Thumbs.db
                 if "postgres" in subdir:
                     try:
                         import os
+
                         uid = os.getuid() if hasattr(os, "getuid") else 1000
                         gid = os.getgid() if hasattr(os, "getgid") else 1000
                         os.chown(dir_path, uid, gid)
@@ -1294,7 +1308,6 @@ echo 🎉 Workspace started successfully!
         else:
             pass
 
-
         # Quick Start Guide
 
         # Cross-platform startup options
@@ -1331,7 +1344,6 @@ echo 🎉 Workspace started successfully!
         else:
             pass
 
-
         # Workspace structure with descriptions
 
         # First run suggestions
@@ -1344,7 +1356,7 @@ echo 🎉 Workspace started successfully!
         self,
         workspace_path: Path,
         container_services: list[str],
-        postgres_config: dict[str, str]
+        postgres_config: dict[str, str],
     ) -> bool:
         """Start Docker containers and configure other services."""
         try:
@@ -1365,58 +1377,111 @@ echo 🎉 Workspace started successfully!
                     if service == "postgres" and postgres_config["type"] == "docker":
                         print("🗄️ Starting PostgreSQL container...")
                         result = secure_subprocess_call(
-                            ["docker", "compose", "up", "-d", "postgres", "--remove-orphans"],
+                            [
+                                "docker",
+                                "compose",
+                                "up",
+                                "-d",
+                                "postgres",
+                                "--remove-orphans",
+                            ],
                             capture_output=True,
-                            timeout=120
+                            timeout=120,
                         )
                         if result.returncode == 0:
                             print("✅ PostgreSQL container started successfully")
                         else:
-                            print(f"❌ Failed to start PostgreSQL container: {result.stderr}")
+                            print(
+                                f"❌ Failed to start PostgreSQL container: {result.stderr}"
+                            )
                             success = False
 
                     elif service == "agent":
                         print("🤖 Starting Agent Database Container...")
                         # Check if the compose file exists
-                        agent_compose_file = workspace_path / "docker" / "agent" / "docker-compose.unified.yml"
+                        agent_compose_file = (
+                            workspace_path
+                            / "docker"
+                            / "agent"
+                            / "docker-compose.unified.yml"
+                        )
                         if not agent_compose_file.exists():
-                            print(f"❌ Agent compose file not found: {agent_compose_file}")
-                            print("💡 Make sure you selected agent service during initialization")
+                            print(
+                                f"❌ Agent compose file not found: {agent_compose_file}"
+                            )
+                            print(
+                                "💡 Make sure you selected agent service during initialization"
+                            )
                             success = False
                             continue
-                            
+
                         result = secure_subprocess_call(
-                            ["docker", "compose", "-f", "docker/agent/docker-compose.unified.yml", "up", "-d", "agent-all-in-one", "--remove-orphans"],
+                            [
+                                "docker",
+                                "compose",
+                                "-f",
+                                "docker/agent/docker-compose.unified.yml",
+                                "up",
+                                "-d",
+                                "agent-all-in-one",
+                                "--remove-orphans",
+                            ],
                             capture_output=True,
-                            timeout=120
+                            timeout=120,
                         )
                         if result.returncode == 0:
                             print("✅ Agent Database Container started on port 35532")
                         else:
-                            print(f"⚠️ Failed to start Agent container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}")
-                            print("💡 Check that docker/agent/docker-compose.unified.yml contains the correct service definition")
+                            print(
+                                f"⚠️ Failed to start Agent container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}"
+                            )
+                            print(
+                                "💡 Check that docker/agent/docker-compose.unified.yml contains the correct service definition"
+                            )
                             success = False
 
                     elif service == "genie":
                         print("🧞 Starting Genie Database Container...")
                         # Check if the compose file exists
-                        genie_compose_file = workspace_path / "docker" / "genie" / "docker-compose.unified.yml"
+                        genie_compose_file = (
+                            workspace_path
+                            / "docker"
+                            / "genie"
+                            / "docker-compose.unified.yml"
+                        )
                         if not genie_compose_file.exists():
-                            print(f"❌ Genie compose file not found: {genie_compose_file}")
-                            print("💡 Make sure you selected genie service during initialization")
+                            print(
+                                f"❌ Genie compose file not found: {genie_compose_file}"
+                            )
+                            print(
+                                "💡 Make sure you selected genie service during initialization"
+                            )
                             success = False
                             continue
-                            
+
                         result = secure_subprocess_call(
-                            ["docker", "compose", "-f", "docker/genie/docker-compose.unified.yml", "up", "-d", "genie-all-in-one", "--remove-orphans"],
+                            [
+                                "docker",
+                                "compose",
+                                "-f",
+                                "docker/genie/docker-compose.unified.yml",
+                                "up",
+                                "-d",
+                                "genie-all-in-one",
+                                "--remove-orphans",
+                            ],
                             capture_output=True,
-                            timeout=120
+                            timeout=120,
                         )
                         if result.returncode == 0:
                             print("✅ Genie Database Container started on port 48532")
                         else:
-                            print(f"⚠️ Failed to start Genie container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}")
-                            print("💡 Check that docker/genie/docker-compose.unified.yml contains the correct service definition")
+                            print(
+                                f"⚠️ Failed to start Genie container: {result.stderr.decode().strip() if result.stderr else 'Unknown error'}"
+                            )
+                            print(
+                                "💡 Check that docker/genie/docker-compose.unified.yml contains the correct service definition"
+                            )
                             success = False
 
             finally:
@@ -1440,24 +1505,25 @@ echo 🎉 Workspace started successfully!
 
             # Stop and remove existing hive containers (both old and new architectures)
             containers_to_remove = [
-                "hive-postgres-workspace", "hive-postgres-agent", "hive-postgres-genie",
-                "hive-agents-agent", "hive-genie", "hive-agent-dev-server",
-                "hive-agent-unified", "hive-genie-unified"
+                "hive-postgres-workspace",
+                "hive-postgres-agent",
+                "hive-postgres-genie",
+                "hive-agents-agent",
+                "hive-genie",
+                "hive-agent-dev-server",
+                "hive-agent-unified",
+                "hive-genie-unified",
             ]
 
             for container in containers_to_remove:
                 try:
                     # Stop container if running
                     secure_subprocess_call(
-                        ["docker", "stop", container],
-                        capture_output=True,
-                        timeout=30
+                        ["docker", "stop", container], capture_output=True, timeout=30
                     )
                     # Remove container
                     secure_subprocess_call(
-                        ["docker", "rm", container],
-                        capture_output=True,
-                        timeout=30
+                        ["docker", "rm", container], capture_output=True, timeout=30
                     )
                 except Exception:
                     # Container might not exist, continue
@@ -1465,7 +1531,9 @@ echo 🎉 Workspace started successfully!
 
             # Remove orphaned networks
             networks_to_remove = [
-                "hive_workspace_network", "hive_agent_network", "hive_genie_network"
+                "hive_workspace_network",
+                "hive_agent_network",
+                "hive_genie_network",
             ]
 
             for network in networks_to_remove:
@@ -1473,7 +1541,7 @@ echo 🎉 Workspace started successfully!
                     secure_subprocess_call(
                         ["docker", "network", "rm", network],
                         capture_output=True,
-                        timeout=30
+                        timeout=30,
                     )
                 except Exception:
                     # Network might not exist or be in use, continue

@@ -317,7 +317,9 @@ class VersionFactory:
                         error_msg = f"Invalid tool configuration: {tool_config}"
                         if strict_validation:
                             logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
-                            raise ValueError(f"Agent {component_id} tool validation failed: {error_msg}")
+                            raise ValueError(
+                                f"Agent {component_id} tool validation failed: {error_msg}"
+                            )
                         logger.warning(f"{error_msg}")
 
                 # Load tools via central registry
@@ -334,9 +336,13 @@ class VersionFactory:
                 if tool_names:
                     # Sort tool names alphabetically for consistent display
                     sorted_tool_names = sorted(tool_names)
-                    logger.info(f"Loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}")
+                    logger.info(
+                        f"Loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}"
+                    )
                 else:
-                    logger.info(f"Loaded {len(tools)} tools for agent {component_id} via central registry")
+                    logger.info(
+                        f"Loaded {len(tools)} tools for agent {component_id} via central registry"
+                    )
 
             else:
                 # No tools configured - that's okay for agents without specific tool requirements
@@ -360,10 +366,10 @@ class VersionFactory:
     def _validate_tool_config(self, tool_config: dict[str, Any]) -> bool:
         """
         Validate tool configuration structure.
-        
+
         Args:
             tool_config: Tool configuration dictionary from YAML
-            
+
         Returns:
             True if valid, False otherwise
         """

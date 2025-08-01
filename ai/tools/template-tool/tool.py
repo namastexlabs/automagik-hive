@@ -10,7 +10,7 @@ from lib.logging import logger
 class TemplateTool(BaseTool):
     """
     Template Tool - Foundational template for specialized tool development.
-    
+
     This tool provides standard patterns for tool initialization, configuration
     management, execution frameworks, and result handling that can be customized
     for specific domain requirements.
@@ -19,10 +19,10 @@ class TemplateTool(BaseTool):
     def initialize(self, **kwargs) -> None:
         """
         Initialize template tool functionality.
-        
+
         This method handles template-specific initialization and can be
         customized for specialized tool requirements.
-        
+
         Args:
             **kwargs: Tool-specific initialization parameters
         """
@@ -45,10 +45,12 @@ class TemplateTool(BaseTool):
         self._is_initialized = True
 
         if self.debug_mode:
-            logger.info("Template tool initialized",
-                       tool_id=self.config.tool_id if self.config else "template-tool",
-                       timeout=self.timeout_seconds,
-                       max_retries=self.max_retries)
+            logger.info(
+                "Template tool initialized",
+                tool_id=self.config.tool_id if self.config else "template-tool",
+                timeout=self.timeout_seconds,
+                max_retries=self.max_retries,
+            )
 
     def _setup_template_resources(self) -> None:
         """Setup template-specific resources and connections"""
@@ -62,17 +64,19 @@ class TemplateTool(BaseTool):
 
         logger.debug("Template resources initialized")
 
-    def execute(self, input_data: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
+    def execute(
+        self, input_data: str, options: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Execute the template tool functionality.
-        
+
         This is the main execution method that should be customized for
         each specific tool implementation.
-        
+
         Args:
             input_data: Primary input data for tool processing
             options: Optional configuration overrides
-            
+
         Returns:
             Dictionary containing execution result and metadata
         """
@@ -98,22 +102,30 @@ class TemplateTool(BaseTool):
                     "tool_id": self.config.tool_id if self.config else "template-tool",
                     "input_length": len(str(input_data)),
                     "options_used": execution_options,
-                    "execution_time": "placeholder"  # In real implementation, measure actual time
-                }
+                    "execution_time": "placeholder",  # In real implementation, measure actual time
+                },
             }
 
             # Store execution history
-            self._execution_history.append({
-                "execution_id": execution_id,
-                "status": "success",
-                "input_data": input_data[:100] + "..." if len(str(input_data)) > 100 else input_data,
-                "result_summary": str(result)[:100] + "..." if len(str(result)) > 100 else str(result)
-            })
+            self._execution_history.append(
+                {
+                    "execution_id": execution_id,
+                    "status": "success",
+                    "input_data": input_data[:100] + "..."
+                    if len(str(input_data)) > 100
+                    else input_data,
+                    "result_summary": str(result)[:100] + "..."
+                    if len(str(result)) > 100
+                    else str(result),
+                }
+            )
 
             if self.debug_mode:
-                logger.info("Template tool execution completed",
-                           execution_id=execution_id,
-                           status="success")
+                logger.info(
+                    "Template tool execution completed",
+                    execution_id=execution_id,
+                    status="success",
+                )
 
             return response
 
@@ -126,34 +138,42 @@ class TemplateTool(BaseTool):
                     "execution_id": execution_id,
                     "tool_id": self.config.tool_id if self.config else "template-tool",
                     "input_length": len(str(input_data)),
-                    "options_used": execution_options
-                }
+                    "options_used": execution_options,
+                },
             }
 
             # Store error in execution history
-            self._execution_history.append({
-                "execution_id": execution_id,
-                "status": "error",
-                "input_data": input_data[:100] + "..." if len(str(input_data)) > 100 else input_data,
-                "error": str(e)
-            })
+            self._execution_history.append(
+                {
+                    "execution_id": execution_id,
+                    "status": "error",
+                    "input_data": input_data[:100] + "..."
+                    if len(str(input_data)) > 100
+                    else input_data,
+                    "error": str(e),
+                }
+            )
 
-            logger.error("Template tool execution failed",
-                        execution_id=execution_id,
-                        error=str(e))
+            logger.error(
+                "Template tool execution failed",
+                execution_id=execution_id,
+                error=str(e),
+            )
 
             return error_response
 
-    def _process_input(self, input_data: str, options: dict[str, Any]) -> dict[str, Any]:
+    def _process_input(
+        self, input_data: str, options: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Process input data according to template logic.
-        
+
         This method should be customized for each specific tool implementation.
-        
+
         Args:
             input_data: Input data to process
             options: Execution options
-            
+
         Returns:
             Processed result
         """
@@ -165,19 +185,23 @@ class TemplateTool(BaseTool):
             "processed_at": "2025-08-01T00:00:00Z",  # In real implementation, use actual timestamp
             "processing_method": "template_processing",
             "options_applied": options,
-            "template_version": self.config.parameters.get("template_version", "1.0.0") if self.config else "1.0.0"
+            "template_version": self.config.parameters.get("template_version", "1.0.0")
+            if self.config
+            else "1.0.0",
         }
 
         # Example: Apply any transformations, calculations, or business logic here
         if "transform" in options:
-            processed_data["transformation"] = f"Applied {options['transform']} to: {input_data}"
+            processed_data["transformation"] = (
+                f"Applied {options['transform']} to: {input_data}"
+            )
 
         if options.get("analyze"):
             processed_data["analysis"] = {
                 "input_type": type(input_data).__name__,
                 "input_length": len(str(input_data)),
                 "contains_numbers": any(char.isdigit() for char in str(input_data)),
-                "contains_letters": any(char.isalpha() for char in str(input_data))
+                "contains_letters": any(char.isalpha() for char in str(input_data)),
             }
 
         return processed_data
@@ -187,7 +211,7 @@ class TemplateTool(BaseTool):
         default_options = {
             "timeout": self.timeout_seconds,
             "retries": self.max_retries,
-            "debug": self.debug_mode
+            "debug": self.debug_mode,
         }
 
         # Merge with provided options (provided options take precedence)
@@ -207,7 +231,7 @@ class TemplateTool(BaseTool):
     def get_status(self) -> dict[str, Any]:
         """
         Get tool status information.
-        
+
         Returns:
             Dictionary with current tool status and statistics
         """
@@ -218,12 +242,14 @@ class TemplateTool(BaseTool):
             **base_info,
             "execution_count": len(self._execution_history),
             "resource_cache_size": len(self._resource_cache),
-            "last_execution": self._execution_history[-1] if self._execution_history else None,
+            "last_execution": self._execution_history[-1]
+            if self._execution_history
+            else None,
             "configuration": {
                 "timeout_seconds": self.timeout_seconds,
                 "max_retries": self.max_retries,
-                "debug_mode": self.debug_mode
-            }
+                "debug_mode": self.debug_mode,
+            },
         }
 
         return template_status

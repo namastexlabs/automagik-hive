@@ -76,6 +76,7 @@ class TestCoverageValidationFramework:
         """Test coverage reporting functionality."""
         # Execute some CLI code
         import cli.main
+
         cli.main.create_parser()
 
         coverage_instance.stop()
@@ -119,12 +120,15 @@ class TestCoverageValidationFramework:
         total_coverage = coverage_instance.report(show_missing=False)
 
         # Should fail initially - coverage threshold not met
-        assert total_coverage >= 95.0, f"Coverage {total_coverage}% is below 95% threshold"
+        assert total_coverage >= 95.0, (
+            f"Coverage {total_coverage}% is below 95% threshold"
+        )
 
     def test_missing_coverage_identification(self, coverage_instance, tmp_path):
         """Test identification of missing test coverage areas."""
         # Execute CLI code
         import cli.main
+
         cli.main.create_parser()
 
         coverage_instance.stop()
@@ -164,12 +168,15 @@ class TestPerformanceBenchmarkValidation:
 
         # Import and initialize CLI
         import cli.main
+
         parser = cli.main.create_parser()
 
         startup_time = time.time() - start_time
 
         # Should fail initially - startup performance not optimized
-        assert startup_time < 1.0, f"CLI startup took {startup_time:.3f}s, should be under 1s"
+        assert startup_time < 1.0, (
+            f"CLI startup took {startup_time:.3f}s, should be under 1s"
+        )
 
     def test_argument_parsing_performance_benchmark(self):
         """Test argument parsing performance benchmark."""
@@ -201,15 +208,18 @@ class TestPerformanceBenchmarkValidation:
         parsing_time = time.time() - start_time
 
         # Should fail initially - parsing performance not optimized
-        assert parsing_time < 0.5, f"Argument parsing took {parsing_time:.3f}s, should be under 0.5s"
+        assert parsing_time < 0.5, (
+            f"Argument parsing took {parsing_time:.3f}s, should be under 0.5s"
+        )
 
     def test_command_routing_performance_benchmark(self):
         """Test command routing performance benchmark."""
-        with patch("cli.main.InitCommands") as mock_init, \
-             patch("cli.main.WorkspaceCommands") as mock_workspace, \
-             patch("cli.main.PostgreSQLCommands") as mock_postgres, \
-             patch("cli.main.AgentCommands") as mock_agent:
-
+        with (
+            patch("cli.main.InitCommands") as mock_init,
+            patch("cli.main.WorkspaceCommands") as mock_workspace,
+            patch("cli.main.PostgreSQLCommands") as mock_postgres,
+            patch("cli.main.AgentCommands") as mock_agent,
+        ):
             # Configure mocks to return quickly
             mock_init.return_value.init_workspace.return_value = True
             mock_workspace.return_value.start_workspace.return_value = True
@@ -234,7 +244,9 @@ class TestPerformanceBenchmarkValidation:
                 command_time = time.time() - start_time
 
                 # Should fail initially - command routing not optimized
-                assert command_time < 2.0, f"Command {command_args} took {command_time:.3f}s"
+                assert command_time < 2.0, (
+                    f"Command {command_args} took {command_time:.3f}s"
+                )
                 assert result == 0
 
             total_time = time.time() - total_start_time
@@ -252,6 +264,7 @@ class TestPerformanceBenchmarkValidation:
 
         # Import and use CLI
         import cli.main
+
         parser = cli.main.create_parser()
 
         # Create command instances
@@ -272,7 +285,9 @@ class TestPerformanceBenchmarkValidation:
         object_increase = final_objects - initial_objects
 
         # Should fail initially - memory usage not optimized
-        assert object_increase < 2000, f"CLI created {object_increase} objects, should be under 2000"
+        assert object_increase < 2000, (
+            f"CLI created {object_increase} objects, should be under 2000"
+        )
 
     def test_concurrent_command_performance(self):
         """Test performance with concurrent command execution simulation."""
@@ -334,7 +349,7 @@ class TestRealAgentServerValidation:
 
     @pytest.mark.skipif(
         not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
-        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable."
+        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_connectivity_validation(self, agent_server_check):
         """Test connectivity to real agent server."""
@@ -350,7 +365,7 @@ class TestRealAgentServerValidation:
 
     @pytest.mark.skipif(
         not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
-        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable."
+        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_endpoints_comprehensive(self, agent_server_check):
         """Test comprehensive agent server endpoint validation."""
@@ -374,14 +389,16 @@ class TestRealAgentServerValidation:
             try:
                 response = requests.get(f"{base_url}{endpoint}", timeout=10)
                 # Should fail initially - endpoint validation not implemented
-                assert response.status_code in expected_codes, f"Endpoint {endpoint} returned {response.status_code}"
+                assert response.status_code in expected_codes, (
+                    f"Endpoint {endpoint} returned {response.status_code}"
+                )
 
             except requests.RequestException as e:
                 pytest.fail(f"Failed to connect to {endpoint}: {e}")
 
     @pytest.mark.skipif(
         not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
-        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable."
+        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_performance_validation(self, agent_server_check):
         """Test agent server performance characteristics."""
@@ -406,7 +423,7 @@ class TestRealAgentServerValidation:
 
     @pytest.mark.skipif(
         not os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() == "true",
-        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable."
+        reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
     def test_agent_server_concurrent_requests(self, agent_server_check):
         """Test agent server under concurrent load."""
@@ -447,10 +464,16 @@ class TestRealAgentServerValidation:
         assert len(results) == num_concurrent_requests
 
         successful_requests = [r for r in results if r[0] == 200]
-        assert len(successful_requests) >= num_concurrent_requests * 0.9  # 90% success rate
+        assert (
+            len(successful_requests) >= num_concurrent_requests * 0.9
+        )  # 90% success rate
 
-        avg_response_time = sum(r[1] for r in successful_requests) / len(successful_requests)
-        assert avg_response_time < 5.0, f"Average response time {avg_response_time:.3f}s too high"
+        avg_response_time = sum(r[1] for r in successful_requests) / len(
+            successful_requests
+        )
+        assert avg_response_time < 5.0, (
+            f"Average response time {avg_response_time:.3f}s too high"
+        )
 
 
 class TestErrorScenarioCoverageValidation:
@@ -463,7 +486,6 @@ class TestErrorScenarioCoverageValidation:
             (["--invalid-flag"], SystemExit),
             (["--postgres-logs", "--tail", "not_a_number"], SystemExit),
             (["--serve", "--port", "invalid_port"], SystemExit),
-
             # Missing required arguments
             (["--postgres-logs", "--tail"], SystemExit),
         ]
@@ -478,10 +500,11 @@ class TestErrorScenarioCoverageValidation:
 
     def test_command_failure_scenarios_coverage(self):
         """Test command failure scenarios coverage."""
-        with patch("cli.main.InitCommands") as mock_init, \
-             patch("cli.main.PostgreSQLCommands") as mock_postgres, \
-             patch("cli.main.AgentCommands") as mock_agent:
-
+        with (
+            patch("cli.main.InitCommands") as mock_init,
+            patch("cli.main.PostgreSQLCommands") as mock_postgres,
+            patch("cli.main.AgentCommands") as mock_agent,
+        ):
             # Configure all commands to fail
             mock_init.return_value.init_workspace.return_value = False
             mock_postgres.return_value.postgres_status.return_value = False
@@ -503,7 +526,6 @@ class TestErrorScenarioCoverageValidation:
     def test_exception_handling_coverage(self):
         """Test exception handling coverage."""
         with patch("cli.main.InitCommands") as mock_init:
-
             exceptions_to_test = [
                 OSError("System error"),
                 PermissionError("Permission denied"),
@@ -528,7 +550,9 @@ class TestErrorScenarioCoverageValidation:
         # Test file descriptor exhaustion simulation
         with patch("builtins.open", side_effect=OSError("Too many open files")):
             with patch("cli.main.InitCommands") as mock_init:
-                mock_init.return_value.init_workspace.side_effect = OSError("Too many open files")
+                mock_init.return_value.init_workspace.side_effect = OSError(
+                    "Too many open files"
+                )
 
                 with patch("sys.argv", ["automagik-hive", "--init"]):
                     result = main()
@@ -548,9 +572,13 @@ class TestErrorScenarioCoverageValidation:
 
     def test_disk_space_exhaustion_scenarios(self):
         """Test disk space exhaustion scenario handling."""
-        with patch("pathlib.Path.write_text", side_effect=OSError("No space left on device")):
+        with patch(
+            "pathlib.Path.write_text", side_effect=OSError("No space left on device")
+        ):
             with patch("cli.main.InitCommands") as mock_init:
-                mock_init.return_value.init_workspace.side_effect = OSError("No space left on device")
+                mock_init.return_value.init_workspace.side_effect = OSError(
+                    "No space left on device"
+                )
 
                 with patch("sys.argv", ["automagik-hive", "--init"]):
                     result = main()
@@ -583,7 +611,9 @@ class TestCrossPlatformCoverageValidation:
 
                     # Should fail initially - Windows path handling not complete
                     assert result == 0
-                    mock_workspace.return_value.start_workspace.assert_called_once_with(path)
+                    mock_workspace.return_value.start_workspace.assert_called_once_with(
+                        path
+                    )
 
     def test_unix_path_handling_coverage(self):
         """Test Unix path handling coverage."""
@@ -607,7 +637,9 @@ class TestCrossPlatformCoverageValidation:
 
                     # Should fail initially - Unix path handling not complete
                     assert result == 0
-                    mock_workspace.return_value.start_workspace.assert_called_once_with(path)
+                    mock_workspace.return_value.start_workspace.assert_called_once_with(
+                        path
+                    )
 
     def test_file_permission_handling_coverage(self):
         """Test file permission handling coverage."""
@@ -628,9 +660,13 @@ class TestCrossPlatformCoverageValidation:
 
                     with patch("cli.main.WorkspaceCommands") as mock_workspace:
                         if permissions == 0o444:  # Read-only
-                            mock_workspace.return_value.start_workspace.return_value = False
+                            mock_workspace.return_value.start_workspace.return_value = (
+                                False
+                            )
                         else:
-                            mock_workspace.return_value.start_workspace.return_value = True
+                            mock_workspace.return_value.start_workspace.return_value = (
+                                True
+                            )
 
                         with patch("sys.argv", ["automagik-hive", str(workspace)]):
                             with patch("pathlib.Path.is_dir", return_value=True):
@@ -638,14 +674,19 @@ class TestCrossPlatformCoverageValidation:
 
                         # Should fail initially - permission handling not complete
                         expected_result = 1 if permissions == 0o444 else 0
-                        assert result == expected_result, f"Permissions {oct(permissions)} handling failed"
+                        assert result == expected_result, (
+                            f"Permissions {oct(permissions)} handling failed"
+                        )
 
     def test_environment_variable_handling_coverage(self):
         """Test environment variable handling across platforms."""
         # Test with different environment variable formats
         env_scenarios = [
             {"PATH": "/usr/bin:/bin", "HOME": "/home/user"},  # Unix-style
-            {"Path": "C:\\Windows\\System32", "USERPROFILE": "C:\\Users\\User"},  # Windows-style
+            {
+                "Path": "C:\\Windows\\System32",
+                "USERPROFILE": "C:\\Users\\User",
+            },  # Windows-style
             {"CUSTOM_VAR": "value with spaces", "EMPTY_VAR": ""},  # Special cases
         ]
 
@@ -683,7 +724,9 @@ class TestCrossPlatformCoverageValidation:
 
             except UnicodeError:
                 # Some platforms may not support all Unicode characters
-                pytest.skip(f"Unicode path {unicode_path} not supported on this platform")
+                pytest.skip(
+                    f"Unicode path {unicode_path} not supported on this platform"
+                )
 
 
 class TestCoverageReportingAndValidation:
@@ -697,6 +740,7 @@ class TestCoverageReportingAndValidation:
 
         # Execute CLI functionality to measure coverage
         import cli.main
+
         parser = cli.main.create_parser()
 
         # Execute various CLI paths
@@ -744,6 +788,7 @@ class TestCoverageReportingAndValidation:
 
         # Execute CLI functionality
         import cli.main
+
         cli.main.create_parser()
 
         cov.stop()
@@ -755,12 +800,14 @@ class TestCoverageReportingAndValidation:
         # Define coverage thresholds
         thresholds = {
             "minimum": 85.0,  # Minimum acceptable coverage
-            "target": 95.0,   # Target coverage goal
-            "excellent": 98.0  # Excellent coverage goal
+            "target": 95.0,  # Target coverage goal
+            "excellent": 98.0,  # Excellent coverage goal
         }
 
         # Should fail initially - coverage thresholds not met
-        assert total_coverage >= thresholds["minimum"], f"Coverage {total_coverage}% below minimum {thresholds['minimum']}%"
+        assert total_coverage >= thresholds["minimum"], (
+            f"Coverage {total_coverage}% below minimum {thresholds['minimum']}%"
+        )
 
         # Log coverage status
         if total_coverage >= thresholds["excellent"]:
@@ -768,7 +815,9 @@ class TestCoverageReportingAndValidation:
         elif total_coverage >= thresholds["target"]:
             print(f"🎯 Target coverage achieved: {total_coverage}%")
         else:
-            print(f"⚠️  Coverage below target: {total_coverage}% (target: {thresholds['target']}%)")
+            print(
+                f"⚠️  Coverage below target: {total_coverage}% (target: {thresholds['target']}%)"
+            )
 
     def test_coverage_by_module_validation(self):
         """Test coverage validation by individual modules."""
@@ -827,11 +876,12 @@ class TestCoverageReportingAndValidation:
         # Simulate integration test execution
 
         # Simulate full workflow execution
-        with patch("cli.main.InitCommands") as mock_init, \
-             patch("cli.main.WorkspaceCommands") as mock_workspace, \
-             patch("cli.main.PostgreSQLCommands") as mock_postgres, \
-             patch("cli.main.AgentCommands") as mock_agent:
-
+        with (
+            patch("cli.main.InitCommands") as mock_init,
+            patch("cli.main.WorkspaceCommands") as mock_workspace,
+            patch("cli.main.PostgreSQLCommands") as mock_postgres,
+            patch("cli.main.AgentCommands") as mock_agent,
+        ):
             mock_init.return_value.init_workspace.return_value = True
             mock_workspace.return_value.start_workspace.return_value = True
             mock_postgres.return_value.postgres_status.return_value = True
@@ -853,4 +903,6 @@ class TestCoverageReportingAndValidation:
         integration_coverage = cov.report(show_missing=False)
 
         # Should fail initially - integration test coverage not adequate
-        assert integration_coverage >= 80.0, f"Integration test coverage {integration_coverage}% too low"
+        assert integration_coverage >= 80.0, (
+            f"Integration test coverage {integration_coverage}% too low"
+        )

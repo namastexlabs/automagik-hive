@@ -38,7 +38,6 @@ class TestProxyTeamsImports:
     def test_utility_imports(self):
         """Test utility imports."""
 
-
         assert Path is not None
         assert yaml is not None
 
@@ -61,8 +60,14 @@ class TestAgnoTeamProxyInitialization:
 
         # Should discover standard Team parameters
         expected_params = {
-            "members", "mode", "model", "name", "team_id",
-            "session_id", "description", "instructions"
+            "members",
+            "mode",
+            "model",
+            "name",
+            "team_id",
+            "session_id",
+            "description",
+            "instructions",
         }
 
         # Check that at least some expected parameters are discovered
@@ -71,7 +76,9 @@ class TestAgnoTeamProxyInitialization:
 
     @patch("lib.utils.proxy_teams.inspect.signature")
     @patch("lib.utils.proxy_teams.logger")
-    def test_parameter_discovery_failure_uses_fallback(self, mock_logger, mock_signature):
+    def test_parameter_discovery_failure_uses_fallback(
+        self, mock_logger, mock_signature
+    ):
         """Test fallback parameter set when introspection fails."""
         # Make introspection fail
         mock_signature.side_effect = Exception("Introspection failed")
@@ -92,8 +99,14 @@ class TestAgnoTeamProxyInitialization:
 
         # Test core parameters
         core_params = {
-            "members", "mode", "model", "name", "team_id",
-            "session_id", "description", "instructions"
+            "members",
+            "mode",
+            "model",
+            "name",
+            "team_id",
+            "session_id",
+            "description",
+            "instructions",
         }
 
         for param in core_params:
@@ -101,17 +114,25 @@ class TestAgnoTeamProxyInitialization:
 
         # Test categories are represented
         assert "storage" in fallback_params  # Storage category
-        assert "memory" in fallback_params   # Memory category
-        assert "tools" in fallback_params    # Tools category
+        assert "memory" in fallback_params  # Memory category
+        assert "tools" in fallback_params  # Tools category
 
     def test_custom_parameter_handlers_mapping(self):
         """Test custom parameter handlers are properly mapped."""
         proxy = AgnoTeamProxy()
 
         expected_handlers = {
-            "model", "storage", "memory", "team", "members",
-            "suggested_actions", "escalation_triggers",
-            "streaming_config", "events_config", "context_config", "display_config"
+            "model",
+            "storage",
+            "memory",
+            "team",
+            "members",
+            "suggested_actions",
+            "escalation_triggers",
+            "streaming_config",
+            "events_config",
+            "context_config",
+            "display_config",
         }
 
         for handler in expected_handlers:
@@ -130,25 +151,15 @@ class TestAgnoTeamProxyTeamCreation:
                 "name": "Test Team",
                 "description": "A test team",
                 "mode": "route",
-                "version": 1
+                "version": 1,
             },
-            "model": {
-                "id": "claude-3-sonnet",
-                "temperature": 0.7,
-                "max_tokens": 1000
-            },
+            "model": {"id": "claude-3-sonnet", "temperature": 0.7, "max_tokens": 1000},
             "members": ["agent1", "agent2"],
             "instructions": "Follow the routing protocol",
-            "storage": {
-                "type": "postgres",
-                "host": "localhost",
-                "port": 5432
-            },
-            "memory": {
-                "enable_user_memories": True
-            },
+            "storage": {"type": "postgres", "host": "localhost", "port": 5432},
+            "memory": {"enable_user_memories": True},
             "suggested_actions": ["escalate", "route"],
-            "metrics_enabled": True
+            "metrics_enabled": True,
         }
 
     @pytest.mark.asyncio
@@ -156,15 +167,18 @@ class TestAgnoTeamProxyTeamCreation:
         """Test basic team creation."""
         proxy = AgnoTeamProxy()
 
-        with patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process, \
-             patch("lib.utils.proxy_teams.Team") as mock_team_class, \
-             patch.object(proxy, "_create_metadata") as mock_metadata:
-
+        with (
+            patch.object(
+                proxy, "_process_config", new_callable=AsyncMock
+            ) as mock_process,
+            patch("lib.utils.proxy_teams.Team") as mock_team_class,
+            patch.object(proxy, "_create_metadata") as mock_metadata,
+        ):
             # Mock processed configuration
             mock_process.return_value = {
                 "name": "Test Team",
                 "mode": "route",
-                "members": []
+                "members": [],
             }
 
             # Mock metadata creation
@@ -179,7 +193,7 @@ class TestAgnoTeamProxyTeamCreation:
                 config=mock_team_config,
                 session_id="session-123",
                 debug_mode=True,
-                user_id="user-456"
+                user_id="user-456",
             )
 
             assert result == mock_team
@@ -193,11 +207,14 @@ class TestAgnoTeamProxyTeamCreation:
         mock_metrics_service = MagicMock()
         mock_metrics_service.collect_from_response = MagicMock()
 
-        with patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process, \
-             patch("lib.utils.proxy_teams.Team") as mock_team_class, \
-             patch.object(proxy, "_wrap_team_with_metrics") as mock_wrap, \
-             patch.object(proxy, "_create_metadata") as mock_metadata:
-
+        with (
+            patch.object(
+                proxy, "_process_config", new_callable=AsyncMock
+            ) as mock_process,
+            patch("lib.utils.proxy_teams.Team") as mock_team_class,
+            patch.object(proxy, "_wrap_team_with_metrics") as mock_wrap,
+            patch.object(proxy, "_create_metadata") as mock_metadata,
+        ):
             mock_process.return_value = {"name": "Test Team"}
             mock_metadata.return_value = {"version": 1}
             mock_team = MagicMock()
@@ -207,7 +224,7 @@ class TestAgnoTeamProxyTeamCreation:
             result = await proxy.create_team(
                 component_id="test-team",
                 config=mock_team_config,
-                metrics_service=mock_metrics_service
+                metrics_service=mock_metrics_service,
             )
 
             assert result == mock_team
@@ -220,17 +237,19 @@ class TestAgnoTeamProxyTeamCreation:
         """Test team creation failure handling."""
         proxy = AgnoTeamProxy()
 
-        with patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process, \
-             patch("lib.utils.proxy_teams.Team") as mock_team_class, \
-             patch("lib.utils.proxy_teams.logger") as mock_logger:
-
+        with (
+            patch.object(
+                proxy, "_process_config", new_callable=AsyncMock
+            ) as mock_process,
+            patch("lib.utils.proxy_teams.Team") as mock_team_class,
+            patch("lib.utils.proxy_teams.logger") as mock_logger,
+        ):
             mock_process.return_value = {"name": "Test Team"}
             mock_team_class.side_effect = Exception("Team creation failed")
 
             with pytest.raises(Exception, match="Team creation failed"):
                 await proxy.create_team(
-                    component_id="test-team",
-                    config=mock_team_config
+                    component_id="test-team", config=mock_team_config
                 )
 
             mock_logger.error.assert_called()
@@ -278,13 +297,15 @@ class TestAgnoTeamProxyConfigurationProcessing:
             "name": "Test Team",
             "mode": "route",
             "description": "Test description",
-            "instructions": "Test instructions"
+            "instructions": "Test instructions",
         }
 
         # Mock supported parameters to match config
         proxy._supported_params = {"name", "mode", "description", "instructions"}
 
-        result = await proxy._process_config(config, "test-team", "postgresql://test_db")
+        result = await proxy._process_config(
+            config, "test-team", "postgresql://test_db"
+        )
 
         assert result["name"] == "Test Team"
         assert result["mode"] == "route"
@@ -297,18 +318,21 @@ class TestAgnoTeamProxyConfigurationProcessing:
         config = {
             "model": {"id": "claude-3-sonnet"},
             "storage": {"type": "postgres"},
-            "team": {"name": "Custom Team"}
+            "team": {"name": "Custom Team"},
         }
 
-        with patch.object(proxy, "_handle_model_config") as mock_model, \
-             patch.object(proxy, "_handle_storage_config") as mock_storage, \
-             patch.object(proxy, "_handle_team_metadata") as mock_team:
-
+        with (
+            patch.object(proxy, "_handle_model_config") as mock_model,
+            patch.object(proxy, "_handle_storage_config") as mock_storage,
+            patch.object(proxy, "_handle_team_metadata") as mock_team,
+        ):
             mock_model.return_value = MagicMock()
             mock_storage.return_value = MagicMock()
             mock_team.return_value = {"name": "Custom Team"}
 
-            result = await proxy._process_config(config, "test-team", "postgresql://test_db")
+            result = await proxy._process_config(
+                config, "test-team", "postgresql://test_db"
+            )
 
             mock_model.assert_called_once()
             mock_storage.assert_called_once()
@@ -317,16 +341,18 @@ class TestAgnoTeamProxyConfigurationProcessing:
     @pytest.mark.asyncio
     async def test_process_config_async_members_handler(self, proxy):
         """Test processing of async members handler."""
-        config = {
-            "members": ["agent1", "agent2"]
-        }
+        config = {"members": ["agent1", "agent2"]}
 
         mock_members = [MagicMock(), MagicMock()]
 
-        with patch.object(proxy, "_handle_members", new_callable=AsyncMock) as mock_handler:
+        with patch.object(
+            proxy, "_handle_members", new_callable=AsyncMock
+        ) as mock_handler:
             mock_handler.return_value = mock_members
 
-            result = await proxy._process_config(config, "test-team", "postgresql://test_db")
+            result = await proxy._process_config(
+                config, "test-team", "postgresql://test_db"
+            )
 
             assert result["members"] == mock_members
             mock_handler.assert_called_once()
@@ -334,10 +360,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
     @pytest.mark.asyncio
     async def test_process_config_unknown_params_logging(self, proxy):
         """Test logging of unknown parameters."""
-        config = {
-            "unknown_param": "value",
-            "another_unknown": 123
-        }
+        config = {"unknown_param": "value", "another_unknown": 123}
 
         with patch("lib.utils.proxy_teams.logger") as mock_logger:
             await proxy._process_config(config, "test-team", "postgresql://test_db")
@@ -348,19 +371,19 @@ class TestAgnoTeamProxyConfigurationProcessing:
     @pytest.mark.asyncio
     async def test_process_config_dict_handler_result(self, proxy):
         """Test handling of dict results from custom handlers."""
-        config = {
-            "team": {"name": "Test", "mode": "route"}
-        }
+        config = {"team": {"name": "Test", "mode": "route"}}
 
         # Mock handler that returns a dict
         with patch.object(proxy, "_handle_team_metadata") as mock_handler:
             mock_handler.return_value = {
                 "name": "Test Team",
                 "mode": "route",
-                "extra_field": "value"
+                "extra_field": "value",
             }
 
-            result = await proxy._process_config(config, "test-team", "postgresql://test_db")
+            result = await proxy._process_config(
+                config, "test-team", "postgresql://test_db"
+            )
 
             # Dict result should be merged into processed config
             assert result["name"] == "Test Team"
@@ -382,23 +405,21 @@ class TestAgnoTeamProxyParameterHandlers:
             "id": "claude-3-sonnet",
             "temperature": 0.7,
             "max_tokens": 1500,
-            "custom_param": "value"
+            "custom_param": "value",
         }
 
         with patch("lib.config.models.resolve_model") as mock_resolve:
             mock_model = MagicMock()
             mock_resolve.return_value = mock_model
 
-            result = proxy._handle_model_config(
-                model_config, {}, "test-team", None
-            )
+            result = proxy._handle_model_config(model_config, {}, "test-team", None)
 
             assert result == mock_model
             mock_resolve.assert_called_once_with(
                 model_id="claude-3-sonnet",
                 temperature=0.7,
                 max_tokens=1500,
-                custom_param="value"
+                custom_param="value",
             )
 
     def test_handle_model_config_defaults(self, proxy):
@@ -411,16 +432,12 @@ class TestAgnoTeamProxyParameterHandlers:
             mock_resolve.assert_called_once_with(
                 model_id="claude-3-sonnet",
                 temperature=1.0,  # Default for teams
-                max_tokens=2000   # Default
+                max_tokens=2000,  # Default
             )
 
     def test_handle_storage_config(self, proxy):
         """Test storage configuration handler."""
-        storage_config = {
-            "type": "postgres",
-            "host": "localhost",
-            "port": 5432
-        }
+        storage_config = {"type": "postgres", "host": "localhost", "port": 5432}
 
         with patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create:
             mock_storage = MagicMock()
@@ -435,7 +452,7 @@ class TestAgnoTeamProxyParameterHandlers:
                 storage_config=storage_config,
                 component_id="test-team",
                 component_mode="team",
-                db_url="db_url"
+                db_url="db_url",
             )
 
     def test_handle_memory_config_enabled(self, proxy):
@@ -457,17 +474,13 @@ class TestAgnoTeamProxyParameterHandlers:
         """Test memory configuration when disabled."""
         memory_config = {"enable_user_memories": False}
 
-        result = proxy._handle_memory_config(
-            memory_config, {}, "test-team", "db_url"
-        )
+        result = proxy._handle_memory_config(memory_config, {}, "test-team", "db_url")
 
         assert result is None
 
     def test_handle_memory_config_none(self, proxy):
         """Test memory configuration when None."""
-        result = proxy._handle_memory_config(
-            None, {}, "test-team", "db_url"
-        )
+        result = proxy._handle_memory_config(None, {}, "test-team", "db_url")
 
         assert result is None
 
@@ -479,21 +492,17 @@ class TestAgnoTeamProxyParameterHandlers:
             mock_create.side_effect = Exception("Memory creation failed")
 
             with pytest.raises(Exception, match="Memory creation failed"):
-                proxy._handle_memory_config(
-                    memory_config, {}, "test-team", "db_url"
-                )
+                proxy._handle_memory_config(memory_config, {}, "test-team", "db_url")
 
     def test_handle_team_metadata(self, proxy):
         """Test team metadata handler."""
         team_config = {
             "name": "Custom Team",
             "description": "A custom test team",
-            "mode": "coordinate"
+            "mode": "coordinate",
         }
 
-        result = proxy._handle_team_metadata(
-            team_config, {}, "test-team", None
-        )
+        result = proxy._handle_team_metadata(team_config, {}, "test-team", None)
 
         assert result["name"] == "Custom Team"
         assert result["description"] == "A custom test team"
@@ -503,9 +512,7 @@ class TestAgnoTeamProxyParameterHandlers:
         """Test team metadata with defaults."""
         team_config = {}
 
-        result = proxy._handle_team_metadata(
-            team_config, {}, "test-team", None
-        )
+        result = proxy._handle_team_metadata(team_config, {}, "test-team", None)
 
         assert result["name"] == "Team test-team"
         assert result["description"] is None
@@ -519,16 +526,22 @@ class TestAgnoTeamProxyParameterHandlers:
         mock_agent1 = MagicMock()
         mock_agent2 = MagicMock()
 
-        with patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent, \
-             patch("lib.utils.proxy_teams.logger") as mock_logger:
-
+        with (
+            patch(
+                "ai.agents.registry.get_agent", new_callable=AsyncMock
+            ) as mock_get_agent,
+            patch("lib.utils.proxy_teams.logger") as mock_logger,
+        ):
             mock_get_agent.side_effect = [mock_agent1, mock_agent2]
 
             result = await proxy._handle_members(
-                members_config, {}, "test-team", None,
+                members_config,
+                {},
+                "test-team",
+                None,
                 session_id="session-123",
                 debug_mode=True,
-                user_id="user-456"
+                user_id="user-456",
             )
 
             assert len(result) == 2
@@ -546,19 +559,20 @@ class TestAgnoTeamProxyParameterHandlers:
         mock_agent1 = MagicMock()
         mock_agent3 = MagicMock()
 
-        with patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent, \
-             patch("lib.utils.proxy_teams.logger") as mock_logger:
-
+        with (
+            patch(
+                "ai.agents.registry.get_agent", new_callable=AsyncMock
+            ) as mock_get_agent,
+            patch("lib.utils.proxy_teams.logger") as mock_logger,
+        ):
             # Second agent fails to load
             mock_get_agent.side_effect = [
                 mock_agent1,
                 Exception("Agent not found"),
-                mock_agent3
+                mock_agent3,
             ]
 
-            result = await proxy._handle_members(
-                members_config, {}, "test-team", None
-            )
+            result = await proxy._handle_members(members_config, {}, "test-team", None)
 
             # Should return successful agents only
             assert len(result) == 2
@@ -571,17 +585,13 @@ class TestAgnoTeamProxyParameterHandlers:
     @pytest.mark.asyncio
     async def test_handle_members_empty_list(self, proxy):
         """Test member loading with empty list."""
-        result = await proxy._handle_members(
-            [], {}, "test-team", None
-        )
+        result = await proxy._handle_members([], {}, "test-team", None)
 
         assert result == []
 
     def test_handle_custom_metadata_returns_none(self, proxy):
         """Test custom metadata handler returns None."""
-        result = proxy._handle_custom_metadata(
-            "some_value", {}, "test-team", None
-        )
+        result = proxy._handle_custom_metadata("some_value", {}, "test-team", None)
 
         assert result is None
 
@@ -621,7 +631,9 @@ class TestAgnoTeamProxyMetricsWrapping:
         # Original run method should be replaced
         assert wrapped_team.run != original_run
 
-    def test_wrapped_run_successful_execution(self, proxy, mock_team, mock_metrics_service):
+    def test_wrapped_run_successful_execution(
+        self, proxy, mock_team, mock_metrics_service
+    ):
         """Test wrapped run method with successful execution."""
         config = {}
         mock_response = {"content": "Team response"}
@@ -641,12 +653,16 @@ class TestAgnoTeamProxyMetricsWrapping:
             original_run.assert_called_once_with("test message")
             mock_metrics_service.collect_from_response.assert_called_once()
 
-    def test_wrapped_run_metrics_collection_failure(self, proxy, mock_team, mock_metrics_service):
+    def test_wrapped_run_metrics_collection_failure(
+        self, proxy, mock_team, mock_metrics_service
+    ):
         """Test wrapped run method when metrics collection fails."""
         config = {}
         mock_response = {"content": "Team response"}
         mock_team.run.return_value = mock_response
-        mock_metrics_service.collect_from_response.side_effect = Exception("Metrics failed")
+        mock_metrics_service.collect_from_response.side_effect = Exception(
+            "Metrics failed"
+        )
 
         wrapped_team = proxy._wrap_team_with_metrics(
             mock_team, "test-team", config, mock_metrics_service
@@ -660,7 +676,9 @@ class TestAgnoTeamProxyMetricsWrapping:
             # Should log warning but not raise
             mock_logger.warning.assert_called_once()
 
-    def test_wrapped_run_team_execution_failure(self, proxy, mock_team, mock_metrics_service):
+    def test_wrapped_run_team_execution_failure(
+        self, proxy, mock_team, mock_metrics_service
+    ):
         """Test wrapped run method when team execution fails."""
         config = {}
         mock_team.run.side_effect = Exception("Team execution failed")
@@ -690,7 +708,9 @@ class TestAgnoTeamProxyMetricsWrapping:
         # Should not call metrics collection for None response
         mock_metrics_service.collect_from_response.assert_not_called()
 
-    def test_wrapped_run_metrics_service_returns_false(self, proxy, mock_team, mock_metrics_service):
+    def test_wrapped_run_metrics_service_returns_false(
+        self, proxy, mock_team, mock_metrics_service
+    ):
         """Test wrapped run when metrics service returns false."""
         config = {}
         mock_response = {"content": "Team response"}
@@ -719,7 +739,7 @@ class TestAgnoTeamProxyMetricsWrapping:
         """Test extracting metrics overrides from team section."""
         config = {
             "team": {"metrics_enabled": False},
-            "metrics_enabled": True  # Should be overridden by team section
+            "metrics_enabled": True,  # Should be overridden by team section
         }
 
         overrides = proxy._extract_metrics_overrides(config)
@@ -769,7 +789,7 @@ class TestAgnoTeamProxyUtilityMethods:
         config = {
             "name": "Test Team",
             "mode": "route",
-            "description": "Test description"
+            "description": "Test description",
         }
 
         result = proxy.validate_config(config)
@@ -786,9 +806,9 @@ class TestAgnoTeamProxyUtilityMethods:
         proxy._custom_params = {"model", "storage"}
 
         config = {
-            "name": "Test Team",      # supported
-            "model": {},              # custom
-            "unknown_param": "value"  # unknown
+            "name": "Test Team",  # supported
+            "model": {},  # custom
+            "unknown_param": "value",  # unknown
         }
 
         result = proxy.validate_config(config)
@@ -812,10 +832,7 @@ class TestAgnoTeamProxyUtilityMethods:
         proxy._supported_params = {"name", "mode"}
         proxy._custom_params = {"model", "storage"}
 
-        config = {
-            "model": {"id": "claude"},
-            "storage": {"type": "postgres"}
-        }
+        config = {"model": {"id": "claude"}, "storage": {"type": "postgres"}}
 
         result = proxy.validate_config(config)
 
@@ -829,10 +846,7 @@ class TestAgnoTeamProxyUtilityMethods:
         proxy._supported_params = {"name", "mode"}
         proxy._custom_params = {"model", "storage"}
 
-        config = {
-            "unknown1": "value1",
-            "unknown2": "value2"
-        }
+        config = {"unknown1": "value1", "unknown2": "value2"}
 
         result = proxy.validate_config(config)
 
@@ -855,10 +869,13 @@ class TestAgnoTeamProxyEdgeCases:
         """Test team creation with additional kwargs."""
         config = {"name": "Test Team"}
 
-        with patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process, \
-             patch("lib.utils.proxy_teams.Team") as mock_team_class, \
-             patch.object(proxy, "_create_metadata") as mock_metadata:
-
+        with (
+            patch.object(
+                proxy, "_process_config", new_callable=AsyncMock
+            ) as mock_process,
+            patch("lib.utils.proxy_teams.Team") as mock_team_class,
+            patch.object(proxy, "_create_metadata") as mock_metadata,
+        ):
             mock_process.return_value = {"name": "Test Team", "members": []}
             mock_metadata.return_value = {"version": 1}
             mock_team = MagicMock()
@@ -868,14 +885,16 @@ class TestAgnoTeamProxyEdgeCases:
                 component_id="test-team",
                 config=config,
                 custom_kwarg="custom_value",
-                another_kwarg=123
+                another_kwarg=123,
             )
 
             # kwargs should be passed to _process_config
             mock_process.assert_called_once_with(
-                config, "test-team", None,
+                config,
+                "test-team",
+                None,
                 custom_kwarg="custom_value",
-                another_kwarg=123
+                another_kwarg=123,
             )
 
     @pytest.mark.asyncio
@@ -886,27 +905,27 @@ class TestAgnoTeamProxyEdgeCases:
         # Mock a small set of supported parameters
         proxy._supported_params = {"name", "mode", "members"}
 
-        with patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process, \
-             patch("lib.utils.proxy_teams.Team") as mock_team_class, \
-             patch.object(proxy, "_create_metadata") as mock_metadata:
-
+        with (
+            patch.object(
+                proxy, "_process_config", new_callable=AsyncMock
+            ) as mock_process,
+            patch("lib.utils.proxy_teams.Team") as mock_team_class,
+            patch.object(proxy, "_create_metadata") as mock_metadata,
+        ):
             # Return more parameters than supported
             mock_process.return_value = {
                 "name": "Test Team",
                 "mode": "route",
                 "members": [],
                 "unsupported_param": "value",
-                "another_unsupported": None
+                "another_unsupported": None,
             }
 
             mock_metadata.return_value = {"version": 1}
             mock_team = MagicMock()
             mock_team_class.return_value = mock_team
 
-            await proxy.create_team(
-                component_id="test-team",
-                config=config
-            )
+            await proxy.create_team(component_id="test-team", config=config)
 
             # Only supported parameters should be passed
             call_args = mock_team_class.call_args[1]
@@ -926,9 +945,7 @@ class TestAgnoTeamProxyEdgeCases:
             mock_resolve.side_effect = ImportError("Module not found")
 
             with pytest.raises(ImportError):
-                proxy._handle_model_config(
-                    model_config, {}, "test-team", None
-                )
+                proxy._handle_model_config(model_config, {}, "test-team", None)
 
     def test_handle_storage_config_creation_failure(self, proxy):
         """Test storage config handler when creation fails."""
@@ -938,16 +955,16 @@ class TestAgnoTeamProxyEdgeCases:
             mock_create.side_effect = Exception("Storage creation failed")
 
             with pytest.raises(Exception, match="Storage creation failed"):
-                proxy._handle_storage_config(
-                    storage_config, {}, "test-team", None
-                )
+                proxy._handle_storage_config(storage_config, {}, "test-team", None)
 
     @pytest.mark.asyncio
     async def test_handle_members_import_failure(self, proxy):
         """Test member loading when import fails."""
         members_config = ["agent1"]
 
-        with patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent:
+        with patch(
+            "ai.agents.registry.get_agent", new_callable=AsyncMock
+        ) as mock_get_agent:
             mock_get_agent.side_effect = ImportError("Agent registry not found")
 
             with patch("lib.utils.proxy_teams.logger") as mock_logger:
@@ -963,17 +980,11 @@ class TestAgnoTeamProxyEdgeCases:
         config = {
             "team": {"version": 2},
             "suggested_actions": ["action1", "action2"],
-            "escalation_triggers": {
-                "timeout": 300,
-                "error_count": 5
-            },
-            "streaming_config": {
-                "enabled": True,
-                "chunk_size": 1024
-            },
+            "escalation_triggers": {"timeout": 300, "error_count": 5},
+            "streaming_config": {"enabled": True, "chunk_size": 1024},
             "events_config": None,  # Should handle None values
             "context_config": {},
-            "display_config": {"theme": "dark"}
+            "display_config": {"theme": "dark"},
         }
 
         metadata = proxy._create_metadata(config, "test-team")
@@ -1004,17 +1015,25 @@ class TestAgnoTeamProxyEdgeCases:
 
         # Test coverage of major functionality areas
         core_areas = {
-            "members", "mode", "model", "name",  # Core team
-            "storage", "memory",                 # Persistence
-            "tools", "instructions",             # Functionality
-            "session_id", "user_id"             # Session management
+            "members",
+            "mode",
+            "model",
+            "name",  # Core team
+            "storage",
+            "memory",  # Persistence
+            "tools",
+            "instructions",  # Functionality
+            "session_id",
+            "user_id",  # Session management
         }
 
         missing_areas = core_areas - fallback_params
         assert len(missing_areas) == 0, f"Missing core areas: {missing_areas}"
 
         # Should have substantial parameter coverage
-        assert len(fallback_params) > 50, "Fallback should have comprehensive parameter coverage"
+        assert len(fallback_params) > 50, (
+            "Fallback should have comprehensive parameter coverage"
+        )
 
 
 class TestAgnoTeamProxyIntegration:
@@ -1034,42 +1053,30 @@ class TestAgnoTeamProxyIntegration:
                 "description": "A comprehensive test team",
                 "mode": "coordinate",
                 "version": 3,
-                "metrics_enabled": True
+                "metrics_enabled": True,
             },
             "model": {
                 "id": "claude-3-opus",
                 "temperature": 0.8,
                 "max_tokens": 2500,
-                "top_p": 0.9
+                "top_p": 0.9,
             },
             "members": ["strategist-agent", "executor-agent", "reviewer-agent"],
             "storage": {
                 "type": "postgres",
                 "host": "localhost",
                 "port": 5432,
-                "database": "team_storage"
+                "database": "team_storage",
             },
-            "memory": {
-                "enable_user_memories": True,
-                "enable_session_summaries": True
-            },
+            "memory": {"enable_user_memories": True, "enable_session_summaries": True},
             "instructions": "Coordinate team efforts to solve complex problems",
             "description": "Multi-agent team for complex problem solving",
             "tools": ["search", "analysis", "reporting"],
             "suggested_actions": ["analyze", "plan", "execute", "review"],
-            "escalation_triggers": {
-                "max_iterations": 10,
-                "timeout_minutes": 30
-            },
-            "streaming_config": {
-                "enabled": True,
-                "real_time": True
-            },
-            "context_config": {
-                "max_history": 100,
-                "include_metadata": True
-            },
-            "unknown_parameter": "should_be_logged"
+            "escalation_triggers": {"max_iterations": 10, "timeout_minutes": 30},
+            "streaming_config": {"enabled": True, "real_time": True},
+            "context_config": {"max_history": 100, "include_metadata": True},
+            "unknown_parameter": "should_be_logged",
         }
 
     @pytest.mark.asyncio
@@ -1082,13 +1089,18 @@ class TestAgnoTeamProxyIntegration:
         mock_metrics_service = MagicMock()
         mock_metrics_service.collect_from_response = MagicMock(return_value=True)
 
-        with patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent, \
-             patch("lib.config.models.resolve_model") as mock_resolve_model, \
-             patch("lib.utils.agno_storage_utils.create_dynamic_storage") as mock_create_storage, \
-             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory, \
-             patch("lib.utils.proxy_teams.Team") as mock_team_class, \
-             patch("lib.utils.proxy_teams.logger") as mock_logger:
-
+        with (
+            patch(
+                "ai.agents.registry.get_agent", new_callable=AsyncMock
+            ) as mock_get_agent,
+            patch("lib.config.models.resolve_model") as mock_resolve_model,
+            patch(
+                "lib.utils.agno_storage_utils.create_dynamic_storage"
+            ) as mock_create_storage,
+            patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
+            patch("lib.utils.proxy_teams.Team") as mock_team_class,
+            patch("lib.utils.proxy_teams.logger") as mock_logger,
+        ):
             # Setup mocks
             mock_get_agent.side_effect = mock_agents
             mock_resolve_model.return_value = mock_model
@@ -1106,7 +1118,7 @@ class TestAgnoTeamProxyIntegration:
                 debug_mode=True,
                 user_id="user-123",
                 db_url="postgresql://localhost/test",
-                metrics_service=mock_metrics_service
+                metrics_service=mock_metrics_service,
             )
 
             # Verify all components were called
@@ -1138,19 +1150,26 @@ class TestAgnoTeamProxyIntegration:
         assert validation_result["coverage_percentage"] > 0
 
     @pytest.mark.asyncio
-    async def test_error_resilience_in_complex_workflow(self, proxy, comprehensive_config):
+    async def test_error_resilience_in_complex_workflow(
+        self, proxy, comprehensive_config
+    ):
         """Test error handling in complex team creation scenarios."""
-        with patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent, \
-             patch("lib.config.models.resolve_model") as mock_resolve_model, \
-             patch("lib.utils.agno_storage_utils.create_dynamic_storage") as mock_create_storage, \
-             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory, \
-             patch("lib.utils.proxy_teams.Team") as mock_team_class:
-
+        with (
+            patch(
+                "ai.agents.registry.get_agent", new_callable=AsyncMock
+            ) as mock_get_agent,
+            patch("lib.config.models.resolve_model") as mock_resolve_model,
+            patch(
+                "lib.utils.agno_storage_utils.create_dynamic_storage"
+            ) as mock_create_storage,
+            patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
+            patch("lib.utils.proxy_teams.Team") as mock_team_class,
+        ):
             # Simulate partial failures
             mock_get_agent.side_effect = [
                 MagicMock(),  # First agent succeeds
                 Exception("Agent 2 failed"),  # Second fails
-                MagicMock()   # Third succeeds
+                MagicMock(),  # Third succeeds
             ]
             mock_resolve_model.return_value = MagicMock()
             mock_create_storage.return_value = MagicMock()
@@ -1159,8 +1178,7 @@ class TestAgnoTeamProxyIntegration:
 
             # Should complete despite member loading failure
             result = await proxy.create_team(
-                component_id="resilient-team",
-                config=comprehensive_config
+                component_id="resilient-team", config=comprehensive_config
             )
 
             assert result is not None
@@ -1169,7 +1187,7 @@ class TestAgnoTeamProxyIntegration:
         """Test complete metrics integration cycle."""
         config = {
             "team": {"metrics_enabled": True},
-            "metrics_enabled": False  # Should be overridden
+            "metrics_enabled": False,  # Should be overridden
         }
 
         mock_team = MagicMock()
@@ -1219,18 +1237,18 @@ class TestAgnoTeamProxyPerformance:
 
     def test_config_processing_efficiency(self, proxy):
         """Test efficiency of configuration processing."""
-        large_config = {
-            f"param_{i}": f"value_{i}" for i in range(100)
-        }
+        large_config = {f"param_{i}": f"value_{i}" for i in range(100)}
 
         # Add some supported parameters
         proxy._supported_params.update([f"param_{i}" for i in range(0, 50, 5)])
 
         import time
+
         start_time = time.time()
 
         # Process large config - should complete quickly
         import asyncio
+
         result = asyncio.run(proxy._process_config(large_config, "perf-test", None))
 
         end_time = time.time()
@@ -1249,7 +1267,7 @@ class TestAgnoTeamProxyPerformance:
             "streaming_config": {f"stream_{i}": True for i in range(50)},
             "events_config": {f"event_{i}": f"config_{i}" for i in range(50)},
             "context_config": {f"context_{i}": i for i in range(50)},
-            "display_config": {f"display_{i}": f"value_{i}" for i in range(50)}
+            "display_config": {f"display_{i}": f"value_{i}" for i in range(50)},
         }
 
         metadata = proxy._create_metadata(large_custom_config, "scale-test")
@@ -1271,5 +1289,5 @@ __all__ = [
     "TestAgnoTeamProxyPerformance",
     "TestAgnoTeamProxyTeamCreation",
     "TestAgnoTeamProxyUtilityMethods",
-    "TestProxyTeamsImports"
+    "TestProxyTeamsImports",
 ]

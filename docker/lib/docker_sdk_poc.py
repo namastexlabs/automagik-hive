@@ -29,6 +29,7 @@ from docker.models.containers import Container
 
 class ContainerState(Enum):
     """Container state enumeration"""
+
     CREATED = "created"
     RUNNING = "running"
     PAUSED = "paused"
@@ -41,6 +42,7 @@ class ContainerState(Enum):
 @dataclass
 class ContainerInfo:
     """Container information structure"""
+
     id: str
     name: str
     image: str
@@ -55,6 +57,7 @@ class ContainerInfo:
 @dataclass
 class ServiceHealth:
     """Service health information"""
+
     name: str
     container_id: str
     state: ContainerState
@@ -65,10 +68,10 @@ class ServiceHealth:
 
 class DockerSDKManager:
     """Docker SDK-based container management.
-    
+
     This is a proof-of-concept demonstrating how to replace subprocess
     Docker calls with the Docker SDK for Python.
-    
+
     Benefits over subprocess approach:
     - Type safety and IDE autocompletion
     - Structured exception handling
@@ -96,10 +99,10 @@ class DockerSDKManager:
 
     def get_container_info(self, name_or_id: str) -> ContainerInfo | None:
         """Get detailed container information using Docker SDK.
-        
+
         Args:
             name_or_id: Container name or ID
-            
+
         Returns:
             ContainerInfo object or None if not found
         """
@@ -119,13 +122,15 @@ class DockerSDKManager:
             return ContainerInfo(
                 id=container.id[:12],  # Short ID like Docker CLI
                 name=container.name,
-                image=container.image.tags[0] if container.image.tags else container.image.id[:12],
+                image=container.image.tags[0]
+                if container.image.tags
+                else container.image.id[:12],
                 state=state,
                 status=container.status,
                 ports=container.attrs["NetworkSettings"]["Ports"] or {},
                 labels=container.labels,
                 created=container.attrs["Created"],
-                started=container.attrs["State"].get("StartedAt")
+                started=container.attrs["State"].get("StartedAt"),
             )
 
         except NotFound:
@@ -143,10 +148,10 @@ class DockerSDKManager:
         volumes: dict[str, dict[str, str]] | None = None,
         labels: dict[str, str] | None = None,
         restart_policy: dict[str, Any] | None = None,
-        detach: bool = True
+        detach: bool = True,
     ) -> Container | None:
         """Start container using Docker SDK.
-        
+
         Args:
             image: Docker image name
             name: Container name
@@ -156,7 +161,7 @@ class DockerSDKManager:
             labels: Container labels
             restart_policy: Restart policy configuration
             detach: Run in detached mode
-            
+
         Returns:
             Container object or None if failed
         """
@@ -188,10 +193,12 @@ class DockerSDKManager:
                 labels=labels or {},
                 restart_policy=restart_policy,
                 detach=detach,
-                remove=False  # Don't auto-remove for persistence
+                remove=False,  # Don't auto-remove for persistence
             )
 
-            print(f"✅ Container '{name}' started successfully (ID: {container.id[:12]})")
+            print(
+                f"✅ Container '{name}' started successfully (ID: {container.id[:12]})"
+            )
             return container
 
         except ImageNotFound:
@@ -206,11 +213,11 @@ class DockerSDKManager:
 
     def stop_container(self, name_or_id: str, timeout: int = 10) -> bool:
         """Stop container gracefully using Docker SDK.
-        
+
         Args:
             name_or_id: Container name or ID
             timeout: Seconds to wait before force kill
-            
+
         Returns:
             True if stopped successfully, False otherwise
         """
@@ -239,11 +246,11 @@ class DockerSDKManager:
 
     def restart_container(self, name_or_id: str, timeout: int = 10) -> bool:
         """Restart container using Docker SDK.
-        
+
         Args:
             name_or_id: Container name or ID
             timeout: Seconds to wait for stop before force kill
-            
+
         Returns:
             True if restarted successfully, False otherwise
         """
@@ -271,16 +278,16 @@ class DockerSDKManager:
         name_or_id: str,
         tail: int = 50,
         follow: bool = False,
-        timestamps: bool = False
+        timestamps: bool = False,
     ) -> str | None:
         """Get container logs using Docker SDK.
-        
+
         Args:
             name_or_id: Container name or ID
             tail: Number of lines to retrieve
             follow: Stream logs continuously
             timestamps: Include timestamps
-            
+
         Returns:
             Log content as string or None if error
         """
@@ -294,7 +301,7 @@ class DockerSDKManager:
                 tail=tail,
                 follow=follow,
                 timestamps=timestamps,
-                stream=False  # Return as bytes, not generator
+                stream=False,  # Return as bytes, not generator
             )
 
             return logs.decode("utf-8", errors="replace")
@@ -307,18 +314,15 @@ class DockerSDKManager:
             return None
 
     def wait_for_healthy(
-        self,
-        name_or_id: str,
-        timeout: int = 60,
-        check_interval: float = 1.0
+        self, name_or_id: str, timeout: int = 60, check_interval: float = 1.0
     ) -> bool:
         """Wait for container to become healthy using Docker SDK.
-        
+
         Args:
             name_or_id: Container name or ID
             timeout: Maximum wait time in seconds
             check_interval: Check interval in seconds
-            
+
         Returns:
             True if container is healthy, False if timeout or error
         """
@@ -337,7 +341,9 @@ class DockerSDKManager:
 
                 # Check if container is running
                 if state["Status"] != "running":
-                    print(f"❌ Container '{name_or_id}' is not running: {state['Status']}")
+                    print(
+                        f"❌ Container '{name_or_id}' is not running: {state['Status']}"
+                    )
                     return False
 
                 # Check health if available
@@ -370,10 +376,10 @@ class DockerSDKManager:
 
     def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         """List containers using Docker SDK.
-        
+
         Args:
             all: Include stopped containers
-            
+
         Returns:
             List of ContainerInfo objects
         """
@@ -395,13 +401,15 @@ class DockerSDKManager:
                     info = ContainerInfo(
                         id=container.id[:12],
                         name=container.name,
-                        image=container.image.tags[0] if container.image.tags else container.image.id[:12],
+                        image=container.image.tags[0]
+                        if container.image.tags
+                        else container.image.id[:12],
                         state=state,
                         status=container.status,
                         ports=container.attrs["NetworkSettings"]["Ports"] or {},
                         labels=container.labels,
                         created=container.attrs["Created"],
-                        started=container.attrs["State"].get("StartedAt")
+                        started=container.attrs["State"].get("StartedAt"),
                     )
                     container_list.append(info)
 
@@ -417,7 +425,7 @@ class DockerSDKManager:
 
     def prune_containers(self) -> dict[str, Any]:
         """Remove stopped containers using Docker SDK.
-        
+
         Returns:
             Prune results dictionary
         """
@@ -430,7 +438,9 @@ class DockerSDKManager:
             deleted_count = len(result.get("ContainersDeleted", []))
             space_reclaimed = result.get("SpaceReclaimed", 0)
 
-            print(f"🧹 Pruned {deleted_count} containers, reclaimed {space_reclaimed} bytes")
+            print(
+                f"🧹 Pruned {deleted_count} containers, reclaimed {space_reclaimed} bytes"
+            )
             return result
 
         except APIError as e:
@@ -439,10 +449,10 @@ class DockerSDKManager:
 
     def get_service_health(self, service_name: str) -> ServiceHealth | None:
         """Get comprehensive service health information.
-        
+
         Args:
             service_name: Name of the service/container
-            
+
         Returns:
             ServiceHealth object or None if not found
         """
@@ -463,9 +473,13 @@ class DockerSDKManager:
                 container_id=container_info.id,
                 state=container_info.state,
                 health_status=health.get("Status"),
-                last_health_check=health.get("Log", [{}])[-1].get("Start") if health.get("Log") else None,
-                is_ready=container_info.state == ContainerState.RUNNING and
-                        (health.get("Status") in ["healthy", None])  # No health check or healthy
+                last_health_check=health.get("Log", [{}])[-1].get("Start")
+                if health.get("Log")
+                else None,
+                is_ready=container_info.state == ContainerState.RUNNING
+                and (
+                    health.get("Status") in ["healthy", None]
+                ),  # No health check or healthy
             )
 
         except (NotFound, APIError) as e:

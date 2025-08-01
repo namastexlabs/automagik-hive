@@ -65,7 +65,6 @@ class TemplateProcessor:
             )
             return self._process_environment_variables(processed_content)
 
-
         except Exception:
             return content  # Return original on error
 

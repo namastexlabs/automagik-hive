@@ -236,9 +236,7 @@ class ConfigInheritanceManager:
         if total_inherited == 0:
             return "Configuration inheritance: No parameters inherited (all agents have explicit overrides)"
         agent_summary = (
-            ", ".join(agents_with_inheritance)
-            if agents_with_inheritance
-            else "none"
+            ", ".join(agents_with_inheritance) if agents_with_inheritance else "none"
         )
         return f"Configuration inheritance: {total_inherited} parameters inherited across {len(original_configs)} agents [{agent_summary}]"
 

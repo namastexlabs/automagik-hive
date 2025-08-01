@@ -36,7 +36,7 @@ except ImportError as e:
 
 def main() -> int:
     """Main pre-commit validation entry point.
-    
+
     Returns:
         Exit code: 0 for success, 1 for validation failure, 2 for system error
     """
@@ -71,7 +71,9 @@ def main() -> int:
         if bypass_flag:
             bypass_info = fs_adapter.get_bypass_info()
             if bypass_info:
-                print(f"⚠️  BYPASS ACTIVE: {bypass_info.get('reason', 'No reason provided')}")
+                print(
+                    f"⚠️  BYPASS ACTIVE: {bypass_info.get('reason', 'No reason provided')}"
+                )
                 print(f"   Created by: {bypass_info.get('created_by', 'unknown')}")
                 print(f"   Expires: {bypass_info.get('expires_at', 'unknown')}")
 
@@ -91,12 +93,14 @@ def main() -> int:
         # Record metrics
         metrics = ValidationMetrics()
         metrics.record_validation(result)
-        fs_adapter.record_validation_metrics({
-            "files_checked": result.total_files_processed,
-            "blocked_count": len(result.blocked_files),
-            "bypass_used": result.result == ValidationResult.BYPASS,
-            "validation_result": result.result.value
-        })
+        fs_adapter.record_validation_metrics(
+            {
+                "files_checked": result.total_files_processed,
+                "blocked_count": len(result.blocked_files),
+                "bypass_used": result.result == ValidationResult.BYPASS,
+                "validation_result": result.result.value,
+            }
+        )
 
         # Return appropriate exit code
         if result.result == ValidationResult.BLOCKED:
@@ -107,13 +111,14 @@ def main() -> int:
         print(f"❌ Pre-commit hook error: {e}")
         if "--debug" in sys.argv:
             import traceback
+
             traceback.print_exc()
         return 2
 
 
 def run_test_mode() -> int:
     """Run the validation system in test mode.
-    
+
     Returns:
         Exit code: 0 for success, 1 for test failure
     """
@@ -154,19 +159,20 @@ def run_test_mode() -> int:
         print(f"❌ Test failed: {e}")
         if "--debug" in sys.argv:
             import traceback
+
             traceback.print_exc()
         return 1
 
 
 def display_validation_result(result) -> None:
     """Display validation results to user with colored output.
-    
+
     Args:
         result: HookValidationResult to display
     """
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"📊 VALIDATION RESULT: {result.result.value.upper()}")
-    print("="*60)
+    print("=" * 60)
 
     if result.result == ValidationResult.BYPASS:
         print("⚠️  BYPASS MODE ACTIVE - Validation skipped")
@@ -186,7 +192,7 @@ def display_validation_result(result) -> None:
                 "create": "📄",
                 "modify": "✏️",
                 "delete": "🗑️",
-                "rename": "📝"
+                "rename": "📝",
             }.get(file_change.operation.value, "📄")
             print(f"   {operation_icon} {file_change.path}")
 
@@ -194,7 +200,7 @@ def display_validation_result(result) -> None:
     if result.blocked_files:
         print(f"\n❌ BLOCKED FILES ({len(result.blocked_files)}):")
         for i, msg in enumerate(result.error_messages):
-            print(f"\n{i+1}. {msg}")
+            print(f"\n{i + 1}. {msg}")
 
     # Display suggestions
     if result.suggestions:
@@ -213,7 +219,7 @@ def display_validation_result(result) -> None:
         print("   • make bypass-hooks")
         print("   • touch .git/hooks/BYPASS_ROOT_VALIDATION")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
 
 
 def print_usage() -> None:

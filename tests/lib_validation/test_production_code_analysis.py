@@ -25,10 +25,11 @@ def test_production_code_import_analysis():
 
     # Verify this is the expected Pydantic V1/V2 compatibility error
     error_message = str(exc_info.value)
-    assert ("regex` is removed. use `pattern` instead" in error_message or
-            "ValidationError" in error_message or
-            "PydanticUserError" in error_message), \
-           f"Unexpected error type: {error_message}"
+    assert (
+        "regex` is removed. use `pattern` instead" in error_message
+        or "ValidationError" in error_message
+        or "PydanticUserError" in error_message
+    ), f"Unexpected error type: {error_message}"
 
     print("\n📋 Production Code Analysis:")
     print(f"   Import Error: {error_message[:100]}...")
@@ -49,7 +50,7 @@ def test_production_validation_logic_verification():
         ("hello<world>", "helloworld"),
         ('test"quote"test', "testquotetest"),
         ("test'apostrophe'test", "testapostrophetest"),
-        ('mixed<">\' test', "mixed test"),
+        ("mixed<\">' test", "mixed test"),
         ("normal text", "normal text"),
     ]
 
@@ -82,8 +83,12 @@ def test_production_dangerous_keys_verification():
     ]
 
     for key, should_be_dangerous in test_keys:
-        is_dangerous = any(danger in str(key).lower() for danger in production_dangerous_keys)
-        assert is_dangerous == should_be_dangerous, f"Dangerous key logic mismatch for {key}"
+        is_dangerous = any(
+            danger in str(key).lower() for danger in production_dangerous_keys
+        )
+        assert is_dangerous == should_be_dangerous, (
+            f"Dangerous key logic mismatch for {key}"
+        )
 
     print("\n🔒 Security Logic Verification:")
     print(f"   Dangerous keys: {production_dangerous_keys}")
@@ -99,25 +104,57 @@ def test_production_field_constraints_documentation():
     constraints = {
         "AgentRequest": {
             "message": {"min_length": 1, "max_length": 10000},
-            "session_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 100},
-            "user_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 100},
+            "session_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 100,
+            },
+            "user_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 100,
+            },
             "context": {"size_limit": 5000},
-            "stream": {"default": False}
+            "stream": {"default": False},
         },
         "TeamRequest": {
             "task": {"min_length": 1, "max_length": 5000},
-            "team_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 50},
-            "session_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 100},
-            "user_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 100},
+            "team_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 50,
+            },
+            "session_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 100,
+            },
+            "user_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 100,
+            },
             "context": {"default_factory": dict},
-            "stream": {"default": False}
+            "stream": {"default": False},
         },
         "WorkflowRequest": {
-            "workflow_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 50},
+            "workflow_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 50,
+            },
             "input_data": {"size_limit": 10000, "default_factory": dict},
-            "session_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 100},
-            "user_id": {"regex": r"^[a-zA-Z0-9_-]+$", "min_length": 1, "max_length": 100}
-        }
+            "session_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 100,
+            },
+            "user_id": {
+                "regex": r"^[a-zA-Z0-9_-]+$",
+                "min_length": 1,
+                "max_length": 100,
+            },
+        },
     }
 
     print("\n📐 Field Constraints Documentation:")
@@ -144,7 +181,7 @@ def test_coverage_strategy_documentation():
             "sanitize_message (AgentRequest)",
             "validate_context (AgentRequest)",
             "sanitize_task (TeamRequest)",
-            "validate_input_data (WorkflowRequest)"
+            "validate_input_data (WorkflowRequest)",
         ],
         "Model Classes": [
             "BaseValidatedRequest (config)",
@@ -154,22 +191,22 @@ def test_coverage_strategy_documentation():
             "HealthRequest (minimal)",
             "VersionRequest (minimal)",
             "ErrorResponse (response)",
-            "SuccessResponse (response)"
+            "SuccessResponse (response)",
         ],
         "Security Features": [
             "HTML/Script tag sanitization",
             "Dangerous key detection",
             "Case-insensitive security checks",
             "Recursive validation for nested data",
-            "Size limit enforcement"
+            "Size limit enforcement",
         ],
         "Edge Cases": [
             "Unicode character handling",
             "Boundary value testing",
             "Empty/whitespace validation",
             "Regex pattern validation",
-            "Default value behavior"
-        ]
+            "Default value behavior",
+        ],
     }
 
     print("\n🎯 Comprehensive Coverage Strategy:")

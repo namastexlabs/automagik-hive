@@ -48,6 +48,7 @@ from lib.models import Base
 
 target_metadata = Base.metadata
 
+
 # Get database URL from environment with enhanced error handling
 def get_url():
     db_url = os.getenv("HIVE_DATABASE_URL")
@@ -64,6 +65,7 @@ def get_url():
     if db_url.startswith("postgresql://"):
         return db_url.replace("postgresql://", "postgresql+psycopg://")
     return db_url
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

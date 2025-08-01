@@ -158,7 +158,6 @@ def test_template_processor():
         if "Item 0: item1 (first)" not in advanced_processed:
             return False
 
-
         # Test 7: Validation System
 
         # Test invalid MCP config
@@ -170,7 +169,6 @@ def test_template_processor():
         unprocessed_content = "Hello {{missing_variable}} world"
         if template_processor.validate_processed_content(unprocessed_content):
             return False
-
 
     return True
 

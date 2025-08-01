@@ -3,7 +3,7 @@
 TDD Test Suite for Enhanced Makefile Uninstall Functionality
 
 This test suite validates that the make uninstall command properly cleans up:
-- Main infrastructure containers (hive-agents, hive-postgres) 
+- Main infrastructure containers (hive-agents, hive-postgres)
 - Agent infrastructure containers (hive-agents-agent, hive-postgres-agent)
 - Docker images (automagik-hive-app)
 - Docker volumes (app_logs, app_data, agent_app_logs, agent_app_data)
@@ -46,9 +46,13 @@ class TestMakefileUninstallEnhanced:
 
         # Create environment files
         with open(".env", "w") as f:
-            f.write("HIVE_API_PORT=8886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n")
+            f.write(
+                "HIVE_API_PORT=8886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"
+            )
         with open(".env.agent", "w") as f:
-            f.write("HIVE_API_PORT=38886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n")
+            f.write(
+                "HIVE_API_PORT=38886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
+            )
 
         # Create log and PID files
         with open("logs/agent-server.pid", "w") as f:
@@ -116,8 +120,13 @@ uninstall-purge-enhanced:
 
         # Verify the enhanced uninstall-clean target includes agent infrastructure cleanup
         assert "docker image rm automagik-hive-app" in makefile_content
-        assert "automagik-hive_agent_app_logs automagik-hive_agent_app_data" in makefile_content
-        assert ".env.agent logs/agent-server.pid logs/agent-server.log" in makefile_content
+        assert (
+            "automagik-hive_agent_app_logs automagik-hive_agent_app_data"
+            in makefile_content
+        )
+        assert (
+            ".env.agent logs/agent-server.pid logs/agent-server.log" in makefile_content
+        )
         assert "Enhanced clean uninstall complete" in makefile_content
 
     def test_uninstall_purge_enhanced_removes_all_data(self):
@@ -143,14 +152,23 @@ uninstall-purge-enhanced:
     def test_agent_infrastructure_cleanup_components_identified(self):
         """Test that all agent infrastructure components are identified"""
         components = {
-            "containers": ["hive-agents", "hive-postgres", "hive-agents-agent", "hive-postgres-agent"],
+            "containers": [
+                "hive-agents",
+                "hive-postgres",
+                "hive-agents-agent",
+                "hive-postgres-agent",
+            ],
             "compose_files": ["docker-compose.yml", "docker-compose-agent.yml"],
             "images": ["automagik-hive-app"],
-            "volumes": ["automagik-hive_app_logs", "automagik-hive_app_data",
-                       "automagik-hive_agent_app_logs", "automagik-hive_agent_app_data"],
+            "volumes": [
+                "automagik-hive_app_logs",
+                "automagik-hive_app_data",
+                "automagik-hive_agent_app_logs",
+                "automagik-hive_agent_app_data",
+            ],
             "data_dirs": ["./data/postgres", "./data/postgres-agent"],
             "env_files": [".env.agent"],
-            "log_files": ["logs/agent-server.pid", "logs/agent-server.log"]
+            "log_files": ["logs/agent-server.pid", "logs/agent-server.log"],
         }
 
         # Verify all components are properly identified
@@ -188,6 +206,7 @@ uninstall-purge-enhanced:
 
         for cmd in cleanup_commands:
             assert "logs/agent-server.pid" in cmd
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

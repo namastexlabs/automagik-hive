@@ -25,7 +25,7 @@ async def send_startup_notification(startup_display=None):
                 title="🚀 Automagik Hive Server Started",
                 message=message,
                 source="server-startup",
-                level=NotificationLevel.INFO
+                level=NotificationLevel.INFO,
             )
 
         # Run in isolated task to prevent context manager conflicts
@@ -52,7 +52,7 @@ def _build_startup_message(startup_display=None):
         f"📅 Started: {timestamp}",
         f"🌍 Environment: {environment.upper()}",
         f"🌐 Port: {port}",
-        ""
+        "",
     ]
 
     if startup_display:
@@ -62,20 +62,24 @@ def _build_startup_message(startup_display=None):
         total_workflows = len(startup_display.workflows)
         total_errors = len(startup_display.errors)
 
-        message_parts.extend([
-            "📊 *System Components:*",
-            f"🤖 Agents: {total_agents}",
-            f"🏢 Teams: {total_teams}",
-            f"⚡ Workflows: {total_workflows}",
-            ""
-        ])
+        message_parts.extend(
+            [
+                "📊 *System Components:*",
+                f"🤖 Agents: {total_agents}",
+                f"🏢 Teams: {total_teams}",
+                f"⚡ Workflows: {total_workflows}",
+                "",
+            ]
+        )
 
         # Add agents with versions
         if startup_display.agents:
             message_parts.append("🤖 *Active Agents:*")
             for agent_id, info in startup_display.agents.items():
                 status_icon = "✅" if info["status"] == "✅" else "❌"
-                version_info = f"v{info['version']}" if info["version"] != "latest" else "latest"
+                version_info = (
+                    f"v{info['version']}" if info["version"] != "latest" else "latest"
+                )
                 message_parts.append(f"{status_icon} {agent_id} ({version_info})")
             message_parts.append("")
 
@@ -84,44 +88,51 @@ def _build_startup_message(startup_display=None):
             message_parts.append("⚡ *Active Workflows:*")
             for workflow_id, info in startup_display.workflows.items():
                 status_icon = "✅" if info["status"] == "✅" else "❌"
-                version_info = f"v{info['version']}" if info["version"] != "latest" else "latest"
+                version_info = (
+                    f"v{info['version']}" if info["version"] != "latest" else "latest"
+                )
                 message_parts.append(f"{status_icon} {workflow_id} ({version_info})")
             message_parts.append("")
 
         # Add error summary if any
         if startup_display.errors:
-            message_parts.extend([
-                f"⚠️ *Issues Found: {total_errors}*",
-                ""
-            ])
+            message_parts.extend([f"⚠️ *Issues Found: {total_errors}*", ""])
             for error in startup_display.errors[:3]:  # Show first 3 errors
-                message_parts.append(f"❌ {error['component']}: {error['message'][:50]}...")
+                message_parts.append(
+                    f"❌ {error['component']}: {error['message'][:50]}..."
+                )
             if total_errors > 3:
                 message_parts.append(f"... and {total_errors - 3} more issues")
             message_parts.append("")
 
         # System status summary
-        successful_components = sum(1 for items in [startup_display.agents, startup_display.teams, startup_display.workflows]
-                                  for item in items.values() if item["status"] == "✅")
+        successful_components = sum(
+            1
+            for items in [
+                startup_display.agents,
+                startup_display.teams,
+                startup_display.workflows,
+            ]
+            for item in items.values()
+            if item["status"] == "✅"
+        )
         total_components = total_agents + total_teams + total_workflows
 
         if total_errors == 0:
             message_parts.append("✅ *All systems operational*")
         else:
-            message_parts.append(f"⚠️ *{successful_components}/{total_components} components healthy*")
+            message_parts.append(
+                f"⚠️ *{successful_components}/{total_components} components healthy*"
+            )
     else:
-        message_parts.extend([
-            "✅ Server started successfully",
-            "📊 Component details unavailable"
-        ])
+        message_parts.extend(
+            ["✅ Server started successfully", "📊 Component details unavailable"]
+        )
 
     # Import here to avoid circular imports
     from lib.config.server_config import get_server_config
 
-    message_parts.extend([
-        "",
-        f"🔗 API: {get_server_config().get_base_url()}"
-    ])
+    message_parts.extend(["", f"🔗 API: {get_server_config().get_base_url()}"])
 
     return "\n".join(message_parts)
 
@@ -135,7 +146,7 @@ async def send_shutdown_notification():
                 title="Automagik Hive Server Shutdown",
                 message="The automagik-hive server is shutting down.",
                 source="server-shutdown",
-                level=NotificationLevel.WARNING
+                level=NotificationLevel.WARNING,
             )
 
         # Run in isolated task to prevent context manager conflicts
@@ -152,7 +163,7 @@ async def send_error_notification(error_message: str, source: str = "server-erro
             title="Automagik Hive Server Error",
             message=f"Server error occurred: {error_message}",
             source=source,
-            level=NotificationLevel.ERROR
+            level=NotificationLevel.ERROR,
         )
         logger.info(f"📱 Error notification sent: {error_message}")
     except Exception as e:
@@ -166,7 +177,7 @@ async def send_mcp_server_error(server_name: str, error_message: str):
             title=f"MCP Server Error: {server_name}",
             message=f"MCP server '{server_name}' encountered an error: {error_message}",
             source="mcp-server-error",
-            level=NotificationLevel.CRITICAL
+            level=NotificationLevel.CRITICAL,
         )
         logger.info(f"📱 MCP server error notification sent: {server_name}")
     except Exception as e:
@@ -176,13 +187,15 @@ async def send_mcp_server_error(server_name: str, error_message: str):
 async def send_health_check_notification(component: str, status: str, message: str):
     """Send notification for health check results"""
     try:
-        level = NotificationLevel.INFO if status == "healthy" else NotificationLevel.WARNING
+        level = (
+            NotificationLevel.INFO if status == "healthy" else NotificationLevel.WARNING
+        )
 
         await send_notification(
             title=f"Health Check: {component}",
             message=f"Component '{component}' is {status}. {message}",
             source="health-check",
-            level=level
+            level=level,
         )
         logger.info(f"📱 Health check notification sent: {component} - {status}")
     except Exception as e:
@@ -190,42 +203,45 @@ async def send_health_check_notification(component: str, status: str, message: s
 
 
 # Convenience function for common notification patterns
-async def notify_system_event(title: str, message: str, level: NotificationLevel = NotificationLevel.INFO):
+async def notify_system_event(
+    title: str, message: str, level: NotificationLevel = NotificationLevel.INFO
+):
     """Generic system event notification"""
     try:
         await send_notification(
-            title=title,
-            message=message,
-            source="system-event",
-            level=level
+            title=title, message=message, source="system-event", level=level
         )
         logger.info(f"📱 System event notification sent: {title}")
     except Exception as e:
         logger.error(f"📱 Failed to send system event notification: {e}")
 
 
-async def notify_critical_error(title: str, message: str, source: str = "critical-error"):
+async def notify_critical_error(
+    title: str, message: str, source: str = "critical-error"
+):
     """Critical error notification"""
     try:
         await send_notification(
             title=title,
             message=message,
             source=source,
-            level=NotificationLevel.CRITICAL
+            level=NotificationLevel.CRITICAL,
         )
         logger.info(f"📱 Critical error notification sent: {title}")
     except Exception as e:
         logger.error(f"📱 Failed to send critical error notification: {e}")
 
 
-async def notify_performance_issue(component: str, metric: str, value: str, threshold: str):
+async def notify_performance_issue(
+    component: str, metric: str, value: str, threshold: str
+):
     """Performance issue notification"""
     try:
         await send_notification(
             title=f"Performance Issue: {component}",
             message=f"{component} {metric} is {value} (threshold: {threshold}). This may affect system performance.",
             source="performance-monitor",
-            level=NotificationLevel.WARNING
+            level=NotificationLevel.WARNING,
         )
         logger.info(f"📱 Performance issue notification sent: {component}")
     except Exception as e:
@@ -243,21 +259,23 @@ async def notify_user_action(action: str, user_id: str, details: str = ""):
             title="Important User Action",
             message=message,
             source="user-action",
-            level=NotificationLevel.INFO
+            level=NotificationLevel.INFO,
         )
         logger.info(f"📱 User action notification sent: {action}")
     except Exception as e:
         logger.error(f"📱 Failed to send user action notification: {e}")
 
 
-async def notify_security_event(event_type: str, message: str, source: str = "security"):
+async def notify_security_event(
+    event_type: str, message: str, source: str = "security"
+):
     """Security event notification"""
     try:
         await send_notification(
             title=f"Security Event: {event_type}",
             message=message,
             source=source,
-            level=NotificationLevel.CRITICAL
+            level=NotificationLevel.CRITICAL,
         )
         logger.info(f"📱 Security event notification sent: {event_type}")
     except Exception as e:

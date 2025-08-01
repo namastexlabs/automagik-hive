@@ -118,7 +118,9 @@ class TestWorkflowDiscovery:
 
     @patch("ai.workflows.registry.importlib.util")
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_factory_function(self, mock_path, mock_importlib) -> None:
+    def test_discover_workflows_no_factory_function(
+        self, mock_path, mock_importlib
+    ) -> None:
         """Test discovery when workflow module has no factory function."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -157,7 +159,9 @@ class TestWorkflowDiscovery:
 
     @patch("ai.workflows.registry.importlib.util")
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_import_exception(self, mock_path, mock_importlib) -> None:
+    def test_discover_workflows_import_exception(
+        self, mock_path, mock_importlib
+    ) -> None:
         """Test discovery handles import exceptions gracefully."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True

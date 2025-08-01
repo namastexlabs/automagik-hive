@@ -16,6 +16,7 @@ from docker_sdk_poc import DockerSDKManager
 @dataclass
 class BenchmarkResult:
     """Single benchmark measurement result"""
+
     operation: str
     method: str  # 'subprocess' or 'sdk'
     duration: float
@@ -27,6 +28,7 @@ class BenchmarkResult:
 @dataclass
 class BenchmarkSuite:
     """Complete benchmark suite results"""
+
     results: list[BenchmarkResult]
     summary: dict[str, Any]
 
@@ -45,7 +47,9 @@ class DockerBenchmark:
         self.sdk_manager = DockerSDKManager()
         self.results: list[BenchmarkResult] = []
 
-    def benchmark_container_listing(self, iterations: int = 10) -> list[BenchmarkResult]:
+    def benchmark_container_listing(
+        self, iterations: int = 10
+    ) -> list[BenchmarkResult]:
         """Benchmark container listing operations"""
         results = []
 
@@ -57,11 +61,17 @@ class DockerBenchmark:
             with timer() as get_time:
                 try:
                     result = subprocess.run(
-                        ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.Status}}\t{{.Image}}"],
+                        [
+                            "docker",
+                            "ps",
+                            "-a",
+                            "--format",
+                            "{{.Names}}\t{{.Status}}\t{{.Image}}",
+                        ],
                         capture_output=True,
                         text=True,
                         timeout=30,
-                        check=True
+                        check=True,
                     )
                     success = True
                     error = None
@@ -72,13 +82,15 @@ class DockerBenchmark:
                 duration = get_time()
                 subprocess_times.append(duration)
 
-                results.append(BenchmarkResult(
-                    operation="list_containers",
-                    method="subprocess",
-                    duration=duration,
-                    success=success,
-                    error=error
-                ))
+                results.append(
+                    BenchmarkResult(
+                        operation="list_containers",
+                        method="subprocess",
+                        duration=duration,
+                        success=success,
+                        error=error,
+                    )
+                )
 
         # SDK approach
         sdk_times = []
@@ -95,13 +107,15 @@ class DockerBenchmark:
                 duration = get_time()
                 sdk_times.append(duration)
 
-                results.append(BenchmarkResult(
-                    operation="list_containers",
-                    method="sdk",
-                    duration=duration,
-                    success=success,
-                    error=error
-                ))
+                results.append(
+                    BenchmarkResult(
+                        operation="list_containers",
+                        method="sdk",
+                        duration=duration,
+                        success=success,
+                        error=error,
+                    )
+                )
 
         # Print comparison
         avg_subprocess = sum(subprocess_times) / len(subprocess_times)
@@ -114,7 +128,9 @@ class DockerBenchmark:
 
         return results
 
-    def benchmark_container_info(self, container_name: str = "postgres", iterations: int = 10) -> list[BenchmarkResult]:
+    def benchmark_container_info(
+        self, container_name: str = "postgres", iterations: int = 10
+    ) -> list[BenchmarkResult]:
         """Benchmark getting container information"""
         results = []
 
@@ -141,7 +157,7 @@ class DockerBenchmark:
                         capture_output=True,
                         text=True,
                         timeout=30,
-                        check=True
+                        check=True,
                     )
                     success = True
                     error = None
@@ -152,13 +168,15 @@ class DockerBenchmark:
                 duration = get_time()
                 subprocess_times.append(duration)
 
-                results.append(BenchmarkResult(
-                    operation="container_info",
-                    method="subprocess",
-                    duration=duration,
-                    success=success,
-                    error=error
-                ))
+                results.append(
+                    BenchmarkResult(
+                        operation="container_info",
+                        method="subprocess",
+                        duration=duration,
+                        success=success,
+                        error=error,
+                    )
+                )
 
         # SDK approach
         sdk_times = []
@@ -175,13 +193,15 @@ class DockerBenchmark:
                 duration = get_time()
                 sdk_times.append(duration)
 
-                results.append(BenchmarkResult(
-                    operation="container_info",
-                    method="sdk",
-                    duration=duration,
-                    success=success,
-                    error=error
-                ))
+                results.append(
+                    BenchmarkResult(
+                        operation="container_info",
+                        method="sdk",
+                        duration=duration,
+                        success=success,
+                        error=error,
+                    )
+                )
 
         # Print comparison
         avg_subprocess = sum(subprocess_times) / len(subprocess_times)
@@ -194,7 +214,9 @@ class DockerBenchmark:
 
         return results
 
-    def benchmark_log_retrieval(self, container_name: str | None = None, iterations: int = 5) -> list[BenchmarkResult]:
+    def benchmark_log_retrieval(
+        self, container_name: str | None = None, iterations: int = 5
+    ) -> list[BenchmarkResult]:
         """Benchmark log retrieval operations"""
         results = []
 
@@ -221,7 +243,7 @@ class DockerBenchmark:
                         capture_output=True,
                         text=True,
                         timeout=30,
-                        check=True
+                        check=True,
                     )
                     success = True
                     error = None
@@ -232,13 +254,15 @@ class DockerBenchmark:
                 duration = get_time()
                 subprocess_times.append(duration)
 
-                results.append(BenchmarkResult(
-                    operation="get_logs",
-                    method="subprocess",
-                    duration=duration,
-                    success=success,
-                    error=error
-                ))
+                results.append(
+                    BenchmarkResult(
+                        operation="get_logs",
+                        method="subprocess",
+                        duration=duration,
+                        success=success,
+                        error=error,
+                    )
+                )
 
         # SDK approach
         sdk_times = []
@@ -255,13 +279,15 @@ class DockerBenchmark:
                 duration = get_time()
                 sdk_times.append(duration)
 
-                results.append(BenchmarkResult(
-                    operation="get_logs",
-                    method="sdk",
-                    duration=duration,
-                    success=success,
-                    error=error
-                ))
+                results.append(
+                    BenchmarkResult(
+                        operation="get_logs",
+                        method="sdk",
+                        duration=duration,
+                        success=success,
+                        error=error,
+                    )
+                )
 
         # Print comparison
         avg_subprocess = sum(subprocess_times) / len(subprocess_times)
@@ -294,11 +320,27 @@ class DockerBenchmark:
         subprocess_results = [r for r in all_results if r.method == "subprocess"]
         sdk_results = [r for r in all_results if r.method == "sdk"]
 
-        subprocess_avg = sum(r.duration for r in subprocess_results) / len(subprocess_results) if subprocess_results else 0
-        sdk_avg = sum(r.duration for r in sdk_results) / len(sdk_results) if sdk_results else 0
+        subprocess_avg = (
+            sum(r.duration for r in subprocess_results) / len(subprocess_results)
+            if subprocess_results
+            else 0
+        )
+        sdk_avg = (
+            sum(r.duration for r in sdk_results) / len(sdk_results)
+            if sdk_results
+            else 0
+        )
 
-        subprocess_success_rate = sum(1 for r in subprocess_results if r.success) / len(subprocess_results) if subprocess_results else 0
-        sdk_success_rate = sum(1 for r in sdk_results if r.success) / len(sdk_results) if sdk_results else 0
+        subprocess_success_rate = (
+            sum(1 for r in subprocess_results if r.success) / len(subprocess_results)
+            if subprocess_results
+            else 0
+        )
+        sdk_success_rate = (
+            sum(1 for r in sdk_results if r.success) / len(sdk_results)
+            if sdk_results
+            else 0
+        )
 
         overall_speedup = subprocess_avg / sdk_avg if sdk_avg > 0 else 0
 
@@ -309,18 +351,26 @@ class DockerBenchmark:
             "overall_speedup": overall_speedup,
             "subprocess_success_rate": subprocess_success_rate,
             "sdk_success_rate": sdk_success_rate,
-            "subprocess_error_count": sum(1 for r in subprocess_results if not r.success),
-            "sdk_error_count": sum(1 for r in sdk_results if not r.success)
+            "subprocess_error_count": sum(
+                1 for r in subprocess_results if not r.success
+            ),
+            "sdk_error_count": sum(1 for r in sdk_results if not r.success),
         }
 
         # Print final summary
         print("\n📈 BENCHMARK SUMMARY")
         print("=" * 30)
         print(f"Total operations: {summary['total_operations']}")
-        print(f"Subprocess avg: {summary['subprocess_avg_duration']:.4f}s (success: {summary['subprocess_success_rate']:.1%})")
-        print(f"SDK avg: {summary['sdk_avg_duration']:.4f}s (success: {summary['sdk_success_rate']:.1%})")
+        print(
+            f"Subprocess avg: {summary['subprocess_avg_duration']:.4f}s (success: {summary['subprocess_success_rate']:.1%})"
+        )
+        print(
+            f"SDK avg: {summary['sdk_avg_duration']:.4f}s (success: {summary['sdk_success_rate']:.1%})"
+        )
         print(f"Overall speedup: {summary['overall_speedup']:.2f}x")
-        print(f"Error reduction: {summary['subprocess_error_count']} → {summary['sdk_error_count']} errors")
+        print(
+            f"Error reduction: {summary['subprocess_error_count']} → {summary['sdk_error_count']} errors"
+        )
 
         return BenchmarkSuite(results=all_results, summary=summary)
 
@@ -339,7 +389,7 @@ class DockerBenchmark:
                 capture_output=True,
                 text=True,
                 timeout=10,
-                check=True
+                check=True,
             )
             print("  Subprocess: Unexpected success")
         except subprocess.CalledProcessError as e:
@@ -367,7 +417,7 @@ class DockerBenchmark:
                 capture_output=True,
                 text=True,
                 timeout=10,
-                check=True
+                check=True,
             )
             print("  Subprocess: Unexpected success")
         except subprocess.CalledProcessError as e:

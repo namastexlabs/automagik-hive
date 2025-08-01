@@ -18,10 +18,7 @@ async def lifespan(_app: FastAPI):
     auth_service = get_auth_service()
     auth_status = auth_service.get_auth_status()
 
-    logger.info(
-        "Authentication initialized",
-        **auth_status
-    )
+    logger.info("Authentication initialized", **auth_status)
 
     # Log security warnings for production
     if auth_status["production_override_active"]:

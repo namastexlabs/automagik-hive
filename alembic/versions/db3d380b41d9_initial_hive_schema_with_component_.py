@@ -5,6 +5,7 @@ Revises:
 Create Date: 2025-07-20 16:39:36.382070
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -33,16 +34,36 @@ def upgrade() -> None:
         sa.Column("config", sa.JSON(), nullable=False),
         sa.Column("description", sa.Text()),
         sa.Column("is_active", sa.Boolean(), default=False, nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.Column("created_by", sa.String(255), default="system", nullable=True),
         sa.PrimaryKeyConstraint("id"),
         schema="hive",
     )
 
     # Create indexes for component_versions
-    op.create_index("idx_component_versions_component_id", "component_versions", ["component_id"], schema="hive")
-    op.create_index("idx_component_versions_component_type", "component_versions", ["component_type"], schema="hive")
-    op.create_index("idx_component_versions_is_active", "component_versions", ["is_active"], schema="hive")
+    op.create_index(
+        "idx_component_versions_component_id",
+        "component_versions",
+        ["component_id"],
+        schema="hive",
+    )
+    op.create_index(
+        "idx_component_versions_component_type",
+        "component_versions",
+        ["component_type"],
+        schema="hive",
+    )
+    op.create_index(
+        "idx_component_versions_is_active",
+        "component_versions",
+        ["is_active"],
+        schema="hive",
+    )
 
     # Create version_history table
     op.create_table(
@@ -54,13 +75,23 @@ def upgrade() -> None:
         sa.Column("action", sa.String(50), nullable=False),
         sa.Column("description", sa.Text()),
         sa.Column("changed_by", sa.String(255), default="system", nullable=True),
-        sa.Column("changed_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "changed_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id"),
         schema="hive",
     )
 
     # Create indexes for version_history
-    op.create_index("idx_version_history_component_id", "version_history", ["component_id"], schema="hive")
+    op.create_index(
+        "idx_version_history_component_id",
+        "version_history",
+        ["component_id"],
+        schema="hive",
+    )
 
     # Create agent_metrics table
     op.create_table(
@@ -71,15 +102,29 @@ def upgrade() -> None:
         sa.Column("execution_type", sa.String(50), nullable=False),
         sa.Column("metrics", sa.JSON(), nullable=False),
         sa.Column("version", sa.String(10), nullable=False, default="1.0"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.PrimaryKeyConstraint("id"),
         schema="hive",
     )
 
     # Create indexes for agent_metrics
-    op.create_index("idx_agent_metrics_timestamp", "agent_metrics", ["timestamp"], schema="hive")
-    op.create_index("idx_agent_metrics_agent_name", "agent_metrics", ["agent_name"], schema="hive")
-    op.create_index("idx_agent_metrics_execution_type", "agent_metrics", ["execution_type"], schema="hive")
+    op.create_index(
+        "idx_agent_metrics_timestamp", "agent_metrics", ["timestamp"], schema="hive"
+    )
+    op.create_index(
+        "idx_agent_metrics_agent_name", "agent_metrics", ["agent_name"], schema="hive"
+    )
+    op.create_index(
+        "idx_agent_metrics_execution_type",
+        "agent_metrics",
+        ["execution_type"],
+        schema="hive",
+    )
 
 
 def downgrade() -> None:

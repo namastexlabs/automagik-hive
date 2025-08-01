@@ -61,24 +61,26 @@ def generate_postgres_credentials(
     host: str = "localhost",
     port: int = 5532,
     database: str = "hive",
-    env_file: Path | None = None
+    env_file: Path | None = None,
 ) -> dict[str, str]:
     """
     Generate secure PostgreSQL credentials using CLI-compatible service.
-    
+
     Args:
         host: Database host
         port: Database port
         database: Database name
         env_file: Path to environment file
-        
+
     Returns:
         Generated credentials dictionary
     """
     credential_service = CredentialService(env_file)
     creds = credential_service.generate_postgres_credentials(host, port, database)
 
-    logger.info("PostgreSQL credentials generated via CLI", database=database, port=port)
+    logger.info(
+        "PostgreSQL credentials generated via CLI", database=database, port=port
+    )
     print("✅ PostgreSQL credentials generated:")
     print(f"   User: {creds['user']}")
     print(f"   Password: {creds['password']}")
@@ -92,17 +94,17 @@ def generate_complete_workspace_credentials(
     workspace_path: Path | None = None,
     postgres_host: str = "localhost",
     postgres_port: int = 5532,
-    postgres_database: str = "hive"
+    postgres_database: str = "hive",
 ) -> dict[str, str]:
     """
     Generate complete set of credentials for workspace initialization.
-    
+
     Args:
         workspace_path: Path to workspace directory
         postgres_host: PostgreSQL host
         postgres_port: PostgreSQL port
         postgres_database: PostgreSQL database name
-        
+
     Returns:
         Complete credentials dictionary
     """
@@ -115,7 +117,9 @@ def generate_complete_workspace_credentials(
         postgres_host, postgres_port, postgres_database
     )
 
-    logger.info("Complete workspace credentials generated", workspace_path=str(workspace_path))
+    logger.info(
+        "Complete workspace credentials generated", workspace_path=str(workspace_path)
+    )
     print("✅ Complete workspace credentials generated:")
     print(f"   PostgreSQL User: {creds['postgres_user']}")
     print(f"   PostgreSQL Password: {creds['postgres_password']}")
@@ -127,18 +131,16 @@ def generate_complete_workspace_credentials(
 
 
 def generate_agent_credentials(
-    port: int = 35532,
-    database: str = "hive_agent",
-    env_file: Path | None = None
+    port: int = 35532, database: str = "hive_agent", env_file: Path | None = None
 ) -> dict[str, str]:
     """
     Generate agent-specific credentials with unified approach.
-    
+
     Args:
         port: Agent database port
         database: Agent database name
         env_file: Path to environment file
-        
+
     Returns:
         Agent credentials dictionary
     """
@@ -158,7 +160,7 @@ def generate_agent_credentials(
 def show_credential_status(env_file: Path | None = None) -> None:
     """
     Show comprehensive credential status.
-    
+
     Args:
         env_file: Path to environment file
     """
@@ -169,21 +171,35 @@ def show_credential_status(env_file: Path | None = None) -> None:
     print("🔐 Automagik Hive Credential Status")
     print("=" * 45)
 
-    print(f"Environment File: {'✅ EXISTS' if status['env_file_exists'] else '❌ MISSING'}")
-    print(f"PostgreSQL: {'✅ CONFIGURED' if status['postgres_configured'] else '❌ NOT CONFIGURED'}")
-    print(f"API Key: {'✅ CONFIGURED' if status['api_key_configured'] else '❌ NOT CONFIGURED'}")
+    print(
+        f"Environment File: {'✅ EXISTS' if status['env_file_exists'] else '❌ MISSING'}"
+    )
+    print(
+        f"PostgreSQL: {'✅ CONFIGURED' if status['postgres_configured'] else '❌ NOT CONFIGURED'}"
+    )
+    print(
+        f"API Key: {'✅ CONFIGURED' if status['api_key_configured'] else '❌ NOT CONFIGURED'}"
+    )
 
     if status.get("validation"):
         print("\nValidation Results:")
         validation = status["validation"]
         if "postgres_user_valid" in validation:
-            print(f"  PostgreSQL User: {'✅ VALID' if validation['postgres_user_valid'] else '❌ INVALID'}")
+            print(
+                f"  PostgreSQL User: {'✅ VALID' if validation['postgres_user_valid'] else '❌ INVALID'}"
+            )
         if "postgres_password_valid" in validation:
-            print(f"  PostgreSQL Password: {'✅ VALID' if validation['postgres_password_valid'] else '❌ INVALID'}")
+            print(
+                f"  PostgreSQL Password: {'✅ VALID' if validation['postgres_password_valid'] else '❌ INVALID'}"
+            )
         if "postgres_url_valid" in validation:
-            print(f"  PostgreSQL URL: {'✅ VALID' if validation['postgres_url_valid'] else '❌ INVALID'}")
+            print(
+                f"  PostgreSQL URL: {'✅ VALID' if validation['postgres_url_valid'] else '❌ INVALID'}"
+            )
         if "api_key_valid" in validation:
-            print(f"  API Key Format: {'✅ VALID' if validation['api_key_valid'] else '❌ INVALID'}")
+            print(
+                f"  API Key Format: {'✅ VALID' if validation['api_key_valid'] else '❌ INVALID'}"
+            )
 
     if status["postgres_configured"]:
         print("\nPostgreSQL Details:")
@@ -195,12 +211,11 @@ def show_credential_status(env_file: Path | None = None) -> None:
 
 
 def sync_mcp_credentials(
-    mcp_file: Path | None = None,
-    env_file: Path | None = None
+    mcp_file: Path | None = None, env_file: Path | None = None
 ) -> None:
     """
     Synchronize MCP configuration with current credentials.
-    
+
     Args:
         mcp_file: Path to MCP config file
         env_file: Path to environment file
@@ -226,31 +241,47 @@ if __name__ == "__main__":
     auth_parser.add_argument(
         "action",
         choices=["show", "regenerate", "status"],
-        help="Authentication action to perform"
+        help="Authentication action to perform",
     )
 
     # Credential management commands
     cred_parser = subparsers.add_parser("credentials", help="Credential management")
-    cred_subparsers = cred_parser.add_subparsers(dest="cred_action", help="Credential actions")
+    cred_subparsers = cred_parser.add_subparsers(
+        dest="cred_action", help="Credential actions"
+    )
 
     # PostgreSQL credentials
-    postgres_parser = cred_subparsers.add_parser("postgres", help="Generate PostgreSQL credentials")
+    postgres_parser = cred_subparsers.add_parser(
+        "postgres", help="Generate PostgreSQL credentials"
+    )
     postgres_parser.add_argument("--host", default="localhost", help="Database host")
     postgres_parser.add_argument("--port", type=int, default=5532, help="Database port")
     postgres_parser.add_argument("--database", default="hive", help="Database name")
     postgres_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
     # Agent credentials
-    agent_parser = cred_subparsers.add_parser("agent", help="Generate agent credentials")
-    agent_parser.add_argument("--port", type=int, default=35532, help="Agent database port")
-    agent_parser.add_argument("--database", default="hive_agent", help="Agent database name")
+    agent_parser = cred_subparsers.add_parser(
+        "agent", help="Generate agent credentials"
+    )
+    agent_parser.add_argument(
+        "--port", type=int, default=35532, help="Agent database port"
+    )
+    agent_parser.add_argument(
+        "--database", default="hive_agent", help="Agent database name"
+    )
     agent_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
     # Complete workspace credentials
-    workspace_parser = cred_subparsers.add_parser("workspace", help="Generate complete workspace credentials")
-    workspace_parser.add_argument("workspace_path", type=Path, help="Workspace directory path")
+    workspace_parser = cred_subparsers.add_parser(
+        "workspace", help="Generate complete workspace credentials"
+    )
+    workspace_parser.add_argument(
+        "workspace_path", type=Path, help="Workspace directory path"
+    )
     workspace_parser.add_argument("--host", default="localhost", help="Database host")
-    workspace_parser.add_argument("--port", type=int, default=5532, help="Database port")
+    workspace_parser.add_argument(
+        "--port", type=int, default=5532, help="Database port"
+    )
     workspace_parser.add_argument("--database", default="hive", help="Database name")
 
     # Credential status
@@ -258,7 +289,9 @@ if __name__ == "__main__":
     status_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
     # MCP sync
-    mcp_parser = cred_subparsers.add_parser("sync-mcp", help="Sync MCP configuration with credentials")
+    mcp_parser = cred_subparsers.add_parser(
+        "sync-mcp", help="Sync MCP configuration with credentials"
+    )
     mcp_parser.add_argument("--mcp-file", type=Path, help="MCP config file path")
     mcp_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
@@ -280,28 +313,23 @@ if __name__ == "__main__":
                 host=args.host,
                 port=args.port,
                 database=args.database,
-                env_file=args.env_file
+                env_file=args.env_file,
             )
         elif args.cred_action == "agent":
             generate_agent_credentials(
-                port=args.port,
-                database=args.database,
-                env_file=args.env_file
+                port=args.port, database=args.database, env_file=args.env_file
             )
         elif args.cred_action == "workspace":
             generate_complete_workspace_credentials(
                 workspace_path=args.workspace_path,
                 postgres_host=args.host,
                 postgres_port=args.port,
-                postgres_database=args.database
+                postgres_database=args.database,
             )
         elif args.cred_action == "status":
             show_credential_status(env_file=args.env_file)
         elif args.cred_action == "sync-mcp":
-            sync_mcp_credentials(
-                mcp_file=args.mcp_file,
-                env_file=args.env_file
-            )
+            sync_mcp_credentials(mcp_file=args.mcp_file, env_file=args.env_file)
         else:
             cred_parser.print_help()
 

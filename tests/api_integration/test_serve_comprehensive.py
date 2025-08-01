@@ -39,7 +39,9 @@ class TestFastAPIAppCreation:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -65,7 +67,9 @@ class TestFastAPIAppCreation:
             # Setup mock playground
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -86,7 +90,9 @@ class TestFastAPIAppCreation:
         """Test async app creation in development mode."""
         with (
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}),
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -102,8 +108,12 @@ class TestFastAPIAppCreation:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = True
-            mock_startup_results.services.auth_service.get_current_key.return_value = "test-key-123"
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                True
+            )
+            mock_startup_results.services.auth_service.get_current_key.return_value = (
+                "test-key-123"
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             # Configure async mock to return the startup results
@@ -121,7 +131,9 @@ class TestFastAPIAppCreation:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Mock server config
@@ -141,7 +153,9 @@ class TestFastAPIAppCreation:
     async def test_async_create_automagik_api_no_teams_loaded(self):
         """Test app creation when no teams are loaded."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -155,7 +169,9 @@ class TestFastAPIAppCreation:
             mock_startup_results.registries.teams = {}  # No teams
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -174,7 +190,9 @@ class TestFastAPIAppCreation:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -196,7 +214,9 @@ class TestFastAPIAppCreation:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -209,6 +229,7 @@ class TestFastAPIAppCreation:
 
             # Should raise ComponentLoadingError
             from lib.exceptions import ComponentLoadingError
+
             with pytest.raises(ComponentLoadingError):
                 await api.serve._async_create_automagik_api()
 
@@ -216,7 +237,9 @@ class TestFastAPIAppCreation:
     async def test_async_create_automagik_api_fallback_dummy_agent(self):
         """Test app creation with fallback dummy agent when all agents fail to wrap."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -232,7 +255,9 @@ class TestFastAPIAppCreation:
             mock_startup_results.registries.teams = {}  # No teams to fail at team creation
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -247,7 +272,9 @@ class TestFastAPIAppCreation:
             mock_create_team.side_effect = Exception("Team creation failed")
 
             # Agent registry fails
-            mock_agent_registry.get_agent.side_effect = Exception("Agent wrapping failed")
+            mock_agent_registry.get_agent.side_effect = Exception(
+                "Agent wrapping failed"
+            )
 
             # Workflow creation fails
             mock_get_workflow.side_effect = Exception("Workflow creation failed")
@@ -259,7 +286,9 @@ class TestFastAPIAppCreation:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -269,12 +298,16 @@ class TestFastAPIAppCreation:
             assert isinstance(app, FastAPI)
             mock_agent_class.assert_called_once()
 
-    @pytest.mark.skip(reason="Complex mock chain needs refactoring - playground.get_async_router mock not working correctly")
+    @pytest.mark.skip(
+        reason="Complex mock chain needs refactoring - playground.get_async_router mock not working correctly"
+    )
     @pytest.mark.asyncio
     async def test_async_create_automagik_api_with_auth_enabled(self):
         """Test async app creation with authentication enabled."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -291,7 +324,9 @@ class TestFastAPIAppCreation:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = True
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                True
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -312,7 +347,9 @@ class TestFastAPIAppCreation:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -357,7 +394,9 @@ class TestFastAPIAppCreation:
         ):
             # Setup mock startup display that fails
             mock_startup_display = MagicMock()
-            mock_startup_display.display_summary.side_effect = Exception("Display failed")
+            mock_startup_display.display_summary.side_effect = Exception(
+                "Display failed"
+            )
             mock_create_display.return_value = mock_startup_display
 
             # Call the function - should not raise
@@ -366,7 +405,9 @@ class TestFastAPIAppCreation:
             # Should still create app
             assert isinstance(app, FastAPI)
 
-    @pytest.mark.skip(reason="Complex ThreadPoolExecutor mock not working - implementation detail test needs refactoring")
+    @pytest.mark.skip(
+        reason="Complex ThreadPoolExecutor mock not working - implementation detail test needs refactoring"
+    )
     def test_create_automagik_api_with_event_loop(self):
         """Test create_automagik_api when event loop is running."""
 
@@ -390,7 +431,9 @@ class TestFastAPIAppCreation:
                 mock_future = MagicMock()
                 mock_future.result.return_value = mock_app
                 mock_executor_instance.submit.return_value = mock_future
-                mock_executor.return_value.__enter__.return_value = mock_executor_instance
+                mock_executor.return_value.__enter__.return_value = (
+                    mock_executor_instance
+                )
 
                 # Call the function
                 result = api.serve.create_automagik_api()
@@ -407,8 +450,12 @@ class TestFastAPIAppCreation:
         """Test create_automagik_api asyncio.run path when forced to no event loop."""
         # Find and stop the autouse mock of create_automagik_api
         import unittest.mock
+
         for patch_obj in unittest.mock._patch._active_patches:
-            if hasattr(patch_obj, "attribute") and patch_obj.attribute == "create_automagik_api":
+            if (
+                hasattr(patch_obj, "attribute")
+                and patch_obj.attribute == "create_automagik_api"
+            ):
                 if hasattr(patch_obj, "temp_original"):
                     # Temporarily restore the original function
                     patch_obj.stop()
@@ -528,8 +575,12 @@ class TestLifespanManagement:
         """Test lifespan in production mode with notifications."""
         with (
             patch("lib.mcp.MCPCatalog") as mock_mcp_catalog,
-            patch("common.startup_notifications.send_startup_notification") as mock_startup_notif,
-            patch("common.startup_notifications.send_shutdown_notification") as mock_shutdown_notif,
+            patch(
+                "common.startup_notifications.send_startup_notification"
+            ) as mock_startup_notif,
+            patch(
+                "common.startup_notifications.send_shutdown_notification"
+            ) as mock_shutdown_notif,
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}),
             patch("asyncio.sleep") as mock_sleep,
         ):
@@ -561,8 +612,12 @@ class TestLifespanManagement:
         """Test lifespan when notification sending fails."""
         with (
             patch("lib.mcp.MCPCatalog") as mock_mcp_catalog,
-            patch("common.startup_notifications.send_startup_notification") as mock_startup_notif,
-            patch("common.startup_notifications.send_shutdown_notification") as mock_shutdown_notif,
+            patch(
+                "common.startup_notifications.send_startup_notification"
+            ) as mock_startup_notif,
+            patch(
+                "common.startup_notifications.send_shutdown_notification"
+            ) as mock_shutdown_notif,
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}),
             patch("asyncio.sleep") as mock_sleep,
         ):
@@ -623,7 +678,9 @@ class TestStartupOrchestration:
     async def test_startup_orchestration_integration(self):
         """Test integration with startup orchestration system."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -646,7 +703,9 @@ class TestStartupOrchestration:
                 "workflow2": MagicMock(),
             }
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -665,7 +724,9 @@ class TestStartupOrchestration:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -680,11 +741,16 @@ class TestStartupOrchestration:
     async def test_reloader_context_detection(self):
         """Test reloader context detection and quiet mode."""
         with (
-            patch.dict(os.environ, {
-                "HIVE_ENVIRONMENT": "development",
-                "RUN_MAIN": "true"  # Indicates reloader context
-            }),
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch.dict(
+                os.environ,
+                {
+                    "HIVE_ENVIRONMENT": "development",
+                    "RUN_MAIN": "true",  # Indicates reloader context
+                },
+            ),
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -698,7 +764,9 @@ class TestStartupOrchestration:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -715,7 +783,9 @@ class TestStartupOrchestration:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -740,6 +810,7 @@ class TestStartupOrchestration:
 
             # Re-import module to trigger migration code
             import importlib
+
             importlib.reload(api.serve)
 
             # Should have attempted to run migrations
@@ -758,6 +829,7 @@ class TestStartupOrchestration:
 
             # Re-import module to trigger migration code
             import importlib
+
             try:
                 importlib.reload(api.serve)
                 # Should not raise - error should be handled gracefully
@@ -772,7 +844,9 @@ class TestMiddlewareConfiguration:
     async def test_cors_middleware_configuration(self):
         """Test CORS middleware configuration."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -787,7 +861,9 @@ class TestMiddlewareConfiguration:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -804,13 +880,18 @@ class TestMiddlewareConfiguration:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Configure API settings
             mock_api_settings.title = "Test API"
             mock_api_settings.version = "2.0.0"
-            mock_api_settings.cors_origin_list = ["http://localhost:3000", "https://app.example.com"]
+            mock_api_settings.cors_origin_list = [
+                "http://localhost:3000",
+                "https://app.example.com",
+            ]
             mock_api_settings.docs_enabled = True
 
             # Call the function
@@ -843,7 +924,9 @@ class TestMiddlewareConfiguration:
         """Test docs configuration in production mode."""
         with (
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}),
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -858,7 +941,9 @@ class TestMiddlewareConfiguration:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -875,7 +960,9 @@ class TestMiddlewareConfiguration:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Configure API settings for production (docs disabled)
@@ -900,7 +987,9 @@ class TestErrorHandlingAndFallbacks:
     async def test_startup_display_error_fallback(self):
         """Test fallback when startup display fails."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -915,7 +1004,9 @@ class TestErrorHandlingAndFallbacks:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -925,7 +1016,9 @@ class TestErrorHandlingAndFallbacks:
             mock_startup_display.teams = []
             mock_startup_display.agents = []
             mock_startup_display.workflows = []
-            mock_startup_display.display_summary.side_effect = Exception("Display failed")
+            mock_startup_display.display_summary.side_effect = Exception(
+                "Display failed"
+            )
             mock_display.return_value = mock_startup_display
 
             mock_create_team.return_value = MagicMock()
@@ -934,7 +1027,9 @@ class TestErrorHandlingAndFallbacks:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -948,7 +1043,9 @@ class TestErrorHandlingAndFallbacks:
     async def test_startup_display_complete_failure(self):
         """Test when both main and fallback display fail."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -963,7 +1060,9 @@ class TestErrorHandlingAndFallbacks:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -973,7 +1072,9 @@ class TestErrorHandlingAndFallbacks:
             mock_startup_display.teams = []
             mock_startup_display.agents = []
             mock_startup_display.workflows = []
-            mock_startup_display.display_summary.side_effect = Exception("Display failed")
+            mock_startup_display.display_summary.side_effect = Exception(
+                "Display failed"
+            )
             mock_display.return_value = mock_startup_display
 
             mock_simple_display.side_effect = Exception("Fallback display failed")
@@ -984,7 +1085,9 @@ class TestErrorHandlingAndFallbacks:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function - should not raise
@@ -997,7 +1100,9 @@ class TestErrorHandlingAndFallbacks:
     async def test_business_endpoints_registration_error(self):
         """Test error handling when business endpoints registration fails."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -1012,7 +1117,9 @@ class TestErrorHandlingAndFallbacks:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -1029,7 +1136,9 @@ class TestErrorHandlingAndFallbacks:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Make v1_router import fail
@@ -1047,13 +1156,17 @@ class TestErrorHandlingAndFallbacks:
     async def test_workflow_registry_check_error(self):
         """Test error handling in workflow registry check."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
             patch("ai.workflows.registry.get_workflow") as mock_get_workflow,
             patch("api.serve.Playground") as mock_playground,
-            patch("ai.workflows.registry.is_workflow_registered") as mock_is_workflow_registered,
+            patch(
+                "ai.workflows.registry.is_workflow_registered"
+            ) as mock_is_workflow_registered,
             patch("lib.logging.set_runtime_mode") as mock_runtime_mode,
         ):
             # Setup startup results
@@ -1062,7 +1175,9 @@ class TestErrorHandlingAndFallbacks:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -1079,7 +1194,9 @@ class TestErrorHandlingAndFallbacks:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Workflow registry check fails
@@ -1100,7 +1217,9 @@ class TestProductionFeatures:
         """Test development URLs display."""
         with (
             patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}),
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -1117,7 +1236,9 @@ class TestProductionFeatures:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -1134,7 +1255,9 @@ class TestProductionFeatures:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Setup server config
@@ -1212,10 +1335,10 @@ class TestProductionFeatures:
         with (
             patch("uvicorn.run") as mock_uvicorn_run,
             patch("lib.config.server_config.get_server_config") as mock_get_config,
-            patch.dict(os.environ, {
-                "HIVE_ENVIRONMENT": "development",
-                "DISABLE_RELOAD": "true"
-            }),
+            patch.dict(
+                os.environ,
+                {"HIVE_ENVIRONMENT": "development", "DISABLE_RELOAD": "true"},
+            ),
         ):
             # Setup server config
             mock_config = MagicMock()
@@ -1252,7 +1375,9 @@ class TestEventLoopHandling:
                 async def test_with_loop():
                     # Now we're in an event loop context
                     with (
-                        patch("api.serve._async_create_automagik_api") as mock_async_create,
+                        patch(
+                            "api.serve._async_create_automagik_api"
+                        ) as mock_async_create,
                         patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
                     ):
                         # Setup mock app
@@ -1263,7 +1388,9 @@ class TestEventLoopHandling:
                             inner_loop = asyncio.new_event_loop()
                             asyncio.set_event_loop(inner_loop)
                             try:
-                                return inner_loop.run_until_complete(mock_async_create.return_value)
+                                return inner_loop.run_until_complete(
+                                    mock_async_create.return_value
+                                )
                             finally:
                                 inner_loop.close()
 
@@ -1272,7 +1399,9 @@ class TestEventLoopHandling:
                         mock_future = MagicMock()
                         mock_future.result.return_value = mock_app
                         mock_executor_instance.submit.return_value = mock_future
-                        mock_executor.return_value.__enter__.return_value = mock_executor_instance
+                        mock_executor.return_value.__enter__.return_value = (
+                            mock_executor_instance
+                        )
 
                         mock_async_create.return_value = mock_app
 
@@ -1368,7 +1497,9 @@ class TestEventLoopHandling:
 
                 mock_executor_instance = MagicMock()
                 mock_executor_instance.submit.side_effect = mock_submit
-                mock_executor.return_value.__enter__.return_value = mock_executor_instance
+                mock_executor.return_value.__enter__.return_value = (
+                    mock_executor_instance
+                )
 
                 # This should work even with complex threading
                 try:
@@ -1390,7 +1521,9 @@ class TestIntegrationValidation:
     async def test_playground_router_integration(self):
         """Test integration with Agno Playground router."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -1404,7 +1537,9 @@ class TestIntegrationValidation:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -1427,7 +1562,9 @@ class TestIntegrationValidation:
             # Setup playground with detailed router
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -1451,7 +1588,9 @@ class TestIntegrationValidation:
     async def test_agent_metrics_integration(self):
         """Test agent integration with metrics service."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -1466,7 +1605,9 @@ class TestIntegrationValidation:
             mock_startup_results.registries.teams = {"test-team": MagicMock()}
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = mock_metrics_service
 
             mock_startup.return_value = mock_startup_results
@@ -1487,7 +1628,9 @@ class TestIntegrationValidation:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -1502,7 +1645,9 @@ class TestIntegrationValidation:
     async def test_team_creation_with_metrics(self):
         """Test team creation with metrics service integration."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -1514,10 +1659,15 @@ class TestIntegrationValidation:
             mock_metrics_service = MagicMock()
             mock_startup_results = MagicMock()
             mock_startup_results.registries.agents = {"test-agent": MagicMock()}
-            mock_startup_results.registries.teams = {"team1": MagicMock(), "team2": MagicMock()}
+            mock_startup_results.registries.teams = {
+                "team1": MagicMock(),
+                "team2": MagicMock(),
+            }
             mock_startup_results.registries.workflows = {"test-workflow": MagicMock()}
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = mock_metrics_service
 
             mock_startup.return_value = mock_startup_results
@@ -1537,7 +1687,9 @@ class TestIntegrationValidation:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function
@@ -1552,7 +1704,9 @@ class TestIntegrationValidation:
     async def test_workflow_creation_integration(self):
         """Test workflow creation and integration."""
         with (
-            patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup,
+            patch(
+                "api.serve.orchestrated_startup", new_callable=AsyncMock
+            ) as mock_startup,
             patch("api.serve.get_startup_display_with_results") as mock_display,
             patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team,
             patch("ai.agents.registry.AgentRegistry") as mock_agent_registry,
@@ -1571,7 +1725,9 @@ class TestIntegrationValidation:
                 "workflow3": MagicMock(),
             }
             mock_startup_results.services.auth_service = MagicMock()
-            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = (
+                False
+            )
             mock_startup_results.services.metrics_service = MagicMock()
 
             mock_startup.return_value = mock_startup_results
@@ -1591,7 +1747,9 @@ class TestIntegrationValidation:
 
             mock_playground_instance = MagicMock()
             mock_playground_router = MagicMock()
-            mock_playground_instance.get_async_router.return_value = mock_playground_router
+            mock_playground_instance.get_async_router.return_value = (
+                mock_playground_router
+            )
             mock_playground.return_value = mock_playground_instance
 
             # Call the function

@@ -39,7 +39,7 @@ class TestAgentCredentials:
             postgres_port=35532,
             hive_api_key="test-api-key",
             hive_api_port=38886,
-            cors_origins="http://localhost:38886"
+            cors_origins="http://localhost:38886",
         )
 
         # Should fail initially - dataclass not implemented
@@ -60,7 +60,7 @@ class TestAgentCredentials:
             postgres_port=5432,
             hive_api_key="key",
             hive_api_port=8886,
-            cors_origins="http://localhost:8886"
+            cors_origins="http://localhost:8886",
         )
 
         # Should fail initially - all parameters required
@@ -84,7 +84,7 @@ class TestEnvironmentConfig:
             target_file=Path(".env.agent"),
             port_mappings={"HIVE_API_PORT": 38886, "POSTGRES_PORT": 35532},
             database_suffix="_agent",
-            cors_port_mapping={8886: 38886, 5532: 35532}
+            cors_port_mapping={8886: 38886, 5532: 35532},
         )
 
         # Should fail initially - dataclass not implemented
@@ -300,7 +300,9 @@ class TestAgentEnvironmentValidation:
         assert any("not found" in error for error in result["errors"])
         assert result["config"] is None
 
-    def test_validate_environment_missing_required_keys(self, temp_workspace_with_agent_env):
+    def test_validate_environment_missing_required_keys(
+        self, temp_workspace_with_agent_env
+    ):
         """Test validation fails when required keys are missing."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
         env.env_agent_path.write_text("SOME_OTHER_KEY=value\n")
@@ -309,9 +311,16 @@ class TestAgentEnvironmentValidation:
 
         # Should fail initially - required keys validation not implemented
         assert result["valid"] is False
-        assert any("Missing required key: HIVE_API_PORT" in error for error in result["errors"])
-        assert any("Missing required key: HIVE_DATABASE_URL" in error for error in result["errors"])
-        assert any("Missing required key: HIVE_API_KEY" in error for error in result["errors"])
+        assert any(
+            "Missing required key: HIVE_API_PORT" in error for error in result["errors"]
+        )
+        assert any(
+            "Missing required key: HIVE_DATABASE_URL" in error
+            for error in result["errors"]
+        )
+        assert any(
+            "Missing required key: HIVE_API_KEY" in error for error in result["errors"]
+        )
 
     def test_validate_environment_invalid_port(self, temp_workspace_with_agent_env):
         """Test validation warns about unexpected port values."""
@@ -326,9 +335,14 @@ class TestAgentEnvironmentValidation:
 
         # Should fail initially - port validation not implemented
         assert result["valid"] is True  # Valid but with warnings
-        assert any("Expected HIVE_API_PORT=38886, got 8886" in warning for warning in result["warnings"])
+        assert any(
+            "Expected HIVE_API_PORT=38886, got 8886" in warning
+            for warning in result["warnings"]
+        )
 
-    def test_validate_environment_invalid_database_url(self, temp_workspace_with_agent_env):
+    def test_validate_environment_invalid_database_url(
+        self, temp_workspace_with_agent_env
+    ):
         """Test validation warns about unexpected database URL values."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
         env.env_agent_path.write_text(
@@ -341,10 +355,17 @@ class TestAgentEnvironmentValidation:
 
         # Should fail initially - database URL validation not implemented
         assert result["valid"] is True  # Valid but with warnings
-        assert any("Expected database port 35532" in warning for warning in result["warnings"])
-        assert any("Expected database name 'hive_agent'" in warning for warning in result["warnings"])
+        assert any(
+            "Expected database port 35532" in warning for warning in result["warnings"]
+        )
+        assert any(
+            "Expected database name 'hive_agent'" in warning
+            for warning in result["warnings"]
+        )
 
-    def test_validate_environment_invalid_port_format(self, temp_workspace_with_agent_env):
+    def test_validate_environment_invalid_port_format(
+        self, temp_workspace_with_agent_env
+    ):
         """Test validation fails with invalid port format."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
         env.env_agent_path.write_text(
@@ -357,9 +378,14 @@ class TestAgentEnvironmentValidation:
 
         # Should fail initially - port format validation not implemented
         assert result["valid"] is False
-        assert any("HIVE_API_PORT must be a valid integer" in error for error in result["errors"])
+        assert any(
+            "HIVE_API_PORT must be a valid integer" in error
+            for error in result["errors"]
+        )
 
-    def test_validate_environment_exception_handling(self, temp_workspace_with_agent_env):
+    def test_validate_environment_exception_handling(
+        self, temp_workspace_with_agent_env
+    ):
         """Test validation handles exceptions gracefully."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
 
@@ -371,7 +397,9 @@ class TestAgentEnvironmentValidation:
 
             # Should fail initially - exception handling not implemented
             assert result["valid"] is False
-            assert any("Failed to validate environment" in error for error in result["errors"])
+            assert any(
+                "Failed to validate environment" in error for error in result["errors"]
+            )
         finally:
             # Restore permissions for cleanup
             env.env_agent_path.chmod(0o644)
@@ -421,7 +449,9 @@ class TestAgentEnvironmentCredentials:
         # Should fail initially - missing file handling not implemented
         assert credentials is None
 
-    def test_get_agent_credentials_invalid_database_url(self, temp_workspace_with_credentials):
+    def test_get_agent_credentials_invalid_database_url(
+        self, temp_workspace_with_credentials
+    ):
         """Test credential extraction handles invalid database URL."""
         env = AgentEnvironment(temp_workspace_with_credentials)
         env.env_agent_path.write_text(
@@ -439,7 +469,9 @@ class TestAgentEnvironmentCredentials:
         assert credentials.postgres_db == "hive_agent"
         assert credentials.postgres_port == 35532
 
-    def test_get_agent_credentials_exception_handling(self, temp_workspace_with_credentials):
+    def test_get_agent_credentials_exception_handling(
+        self, temp_workspace_with_credentials
+    ):
         """Test credential extraction handles exceptions."""
         env = AgentEnvironment(temp_workspace_with_credentials)
 
@@ -478,10 +510,7 @@ class TestAgentEnvironmentUpdate:
         """Test successful environment update."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
 
-        updates = {
-            "HIVE_API_KEY": "new-api-key",
-            "HIVE_API_PORT": "39886"
-        }
+        updates = {"HIVE_API_KEY": "new-api-key", "HIVE_API_PORT": "39886"}
 
         result = env.update_environment(updates)
 
@@ -498,10 +527,7 @@ class TestAgentEnvironmentUpdate:
         """Test environment update adds new keys."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
 
-        updates = {
-            "NEW_KEY": "new_value",
-            "ANOTHER_KEY": "another_value"
-        }
+        updates = {"NEW_KEY": "new_value", "ANOTHER_KEY": "another_value"}
 
         result = env.update_environment(updates)
 
@@ -607,10 +633,7 @@ class TestAgentEnvironmentCredentialCopy:
                 "UNRELATED_KEY=unrelated-value\n"
             )
             env_agent = workspace / ".env.agent"
-            env_agent.write_text(
-                "HIVE_API_PORT=38886\n"
-                "HIVE_API_KEY=agent-key\n"
-            )
+            env_agent.write_text("HIVE_API_PORT=38886\nHIVE_API_KEY=agent-key\n")
             yield workspace
 
     def test_copy_credentials_from_main_env_success(self, temp_workspace_with_main_env):
@@ -628,7 +651,9 @@ class TestAgentEnvironmentCredentialCopy:
         assert "HIVE_DEFAULT_MODEL=claude-3-sonnet" in content
         assert "UNRELATED_KEY" not in content  # Should not copy unrelated keys
 
-    def test_copy_credentials_database_url_transformation(self, temp_workspace_with_main_env):
+    def test_copy_credentials_database_url_transformation(
+        self, temp_workspace_with_main_env
+    ):
         """Test database URL is transformed for agent environment."""
         env = AgentEnvironment(temp_workspace_with_main_env)
 
@@ -748,11 +773,7 @@ class TestAgentEnvironmentInternalMethods:
 
         env_file = temp_workspace / "test.env"
         env_file.write_text(
-            "KEY1=value1\n"
-            "KEY2=value2\n"
-            "# Comment line\n"
-            "\n"
-            "KEY3=value with spaces\n"
+            "KEY1=value1\nKEY2=value2\n# Comment line\n\nKEY3=value with spaces\n"
         )
 
         config = env._load_env_file(env_file)
@@ -791,11 +812,7 @@ class TestAgentEnvironmentInternalMethods:
         """Test agent database URL building."""
         env = AgentEnvironment(temp_workspace)
 
-        credentials = {
-            "user": "testuser",
-            "password": "testpass",
-            "host": "localhost"
-        }
+        credentials = {"user": "testuser", "password": "testpass", "host": "localhost"}
 
         result = env._build_agent_database_url(credentials)
 
@@ -822,8 +839,9 @@ class TestAgentEnvironmentInternalMethods:
         env.env_agent_path.write_text("HIVE_API_PORT=38886\n")
 
         with patch.object(env, "generate_agent_api_key", return_value="new-key"):
-            with patch.object(env, "update_environment", return_value=True) as mock_update:
-
+            with patch.object(
+                env, "update_environment", return_value=True
+            ) as mock_update:
                 result = env.ensure_agent_api_key()
 
         # Should fail initially - ensure API key not implemented
@@ -836,8 +854,9 @@ class TestAgentEnvironmentInternalMethods:
         env.env_agent_path.write_text("HIVE_API_KEY=your-hive-api-key-here\n")
 
         with patch.object(env, "generate_agent_api_key", return_value="new-key"):
-            with patch.object(env, "update_environment", return_value=True) as mock_update:
-
+            with patch.object(
+                env, "update_environment", return_value=True
+            ) as mock_update:
                 result = env.ensure_agent_api_key()
 
         # Should fail initially - placeholder replacement not implemented
@@ -917,9 +936,13 @@ class TestAgentEnvironmentConvenienceFunctions:
         with patch("cli.core.agent_environment.AgentEnvironment") as mock_env_class:
             mock_env = Mock()
             mock_credentials = AgentCredentials(
-                postgres_user="user", postgres_password="pass", postgres_db="db",
-                postgres_port=35532, hive_api_key="key", hive_api_port=38886,
-                cors_origins="origins"
+                postgres_user="user",
+                postgres_password="pass",
+                postgres_db="db",
+                postgres_port=35532,
+                hive_api_key="key",
+                hive_api_port=38886,
+                cors_origins="origins",
             )
             mock_env.get_agent_credentials.return_value = mock_credentials
             mock_env_class.return_value = mock_env
@@ -961,6 +984,7 @@ class TestAgentEnvironmentCrossPlatform:
     def test_agent_environment_windows_paths(self):
         """Test AgentEnvironment with Windows-style paths."""
         import os
+
         if os.name == "nt":  # Only run on Windows
             workspace = Path("C:\\Users\\test\\workspace")
         else:
@@ -1030,7 +1054,12 @@ class TestAgentEnvironmentEdgeCases:
 
     def test_agent_environment_special_characters_in_paths(self):
         """Test AgentEnvironment with special characters in paths."""
-        special_chars = ["space dir", "dir-with-dashes", "dir_with_underscores", "dir.with.dots"]
+        special_chars = [
+            "space dir",
+            "dir-with-dashes",
+            "dir_with_underscores",
+            "dir.with.dots",
+        ]
 
         for char_name in special_chars:
             workspace = Path(f"/tmp/{char_name}")

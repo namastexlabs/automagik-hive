@@ -112,7 +112,9 @@ class TestComponentVersionService:
 
         # Since _db_service is None initially, the method will create a new DatabaseService
         # We need to mock the import in the method
-        with patch("lib.services.component_version_service.DatabaseService") as mock_db_service:
+        with patch(
+            "lib.services.component_version_service.DatabaseService"
+        ) as mock_db_service:
             mock_db_instance = AsyncMock()
             mock_db_service.return_value = mock_db_instance
             # Mock the initialize method
@@ -320,7 +322,10 @@ class TestComponentVersionService:
         # Since delete_version method doesn't exist, we expect AttributeError
         service = ComponentVersionService()
 
-        with pytest.raises(AttributeError, match="'ComponentVersionService' object has no attribute 'delete_version'"):
+        with pytest.raises(
+            AttributeError,
+            match="'ComponentVersionService' object has no attribute 'delete_version'",
+        ):
             await service.delete_version("test-agent", 1, "deleter")
 
         # Verify the method is missing (expected behavior)

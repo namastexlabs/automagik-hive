@@ -36,9 +36,10 @@ class TestInitCommandsBasic:
     @pytest.fixture
     def mock_services(self):
         """Mock Docker and PostgreSQL services."""
-        with patch("cli.commands.init.DockerService") as mock_docker, \
-             patch("cli.commands.init.PostgreSQLService") as mock_postgres:
-
+        with (
+            patch("cli.commands.init.DockerService") as mock_docker,
+            patch("cli.commands.init.PostgreSQLService") as mock_postgres,
+        ):
             mock_docker_instance = Mock()
             mock_docker_instance.is_docker_available.return_value = True
             mock_docker_instance.generate_compose_file.return_value = True
@@ -48,14 +49,11 @@ class TestInitCommandsBasic:
             mock_postgres_instance.generate_postgres_config.return_value = {
                 "POSTGRES_DB": "hive",
                 "POSTGRES_USER": "hive",
-                "POSTGRES_PASSWORD": "generated_password"
+                "POSTGRES_PASSWORD": "generated_password",
             }
             mock_postgres.return_value = mock_postgres_instance
 
-            yield {
-                "docker": mock_docker_instance,
-                "postgres": mock_postgres_instance
-            }
+            yield {"docker": mock_docker_instance, "postgres": mock_postgres_instance}
 
     def test_init_commands_initialization(self):
         """Test InitCommands initializes correctly."""
@@ -76,9 +74,9 @@ class TestInitCommandsBasic:
         user_inputs = [
             "y",  # Use PostgreSQL
             "5432",  # PostgreSQL port
-            "",   # Skip API keys
-            "",   # Skip more API keys
-            "y"   # Confirm creation
+            "",  # Skip API keys
+            "",  # Skip more API keys
+            "y",  # Confirm creation
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -88,7 +86,9 @@ class TestInitCommandsBasic:
         # Should fail initially - init_workspace not implemented
         assert result is True
 
-    def test_init_workspace_without_name_interactive(self, temp_workspace_dir, mock_services):
+    def test_init_workspace_without_name_interactive(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test workspace initialization with interactive name input."""
         workspace_name = str(temp_workspace_dir / "interactive-workspace")
 
@@ -96,8 +96,8 @@ class TestInitCommandsBasic:
             workspace_name,  # Workspace name input
             "y",  # Use PostgreSQL
             "5432",  # PostgreSQL port
-            "",   # Skip API keys
-            ""    # Skip more API keys
+            "",  # Skip API keys
+            "",  # Skip more API keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -116,7 +116,7 @@ class TestInitCommandsBasic:
             "   ",  # Whitespace only (should retry)
             workspace_name,  # Valid name
             "n",  # No PostgreSQL
-            ""   # Skip API keys
+            "",  # Skip API keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -126,7 +126,9 @@ class TestInitCommandsBasic:
         # Should fail initially - empty name validation not implemented
         assert result is True
 
-    def test_init_workspace_existing_directory_cancel(self, temp_workspace_dir, mock_services):
+    def test_init_workspace_existing_directory_cancel(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test workspace initialization with existing directory cancellation."""
         workspace_path = temp_workspace_dir / "existing-workspace"
         workspace_path.mkdir()
@@ -134,7 +136,7 @@ class TestInitCommandsBasic:
 
         user_inputs = [
             str(workspace_path),  # Existing directory
-            "n"  # Don't continue with existing directory
+            "n",  # Don't continue with existing directory
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -144,7 +146,9 @@ class TestInitCommandsBasic:
         # Should fail initially - existing directory handling not implemented
         assert result is False
 
-    def test_init_workspace_existing_directory_continue(self, temp_workspace_dir, mock_services):
+    def test_init_workspace_existing_directory_continue(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test workspace initialization with existing directory continuation."""
         workspace_path = temp_workspace_dir / "existing-continue-workspace"
         workspace_path.mkdir()
@@ -154,7 +158,7 @@ class TestInitCommandsBasic:
             str(workspace_path),  # Existing directory
             "y",  # Continue with existing directory
             "n",  # No PostgreSQL
-            ""   # Skip API keys
+            "",  # Skip API keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -164,7 +168,9 @@ class TestInitCommandsBasic:
         # Should fail initially - existing directory continuation not implemented
         assert result is True
 
-    def test_init_workspace_directory_creation_failure(self, temp_workspace_dir, mock_services):
+    def test_init_workspace_directory_creation_failure(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test workspace initialization with directory creation failure."""
         # Try to create workspace in read-only directory
         readonly_path = temp_workspace_dir / "readonly"
@@ -197,19 +203,17 @@ class TestInitCommandsPostgreSQLSetup:
     @pytest.fixture
     def mock_services(self):
         """Mock services for PostgreSQL setup testing."""
-        with patch("cli.commands.init.DockerService") as mock_docker, \
-             patch("cli.commands.init.PostgreSQLService") as mock_postgres:
-
+        with (
+            patch("cli.commands.init.DockerService") as mock_docker,
+            patch("cli.commands.init.PostgreSQLService") as mock_postgres,
+        ):
             mock_docker_instance = Mock()
             mock_postgres_instance = Mock()
 
             mock_docker.return_value = mock_docker_instance
             mock_postgres.return_value = mock_postgres_instance
 
-            yield {
-                "docker": mock_docker_instance,
-                "postgres": mock_postgres_instance
-            }
+            yield {"docker": mock_docker_instance, "postgres": mock_postgres_instance}
 
     def test_setup_postgres_interactively_yes(self, temp_workspace_dir, mock_services):
         """Test interactive PostgreSQL setup with yes response."""
@@ -217,9 +221,9 @@ class TestInitCommandsPostgreSQLSetup:
 
         user_inputs = [
             str(workspace_path),
-            "y",    # Use PostgreSQL
-            "5433", # Custom port
-            "",     # Skip API keys
+            "y",  # Use PostgreSQL
+            "5433",  # Custom port
+            "",  # Skip API keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -236,7 +240,7 @@ class TestInitCommandsPostgreSQLSetup:
         user_inputs = [
             str(workspace_path),
             "n",  # No PostgreSQL
-            "",   # Skip API keys
+            "",  # Skip API keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -246,17 +250,19 @@ class TestInitCommandsPostgreSQLSetup:
         # Should fail initially - PostgreSQL skip handling not implemented
         assert result is True
 
-    def test_setup_postgres_custom_port_validation(self, temp_workspace_dir, mock_services):
+    def test_setup_postgres_custom_port_validation(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test PostgreSQL setup with port validation."""
         workspace_path = temp_workspace_dir / "postgres-port-workspace"
 
         user_inputs = [
             str(workspace_path),
-            "y",      # Use PostgreSQL
-            "invalid", # Invalid port (should retry)
-            "99999",   # Port out of range (should retry)
-            "5434",    # Valid port
-            "",        # Skip API keys
+            "y",  # Use PostgreSQL
+            "invalid",  # Invalid port (should retry)
+            "99999",  # Port out of range (should retry)
+            "5434",  # Valid port
+            "",  # Skip API keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -273,8 +279,8 @@ class TestInitCommandsPostgreSQLSetup:
         user_inputs = [
             str(workspace_path),
             "y",  # Use PostgreSQL
-            "",   # Default port (5432)
-            "",   # Skip API keys
+            "",  # Default port (5432)
+            "",  # Skip API keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -291,13 +297,11 @@ class TestInitCommandsCredentialGeneration:
     @pytest.fixture
     def mock_services(self):
         """Mock services for credential testing."""
-        with patch("cli.commands.init.DockerService") as mock_docker, \
-             patch("cli.commands.init.PostgreSQLService") as mock_postgres:
-
-            yield {
-                "docker": Mock(),
-                "postgres": Mock()
-            }
+        with (
+            patch("cli.commands.init.DockerService") as mock_docker,
+            patch("cli.commands.init.PostgreSQLService") as mock_postgres,
+        ):
+            yield {"docker": Mock(), "postgres": Mock()}
 
     def test_generate_credentials_postgres_config(self, mock_services):
         """Test credential generation with PostgreSQL configuration."""
@@ -305,7 +309,7 @@ class TestInitCommandsCredentialGeneration:
             "enabled": True,
             "port": 5432,
             "database": "hive",
-            "user": "hive"
+            "user": "hive",
         }
 
         commands = InitCommands()
@@ -398,8 +402,10 @@ class TestInitCommandsAPIKeyCollection:
     @pytest.fixture
     def mock_services(self):
         """Mock services for API key testing."""
-        with patch("cli.commands.init.DockerService"), \
-             patch("cli.commands.init.PostgreSQLService"):
+        with (
+            patch("cli.commands.init.DockerService"),
+            patch("cli.commands.init.PostgreSQLService"),
+        ):
             yield
 
     def test_collect_api_keys_interactive_skip_all(self, mock_services):
@@ -408,7 +414,7 @@ class TestInitCommandsAPIKeyCollection:
             "",  # Skip OpenAI
             "",  # Skip Anthropic
             "",  # Skip Google
-            ""   # Skip custom keys
+            "",  # Skip custom keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -424,7 +430,7 @@ class TestInitCommandsAPIKeyCollection:
             "sk-test-openai-key-12345",  # OpenAI key
             "",  # Skip Anthropic
             "",  # Skip Google
-            ""   # Skip custom
+            "",  # Skip custom
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -441,7 +447,7 @@ class TestInitCommandsAPIKeyCollection:
             "",  # Skip OpenAI
             "sk-ant-api-test-key-67890",  # Anthropic key
             "",  # Skip Google
-            ""   # Skip custom
+            "",  # Skip custom
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -458,7 +464,7 @@ class TestInitCommandsAPIKeyCollection:
             "",  # Skip OpenAI
             "",  # Skip Anthropic
             "AIza-google-test-key-abcdef",  # Google key
-            ""   # Skip custom
+            "",  # Skip custom
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -476,8 +482,8 @@ class TestInitCommandsAPIKeyCollection:
             "",  # Skip Anthropic
             "",  # Skip Google
             "CUSTOM_API_KEY=custom-value-123",  # Custom key
-            "ANOTHER_KEY=another-value-456",    # Another custom key
-            ""   # Finish custom keys
+            "ANOTHER_KEY=another-value-456",  # Another custom key
+            "",  # Finish custom keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -494,12 +500,12 @@ class TestInitCommandsAPIKeyCollection:
         """Test API key validation with invalid formats."""
         user_inputs = [
             "invalid-openai-key",  # Invalid OpenAI format (should retry)
-            "sk-test-valid-key",   # Valid OpenAI key
+            "sk-test-valid-key",  # Valid OpenAI key
             "",  # Skip Anthropic
             "",  # Skip Google
-            "INVALID_FORMAT",      # Invalid custom format (should retry)
-            "VALID_KEY=value",     # Valid custom format
-            ""   # Finish
+            "INVALID_FORMAT",  # Invalid custom format (should retry)
+            "VALID_KEY=value",  # Valid custom format
+            "",  # Finish
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -520,7 +526,7 @@ class TestInitCommandsAPIKeyCollection:
             "AIza-google-key-789",
             "HUGGINGFACE_KEY=hf_custom_key",
             "REPLICATE_KEY=r_custom_key",
-            ""  # Finish custom keys
+            "",  # Finish custom keys
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
@@ -533,7 +539,7 @@ class TestInitCommandsAPIKeyCollection:
             "ANTHROPIC_API_KEY",
             "GOOGLE_API_KEY",
             "HUGGINGFACE_KEY",
-            "REPLICATE_KEY"
+            "REPLICATE_KEY",
         ]
 
         for key in expected_keys:
@@ -552,21 +558,21 @@ class TestInitCommandsFileCreation:
     @pytest.fixture
     def mock_services(self):
         """Mock services for file creation testing."""
-        with patch("cli.commands.init.DockerService") as mock_docker, \
-             patch("cli.commands.init.PostgreSQLService") as mock_postgres:
-
+        with (
+            patch("cli.commands.init.DockerService") as mock_docker,
+            patch("cli.commands.init.PostgreSQLService") as mock_postgres,
+        ):
             mock_docker_instance = Mock()
             mock_postgres_instance = Mock()
 
             mock_docker.return_value = mock_docker_instance
             mock_postgres.return_value = mock_postgres_instance
 
-            yield {
-                "docker": mock_docker_instance,
-                "postgres": mock_postgres_instance
-            }
+            yield {"docker": mock_docker_instance, "postgres": mock_postgres_instance}
 
-    def test_create_workspace_files_with_postgres(self, temp_workspace_dir, mock_services):
+    def test_create_workspace_files_with_postgres(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test workspace file creation with PostgreSQL."""
         workspace_path = temp_workspace_dir / "file-creation-postgres"
         workspace_path.mkdir()
@@ -574,23 +580,25 @@ class TestInitCommandsFileCreation:
         credentials = {
             "POSTGRES_PASSWORD": "test_password",
             "HIVE_API_KEY": "hive_test_key",
-            "JWT_SECRET": "test_jwt_secret"
+            "JWT_SECRET": "test_jwt_secret",
         }
 
         api_keys = {
             "OPENAI_API_KEY": "sk-test-openai",
-            "ANTHROPIC_API_KEY": "sk-ant-test"
+            "ANTHROPIC_API_KEY": "sk-ant-test",
         }
 
         postgres_config = {
             "enabled": True,
             "port": 5432,
             "database": "hive",
-            "user": "hive"
+            "user": "hive",
         }
 
         commands = InitCommands()
-        result = commands._create_workspace_files(workspace_path, credentials, api_keys, postgres_config)
+        result = commands._create_workspace_files(
+            workspace_path, credentials, api_keys, postgres_config
+        )
 
         # Should fail initially - file creation not implemented
         assert result is True
@@ -600,22 +608,23 @@ class TestInitCommandsFileCreation:
         assert (workspace_path / ".env").exists()
         assert (workspace_path / ".env.example").exists()
 
-    def test_create_workspace_files_without_postgres(self, temp_workspace_dir, mock_services):
+    def test_create_workspace_files_without_postgres(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test workspace file creation without PostgreSQL."""
         workspace_path = temp_workspace_dir / "file-creation-no-postgres"
         workspace_path.mkdir()
 
-        credentials = {
-            "HIVE_API_KEY": "hive_test_key",
-            "JWT_SECRET": "test_jwt_secret"
-        }
+        credentials = {"HIVE_API_KEY": "hive_test_key", "JWT_SECRET": "test_jwt_secret"}
 
         api_keys = {"OPENAI_API_KEY": "sk-test-openai"}
 
         postgres_config = {"enabled": False}
 
         commands = InitCommands()
-        result = commands._create_workspace_files(workspace_path, credentials, api_keys, postgres_config)
+        result = commands._create_workspace_files(
+            workspace_path, credentials, api_keys, postgres_config
+        )
 
         # Should fail initially - no postgres file creation not implemented
         assert result is True
@@ -624,7 +633,9 @@ class TestInitCommandsFileCreation:
         assert (workspace_path / "docker-compose.yml").exists()
         assert (workspace_path / ".env").exists()
 
-    def test_create_workspace_files_env_content(self, temp_workspace_dir, mock_services):
+    def test_create_workspace_files_env_content(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test .env file content creation."""
         workspace_path = temp_workspace_dir / "env-content-test"
         workspace_path.mkdir()
@@ -632,24 +643,26 @@ class TestInitCommandsFileCreation:
         credentials = {
             "POSTGRES_PASSWORD": "secure_password_123",
             "HIVE_API_KEY": "hive_secure_key_456",
-            "JWT_SECRET": "secure_jwt_secret_789"
+            "JWT_SECRET": "secure_jwt_secret_789",
         }
 
         api_keys = {
             "OPENAI_API_KEY": "sk-openai-key",
             "ANTHROPIC_API_KEY": "sk-ant-key",
-            "CUSTOM_KEY": "custom_value"
+            "CUSTOM_KEY": "custom_value",
         }
 
         postgres_config = {
             "enabled": True,
             "port": 5433,
             "database": "custom_db",
-            "user": "custom_user"
+            "user": "custom_user",
         }
 
         commands = InitCommands()
-        result = commands._create_workspace_files(workspace_path, credentials, api_keys, postgres_config)
+        result = commands._create_workspace_files(
+            workspace_path, credentials, api_keys, postgres_config
+        )
 
         assert result is True
 
@@ -667,7 +680,9 @@ class TestInitCommandsFileCreation:
         assert "POSTGRES_DB=custom_db" in env_content
         assert "POSTGRES_USER=custom_user" in env_content
 
-    def test_create_workspace_files_docker_compose_content(self, temp_workspace_dir, mock_services):
+    def test_create_workspace_files_docker_compose_content(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test docker-compose.yml file content creation."""
         workspace_path = temp_workspace_dir / "compose-content-test"
         workspace_path.mkdir()
@@ -678,11 +693,13 @@ class TestInitCommandsFileCreation:
             "enabled": True,
             "port": 5434,
             "database": "compose_test_db",
-            "user": "compose_user"
+            "user": "compose_user",
         }
 
         commands = InitCommands()
-        result = commands._create_workspace_files(workspace_path, credentials, api_keys, postgres_config)
+        result = commands._create_workspace_files(
+            workspace_path, credentials, api_keys, postgres_config
+        )
 
         assert result is True
 
@@ -706,7 +723,9 @@ class TestInitCommandsFileCreation:
         except yaml.YAMLError:
             pytest.fail("docker-compose.yml should be valid YAML")
 
-    def test_create_workspace_files_env_example_content(self, temp_workspace_dir, mock_services):
+    def test_create_workspace_files_env_example_content(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test .env.example file content creation."""
         workspace_path = temp_workspace_dir / "env-example-test"
         workspace_path.mkdir()
@@ -716,7 +735,9 @@ class TestInitCommandsFileCreation:
         postgres_config = {"enabled": True}
 
         commands = InitCommands()
-        result = commands._create_workspace_files(workspace_path, credentials, api_keys, postgres_config)
+        result = commands._create_workspace_files(
+            workspace_path, credentials, api_keys, postgres_config
+        )
 
         assert result is True
 
@@ -724,14 +745,22 @@ class TestInitCommandsFileCreation:
         env_example_content = (workspace_path / ".env.example").read_text()
 
         # Should fail initially - env example content not implemented
-        assert "HIVE_API_KEY=your_api_key_here" in env_example_content or "HIVE_API_KEY=" in env_example_content
-        assert "OPENAI_API_KEY=your_openai_key_here" in env_example_content or "OPENAI_API_KEY=" in env_example_content
+        assert (
+            "HIVE_API_KEY=your_api_key_here" in env_example_content
+            or "HIVE_API_KEY=" in env_example_content
+        )
+        assert (
+            "OPENAI_API_KEY=your_openai_key_here" in env_example_content
+            or "OPENAI_API_KEY=" in env_example_content
+        )
 
         # Should not contain actual secrets
         assert "actual_key" not in env_example_content
         assert "actual_openai_key" not in env_example_content
 
-    def test_create_workspace_files_permission_error(self, temp_workspace_dir, mock_services):
+    def test_create_workspace_files_permission_error(
+        self, temp_workspace_dir, mock_services
+    ):
         """Test workspace file creation with permission errors."""
         workspace_path = temp_workspace_dir / "permission-error-test"
         workspace_path.mkdir()
@@ -745,7 +774,9 @@ class TestInitCommandsFileCreation:
 
         try:
             commands = InitCommands()
-            result = commands._create_workspace_files(workspace_path, credentials, api_keys, postgres_config)
+            result = commands._create_workspace_files(
+                workspace_path, credentials, api_keys, postgres_config
+            )
 
             # Should fail initially - permission error handling not implemented
             assert result is False
@@ -766,7 +797,7 @@ class TestInitCommandsFileCreation:
         expected_dirs = [
             workspace_path / "data",
             workspace_path / "logs",
-            workspace_path / "backups"
+            workspace_path / "backups",
         ]
 
         for expected_dir in expected_dirs:
@@ -844,8 +875,10 @@ class TestInitCommandsErrorHandling:
     @pytest.fixture
     def mock_services(self):
         """Mock services for error testing."""
-        with patch("cli.commands.init.DockerService"), \
-             patch("cli.commands.init.PostgreSQLService"):
+        with (
+            patch("cli.commands.init.DockerService"),
+            patch("cli.commands.init.PostgreSQLService"),
+        ):
             yield
 
     def test_init_workspace_file_creation_failure(self, mock_services):
@@ -859,7 +892,11 @@ class TestInitCommandsErrorHandling:
 
     def test_init_workspace_exception_handling(self, mock_services):
         """Test initialization with unexpected exceptions."""
-        with patch.object(InitCommands, "_get_workspace_path", side_effect=Exception("Unexpected error")):
+        with patch.object(
+            InitCommands,
+            "_get_workspace_path",
+            side_effect=Exception("Unexpected error"),
+        ):
             commands = InitCommands()
             result = commands.init_workspace("test_workspace")
 
@@ -877,7 +914,9 @@ class TestInitCommandsErrorHandling:
 
     def test_credential_generation_entropy_failure(self, mock_services):
         """Test credential generation with entropy failure."""
-        with patch("secrets.token_urlsafe", side_effect=OSError("Entropy source unavailable")):
+        with patch(
+            "secrets.token_urlsafe", side_effect=OSError("Entropy source unavailable")
+        ):
             commands = InitCommands()
 
             # Should fail initially - entropy failure handling not implemented
@@ -909,8 +948,10 @@ class TestInitCommandsCrossPlatform:
     @pytest.fixture
     def mock_services(self):
         """Mock services for cross-platform testing."""
-        with patch("cli.commands.init.DockerService"), \
-             patch("cli.commands.init.PostgreSQLService"):
+        with (
+            patch("cli.commands.init.DockerService"),
+            patch("cli.commands.init.PostgreSQLService"),
+        ):
             yield
 
     @pytest.mark.skipif(os.name == "nt", reason="Unix-specific path testing")
@@ -947,25 +988,14 @@ class TestInitCommandsCrossPlatform:
 
     def test_path_normalization_cross_platform(self, mock_services):
         """Test path normalization across platforms."""
-        test_paths = [
-            "workspace",
-            "./workspace",
-            "../workspace",
-            "path/to/workspace"
-        ]
+        test_paths = ["workspace", "./workspace", "../workspace", "path/to/workspace"]
 
         if os.name == "nt":
-            test_paths.extend([
-                "C:\\workspace",
-                "workspace\\subdir",
-                "D:\\path\\to\\workspace"
-            ])
+            test_paths.extend(
+                ["C:\\workspace", "workspace\\subdir", "D:\\path\\to\\workspace"]
+            )
         else:
-            test_paths.extend([
-                "/home/user/workspace",
-                "~/workspace",
-                "/tmp/workspace"
-            ])
+            test_paths.extend(["/home/user/workspace", "~/workspace", "/tmp/workspace"])
 
         commands = InitCommands()
 
@@ -987,7 +1017,9 @@ class TestInitCommandsCrossPlatform:
             postgres_config = {"enabled": False}
 
             commands = InitCommands()
-            result = commands._create_workspace_files(workspace_path, credentials, api_keys, postgres_config)
+            result = commands._create_workspace_files(
+                workspace_path, credentials, api_keys, postgres_config
+            )
 
             if result:
                 env_file = workspace_path / ".env"
@@ -996,4 +1028,6 @@ class TestInitCommandsCrossPlatform:
                     # On Unix, .env should have restricted permissions
                     if os.name != "nt":
                         permissions = oct(env_file.stat().st_mode)[-3:]
-                        assert permissions in ["600", "644"], f"Unexpected permissions: {permissions}"
+                        assert permissions in ["600", "644"], (
+                            f"Unexpected permissions: {permissions}"
+                        )

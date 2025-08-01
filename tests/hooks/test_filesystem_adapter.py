@@ -29,6 +29,7 @@ class TestFileSystemAdapter:
     def teardown_method(self):
         """Clean up test fixtures after each test method."""
         import shutil
+
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_check_bypass_flag_not_exists(self):
@@ -71,7 +72,7 @@ class TestFileSystemAdapter:
             "duration_hours": 1,
             "created_by": "test_user",
             "created_at": past_time.isoformat(),
-            "expires_at": (past_time + timedelta(hours=1)).isoformat()
+            "expires_at": (past_time + timedelta(hours=1)).isoformat(),
         }
 
         # Write expired bypass file
@@ -159,7 +160,7 @@ class TestFileSystemAdapter:
             "files_checked": 5,
             "blocked_count": 1,
             "bypass_used": False,
-            "validation_result": "blocked"
+            "validation_result": "blocked",
         }
 
         self.adapter.record_validation_metrics(metrics)
@@ -182,11 +183,7 @@ class TestFileSystemAdapter:
             json.dump(initial_metrics, f)
 
         # Add new metrics
-        new_metrics = {
-            "files_checked": 3,
-            "blocked_count": 0,
-            "bypass_used": True
-        }
+        new_metrics = {"files_checked": 3, "blocked_count": 0, "bypass_used": True}
 
         self.adapter.record_validation_metrics(new_metrics)
 
@@ -200,7 +197,9 @@ class TestFileSystemAdapter:
     def test_record_validation_metrics_limit(self):
         """Test metrics file size limit (keeps last 1000 entries)."""
         # Create a large number of metrics entries
-        large_metrics = [{"entry": i, "timestamp": "2023-01-01T00:00:00"} for i in range(1005)]
+        large_metrics = [
+            {"entry": i, "timestamp": "2023-01-01T00:00:00"} for i in range(1005)
+        ]
         with open(self.adapter.metrics_file, "w") as f:
             json.dump(large_metrics, f)
 
@@ -230,12 +229,14 @@ class TestFileSystemAdapter:
         # Add metrics from different time periods
         for i in range(10):
             entry_time = base_time + timedelta(hours=i)
-            test_data.append({
-                "timestamp": entry_time.isoformat(),
-                "files_checked": i + 1,
-                "blocked_count": 1 if i % 3 == 0 else 0,
-                "bypass_used": i % 5 == 0
-            })
+            test_data.append(
+                {
+                    "timestamp": entry_time.isoformat(),
+                    "files_checked": i + 1,
+                    "blocked_count": 1 if i % 3 == 0 else 0,
+                    "bypass_used": i % 5 == 0,
+                }
+            )
 
         with open(self.adapter.metrics_file, "w") as f:
             json.dump(test_data, f)
@@ -259,14 +260,14 @@ class TestFileSystemAdapter:
                 "timestamp": old_time.isoformat(),
                 "files_checked": 1,
                 "blocked_count": 0,
-                "bypass_used": False
+                "bypass_used": False,
             },
             {
                 "timestamp": recent_time.isoformat(),
                 "files_checked": 2,
                 "blocked_count": 1,
-                "bypass_used": False
-            }
+                "bypass_used": False,
+            },
         ]
 
         with open(self.adapter.metrics_file, "w") as f:
@@ -292,10 +293,7 @@ class TestFileSystemAdapter:
     @patch("subprocess.run")
     def test_get_git_user_success(self, mock_run):
         """Test _get_git_user returns correct username."""
-        mock_run.return_value = MagicMock(
-            stdout="John Doe\n",
-            returncode=0
-        )
+        mock_run.return_value = MagicMock(stdout="John Doe\n", returncode=0)
 
         user = self.adapter._get_git_user()
 
@@ -305,7 +303,7 @@ class TestFileSystemAdapter:
             cwd=self.adapter.project_root,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
 
     @patch("subprocess.run")
@@ -320,9 +318,7 @@ class TestFileSystemAdapter:
     def test_is_bypass_expired_true(self):
         """Test _is_bypass_expired correctly identifies expired bypass."""
         past_time = datetime.now() - timedelta(hours=1)
-        bypass_info = {
-            "expires_at": past_time.isoformat()
-        }
+        bypass_info = {"expires_at": past_time.isoformat()}
 
         result = self.adapter._is_bypass_expired(bypass_info)
         assert result is True
@@ -330,27 +326,21 @@ class TestFileSystemAdapter:
     def test_is_bypass_expired_false(self):
         """Test _is_bypass_expired correctly identifies valid bypass."""
         future_time = datetime.now() + timedelta(hours=1)
-        bypass_info = {
-            "expires_at": future_time.isoformat()
-        }
+        bypass_info = {"expires_at": future_time.isoformat()}
 
         result = self.adapter._is_bypass_expired(bypass_info)
         assert result is False
 
     def test_is_bypass_expired_malformed(self):
         """Test _is_bypass_expired handles malformed expiration data."""
-        bypass_info = {
-            "expires_at": "invalid-date-format"
-        }
+        bypass_info = {"expires_at": "invalid-date-format"}
 
         result = self.adapter._is_bypass_expired(bypass_info)
         assert result is True  # Treat malformed as expired
 
     def test_is_bypass_expired_missing_key(self):
         """Test _is_bypass_expired handles missing expires_at key."""
-        bypass_info = {
-            "reason": "test"
-        }
+        bypass_info = {"reason": "test"}
 
         result = self.adapter._is_bypass_expired(bypass_info)
         assert result is True  # Treat missing key as expired

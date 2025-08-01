@@ -19,5 +19,6 @@ class ShellToolkit:
         """Return the underlying Agno ShellTools instance."""
         return self._shell_tools
 
+
 # Export the toolkit for auto-discovery
 __all__ = ["ShellToolkit"]

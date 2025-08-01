@@ -1,0 +1,274 @@
+# Automagik Hive Unified Docker Compose Configuration
+# Profile-based service groups for modular deployment
+#
+# Usage:
+#   docker-compose --profile agent up      # Agent stack only
+#   docker-compose --profile genie up      # Genie stack only  
+#   docker-compose --profile all up        # Both stacks
+#
+# Services:
+#   Agent Stack: hive-agent-postgres (35532), hive-agent-api (38886)
+#   Genie Stack: hive-genie-postgres (48532), hive-genie-api (48886)
+
+networks:
+  hive-agent-network:
+    driver: bridge
+    name: hive-agent-network
+  hive-genie-network:
+    driver: bridge
+    name: hive-genie-network
+
+volumes:
+  hive-agent-postgres-data:
+    name: hive-agent-postgres-data
+  hive-genie-postgres-data:
+    name: hive-genie-postgres-data
+
+services:
+  # =============================================================================
+  # AGENT STACK - Development Agent Services
+  # Profiles: ["agent", "all"]
+  # Ports: 35532 (postgres), 38886 (api)
+  # =============================================================================
+  
+  hive-agent-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: hive-agent-postgres
+    profiles: ["agent", "all"]
+    environment:
+      POSTGRES_DB: hive_agent
+      POSTGRES_USER: hive_agent
+      POSTGRES_PASSWORD: hive_agent_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+      # Performance tuning
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - hive-agent-postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-agent-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "35532:5432"
+    networks:
+      - hive-agent-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive_agent -d hive_agent -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  hive-agent-api:
+    image: automagik-hive:latest
+    container_name: hive-agent-api
+    profiles: ["agent", "all"]
+    depends_on:
+      hive-agent-postgres:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://hive_agent:hive_agent_password@hive-agent-postgres:5432/hive_agent
+      POSTGRES_HOST: hive-agent-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: hive_agent
+      POSTGRES_USER: hive_agent
+      POSTGRES_PASSWORD: hive_agent_password
+      
+      # API configuration
+      HOST: 0.0.0.0
+      PORT: 8000
+      ENVIRONMENT: development
+      LOG_LEVEL: info
+      
+      # Agent-specific configuration
+      HIVE_MODE: agent
+      HIVE_API_KEY: ${HIVE_AGENT_API_KEY:-agent-dev-key-12345}
+      
+      # Service discovery
+      SERVICE_NAME: hive-agent-api
+      SERVICE_PORT: 8000
+      
+      # Resource limits
+      MAX_WORKERS: 4
+      WORKER_TIMEOUT: 30
+      
+    volumes:
+      - ./ai:/app/ai:ro
+      - ./lib:/app/lib:ro
+      - ./api:/app/api:ro
+      - ./.env.agent:/app/.env:ro
+    ports:
+      - "38886:8000"
+    networks:
+      - hive-agent-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "25m"
+        max-file: "5"
+
+  # =============================================================================
+  # GENIE STACK - Strategic Orchestration Services  
+  # Profiles: ["genie", "all"]
+  # Ports: 48532 (postgres), 48886 (api)
+  # =============================================================================
+  
+  hive-genie-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: hive-genie-postgres
+    profiles: ["genie", "all"]
+    environment:
+      POSTGRES_DB: hive_genie
+      POSTGRES_USER: hive_genie
+      POSTGRES_PASSWORD: hive_genie_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+      # Performance tuning
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - hive-genie-postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-genie-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "48532:5432"
+    networks:
+      - hive-genie-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive_genie -d hive_genie -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  hive-genie-api:
+    image: automagik-hive:latest
+    container_name: hive-genie-api
+    profiles: ["genie", "all"]
+    depends_on:
+      hive-genie-postgres:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://hive_genie:hive_genie_password@hive-genie-postgres:5432/hive_genie
+      POSTGRES_HOST: hive-genie-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: hive_genie
+      POSTGRES_USER: hive_genie
+      POSTGRES_PASSWORD: hive_genie_password
+      
+      # API configuration
+      HOST: 0.0.0.0
+      PORT: 8000
+      ENVIRONMENT: development
+      LOG_LEVEL: info
+      
+      # Genie-specific configuration
+      HIVE_MODE: genie
+      HIVE_API_KEY: ${HIVE_GENIE_API_KEY:-genie-orchestration-key-67890}
+      
+      # Service discovery
+      SERVICE_NAME: hive-genie-api
+      SERVICE_PORT: 8000
+      
+      # Resource limits (higher for orchestration)
+      MAX_WORKERS: 8
+      WORKER_TIMEOUT: 60
+      
+    volumes:
+      - ./ai:/app/ai:ro
+      - ./lib:/app/lib:ro
+      - ./api:/app/api:ro
+      - ./.env.genie:/app/.env:ro
+    ports:
+      - "48886:8000"
+    networks:
+      - hive-genie-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "7"
+
+# =============================================================================
+# PROFILE USAGE EXAMPLES
+# =============================================================================
+#
+# Agent Development (Development Agent Services):
+#   docker-compose -f docker-compose.unified.yml --profile agent up -d
+#   - Starts: hive-agent-postgres, hive-agent-api
+#   - Ports: 35532 (postgres), 38886 (api)
+#   - Use for: Code implementation, testing, debugging
+#
+# Genie Orchestration (Strategic Orchestration Services):
+#   docker-compose -f docker-compose.unified.yml --profile genie up -d
+#   - Starts: hive-genie-postgres, hive-genie-api
+#   - Ports: 48532 (postgres), 48886 (api)
+#   - Use for: Multi-agent coordination, complex workflows
+#
+# Full Stack (All Services):
+#   docker-compose -f docker-compose.unified.yml --profile all up -d
+#   - Starts: All services from both stacks
+#   - Use for: Complete development environment
+#
+# Service Management:
+#   docker-compose -f docker-compose.unified.yml --profile agent down
+#   docker-compose -f docker-compose.unified.yml --profile genie logs -f
+#   docker-compose -f docker-compose.unified.yml --profile all ps
+#
+# Health Checks:
+#   docker-compose -f docker-compose.unified.yml --profile agent exec hive-agent-postgres pg_isready
+#   docker-compose -f docker-compose.unified.yml --profile genie exec hive-genie-api curl localhost:8000/health

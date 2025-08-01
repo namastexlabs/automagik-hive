@@ -30,10 +30,10 @@ class ToolRegistry:
     def load_tools(tool_configs: list[dict[str, Any]]) -> list[Callable]:
         """
         Load tools from YAML configuration.
-        
+
         Args:
             tool_configs: List of tool configuration dictionaries
-            
+
         Returns:
             List of callable tool functions
         """
@@ -70,7 +70,9 @@ class ToolRegistry:
                             tools.append(mcp_tools_instance)
                             logger.debug(f"🌐 Added MCPTools instance for {tool_name}")
                         else:
-                            logger.warning(f"Failed to get MCPTools instance for {tool_name}")
+                            logger.warning(
+                                f"Failed to get MCPTools instance for {tool_name}"
+                            )
                     else:
                         logger.warning(f"Failed to resolve MCP tool: {tool_name}")
                 elif tool_name.startswith("shared__"):
@@ -95,7 +97,7 @@ class ToolRegistry:
     def discover_shared_tools() -> dict[str, Any]:
         """
         Discover all shared tools in lib/tools/shared/.
-        
+
         Returns:
             Dictionary mapping tool names to tool classes/functions
         """
@@ -120,8 +122,9 @@ class ToolRegistry:
 
                 # Look for classes and functions with @tool decorator or Tool suffix
                 for name, obj in inspect.getmembers(module):
-                    if (inspect.isclass(obj) and name.endswith("Toolkit")) or \
-                       (inspect.isfunction(obj) and hasattr(obj, "__annotations__")):
+                    if (inspect.isclass(obj) and name.endswith("Toolkit")) or (
+                        inspect.isfunction(obj) and hasattr(obj, "__annotations__")
+                    ):
                         shared_tools[f"{module_name}__{name}"] = obj
 
             except Exception as e:
@@ -134,10 +137,10 @@ class ToolRegistry:
     def resolve_mcp_tool(name: str) -> RealMCPTool:
         """
         Resolve MCP tool by name using real MCP connections.
-        
+
         Args:
             name: MCP tool name (e.g., "mcp__postgres__query")
-            
+
         Returns:
             RealMCPTool instance or None if not found
         """
@@ -159,16 +162,17 @@ class ToolRegistry:
     def _load_native_agno_tool(tool_name: str) -> Any:
         """
         Load native Agno tools directly.
-        
+
         Args:
             tool_name: Name of the native Agno tool (e.g., "ShellTools")
-            
+
         Returns:
             Agno tool instance or None if not found
         """
         try:
             if tool_name == "ShellTools":
                 from agno.tools.shell import ShellTools
+
                 return ShellTools()
             # Add more native Agno tools here as needed
             # elif tool_name == "CalculatorTools":
@@ -204,10 +208,10 @@ class ToolRegistry:
     def _validate_tool_config(tool_config: Any) -> bool:
         """
         Validate tool configuration structure.
-        
+
         Args:
             tool_config: Tool configuration (string or dictionary)
-            
+
         Returns:
             True if valid, False otherwise
         """

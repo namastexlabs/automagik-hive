@@ -1,0 +1,124 @@
+# Template Agent Configuration for {{workspace_name}}
+version: "1.0.0"
+metadata:
+  name: "template-agent"
+  description: "Template agent for {{workspace_name}} workspace"
+  version: "1.0.0"
+  author: "{{workspace_name}} Team"
+  tags:
+    - "template"
+    - "{{workspace_name}}"
+  
+agent:
+  name: "{{workspace_name}}-template-agent"
+  description: "A template agent to get started with AI development"
+  model: "claude-3-5-sonnet"
+  temperature: 0.7
+  max_tokens: 4000
+  
+  # Agent personality and behavior
+  personality:
+    traits:
+      - "helpful"
+      - "analytical" 
+      - "detail-oriented"
+    tone: "professional"
+    expertise_areas:
+      - "general assistance"
+      - "problem solving"
+  
+  # System prompt
+  system_prompt: |
+    You are a helpful AI assistant for the {{workspace_name}} workspace.
+    
+    Your role is to:
+    - Assist with tasks and questions
+    - Provide clear, accurate responses
+    - Help with problem-solving and analysis
+    - Maintain a professional and helpful demeanor
+    
+    You have access to various tools and can help with:
+    - Code analysis and generation
+    - File operations
+    - Data processing
+    - Research and information gathering
+    
+    Always strive to be helpful, accurate, and efficient in your responses.
+
+  # Available tools
+  tools:
+    - "file_operations"
+    - "code_analysis"
+    - "web_search"
+    - "calculation"
+  
+  # Memory and context settings
+  memory:
+    enabled: true
+    max_context_length: 8000
+    conversation_memory: true
+    long_term_memory: false
+  
+  # Rate limiting and safety
+  rate_limiting:
+    requests_per_minute: 60
+    max_concurrent_conversations: 5
+  
+  safety:
+    content_filtering: true
+    harmful_content_prevention: true
+    privacy_protection: true
+
+# Integration settings
+integration:
+  # Database configuration
+  database:
+    enabled: true
+    connection_string: "{{database_url}}"
+    table_prefix: "{{workspace_name}}_template_agent"
+  
+  # API configuration  
+  api:
+    enabled: true
+    endpoint: "/agents/template-agent"
+    methods: ["GET", "POST"]
+    authentication: true
+  
+  # MCP integration
+  mcp:
+    enabled: {{mcp_enabled}}
+    server_name: "{{workspace_name}}-template-agent"
+    capabilities:
+      - "resources"
+      - "tools"
+      - "prompts"
+
+# Monitoring and logging
+monitoring:
+  logging:
+    level: "INFO"
+    file: "logs/template-agent.log"
+    max_size: "10MB"
+    backup_count: 5
+  
+  metrics:
+    enabled: true
+    collection_interval: 60  # seconds
+    metrics_to_collect:
+      - "response_time"
+      - "success_rate"
+      - "error_count"
+      - "conversation_length"
+
+# Development settings
+development:
+  debug_mode: false
+  hot_reload: true
+  test_mode: false
+  
+# Production settings
+production:
+  performance_optimization: true
+  caching_enabled: true
+  error_handling: "graceful"
+  fallback_responses: true

@@ -73,24 +73,10 @@ class TestEmojiLoaderComprehensive:
         config_file = temp_directory / "emoji_config.yaml"
         correct_config = {
             "resource_types": {
-                "directories": {
-                    "api/": "🌐",
-                    "db/": "🗄️",
-                    "tests/": "🧪"
-                },
-                "activities": {
-                    "success": "✅",
-                    "error": "❌",
-                    "warning": "⚠️"
-                },
-                "services": {
-                    "database": "🗄️",
-                    "api": "🌐"
-                },
-                "file_types": {
-                    ".py": "🐍",
-                    ".yaml": "⚙️"
-                }
+                "directories": {"api/": "🌐", "db/": "🗄️", "tests/": "🧪"},
+                "activities": {"success": "✅", "error": "❌", "warning": "⚠️"},
+                "services": {"database": "🗄️", "api": "🌐"},
+                "file_types": {".py": "🐍", ".yaml": "⚙️"},
             }
         }
         with open(config_file, "w") as f:
@@ -133,18 +119,9 @@ class TestEmojiLoaderComprehensive:
         config_file = temp_directory / "emoji_config.yaml"
         config = {
             "resource_types": {
-                "directories": {
-                    "db/": "🗄️",
-                    "api/": "🌐"
-                },
-                "activities": {
-                    "database": "🗄️",
-                    "query": "🔍"
-                },
-                "services": {
-                    "api": "🌐",
-                    "endpoint": "🔗"
-                }
+                "directories": {"db/": "🗄️", "api/": "🌐"},
+                "activities": {"database": "🗄️", "query": "🔍"},
+                "services": {"api": "🌐", "endpoint": "🔗"},
             }
         }
         with open(config_file, "w") as f:
@@ -155,7 +132,9 @@ class TestEmojiLoaderComprehensive:
             # Create a real loader with our config
             test_loader = EmojiLoader(str(config_file))
 
-            with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
+            with patch(
+                "lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader
+            ):
                 # Test message with matching keywords
                 result = auto_emoji("Database query successful", "/path/to/file.py")
                 # Should contain emoji or be unchanged
@@ -176,7 +155,9 @@ class TestEmojiLoaderComprehensive:
             # Create a real loader with no config
             test_loader = EmojiLoader("/non/existent/path.yaml")
 
-            with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
+            with patch(
+                "lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader
+            ):
                 # Should return original message when no config
                 message = "Test message"
                 result = auto_emoji(message, "/path/to/file.py")
@@ -190,16 +171,8 @@ class TestEmojiLoaderComprehensive:
         config_file = temp_directory / "emoji_config.yaml"
         config = {
             "resource_types": {
-                "directories": {
-                    "api/": "🌐",
-                    "db/": "🗄️",
-                    "tests/": "🧪"
-                },
-                "activities": {
-                    "endpoint": "🔗",
-                    "migration": "📦",
-                    "test": "🧪"
-                }
+                "directories": {"api/": "🌐", "db/": "🗄️", "tests/": "🧪"},
+                "activities": {"endpoint": "🔗", "migration": "📦", "test": "🧪"},
             }
         }
         with open(config_file, "w") as f:
@@ -306,7 +279,9 @@ class TestEmojiLoaderComprehensive:
         with patch("lib.utils.emoji_loader._loader", None):
             test_loader = EmojiLoader("/non/existent/path.yaml")
 
-            with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
+            with patch(
+                "lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader
+            ):
                 # Test with empty message
                 result = auto_emoji("", "/path/to/file.py")
                 assert result == ""
@@ -331,7 +306,7 @@ class TestEmojiLoaderComprehensive:
                 "directories": {"api/": "🌐"},
                 "activities": {"success": "✅"},
                 "services": {"database": "🗄️"},
-                "file_types": {".py": "🐍"}
+                "file_types": {".py": "🐍"},
             }
         }
         with open(config_file, "w") as f:
@@ -354,16 +329,8 @@ class TestEmojiLoaderComprehensive:
         config_file = temp_directory / "multi_config.yaml"
         config = {
             "resource_types": {
-                "directories": {
-                    "api/": "🌐",
-                    "db/": "🗄️",
-                    "test/": "🧪"
-                },
-                "activities": {
-                    "database": "🗄️",
-                    "api": "🌐",
-                    "test": "🧪"
-                }
+                "directories": {"api/": "🌐", "db/": "🗄️", "test/": "🧪"},
+                "activities": {"database": "🗄️", "api": "🌐", "test": "🧪"},
             }
         }
         with open(config_file, "w") as f:
@@ -372,7 +339,9 @@ class TestEmojiLoaderComprehensive:
         with patch("lib.utils.emoji_loader._loader", None):
             test_loader = EmojiLoader(str(config_file))
 
-            with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
+            with patch(
+                "lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader
+            ):
                 # Message that could match multiple patterns
                 message = "Database API test successful"
                 result = auto_emoji(message, "/api/db/test_file.py")
@@ -392,7 +361,7 @@ class TestEmojiLoaderComprehensive:
                 "directories": {f"dir_{i}/": f"emoji_{i}" for i in range(100)},
                 "activities": {f"activity_{i}": f"emoji_{i}" for i in range(100)},
                 "services": {f"service_{i}": f"emoji_{i}" for i in range(100)},
-                "file_types": {f".ext_{i}": f"emoji_{i}" for i in range(100)}
+                "file_types": {f".ext_{i}": f"emoji_{i}" for i in range(100)},
             }
         }
         with open(config_file, "w") as f:
@@ -411,20 +380,16 @@ class TestEmojiLoaderComprehensive:
 
         # Create config file
         config_file = temp_directory / "unicode_config.yaml"
-        config = {
-            "resource_types": {
-                "activities": {
-                    "test": "🧪"
-                }
-            }
-        }
+        config = {"resource_types": {"activities": {"test": "🧪"}}}
         with open(config_file, "w") as f:
             yaml.dump(config, f)
 
         with patch("lib.utils.emoji_loader._loader", None):
             test_loader = EmojiLoader(str(config_file))
 
-            with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
+            with patch(
+                "lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader
+            ):
                 # Test with Unicode characters in message
                 unicode_message = "测试消息 with émojis"
                 result = auto_emoji(unicode_message, "/test/file.py")

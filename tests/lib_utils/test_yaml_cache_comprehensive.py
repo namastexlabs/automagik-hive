@@ -328,6 +328,7 @@ class TestYamlCacheUtilityFunctions:
 
         # Get normalized path for cache lookup (YAMLCacheManager uses os.path.abspath)
         import os
+
         normalized_path = os.path.abspath(str(yaml_file))
 
         # Get original cached object

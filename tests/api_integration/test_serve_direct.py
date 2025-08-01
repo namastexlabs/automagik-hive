@@ -185,9 +185,9 @@ class TestServeModuleFunctionality:
         """Test startup display integration."""
         mock_display.return_value = MagicMock()
 
-
         # Startup display should be importable from lib.utils.startup_display
         from lib.utils.startup_display import create_startup_display
+
         assert create_startup_display is not None
 
     def test_asyncio_integration(self):
@@ -223,6 +223,7 @@ class TestServeErrorHandling:
         # Import should work even if dotenv is not available
         try:
             import api.serve
+
             # If we can import api.serve, the test passes
             assert api.serve is not None
         except ImportError:
@@ -258,7 +259,9 @@ class TestServeErrorHandling:
                 # Should not crash even with missing env vars
                 assert api.serve is not None
             except Exception as e:
-                pytest.fail(f"serve.py should handle missing environment variables gracefully: {e}")
+                pytest.fail(
+                    f"serve.py should handle missing environment variables gracefully: {e}"
+                )
 
 
 class TestServeAsyncPatterns:

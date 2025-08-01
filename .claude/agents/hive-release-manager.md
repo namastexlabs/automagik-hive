@@ -242,7 +242,7 @@ component_building = {
     "uv_build_process": {
         "clean_dist": "rm -rf dist  # Clean previous builds",
         "uv_build": "uv build     # Create wheel and sdist via hatchling",
-        "cli_validation": "python -m zipfile -l dist/*.whl | grep 'cli/'",
+        "cli_validation": "uv run python -m zipfile -l dist/*.whl | grep 'cli/'",
         "entry_points_check": "Validate entry_points.txt in wheel",
         "packages_validation": "Confirm ai/, api/, lib/, cli/ in build"
     },

@@ -56,7 +56,6 @@ class WorkspaceCommands:
         """
         workspace = Path(workspace_path).resolve()
 
-
         # Step 1: Validate workspace structure
         if not self._validate_workspace(workspace):
             return False
@@ -193,7 +192,17 @@ class WorkspaceCommands:
             if not compose_cmd:
                 return False
             result = subprocess.run(
-                [*compose_cmd, "-f", str(workspace / "docker-compose.yml"), "exec", "-T", "postgres", "pg_isready", "-U", "hive"],
+                [
+                    *compose_cmd,
+                    "-f",
+                    str(workspace / "docker-compose.yml"),
+                    "exec",
+                    "-T",
+                    "postgres",
+                    "pg_isready",
+                    "-U",
+                    "hive",
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -260,7 +269,15 @@ class WorkspaceCommands:
             if not compose_cmd:
                 return False
             result = subprocess.run(
-                [*compose_cmd, "-f", str(workspace / "docker-compose.yml"), "ps", "--services", "--filter", "status=running"],
+                [
+                    *compose_cmd,
+                    "-f",
+                    str(workspace / "docker-compose.yml"),
+                    "ps",
+                    "--services",
+                    "--filter",
+                    "status=running",
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -280,7 +297,19 @@ class WorkspaceCommands:
             if not compose_cmd:
                 return False
             result = subprocess.run(
-                [*compose_cmd, "-f", str(workspace / "docker-compose.yml"), "exec", "-T", "postgres", "pg_isready", "-U", postgres_user, "-d", "hive"],
+                [
+                    *compose_cmd,
+                    "-f",
+                    str(workspace / "docker-compose.yml"),
+                    "exec",
+                    "-T",
+                    "postgres",
+                    "pg_isready",
+                    "-U",
+                    postgres_user,
+                    "-d",
+                    "hive",
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -310,7 +339,6 @@ class WorkspaceCommands:
             # Get server configuration
             host = env_config.get("HIVE_HOST", "0.0.0.0")
             port = env_config.get("HIVE_PORT", "8886")
-
 
             # Check if we're inside the automagik-hive package directory
             # If so, we can start the server directly
@@ -360,7 +388,6 @@ class WorkspaceCommands:
         """Show startup success message and connection info."""
         env_config.get("HIVE_HOST", "0.0.0.0")
         env_config.get("HIVE_PORT", "8886")
-
 
     def validate_workspace_path(self, path: str) -> bool:
         """Validate if a path looks like a workspace path.

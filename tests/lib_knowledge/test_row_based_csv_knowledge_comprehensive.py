@@ -40,6 +40,7 @@ class TestRowBasedCSVKnowledgeInitialization:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_initialization_with_valid_csv(self):
@@ -47,8 +48,18 @@ class TestRowBasedCSVKnowledgeInitialization:
         # Create test CSV with all expected columns
         test_data = [
             ["problem", "solution", "business_unit", "typification"],
-            ["Python basics", "Python is a programming language", "tech", "programming"],
-            ["Data structures", "Lists, dicts, sets are basic structures", "tech", "programming"],
+            [
+                "Python basics",
+                "Python is a programming language",
+                "tech",
+                "programming",
+            ],
+            [
+                "Data structures",
+                "Lists, dicts, sets are basic structures",
+                "tech",
+                "programming",
+            ],
             ["Machine learning", "ML is subset of AI", "ai", "concepts"],
         ]
 
@@ -102,8 +113,18 @@ class TestRowBasedCSVKnowledgeInitialization:
         """Test initialization with CSV containing empty values."""
         test_data = [
             ["problem", "solution", "business_unit", "typification"],
-            ["Question with no solution", "", "tech", ""],  # Empty solution and typification
-            ["", "Answer with no question", "", "misc"],  # Empty problem and business_unit
+            [
+                "Question with no solution",
+                "",
+                "tech",
+                "",
+            ],  # Empty solution and typification
+            [
+                "",
+                "Answer with no question",
+                "",
+                "misc",
+            ],  # Empty problem and business_unit
             ["  ", "  ", "  ", "  "],  # Whitespace-only values
         ]
 
@@ -182,6 +203,7 @@ class TestRowBasedCSVDocumentCreation:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_document_metadata_creation(self):
@@ -271,7 +293,9 @@ class TestRowBasedCSVDocumentCreation:
             debug_calls = mock_logger.debug.call_args_list
             bu_logged = False
             for call_args in debug_calls:
-                if len(call_args[0]) > 0 and "✓ engineering: 2 documents processed" in str(call_args):
+                if len(
+                    call_args[0]
+                ) > 0 and "✓ engineering: 2 documents processed" in str(call_args):
                     bu_logged = True
                     break
             # Note: The exact format might vary, so we check that some logging occurred
@@ -281,7 +305,12 @@ class TestRowBasedCSVDocumentCreation:
         """Test that content is properly stripped and formatted."""
         test_data = [
             ["problem", "solution", "business_unit", "typification"],
-            ["  Problem with spaces  ", "  Solution with spaces  ", "  tech  ", "  programming  "],
+            [
+                "  Problem with spaces  ",
+                "  Solution with spaces  ",
+                "  tech  ",
+                "  programming  ",
+            ],
         ]
 
         with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
@@ -313,6 +342,7 @@ class TestRowBasedCSVErrorHandling:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_csv_read_error_handling(self):
@@ -408,6 +438,7 @@ class TestRowBasedCSVVectorOperations:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_load_method_with_recreate(self):
@@ -591,6 +622,7 @@ class TestRowBasedCSVHotReload:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_reload_from_csv_success(self):
@@ -643,7 +675,9 @@ class TestRowBasedCSVHotReload:
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
 
         # Mock _load_csv_as_documents to raise exception
-        with patch.object(kb, "_load_csv_as_documents", side_effect=Exception("Load error")):
+        with patch.object(
+            kb, "_load_csv_as_documents", side_effect=Exception("Load error")
+        ):
             with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
                 kb.reload_from_csv()
 
@@ -663,6 +697,7 @@ class TestRowBasedCSVFilterValidation:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_validate_filters_with_none(self):
@@ -741,12 +776,18 @@ class TestRowBasedCSVFilterValidation:
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
 
         # Mock valid metadata filters
-        kb.valid_metadata_filters = {"business_unit", "row_index", "source", "has_problem", "has_solution"}
+        kb.valid_metadata_filters = {
+            "business_unit",
+            "row_index",
+            "source",
+            "has_problem",
+            "has_solution",
+        }
 
         test_filters = {
             "business_unit": "tech",
             "has_problem": True,
-            "invalid_key": "value"
+            "invalid_key": "value",
         }
 
         with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
@@ -775,7 +816,7 @@ class TestRowBasedCSVFilterValidation:
         test_filters = {
             "meta_data.business_unit": "tech",
             "meta_data.invalid_key": "value",
-            "row_index": 1
+            "row_index": 1,
         }
 
         valid_filters, invalid_keys = kb.validate_filters(test_filters)
@@ -797,6 +838,7 @@ class TestRowBasedCSVAdvancedCases:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_special_characters_in_content(self):
@@ -942,7 +984,9 @@ class TestRowBasedCSVAdvancedCases:
         # Check individual sections in the correct order (based on actual code)
         assert content_parts[0].startswith("**Problem:**")
         assert content_parts[1].startswith("**Solution:**")
-        assert content_parts[2].startswith("**Typification:**")  # Comes before Business Unit
+        assert content_parts[2].startswith(
+            "**Typification:**"
+        )  # Comes before Business Unit
         assert content_parts[3].startswith("**Business Unit:**")
 
 
@@ -957,6 +1001,7 @@ class TestRowBasedCSVPerformanceAndMemory:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_large_dataset_handling(self):
@@ -974,6 +1019,7 @@ class TestRowBasedCSVPerformanceAndMemory:
 
         # Time the initialization (basic performance check)
         import time
+
         start_time = time.time()
         kb = RowBasedCSVKnowledgeBase(str(csv_file), self.mock_vector_db)
         end_time = time.time()

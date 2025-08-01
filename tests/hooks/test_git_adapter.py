@@ -27,16 +27,14 @@ class TestGitAdapter:
         """Clean up test fixtures after each test method."""
         # Clean up temporary directory
         import shutil
+
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     @patch("subprocess.run")
     def test_get_staged_changes_empty(self, mock_run):
         """Test get_staged_changes with no staged files."""
         # Mock empty git diff output
-        mock_run.return_value = MagicMock(
-            stdout="",
-            returncode=0
-        )
+        mock_run.return_value = MagicMock(stdout="", returncode=0)
 
         changes = self.adapter.get_staged_changes()
 
@@ -46,17 +44,14 @@ class TestGitAdapter:
             cwd=self.test_dir,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
 
     @patch("subprocess.run")
     def test_get_staged_changes_single_file(self, mock_run):
         """Test get_staged_changes with single staged file."""
         # Mock git diff output for single file
-        mock_run.return_value = MagicMock(
-            stdout="A\tREADME.md\n",
-            returncode=0
-        )
+        mock_run.return_value = MagicMock(stdout="A\tREADME.md\n", returncode=0)
 
         changes = self.adapter.get_staged_changes()
 
@@ -74,7 +69,7 @@ class TestGitAdapter:
         # Mock git diff output for multiple files
         mock_run.return_value = MagicMock(
             stdout="A\tREADME.md\nM\tpyproject.toml\nD\told_file.py\nR\trenamed.txt\n",
-            returncode=0
+            returncode=0,
         )
 
         changes = self.adapter.get_staged_changes()
@@ -104,7 +99,7 @@ class TestGitAdapter:
         # Mock git diff output for subdirectory files
         mock_run.return_value = MagicMock(
             stdout="A\tlib/utils.py\nM\tsrc/hooks/domain/entities.py\nA\ttests/test_something.py\n",
-            returncode=0
+            returncode=0,
         )
 
         changes = self.adapter.get_staged_changes()
@@ -120,7 +115,9 @@ class TestGitAdapter:
         assert utils_change.file_extension == ".py"
         assert utils_change.operation == FileOperation.CREATE
 
-        entities_change = next(c for c in changes if c.path == "src/hooks/domain/entities.py")
+        entities_change = next(
+            c for c in changes if c.path == "src/hooks/domain/entities.py"
+        )
         assert entities_change.file_extension == ".py"
         assert entities_change.operation == FileOperation.MODIFY
 
@@ -149,8 +146,7 @@ class TestGitAdapter:
         """Test get_staged_changes handles malformed Git output."""
         # Mock git diff output with malformed line
         mock_run.return_value = MagicMock(
-            stdout="A\tREADME.md\nMALFORMED_LINE\nM\tpyproject.toml\n",
-            returncode=0
+            stdout="A\tREADME.md\nMALFORMED_LINE\nM\tpyproject.toml\n", returncode=0
         )
 
         changes = self.adapter.get_staged_changes()
@@ -173,7 +169,7 @@ class TestGitAdapter:
             ["git", "rev-parse", "--git-dir"],
             cwd=self.test_dir,
             capture_output=True,
-            check=True
+            check=True,
         )
 
     @patch("subprocess.run")
@@ -188,10 +184,7 @@ class TestGitAdapter:
     @patch("subprocess.run")
     def test_get_repository_root(self, mock_run):
         """Test get_repository_root returns correct path."""
-        mock_run.return_value = MagicMock(
-            stdout="/path/to/repo\n",
-            returncode=0
-        )
+        mock_run.return_value = MagicMock(stdout="/path/to/repo\n", returncode=0)
 
         root = self.adapter.get_repository_root()
 
@@ -201,7 +194,7 @@ class TestGitAdapter:
             cwd=self.test_dir,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
 
     @patch("subprocess.run")
@@ -297,10 +290,7 @@ class TestGitAdapter:
     @patch("subprocess.run")
     def test_get_current_branch(self, mock_run):
         """Test get_current_branch returns correct branch name."""
-        mock_run.return_value = MagicMock(
-            stdout="main\n",
-            returncode=0
-        )
+        mock_run.return_value = MagicMock(stdout="main\n", returncode=0)
 
         branch = self.adapter.get_current_branch()
 
@@ -310,7 +300,7 @@ class TestGitAdapter:
             cwd=self.test_dir,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
 
     @patch("subprocess.run")
@@ -319,7 +309,7 @@ class TestGitAdapter:
         # First call fails, second succeeds
         mock_run.side_effect = [
             subprocess.CalledProcessError(1, "git"),
-            MagicMock(stdout="develop\n", returncode=0)
+            MagicMock(stdout="develop\n", returncode=0),
         ]
 
         branch = self.adapter.get_current_branch()
@@ -339,7 +329,7 @@ class TestGitAdapter:
         mock_run.assert_called_once_with(
             ["git", "diff", "--cached", "--quiet"],
             cwd=self.test_dir,
-            capture_output=True
+            capture_output=True,
         )
 
     @patch("subprocess.run")
