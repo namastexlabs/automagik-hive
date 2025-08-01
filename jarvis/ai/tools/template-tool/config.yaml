@@ -1,0 +1,301 @@
+tool:
+  name: "🔧 Enhanced Template Tool"
+  tool_id: "template-tool"
+  version: 2
+  description: >
+    ENHANCED TEMPLATE TOOL - A comprehensive foundation for creating specialized tools
+    with advanced configuration, error handling, caching, validation, and monitoring.
+    Features: async support, retry mechanisms, metric collection, caching, validation,
+    event handling, resource management, and comprehensive debugging capabilities.
+  
+  category: "template"
+  tags:
+    - "template"
+    - "foundation"
+    - "development"
+    - "pattern"
+    - "enhanced"
+    - "async"
+    - "monitoring"
+  
+  enabled: true
+  
+  # Tool dependencies (packages, services, etc.)
+  dependencies:
+    - "asyncio>=3.4.3"
+    - "aiofiles>=23.2.0"
+    - "cachetools>=5.3.0"
+  
+  # Integration configuration
+  integration:
+    # MCP servers this tool might interact with
+    mcp_servers:
+      - name: "automagik-forge"
+        enabled: true
+        config:
+          base_url: "http://localhost:38886"
+          api_key: "${HIVE_API_KEY}"
+    
+    # API endpoints this tool might use
+    api_endpoints:
+      status_check: 
+        url: "http://localhost:38886/health"
+        method: "GET"
+        timeout: 5
+      
+    # Database connections this tool might need
+    databases:
+      - name: "hive_db"
+        type: "postgresql"
+        connection_string: "${DATABASE_URL}"
+        pool_size: 5
+  
+  # Enhanced tool-specific parameters
+  parameters:
+    # Core execution parameters
+    timeout_seconds: 30
+    max_retries: 3
+    retry_delay: 1.0
+    retry_backoff: 2.0
+    debug_mode: false
+    
+    # Performance and caching
+    enable_caching: true
+    cache_ttl: 300  # 5 minutes
+    cache_max_size: 1000
+    
+    # Async execution
+    async_enabled: true
+    max_concurrent_tasks: 5
+    task_timeout: 60
+    
+    # Validation and monitoring
+    enable_validation: true
+    collect_metrics: true
+    log_execution_details: true
+    
+    # Resource management
+    max_memory_mb: 512
+    cleanup_on_exit: true
+    resource_monitoring: true
+    
+    # Template-specific settings
+    template_version: "2.0.0"
+    customization_guide: true
+    development_mode: true
+
+# Enhanced tool metadata and documentation
+metadata:
+  author: "Automagik Hive"
+  created_date: "2025-08-01"
+  last_modified: "2025-08-01"
+  license: "MIT"
+  maintainer: "genie@namastex.ai"
+  documentation_url: "https://github.com/namastex/automagik-hive/blob/main/ai/tools/README.md"
+  
+  # Comprehensive usage examples
+  examples:
+    - name: "Basic Synchronous Usage"
+      description: "Simple synchronous tool execution"
+      code: |
+        from ai.tools import get_tool
+        
+        tool = get_tool("template-tool")
+        result = tool.execute(input_data="Hello World")
+        print(f"Result: {result['status']} - {result['result']}")
+    
+    - name: "Advanced Configuration"
+      description: "Tool with custom parameters and debugging"
+      code: |
+        tool = get_tool("template-tool", 
+                       timeout_seconds=60,
+                       debug_mode=True,
+                       enable_caching=True,
+                       max_retries=5)
+        
+        result = tool.execute(
+            input_data="Complex processing task",
+            options={
+                "transform": "uppercase",
+                "analyze": True,
+                "cache_key": "my_unique_key"
+            }
+        )
+    
+    - name: "Async Execution"
+      description: "Asynchronous tool execution for performance"
+      code: |
+        import asyncio
+        from ai.tools import get_tool
+        
+        async def process_data():
+            tool = get_tool("template-tool", async_enabled=True)
+            result = await tool.execute_async(
+                input_data="Async processing",
+                options={"concurrent": True}
+            )
+            return result
+        
+        result = asyncio.run(process_data())
+    
+    - name: "Batch Processing"
+      description: "Processing multiple items efficiently"
+      code: |
+        tool = get_tool("template-tool")
+        
+        data_items = ["item1", "item2", "item3"]
+        results = tool.batch_execute(data_items, batch_size=2)
+        
+        for i, result in enumerate(results):
+            print(f"Item {i}: {result['status']}")
+    
+    - name: "Error Handling"
+      description: "Robust error handling and recovery"
+      code: |
+        tool = get_tool("template-tool", max_retries=3)
+        
+        try:
+            result = tool.execute("potentially failing input")
+            if result['status'] == 'error':
+                print(f"Tool error: {result['error']}")
+                # Handle error appropriately
+        except Exception as e:
+            print(f"Execution failed: {e}")
+    
+    - name: "Monitoring and Metrics"
+      description: "Tool execution monitoring and performance metrics"
+      code: |
+        tool = get_tool("template-tool", collect_metrics=True)
+        
+        # Execute with monitoring
+        result = tool.execute("monitoring test")
+        
+        # Get execution metrics
+        metrics = tool.get_metrics()
+        print(f"Executions: {metrics['total_executions']}")
+        print(f"Success rate: {metrics['success_rate']:.2%}")
+        print(f"Avg execution time: {metrics['avg_execution_time']:.2f}s")
+
+# Enhanced interface specification
+interface:
+  inputs:
+    - name: "input_data"
+      type: "str | dict | list"
+      required: true
+      description: "Primary input data for tool processing (supports multiple types)"
+      validation:
+        min_length: 1
+        max_length: 10000
+        allowed_types: ["str", "dict", "list"]
+    
+    - name: "options"
+      type: "dict"
+      required: false
+      description: "Optional configuration overrides and execution parameters"
+      schema:
+        transform: 
+          type: "str"
+          choices: ["uppercase", "lowercase", "title", "reverse"]
+        analyze: 
+          type: "bool"
+          default: false
+        cache_key:
+          type: "str"
+          description: "Custom cache key for result caching"
+        timeout_override:
+          type: "int"
+          min: 1
+          max: 300
+        retry_override:
+          type: "int"
+          min: 0
+          max: 10
+  
+  outputs:
+    - name: "status"
+      type: "str"
+      description: "Execution status ('success', 'error', 'timeout')"
+      required: true
+    
+    - name: "result"
+      type: "dict | str | list"
+      description: "Processed result data (type depends on processing)"
+      required: false
+    
+    - name: "error"
+      type: "str"
+      description: "Error message if status is 'error'"
+      required: false
+    
+    - name: "metadata"
+      type: "dict"
+      description: "Comprehensive execution metadata and diagnostics"
+      required: true
+      schema:
+        execution_id: "str"
+        tool_id: "str"
+        execution_time: "float"
+        input_hash: "str"
+        cache_hit: "bool"
+        retry_count: "int"
+        resource_usage:
+          memory_mb: "float"
+          cpu_percent: "float"
+        timestamps:
+          started_at: "str"
+          completed_at: "str"
+    
+    - name: "metrics"
+      type: "dict"
+      description: "Performance and execution metrics"
+      required: false
+
+# Enhanced success criteria and validation
+success_criteria: >
+  Enhanced template configured ✓ Advanced patterns implemented ✓ 
+  Async support enabled ✓ Caching system active ✓ Monitoring integrated ✓
+  Error handling robust ✓ Resource management optimized ✓
+  Comprehensive tool foundation ready for specialized development!
+
+# Development workflow integration
+development:
+  workflow:
+    1: "Copy template-tool directory to new-tool-name/"
+    2: "Update config.yaml with tool-specific configuration"
+    3: "Implement tool-specific logic in tool.py"
+    4: "Add comprehensive tests in tests/tools/test_new_tool.py"
+    5: "Update documentation and examples"
+    6: "Test integration with registry system"
+    7: "Validate performance and monitoring"
+  
+  testing:
+    unit_tests: "tests/tools/test_template_tool.py"
+    integration_tests: "tests/tools/test_template_integration.py"
+    performance_tests: "tests/tools/test_template_performance.py"
+  
+  quality_gates:
+    - "Code coverage > 85%"
+    - "Type checking passes (mypy)"
+    - "Linting passes (ruff)"
+    - "Performance benchmarks met"
+    - "Resource usage within limits"
+    - "Documentation complete"
+
+# Version management
+versioning:
+  current_version: 2
+  changelog:
+    v2: "Enhanced template with async, caching, monitoring, validation"
+    v1: "Basic template with core functionality"
+  
+  migration_guide:
+    v1_to_v2: >
+      Update config.yaml with enhanced parameters.
+      Implement async methods if needed.
+      Add validation and monitoring.
+      Update tests for new features.
+  
+  compatibility:
+    min_python: "3.9"
+    dependencies_updated: "2025-08-01"
+    breaking_changes: ["Enhanced interface validation", "New async methods"]

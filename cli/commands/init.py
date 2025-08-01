@@ -789,14 +789,38 @@ HIVE_DEV_MODE=true
                 # Replace build sections with pre-built image for UVX distribution
                 if "build:" in template_content:
                     # Replace build section with image for agent/genie services
-                    import re
-                    # Remove build sections and replace with image
-                    template_content = re.sub(
-                        r'\s*build:\s*\n\s*context:.*?\n\s*dockerfile:.*?\n\s*target:.*?\n',
-                        '    image: agnohq/automagik-hive:latest\n',
-                        template_content,
-                        flags=re.MULTILINE | re.DOTALL
-                    )
+                    # Find and replace build sections while maintaining proper YAML indentation
+                    lines = template_content.split('\n')
+                    new_lines = []
+                    i = 0
+                    while i < len(lines):
+                        line = lines[i]
+                        if 'build:' in line:
+                            # Found build section, get the indentation level
+                            build_indent = len(line) - len(line.lstrip())
+                            # For UVX distribution, comment out complex services until Docker image is published
+                            new_lines.append(' ' * build_indent + '# Docker image not yet published - use local development instead')  
+                            new_lines.append(' ' * build_indent + '# image: agnohq/automagik-hive:latest')
+                            new_lines.append(' ' * build_indent + 'image: hello-world  # Placeholder - service disabled for UVX distribution')
+                            # Skip all build-related lines until we reach the next property at same or lesser indentation
+                            i += 1
+                            while i < len(lines):
+                                next_line = lines[i]
+                                if next_line.strip() == '':
+                                    # Skip empty lines
+                                    i += 1
+                                    continue
+                                next_indent = len(next_line) - len(next_line.lstrip())
+                                if next_indent <= build_indent and next_line.strip():
+                                    # Found next property at same or lesser indentation - stop skipping
+                                    break
+                                # Skip this line as it's part of the build section
+                                i += 1
+                            continue
+                        else:
+                            new_lines.append(line)
+                        i += 1
+                    template_content = '\n'.join(new_lines)
                 
                 # Replace template variables with actual credentials
                 if "postgres_user" in credentials:
