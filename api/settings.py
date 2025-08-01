@@ -5,6 +5,8 @@ from pydantic import Field, field_validator
 from pydantic_core.core_schema import FieldValidationInfo
 from pydantic_settings import BaseSettings
 
+from lib.utils.version_reader import get_api_version
+
 
 class ApiSettings(BaseSettings):
     """API settings for Automagik Hive Multi-Agent System.
@@ -14,7 +16,7 @@ class ApiSettings(BaseSettings):
 
     # Api title and version
     title: str = "Automagik Hive Multi-Agent System"
-    version: str = "2.0"
+    version: str = Field(default_factory=get_api_version)
 
     # Application environment derived from the `HIVE_ENVIRONMENT` environment variable.
     # Valid values include "development", "production"

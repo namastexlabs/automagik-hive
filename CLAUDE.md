@@ -513,6 +513,9 @@ All debugging and fix claims MUST include concrete evidence before completion:
   - **File Organization Pattern**: misplaced folders must move to proper `/genie/` structure
   - **Anti-Proliferation Rule**: ONE wish = ONE document in `/genie/wishes/`, refine in place
   - **Proper Structure**: reports/ (findings), experiments/ (prototypes), ideas/ (brainstorms), knowledge/ (wisdom), wishes/ (plans)
+  - **🚨 ROOT-LEVEL .md PROHIBITION**: NEVER create .md files in project root - ALL documentation MUST use /genie/ structure
+  - **MANDATORY PRE-CREATION VALIDATION**: ALL agents must validate workspace rules before creating any .md file
+  - **BEHAVIORAL LEARNING INTEGRATION**: Violations trigger immediate cross-agent behavioral updates
 
 ### Enhanced Parallel Execution Protocol
 **CRITICAL PATTERN**: For MCP configuration updates to 8+ YAML files:

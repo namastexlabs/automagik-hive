@@ -35,6 +35,7 @@ from lib.exceptions import ComponentLoadingError
 # Configure unified logging system AFTER environment variables are loaded
 from lib.logging import logger, setup_logging
 from lib.utils.startup_display import create_startup_display
+from lib.utils.version_reader import get_api_version
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
@@ -186,7 +187,7 @@ def _create_simple_sync_api() -> FastAPI:
     app = FastAPI(
         title="Automagik Hive Multi-Agent System",
         description="Multi-Agent System (Simplified Mode)",
-        version="1.0.0",
+        version=get_api_version(),
     )
 
     @app.get("/")
@@ -345,7 +346,7 @@ async def _async_create_automagik_api():
     app = FastAPI(
         title="Automagik Hive Multi-Agent System",
         description="Multi-Agent System with intelligent routing and dynamic team discovery",
-        version="1.0.0",
+        version=get_api_version(),
     )
 
     # ✅ CONFIGURE APP WITH UNIFIED SETTINGS

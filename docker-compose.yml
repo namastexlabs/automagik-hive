@@ -1,16 +1,24 @@
 # =============================================================================
-# Automagik Hive Multi-Agent System - Docker Compose Configuration
+# Automagik Hive Multi-Container Architecture - Complete Docker Compose
 # =============================================================================
 #
-# Production-ready orchestration for:
-# - Main application service with optimized build
-# - PostgreSQL database with pgvector extension
+# UVX Phase 1 Multi-Container orchestration for:
+# - Main workspace server (port 8886) with PostgreSQL (port 5532)
+# - Genie consultation container (port 48886) - all-in-one PostgreSQL + FastAPI
+# - Agent development container (port 35532) - all-in-one PostgreSQL + FastAPI
 # - BuildKit optimizations for fast builds
 #
 # Usage:
-#   docker-compose up -d          # Start all services
-#   docker-compose logs -f app    # View application logs
-#   make install                  # Initial setup with database
+#   docker-compose up -d                    # Start all services
+#   docker-compose up postgres              # Start only main PostgreSQL
+#   docker-compose up app                   # Start main workspace server
+#   docker-compose -f docker-compose-genie.yml up -d      # Start Genie container
+#   docker-compose -f docker-compose-agent.yml up -d      # Start Agent container
+#
+# Integration with UVX CLI:
+#   uvx automagik-hive ./my-workspace       # Start workspace (uses postgres + app services)
+#   uvx automagik-hive --genie-serve        # Start Genie container
+#   uvx automagik-hive --agent-serve        # Start Agent container
 #
 # =============================================================================
 

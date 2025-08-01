@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.1.2"
+version = "0.1.0a2"
 description = "Automagik Multi-Agent Framework - Extensible Agent Creation System"
 readme = "README.md"
 license = "MIT"
@@ -99,7 +99,7 @@ Documentation = "https://docs.automagik.ai"
 "Bug Tracker" = "https://github.com/namastex/automagik-hive/issues"
 
 [project.scripts]
-hive = "api.serve:main"
+automagik-hive = "cli.main:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -346,13 +346,14 @@ exclude_lines = [
 # Hatchling Build Configuration
 # ============================================================================
 [tool.hatch.build.targets.wheel]
-packages = ["ai", "api", "lib"]
+packages = ["ai", "api", "lib", "cli"]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "/ai",
     "/api", 
     "/lib",
+    "/cli",
     "/tests",
     "/README.md",
     "/pyproject.toml",
