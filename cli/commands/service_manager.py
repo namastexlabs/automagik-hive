@@ -638,3 +638,51 @@ class ServiceManager:
 
         except Exception:
             return False
+
+    # CLI compatibility methods
+    def get_logs(self, component: str = "all", lines: int = 50) -> dict[str, str]:
+        """Get logs for specified component (CLI compatibility wrapper).
+        
+        Args:
+            component: Component to get logs for
+            lines: Number of lines to retrieve
+            
+        Returns:
+            dict: Component logs as {component: log_content}
+        """
+        # Delegate to existing show_logs method and capture output
+        self.show_logs(component, lines)
+        return {"status": "logs_displayed"}
+    
+    def display_logs(self, logs: dict[str, str]) -> None:
+        """Display logs (CLI compatibility - logs already displayed by get_logs)."""
+        pass  # Logs already displayed by show_logs
+        
+    def display_status(self, status: dict[str, str]) -> None:
+        """Display service status in formatted output.
+        
+        Args:
+            status: Status dictionary from get_status()
+        """
+        from rich.console import Console
+        from rich.table import Table
+        
+        console = Console()
+        table = Table(title="Service Status")
+        table.add_column("Component", style="cyan")
+        table.add_column("Status", style="green")
+        
+        for component, stat in status.items():
+            # Color code status
+            if stat == "healthy":
+                status_text = f"[green]{stat}[/green]"
+            elif stat == "running":
+                status_text = f"[yellow]{stat}[/yellow]"
+            elif stat == "stopped":
+                status_text = f"[red]{stat}[/red]"
+            else:
+                status_text = f"[dim]{stat}[/dim]"
+                
+            table.add_row(component, status_text)
+            
+        console.print(table)

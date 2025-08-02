@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Automagik Hive CLI - UVX Master Plan Implementation.
+"""Automagik Hive CLI - 8-Command UVX Interface.
 
-Simple 2-command UVX interface:
-- uvx automagik-hive --init - Interactive workspace creation with Docker installation
-- uvx automagik-hive ./my-workspace - Start existing workspace server
+Comprehensive CLI with install, start, stop, restart, status, health, logs, uninstall commands
+supporting component-specific operations (all, workspace, agent, genie).
 
 Interactive Docker installation, excellent DX, guided setup flow.
 """
@@ -17,22 +16,92 @@ from cli.commands import LazyCommandLoader
 
 
 def create_parser() -> argparse.ArgumentParser:
-    """Create UVX-compliant argument parser with 2-command interface."""
+    """Create UVX-compliant argument parser with 8-command interface."""
     parser = argparse.ArgumentParser(
         prog="automagik-hive",
-        description="Automagik Hive - Multi-agent AI framework (UVX Interface)",
+        description="Automagik Hive - Multi-agent AI framework (8-Command Interface)",
         epilog="""
 Examples:
-  %(prog)s --init                     # Interactive workspace creation
-  %(prog)s --init my-project          # Create workspace in specific directory
-  %(prog)s ./my-workspace             # Start existing workspace server
-  %(prog)s --help                     # Show this help
-  %(prog)s --version                  # Show version information
+  %(prog)s --install agent                    # Interactive agent setup with Docker installation
+  %(prog)s --start agent                      # Start agent services
+  %(prog)s --stop agent                       # Stop agent services  
+  %(prog)s --restart agent                    # Restart agent services
+  %(prog)s --status agent                     # Check agent service status
+  %(prog)s --health agent                     # Health check agent services
+  %(prog)s --logs agent 100                   # Show agent logs (100 lines)
+  %(prog)s --uninstall agent                  # Remove agent environment
+  %(prog)s --init my-project                  # Initialize workspace
+  %(prog)s ./my-workspace                     # Start existing workspace server
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # Primary UVX commands
+    # Component management commands
+    parser.add_argument(
+        "--install",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Interactive installation with Docker setup (default: all)",
+    )
+    
+    parser.add_argument(
+        "--start",
+        nargs="?", 
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Start services (default: all)",
+    )
+    
+    parser.add_argument(
+        "--stop",
+        nargs="?",
+        const="all", 
+        choices=["all", "workspace", "agent", "genie"],
+        help="Stop services (default: all)",
+    )
+    
+    parser.add_argument(
+        "--restart",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"], 
+        help="Restart services (default: all)",
+    )
+    
+    parser.add_argument(
+        "--status",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Check service status (default: all)",
+    )
+    
+    parser.add_argument(
+        "--health",
+        nargs="?", 
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Health check services (default: all)",
+    )
+    
+    parser.add_argument(
+        "--logs",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Show service logs (default: all)",
+    )
+    
+    parser.add_argument(
+        "--uninstall",
+        nargs="?",
+        const="all",
+        choices=["all", "workspace", "agent", "genie"],
+        help="Uninstall components (default: all)",
+    )
+
+    # Legacy UVX commands for backward compatibility
     parser.add_argument(
         "--init",
         nargs="?",
@@ -46,11 +115,20 @@ Examples:
         action="store_true",
         help="Show version information",
     )
+    
+    # Log lines argument (used with --logs)
+    parser.add_argument(
+        "lines",
+        nargs="?",
+        type=int,
+        default=50,
+        help="Number of log lines to show (default: 50, used with --logs)",
+    )
 
     # Positional argument for workspace path
     parser.add_argument(
         "workspace",
-        nargs="?",
+        nargs="?", 
         default=None,
         help="Path to workspace directory for server startup",
     )
@@ -59,9 +137,17 @@ Examples:
 
 
 def validate_arguments(args: argparse.Namespace) -> tuple[bool, Optional[str]]:
-    """Validate UVX argument structure."""
+    """Validate 8-command argument structure."""
     # Count active commands
     commands = [
+        args.install is not None,
+        args.start is not None, 
+        args.stop is not None,
+        args.restart is not None,
+        args.status is not None,
+        args.health is not None,
+        args.logs is not None,
+        args.uninstall is not None,
         args.init is not None,
         args.version,
         args.workspace is not None,
@@ -94,12 +180,12 @@ def show_version():
         pkg_version = "unknown"
     
     print(f"Automagik Hive v{pkg_version}")
-    print("Multi-agent AI framework with UVX interface")
+    print("Multi-agent AI framework with 8-command interface")
     print("Documentation: https://github.com/namastex/automagik-hive")
 
 
 def main() -> int:
-    """UVX-compliant main CLI entry point."""
+    """8-command CLI entry point."""
     parser = create_parser()
     args = parser.parse_args()
 
@@ -110,24 +196,60 @@ def main() -> int:
         return 1
 
     try:
-        # Route to command handlers - UVX interface
+        commands = LazyCommandLoader()
+
+        # Route to command handlers - 8-command interface
 
         # Version command
         if args.version:
             show_version()
             return 0
 
-        # Interactive initialization
+        # Interactive initialization (legacy UVX compatibility)
         if args.init is not None:
-            commands = LazyCommandLoader()
             workspace_name = args.init if args.init else None
             success = commands.interactive_initializer.initialize_workspace(workspace_name)
             return 0 if success else 1
 
-        # Workspace startup
+        # Workspace startup (legacy UVX compatibility)
         if args.workspace:
-            commands = LazyCommandLoader()
             success = commands.workspace_manager.start_workspace_server(args.workspace)
+            return 0 if success else 1
+
+        # Component management commands
+        if args.install is not None:
+            success = commands.workflow_orchestrator.execute_unified_workflow(args.install)
+            return 0 if success else 1
+
+        if args.start is not None:
+            success = commands.service_manager.start_services(args.start)
+            return 0 if success else 1
+
+        if args.stop is not None:
+            success = commands.service_manager.stop_services(args.stop)
+            return 0 if success else 1
+
+        if args.restart is not None:
+            success = commands.service_manager.restart_services(args.restart)
+            return 0 if success else 1
+
+        if args.status is not None:
+            status = commands.service_manager.get_status(args.status)
+            commands.service_manager.display_status(status)
+            return 0
+
+        if args.health is not None:
+            health = commands.health_checker.check_health(args.health)
+            commands.health_checker.display_health(health)
+            return 0
+
+        if args.logs is not None:
+            logs = commands.service_manager.get_logs(args.logs, args.lines)
+            commands.service_manager.display_logs(logs)
+            return 0
+
+        if args.uninstall is not None:
+            success = commands.uninstaller.uninstall_component(args.uninstall)
             return 0 if success else 1
 
         # No command - show help

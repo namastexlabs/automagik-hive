@@ -1214,3 +1214,55 @@ class HealthChecker:
             logger.error(f"Health check CLI failed: {e}")
             self.console.print(f"❌ [red]Health check failed:[/red] {e}")
             return 1
+
+    # CLI compatibility methods  
+    def check_health(self, component: str = "all") -> dict[str, Any]:
+        """Check health of specified component (CLI compatibility wrapper).
+        
+        Args:
+            component: Component to check health for
+            
+        Returns:
+            dict: Health check results
+        """
+        try:
+            results = self.comprehensive_health_check(component)
+            return {comp: {"status": result.status, "message": result.message} 
+                    for comp, result in results.items()}
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            return {"error": str(e)}
+    
+    def display_health(self, health_results: dict[str, Any]) -> None:
+        """Display health results (CLI compatibility wrapper).
+        
+        Args:
+            health_results: Health results from check_health()
+        """
+        if "error" in health_results:
+            self.console.print(f"❌ [red]Health check error:[/red] {health_results['error']}")
+            return
+            
+        # Create simple health display
+        table = Table(title="Health Check Results")
+        table.add_column("Component", style="cyan")
+        table.add_column("Status", style="green") 
+        table.add_column("Message", style="white")
+        
+        for component, result in health_results.items():
+            status = result.get("status", "unknown")
+            message = result.get("message", "No details")
+            
+            # Color code status
+            if status == "healthy":
+                status_text = f"[green]{status}[/green]"
+            elif status == "warning":
+                status_text = f"[yellow]{status}[/yellow]"
+            elif status == "unhealthy":
+                status_text = f"[red]{status}[/red]"
+            else:
+                status_text = f"[dim]{status}[/dim]"
+                
+            table.add_row(component, status_text, message)
+            
+        self.console.print(table)
