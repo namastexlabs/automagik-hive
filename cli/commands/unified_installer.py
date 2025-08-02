@@ -21,7 +21,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from .health_checker import HealthChecker
-from .init import InitCommands
+from .init import InteractiveInitializer
 from .postgres import PostgreSQLCommands
 from .workflow_orchestrator import WorkflowOrchestrator
 
@@ -37,7 +37,7 @@ class UnifiedInstaller:
     def __init__(self) -> None:
         self.console = Console()
         self.health_checker = HealthChecker()
-        self.init_commands = InitCommands()
+        self.init_commands = InteractiveInitializer()
         self.postgres_commands = PostgreSQLCommands()
         self.workflow_orchestrator = WorkflowOrchestrator()
 
