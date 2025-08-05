@@ -291,15 +291,15 @@ class WorkflowOrchestrator:
 
     def _check_docker_compose_available(self) -> bool:
         """Check if Docker Compose is available (modern or legacy).
-        
+
         Tries modern 'docker compose' first, then falls back to legacy 'docker-compose'.
-        
+
         Returns:
             bool: True if either version is available
         """
         try:
             import subprocess
-            
+
             # Try modern 'docker compose' first (Docker v2+)
             try:
                 result = subprocess.run(
@@ -336,54 +336,79 @@ class WorkflowOrchestrator:
 
     def _prompt_docker_installation(self, missing_deps: list[str]) -> bool:
         """Prompt user for interactive Docker installation when missing.
-        
+
         Args:
             missing_deps: List of missing dependencies
-            
+
         Returns:
             bool: True if user wants to proceed with installation, False to cancel
         """
         if not missing_deps:
             return True
-            
+
         # Only handle Docker-related missing dependencies interactively
-        docker_deps = [dep for dep in missing_deps if dep in ["docker", "docker-compose"]]
+        docker_deps = [
+            dep for dep in missing_deps if dep in ["docker", "docker-compose"]
+        ]
         if not docker_deps:
             return False
-            
-        self.console.print("\n🐳 [bold yellow]Docker Installation Required[/bold yellow]")
+
+        self.console.print(
+            "\n🐳 [bold yellow]Docker Installation Required[/bold yellow]"
+        )
         self.console.print(f"Missing dependencies: {', '.join(docker_deps)}")
         self.console.print()
-        
+
         # Provide platform-specific installation guidance
         import platform
+
         system = platform.system().lower()
-        
+
         if system == "linux":
             self.console.print("📋 [bold]Linux Installation Options:[/bold]")
-            self.console.print("1. [cyan]Ubuntu/Debian:[/cyan] sudo apt-get update && sudo apt-get install docker.io docker-compose")
-            self.console.print("2. [cyan]RHEL/CentOS:[/cyan] sudo yum install docker docker-compose")
-            self.console.print("3. [cyan]Docker Desktop:[/cyan] Download from https://docs.docker.com/desktop/linux/")
+            self.console.print(
+                "1. [cyan]Ubuntu/Debian:[/cyan] sudo apt-get update && sudo apt-get install docker.io docker-compose"
+            )
+            self.console.print(
+                "2. [cyan]RHEL/CentOS:[/cyan] sudo yum install docker docker-compose"
+            )
+            self.console.print(
+                "3. [cyan]Docker Desktop:[/cyan] Download from https://docs.docker.com/desktop/linux/"
+            )
         elif system == "darwin":
             self.console.print("📋 [bold]macOS Installation Options:[/bold]")
-            self.console.print("1. [cyan]Docker Desktop:[/cyan] Download from https://docs.docker.com/desktop/mac/")
+            self.console.print(
+                "1. [cyan]Docker Desktop:[/cyan] Download from https://docs.docker.com/desktop/mac/"
+            )
             self.console.print("2. [cyan]Homebrew:[/cyan] brew install --cask docker")
         elif system == "windows":
             self.console.print("📋 [bold]Windows Installation Options:[/bold]")
-            self.console.print("1. [cyan]Docker Desktop:[/cyan] Download from https://docs.docker.com/desktop/windows/")
-            self.console.print("2. [cyan]WSL2 + Docker:[/cyan] Install WSL2 first, then Docker Desktop")
+            self.console.print(
+                "1. [cyan]Docker Desktop:[/cyan] Download from https://docs.docker.com/desktop/windows/"
+            )
+            self.console.print(
+                "2. [cyan]WSL2 + Docker:[/cyan] Install WSL2 first, then Docker Desktop"
+            )
         else:
-            self.console.print("📋 [bold]Installation:[/bold] Please install Docker from https://docs.docker.com/get-docker/")
+            self.console.print(
+                "📋 [bold]Installation:[/bold] Please install Docker from https://docs.docker.com/get-docker/"
+            )
 
         self.console.print()
         self.console.print("🔄 [bold]After installation:[/bold]")
         self.console.print("   • Restart your terminal")
         self.console.print("   • Run this command again")
         self.console.print()
-        
+
         # Ask user if they want to proceed or cancel
         try:
-            response = input("❓ Would you like to continue with installation after installing Docker? (y/N): ").strip().lower()
+            response = (
+                input(
+                    "❓ Would you like to continue with installation after installing Docker? (y/N): "
+                )
+                .strip()
+                .lower()
+            )
             return response in ["y", "yes"]
         except (KeyboardInterrupt, EOFError):
             self.console.print("\n🛑 Installation cancelled by user")
@@ -752,9 +777,13 @@ class WorkflowOrchestrator:
         is_valid, missing = self.validate_workflow_dependencies("workspace")
         if not is_valid:
             # For workspace, we only need uvx - show error for critical missing deps
-            critical_missing = [dep for dep in missing if dep not in ["docker", "docker-compose"]]
+            critical_missing = [
+                dep for dep in missing if dep not in ["docker", "docker-compose"]
+            ]
             if critical_missing:
-                self.console.print(f"❌ Missing critical dependencies: {', '.join(critical_missing)}")
+                self.console.print(
+                    f"❌ Missing critical dependencies: {', '.join(critical_missing)}"
+                )
                 return False
         return True  # Workspace deployment doesn't require Docker
 
@@ -766,7 +795,9 @@ class WorkflowOrchestrator:
             if not self._prompt_docker_installation(missing):
                 return False
             # After interactive prompt, user chose to continue - proceed with installation
-            self.console.print("🔄 [bold blue]Proceeding with installation...[/bold blue]")
+            self.console.print(
+                "🔄 [bold blue]Proceeding with installation...[/bold blue]"
+            )
         return True
 
     def _validate_genie_dependencies(self) -> bool:
@@ -777,7 +808,9 @@ class WorkflowOrchestrator:
             if not self._prompt_docker_installation(missing):
                 return False
             # After interactive prompt, user chose to continue - proceed with installation
-            self.console.print("🔄 [bold blue]Proceeding with installation...[/bold blue]")
+            self.console.print(
+                "🔄 [bold blue]Proceeding with installation...[/bold blue]"
+            )
         return True
 
     def _validate_all_dependencies(self) -> bool:
@@ -788,7 +821,9 @@ class WorkflowOrchestrator:
             if not self._prompt_docker_installation(missing):
                 return False
             # After interactive prompt, user chose to continue - proceed with installation
-            self.console.print("🔄 [bold blue]Proceeding with installation...[/bold blue]")
+            self.console.print(
+                "🔄 [bold blue]Proceeding with installation...[/bold blue]"
+            )
         return True
 
     def _start_workspace_process(self) -> bool:
@@ -847,21 +882,21 @@ class WorkflowOrchestrator:
 
     def _install_agent_infrastructure(self) -> bool:
         """Install agent infrastructure - delegated to UnifiedInstaller."""
-        from .unified_installer import UnifiedInstaller
+        from .installer import UnifiedInstaller
 
         installer = UnifiedInstaller()
         return installer._install_infrastructure("agent")
 
     def _install_genie_infrastructure(self) -> bool:
         """Install genie infrastructure - delegated to UnifiedInstaller."""
-        from .unified_installer import UnifiedInstaller
+        from .installer import UnifiedInstaller
 
         installer = UnifiedInstaller()
         return installer._install_infrastructure("genie")
 
     def _install_complete_infrastructure(self) -> bool:
         """Install complete infrastructure - delegated to UnifiedInstaller."""
-        from .unified_installer import UnifiedInstaller
+        from .installer import UnifiedInstaller
 
         installer = UnifiedInstaller()
         return installer._install_infrastructure("all")
