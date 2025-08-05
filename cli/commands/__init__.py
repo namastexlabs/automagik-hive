@@ -1,7 +1,7 @@
 """CLI commands for Automagik Hive - 8-Command Interface.
 
 Comprehensive command loading for:
-- install, start, stop, restart, status, health, logs, uninstall commands  
+- install, start, stop, restart, status, health, logs, uninstall commands
 - Component support: all, workspace, agent, genie
 - Interactive Docker installation and guided setup
 """
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from .service_manager import ServiceManager
     from .uninstall import UninstallCommands
     from .workflow_orchestrator import WorkflowOrchestrator
-    from .workspace import WorkspaceManager
+    from .workspace import UnifiedWorkspaceManager as WorkspaceManager
 
 
 class LazyCommandLoader:
@@ -33,6 +33,7 @@ class LazyCommandLoader:
         """InteractiveInitializer for --init command."""
         if self._interactive_initializer is None:
             from .init import InteractiveInitializer
+
             self._interactive_initializer = InteractiveInitializer()
         return self._interactive_initializer
 
@@ -40,7 +41,8 @@ class LazyCommandLoader:
     def workspace_manager(self) -> "WorkspaceManager":
         """WorkspaceManager for ./workspace command."""
         if self._workspace_manager is None:
-            from .workspace import WorkspaceManager
+            from .workspace import UnifiedWorkspaceManager as WorkspaceManager
+
             self._workspace_manager = WorkspaceManager()
         return self._workspace_manager
 
@@ -49,6 +51,7 @@ class LazyCommandLoader:
         """WorkflowOrchestrator for --install command."""
         if self._workflow_orchestrator is None:
             from .workflow_orchestrator import WorkflowOrchestrator
+
             self._workflow_orchestrator = WorkflowOrchestrator()
         return self._workflow_orchestrator
 
@@ -57,6 +60,7 @@ class LazyCommandLoader:
         """ServiceManager for start/stop/restart/status/logs commands."""
         if self._service_manager is None:
             from .service_manager import ServiceManager
+
             self._service_manager = ServiceManager()
         return self._service_manager
 
@@ -65,6 +69,7 @@ class LazyCommandLoader:
         """HealthChecker for --health command."""
         if self._health_checker is None:
             from .health_checker import HealthChecker
+
             self._health_checker = HealthChecker()
         return self._health_checker
 
@@ -73,6 +78,7 @@ class LazyCommandLoader:
         """UninstallCommands for --uninstall command."""
         if self._uninstaller is None:
             from .uninstall import UninstallCommands
+
             self._uninstaller = UninstallCommands()
         return self._uninstaller
 
