@@ -3,16 +3,16 @@
 
 import subprocess
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 
 def test_interactive_install():
     """Test the --install command with simulated missing Docker."""
-    
     print("🧪 Testing interactive Docker installation...")
     
     # Test 1: Check help output shows --install command
     try:
-        result = subprocess.run([sys.executable, "-m", "cli.main", "--help"], 
+        result = subprocess.run([sys.executable, "-m", "cli.main", "--help"],
                               capture_output=True, text=True, check=False)
         if "--install" in result.stdout:
             print("✅ Test 1 PASSED: --install command available in help")
@@ -25,7 +25,7 @@ def test_interactive_install():
         
     # Test 2: Check version command works
     try:
-        result = subprocess.run([sys.executable, "-m", "cli.main", "--version"], 
+        result = subprocess.run([sys.executable, "-m", "cli.main", "--version"],
                               capture_output=True, text=True, check=False)
         if "Automagik Hive" in result.stdout:
             print("✅ Test 2 PASSED: --version command works")
@@ -43,7 +43,7 @@ def test_interactive_install():
         orchestrator = WorkflowOrchestrator()
         
         # Check if the interactive Docker installation method exists
-        if hasattr(orchestrator, '_prompt_docker_installation'):
+        if hasattr(orchestrator, "_prompt_docker_installation"):
             print("✅ Test 3 PASSED: Interactive Docker installation method exists")
         else:
             print("❌ Test 3 FAILED: Interactive Docker installation method missing")

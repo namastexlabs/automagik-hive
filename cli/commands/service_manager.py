@@ -656,7 +656,7 @@ class ServiceManager:
     
     def display_logs(self, logs: dict[str, str]) -> None:
         """Display logs (CLI compatibility - logs already displayed by get_logs)."""
-        pass  # Logs already displayed by show_logs
+        # Logs already displayed by show_logs
         
     def display_status(self, status: dict[str, str]) -> None:
         """Display service status in formatted output.

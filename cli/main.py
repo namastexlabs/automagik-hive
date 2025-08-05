@@ -47,7 +47,7 @@ Examples:
     
     parser.add_argument(
         "--start",
-        nargs="?", 
+        nargs="?",
         const="all",
         choices=["all", "workspace", "agent", "genie"],
         help="Start services (default: all)",
@@ -56,7 +56,7 @@ Examples:
     parser.add_argument(
         "--stop",
         nargs="?",
-        const="all", 
+        const="all",
         choices=["all", "workspace", "agent", "genie"],
         help="Stop services (default: all)",
     )
@@ -65,7 +65,7 @@ Examples:
         "--restart",
         nargs="?",
         const="all",
-        choices=["all", "workspace", "agent", "genie"], 
+        choices=["all", "workspace", "agent", "genie"],
         help="Restart services (default: all)",
     )
     
@@ -79,7 +79,7 @@ Examples:
     
     parser.add_argument(
         "--health",
-        nargs="?", 
+        nargs="?",
         const="all",
         choices=["all", "workspace", "agent", "genie"],
         help="Health check services (default: all)",
@@ -128,7 +128,7 @@ Examples:
     # Positional argument for workspace path
     parser.add_argument(
         "workspace",
-        nargs="?", 
+        nargs="?",
         default=None,
         help="Path to workspace directory for server startup",
     )
@@ -136,12 +136,12 @@ Examples:
     return parser
 
 
-def validate_arguments(args: argparse.Namespace) -> tuple[bool, Optional[str]]:
+def validate_arguments(args: argparse.Namespace) -> tuple[bool, str | None]:
     """Validate 8-command argument structure."""
     # Count active commands
     commands = [
         args.install is not None,
-        args.start is not None, 
+        args.start is not None,
         args.stop is not None,
         args.restart is not None,
         args.status is not None,

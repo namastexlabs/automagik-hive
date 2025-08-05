@@ -384,7 +384,7 @@ class WorkflowOrchestrator:
         # Ask user if they want to proceed or cancel
         try:
             response = input("❓ Would you like to continue with installation after installing Docker? (y/N): ").strip().lower()
-            return response in ['y', 'yes']
+            return response in ["y", "yes"]
         except (KeyboardInterrupt, EOFError):
             self.console.print("\n🛑 Installation cancelled by user")
             return False

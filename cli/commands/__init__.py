@@ -9,12 +9,12 @@ Comprehensive command loading for:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .init import InteractiveInitializer
-    from .workspace import WorkspaceManager
-    from .workflow_orchestrator import WorkflowOrchestrator
-    from .service_manager import ServiceManager
     from .health_checker import HealthChecker
+    from .init import InteractiveInitializer
+    from .service_manager import ServiceManager
     from .uninstall import UninstallCommands
+    from .workflow_orchestrator import WorkflowOrchestrator
+    from .workspace import WorkspaceManager
 
 
 class LazyCommandLoader:
@@ -60,7 +60,7 @@ class LazyCommandLoader:
             self._service_manager = ServiceManager()
         return self._service_manager
 
-    @property  
+    @property
     def health_checker(self) -> "HealthChecker":
         """HealthChecker for --health command."""
         if self._health_checker is None:

@@ -631,16 +631,15 @@ class UninstallCommands:
             if component == "all":
                 # Full global uninstall
                 return self.uninstall_global_installation()
-            elif component == "workspace":
+            if component == "workspace":
                 # Just remove current workspace
                 return self.uninstall_current_workspace()
-            elif component in ["agent", "genie"]:
-                # Use existing uninstall current workspace for now 
+            if component in ["agent", "genie"]:
+                # Use existing uninstall current workspace for now
                 # (agent/genie specific uninstall could be added later)
                 return self.uninstall_current_workspace()
-            else:
-                print(f"❌ Unknown component: {component}")
-                return False
+            print(f"❌ Unknown component: {component}")
+            return False
                 
         except Exception as e:
             print(f"❌ Uninstall failed: {e}")

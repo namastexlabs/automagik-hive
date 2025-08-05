@@ -10,24 +10,24 @@ Implements the UVX ./workspace command with:
 import os
 import subprocess
 import sys
-from pathlib import Path
-from typing import Optional, Dict, Any
 import time
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class WorkspaceManager:
     """Manage workspace startup and validation."""
 
     def __init__(self):
-        self.workspace_path: Optional[Path] = None
-        self.config: Dict[str, Any] = {}
+        self.workspace_path: Path | None = None
+        self.config: dict[str, Any] = {}
 
     def start_workspace_server(self, workspace_path: str) -> bool:
         """Start existing workspace server."""
         try:
             self.workspace_path = Path(workspace_path).resolve()
             
-            print(f"🚀 Starting Automagik Hive workspace...")
+            print("🚀 Starting Automagik Hive workspace...")
             print(f"📁 Workspace: {self.workspace_path}")
             print()
 
@@ -68,7 +68,7 @@ class WorkspaceManager:
             return False
 
         # Check for required files
-        required_files = ['.env']
+        required_files = [".env"]
         missing_files = []
         
         for file in required_files:
@@ -81,7 +81,7 @@ class WorkspaceManager:
             return False
 
         # Check for optional but recommended files
-        optional_files = ['.claude', '.mcp.json']
+        optional_files = [".claude", ".mcp.json"]
         missing_optional = []
         
         for file in optional_files:
@@ -97,7 +97,7 @@ class WorkspaceManager:
 
     def _load_configuration(self) -> bool:
         """Load workspace configuration from .env file."""
-        env_file = self.workspace_path / '.env'
+        env_file = self.workspace_path / ".env"
         
         if not env_file.exists():
             print("❌ Configuration file (.env) not found.")
@@ -106,13 +106,13 @@ class WorkspaceManager:
         try:
             # Parse .env file
             env_content = env_file.read_text()
-            for line in env_content.strip().split('\n'):
-                if '=' in line and not line.strip().startswith('#'):
-                    key, value = line.split('=', 1)
+            for line in env_content.strip().split("\n"):
+                if "=" in line and not line.strip().startswith("#"):
+                    key, value = line.split("=", 1)
                     self.config[key.strip()] = value.strip()
 
             # Validate required configuration
-            required_config = ['DATABASE_URL', 'HIVE_API_KEY']
+            required_config = ["DATABASE_URL", "HIVE_API_KEY"]
             missing_config = []
             
             for key in required_config:
@@ -133,7 +133,7 @@ class WorkspaceManager:
 
     def _validate_database(self) -> bool:
         """Validate PostgreSQL connection."""
-        database_url = self.config.get('DATABASE_URL')
+        database_url = self.config.get("DATABASE_URL")
         if not database_url:
             print("❌ DATABASE_URL not found in configuration.")
             return False
@@ -142,12 +142,12 @@ class WorkspaceManager:
 
         try:
             # Parse database URL
-            if not database_url.startswith('postgresql://'):
+            if not database_url.startswith("postgresql://"):
                 print("❌ Invalid DATABASE_URL format. Expected postgresql://...")
                 return False
 
             # Check if it's a Docker container
-            if 'localhost:5532' in database_url:
+            if "localhost:5532" in database_url:
                 if not self._check_postgres_container():
                     print("❌ PostgreSQL container not running.")
                     print("💡 Try starting the container or re-run initialization.")
@@ -171,15 +171,15 @@ class WorkspaceManager:
         try:
             # List running containers
             result = subprocess.run(
-                ['docker', 'ps', '--format', '{{.Names}}'], 
-                capture_output=True, text=True, timeout=10
+                ["docker", "ps", "--format", "{{.Names}}"],
+                check=False, capture_output=True, text=True, timeout=10
             )
             
             if result.returncode != 0:
                 return False
 
-            containers = result.stdout.strip().split('\n')
-            postgres_containers = [c for c in containers if 'postgres' in c.lower()]
+            containers = result.stdout.strip().split("\n")
+            postgres_containers = [c for c in containers if "postgres" in c.lower()]
             
             if not postgres_containers:
                 print("⚠️  No PostgreSQL containers found running.")
@@ -202,7 +202,7 @@ class WorkspaceManager:
             cursor = conn.cursor()
             
             # Test basic query
-            cursor.execute('SELECT version()')
+            cursor.execute("SELECT version()")
             version = cursor.fetchone()[0]
             print(f"✅ PostgreSQL version: {version.split(',')[0]}")
             
@@ -274,7 +274,7 @@ class WorkspaceManager:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(1)
-                result = s.connect_ex(('localhost', port))
+                result = s.connect_ex(("localhost", port))
                 return result != 0  # Port is available if connection fails
         except Exception:
             return False

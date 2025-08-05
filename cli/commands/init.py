@@ -8,23 +8,23 @@ Implements the UVX --init command with:
 """
 
 import os
+import secrets
+import shutil
+import string
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
-import shutil
-import secrets
-import string
+from typing import Any, Dict, Optional
 
 
 class InteractiveInitializer:
     """Interactive workspace initialization with Docker and API key setup."""
 
     def __init__(self):
-        self.workspace_path: Optional[Path] = None
-        self.config: Dict[str, Any] = {}
+        self.workspace_path: Path | None = None
+        self.config: dict[str, Any] = {}
 
-    def initialize_workspace(self, workspace_name: Optional[str] = None) -> bool:
+    def initialize_workspace(self, workspace_name: str | None = None) -> bool:
         """Main interactive initialization flow."""
         try:
             print("🧞 Welcome to Automagik Hive Interactive Setup!")
@@ -61,7 +61,7 @@ class InteractiveInitializer:
             print(f"❌ Setup failed: {e}")
             return False
 
-    def _setup_workspace_directory(self, workspace_name: Optional[str]) -> bool:
+    def _setup_workspace_directory(self, workspace_name: str | None) -> bool:
         """Interactive workspace directory setup."""
         print("📁 Workspace Directory:")
         
@@ -80,12 +80,12 @@ class InteractiveInitializer:
             if any(workspace_path.iterdir()):
                 print(f"⚠️  Directory '{workspace_path}' exists and is not empty.")
                 confirm = input("Continue and potentially overwrite files? [y/N]: ").strip().lower()
-                if confirm not in ['y', 'yes']:
+                if confirm not in ["y", "yes"]:
                     return False
         else:
             print(f"📁 Directory '{workspace_path}' doesn't exist.")
             confirm = input("🎯 Create workspace directory? [Y/n]: ").strip().lower()
-            if confirm in ['n', 'no']:
+            if confirm in ["n", "no"]:
                 return False
             try:
                 workspace_path.mkdir(parents=True, exist_ok=True)
@@ -118,18 +118,17 @@ class InteractiveInitializer:
             
             while True:
                 choice = input("Selection [1]: ").strip()
-                if choice in ['', '1']:
+                if choice in ["", "1"]:
                     if not self._install_docker():
                         return False
-                    self.config['database_type'] = 'docker'
+                    self.config["database_type"] = "docker"
                     break
-                elif choice == '2':
+                if choice == "2":
                     return self._setup_external_postgres()
-                else:
-                    print("Please choose 1 or 2.")
+                print("Please choose 1 or 2.")
         else:
             print("✅ Docker found and running")
-            self.config['database_type'] = 'docker'
+            self.config["database_type"] = "docker"
             self._setup_docker_postgres()
 
         return True
@@ -137,14 +136,14 @@ class InteractiveInitializer:
     def _check_docker(self) -> bool:
         """Check if Docker is available and running."""
         try:
-            result = subprocess.run(['docker', '--version'], 
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["docker", "--version"],
+                                  check=False, capture_output=True, text=True, timeout=10)
             if result.returncode != 0:
                 return False
                 
             # Check if daemon is running
-            result = subprocess.run(['docker', 'ps'], 
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["docker", "ps"],
+                                  check=False, capture_output=True, text=True, timeout=10)
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
@@ -156,16 +155,15 @@ class InteractiveInitializer:
         
         system = sys.platform.lower()
         
-        if system.startswith('linux'):
+        if system.startswith("linux"):
             return self._install_docker_linux()
-        elif system == 'darwin':
+        if system == "darwin":
             return self._install_docker_macos()
-        elif system.startswith('win'):
+        if system.startswith("win"):
             return self._install_docker_windows()
-        else:
-            print(f"❌ Unsupported platform: {system}")
-            print("Please install Docker manually and run setup again.")
-            return False
+        print(f"❌ Unsupported platform: {system}")
+        print("Please install Docker manually and run setup again.")
+        return False
 
     def _install_docker_linux(self) -> bool:
         """Install Docker on Linux."""
@@ -173,30 +171,30 @@ class InteractiveInitializer:
         
         try:
             # Try to detect distribution
-            if shutil.which('apt'):
+            if shutil.which("apt"):
                 print("📦 Installing Docker via apt...")
                 commands = [
-                    'sudo apt update',
-                    'sudo apt install -y docker.io',
-                    'sudo systemctl enable docker',
-                    'sudo systemctl start docker',
-                    'sudo usermod -aG docker $USER'
+                    "sudo apt update",
+                    "sudo apt install -y docker.io",
+                    "sudo systemctl enable docker",
+                    "sudo systemctl start docker",
+                    "sudo usermod -aG docker $USER"
                 ]
-            elif shutil.which('yum'):
+            elif shutil.which("yum"):
                 print("📦 Installing Docker via yum...")
                 commands = [
-                    'sudo yum install -y docker',
-                    'sudo systemctl enable docker',
-                    'sudo systemctl start docker',
-                    'sudo usermod -aG docker $USER'
+                    "sudo yum install -y docker",
+                    "sudo systemctl enable docker",
+                    "sudo systemctl start docker",
+                    "sudo usermod -aG docker $USER"
                 ]
-            elif shutil.which('pacman'):
+            elif shutil.which("pacman"):
                 print("📦 Installing Docker via pacman...")
                 commands = [
-                    'sudo pacman -S --noconfirm docker',
-                    'sudo systemctl enable docker',
-                    'sudo systemctl start docker',
-                    'sudo usermod -aG docker $USER'
+                    "sudo pacman -S --noconfirm docker",
+                    "sudo systemctl enable docker",
+                    "sudo systemctl start docker",
+                    "sudo usermod -aG docker $USER"
                 ]
             else:
                 print("❌ Could not detect package manager.")
@@ -205,7 +203,7 @@ class InteractiveInitializer:
             
             for cmd in commands:
                 print(f"Running: {cmd}")
-                result = subprocess.run(cmd, shell=True, text=True)
+                result = subprocess.run(cmd, check=False, shell=True, text=True)
                 if result.returncode != 0:
                     print(f"❌ Command failed: {cmd}")
                     return False
@@ -245,10 +243,10 @@ class InteractiveInitializer:
         print("🐘 Setting up PostgreSQL container...")
         
         # Generate secure PostgreSQL credentials
-        self.config['postgres_user'] = 'hive_' + self._generate_random_string(8)
-        self.config['postgres_password'] = self._generate_random_string(32)
-        self.config['postgres_db'] = 'hive'
-        self.config['postgres_port'] = '5532'
+        self.config["postgres_user"] = "hive_" + self._generate_random_string(8)
+        self.config["postgres_password"] = self._generate_random_string(32)
+        self.config["postgres_db"] = "hive"
+        self.config["postgres_port"] = "5532"
         
         print("✅ Generated secure PostgreSQL credentials")
 
@@ -274,12 +272,12 @@ class InteractiveInitializer:
             return False
         
         self.config.update({
-            'database_type': 'external',
-            'postgres_host': host,
-            'postgres_port': port,
-            'postgres_db': database,
-            'postgres_user': username,
-            'postgres_password': password
+            "database_type": "external",
+            "postgres_host": host,
+            "postgres_port": port,
+            "postgres_db": database,
+            "postgres_user": username,
+            "postgres_password": password
         })
         
         # Test connection
@@ -287,9 +285,8 @@ class InteractiveInitializer:
         if self._test_postgres_connection():
             print("✅ Connected to PostgreSQL")
             return True
-        else:
-            print("❌ Connection failed")
-            return False
+        print("❌ Connection failed")
+        return False
 
     def _test_postgres_connection(self) -> bool:
         """Test PostgreSQL connection."""
@@ -297,11 +294,11 @@ class InteractiveInitializer:
             import psycopg2
             
             conn_params = {
-                'host': self.config['postgres_host'],
-                'port': self.config['postgres_port'],
-                'database': self.config['postgres_db'],
-                'user': self.config['postgres_user'],
-                'password': self.config['postgres_password']
+                "host": self.config["postgres_host"],
+                "port": self.config["postgres_port"],
+                "database": self.config["postgres_db"],
+                "user": self.config["postgres_user"],
+                "password": self.config["postgres_password"]
             }
             
             conn = psycopg2.connect(**conn_params)
@@ -335,15 +332,15 @@ class InteractiveInitializer:
         print()
         
         api_keys = {
-            'openai': "🤖 OpenAI API Key",
-            'anthropic': "🧠 Anthropic API Key", 
-            'google': "💎 Google Gemini API Key"
+            "openai": "🤖 OpenAI API Key",
+            "anthropic": "🧠 Anthropic API Key",
+            "google": "💎 Google Gemini API Key"
         }
         
         for key, prompt in api_keys.items():
             value = input(f"{prompt}: ").strip()
             if value:
-                self.config[f'{key}_api_key'] = value
+                self.config[f"{key}_api_key"] = value
 
     def _confirm_setup(self) -> bool:
         """Show setup summary and get confirmation."""
@@ -351,19 +348,19 @@ class InteractiveInitializer:
         print("📋 Setup Summary:")
         print(f"- Workspace: {self.workspace_path}")
         
-        if self.config['database_type'] == 'docker':
+        if self.config["database_type"] == "docker":
             print("- Database: Built-in Docker PostgreSQL + pgvector")
         else:
             print(f"- Database: External PostgreSQL ({self.config['postgres_host']}:{self.config['postgres_port']})")
         
         print("- Templates: .env, .claude/, .mcp.json")
         
-        api_count = sum(1 for key in self.config.keys() if key.endswith('_api_key'))
+        api_count = sum(1 for key in self.config.keys() if key.endswith("_api_key"))
         print(f"- API Keys: {api_count} configured")
         print()
         
         confirm = input("🎯 Create Automagik Hive workspace? [Y/n]: ").strip().lower()
-        return confirm not in ['n', 'no']
+        return confirm not in ["n", "no"]
 
     def _create_workspace(self) -> bool:
         """Create the actual workspace."""
@@ -379,7 +376,7 @@ class InteractiveInitializer:
             print("✅ Created .env with API keys + database URL")
             
             # Start PostgreSQL container if using Docker
-            if self.config['database_type'] == 'docker':
+            if self.config["database_type"] == "docker":
                 self._start_postgres_container()
                 print("✅ Started PostgreSQL container (port 5532)")
             
@@ -406,7 +403,7 @@ class InteractiveInitializer:
         env_content = []
         
         # Database configuration
-        if self.config['database_type'] == 'docker':
+        if self.config["database_type"] == "docker":
             database_url = (
                 f"postgresql://{self.config['postgres_user']}:"
                 f"{self.config['postgres_password']}@localhost:"
@@ -424,37 +421,37 @@ class InteractiveInitializer:
         
         # API keys
         for key, value in self.config.items():
-            if key.endswith('_api_key'):
-                env_key = key.upper().replace('_API_KEY', '_API_KEY')
+            if key.endswith("_api_key"):
+                env_key = key.upper().replace("_API_KEY", "_API_KEY")
                 env_content.append(f"{env_key}={value}")
         
         # Write .env file
-        env_file = self.workspace_path / '.env'
-        env_file.write_text('\n'.join(env_content) + '\n')
+        env_file = self.workspace_path / ".env"
+        env_file.write_text("\n".join(env_content) + "\n")
 
     def _start_postgres_container(self):
         """Start PostgreSQL Docker container."""
         container_name = "automagik-hive-postgres"
         
         # Stop and remove existing container
-        subprocess.run(['docker', 'stop', container_name], 
-                      capture_output=True, text=True)
-        subprocess.run(['docker', 'rm', container_name], 
-                      capture_output=True, text=True)
+        subprocess.run(["docker", "stop", container_name],
+                      check=False, capture_output=True, text=True)
+        subprocess.run(["docker", "rm", container_name],
+                      check=False, capture_output=True, text=True)
         
         # Start new container
         cmd = [
-            'docker', 'run', '-d',
-            '--name', container_name,
-            '-p', f"{self.config['postgres_port']}:5432",
-            '-e', f"POSTGRES_USER={self.config['postgres_user']}",
-            '-e', f"POSTGRES_PASSWORD={self.config['postgres_password']}",
-            '-e', f"POSTGRES_DB={self.config['postgres_db']}",
-            '-v', f"{self.workspace_path}/data/postgres:/var/lib/postgresql/data",
-            'agnohq/pgvector:16'
+            "docker", "run", "-d",
+            "--name", container_name,
+            "-p", f"{self.config['postgres_port']}:5432",
+            "-e", f"POSTGRES_USER={self.config['postgres_user']}",
+            "-e", f"POSTGRES_PASSWORD={self.config['postgres_password']}",
+            "-e", f"POSTGRES_DB={self.config['postgres_db']}",
+            "-v", f"{self.workspace_path}/data/postgres:/var/lib/postgresql/data",
+            "agnohq/pgvector:16"
         ]
         
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
         if result.returncode != 0:
             raise Exception(f"Failed to start PostgreSQL container: {result.stderr}")
 
@@ -464,19 +461,19 @@ class InteractiveInitializer:
         try:
             import automagik_hive
             package_path = Path(automagik_hive.__file__).parent
-            claude_source = package_path / '.claude'
+            claude_source = package_path / ".claude"
         except ImportError:
             # Fallback to current directory
-            claude_source = Path(__file__).parent.parent.parent / '.claude'
+            claude_source = Path(__file__).parent.parent.parent / ".claude"
         
         if claude_source.exists():
-            claude_dest = self.workspace_path / '.claude'
+            claude_dest = self.workspace_path / ".claude"
             if claude_dest.exists():
                 shutil.rmtree(claude_dest)
             shutil.copytree(claude_source, claude_dest)
         else:
             print("⚠️  .claude folder not found - creating minimal structure")
-            (self.workspace_path / '.claude').mkdir(exist_ok=True)
+            (self.workspace_path / ".claude").mkdir(exist_ok=True)
 
     def _create_mcp_config(self):
         """Create .mcp.json configuration."""
@@ -495,18 +492,18 @@ class InteractiveInitializer:
             }
         }
         
-        mcp_file = self.workspace_path / '.mcp.json'
+        mcp_file = self.workspace_path / ".mcp.json"
         import json
         mcp_file.write_text(json.dumps(mcp_config, indent=2))
 
     def _create_directory_structure(self):
         """Create basic workspace directory structure."""
         directories = [
-            'ai/agents',
-            'ai/teams', 
-            'ai/workflows',
-            'ai/tools',
-            'data/postgres'
+            "ai/agents",
+            "ai/teams",
+            "ai/workflows",
+            "ai/tools",
+            "data/postgres"
         ]
         
         for directory in directories:
@@ -521,11 +518,11 @@ class InteractiveInitializer:
         print()
         print("💡 Your workspace includes:")
         print("- PostgreSQL database with pgvector")
-        print("- Complete .claude/ agent ecosystem")  
+        print("- Complete .claude/ agent ecosystem")
         print("- MCP server configuration")
         print("- AI component structure (agents, teams, workflows, tools)")
 
     def _generate_random_string(self, length: int) -> str:
         """Generate cryptographically secure random string."""
         alphabet = string.ascii_letters + string.digits
-        return ''.join(secrets.choice(alphabet) for _ in range(length))
+        return "".join(secrets.choice(alphabet) for _ in range(length))

@@ -161,7 +161,7 @@ class PostgreSQLService:
         result = self.postgres_manager.validate_container_health(str(workspace))
         return bool(result)
 
-    def get_postgres_connection_info(self, workspace_path: str) -> Dict[str, Any] | None:
+    def get_postgres_connection_info(self, workspace_path: str) -> dict[str, Any] | None:
         """Get PostgreSQL connection information.
 
         Args:

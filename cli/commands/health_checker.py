@@ -1215,7 +1215,7 @@ class HealthChecker:
             self.console.print(f"❌ [red]Health check failed:[/red] {e}")
             return 1
 
-    # CLI compatibility methods  
+    # CLI compatibility methods
     def check_health(self, component: str = "all") -> dict[str, Any]:
         """Check health of specified component (CLI compatibility wrapper).
         
@@ -1227,7 +1227,7 @@ class HealthChecker:
         """
         try:
             results = self.comprehensive_health_check(component)
-            return {comp: {"status": result.status, "message": result.message} 
+            return {comp: {"status": result.status, "message": result.message}
                     for comp, result in results.items()}
         except Exception as e:
             logger.error(f"Health check failed: {e}")
@@ -1246,7 +1246,7 @@ class HealthChecker:
         # Create simple health display
         table = Table(title="Health Check Results")
         table.add_column("Component", style="cyan")
-        table.add_column("Status", style="green") 
+        table.add_column("Status", style="green")
         table.add_column("Message", style="white")
         
         for component, result in health_results.items():
