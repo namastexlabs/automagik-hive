@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.1.0a53"
+version = "0.1.0a54"
 description = "Automagik Multi-Agent Framework - Extensible Agent Creation System"
 readme = "README.md"
 license = "MIT"
@@ -17,7 +17,14 @@ requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = [ "bandit>=1.8.6", "pathlib>=1.0.1", "pip-audit>=2.9.0", "safety>=3.6.0", "twine>=6.1.0", "types-pyyaml>=6.0.12.20250516",]
+dev = [
+ "bandit>=1.8.6",
+ "pathlib>=1.0.1",
+ "pip-audit>=2.9.0",
+ "safety>=3.6.0",
+ "twine>=6.1.0",
+ "types-pyyaml>=6.0.12.20250516",
+]
 
 [project.optional-dependencies]
 dev = [ "pytest>=8.4.1", "pytest-asyncio>=1.0.0", "pytest-cov>=6.2.1", "pytest-mock>=3.14.1", "coverage>=7.9.2", "faker>=37.4.2", "ruff>=0.12.3", "mypy>=1.16.1", "langwatch-scenario>=0.7.8",]
