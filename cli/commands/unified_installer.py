@@ -40,6 +40,44 @@ class UnifiedInstaller:
         self.init_commands = InteractiveInitializer()
         self.postgres_commands = PostgreSQLCommands()
         self.workflow_orchestrator = WorkflowOrchestrator()
+        self._docker_compose_cmd = self._detect_docker_compose_command()
+
+    def _detect_docker_compose_command(self) -> list[str]:
+        """Detect which Docker Compose command to use.
+        
+        Returns:
+            List of command parts: either ["docker", "compose"] or ["docker-compose"]
+        """
+        try:
+            # Try modern 'docker compose' first (Docker v2+)
+            result = subprocess.run(
+                ["docker", "compose", "version"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                return ["docker", "compose"]
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+
+        try:
+            # Fallback to legacy 'docker-compose'
+            result = subprocess.run(
+                ["docker-compose", "--version"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                return ["docker-compose"]
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+
+        # Default to modern command if detection fails
+        return ["docker", "compose"]
 
     def install_with_workflow(self, component: str = "all") -> bool:
         """Execute full install → start → health → workspace workflow.
@@ -523,11 +561,14 @@ services:
   hive-agent-api:
     image: python:3.12-slim
     profiles: ["agent", "all"]
+    user: "1000:1000"
     depends_on:
       hive-agent-postgres:
         condition: service_healthy
     environment:
       HIVE_DATABASE_URL: postgresql://hive:hive@hive-agent-postgres:5432/hive_agent
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/uv-cache
     ports:
       - "38886:8000"
     networks:
@@ -535,7 +576,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    command: ["uv", "run", "python", "-m", "api.serve"]
+    command: ["sh", "-c", "pip install uv && /tmp/.local/bin/uv sync --no-dev && /tmp/.local/bin/uv add psycopg2-binary && /tmp/.local/bin/uv run python -m api.serve"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 30s
@@ -565,11 +606,14 @@ services:
   hive-genie-api:
     image: python:3.12-slim
     profiles: ["genie", "all"]
+    user: "1000:1000"
     depends_on:
       hive-genie-postgres:
         condition: service_healthy
     environment:
       HIVE_DATABASE_URL: postgresql://hive:hive@hive-genie-postgres:5432/hive_genie
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/uv-cache
     ports:
       - "48886:8000"
     networks:
@@ -577,7 +621,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    command: ["uv", "run", "python", "-m", "api.serve"]
+    command: ["sh", "-c", "pip install uv && /tmp/.local/bin/uv sync --no-dev && /tmp/.local/bin/uv add psycopg2-binary && /tmp/.local/bin/uv run python -m api.serve"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 30s
@@ -607,16 +651,16 @@ services:
         try:
             self.console.print(f"🚀 Starting {component} services...")
 
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                "docker-compose.unified.yml",
+                "--profile",
+                component,
+                "up",
+                "-d",
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    "docker-compose.unified.yml",
-                    "--profile",
-                    component,
-                    "up",
-                    "-d",
-                ],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=False,

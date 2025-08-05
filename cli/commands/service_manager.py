@@ -22,6 +22,44 @@ class ServiceManager:
         self.docker_service = DockerService()
         self.postgres_service = PostgreSQLService()
         self.workspace_process = None
+        self._docker_compose_cmd = self._detect_docker_compose_command()
+
+    def _detect_docker_compose_command(self) -> list[str]:
+        """Detect which Docker Compose command to use.
+        
+        Returns:
+            List of command parts: either ["docker", "compose"] or ["docker-compose"]
+        """
+        try:
+            # Try modern 'docker compose' first (Docker v2+)
+            result = subprocess.run(
+                ["docker", "compose", "version"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                return ["docker", "compose"]
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+
+        try:
+            # Fallback to legacy 'docker-compose'
+            result = subprocess.run(
+                ["docker-compose", "--version"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                return ["docker-compose"]
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+
+        # Default to modern command if detection fails
+        return ["docker", "compose"]
 
     def start_services(self, component: str = "all") -> bool:
         """Start specified services with proper dependency ordering.
@@ -275,16 +313,16 @@ class ServiceManager:
 
         try:
             # Start agent profile services
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "agent",
+                "up",
+                "-d",
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "agent",
-                    "up",
-                    "-d",
-                ],
+                cmd,
                 check=False,
                 capture_output=True,
                 text=True,
@@ -303,15 +341,15 @@ class ServiceManager:
 
         try:
             # Stop agent profile services
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "agent",
+                "down",
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "agent",
-                    "down",
-                ],
+                cmd,
                 check=False,
                 capture_output=True,
                 text=True,
@@ -332,16 +370,16 @@ class ServiceManager:
 
         try:
             # Start genie profile services
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "genie",
+                "up",
+                "-d",
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "genie",
-                    "up",
-                    "-d",
-                ],
+                cmd,
                 check=False,
                 capture_output=True,
                 text=True,
@@ -360,15 +398,15 @@ class ServiceManager:
 
         try:
             # Stop genie profile services
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "genie",
+                "down",
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "genie",
-                    "down",
-                ],
+                cmd,
                 check=False,
                 capture_output=True,
                 text=True,
@@ -505,17 +543,17 @@ class ServiceManager:
             return False
 
         try:
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "agent",
+                "logs",
+                "--tail",
+                str(lines),
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "agent",
-                    "logs",
-                    "--tail",
-                    str(lines),
-                ],
+                cmd,
                 check=False,
                 capture_output=False,
                 text=True,
@@ -533,17 +571,17 @@ class ServiceManager:
             return False
 
         try:
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "genie",
+                "logs",
+                "--tail",
+                str(lines),
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "genie",
-                    "logs",
-                    "--tail",
-                    str(lines),
-                ],
+                cmd,
                 check=False,
                 capture_output=False,
                 text=True,
@@ -585,17 +623,17 @@ class ServiceManager:
 
         try:
             # Remove containers and volumes
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "agent",
+                "down",
+                "-v",
+                "--remove-orphans",
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "agent",
-                    "down",
-                    "-v",
-                    "--remove-orphans",
-                ],
+                cmd,
                 check=False,
                 capture_output=True,
                 text=True,
@@ -616,17 +654,17 @@ class ServiceManager:
 
         try:
             # Remove containers and volumes
+            cmd = self._docker_compose_cmd + [
+                "-f",
+                str(compose_file),
+                "--profile",
+                "genie",
+                "down",
+                "-v",
+                "--remove-orphans",
+            ]
             result = subprocess.run(
-                [
-                    "docker-compose",
-                    "-f",
-                    str(compose_file),
-                    "--profile",
-                    "genie",
-                    "down",
-                    "-v",
-                    "--remove-orphans",
-                ],
+                cmd,
                 check=False,
                 capture_output=True,
                 text=True,

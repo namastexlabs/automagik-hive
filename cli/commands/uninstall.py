@@ -630,7 +630,7 @@ class UninstallCommands:
         try:
             if component == "all":
                 # Full global uninstall
-                return self.uninstall_global_installation()
+                return self.uninstall_global()
             if component == "workspace":
                 # Just remove current workspace
                 return self.uninstall_current_workspace()

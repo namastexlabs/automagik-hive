@@ -1,4 +1,4 @@
-# Automagik Hive Docker Compose - AGENT Profile
+# Automagik Hive Docker Compose - ALL Profile
 version: '3.8'
 
 networks:
@@ -57,11 +57,14 @@ services:
   hive-agent-api:
     image: python:3.12-slim
     profiles: ["agent", "all"]
+    user: "1000:1000"
     depends_on:
       hive-agent-postgres:
         condition: service_healthy
     environment:
       HIVE_DATABASE_URL: postgresql://hive:hive@hive-agent-postgres:5432/hive_agent
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/uv-cache
     ports:
       - "38886:8000"
     networks:
@@ -69,7 +72,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    command: ["uv", "run", "python", "-m", "api.serve"]
+    command: ["sh", "-c", "pip install uv && /tmp/.local/bin/uv sync --no-dev && /tmp/.local/bin/uv add psycopg2-binary && /tmp/.local/bin/uv run python -m api.serve"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 30s
@@ -99,11 +102,14 @@ services:
   hive-genie-api:
     image: python:3.12-slim
     profiles: ["genie", "all"]
+    user: "1000:1000"
     depends_on:
       hive-genie-postgres:
         condition: service_healthy
     environment:
       HIVE_DATABASE_URL: postgresql://hive:hive@hive-genie-postgres:5432/hive_genie
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/uv-cache
     ports:
       - "48886:8000"
     networks:
@@ -111,7 +117,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    command: ["uv", "run", "python", "-m", "api.serve"]
+    command: ["sh", "-c", "pip install uv && /tmp/.local/bin/uv sync --no-dev && /tmp/.local/bin/uv add psycopg2-binary && /tmp/.local/bin/uv run python -m api.serve"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 30s
