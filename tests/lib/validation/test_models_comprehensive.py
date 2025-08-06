@@ -8,12 +8,12 @@ NOTE: Due to Pydantic V1 production code with V2 environment, using compatibilit
 import pytest
 from pydantic import ValidationError
 
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockAgentRequest as AgentRequest,
 )
 
 # Import mock models due to Pydantic V1/V2 compatibility issues
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockBaseValidatedRequest as BaseValidatedRequest,
 )
 from tests.lib_validation.test_models_compatibility_layer import (

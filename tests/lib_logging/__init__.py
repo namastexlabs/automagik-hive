@@ -1,1 +1,0 @@
-"""Logging library test package."""

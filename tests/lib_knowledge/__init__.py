@@ -1,1 +1,0 @@
-"""Knowledge library test package."""

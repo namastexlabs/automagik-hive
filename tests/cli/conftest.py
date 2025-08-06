@@ -43,10 +43,7 @@ except ImportError:
 
 
 # Test environment configuration
-try:
-    pytest_plugins = ["pytest_mock"]
-except ImportError:
-    pytest_plugins = []
+# Note: pytest_plugins moved to root conftest.py to fix collection error
 
 
 class TestEnvironmentManager:

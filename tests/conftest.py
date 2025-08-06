@@ -23,6 +23,7 @@ from httpx import ASGITransport, AsyncClient
 pytest_plugins = [
     "tests.fixtures.config_fixtures",
     "tests.fixtures.service_fixtures",
+    "pytest_mock",  # Moved from tests/cli/conftest.py to fix collection error
 ]
 
 # Set test environment before importing API modules
