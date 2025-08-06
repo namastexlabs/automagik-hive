@@ -270,20 +270,19 @@ tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_mo
 **🤖 LLM-optimized commands - unified CLI interface (no prompts, automation-friendly):**
 ```bash
 # Agent environment setup and management
-uv run automagik-hive --install agent     # Setup agent Docker services (ports 38886/35532) - no prompts
-uv run automagik-hive --start agent       # Start agent services in background
-uv run automagik-hive --stop agent        # Stop agent services  
-uv run automagik-hive --restart agent     # Restart agent services
-uv run automagik-hive --status agent      # Check agent service status
-uv run automagik-hive --health agent      # Health check agent services
-uv run automagik-hive --logs agent 100    # View agent logs (100 lines)
+make install-agent     # Setup agent Docker services (ports 38886/35532) - unified config from .env.example
+make agent             # Start agent services via Docker containers
+make agent-stop        # Stop agent services  
+make agent-restart     # Restart agent services
+make agent-status      # Check agent service status
+make agent-logs        # View agent logs from Docker containers
 
 # Your isolated agent environment:
-# - Agent API: http://localhost:38886
-# - Agent DB: postgresql://localhost:35532  
-# - Agent config: .env.agent (auto-generated)
-# - Isolated containers: hive-agent-postgres, hive-agent-api
-# - Completely separate from user environments
+# - Agent API: http://localhost:38886 (Docker container)
+# - Agent DB: postgresql://localhost:35532 (Docker container)
+# - Agent config: docker/agent/.env (auto-generated from .env.example)
+# - Isolated containers: hive-postgres-agent, hive-agent-dev-server
+# - Unified credential system with main .env
 # - Zero prompts or confirmations for automation compatibility
 ```
 

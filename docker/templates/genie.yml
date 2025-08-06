@@ -15,7 +15,7 @@
 services:
   # Genie PostgreSQL Database with pgvector extension
   hive-postgres-genie:
-    image: pgvector/pgvector:pg16
+    image: agnohq/pgvector:16
     container_name: hive-postgres-genie
     restart: unless-stopped
     ports:

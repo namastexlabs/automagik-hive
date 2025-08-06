@@ -1,7 +1,7 @@
 services:
   # PostgreSQL Database Service
   agent-postgres:
-    image: pgvector/pgvector:pg16
+    image: agnohq/pgvector:16
     container_name: hive-agent-postgres
     restart: unless-stopped
     ports:

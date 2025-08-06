@@ -780,7 +780,29 @@ class CredentialService:
                         # Extract base from main API key (remove hive_ prefix)
                         api_key_base = api_key[5:]  # Remove "hive_" prefix
             
+            # Validate credentials exist and are not placeholders
             if postgres_user and postgres_password and api_key_base:
+                # Check for common placeholder patterns
+                placeholder_patterns = [
+                    'your-secure-password-here',
+                    'your-hive-api-key-here',
+                    'your-password',
+                    'change-me',
+                    'placeholder',
+                    'example',
+                    'template',
+                    'replace-this'
+                ]
+                
+                # Check if any credential contains placeholder patterns
+                if any(pattern in postgres_password.lower() for pattern in placeholder_patterns):
+                    logger.info("Detected placeholder password in main .env file - forcing credential regeneration")
+                    return None
+                    
+                if any(pattern in api_key_base.lower() for pattern in placeholder_patterns):
+                    logger.info("Detected placeholder API key in main .env file - forcing credential regeneration")
+                    return None
+                
                 return {
                     "postgres_user": postgres_user,
                     "postgres_password": postgres_password,

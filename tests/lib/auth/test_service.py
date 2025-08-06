@@ -189,3 +189,80 @@ HIVE_ENABLE_METRICS=true
         # Should have updated credentials
         assert "HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@localhost:5532/hive" in env_content
         assert "HIVE_API_KEY=hive_test_base_key" in env_content
+
+    def test_extract_existing_master_credentials_rejects_placeholders(self, tmp_path):
+        """Test that _extract_existing_master_credentials rejects placeholder passwords."""
+        # Create .env with placeholder credentials
+        env_file = tmp_path / ".env"
+        env_file.write_text("""
+HIVE_DATABASE_URL=postgresql+psycopg://hive_user:your-secure-password-here@localhost:5532/hive
+HIVE_API_KEY=hive_real_api_key_base
+""")
+        
+        service = CredentialService(project_root=tmp_path)
+        
+        # Should return None because password is a placeholder
+        credentials = service._extract_existing_master_credentials()
+        
+        assert credentials is None
+
+    def test_extract_existing_master_credentials_rejects_placeholder_api_key(self, tmp_path):
+        """Test that _extract_existing_master_credentials rejects placeholder API keys."""
+        # Create .env with placeholder API key
+        env_file = tmp_path / ".env"
+        env_file.write_text("""
+HIVE_DATABASE_URL=postgresql+psycopg://hive_user:real_secure_password@localhost:5532/hive
+HIVE_API_KEY=hive_your-hive-api-key-here
+""")
+        
+        service = CredentialService(project_root=tmp_path)
+        
+        # Should return None because API key is a placeholder
+        credentials = service._extract_existing_master_credentials()
+        
+        assert credentials is None
+
+    def test_extract_existing_master_credentials_accepts_valid_credentials(self, tmp_path):
+        """Test that _extract_existing_master_credentials accepts valid non-placeholder credentials."""
+        # Create .env with valid credentials
+        env_file = tmp_path / ".env"
+        env_file.write_text("""
+HIVE_DATABASE_URL=postgresql+psycopg://hive_user:real_secure_password123@localhost:5532/hive
+HIVE_API_KEY=hive_AFtzRGH5r01t2l291d4sivlizsd6EgYcfpUAW57te-I
+""")
+        
+        service = CredentialService(project_root=tmp_path)
+        
+        # Should return valid credentials
+        credentials = service._extract_existing_master_credentials()
+        
+        assert credentials is not None
+        assert credentials["postgres_user"] == "hive_user"
+        assert credentials["postgres_password"] == "real_secure_password123"
+        assert credentials["api_key_base"] == "AFtzRGH5r01t2l291d4sivlizsd6EgYcfpUAW57te-I"
+
+    def test_extract_existing_master_credentials_detects_various_placeholders(self, tmp_path):
+        """Test that _extract_existing_master_credentials detects various placeholder patterns."""
+        placeholder_passwords = [
+            "your-secure-password-here",
+            "your-password", 
+            "change-me",
+            "placeholder",
+            "example",
+            "template",
+            "replace-this"
+        ]
+        
+        for placeholder in placeholder_passwords:
+            env_file = tmp_path / ".env"
+            env_file.write_text(f"""
+HIVE_DATABASE_URL=postgresql+psycopg://hive_user:{placeholder}@localhost:5532/hive
+HIVE_API_KEY=hive_real_api_key_base
+""")
+            
+            service = CredentialService(project_root=tmp_path)
+            
+            # Should return None for each placeholder pattern
+            credentials = service._extract_existing_master_credentials()
+            
+            assert credentials is None, f"Placeholder '{placeholder}' was not detected"

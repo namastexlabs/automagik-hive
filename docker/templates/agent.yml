@@ -15,7 +15,7 @@
 services:
   # Agent PostgreSQL Database with pgvector extension
   hive-postgres-agent:
-    image: pgvector/pgvector:pg16
+    image: agnohq/pgvector:16
     container_name: hive-postgres-agent
     restart: unless-stopped
     ports:
