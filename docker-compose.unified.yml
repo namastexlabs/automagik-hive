@@ -1,4 +1,4 @@
-# Automagik Hive Docker Compose - ALL Profile
+# Automagik Hive Docker Compose - AGENT Profile
 version: '3.8'
 
 networks:

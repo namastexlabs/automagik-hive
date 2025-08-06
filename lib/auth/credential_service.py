@@ -2,28 +2,66 @@
 """
 Credential Management Service for Automagik Hive.
 
-Integrates existing Makefile credential generation patterns with CLI system.
-Provides secure credential generation for PostgreSQL, API keys, and database URLs.
+SINGLE SOURCE OF TRUTH for all credential generation across the entire system.
+Generates credentials ONCE during install and populates ALL 3 modes consistently.
+
+DESIGN PRINCIPLES:
+1. Generate credentials ONCE during installation
+2. Share same DB user/password across all modes (security best practice)  
+3. Different ports per mode: workspace(5532/8886), agent(35532/38886), genie(48532/48886)
+4. Consistent API keys but with mode-specific prefixes for identification
+5. Template-based environment file generation
+6. Backward compatibility with existing Makefile and CLI installers
 """
 
 import secrets
 from pathlib import Path
+from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 from lib.logging import logger
 
 
 class CredentialService:
-    """Service for generating and managing secure credentials."""
+    """SINGLE SOURCE OF TRUTH for all Automagik Hive credential management."""
+    
+    # Default base ports (can be overridden by .env)
+    DEFAULT_BASE_PORTS = {"db": 5532, "api": 8886}
+    
+    # Port prefixes for each mode
+    PORT_PREFIXES = {
+        "workspace": "",      # No prefix - use base ports
+        "agent": "3",         # 3 prefix: 5532 → 35532, 8886 → 38886  
+        "genie": "4"          # 4 prefix: 5532 → 45532, 8886 → 48886
+    }
+    
+    # Database names per mode
+    DATABASES = {
+        "workspace": "hive",
+        "agent": "hive_agent", 
+        "genie": "hive_genie"
+    }
 
-    def __init__(self, env_file: Path | None = None) -> None:
+    def __init__(self, project_root: Path = None, env_file: Path = None) -> None:
         """
         Initialize credential service.
 
         Args:
-            env_file: Path to environment file (defaults to .env)
+            project_root: Project root directory (defaults to current working directory)
+            env_file: Path to environment file (defaults to .env) - for backward compatibility
         """
-        self.env_file = env_file or Path(".env")
+        # Handle backward compatibility
+        if env_file is not None and project_root is None:
+            # Legacy usage: CredentialService(env_file=Path(".env"))
+            self.project_root = env_file.parent if env_file.parent != Path(".") else Path.cwd()
+            self.master_env_file = env_file
+        else:
+            # New usage: CredentialService(project_root=Path("/path"))
+            self.project_root = project_root or Path.cwd()
+            self.master_env_file = self.project_root / ".env"
+        
+        # Legacy support for existing API
+        self.env_file = self.master_env_file
         self.postgres_user_var = "POSTGRES_USER"
         self.postgres_password_var = "POSTGRES_PASSWORD"
         self.postgres_db_var = "POSTGRES_DB"
@@ -489,3 +527,385 @@ class CredentialService:
         )
 
         return complete_creds
+
+    def extract_base_ports_from_env(self) -> Dict[str, int]:
+        """
+        Extract base ports from .env file or return defaults.
+        
+        Returns:
+            Dict containing base ports for db and api
+        """
+        base_ports = self.DEFAULT_BASE_PORTS.copy()
+        
+        if not self.master_env_file.exists():
+            logger.debug("No .env file found, using default base ports", defaults=base_ports)
+            return base_ports
+        
+        try:
+            env_content = self.master_env_file.read_text()
+            
+            for line in env_content.splitlines():
+                line = line.strip()
+                if line.startswith("HIVE_DATABASE_URL="):
+                    url = line.split("=", 1)[1].strip()
+                    if "postgresql+psycopg://" in url:
+                        parsed = urlparse(url)
+                        if parsed.port:
+                            base_ports["db"] = parsed.port
+                            logger.debug("Found custom database port in .env", port=parsed.port)
+                            
+                elif line.startswith("HIVE_API_PORT="):
+                    port = line.split("=", 1)[1].strip()
+                    try:
+                        base_ports["api"] = int(port)
+                        logger.debug("Found custom API port in .env", port=port)
+                    except ValueError:
+                        logger.warning("Invalid API port in .env, using default", invalid_port=port)
+                        
+        except Exception as e:
+            logger.error("Failed to extract base ports from .env", error=str(e))
+            
+        logger.info("Base ports extracted", ports=base_ports)
+        return base_ports
+    
+    def calculate_ports(self, mode: str, base_ports: Dict[str, int]) -> Dict[str, int]:
+        """
+        Calculate ports by adding prefix to base ports.
+        
+        Args:
+            mode: Mode name (workspace, agent, genie)
+            base_ports: Base ports dict with 'db' and 'api' keys
+            
+        Returns:
+            Dict containing calculated ports for the mode
+        """
+        if mode not in self.PORT_PREFIXES:
+            raise ValueError(f"Unknown mode: {mode}. Valid modes: {list(self.PORT_PREFIXES.keys())}")
+            
+        prefix = self.PORT_PREFIXES[mode]
+        
+        if not prefix:
+            # No prefix for workspace mode
+            return base_ports.copy()
+        
+        # Add prefix to port numbers
+        calculated_ports = {
+            "db": int(f"{prefix}{base_ports['db']}"),
+            "api": int(f"{prefix}{base_ports['api']}")
+        }
+        
+        logger.debug("Calculated ports for mode", mode=mode, prefix=prefix, ports=calculated_ports)
+        return calculated_ports
+    
+    def get_deployment_ports(self) -> Dict[str, Dict[str, int]]:
+        """
+        Get deployment ports for all modes using dynamic base ports.
+        
+        Returns:
+            Dict mapping mode names to their port configurations
+        """
+        base_ports = self.extract_base_ports_from_env()
+        
+        deployment_ports = {}
+        for mode in self.PORT_PREFIXES:
+            deployment_ports[mode] = self.calculate_ports(mode, base_ports)
+            
+        logger.info("Deployment ports calculated", ports=deployment_ports)
+        return deployment_ports
+    
+    def derive_mode_credentials(
+        self, 
+        master_credentials: Dict[str, str], 
+        mode: str
+    ) -> Dict[str, str]:
+        """
+        Derive mode-specific credentials from master credentials.
+        
+        SHARED: user, password (security best practice - same DB user across environments)
+        DIFFERENT: ports, database names, API key prefixes
+        
+        Args:
+            master_credentials: Master credentials from generate_master_credentials()
+            mode: Mode name (workspace, agent, genie)
+            
+        Returns:
+            Dict containing mode-specific credentials
+        """
+        if mode not in self.PORT_PREFIXES:
+            raise ValueError(f"Unknown mode: {mode}. Valid modes: {list(self.PORT_PREFIXES.keys())}")
+            
+        # Calculate ports dynamically
+        base_ports = self.extract_base_ports_from_env()
+        mode_ports = self.calculate_ports(mode, base_ports)
+        database_name = self.DATABASES[mode]
+        
+        # Create mode-specific API key with identifier prefix
+        api_key = f"hive_{mode}_{master_credentials['api_key_base']}"
+        
+        # Create database URL with mode-specific port and database
+        database_url = (
+            f"postgresql+psycopg://{master_credentials['postgres_user']}:"
+            f"{master_credentials['postgres_password']}@localhost:"
+            f"{mode_ports['db']}/{database_name}"
+        )
+        
+        mode_credentials = {
+            "postgres_user": master_credentials["postgres_user"],
+            "postgres_password": master_credentials["postgres_password"],
+            "postgres_database": database_name,
+            "postgres_host": "localhost",
+            "postgres_port": str(mode_ports["db"]),
+            "api_port": str(mode_ports["api"]),
+            "api_key": api_key,
+            "database_url": database_url,
+            "mode": mode
+        }
+        
+        logger.info(
+            f"Derived {mode} credentials from master",
+            database=database_name,
+            db_port=mode_ports["db"],
+            api_port=mode_ports["api"]
+        )
+        
+        return mode_credentials
+    
+    def generate_master_credentials(self) -> Dict[str, str]:
+        """
+        Generate the SINGLE SET of master credentials used across all modes.
+        
+        This is the SINGLE SOURCE OF TRUTH - called ONCE during installation.
+        
+        Returns:
+            Dict containing master credentials that will be shared across all modes
+        """
+        logger.info("Generating MASTER credentials (single source of truth)")
+        
+        # Generate secure master credentials
+        master_user = self._generate_secure_token(16, safe_chars=True)
+        master_password = self._generate_secure_token(16, safe_chars=True)
+        master_api_key_base = secrets.token_urlsafe(32)
+        
+        master_credentials = {
+            "postgres_user": master_user,
+            "postgres_password": master_password,
+            "api_key_base": master_api_key_base,
+        }
+        
+        logger.info(
+            "Master credentials generated",
+            user_length=len(master_user),
+            password_length=len(master_password),
+            api_key_base_length=len(master_api_key_base)
+        )
+        
+        return master_credentials
+    
+    def install_all_modes(
+        self, 
+        modes: List[str] = None,
+        force_regenerate: bool = False
+    ) -> Dict[str, Dict[str, str]]:
+        """
+        MAIN INSTALLATION FUNCTION: Install credentials for all specified modes.
+        
+        This is the primary entry point called by both Makefile and CLI installers.
+        Generates master credentials ONCE and derives mode-specific configs.
+        
+        Args:
+            modes: List of modes to install (defaults to all: workspace, agent, genie)
+            force_regenerate: Force regeneration even if credentials exist
+            
+        Returns:
+            Dict mapping mode names to their credential sets
+        """
+        modes = modes or list(self.PORT_PREFIXES.keys())
+        logger.info(f"Installing credentials for modes: {modes}")
+        
+        # Check if master credentials exist and should be reused
+        existing_master = self._extract_existing_master_credentials()
+        
+        if existing_master and not force_regenerate:
+            logger.info("Reusing existing master credentials")
+            master_credentials = existing_master
+        else:
+            logger.info("Generating new master credentials")
+            master_credentials = self.generate_master_credentials()
+            
+            # Save master credentials to main .env file
+            self._save_master_credentials(master_credentials)
+        
+        # Generate credentials for each requested mode
+        all_mode_credentials = {}
+        
+        for mode in modes:
+            logger.info(f"Setting up {mode} mode...")
+            
+            # Derive mode-specific credentials
+            mode_creds = self.derive_mode_credentials(master_credentials, mode)
+            all_mode_credentials[mode] = mode_creds
+            
+            # Create environment file for this mode
+            self._create_mode_env_file(mode, mode_creds)
+        
+        logger.info(f"Credential installation complete for modes: {modes}")
+        return all_mode_credentials
+        
+    def _extract_existing_master_credentials(self) -> Optional[Dict[str, str]]:
+        """Extract existing master credentials from main .env file."""
+        if not self.master_env_file.exists():
+            return None
+            
+        try:
+            env_content = self.master_env_file.read_text()
+            
+            # Extract database URL
+            postgres_user = None
+            postgres_password = None
+            api_key_base = None
+            
+            for line in env_content.splitlines():
+                line = line.strip()
+                if line.startswith("HIVE_DATABASE_URL="):
+                    url = line.split("=", 1)[1].strip()
+                    if "postgresql+psycopg://" in url:
+                        parsed = urlparse(url)
+                        if parsed.username and parsed.password:
+                            postgres_user = parsed.username
+                            postgres_password = parsed.password
+                            
+                elif line.startswith("HIVE_API_KEY="):
+                    api_key = line.split("=", 1)[1].strip()
+                    if api_key.startswith("hive_"):
+                        # Extract base from main API key (remove hive_ prefix)
+                        api_key_base = api_key[5:]  # Remove "hive_" prefix
+            
+            if postgres_user and postgres_password and api_key_base:
+                return {
+                    "postgres_user": postgres_user,
+                    "postgres_password": postgres_password,
+                    "api_key_base": api_key_base
+                }
+                
+        except Exception as e:
+            logger.error("Failed to extract existing master credentials", error=str(e))
+            
+        return None
+        
+    def _save_master_credentials(self, master_credentials: Dict[str, str]) -> None:
+        """Save master credentials to main .env file."""
+        logger.info("Saving master credentials to main .env file")
+        
+        # Create main .env from example if it doesn't exist
+        if not self.master_env_file.exists():
+            env_example = self.project_root / ".env.example"
+            if env_example.exists():
+                logger.info("Creating .env from .env.example")
+                self.master_env_file.write_text(env_example.read_text())
+            else:
+                logger.info("Creating new .env file")
+                self.master_env_file.write_text(self._get_base_env_template())
+        
+        # Update credentials in .env file
+        env_content = self.master_env_file.read_text()
+        lines = env_content.splitlines()
+        
+        # Generate main workspace credentials for main .env
+        main_db_url = (
+            f"postgresql+psycopg://{master_credentials['postgres_user']}:"
+            f"{master_credentials['postgres_password']}@localhost:5532/hive"
+        )
+        main_api_key = f"hive_{master_credentials['api_key_base']}"
+        
+        # Update lines
+        updated_lines = []
+        db_url_updated = False
+        api_key_updated = False
+        
+        for line in lines:
+            if line.startswith("HIVE_DATABASE_URL="):
+                updated_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
+                db_url_updated = True
+            elif line.startswith("HIVE_API_KEY="):
+                updated_lines.append(f"HIVE_API_KEY={main_api_key}")
+                api_key_updated = True
+            else:
+                updated_lines.append(line)
+        
+        # Add missing entries
+        if not db_url_updated:
+            updated_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
+        if not api_key_updated:
+            updated_lines.append(f"HIVE_API_KEY={main_api_key}")
+            
+        self.master_env_file.write_text("\n".join(updated_lines) + "\n")
+        logger.info("Master credentials saved to .env")
+        
+    def _get_base_env_template(self) -> str:
+        """Get base environment template for new installations."""
+        return """# =========================================================================
+# ⚡ AUTOMAGIK HIVE - MAIN CONFIGURATION
+# =========================================================================
+HIVE_ENVIRONMENT=development
+HIVE_LOG_LEVEL=INFO
+AGNO_LOG_LEVEL=INFO
+
+HIVE_API_HOST=0.0.0.0
+HIVE_API_PORT=8886
+HIVE_API_WORKERS=1
+
+# Generated by Credential Service
+HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive
+HIVE_API_KEY=hive_generated_key
+
+HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:8886
+HIVE_AUTH_DISABLED=true
+HIVE_DEV_MODE=true
+HIVE_DEFAULT_MODEL=gpt-4.1-mini
+"""
+        
+    def _create_mode_env_file(self, mode: str, credentials: Dict[str, str]) -> None:
+        """Create environment file for a specific mode."""
+        if mode == "workspace":
+            # Workspace uses main .env file (already created by _save_master_credentials)
+            logger.info("Workspace uses main .env file (already created)")
+            return
+            
+        env_file = self.project_root / f".env.{mode}"
+        logger.info(f"Creating {mode} environment file", file=str(env_file))
+        
+        # Create mode-specific .env file content
+        env_content = f"""# =========================================================================
+# ⚡ AUTOMAGIK HIVE - {mode.upper()} MODE CONFIGURATION
+# =========================================================================
+HIVE_ENVIRONMENT=development
+HIVE_LOG_LEVEL=INFO
+AGNO_LOG_LEVEL=INFO
+
+# Server & API Configuration
+HIVE_API_HOST=0.0.0.0
+HIVE_API_PORT={credentials['api_port']}
+HIVE_API_WORKERS=1
+
+# Database Configuration (Shared Credentials)
+HIVE_DATABASE_URL={credentials['database_url']}
+POSTGRES_HOST={credentials['postgres_host']}
+POSTGRES_PORT=5432
+POSTGRES_USER={credentials['postgres_user']}
+POSTGRES_PASSWORD={credentials['postgres_password']}
+POSTGRES_DB={credentials['postgres_database']}
+
+# Security & Authentication
+HIVE_API_KEY={credentials['api_key']}
+HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:{credentials['api_port']}
+HIVE_AUTH_DISABLED=true
+
+# Development Mode Settings
+HIVE_DEV_MODE=true
+HIVE_ENABLE_METRICS=true
+HIVE_AGNO_MONITOR=false
+HIVE_DEFAULT_MODEL=gpt-4.1-mini
+"""
+        
+        env_file.write_text(env_content)
+        logger.info(f"Created {mode} environment file", file=str(env_file))

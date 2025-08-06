@@ -25,27 +25,58 @@ Create a single credential generation point during installation that populates a
 - Store in memory/temp during installation
 - Populate all environment files from single source
 
-**T1.1: Port Configuration Matrix**
+**T1.1: Port Configuration with Prefix System**
 ```python
-DEPLOYMENT_PORTS = {
-    "workspace": {"db": 5532, "api": 8886},
-    "agent": {"db": 35532, "api": 38886},
-    "genie": {"db": 48532, "api": 48886}
+# Base ports from .env (default: 5532, 8886)
+BASE_PORTS = {"db": 5532, "api": 8886}
+
+# Prefix system for port calculation
+PORT_PREFIXES = {
+    "workspace": "",      # No prefix - use base ports
+    "agent": "3",         # 3 prefix: 5532 → 35532, 8886 → 38886
+    "genie": "4"          # 4 prefix: 5532 → 45532, 8886 → 48886
 }
+
+def calculate_ports(mode: str, base_ports: dict) -> dict:
+    """Calculate ports by adding prefix to base ports."""
+    prefix = PORT_PREFIXES[mode]
+    if not prefix:
+        return base_ports
+    
+    return {
+        "db": int(f"{prefix}{base_ports['db']}"),
+        "api": int(f"{prefix}{base_ports['api']}")
+    }
+
+# Dynamic port calculation
+DEPLOYMENT_PORTS = {
+    mode: calculate_ports(mode, BASE_PORTS) 
+    for mode in PORT_PREFIXES.keys()
+}
+# Result: workspace(5532,8886), agent(35532,38886), genie(45532,48886)
 ```
 
-**T1.2: Single Credential Generation**
+**T1.2: Single Credential Generation with Dynamic Ports**
 ```python
-# Generate once during install
+# Read base ports from .env (or use defaults)
+base_ports = extract_base_ports_from_env() or {"db": 5532, "api": 8886}
+
+# Generate credentials once during install
 credentials = {
     "postgres_user": generate_secure_token(),
-    "postgres_password": generate_secure_token(),
+    "postgres_password": generate_secure_token(), 
     "api_key": generate_hive_api_key()
 }
 
-# Apply to all modes with different ports
-for mode, ports in DEPLOYMENT_PORTS.items():
+# Apply to all modes with prefix-calculated ports
+for mode in PORT_PREFIXES.keys():
+    ports = calculate_ports(mode, base_ports)
     create_env_file(mode, credentials, ports)
+    
+# Example result:
+# workspace: DB=5532, API=8886 (base ports)
+# agent: DB=35532, API=38886 (prefix "3" + base)
+# genie: DB=45532, API=48886 (prefix "4" + base)
 ```
 
 ### Phase 2: Clean Environment File Organization

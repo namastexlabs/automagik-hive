@@ -42,7 +42,7 @@ class DockerManager:
         }
         
         # Initialize credential service for secure credential generation
-        self.credential_service = CredentialService()
+        self.credential_service = CredentialService(project_root=self.project_root)
     
     def _run_command(self, cmd: List[str], capture_output: bool = False) -> Optional[str]:
         """Run shell command."""
@@ -140,17 +140,14 @@ class DockerManager:
             # Fallback on any error
             return "agnohq/pgvector:16"
     
-    def _create_postgres_container(self, component: str) -> bool:
-        """Create PostgreSQL container with secure generated credentials."""
+    def _create_postgres_container(self, component: str, credentials: dict) -> bool:
+        """Create PostgreSQL container with provided credentials."""
         container_name = self.CONTAINERS[component]["postgres"]
         port = self.PORTS[component]["postgres"]
         
         if self._container_exists(container_name):
             print(f"✅ PostgreSQL container {container_name} already exists")
             return True
-        
-        # Generate or retrieve secure credentials
-        credentials = self._get_or_generate_credentials(component)
         
         postgres_image = self._get_postgres_image(component)
         print(f"🐘 Creating PostgreSQL container {container_name} with {postgres_image}...")
@@ -170,8 +167,8 @@ class DockerManager:
         
         return self._run_command(cmd) is None
     
-    def _create_api_container(self, component: str) -> bool:
-        """Create API container."""
+    def _create_api_container(self, component: str, credentials: dict) -> bool:
+        """Create API container with provided credentials."""
         container_name = self.CONTAINERS[component]["api"]
         port = self.PORTS[component]["api"]
         
@@ -181,11 +178,11 @@ class DockerManager:
         
         print(f"🚀 Creating API container {container_name}...")
         
-        # Create .env file for component with secure credentials
+        # Create .env file for component with provided credentials
         docker_folder = self.project_root / "docker" / component
+        docker_folder.mkdir(parents=True, exist_ok=True)
         env_file = docker_folder / ".env"
         if not env_file.exists():
-            credentials = self._get_or_generate_credentials(component)
             
             env_content = f"""# Automagik Hive {component.title()} Container Environment
 # Docker-specific configuration
@@ -248,7 +245,7 @@ PYTHONDONTWRITEBYTECODE=1
         
         return self._run_command(cmd) is None
     
-    def _get_or_generate_credentials(self, component: str) -> dict[str, str]:
+    def _get_or_generate_credentials_legacy(self, component: str) -> dict[str, str]:
         """Get existing or generate new secure credentials for component."""
         docker_folder = self.project_root / "docker" / component  
         env_file_path = docker_folder / ".env"
@@ -332,16 +329,15 @@ PYTHONDONTWRITEBYTECODE=1
         
         return complete_creds
     
-    def _create_workspace_env_file(self, component: str) -> None:
-        """Create .env file for workspace component (no API container)."""
+    def _create_workspace_env_file(self, component: str, credentials: dict) -> None:
+        """Create .env file for workspace component with provided credentials."""
         docker_folder = self.project_root / "docker" / "main"
+        docker_folder.mkdir(parents=True, exist_ok=True)
         env_file = docker_folder / ".env"
         
         if env_file.exists():
             print(f"✅ {env_file} already exists")
             return
-        
-        credentials = self._get_or_generate_credentials(component)
         
         # Main container environment variables
         env_content = f"""# Automagik Hive Main Container Environment  
@@ -380,9 +376,18 @@ PYTHONDONTWRITEBYTECODE=1
         
         print(f"🚀 Installing {component}...")
         
-        self._create_network()
-        
+        # Generate unified credentials ONCE for all modes
         components = ["agent", "workspace"] if component == "all" else [component]
+        
+        print("🔐 Generating unified credentials for all deployment modes...")
+        try:
+            all_credentials = self.credential_service.install_all_modes(components)
+            print("✅ Unified credentials generated successfully")
+        except Exception as e:
+            print(f"❌ Failed to generate credentials: {e}")
+            return False
+        
+        self._create_network()
         
         for comp in components:
             if comp not in self.CONTAINERS:
@@ -390,9 +395,10 @@ PYTHONDONTWRITEBYTECODE=1
                 return False
             
             print(f"\n📦 Setting up {comp} component...")
+            comp_credentials = all_credentials[comp]
             
             # Create PostgreSQL container
-            if not self._create_postgres_container(comp):
+            if not self._create_postgres_container(comp, comp_credentials):
                 print(f"❌ Failed to create PostgreSQL for {comp}")
                 return False
             
@@ -408,12 +414,12 @@ PYTHONDONTWRITEBYTECODE=1
             
             # Create API container only for non-workspace components
             if comp != "workspace":
-                if not self._create_api_container(comp):
+                if not self._create_api_container(comp, comp_credentials):
                     print(f"❌ Failed to create API for {comp}")
                     return False
             else:
                 # For workspace, create .env file even though no API container
-                self._create_workspace_env_file(comp)
+                self._create_workspace_env_file(comp, comp_credentials)
                 print("📝 Workspace app will run locally with: uv run automagik-hive /path/to/workspace")
         
         print(f"\n✅ {component} installation complete!")
