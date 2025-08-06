@@ -15,9 +15,8 @@ WORKDIR /app
 # Copy dependency files and README for package build
 COPY pyproject.toml uv.lock README.md ./
 
-# Install dependencies with UV sync (production only, no dev dependencies) + BuildKit cache
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+# Install dependencies with UV sync (production only, no dev dependencies)
+RUN uv sync --frozen --no-dev
 
 # ============================================================================
 # STAGE 2: Production Runtime

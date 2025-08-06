@@ -43,18 +43,13 @@ services:
     container_name: hive-agents
     restart: unless-stopped
     ports:
-      - "${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"
+      - "8886:8886"
+    env_file:
+      - .env
     environment:
       # Database connection with psycopg3 syntax
-      - HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-ai}:${POSTGRES_PASSWORD:-ai}@postgres:5432/${POSTGRES_DB:-hive}
+      - HIVE_DATABASE_URL=postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB
       - RUNTIME_ENV=prd
-      - HIVE_LOG_LEVEL=info
-      - HIVE_API_HOST=0.0.0.0
-      - HIVE_API_PORT=${HIVE_API_PORT:-8886}
-      - HIVE_API_WORKERS=${API_WORKERS:-4}
-      # Performance optimizations
-      - PYTHONUNBUFFERED=1
-      - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - app_logs:/app/logs
       - app_data:/app/data
@@ -64,7 +59,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8886/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -75,12 +70,10 @@ services:
     image: agnohq/pgvector:16
     container_name: hive-postgres
     restart: unless-stopped
-    user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"
+    user: "1000:1000"
+    env_file:
+      - .env
     environment:
-      # Extract from URL: postgresql+psycopg://user:pass@host:port/db
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD  
-      - POSTGRES_DB=hive
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
@@ -94,7 +87,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai}"]
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
       interval: 10s
       timeout: 5s
       retries: 5

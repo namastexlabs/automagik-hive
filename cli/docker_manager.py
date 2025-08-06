@@ -7,6 +7,8 @@ import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from lib.auth.credential_service import CredentialService
+
 
 class DockerManager:
     """Simple Docker operations manager."""
@@ -18,15 +20,16 @@ class DockerManager:
             "api": "hive-agent-api"
         },
         "workspace": {
-            "postgres": "hive-workspace-postgres", 
-            "api": "hive-workspace-api"
+            "postgres": "hive-workspace-postgres"
+            # Note: workspace app runs locally, no API container
         }
     }
     
     # Port mappings
     PORTS = {
+        "workspace": {"postgres": 5532},
         "agent": {"postgres": 35532, "api": 38886},
-        "workspace": {"postgres": 35533, "api": 38887}
+        "genie": {"postgres": 45532, "api": 48886}
     }
     
     def __init__(self):
@@ -34,9 +37,12 @@ class DockerManager:
         
         # Map component to docker template file
         self.template_files = {
-            "workspace": self.project_root / "docker/templates/workspace.yml",
-            "agent": self.project_root / "docker/templates/agent.yml"
+            "workspace": self.project_root / "docker/main/docker-compose.yml",
+            "agent": self.project_root / "docker/agent/docker-compose.yml"
         }
+        
+        # Initialize credential service for secure credential generation
+        self.credential_service = CredentialService()
     
     def _run_command(self, cmd: List[str], capture_output: bool = False) -> Optional[str]:
         """Run shell command."""
@@ -97,6 +103,15 @@ class DockerManager:
             print("🔗 Creating Docker network...")
             self._run_command(["docker", "network", "create", "hive-network"])
     
+    def _get_dockerfile_path(self, component: str) -> Path:
+        """Get the Dockerfile path for a component."""
+        dockerfile_mapping = {
+            "workspace": self.project_root / "docker" / "main" / "Dockerfile",
+            "agent": self.project_root / "docker" / "agent" / "Dockerfile.api"
+        }
+        
+        return dockerfile_mapping.get(component, self.project_root / "docker" / "main" / "Dockerfile")
+    
     def _get_postgres_image(self, component: str) -> str:
         """Get PostgreSQL image from docker compose template."""
         template_file = self.template_files.get(component)
@@ -126,7 +141,7 @@ class DockerManager:
             return "agnohq/pgvector:16"
     
     def _create_postgres_container(self, component: str) -> bool:
-        """Create PostgreSQL container."""
+        """Create PostgreSQL container with secure generated credentials."""
         container_name = self.CONTAINERS[component]["postgres"]
         port = self.PORTS[component]["postgres"]
         
@@ -134,17 +149,21 @@ class DockerManager:
             print(f"✅ PostgreSQL container {container_name} already exists")
             return True
         
+        # Generate or retrieve secure credentials
+        credentials = self._get_or_generate_credentials(component)
+        
         postgres_image = self._get_postgres_image(component)
         print(f"🐘 Creating PostgreSQL container {container_name} with {postgres_image}...")
+        print(f"🔐 Using secure credentials (user: {credentials['postgres_user'][:4]}...)")
         
         cmd = [
             "docker", "run", "-d",
             "--name", container_name,
             "--network", "hive-network",
             "-p", f"{port}:5432",
-            "-e", f"POSTGRES_DB=hive_{component}",
-            "-e", "POSTGRES_USER=hive_user",
-            "-e", "POSTGRES_PASSWORD=hive_password",
+            "-e", f"POSTGRES_DB={credentials['postgres_database']}",
+            "-e", f"POSTGRES_USER={credentials['postgres_user']}",
+            "-e", f"POSTGRES_PASSWORD={credentials['postgres_password']}",
             "-v", f"hive_{component}_data:/var/lib/postgresql/data",
             postgres_image
         ]
@@ -162,25 +181,58 @@ class DockerManager:
         
         print(f"🚀 Creating API container {container_name}...")
         
-        # Create .env file for component
-        env_file = self.project_root / f".env.{component}"
+        # Create .env file for component with secure credentials
+        docker_folder = self.project_root / "docker" / component
+        env_file = docker_folder / ".env"
         if not env_file.exists():
-            env_content = f"""# Automagik Hive {component.title()} Environment
-DATABASE_URL=postgresql://hive_user:hive_password@hive-{component}-postgres:5432/hive_{component}
-HIVE_API_KEY=hive_{component}_api_key_123
-PORT={port}
-ENVIRONMENT={component}
+            credentials = self._get_or_generate_credentials(component)
+            
+            env_content = f"""# Automagik Hive {component.title()} Container Environment
+# Docker-specific configuration
+POSTGRES_HOST=postgres-{component}
+POSTGRES_PORT=5432
+POSTGRES_DB={credentials['postgres_database']}
+POSTGRES_USER={credentials['postgres_user']}  
+POSTGRES_PASSWORD={credentials['postgres_password']}
+
+HIVE_API_HOST=0.0.0.0
+HIVE_API_PORT={port}
+HIVE_API_WORKERS=2
+HIVE_ENVIRONMENT=development
+
+HIVE_API_KEY={credentials['api_key']}
+
+HIVE_LOG_LEVEL=info
+PYTHONUNBUFFERED=1
+PYTHONDONTWRITEBYTECODE=1
 """
             env_file.write_text(env_content)
-            print(f"📝 Created {env_file}")
+            print(f"📝 Created {env_file} with secure credentials")
+            print(f"🔑 API Key: {credentials['api_key']}")
         
         # Build image if it doesn't exist
         images = self._run_command(["docker", "images", "--filter", f"reference=hive-{component}", "--format", "{{.Repository}}"], capture_output=True)
         if f"hive-{component}" not in (images or ""):
             print(f"🏗️ Building {component} image...")
-            if not self._run_command(["docker", "build", "-t", f"hive-{component}", "."]):
+            
+            # Determine the correct Dockerfile location based on component
+            dockerfile_path = self._get_dockerfile_path(component)
+            
+            if not dockerfile_path.exists():
+                print(f"❌ Dockerfile not found at {dockerfile_path}")
+                return False
+            
+            # Use project root as build context so Dockerfile can access all source files
+            build_cmd = ["docker", "build", "-f", str(dockerfile_path), "-t", f"hive-{component}", str(self.project_root)]
+            self._run_command(build_cmd)  # Don't fail on warnings, check if image exists instead
+            
+            # Verify the image was built successfully
+            images_after = self._run_command(["docker", "images", "--filter", f"reference=hive-{component}", "--format", "{{.Repository}}"], capture_output=True)
+            if f"hive-{component}" not in (images_after or ""):
                 print(f"❌ Failed to build {component} image")
                 return False
+            else:
+                print(f"✅ Successfully built {component} image")
         
         cmd = [
             "docker", "run", "-d",
@@ -195,6 +247,127 @@ ENVIRONMENT={component}
         ]
         
         return self._run_command(cmd) is None
+    
+    def _get_or_generate_credentials(self, component: str) -> dict[str, str]:
+        """Get existing or generate new secure credentials for component."""
+        docker_folder = self.project_root / "docker" / component  
+        env_file_path = docker_folder / ".env"
+        
+        # Configure credential service for component-specific .env file
+        component_credential_service = CredentialService(env_file_path)
+        
+        # Check if credentials already exist
+        existing_creds = component_credential_service.extract_postgres_credentials_from_env()
+        existing_api_key = component_credential_service.extract_hive_api_key_from_env()
+        
+        if existing_creds.get("user") and existing_creds.get("password") and existing_api_key:
+            print(f"✅ Using existing secure credentials for {component}")
+            return {
+                "postgres_user": existing_creds["user"],
+                "postgres_password": existing_creds["password"],
+                "postgres_database": existing_creds.get("database", f"hive_{component}"),
+                "postgres_host": existing_creds.get("host", "localhost"),
+                "postgres_port": str(self.PORTS[component]["postgres"]),
+                "api_key": existing_api_key
+            }
+        
+        # Generate new secure credentials
+        print(f"🔐 Generating new secure credentials for {component}...")
+        
+        # Determine database configuration based on component
+        postgres_port = self.PORTS[component]["postgres"]
+        postgres_database = f"hive_{component}"
+        
+        # For agent component, try to reuse workspace credentials if available
+        if component == "agent":
+            workspace_env = self.project_root / "docker" / "main" / ".env"
+            if workspace_env.exists():
+                workspace_service = CredentialService(workspace_env)
+                workspace_creds = workspace_service.extract_postgres_credentials_from_env()
+                if workspace_creds.get("user") and workspace_creds.get("password"):
+                    print("🔗 Reusing workspace credentials for agent (unified approach)")
+                    api_key = component_credential_service.generate_hive_api_key()
+                    
+                    # Build credentials in format expected by CredentialService
+                    postgres_creds_for_save = {
+                        "user": workspace_creds["user"],
+                        "password": workspace_creds["password"],
+                        "database": postgres_database,
+                        "host": "localhost",
+                        "port": str(postgres_port),
+                        "url": f"postgresql+psycopg://{workspace_creds['user']}:{workspace_creds['password']}@localhost:{postgres_port}/{postgres_database}"
+                    }
+                    
+                    # Save to component .env file
+                    component_credential_service.save_credentials_to_env(
+                        postgres_creds=postgres_creds_for_save,
+                        api_key=api_key,
+                        create_if_missing=True
+                    )
+                    
+                    # Return in format expected by DockerManager
+                    credentials = {
+                        "postgres_user": workspace_creds["user"],
+                        "postgres_password": workspace_creds["password"],
+                        "postgres_database": postgres_database,
+                        "postgres_host": "localhost",
+                        "postgres_port": str(postgres_port),
+                        "api_key": api_key
+                    }
+                    return credentials
+        
+        # Generate completely new credentials
+        complete_creds = component_credential_service.setup_complete_credentials(
+            postgres_host="localhost",
+            postgres_port=postgres_port,
+            postgres_database=postgres_database
+        )
+        
+        print(f"✅ Generated secure credentials for {component}")
+        print(f"   Database: {complete_creds['postgres_database']}")
+        print(f"   Port: {complete_creds['postgres_port']}")
+        print(f"   User: {complete_creds['postgres_user'][:4]}... (16 chars)")
+        print(f"   Password: ****... (16 chars)")
+        print(f"   API Key: {complete_creds['api_key'][:12]}... ({len(complete_creds['api_key'])} chars)")
+        
+        return complete_creds
+    
+    def _create_workspace_env_file(self, component: str) -> None:
+        """Create .env file for workspace component (no API container)."""
+        docker_folder = self.project_root / "docker" / "main"
+        env_file = docker_folder / ".env"
+        
+        if env_file.exists():
+            print(f"✅ {env_file} already exists")
+            return
+        
+        credentials = self._get_or_generate_credentials(component)
+        
+        # Main container environment variables
+        env_content = f"""# Automagik Hive Main Container Environment  
+# Docker-specific configuration
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB={credentials['postgres_database']}
+POSTGRES_USER={credentials['postgres_user']}
+POSTGRES_PASSWORD={credentials['postgres_password']}
+
+HIVE_API_HOST=0.0.0.0
+HIVE_API_PORT=8886
+HIVE_API_WORKERS=4
+HIVE_ENVIRONMENT=development
+
+HIVE_API_KEY={credentials['api_key']}
+
+HIVE_LOG_LEVEL=info
+PYTHONUNBUFFERED=1
+PYTHONDONTWRITEBYTECODE=1
+"""
+        
+        env_file.write_text(env_content)
+        print(f"📝 Created {env_file} with secure credentials")
+        print(f"🔑 API Key: {credentials['api_key']}")
+        print(f"🗄️ Database: {credentials['postgres_database']} on port {credentials['postgres_port']}")
     
     def install(self, component: str) -> bool:
         """Install component containers."""
@@ -233,10 +406,15 @@ ENVIRONMENT={component}
             print("⏳ Waiting for PostgreSQL to be ready...")
             time.sleep(5)
             
-            # Create API container
-            if not self._create_api_container(comp):
-                print(f"❌ Failed to create API for {comp}")
-                return False
+            # Create API container only for non-workspace components
+            if comp != "workspace":
+                if not self._create_api_container(comp):
+                    print(f"❌ Failed to create API for {comp}")
+                    return False
+            else:
+                # For workspace, create .env file even though no API container
+                self._create_workspace_env_file(comp)
+                print("📝 Workspace app will run locally with: uv run automagik-hive /path/to/workspace")
         
         print(f"\n✅ {component} installation complete!")
         return True

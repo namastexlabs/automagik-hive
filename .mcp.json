@@ -31,7 +31,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql+psycopg://hive_user:your-secure-password-here@localhost:35532/hive_agent"
+        "postgresql+psycopg://MxJ9wp3kqy96GNbS:TC4Jthcno1r2dhKI@localhost:35532/hive_agent"
       ]
     },
     "automagik-hive": {
@@ -43,7 +43,7 @@
       ],
       "env": {
         "HIVE_API_BASE_URL": "http://localhost:38886",
-        "HIVE_API_KEY": "your-hive-api-key-here",
+        "HIVE_API_KEY": "hive_2RO67C5PL2Xl-TsevD8iYWZJo5Pk3LdVHlwiNs6ZkAw",
         "HIVE_TIMEOUT": "300"
       }
     },
