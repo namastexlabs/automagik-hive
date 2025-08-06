@@ -34,7 +34,7 @@ services:
     image: agnohq/pgvector:16
     container_name: hive-postgres-agent
     restart: unless-stopped
-    user: "1000:1000"  # Match host user permissions (namastex:namastex)
+    user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"  # Dynamic user permissions (cross-platform)
     ports:
       - "35532:5432"  # Agent PostgreSQL port
     env_file:
