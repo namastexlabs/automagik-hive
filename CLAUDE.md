@@ -270,13 +270,13 @@ tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_mo
 **🤖 LLM-optimized commands - unified CLI interface (no prompts, automation-friendly):**
 ```bash
 # Agent environment setup and management
-uvx automagik-hive --install agent     # Setup agent Docker services (ports 38886/35532) - no prompts
-uvx automagik-hive --start agent       # Start agent services in background
-uvx automagik-hive --stop agent        # Stop agent services  
-uvx automagik-hive --restart agent     # Restart agent services
-uvx automagik-hive --status agent      # Check agent service status
-uvx automagik-hive --health agent      # Health check agent services
-uvx automagik-hive --logs agent 100    # View agent logs (100 lines)
+uv run automagik-hive --install agent     # Setup agent Docker services (ports 38886/35532) - no prompts
+uv run automagik-hive --start agent       # Start agent services in background
+uv run automagik-hive --stop agent        # Stop agent services  
+uv run automagik-hive --restart agent     # Restart agent services
+uv run automagik-hive --status agent      # Check agent service status
+uv run automagik-hive --health agent      # Health check agent services
+uv run automagik-hive --logs agent 100    # View agent logs (100 lines)
 
 # Your isolated agent environment:
 # - Agent API: http://localhost:38886
@@ -354,8 +354,8 @@ SELECT * FROM agno.knowledge_base WHERE meta_data->>'domain' = 'development';
 **Integration with Development Workflow**:
 ```bash
 # Before using MCP tools, ensure agent environment is running
-uvx automagik-hive --status agent    # Check if services are up
-uvx automagik-hive --logs agent 50   # Debug any connection issues
+uv run automagik-hive --status agent    # Check if services are up
+uv run automagik-hive --logs agent 50   # Debug any connection issues
 
 # After tool usage that modifies configs
 # CRITICAL: Bump version in YAML files per our rules
@@ -371,7 +371,7 @@ cat .env.agent | grep HIVE_API_KEY  # Verify API key exists
 
 **Connection Failures**:
 ```bash
-uvx automagik-hive --restart agent   # Clean restart of services
+uv run automagik-hive --restart agent   # Clean restart of services
 # Remember: Agent API on http://localhost:38886
 ```
 

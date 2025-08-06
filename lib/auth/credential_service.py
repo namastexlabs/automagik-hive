@@ -796,14 +796,14 @@ class CredentialService:
         """Save master credentials to main .env file."""
         logger.info("Saving master credentials to main .env file")
         
-        # Create main .env from example if it doesn't exist
+        # Create main .env from .env.example if it doesn't exist
         if not self.master_env_file.exists():
             env_example = self.project_root / ".env.example"
             if env_example.exists():
-                logger.info("Creating .env from .env.example")
+                logger.info("Creating .env from .env.example template with comprehensive configuration")
                 self.master_env_file.write_text(env_example.read_text())
             else:
-                logger.info("Creating new .env file")
+                logger.warning(".env.example not found, creating minimal .env file")
                 self.master_env_file.write_text(self._get_base_env_template())
         
         # Update credentials in .env file
@@ -839,7 +839,7 @@ class CredentialService:
             updated_lines.append(f"HIVE_API_KEY={main_api_key}")
             
         self.master_env_file.write_text("\n".join(updated_lines) + "\n")
-        logger.info("Master credentials saved to .env")
+        logger.info("Master credentials saved to .env with all comprehensive configurations from template")
         
     def _get_base_env_template(self) -> str:
         """Get base environment template for new installations."""

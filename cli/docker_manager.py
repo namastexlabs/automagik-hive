@@ -619,6 +619,31 @@ PYTHONDONTWRITEBYTECODE=1
         if db_choice == "1":
             print("✅ Using PostgreSQL + pgvector container for Hive")
             use_container = True
+            
+            # Check if database already exists and prompt for reuse/recreate
+            postgres_container = self.CONTAINERS["workspace"]["postgres"]
+            if self._container_exists(postgres_container):
+                print(f"\n🗄️ Found existing database container: {postgres_container}")
+                while True:
+                    db_action = input("Do you want to (r)euse existing database or (c)recreate it? (r/c): ").strip().lower()
+                    if db_action in ["r", "reuse", "c", "create", "recreate"]:
+                        break
+                    print("❌ Please enter r/reuse or c/create.")
+                
+                if db_action in ["c", "create", "recreate"]:
+                    print("🗑️ Recreating database container...")
+                    # Stop and remove existing container
+                    if self._container_running(postgres_container):
+                        self._run_command(["docker", "stop", postgres_container])
+                    self._run_command(["docker", "rm", postgres_container])
+                    # Remove volume to ensure clean slate
+                    volume_name = "hive_workspace_data"
+                    volumes = self._run_command(["docker", "volume", "ls", "--filter", f"name={volume_name}", "--format", "{{.Name}}"], capture_output=True)
+                    if volume_name in (volumes or ""):
+                        print("🗑️ Removing existing database volume...")
+                        self._run_command(["docker", "volume", "rm", volume_name])
+                else:
+                    print("♻️ Reusing existing database container")
         else:
             print("📝 Custom database setup for Hive")
             use_container = False
