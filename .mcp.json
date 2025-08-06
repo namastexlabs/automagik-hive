@@ -43,7 +43,7 @@
       ],
       "env": {
         "HIVE_API_BASE_URL": "http://localhost:38886",
-        "HIVE_API_KEY": "hive_agent_8W_Klko3KCv6-cpodClZBeBC-iCg9ktL9RHHPPCRPVI",
+        "HIVE_API_KEY": "hive_8W_Klko3KCv6-cpodClZBeBC-iCg9ktL9RHHPPCRPVI",
         "HIVE_TIMEOUT": "300"
       }
     },
