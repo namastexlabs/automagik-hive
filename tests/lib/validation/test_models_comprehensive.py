@@ -16,22 +16,22 @@ from tests.lib.validation.test_models_compatibility_layer import (
 from tests.lib.validation.test_models_compatibility_layer import (
     MockBaseValidatedRequest as BaseValidatedRequest,
 )
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockErrorResponse as ErrorResponse,
 )
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockHealthRequest as HealthRequest,
 )
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockSuccessResponse as SuccessResponse,
 )
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockTeamRequest as TeamRequest,
 )
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockVersionRequest as VersionRequest,
 )
-from tests.lib_validation.test_models_compatibility_layer import (
+from tests.lib.validation.test_models_compatibility_layer import (
     MockWorkflowRequest as WorkflowRequest,
 )
 
