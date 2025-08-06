@@ -149,7 +149,10 @@ endef
 
 define generate_postgres_credentials
     $(call extract_postgres_credentials_from_env); \
-    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ]; then \
+    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ] && \
+       [ "$$POSTGRES_PASS" != "your-secure-password-here" ] && \
+       [ "$$POSTGRES_USER" != "hive_user" ] && \
+       [ "$$POSTGRES_USER" != "your-username-here" ]; then \
         $(call print_status,Using existing PostgreSQL credentials from .env...); \
         echo -e "$(FONT_CYAN)Reusing credentials:$(FONT_RESET)"; \
         echo -e "  User: $$POSTGRES_USER"; \
@@ -217,8 +220,18 @@ define setup_docker_postgres
             export POSTGRES_UID=1000; \
             export POSTGRES_GID=1000; \
         fi; \
-        mkdir -p ./data/postgres && chown -R $${POSTGRES_UID}:$${POSTGRES_GID} ./data 2>/dev/null || sudo chown -R $$USER:$$USER ./data; \
-        $(DOCKER_COMPOSE) up -d postgres; \
+        mkdir -p ./data/postgres; \
+        chmod -R 755 ./data/postgres; \
+        chown -R $${POSTGRES_UID}:$${POSTGRES_GID} ./data/postgres 2>/dev/null || sudo chown -R $$USER:$$USER ./data/postgres; \
+        echo -e "$(FONT_CYAN)📋 Creating Docker environment file for compose...$(FONT_RESET)"; \
+        mkdir -p docker/main; \
+        echo "POSTGRES_USER=$$POSTGRES_USER" > docker/main/.env; \
+        echo "POSTGRES_PASSWORD=$$POSTGRES_PASSWORD" >> docker/main/.env; \
+        echo "POSTGRES_DB=$$POSTGRES_DB" >> docker/main/.env; \
+        echo "POSTGRES_UID=$$POSTGRES_UID" >> docker/main/.env; \
+        echo "POSTGRES_GID=$$POSTGRES_GID" >> docker/main/.env; \
+        echo "HIVE_API_PORT=$$(grep '^HIVE_API_PORT=' .env | cut -d'=' -f2 | head -1 || echo '8886')" >> docker/main/.env; \
+        $(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d postgres; \
         echo -e "$(FONT_GREEN)$(CHECKMARK) PostgreSQL container started with secure credentials!$(FONT_RESET)"; \
         echo -e "$(FONT_YELLOW)💡 Run 'make dev' for development or 'make prod' for production stack$(FONT_RESET)"; \
     else \
@@ -444,6 +457,14 @@ prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
 				export POSTGRES_UID=1000; \
 				export POSTGRES_GID=1000; \
 			fi; \
+			echo -e "$(FONT_CYAN)📋 Creating Docker environment file for compose...$(FONT_RESET)"; \
+			mkdir -p docker/main; \
+			echo "POSTGRES_USER=$$POSTGRES_USER" > docker/main/.env; \
+			echo "POSTGRES_PASSWORD=$$POSTGRES_PASSWORD" >> docker/main/.env; \
+			echo "POSTGRES_DB=$$POSTGRES_DB" >> docker/main/.env; \
+			echo "POSTGRES_UID=$$POSTGRES_UID" >> docker/main/.env; \
+			echo "POSTGRES_GID=$$POSTGRES_GID" >> docker/main/.env; \
+			echo "HIVE_API_PORT=$$(grep '^HIVE_API_PORT=' .env | cut -d'=' -f2 | head -1 || echo '8886')" >> docker/main/.env; \
 			$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build; \
 		else \
 			echo "Error: Could not extract database URL from .env"; \

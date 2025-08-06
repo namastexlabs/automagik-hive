@@ -41,7 +41,6 @@ services:
       target: genie-production
     container_name: hive-genie-server
     restart: unless-stopped
-    user: "1000:1000"  # Match host user permissions (namastex:namastex)
     ports:
       - "48886:48886"  # Genie consultation API
     env_file:

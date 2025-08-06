@@ -54,16 +54,20 @@ class MCPCatalog:
     access to server configurations for tool instantiation.
     """
 
-    def __init__(self, mcp_json_path: str = ".mcp.json"):
+    def __init__(self, mcp_json_path: str | None = None):
         """
         Initialize MCP catalog from configuration file.
 
         Args:
             mcp_json_path: Path to the .mcp.json configuration file
+                          (defaults to HIVE_MCP_CONFIG_PATH env var or .mcp.json)
 
         Raises:
             MCPException: If the configuration file is invalid
         """
+        if mcp_json_path is None:
+            import os
+            mcp_json_path = os.getenv("HIVE_MCP_CONFIG_PATH", ".mcp.json")
         self.config_path = Path(mcp_json_path)
         self.catalog: dict[str, Any] = {}
         self.available_servers: dict[str, MCPServerConfig] = {}

@@ -182,9 +182,8 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 
-# Local data directories (PostgreSQL data)
-/data/postgres/
-/data/postgres-agent/
+# Docker data directory (PostgreSQL and other service data)
+/data/
 
 tmp/
 backup/

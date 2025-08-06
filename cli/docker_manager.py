@@ -20,7 +20,7 @@ class DockerManager:
             "api": "hive-agent-dev-server"      # Matches docker/agent/docker-compose.yml
         },
         "workspace": {
-            "postgres": "hive-postgres-main"    # Matches docker/main/docker-compose.yml
+            "postgres": "hive-postgres"    # Matches docker/main/docker-compose.yml
             # Note: workspace app runs locally, no API container
         }
     }
@@ -180,10 +180,14 @@ class DockerManager:
         
         # Use Docker Compose to start services (try both docker-compose and docker compose)
         docker_compose_cmd = self._get_docker_compose_command()
+        
+        # For workspace, only start postgres service (database-only installation)
+        services = ["postgres"] if component == "workspace" else []
+        
         if docker_compose_cmd == "docker compose":
-            cmd = ["docker", "compose", "-f", str(compose_file), "up", "-d"]
+            cmd = ["docker", "compose", "-f", str(compose_file), "up", "-d"] + services
         else:
-            cmd = [docker_compose_cmd, "-f", str(compose_file), "up", "-d"]
+            cmd = [docker_compose_cmd, "-f", str(compose_file), "up", "-d"] + services
         
         return self._run_command(cmd) is None
     

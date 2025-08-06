@@ -8,10 +8,12 @@ Generates credentials ONCE during install and populates ALL 3 modes consistently
 DESIGN PRINCIPLES:
 1. Generate credentials ONCE during installation
 2. Share same DB user/password across all modes (security best practice)  
-3. Different ports per mode: workspace(5532/8886), agent(35532/38886), genie(48532/48886)
-4. Consistent API keys but with mode-specific prefixes for identification
-5. Template-based environment file generation
-6. Backward compatibility with existing Makefile and CLI installers
+3. SHARED DATABASE: All modes use postgres port 5532, different API ports
+4. Schema separation: workspace(public), agent(agent schema), genie(genie schema)
+5. Consistent API keys but with mode-specific prefixes for identification
+6. Template-based environment file generation
+7. Backward compatibility with existing Makefile and CLI installers
+8. Container sharing: Single postgres container for all modes
 """
 
 import secrets
@@ -31,15 +33,26 @@ class CredentialService:
     # Port prefixes for each mode
     PORT_PREFIXES = {
         "workspace": "",      # No prefix - use base ports
-        "agent": "3",         # 3 prefix: 5532 → 35532, 8886 → 38886  
-        "genie": "4"          # 4 prefix: 5532 → 45532, 8886 → 48886
+        "agent": "3",         # 3 prefix: shared postgres 5532, API 38886  
+        "genie": "4"          # 4 prefix: shared postgres 5532, API 48886
     }
     
-    # Database names per mode
+    # Database names per mode - ALL USE SHARED DATABASE WITH SCHEMA SEPARATION
     DATABASES = {
-        "workspace": "hive",
-        "agent": "hive_agent", 
-        "genie": "hive_genie"
+        "workspace": "hive",    # All modes use same database  
+        "agent": "hive",        # Same database, different schema
+        "genie": "hive"         # Same database, different schema
+    }
+    
+    # Container names for shared approach
+    CONTAINERS = {
+        "agent": {
+            "postgres": "hive-postgres-shared",  # Shared container
+            "api": "hive-agent-dev-server"
+        },
+        "workspace": {
+            "postgres": "hive-postgres-shared"   # Same shared container
+        }
     }
 
     def __init__(self, project_root: Path = None, env_file: Path = None) -> None:
@@ -139,21 +152,24 @@ class CredentialService:
         return api_key
 
     def generate_agent_credentials(
-        self, port: int = 35532, database: str = "hive_agent"
+        self, port: int = 5532, database: str = "hive"
     ) -> dict[str, str]:
         """
         Generate agent-specific credentials with unified user/pass from main.
+        
+        SHARED DATABASE APPROACH: Uses same postgres port and database as main
+        Only schema separation differentiates agent from workspace mode
 
         Replicates Makefile use_unified_credentials_for_agent function:
         - Reuses main PostgreSQL user/password
-        - Changes port and database name
+        - Uses shared database and port with schema separation
 
         Args:
-            port: Agent database port (default: 35532)
-            database: Agent database name (default: hive_agent)
+            port: Shared database port (default: 5532)
+            database: Shared database name (default: hive)
 
         Returns:
-            Dict containing agent credentials
+            Dict containing agent credentials with schema separation
         """
         logger.info("Generating agent credentials with unified approach")
 
@@ -337,7 +353,10 @@ class CredentialService:
         Args:
             mcp_file: Path to MCP config file (defaults to .mcp.json)
         """
-        mcp_file = mcp_file or Path(".mcp.json")
+        if mcp_file is None:
+            import os
+            mcp_config_path = os.getenv("HIVE_MCP_CONFIG_PATH", ".mcp.json")
+            mcp_file = Path(mcp_config_path)
 
         if not mcp_file.exists():
             logger.warning("MCP config file not found", mcp_file=str(mcp_file))
@@ -572,6 +591,9 @@ class CredentialService:
         """
         Calculate ports by adding prefix to base ports.
         
+        SHARED DATABASE APPROACH: All modes use shared postgres port 5532
+        Only API ports get prefixed for mode separation
+        
         Args:
             mode: Mode name (workspace, agent, genie)
             base_ports: Base ports dict with 'db' and 'api' keys
@@ -588,13 +610,18 @@ class CredentialService:
             # No prefix for workspace mode
             return base_ports.copy()
         
-        # Add prefix to port numbers
+        # SHARED DATABASE: All modes use same postgres port 5532
+        # Only API ports get prefixed for separation
         calculated_ports = {
-            "db": int(f"{prefix}{base_ports['db']}"),
-            "api": int(f"{prefix}{base_ports['api']}")
+            "db": base_ports["db"],  # Shared postgres port 5532 for all modes
+            "api": int(f"{prefix}{base_ports['api']}")  # Prefixed API port
         }
         
-        logger.debug("Calculated ports for mode", mode=mode, prefix=prefix, ports=calculated_ports)
+        logger.debug(
+            "Calculated ports for shared database approach", 
+            mode=mode, prefix=prefix, ports=calculated_ports, 
+            shared_postgres_port=base_ports["db"]
+        )
         return calculated_ports
     
     def get_deployment_ports(self) -> Dict[str, Dict[str, int]]:
@@ -621,15 +648,16 @@ class CredentialService:
         """
         Derive mode-specific credentials from master credentials.
         
-        SHARED: user, password (security best practice - same DB user across environments)
-        DIFFERENT: ports, database names, API key prefixes
+        SHARED DATABASE APPROACH:
+        - SHARED: user, password, database name (hive), postgres port (5532)
+        - DIFFERENT: API ports, API key prefixes, schema namespaces
         
         Args:
             master_credentials: Master credentials from generate_master_credentials()
             mode: Mode name (workspace, agent, genie)
             
         Returns:
-            Dict containing mode-specific credentials
+            Dict containing mode-specific credentials with schema separation
         """
         if mode not in self.PORT_PREFIXES:
             raise ValueError(f"Unknown mode: {mode}. Valid modes: {list(self.PORT_PREFIXES.keys())}")
@@ -637,39 +665,118 @@ class CredentialService:
         # Calculate ports dynamically
         base_ports = self.extract_base_ports_from_env()
         mode_ports = self.calculate_ports(mode, base_ports)
-        database_name = self.DATABASES[mode]
+        database_name = self.DATABASES[mode]  # All modes use 'hive' database
         
         # Create mode-specific API key with identifier prefix
         api_key = f"hive_{mode}_{master_credentials['api_key_base']}"
         
-        # Create database URL with mode-specific port and database
-        database_url = (
-            f"postgresql+psycopg://{master_credentials['postgres_user']}:"
-            f"{master_credentials['postgres_password']}@localhost:"
-            f"{mode_ports['db']}/{database_name}"
-        )
+        # Create database URL with schema separation for non-workspace modes
+        if mode == "workspace":
+            # Workspace uses default public schema
+            database_url = (
+                f"postgresql+psycopg://{master_credentials['postgres_user']}:"
+                f"{master_credentials['postgres_password']}@localhost:"
+                f"{mode_ports['db']}/{database_name}"
+            )
+        else:
+            # Agent/genie modes use schema-specific connection
+            database_url = (
+                f"postgresql+psycopg://{master_credentials['postgres_user']}:"
+                f"{master_credentials['postgres_password']}@localhost:"
+                f"{mode_ports['db']}/{database_name}?options=-csearch_path={mode}"
+            )
         
         mode_credentials = {
             "postgres_user": master_credentials["postgres_user"],
             "postgres_password": master_credentials["postgres_password"],
-            "postgres_database": database_name,
+            "postgres_database": database_name,  # All modes use 'hive' database
             "postgres_host": "localhost",
-            "postgres_port": str(mode_ports["db"]),
+            "postgres_port": str(mode_ports["db"]),  # Shared postgres port
             "api_port": str(mode_ports["api"]),
             "api_key": api_key,
             "database_url": database_url,
-            "mode": mode
+            "mode": mode,
+            "schema": "public" if mode == "workspace" else mode  # Schema separation
         }
         
         logger.info(
-            f"Derived {mode} credentials from master",
+            f"Derived {mode} credentials for shared database approach",
             database=database_name,
-            db_port=mode_ports["db"],
-            api_port=mode_ports["api"]
+            shared_db_port=mode_ports["db"],
+            api_port=mode_ports["api"],
+            schema=mode_credentials["schema"]
         )
         
         return mode_credentials
     
+
+    def get_database_url_with_schema(self, mode: str) -> str:
+        """Generate database URL with appropriate schema for mode."""
+        base_url = self.extract_postgres_credentials_from_env()["url"]
+        
+        if not base_url:
+            raise ValueError(f"No database URL found in .env file for mode {mode}")
+        
+        if mode == "workspace":
+            return base_url  # Uses public schema (default)
+        else:
+            # Add schema search path for agent/genie modes
+            separator = "&" if "?" in base_url else "?"
+            return f"{base_url}{separator}options=-csearch_path={mode}"
+    
+    def ensure_schema_exists(self, mode: str):
+        """Ensure the appropriate schema exists for the mode."""
+        if mode in ["agent", "genie"]:
+            # Schema creation should integrate with Agno framework
+            # This is a placeholder for now - actual implementation should
+            # integrate with the database initialization system
+            logger.info(f"Schema creation for {mode} mode - integrate with Agno framework")
+    
+    def detect_existing_containers(self) -> Dict[str, bool]:
+        """Detect existing Docker containers for shared approach."""
+        import subprocess
+        
+        containers_status = {}
+        
+        for mode, container_info in self.CONTAINERS.items():
+            for service, container_name in container_info.items():
+                try:
+                    # Check if container exists and is running
+                    result = subprocess.run(
+                        ["docker", "ps", "--filter", f"name={container_name}", "--format", "{{.Names}}"],
+                        capture_output=True, text=True, check=False
+                    )
+                    containers_status[container_name] = container_name in result.stdout
+                except Exception as e:
+                    logger.warning(f"Failed to check container {container_name}", error=str(e))
+                    containers_status[container_name] = False
+        
+        logger.info("Container detection results", containers=containers_status)
+        return containers_status
+    
+    def migrate_to_shared_database(self):
+        """Migrate from separate database approach to shared database with schemas."""
+        logger.info("Checking for migration to shared database approach")
+        
+        # Detect existing separate containers
+        existing_containers = self.detect_existing_containers()
+        
+        # Check for old container names that need migration
+        old_containers = ["hive-postgres-agent", "hive-postgres-genie"]
+        needs_migration = any(
+            container for container in old_containers 
+            if container in existing_containers and existing_containers[container]
+        )
+        
+        if needs_migration:
+            logger.info("Migration needed from separate database containers to shared approach")
+            # Offer migration to shared approach
+            # Preserve existing data during migration
+            # This should be implemented with proper data migration logic
+            logger.warning("Migration logic not yet implemented - manual migration required")
+        else:
+            logger.info("No migration needed - using shared database approach")
+
     def generate_master_credentials(self) -> Dict[str, str]:
         """
         Generate the SINGLE SET of master credentials used across all modes.
@@ -912,7 +1019,7 @@ HIVE_API_WORKERS=1
 # Database Configuration (Shared Credentials)
 HIVE_DATABASE_URL={credentials['database_url']}
 POSTGRES_HOST={credentials['postgres_host']}
-POSTGRES_PORT=5432
+POSTGRES_PORT=5532
 POSTGRES_USER={credentials['postgres_user']}
 POSTGRES_PASSWORD={credentials['postgres_password']}
 POSTGRES_DB={credentials['postgres_database']}

@@ -35,10 +35,10 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--init", metavar="NAME", help="Initialize workspace")
     parser.add_argument("--version", action="store_true", help="Show version")
     
-    # Log lines (for --logs)
-    parser.add_argument("lines", nargs="?", type=int, default=50, help="Number of log lines")
+    # Lines flag (for --logs only)
+    parser.add_argument("--lines", type=int, default=50, help="Number of log lines (used with --logs)")
     
-    # Workspace path
+    # Workspace path - primary positional argument
     parser.add_argument("workspace", nargs="?", help="Workspace directory path")
 
     return parser
