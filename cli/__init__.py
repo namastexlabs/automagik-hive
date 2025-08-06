@@ -1,9 +1,7 @@
-"""CLI package for Automagik Hive.
+"""Automagik Hive CLI - Simple 8-command interface."""
 
-This package provides command-line interface capabilities for the UVX transformation,
-enabling workspace initialization, container management, and development workflows.
-"""
+__version__ = "0.1.0"
 
-from lib.utils.version_reader import get_project_version
+from .main import main
 
-__version__ = get_project_version()
+__all__ = ["main"]

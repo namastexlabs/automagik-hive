@@ -39,18 +39,18 @@ def test_interactive_install():
         
     # Test 3: Import workflow orchestrator and check if interactive method exists
     try:
-        from cli.commands.workflow_orchestrator import WorkflowOrchestrator
+        from cli.commands.orchestrator import WorkflowOrchestrator
         orchestrator = WorkflowOrchestrator()
         
-        # Check if the interactive Docker installation method exists
-        if hasattr(orchestrator, "_prompt_docker_installation"):
+        # Check if the dependency validator has the interactive Docker installation method
+        if hasattr(orchestrator.dependency_validator, "prompt_docker_installation"):
             print("✅ Test 3 PASSED: Interactive Docker installation method exists")
         else:
             print("❌ Test 3 FAILED: Interactive Docker installation method missing")
             return False
             
         # Check dependency validation method
-        is_valid, missing = orchestrator.validate_workflow_dependencies("agent")
+        is_valid, missing = orchestrator.dependency_validator.validate_dependencies("agent")
         print(f"✅ Test 3 INFO: Dependency validation returned: {is_valid}, missing: {missing}")
         
     except Exception as e:
