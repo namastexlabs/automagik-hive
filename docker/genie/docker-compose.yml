@@ -29,11 +29,34 @@ x-genie-build-args: &genie-build-args
   CONTAINER_TYPE: genie
 
 services:
-  # Genie All-in-One Service (PostgreSQL + FastAPI)
+  # Standalone PostgreSQL for Genie Development
+  postgres-genie:
+    image: agnohq/pgvector:16
+    container_name: hive-postgres-genie
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "48532:5432"  # Genie PostgreSQL port
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ../../data/postgres-genie:/var/lib/postgresql/data
+    networks:
+      - genie_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Genie FastAPI Service (connects to postgres-genie)
   genie-server:
     build:
-      context: .
-      dockerfile: Dockerfile.genie
+      context: ../../
+      dockerfile: docker/genie/Dockerfile.api
       args:
         <<: *genie-build-args
       platforms:
@@ -41,41 +64,29 @@ services:
       target: genie-production
     container_name: hive-genie-server
     restart: unless-stopped
+    user: "1000:1000"
     ports:
       - "48886:48886"  # Genie consultation API
     env_file:
       - .env
     environment:
-      # Genie-specific database connection (internal PostgreSQL)
-      - HIVE_DATABASE_URL=postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB
+      # Genie-specific database connection (connects to postgres-genie service)
+      - HIVE_DATABASE_URL=postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres-genie:5432/$POSTGRES_DB
       - RUNTIME_ENV=prd
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - SUPERVISOR_LOG_LEVEL=info
     volumes:
-      - ./data/postgres-genie:/var/lib/postgresql/data  # PostgreSQL persistence
       - genie_app_logs:/app/logs                        # Application logs
       - genie_app_data:/app/data                        # Application data
-      - genie_supervisor_logs:/var/log/supervisor       # Supervisor logs
+    depends_on:
+      postgres-genie:
+        condition: service_healthy
     networks:
       - genie_network
     healthcheck:
-      test: |
-        # Multi-service health check: PostgreSQL + FastAPI
-        pg_isready -U $POSTGRES_USER -d $POSTGRES_DB &&
-        curl -f http://localhost:48886/api/v1/health
+      test: ["CMD", "curl", "-f", "http://localhost:48886/api/v1/health"]
       interval: 30s
-      timeout: 15s  # Longer timeout for dual-service check
+      timeout: 10s
       retries: 3
-      start_period: 90s  # Extra time for PostgreSQL + app startup
-    # Resource limits for all-in-one container
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.0'
-        reservations:
-          memory: 512M
-          cpus: '0.25'
+      start_period: 60s
 
 # Genie network configuration
 networks:
@@ -91,6 +102,3 @@ volumes:
   genie_app_data:
     driver: local
     name: hive_genie_app_data
-  genie_supervisor_logs:
-    driver: local
-    name: hive_genie_supervisor_logs

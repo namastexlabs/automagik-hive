@@ -34,6 +34,7 @@ services:
     image: agnohq/pgvector:16
     container_name: hive-postgres-agent
     restart: unless-stopped
+    user: "1000:1000"
     ports:
       - "35532:5432"  # Agent PostgreSQL port
     env_file:
@@ -85,15 +86,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    # Resource limits for agent service
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.1'
 
 # Agent network configuration
 networks:
