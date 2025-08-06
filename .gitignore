@@ -1,11 +1,7 @@
-# Environment variables
+# Environment variables and secrets
 .env
-.env.agent
-.env.local
-.env.*.local
-
-# MCP Configuration (contains local settings and credentials)
-.mcp.json
+!.env.example
+.envrc
 
 # Python
 __pycache__/
@@ -19,117 +15,31 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+*.whl
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.venv
-env/
+# Virtual environments
+.venv/
 venv/
 ENV/
-env.bak/
-venv.bak/
+env/
 
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
+# Development tools cache
 .mypy_cache/
-.dmypy.json
-dmypy.json
+.pytest_cache/
+.ruff_cache/
+.tox/
 
-# Pyre type checker
-.pyre/
+# Testing and coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+coverage.json
 
-# Temporary folders
-tmp/
-temp/
-
-# IDEs
+# IDEs and editors
 .vscode/
 .idea/
 *.swp
@@ -140,63 +50,30 @@ temp/
 .DS_Store
 Thumbs.db
 
-# Database files
+# Databases  
 *.db
 *.sqlite
 *.sqlite3
+data/
 
-# Backup files
-*.bak
-*.backup
-*.orig
-*.save
-*.old
-*.swp
-*.swo
-*~
-*.tmp
-*.temp
-#*#
-.#*
-*.bak.*
-*.backup.*
-*.save.*
-*.old.*
-*_backup
-*_backup.*
-*.backup_*
-*.bak_*
-*.~*
-*_old
-*_old.*
-*.old_*
-*.bak.old
-*.backup.old
-
-# Temporary files
-*.tmp
-*.temp
-
-# Database files
-data/*.db
-data/*.sqlite
-data/*.sqlite3
-
-# Docker data directory (PostgreSQL and other service data)
-/data/
-
-tmp/
-backup/
-backups/
 # Logs
 logs/
 *.log
 
-# Build artifacts
-build/
-dist/
-*.egg-info/
+# Temporary files and directories
+tmp/
+temp/
+backup/
+backups/
 
+# Project specific
 codebase.md
-.env
+dependency-scan.json
 .cache_ggshield
+
+# Development artifacts
+test-workspace/
+test-local/
+test-workspace-fix/
+test-workspace-validation/
+docker-migration-backup-*/
