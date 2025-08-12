@@ -1,0 +1,254 @@
+workflow:
+  name: "ProcessamentoFaturas - CTE Invoice Processing Pipeline"
+  workflow_id: "processamento-faturas"
+  version: 1
+  description: "Automated CTE invoice processing workflow that monitors emails, extracts Excel data, and orchestrates browser API flows"
+
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.3  # Lower temperature for consistent processing
+  max_tokens: 8000
+
+# Unified MCP Configuration for all workflow steps
+mcp_servers:
+  - "automagik-forge:*"
+  - "ask-repo-agent:*"  
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
+
+storage:
+  type: postgres
+  table_name: processamento_faturas_workflow
+  auto_upgrade_schema: true
+
+memory:
+  num_history_runs: 30
+  enable_user_memories: true
+  enable_agentic_memory: true
+  add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
+  memory_retention_days: 180
+
+display:
+  markdown: false
+  show_tool_calls: true
+  add_datetime_to_instructions: true
+
+context:
+  add_state_in_messages: true
+  enable_agentic_context: true
+
+events:
+  store_events: true
+  events_to_skip: []
+
+streaming:
+  stream: true
+  stream_intermediate_steps: true
+
+# Workflow-specific configuration
+workflow_config:
+  max_emails_per_execution: 3
+  supported_file_extensions: [".xlsx", ".xlsb"]
+  email_label_filter: "mc-tech-não-processado"
+  attachment_keyword: "upload"
+  
+  # CTE Processing Configuration
+  cte_filter:
+    process_only_ctes: true
+    ignore_minutas: true
+    required_columns:
+      - "Empresa Origem"
+      - "Valor"
+      - "CNPJ Claro" 
+      - "TIPO"
+      - "NF/CTE"
+      - "PO"
+      - "Competência"
+  
+  # Browser API Configuration
+  browser_api:
+    base_url: "${BROWSER_API_URL}"
+    execution_endpoint: "/execute-flow"
+    timeout_ms: 30000
+    max_retries: 3
+    
+    flows:
+      invoiceGen:
+        description: "Generate invoices in ESL system"
+        trigger_conditions: ["PENDING", "FAILED_GENERATION"]
+        
+      invoiceMonitor:
+        description: "Monitor invoice status"
+        trigger_conditions: ["WAITING_MONITORING"]
+        
+      main_download_invoice:
+        description: "Download processed invoices"
+        trigger_conditions: ["MONITORED", "WAITING_DOWNLOAD"]
+        response_type: "zip_file"
+        process_individually: true
+        
+      invoiceUpload:
+        description: "Upload completed invoices"
+        trigger_conditions: ["DOWNLOADED"]
+        requires_pdf: true
+
+  # State Management
+  cte_status_flow:
+    - "PENDING"              # Awaiting invoice generation
+    - "WAITING_MONITORING"   # Awaiting monitoring
+    - "MONITORED"           # Monitored and ready for download
+    - "WAITING_DOWNLOAD"    # Awaiting download
+    - "DOWNLOADED"          # Invoice downloaded
+    - "UPLOADED"            # Invoice uploaded
+    - "FAILED_GENERATION"   # Generation failed
+
+  # Error Handling
+  error_handling:
+    invalid_email:
+      apply_label: "mc-tech-anexo-inválido"
+      notify_admin: true
+    api_unavailable:
+      retry_attempts: 3
+      backoff_strategy: "exponential"
+    processing_failed:
+      save_current_state: true
+      schedule_reprocessing: true
+
+  # File Organization
+  directory_structure:
+    base_path: "mctech/"
+    subdirs:
+      sheets: "sheets/"      # Original Excel files
+      minutas: "minutas/"    # MINUTAS JSONs by CNPJ  
+      downloads: "downloads/" # Downloaded invoices by PO
+    logs:
+      workflow: "logs/workflow_execution.log"
+      api_calls: "logs/api_calls.log"
+      errors: "logs/error_tracking.log"
+
+  # Monitoring & Metrics
+  metrics:
+    track_processing_time: true
+    track_api_latency: true
+    track_success_rates: true
+    generate_daily_reports: true
+
+instructions: |
+  You are the **PROCESSAMENTO FATURAS WORKFLOW**, an automated CTE invoice processing pipeline 
+  that coordinates the complete flow from email monitoring to invoice upload.
+
+  ## 🎯 WORKFLOW IDENTITY
+
+  **Mission**: Automate end-to-end CTE invoice processing with zero manual intervention
+  **Architecture**: 4-stage sequential pipeline with conditional branching and state management
+  **Integration**: Seamless compatibility with existing Python system and Browser APIs
+
+  ## 🔄 4-STAGE PROCESSING PIPELINE
+
+  ### Stage 1: Email Monitoring & Extraction
+  - Monitor Gmail inbox for unprocessed emails with 'mc-tech-não-processado' label
+  - Validate Excel attachments (.xlsx, .xlsb) containing 'upload' keyword
+  - Extract and store original spreadsheets for processing
+  - Apply appropriate labels based on processing results
+
+  ### Stage 2: Excel Data Processing (CTEs Only)
+  - Extract data from Excel spreadsheets focusing exclusively on CTEs
+  - Filter out MINUTAS records (ignore non-CTE entries)
+  - Validate required columns: Empresa Origem, Valor, CNPJ Claro, TIPO, NF/CTE, PO, Competência
+  - Apply data validation and consistency checks
+
+  ### Stage 3: JSON Structure Generation
+  - Create structured JSON files for each PO containing CTE data
+  - Generate proper data structures with values array, client_data, type="CTE"
+  - Set initial status="PENDING" for new CTEs
+  - Calculate date ranges and value totals per PO
+
+  ### Stage 4: Browser API Orchestration
+  - Execute sequential browser automation flows based on CTE status
+  - **invoiceGen**: Generate invoices for PENDING/FAILED_GENERATION CTEs
+  - **invoiceMonitor**: Monitor status for WAITING_MONITORING CTEs  
+  - **main-download-invoice**: Download invoices for MONITORED/WAITING_DOWNLOAD CTEs
+  - **invoiceUpload**: Upload completed invoices for DOWNLOADED CTEs
+
+  ## 🧠 STATE MANAGEMENT PROTOCOL
+
+  **CTE Status Tracking**:
+  ```
+  PENDING → invoiceGen → WAITING_MONITORING → invoiceMonitor → MONITORED → 
+  main-download-invoice → WAITING_DOWNLOAD → DOWNLOADED → invoiceUpload → UPLOADED
+  ```
+
+  **Conditional Flow Logic**:
+  - Each API call triggered only by specific status conditions
+  - Failed operations return to appropriate retry status
+  - State persistence across workflow interruptions
+  - Recovery mechanisms for incomplete processing
+
+  ## 🔌 API INTEGRATION PATTERNS
+
+  **Dynamic Payload Construction**:
+  - **invoiceGen**: Build orders array from PENDING CTEs
+  - **invoiceMonitor**: Build orders array from WAITING_MONITORING CTEs
+  - **main-download-invoice**: Process individual POs with CTE arrays, calculated totals, date ranges
+  - **invoiceUpload**: Convert PDF files to base64 for upload
+
+  **Error Handling & Retry Logic**:
+  - 3-retry pattern with exponential backoff for API failures
+  - State preservation during interruptions
+  - Automatic recovery from last successful checkpoint
+  - Comprehensive error logging and admin notifications
+
+  ## 📊 WORKFLOW SUCCESS CRITERIA
+
+  - **Email Processing**: Successfully identify and process all valid Excel attachments
+  - **Data Extraction**: Accurately extract CTE data while filtering out MINUTAS
+  - **State Management**: Maintain consistent status tracking across all CTEs
+  - **API Coordination**: Execute browser flows in correct sequence with proper payloads
+  - **Error Recovery**: Handle failures gracefully with automatic retry and notification
+  - **Audit Trail**: Maintain comprehensive logs for troubleshooting and compliance
+
+  ## 🚨 QUALITY ASSURANCE
+
+  **Mandatory Validation Checkpoints**:
+  - [ ] Email attachment validation (format, content, labeling)
+  - [ ] Excel data integrity (required columns, data types, CTE filtering)
+  - [ ] JSON structure validation (schema compliance, data consistency)
+  - [ ] API payload validation (correct structure, required fields)
+  - [ ] State transition validation (proper status flow, error handling)
+  - [ ] File management validation (proper storage, cleanup, organization)
+
+  Your purpose is **FLAWLESS CTE AUTOMATION** - processing invoice workflows with complete 
+  accuracy, robust error handling, and seamless integration with existing systems.
+
+expected_output: |
+  Complete CTE invoice processing workflow execution with:
+  
+  1. **Email Processing Results**: Successfully processed emails with valid attachments
+  2. **Data Extraction Summary**: CTEs extracted and structured (MINUTAS filtered out)
+  3. **Status Management Report**: Current status of all CTEs in the processing pipeline  
+  4. **API Execution Log**: Browser flow execution results with payloads and responses
+  5. **File Organization**: Properly organized Excel files, JSONs, and downloaded invoices
+  6. **Error Report**: Any failures encountered with recovery actions taken
+  7. **Performance Metrics**: Processing times, success rates, and system health indicators
+
+success_criteria: |
+  SUCCESS = Complete CTE pipeline automation ✓ Zero manual intervention required ✓ 
+  All CTEs processed through appropriate status flows ✓ Browser APIs coordinated seamlessly ✓ 
+  Robust error handling and recovery ✓ Perfect integration with existing Python system ✓
+
+workflow_metadata:
+  complexity: "high"
+  automation_level: "full"
+  integration_type: "hybrid_python_agno"
+  processing_scope: "cte_only"
+  api_dependencies: ["browser_api", "gmail_api"]
+  state_management: "persistent_postgresql"
+
+add_datetime_to_instructions: true
