@@ -71,7 +71,9 @@ def main() -> int:
         
         # Version
         if args.version:
-            print("Automagik Hive v0.1.0")
+            from lib.utils.version_reader import get_project_version
+            version = get_project_version()
+            print(f"Automagik Hive v{version}")
             return 0
         
         # Init workspace

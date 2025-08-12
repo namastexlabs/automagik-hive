@@ -945,7 +945,7 @@ publish: ## 📦 Build and publish alpha release to PyPI
 	$(call print_status,Publishing to PyPI...); \
 	if [ -f ".env" ]; then \
 		PYPI_USERNAME=$$(grep '^PYPI_USERNAME=' .env | cut -d'=' -f2 | tr -d ' '); \
-		PYPI_TOKEN=$$(grep '^PYPI_API_TOKEN=' .env | cut -d'=' -f2 | tr -d ' '); \
+		PYPI_TOKEN=$$(grep '^PYPI_API_KEY=' .env | cut -d'=' -f2 | tr -d ' '); \
 		if [ -n "$$PYPI_USERNAME" ] && [ -n "$$PYPI_TOKEN" ] && [ "$$PYPI_TOKEN" != "your-pypi-api-token-here" ]; then \
 			$(call print_status,Using PyPI credentials from .env file...); \
 			export TWINE_USERNAME="$$PYPI_USERNAME"; \
