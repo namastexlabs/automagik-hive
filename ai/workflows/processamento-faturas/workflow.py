@@ -35,13 +35,15 @@ from lib.logging import logger
 class ProcessingStatus(Enum):
     """CTE Processing Status Enum"""
     PENDING = "pending"
-    PROCESSING = "processing"
+    PROCESSING = "processing" #????
     WAITING_MONITORING = "waiting_monitoring"
     MONITORED = "monitored"
+    #WAITING_UPLOAD = "waiting_upload"
+    #WAITING_DOWNLOAD = "waiting_download"
     DOWNLOADED = "downloaded"
     UPLOADED = "uploaded"
     COMPLETED = "completed"
-    FAILED_EXTRACTION = "failed_extraction"
+    FAILED_EXTRACTION = "failed_extraction" # Api errors
     FAILED_GENERATION = "failed_generation"
     FAILED_MONITORING = "failed_monitoring"
     FAILED_DOWNLOAD = "failed_download"
@@ -91,16 +93,16 @@ def create_workflow_model():
     """Create model for ProcessamentoFaturas workflow"""
     return resolve_model(
         model_id=get_default_model_id(),
-        temperature=0.2,  # Lower temperature for more reliable processing
+        temperature=0.1,  # Lower temperature for more reliable processing
         max_tokens=4000,
     )
 
 
-def create_postgres_storage(table_name: str) -> PostgresStorage:
+def create_postgres_storage(table_name: str) -> PostgresStorage: #Avaliar alternativas
     """Create PostgreSQL storage for agent state persistence"""
     return PostgresStorage(
         table_name=table_name,
-        db_url=os.getenv("DATABASE_URL", "postgresql://localhost:5432/hive_agent"),
+        db_url=os.getenv("DATABASE_URL", "postgresql://localhost:5432/hive_agent"), # Trocar pro .env
         auto_upgrade_schema=True
     )
 
@@ -123,10 +125,10 @@ def create_email_processor_agent() -> Agent:
             "- Initialize processing pipeline with proper state tracking",
             "",
             "**📧 EMAIL MONITORING PROTOCOL**",
-            "1. **Authentication**: Maintain OAuth2 connection with token refresh",
-            "2. **Monitoring**: Poll Gmail API every 30 seconds for new emails",
+            "1. **Authentication**: Maintain OAuth2 connection with token refresh", #Nao necessariamente precisa de refresh? vamo ver
+            "2. **Monitoring**: Poll Gmail API every 30 seconds for new emails", # Mexer no timer
             "3. **Filtering**: Apply sender and subject line filters",
-            "4. **Detection**: Identify Excel attachments (.xlsx, .xls)",
+            "4. **Detection**: Identify Excel attachments (.xlsx, .xlsb)",
             "5. **Validation**: Verify file integrity and format",
             "6. **Download**: Secure download to temporary processing location",
             "7. **State Creation**: Initialize processing state in database",
@@ -167,7 +169,7 @@ def create_data_extractor_agent() -> Agent:
             "**🎯 CORE MISSION**",
             "- Parse Excel files with high accuracy and error handling",
             "- Differentiate between CTE and MINUTA records automatically",
-            "- Extract ONLY CTE records (completely filter out MINUTAS)",
+            "- Extract ONLY CTE records (completely filter out MINUTAS)", # mudar estrategia depois
             "- Transform data into structured JSON with comprehensive validation",
             "- Generate processing metadata and batch summaries",
             "",
@@ -181,13 +183,13 @@ def create_data_extractor_agent() -> Agent:
             "7. **Batch Metadata**: Generate processing summary and statistics",
             "8. **State Update**: Update processing state and trigger next phase",
             "",
-            "**🔍 CTE/MINUTA DIFFERENTIATION RULES**",
-            "- CTE Indicators: Document type, value patterns, specific field combinations",
-            "- MINUTA Indicators: Document type markers, field patterns",
-            "- Hybrid Records: Apply precedence rules for ambiguous cases",
-            "- Validation Logic: Ensure classification accuracy >99.5%",
+            # "**🔍 CTE/MINUTA DIFFERENTIATION RULES**", # ?? Nao involve inferencia nenhuma, é só um valor especifico em uma coluna (CTE/MINUTA)
+            # "- CTE Indicators: Document type, value patterns, specific field combinations",
+            # "- MINUTA Indicators: Document type markers, field patterns",
+            # "- Hybrid Records: Apply precedence rules for ambiguous cases",
+            # "- Validation Logic: Ensure classification accuracy >99.5%",
             "",
-            "**📋 DATA VALIDATION REQUIREMENTS**",
+            "**📋 DATA VALIDATION REQUIREMENTS**", # Origem destino???
             "- Required Fields: All CTE records must have origem_destino, valor, data_emissao, cnpj_cliente",
             "- Format Validation: CNPJ format, date ranges, numeric values",
             "- Business Rules: Value limits, date ranges, customer validations",
@@ -215,7 +217,7 @@ def create_json_generator_agent() -> Agent:
             "",
             "**🎯 CORE MISSION**",
             "- Transform validated CTE data into structured JSON format",
-            "- Generate separate JSON files per PO with proper organization",
+            "- Generate separate JSON files per Excel sheet, with proper organization", 
             "- Implement comprehensive state management for each CTE",
             "- Ensure JSON schema compliance for downstream processing",
             "- Calculate metadata and perform integrity validation",
@@ -286,9 +288,9 @@ def create_api_orchestrator_agent() -> Agent:
             "   - Update state to WAITING_MONITORING",
             "",
             "2. **Invoice Monitoring** (`/api/invoiceMonitor`)",
-            "   - Poll generation status using job ID",
-            "   - Implement exponential backoff for polling",
-            "   - Wait for COMPLETED status before proceeding",
+            "   - Poll generation status using job ID", # Redefinir o timer
+            "   - Implement exponential backoff for polling", #???
+            # "   - Wait for COMPLETED status before proceeding", # <--- ORIGEM DO STATUS COMPLETED
             "   - Update state to MONITORED",
             "",
             "3. **Invoice Download** (`/api/main-download-invoice`)",
@@ -383,7 +385,7 @@ def create_file_manager_agent() -> Agent:
             "- **Scheduled Cleanup**: Hourly removal of expired temp files",
             "- **Success Cleanup**: Remove temp files after successful processing",
             "- **Error Cleanup**: Preserve files for debugging on failures",
-            "- **Age-Based Cleanup**: Remove files older than 24 hours",
+            # "- **Age-Based Cleanup**: Remove files older than 24 hours", # Ver com muito cuidado oq ta sendo flagado com isso
             "",
             "**⚠️ ERROR HANDLING**",
             "- **Disk Space**: Monitor available space, cleanup if needed",
@@ -601,7 +603,7 @@ class ErrorRecoveryManager:
 class BrowserAPIClient:
     """Enhanced Browser API client with payload construction and retry logic"""
     
-    def __init__(self, base_url: str = "http://browser-api:8000", timeout: int = 30, max_retries: int = 3):
+    def __init__(self, base_url: str = "http://localhost:8088", timeout: int = 900, max_retries: int = 3): # Editar provider -> mover pro env
         self.base_url = base_url
         self.timeout = timeout
         self.max_retries = max_retries
@@ -651,7 +653,7 @@ class BrowserAPIClient:
         """Build payload for individual invoice download"""
         
         po_number = order["po_number"]
-        cte_numbers = [str(cte["NF_CTE"]) for cte in order["ctes"]]
+        cte_numbers = [str(cte["NF/CTE"]) for cte in order["ctes"]] # Estava NF_CTE
         
         payload = {
             "flow_name": "main-download-invoice",
@@ -694,7 +696,7 @@ class BrowserAPIClient:
                 logger.info(f"📊 Updated PO {po_number} status: {new_status}")
                 break
     
-    async def execute_api_call(self, endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_api_call(self, endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]: # Api calls are currently mocked
         """Execute API call with retry logic and API_RESULT response handling"""
         
         for attempt in range(self.max_retries):
@@ -704,6 +706,7 @@ class BrowserAPIClient:
                 logger.info(f"📋 Payload: {json.dumps(payload)}")
                 
                 # Simulate API call with realistic Browser API responses
+                #Arrumar com chamadas reais
                 start_time = datetime.now(UTC)
                 
                 if "invoiceGen" in endpoint:
@@ -796,25 +799,25 @@ class BrowserAPIClient:
                         "exponential_backoff_retry"
                     )
     
-    def parse_api_result(self, raw_response: str) -> Dict[str, Any]:
-        """Parse API_RESULT response from Browser API"""
-        try:
-            # Extract JSON from API_RESULT:... format
-            if raw_response.startswith("API_RESULT:"):
-                json_str = raw_response[11:]  # Remove "API_RESULT:" prefix
-                return json.loads(json_str)
-            else:
-                # Fallback for direct JSON response
-                return json.loads(raw_response)
+    # def parse_api_result(self, raw_response: str) -> Dict[str, Any]: # Não é utilizado em canto nenhum??
+    #     """Parse API_RESULT response from Browser API"""
+    #     try:
+    #         # Extract JSON from API_RESULT:... format
+    #         if raw_response.startswith("API_RESULT:"):
+    #             json_str = raw_response[11:]  # Remove "API_RESULT:" prefix
+    #             return json.loads(json_str)
+    #         else:
+    #             # Fallback for direct JSON response
+    #             return json.loads(raw_response)
                 
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ Failed to parse API response: {raw_response}")
-            return {
-                "success": False,
-                "text_output": f"Failed to parse API response: {str(e)}",
-                "error": "Invalid JSON response",
-                "timestamp": datetime.now(UTC).isoformat()
-            }
+    #     except json.JSONDecodeError as e:
+    #         logger.error(f"❌ Failed to parse API response: {raw_response}")
+    #         return {
+    #             "success": False,
+    #             "text_output": f"Failed to parse API response: {str(e)}",
+    #             "error": "Invalid JSON response",
+    #             "timestamp": datetime.now(UTC).isoformat()
+    #         }
 
 
 class MetricsCollector:
@@ -915,6 +918,7 @@ async def execute_email_monitoring_step(step_input: StepInput) -> StepOutput:
         response = email_processor.run(monitoring_context)
         
         # Simulate email processing results (in real implementation, this would call Gmail API)
+        # mockado, arrumar
         valid_attachments = [
             {
                 "filename": "upload_faturas_2025_01.xlsx",
@@ -1025,6 +1029,7 @@ async def execute_data_extraction_step(step_input: StepInput) -> StepOutput:
     response = data_extractor.run(extraction_context)
     
     # Simulate CTE extraction results (in real implementation, this would process actual Excel files)
+    # processar de fato
     extraction_results = {
         "ctes_extracted": {
             "600708542": {
@@ -1227,6 +1232,7 @@ async def execute_api_orchestration_step(step_input: StepInput) -> StepOutput:
     response = api_orchestrator.run(orchestration_context)
     
     # Simulate API orchestration results with individual status tracking
+    # fazer chamada real
     api_execution_results = {
         "consolidated_json": consolidated_json.copy(),  # Include the working JSON
         "flows_executed": {},
@@ -1357,7 +1363,7 @@ async def execute_api_orchestration_step(step_input: StepInput) -> StepOutput:
     # Store in session state
     step_input.workflow_session_state["api_orchestration_results"] = api_execution_results
     
-    logger.info(f"🤖 API orchestration completed - {len(json_files)} POs processed through full pipeline")
+    logger.info(f"🤖 API orchestration completed - {len(json_files)} POs processed through full pipeline") # Variavel n exite?
     
     return StepOutput(content=json.dumps(api_execution_results))
 
@@ -1527,6 +1533,7 @@ if __name__ == "__main__":
         - All CTEs processed through PENDING → UPLOADED status flow
         - Comprehensive audit trail and error handling
         """
+        # o processo infere e assume que em 1 run vai estar tudo feito.
         
         # Create workflow instance
         workflow = get_processamento_faturas_workflow()
