@@ -11,6 +11,11 @@ from pathlib import Path
 
 from .docker_manager import DockerManager
 from .workspace import WorkspaceManager
+from .commands.init import InitCommands
+from .commands.workspace import WorkspaceCommands
+from .commands.postgres import PostgreSQLCommands
+from .commands.agent import AgentCommands
+from .commands.uninstall import UninstallCommands
 
 # Import command classes for test compatibility
 from .commands.init import InitCommands
@@ -28,22 +33,36 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # 8 core commands
-    parser.add_argument("--install", nargs="?", const="interactive", choices=["agent", "workspace", "all", "interactive"], help="Install components (interactive by default)")
-    parser.add_argument("--start", choices=["agent", "workspace", "all"], help="Start services")
-    parser.add_argument("--stop", choices=["agent", "workspace", "all"], help="Stop services")
-    parser.add_argument("--restart", choices=["agent", "workspace", "all"], help="Restart services")
-    parser.add_argument("--status", choices=["agent", "workspace", "all"], help="Service status")
-    parser.add_argument("--health", choices=["agent", "workspace", "all"], help="Health check")
-    parser.add_argument("--logs", choices=["agent", "workspace", "all"], help="Show logs")
-    parser.add_argument("--uninstall", choices=["agent", "workspace", "all"], help="Uninstall")
-    
-    # Additional commands
+    # Core commands  
     parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
+    parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start workspace server")
     parser.add_argument("--version", action="store_true", help="Show version")
     
-    # Lines flag (for --logs only)
-    parser.add_argument("--lines", type=int, default=50, help="Number of log lines (used with --logs)")
+    # PostgreSQL commands
+    parser.add_argument("--postgres-status", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL status")
+    parser.add_argument("--postgres-start", nargs="?", const=".", metavar="WORKSPACE", help="Start PostgreSQL")
+    parser.add_argument("--postgres-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop PostgreSQL")
+    parser.add_argument("--postgres-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart PostgreSQL")
+    parser.add_argument("--postgres-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show PostgreSQL logs")
+    parser.add_argument("--postgres-health", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL health")
+    
+    # Agent commands
+    parser.add_argument("--agent-install", nargs="?", const=".", metavar="WORKSPACE", help="Install agent services")
+    parser.add_argument("--agent-serve", nargs="?", const=".", metavar="WORKSPACE", help="Start agent server")
+    parser.add_argument("--agent-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop agent services")
+    parser.add_argument("--agent-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart agent services")
+    parser.add_argument("--agent-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show agent logs")
+    parser.add_argument("--agent-status", nargs="?", const=".", metavar="WORKSPACE", help="Check agent status")
+    parser.add_argument("--agent-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset agent services")
+    
+    # Uninstall commands
+    parser.add_argument("--uninstall", nargs="?", const=".", metavar="WORKSPACE", help="Uninstall current workspace")
+    parser.add_argument("--uninstall-global", action="store_true", help="Uninstall global installation")
+    
+    # Utility flags
+    parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind server to")
+    parser.add_argument("--port", type=int, default=8886, help="Port to bind server to")
     
     # Workspace path - primary positional argument
     parser.add_argument("workspace", nargs="?", help="Workspace directory path")
@@ -58,9 +77,13 @@ def main() -> int:
     
     # Count commands
     commands = [
-        args.install, args.start, args.stop, args.restart,
-        args.status, args.health, args.logs, args.uninstall,
-        args.init, args.version, args.workspace
+        args.init != False, args.serve, args.version,
+        args.postgres_status, args.postgres_start, args.postgres_stop, 
+        args.postgres_restart, args.postgres_logs, args.postgres_health,
+        args.agent_install, args.agent_serve, args.agent_stop,
+        args.agent_restart, args.agent_logs, args.agent_status, args.agent_reset,
+        args.uninstall, args.uninstall_global,
+        args.workspace
     ]
     command_count = sum(1 for cmd in commands if cmd)
     
@@ -73,9 +96,6 @@ def main() -> int:
         return 0
 
     try:
-        docker = DockerManager()
-        workspace_mgr = WorkspaceManager()
-        
         # Version
         if args.version:
             from lib.utils.version_reader import get_project_version
@@ -84,41 +104,95 @@ def main() -> int:
             return 0
         
         # Init workspace
-        if args.init:
-            init_cmd = InitCommands()
+        if args.init is not False:  # Using 'is not False' to handle both None and string values
+            init_commands = InitCommands()
             workspace_name = None if args.init == "__DEFAULT__" else args.init
-            return 0 if init_cmd.init_workspace(workspace_name) else 1
+            return 0 if init_commands.init_workspace(workspace_name) else 1
         
         # Start workspace server
         if args.workspace:
             if not Path(args.workspace).exists():
                 print(f"❌ Directory not found: {args.workspace}")
                 return 1
-            workspace_cmd = WorkspaceCommands()
-            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
+            workspace_commands = WorkspaceCommands()
+            return 0 if workspace_commands.start_server(args.workspace) else 1
         
-        # Docker operations
+        # Get component for operations that need it
         component = args.install or args.start or args.stop or args.restart or args.status or args.health or args.logs or args.uninstall
         
-        if args.install:
-            return 0 if docker.install(component) else 1
-        elif args.start:
-            return 0 if docker.start(component) else 1
-        elif args.stop:
-            return 0 if docker.stop(component) else 1
-        elif args.restart:
-            return 0 if docker.restart(component) else 1
-        elif args.status:
-            docker.status(component)
-            return 0
-        elif args.health:
-            return 0
-        elif args.logs:
-            docker.logs(component, args.lines)
-            return 0
-        elif args.uninstall:
-            return 0 if docker.uninstall(component) else 1
+        # Agent operations
+        if component in ["agent", "all"]:
+            agent_commands = AgentCommands()
+            
+            if args.install:
+                return 0 if agent_commands.install() else 1
+            elif args.start:
+                return 0 if agent_commands.start() else 1
+            elif args.stop:
+                return 0 if agent_commands.stop() else 1
+            elif args.restart:
+                return 0 if agent_commands.restart() else 1
+            elif args.status:
+                agent_commands.status()
+                return 0
+            elif args.health:
+                agent_commands.health()
+                return 0
+            elif args.logs:
+                agent_commands.logs(args.lines)
+                return 0
+            elif args.uninstall:
+                uninstall_commands = UninstallCommands()
+                return 0 if uninstall_commands.uninstall_agent() else 1
         
+        # PostgreSQL operations
+        if component == "postgres":
+            postgres_commands = PostgreSQLCommands()
+            
+            if args.install:
+                return 0 if postgres_commands.install() else 1
+            elif args.start:
+                return 0 if postgres_commands.start() else 1
+            elif args.stop:
+                return 0 if postgres_commands.stop() else 1
+            elif args.restart:
+                return 0 if postgres_commands.restart() else 1
+            elif args.status:
+                postgres_commands.status()
+                return 0
+            elif args.health:
+                postgres_commands.health()
+                return 0
+            elif args.logs:
+                postgres_commands.logs(args.lines)
+                return 0
+        
+        # Workspace operations
+        if component == "workspace":
+            workspace_commands = WorkspaceCommands()
+            
+            if args.install:
+                return 0 if workspace_commands.install() else 1
+            elif args.start:
+                return 0 if workspace_commands.start() else 1
+            elif args.stop:
+                return 0 if workspace_commands.stop() else 1
+            elif args.restart:
+                return 0 if workspace_commands.restart() else 1
+            elif args.status:
+                workspace_commands.status()
+                return 0
+            elif args.health:
+                workspace_commands.health()
+                return 0
+            elif args.logs:
+                workspace_commands.logs(args.lines)
+                return 0
+            elif args.uninstall:
+                uninstall_commands = UninstallCommands()
+                return 0 if uninstall_commands.uninstall_workspace() else 1
+        
+        # Fallback for unhandled cases
         return 0
     
     except KeyboardInterrupt:
@@ -148,4 +222,6 @@ class LazyCommandLoader:
         return lambda: f"Command {command_name} loaded"
 
 
-app = create_parser()  # Expected by some tests
+def app() -> int:
+    """CLI app function that calls main and returns result."""
+    return main()

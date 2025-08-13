@@ -34,6 +34,14 @@ class UninstallCommands:
         """Execute command stub."""
         return True
     
+    def uninstall_agent(self) -> bool:
+        """Uninstall agent stub."""
+        return True
+    
+    def uninstall_workspace(self) -> bool:
+        """Uninstall workspace stub."""
+        return True
+    
     def status(self) -> Dict[str, Any]:
         """Get status stub."""
         return {"status": "running", "healthy": True}
