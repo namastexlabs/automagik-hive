@@ -23,15 +23,16 @@ class TestVersionCommand:
             # Mock sys.argv to simulate --version command
             monkeypatch.setattr(sys, 'argv', ['automagik-hive', '--version'])
             
-            # Run main() - version returns 0 without raising SystemExit
-            result = main()
+            # argparse with action="version" raises SystemExit
+            with pytest.raises(SystemExit) as exc_info:
+                main()
             
-            # Should return 0 for success
-            assert result == 0
+            # Should exit with code 0 for success
+            assert exc_info.value.code == 0
             
             # Check that version was displayed correctly
             captured = capsys.readouterr()
-            assert "Automagik Hive v0.1.0a59" in captured.out
+            assert "automagik-hive v0.1.0a59" in captured.out
             
             # Verify get_project_version was called
             mock_version.assert_called_once()

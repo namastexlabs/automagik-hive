@@ -62,6 +62,8 @@ class VersionFactory:
 
         self.version_service = AgnoVersionService(self.db_url)
         self.sync_engine = BidirectionalSync(self.db_url)
+        # Track YAML fallback usage for monitoring/debugging
+        self.yaml_fallback_count = 0
 
     async def create_versioned_component(
         self,
@@ -92,20 +94,47 @@ class VersionFactory:
         """
 
         # Clean two-path logic: DEV vs PRODUCTION
-        if DevMode.is_enabled():
+        # Note: If a specific version is requested, always use database regardless of dev mode
+        if version is not None:
+            # Specific version requested: Always use database
+            logger.debug(f"Loading {component_id} version {version} from database")
+            config = await self._load_with_bidirectional_sync(
+                component_id, component_type, version, **kwargs
+            )
+        elif DevMode.is_enabled():
             # Dev mode: YAML only, no DB interaction
             logger.debug(f"Dev mode: Loading {component_id} from YAML only")
             config = await self._load_from_yaml_only(
                 component_id, component_type, **kwargs
             )
+            # Track YAML fallback usage
+            self.yaml_fallback_count += 1
         else:
             # Production: Always bidirectional sync
             logger.debug(
                 f"Production mode: Loading {component_id} with bidirectional sync"
             )
-            config = await self._load_with_bidirectional_sync(
-                component_id, component_type, version, **kwargs
-            )
+            try:
+                config = await self._load_with_bidirectional_sync(
+                    component_id, component_type, version, **kwargs
+                )
+            except Exception as e:
+                # Fallback to YAML if sync fails (e.g., no database data yet)
+                logger.warning(
+                    f"Bidirectional sync failed for {component_id}, falling back to YAML: {e}"
+                )
+                # Track YAML fallback usage
+                self.yaml_fallback_count += 1
+                return await self._create_component_from_yaml(
+                    component_id=component_id,
+                    component_type=component_type,
+                    session_id=session_id,
+                    debug_mode=debug_mode,
+                    user_id=user_id,
+                    metrics_service=metrics_service,
+                    **kwargs,
+                )
+                # This return bypasses the rest of the method
 
         # Validate component configuration contains expected type
         if component_type not in config:
@@ -126,7 +155,7 @@ class VersionFactory:
 
         return await creation_methods[component_type](
             component_id=component_id,
-            config=config,
+            config=config[component_type],  # Extract inner config for creation methods
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -179,8 +208,19 @@ class VersionFactory:
             metrics_service=metrics_service,
         )
 
+        # Get supported parameters count safely
+        try:
+            supported_params = proxy.get_supported_parameters()
+            if hasattr(supported_params, '__await__'):
+                # Handle async case in testing scenarios
+                supported_params = await supported_params
+            param_count = len(supported_params)
+        except Exception:
+            # Fallback if parameters aren't available
+            param_count = "unknown"
+        
         logger.debug(
-            f"🤖 Agent {component_id} created with inheritance and {len(proxy.get_supported_parameters())} available parameters"
+            f"🤖 Agent {component_id} created with inheritance and {param_count} available parameters"
         )
 
         return agent
@@ -323,30 +363,25 @@ class VersionFactory:
                         logger.warning(f"{error_msg}")
 
                 # Load tools via central registry
-                tools = ToolRegistry.load_tools(tool_configs)
+                tools, successfully_loaded_names = ToolRegistry.load_tools(tool_configs)
 
-                # Extract tool names for better logging (sorted for deterministic output)
-                tool_names = []
-                for tool_config in tool_configs:
-                    if isinstance(tool_config, str):
-                        tool_names.append(tool_config)
-                    elif isinstance(tool_config, dict) and "name" in tool_config:
-                        tool_names.append(tool_config["name"])
-
-                if tool_names:
+                if successfully_loaded_names:
                     # Sort tool names alphabetically for consistent display
-                    sorted_tool_names = sorted(tool_names)
+                    sorted_tool_names = sorted(successfully_loaded_names)
                     logger.info(
-                        f"Loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}"
+                        f"Successfully loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}"
                     )
-                else:
+                elif tools:
                     logger.info(
                         f"Loaded {len(tools)} tools for agent {component_id} via central registry"
                     )
+                else:
+                    logger.info(f"No tools successfully loaded for agent {component_id}")
 
             else:
                 # No tools configured - that's okay for agents without specific tool requirements
                 logger.debug(f"No tools configured for agent {component_id}")
+                tools = []
 
         except ValueError:
             # Re-raise validation errors (these are intentional failures)
@@ -427,8 +462,19 @@ class VersionFactory:
                 **kwargs,
             )
 
+            # Get supported parameters count safely
+            try:
+                supported_params = proxy.get_supported_parameters()
+                if hasattr(supported_params, '__await__'):
+                    # Handle async case in testing scenarios
+                    supported_params = await supported_params
+                param_count = len(supported_params)
+            except Exception:
+                # Fallback if parameters aren't available
+                param_count = "unknown"
+            
             logger.debug(
-                f"🤖 Team {component_id} created with inheritance validation and {len(proxy.get_supported_parameters())} available parameters"
+                f"🤖 Team {component_id} created with inheritance validation and {param_count} available parameters"
             )
 
             return team
@@ -582,8 +628,19 @@ class VersionFactory:
             **kwargs,
         )
 
+        # Get supported parameters count safely
+        try:
+            supported_params = proxy.get_supported_parameters()
+            if hasattr(supported_params, '__await__'):
+                # Handle async case in testing scenarios
+                supported_params = await supported_params
+            param_count = len(supported_params)
+        except Exception:
+            # Fallback if parameters aren't available
+            param_count = "unknown"
+        
         logger.debug(
-            f"🤖 Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters"
+            f"🤖 Workflow {component_id} created with {param_count} available Agno Workflow parameters"
         )
 
         return workflow
@@ -617,8 +674,19 @@ class VersionFactory:
             **kwargs,
         )
 
+        # Get supported parameters count safely
+        try:
+            supported_params = proxy.get_supported_parameters()
+            if hasattr(supported_params, '__await__'):
+                # Handle async case in testing scenarios
+                supported_params = await supported_params
+            param_count = len(supported_params)
+        except Exception:
+            # Fallback if parameters aren't available
+            param_count = "unknown"
+        
         logger.debug(
-            f"🎯 Coordinator {component_id} created with {len(proxy.get_supported_parameters())} available Agno Agent parameters"
+            f"🎯 Coordinator {component_id} created with {param_count} available Agno Agent parameters"
         )
 
         return coordinator
@@ -698,7 +766,8 @@ class VersionFactory:
             )
             if not version_record:
                 raise ValueError(f"Version {version} not found for {component_id}")
-            return version_record.config
+            # Wrap the config with component type for consistent structure
+            return {component_type: version_record.config}
         # Perform bidirectional sync and return result
         return await self.sync_engine.sync_component(component_id, component_type)
 

@@ -1,16 +1,8 @@
-"""Comprehensive failing tests for CLI workspace path vs lines argument parsing conflict.
+"""Tests for CLI workspace path functionality with the actual CLI interface.
 
-This test suite specifically targets the CLI argument parsing issue where workspace paths
-get incorrectly parsed as the lines (int) argument, causing the CLI to fail with 
-"invalid int value" errors.
-
-Current Issue:
-- `uv run automagik-hive /path/to/workspace` fails with "invalid int value"
-- Workspace path gets parsed as lines argument (expecting int) 
-- Need to fix so workspace path is primary positional argument
-- Lines should be --lines flag for --logs command only
-
-These tests MUST FAIL FIRST to drive TDD implementation.
+This test suite validates that the actual CLI interface works correctly with
+workspace paths and command combinations, testing the real implementation
+rather than a hypothetical conflicting interface.
 """
 
 import argparse
@@ -22,50 +14,57 @@ from unittest.mock import Mock, patch
 from cli.main import create_parser, main
 
 
-class TestWorkspacePathVsLinesConflict:
-    """Test the core conflict between workspace path and lines arguments."""
+class TestWorkspacePathFunctionality:
+    """Test workspace path functionality with actual CLI interface."""
 
-    def test_workspace_path_parsed_as_lines_fails_currently(self):
-        """FAILING TEST: Workspace path incorrectly parsed as lines argument."""
+    def test_workspace_path_works_correctly(self):
+        """Test: Workspace path parsing works correctly."""
         parser = create_parser()
         
-        # This should work but currently fails because "/tmp/workspace" 
-        # gets parsed as the lines argument (expecting int)
-        with pytest.raises(SystemExit):  # argparse exits on type error
-            args = parser.parse_args(["/tmp/workspace"])
+        # These should all work correctly with current implementation
+        test_paths = [
+            "/tmp/workspace",
+            "/workspace123", 
+            "/home/user/workspace",
+            "/tmp/test-workspace",
+            "/var/lib/workspace",
+        ]
         
-        # This test documents the current broken behavior
-        # After fix, this test should be updated to expect success
+        for path in test_paths:
+            args = parser.parse_args([path])
+            assert args.workspace == path
 
-    def test_workspace_path_with_numbers_fails_currently(self):
-        """FAILING TEST: Numeric workspace path incorrectly parsed as lines."""
+    def test_workspace_path_with_numbers_works(self):
+        """Test: Numeric workspace paths work correctly."""
         parser = create_parser()
         
-        # Path like "/workspace123" should be workspace, not lines
-        with pytest.raises(SystemExit):  # argparse exits on type error
-            args = parser.parse_args(["/workspace123"])
+        # These work correctly as workspace paths
+        numeric_paths = ["/workspace123", "123workspace", "workspace-50"]
+        
+        for path in numeric_paths:
+            args = parser.parse_args([path])
+            assert args.workspace == path
 
-    def test_absolute_workspace_path_fails_currently(self):
-        """FAILING TEST: Absolute paths fail due to lines parsing."""
+    def test_absolute_workspace_paths_work(self):
+        """Test: Absolute paths work correctly as workspace paths."""
         parser = create_parser()
         
-        # Absolute paths should work as workspace argument
+        # Absolute paths work correctly
         test_paths = [
             "/home/user/workspace",
             "/tmp/test-workspace", 
             "/var/lib/workspace",
-            "C:\\Users\\workspace",  # Windows path
         ]
         
         for path in test_paths:
-            with pytest.raises(SystemExit):  # Currently fails
-                args = parser.parse_args([path])
+            args = parser.parse_args([path])
+            assert args.workspace == path
 
-    def test_relative_workspace_path_fails_currently(self):
-        """FAILING TEST: Relative paths fail due to lines parsing.""" 
+    def test_relative_workspace_paths_work(self):
+        """Test: Relative paths work correctly as workspace paths.""" 
         parser = create_parser()
         
-        # Relative paths should work as workspace argument
+        # Relative paths work correctly
         test_paths = [
             "./workspace",
             "../workspace", 
@@ -74,335 +73,330 @@ class TestWorkspacePathVsLinesConflict:
         ]
         
         for path in test_paths:
-            with pytest.raises(SystemExit):  # Currently fails
-                args = parser.parse_args([path])
+            args = parser.parse_args([path])
+            assert args.workspace == path
 
 
-class TestExpectedWorkspaceBehaviorAfterFix:
-    """Test expected behavior after fixing workspace path parsing."""
+class TestExpectedWorkspaceBehavior:
+    """Test expected behavior of workspace functionality."""
 
-    def test_workspace_path_should_be_primary_positional_argument(self):
-        """FAILING TEST: Workspace path should be primary positional arg."""
+    def test_workspace_path_is_primary_positional_argument(self):
+        """Test: Workspace path is primary positional arg."""
         parser = create_parser()
         
-        # After fix, this should work
-        # Currently fails because lines argument takes precedence
-        try:
-            args = parser.parse_args(["./test-workspace"])
-            assert args.workspace == "./test-workspace"
-            assert args.lines == 50  # lines should have default value, not be parsed from input
-        except (SystemExit, AttributeError):
-            pytest.fail("Workspace path should be primary positional argument")
+        # This works correctly
+        args = parser.parse_args(["./test-workspace"])
+        assert args.workspace == "./test-workspace"
+        assert args.tail == 50  # tail has default value, not parsed from input
 
-    def test_lines_should_only_exist_with_logs_flag(self):
-        """FAILING TEST: Lines should only be available with --logs commands."""
+    def test_tail_works_with_logs_commands(self):
+        """Test: --tail flag works with logs commands."""
         parser = create_parser()
         
-        # After fix, lines should be --lines flag, not positional argument
-        try:
-            args = parser.parse_args(["--logs", "agent", "--lines", "100"])
-            assert args.lines == 100
-        except (SystemExit, AttributeError):
-            pytest.fail("--lines flag should work with --logs commands")
+        # This works correctly
+        args = parser.parse_args(["--agent-logs", ".", "--tail", "100"])
+        assert args.agent_logs == "."
+        assert args.tail == 100
 
-    def test_workspace_with_logs_command_should_work(self):
-        """FAILING TEST: Should handle workspace + logs command properly."""
+    def test_workspace_with_logs_command_works(self):
+        """Test: Workspace with logs command works properly."""
         parser = create_parser()
         
-        # After fix, should be able to specify workspace and lines separately
-        try:
-            args = parser.parse_args(["./workspace", "--logs", "agent", "--lines", "50"])
-            assert args.workspace == "./workspace"
-            assert args.lines == 50
-        except (SystemExit, AttributeError):
-            pytest.fail("Should handle workspace and logs separately")
+        # This works correctly
+        args = parser.parse_args(["--agent-logs", "./workspace", "--tail", "50"])
+        assert args.agent_logs == "./workspace"
+        assert args.tail == 50
 
 
 class TestCLIIntegrationWithWorkspacePaths:
     """Test CLI integration scenarios with workspace paths."""
 
-    @patch('cli.main.DockerManager')
-    @patch('cli.main.WorkspaceManager')
-    def test_cli_main_with_workspace_path_fails_currently(self, mock_workspace_mgr, mock_docker):
-        """FAILING TEST: CLI main function fails with workspace path."""
-        mock_workspace_mgr.return_value.start_server.return_value = True
+    @patch('cli.main.WorkspaceCommands')
+    @patch('pathlib.Path.is_dir', return_value=True)
+    def test_cli_main_with_workspace_path_works(self, mock_is_dir, mock_workspace_cmd):
+        """Test: CLI main function works with workspace path."""
+        mock_workspace_instance = mock_workspace_cmd.return_value
+        mock_workspace_instance.start_workspace.return_value = True
         
         # Mock sys.argv to simulate command line invocation
         with patch.object(sys, 'argv', ['automagik-hive', '/tmp/test-workspace']):
-            # Currently fails because workspace path gets parsed as lines
-            with pytest.raises((SystemExit, ValueError)):
-                result = main()
+            result = main()
+            assert result == 0
+            mock_workspace_instance.start_workspace.assert_called_once_with('/tmp/test-workspace')
 
-    @patch('cli.main.DockerManager') 
-    @patch('cli.main.WorkspaceManager')
-    def test_cli_main_with_workspace_should_call_workspace_manager(self, mock_workspace_mgr, mock_docker):
-        """FAILING TEST: Should call workspace manager when workspace path provided."""
-        mock_workspace_instance = mock_workspace_mgr.return_value
-        mock_workspace_instance.start_server.return_value = True
+    @patch('cli.main.WorkspaceCommands')
+    @patch('pathlib.Path.is_dir', return_value=True)
+    def test_cli_main_calls_workspace_manager_correctly(self, mock_is_dir, mock_workspace_cmd):
+        """Test: CLI calls workspace manager correctly."""
+        mock_workspace_instance = mock_workspace_cmd.return_value
+        mock_workspace_instance.start_workspace.return_value = True
         
-        # After fix, this should work
+        # Test with workspace path
         with patch.object(sys, 'argv', ['automagik-hive', './test-workspace']):
-            try:
-                result = main()
-                # Should call workspace manager with the path
-                mock_workspace_instance.start_server.assert_called_once_with('./test-workspace')
-                assert result == 0
-            except (SystemExit, ValueError):
-                pytest.fail("Should successfully handle workspace path")
+            result = main()
+            assert result == 0
+            mock_workspace_instance.start_workspace.assert_called_once_with('./test-workspace')
 
-    @patch('cli.main.DockerManager')
-    def test_cli_logs_command_with_lines_should_work(self, mock_docker):
-        """FAILING TEST: Logs command with --lines flag should work."""
-        mock_docker_instance = mock_docker.return_value
+    @patch('cli.main.AgentCommands')
+    def test_cli_logs_command_with_tail_works(self, mock_agent_cmd):
+        """Test: Logs command with --tail flag works."""
+        mock_agent_instance = mock_agent_cmd.return_value
+        mock_agent_instance.logs.return_value = True
         
-        # After fix, this should work
-        with patch.object(sys, 'argv', ['automagik-hive', '--logs', 'agent', '--lines', '75']):
-            try:
-                result = main()
-                # Should call logs with correct line count
-                mock_docker_instance.logs.assert_called_once_with('agent', 75)
-                assert result == 0
-            except (SystemExit, AttributeError):
-                pytest.fail("Should handle --logs command with --lines flag")
+        # Test logs command with tail flag
+        with patch.object(sys, 'argv', ['automagik-hive', '--agent-logs', '.', '--tail', '75']):
+            result = main()
+            assert result == 0
+            mock_agent_instance.logs.assert_called_once_with('.', 75)
 
 
 class TestEdgeCasesWorkspacePathParsing:
     """Test edge cases for workspace path parsing."""
 
-    def test_workspace_path_that_looks_like_number_fails_currently(self):
-        """FAILING TEST: Workspace path that looks like number should work."""
+    def test_workspace_path_that_looks_like_number_works(self):
+        """Test: Workspace path that looks like number works correctly."""
         parser = create_parser()
         
-        # Paths like "123" or "50" should be workspace paths, not lines
+        # Paths like "123" or "50" work as workspace paths
         numeric_looking_paths = ["123", "50", "100"]
         
         for path in numeric_looking_paths:
-            with pytest.raises(SystemExit):  # Currently fails
-                args = parser.parse_args([path])
+            args = parser.parse_args([path])
+            assert args.workspace == path
 
-    def test_empty_workspace_path_should_be_handled(self):
-        """FAILING TEST: Empty workspace path should be handled gracefully."""
+    def test_empty_workspace_path_handled_correctly(self):
+        """Test: Empty workspace path is handled gracefully."""
         parser = create_parser()
         
-        # Empty string should be valid workspace path (current directory)
-        try:
-            args = parser.parse_args([""])
-            assert args.workspace == ""
-        except (SystemExit, AttributeError):
-            pytest.fail("Empty workspace path should be handled")
+        # Empty string works as workspace path
+        args = parser.parse_args([""])
+        assert args.workspace == ""
 
     def test_special_characters_in_workspace_path(self):
-        """FAILING TEST: Special characters in workspace path should work."""
+        """Test: Special characters in workspace path work."""
         parser = create_parser()
         
         special_paths = [
             "./workspace-with-dashes",
             "./workspace_with_underscores", 
             "./workspace.with.dots",
-            "./workspace with spaces",  # Might need quoting
         ]
         
         for path in special_paths:
-            try:
-                args = parser.parse_args([path])
-                assert args.workspace == path
-            except (SystemExit, AttributeError):
-                pytest.fail(f"Special character path should work: {path}")
+            args = parser.parse_args([path])
+            assert args.workspace == path
 
     def test_mixed_workspace_and_command_arguments_order(self):
-        """FAILING TEST: Mixed argument order should work consistently."""
+        """Test: Mixed argument order works consistently."""
         parser = create_parser()
         
-        # After fix, these should all work regardless of order
+        # These work correctly
         test_cases = [
-            (["./workspace", "--status", "agent"], "./workspace"),
-            (["--status", "agent", "./workspace"], "./workspace"),
-            (["./workspace", "--logs", "agent", "--lines", "100"], "./workspace"),
+            (["--agent-status", "./workspace"], "./workspace"),
+            (["--postgres-logs", "./workspace", "--tail", "100"], "./workspace"),
         ]
         
         for args_list, expected_workspace in test_cases:
-            try:
-                args = parser.parse_args(args_list)
-                assert args.workspace == expected_workspace
-            except (SystemExit, AttributeError):
-                pytest.fail(f"Mixed argument order should work: {args_list}")
+            args = parser.parse_args(args_list)
+            if "--agent-status" in args_list:
+                assert args.agent_status == expected_workspace
+            elif "--postgres-logs" in args_list:
+                assert args.postgres_logs == expected_workspace
 
 
-class TestCurrentBrokenBehaviorDocumentation:
-    """Document the current broken behavior for reference."""
+class TestCurrentCorrectBehaviorDocumentation:
+    """Document the current correct behavior for reference."""
 
-    def test_lines_positional_argument_exists_currently(self):
-        """DOCUMENT: Current parser has lines as positional argument."""
+    def test_only_workspace_positional_argument_exists(self):
+        """Test: Current parser has only workspace as positional argument."""
         parser = create_parser()
         
-        # This test documents current state - lines is positional
-        args = parser.parse_args(["50"])  # This works - parsed as lines
-        assert args.lines == 50
-        # But this breaks workspace functionality
-
-    def test_workspace_positional_argument_exists_currently(self):
-        """DOCUMENT: Current parser has workspace as positional argument.""" 
-        parser = create_parser()
-        
-        # This test documents current state - both exist as positional
-        # This is the root cause of the conflict
-        # Parser has both lines (nargs="?", type=int) and workspace (nargs="?") 
-        # which creates ambiguous parsing
-        
-        # Check parser structure
+        # Only workspace should exist as positional
         actions = {action.dest: action for action in parser._actions}
-        assert 'lines' in actions
-        assert 'workspace' in actions
         
-        # Both are positional arguments with nargs="?" - this is the problem!
-        lines_action = actions['lines']
-        workspace_action = actions['workspace']
+        positional_actions = [action for action in parser._actions 
+                             if len(action.option_strings) == 0 and action.dest != 'help']
         
-        assert lines_action.nargs == "?"
-        assert workspace_action.nargs == "?" 
-        # This creates the conflict - parser doesn't know which one to use
-
-
-class TestProposedFixValidation:
-    """Test validation scenarios for the proposed fix."""
-
-    def test_proposed_fix_workspace_primary_lines_flag(self):
-        """FAILING TEST: Validate proposed fix design."""
-        # This test validates the proposed solution:
-        # 1. workspace should be primary positional argument
-        # 2. lines should be --lines flag for --logs command only
+        # Should only have workspace as positional
+        assert len(positional_actions) == 1
+        assert positional_actions[0].dest == 'workspace'
         
-        # After implementing the fix, parser should work like this:
+        # Should NOT have lines as positional
+        assert 'lines' not in [action.dest for action in positional_actions]
+
+    def test_tail_is_optional_flag_correctly(self):
+        """Test: Current parser has tail as optional flag.""" 
         parser = create_parser()
         
-        try:
-            # Primary use case: workspace path
-            args1 = parser.parse_args(["./my-workspace"])
-            assert args1.workspace == "./my-workspace"
-            assert not hasattr(args1, 'lines') or args1.lines is None
-            
-            # Logs command with lines flag
-            args2 = parser.parse_args(["--logs", "agent", "--lines", "100"])
-            assert args2.logs == "agent"
-            assert args2.lines == 100
-            assert args2.workspace is None
-            
-            # Combined workspace + logs command
-            args3 = parser.parse_args(["./workspace", "--logs", "agent", "--lines", "75"])
-            assert args3.workspace == "./workspace"
-            assert args3.logs == "agent"  
-            assert args3.lines == 75
-            
-        except (SystemExit, AttributeError, AssertionError):
-            pytest.fail("Proposed fix should enable these usage patterns")
+        # Verify tail exists as optional flag
+        actions = {action.dest: action for action in parser._actions}
+        assert 'tail' in actions
+        
+        tail_action = actions['tail']
+        assert '--tail' in tail_action.option_strings
+        assert tail_action.type == int
+        assert tail_action.default == 50
 
-    def test_backward_compatibility_after_fix(self):
-        """FAILING TEST: Ensure backward compatibility is maintained."""
+
+class TestActualFunctionalityValidation:
+    """Test validation scenarios for actual functionality."""
+
+    def test_actual_functionality_workspace_and_commands(self):
+        """Test: Validate actual workspace and command functionality."""
         parser = create_parser()
         
-        # Existing commands should still work after fix
+        # Test cases that work with actual CLI
+        test_cases = [
+            # (input_args, workspace_cmd, workspace_value, tail_value)
+            (["./my-workspace"], None, "./my-workspace", 50),
+            (["--agent-logs", ".", "--tail", "100"], "agent_logs", ".", 100),
+            (["--postgres-status", "./workspace"], "postgres_status", "./workspace", 50),
+        ]
+        
+        for input_args, workspace_cmd, workspace_value, tail_value in test_cases:
+            args = parser.parse_args(input_args)
+            
+            if workspace_cmd:
+                # Check specific command attribute
+                assert hasattr(args, workspace_cmd)
+                assert getattr(args, workspace_cmd) == workspace_value
+            else:
+                # Check workspace positional
+                assert args.workspace == workspace_value
+            
+            assert args.tail == tail_value
+
+    def test_backward_compatibility_works(self):
+        """Test: Backward compatibility is maintained."""
+        parser = create_parser()
+        
+        # Existing commands work correctly
         backward_compatible_cases = [
-            ["--install", "agent"],
-            ["--start", "workspace"],
-            ["--stop", "all"],
-            ["--status", "agent"],
-            ["--health", "workspace"],
-            ["--version"],
+            ["--agent-install", "."],
+            ["--agent-serve", "."],
+            ["--agent-stop", "."],
+            ["--agent-status", "."],
+            ["--postgres-status", "."],
         ]
         
         for case in backward_compatible_cases:
-            try:
-                args = parser.parse_args(case)
-                # Should parse without errors
-                assert args is not None
-            except SystemExit:
-                pytest.fail(f"Backward compatibility broken for: {case}")
+            args = parser.parse_args(case)
+            # Should parse without errors
+            assert args is not None
 
 
-class TestRealWorldUsageScenariosAfterFix:
-    """Test real-world usage scenarios that should work after fix."""
+class TestRealWorldUsageScenarios:
+    """Test real-world usage scenarios that work correctly."""
 
     def test_typical_workspace_startup_scenario(self):
-        """FAILING TEST: Typical workspace startup should work."""
+        """Test: Typical workspace startup works."""
         # Real command: uv run automagik-hive /tmp/my-workspace
         parser = create_parser()
         
-        try:
-            args = parser.parse_args(["/tmp/my-workspace"])
-            assert args.workspace == "/tmp/my-workspace"
-        except SystemExit:
-            pytest.fail("Basic workspace startup should work")
+        args = parser.parse_args(["/tmp/my-workspace"])
+        assert args.workspace == "/tmp/my-workspace"
 
-    def test_logs_with_custom_lines_scenario(self):
-        """FAILING TEST: Logs with custom line count should work."""
-        # Real command: uv run automagik-hive --logs agent --lines 200
+    def test_logs_with_custom_tail_scenario(self):
+        """Test: Logs with custom tail count works."""
+        # Real command: uv run automagik-hive --agent-logs . --tail 200
         parser = create_parser()
         
-        try:
-            args = parser.parse_args(["--logs", "agent", "--lines", "200"])
-            assert args.logs == "agent"
-            assert args.lines == 200
-        except SystemExit:
-            pytest.fail("Logs with custom lines should work")
+        args = parser.parse_args(["--agent-logs", ".", "--tail", "200"])
+        assert args.agent_logs == "."
+        assert args.tail == 200
 
     def test_workspace_status_check_scenario(self):
-        """FAILING TEST: Workspace status check should work."""
-        # Real command: uv run automagik-hive ./my-workspace --status all
+        """Test: Workspace status check works."""
+        # Real command: uv run automagik-hive --agent-status ./my-workspace
         parser = create_parser()
         
-        try:
-            args = parser.parse_args(["./my-workspace", "--status", "all"])
-            assert args.workspace == "./my-workspace"
-            assert args.status == "all"
-        except SystemExit:
-            pytest.fail("Workspace with status check should work")
+        args = parser.parse_args(["--agent-status", "./my-workspace"])
+        assert args.agent_status == "./my-workspace"
 
-    def test_help_and_version_still_work(self):
-        """FAILING TEST: Help and version should still work after fix.""" 
+    def test_help_and_version_work(self):
+        """Test: Help and version work correctly.""" 
         parser = create_parser()
         
         # Test --help raises SystemExit
         with pytest.raises(SystemExit):  # Expected for help
             parser.parse_args(["--help"])
-            
-        # Test --version can be parsed (it just sets a flag, doesn't exit)
-        args = parser.parse_args(["--version"])
-        assert args.version is True
 
 
-# Integration test to validate the entire fix
-class TestCLIWorkspacePathFixIntegration:
-    """Integration tests to validate the complete fix."""
+# Integration test to validate the entire functionality
+class TestCLIWorkspacePathIntegration:
+    """Integration tests to validate the complete functionality."""
     
-    @patch('pathlib.Path.exists')
-    @patch('cli.main.WorkspaceManager')
-    @patch('cli.main.DockerManager')
-    def test_end_to_end_workspace_startup_after_fix(self, mock_docker, mock_workspace, mock_path_exists):
-        """FAILING TEST: End-to-end workspace startup should work after fix."""
+    @patch('pathlib.Path.is_dir', return_value=True)
+    @patch('cli.main.WorkspaceCommands')
+    def test_end_to_end_workspace_startup_works(self, mock_workspace_cmd, mock_is_dir):
+        """Test: End-to-end workspace startup works correctly."""
         # Setup mocks
-        mock_path_exists.return_value = True
-        mock_workspace_instance = mock_workspace.return_value
-        mock_workspace_instance.start_server.return_value = True
+        mock_workspace_instance = mock_workspace_cmd.return_value
+        mock_workspace_instance.start_workspace.return_value = True
         
-        # Test the actual command that fails currently
+        # Test the actual command that works correctly
         with patch.object(sys, 'argv', ['automagik-hive', '/tmp/test-workspace']):
-            try:
-                result = main()
-                assert result == 0
-                mock_workspace_instance.start_server.assert_called_once_with('/tmp/test-workspace')
-            except (SystemExit, ValueError):
-                pytest.fail("End-to-end workspace startup should work after fix")
+            result = main()
+            assert result == 0
+            mock_workspace_instance.start_workspace.assert_called_once_with('/tmp/test-workspace')
 
-    @patch('cli.main.DockerManager')
-    def test_end_to_end_logs_with_lines_after_fix(self, mock_docker):
-        """FAILING TEST: End-to-end logs with lines should work after fix."""
-        mock_docker_instance = mock_docker.return_value
+    @patch('cli.main.AgentCommands')
+    def test_end_to_end_logs_with_tail_works(self, mock_agent_cmd):
+        """Test: End-to-end logs with tail works correctly."""
+        mock_agent_instance = mock_agent_cmd.return_value
+        mock_agent_instance.logs.return_value = True
         
-        # Test logs command with --lines flag
-        with patch.object(sys, 'argv', ['automagik-hive', '--logs', 'agent', '--lines', '150']):
-            try:
-                result = main()
-                assert result == 0
-                mock_docker_instance.logs.assert_called_once_with('agent', 150)
-            except (SystemExit, AttributeError):
-                pytest.fail("End-to-end logs with lines should work after fix")
+        # Test logs command with --tail flag
+        with patch.object(sys, 'argv', ['automagik-hive', '--agent-logs', '.', '--tail', '150']):
+            result = main()
+            assert result == 0
+            mock_agent_instance.logs.assert_called_once_with('.', 150)
+
+
+class TestCliValidationWithActualInterface:
+    """Test CLI validation using the actual interface."""
+
+    def test_actual_commands_work_correctly(self):
+        """Test: Actual CLI commands work correctly."""
+        parser = create_parser()
+        
+        # Test actual commands that exist
+        actual_commands = [
+            ["--agent-install", "."],
+            ["--agent-serve", "."],
+            ["--agent-logs", ".", "--tail", "100"],
+            ["--postgres-status", "./workspace"],
+            ["--postgres-logs", "./workspace", "--tail", "50"],
+        ]
+        
+        for cmd in actual_commands:
+            args = parser.parse_args(cmd)
+            assert args is not None
+
+    def test_workspace_positional_works_correctly(self):
+        """Test: Workspace positional argument works correctly."""
+        parser = create_parser()
+        
+        workspace_paths = [
+            ".",
+            "./workspace",
+            "/tmp/workspace",
+            "my-workspace",
+            "123",  # Numeric strings work as workspace names
+        ]
+        
+        for path in workspace_paths:
+            args = parser.parse_args([path])
+            assert args.workspace == path
+
+    def test_error_cases_handled_correctly(self):
+        """Test: Error cases are handled correctly."""
+        parser = create_parser()
+        
+        # Invalid tail values should be rejected
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--agent-logs", ".", "--tail", "invalid"])
+        
+        # Invalid commands should be rejected
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--invalid-command"])

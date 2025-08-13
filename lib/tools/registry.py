@@ -27,7 +27,7 @@ class ToolRegistry:
     _mcp_tools_cache: dict[str, RealMCPTool] = {}
 
     @staticmethod
-    def load_tools(tool_configs: list[dict[str, Any]]) -> list[Callable]:
+    def load_tools(tool_configs: list[dict[str, Any]]) -> tuple[list[Callable], list[str]]:
         """
         Load tools from YAML configuration.
 
@@ -35,9 +35,10 @@ class ToolRegistry:
             tool_configs: List of tool configuration dictionaries
 
         Returns:
-            List of callable tool functions
+            Tuple of (callable tool functions, list of successfully loaded tool names)
         """
         tools = []
+        successfully_loaded_names = []
 
         # Sort tool configs for deterministic loading order
         def get_tool_name(config):
@@ -69,6 +70,7 @@ class ToolRegistry:
                             if mcp_tools_instance:
                                 # Add the MCPTools instance directly - Agno knows how to handle this
                                 tools.append(mcp_tools_instance)
+                                successfully_loaded_names.append(tool_name)
                                 logger.debug(f"🌐 Added MCPTools instance for {tool_name}")
                             else:
                                 logger.warning(
@@ -83,18 +85,20 @@ class ToolRegistry:
                     tool = ToolRegistry._load_shared_tool(shared_tool_name)
                     if tool:
                         tools.append(tool)
+                        successfully_loaded_names.append(tool_name)
                 elif tool_name == "ShellTools":
                     # Handle native Agno ShellTools directly
                     agno_shell_tool = ToolRegistry._load_native_agno_tool("ShellTools")
                     if agno_shell_tool:
                         tools.append(agno_shell_tool)
+                        successfully_loaded_names.append(tool_name)
                 else:
                     logger.warning(f"Unknown tool type for: {tool_name}")
 
             except Exception as e:
                 logger.error(f"Failed to load tool {tool_name}: {e}")
 
-        return tools
+        return tools, successfully_loaded_names
 
     @staticmethod
     def discover_shared_tools() -> dict[str, Any]:
@@ -157,7 +161,8 @@ class ToolRegistry:
                 logger.debug(f"🌐 Cached real MCP tool: {name}")
                 return real_tool
         except Exception as e:
-            logger.warning(f"🌐 MCP tool {name} unavailable - will be skipped: {e}")
+            # Reduced redundant logging - single warning per tool instead of multiple
+            logger.debug(f"🌐 MCP tool {name} unavailable - will be skipped: {e}")
 
         return None
 

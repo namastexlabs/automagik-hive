@@ -145,11 +145,11 @@ def test_validate_filters(temp_csv_file, mock_vector_db):
 
 
 def test_skip_empty_answers(mock_vector_db):
-    """Test skipping rows with empty answers"""
+    """Test handling rows with empty answers (should create documents for questions without answers)"""
     csv_content = [
         ["question", "answer", "category", "tags"],
         ["Valid question?", "Valid answer", "development", "test"],
-        ["Empty answer question?", "", "development", "test"],  # Should skip
+        ["Empty answer question?", "", "development", "test"],  # Should create document for question only
         ["Another valid?", "Another answer", "development", "test"],
     ]
     
@@ -160,12 +160,21 @@ def test_skip_empty_answers(mock_vector_db):
     
     try:
         kb = RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
-        # Should only have 2 documents (skipping empty answer)
-        assert len(kb.documents) == 2
+        # Should have 3 documents (including question without answer)
+        assert len(kb.documents) == 3
         
-        # Check that empty answer row was skipped
-        contents = [doc.content for doc in kb.documents]
-        assert not any("Empty answer question?" in content for content in contents)
+        # Check that question without answer is included and formatted correctly
+        empty_answer_doc = None
+        for doc in kb.documents:
+            if "Empty answer question?" in doc.content:
+                empty_answer_doc = doc
+                break
+        
+        assert empty_answer_doc is not None
+        assert "**Q:** Empty answer question?" in empty_answer_doc.content
+        assert "**A:**" not in empty_answer_doc.content  # Should not have empty answer section
+        assert empty_answer_doc.meta_data["has_question"] is True
+        assert empty_answer_doc.meta_data["has_answer"] is False
     finally:
         Path(csv_path).unlink(missing_ok=True)
 

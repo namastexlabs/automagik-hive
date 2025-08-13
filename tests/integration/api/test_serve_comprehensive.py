@@ -16,6 +16,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 # Import the module under test
 import api.serve
+from lib.utils.version_reader import get_api_version
 
 
 class TestFastAPIAppCreation:
@@ -79,7 +80,7 @@ class TestFastAPIAppCreation:
             assert isinstance(app, FastAPI)
             assert app.title == "Automagik Hive Multi-Agent System"
             assert "Multi-Agent System" in app.description
-            assert app.version == "2.0"
+            assert app.version == get_api_version()
 
             # Verify startup was called
             mock_startup.assert_called_once()
@@ -378,7 +379,7 @@ class TestFastAPIAppCreation:
             assert isinstance(app, FastAPI)
             assert app.title == "Automagik Hive Multi-Agent System"
             assert "Simplified Mode" in app.description
-            assert app.version == "1.0.0"
+            assert app.version == get_api_version()
 
             # Verify startup display was called
             mock_create_display.assert_called_once()

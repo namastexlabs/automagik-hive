@@ -170,6 +170,11 @@ class AgentTester:
 
         if "complete" in task_prompt.lower() or "finished" in task_prompt.lower():
             # Completion phase - no artifacts (should be deleted)
+            # Also delete any context files that are in wishes directory
+            context_files = self._extract_context_files(task_prompt)
+            for context_file in context_files:
+                if "/genie/wishes/" in context_file and os.path.exists(context_file):
+                    os.unlink(context_file)
             return "success", []
 
         # Default case - create appropriate artifact based on agent type

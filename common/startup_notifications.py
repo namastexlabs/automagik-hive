@@ -4,7 +4,9 @@ Handles notifications when the server starts up and shuts down.
 """
 
 import asyncio
+from datetime import datetime
 
+from lib.config.server_config import get_server_config
 from lib.logging import logger
 
 from .notifications import NotificationLevel, send_notification
@@ -37,10 +39,6 @@ async def send_startup_notification(startup_display=None):
 
 def _build_startup_message(startup_display=None):
     """Build rich startup notification message."""
-    from datetime import datetime
-
-    from lib.config.server_config import get_server_config
-
     # Basic system info
     config = get_server_config()
     environment = config.environment
@@ -129,10 +127,7 @@ def _build_startup_message(startup_display=None):
             ["✅ Server started successfully", "📊 Component details unavailable"]
         )
 
-    # Import here to avoid circular imports
-    from lib.config.server_config import get_server_config
-
-    message_parts.extend(["", f"🔗 API: {get_server_config().get_base_url()}"])
+    message_parts.extend(["", f"🔗 API: {config.get_base_url()}"])
 
     return "\n".join(message_parts)
 

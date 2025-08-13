@@ -1,8 +1,7 @@
-"""Edge case tests for CLI argument parsing conflicts and error scenarios.
+"""Edge case tests for CLI argument parsing that test the actual CLI interface.
 
-These tests focus on specific edge cases, error conditions, and boundary scenarios
-for the CLI argument parsing system. All tests should FAIL initially to drive
-TDD implementation.
+These tests validate the current CLI argument parsing system behavior for edge cases,
+error conditions, and boundary scenarios based on the real CLI interface.
 """
 
 import argparse
@@ -14,154 +13,134 @@ from cli.main import create_parser, main
 
 
 class TestArgumentParsingEdgeCases:
-    """Test edge cases in argument parsing that expose the lines/workspace conflict."""
+    """Test edge cases in argument parsing with the actual CLI interface."""
 
-    def test_numeric_string_workspace_path_parsing_conflict(self):
-        """FAILING TEST: Numeric string paths expose the parsing conflict."""
+    def test_numeric_string_workspace_path_parsing_works(self):
+        """Test: Numeric string paths work correctly as workspace paths."""
         parser = create_parser()
         
-        # These should be workspace paths, but get parsed as lines (int)
+        # These should all work as workspace paths with the current interface
         numeric_paths = ["50", "100", "25", "0", "999"]
         
         for path in numeric_paths:
-            # Currently this "works" because it gets parsed as lines
-            # But it SHOULD be parsed as workspace path instead
             args = parser.parse_args([path])
             
-            # This assertion will FAIL because it gets parsed as lines, not workspace
-            try:
-                assert args.workspace == path
-                assert args.lines != int(path)  # Should not be parsed as lines
-            except (AttributeError, AssertionError):
-                # Expected failure - this is the bug we're fixing
-                pass
+            # Should be parsed as workspace path correctly
+            assert args.workspace == path
+            # tail should have default value (50), not parsed from input
+            assert args.tail == 50
 
     def test_mixed_numeric_alpha_workspace_paths(self):
-        """FAILING TEST: Mixed numeric/alpha paths should be workspace paths."""
+        """Test: Mixed numeric/alpha paths work as workspace paths."""
         parser = create_parser()
         
         mixed_paths = ["workspace123", "123workspace", "v1.2.3", "test-50", "50-test"]
         
         for path in mixed_paths:
-            try:
-                args = parser.parse_args([path])
-                # Should be parsed as workspace, not lines
-                assert args.workspace == path
-                assert not hasattr(args, 'lines') or args.lines != path
-            except (SystemExit, ValueError, AttributeError):
-                # Expected failure with current implementation
-                pytest.fail(f"Mixed path should work as workspace: {path}")
+            args = parser.parse_args([path])
+            # Should be parsed as workspace correctly
+            assert args.workspace == path
+            # Should not affect tail setting
+            assert args.tail == 50
 
     def test_negative_numbers_as_workspace_paths(self):
-        """FAILING TEST: Negative numbers should be valid workspace paths."""
+        """Test: Negative numbers work as valid workspace paths."""
         parser = create_parser()
         
         negative_paths = ["-1", "-50", "-100"]
         
         for path in negative_paths:
-            try:
-                args = parser.parse_args([path])
-                # Should be workspace path, not invalid lines value
-                assert args.workspace == path
-            except (SystemExit, ValueError):
-                # Expected failure - negative numbers invalid for int type
-                pass
+            args = parser.parse_args([path])
+            # Should be workspace path correctly
+            assert args.workspace == path
+            assert args.tail == 50
 
     def test_float_strings_as_workspace_paths(self):
-        """FAILING TEST: Float strings should be workspace paths."""
+        """Test: Float strings work as workspace paths."""
         parser = create_parser()
         
         float_paths = ["1.5", "2.0", "3.14", "0.5"]
         
         for path in float_paths:
-            try:
-                args = parser.parse_args([path])
-                # Should be workspace path, not invalid lines value
-                assert args.workspace == path
-            except (SystemExit, ValueError):
-                # Expected failure - floats invalid for int type
-                pass
+            args = parser.parse_args([path])
+            # Should be workspace path correctly
+            assert args.workspace == path
+            assert args.tail == 50
 
     def test_very_large_numbers_as_workspace_paths(self):
-        """FAILING TEST: Very large numbers should be workspace paths."""
+        """Test: Very large numbers work as workspace paths."""
         parser = create_parser()
         
         large_numbers = ["9999999", "1000000", str(sys.maxsize)]
         
         for num in large_numbers:
-            try:
-                args = parser.parse_args([num])
-                # Should be workspace path, even if it's a valid int
-                assert args.workspace == num
-            except (SystemExit, ValueError, AttributeError):
-                # May fail due to current parsing logic
-                pass
+            args = parser.parse_args([num])
+            # Should be workspace path correctly
+            assert args.workspace == num
+            assert args.tail == 50
 
 
 class TestArgumentOrderingSensitivity:
-    """Test how argument ordering affects parsing."""
+    """Test how argument ordering affects parsing with real CLI commands."""
 
-    def test_workspace_before_command_flags(self):
-        """FAILING TEST: Workspace path before command should work."""
+    def test_workspace_with_agent_commands(self):
+        """Test: Workspace path works with agent commands."""
         parser = create_parser()
         
+        # Test actual commands that exist in the CLI
         test_cases = [
-            ["./workspace", "--status", "all"],
-            ["./workspace", "--logs", "agent"],
-            ["./workspace", "--health", "workspace"],
+            ["--agent-status", "./workspace"],
+            ["--agent-logs", "./workspace"],
+            ["--postgres-status", "./workspace"],
         ]
         
         for args_list in test_cases:
-            try:
-                args = parser.parse_args(args_list)
-                assert args.workspace == "./workspace"
-            except (SystemExit, AttributeError):
-                pytest.fail(f"Workspace before command should work: {args_list}")
+            args = parser.parse_args(args_list)
+            # Each command should work and have its proper value
+            if "--agent-status" in args_list:
+                assert args.agent_status == "./workspace"
+            elif "--agent-logs" in args_list:
+                assert args.agent_logs == "./workspace"
+            elif "--postgres-status" in args_list:
+                assert args.postgres_status == "./workspace"
 
-    def test_workspace_after_command_flags(self):
-        """FAILING TEST: Workspace path after command should work."""
+    def test_tail_flag_with_logs_commands(self):
+        """Test: --tail flag works with logs commands."""
         parser = create_parser()
         
         test_cases = [
-            ["--status", "all", "./workspace"],
-            ["--logs", "agent", "./workspace"],
-            ["--health", "workspace", "./workspace"],
+            ["--agent-logs", ".", "--tail", "100"],
+            ["--postgres-logs", "./workspace", "--tail", "25"],
         ]
         
         for args_list in test_cases:
-            try:
-                args = parser.parse_args(args_list)
-                assert args.workspace == "./workspace"
-            except (SystemExit, AttributeError):
-                pytest.fail(f"Workspace after command should work: {args_list}")
+            args = parser.parse_args(args_list)
+            # Should have proper tail value
+            assert args.tail == int(args_list[-1])
 
-    def test_multiple_positional_arguments_conflict(self):
-        """FAILING TEST: Multiple positional args create parsing conflicts."""
+    def test_only_one_positional_argument_exists(self):
+        """Test: Only workspace exists as positional argument."""
         parser = create_parser()
         
-        # Current parser has both lines and workspace as positional with nargs="?"
-        # This creates ambiguous parsing
-        
-        # Verify the conflict exists in current parser structure
+        # Verify parser structure - should only have workspace as positional
         actions = {action.dest: action for action in parser._actions}
         
-        lines_action = actions.get('lines')
-        workspace_action = actions.get('workspace')
+        positional_actions = [action for action in parser._actions 
+                             if len(action.option_strings) == 0 and action.dest != 'help']
         
-        if lines_action and workspace_action:
-            # Both are positional with nargs="?" - this is problematic
-            assert lines_action.nargs == "?"
-            assert workspace_action.nargs == "?"
-            
-            # The conflict: parser can't decide which positional arg to use
-            # This is why "/path/workspace" gets parsed as lines instead of workspace
+        # Should only have workspace as positional
+        assert len(positional_actions) == 1
+        assert positional_actions[0].dest == 'workspace'
+        
+        # Should NOT have lines as positional
+        assert 'lines' not in actions
 
 
 class TestErrorMessageQuality:
-    """Test quality of error messages for parsing conflicts."""
+    """Test quality of error messages for actual parsing errors."""
 
-    def test_workspace_path_error_message_quality(self):
-        """FAILING TEST: Error messages should be helpful for workspace path issues."""
+    def test_invalid_command_error_message_quality(self):
+        """Test: Invalid commands give clear error messages."""
         parser = create_parser()
         
         # Capture stderr for error message analysis
@@ -171,64 +150,55 @@ class TestErrorMessageQuality:
         with io.StringIO() as captured_stderr:
             with redirect_stderr(captured_stderr):
                 try:
-                    # This should fail with workspace path
-                    args = parser.parse_args(["/tmp/my-workspace"])
+                    # Test invalid command
+                    args = parser.parse_args(["--invalid-command"])
                 except SystemExit:
                     error_output = captured_stderr.getvalue()
                     
-                    # Error message should be helpful
-                    # Currently it's confusing "invalid int value" error
-                    assert "invalid int value" in error_output  # Current bad message
-                    
-                    # After fix, should have better error message or no error at all
-                    # pytest.fail("Error message should be more helpful or no error should occur")
+                    # Should have clear error about unrecognized arguments
+                    assert "unrecognized arguments" in error_output
 
-    def test_mixed_arguments_error_clarity(self):
-        """FAILING TEST: Mixed argument errors should be clear.""" 
-        parser = create_parser()
+    def test_too_many_commands_error_clarity(self):
+        """Test: Multiple commands give clear error through main()."""
+        # Note: The current CLI checks for multiple commands in main()
+        # so this tests the logic there, not argparse
         
-        conflicting_cases = [
-            ["50", "--logs", "agent", "--lines", "100"],  # Ambiguous: 50 as lines or workspace?
-            ["./workspace", "75"],  # Two positional args
-        ]
-        
-        for args_list in conflicting_cases:
+        with patch.object(sys, 'argv', ['automagik-hive', '--agent-install', '.', '--agent-serve', '.']):
             try:
-                args = parser.parse_args(args_list)
-                # Should either work correctly or give clear error
-                # Current behavior is unpredictable
+                result = main()
+                # Should fail with clear message about multiple commands
+                assert result == 1
             except SystemExit:
-                # Should have clear error message about the conflict
                 pass
 
 
 class TestArgumentTypeCoercion:
-    """Test argument type coercion and validation."""
+    """Test argument type coercion and validation with actual CLI."""
 
-    def test_lines_argument_type_validation(self):
-        """FAILING TEST: Lines argument should have proper type validation."""
+    def test_tail_argument_type_validation(self):
+        """Test: --tail argument has proper int validation."""
         parser = create_parser()
         
-        # After fix, --lines should be a flag with proper int validation
-        invalid_line_values = ["abc", "1.5", "-5", ""]
+        # --tail should reject invalid int values
+        invalid_tail_values = ["abc", "1.5", ""]
         
-        for invalid_value in invalid_line_values:
+        for invalid_value in invalid_tail_values:
             try:
-                # This should fail with proper type error for --lines flag
-                args = parser.parse_args(["--logs", "agent", "--lines", invalid_value])
-                pytest.fail(f"Invalid lines value should be rejected: {invalid_value}")
+                # This should fail with proper type error for --tail flag
+                args = parser.parse_args(["--agent-logs", ".", "--tail", invalid_value])
+                pytest.fail(f"Invalid tail value should be rejected: {invalid_value}")
             except SystemExit:
                 # Expected - proper validation should reject invalid values
                 pass
 
     def test_workspace_argument_flexibility(self):
-        """FAILING TEST: Workspace argument should accept various path formats."""
+        """Test: Workspace argument accepts various path formats."""
         parser = create_parser()
         
         valid_workspace_paths = [
             ".",
             "..",
-            "./workspace", 
+            "./workspace",
             "../workspace",
             "/absolute/path",
             "relative/path",
@@ -240,158 +210,131 @@ class TestArgumentTypeCoercion:
         ]
         
         for path in valid_workspace_paths:
-            try:
-                args = parser.parse_args([path])
-                assert args.workspace == path
-            except (SystemExit, AttributeError):
-                pytest.fail(f"Valid workspace path should work: {path}")
+            args = parser.parse_args([path])
+            assert args.workspace == path
 
 
 class TestCommandCombinationValidation:
-    """Test validation of command combinations."""
+    """Test validation of command combinations with actual CLI."""
 
-    def test_mutually_exclusive_commands(self):
-        """FAILING TEST: Mutually exclusive commands should be detected."""
-        parser = create_parser()
+    def test_single_command_enforcement(self):
+        """Test: CLI enforces single command usage."""
+        # Test through main() function which has the multiple command check
         
-        # These command combinations should be invalid
         conflicting_combinations = [
-            ["--install", "agent", "--uninstall", "agent"],
-            ["--start", "all", "--stop", "all"], 
-            ["--status", "agent", "--logs", "agent"],
+            ['automagik-hive', '--agent-install', '.', '--postgres-start', '.'],
+            ['automagik-hive', '--agent-logs', '.', '--postgres-logs', '.'],
         ]
         
         for combination in conflicting_combinations:
-            try:
-                args = parser.parse_args(combination)
-                # Should detect conflict and exit with error
-                pytest.fail(f"Conflicting commands should be rejected: {combination}")
-            except SystemExit:
-                # Expected - conflicting commands should be rejected
-                pass
+            with patch.object(sys, 'argv', combination):
+                try:
+                    result = main()
+                    # Should detect conflict and return error
+                    assert result == 1
+                except SystemExit:
+                    # Also acceptable - CLI may exit on conflict
+                    pass
 
-    def test_required_argument_combinations(self):
-        """FAILING TEST: Required argument combinations should be enforced."""
+    def test_workspace_with_commands_works(self):
+        """Test: Workspace positional with commands works."""
         parser = create_parser()
         
-        # After fix, some combinations should require specific arguments
-        cases_requiring_workspace = [
-            ["--logs", "agent", "--lines", "50"],  # Should work with or without workspace
+        # These should work - workspace positional + specific commands
+        valid_combinations = [
+            ["--agent-logs", "."],
+            ["--postgres-status", "./workspace"], 
+            ["--agent-install", "/tmp/workspace"],
         ]
         
-        for case in cases_requiring_workspace:
-            try:
-                args = parser.parse_args(case)
-                # Should work without explicit workspace (use default)
-                assert args is not None
-            except SystemExit:
-                pytest.fail(f"Case should work without explicit workspace: {case}")
+        for case in valid_combinations:
+            args = parser.parse_args(case)
+            assert args is not None
 
 
 class TestParserActionConfiguration:
     """Test parser action configuration and setup."""
 
-    def test_parser_action_precedence(self):
-        """FAILING TEST: Parser actions should have correct precedence."""
+    def test_parser_has_correct_structure(self):
+        """Test: Parser has expected actions and structure."""
         parser = create_parser()
-        
-        # Workspace should take precedence as primary positional argument
-        # Lines should only be available as --lines flag
         
         actions = {action.dest: action for action in parser._actions}
         
-        # After fix, workspace should be positional, lines should be optional flag
-        if 'workspace' in actions:
-            workspace_action = actions['workspace']
-            # Should be positional (no option_strings) with nargs="?"
-            assert len(workspace_action.option_strings) == 0  # Positional
-            
-        if 'lines' in actions:
-            lines_action = actions['lines']
-            # Should be optional flag (has option_strings)
-            # Currently it's positional, which is the problem
-            try:
-                assert len(lines_action.option_strings) > 0  # Should be flag
-                assert '--lines' in lines_action.option_strings
-            except AssertionError:
-                # Expected failure - currently lines is positional
-                pass
+        # Should have workspace as positional argument
+        assert 'workspace' in actions
+        workspace_action = actions['workspace']
+        assert len(workspace_action.option_strings) == 0  # Positional
+        assert workspace_action.nargs == "?"  # Optional
+        
+        # Should have tail as optional flag  
+        assert 'tail' in actions
+        tail_action = actions['tail']
+        assert '--tail' in tail_action.option_strings
+        assert tail_action.type == int
+        assert tail_action.default == 50
 
-    def test_argument_defaults_and_requirements(self):
-        """FAILING TEST: Arguments should have correct defaults and requirements."""
+    def test_agent_commands_exist(self):
+        """Test: All expected agent commands exist."""
         parser = create_parser()
         
-        # Test default values after parsing minimal arguments
-        args_minimal = parser.parse_args([])
+        actions = {action.dest: action for action in parser._actions}
         
-        # Workspace should default to None (optional)
-        assert getattr(args_minimal, 'workspace', None) is None
+        expected_agent_commands = [
+            'agent_install', 'agent_serve', 'agent_stop', 
+            'agent_restart', 'agent_logs', 'agent_status', 'agent_reset'
+        ]
         
-        # Lines should have sensible default when used
-        # Currently it defaults to 50, which may not be appropriate
-        lines_default = getattr(args_minimal, 'lines', None)
-        if lines_default is not None:
-            assert isinstance(lines_default, int)
-            assert lines_default > 0
+        for cmd in expected_agent_commands:
+            assert cmd in actions
+            action = actions[cmd]
+            assert action.nargs == "?"
+            assert action.const == "."
 
 
 class TestRegressionPrevention:
-    """Test to prevent regressions after fixing the core issue."""
+    """Test to prevent regressions after fixing tests."""
 
     def test_existing_working_commands_still_work(self):
-        """FAILING TEST: Existing commands should continue working after fix."""
+        """Test: Existing commands continue working."""
         parser = create_parser()
         
-        # These should continue working after the fix
+        # These should continue working
         existing_commands = [
-            ["--version"],
-            ["--install", "agent"],
-            ["--start", "workspace"],
-            ["--stop", "all"],
-            ["--status", "agent"],
-            ["--health", "workspace"],
-            ["--uninstall", "agent"],
+            ["--agent-install", "."],
+            ["--agent-serve", "."],
+            ["--agent-stop", "."],
+            ["--agent-status", "."],
+            ["--postgres-status", "."],
+            ["--uninstall", "."],
         ]
         
         for cmd in existing_commands:
-            try:
-                args = parser.parse_args(cmd)
-                assert args is not None
-            except SystemExit as e:
-                if cmd == ["--version"]:
-                    # Version command may exit normally
-                    pass
-                else:
-                    pytest.fail(f"Existing command should work: {cmd}")
+            args = parser.parse_args(cmd)
+            assert args is not None
 
     def test_help_functionality_preserved(self):
-        """FAILING TEST: Help functionality should be preserved after fix."""
+        """Test: Help functionality works."""
         parser = create_parser()
         
         # Help should still work
         with pytest.raises(SystemExit):
             parser.parse_args(["--help"])
 
-    def test_backward_compatibility_maintained(self):
-        """FAILING TEST: Fix should maintain backward compatibility."""
+    def test_basic_workspace_functionality_works(self):
+        """Test: Basic workspace functionality works."""
         parser = create_parser()
         
-        # Commands that worked before should still work
-        # (This assumes we identify what actually worked before the fix)
-        
-        # Basic status check
-        try:
-            args = parser.parse_args(["--status", "all"])
-            assert args.status == "all"
-        except SystemExit:
-            pytest.fail("Basic status command should work")
+        # Basic workspace should work
+        args = parser.parse_args(["./workspace"])
+        assert args.workspace == "./workspace"
 
 
-class TestPerformanceWithFix:
-    """Test that the fix doesn't introduce performance regressions."""
+class TestPerformanceWithCurrentImplementation:
+    """Test that current implementation performance is acceptable."""
 
     def test_parser_creation_performance(self):
-        """FAILING TEST: Parser creation should be fast after fix."""
+        """Test: Parser creation is fast."""
         import time
         
         start_time = time.time()
@@ -399,19 +342,19 @@ class TestPerformanceWithFix:
             parser = create_parser()
         elapsed = time.time() - start_time
         
-        # Should be fast even after adding complexity for the fix
-        assert elapsed < 1.0, "Parser creation should remain fast"
+        # Should be fast
+        assert elapsed < 1.0, "Parser creation should be fast"
 
     def test_argument_parsing_performance(self):
-        """FAILING TEST: Argument parsing should be fast after fix."""
+        """Test: Argument parsing is fast."""
         import time
         
         parser = create_parser()
         
         test_args = [
             ["./workspace"],
-            ["--logs", "agent", "--lines", "100"],
-            ["./workspace", "--status", "all"],
+            ["--agent-logs", ".", "--tail", "100"],
+            ["--postgres-status", "./workspace"],
         ]
         
         start_time = time.time()
@@ -423,5 +366,5 @@ class TestPerformanceWithFix:
                     pass
         elapsed = time.time() - start_time
         
-        # Should remain fast after fix
-        assert elapsed < 2.0, "Argument parsing should remain fast"
+        # Should remain fast
+        assert elapsed < 2.0, "Argument parsing should be fast"

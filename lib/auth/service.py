@@ -25,9 +25,9 @@ class AuthService:
             # Production override: ALWAYS enable authentication regardless of HIVE_AUTH_DISABLED
             self.auth_disabled = False
         else:
-            # Development/staging: respect HIVE_AUTH_DISABLED setting (default: disabled for easier onboarding)
+            # Development/staging: respect HIVE_AUTH_DISABLED setting (default: enabled for security)
             self.auth_disabled = (
-                os.getenv("HIVE_AUTH_DISABLED", "true").lower() == "true"
+                os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
             )
 
     async def validate_api_key(self, provided_key: str | None) -> bool:
@@ -68,7 +68,7 @@ class AuthService:
 
     def get_auth_status(self) -> dict[str, str | bool]:
         """Get current authentication status and configuration."""
-        raw_auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "true").lower() == "true"
+        raw_auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
 
         return {
             "environment": self.environment,

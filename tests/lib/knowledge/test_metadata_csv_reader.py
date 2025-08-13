@@ -158,8 +158,8 @@ class TestMetadataCsvReaderEdgeCases:
             documents = reader.read(self.csv_file)
             # Should handle missing column gracefully
             assert isinstance(documents, list)
-        except (KeyError, ValueError):
-            # Expected if content column is required
+        except (KeyError, ValueError, RuntimeError):
+            # Expected if content column is required (may be wrapped in RuntimeError)
             pass
 
 

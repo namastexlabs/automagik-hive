@@ -9,6 +9,8 @@ from unittest.mock import patch
 
 import pytest
 
+from lib.utils.version_reader import get_api_version
+
 
 class TestApiSettings:
     """Test ApiSettings configuration class."""
@@ -21,7 +23,7 @@ class TestApiSettings:
         settings = ApiSettings()
 
         assert settings.title == "Automagik Hive Multi-Agent System"
-        assert settings.version == "2.0"
+        assert settings.version == get_api_version()
         assert settings.environment == "development"
         assert settings.docs_enabled is True
         assert isinstance(settings.cors_origin_list, list)
@@ -38,7 +40,7 @@ class TestApiSettings:
         settings = ApiSettings()
 
         assert settings.title == "Automagik Hive Multi-Agent System"
-        assert settings.version == "2.0"
+        assert settings.version == get_api_version()
         assert settings.environment == "production"
         assert settings.docs_enabled is True
         assert isinstance(settings.cors_origin_list, list)

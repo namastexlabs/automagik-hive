@@ -104,9 +104,21 @@ class TestCredentialServiceMcpSyncIntegration:
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
         
-        # Create custom MCP file
+        # Create custom MCP file with postgres server to update
         custom_mcp_file = tmp_path / "custom.mcp.json"
-        custom_mcp_file.write_text('{"mcpServers": {}}')
+        custom_mcp_file.write_text('''
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "uv",
+      "args": ["tool", "run", "--from", "mcp-server-postgres", "mcp-server-postgres"],
+      "env": {
+        "POSTGRESQL_CONNECTION_STRING": "postgresql+psycopg://old-user:old-pass@localhost:5532/hive"
+      }
+    }
+  }
+}
+''')
         
         # Set environment variable for custom path
         with patch.dict('os.environ', {'HIVE_MCP_CONFIG_PATH': str(custom_mcp_file)}):
@@ -115,7 +127,7 @@ class TestCredentialServiceMcpSyncIntegration:
             
             # Verify custom file was used/modified
             custom_content = custom_mcp_file.read_text()
-            assert custom_content != '{"mcpServers": {}}'  # Should be modified
+            assert "old-user:old-pass" not in custom_content  # Old credentials should be replaced
 
     def test_concurrent_credential_generation_thread_safety(self, tmp_path):
         """
@@ -166,8 +178,10 @@ class TestCredentialServiceMcpSyncIntegration:
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
         
-        # Create MCP file with existing servers
-        mcp_file = tmp_path / ".mcp.json"
+        # Create ai directory and MCP file with existing servers (respecting HIVE_MCP_CONFIG_PATH=ai/.mcp.json)
+        ai_dir = tmp_path / "ai"
+        ai_dir.mkdir(exist_ok=True)
+        mcp_file = ai_dir / ".mcp.json"
         mcp_content = '''
 {
   "mcpServers": {

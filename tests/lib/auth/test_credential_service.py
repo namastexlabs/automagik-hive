@@ -206,8 +206,10 @@ class TestCredentialServiceMcpSyncEdgeCases:
         """
         service = CredentialService(project_root=tmp_path)
         
-        # Create MCP file with existing servers
-        mcp_file = tmp_path / ".mcp.json"
+        # Create ai directory and MCP file with existing servers (respecting HIVE_MCP_CONFIG_PATH=ai/.mcp.json)
+        ai_dir = tmp_path / "ai"
+        ai_dir.mkdir(exist_ok=True)
+        mcp_file = ai_dir / ".mcp.json"
         mcp_content = '''
 {
   "mcpServers": {

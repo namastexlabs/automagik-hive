@@ -367,11 +367,10 @@ class TestCheckMigrationStatus:
         """Test migration status when exception occurs."""
         mock_connection = Mock()
 
-        # Mock Alembic configuration path to raise exception
-        with patch("lib.utils.db_migration.Path") as mock_path:
-            mock_path.return_value.parent.parent.parent.__truediv__.side_effect = (
-                Exception("Config error")
-            )
+        # Mock _find_alembic_config to raise exception
+        with patch("lib.utils.db_migration._find_alembic_config") as mock_find_config:
+            test_exception = Exception("Config error")
+            mock_find_config.side_effect = test_exception
 
             with patch("lib.utils.db_migration.logger") as mock_logger:
                 result = _check_migration_status(mock_connection)

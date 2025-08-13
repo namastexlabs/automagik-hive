@@ -55,7 +55,11 @@ class BaseTool(ABC):
         self._is_initialized = False
 
         # Load configuration if path provided
-        if config_path and config_path.exists():
+        if config_path:
+            if not isinstance(config_path, Path):
+                raise TypeError(f"config_path must be a Path object, got {type(config_path).__name__}")
+            if not config_path.exists():
+                raise FileNotFoundError(f"Configuration file not found: {config_path}")
             self.load_config()
 
         # Initialize tool-specific setup
@@ -71,18 +75,27 @@ class BaseTool(ABC):
             with open(self.config_path) as f:
                 config_data = yaml.safe_load(f)
 
-            # Extract tool configuration section
+            if not config_data:
+                raise ValueError("Configuration file is empty or invalid")
+
+            # Handle both nested 'tool:' structure and flat structure
             if "tool" in config_data:
-                self.config = ToolConfig(**config_data["tool"])
+                # Nested structure: use tool section
+                tool_config = config_data["tool"]
             else:
-                logger.warning(
-                    "No 'tool' section found in configuration", path=self.config_path
-                )
+                # Flat structure: check if it has required fields
+                if "tool_id" in config_data or "name" in config_data:
+                    tool_config = config_data
+                else:
+                    raise ValueError("Configuration must contain 'tool' section or valid tool fields")
+
+            self.config = ToolConfig(**tool_config)
 
         except Exception as e:
             logger.error(
                 "Failed to load tool configuration", path=self.config_path, error=str(e)
             )
+            raise
 
     @abstractmethod
     def initialize(self, **kwargs) -> None:
@@ -110,6 +123,21 @@ class BaseTool(ABC):
 
         Returns:
             Tool execution result
+        """
+
+    @abstractmethod
+    def validate_inputs(self, inputs: dict[str, Any]) -> bool:
+        """
+        Validate tool inputs.
+
+        This method should be implemented by each tool to validate
+        input parameters before execution.
+
+        Args:
+            inputs: Dictionary of input parameters to validate
+
+        Returns:
+            True if inputs are valid, False otherwise
         """
 
     def validate_config(self) -> bool:

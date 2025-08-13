@@ -95,10 +95,10 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                         else:
                             content_parts.append(f"**Problem:** {problem}")
                     
-                    # Add main content with appropriate label
+                    # Add main content with appropriate label (only if not empty)
                     if answer:
                         content_parts.append(f"**A:** {answer}")
-                    else:
+                    elif solution:  # Only add solution if it's not empty
                         content_parts.append(f"**Solution:** {solution}")
 
                     # Add typification and business unit if present (in correct order)

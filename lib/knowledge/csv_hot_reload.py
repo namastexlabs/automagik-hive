@@ -101,6 +101,7 @@ class CSVHotReloadManager:
 
         except Exception as e:
             logger.warning("Failed to initialize knowledge base", error=str(e))
+            self.knowledge_base = None
 
     def start_watching(self):
         """Start watching the CSV file for changes."""

@@ -213,7 +213,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_new_component(self, mock_db_service, mock_settings):
         """Test syncing new component to database."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Mock no existing component in DB
         mock_db_service.fetch_one.return_value = None
@@ -235,7 +235,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_existing_component_different_version(self, mock_db_service, mock_settings):
         """Test syncing existing component with different version."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Mock existing component with different version
         existing_component = {
@@ -261,7 +261,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_existing_component_same_version(self, mock_db_service, mock_settings):
         """Test syncing existing component with same version (no action)."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Mock existing component with same version
         existing_component = {
@@ -448,7 +448,7 @@ class TestAgnoVersionSyncServiceEdgeCases:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_database_error(self, mock_db_service, mock_settings):
         """Test handling database errors during sync."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         mock_db_service.fetch_one.side_effect = Exception("Database connection failed")
         
@@ -543,11 +543,16 @@ class TestAgnoVersionSyncServiceIntegration:
     @pytest.mark.asyncio
     async def test_sync_with_mixed_component_states(self, mock_db_service, mock_settings):
         """Test sync with components in different states."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Mock database responses for different scenarios
         def mock_fetch_one_side_effect(query, params):
-            component_name = params[1]  # Assuming name is second parameter
+            # Handle both dict and positional parameters
+            if isinstance(params, dict):
+                component_name = params.get("name", "")
+            else:
+                component_name = params[1] if len(params) > 1 else ""  # Assuming name is second parameter
+            
             if component_name == "new-agent":
                 return None  # New component
             elif component_name == "updated-agent":

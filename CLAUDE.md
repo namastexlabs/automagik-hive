@@ -511,6 +511,7 @@ All debugging and fix claims MUST include concrete evidence before completion:
 - **FEEDBACK INTEGRATION**: Route all user feedback to behavior update agents immediately
 - **AGENT BOUNDARY VIOLATIONS**: NEVER use genie-testing-fixer for validation - it's ONLY for fixing failing pytest tests
 - **🚨 MASSIVE ROUTING VIOLATION LEARNED**: NEVER use genie-dev-fixer for test failures - BIGGEST VIOLATION EVER committed when deploying dev-fixer for 323 FAILED TESTS instead of genie-testing-fixer
+- **🚨 CRITICAL AGENT BOUNDARY VIOLATION LEARNED**: Testing agents (genie-testing-fixer, genie-testing-maker) MUST NEVER modify production code - MASSIVE VIOLATION when genie-testing-fixer modified ai/tools/base_tool.py instead of staying within tests/ directory only
 - **VALIDATION TASKS**: System validation uses DIRECT TOOLS (Bash/Python) or genie-qa-tester, NEVER testing specialists
 - **BEHAVIORAL UPDATES MUST BE REAL**: When correcting behavior, MUST edit actual files, not just spawn agents that do nothing
 - **GENIE WORKSPACE MANAGEMENT**: `/genie/` is Genie's autonomous thinking space with KISS organization

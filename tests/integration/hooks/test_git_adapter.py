@@ -328,6 +328,7 @@ class TestGitAdapter:
         assert result is True
         mock_run.assert_called_once_with(
             ["git", "diff", "--cached", "--quiet"],
+            check=False,
             cwd=self.test_dir,
             capture_output=True,
         )

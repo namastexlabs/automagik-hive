@@ -342,17 +342,18 @@ class TestCreateMCPToolsSync:
 
     @patch("lib.mcp.connection_manager.get_catalog")
     def test_sync_server_not_found(self, mock_get_catalog) -> None:
-        """Test sync error when server is not found."""
+        """Test sync graceful handling when server is not found."""
         mock_catalog = Mock()
         mock_catalog.get_server_config.side_effect = Exception("Not found")
         mock_get_catalog.return_value = mock_catalog
 
-        with pytest.raises(MCPConnectionError, match="Server 'missing' not found"):
-            create_mcp_tools_sync("missing")
+        # Sync function should return None gracefully, not raise
+        result = create_mcp_tools_sync("missing")
+        assert result is None
 
     @patch("lib.mcp.connection_manager.get_catalog")
     def test_sync_unknown_server_type(self, mock_get_catalog) -> None:
-        """Test sync error for unknown server type."""
+        """Test sync graceful handling for unknown server type."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
 
@@ -364,11 +365,9 @@ class TestCreateMCPToolsSync:
         mock_server_config.is_command_server = False
         mock_catalog.get_server_config.return_value = mock_server_config
 
-        with pytest.raises(
-            MCPConnectionError,
-            match="Unknown server type for unknown-sync",
-        ):
-            create_mcp_tools_sync("unknown-sync")
+        # Sync function should return None gracefully, not raise
+        result = create_mcp_tools_sync("unknown-sync")
+        assert result is None
 
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
@@ -379,7 +378,7 @@ class TestCreateMCPToolsSync:
         mock_mcp_tools_class,
         mock_get_catalog,
     ) -> None:
-        """Test sync error when MCPTools creation fails."""
+        """Test sync graceful handling when MCPTools creation fails."""
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
 
@@ -392,13 +391,11 @@ class TestCreateMCPToolsSync:
 
         mock_mcp_tools_class.side_effect = Exception("Sync creation failed")
 
-        with pytest.raises(
-            MCPConnectionError,
-            match="Failed to connect to failing-sync",
-        ):
-            create_mcp_tools_sync("failing-sync")
+        # Sync function should return None gracefully, not raise
+        result = create_mcp_tools_sync("failing-sync")
+        assert result is None
 
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
 
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")

@@ -42,10 +42,10 @@ class TestGenieTestingAgentFactory:
         RED phase: This test WILL FAIL until implementation is complete.
         Tests the happy path of testing agent creation.
         """
-        with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
-             patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
-             patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
+        with patch.object(genie_testing_agent.yaml, 'safe_load') as mock_yaml, \
+             patch.object(genie_testing_agent, 'AgentMemory') as mock_memory, \
+             patch.object(genie_testing_agent, 'PostgresStorage', MockPostgresStorage) as mock_storage, \
+             patch.object(genie_testing_agent, 'Agent') as mock_agent, \
              patch('builtins.open', mock_open(read_data='test config')):
             
             # Setup mock configuration for testing agent
@@ -69,6 +69,13 @@ class TestGenieTestingAgentFactory:
                     'enable_user_memories': True,
                     'enable_session_summaries': True,
                     'num_history_runs': 30
+                },
+                'instructions': 'Strategic testing coordination agent',
+                'streaming': {
+                    'stream_intermediate_steps': True
+                },
+                'display': {
+                    'show_tool_calls': True
                 }
             }
             mock_yaml.return_value = mock_config
@@ -106,17 +113,20 @@ class TestGenieTestingAgentFactory:
         
         RED phase: Tests testing agent parameter customization.
         """
-        with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
-             patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
-             patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
+        with patch.object(genie_testing_agent.yaml, 'safe_load') as mock_yaml, \
+             patch.object(genie_testing_agent, 'AgentMemory') as mock_memory, \
+             patch.object(genie_testing_agent, 'PostgresStorage', MockPostgresStorage) as mock_storage, \
+             patch.object(genie_testing_agent, 'Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             
             mock_config = {
                 'agent': {'name': 'Custom Testing', 'agent_id': 'custom-testing', 'description': 'Custom'},
                 'model': {'provider': 'openai', 'id': 'gpt-4', 'temperature': 0.2, 'max_tokens': 3000},
                 'storage': {'table_name': 'custom_testing'},
-                'memory': {'num_history_runs': 20}
+                'memory': {'num_history_runs': 20},
+                'instructions': 'Custom testing coordination agent',
+                'streaming': {'stream_intermediate_steps': True},
+                'display': {'show_tool_calls': True}
             }
             mock_yaml.return_value = mock_config
             mock_agent.return_value = Mock()
@@ -169,13 +179,18 @@ class TestGenieTestingAgentFactory:
         
         RED phase: Tests testing agent memory dependency failure handling.
         """
-        with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
-             patch('ai.agents.genie_testing.agent.AgentMemory', side_effect=Exception("Testing memory init failed")), \
+        with patch.object(genie_testing_agent.yaml, 'safe_load') as mock_yaml, \
+             patch.object(genie_testing_agent, 'AgentMemory', side_effect=Exception("Testing memory init failed")), \
              patch('builtins.open', mock_open()):
             
             mock_yaml.return_value = {
                 'agent': {'name': 'Test', 'agent_id': 'test', 'description': 'Test'},
-                'model': {}, 'storage': {}, 'memory': {}
+                'model': {'provider': 'test', 'id': 'test'}, 
+                'storage': {'table_name': 'test'}, 
+                'memory': {'enable_user_memories': True},
+                'instructions': 'Test instructions',
+                'streaming': {'stream_intermediate_steps': True},
+                'display': {'show_tool_calls': True}
             }
             
             with pytest.raises(Exception) as exc_info:
@@ -193,16 +208,20 @@ class TestGenieTestingSpecificBehavior:
         
         RED phase: Tests testing-specific model configuration.
         """
-        with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
-             patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
-             patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
+        with patch.object(genie_testing_agent.yaml, 'safe_load') as mock_yaml, \
+             patch.object(genie_testing_agent, 'AgentMemory') as mock_memory, \
+             patch.object(genie_testing_agent, 'PostgresStorage', MockPostgresStorage) as mock_storage, \
+             patch.object(genie_testing_agent, 'Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             
             mock_yaml.return_value = {
                 'agent': {'name': 'Testing Agent', 'agent_id': 'testing', 'description': 'Test'},
                 'model': {'provider': 'anthropic', 'id': 'claude-3', 'temperature': 0.3, 'max_tokens': 4000},
-                'storage': {}, 'memory': {}
+                'storage': {'table_name': 'testing'}, 
+                'memory': {'enable_user_memories': True},
+                'instructions': 'Testing coordination',
+                'streaming': {'stream_intermediate_steps': True},
+                'display': {'show_tool_calls': True}
             }
             mock_memory.return_value = Mock()
             mock_storage.return_value = Mock()
@@ -220,15 +239,17 @@ class TestGenieTestingSpecificBehavior:
         
         RED phase: Tests testing-specific agent configuration.
         """
-        with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
-             patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
-             patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
+        with patch.object(genie_testing_agent.yaml, 'safe_load') as mock_yaml, \
+             patch.object(genie_testing_agent, 'AgentMemory') as mock_memory, \
+             patch.object(genie_testing_agent, 'PostgresStorage', MockPostgresStorage) as mock_storage, \
+             patch.object(genie_testing_agent, 'Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             
             mock_yaml.return_value = {
                 'agent': {'name': 'Testing Specialist', 'agent_id': 'testing-specialist', 'description': 'Testing coordination'},
-                'model': {}, 'storage': {}, 'memory': {},
+                'model': {'provider': 'anthropic', 'id': 'claude-3'}, 
+                'storage': {'table_name': 'testing_specialist'}, 
+                'memory': {'enable_user_memories': True},
                 'instructions': 'Coordinate testing operations with strategic oversight',
                 'streaming': {'stream_intermediate_steps': True},
                 'display': {'show_tool_calls': True}
@@ -251,9 +272,10 @@ class TestGenieTestingSpecificBehavior:
         
         RED phase: Tests module exports for testing agent API.
         """
-        from ai.agents.genie_testing.agent import __all__
+        # Use the loaded module instead of direct import due to hyphen in module name
+        module_all = getattr(genie_testing_agent, '__all__')
         
-        assert "get_genie_testing" in __all__, "Testing factory function should be exported"
+        assert "get_genie_testing" in module_all, "Testing factory function should be exported"
 
 
 class TestGenieTestingIntegration:
@@ -265,10 +287,10 @@ class TestGenieTestingIntegration:
         
         RED phase: Tests end-to-end testing agent creation.
         """
-        with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
-             patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
-             patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
+        with patch.object(genie_testing_agent.yaml, 'safe_load') as mock_yaml, \
+             patch.object(genie_testing_agent, 'AgentMemory') as mock_memory, \
+             patch.object(genie_testing_agent, 'PostgresStorage', MockPostgresStorage) as mock_storage, \
+             patch.object(genie_testing_agent, 'Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             
             # Full realistic testing configuration

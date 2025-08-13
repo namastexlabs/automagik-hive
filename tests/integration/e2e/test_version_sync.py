@@ -17,7 +17,7 @@ from lib.utils.version_reader import get_project_version, get_version_info
 
 def test_pyproject_toml_version_format():
     """Test that pyproject.toml has a valid version format."""
-    project_root = Path(__file__).parent.parent
+    project_root = Path(__file__).parent.parent.parent.parent
     pyproject_path = project_root / "pyproject.toml"
 
     assert pyproject_path.exists(), "pyproject.toml should exist"

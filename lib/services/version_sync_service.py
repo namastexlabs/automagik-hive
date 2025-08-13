@@ -264,20 +264,24 @@ class AgnoVersionSyncService:
             yaml_components = await self.get_yaml_component_versions(component_type)
             
             synced_count = 0
-            component_types = set()
+            component_types = []
+            seen_types = set()
             
             # Sync each component
             for component in yaml_components:
                 try:
                     await self.sync_component_to_db(component)
                     synced_count += 1
-                    component_types.add(component['component_type'])
+                    # Add to component_types list in order, avoiding duplicates
+                    if component['component_type'] not in seen_types:
+                        component_types.append(component['component_type'])
+                        seen_types.add(component['component_type'])
                 except Exception as e:
                     logger.error(f"Error syncing component {component['name']}: {e}")
             
             return {
                 'synced_count': synced_count,
-                'component_types': list(component_types),
+                'component_types': component_types,
                 'total_found': len(yaml_components)
             }
             

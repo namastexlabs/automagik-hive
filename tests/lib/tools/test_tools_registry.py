@@ -26,10 +26,11 @@ class TestToolRegistryErrorHandling:
             mock_resolve.return_value = None
             
             # This should not crash - just skip the unavailable tool
-            tools = ToolRegistry.load_tools(tool_configs)
+            tools, loaded_names = ToolRegistry.load_tools(tool_configs)
             
             # Should have loaded ShellTools but skipped postgres
             assert len(tools) == 1  # Only ShellTools loaded
+            assert loaded_names == ["ShellTools"]  # Only ShellTools successfully loaded
             mock_resolve.assert_called_once_with("mcp__postgres__query")
 
     def test_resolve_mcp_tool_handles_exceptions(self):
@@ -54,10 +55,11 @@ class TestToolRegistryErrorHandling:
         with patch('lib.tools.registry.ToolRegistry.resolve_mcp_tool') as mock_resolve:
             mock_resolve.return_value = None  # Simulate unavailable tool
             
-            tools = ToolRegistry.load_tools(tool_configs)
+            tools, loaded_names = ToolRegistry.load_tools(tool_configs)
             
             # Should handle string format and skip unavailable tools
             assert len(tools) == 1  # Only ShellTools loaded
+            assert loaded_names == ["ShellTools"]  # Only ShellTools successfully loaded
 
     def test_load_tools_with_mixed_availability(self):
         """Test loading tools when some are available and others aren't."""
@@ -80,10 +82,11 @@ class TestToolRegistryErrorHandling:
             
             mock_resolve.side_effect = mock_resolver
             
-            tools = ToolRegistry.load_tools(tool_configs)
+            tools, loaded_names = ToolRegistry.load_tools(tool_configs)
             
             # Should load automagik_forge and ShellTools, skip postgres
             assert len(tools) == 2
+            assert set(loaded_names) == {"mcp__automagik_forge__list_projects", "ShellTools"}
 
     def test_load_tools_handles_tool_function_failure(self):
         """Test handling when MCP tool exists but get_tool_function fails."""
@@ -94,10 +97,11 @@ class TestToolRegistryErrorHandling:
             mock_tool.get_tool_function.return_value = None  # Tool exists but function fails
             mock_resolve.return_value = mock_tool
             
-            tools = ToolRegistry.load_tools(tool_configs)
+            tools, loaded_names = ToolRegistry.load_tools(tool_configs)
             
             # Should skip the tool when get_tool_function returns None
             assert len(tools) == 0
+            assert loaded_names == []  # No tools successfully loaded
 
     def test_validate_tool_config(self):
         """Test tool configuration validation."""
