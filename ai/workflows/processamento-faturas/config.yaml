@@ -7,7 +7,7 @@ workflow:
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
-  temperature: 0.3  # Lower temperature for consistent processing
+  temperature: 0.2  # Lower temperature for consistent processing
   max_tokens: 8000
 
 # Unified MCP Configuration for all workflow steps

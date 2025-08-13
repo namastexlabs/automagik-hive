@@ -27,41 +27,73 @@ make agent
 
 ### 🎯 Overview
 
-The ProcessamentoFaturas workflow transforms manual CTE invoice processing into a fully automated 5-stage pipeline:
+The ProcessamentoFaturas workflow is a **daily scheduled system** that transforms manual CTE invoice processing into an automated, status-based pipeline with individual PO tracking and incremental processing:
 
-1. **📧 Email Monitoring** - OAuth2 Gmail integration with attachment extraction
-2. **📊 Data Extraction** - Excel processing with CTE/MINUTA differentiation  
-3. **🏗️ JSON Generation** - Consolidated JSON structure per Excel file
-4. **🔗 API Orchestration** - Sequential Browser API calls with proper state management
-5. **✅ Workflow Completion** - Comprehensive metrics and status reporting
+1. **🌅 Daily Initialization** - Dual scan for new emails AND existing JSON files with backlog processing
+2. **🔍 JSON Analysis** - Individual PO status extraction and categorization from all JSON files
+3. **🎯 Status-Based Routing** - Smart routing of each PO to appropriate processing step based on current status
+4. **⚙️ Individual PO Processing** - Status-specific API calls with batch and individual processing modes
+5. **🏁 Daily Completion** - JSON file updates, status persistence, and next execution scheduling
+
+### 🔄 **Revolutionary Architecture Change**
+
+**From**: Linear single execution (Email → Data → JSON → API → Complete)  
+**To**: Daily cyclic processing with individual PO status tracking
+
+#### **🚀 Key Transformation Benefits:**
+- **Daily Scheduled Execution**: Runs automatically every day at 8 AM
+- **Incremental Processing**: Each PO advances gradually through pipeline over multiple days
+- **Individual Status Tracking**: Every PO maintains its own processing status in JSON files
+- **Backlog Management**: Processes pending POs from previous executions alongside new emails
+- **Resilient Processing**: Individual PO failures don't affect other POs in the batch
+- **Smart Routing**: Each PO gets routed to exactly the processing step it needs
 
 ### 🏗️ Architecture
 
-#### **Workflow Type**: Agno Workflows 2.0
-Built using **step-based sequential execution** with specialized agents as internal components:
+#### **Workflow Type**: Agno Workflows 2.0 - Daily Scheduled Architecture
+Built using **daily cyclic execution** with status-based PO processing and specialized agents:
 
 ```python
 Workflow(
     name="processamento_faturas",
+    description="Daily scheduled CTE invoice processing with individual PO status-based routing",
     steps=[
-        Step("email_monitoring", executor=execute_email_monitoring_step),
-        Step("data_extraction", executor=execute_data_extraction_step), 
-        Step("json_generation", executor=execute_json_generation_step),
-        Step("api_orchestration", executor=execute_api_orchestration_step),
-        Step("workflow_completion", executor=execute_workflow_completion_step)
+        Step("daily_initialization", executor=execute_daily_initialization_step),
+        Step("json_analysis", executor=execute_json_analysis_step),
+        Step("status_based_routing", executor=execute_status_based_routing_step), 
+        Step("individual_po_processing", executor=execute_individual_po_processing_step),
+        Step("daily_completion", executor=execute_daily_completion_step)
     ],
     storage=PostgresStorage(auto_upgrade_schema=True)
 )
 ```
 
-#### **5 Specialized Agents**
-Each step utilizes dedicated agents with specific expertise:
+#### **🔄 Daily Processing Cycle Example:**
+```
+Day 1 (8 AM): Email scan → 3 new POs (PENDING) → invoiceGen → 3 POs (WAITING_MONITORING)
+Day 2 (8 AM): JSON analysis → 3 POs (WAITING_MONITORING) → invoiceMonitor → 3 POs (MONITORED)
+Day 3 (8 AM): JSON analysis → 3 POs (MONITORED) → individual downloads → 3 POs (DOWNLOADED)
+Day 4 (8 AM): JSON analysis → 3 POs (DOWNLOADED) → individual uploads → 3 POs (UPLOADED) ✅
+```
 
-- **📧 EmailProcessor** - Gmail OAuth2 integration, attachment validation
-- **📊 DataExtractor** - Excel processing, CTE data extraction, MINUTA filtering
-- **🏗️ JSONGenerator** - Consolidated JSON structure generation
-- **🔗 APIOrchestrator** - Browser API sequential calls with retry logic
-- **📁 FileManager** - File integrity management with SHA-256 checksums
+#### **5 Specialized Agents - Enhanced for Daily Processing**
+Each step utilizes dedicated agents with specific daily processing expertise:
+
+- **📧 EmailProcessor** - Gmail OAuth2 + existing JSON file scanning, morning email processing
+- **📊 DataExtractor** - JSON file analysis, individual PO status extraction, categorization
+- **🏗️ JSONGenerator** - Status-based routing logic, processing queue organization  
+- **🔗 APIOrchestrator** - Individual PO API calls, batch vs individual processing modes
+- **📁 FileManager** - JSON file updates, status persistence, next execution scheduling
+
+#### **🎯 Status-Based Processing Logic:**
+```
+PENDING POs        → invoiceGen API (batch processing)    → WAITING_MONITORING
+WAITING_MONITORING → invoiceMonitor API (batch)          → MONITORED  
+MONITORED POs      → download API (individual per PO)    → DOWNLOADED
+DOWNLOADED POs     → upload API (individual per PO)      → UPLOADED ✅
+UPLOADED POs       → Skip (already completed)            → No action
+FAILED_* POs       → Error handling and retry logic      → Status-specific recovery
+```
 
 ### 📋 Data Flow
 
@@ -77,11 +109,11 @@ Each step utilizes dedicated agents with specific expertise:
     "values": [
       {
         "index": 154,
-        "NF_CTE": "96765", 
-        "value": 1644.67,
-        "empresa_origem": "CLARO NXT",
-        "cnpj_claro": "66970229041351",
-        "competencia": "04/2025"
+        "NF/CTE": "96765", 
+        "valor CHAVE": 1644.67,
+        "Empresa Origem": "CLARO MOVEL ENG",
+        "CNPJ Fornecedor": "9351138000100",
+        "Competência": "45778"
       }
     ],
     "total_value": 1644.67,
@@ -91,23 +123,37 @@ Each step utilizes dedicated agents with specific expertise:
 }
 ```
 
-#### **Output**: Consolidated JSON Structure
+#### **Output**: Daily Status-Tracked JSON Structure
 ```json
 {
-  "batch_id": "batch_20250112_143052",
+  "batch_id": "daily_20250113_080012",
   "source_file": "faturas_janeiro_2025.xlsx",
-  "processing_timestamp": "2025-01-12T14:30:52Z",
+  "processing_timestamp": "2025-01-13T08:00:12Z",
+  "last_daily_update": "2025-01-13T08:15:32Z",
   "total_ctes": 15,
   "total_pos": 8,
   "total_value": 45230.89,
-  "client_data": ["CLARO NXT", 66970229041351],
+  "client_data": ["CLARO MOVEL ENG", 9351138000100],
   "type": "CTE",
   "orders": [
     {
       "po_number": "600708542",
       "cte_entries": [...],
       "total_value": 1644.67,
-      "status": "PENDING"
+      "status": "WAITING_MONITORING",  // Individual PO status tracking
+      "last_updated": "2025-01-13T08:15:32Z",
+      "processing_history": [
+        {"status": "PENDING", "timestamp": "2025-01-12T08:00:00Z"},
+        {"status": "WAITING_MONITORING", "timestamp": "2025-01-13T08:15:32Z"}
+      ]
+    },
+    {
+      "po_number": "600708543", 
+      "cte_entries": [...],
+      "total_value": 2189.45,
+      "status": "DOWNLOADED",  // Different POs can be in different stages
+      "last_updated": "2025-01-12T08:20:15Z",
+      "download_path": "mctech/downloads/fatura_600708543.pdf"
     }
   ]
 }
@@ -115,13 +161,43 @@ Each step utilizes dedicated agents with specific expertise:
 
 ### 🔗 Browser API Integration
 
-#### **Sequential API Orchestration**
-The workflow integrates with Browser API through 4 sequential endpoints:
+#### **Status-Based API Orchestration**
+The daily workflow integrates with Browser API through status-driven flow execution using a **single endpoint**:
 
-1. **`/api/invoiceGen`** - Invoice generation initiation
-2. **`/api/statusMonitoring`** - Processing status monitoring  
-3. **`/api/downloadInvoices`** - Generated invoice download
-4. **`/api/uploadToSystem`** - Final system upload
+**🎯 Unified Endpoint**: `POST /execute_flow`
+
+All API calls use the same endpoint with different `flow_name` parameters:
+
+1. **`invoiceGen`** - **Batch processing** for PENDING POs (multiple POs per call)
+2. **`invoiceMonitor`** - **Batch processing** for WAITING_MONITORING POs  
+3. **`main-download-invoice`** - **Individual processing** for MONITORED POs (one API call per PO)
+4. **`invoiceUpload`** - **Individual processing** for DOWNLOADED POs (one API call per PO)
+
+#### **📋 API Call Structure**
+```http
+POST http://localhost:8088/execute_flow
+Content-Type: application/json
+
+{
+  "flow_name": "invoiceGen",
+  "parameters": {
+    "orders": ["600708542", "600708543"],
+    "headless": true
+  },
+  "headless": true
+}
+```
+
+#### **🔄 Daily API Call Distribution:**
+```
+Single Daily Execution Processes:
+├── 5 PENDING POs      → 1 batch invoiceGen call    → 5 WAITING_MONITORING POs
+├── 3 MONITORING POs   → 1 batch invoiceMonitor call → 3 MONITORED POs  
+├── 2 MONITORED POs    → 2 individual download calls → 2 DOWNLOADED POs
+└── 4 DOWNLOADED POs   → 4 individual upload calls  → 4 UPLOADED POs ✅
+
+Total API calls: 8 calls processing 14 POs in various stages
+```
 
 #### **API Response Format (API_RESULT)**
 ```json
@@ -151,25 +227,37 @@ The workflow integrates with Browser API through 4 sequential endpoints:
 }
 ```
 
-### 💾 State Management
+### 💾 State Management - Daily Persistence Architecture
 
-#### **PostgreSQL Persistence**
-- **Session State**: Cross-step data sharing with automatic persistence
-- **Processing Status**: Individual PO status tracking throughout pipeline
-- **Error Recovery**: Automatic retry logic with exponential backoff
-- **Metrics Collection**: Comprehensive performance monitoring
+#### **Enhanced PostgreSQL Persistence**
+- **Daily Session State**: Cross-step data sharing with daily execution context
+- **Individual PO Status**: Persistent status tracking per PO across multiple days
+- **JSON File State**: Real-time status updates written back to JSON files
+- **Backlog Management**: Automatic identification and processing of pending POs
+- **Error Recovery**: Individual PO failure isolation with status-specific recovery
+- **Daily Metrics**: Performance tracking across multiple daily executions
 
-#### **Status Transitions**
+#### **Daily Status Transition Flow**
 ```
-PENDING → PROCESSING → WAITING_MONITORING → MONITORED 
-       ↓              ↓                    ↓
-FAILED_EXTRACTION  FAILED_GENERATION  FAILED_MONITORING
-                                           ↓
-                                      DOWNLOADED
-                                           ↓
-                                      UPLOADED
-                                           ↓
-                                      COMPLETED
+🔄 DAILY EXECUTION CYCLE:
+
+Day N-2: PENDING → invoiceGen (batch) → WAITING_MONITORING
+Day N-1: WAITING_MONITORING → invoiceMonitor (batch) → MONITORED  
+Day N:   MONITORED → download (individual) → DOWNLOADED
+Day N+1: DOWNLOADED → upload (individual) → UPLOADED ✅
+
+📊 PARALLEL PROCESSING:
+- Multiple POs can be in different stages simultaneously
+- Each PO progresses independently based on its individual status
+- Failed POs don't block progression of successful POs
+- New POs from emails get added to PENDING queue daily
+
+❌ ERROR HANDLING:
+FAILED_EXTRACTION   → Retry email/Excel processing (next day)
+FAILED_GENERATION   → Retry invoiceGen API call
+FAILED_MONITORING   → Retry invoiceMonitor API call  
+FAILED_DOWNLOAD     → Retry individual download
+FAILED_UPLOAD       → Retry individual upload
 ```
 
 ### 🧪 Testing
@@ -193,13 +281,27 @@ uv run pytest ai/workflows/processamento-faturas/tests.py -v
 - **Mocking strategies** for external dependencies
 - **Coverage targets**: >90% code coverage
 
-### ⚡ Performance Targets
+### ⚡ Performance Targets - Daily Execution Optimized
 
-- **Email Processing**: <5s per email batch
-- **Data Extraction**: <10s per Excel file
-- **JSON Generation**: <2s per consolidation
-- **API Orchestration**: <30s per complete cycle
-- **Total Workflow**: <60s end-to-end
+- **Daily Initialization**: <10s for email scan + JSON file analysis
+- **JSON Analysis**: <5s per existing JSON file analyzed
+- **Status-Based Routing**: <3s for processing queue organization
+- **Batch API Operations**: <15s per batch call (invoiceGen, invoiceMonitor)
+- **Individual API Operations**: <8s per individual call (download, upload)
+- **Daily Completion**: <5s for JSON file updates and scheduling
+- **Total Daily Execution**: <2 minutes for typical mixed workload
+
+#### **📊 Daily Processing Capacity:**
+```
+Typical Daily Workload:
+├── New emails: 0-3 (morning only, <12PM)
+├── Existing POs to process: 10-50 across various stages
+├── Batch API calls: 0-2 (invoiceGen + invoiceMonitor)
+├── Individual API calls: 5-25 (downloads + uploads)
+└── JSON files updated: 3-8 consolidated files
+
+Performance: Processes 50+ POs across multiple stages in under 2 minutes
+```
 
 ### 🔧 Configuration
 
@@ -208,9 +310,30 @@ uv run pytest ai/workflows/processamento-faturas/tests.py -v
 # Required environment variables (.env)
 GMAIL_CLIENT_ID=your_gmail_oauth_client_id
 GMAIL_CLIENT_SECRET=your_gmail_oauth_secret
-BROWSER_API_BASE_URL=https://api.browser-system.com
-POSTGRES_CONNECTION_STRING=postgresql://user:pass@localhost:5432/db
+
+# Database connection (automatically configured with make agent)
+DATABASE_URL="postgresql://localhost:35532/hive_agent"
+
+# Browser API Configuration
+BROWSER_API_BASE_URL="http://localhost:8088"
+BROWSER_API_TIMEOUT="900"
+BROWSER_API_MAX_RETRIES="3"
 ```
+
+#### **📋 Browser API Server Requirements**
+The workflow requires a **running Browser API server** at `http://localhost:8088`:
+
+```bash
+# Browser API must be running and responding to:
+curl -X POST http://localhost:8088/execute_flow \
+  -H "Content-Type: application/json" \
+  -d '{"flow_name": "test", "parameters": {}}'
+
+# Health check (if available):
+curl http://localhost:8088/health
+```
+
+**⚠️ Important**: The workflow will **fail immediately** if the Browser API is not available. Ensure the server is running before executing the workflow.
 
 #### **Agent Configuration** 
 ```yaml
@@ -229,40 +352,120 @@ agents:
     tools: ["excel_processor", "data_validator"]
 ```
 
-### 🚀 Deployment
+### 🚀 Deployment - Daily Scheduled Execution
 
 #### **Local Development**
 ```bash
 # Start workflow service
 uv run python api/main.py
 
-# Access playground
+# Access playground for manual testing
 open http://localhost:8000
+
+# Test daily workflow execution
+cd ai/workflows/processamento-faturas/
+uv run python workflow.py
 ```
 
-#### **Production Deployment**
+#### **Production Deployment with Daily Scheduling**
 ```bash
 # Docker deployment
 docker build -t hive-workflows .
 docker run -p 8000:8000 hive-workflows
 
-# Environment scaling
-export WORKERS=4
-export MAX_CONCURRENT_WORKFLOWS=10
+# Cron job setup for daily execution at 8 AM
+crontab -e
+# Add: 0 8 * * * cd /project && uv run python -c "
+import asyncio
+from ai.workflows.processamento_faturas.workflow import get_processamento_faturas_workflow
+
+async def daily_run():
+    workflow = get_processamento_faturas_workflow()
+    await workflow.arun('Execute daily CTE processing')
+
+asyncio.run(daily_run())
+"
+```
+
+#### **⚡ Quick Execution**
+```bash
+# 1. Ensure Browser API is running
+curl http://localhost:8088/health  # Should return 200
+
+# 2. Start agent services
+make agent
+
+# 3. Run workflow via API Playground
+uv run python api/main.py
+# Access: http://localhost:8000
+# Select: processamento_faturas workflow -> Run
+```
+
+#### **🕰️ Scheduling Options:**
+```bash
+# Option 1: Cron Job (Linux/Mac) - with API check
+#!/bin/bash
+# daily-workflow-runner.sh
+if curl -sf http://localhost:8088/health > /dev/null; then
+  cd /project && uv run python api/main.py --execute processamento_faturas
+else
+  echo "Browser API not available - workflow skipped" >&2
+  exit 1
+fi
+
+# Cron: 0 8 * * * /path/to/daily-workflow-runner.sh
+
+# Option 2: Docker Compose with Scheduler
+services:
+  browser-api:
+    image: browser-api:latest
+    ports: ["8088:8088"]
+  
+  hive-scheduler:
+    build: .
+    command: python daily_scheduler.py
+    environment:
+      - SCHEDULE_TIME=08:00
+      - WORKFLOW_NAME=processamento_faturas
+      - BROWSER_API_BASE_URL=http://browser-api:8088
+    depends_on: [browser-api]
+
+# Option 3: MCP automagik-hive scheduled execution
+mcp__automagik_hive__schedule_workflow(
+    workflow_id="processamento_faturas",
+    schedule="0 8 * * *",  # Daily at 8 AM
+    input_data={"mode": "daily_processing"}
+)
 ```
 
 ### 📊 Monitoring & Metrics
 
-#### **Workflow Metrics**
-- **Execution Time**: Total workflow duration
-- **API Success Rate**: Browser API call success percentage
-- **Processing Volume**: CTEs processed per batch
-- **Error Rates**: Failure rates by step and error type
+#### **Daily Workflow Metrics**
+- **Daily Execution Time**: Complete daily cycle duration (<2 minutes target)
+- **PO Processing Volume**: Total POs processed across all stages per day
+- **Status Progression Rate**: POs advancing from one status to next per day
+- **API Success Rate**: Browser API call success percentage by call type
+- **Backlog Reduction**: Rate of PO completion (UPLOADED status) per day
+- **New vs Existing Ratio**: New emails processed vs existing PO backlog handled
 
-#### **Agent Performance**
-- **Response Times**: Individual agent execution times
-- **Memory Usage**: Agent memory consumption patterns
-- **Retry Patterns**: Automatic recovery success rates
+#### **Individual PO Tracking**
+- **Status Duration**: Time spent in each processing stage
+- **End-to-End Latency**: Days from PENDING to UPLOADED per PO
+- **Error Recovery Time**: Time to recover from individual PO failures
+- **Batch vs Individual Performance**: Efficiency comparison of processing modes
+
+#### **📈 Daily Dashboard Metrics:**
+```
+Daily Execution Summary (2025-01-13):
+├── Total POs Found: 23
+├── New POs Added: 3 (from morning emails)
+├── POs Processed: 18
+│   ├── Batch Operations: 8 POs (2 API calls)
+│   └── Individual Operations: 10 POs (10 API calls)
+├── POs Completed: 6 (reached UPLOADED status)
+├── POs Remaining: 5 (various stages)
+└── Next Execution: 2025-01-14 08:00:00
+```
 
 ### 🔒 Security & Compliance
 

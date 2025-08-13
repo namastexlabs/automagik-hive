@@ -3,6 +3,12 @@
 !.env.example
 .envrc
 
+# Gmail API credentials - NEVER commit these!
+credentials.json
+token.json
+gmail_credentials.json
+gmail_token.json
+
 # Python
 __pycache__/
 *.py[cod]
