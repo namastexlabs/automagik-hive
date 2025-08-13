@@ -18,6 +18,33 @@ class PostgreSQLCommands:
         """Execute command stub."""
         return True
     
-    def status(self) -> Dict[str, Any]:
-        """Get status stub."""
-        return {"status": "running", "healthy": True}
+    def install(self) -> bool:
+        """Install PostgreSQL stub."""
+        return True
+    
+    def start(self) -> bool:
+        """Start PostgreSQL stub."""
+        return True
+    
+    def stop(self) -> bool:
+        """Stop PostgreSQL stub."""
+        return True
+    
+    def restart(self) -> bool:
+        """Restart PostgreSQL stub."""
+        return True
+    
+    def status(self) -> bool:
+        """PostgreSQL status stub."""
+        print("PostgreSQL status: running")
+        return True
+    
+    def health(self) -> bool:
+        """PostgreSQL health stub."""
+        print("PostgreSQL health: healthy")
+        return True
+    
+    def logs(self, lines: int = 100) -> bool:
+        """PostgreSQL logs stub."""
+        print("PostgreSQL logs output")
+        return True

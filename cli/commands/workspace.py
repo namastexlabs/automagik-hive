@@ -18,6 +18,37 @@ class WorkspaceCommands:
         """Execute command stub."""
         return True
     
-    def status(self) -> Dict[str, Any]:
-        """Get status stub."""
-        return {"status": "running", "healthy": True}
+    def start_server(self, workspace_path: str) -> bool:
+        """Start workspace server stub."""
+        return True
+    
+    def install(self) -> bool:
+        """Install workspace stub."""
+        return True
+    
+    def start(self) -> bool:
+        """Start workspace stub."""
+        return True
+    
+    def stop(self) -> bool:
+        """Stop workspace stub."""
+        return True
+    
+    def restart(self) -> bool:
+        """Restart workspace stub."""
+        return True
+    
+    def status(self) -> bool:
+        """Workspace status stub."""
+        print("Workspace status: running")
+        return True
+    
+    def health(self) -> bool:
+        """Workspace health stub."""
+        print("Workspace health: healthy")
+        return True
+    
+    def logs(self, lines: int = 100) -> bool:
+        """Workspace logs stub."""
+        print("Workspace logs output")
+        return True

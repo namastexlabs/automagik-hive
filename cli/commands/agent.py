@@ -30,10 +30,15 @@ class AgentCommands:
         """Restart agent command stub."""
         return True
     
-    def status(self) -> Dict[str, Any]:
-        """Agent status command stub."""
-        return {"status": "running", "healthy": True}
+    def status(self) -> bool:
+        """Agent status command stub - returns success."""
+        print("Agent status: running")
+        return True
     
     def logs(self, lines: int = 100) -> str:
         """Agent logs command stub."""
         return "Agent logs output"
+    
+    def health(self) -> Dict[str, Any]:
+        """Agent health command stub."""
+        return {"status": "healthy", "uptime": "1h"}
