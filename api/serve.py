@@ -477,7 +477,7 @@ async def _async_create_automagik_api():
 
         app.include_router(version_router)
 
-        if is_development and not is_reloader:
+        if is_development and not is_reloader_context:
             # Add development URLs
             get_server_config().port
             from rich.console import Console

@@ -448,27 +448,46 @@ class TestCredentialServiceMcpSyncValidation:
 
     def test_sync_mcp_parameter_type_validation(self, tmp_path):
         """
-        Test that sync_mcp parameter validates type correctly.
+        Test that sync_mcp parameter handles different value types correctly.
         
-        Expected behavior: Should only accept boolean values.
+        Expected behavior: Parameter uses Python's truthy/falsy evaluation.
+        Boolean values work as expected, other types are evaluated in boolean context.
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
         
-        # Mock dependencies to focus on parameter validation
-        with patch.object(service, 'sync_mcp_config_with_credentials'):
+        # Mock dependencies to focus on parameter behavior
+        with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             
             # Valid boolean values should work
             service.setup_complete_credentials(sync_mcp=True)
-            service.setup_complete_credentials(sync_mcp=False)
+            assert mock_sync.call_count == 1, "sync_mcp=True should trigger MCP sync"
             
-            # Invalid values should be handled appropriately
-            # (either convert to boolean or raise appropriate error)
-            with pytest.raises((TypeError, ValueError)):
-                service.setup_complete_credentials(sync_mcp="yes")
+            mock_sync.reset_mock()
+            service.setup_complete_credentials(sync_mcp=False)
+            assert mock_sync.call_count == 0, "sync_mcp=False should not trigger MCP sync"
+            
+            # Truthy values should trigger sync (Python boolean context evaluation)
+            mock_sync.reset_mock()
+            service.setup_complete_credentials(sync_mcp="yes")
+            assert mock_sync.call_count == 1, "sync_mcp='yes' (truthy string) should trigger MCP sync"
                 
-            with pytest.raises((TypeError, ValueError)):
-                service.setup_complete_credentials(sync_mcp=1)
+            mock_sync.reset_mock()
+            service.setup_complete_credentials(sync_mcp=1)
+            assert mock_sync.call_count == 1, "sync_mcp=1 (truthy int) should trigger MCP sync"
+            
+            # Falsy values should not trigger sync
+            mock_sync.reset_mock()
+            service.setup_complete_credentials(sync_mcp="")
+            assert mock_sync.call_count == 0, "sync_mcp='' (falsy string) should not trigger MCP sync"
+            
+            mock_sync.reset_mock()
+            service.setup_complete_credentials(sync_mcp=0)
+            assert mock_sync.call_count == 0, "sync_mcp=0 (falsy int) should not trigger MCP sync"
+            
+            mock_sync.reset_mock()
+            service.setup_complete_credentials(sync_mcp=None)
+            assert mock_sync.call_count == 0, "sync_mcp=None (falsy) should not trigger MCP sync"
 
     def test_install_all_modes_sync_mcp_applies_to_all_modes(self, tmp_path):
         """

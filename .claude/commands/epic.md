@@ -10,7 +10,7 @@ Internal command used by Claude to structure epics after context gathering.
 
 ## Purpose
 
-The `/epic` command is used internally by Claude after `/wish` has gathered all necessary context. It structures the information into a comprehensive epic document ready for task generation.
+The `/epic` command is used internally by Claude after `/wish` has gathered all necessary context. It structures the information into a complete epic document ready for task generation.
 
 ## Internal Workflow
 

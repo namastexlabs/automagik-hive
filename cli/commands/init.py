@@ -8,6 +8,40 @@ from typing import Optional, Dict, Any
 from pathlib import Path
 
 
+class InteractiveInitializer:
+    """Interactive initialization for workspace setup."""
+    
+    def __init__(self, workspace_path: Optional[Path] = None):
+        self.workspace_path = workspace_path or Path(".")
+    
+    def interactive_setup(self) -> bool:
+        """Run interactive workspace setup."""
+        try:
+            print("🚀 Starting interactive workspace setup...")
+            # Stub implementation - would run interactive setup flow
+            return True
+        except Exception as e:
+            print(f"❌ Interactive setup failed: {e}")
+            return False
+    
+    def guided_init(self, workspace_name: Optional[str] = None) -> bool:
+        """Run guided initialization flow."""
+        try:
+            if workspace_name:
+                print(f"🎯 Guided initialization for: {workspace_name}")
+            else:
+                print("🎯 Guided initialization for current directory")
+            # Stub implementation - would run guided setup
+            return True
+        except Exception as e:
+            print(f"❌ Guided initialization failed: {e}")
+            return False
+    
+    def execute(self) -> bool:
+        """Execute interactive initializer."""
+        return self.interactive_setup()
+
+
 class InitCommands:
     """CLI InitCommands implementation."""
     

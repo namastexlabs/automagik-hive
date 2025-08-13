@@ -2,7 +2,7 @@
 
 ---
 allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(*), Bash(find *), Bash(wc *), Bash(head *), Bash(tail *), Bash(sort *), Bash(uniq *), Bash(cat *), Bash(grep *), Bash(ls *), Bash(tree *), mcp__zen__refactor(*), mcp__zen__analyze(*), mcp__search-repo-docs__*, mcp__ask-repo-agent__*
-description: Intelligent code refactoring with comprehensive analysis and safety validation
+description: Intelligent code refactoring with complete analysis and safety validation
 ---
 
 You are working on the PagBank Multi-Agent System project. The user has requested to refactor specific files tagged with @ symbols in their arguments: "$ARGUMENTS"
@@ -123,17 +123,17 @@ You have complete autonomy to design and launch sub-agents based on the specific
 - **Flexible Agent Count**: Use as many agents as needed - scale based on actual complexity
 - **Adaptive Coverage**: Ensure critical aspects are covered without unnecessary overlap
 - **Risk-Focused Analysis**: Prioritize investigation of the highest-risk refactoring aspects
-- **Enhanced Analysis**: Use zen tools and MCP servers for complex assessments
+- **refined Analysis**: Use zen tools and MCP servers for complex assessments
 
-**Enhanced Sub-Agent Capabilities:**
+**refined Sub-Agent Capabilities:**
 ```bash
 # Sub-agents can leverage powerful refactoring tools:
 # - Comprehensive refactoring analysis with zen framework
 # - External documentation research for best practices
 # - Repository pattern analysis for implementation guidance
 
-# Example enhanced sub-agent task:
-Task: "As Refactoring_Analyst, use mcp__zen__refactor to comprehensively analyze @agents/pagbank/agent.py for decomposition opportunities, including business logic separation, routing pattern extraction, and compliance consideration maintenance. Include dependency mapping and impact assessment on existing routing logic."
+# Example refined sub-agent task:
+Task: "As Refactoring_Analyst, use mcp__zen__refactor to completely analyze @agents/pagbank/agent.py for decomposition opportunities, including business logic separation, routing pattern extraction, and compliance consideration maintenance. Include dependency mapping and impact assessment on existing routing logic."
 ```
 
 **Sub-Agent Task Template:**
@@ -145,13 +145,13 @@ Standard Investigation Workflow:
 2. [CUSTOM_ANALYSIS_STEPS] - Investigate the specific area thoroughly
 3. Consider business unit implications and routing impact
 4. Validate compliance and Portuguese language requirements
-5. Use enhanced analysis tools when beneficial:
-   - mcp__zen__refactor for comprehensive refactoring analysis
+5. Use refined analysis tools when beneficial:
+   - mcp__zen__refactor for complete refactoring analysis
    - mcp__zen__analyze for architectural assessment
    - mcp__search-repo-docs__get-library-docs for Agno framework patterns
 6. Return actionable findings that support safe and effective refactoring
 
-Return comprehensive findings addressing this investigation area with PagBank-specific considerations."
+Return complete findings addressing this investigation area with PagBank-specific considerations."
 ```
 
 **CRITICAL: When launching sub-agents, always use parallel execution with a single message containing multiple Task tool invocations.**
@@ -262,7 +262,7 @@ Implement the refactoring based on the synthesized analysis:
 
 ### PagBank-Specific Considerations
 - **Business Unit Integrity**: Ensure refactoring maintains clear separation between Adquirência, Emissão, PagBank, and Human Handoff
-- **Routing Logic Preservation**: Keep agent routing patterns functional and optimized
+- **Routing Logic Preservation**: Keep agent routing patterns functional and powered
 - **Knowledge Base Consistency**: Update CSV knowledge base to reflect structural changes
 - **Portuguese Language Maintenance**: Ensure customer-facing content remains consistent
 - **Compliance Validation**: Verify financial services requirements are preserved
@@ -278,9 +278,9 @@ Implement the refactoring based on the synthesized analysis:
 - **Routing validation** - Test that agent routing logic still functions
 - **Compliance check** - Ensure financial services and language requirements preserved
 
-## Enhanced Analysis Integration
+## refined Analysis Integration
 
-Leverage enhanced analysis tools when beneficial for comprehensive refactoring:
+Leverage refined analysis tools when beneficial for complete refactoring:
 
 ### Refactoring Analysis Tools:
 ```python
@@ -316,7 +316,7 @@ docs = mcp__search-repo-docs__get-library-docs(
 
 ## Summary Format
 
-Provide a comprehensive summary of:
+Provide a complete summary of:
 - **Analysis Results**: Key findings from each sub-agent with business context
 - **Refactoring Strategy**: Chosen approach and rationale including business unit considerations
 - **Value Assessment**: Whether refactoring improves the code (from Step 6) with specific benefits

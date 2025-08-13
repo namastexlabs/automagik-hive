@@ -105,7 +105,7 @@ class ConfigAwareFilter:
 
         return best_unit_id
 
-    def get_enhanced_search_params(self) -> dict[str, Any]:
+    def get_search_params(self) -> dict[str, Any]:
         """Get search parameters from configuration."""
         return {
             "max_results": self.search_config.get("max_results", 3),
@@ -205,7 +205,7 @@ def test_config_filter():
             logger.info(f"📊 Detected: {unit_info['name']} ({detected})")
 
     # Test search and performance settings
-    search_params = filter_instance.get_enhanced_search_params()
+    search_params = filter_instance.get_search_params()
     performance_settings = filter_instance.get_performance_settings()
 
     logger.info("Configuration Settings:")

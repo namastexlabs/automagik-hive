@@ -356,43 +356,45 @@ class TestCredentialServiceMcpSyncPerformance:
         
         Expected behavior: Multiple syncs should be safe and produce consistent results.
         """
-        # Create service with temp directory
-        service = CredentialService(project_root=tmp_path)
-        
-        # Create MCP file with initial content
-        mcp_file = tmp_path / ".mcp.json"
-        initial_content = {
-            "mcpServers": {
-                "postgres": {
-                    "command": "uv",
-                    "args": ["tool", "run", "--from", "mcp-server-postgres", "mcp-server-postgres"],
-                    "env": {
-                        "POSTGRESQL_CONNECTION_STRING": "postgresql+psycopg://old-user:old-pass@localhost:5532/hive",
-                        "HIVE_API_KEY": "old-key"
+        # Override environment variable to use .mcp.json in test temp dir
+        with patch.dict('os.environ', {'HIVE_MCP_CONFIG_PATH': '.mcp.json'}):
+            # Create service with temp directory
+            service = CredentialService(project_root=tmp_path)
+            
+            # Create MCP file with initial content
+            mcp_file = tmp_path / ".mcp.json"
+            initial_content = {
+                "mcpServers": {
+                    "postgres": {
+                        "command": "uv",
+                        "args": ["tool", "run", "--from", "mcp-server-postgres", "mcp-server-postgres"],
+                        "env": {
+                            "POSTGRESQL_CONNECTION_STRING": "postgresql+psycopg://old-user:old-pass@localhost:5532/hive",
+                            "HIVE_API_KEY": "old-key"
+                        }
                     }
                 }
             }
-        }
-        mcp_file.write_text(json.dumps(initial_content, indent=2))
-        
-        # Generate credentials
-        result = service.setup_complete_credentials(sync_mcp=True)
-        
-        # Capture state after first sync
-        first_sync_content = mcp_file.read_text()
-        
-        # Sync again multiple times
-        service.sync_mcp_config_with_credentials()
-        service.sync_mcp_config_with_credentials()
-        
-        # Should be identical after multiple syncs
-        final_content = mcp_file.read_text()
-        assert first_sync_content == final_content
-        
-        # Should contain new credentials, not old ones
-        assert result['postgres_user'] in final_content
-        assert result['postgres_password'] in final_content
-        assert "old-user:old-pass" not in final_content
+            mcp_file.write_text(json.dumps(initial_content, indent=2))
+            
+            # Generate credentials
+            result = service.setup_complete_credentials(sync_mcp=True)
+            
+            # Capture state after first sync
+            first_sync_content = mcp_file.read_text()
+            
+            # Sync again multiple times
+            service.sync_mcp_config_with_credentials()
+            service.sync_mcp_config_with_credentials()
+            
+            # Should be identical after multiple syncs
+            final_content = mcp_file.read_text()
+            assert first_sync_content == final_content
+            
+            # Should contain new credentials in the connection string, not old ones
+            assert result['postgres_user'] in final_content
+            assert result['postgres_password'] in final_content
+            assert "old-user:old-pass" not in final_content
 
 
 class TestCredentialServiceMcpSyncConfiguration:
@@ -411,7 +413,32 @@ class TestCredentialServiceMcpSyncConfiguration:
         custom_dir = tmp_path / "config"
         custom_dir.mkdir()
         custom_mcp_file = custom_dir / "custom.mcp.json"
-        custom_mcp_file.write_text('{"mcpServers": {}}')
+        # Create MCP structure with postgres and automagik-hive servers for credential sync
+        custom_mcp_file.write_text('''{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql+psycopg://old_user:old_pass@localhost:35532/hive_agent"
+      ]
+    },
+    "automagik-hive": {
+      "command": "uvx",
+      "args": [
+        "automagik-tools@0.8.17",
+        "tool",
+        "automagik-hive"
+      ],
+      "env": {
+        "HIVE_API_BASE_URL": "http://localhost:38886",
+        "HIVE_API_KEY": "old_api_key",
+        "HIVE_TIMEOUT": "300"
+      }
+    }
+  }
+}''')
         
         # Set environment variable for custom path
         with patch.dict('os.environ', {'HIVE_MCP_CONFIG_PATH': str(custom_mcp_file)}):
@@ -435,59 +462,87 @@ class TestCredentialServiceMcpSyncConfiguration:
         
         Expected behavior: Should only update credential-related fields.
         """
-        # Create service with temp directory
-        service = CredentialService(project_root=tmp_path)
+        # Clear environment pollution to ensure test isolation
+        import os
+        original_env = os.environ.get('HIVE_MCP_CONFIG_PATH')
+        if 'HIVE_MCP_CONFIG_PATH' in os.environ:
+            del os.environ['HIVE_MCP_CONFIG_PATH']
         
-        # Create MCP file with complex configuration
-        mcp_file = tmp_path / ".mcp.json"
-        mcp_config = {
-            "mcpServers": {
-                "postgres": {
-                    "command": "uv",
-                    "args": ["tool", "run", "--from", "mcp-server-postgres", "mcp-server-postgres"],
-                    "env": {
-                        "POSTGRESQL_CONNECTION_STRING": "postgresql+psycopg://old-user:old-pass@localhost:5532/hive",
-                        "HIVE_API_KEY": "old-key"
-                    }
-                },
-                "filesystem": {
-                    "command": "npx",
-                    "args": ["-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"],
-                    "env": {}
-                },
-                "custom-server": {
-                    "command": "python",
-                    "args": ["-m", "custom.server"],
-                    "env": {
-                        "CUSTOM_CONFIG": "preserve-this",
-                        "ANOTHER_SETTING": "keep-this-too"
+        try:
+            # Create service with temp directory
+            service = CredentialService(project_root=tmp_path)
+            
+            # Create MCP file with complex configuration
+            mcp_file = tmp_path / ".mcp.json"
+            mcp_config = {
+                "mcpServers": {
+                    "postgres": {
+                        "command": "npx",
+                        "args": [
+                            "-y",
+                            "@modelcontextprotocol/server-postgres",
+                            "postgresql+psycopg://old-user:old-pass@localhost:5532/hive"
+                        ]
+                    },
+                    "automagik-hive": {
+                        "command": "uvx",
+                        "args": [
+                            "automagik-tools@0.8.17",
+                            "tool",
+                            "automagik-hive"
+                        ],
+                        "env": {
+                            "HIVE_API_BASE_URL": "http://localhost:38886",
+                            "HIVE_API_KEY": "old-key",
+                            "HIVE_TIMEOUT": "300"
+                        }
+                    },
+                    "filesystem": {
+                        "command": "npx",
+                        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"],
+                        "env": {}
+                    },
+                    "custom-server": {
+                        "command": "python",
+                        "args": ["-m", "custom.server"],
+                        "env": {
+                            "CUSTOM_CONFIG": "preserve-this",
+                            "ANOTHER_SETTING": "keep-this-too"
+                        }
                     }
                 }
             }
-        }
-        mcp_file.write_text(json.dumps(mcp_config, indent=2))
+            mcp_file.write_text(json.dumps(mcp_config, indent=2))
+            
+            # Generate credentials and sync MCP
+            result = service.setup_complete_credentials(sync_mcp=True)
+            
+            # Parse updated content
+            updated_content = json.loads(mcp_file.read_text())
+            
+            # Non-credential servers should be preserved
+            assert "filesystem" in updated_content["mcpServers"]
+            assert "custom-server" in updated_content["mcpServers"]
+            
+            # Custom environment variables should be preserved
+            custom_server = updated_content["mcpServers"]["custom-server"]
+            assert custom_server["env"]["CUSTOM_CONFIG"] == "preserve-this"
+            assert custom_server["env"]["ANOTHER_SETTING"] == "keep-this-too"
+            
+            # Postgres credentials should be updated in args array
+            postgres_server = updated_content["mcpServers"]["postgres"]
+            connection_string = postgres_server["args"][-1]  # Last arg is the connection string
+            assert result['postgres_user'] in connection_string
+            assert result['postgres_password'] in connection_string
+            assert "old-user:old-pass" not in connection_string
+            
+            # API key should be updated in automagik-hive server
+            hive_server = updated_content["mcpServers"]["automagik-hive"]
+            assert hive_server["env"]["HIVE_API_KEY"] == result['api_key']
         
-        # Generate credentials and sync MCP
-        result = service.setup_complete_credentials(sync_mcp=True)
-        
-        # Parse updated content
-        updated_content = json.loads(mcp_file.read_text())
-        
-        # Non-credential servers should be preserved
-        assert "filesystem" in updated_content["mcpServers"]
-        assert "custom-server" in updated_content["mcpServers"]
-        
-        # Custom environment variables should be preserved
-        custom_server = updated_content["mcpServers"]["custom-server"]
-        assert custom_server["env"]["CUSTOM_CONFIG"] == "preserve-this"
-        assert custom_server["env"]["ANOTHER_SETTING"] == "keep-this-too"
-        
-        # Postgres credentials should be updated
-        postgres_server = updated_content["mcpServers"]["postgres"]
-        connection_string = postgres_server["env"]["POSTGRESQL_CONNECTION_STRING"]
-        assert result['postgres_user'] in connection_string
-        assert result['postgres_password'] in connection_string
-        assert "old-user:old-pass" not in connection_string
-        
-        # API key should be updated
-        assert postgres_server["env"]["HIVE_API_KEY"] == result['api_key']
+        finally:
+            # Restore original environment
+            if original_env is None:
+                os.environ.pop('HIVE_MCP_CONFIG_PATH', None)
+            else:
+                os.environ['HIVE_MCP_CONFIG_PATH'] = original_env

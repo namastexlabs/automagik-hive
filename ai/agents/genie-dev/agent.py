@@ -52,7 +52,7 @@ async def get_genie_dev_agent(**kwargs: Any) -> Agent:
 
     Returns:
         Agent instance configured for development task routing with
-        enhanced memory and intelligent delegation capabilities
+        comprehensive memory and intelligent delegation capabilities
 
     Example Usage:
         # Requirements analysis and planning

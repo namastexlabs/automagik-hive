@@ -4,10 +4,12 @@
 import tempfile
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+import pytest
 
 from cli.docker_manager import DockerManager
 
 
+# Test enabled - credential service database port bug has been fixed
 def test_cli_install_uses_single_credential_system():
     """Test that CLI install command uses single credential system."""
     with tempfile.TemporaryDirectory() as temp_dir:

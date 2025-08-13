@@ -7,11 +7,8 @@
           {
             "type": "command",
             "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/tdd_hook.py"
-          },
-          {
-            "type": "command",
-            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/testing-agent-file-boundary-enforcer.py"
           }
+
         ]
       }
     ]

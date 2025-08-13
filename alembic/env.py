@@ -49,11 +49,11 @@ from lib.models import Base
 target_metadata = Base.metadata
 
 
-# Get database URL from environment with enhanced error handling
+# Get database URL from environment with comprehensive error handling
 def get_url():
     db_url = os.getenv("HIVE_DATABASE_URL")
     if not db_url:
-        # Enhanced error message for UVX debugging
+        # Comprehensive error message for UVX debugging
         raise ValueError(
             "HIVE_DATABASE_URL environment variable must be set. "
             "This error often occurs in UVX environments when .env files cannot be found. "

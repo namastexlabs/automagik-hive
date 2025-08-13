@@ -649,7 +649,8 @@ class TestAgnoVersionSyncServiceIntegration:
     @pytest.mark.asyncio
     async def test_version_comparison_edge_cases(self, mock_db_service, mock_settings):
         """Test edge cases in version comparison logic."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        # Pass mock_db_service to service constructor to prevent real DB connection
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Test different version formats
         version_scenarios = [
@@ -661,10 +662,23 @@ class TestAgnoVersionSyncServiceIntegration:
         ]
         
         for yaml_version, db_version, should_skip in version_scenarios:
-            mock_db_service.fetch_one.return_value = {
-                "version": db_version,
-                "updated_at": datetime.now()
-            }
+            # Create a side effect function that handles the parameter format correctly
+            def mock_fetch_one_side_effect(query, params):
+                # Handle both dict and positional parameters
+                if isinstance(params, dict):
+                    component_name = params.get("name", "")
+                else:
+                    # If params is a tuple/list, extract the name parameter
+                    component_name = params[1] if len(params) > 1 else ""
+                
+                # Return the mock data for any component query
+                return {
+                    "version": db_version,
+                    "updated_at": datetime.now()
+                }
+            
+            mock_db_service.fetch_one.side_effect = mock_fetch_one_side_effect
+            mock_db_service.execute.return_value = None
             mock_db_service.execute.reset_mock()
             
             component_data = {
@@ -730,7 +744,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_force_sync_operation(self, mock_db_service, mock_settings):
         """Test force sync that updates all components regardless of version."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Mock existing component with same version
         mock_db_service.fetch_one.return_value = {
@@ -770,7 +784,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_backup_and_restore_workflow(self, mock_db_service, mock_settings):
         """Test backup creation and restoration of component versions."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Mock existing DB state
         existing_versions = [
@@ -805,7 +819,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_health_check_and_diagnostics(self, mock_db_service, mock_settings):
         """Test service health check and diagnostic capabilities."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Test database connectivity
         mock_db_service.fetch_one.return_value = {"count": 5}
@@ -825,7 +839,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_large_scale_sync_performance(self, mock_db_service, mock_settings):
         """Test performance characteristics with large numbers of components."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Generate large number of components
         large_component_set = [
@@ -855,7 +869,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_error_recovery_and_resilience(self, mock_db_service, mock_settings):
         """Test error recovery and system resilience."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Test partial failure scenario
         component_data = [
@@ -866,7 +880,13 @@ class TestAgnoVersionSyncServiceAdvanced:
         
         # Mock selective database failures
         def mock_fetch_side_effect(query, params):
-            if params[1] == "bad-agent":  # name parameter
+            # Handle both dict and positional parameters
+            if isinstance(params, dict):
+                component_name = params.get("name", "")
+            else:
+                component_name = params[1] if len(params) > 1 else ""
+            
+            if component_name == "bad-agent":
                 raise Exception("Database error for bad-agent")
             return None  # Component doesn't exist (successful case)
         

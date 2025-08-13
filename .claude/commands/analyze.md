@@ -16,7 +16,7 @@ Comprehensive analysis command that unifies general analysis, multi-agent code r
 
 ### General Analysis (default)
 ```bash
-# Default comprehensive analysis
+# Default complete analysis
 /analyze "Review the authentication system architecture"
 /analyze "Analyze database performance" model="o3"
 ```
@@ -65,15 +65,15 @@ The command automatically selects the optimal analysis approach:
 
 ### General Mode (default)
 - Uses `mcp__zen__analyze` for architectural and code analysis
-- Single-agent comprehensive assessment
+- Single-agent complete assessment
 - Best for: architecture review, design patterns, general insights
 
 ### Review Mode
 - Uses multi-agent code review teams (from original `/review`)
 - Deploys 3-6 specialized agents based on scope:
   - Security_Auditor, Performance_Analyzer, Quality_Inspector, Architecture_Reviewer
-- Parallel execution for comprehensive coverage
-- Best for: comprehensive code review, critical findings, production readiness
+- Parallel execution for complete coverage
+- Best for: complete code review, critical findings, production readiness
 
 ### Security Mode  
 - Uses `mcp__zen__secaudit` for specialized security analysis
@@ -93,14 +93,14 @@ The command automatically selects the optimal analysis approach:
 - Design pattern compliance
 - Best for: code quality improvement, technical debt assessment
 
-## Enhanced Capabilities
+## refined Capabilities
 
 ### Expert Consultation & Notifications
 ```python
 # Complex analysis with expert consultation
 mcp__gemini__consult_gemini(
     specific_question="Analysis approach for [complex component]",
-    problem_description="Need comprehensive analysis of [system]",
+    problem_description="Need complete analysis of [system]",
     code_context="System shows patterns like [examples]...",
     attached_files=["critical/files.py"],
     preferred_approach="review"
@@ -164,4 +164,4 @@ esac
 
 ---
 
-**Unified Analysis**: One powerful command for all analysis needs - from quick assessments to comprehensive multi-agent reviews and specialized security audits.
+**Unified Analysis**: One powerful command for all analysis needs - from quick assessments to complete multi-agent reviews and specialized security audits.

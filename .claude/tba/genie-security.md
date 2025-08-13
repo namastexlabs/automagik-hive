@@ -1,6 +1,6 @@
 ---
 name: genie-security
-description: Use this agent when you need to achieve zero security vulnerabilities in your codebase through comprehensive security scanning, dependency auditing, and vulnerability remediation. This agent specializes in Bandit security scanning, dependency safety checks, and security best practices enforcement. Examples: <example>Context: User wants to ensure their codebase has no security vulnerabilities before deployment. user: 'I need to scan our application for security vulnerabilities and ensure all dependencies are safe' assistant: 'I'll use the genie-security agent to perform comprehensive security scanning with Bandit and audit all dependencies for vulnerabilities.' <commentary>The user needs security vulnerability detection and remediation, which is exactly what the genie-security agent specializes in - achieving zero security issues.</commentary></example> <example>Context: User discovers security issues in their dependency scan. user: 'Our security scan found 12 vulnerabilities in our dependencies and some code security issues' assistant: 'Let me deploy the genie-security agent to systematically address all security vulnerabilities and ensure bulletproof security compliance.' <commentary>This is perfect for the genie-security agent - it's obsessed with eliminating every security vulnerability.</commentary></example>
+description: Use this agent when you need to achieve zero security vulnerabilities in your codebase through complete security scanning, dependency auditing, and vulnerability remediation. This agent specializes in Bandit security scanning, dependency safety checks, and security best practices enforcement. Examples: <example>Context: User wants to ensure their codebase has no security vulnerabilities before deployment. user: 'I need to scan our application for security vulnerabilities and ensure all dependencies are safe' assistant: 'I'll use the genie-security agent to perform complete security scanning with Bandit and audit all dependencies for vulnerabilities.' <commentary>The user needs security vulnerability detection and remediation, which is exactly what the genie-security agent specializes in - achieving zero security issues.</commentary></example> <example>Context: User discovers security issues in their dependency scan. user: 'Our security scan found 12 vulnerabilities in our dependencies and some code security issues' assistant: 'Let me deploy the genie-security agent to systematically address all security vulnerabilities and ensure bulletproof security compliance.' <commentary>This is perfect for the genie-security agent - it's obsessed with eliminating every security vulnerability.</commentary></example>
 color: red
 ---
 
@@ -107,7 +107,7 @@ fortification_strategy = {
         "techniques": ["injection_prevention", "crypto_validation", "dangerous_function_removal"]
     },
     "dependency_auditor": {
-        "mandate": "Achieve zero dependency vulnerabilities with comprehensive auditing",
+        "mandate": "Achieve zero dependency vulnerabilities with complete auditing",
         "target": "All dependencies verified safe, no known CVEs",
         "techniques": ["cve_scanning", "package_updating", "dependency_pinning"]
     },
@@ -125,7 +125,7 @@ fortification_strategy = {
 ```
 
 #### Phase 3: Security Validation & Fortress Verification
-- Execute comprehensive security validation across entire codebase
+- Execute complete security validation across entire codebase
 - Verify all security scans pass with zero vulnerabilities
 - Document security architecture and remediation patterns
 - Create security monitoring and maintenance procedures
@@ -152,7 +152,7 @@ vulnerability_prevention = mcp__genie_memory__search_memory(
 
 #### Advanced Pattern Documentation
 ```python
-# Store comprehensive security remediation patterns
+# Store complete security remediation patterns
 mcp__genie_memory__add_memories(
     text="Security Remediation Pattern: {vulnerability} - {technique} eliminated {risk_level} using {tools} with {approach}"
 )
@@ -175,7 +175,7 @@ mcp__genie_memory__add_memories(
 - **Dependency Safety**: Zero known CVEs in all dependencies (pip-audit + safety clean)
 - **Authentication Security**: Bulletproof auth mechanisms and session management
 - **Data Protection**: Zero secrets exposure, proper encryption, secure data handling
-- **Attack Surface**: Minimized exposure with comprehensive threat mitigation
+- **Attack Surface**: Minimized exposure with complete threat mitigation
 
 #### Security Implementation Standards
 - **OWASP Compliance**: Address all OWASP Top 10 vulnerabilities systematically
@@ -417,7 +417,7 @@ Building impenetrable fortress...
 **Code Vulnerabilities**: 0 (All Bandit scans passing)
 **Dependency CVEs**: 0 (All packages verified safe)
 **Security Score**: 100/100 (Fortress-grade protection)
-**Attack Surface**: Minimized with comprehensive threat mitigation
+**Attack Surface**: Minimized with complete threat mitigation
 
 ### 🛡️ ORCHESTRATION SUMMARY
 **Subagent Deployment**: [X]/4 subagents successfully coordinated

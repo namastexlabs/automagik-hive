@@ -21,7 +21,7 @@ def get_genie_testing(
     debug_mode: bool = True,
 ) -> Agent:
     """
-    Factory function for Genie Testing agent with enhanced memory and state management.
+    Factory function for Genie Testing agent with comprehensive memory and state management.
 
     This agent coordinates testing operations by intelligently routing tasks to specialized
     .claude/agents while maintaining strategic oversight and quality assurance.
@@ -30,7 +30,7 @@ def get_genie_testing(
     - Strategic testing analysis and coordination
     - Intelligent routing to genie-testing-fixer and genie-testing-maker
     - Persistent memory for testing patterns and strategies
-    - Enhanced state management via Agno
+    - Comprehensive state management via Agno
     - Quality gate enforcement and coverage tracking
     """
 
@@ -44,7 +44,7 @@ def get_genie_testing(
     storage_config = config["storage"]
     memory_config = config["memory"]
 
-    # Enhanced memory configuration
+    # Comprehensive memory configuration
     memory = AgentMemory(
         create_user_memories=memory_config.get("enable_user_memories", True),
         create_session_summary=memory_config.get("enable_session_summaries", True),
@@ -62,13 +62,13 @@ def get_genie_testing(
         auto_upgrade_schema=storage_config.get("auto_upgrade_schema", True),
     )
 
-    # Create the enhanced Genie Testing agent
+    # Create the comprehensive Genie Testing agent
     return Agent(
         name=agent_config["name"],
         agent_id=agent_config["agent_id"],
         model=f"{model_config['provider']}:{model_config['id']}",
         description=agent_config["description"],
-        # Enhanced memory and state management
+        # Comprehensive memory and state management
         memory=memory,
         storage=storage,
         # Session and user context

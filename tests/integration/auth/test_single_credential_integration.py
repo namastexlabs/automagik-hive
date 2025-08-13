@@ -15,7 +15,7 @@ class TestSingleCredentialIntegration:
     """Test complete single credential integration."""
 
     def test_unified_service_port_calculation(self, tmp_path):
-        """Test that CredentialService calculates ports correctly."""
+        """Test that CredentialService calculates ports correctly with prefixed database approach."""
         # Create .env with custom base ports
         env_file = tmp_path / ".env"
         env_file.write_text("""
@@ -32,13 +32,14 @@ HIVE_API_PORT=9000
         assert deployment_ports["workspace"]["db"] == 6000
         assert deployment_ports["workspace"]["api"] == 9000
         
-        # Agent adds prefix "3"
-        assert deployment_ports["agent"]["db"] == 36000
-        assert deployment_ports["agent"]["api"] == 39000
+        # PREFIXED DATABASE APPROACH: Each mode uses prefixed database and API ports
+        # Agent uses prefixed db port and prefixed API port
+        assert deployment_ports["agent"]["db"] == 36000   # Prefixed database port (3 + 6000)
+        assert deployment_ports["agent"]["api"] == 39000  # Prefixed API port (3 + 9000)
         
-        # Genie adds prefix "4"
-        assert deployment_ports["genie"]["db"] == 46000
-        assert deployment_ports["genie"]["api"] == 49000
+        # Genie uses prefixed db port and prefixed API port  
+        assert deployment_ports["genie"]["db"] == 46000   # Prefixed database port (4 + 6000)
+        assert deployment_ports["genie"]["api"] == 49000  # Prefixed API port (4 + 9000)
 
     def test_unified_credential_generation(self, tmp_path):
         """Test that credentials are generated consistently across modes."""
@@ -62,10 +63,10 @@ HIVE_API_PORT=9000
         assert workspace_creds["postgres_password"] == agent_creds["postgres_password"]
         assert workspace_creds["postgres_password"] == genie_creds["postgres_password"]
         
-        # Different ports per mode
-        assert workspace_creds["postgres_port"] == "5532"  # Default base
-        assert agent_creds["postgres_port"] == "35532"      # 3 + 5532
-        assert genie_creds["postgres_port"] == "45532"      # 4 + 5532
+        # PREFIXED DATABASE APPROACH: Different postgres port per mode, different API ports per mode  
+        assert workspace_creds["postgres_port"] == "5532"   # Default base (workspace)
+        assert agent_creds["postgres_port"] == "35532"      # Prefixed database port (3 + 5532)
+        assert genie_creds["postgres_port"] == "45532"      # Prefixed database port (4 + 5532)
         
         assert workspace_creds["api_port"] == "8886"        # Default base
         assert agent_creds["api_port"] == "38886"           # 3 + 8886
@@ -143,14 +144,16 @@ HIVE_API_PORT=9000
         assert "HIVE_DATABASE_URL=" in main_env
         assert "HIVE_API_KEY=" in main_env
         
-        # Agent and genie have their own files
+        # Agent and genie have their own files with shared database approach
         agent_env = (tmp_path / ".env.agent").read_text()
         assert "HIVE_DATABASE_URL=" in agent_env
-        assert "35532" in agent_env  # Agent port
+        assert "POSTGRES_PORT=5532" in agent_env  # Shared database port
+        assert "38886" in agent_env  # Agent API port
         
         genie_env = (tmp_path / ".env.genie").read_text()
         assert "HIVE_DATABASE_URL=" in genie_env  
-        assert "45532" in genie_env  # Genie port
+        assert "POSTGRES_PORT=5532" in genie_env  # Shared database port
+        assert "48886" in genie_env  # Genie API port
 
     def test_backward_compatibility(self, tmp_path):
         """Test that existing installations continue to work."""

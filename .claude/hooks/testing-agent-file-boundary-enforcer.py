@@ -25,6 +25,15 @@ def main():
     if tool_name not in ["Write", "Edit", "MultiEdit"]:
         sys.exit(0)
     
+    # Get the file path being modified first
+    file_path = tool_input.get("file_path", "")
+    if not file_path:
+        sys.exit(0)
+    
+    # ONLY apply to .py files
+    if not file_path.endswith('.py'):
+        sys.exit(0)
+    
     # Check if this is a testing agent by looking at session context
     # We'll check the transcript for recent Task tool calls with genie-testing-* agents
     transcript_path = input_data.get("transcript_path", "")
@@ -41,14 +50,19 @@ def main():
             recent_lines = lines[-50:] if len(lines) >= 50 else lines
             transcript_content = ''.join(recent_lines)
             
-            # Look for genie-testing-fixer or genie-testing-maker agent spawning
-            if any(agent in transcript_content for agent in [
+            # DETECT TESTING SUBAGENT ACTIVITY: Look for actual subagent spawning/activity
+            testing_subagent_activity_patterns = [
                 '"subagent_type": "genie-testing-fixer"',
                 '"subagent_type": "genie-testing-maker"',
-                'genie-testing-fixer',
-                'genie-testing-maker'
-            ]):
-                is_testing_agent_context = True
+                'Task(subagent_type="genie-testing-fixer"',
+                'Task(subagent_type="genie-testing-maker"'
+            ]
+            
+            # Check if testing subagents are being spawned/used in recent activity
+            for pattern in testing_subagent_activity_patterns:
+                if pattern in transcript_content:
+                    is_testing_agent_context = True
+                    break
     except Exception:
         # If we can't read transcript, allow the operation
         sys.exit(0)
@@ -56,10 +70,7 @@ def main():
     if not is_testing_agent_context:
         sys.exit(0)
     
-    # Get the file path being modified
-    file_path = tool_input.get("file_path", "")
-    if not file_path:
-        sys.exit(0)
+    # Already got file_path above for .py check
     
     # Convert to absolute path and normalize
     try:

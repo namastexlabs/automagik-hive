@@ -168,7 +168,7 @@ mcp__zen__consensus(
 
 ### Step 5: Risk Assessment Matrix
 
-Build comprehensive risk matrix:
+Build complete risk matrix:
 
 ```markdown
 ## Deletion Risk Assessment

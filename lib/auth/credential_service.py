@@ -610,8 +610,8 @@ class CredentialService:
         """
         Calculate ports by adding prefix to base ports.
         
-        SHARED DATABASE APPROACH: All modes use shared postgres port 5532
-        Only API ports get prefixed for mode separation
+        PREFIXED DATABASE APPROACH: Each mode uses prefixed database and API ports
+        Agent uses 35532, Genie uses 45532, Workspace uses base 5532
         
         Args:
             mode: Mode name (workspace, agent, genie)
@@ -629,17 +629,16 @@ class CredentialService:
             # No prefix for workspace mode
             return base_ports.copy()
         
-        # SHARED DATABASE: All modes use same postgres port 5532
-        # Only API ports get prefixed for separation
+        # Prefixed database ports for mode separation
         calculated_ports = {
-            "db": base_ports["db"],  # Shared postgres port 5532 for all modes
+            "db": int(f"{prefix}{base_ports['db']}"),  # Prefixed postgres port
             "api": int(f"{prefix}{base_ports['api']}")  # Prefixed API port
         }
         
         logger.debug(
-            "Calculated ports for shared database approach", 
+            "Calculated ports for prefixed database approach", 
             mode=mode, prefix=prefix, ports=calculated_ports, 
-            shared_postgres_port=base_ports["db"]
+            base_postgres_port=base_ports["db"]
         )
         return calculated_ports
     

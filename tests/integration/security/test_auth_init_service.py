@@ -326,6 +326,8 @@ class TestAuthInitServiceFileSystemSecurity:
         """Test that .env file is created with secure permissions."""
         with tempfile.TemporaryDirectory() as temp_dir:
             env_file = Path(temp_dir) / ".env"
+            # Create empty file to trigger key generation path (not CLI temp key path)
+            env_file.touch()
 
             service = AuthInitService()
             service.env_file = env_file

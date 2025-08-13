@@ -63,7 +63,7 @@ class TestConfigAwareFilter:
         assert detected_unit == "tech"
 
         # Test search params
-        search_params = filter_obj.get_enhanced_search_params()
+        search_params = filter_obj.get_search_params()
         assert isinstance(search_params, dict)
         assert "max_results" in search_params
 

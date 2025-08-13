@@ -409,8 +409,6 @@ class TestBidirectionalSync:
         ]
 
         mock_version_service.get_active_version.return_value = None
-        # Mock save_version to prevent unpacking error
-        mock_version_service.save_version.return_value = (True, "created")
 
         for invalid_config in invalid_configs:
             with patch.object(
@@ -471,18 +469,22 @@ class TestBidirectionalSync:
         self, sync_engine, mock_version_service, sample_yaml_config
     ):
         """Test successful DB version creation."""
-        mock_version_service.save_version.return_value = (True, "created")
+        mock_version_service.create_version.return_value = 123  # Valid version ID
 
         await sync_engine._create_db_version(
             "test-agent", "agent", sample_yaml_config, 1
         )
 
-        mock_version_service.save_version.assert_called_once_with(
+        mock_version_service.create_version.assert_called_once_with(
             component_id="test-agent",
             component_type="agent",
             version=1,
             config=sample_yaml_config,
-            is_active=True,
+            description="Created from YAML sync for test-agent",
+        )
+        mock_version_service.set_active_version.assert_called_once_with(
+            component_id="test-agent",
+            version=1,
         )
 
     @pytest.mark.asyncio
@@ -490,10 +492,10 @@ class TestBidirectionalSync:
         self, sync_engine, mock_version_service, sample_yaml_config
     ):
         """Test DB version creation failure."""
-        mock_version_service.save_version.return_value = (False, "error message")
+        mock_version_service.create_version.return_value = None
 
         with pytest.raises(
-            ValueError, match="Failed to create database version: error message"
+            ValueError, match="Failed to create database version for test-agent"
         ):
             await sync_engine._create_db_version(
                 "test-agent", "agent", sample_yaml_config, 1
@@ -504,7 +506,7 @@ class TestBidirectionalSync:
         self, sync_engine, mock_version_service, sample_yaml_config
     ):
         """Test DB version creation with exception."""
-        mock_version_service.save_version.side_effect = Exception("Database error")
+        mock_version_service.create_version.side_effect = Exception("Database error")
 
         with pytest.raises(Exception, match="Database error"):
             await sync_engine._create_db_version(
@@ -516,18 +518,23 @@ class TestBidirectionalSync:
         self, sync_engine, mock_version_service, sample_yaml_config
     ):
         """Test successful DB update from YAML."""
-        mock_version_service.save_version.return_value = (True, "updated")
+        mock_version_service.create_version.return_value = "version-id-123"
+        mock_version_service.set_active_version.return_value = None
 
         await sync_engine._update_db_from_yaml(
             "test-agent", "agent", sample_yaml_config, 1
         )
 
-        mock_version_service.save_version.assert_called_once_with(
+        mock_version_service.create_version.assert_called_once_with(
             component_id="test-agent",
             component_type="agent",
             version=1,
             config=sample_yaml_config,
-            is_active=True,
+            description="Updated from YAML sync for test-agent",
+        )
+        mock_version_service.set_active_version.assert_called_once_with(
+            component_id="test-agent",
+            version=1,
         )
 
     @pytest.mark.asyncio
@@ -535,10 +542,11 @@ class TestBidirectionalSync:
         self, sync_engine, mock_version_service, sample_yaml_config
     ):
         """Test DB update from YAML failure."""
-        mock_version_service.save_version.return_value = (False, "update failed")
+        mock_version_service.create_version.return_value = None  # Falsy value triggers ValueError
+        mock_version_service.set_active_version.return_value = None
 
         with pytest.raises(
-            ValueError, match="Failed to update database from YAML: update failed"
+            ValueError, match="Failed to update database from YAML for test-agent"
         ):
             await sync_engine._update_db_from_yaml(
                 "test-agent", "agent", sample_yaml_config, 1

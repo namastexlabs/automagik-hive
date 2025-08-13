@@ -65,9 +65,9 @@ class TestCheckAndRunMigrations:
                     result = await check_and_run_migrations()
 
                     assert result is False
-                    # Check that error was called with expected messages (enhanced error reporting)
+                    # Check that error was called with expected messages (comprehensive error reporting)
                     error_calls = mock_logger.error.call_args_list
-                    assert len(error_calls) == 5  # Enhanced error logging provides detailed guidance
+                    assert len(error_calls) == 5  # Comprehensive error logging provides detailed guidance
                     call_args, call_kwargs = error_calls[0]
                     assert call_args[0] == "🚨 Database connection failed"
                     assert "error" in call_kwargs

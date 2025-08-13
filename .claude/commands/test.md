@@ -2,10 +2,10 @@
 
 ---
 allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Bash(*), Glob(*), Grep(*), mcp__gemini__*, mcp__search-repo-docs__*, mcp__genie_memory__*, mcp__send_whatsapp_message__*
-description: Generate comprehensive test suites
+description: Generate complete test suites
 ---
 
-Generate comprehensive test suites with edge case coverage and expert guidance.
+Generate complete test suites with edge case coverage and expert guidance.
 
 ## Auto-Loaded Project Context:
 @/CLAUDE.md
@@ -83,7 +83,7 @@ For complex test scenarios:
 # Complex test design consultation
 mcp__gemini__consult_gemini(
     specific_question="How to test [complex component]?",
-    problem_description="Need comprehensive tests for [functionality]",
+    problem_description="Need complete tests for [functionality]",
     code_context="Component has [patterns and complexity]...",
     attached_files=["component/files.py"],
     preferred_approach="test"
@@ -92,7 +92,7 @@ mcp__gemini__consult_gemini(
 # Notify when critical components lack tests
 mcp__send_whatsapp_message__send_text_message(
     instance="SofIA",
-    message="⚠️ TEST COVERAGE: Critical component [name] needs test coverage. Generated comprehensive test suite.",
+    message="⚠️ TEST COVERAGE: Critical component [name] needs test coverage. Generated complete test suite.",
     number="5511986780008@s.whatsapp.net"
 )
 ```

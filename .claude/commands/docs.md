@@ -5,7 +5,7 @@ allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(
 description: Generate and update documentation
 ---
 
-Create comprehensive documentation for code, APIs, and systems with expert guidance.
+Create complete documentation for code, APIs, and systems with expert guidance.
 
 ## Auto-Loaded Project Context:
 @/CLAUDE.md
@@ -50,7 +50,7 @@ Create comprehensive documentation for code, APIs, and systems with expert guida
 
 - **Claude** (default): Context-aware, follows project style
 - **Gemini**: Creative explanations and examples
-- **O3**: Systematic, comprehensive documentation
+- **O3**: Systematic, complete documentation
 
 ## Expert Consultation & Notifications
 
@@ -60,7 +60,7 @@ For complex documentation:
 # Expert documentation guidance
 mcp__gemini__consult_gemini(
     specific_question="How to document [complex system]?",
-    problem_description="Need comprehensive docs for [component]",
+    problem_description="Need complete docs for [component]",
     code_context="System has [architecture and patterns]...",
     attached_files=["relevant/files.py"],
     preferred_approach="explain"

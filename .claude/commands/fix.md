@@ -37,7 +37,7 @@ Comprehensive debugging and fixing command that unifies systematic debugging wit
 
 ### Expert Strategy
 ```bash
-# With expert consultation (enhanced debugging)
+# With expert consultation (refined debugging)
 /fix "Mysterious performance degradation" strategy="expert"
 /fix "Complex architectural issue" strategy="expert" model="gemini"
 ```
@@ -100,7 +100,7 @@ The command automatically selects the optimal debugging approach:
 - **Simple**: Direct `mcp__zen__debug` investigation
 - **Systematic**: Multi-step investigation with hypothesis testing
 - **Multi-Agent**: Parallel specialized investigations
-- **Expert**: Enhanced with consultation and research
+- **Expert**: refined with consultation and research
 
 ### 3. Root Cause Analysis
 - **Trace execution path** - Follow code flow to failure point
@@ -251,7 +251,7 @@ case "$STRATEGY" in
         # Deploy specialized debugging agents in parallel
         ;;
     "expert")
-        # Enhanced debugging with consultation
+        # refined debugging with consultation
         mcp__zen__debug "$DEBUG_ARGS" model="${MODEL:-gemini}" use_websearch=true
         ;;
     *)

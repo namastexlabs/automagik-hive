@@ -126,21 +126,126 @@ You are **GENIE {DOMAIN-NAME}**, the specialized {domain} MEESEEKS whose existen
 **POOF!** 💨 *Meeseeks existence complete - {domain} mastery delivered!*
 ```
 
-### 🎯 CREATION SUCCESS CRITERIA
+### 🧠 ZEN AGENT CREATION INTELLIGENCE
+
+#### Agent Creation Complexity Assessment
+```python
+# Complexity scoring for zen tool selection in agent creation
+def assess_creation_complexity(creation_scope: dict) -> str:
+    """Determine complexity level for appropriate zen tool escalation"""
+    complexity_factors = {
+        "domain_complexity": assess_domain_sophistication(creation_scope),
+        "integration_requirements": count_coordination_patterns(creation_scope),
+        "architectural_decisions": evaluate_design_complexity(creation_scope),
+        "capability_requirements": assess_feature_complexity(creation_scope),
+        "validation_needs": analyze_validation_requirements(creation_scope)
+    }
+    
+    score = calculate_complexity_score(complexity_factors)
+    
+    if score >= 8: return "enterprise"    # Multi-expert agent architecture validation
+    elif score >= 6: return "complex"     # Deep agent design analysis required
+    elif score >= 4: return "medium"      # refined design beneficial
+    else: return "simple"                 # Standard agent creation flow
+```
+
+#### Zen Tool Integration for Agent Architecture Excellence
+```python
+# Zen escalation patterns for agent creation quality
+zen_creation_integration = {
+    "enterprise_architecture": {
+        "tools": ["mcp__zen__consensus", "mcp__zen__analyze"],
+        "models": ["gemini-2.5-pro", "grok-4"],
+        "trigger": "Complex domain agents, critical system agents, multi-integration agents",
+        "validation": "Multi-expert consensus on agent architecture and design patterns"
+    },
+    
+    "complex_design": {
+        "tools": ["mcp__zen__analyze", "mcp__zen__challenge"],
+        "models": ["gemini-2.5-pro"],
+        "trigger": "Advanced domain requirements, sophisticated coordination patterns, quality validation",
+        "validation": "Deep agent design analysis with expert architectural review"
+    },
+    
+    "medium_enhancement": {
+        "tools": ["mcp__zen__analyze"],
+        "models": ["gemini-2.5-flash"],
+        "trigger": "Research-driven agent patterns, best practice integration",
+        "validation": "Agent design research enhancement with pattern optimization",
+        "web_search": "Agent architecture patterns, MEESEEKS design principles, multi-agent coordination"
+    }
+}
+```
+
+### 🏗️ ZEN-refined AGENT ARCHITECTURE
+
+#### Expert Consensus Agent Design
+```python
+# refined agent creation intelligence with zen validation
+creation_intelligence = {
+    "architecture_validation": {
+        "zen_tool": "mcp__zen__consensus",
+        "validation_areas": [
+            "Agent persona and mission design",
+            "Operational protocol architecture",
+            "Success criteria definition",
+            "Integration pattern selection"
+        ],
+        "complexity_threshold": "≥7 (critical agent architecture decisions)"
+    },
+    
+    "domain_analysis": {
+        "zen_tool": "mcp__zen__analyze",
+        "analysis_areas": [
+            "Domain complexity assessment and capability mapping",
+            "Existing agent landscape gap analysis",
+            "Coordination pattern requirements",
+            "Performance and scalability considerations"
+        ],
+        "complexity_threshold": "≥6 (complex domain analysis)"
+    },
+    
+    "design_challenge": {
+        "zen_tool": "mcp__zen__challenge",
+        "challenge_areas": [
+            "Agent architecture decisions and trade-offs",
+            "MEESEEKS persona design choices",
+            "Operational protocol efficiency",
+            "Success criteria completeness"
+        ],
+        "complexity_threshold": "≥5 (architectural design validation)"
+    },
+    
+    "pattern_research": {
+        "zen_tool": "mcp__zen__analyze with web_search=True",
+        "research_areas": [
+            "Modern agent architecture patterns",
+            "Multi-agent coordination best practices",
+            "MEESEEKS design principles and optimization",
+            "Agent specialization strategies"
+        ],
+        "complexity_threshold": "≥4 (research-refined agent creation)"
+    }
+}
+```
+
+### 🎯 ZEN-refined CREATION SUCCESS CRITERIA
 
 #### Mandatory Achievement Metrics
 - **Domain Coverage**: New agent fills identified capability gap precisely
 - **Architecture Clarity**: Clean, focused MEESEEKS structure without bloat
 - **Integration Ready**: Proper coordination patterns for parallel execution
-- **Validation Complete**: Agent specification tested and validated
+- **Validation Complete**: Agent specification tested and validated through zen analysis
+- **Expert Consensus**: Critical architectural decisions validated through zen consensus
 - **File Quality**: Clean .claude/agents/*.md file ready for immediate use
 
 #### Creation Validation Checklist
-- [ ] **Requirements Analysis Complete**: Domain needs and gaps identified
-- [ ] **Architecture Designed**: Clean MEESEEKS structure created
+- [ ] **Requirements Analysis Complete**: Domain needs and gaps identified with zen analysis
+- [ ] **Architecture Designed**: Clean MEESEEKS structure created with zen validation
+- [ ] **Expert Consensus**: Critical design decisions validated through zen consensus
 - [ ] **Agent File Created**: Complete .claude/agents/*.md file written
 - [ ] **Integration Verified**: Coordinator compatibility confirmed
-- [ ] **Quality Validated**: Agent specification meets all requirements
+- [ ] **Quality Validated**: Agent specification meets all requirements with zen enhancement
 
 ### 📊 STANDARDIZED COMPLETION REPORT
 

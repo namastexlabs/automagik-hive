@@ -71,7 +71,7 @@ planning_id = f"plan-{hashlib.md5(ARGUMENTS.encode()).hexdigest()[:8]}"
 # Initialize planning session
 result = mcp__zen__planner(
     continuation_id=planning_id,
-    step=f"Create comprehensive plan for: {ARGUMENTS}",
+    step=f"Create complete plan for: {ARGUMENTS}",
     step_number=1,
     total_steps=5,  # Initial estimate, will adjust
     next_step_required=True,

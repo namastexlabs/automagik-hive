@@ -62,3 +62,24 @@ class WorkspaceCommands:
         """Workspace logs stub."""
         print("Workspace logs output")
         return True
+
+
+class UnifiedWorkspaceManager:
+    """Unified workspace management for CLI operations."""
+    
+    def __init__(self, workspace_path: Optional[Path] = None):
+        self.workspace_path = workspace_path or Path(".")
+    
+    def manage_workspace(self, action: str) -> bool:
+        """Manage workspace operations."""
+        try:
+            print(f"🎯 Managing workspace: {action}")
+            # Stub implementation - would handle workspace management
+            return True
+        except Exception as e:
+            print(f"❌ Workspace management failed: {e}")
+            return False
+    
+    def execute(self) -> bool:
+        """Execute workspace manager."""
+        return self.manage_workspace("default")

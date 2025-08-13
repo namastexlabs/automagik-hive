@@ -13,7 +13,7 @@ from .notifications import NotificationLevel, send_notification
 
 
 async def send_startup_notification(startup_display=None):
-    """Send enhanced notification when server starts."""
+    """Send comprehensive notification when server starts."""
     try:
         # Add a small delay to ensure MCP connection manager is ready
         await asyncio.sleep(0.5)

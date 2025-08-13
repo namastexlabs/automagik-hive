@@ -15,11 +15,65 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 
-# Skip test - CLI structure refactored, old commands module no longer exists
-pytestmark = pytest.mark.skip(reason="CLI architecture refactored - LazyCommandLoader no longer exists")
-
 from cli.main import main
-# TODO: Update tests to use new CLI structure without LazyCommandLoader
+
+# Create stub for LazyCommandLoader if needed
+class LazyCommandLoader:
+    def __init__(self):
+        self._interactive_initializer = None
+        self._workspace_manager = None
+        self._workflow_orchestrator = None
+        self._service_manager = None
+        self._health_checker = None
+        self._uninstaller = None
+    
+    @property
+    def interactive_initializer(self):
+        """Lazy load interactive initializer."""
+        if self._interactive_initializer is None:
+            from cli.commands.init import InteractiveInitializer
+            self._interactive_initializer = InteractiveInitializer()
+        return self._interactive_initializer
+    
+    @property
+    def workspace_manager(self):
+        """Lazy load workspace manager."""
+        if self._workspace_manager is None:
+            from cli.commands.workspace import UnifiedWorkspaceManager
+            self._workspace_manager = UnifiedWorkspaceManager()
+        return self._workspace_manager
+    
+    @property
+    def workflow_orchestrator(self):
+        """Lazy load workflow orchestrator."""
+        if self._workflow_orchestrator is None:
+            from cli.commands.orchestrator import WorkflowOrchestrator
+            self._workflow_orchestrator = WorkflowOrchestrator()
+        return self._workflow_orchestrator
+    
+    @property
+    def service_manager(self):
+        """Lazy load service manager."""
+        if self._service_manager is None:
+            from cli.commands.service import ServiceManager
+            self._service_manager = ServiceManager()
+        return self._service_manager
+    
+    @property
+    def health_checker(self):
+        """Lazy load health checker."""
+        if self._health_checker is None:
+            from cli.commands.health import HealthChecker
+            self._health_checker = HealthChecker()
+        return self._health_checker
+    
+    @property
+    def uninstaller(self):
+        """Lazy load uninstaller."""
+        if self._uninstaller is None:
+            from cli.commands.uninstall import UninstallCommands
+            self._uninstaller = UninstallCommands()
+        return self._uninstaller
 
 
 class TestLazyCommandLoader:

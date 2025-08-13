@@ -380,10 +380,9 @@ def simple_fastapi_app(
         description="Test Multi-Agent System",
     )
 
-    # Add routes
-    app.include_router(health_check_router)
-    app.include_router(version_router)
-    app.include_router(mcp_router)
+    # Add the v1_router which includes all sub-routers with proper /api/v1 prefix
+    from api.routes.v1_router import v1_router
+    app.include_router(v1_router)
 
     # Add CORS middleware
     app.add_middleware(

@@ -9,7 +9,7 @@ description: Genie Speed Optimization Framework - AI-assisted performance optimi
 
 ## Overview
 
-The Genie Speed Optimization Framework is an AI-assisted performance optimization system inspired by Codeflash that follows a "generate and verify" approach. It uses multi-model consensus to generate optimizations, rigorously verifies performance improvements, and maintains code correctness through comprehensive testing.
+The Genie Speed Optimization Framework is an AI-assisted performance optimization system inspired by Codeflash that follows a "generate and verify" approach. It uses multi-model consensus to generate optimizations, rigorously verifies performance improvements, and maintains code correctness through complete testing.
 
 ## Core Philosophy
 
@@ -40,7 +40,7 @@ The Genie Speed Optimization Framework is an AI-assisted performance optimizatio
 - **candidate_ranker.py**: Ranks optimization candidates by impact and safety
 
 ### 4. Reporting System (`scripts/speed/reports/`)
-- **performance_reporter.py**: Generates comprehensive optimization reports
+- **performance_reporter.py**: Generates complete optimization reports
 - **visualization_engine.py**: Creates performance charts and trends
 - **summary_generator.py**: Produces optimization summaries and recommendations
 - **history_tracker.py**: Maintains optimization history and metrics
@@ -132,13 +132,13 @@ python scripts/speed/setup_environment.py
    ```bash
    python scripts/speed/verify_correctness.py --candidate optimization_candidate.py
    ```
-   - Runs comprehensive test suite
+   - Runs complete test suite
    - Validates behavioral equivalence
    - Checks edge case handling
 
 2. **Performance Benchmarking**
    ```bash
-   python scripts/speed/run_benchmarks.py --original original.py --optimized optimized.py
+   python scripts/speed/run_benchmarks.py --original original.py --powered powered.py
    ```
    - Applies minimum runtime measurement
    - Handles multiple input scenarios
@@ -343,7 +343,7 @@ consensus:
 ### 1. Optimization Targets
 - **High-Impact Functions**: Focus on functions called frequently or in critical paths
 - **Self-Contained Logic**: Prioritize functions with minimal external dependencies
-- **Well-Tested Code**: Ensure comprehensive test coverage before optimization
+- **Well-Tested Code**: Ensure complete test coverage before optimization
 - **Stable Interfaces**: Avoid optimizing frequently changing APIs
 
 ### 2. Benchmarking Guidelines
@@ -393,7 +393,7 @@ consensus:
 
 ### Optimization Reports
 
-Each optimization generates a comprehensive report:
+Each optimization generates a complete report:
 
 ```markdown
 # Optimization Report: search_knowledge_base()

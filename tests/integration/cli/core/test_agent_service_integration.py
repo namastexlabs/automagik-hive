@@ -18,10 +18,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# Skip test - CLI structure refactored, cli.core module no longer exists
-pytestmark = pytest.mark.skip(reason="CLI architecture refactored - agent service consolidated into DockerManager")
-
-# TODO: Update tests to use cli.docker_manager.DockerManager
+# Import current CLI structure  
+from cli.core.agent_service import AgentService
 
 
 class TestAgentServiceInitialization:

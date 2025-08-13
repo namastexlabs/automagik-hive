@@ -1,7 +1,7 @@
 """
 Concise startup display utility for Automagik Hive system.
 Replaces verbose startup logs with clean table format.
-Enhanced with contextual emoji detection for improved visual scanning.
+Features contextual emoji detection for visual scanning.
 """
 
 import os

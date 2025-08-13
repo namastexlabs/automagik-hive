@@ -176,7 +176,7 @@ class VersionFactory:
         """Create versioned agent using dynamic Agno proxy with inheritance support."""
 
         # Apply inheritance from team configuration if agent is part of a team
-        enhanced_config = self._apply_team_inheritance(component_id, config)
+        inherited_config = self._apply_team_inheritance(component_id, config)
 
         # Use the dynamic proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_proxy
@@ -184,23 +184,23 @@ class VersionFactory:
         proxy = get_agno_proxy()
 
         # Load custom tools
-        tools = self._load_agent_tools(component_id, enhanced_config)
+        tools = self._load_agent_tools(component_id, inherited_config)
 
         # Prepare config with AGNO native context support
         if tools:
-            enhanced_config["tools"] = tools
+            inherited_config["tools"] = tools
 
         # Add AGNO native context parameters - direct pass-through
-        enhanced_config["context"] = context_kwargs  # Direct context data
-        enhanced_config["add_context"] = (
+        inherited_config["context"] = context_kwargs  # Direct context data
+        inherited_config["add_context"] = (
             True  # Automatically inject context into messages
         )
-        enhanced_config["resolve_context"] = True  # Resolve context at runtime
+        inherited_config["resolve_context"] = True  # Resolve context at runtime
 
         # Create agent using dynamic proxy with native context
         agent = await proxy.create_agent(
             component_id=component_id,
-            config=enhanced_config,
+            config=inherited_config,
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -287,10 +287,10 @@ class VersionFactory:
             # Apply inheritance
             manager = ConfigInheritanceManager()
             agent_configs = {agent_id: config}
-            enhanced_configs = manager.apply_inheritance(team_config, agent_configs)
+            inherited_configs = manager.apply_inheritance(team_config, agent_configs)
 
             # Validate inheritance
-            errors = manager.validate_configuration(team_config, enhanced_configs)
+            errors = manager.validate_configuration(team_config, inherited_configs)
             if errors:
                 if strict_validation:
                     logger.error(
@@ -309,11 +309,11 @@ class VersionFactory:
 
             # Generate inheritance report
             report = manager.generate_inheritance_report(
-                team_config, agent_configs, enhanced_configs
+                team_config, agent_configs, inherited_configs
             )
             logger.debug(f"🔧 Agent {agent_id} in team {team_id}: {report}")
 
-            return enhanced_configs[agent_id]
+            return inherited_configs[agent_id]
 
         except ValueError:
             # Re-raise validation errors (these are intentional failures)
@@ -437,7 +437,7 @@ class VersionFactory:
         try:
             # Validate team inheritance configuration
             logger.debug(f"🔧 Validating inheritance for team {component_id}")
-            enhanced_config = self._validate_team_inheritance(component_id, config)
+            validated_config = self._validate_team_inheritance(component_id, config)
             logger.debug(f"🔧 Team {component_id} inheritance validation completed")
 
             # Use the dynamic team proxy system for automatic Agno compatibility
@@ -453,7 +453,7 @@ class VersionFactory:
             logger.debug(f"🔧 Creating team instance via proxy for {component_id}")
             team = await proxy.create_team(
                 component_id=component_id,
-                config=enhanced_config,
+                config=validated_config,
                 session_id=session_id,
                 debug_mode=debug_mode,
                 user_id=user_id,
@@ -574,9 +574,9 @@ class VersionFactory:
                     logger.warning(f"  ⚠️  {error}")
 
             # Generate inheritance preview report
-            enhanced_agent_configs = manager.apply_inheritance(config, agent_configs)
+            inherited_agent_configs = manager.apply_inheritance(config, agent_configs)
             report = manager.generate_inheritance_report(
-                config, agent_configs, enhanced_agent_configs
+                config, agent_configs, inherited_agent_configs
             )
             logger.debug(f"🔧 Team {team_id}: {report}")
 
@@ -766,8 +766,8 @@ class VersionFactory:
             )
             if not version_record:
                 raise ValueError(f"Version {version} not found for {component_id}")
-            # Wrap the config with component type for consistent structure
-            return {component_type: version_record.config}
+            # Return the config directly as it already has the correct structure
+            return version_record.config
         # Perform bidirectional sync and return result
         return await self.sync_engine.sync_component(component_id, component_type)
 

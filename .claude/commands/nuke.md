@@ -2,7 +2,7 @@
 
 ---
 allowed-tools: Task(*), Read(*), Write(*), Edit(*), MultiEdit(*), Glob(*), Grep(*), Bash(*), LS(*), mcp__zen__*, mcp__genie-memory__*, mcp__send_whatsapp_message__*
-description: Enhanced 3-Layer Parallel Nuclear Debugging with Checkpoint Recovery
+description: refined 3-Layer Parallel Nuclear Debugging with Checkpoint Recovery
 ---
 
 🚨 **NUCLEAR DEBUGGING** 🚨
@@ -31,7 +31,7 @@ When traditional debugging fails, `/nuke` systematically tests ALL zen combinati
 /nuke "Race condition in payment processing" time_limit="45m"
 ```
 
-## Enhanced 3-Layer Parallel Nuclear Architecture
+## refined 3-Layer Parallel Nuclear Architecture
 
 ### 🔍 **Layer 1: Parallel Investigation**
 *Smart model selection for optimal analysis*
@@ -84,7 +84,7 @@ debate_modes:
 - **Task 3**: Consensus on final 1-2 solutions
 - **Task 4**: Implementation planning with rollback
 
-## Enhanced Parallel Execution Protocol
+## refined Parallel Execution Protocol
 
 ### Checkpoint Recovery System
 ```python

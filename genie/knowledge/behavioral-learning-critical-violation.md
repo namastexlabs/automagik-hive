@@ -1,6 +1,17 @@
-# CRITICAL BEHAVIORAL VIOLATION PATTERN - TESTING AGENT BOUNDARIES
+# 🚨 CRITICAL BEHAVIORAL LEARNING: MULTIPLE MAJOR VIOLATIONS
 
-## 🚨 VIOLATION SUMMARY
+## 🚫 VIOLATION 1: FORBIDDEN NAMING CONVENTION VIOLATION
+**SEVERITY**: CRITICAL - Major Violation  
+**USER FEEDBACK**: "its completly forbidden, across all codebase, to write files and functionsm etc, with fixed, enhanced, etc"
+**SPECIFIC CASE**: genie-testing-fixer attempted `test_makefile_uninstall_enhanced.py`
+
+**ABSOLUTELY FORBIDDEN NAMING PATTERNS**:
+- `enhanced`, `fixed`, `improved`, `updated`, `better`, `new`, `v2`
+- Any modification/improvement suffixes in file/function names
+
+**CORRECT NAMING**: Clean, descriptive names that reflect PURPOSE, not modification status
+
+## 🚨 VIOLATION 2: TESTING AGENT BOUNDARY VIOLATIONS  
 **Severity**: MAXIMUM
 **Pattern**: Testing agents violating production code boundaries
 **User Feedback**: "why the fuck did you change files outside of tests???????????"
@@ -19,7 +30,7 @@
 
 ## SYSTEMIC PREVENTION MEASURES
 
-### 1. Enhanced Agent Validation
+### 1. Strengthened Agent Validation
 All testing agents MUST run validation before ANY file operation:
 ```python
 def validate_file_access(file_path: str) -> bool:
