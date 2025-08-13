@@ -304,8 +304,8 @@ class CredentialService:
         logger.info("Saving credentials to .env file")
 
         env_content = []
-        postgres_updated = False
-        api_key_updated = False
+        postgres_found = False
+        api_key_found = False
 
         # Read existing content if file exists
         if self.env_file.exists():
@@ -319,10 +319,10 @@ class CredentialService:
             for i, line in enumerate(env_content):
                 if line.startswith(f"{self.database_url_var}="):
                     env_content[i] = f"{self.database_url_var}={postgres_creds['url']}"
-                    postgres_updated = True
+                    postgres_found = True
                     break
 
-            if not postgres_updated:
+            if not postgres_found:
                 env_content.append(f"{self.database_url_var}={postgres_creds['url']}")
 
         # Update API key
@@ -330,10 +330,10 @@ class CredentialService:
             for i, line in enumerate(env_content):
                 if line.startswith(f"{self.api_key_var}="):
                     env_content[i] = f"{self.api_key_var}={api_key}"
-                    api_key_updated = True
+                    api_key_found = True
                     break
 
-            if not api_key_updated:
+            if not api_key_found:
                 env_content.append(f"{self.api_key_var}={api_key}")
 
         # Write back to file
@@ -974,27 +974,27 @@ class CredentialService:
         main_api_key = f"hive_{master_credentials['api_key_base']}"
         
         # Update lines
-        updated_lines = []
-        db_url_updated = False
-        api_key_updated = False
+        modified_lines = []
+        db_url_found = False
+        api_key_found = False
         
         for line in lines:
             if line.startswith("HIVE_DATABASE_URL="):
-                updated_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
-                db_url_updated = True
+                modified_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
+                db_url_found = True
             elif line.startswith("HIVE_API_KEY="):
-                updated_lines.append(f"HIVE_API_KEY={main_api_key}")
-                api_key_updated = True
+                modified_lines.append(f"HIVE_API_KEY={main_api_key}")
+                api_key_found = True
             else:
-                updated_lines.append(line)
+                modified_lines.append(line)
         
         # Add missing entries
-        if not db_url_updated:
-            updated_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
-        if not api_key_updated:
-            updated_lines.append(f"HIVE_API_KEY={main_api_key}")
+        if not db_url_found:
+            modified_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
+        if not api_key_found:
+            modified_lines.append(f"HIVE_API_KEY={main_api_key}")
             
-        self.master_env_file.write_text("\n".join(updated_lines) + "\n")
+        self.master_env_file.write_text("\n".join(modified_lines) + "\n")
         logger.info("Master credentials saved to .env with all comprehensive configurations from template")
         
     def _get_base_env_template(self) -> str:

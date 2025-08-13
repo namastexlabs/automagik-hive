@@ -205,17 +205,17 @@ class TestCredentialServiceMcpSyncIntegration:
         result = service.setup_complete_credentials(sync_mcp=True)
         
         # Read updated MCP content
-        updated_content = mcp_file.read_text()
+        final_content = mcp_file.read_text()
         
         # Should still have other-server
-        assert "other-server" in updated_content
+        assert "other-server" in final_content
         
-        # Should have updated postgres credentials
-        assert result['postgres_user'] in updated_content
-        assert result['postgres_password'] in updated_content
+        # Should have synced postgres credentials
+        assert result['postgres_user'] in final_content
+        assert result['postgres_password'] in final_content
         
         # Should not have old credentials
-        assert "old-user:old-pass" not in updated_content
+        assert "old-user:old-pass" not in final_content
 
 
 class TestCredentialServiceMcpSyncParameterValidation:

@@ -137,8 +137,8 @@ class TestAuthInitServiceSecurity:
         # Should not modify environment
         assert os.environ.get("HIVE_API_KEY") is None
 
-    def test_ensure_api_key_generation_new(self, clean_environment, mock_env_file):
-        """Test new key generation when none exists."""
+    def test_ensure_api_key_generation_create(self, clean_environment, mock_env_file):
+        """Test key generation when none exists."""
         with patch.object(mock_env_file, "_display_key_to_user"):
             key = mock_env_file.ensure_api_key()
 
@@ -155,8 +155,8 @@ class TestAuthInitServiceSecurity:
             # Should set in environment
             assert os.environ.get("HIVE_API_KEY") == key
 
-    def test_save_key_to_env_new_file(self, clean_environment, mock_env_file):
-        """Test saving key to new .env file."""
+    def test_save_key_to_env_create_file(self, clean_environment, mock_env_file):
+        """Test saving key to create .env file."""
         test_key = "test_key_789"
 
         mock_env_file._save_key_to_env(test_key)
@@ -167,8 +167,8 @@ class TestAuthInitServiceSecurity:
         assert f"HIVE_API_KEY={test_key}" in content
         assert "HIVE_AUTH_DISABLED=false" in content
 
-    def test_save_key_to_env_existing_file(self, clean_environment, mock_env_file):
-        """Test updating key in existing .env file."""
+    def test_save_key_to_env_modify_file(self, clean_environment, mock_env_file):
+        """Test updating key in current .env file."""
         # Create existing .env with some content
         initial_content = """# Existing config
 DATABASE_URL=postgres://localhost/test
@@ -177,13 +177,13 @@ OTHER_VAR=value
 """
         mock_env_file.env_file.write_text(initial_content)
 
-        new_key = "new_key_456"
-        mock_env_file._save_key_to_env(new_key)
+        target_key = "target_key_456"
+        mock_env_file._save_key_to_env(target_key)
 
         content = mock_env_file.env_file.read_text()
 
         # Should update API key
-        assert f"HIVE_API_KEY={new_key}" in content
+        assert f"HIVE_API_KEY={target_key}" in content
         assert "HIVE_API_KEY=old_key_123" not in content
 
         # Should preserve other content
@@ -202,7 +202,7 @@ HIVE_AUTH_DISABLED=true
 """
         mock_env_file.env_file.write_text(initial_content)
 
-        mock_env_file._save_key_to_env("new_key")
+        mock_env_file._save_key_to_env("target_key")
 
         content = mock_env_file.env_file.read_text()
 
@@ -256,19 +256,19 @@ HIVE_AUTH_DISABLED=true
             # Set initial key
             os.environ["HIVE_API_KEY"] = "old_key_123"
 
-            new_key = mock_env_file.regenerate_key()
+            generated_key = mock_env_file.regenerate_key()
 
             # Should generate new key
-            assert new_key.startswith("hive_")
-            assert new_key != "old_key_123"
+            assert generated_key.startswith("hive_")
+            assert generated_key != "old_key_123"
 
             # Should update environment
-            assert os.environ.get("HIVE_API_KEY") == new_key
+            assert os.environ.get("HIVE_API_KEY") == generated_key
 
             # Should save to file
             assert mock_env_file.env_file.exists()
             content = mock_env_file.env_file.read_text()
-            assert f"HIVE_API_KEY={new_key}" in content
+            assert f"HIVE_API_KEY={generated_key}" in content
 
     def test_get_current_key_priority(self, clean_environment, mock_env_file):
         """Test key retrieval priority (env > file)."""
@@ -446,9 +446,9 @@ class TestAuthInitServiceFileSystemSecurity:
             assert key == "hidden_in_large_file"
 
             # Should update key correctly
-            service._save_key_to_env("new_key_in_large_file")
-            updated_key = service._read_key_from_env()
-            assert updated_key == "new_key_in_large_file"
+            service._save_key_to_env("target_key_in_large_file")
+            result_key = service._read_key_from_env()
+            assert result_key == "target_key_in_large_file"
 
             # Should not duplicate the key
             content = env_file.read_text()
@@ -487,7 +487,7 @@ class TestAuthInitServiceErrorHandling:
 
             # Writing should raise appropriate error
             with pytest.raises(PermissionError):
-                service._save_key_to_env("new_key")
+                service._save_key_to_env("target_key")
 
     def test_readonly_directory(self, clean_environment):
         """Test handling when directory is read-only."""
@@ -548,5 +548,5 @@ OTHER_VAR=valué_wîth_áççéñts
             unicode_key = "üñíçødé_kéy_🔐"
             service._save_key_to_env(unicode_key)
 
-            updated_key = service._read_key_from_env()
-            assert updated_key == unicode_key
+            result_key = service._read_key_from_env()
+            assert result_key == unicode_key

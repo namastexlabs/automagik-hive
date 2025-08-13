@@ -563,14 +563,14 @@ def create_automagik_api() -> FastAPI:
         import concurrent.futures
 
         def run_async_in_thread() -> FastAPI:
-            # Create a new event loop in a separate thread
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
+            # Create a fresh event loop in a separate thread
+            event_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(event_loop)
             try:
-                return new_loop.run_until_complete(_async_create_automagik_api())
+                return event_loop.run_until_complete(_async_create_automagik_api())
             finally:
                 # Simplified cleanup - just close the loop
-                new_loop.close()
+                event_loop.close()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(run_async_in_thread)

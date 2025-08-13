@@ -509,8 +509,8 @@ class TestDatabaseMigrationIntegration:
     """Integration tests for database migration workflows."""
 
     @pytest.mark.asyncio
-    async def test_full_migration_workflow_new_database(self):
-        """Test complete migration workflow for new database."""
+    async def test_full_migration_workflow_fresh_database(self):
+        """Test complete migration workflow for fresh database."""
         test_db_url = "postgresql://test:test@localhost:5432/test_db"
 
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
@@ -777,7 +777,7 @@ class TestLoggingAndMonitoring:
                         mock_migration_context.configure.return_value = mock_context
 
                         mock_script_dir = Mock()
-                        mock_script_dir.get_current_head.return_value = "new_revision"
+                        mock_script_dir.get_current_head.return_value = "latest_revision"
                         mock_script_directory.from_config.return_value = mock_script_dir
 
                         with patch("lib.utils.db_migration.logger") as mock_logger:
@@ -788,7 +788,7 @@ class TestLoggingAndMonitoring:
                             mock_logger.info.assert_called_with(
                                 "Migration status",
                                 current_revision="old_revision",
-                                head_revision="new_revision",
+                                head_revision="latest_revision",
                             )
 
 

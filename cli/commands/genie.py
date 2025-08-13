@@ -4,15 +4,20 @@ Minimal stub implementations to fix import errors in tests.
 These are placeholders that satisfy import requirements.
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from pathlib import Path
 
 
 class GenieCommands:
     """Genie commands stub."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Optional[Union[str, Path]] = None):
+        if workspace_path is None:
+            self.workspace_path = Path(".")
+        elif isinstance(workspace_path, str):
+            self.workspace_path = Path(workspace_path)
+        else:
+            self.workspace_path = workspace_path
     
     def serve(self) -> bool:
         """Serve genie command stub."""
@@ -28,16 +33,16 @@ class GenieCommands:
 
 
 # Function-based command stubs
-def genie_serve_cmd(workspace_path: Optional[Path] = None) -> bool:
+def genie_serve_cmd(workspace_path: Optional[Union[str, Path]] = None) -> bool:
     """Genie serve command stub function."""
     return True
 
 
-def genie_status_cmd(workspace_path: Optional[Path] = None) -> Dict[str, Any]:
+def genie_status_cmd(workspace_path: Optional[Union[str, Path]] = None) -> Dict[str, Any]:
     """Genie status command stub function."""
     return {"status": "running", "healthy": True}
 
 
-def genie_stop_cmd(workspace_path: Optional[Path] = None) -> bool:
+def genie_stop_cmd(workspace_path: Optional[Union[str, Path]] = None) -> bool:
     """Genie stop command stub function."""
     return True

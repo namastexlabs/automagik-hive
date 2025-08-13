@@ -65,10 +65,6 @@ class InitCommands:
         """Execute command stub."""
         return True
     
-    def init_workspace(self, workspace_name: Optional[str] = None) -> bool:
-        """Initialize workspace stub."""
-        return True
-    
     def status(self) -> Dict[str, Any]:
         """Get status stub."""
         return {"status": "running", "healthy": True}

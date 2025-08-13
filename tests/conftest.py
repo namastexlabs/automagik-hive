@@ -9,6 +9,7 @@ import asyncio
 import os
 import tempfile
 from collections.abc import Generator
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -46,7 +47,14 @@ def _create_test_fastapi_app() -> FastAPI:
     
     @test_app.get("/health")
     async def health():
-        return {"status": "healthy"}
+        return {
+            "status": "success",
+            "service": "Automagik Hive Multi-Agent System",
+            "router": "health",
+            "path": "/health",
+            "utc": datetime.now(tz=UTC).isoformat(),
+            "message": "System operational",
+        }
     
     @test_app.get("/")
     async def root():
@@ -380,6 +388,9 @@ def simple_fastapi_app(
         description="Test Multi-Agent System",
     )
 
+    # Add health router directly at root level for /health endpoint compatibility
+    app.include_router(health_check_router)
+    
     # Add the v1_router which includes all sub-routers with proper /api/v1 prefix
     from api.routes.v1_router import v1_router
     app.include_router(v1_router)

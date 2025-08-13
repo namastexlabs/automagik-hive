@@ -211,8 +211,8 @@ class TestAgnoVersionSyncService:
         assert "WHERE component_type" in call_args[0]
 
     @pytest.mark.asyncio
-    async def test_sync_component_to_db_new_component(self, mock_db_service, mock_settings):
-        """Test syncing new component to database."""
+    async def test_sync_component_to_db_create_component(self, mock_db_service, mock_settings):
+        """Test syncing component creation to database."""
         service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         # Mock no existing component in DB
@@ -233,21 +233,21 @@ class TestAgnoVersionSyncService:
         assert "INSERT INTO hive.component_versions" in call_args[0]
 
     @pytest.mark.asyncio
-    async def test_sync_component_to_db_existing_component_different_version(self, mock_db_service, mock_settings):
-        """Test syncing existing component with different version."""
+    async def test_sync_component_to_db_update_component_version(self, mock_db_service, mock_settings):
+        """Test syncing component with version change."""
         service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
-        # Mock existing component with different version
-        existing_component = {
+        # Mock component with different version
+        stored_component = {
             "version": "1.0.0",
-            "updated_at": datetime.now()
+            "last_modified": datetime.now()
         }
-        mock_db_service.fetch_one.return_value = existing_component
+        mock_db_service.fetch_one.return_value = stored_component
         mock_db_service.execute.return_value = None
         
         component_data = {
             "component_type": "agent",
-            "name": "existing-agent", 
+            "name": "sample-agent", 
             "version": "2.0.0"
         }
         
@@ -259,20 +259,20 @@ class TestAgnoVersionSyncService:
         assert "UPDATE hive.component_versions" in call_args[0]
 
     @pytest.mark.asyncio
-    async def test_sync_component_to_db_existing_component_same_version(self, mock_db_service, mock_settings):
-        """Test syncing existing component with same version (no action)."""
+    async def test_sync_component_to_db_skip_same_version(self, mock_db_service, mock_settings):
+        """Test syncing component with same version (no action)."""
         service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
-        # Mock existing component with same version
-        existing_component = {
+        # Mock component with same version
+        stored_component = {
             "version": "1.0.0",
-            "updated_at": datetime.now()
+            "last_modified": datetime.now()
         }
-        mock_db_service.fetch_one.return_value = existing_component
+        mock_db_service.fetch_one.return_value = stored_component
         
         component_data = {
             "component_type": "agent",
-            "name": "existing-agent",
+            "name": "sample-agent",
             "version": "1.0.0"
         }
         
@@ -553,21 +553,21 @@ class TestAgnoVersionSyncServiceIntegration:
             else:
                 component_name = params[1] if len(params) > 1 else ""  # Assuming name is second parameter
             
-            if component_name == "new-agent":
-                return None  # New component
-            elif component_name == "updated-agent":
-                return {"version": "1.0.0", "updated_at": datetime.now()}  # Needs update
-            elif component_name == "synced-agent":
-                return {"version": "2.0.0", "updated_at": datetime.now()}  # Already synced
+            if component_name == "agent-a":
+                return None  # Create component
+            elif component_name == "agent-b":
+                return {"version": "1.0.0", "last_modified": datetime.now()}  # Update needed
+            elif component_name == "agent-c":
+                return {"version": "2.0.0", "last_modified": datetime.now()}  # Already synced
             return None
         
         mock_db_service.fetch_one.side_effect = mock_fetch_one_side_effect
         mock_db_service.execute.return_value = None
         
         yaml_components = [
-            {"component_type": "agent", "name": "new-agent", "version": "1.0.0"},
-            {"component_type": "agent", "name": "updated-agent", "version": "2.0.0"},
-            {"component_type": "agent", "name": "synced-agent", "version": "2.0.0"}
+            {"component_type": "agent", "name": "agent-a", "version": "1.0.0"},
+            {"component_type": "agent", "name": "agent-b", "version": "2.0.0"},
+            {"component_type": "agent", "name": "agent-c", "version": "2.0.0"}
         ]
         
         with patch.object(service, 'get_yaml_component_versions', return_value=yaml_components):
@@ -575,7 +575,7 @@ class TestAgnoVersionSyncServiceIntegration:
         
         assert result["synced_count"] == 3
         
-        # Check database operations - should INSERT for new, UPDATE for updated, nothing for synced
+        # Check database operations - should INSERT for agent-a, UPDATE for agent-b, nothing for agent-c
         assert mock_db_service.execute.call_count == 2  # INSERT + UPDATE (no call for synced)
 
     @pytest.mark.asyncio
@@ -674,7 +674,7 @@ class TestAgnoVersionSyncServiceIntegration:
                 # Return the mock data for any component query
                 return {
                     "version": db_version,
-                    "updated_at": datetime.now()
+                    "last_modified": datetime.now()
                 }
             
             mock_db_service.fetch_one.side_effect = mock_fetch_one_side_effect
@@ -746,10 +746,10 @@ class TestAgnoVersionSyncServiceAdvanced:
         """Test force sync that updates all components regardless of version."""
         service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
-        # Mock existing component with same version
+        # Mock component with same version
         mock_db_service.fetch_one.return_value = {
             "version": "1.0.0",
-            "updated_at": datetime.now()
+            "last_modified": datetime.now()
         }
         mock_db_service.execute.return_value = None
         
@@ -769,7 +769,7 @@ class TestAgnoVersionSyncServiceAdvanced:
             async def force_sync_component(component_data):
                 # Always execute UPDATE regardless of version
                 await mock_db_service.execute(
-                    "UPDATE hive.component_versions SET version = $1, updated_at = NOW() WHERE component_type = $2 AND name = $3",
+                    "UPDATE hive.component_versions SET version = $1, last_modified = NOW() WHERE component_type = $2 AND name = $3",
                     component_data["version"], component_data["component_type"], component_data["name"]
                 )
             
@@ -786,24 +786,24 @@ class TestAgnoVersionSyncServiceAdvanced:
         """Test backup creation and restoration of component versions."""
         service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
-        # Mock existing DB state
-        existing_versions = [
-            {"component_type": "agent", "name": "agent1", "version": "1.0.0", "updated_at": datetime.now()},
-            {"component_type": "team", "name": "team1", "version": "2.0.0", "updated_at": datetime.now()}
+        # Mock DB state
+        stored_versions = [
+            {"component_type": "agent", "name": "agent1", "version": "1.0.0", "last_modified": datetime.now()},
+            {"component_type": "team", "name": "team1", "version": "2.0.0", "last_modified": datetime.now()}
         ]
-        mock_db_service.fetch_all.return_value = existing_versions
+        mock_db_service.fetch_all.return_value = stored_versions
         
         # Create backup
-        with patch.object(service, 'get_db_component_versions', return_value=existing_versions):
+        with patch.object(service, 'get_db_component_versions', return_value=stored_versions):
             backup_data = await service.get_db_component_versions()
         
         # Simulate sync that changes versions
-        new_yaml_versions = [
+        target_yaml_versions = [
             {"component_type": "agent", "name": "agent1", "version": "2.0.0"},
             {"component_type": "team", "name": "team1", "version": "3.0.0"}
         ]
         
-        with patch.object(service, 'get_yaml_component_versions', return_value=new_yaml_versions), \
+        with patch.object(service, 'get_yaml_component_versions', return_value=target_yaml_versions), \
              patch.object(service, 'sync_component_to_db') as mock_sync:
             
             await service.sync_yaml_to_db()

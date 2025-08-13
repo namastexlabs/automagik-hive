@@ -521,11 +521,11 @@ class TestAgentEnvironmentUpdate:
         assert "OTHER_KEY=other_value" in content
         assert "# Comment line" in content
 
-    def test_update_environment_add_new_keys(self, temp_workspace_with_agent_env):
-        """Test environment update adds new keys."""
+    def test_update_environment_add_keys(self, temp_workspace_with_agent_env):
+        """Test environment update adds keys."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
 
-        updates = {"NEW_KEY": "new_value", "ANOTHER_KEY": "another_value"}
+        updates = {"EXTRA_KEY": "extra_value", "ANOTHER_KEY": "another_value"}
 
         result = env.update_environment(updates)
 
@@ -533,7 +533,7 @@ class TestAgentEnvironmentUpdate:
         assert result is True
 
         content = env.env_agent_path.read_text()
-        assert "NEW_KEY=new_value" in content
+        assert "EXTRA_KEY=extra_value" in content
         assert "ANOTHER_KEY=another_value" in content
 
     def test_update_environment_missing_file(self, temp_workspace_with_agent_env):

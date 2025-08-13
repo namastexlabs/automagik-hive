@@ -517,27 +517,27 @@ class TestCredentialServiceMcpSyncConfiguration:
             # Generate credentials and sync MCP
             result = service.setup_complete_credentials(sync_mcp=True)
             
-            # Parse updated content
-            updated_content = json.loads(mcp_file.read_text())
+            # Parse content after sync
+            final_content = json.loads(mcp_file.read_text())
             
             # Non-credential servers should be preserved
-            assert "filesystem" in updated_content["mcpServers"]
-            assert "custom-server" in updated_content["mcpServers"]
+            assert "filesystem" in final_content["mcpServers"]
+            assert "custom-server" in final_content["mcpServers"]
             
             # Custom environment variables should be preserved
-            custom_server = updated_content["mcpServers"]["custom-server"]
+            custom_server = final_content["mcpServers"]["custom-server"]
             assert custom_server["env"]["CUSTOM_CONFIG"] == "preserve-this"
             assert custom_server["env"]["ANOTHER_SETTING"] == "keep-this-too"
             
             # Postgres credentials should be updated in args array
-            postgres_server = updated_content["mcpServers"]["postgres"]
+            postgres_server = final_content["mcpServers"]["postgres"]
             connection_string = postgres_server["args"][-1]  # Last arg is the connection string
             assert result['postgres_user'] in connection_string
             assert result['postgres_password'] in connection_string
             assert "old-user:old-pass" not in connection_string
             
             # API key should be updated in automagik-hive server
-            hive_server = updated_content["mcpServers"]["automagik-hive"]
+            hive_server = final_content["mcpServers"]["automagik-hive"]
             assert hive_server["env"]["HIVE_API_KEY"] == result['api_key']
         
         finally:

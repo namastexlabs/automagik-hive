@@ -1495,12 +1495,12 @@ class TestEventLoopHandling:
         # Run in event loop
         asyncio.run(test_with_loop())
 
-    def test_new_event_loop_creation_and_cleanup(self):
-        """Test new event loop creation and cleanup in thread."""
+    def test_event_loop_creation_and_cleanup(self):
+        """Test event loop creation and cleanup in thread."""
 
         def test_thread_execution():
             with (
-                patch("asyncio.new_event_loop") as mock_new_loop,
+                patch("asyncio.new_event_loop") as mock_event_loop,
                 patch("asyncio.set_event_loop"),
                 patch("api.serve._async_create_automagik_api") as mock_async_create,
                 patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
@@ -1508,7 +1508,7 @@ class TestEventLoopHandling:
                 # Setup mocks
                 mock_loop = MagicMock()
                 mock_loop.run_until_complete.return_value = MagicMock(spec=FastAPI)
-                mock_new_loop.return_value = mock_loop
+                mock_event_loop.return_value = mock_loop
 
                 mock_async_create.return_value = MagicMock(spec=FastAPI)
 

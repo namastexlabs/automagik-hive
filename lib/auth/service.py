@@ -62,9 +62,9 @@ class AuthService:
 
     def regenerate_key(self) -> str:
         """Regenerate API key."""
-        new_key = self.init_service.regenerate_key()
-        self.api_key = new_key
-        return new_key
+        api_key = self.init_service.regenerate_key()
+        self.api_key = api_key
+        return api_key
 
     def get_auth_status(self) -> dict[str, str | bool]:
         """Get current authentication status and configuration."""

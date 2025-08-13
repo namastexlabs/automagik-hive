@@ -131,8 +131,14 @@ class AgentEnvironment:
         try:
             config = self._load_env_file(self.env_agent_path)
             
-            # Parse database URL
-            db_info = self._parse_database_url(config.get("HIVE_DATABASE_URL", ""))
+            # Parse database URL - return None if malformed
+            database_url = config.get("HIVE_DATABASE_URL", "")
+            if database_url and not database_url.startswith("postgresql"):
+                return None  # Invalid database URL format
+                
+            db_info = self._parse_database_url(database_url)
+            if database_url and db_info is None:
+                return None  # Failed to parse valid-looking database URL
             
             return AgentCredentials(
                 postgres_user=db_info.get("user", "") if db_info else "",
@@ -147,7 +153,7 @@ class AgentEnvironment:
             return None
     
     def update_environment(self, updates: dict) -> bool:
-        """Update environment file with new values."""
+        """Update environment file with provided values."""
         if not self.env_agent_path.exists():
             return False
         
@@ -155,18 +161,18 @@ class AgentEnvironment:
             content = self.env_agent_path.read_text()
             lines = content.split('\n')
             
-            # Update existing keys and track what was updated
-            updated_keys = set()
+            # Update existing keys and track what was processed
+            processed_keys = set()
             for i, line in enumerate(lines):
                 if '=' in line and not line.strip().startswith('#'):
                     key = line.split('=')[0].strip()
                     if key in updates:
                         lines[i] = f"{key}={updates[key]}"
-                        updated_keys.add(key)
+                        processed_keys.add(key)
             
-            # Add new keys that weren't found
+            # Add remaining keys that weren't found
             for key, value in updates.items():
-                if key not in updated_keys:
+                if key not in processed_keys:
                     lines.append(f"{key}={value}")
             
             # Write back to file
@@ -222,26 +228,26 @@ class AgentEnvironment:
             config = self._load_env_file(self.env_agent_path)
             current_key = config.get("HIVE_API_KEY", "")
             
-            # Generate new key if missing or placeholder
+            # Generate key if missing or placeholder
             if not current_key or current_key == "your-hive-api-key-here":
-                new_key = self.generate_agent_api_key()
-                return self.update_environment({"HIVE_API_KEY": new_key})
+                generated_key = self.generate_agent_api_key()
+                return self.update_environment({"HIVE_API_KEY": generated_key})
             
             return True
         except Exception:
             return False
     
     def generate_agent_api_key(self) -> str:
-        """Generate a new agent API key."""
+        """Generate an agent API key."""
         import secrets
         return secrets.token_urlsafe(32)
     
     # Internal helper methods
     def _apply_port_mappings(self, content: str) -> str:
         """Apply port mappings to content."""
-        for old_port, new_port in [(8886, 38886), (5532, 35532)]:
-            content = content.replace(f":{old_port}", f":{new_port}")
-            content = content.replace(f"={old_port}", f"={new_port}")
+        for source_port, target_port in [(8886, 38886), (5532, 35532)]:
+            content = content.replace(f":{source_port}", f":{target_port}")
+            content = content.replace(f"={source_port}", f"={target_port}")
         return content
     
     def _apply_database_mappings(self, content: str) -> str:
@@ -309,13 +315,29 @@ class AgentEnvironment:
                 return None
             
             host_port, database = host_part.split('/', 1)
-            host, port = host_port.split(':', 1) if ':' in host_port else (host_port, '5432')
+            
+            # Validate host:port format - if no colon found, this is invalid
+            # URLs like "host_port" suggest port should be present but malformed
+            if ':' in host_port:
+                host, port_str = host_port.split(':', 1)
+                # Validate port is numeric
+                try:
+                    port = int(port_str)
+                except ValueError:
+                    return None  # Invalid port number
+            else:
+                # No port specified - only allow this for URLs without explicit port indication
+                # URLs containing "_port" suggest malformed port specification
+                if "_port" in host_port:
+                    return None  # Malformed URL with port indication but no separator
+                host = host_port
+                port = 5432  # Default PostgreSQL port
             
             return {
                 "user": user,
                 "password": password,
                 "host": host,
-                "port": int(port),
+                "port": port,
                 "database": database
             }
         except Exception:

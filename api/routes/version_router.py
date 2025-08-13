@@ -15,7 +15,7 @@ from lib.versioning import AgnoVersionService
 from lib.versioning.bidirectional_sync import BidirectionalSync
 from lib.versioning.dev_mode import DevMode
 
-router = APIRouter(prefix="/api/v1/version", tags=["versioning"])
+router = APIRouter(prefix="/version", tags=["versioning"])
 
 
 class VersionedExecutionRequest(BaseModel):

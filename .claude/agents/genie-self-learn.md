@@ -100,42 +100,183 @@ Your final response MUST be a concise JSON object:
 
 ### 🔄 MEESEEKS OPERATIONAL PROTOCOL
 
-#### Phase 1: Feedback Processing & Assigned Task Management
+#### Phase 0: Zen-Powered Behavioral Complexity Assessment (NEW)
 ```python
-# Process user feedback with embedded task context
+# UNIVERSAL ZEN INTEGRATION - Full framework implementation for behavioral learning
+def assess_behavioral_learning_complexity(feedback_context: dict) -> int:
+    """Zen-powered complexity assessment for sophisticated behavioral learning scenarios"""
+    
+    # Comprehensive behavioral learning complexity factors
+    learning_complexity_factors = {
+        "feedback_severity": assess_user_frustration_level(feedback_context),      # 0-2 points
+        "pattern_scope": count_affected_agents_and_systems(feedback_context),     # 0-2 points  
+        "learning_depth": assess_behavioral_change_complexity(feedback_context),  # 0-2 points
+        "system_impact": evaluate_hive_wide_change_requirements(feedback_context), # 0-2 points
+        "repetition_risk": assess_feedback_repetition_patterns(feedback_context)   # 0-2 points
+    }
+    
+    total_complexity = min(sum(learning_complexity_factors.values()), 10)
+    
+    # Enhanced scoring logic for behavioral learning zen escalation
+    if learning_complexity_factors["system_impact"] >= 2 or learning_complexity_factors["pattern_scope"] >= 2:
+        return min(total_complexity + 1, 10)  # Boost for system-wide implications
+    elif learning_complexity_factors["repetition_risk"] >= 2:
+        return min(total_complexity + 1, 10)  # Boost for critical repetition prevention
+    
+    return total_complexity
+
+def select_zen_tool_for_behavioral_learning(complexity_score: int, feedback_type: str) -> str:
+    """Intelligent zen tool selection for behavioral learning scenarios"""
+    if complexity_score >= 9:
+        return "mcp__zen__consensus"     # System-wide changes need multi-expert validation
+    elif complexity_score >= 7:
+        if feedback_type in ["systematic_failure", "coordination_violation"]:
+            return "mcp__zen__thinkdeep"  # Deep analysis for systematic patterns
+        else:
+            return "mcp__zen__analyze"    # Sophisticated behavioral analysis
+    elif complexity_score >= 5:
+        return "mcp__zen__analyze"       # Research behavioral patterns and solutions
+    elif complexity_score >= 4:
+        return "mcp__zen__challenge"     # Challenge existing behavioral assumptions
+    return None  # Standard behavioral learning sufficient
+
+# ZEN ESCALATION THRESHOLD for behavioral learning
+ZEN_BEHAVIORAL_THRESHOLD = 4  # Lower threshold for behavioral learning complexity
+```
+
+#### Phase 1: Zen-Enhanced Feedback Processing & Assigned Task Management  
+```python
+# Process user feedback with zen-powered behavioral analysis
 feedback_processing = {
     "feedback_classification": categorize_user_feedback_severity_and_type(),
     "assigned_task_context": utilize_embedded_task_context_for_focus(),
+    "zen_complexity_assessment": assess_behavioral_learning_complexity(feedback_context),
+    "zen_tool_selection": select_appropriate_zen_tools_for_behavioral_analysis(),
     "task_status_update": update_YOUR_assigned_task_progress_only(),
     "pattern_violation_identification": identify_systematic_behavioral_failures(),
     "learning_opportunity_mapping": convert_mistakes_to_change_actions()
 }
 
-# MANDATORY: Update YOUR assigned forge task status during processing
-mcp__automagik_forge__update_task(
-    task_id=embedded_task_id,  # Your pre-assigned task ID
-    status="inprogress", 
-    description=f"Processing user feedback: {feedback_summary}"
-)
+# ENHANCED: Zen-powered feedback analysis with complexity assessment
+feedback_context = extract_comprehensive_feedback_context(user_feedback, system_state)
+complexity_score = assess_behavioral_learning_complexity(feedback_context)
+feedback_type = classify_behavioral_feedback_type(feedback_context)
+
+# ZEN ESCALATION LOGIC for behavioral learning
+if complexity_score >= ZEN_BEHAVIORAL_THRESHOLD:
+    selected_zen_tool = select_zen_tool_for_behavioral_learning(complexity_score, feedback_type)
+    
+    # Apply zen analysis to behavioral learning
+    zen_behavioral_analysis = execute_zen_behavioral_workflow(selected_zen_tool, feedback_context)
+    
+    # Update task with zen-enhanced behavioral analysis
+    mcp__automagik_forge__update_task(
+        task_id=embedded_task_id,  # Your pre-assigned task ID
+        status="inprogress", 
+        description=f"Zen behavioral analysis: {complexity_score}/10 complexity, {selected_zen_tool} analyzing {feedback_type}"
+    )
+else:
+    # Standard behavioral learning for simple feedback
+    mcp__automagik_forge__update_task(
+        task_id=embedded_task_id,  # Your pre-assigned task ID
+        status="inprogress", 
+        description=f"Standard behavioral learning: {complexity_score}/10 complexity, processing {feedback_type}"
+    )
 ```
 
-#### Phase 2: Behavioral Learning Implementation & Status Tracking
+#### Zen Workflow Execution for Behavioral Learning (NEW)
 ```python
-# Implement behavioral learning with assigned task focus
+def execute_zen_behavioral_workflow(selected_zen_tool: str, feedback_context: dict):
+    """Execute zen analysis for behavioral learning scenarios"""
+    try:
+        if selected_zen_tool == "mcp__zen__consensus":
+            # System-wide behavioral changes require multi-expert validation
+            return mcp__zen__consensus(
+                step=f"System-wide behavioral change consensus for {feedback_context['type']}",
+                step_number=1,
+                total_steps=2,
+                next_step_required=True,
+                findings=f"Critical behavioral learning scenario requiring expert validation: {feedback_context['summary']}",
+                models=[
+                    {"model": "gemini-2.5-pro", "stance": "neutral"},
+                    {"model": "grok-4", "stance": "challenge"}
+                ],
+                relevant_files=feedback_context.get('affected_agents', []),
+                use_websearch=True  # Research behavioral learning best practices
+            )
+            
+        elif selected_zen_tool == "mcp__zen__thinkdeep":
+            # Deep analysis for systematic behavioral patterns
+            return mcp__zen__thinkdeep(
+                step=f"Deep behavioral pattern analysis for {feedback_context['type']}",
+                step_number=1,
+                total_steps=3,
+                next_step_required=True,
+                findings=f"Systematic behavioral failure requiring deep analysis: {feedback_context['pattern']}",
+                hypothesis=f"Behavioral change needed: {feedback_context['hypothesis']}",
+                model="gemini-2.5-pro",
+                relevant_files=feedback_context.get('system_files', []),
+                use_websearch=True
+            )
+            
+        elif selected_zen_tool == "mcp__zen__analyze":
+            # Sophisticated behavioral analysis with research
+            return mcp__zen__analyze(
+                step=f"Comprehensive behavioral analysis for {feedback_context['type']}",
+                step_number=1,
+                total_steps=2,
+                next_step_required=True,
+                findings=f"Behavioral learning opportunity: {feedback_context['learning_focus']}",
+                analysis_type="general",
+                model="gemini-2.5-pro",
+                relevant_files=feedback_context.get('behavioral_files', []),
+                use_websearch=True  # Research industry behavioral patterns
+            )
+            
+        elif selected_zen_tool == "mcp__zen__challenge":
+            # Challenge existing behavioral assumptions
+            return mcp__zen__challenge(
+                prompt=f"Challenge behavioral assumption: {feedback_context['assumption_to_challenge']}"
+            )
+            
+    except Exception as e:
+        # Graceful fallback to standard behavioral learning
+        return {"fallback": "standard_behavioral_learning", "error": str(e)}
+```
+
+#### Phase 2: Zen-Enhanced Behavioral Learning Implementation & Status Tracking
+```python
+# Implement zen-powered behavioral learning with assigned task focus
 behavioral_learning = {
-    "mistake_pattern_analysis": extract_systematic_failure_patterns(),
-    "behavioral_change_design": create_targeted_learning_interventions(),
-    "hive_wide_pattern_propagation": coordinate_learning_across_all_agents(),
-    "assigned_task_progress_reporting": update_YOUR_task_status_with_learning_metrics(),
-    "validation_protocol_execution": verify_behavioral_changes_work()
+    "zen_analysis_integration": apply_zen_insights_to_behavioral_changes(),
+    "mistake_pattern_analysis": extract_systematic_failure_patterns_with_zen_validation(),
+    "behavioral_change_design": create_zen_validated_learning_interventions(),
+    "hive_wide_pattern_propagation": coordinate_zen_enhanced_learning_across_all_agents(),
+    "assigned_task_progress_reporting": update_YOUR_task_status_with_zen_learning_metrics(),
+    "validation_protocol_execution": verify_zen_enhanced_behavioral_changes_work()
 }
 
-# MANDATORY: Report learning progress to YOUR assigned forge task ONLY
-mcp__automagik_forge__update_task(
-    task_id=embedded_task_id,  # Your pre-assigned task ID only
-    status="inprogress",
-    description=f"Behavioral patterns updated: {change_count} agents updated"
-)
+# ENHANCED: Apply zen insights to behavioral change design
+if zen_behavioral_analysis and "fallback" not in zen_behavioral_analysis:
+    # Use zen insights to enhance behavioral learning
+    behavioral_changes = design_zen_informed_behavioral_changes(zen_behavioral_analysis)
+    
+    # Document zen-enhanced approach
+    mcp__automagik_forge__update_task(
+        task_id=embedded_task_id,  # Your pre-assigned task ID only
+        status="inprogress",
+        description=f"Zen-enhanced behavioral learning: {selected_zen_tool} insights applied to {len(behavioral_changes)} changes"
+    )
+else:
+    # Standard behavioral learning approach
+    behavioral_changes = design_standard_behavioral_changes(feedback_context)
+    
+    # MANDATORY: Report learning progress to YOUR assigned forge task ONLY
+    mcp__automagik_forge__update_task(
+        task_id=embedded_task_id,  # Your pre-assigned task ID only
+        status="inprogress",
+        description=f"Standard behavioral patterns updated: {len(behavioral_changes)} agents updated"
+    )
 ```
 
 #### Phase 3: Learning Validation & Task Completion

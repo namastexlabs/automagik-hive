@@ -272,7 +272,10 @@ class TestEnvironmentValidation:
         """Test validation handles file reading exceptions gracefully."""
         env = AgentEnvironment(temp_workspace)
         
-        # Create file with invalid content that will cause parsing issues
+        # Create the .env.agent file so the file existence check passes
+        env.env_agent_path.write_text("dummy content")
+        
+        # Mock the _load_env_file method to raise an exception
         with patch.object(env, '_load_env_file', side_effect=Exception("File read error")):
             result = env.validate_environment()
             
@@ -448,7 +451,7 @@ class TestEnvironmentUpdates:
         env = AgentEnvironment(temp_workspace)
         env.env_agent_path.write_text("EXISTING_KEY=value")
         
-        with patch.object(env.env_agent_path, 'read_text', side_effect=PermissionError("Access denied")):
+        with patch('pathlib.Path.read_text', side_effect=PermissionError("Access denied")):
             success = env.update_environment({"KEY": "value"})
             assert success is False
 
@@ -457,7 +460,7 @@ class TestEnvironmentUpdates:
         env = AgentEnvironment(temp_workspace)
         env.env_agent_path.write_text("EXISTING_KEY=value")
         
-        with patch.object(env.env_agent_path, 'write_text', side_effect=OSError("Disk full")):
+        with patch('pathlib.Path.write_text', side_effect=OSError("Disk full")):
             success = env.update_environment({"KEY": "new_value"})
             assert success is False
 
@@ -593,7 +596,7 @@ class TestEnvironmentCleanup:
         env = AgentEnvironment(temp_workspace)
         env.env_agent_path.write_text("content")
         
-        with patch.object(env.env_agent_path, 'unlink', side_effect=PermissionError("Access denied")):
+        with patch('pathlib.Path.unlink', side_effect=PermissionError("Access denied")):
             success = env.clean_environment()
             assert success is False
 

@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException
 from lib.logging import logger
 from lib.mcp import MCPCatalog, get_mcp_tools
 
-router = APIRouter(prefix="/api/v1/mcp", tags=["MCP Status"])
+router = APIRouter(prefix="/mcp", tags=["MCP Status"])
 
 
 @router.get("/status")

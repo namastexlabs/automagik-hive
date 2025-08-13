@@ -328,7 +328,7 @@ class TestThroughputPerformance:
         # Should achieve reasonable throughput
         assert throughput > 100, f"Throughput too low: {throughput:.1f} req/s"
 
-    def test_sustainable_load_performance(self, test_client):
+    def test_sustained_load_performance(self, test_client):
         """Test performance under sustained load with realistic expectations."""
         duration = 5  # Shorter test duration for reliability
         min_requests = 40  # Reduced minimum for realistic test environment expectations
@@ -354,7 +354,7 @@ class TestThroughputPerformance:
                 # Skip failed requests for performance calculation
                 pass
 
-            # Optimized delay for sustainable test environment performance
+            # Calculated delay for sustainable test environment performance
             # Target roughly 10-12 RPS (sustainable for test environment)
             time.sleep(0.05)  # ~50ms delay = roughly 20 RPS theoretical max
 

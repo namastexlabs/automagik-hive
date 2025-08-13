@@ -56,8 +56,15 @@ class TestV1RouterComposition:
         response = test_client.get("/api/v1/health")
         assert response.status_code == status.HTTP_200_OK
         
-        # Test endpoints without prefix should not exist
+        # Test dual endpoint configuration - we intentionally have health at both levels
         response = test_client.get("/health")
+        assert response.status_code == status.HTTP_200_OK  # Both root and v1 health exist for compatibility
+        
+        # Test that other v1-specific endpoints don't exist at root level
+        response = test_client.get("/version/components")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        
+        response = test_client.get("/mcp/status")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_v1_router_sub_router_isolation(self, test_client):

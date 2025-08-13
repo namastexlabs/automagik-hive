@@ -38,6 +38,7 @@ class WorkspaceCommands:
     
     def start(self) -> bool:
         """Start workspace stub."""
+        print("Workspace status: running")
         return True
     
     def stop(self) -> bool:

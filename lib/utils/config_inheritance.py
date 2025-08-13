@@ -171,8 +171,22 @@ class ConfigInheritanceManager:
 
         # Validate required unique parameters
         for agent_id, agent_config in agent_configs.items():
-            if "agent_id" not in agent_config.get("agent", {}):
+            # Robust validation that handles both full YAML structure and flattened agent config
+            agent_section = agent_config.get("agent", {})
+            
+            # Check if agent_id exists in agent section (full YAML structure)
+            # OR at root level (flattened agent config from version factory)
+            has_agent_id_in_section = "agent_id" in agent_section
+            has_agent_id_at_root = "agent_id" in agent_config
+            
+            if not has_agent_id_in_section and not has_agent_id_at_root:
+                # Debug logging to help diagnose validation issues
+                logger.debug(f"🔧 Validation debug for {agent_id}:")
+                logger.debug(f"  📋 Config keys: {list(agent_config.keys())}")
+                logger.debug(f"  📋 Agent section keys: {list(agent_section.keys())}")
+                logger.debug(f"  📋 Agent section content: {agent_section}")
                 errors.append(f"Agent {agent_id} missing required 'agent.agent_id'")
+            # Validation passes - agent_id found in appropriate location
 
         # Check for configuration drift in inheritable parameters
         errors.extend(self._check_configuration_drift(agent_configs))

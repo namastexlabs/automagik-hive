@@ -15,7 +15,7 @@ model:
 
 storage:
   type: postgres
-  table_name: genie_debug
+  table_name: agents_genie_debug
   auto_upgrade_schema: true
 
 memory:

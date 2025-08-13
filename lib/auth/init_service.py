@@ -43,13 +43,13 @@ class AuthInitService:
             return temp_key
 
         # Generate new key and save
-        new_key = self._generate_secure_key()
-        self._save_key_to_env(new_key)
-        self._display_key_to_user(new_key)
+        api_key = self._generate_secure_key()
+        self._save_key_to_env(api_key)
+        self._display_key_to_user(api_key)
 
         # Set in environment for current session
-        os.environ[self.api_key_var] = new_key
-        return new_key
+        os.environ[self.api_key_var] = api_key
+        return api_key
 
     def _generate_secure_key(self) -> str:
         """Generate a cryptographically secure API key."""
@@ -58,7 +58,7 @@ class AuthInitService:
     def _save_key_to_env(self, api_key: str) -> None:
         """Add or replace API key in .env file."""
         env_content = []
-        api_key_updated = False
+        api_key_found = False
 
         # Read existing .env content
         if self.env_file.exists():
@@ -68,11 +68,11 @@ class AuthInitService:
         for i, line in enumerate(env_content):
             if line.startswith(f"{self.api_key_var}="):
                 env_content[i] = f"{self.api_key_var}={api_key}"
-                api_key_updated = True
+                api_key_found = True
                 break
 
         # Add API key if it wasn't found
-        if not api_key_updated:
+        if not api_key_found:
             env_content.append(f"{self.api_key_var}={api_key}")
 
         # Ensure AUTH_DISABLED is set to false if not present
@@ -110,13 +110,13 @@ class AuthInitService:
 
     def regenerate_key(self) -> str:
         """Generate and save a new API key."""
-        new_key = self._generate_secure_key()
-        self._save_key_to_env(new_key)
-        self._display_key_to_user(new_key)
+        api_key = self._generate_secure_key()
+        self._save_key_to_env(api_key)
+        self._display_key_to_user(api_key)
 
         # Update environment for current session
-        os.environ[self.api_key_var] = new_key
-        return new_key
+        os.environ[self.api_key_var] = api_key
+        return api_key
 
     def get_current_key(self) -> str | None:
         """Get the current API key without generating a new one."""

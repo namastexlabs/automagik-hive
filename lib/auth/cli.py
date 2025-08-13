@@ -32,8 +32,8 @@ def show_current_key() -> None:
 def regenerate_key() -> None:
     """Generate a new API key."""
     init_service = AuthInitService()
-    new_key = init_service.regenerate_key()
-    logger.info("New API key generated", key_length=len(new_key))
+    api_key = init_service.regenerate_key()
+    logger.info("API key regenerated", key_length=len(api_key))
 
 
 def show_auth_status() -> None:

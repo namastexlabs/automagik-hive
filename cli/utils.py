@@ -20,6 +20,12 @@ def run_command(cmd: list, capture_output: bool = False, cwd: Optional[str] = No
             if e.stderr:
                 print(f"Error: {e.stderr}")
         return None
+    except subprocess.TimeoutExpired:
+        print(f"❌ Command timed out: {' '.join(cmd)}")
+        return None
+    except PermissionError:
+        print(f"❌ Permission denied: {' '.join(cmd)}")
+        return None
     except FileNotFoundError:
         print(f"❌ Command not found: {cmd[0]}")
         return None
@@ -54,7 +60,7 @@ def format_status(name: str, status: str, details: str = "") -> str:
     if details:
         status_text += f" - {details}"
     
-    return f"{name:25} {status_text}"
+    return f"{name:23} {status_text}"
 
 
 def confirm_action(message: str, default: bool = False) -> bool:
@@ -65,4 +71,10 @@ def confirm_action(message: str, default: bool = False) -> bool:
     if not response:
         return default
     
-    return response in ['y', 'yes']
+    if response in ['y', 'yes']:
+        return True
+    elif response in ['n', 'no']:
+        return False
+    else:
+        # Invalid response - return default
+        return default
