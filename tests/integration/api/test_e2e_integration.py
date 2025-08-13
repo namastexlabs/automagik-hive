@@ -91,9 +91,8 @@ class TestE2EUserJourneys:
                 json=update_data,
                 headers=api_headers,
             )
-            # Expect 501 Not Implemented - waiting for production fix: FORGE-TASK-30582ec6
-            # TODO: Change to HTTP_200_OK when PUT endpoint is implemented in AgnoVersionService
-            assert update_response.status_code == status.HTTP_501_NOT_IMPLEMENTED
+            # PUT endpoint is now implemented - expecting successful update
+            assert update_response.status_code == status.HTTP_200_OK
 
             # 4. Activate the version
             activate_response = test_client.post(
