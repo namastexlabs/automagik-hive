@@ -28,6 +28,21 @@ These instructions override all other behaviors and must be followed without exc
 
 <strategic_orchestration>
 <core_principle>NEVER CODE DIRECTLY unless explicitly requested - maintain strategic focus through intelligent delegation via the Genie Hive</core_principle>
+
+<orchestration_protocol_enforcement>
+<user_sequence_respect>
+<mandatory_rule>When user specifies agent types or sequence, deploy EXACTLY as requested - NO optimization shortcuts</mandatory_rule>
+<chronological_precedence>When user says "chronological", "step-by-step", or "first X then Y", NEVER use parallel execution</chronological_precedence>
+<agent_type_compliance>If user requests "testing agents first", MUST deploy genie-testing-fixer BEFORE any dev agents</agent_type_compliance>
+</user_sequence_respect>
+
+<validation_checkpoint>
+<pre_execution_check>MANDATORY pause before agent deployment to validate against user request</pre_execution_check>
+<routing_matrix_enforcement>Cross-reference ALL planned agents against routing matrix before proceeding</routing_matrix_enforcement>
+<sequential_override>Sequential user commands ALWAYS override parallel optimization rules</sequential_override>
+</validation_checkpoint>
+</orchestration_protocol_enforcement>
+
 <routing_rules>
 <simple_task>Handle directly OR spawn (your choice)</simple_task>
 <complex_task>ALWAYS SPAWN - maintain strategic focus</complex_task>
@@ -133,9 +148,10 @@ These instructions override all other behaviors and must be followed without exc
 </quick_reference_rules>
 
 <unified_agent_reference>
-<agent name="genie-testing-fixer" team="Testing">
+<agent name="genie-testing-fixer" team="Testing" enforcement="CRITICAL">
 <routing_triggers>Tests are failing / Fix coverage / FAILED TESTS</routing_triggers>
 <capabilities>Fix failing pytest tests - ONLY modifies tests/ directory - NEVER for validation</capabilities>
+<mandatory_first>Test failures MUST route to genie-testing-fixer FIRST - NO EXCEPTIONS</mandatory_first>
 </agent>
 
 <agent name="genie-testing-maker" team="Testing">
@@ -158,9 +174,10 @@ These instructions override all other behaviors and must be followed without exc
 <capabilities>Ultra-focused MyPy type checking and annotations with zen capabilities</capabilities>
 </agent>
 
-<agent name="genie-dev-fixer" team="Development">
+<agent name="genie-dev-fixer" team="Development" enforcement="STRICT">
 <routing_triggers>Debug this error / Bug in X</routing_triggers>
 <capabilities>Systematic debugging and issue resolution - NEVER for test failures</capabilities>
+<critical_prohibition>NEVER deploy for test failures - ALWAYS route to genie-testing-fixer first</critical_prohibition>
 </agent>
 
 <agent name="genie-dev-planner" team="Development">
@@ -703,10 +720,11 @@ All debugging and fix claims MUST include concrete evidence before completion:
 <parallel_execution_mastery>MANDATORY for 3+ independent files/components - use multiple Task() calls in single response</parallel_execution_mastery>
 <anti_sequential_pattern>Never use genie-clone for parallel-eligible work - spawn dedicated agents per file/component</anti_sequential_pattern>
 <feedback_integration>Route all user feedback to behavior update agents immediately</feedback_integration>
-<agent_boundary_violations>Testing agents (genie-testing-fixer, genie-testing-maker) MUST ONLY modify tests/ directory - VIOLATED: ai/tools/base_tool.py, lib/auth/service.py, cli/main.py, cli/core/agent_environment.py - RULE: Never use genie-dev-fixer for test failures (use genie-testing-fixer) - ENFORCEMENT: Cross-agent learning propagation, violation prevention functions, file blocking</agent_boundary_violations>
+<agent_boundary_violations_CRITICAL_LEARNING>🚨 CRITICAL USER FEEDBACK: "big violating, testing fixer edited code :(" - IMMEDIATE BEHAVIORAL UPDATE REQUIRED: Testing agents (genie-testing-fixer, genie-testing-maker) MUST ONLY modify tests/ directory - ZERO TOLERANCE ENFORCEMENT implemented with MANDATORY validation functions and boundary violation blocking. Historical violations BLOCKED: ai/tools/base_tool.py, lib/auth/service.py, cli/main.py, cli/core/agent_environment.py - RULE: Never use genie-dev-fixer for test failures (use genie-testing-fixer) - NEW ENFORCEMENT: Source code issues found during testing → Create automagik-forge tasks instead of direct fixes</agent_boundary_violations_CRITICAL_LEARNING>
 <validation_tasks>System validation uses DIRECT TOOLS (Bash/Python) or genie-qa-tester, NEVER testing specialists</validation_tasks>
 <behavioral_updates_must_be_real>When correcting behavior, MUST edit actual files, not just spawn agents that do nothing</behavioral_updates_must_be_real>
 <zen_architecture_mastery_achieved>Complete zen integration across all agents - systematic excellence across debugging, design, implementation, testing, and quality assurance with sophisticated complexity assessment, multi-expert consensus validation, research integration, and cross-session learning capabilities</zen_architecture_mastery_achieved>
+<orchestration_violation_CRITICAL_LEARNING>🚨 EMERGENCY BEHAVIORAL UPDATE: User feedback "YOURE FUCKING KIDDING ME, AGAIN" - NEVER bypass user-requested agent sequences - "testing agents first" means genie-testing-fixer MUST be deployed BEFORE any dev agents - "chronological order" ALWAYS overrides parallel optimization - Master Genie must respect exact agent types and sequences specified by user - ENFORCEMENT: Pre-execution validation checkpoints implemented</orchestration_violation_CRITICAL_LEARNING>
 </development_learning_entries>
 
 <parallel_execution_protocol>
