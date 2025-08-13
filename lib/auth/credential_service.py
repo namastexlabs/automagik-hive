@@ -362,7 +362,7 @@ class CredentialService:
                 mcp_file = self.project_root / mcp_config_path
 
         if not mcp_file.exists():
-            logger.warning("MCP config file not found", mcp_file=str(mcp_file), project_root=str(self.project_root))
+            logger.warning("MCP config file not found", mcp_file=str(mcp_file))
             return
 
         # Extract current credentials
@@ -391,7 +391,17 @@ class CredentialService:
 
                 pattern = r'"HIVE_API_KEY":\s*"[^"]*"'
                 replacement = f'"HIVE_API_KEY": "{api_key}"'
-                mcp_content = re.sub(pattern, replacement, mcp_content)
+                
+                # Check if HIVE_API_KEY exists
+                if re.search(pattern, mcp_content):
+                    # Update existing API key
+                    mcp_content = re.sub(pattern, replacement, mcp_content)
+                else:
+                    # Add API key to the first server's env section if it exists
+                    env_pattern = r'("env":\s*\{[^}]*)'
+                    env_replacement = r'\1,\n        "HIVE_API_KEY": "' + api_key + '"'
+                    if re.search(env_pattern, mcp_content):
+                        mcp_content = re.sub(env_pattern, env_replacement, mcp_content)
 
             mcp_file.write_text(mcp_content)
             logger.info("MCP config updated with current credentials")

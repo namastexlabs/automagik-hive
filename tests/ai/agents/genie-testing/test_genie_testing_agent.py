@@ -26,6 +26,12 @@ spec.loader.exec_module(genie_testing_agent)
 get_genie_testing = genie_testing_agent.get_genie_testing
 
 
+class MockPostgresStorage:
+    """Mock PostgresStorage that doesn't require db_url or db_engine."""
+    def __init__(self, *args, **kwargs):
+        pass
+
+
 class TestGenieTestingAgentFactory:
     """Test suite for genie testing agent factory function with TDD compliance."""
 
@@ -38,7 +44,7 @@ class TestGenieTestingAgentFactory:
         """
         with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
              patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage') as mock_storage, \
+             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
              patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
              patch('builtins.open', mock_open(read_data='test config')):
             
@@ -102,7 +108,7 @@ class TestGenieTestingAgentFactory:
         """
         with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
              patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage') as mock_storage, \
+             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
              patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             
@@ -189,7 +195,7 @@ class TestGenieTestingSpecificBehavior:
         """
         with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
              patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage') as mock_storage, \
+             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
              patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             
@@ -216,7 +222,7 @@ class TestGenieTestingSpecificBehavior:
         """
         with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
              patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage') as mock_storage, \
+             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
              patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             
@@ -261,7 +267,7 @@ class TestGenieTestingIntegration:
         """
         with patch('ai.agents.genie_testing.agent.yaml.safe_load') as mock_yaml, \
              patch('ai.agents.genie_testing.agent.AgentMemory') as mock_memory, \
-             patch('ai.agents.genie_testing.agent.PostgresStorage') as mock_storage, \
+             patch('ai.agents.genie_testing.agent.PostgresStorage', MockPostgresStorage) as mock_storage, \
              patch('ai.agents.genie_testing.agent.Agent') as mock_agent, \
              patch('builtins.open', mock_open()):
             

@@ -76,16 +76,17 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                     solution = row.get("solution", "").strip()
                     main_content = answer or solution
                     
-                    if not main_content:
-                        continue  # Skip rows without main content
-                    
-                    # Create content with context if available
-                    content_parts = []
-                    
-                    # Add question/problem for context
+                    # Also check for question/problem context
                     question = row.get("question", "").strip()
                     problem = row.get("problem", "").strip()
                     context = question or problem
+                    
+                    # Skip only if there's neither content nor context
+                    if not main_content and not context:
+                        continue
+                    
+                    # Create content with context if available
+                    content_parts = []
                     
                     if context:
                         # Use appropriate labels based on which schema is present
@@ -99,6 +100,16 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                         content_parts.append(f"**A:** {answer}")
                     else:
                         content_parts.append(f"**Solution:** {solution}")
+
+                    # Add typification and business unit if present (in correct order)
+                    business_unit = row.get("business_unit", "").strip()
+                    typification = row.get("typification", "").strip()
+                    
+                    if typification:
+                        content_parts.append(f"**Typification:** {typification}")
+                    
+                    if business_unit:
+                        content_parts.append(f"**Business Unit:** {business_unit}")
 
                     # Create document content
                     content = "\n\n".join(content_parts)
@@ -114,6 +125,14 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                             "has_answer": bool(main_content),
                             # Add schema-specific metadata
                             "schema_type": "question_answer" if question else "problem_solution",
+                            # Add business unit and typification metadata
+                            "business_unit": business_unit,
+                            "typification": typification,
+                            "has_business_unit": bool(business_unit),
+                            "has_typification": bool(typification),
+                            # Legacy metadata names for backward compatibility
+                            "has_problem": bool(context),
+                            "has_solution": bool(main_content),
                         }
 
                         # Create document with unique ID based on row index

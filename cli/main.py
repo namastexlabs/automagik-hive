@@ -11,11 +11,6 @@ from pathlib import Path
 
 from .docker_manager import DockerManager
 from .workspace import WorkspaceManager
-from .commands.init import InitCommands
-from .commands.workspace import WorkspaceCommands
-from .commands.postgres import PostgreSQLCommands
-from .commands.agent import AgentCommands
-from .commands.uninstall import UninstallCommands
 
 # Import command classes for test compatibility
 from .commands.init import InitCommands
@@ -29,7 +24,7 @@ def create_parser() -> argparse.ArgumentParser:
     """Create simple argument parser."""
     parser = argparse.ArgumentParser(
         prog="automagik-hive",
-        description="Automagik Hive - Simple Multi-agent AI framework",
+        description="UVX Development Environment",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -104,95 +99,63 @@ def main() -> int:
             return 0
         
         # Init workspace
-        if args.init is not False:  # Using 'is not False' to handle both None and string values
-            init_commands = InitCommands()
+        if args.init != False:
+            init_cmd = InitCommands()
             workspace_name = None if args.init == "__DEFAULT__" else args.init
-            return 0 if init_commands.init_workspace(workspace_name) else 1
+            return 0 if init_cmd.init_workspace(workspace_name) else 1
         
-        # Start workspace server
+        # Serve workspace
+        if args.serve:
+            workspace_cmd = WorkspaceCommands()
+            return 0 if workspace_cmd.start_workspace(args.serve) else 1
+        
+        # Start workspace server (positional argument)
         if args.workspace:
-            if not Path(args.workspace).exists():
+            if not Path(args.workspace).is_dir():
                 print(f"❌ Directory not found: {args.workspace}")
                 return 1
-            workspace_commands = WorkspaceCommands()
-            return 0 if workspace_commands.start_server(args.workspace) else 1
+            workspace_cmd = WorkspaceCommands()
+            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
         
-        # Get component for operations that need it
-        component = args.install or args.start or args.stop or args.restart or args.status or args.health or args.logs or args.uninstall
+        # PostgreSQL commands
+        postgres_cmd = PostgreSQLCommands()
+        if args.postgres_status:
+            return 0 if postgres_cmd.postgres_status(args.postgres_status) else 1
+        elif args.postgres_start:
+            return 0 if postgres_cmd.postgres_start(args.postgres_start) else 1
+        elif args.postgres_stop:
+            return 0 if postgres_cmd.postgres_stop(args.postgres_stop) else 1
+        elif args.postgres_restart:
+            return 0 if postgres_cmd.postgres_restart(args.postgres_restart) else 1
+        elif args.postgres_logs:
+            return 0 if postgres_cmd.postgres_logs(args.postgres_logs, args.tail) else 1
+        elif args.postgres_health:
+            return 0 if postgres_cmd.postgres_health(args.postgres_health) else 1
         
-        # Agent operations
-        if component in ["agent", "all"]:
-            agent_commands = AgentCommands()
-            
-            if args.install:
-                return 0 if agent_commands.install() else 1
-            elif args.start:
-                return 0 if agent_commands.start() else 1
-            elif args.stop:
-                return 0 if agent_commands.stop() else 1
-            elif args.restart:
-                return 0 if agent_commands.restart() else 1
-            elif args.status:
-                agent_commands.status()
-                return 0
-            elif args.health:
-                agent_commands.health()
-                return 0
-            elif args.logs:
-                agent_commands.logs(args.lines)
-                return 0
-            elif args.uninstall:
-                uninstall_commands = UninstallCommands()
-                return 0 if uninstall_commands.uninstall_agent() else 1
+        # Agent commands
+        agent_cmd = AgentCommands()
+        if args.agent_install:
+            return 0 if agent_cmd.install(args.agent_install) else 1
+        elif args.agent_serve:
+            return 0 if agent_cmd.serve(args.agent_serve) else 1
+        elif args.agent_stop:
+            return 0 if agent_cmd.stop(args.agent_stop) else 1
+        elif args.agent_restart:
+            return 0 if agent_cmd.restart(args.agent_restart) else 1
+        elif args.agent_logs:
+            return 0 if agent_cmd.logs(args.agent_logs, args.tail) else 1
+        elif args.agent_status:
+            return 0 if agent_cmd.status(args.agent_status) else 1
+        elif args.agent_reset:
+            return 0 if agent_cmd.reset(args.agent_reset) else 1
         
-        # PostgreSQL operations
-        if component == "postgres":
-            postgres_commands = PostgreSQLCommands()
-            
-            if args.install:
-                return 0 if postgres_commands.install() else 1
-            elif args.start:
-                return 0 if postgres_commands.start() else 1
-            elif args.stop:
-                return 0 if postgres_commands.stop() else 1
-            elif args.restart:
-                return 0 if postgres_commands.restart() else 1
-            elif args.status:
-                postgres_commands.status()
-                return 0
-            elif args.health:
-                postgres_commands.health()
-                return 0
-            elif args.logs:
-                postgres_commands.logs(args.lines)
-                return 0
+        # Uninstall commands
+        uninstall_cmd = UninstallCommands()
+        if args.uninstall:
+            return 0 if uninstall_cmd.uninstall_current_workspace() else 1
+        elif args.uninstall_global:
+            return 0 if uninstall_cmd.uninstall_global() else 1
         
-        # Workspace operations
-        if component == "workspace":
-            workspace_commands = WorkspaceCommands()
-            
-            if args.install:
-                return 0 if workspace_commands.install() else 1
-            elif args.start:
-                return 0 if workspace_commands.start() else 1
-            elif args.stop:
-                return 0 if workspace_commands.stop() else 1
-            elif args.restart:
-                return 0 if workspace_commands.restart() else 1
-            elif args.status:
-                workspace_commands.status()
-                return 0
-            elif args.health:
-                workspace_commands.health()
-                return 0
-            elif args.logs:
-                workspace_commands.logs(args.lines)
-                return 0
-            elif args.uninstall:
-                uninstall_commands = UninstallCommands()
-                return 0 if uninstall_commands.uninstall_workspace() else 1
-        
-        # Fallback for unhandled cases
         return 0
     
     except KeyboardInterrupt:
@@ -205,6 +168,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 # Functions expected by tests
 def parse_args():
     """Parse arguments (stub for tests)."""
@@ -222,6 +186,4 @@ class LazyCommandLoader:
         return lambda: f"Command {command_name} loaded"
 
 
-def app() -> int:
-    """CLI app function that calls main and returns result."""
-    return main()
+app = create_parser()  # Expected by some tests

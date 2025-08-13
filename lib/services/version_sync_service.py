@@ -28,13 +28,14 @@ class AgnoVersionSyncService:
     - If same version but different config → DB wins
     """
 
-    def __init__(self, db_url: str | None = None):
-        """Initialize with database URL"""
+    def __init__(self, db_url: str | None = None, db_service=None):
+        """Initialize with database URL and optional db_service for testing"""
         self.db_url = db_url or os.getenv("HIVE_DATABASE_URL")
-        if not self.db_url:
+        if not self.db_url and not db_service:
             raise ValueError("HIVE_DATABASE_URL required")
 
-        self.version_service = AgnoVersionService(self.db_url)
+        self._db_service = db_service  # For testing injection
+        self.version_service = AgnoVersionService(self.db_url) if self.db_url else None
 
         # Component type mappings
         self.config_paths = {
@@ -44,6 +45,14 @@ class AgnoVersionSyncService:
         }
 
         self.sync_results = {"agents": [], "teams": [], "workflows": []}
+
+    async def _get_db_service(self):
+        """Get database service - either injected for testing or create new one"""
+        if self._db_service:
+            return self._db_service
+        
+        from lib.services.database_service import DatabaseService
+        return DatabaseService(self.db_url)
 
     async def get_yaml_component_versions(self, component_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """
@@ -137,11 +146,8 @@ class AgnoVersionSyncService:
             List of component version dictionaries from database
         """
         try:
-            # Import the database service for direct queries  
-            from lib.services.database_service import DatabaseService
-            
-            # Create database service instance
-            db_service = DatabaseService(self.db_url)
+            # Get database service (supports dependency injection for testing)
+            db_service = await self._get_db_service()
             
             # Build query
             if component_type:
@@ -187,9 +193,8 @@ class AgnoVersionSyncService:
             component_data: Dictionary with component_type, name, version
         """
         try:
-            from lib.services.database_service import DatabaseService
-            
-            db_service = DatabaseService(self.db_url)
+            # Get database service (supports dependency injection for testing)
+            db_service = await self._get_db_service()
             
             # Check if component already exists
             existing_query = """
