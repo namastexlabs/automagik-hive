@@ -3,6 +3,10 @@
 !.env.example
 .envrc
 
+# MCP configuration files (contain sensitive API keys)
+.mcp.json
+ai/.mcp.json
+
 # Python
 __pycache__/
 *.py[cod]

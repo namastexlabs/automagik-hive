@@ -54,6 +54,17 @@
         "tool",
         "wait"
       ]
+    },
+    "zen": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "exec $(which uvx || echo uvx) --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server"
+      ],
+      "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
+        "OPENAI_API_KEY": "your_api_key_here"
+      }
     }
   }
 }
