@@ -161,7 +161,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_db_component_versions(self, mock_db_service, mock_settings):
         """Test getting component versions from database."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         mock_db_versions = [
             {
@@ -189,7 +189,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_db_component_versions_by_type(self, mock_db_service, mock_settings):
         """Test getting component versions from database filtered by type."""
-        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db", db_service=mock_db_service)
         
         mock_agent_versions = [
             {

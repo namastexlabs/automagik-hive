@@ -37,8 +37,6 @@ class CSVHotReloadManager:
         if csv_path is None:
             # Use centralized config like knowledge_factory.py
             try:
-                from lib.utils.version_factory import load_global_knowledge_config
-
                 global_config = load_global_knowledge_config()
                 csv_filename = global_config.get("csv_file_path", "knowledge_rag.csv")
                 # Make path relative to knowledge directory (same as knowledge_factory.py)
@@ -75,8 +73,6 @@ class CSVHotReloadManager:
 
             # Load global knowledge config for embedder
             try:
-                from lib.utils.version_factory import load_global_knowledge_config
-
                 global_knowledge = load_global_knowledge_config()
                 embedder_model = global_knowledge.get("vector_db", {}).get(
                     "embedder", "text-embedding-3-small"

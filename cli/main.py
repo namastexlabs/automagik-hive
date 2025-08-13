@@ -106,8 +106,20 @@ def main() -> int:
         
         # Serve workspace
         if args.serve:
-            workspace_cmd = WorkspaceCommands()
-            return 0 if workspace_cmd.start_workspace(args.serve) else 1
+            import subprocess
+            try:
+                # Build uvicorn command
+                cmd = [
+                    "uv", "run", "uvicorn", "api.serve:app",
+                    "--host", args.host,
+                    "--port", str(args.port),
+                    "--reload"
+                ]
+                subprocess.run(cmd)
+                return 0
+            except OSError as e:
+                print(f"❌ Failed to start server: {e}")
+                return 1
         
         # Start workspace server (positional argument)
         if args.workspace:

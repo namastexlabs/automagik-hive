@@ -54,15 +54,18 @@ class TestCSVHotReloadManagerInitialization:
     @patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config")
     def test_initialization_with_centralized_config(self, mock_load_config):
         """Test initialization using centralized configuration."""
-        # Mock the global config to return our test path
-        mock_config = {"csv_file_path": "test_knowledge.csv"}
+        # Mock the global config to return our test path and embedder config
+        mock_config = {
+            "csv_file_path": "test_knowledge.csv",
+            "vector_db": {"embedder": "text-embedding-3-small"}
+        }
         mock_load_config.return_value = mock_config
 
         # Initialize without explicit path to trigger centralized config loading
         manager = CSVHotReloadManager()
 
-        # Verify config was loaded
-        mock_load_config.assert_called_once()
+        # Verify config was loaded (may be called multiple times for different configs)
+        assert mock_load_config.call_count >= 1
         assert "test_knowledge.csv" in str(manager.csv_path)
 
     @patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config")

@@ -543,7 +543,10 @@ class CredentialService:
 
         # Update MCP config if requested
         if sync_mcp:
-            self.sync_mcp_config_with_credentials()
+            try:
+                self.sync_mcp_config_with_credentials()
+            except Exception as e:
+                logger.warning("MCP sync failed but continuing with credential generation", error=str(e))
 
         complete_creds = {
             "postgres_user": postgres_creds["user"],
@@ -875,7 +878,10 @@ class CredentialService:
         
         # Update MCP config if requested (once after all modes are set up)
         if sync_mcp:
-            self.sync_mcp_config_with_credentials()
+            try:
+                self.sync_mcp_config_with_credentials()
+            except Exception as e:
+                logger.warning("MCP sync failed but continuing with credential installation", error=str(e))
         
         logger.info(f"Credential installation complete for modes: {modes}")
         return all_mode_credentials
