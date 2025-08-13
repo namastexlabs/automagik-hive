@@ -12,6 +12,13 @@ from pathlib import Path
 from .docker_manager import DockerManager
 from .workspace import WorkspaceManager
 
+# Import command classes for test compatibility
+from .commands.init import InitCommands
+from .commands.workspace import WorkspaceCommands
+from .commands.postgres import PostgreSQLCommands
+from .commands.agent import AgentCommands
+from .commands.uninstall import UninstallCommands
+
 
 def create_parser() -> argparse.ArgumentParser:
     """Create simple argument parser."""
@@ -32,7 +39,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--uninstall", choices=["agent", "workspace", "all"], help="Uninstall")
     
     # Additional commands
-    parser.add_argument("--init", metavar="NAME", help="Initialize workspace")
+    parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
     parser.add_argument("--version", action="store_true", help="Show version")
     
     # Lines flag (for --logs only)
@@ -78,14 +85,17 @@ def main() -> int:
         
         # Init workspace
         if args.init:
-            return 0 if workspace_mgr.init_workspace(args.init) else 1
+            init_cmd = InitCommands()
+            workspace_name = None if args.init == "__DEFAULT__" else args.init
+            return 0 if init_cmd.init_workspace(workspace_name) else 1
         
         # Start workspace server
         if args.workspace:
             if not Path(args.workspace).exists():
                 print(f"❌ Directory not found: {args.workspace}")
                 return 1
-            return 0 if workspace_mgr.start_server(args.workspace) else 1
+            workspace_cmd = WorkspaceCommands()
+            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
         
         # Docker operations
         component = args.install or args.start or args.stop or args.restart or args.status or args.health or args.logs or args.uninstall

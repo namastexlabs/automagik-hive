@@ -17,9 +17,11 @@ load_dotenv()
 
 # Use unified logging system
 from agno.vectordb.pgvector import PgVector
+from agno.embedder.openai import OpenAIEmbedder
 
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.logging import logger
+from lib.utils.version_factory import load_global_knowledge_config
 
 
 class CSVHotReloadManager:
@@ -73,8 +75,6 @@ class CSVHotReloadManager:
 
             # Load global knowledge config for embedder
             try:
-                from agno.embedder.openai import OpenAIEmbedder
-
                 from lib.utils.version_factory import load_global_knowledge_config
 
                 global_knowledge = load_global_knowledge_config()
@@ -84,8 +84,6 @@ class CSVHotReloadManager:
                 embedder = OpenAIEmbedder(id=embedder_model)
             except Exception as e:
                 logger.warning("Could not load global embedder config: %s", e)
-                from agno.embedder.openai import OpenAIEmbedder
-
                 embedder = OpenAIEmbedder(id="text-embedding-3-small")
 
             # Create PgVector instance

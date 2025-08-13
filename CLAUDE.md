@@ -83,12 +83,12 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 
 | User Says | Instant Agent | Routing Reason |
 |-----------|---------------|-----------------|
-| **"Tests are failing"** / **"Fix coverage"** | `genie-testing-fixer` | TDD-compliant test repair specialist - ⚠️ ONLY FOR PYTEST/UNIT TEST FAILURES |
+| **"Tests are failing"** / **"Fix coverage"** / **"323 FAILED TESTS"** / **"FAILED TESTS"** | `genie-testing-fixer` | 🚨 CRITICAL: ONLY agent for fixing pytest failures - NEVER use genie-dev-fixer for test failures |
 | **"Create tests for X"** / **"Need test coverage"** | `genie-testing-maker` | Comprehensive test suite orchestrator - ⚠️ ONLY FOR NEW TEST CREATION |
 | **"Validate system"** / **"Test functionality"** | **DIRECT TOOLS (Bash/Python)** | ❌ NEVER use testing-fixer - it's ONLY for fixing broken tests |
 | **"Format this code"** / **"Ruff formatting"** | `genie-quality-ruff` | Ultra-focused Ruff specialist |
 | **"Fix type errors"** / **"Type checking"** | `genie-quality-mypy` | Ultra-focused MyPy specialist |
-| **"Debug this error"** / **"Bug in X"** | `genie-dev-fixer` | Systematic debugging MEESEEKS |
+| **"Debug this error"** / **"Bug in X"** | `genie-dev-fixer` | Systematic debugging MEESEEKS - 🚨 NEVER for test failures (use genie-testing-fixer) |
 | **"Plan feature X"** / **"Analyze requirements"** | `genie-dev-planner` | Requirements analysis specialist |
 | **"Design architecture for X"** | `genie-dev-designer` | System architecture MEESEEKS |
 | **"Implement X"** / **"Code this feature"** | `genie-dev-coder` | Implementation specialist (requires DDD) |
@@ -510,6 +510,7 @@ All debugging and fix claims MUST include concrete evidence before completion:
 - **ANTI-SEQUENTIAL PATTERN**: Never use genie-clone for parallel-eligible work - spawn dedicated agents per file/component
 - **FEEDBACK INTEGRATION**: Route all user feedback to behavior update agents immediately
 - **AGENT BOUNDARY VIOLATIONS**: NEVER use genie-testing-fixer for validation - it's ONLY for fixing failing pytest tests
+- **🚨 MASSIVE ROUTING VIOLATION LEARNED**: NEVER use genie-dev-fixer for test failures - BIGGEST VIOLATION EVER committed when deploying dev-fixer for 323 FAILED TESTS instead of genie-testing-fixer
 - **VALIDATION TASKS**: System validation uses DIRECT TOOLS (Bash/Python) or genie-qa-tester, NEVER testing specialists
 - **BEHAVIORAL UPDATES MUST BE REAL**: When correcting behavior, MUST edit actual files, not just spawn agents that do nothing
 - **GENIE WORKSPACE MANAGEMENT**: `/genie/` is Genie's autonomous thinking space with KISS organization

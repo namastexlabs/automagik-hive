@@ -356,10 +356,13 @@ class CredentialService:
         if mcp_file is None:
             import os
             mcp_config_path = os.getenv("HIVE_MCP_CONFIG_PATH", ".mcp.json")
-            mcp_file = Path(mcp_config_path)
+            if os.path.isabs(mcp_config_path):
+                mcp_file = Path(mcp_config_path)
+            else:
+                mcp_file = self.project_root / mcp_config_path
 
         if not mcp_file.exists():
-            logger.warning("MCP config file not found", mcp_file=str(mcp_file))
+            logger.warning("MCP config file not found", mcp_file=str(mcp_file), project_root=str(self.project_root))
             return
 
         # Extract current credentials
@@ -501,6 +504,7 @@ class CredentialService:
         postgres_host: str = "localhost",
         postgres_port: int = 5532,
         postgres_database: str = "hive",
+        sync_mcp: bool = False,
     ) -> dict[str, str]:
         """
         Generate complete set of credentials for new workspace.
@@ -509,6 +513,7 @@ class CredentialService:
             postgres_host: PostgreSQL host
             postgres_port: PostgreSQL port
             postgres_database: PostgreSQL database name
+            sync_mcp: Whether to sync credentials to MCP config (default: False)
 
         Returns:
             Dict with all generated credentials
@@ -526,8 +531,9 @@ class CredentialService:
         # Save to .env file
         self.save_credentials_to_env(postgres_creds, api_key)
 
-        # Update MCP config if available
-        self.sync_mcp_config_with_credentials()
+        # Update MCP config if requested
+        if sync_mcp:
+            self.sync_mcp_config_with_credentials()
 
         complete_creds = {
             "postgres_user": postgres_creds["user"],
@@ -811,7 +817,8 @@ class CredentialService:
     def install_all_modes(
         self, 
         modes: List[str] = None,
-        force_regenerate: bool = False
+        force_regenerate: bool = False,
+        sync_mcp: bool = False
     ) -> Dict[str, Dict[str, str]]:
         """
         MAIN INSTALLATION FUNCTION: Install credentials for all specified modes.
@@ -822,6 +829,7 @@ class CredentialService:
         Args:
             modes: List of modes to install (defaults to all: workspace, agent, genie)
             force_regenerate: Force regeneration even if credentials exist
+            sync_mcp: Whether to sync credentials to MCP config (default: False)
             
         Returns:
             Dict mapping mode names to their credential sets
@@ -854,6 +862,10 @@ class CredentialService:
             
             # Create environment file for this mode
             self._create_mode_env_file(mode, mode_creds)
+        
+        # Update MCP config if requested (once after all modes are set up)
+        if sync_mcp:
+            self.sync_mcp_config_with_credentials()
         
         logger.info(f"Credential installation complete for modes: {modes}")
         return all_mode_credentials

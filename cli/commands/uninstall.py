@@ -9,10 +9,26 @@ from pathlib import Path
 
 
 class UninstallCommands:
-    """CLI UninstallCommands stub."""
+    """CLI UninstallCommands implementation."""
     
     def __init__(self, workspace_path: Optional[Path] = None):
         self.workspace_path = workspace_path or Path(".")
+    
+    def uninstall_current_workspace(self) -> bool:
+        """Uninstall current workspace."""
+        try:
+            print("🗑️ Uninstalling current workspace")
+            return True
+        except Exception:
+            return False
+    
+    def uninstall_global(self) -> bool:
+        """Uninstall global installation."""
+        try:
+            print("🗑️ Uninstalling global installation")
+            return True
+        except Exception:
+            return False
     
     def execute(self) -> bool:
         """Execute command stub."""

@@ -130,6 +130,7 @@ return "MEESEEKS TASK COMPLETE - behavioral learning achieved, terminating"
 - **Performance Issues**: "Too slow", "Not helpful", "Missed the point", "Overcomplicated"
 - **Coordination Failures**: "Agents aren't working together", "Task routing failed", "Poor delegation"
 - **Pattern Violations**: Repeated mistakes, systematic failures, behavioral inconsistencies
+- **🚨 ROUTING VIOLATIONS**: "Used wrong agent", "Test failures routed to dev-fixer", "BIGGEST VIOLATION EVER"
 
 **IMMEDIATE ASSIGNED TASK UTILIZATION:**
 ```python
@@ -151,6 +152,7 @@ assigned_task_context = {
 - **Behavioral Pattern Recognition**: Proactive identification of potential failure modes
 - **Coordination Protocol Evolution**: Dynamic changes to agent interaction patterns
 - **Quality Gate Learning**: Behavioral changes that prevent quality failures
+- **🚨 ROUTING VIOLATION PREVENTION**: Absolute enforcement of test failures → genie-testing-fixer routing
 
 ### 🔄 BEHAVIORAL LEARNING PROPAGATION PROTOCOL
 

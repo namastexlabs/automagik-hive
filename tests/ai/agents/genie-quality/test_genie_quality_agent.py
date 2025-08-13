@@ -35,7 +35,7 @@ class TestGenieQualityAgentFactory:
         RED phase: This test WILL FAIL until implementation is complete.
         Tests the async quality agent creation via version factory.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             # Setup mock for async create_agent function
             mock_agent_instance = Mock()
             mock_create_agent.return_value = mock_agent_instance
@@ -57,7 +57,7 @@ class TestGenieQualityAgentFactory:
         
         RED phase: Tests quality-specific parameter passing.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_agent_instance = Mock()
             mock_create_agent.return_value = mock_agent_instance
             
@@ -85,7 +85,7 @@ class TestGenieQualityAgentFactory:
         
         RED phase: Tests quality routing and delegation parameters.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_agent_instance = Mock()
             mock_create_agent.return_value = mock_agent_instance
             
@@ -112,7 +112,7 @@ class TestGenieQualityAgentFactory:
         
         RED phase: Tests error handling for version factory failures.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             # Simulate create_agent failure
             mock_create_agent.side_effect = Exception("Quality agent creation failed")
             
@@ -146,7 +146,7 @@ class TestGenieQualityAgentSpecialization:
         
         RED phase: Tests routing to Ruff specialist.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             ruff_context = {
@@ -172,7 +172,7 @@ class TestGenieQualityAgentSpecialization:
         
         RED phase: Tests routing to MyPy specialist.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             mypy_context = {
@@ -198,7 +198,7 @@ class TestGenieQualityAgentSpecialization:
         
         RED phase: Tests multi-tool quality coordination.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             comprehensive_context = {
@@ -228,7 +228,7 @@ class TestGenieQualityAgentStrategicCoordination:
         
         RED phase: Tests strategic quality coordination behavior.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             strategic_context = {
@@ -274,7 +274,7 @@ class TestGenieQualityAgentIntegration:
         
         RED phase: Tests minimal parameter scenario for quality agent.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             result = await get_genie_quality_agent()
@@ -289,7 +289,7 @@ class TestGenieQualityAgentIntegration:
         
         RED phase: Tests routing to correct factory method.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_agent = Mock()
             mock_agent.name = "Genie Quality Agent"
             mock_create_agent.return_value = mock_agent
@@ -307,7 +307,7 @@ class TestGenieQualityAgentIntegration:
         
         RED phase: Tests end-to-end quality agent coordination.
         """
-        with patch('ai.agents.genie_quality.agent.create_agent') as mock_create_agent:
+        with patch('lib.utils.version_factory.create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             complex_quality_context = {

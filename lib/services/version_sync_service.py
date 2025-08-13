@@ -9,7 +9,8 @@ import glob
 import os
 import shutil
 from datetime import datetime
-from typing import Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import yaml
 
@@ -43,6 +44,327 @@ class AgnoVersionSyncService:
         }
 
         self.sync_results = {"agents": [], "teams": [], "workflows": []}
+
+    async def get_yaml_component_versions(self, component_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get component versions from YAML files.
+        
+        Args:
+            component_type: Optional filter by component type ('agent', 'team', 'workflow')
+        
+        Returns:
+            List of component version dictionaries
+        """
+        versions = []
+        component_types = [component_type] if component_type else ["agent", "team", "workflow"]
+        
+        for comp_type in component_types:
+            try:
+                # Get the directory path for this component type
+                if comp_type == "agent":
+                    base_dir = Path("ai/agents")
+                elif comp_type == "team":
+                    base_dir = Path("ai/teams")
+                elif comp_type == "workflow":
+                    base_dir = Path("ai/workflows")
+                else:
+                    continue
+                
+                if not base_dir.exists():
+                    continue
+                
+                # Look for component directories
+                for component_dir in base_dir.iterdir():
+                    if not component_dir.is_dir():
+                        continue
+                    
+                    # Look for YAML/YML config files in the component directory
+                    for config_file in component_dir.iterdir():
+                        if config_file.suffix not in ['.yaml', '.yml']:
+                            continue
+                        
+                        try:
+                            with open(config_file, 'r', encoding='utf-8') as f:
+                                config = yaml.safe_load(f)
+                            
+                            if not config or not isinstance(config, dict):
+                                continue
+                            
+                            # Extract component info - handle both nested and flat structures
+                            component_section = config.get(comp_type, {})
+                            
+                            # If no nested section, check if the root has component data
+                            if not component_section:
+                                # Check if root level has name/version (test structure)
+                                if 'name' in config or 'version' in config:
+                                    component_section = config
+                                else:
+                                    continue
+                            
+                            # Get version, defaulting to "1.0.0" if missing
+                            version = component_section.get('version', '1.0.0')
+                            name = component_section.get('name', component_dir.name)
+                            
+                            versions.append({
+                                'component_type': comp_type,
+                                'name': name,
+                                'version': version,
+                                'file_path': str(config_file),
+                                'updated_at': datetime.fromtimestamp(config_file.stat().st_mtime)
+                            })
+                            
+                            # Only process the first valid config file per directory
+                            break
+                            
+                        except (yaml.YAMLError, IOError, OSError) as e:
+                            logger.warning(f"Error reading YAML file {config_file}: {e}")
+                            continue
+                        
+            except Exception as e:
+                logger.error(f"Error processing component type {comp_type}: {e}")
+                continue
+        
+        return versions
+
+    async def get_db_component_versions(self, component_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get component versions from database.
+        
+        Args:
+            component_type: Optional filter by component type
+        
+        Returns:
+            List of component version dictionaries from database
+        """
+        try:
+            # Import the database service for direct queries  
+            from lib.services.database_service import DatabaseService
+            
+            # Create database service instance
+            db_service = DatabaseService(self.db_url)
+            
+            # Build query
+            if component_type:
+                query = """
+                    SELECT component_type, name, version, updated_at 
+                    FROM hive.component_versions 
+                    WHERE component_type = %(component_type)s
+                    ORDER BY component_type, name
+                """
+                params = {"component_type": component_type}
+            else:
+                query = """
+                    SELECT component_type, name, version, updated_at 
+                    FROM hive.component_versions 
+                    ORDER BY component_type, name
+                """
+                params = None
+            
+            # Execute query
+            results = await db_service.fetch_all(query, params)
+            
+            # Convert to list of dictionaries
+            versions = []
+            for row in results:
+                versions.append({
+                    'component_type': row['component_type'],
+                    'name': row['name'],
+                    'version': row['version'],
+                    'updated_at': row['updated_at']
+                })
+            
+            return versions
+            
+        except Exception as e:
+            logger.error(f"Error fetching component versions from database: {e}")
+            return []
+
+    async def sync_component_to_db(self, component_data: Dict[str, Any]) -> None:
+        """
+        Sync a single component to database.
+        
+        Args:
+            component_data: Dictionary with component_type, name, version
+        """
+        try:
+            from lib.services.database_service import DatabaseService
+            
+            db_service = DatabaseService(self.db_url)
+            
+            # Check if component already exists
+            existing_query = """
+                SELECT version, updated_at 
+                FROM hive.component_versions 
+                WHERE component_type = %(component_type)s AND name = %(name)s
+            """
+            existing = await db_service.fetch_one(
+                existing_query,
+                {
+                    "component_type": component_data['component_type'],
+                    "name": component_data['name']
+                }
+            )
+            
+            if existing is None:
+                # Insert new component
+                insert_query = """
+                    INSERT INTO hive.component_versions (component_type, name, version, updated_at)
+                    VALUES (%(component_type)s, %(name)s, %(version)s, NOW())
+                """
+                await db_service.execute(
+                    insert_query,
+                    {
+                        "component_type": component_data['component_type'],
+                        "name": component_data['name'],
+                        "version": component_data['version']
+                    }
+                )
+                logger.debug(f"Inserted new component: {component_data['component_type']}/{component_data['name']} v{component_data['version']}")
+                
+            elif existing['version'] != component_data['version']:
+                # Update existing component with different version
+                update_query = """
+                    UPDATE hive.component_versions 
+                    SET version = %(version)s, updated_at = NOW()
+                    WHERE component_type = %(component_type)s AND name = %(name)s
+                """
+                await db_service.execute(
+                    update_query,
+                    {
+                        "version": component_data['version'],
+                        "component_type": component_data['component_type'],
+                        "name": component_data['name']
+                    }
+                )
+                logger.debug(f"Updated component: {component_data['component_type']}/{component_data['name']} {existing['version']} -> {component_data['version']}")
+            
+            # If versions match, no action needed
+            
+        except Exception as e:
+            logger.error(f"Error syncing component to database: {e}")
+            raise
+
+    async def sync_yaml_to_db(self, component_type: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Sync YAML components to database.
+        
+        Args:
+            component_type: Optional filter by component type
+        
+        Returns:
+            Dictionary with sync results
+        """
+        try:
+            # Get YAML components
+            yaml_components = await self.get_yaml_component_versions(component_type)
+            
+            synced_count = 0
+            component_types = set()
+            
+            # Sync each component
+            for component in yaml_components:
+                try:
+                    await self.sync_component_to_db(component)
+                    synced_count += 1
+                    component_types.add(component['component_type'])
+                except Exception as e:
+                    logger.error(f"Error syncing component {component['name']}: {e}")
+            
+            return {
+                'synced_count': synced_count,
+                'component_types': list(component_types),
+                'total_found': len(yaml_components)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in sync_yaml_to_db: {e}")
+            return {
+                'synced_count': 0,
+                'component_types': [],
+                'total_found': 0,
+                'error': str(e)
+            }
+
+    async def get_sync_status(self, component_type: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get synchronization status between YAML and database.
+        
+        Args:
+            component_type: Optional filter by component type
+        
+        Returns:
+            Dictionary with sync status information
+        """
+        try:
+            # Get components from both sources
+            yaml_components = await self.get_yaml_component_versions(component_type)
+            db_components = await self.get_db_component_versions(component_type)
+            
+            # Create lookup dictionaries
+            yaml_lookup = {
+                f"{comp['component_type']}/{comp['name']}": comp 
+                for comp in yaml_components
+            }
+            db_lookup = {
+                f"{comp['component_type']}/{comp['name']}": comp 
+                for comp in db_components
+            }
+            
+            # Find matches and mismatches
+            in_sync = []
+            out_of_sync = []
+            
+            # Check YAML components against DB
+            for key, yaml_comp in yaml_lookup.items():
+                db_comp = db_lookup.get(key)
+                if db_comp and yaml_comp['version'] == db_comp['version']:
+                    in_sync.append({
+                        'component_type': yaml_comp['component_type'],
+                        'name': yaml_comp['name'],
+                        'version': yaml_comp['version']
+                    })
+                else:
+                    out_of_sync.append({
+                        'component_type': yaml_comp['component_type'],
+                        'name': yaml_comp['name'],
+                        'yaml_version': yaml_comp['version'],
+                        'db_version': db_comp['version'] if db_comp else None,
+                        'status': 'version_mismatch' if db_comp else 'missing_in_db'
+                    })
+            
+            # Check for DB components not in YAML
+            for key, db_comp in db_lookup.items():
+                if key not in yaml_lookup:
+                    out_of_sync.append({
+                        'component_type': db_comp['component_type'],
+                        'name': db_comp['name'],
+                        'yaml_version': None,
+                        'db_version': db_comp['version'],
+                        'status': 'missing_in_yaml'
+                    })
+            
+            return {
+                'total_yaml_components': len(yaml_components),
+                'total_db_components': len(db_components),
+                'in_sync_count': len(in_sync),
+                'out_of_sync_count': len(out_of_sync),
+                'in_sync_components': in_sync,
+                'out_of_sync_components': out_of_sync,
+                'sync_percentage': (len(in_sync) / max(len(yaml_components), 1)) * 100
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting sync status: {e}")
+            return {
+                'total_yaml_components': 0,
+                'total_db_components': 0,
+                'in_sync_count': 0,
+                'out_of_sync_count': 0,
+                'in_sync_components': [],
+                'out_of_sync_components': [],
+                'sync_percentage': 0,
+                'error': str(e)
+            }
 
     async def sync_on_startup(self) -> dict[str, Any]:
         """Main entry point - sync all components on startup"""
