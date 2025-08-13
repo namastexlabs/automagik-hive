@@ -35,9 +35,11 @@ class TestGenieDevAgentFactory:
         RED phase: This test WILL FAIL until implementation is complete.
         Tests the async development agent creation via version factory.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        # Patch the create_agent import in the actual agent module
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             # Setup mock for async create_agent function
             mock_agent_instance = Mock()
+            # For AsyncMock, we need to configure the return value properly
             mock_create_agent.return_value = mock_agent_instance
             
             # Execute async function under test
@@ -57,7 +59,7 @@ class TestGenieDevAgentFactory:
         
         RED phase: Tests development-specific parameter passing.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_agent_instance = Mock()
             mock_create_agent.return_value = mock_agent_instance
             
@@ -86,7 +88,7 @@ class TestGenieDevAgentFactory:
         
         RED phase: Tests comprehensive development parameter handling.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_agent_instance = Mock()
             mock_create_agent.return_value = mock_agent_instance
             
@@ -124,7 +126,7 @@ class TestGenieDevAgentFactory:
         
         RED phase: Tests error handling for version factory failures.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             # Simulate create_agent failure
             mock_create_agent.side_effect = Exception("Development agent creation failed")
             
@@ -140,7 +142,7 @@ class TestGenieDevAgentFactory:
         
         RED phase: Tests import dependency failure handling.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent', side_effect=ImportError("Cannot import create_agent")):
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock, side_effect=ImportError("Cannot import create_agent")):
             
             with pytest.raises(ImportError) as exc_info:
                 await get_genie_dev_agent()
@@ -158,7 +160,7 @@ class TestGenieDevAgentDevelopmentScenarios:
         
         RED phase: Tests development planning scenario.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             planning_context = {
@@ -182,7 +184,7 @@ class TestGenieDevAgentDevelopmentScenarios:
         
         RED phase: Tests development design scenario.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             design_context = {
@@ -208,7 +210,7 @@ class TestGenieDevAgentDevelopmentScenarios:
         
         RED phase: Tests development coding scenario.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             coding_context = {
@@ -234,7 +236,7 @@ class TestGenieDevAgentDevelopmentScenarios:
         
         RED phase: Tests development debugging scenario.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             fixing_context = {
@@ -283,7 +285,7 @@ class TestGenieDevAgentIntegration:
         
         RED phase: Tests minimal parameter scenario.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_create_agent.return_value = Mock()
             
             result = await get_genie_dev_agent()
@@ -298,7 +300,7 @@ class TestGenieDevAgentIntegration:
         
         RED phase: Tests routing to correct factory method.
         """
-        with patch('ai.agents.genie_dev.agent.create_agent') as mock_create_agent:
+        with patch.object(genie_dev_agent, 'create_agent', new_callable=AsyncMock) as mock_create_agent:
             mock_agent = Mock()
             mock_agent.name = "Genie Dev Agent"
             mock_create_agent.return_value = mock_agent

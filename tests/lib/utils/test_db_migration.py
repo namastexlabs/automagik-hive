@@ -34,13 +34,16 @@ class TestCheckAndRunMigrations:
     async def test_check_and_run_migrations_no_database_url(self):
         """Test migration check when HIVE_DATABASE_URL is not set."""
         with patch.dict(os.environ, {}, clear=True):
-            with patch("lib.utils.db_migration.logger") as mock_logger:
-                result = await check_and_run_migrations()
+            # Patch _ensure_environment_loaded to prevent .env loading
+            with patch("lib.utils.db_migration._ensure_environment_loaded") as mock_env_load:
+                with patch("lib.utils.db_migration.logger") as mock_logger:
+                    result = await check_and_run_migrations()
 
-                assert result is False
-                mock_logger.warning.assert_called_once_with(
-                    "HIVE_DATABASE_URL not set, skipping migration check"
-                )
+                    assert result is False
+                    mock_logger.warning.assert_called_once_with(
+                        "HIVE_DATABASE_URL not set, skipping migration check. "
+                        "This may indicate environment loading issues in UVX environments."
+                    )
 
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_database_connection_failure(self):
@@ -62,11 +65,11 @@ class TestCheckAndRunMigrations:
                     result = await check_and_run_migrations()
 
                     assert result is False
-                    # Check that error was called with expected message
+                    # Check that error was called with expected messages (enhanced error reporting)
                     error_calls = mock_logger.error.call_args_list
-                    assert len(error_calls) == 1
+                    assert len(error_calls) == 5  # Enhanced error logging provides detailed guidance
                     call_args, call_kwargs = error_calls[0]
-                    assert call_args[0] == "Database connection failed"
+                    assert call_args[0] == "🚨 Database connection failed"
                     assert "error" in call_kwargs
                     assert "Connection failed" in str(call_kwargs["error"])
 
@@ -643,7 +646,8 @@ class TestErrorHandlingAndEdgeCases:
 
                 assert result is False
                 mock_logger.warning.assert_called_once_with(
-                    "HIVE_DATABASE_URL not set, skipping migration check"
+                    "HIVE_DATABASE_URL not set, skipping migration check. "
+                    "This may indicate environment loading issues in UVX environments."
                 )
 
     @pytest.mark.asyncio

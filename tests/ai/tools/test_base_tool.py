@@ -89,6 +89,10 @@ class TestToolConfig:
 class ConcreteTestTool(BaseTool):
     """Concrete implementation of BaseTool for testing."""
     
+    def initialize(self, **kwargs) -> None:
+        """Test implementation of initialize method."""
+        self._is_initialized = True
+    
     def execute(self, *args, **kwargs) -> Any:
         """Test implementation of execute method."""
         return {"status": "executed", "args": args, "kwargs": kwargs}

@@ -62,7 +62,8 @@ class TestGenieDebugAgent:
             config = yaml.safe_load(f)
         
         assert isinstance(config, dict), "Configuration should be a dictionary"
-        assert "name" in config, "Configuration should have a 'name' field"
+        assert "agent" in config, "Configuration should have an 'agent' section"
+        assert "name" in config["agent"], "Agent section should have a 'name' field"
     
     def test_config_has_required_fields(self, agent_config_dir):
         """Test that configuration contains all required fields."""
@@ -71,20 +72,27 @@ class TestGenieDebugAgent:
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
         
-        required_fields = ["name", "description", "instructions", "model"]
-        for field in required_fields:
-            assert field in config, f"Configuration missing required field: {field}"
+        # Check agent section required fields
+        agent_required_fields = ["name", "agent_id", "description"]
+        assert "agent" in config, "Configuration missing 'agent' section"
+        for field in agent_required_fields:
+            assert field in config["agent"], f"Agent section missing required field: {field}"
+            
+        # Check top-level required fields
+        top_level_required_fields = ["instructions", "model"]
+        for field in top_level_required_fields:
+            assert field in config, f"Configuration missing required top-level field: {field}"
     
     def test_agent_name_matches_directory(self, agent_config_dir):
-        """Test that agent name in config matches directory name."""
+        """Test that agent_id in config matches directory name."""
         config_file = agent_config_dir / "config.yaml"
         
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
         
-        expected_name = "genie-debug"
-        actual_name = config.get("name")
-        assert actual_name == expected_name, f"Agent name '{actual_name}' doesn't match directory name '{expected_name}'"
+        expected_agent_id = "genie-debug"
+        actual_agent_id = config.get("agent", {}).get("agent_id")
+        assert actual_agent_id == expected_agent_id, f"Agent ID '{actual_agent_id}' doesn't match directory name '{expected_agent_id}'"
     
     @patch('agno.Agent')
     def test_agent_instantiation(self, mock_agent_class, agent_config_dir, sample_config):
@@ -110,10 +118,23 @@ class TestGenieDebugAgent:
             config = yaml.safe_load(f)
         
         tools = config.get("tools", [])
-        debug_tools = ["bash", "read", "edit", "grep"]
         
-        # At least some debug tools should be present
-        assert any(tool in tools for tool in debug_tools), f"Debug agent should have debugging tools like {debug_tools}"
+        # Check if tools are configured (tools can be by name or MCP tools)
+        assert len(tools) > 0, "Debug agent should have tools configured"
+        
+        # Check for postgres tool (debugging often needs database queries)
+        tool_names = []
+        for tool in tools:
+            if isinstance(tool, dict):
+                tool_names.append(tool.get("name", ""))
+            else:
+                tool_names.append(str(tool))
+        
+        # Should have debugging-related tools
+        has_postgres = any("postgres" in tool_name for tool_name in tool_names)
+        has_shell = any("shell" in tool_name.lower() for tool_name in tool_names)
+        
+        assert has_postgres or has_shell, f"Debug agent should have debugging tools, found: {tool_names}"
     
     def test_agent_temperature_for_debugging(self, agent_config_dir):
         """Test that debug agent has appropriate temperature for precise debugging."""
@@ -122,7 +143,9 @@ class TestGenieDebugAgent:
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
         
-        temperature = config.get("temperature", 0.5)
+        # Temperature is nested under model section in the actual config
+        model_config = config.get("model", {})
+        temperature = model_config.get("temperature", 0.5)
         assert temperature <= 0.3, f"Debug agent should have low temperature for precision, got {temperature}"
 
 class TestGenieDebugAgentIntegration:

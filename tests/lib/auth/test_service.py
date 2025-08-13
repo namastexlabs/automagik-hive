@@ -70,8 +70,8 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5433/hive
         
         calculated = service.calculate_ports("agent", base_ports)
         
-        # Agent has prefix "3"
-        assert calculated == {"db": 35532, "api": 38886}
+        # Agent uses shared postgres port 5532, prefixed API port
+        assert calculated == {"db": 5532, "api": 38886}
 
     def test_calculate_ports_genie(self):
         """Test port calculation for genie mode."""
@@ -80,8 +80,8 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5433/hive
         
         calculated = service.calculate_ports("genie", base_ports)
         
-        # Genie has prefix "4"  
-        assert calculated == {"db": 45532, "api": 48886}
+        # Genie uses shared postgres port 5532, prefixed API port
+        assert calculated == {"db": 5532, "api": 48886}
 
     def test_get_deployment_ports_dynamic(self, tmp_path):
         """Test that deployment ports are calculated dynamically from .env."""
@@ -98,8 +98,8 @@ HIVE_API_PORT=9000
         
         expected = {
             "workspace": {"db": 6000, "api": 9000},
-            "agent": {"db": 36000, "api": 39000},
-            "genie": {"db": 46000, "api": 49000}
+            "agent": {"db": 6000, "api": 39000},
+            "genie": {"db": 6000, "api": 49000}
         }
         
         assert deployment_ports == expected

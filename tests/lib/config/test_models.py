@@ -91,26 +91,28 @@ class TestDefaultProviderResolution:
     """Test default provider detection and resolution."""
 
     def test_get_default_provider_with_openai_env(self):
-        """Test provider detection when OpenAI env var is set."""
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True):
+        """Test provider detection when HIVE_DEFAULT_PROVIDER env var is set."""
+        with patch.dict(os.environ, {"HIVE_DEFAULT_PROVIDER": "openai"}, clear=True):
             if callable(get_default_provider):
                 provider = get_default_provider()
                 # Should return a valid provider string
                 assert isinstance(provider, str)
                 assert len(provider) > 0
+                assert provider == "openai"
 
     def test_get_default_provider_with_anthropic_env(self):
-        """Test provider detection when Anthropic env var is set."""
-        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True):
+        """Test provider detection when HIVE_DEFAULT_PROVIDER env var is set."""
+        with patch.dict(os.environ, {"HIVE_DEFAULT_PROVIDER": "anthropic"}, clear=True):
             if callable(get_default_provider):
                 provider = get_default_provider()
                 assert isinstance(provider, str)
                 assert len(provider) > 0
+                assert provider == "anthropic"
 
     def test_get_default_provider_no_env_vars(self):
-        """Test provider detection when no API keys are set."""
+        """Test provider detection when HIVE_DEFAULT_PROVIDER is not set."""
         env_vars_to_clear = [
-            "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", 
+            "HIVE_DEFAULT_PROVIDER", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", 
             "AZURE_OPENAI_API_KEY", "COHERE_API_KEY", "REPLICATE_API_TOKEN"
         ]
         with patch.dict(os.environ, {}, clear=True):
@@ -205,13 +207,16 @@ class TestModelResolverMethods:
         resolver = ModelResolver()
         
         if hasattr(resolver, '_detect_provider'):
-            # Test with various environment configurations
+            # Test with various environment configurations and model IDs
+            test_models = ["gpt-4", "claude-3-haiku-20240307", "gemini-pro"]
             with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}, clear=True):
-                try:
-                    provider = resolver._detect_provider()
-                    assert isinstance(provider, str)
-                except (AttributeError, ModelResolutionError):
-                    pass
+                for model_id in test_models:
+                    try:
+                        provider = resolver._detect_provider(model_id)
+                        assert isinstance(provider, str)
+                        break  # If one succeeds, that's enough for the test
+                    except (AttributeError, ModelResolutionError):
+                        continue  # Try next model
 
     def test_model_resolver_discover_model_class(self):
         """Test model class discovery method."""

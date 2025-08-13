@@ -12,10 +12,6 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.3
   max_tokens: 4000
-  output_model:
-    provider: anthropic
-    id: claude-haiku-4-20250201
-    temperature: 0.3
 
 storage:
   type: postgres
@@ -47,13 +43,8 @@ events:
 
 # MCP servers configuration for unified tool access
 mcp_servers:
-  - "automagik-forge:*"
   - "ask-repo-agent:*"
   - "search-repo-docs:*"
-  - "send_whatsapp_message:*"
-  - "postgres:query"
-  - "claude-mcp:*"
-  - "automagik-hive:*"
 
 streaming:
   stream: true

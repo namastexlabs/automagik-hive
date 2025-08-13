@@ -1080,7 +1080,7 @@ class TestComprehensiveIntegration:
 
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
-    @patch("lib.utils.agno_storage_utils.create_dynamic_storage")
+    @patch("lib.utils.proxy_agents.create_dynamic_storage")
     @patch("lib.memory.memory_factory.create_agent_memory")
     async def test_comprehensive_agent_creation(
         self, mock_memory, mock_storage, mock_model, mock_agent_class, proxy
@@ -1136,7 +1136,7 @@ class TestComprehensiveIntegration:
             session_id="test-session-123",
             debug_mode=True,
             user_id="test-user-456",
-            db_url="test://comprehensive-db",
+            db_url="sqlite:///:memory:",  # Use valid SQLAlchemy URL for in-memory SQLite
         )
 
         # Verify all handlers were called

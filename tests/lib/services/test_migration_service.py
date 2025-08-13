@@ -63,8 +63,9 @@ class TestMigrationServiceInitialization:
         db_url = "postgresql://user:pass@localhost/test"
         service = MigrationService(db_url=db_url)
 
-        # Should be project_root/alembic.ini
-        expected_path = Path(__file__).parent.parent.parent / "alembic.ini"
+        # Should be project_root/alembic.ini - calculated the same way as production code
+        # lib/services/migration_service.py -> project_root
+        expected_path = Path(__file__).parent.parent.parent.parent / "alembic.ini"
         assert service.alembic_cfg_path == expected_path
 
 

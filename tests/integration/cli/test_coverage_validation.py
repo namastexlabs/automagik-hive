@@ -18,29 +18,39 @@ class CoverageAnalyzer:
     """Analyze test coverage for CLI modules."""
 
     def __init__(self):
+        # Updated to reflect actual CLI module structure
         self.cli_modules = [
-            'cli.commands.health',
-            'cli.commands.health_utils',
-            'cli.commands.health_report',
-            'cli.commands.orchestrator',
-            'cli.commands.workflow_utils',
-            'cli.commands.service',
-            'cli.commands.service_operations',
-            'cli.commands.service_status',
-            'cli.commands.service_logs',
-            'cli.commands.service_cleanup',
-            'cli.commands.workspace',
+            'cli.commands.agent',
+            'cli.commands.genie',
             'cli.commands.init',
+            'cli.commands.postgres',
             'cli.commands.uninstall',
+            'cli.commands.workspace',
             'cli.main',
             'cli.commands',
+            'cli.core.agent_environment',
+            'cli.core.agent_service',
+            'cli.core.postgres_service',
+            'cli.docker_manager',
+            'cli.utils',
+            'cli.workspace',
         ]
         
+        # Updated to reflect actual test module structure
         self.test_modules = [
-            'tests.cli.test_health_system_comprehensive',
-            'tests.cli.test_orchestrator_workflow_comprehensive',
-            'tests.cli.test_service_management_comprehensive',
-            'tests.cli.test_cli_integration_comprehensive',
+            'tests.cli.commands.test_agent_commands',
+            'tests.cli.commands.test_genie',
+            'tests.cli.commands.test_init',
+            'tests.cli.commands.test_postgres',
+            'tests.cli.commands.test_uninstall',
+            'tests.cli.commands.test_workspace',
+            'tests.cli.test_main',
+            'tests.cli.core.test_agent_environment',
+            'tests.cli.core.test_agent_service',
+            'tests.cli.core.test_postgres_service',
+            'tests.cli.test_docker_manager',
+            'tests.cli.test_utils',
+            'tests.cli.test_workspace_cli',
         ]
 
     def analyze_module_functions(self, module_name: str) -> Dict[str, List[str]]:

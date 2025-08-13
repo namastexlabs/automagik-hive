@@ -40,6 +40,21 @@ os.environ["ANTHROPIC_API_KEY"] = "test-key"
 os.environ["OPENAI_API_KEY"] = "test-key"
 
 
+def _create_test_fastapi_app() -> FastAPI:
+    """Create a minimal FastAPI app for testing with basic endpoints."""
+    test_app = FastAPI(title="Automagik Hive Multi-Agent System", description="Test Multi-Agent System", version="1.0.0")
+    
+    @test_app.get("/health")
+    async def health():
+        return {"status": "healthy"}
+    
+    @test_app.get("/")
+    async def root():
+        return {"status": "ok"}
+    
+    return test_app
+
+
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create an instance of the default event loop for the test session."""
@@ -356,11 +371,12 @@ def simple_fastapi_app(
     from api.routes.health import health_check_router
     from api.routes.mcp_router import router as mcp_router
     from api.routes.version_router import version_router
+    from lib.utils.version_reader import get_api_version
 
     # Create a simple test app with just the routes we need
     app = FastAPI(
         title="Test Automagik Hive Multi-Agent System",
-        version="2.0",
+        version=get_api_version(),
         description="Test Multi-Agent System",
     )
 
@@ -487,10 +503,13 @@ def mock_external_dependencies():
         patch("lib.logging.setup_logging"),
         patch("lib.logging.set_runtime_mode"),
         # Mock serve.py startup orchestration to prevent component loading at import
-        patch("api.serve.orchestrated_startup"),
+        patch("api.serve.orchestrated_startup", new_callable=AsyncMock),
         patch("api.serve.create_startup_display"),
-        # Mock the serve.py app creation to prevent execution at import time
-        patch("api.serve.create_automagik_api", return_value=Mock()),
+        # Mock async notification functions in lifespan
+        patch("common.startup_notifications.send_startup_notification", new_callable=AsyncMock),
+        patch("common.startup_notifications.send_shutdown_notification", new_callable=AsyncMock),
+        # Mock the serve.py app creation to return a FastAPI app with basic endpoints
+        patch("api.serve.create_automagik_api", side_effect=lambda: _create_test_fastapi_app()),
     ]
 
     for p in patches:

@@ -65,12 +65,13 @@ class TestLangWatchManager:
             # Manager creation might fail - that's acceptable for testing
             pass
 
-    @patch('lib.metrics.langwatch_integration.langwatch')
+    @patch('lib.metrics.langwatch_integration.langwatch', create=True)
     def test_langwatch_integration_mocked(self, mock_langwatch):
         """Test LangWatch integration with mocked dependencies."""
         # Mock the langwatch library
         mock_langwatch.configure = MagicMock()
         mock_langwatch.track = MagicMock()
+        mock_langwatch.setup = MagicMock()
         
         try:
             manager = LangWatchManager()
@@ -110,7 +111,7 @@ class TestLangWatchManagerEdgeCases:
 
     def test_missing_dependencies(self):
         """Test behavior when LangWatch dependencies are missing."""
-        with patch('lib.metrics.langwatch_integration.langwatch', None):
+        with patch('lib.metrics.langwatch_integration.langwatch', None, create=True):
             try:
                 manager = LangWatchManager()
                 # Should handle missing dependencies gracefully

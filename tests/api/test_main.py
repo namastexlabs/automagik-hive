@@ -19,6 +19,7 @@ class TestAppCreation:
     def test_create_app_basic(self, mock_auth_service, mock_database):
         """Test basic app creation without errors."""
         from api.main import create_app
+        from lib.utils.version_reader import get_api_version
 
         with patch("api.main.lifespan") as mock_lifespan:
             mock_lifespan.return_value = AsyncMock()
@@ -26,8 +27,8 @@ class TestAppCreation:
 
             assert app is not None
             assert app.title == "Automagik Hive Multi-Agent System"
-            # Version comes from api/settings.py
-            assert app.version == "2.0"
+            # Version comes from api/settings.py using get_api_version()
+            assert app.version == get_api_version()
             assert app.description == "Enterprise Multi-Agent AI Framework"
 
     def test_create_app_with_docs_enabled(self, mock_auth_service, mock_database):
@@ -358,10 +359,12 @@ class TestAppConfiguration:
 
     def test_app_metadata(self, simple_fastapi_app):
         """Test app metadata configuration."""
+        from lib.utils.version_reader import get_api_version
+        
         app = simple_fastapi_app
 
         assert app.title == "Test Automagik Hive Multi-Agent System"
-        assert app.version == "2.0"
+        assert app.version == get_api_version()
         assert "Multi-Agent" in app.description
 
     def test_openapi_configuration(self, simple_fastapi_app):
@@ -518,14 +521,21 @@ class TestMainModule:
         # Patch the actual import path used in main.py
         with patch("api.main.get_auth_service") as mock_auth:
             auth_service = MagicMock()
-            auth_service.is_auth_enabled.return_value = False
+            auth_service.get_auth_status.return_value = {
+                "environment": "development",
+                "auth_enabled": False,
+                "production_override_active": False,
+                "raw_hive_auth_disabled_setting": True,
+                "effective_auth_disabled": True,
+                "security_note": "Authentication is ALWAYS enabled in production regardless of HIVE_AUTH_DISABLED setting",
+            }
             mock_auth.return_value = auth_service
 
             # Test actual lifespan execution
             async with lifespan(mock_app):
                 # During lifespan, auth should be initialized
                 mock_auth.assert_called_once()
-                auth_service.is_auth_enabled.assert_called_once()
+                auth_service.get_auth_status.assert_called_once()
 
     def test_app_creation_with_all_settings(self):
         """Test app creation with different settings configurations."""

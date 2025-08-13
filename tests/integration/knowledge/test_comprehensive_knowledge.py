@@ -165,22 +165,22 @@ class TestRowBasedCSVKnowledge:
 
     def test_knowledge_loading(self):
         """Test knowledge loading from CSV."""
-        # Create knowledge CSV with expected columns (problem, solution, etc.)
+        # Create knowledge CSV with expected columns (question, answer, category, tags)
         test_data = [
-            ["problem", "solution", "business_unit", "typification"],
+            ["question", "answer", "category", "tags"],
             [
-                "Python basics",
+                "What are Python basics?",
                 "Python is a programming language",
                 "tech",
                 "programming",
             ],
             [
-                "Data structures",
+                "What are data structures?",
                 "Lists, dicts, sets are basic structures",
                 "tech",
                 "programming",
             ],
-            ["Machine learning", "ML is subset of AI", "ai", "concepts"],
+            ["What is machine learning?", "ML is subset of AI", "ai", "concepts"],
         ]
 
         with open(self.csv_file, "w", newline="") as f:
@@ -202,16 +202,16 @@ class TestRowBasedCSVKnowledge:
         # Check that documents have expected content format
         assert documents[0].content is not None
         assert documents[0].id is not None
-        assert "Problem:" in documents[0].content
+        assert "**Q:**" in documents[0].content
 
     def test_search_functionality(self):
         """Test search functionality if available."""
         # Create searchable knowledge with expected columns
         test_data = [
-            ["problem", "solution", "business_unit", "typification"],
-            ["Python", "Programming language", "tech", "code"],
-            ["JavaScript", "Web programming", "tech", "web"],
-            ["Database", "Data storage", "tech", "data"],
+            ["question", "answer", "category", "tags"],
+            ["What is Python?", "Programming language", "tech", "code"],
+            ["What is JavaScript?", "Web programming", "tech", "web"],
+            ["What is a Database?", "Data storage", "tech", "data"],
         ]
 
         with open(self.csv_file, "w", newline="") as f:

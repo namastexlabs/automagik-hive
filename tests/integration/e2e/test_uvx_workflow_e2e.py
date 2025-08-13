@@ -43,28 +43,30 @@ class TestUVXWorkflowEndToEnd:
     def mock_docker_environment(self):
         """Mock Docker environment for testing."""
         with (
-            patch("cli.core.docker_service.DockerService") as mock_docker_service,
+            patch("cli.docker_manager.DockerManager") as mock_docker_service,
             patch(
                 "cli.core.postgres_service.PostgreSQLService"
             ) as mock_postgres_service,
         ):
             # Configure mock Docker service
             mock_docker = Mock()
-            mock_docker.is_docker_available.return_value = True
-            mock_docker.is_container_running.return_value = False
-            mock_docker.start_container.return_value = True
-            mock_docker.stop_container.return_value = True
-            mock_docker.get_container_logs.return_value = "Mock container logs"
+            mock_docker.install.return_value = True
+            mock_docker.start.return_value = True
+            mock_docker.stop.return_value = True
+            mock_docker.restart.return_value = True
+            mock_docker.status.return_value = None
+            mock_docker.health.return_value = None
+            mock_docker.logs.return_value = None
+            mock_docker.uninstall.return_value = True
             mock_docker_service.return_value = mock_docker
 
             # Configure mock PostgreSQL service
             mock_postgres = Mock()
-            mock_postgres.is_postgres_running.return_value = False
-            mock_postgres.start_postgres.return_value = True
-            mock_postgres.stop_postgres.return_value = True
-            mock_postgres.get_postgres_status.return_value = {
+            mock_postgres.execute.return_value = True
+            mock_postgres.status.return_value = {
                 "status": "running",
                 "port": 35532,
+                "healthy": True,
             }
             mock_postgres_service.return_value = mock_postgres
 
@@ -87,7 +89,7 @@ class TestUVXWorkflowEndToEnd:
         ]
 
         with patch("builtins.input", side_effect=user_inputs):
-            with patch("sys.argv", ["automagik-hive", "--init"]):
+            with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
                 result = main()
 
         # Should fail initially - init workflow not fully implemented
@@ -495,7 +497,7 @@ class TestWorkflowPerformanceBenchmarks:
         start_time = time.time()
 
         with patch("builtins.input", side_effect=user_inputs):
-            with patch("sys.argv", ["automagik-hive", "--init"]):
+            with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
                 result = main()
 
         elapsed = time.time() - start_time
@@ -586,7 +588,7 @@ class TestWorkflowErrorRecovery:
 
         try:
             with patch("builtins.input", side_effect=user_inputs):
-                with patch("sys.argv", ["automagik-hive", "--init"]):
+                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
                     result = main()
 
             # Should fail initially - permission error handling not implemented
@@ -674,7 +676,7 @@ class TestWorkflowCrossPlatformValidation:
         user_inputs = [str(unix_workspace), "n", ""]
 
         with patch("builtins.input", side_effect=user_inputs):
-            with patch("sys.argv", ["automagik-hive", "--init"]):
+            with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
                 result = main()
 
         # Should fail initially - Unix path handling not validated
@@ -689,7 +691,7 @@ class TestWorkflowCrossPlatformValidation:
         user_inputs = [str(workspace_path), "n", ""]
 
         with patch("builtins.input", side_effect=user_inputs):
-            with patch("sys.argv", ["automagik-hive", "--init"]):
+            with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
                 result = main()
 
         if result == 0 and workspace_path.exists():
@@ -743,7 +745,7 @@ class TestWorkflowCrossPlatformValidation:
             user_inputs = [path_format, "n", ""]
 
             with patch("builtins.input", side_effect=user_inputs):
-                with patch("sys.argv", ["automagik-hive", "--init"]):
+                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
                     result = main()
 
             # Should fail initially - path separator normalization not implemented

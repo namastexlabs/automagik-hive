@@ -65,23 +65,40 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                 reader = csv.DictReader(f)
                 rows = list(reader)
 
-                # Process rows with new AI framework schema
+                # Process rows with flexible schema (question/answer or problem/solution)
                 for row_index, row in enumerate(rows):
-                    # Primary content is the answer
-                    answer = row.get("answer", "").strip()
-                    if not answer:
-                        continue  # Skip rows without answers
+                    # Support both column schemas:
+                    # 1. question/answer (test schema)
+                    # 2. problem/solution (business schema)
                     
-                    # Create content with question context if available
+                    # Primary content - try answer first, then solution
+                    answer = row.get("answer", "").strip()
+                    solution = row.get("solution", "").strip()
+                    main_content = answer or solution
+                    
+                    if not main_content:
+                        continue  # Skip rows without main content
+                    
+                    # Create content with context if available
                     content_parts = []
                     
-                    # Add question for context
+                    # Add question/problem for context
                     question = row.get("question", "").strip()
-                    if question:
-                        content_parts.append(f"**Q:** {question}")
+                    problem = row.get("problem", "").strip()
+                    context = question or problem
                     
-                    # Add main answer content
-                    content_parts.append(f"**A:** {answer}")
+                    if context:
+                        # Use appropriate labels based on which schema is present
+                        if question:
+                            content_parts.append(f"**Q:** {question}")
+                        else:
+                            content_parts.append(f"**Problem:** {problem}")
+                    
+                    # Add main content with appropriate label
+                    if answer:
+                        content_parts.append(f"**A:** {answer}")
+                    else:
+                        content_parts.append(f"**Solution:** {solution}")
 
                     # Create document content
                     content = "\n\n".join(content_parts)
@@ -93,8 +110,10 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                             "source": "knowledge_rag_csv",
                             "category": row.get("category", "").strip(),
                             "tags": row.get("tags", "").strip(),
-                            "has_question": bool(question),
-                            "has_answer": bool(answer),
+                            "has_question": bool(context),
+                            "has_answer": bool(main_content),
+                            # Add schema-specific metadata
+                            "schema_type": "question_answer" if question else "problem_solution",
                         }
 
                         # Create document with unique ID based on row index

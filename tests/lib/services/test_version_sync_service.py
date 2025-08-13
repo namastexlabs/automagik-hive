@@ -74,15 +74,16 @@ class TestAgnoVersionSyncService:
 
     def test_service_initialization(self, mock_db_service, mock_settings):
         """Test service initialization with dependencies."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        # AgnoVersionSyncService takes only db_url, not db_service and settings
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
-        assert service.db_service == mock_db_service
-        assert service.settings == mock_settings
+        assert service.db_url == "postgresql://test:test@localhost:5432/test_db"
+        assert hasattr(service, 'version_service')
 
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_agent(self, mock_db_service, mock_settings, sample_agent_yaml):
         """Test getting version info from agent YAML files."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         with patch('pathlib.Path.iterdir') as mock_iterdir, \
              patch('pathlib.Path.is_dir', return_value=True), \
@@ -108,7 +109,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_team(self, mock_db_service, mock_settings, sample_team_yaml):
         """Test getting version info from team YAML files."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         with patch('pathlib.Path.iterdir') as mock_iterdir, \
              patch('pathlib.Path.is_dir', return_value=True), \
@@ -134,7 +135,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_workflow(self, mock_db_service, mock_settings, sample_workflow_yaml):
         """Test getting version info from workflow YAML files."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         with patch('pathlib.Path.iterdir') as mock_iterdir, \
              patch('pathlib.Path.is_dir', return_value=True), \
@@ -160,7 +161,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_db_component_versions(self, mock_db_service, mock_settings):
         """Test getting component versions from database."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         mock_db_versions = [
             {
@@ -188,7 +189,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_db_component_versions_by_type(self, mock_db_service, mock_settings):
         """Test getting component versions from database filtered by type."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         mock_agent_versions = [
             {
@@ -212,7 +213,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_new_component(self, mock_db_service, mock_settings):
         """Test syncing new component to database."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock no existing component in DB
         mock_db_service.fetch_one.return_value = None
@@ -234,7 +235,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_existing_component_different_version(self, mock_db_service, mock_settings):
         """Test syncing existing component with different version."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock existing component with different version
         existing_component = {
@@ -260,7 +261,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_existing_component_same_version(self, mock_db_service, mock_settings):
         """Test syncing existing component with same version (no action)."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock existing component with same version
         existing_component = {
@@ -283,7 +284,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_yaml_to_db_full_sync(self, mock_db_service, mock_settings):
         """Test full YAML to database synchronization."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock YAML components
         yaml_components = [
@@ -309,7 +310,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_sync_yaml_to_db_by_type(self, mock_db_service, mock_settings):
         """Test YAML to database sync filtered by component type."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         agent_components = [
             {"component_type": "agent", "name": "agent1", "version": "1.0.0"}
@@ -330,7 +331,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_sync_status(self, mock_db_service, mock_settings):
         """Test getting synchronization status between YAML and DB."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         yaml_components = [
             {"component_type": "agent", "name": "agent1", "version": "1.0.0"},
@@ -357,7 +358,7 @@ class TestAgnoVersionSyncService:
     @pytest.mark.asyncio
     async def test_get_sync_status_by_type(self, mock_db_service, mock_settings):
         """Test getting sync status filtered by component type."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         yaml_teams = [
             {"component_type": "team", "name": "team1", "version": "1.0.0"}
@@ -384,7 +385,7 @@ class TestAgnoVersionSyncServiceEdgeCases:
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_missing_directory(self, mock_db_service, mock_settings):
         """Test handling missing component directory."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         with patch('pathlib.Path.exists', return_value=False):
             versions = await service.get_yaml_component_versions("agent")
@@ -394,7 +395,7 @@ class TestAgnoVersionSyncServiceEdgeCases:
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_invalid_yaml(self, mock_db_service, mock_settings):
         """Test handling invalid YAML files."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         with patch('pathlib.Path.iterdir') as mock_iterdir, \
              patch('pathlib.Path.is_dir', return_value=True), \
@@ -418,7 +419,7 @@ class TestAgnoVersionSyncServiceEdgeCases:
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_missing_version(self, mock_db_service, mock_settings):
         """Test handling YAML without version field."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         yaml_without_version = {
             "name": "no-version-agent",
@@ -447,7 +448,7 @@ class TestAgnoVersionSyncServiceEdgeCases:
     @pytest.mark.asyncio
     async def test_sync_component_to_db_database_error(self, mock_db_service, mock_settings):
         """Test handling database errors during sync."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         mock_db_service.fetch_one.side_effect = Exception("Database connection failed")
         
@@ -464,7 +465,7 @@ class TestAgnoVersionSyncServiceEdgeCases:
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_no_config_files(self, mock_db_service, mock_settings):
         """Test handling directories without config files."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         with patch('pathlib.Path.iterdir') as mock_iterdir, \
              patch('pathlib.Path.is_dir', return_value=True), \
@@ -483,7 +484,7 @@ class TestAgnoVersionSyncServiceEdgeCases:
     @pytest.mark.asyncio
     async def test_get_yaml_component_versions_non_yaml_files(self, mock_db_service, mock_settings):
         """Test handling directories with non-YAML files."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         with patch('pathlib.Path.iterdir') as mock_iterdir, \
              patch('pathlib.Path.is_dir', return_value=True), \
@@ -510,7 +511,7 @@ class TestAgnoVersionSyncServiceIntegration:
     @pytest.mark.asyncio
     async def test_full_sync_workflow(self, mock_db_service, mock_settings):
         """Test complete synchronization workflow."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Setup mock data
         yaml_components = [
@@ -542,7 +543,7 @@ class TestAgnoVersionSyncServiceIntegration:
     @pytest.mark.asyncio
     async def test_sync_with_mixed_component_states(self, mock_db_service, mock_settings):
         """Test sync with components in different states."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock database responses for different scenarios
         def mock_fetch_one_side_effect(query, params):
@@ -575,7 +576,7 @@ class TestAgnoVersionSyncServiceIntegration:
     @pytest.mark.asyncio
     async def test_concurrent_access_simulation(self, mock_db_service, mock_settings):
         """Test handling multiple concurrent sync operations."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock async delays to simulate concurrent access
         async def delayed_sync_component(component_data):
@@ -605,7 +606,7 @@ class TestAgnoVersionSyncServiceIntegration:
     @pytest.mark.asyncio 
     async def test_component_discovery_patterns(self, mock_db_service, mock_settings):
         """Test different component discovery patterns."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Test with nested directories and various file patterns
         with patch('pathlib.Path.iterdir') as mock_iterdir, \
@@ -643,7 +644,7 @@ class TestAgnoVersionSyncServiceIntegration:
     @pytest.mark.asyncio
     async def test_version_comparison_edge_cases(self, mock_db_service, mock_settings):
         """Test edge cases in version comparison logic."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Test different version formats
         version_scenarios = [
@@ -724,7 +725,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_force_sync_operation(self, mock_db_service, mock_settings):
         """Test force sync that updates all components regardless of version."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock existing component with same version
         mock_db_service.fetch_one.return_value = {
@@ -764,7 +765,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_backup_and_restore_workflow(self, mock_db_service, mock_settings):
         """Test backup creation and restoration of component versions."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Mock existing DB state
         existing_versions = [
@@ -799,7 +800,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_health_check_and_diagnostics(self, mock_db_service, mock_settings):
         """Test service health check and diagnostic capabilities."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Test database connectivity
         mock_db_service.fetch_one.return_value = {"count": 5}
@@ -819,7 +820,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_large_scale_sync_performance(self, mock_db_service, mock_settings):
         """Test performance characteristics with large numbers of components."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Generate large number of components
         large_component_set = [
@@ -849,7 +850,7 @@ class TestAgnoVersionSyncServiceAdvanced:
     @pytest.mark.asyncio
     async def test_error_recovery_and_resilience(self, mock_db_service, mock_settings):
         """Test error recovery and system resilience."""
-        service = AgnoVersionSyncService(mock_db_service, mock_settings)
+        service = AgnoVersionSyncService(db_url="postgresql://test:test@localhost:5432/test_db")
         
         # Test partial failure scenario
         component_data = [

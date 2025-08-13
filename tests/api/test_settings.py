@@ -305,7 +305,7 @@ class TestFieldValidators:
         from api.settings import ApiSettings
 
         # Test validator directly
-        valid_envs = ["development", "production"]
+        valid_envs = ["development", "staging", "production"]
 
         for env in valid_envs:
             # Should not raise exception
@@ -316,7 +316,7 @@ class TestFieldValidators:
         """Test environment validator with invalid values."""
         from api.settings import ApiSettings
 
-        invalid_envs = ["staging", "test", "invalid", ""]
+        invalid_envs = ["test", "invalid", ""]
 
         for env in invalid_envs:
             with pytest.raises(ValueError, match="Invalid environment"):

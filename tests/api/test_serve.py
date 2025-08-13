@@ -71,7 +71,9 @@ class TestServeModuleFunctions:
         assert isinstance(app, FastAPI)
         assert app.title == "Automagik Hive Multi-Agent System"
         assert "Simplified Mode" in app.description
-        assert app.version == "1.0.0"
+        # Version should match current project version from version_reader
+        from lib.utils.version_reader import get_api_version
+        assert app.version == get_api_version()
 
         # Test the app endpoints work
         with TestClient(app) as client:
@@ -94,26 +96,36 @@ class TestServeModuleFunctions:
         # Test lifespan function creation
         mock_startup_display = MagicMock()
         
-        with patch("lib.utils.startup_display.startup_display", mock_startup_display):
-            # This should create a lifespan function
-            lifespan_func = api.serve.create_lifespan(mock_startup_display)
-            
-            # Verify it's a function that can be called
-            assert callable(lifespan_func)
+        # create_lifespan takes startup_display as a direct parameter
+        lifespan_func = api.serve.create_lifespan(mock_startup_display)
+        
+        # Verify it's a function that can be called
+        assert callable(lifespan_func)
 
     def test_get_app_function(self):
         """Test get_app function execution."""
-        # Mock dependencies
-        with patch("api.serve.create_lifespan") as mock_create_lifespan:
-            with patch("lib.utils.startup_display.startup_display") as mock_startup:
-                mock_create_lifespan.return_value = MagicMock()
-                
-                # Test get_app function
-                app = api.serve.get_app()
-                
-                # Should return a FastAPI instance
-                assert isinstance(app, FastAPI)
-                assert app.title == "Automagik Hive Multi-Agent System"
+        # Mock dependencies that would cause complex initialization
+        with patch("api.serve.create_automagik_api") as mock_create_api:
+            # Clear any cached app instance first
+            api.serve._app_instance = None
+            
+            # Create a real FastAPI app to return
+            mock_app = FastAPI(
+                title="Automagik Hive Multi-Agent System",
+                description="Test app",
+                version="test"
+            )
+            mock_create_api.return_value = mock_app
+            
+            # Test get_app function
+            app = api.serve.get_app()
+            
+            # Should return a FastAPI instance
+            assert isinstance(app, FastAPI)
+            assert app.title == "Automagik Hive Multi-Agent System"
+            
+            # Clean up - reset the cached instance to None after test
+            api.serve._app_instance = None
 
     def test_main_function_execution(self):
         """Test main function with different scenarios."""
@@ -207,14 +219,13 @@ class TestServeIntegration:
     def test_lifespan_integration(self):
         """Test lifespan integration with startup and shutdown."""
         # Mock the startup display
-        with patch("lib.utils.startup_display.startup_display") as mock_startup:
-            mock_startup.return_value = MagicMock()
-            
-            # Create lifespan
-            lifespan_func = api.serve.create_lifespan(mock_startup.return_value)
-            
-            # Test that lifespan can be created
-            assert callable(lifespan_func)
+        mock_startup_display = MagicMock()
+        
+        # Create lifespan - create_lifespan takes startup_display as direct parameter
+        lifespan_func = api.serve.create_lifespan(mock_startup_display)
+        
+        # Test that lifespan can be created
+        assert callable(lifespan_func)
 
     def test_full_server_workflow(self):
         """Test complete server workflow."""

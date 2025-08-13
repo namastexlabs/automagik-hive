@@ -3,9 +3,10 @@
 import csv
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from agno.vectordb.base import VectorDb
 
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 
@@ -38,7 +39,7 @@ def temp_csv_file(sample_csv_content):
 @pytest.fixture
 def mock_vector_db():
     """Mock vector database for testing"""
-    mock_db = Mock()
+    mock_db = MagicMock(spec=VectorDb)
     mock_db.exists.return_value = True
     mock_db.upsert_available.return_value = True
     return mock_db
@@ -110,19 +111,17 @@ def test_missing_csv_file(mock_vector_db):
     assert len(kb.documents) == 0
 
 
-def test_reload_from_csv(temp_csv_file, mock_vector_db):
+@patch.object(RowBasedCSVKnowledgeBase, 'load')
+def test_reload_from_csv(mock_load, temp_csv_file, mock_vector_db):
     """Test CSV reload functionality"""
     kb = RowBasedCSVKnowledgeBase(csv_path=temp_csv_file, vector_db=mock_vector_db)
     original_count = len(kb.documents)
-    
-    # Mock the load method
-    kb.load = Mock()
     
     # Test reload
     kb.reload_from_csv()
     
     # Should call load with recreate=True
-    kb.load.assert_called_once_with(recreate=True, skip_existing=False)
+    mock_load.assert_called_once_with(recreate=True, skip_existing=False)
 
 
 def test_validate_filters(temp_csv_file, mock_vector_db):
@@ -173,22 +172,22 @@ def test_skip_empty_answers(mock_vector_db):
 
 def test_knowledge_loading_with_expected_columns(mock_vector_db):
     """Test knowledge loading from CSV with expected business columns."""
-    # Create knowledge CSV with expected columns (problem, solution, etc.)
+    # Create knowledge CSV with expected columns (question, answer, category, tags)
     test_data = [
-        ["problem", "solution", "business_unit", "typification"],
+        ["question", "answer", "category", "tags"],
         [
-            "Python basics",
+            "What are Python basics?",
             "Python is a programming language",
             "tech",
             "programming",
         ],
         [
-            "Data structures",
+            "What are data structures?",
             "Lists, dicts, sets are basic structures",
             "tech",
             "programming",
         ],
-        ["Machine learning", "ML is subset of AI", "ai", "concepts"],
+        ["What is machine learning?", "ML is subset of AI", "ai", "concepts"],
     ]
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, newline='') as f:
@@ -208,7 +207,7 @@ def test_knowledge_loading_with_expected_columns(mock_vector_db):
         # Check that documents have expected content format
         assert documents[0].content is not None
         assert documents[0].id is not None
-        assert "Problem:" in documents[0].content
+        assert "**Q:**" in documents[0].content
     finally:
         Path(csv_path).unlink(missing_ok=True)
 
@@ -217,10 +216,10 @@ def test_search_functionality_basic(mock_vector_db):
     """Test search functionality if available."""
     # Create searchable knowledge with expected columns
     test_data = [
-        ["problem", "solution", "business_unit", "typification"],
-        ["Python", "Programming language", "tech", "code"],
-        ["JavaScript", "Web programming", "tech", "web"],
-        ["Database", "Data storage", "tech", "data"],
+        ["question", "answer", "category", "tags"],
+        ["What is Python?", "Programming language", "tech", "code"],
+        ["What is JavaScript?", "Web programming", "tech", "web"],
+        ["What is a Database?", "Data storage", "tech", "data"],
     ]
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, newline='') as f:
