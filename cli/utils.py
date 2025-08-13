@@ -66,7 +66,11 @@ def format_status(name: str, status: str, details: str = "") -> str:
 def confirm_action(message: str, default: bool = False) -> bool:
     """Ask user for confirmation."""
     suffix = " (Y/n)" if default else " (y/N)"
-    response = input(f"{message}{suffix}: ").strip().lower()
+    try:
+        response = input(f"{message}{suffix}: ").strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        # Handle Ctrl+C and Ctrl+D gracefully - return default value
+        return default
     
     if not response:
         return default

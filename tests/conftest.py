@@ -63,6 +63,22 @@ def _create_test_fastapi_app() -> FastAPI:
     return test_app
 
 
+@pytest.fixture(scope="session", autouse=True)
+def preserve_builtin_input():
+    """Preserve and restore the original input function to prevent KeyboardInterrupt during pytest shutdown."""
+    import builtins
+    # Back up the original input function
+    original_input = builtins.input
+    builtins.__original_input__ = original_input
+    
+    yield
+    
+    # Restore the original input function during session cleanup
+    # This prevents any lingering mocks with KeyboardInterrupt side effects
+    # from interfering with pytest's shutdown process
+    builtins.input = original_input
+
+
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create an instance of the default event loop for the test session."""
@@ -85,6 +101,23 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
             pass
         finally:
             loop.close()
+            
+        # CRITICAL FIX: Ensure builtins.input is restored to prevent 
+        # KeyboardInterrupt during pytest shutdown
+        try:
+            import builtins
+            # Force restore the original input function to prevent any lingering mocks
+            # that might have KeyboardInterrupt side effects
+            if hasattr(builtins, '__original_input__'):
+                builtins.input = builtins.__original_input__
+            else:
+                # Restore input to a safe default implementation
+                def safe_input(prompt=""):
+                    return ""
+                builtins.input = safe_input
+        except Exception:
+            # Fail silently to avoid affecting test results  
+            pass
 
 
 @pytest.fixture
@@ -188,9 +221,8 @@ def mock_component_registries() -> Generator[
     for p in patches:
         try:
             p.stop()
-        except BaseException:
+        except Exception:
             # Ignore cleanup errors to prevent test failures
-            # Note: Using BaseException to catch KeyboardInterrupt from side_effects
             pass
 
 
@@ -554,7 +586,6 @@ def mock_external_dependencies():
         for p in reversed(started_patches):
             try:
                 p.stop()
-            except BaseException:
+            except Exception:
                 # Ignore cleanup errors to prevent test failures
-                # Note: Using BaseException to catch KeyboardInterrupt from side_effects
                 pass

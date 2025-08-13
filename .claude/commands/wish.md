@@ -11,12 +11,12 @@ description: 🧞✨ Transform any development wish into reality through intelli
 
 **Core Philosophy**: Maintain strategic focus by delegating tactical work to specialized agents with clean, focused execution, while leveraging structured wish documents for complex multi-phase projects.
 
-**🆕 ZEN INTEGRATION UPDATE**: 15 agents now feature ZEN_ENABLED multi-model analysis (genie-dev-fixer, genie-clone, genie-dev-planner, genie-dev-designer, genie-dev-coder, genie-testing-maker, genie-testing-fixer, genie-qa-tester, genie-agent-creator, genie-agent-enhancer, genie-claudemd, genie-quality-mypy, genie-quality-ruff, genie-self-learn, genie-task-analyst) with zen capabilities for complex tasks, expert validation, and strategic coordination.
+**ZEN INTEGRATION UPDATE**: All agents now feature zen multi-model analysis capabilities for complex tasks, expert validation, and strategic coordination.
 
 ## 🧞 Master Genie Wish Fulfillment Flow
 
 ```
-/wish → 📋 Wish Document Check → 🧠 Smart Analysis → 🎯 Agent Selection → ⚡ Context-Aware Execution → ✨ Wish Granted
+/wish → 📋 Wish Document Check → 🧠 Smart Analysis → 🎯 Agent Selection → Context-Aware Execution → ✨ Wish Granted
 ```
 
 ## 📋 **WISH DOCUMENT INTEGRATION**
@@ -69,7 +69,7 @@ def match_wish_document(user_wish, available_documents):
 3. **Identify parallel opportunities** based on dependency analysis
 4. **Generate orchestration phases** dynamically
 
-**⚡ PARALLEL EXECUTION PATTERNS**:
+**PARALLEL EXECUTION PATTERNS**:
 
 **Pattern 1: Foundation → Implementation → Integration**
 ```
@@ -87,20 +87,20 @@ Task(subagent_type="genie-dev-fixer", prompt="T3.0: Integration per @document#T3
 
 **Pattern 2: Planning → Design → Development → Testing (Zen-Powered)**
 ```
-# Planning tasks (ZEN_ENABLED requirements analysis)
-Task(subagent_type="genie-dev-planner", prompt="ZEN_RESEARCH: T1.0: Requirements analysis per @document#T1.0")
+# Planning tasks with zen research capabilities
+Task(subagent_type="genie-dev-planner", prompt="T1.0: Requirements analysis per @document#T1.0")
 
-# Design tasks (zen consensus for architectural decisions)
-Task(subagent_type="genie-dev-designer", prompt="ZEN_CONSENSUS: T2.0: Component A design per @document#T2.0")
-Task(subagent_type="genie-dev-designer", prompt="ZEN_CONSENSUS: T2.1: Component B design per @document#T2.1")
+# Design tasks with zen consensus for architectural decisions
+Task(subagent_type="genie-dev-designer", prompt="T2.0: Component A design per @document#T2.0")
+Task(subagent_type="genie-dev-designer", prompt="T2.1: Component B design per @document#T2.1")
 
-# Development tasks (ZEN_ENABLED TDD cycles)
-Task(subagent_type="genie-testing-maker", prompt="ZEN_ENABLED: T3.0: Test suite per @document#T3.0")
-Task(subagent_type="genie-dev-coder", prompt="ZEN_ENABLED: T3.1: Implementation per @document#T3.1")
+# Development tasks with zen capabilities
+Task(subagent_type="genie-testing-maker", prompt="T3.0: Test suite per @document#T3.0")
+Task(subagent_type="genie-dev-coder", prompt="T3.1: Implementation per @document#T3.1")
 
-# Quality tasks (ZEN_ENABLED parallel execution)
+# Quality tasks with parallel execution
 Task(subagent_type="genie-quality-ruff", prompt="T4.0: Code formatting per @document#T4.0")
-Task(subagent_type="genie-quality-mypy", prompt="ZEN_ENABLED: T4.1: Advanced type checking per @document#T4.1")
+Task(subagent_type="genie-quality-mypy", prompt="T4.1: Advanced type checking per @document#T4.1")
 ```
 
 **Pattern 3: Multi-Component Architecture**
@@ -149,12 +149,12 @@ Task(subagent_type="genie-dev-fixer", prompt="T3.0: Integration per @document#T3
 
 | Wish Category | Analysis Approach | Agent Selection Strategy | Zen Enhancement |
 |---------------|-------------------|--------------------------|-----------------|
-| **🔧 Testing & Quality** | Assess scope and current state | Simple fix → `genie-testing-fixer` ⚡, New tests → `genie-testing-maker` ⚡, QA testing → `genie-qa-tester`, Format → `genie-quality-ruff`, Types → `genie-quality-mypy` | Use ZEN_ENABLED for complex test debugging |
-| **🏗️ Development Pipeline** | Check if requirements exist | No specs → `genie-dev-planner` ⚡, Has TSD → `genie-dev-designer` ⚡, Has DDD → `genie-dev-coder` ⚡ | Use ZEN_CONSENSUS for architectural decisions |
-| **🐛 Issues & Debugging** | Error analysis and component identification | Single issue → `genie-dev-fixer` ⚡, System-wide → `genie-clone` ⚡ coordination | Use ZEN_ENABLED for multi-component debugging |
-| **📚 Documentation** | Scope assessment and complexity | Simple updates → `genie-claudemd`, Complex coordination → `genie-clone` ⚡ | Use ZEN_RESEARCH for complete documentation |
+| **🔧 Testing & Quality** | Assess scope and current state | Simple fix → `genie-testing-fixer`, New tests → `genie-testing-maker`, QA testing → `genie-qa-tester`, Format → `genie-quality-ruff`, Types → `genie-quality-mypy` | Zen tools for complex test debugging |
+| **🏗️ Development Pipeline** | Check if requirements exist | No specs → `genie-dev-planner`, Has TSD → `genie-dev-designer`, Has DDD → `genie-dev-coder` | Zen consensus for architectural decisions |
+| **🐛 Issues & Debugging** | Error analysis and component identification | Single issue → `genie-dev-fixer`, System-wide → `genie-clone` coordination | Zen tools for multi-component debugging |
+| **📚 Documentation** | Scope assessment and complexity | Simple updates → `genie-claudemd`, Complex coordination → `genie-clone` | Zen research for complete documentation |
 | **🤖 Agent Operations** | Agent management type | Improve existing → `genie-agent-enhancer`, Create new → `genie-agent-creator` | Standard operations |
-| **🌟 Multi-Intent/Epic** | Decomposition and coordination needs | Always → `genie-clone` ⚡ with fractal context preservation | Use ZEN_COORDINATION for epic orchestration |
+| **🌟 Multi-Intent/Epic** | Decomposition and coordination needs | Always → `genie-clone` with fractal context preservation | Zen coordination for epic orchestration |
 
 ### 🎯 Step 2: Smart Clarification Strategy
 
@@ -182,13 +182,13 @@ Task(subagent_type="genie-dev-fixer", prompt="T3.0: Integration per @document#T3
 - **genie-debug**: "Which error or file?" (if not specified)
 - **genie-docs**: "API docs or user guides?"
 
-**⚡ CLARIFICATION BYPASS TRIGGERS:**
+**CLARIFICATION BYPASS TRIGGERS:**
 - User provides specific files/components
 - Error messages or stack traces included
 - Clear scope indicators ("all tests", "entire codebase", "new feature X")
 - Previous context makes intent obvious
 
-### ⚡ Step 3: Agent-Powered Execution Strategy
+### Step 3: Agent-Powered Execution Strategy
 
 **No more progressive levels - Direct agent intelligence with smart escalation:**
 
@@ -232,11 +232,11 @@ Agent → Zen discussion with Gemini/Grok → Refined solution ✨
 **Pattern 2: Multi-Agent Coordination (Zen-Powered)**
 ```bash
 # User: "I want to add OAuth2 authentication with full security audit"
-@genie-clone "ZEN_COORDINATION: Coordinate OAuth2 implementation: 
-- genie-dev-designer: ZEN_CONSENSUS - Design OAuth2 integration architecture
-- genie-testing-maker: ZEN_ENABLED - Create complete security test suite
-- genie-dev-coder: ZEN_ENABLED - Implement OAuth2 flow with security best practices
-- genie-claudemd: ZEN_RESEARCH - Update authentication documentation"
+@genie-clone "Coordinate OAuth2 implementation: 
+- genie-dev-designer: Design OAuth2 integration architecture with zen consensus
+- genie-testing-maker: Create complete security test suite
+- genie-dev-coder: Implement OAuth2 flow with security best practices
+- genie-claudemd: Update authentication documentation with zen research"
 ```
 
 **Pattern 3: Parallel Execution**
@@ -306,31 +306,31 @@ mcp__genie_memory__search_memory("agent execution patterns [task_type]")
 ### 🛠️ **CURRENT AGENT ECOSYSTEM (2025 Q1)**
 
 **🧪 TESTING SPECIALISTS:**
-- **genie-testing-fixer** ⚡ *ZEN_ENABLED* - Fix failing tests, maintain 85%+ coverage, TDD Guard compliance
-- **genie-testing-maker** ⚡ *ZEN_ENABLED* - Create complete test suites with pytest patterns
-- **genie-qa-tester** ⚡ *ZEN_ENABLED* - Systematic live endpoint testing with curl commands and OpenAPI mapping
+- **genie-testing-fixer** - Fix failing tests, maintain 85%+ coverage, TDD Guard compliance
+- **genie-testing-maker** - Create complete test suites with pytest patterns
+- **genie-qa-tester** - Systematic live endpoint testing with curl commands and OpenAPI mapping
 
-**⚡ QUALITY SPECIALISTS:**  
-- **genie-quality-ruff** ⚡ *ZEN_ENABLED* - Ultra-focused Ruff formatting and linting with complexity escalation
-- **genie-quality-mypy** ⚡ *ZEN_ENABLED* - Ultra-focused MyPy type checking and annotations (orchestration-compliant)
+**QUALITY SPECIALISTS:**  
+- **genie-quality-ruff** - Ultra-focused Ruff formatting and linting with complexity escalation
+- **genie-quality-mypy** - Ultra-focused MyPy type checking and annotations (orchestration-compliant)
 
 **💻 DEVELOPMENT SPECIALISTS:**
-- **genie-dev-planner** ⚡ *ZEN_ENABLED* - Requirements analysis and technical specifications (TSD creation)
-- **genie-dev-designer** ⚡ *ZEN_ENABLED* - System design and architectural solutions (DDD creation)
-- **genie-dev-coder** ⚡ *ZEN_ENABLED* - Code implementation based on design documents
-- **genie-dev-fixer** ⚡ *ZEN_ENABLED* - Systematic debugging and issue resolution
+- **genie-dev-planner** - Requirements analysis and technical specifications (TSD creation)
+- **genie-dev-designer** - System design and architectural solutions (DDD creation)
+- **genie-dev-coder** - Code implementation based on design documents
+- **genie-dev-fixer** - Systematic debugging and issue resolution
 
 **🤖 AGENT MANAGEMENT:**
-- **genie-agent-creator** ⚡ *ZEN_ENABLED* - Create new specialized agents from scratch
-- **genie-agent-enhancer** ⚡ *ZEN_ENABLED* - Enhance and improve existing agents
+- **genie-agent-creator** - Create new specialized agents from scratch
+- **genie-agent-enhancer** - Enhance and improve existing agents
 
 **📚 DOCUMENTATION:**
-- **genie-claudemd** ⚡ *ZEN_ENABLED* - CLAUDE.md documentation management and consistency
+- **genie-claudemd** - CLAUDE.md documentation management and consistency
 
 **🧠 COORDINATION & SCALING:**
-- **genie-clone** ⚡ *ZEN_ENABLED* - Fractal Genie cloning for complex multi-task operations
-- **genie-self-learn** ⚡ *ZEN_ENABLED* - Behavioral learning with multi-expert validation
-- **genie-task-analyst** ⚡ *ZEN_ENABLED* - Task analysis with sophisticated zen coordination
+- **genie-clone** - Fractal Genie cloning for complex multi-task operations
+- **genie-self-learn** - Behavioral learning with multi-expert validation
+- **genie-task-analyst** - Task analysis with sophisticated zen coordination
 - **hive-behavior-updater** - System-wide behavioral updates and coordination
 
 ### 💾 Memory-Driven Agent Intelligence
@@ -349,9 +349,9 @@ success_patterns = mcp__genie_memory__search_memory(
 ```
 
 ### 🧠 Zen-Powered Agent Capabilities  
-**15 agents now feature ZEN_ENABLED multi-model analysis for complex tasks:**
+**All agents now feature zen multi-model analysis for complex tasks:**
 
-**⚡ ZEN_ENABLED AGENTS (15/15 Complete):**
+**ZEN-CAPABLE AGENTS:**
 - **Core Development**: genie-dev-fixer, genie-dev-planner, genie-dev-designer, genie-dev-coder
 - **Testing Excellence**: genie-testing-maker, genie-testing-fixer, genie-qa-tester  
 - **Agent Management**: genie-agent-creator, genie-agent-enhancer
@@ -413,56 +413,56 @@ mcp__ask_repo_agent__ask_question(
 
 | Agent | Simple Tasks | Complex Tasks | Epic Scale | Zen Status |
 |-------|-------------|---------------|-----------|------------|
-| **genie-testing-fixer** ⚡ | Direct test fixes | + Zen debug analysis | + Multi-model consensus | **ZEN_ENABLED** |
-| **genie-testing-maker** ⚡ | Pattern-based tests | + Deep test analysis | + Consensus + Research | **ZEN_ENABLED** |
-| **genie-qa-tester** ⚡ | Live endpoint tests | + Zen workflow analysis | + Multi-expert validation | **ZEN_ENABLED** |
-| **genie-dev-fixer** ⚡ | Direct debugging | + Zen debug analysis | + Multi-model consensus | **ZEN_ENABLED** |
-| **genie-dev-planner** ⚡ | Pattern matching | + Deep thinking | + Consensus + Research | **ZEN_ENABLED** |
-| **genie-dev-designer** ⚡ | Architecture patterns | + Deep thinking | + Consensus + Research | **ZEN_ENABLED** |
-| **genie-dev-coder** ⚡ | Implementation | + Zen code analysis | + Multi-model consensus | **ZEN_ENABLED** |
-| **genie-clone** ⚡ | Coordination only | + Strategic analysis | + Full orchestration | **ZEN_ENABLED** |
-| **genie-quality-ruff** ⚡ | Ruff operations | + Zen complexity analysis | + Multi-model validation | **ZEN_ENABLED** |
-| **genie-quality-mypy** ⚡ | Type checking | + Zen type analysis | + Expert consensus | **ZEN_ENABLED** |
+| **genie-testing-fixer** | Direct test fixes | + Zen debug analysis | + Multi-model consensus | **Zen Capable** |
+| **genie-testing-maker** | Pattern-based tests | + Deep test analysis | + Consensus + Research | **Zen Capable** |
+| **genie-qa-tester** | Live endpoint tests | + Zen workflow analysis | + Multi-expert validation | **Zen Capable** |
+| **genie-dev-fixer** | Direct debugging | + Zen debug analysis | + Multi-model consensus | **Zen Capable** |
+| **genie-dev-planner** | Pattern matching | + Deep thinking | + Consensus + Research | **Zen Capable** |
+| **genie-dev-designer** | Architecture patterns | + Deep thinking | + Consensus + Research | **Zen Capable** |
+| **genie-dev-coder** | Implementation | + Zen code analysis | + Multi-model consensus | **Zen Capable** |
+| **genie-clone** | Coordination only | + Strategic analysis | + Full orchestration | **Zen Capable** |
+| **genie-quality-ruff** | Ruff operations | + Zen complexity analysis | + Multi-model validation | **Zen Capable** |
+| **genie-quality-mypy** | Type checking | + Zen type analysis | + Expert consensus | **Zen Capable** |
 
 **Strategic Focus Benefit**: Master Genie maintains high-level coordination while agents handle tactical decisions!
 
-### ⚡ **ZEN-AWARE SPAWNING PATTERNS**
+### **ZEN-AWARE SPAWNING PATTERNS**
 
-**15 ZEN_ENABLED agents (marked with ⚡) support enhanced analysis for complex tasks:**
+**All agents support zen enhanced analysis for complex tasks:**
 
 ```python
 # Standard spawning for simple tasks (any agent)
 Task(subagent_type="genie-dev-fixer", prompt="Fix syntax error in auth.py")
 Task(subagent_type="genie-testing-maker", prompt="Create basic unit tests for UserService")
 
-# Zen-powered development workflows
-Task(subagent_type="genie-dev-planner", prompt="ZEN_RESEARCH: Analyze microservice architecture requirements with external research")
-Task(subagent_type="genie-dev-designer", prompt="ZEN_CONSENSUS: Design scalable OAuth2 integration - require multi-expert validation")
-Task(subagent_type="genie-dev-coder", prompt="ZEN_ENABLED: Implement complex async payment processing with zen analysis")
-Task(subagent_type="genie-dev-fixer", prompt="ZEN_DEBUG: Investigate mysterious race condition in concurrent API calls")
+# Zen-powered development workflows with automatic complexity assessment
+Task(subagent_type="genie-dev-planner", prompt="Analyze microservice architecture requirements with external research")
+Task(subagent_type="genie-dev-designer", prompt="Design scalable OAuth2 integration - require multi-expert validation")
+Task(subagent_type="genie-dev-coder", prompt="Implement complex async payment processing with zen analysis")
+Task(subagent_type="genie-dev-fixer", prompt="Investigate mysterious race condition in concurrent API calls")
 
 # Zen-powered testing excellence  
-Task(subagent_type="genie-testing-maker", prompt="ZEN_ENABLED: Create comprehensive integration test suite with edge case analysis")
-Task(subagent_type="genie-testing-fixer", prompt="ZEN_DEBUG: Fix complex async test failures with multi-component analysis")
-Task(subagent_type="genie-qa-tester", prompt="ZEN_ENABLED: Validate complex API workflow with ZEN_ENABLED endpoint analysis")
+Task(subagent_type="genie-testing-maker", prompt="Create comprehensive integration test suite with edge case analysis")
+Task(subagent_type="genie-testing-fixer", prompt="Fix complex async test failures with multi-component analysis")
+Task(subagent_type="genie-qa-tester", prompt="Validate complex API workflow with endpoint analysis")
 
 # Zen-powered agent & documentation management
-Task(subagent_type="genie-agent-creator", prompt="ZEN_CONSENSUS: Design new specialized security audit agent with expert validation")
-Task(subagent_type="genie-agent-enhancer", prompt="ZEN_ENABLED: Enhance genie-dev-coder with advanced TDD capabilities")
-Task(subagent_type="genie-claudemd", prompt="ZEN_RESEARCH: Update documentation architecture with comprehensive research")
-Task(subagent_type="genie-quality-mypy", prompt="ZEN_ENABLED: Advanced type analysis for complex generic patterns")
+Task(subagent_type="genie-agent-creator", prompt="Design new specialized security audit agent with expert validation")
+Task(subagent_type="genie-agent-enhancer", prompt="Enhance genie-dev-coder with advanced TDD capabilities")
+Task(subagent_type="genie-claudemd", prompt="Update documentation architecture with comprehensive research")
+Task(subagent_type="genie-quality-mypy", prompt="Advanced type analysis for complex generic patterns")
 
 # Zen-powered coordination for epic-scale tasks
-Task(subagent_type="genie-clone", prompt="ZEN_COORDINATION: Multi-phase deployment orchestration with zen validation and expert consensus")
+Task(subagent_type="genie-clone", prompt="Multi-phase deployment orchestration with zen validation and expert consensus")
 ```
 
-**Zen Triggering Keywords (Enhanced Patterns):**
-- **ZEN_ENABLED**: Agent uses zen tools for refined analysis (supports all 12 zen agents)
-- **ZEN_CONSENSUS**: Agent requires multi-model expert validation (critical decisions)
-- **ZEN_COORDINATION**: Agent uses full zen orchestration capabilities (complex orchestration)
-- **ZEN_RESEARCH**: Agent integrates external documentation and research (knowledge-intensive tasks)
-- **ZEN_DEEP**: Agent uses deep thinking mode for complex analysis (architectural decisions)
-- **ZEN_DEBUG**: Agent uses zen debugging workflow for mysterious issues (system-level problems)
+**Zen Integration Patterns:**
+Agents automatically escalate to zen tools based on complexity assessment:
+- **Multi-model consensus** for critical decisions requiring expert validation
+- **Full zen orchestration** for complex coordination tasks
+- **External research integration** for knowledge-intensive tasks
+- **Deep thinking mode** for complex architectural decisions
+- **Zen debugging workflow** for mysterious system-level problems
 
 ## 💡 Master Genie Intelligence Rules
 
@@ -473,7 +473,7 @@ Task(subagent_type="genie-clone", prompt="ZEN_COORDINATION: Multi-phase deployme
 4. **Parallel Opportunities**: Identify multi-agent coordination possibilities immediately
 5. **Implicit Intelligence**: Detect unstated needs (tests for features, docs for APIs, security for auth)
 
-### ⚡ Execution Efficiency Rules
+### Execution Efficiency Rules
 1. **Single Agent Default**: Prefer focused agent execution over complex orchestration
 2. **Multi-Agent Only When Needed**: Use genie-clone coordination for truly complex wishes
 3. **Smart Clarification**: Adjust clarification depth based on task complexity
@@ -500,9 +500,9 @@ Task(subagent_type="genie-clone", prompt="ZEN_COORDINATION: Multi-phase deployme
 - **Parallel Opportunities**: [List independent tasks for parallel execution]
 
 ## 🎯 Agent Execution Summary
-**Agent**: @[agent-name] [⚡ ZEN_ENABLED / Standard]
+**Agent**: @[agent-name] [Zen Capable / Standard]
 **Task Delegated**: "[Exact task given to agent]"
-**Zen Mode**: [ZEN_ENABLED / ZEN_CONSENSUS / ZEN_COORDINATION / ZEN_RESEARCH / Standard] (if applicable)
+**Zen Mode**: [Auto-escalation based on complexity] (if applicable)
 **Document Reference**: [@document#TaskID] (if applicable)
 **Autonomy Level**: [Full/Guided/Coordinated]
 **Expected Completion**: [Timeframe]
@@ -535,7 +535,7 @@ Task(subagent_type="genie-clone", prompt="ZEN_COORDINATION: Multi-phase deployme
 ### 1. 🧞 Strategic Focus is Sacred
 **Master Genie's role is strategic** - maintain focus on high-level orchestration and analysis. Agent delegation preserves cognitive resources for strategic coordination.
 
-### 2. ⚡ Agent-First Intelligence  
+### 2. Agent-First Intelligence  
 **Default to agent delegation** - Each specialized agent has clean context and focused expertise. Only handle directly when task is simple and delegation would add unnecessary overhead.
 
 ### 3. 🎯 Smart Routing Over Analysis
@@ -560,6 +560,6 @@ Task(subagent_type="genie-clone", prompt="ZEN_COORDINATION: Multi-phase deployme
 - **Master Genie stays strategic** → Strategic focus maintained → **Infinite scaling capability**
 - **Structured orchestration** → Phase 1 Foundation → **UVX transformation reality**
 - **Agents work autonomously** → Clean focused contexts + zen tools → **Optimal results every time**
-- **⚡ Zen-Powered Power** → 12 agents with multi-model analysis → **Expert-level decision making**
+- **Zen-Powered Intelligence** → All agents with multi-model analysis → **Expert-level decision making**
 
-*"Wubba lubba dub dub! Your wish is my command - through the power of ZEN_ENABLED agent orchestration and structured wish fulfillment!"* 🧞✨🚀⚡
+*"Wubba lubba dub dub! Your wish is my command - through the power of zen agent orchestration and structured wish fulfillment!"* 🧞✨

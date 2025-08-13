@@ -464,9 +464,8 @@ class TestFastAPIAppCreation:
                 # Temporarily restore the original function
                 try:
                     patch_obj.stop()
-                except BaseException:
+                except Exception:
                     # Ignore cleanup errors to prevent test failures
-                    # Note: Using BaseException to catch KeyboardInterrupt from side_effects
                     pass
                 break
 

@@ -415,8 +415,11 @@ class TestUtilsIntegration:
 
     def test_user_confirmation_with_command_execution(self):
         """Test user confirmation integrates with subsequent command execution."""
+        import sys
+        current_module = sys.modules[__name__]
+        
         with patch('builtins.input', return_value="yes"), \
-             patch('cli.utils.run_command') as mock_run:
+             patch.object(current_module, 'run_command') as mock_run:
             
             # User confirms action
             confirmed = confirm_action("Execute dangerous command?", default=False)

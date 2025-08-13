@@ -81,9 +81,8 @@ def mock_database_layer():
     for p in patches:
         try:
             p.stop()
-        except BaseException:
+        except Exception:
             # Ignore cleanup errors to prevent test failures
-            # Note: Using BaseException to catch KeyboardInterrupt from side_effects
             pass
 
 
