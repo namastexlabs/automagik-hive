@@ -1,8 +1,9 @@
 team:
   mode: route
+  role: "Template Routing Specialist"
   name: Template Team
   team_id: template-team
-  version: 1  # Rollback from version 2
+  version: 1
   description: Template demonstrating all Agno Team parameters
 mcp_servers:
   - "automagik-forge:*"
@@ -17,6 +18,10 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.7
   max_tokens: 2000
+  output_model:
+    provider: anthropic
+    id: claude-haiku-4-20250201
+    temperature: 0.5
 storage:
   type: postgres
   table_name: template_agents

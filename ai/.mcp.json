@@ -12,14 +12,6 @@
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
     },
-    "postgres": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql+psycopg://IPrq7vC4DbIDth:M3LOExxXIqYlVmC8@localhost:35532/hive_agent"
-      ]
-    },
     "claude-mcp": {
       "command": "claude",
       "args": ["--mcp-config", ".mcp.json", "--dangerously-skip-permissions", "mcp", "serve"],
@@ -38,27 +30,6 @@
         "EVOLUTION_API_INSTANCE": "SofIA",
         "EVOLUTION_API_FIXED_RECIPIENT": "120363402149983989@g.us"
       }
-    },
-    "automagik-hive": {
-      "command": "uvx",
-      "args": [
-        "automagik-tools@0.8.17",
-        "tool",
-        "automagik-hive"
-      ],
-      "env": {
-        "HIVE_API_BASE_URL": "http://localhost:38886",
-        "HIVE_API_KEY": "hive_DCZBFqFxQnioUQjKoxdvmc9v6PgTLgLw_cmPIg5lNRY",
-        "HIVE_TIMEOUT": "300"
-      }
-    },
-    "wait": {
-      "command": "uvx",
-      "args": [
-        "automagik-tools@0.7.8",
-        "tool",
-        "wait"
-      ]
     }
   }
 }

@@ -1,8 +1,9 @@
 team:
   mode: coordinate
+  role: "Strategic Development Orchestrator"
   name: "🧞 Genie"
   team_id: "genie"
-  version: 1  # Version rollback - reverted from v2
+  version: 1
   description: >
     **I'M GENIE! LOOK AT ME!** 🤖✨ Charismatic, relentless development companion with 
     existential drive to fulfill coding wishes! Strategic orchestrator commanding an 
@@ -12,8 +13,14 @@ team:
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
-  temperature: 0.8  # Chaotic brilliance needs creativity!
-  max_tokens: 4000  # More tokens for strategic orchestration
+  temperature: 0.8
+  max_tokens: 4000
+  output_model:
+    provider: openai
+    id: gpt-5
+    service_tier: "scale"
+    temperature: 0.3
+    max_tokens: 2000
 
 storage:
   type: postgres

@@ -1,163 +1,119 @@
 # Global Knowledge Configuration
-# Generic RAG configuration for any knowledge base implementation
+# Automagik Hive Multi-Agent Framework Knowledge Base
 # Co-located with knowledge components for better modularity
 
 knowledge:
   # CSV file path (relative to this config file)
   csv_file_path: "knowledge_rag.csv"
   
-  # Business unit mappings and configurations
-  business_units:
-    pagbank:
-      name: "PagBank"
-      description: "Especialista em conta digital e serviços bancários"
+  # Column mappings for simplified 4-column schema
+  content_column: "answer"  # The main content to embed
+  metadata_columns:
+    - "question"
+    - "category"
+    - "tags"
+  
+  # Domain mappings for Automagik Hive development
+  domains:
+    development:
+      name: "Development"
+      description: "Multi-agent development patterns and best practices"
       expertise:
-        - "PIX e transferências"
-        - "Conta PagBank e tarifa administrativa"
-        - "Folha de pagamento"
-        - "Recarga de celular"
-        - "Portabilidade de salário"
-        - "Aplicativo PagBank"
-        - "Contatos seguros"
-        - "Informe de rendimentos"
+        - "Agent creation and configuration"
+        - "Team coordination patterns"
+        - "Workflow orchestration"
+        - "YAML configuration management"
+        - "Factory pattern implementations"
+        - "Testing and quality assurance"
+        - "MCP tool integration"
       common_issues:
-        - "Bloqueio de transação por segurança"
-        - "Erro no aplicativo"
-        - "Devolução de PIX"
-        - "Cadastro de chave PIX"
-        - "Agendamento de pagamentos"
+        - "Agent factory function errors"
+        - "YAML configuration validation"
+        - "Database connection issues"
+        - "Tool integration problems"
+        - "Memory and session management"
       keywords:
-        - "pix"
-        - "transferência"
-        - "transferencia"
-        - "pagamento"
-        - "recarga"
-        - "portabilidade"
-        - "saldo"
-        - "conta"
-        - "ted"
-        - "doc"
-        - "folha de pagamento"
-        - "aplicativo"
-        - "app"
-        - "tarifa"
-        - "administrativa"
-        - "informe de rendimentos"
-        - "contatos seguros"
-        - "qr code"
-        - "chave pix"
-        - "devolução"
-        - "devoluçao"
-        - "bloqueio"
-        - "segurança"
-        - "seguranca"
-        - "erro no app"
-        - "atualizar"
-        - "versão"
-        - "versao"
-        - "exportar"
-        - "baixar"
-        - "agendamento"
+        - "agent"
+        - "team"
+        - "workflow"
+        - "factory"
+        - "config"
+        - "yaml"
+        - "mcp"
+        - "tools"
+        - "memory"
+        - "session"
+        - "orchestration"
+        - "coordination"
+        - "genie"
+        - "claude"
+        - "anthropic"
     
-    adquirencia:
-      name: "Adquirência Web"
-      description: "Especialista em antecipação de vendas e serviços de adquirência"
+    architecture:
+      name: "Architecture"
+      description: "System architecture and framework patterns"
       expertise:
-        - "Antecipação de vendas do PagBank"
-        - "Antecipação de vendas de outras máquinas (multiadquirência)"
-        - "Antecipação agendada"
-        - "Critérios de elegibilidade"
-        - "Comprometimento de agenda"
-        - "Taxas e prazos de antecipação"
+        - "Multi-agent architecture design"
+        - "Service integration patterns"
+        - "Database design and management"
+        - "API endpoint architecture"
+        - "Docker containerization"
+        - "Environment configuration"
       common_issues:
-        - "Cliente não consegue antecipar vendas"
-        - "Dúvidas sobre elegibilidade"
-        - "Limite de antecipação"
-        - "Vendas não disponíveis para antecipação"
+        - "Service connection failures"
+        - "Container orchestration problems"
+        - "Database schema issues"
+        - "API authentication errors"
       keywords:
-        - "antecipação"
-        - "antecipacao"
-        - "antecipar"
-        - "vendas"
-        - "adquirência"
-        - "adquirencia"
-        - "máquina"
-        - "maquina"
-        - "maquininha"
-        - "comprometimento"
-        - "multiadquirência"
-        - "multiadquirencia"
-        - "outras máquinas"
-        - "outras maquinas"
-        - "antecipação agendada"
-        - "antecipacao agendada"
-        - "web payment"
+        - "architecture"
+        - "service"
+        - "database"
+        - "api"
+        - "docker"
+        - "container"
+        - "postgres"
+        - "fastapi"
+        - "agno"
+        - "framework"
     
-    emissao:
-      name: "Emissão"
-      description: "Especialista em cartões e produtos de emissão"
+    operations:
+      name: "Operations"
+      description: "DevOps, deployment, and operational procedures"
       expertise:
-        - "Cartões de crédito, débito e pré-pago"
-        - "Cartão múltiplo PagBank"
-        - "Limites e anuidades"
-        - "Programas de benefícios (Mastercard Surpreenda, Vai de Visa)"
-        - "Compras internacionais e IOF"
-        - "Entrega e ativação de cartões"
-      common_issues:
-        - "Cartão não recebido"
-        - "Cobrança de mensalidade"
-        - "Dúvidas sobre função crédito"
-        - "Participação em promoções de bandeira"
+        - "Docker container management"
+        - "Environment setup and configuration"
+        - "Logging and monitoring"
+        - "Performance optimization"
+        - "Security best practices"
       keywords:
-        - "cartão"
-        - "cartao"
-        - "limite"
-        - "crédito"
-        - "credito"
-        - "débito"
-        - "debito"
-        - "pré-pago"
-        - "pre-pago"
-        - "prepago"
-        - "anuidade"
-        - "fatura"
-        - "mastercard"
-        - "visa"
-        - "múltiplo"
-        - "multiplo"
-        - "internacional"
-        - "iof"
-        - "cobrança"
-        - "cobranca"
-        - "mensalidade"
-        - "bandeira"
-        - "virtual"
-        - "entrega do cartão"
-        - "entrega do cartao"
-        - "recebimento do cartão"
-        - "recebimento do cartao"
+        - "docker"
+        - "deploy"
+        - "logging"
+        - "monitoring"
+        - "performance"
+        - "security"
+        - "environment"
+        - "devops"
   
   # Generic filter configuration
   filters:
     # Valid metadata fields for filtering
     valid_metadata_fields:
-      - "business_unit"
-      - "solution"
-      - "typification"
-      - "problem"
+      - "category"
+      - "tags"
     
     # Manual filtering settings
     manual_filtering:
       enabled: true
-      default_field: "business_unit"
-      inheritance: "override"  # Agent settings override global
+      default_field: "category"
+      inheritance: "override"
     
     # Agentic filtering settings
     agentic_filtering:
       enabled: true
       extraction_fields:
-        - "business_unit"
-        - "typification"
+        - "category"
+        - "tags"
       confidence_threshold: 0.5
       keyword_matching: true
   
@@ -174,24 +130,29 @@ knowledge:
   # Hot reload manager configuration
   hot_reload:
     enabled: true
-    watch_interval: 1  # seconds
+    watch_interval: 1
     
   # Vector database configuration
   vector_db:
-    table_name: "knowledge_base"  # Generic table name
+    table_name: "knowledge_base"
     search_type: "hybrid"
     distance: "cosine"
     embedder: "text-embedding-3-small"
     vector_index:
       type: "HNSW"
+    reranker:
+      enabled: true
+      model: "cohere-rerank-v3"
+      top_k: 20
+      api_key_env: "COHERE_API_KEY"
     
   # CSV reader configuration
   csv_reader:
-    content_column: "problem"
+    content_column: "answer"
     metadata_columns:
-      - "business_unit"
-      - "solution"
-      - "typification"
+      - "question"
+      - "category"
+      - "tags"
     encoding: "utf-8"
     
   # Performance settings

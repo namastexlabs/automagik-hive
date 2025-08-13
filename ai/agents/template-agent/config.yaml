@@ -10,8 +10,12 @@ agent:
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
-  temperature: 0.3  # Balanced creativity and precision for template usage
+  temperature: 0.3
   max_tokens: 4000
+  output_model:
+    provider: anthropic
+    id: claude-haiku-4-20250201
+    temperature: 0.3
 
 storage:
   type: postgres

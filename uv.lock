@@ -8,12 +8,13 @@ resolution-markers = [
 
 [[package]]
 name = "agno"
-version = "1.7.5"
+version = "1.7.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docstring-parser" },
     { name = "gitpython" },
     { name = "httpx" },
+    { name = "packaging" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
@@ -24,9 +25,9 @@ dependencies = [
     { name = "typer" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/54/de85a1bbb184afa0dce7f92fe2d5102fee5bf9a8dcc2e10ac5e5f6f957c4/agno-1.7.5.tar.gz", hash = "sha256:1035dd730df724bc360870b73cfad1993b2e4137f33d722311aca146fbb705e9", size = 712142, upload-time = "2025-07-17T21:21:46.602Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/37/d12765315c4d3b2d1dd367b40392c6b664a79070e833021c355027073b90/agno-1.7.10.tar.gz", hash = "sha256:d53442728cde22b25507343632ebafe173c29a90160ced50f111df7c0726c85e", size = 738740, upload-time = "2025-08-12T16:26:53.616Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/91/06bd1c8564fd0038afc9cd9d48647719ee86ca3576223de50eb46d4343e5/agno-1.7.5-py3-none-any.whl", hash = "sha256:18996910042200b5ae1041a1f4c69a80492961980a0f52aa08f9c5aaada040f5", size = 948141, upload-time = "2025-07-17T21:21:44.363Z" },
+    { url = "https://files.pythonhosted.org/packages/90/a7/4272120bb5d0d97f547b2d3fda4dc3de22097f0e32180ad15afc159e01b7/agno-1.7.10-py3-none-any.whl", hash = "sha256:102db10ee40b25caea03b2ec8ea185dffd96dc7111075b570be07d36bafaebec", size = 976719, upload-time = "2025-08-12T16:26:51.446Z" },
 ]
 
 [[package]]
@@ -237,7 +238,7 @@ wheels = [
 
 [[package]]
 name = "automagik-hive"
-version = "0.1.0a59"
+version = "0.1.0a60"
 source = { editable = "." }
 dependencies = [
     { name = "agno" },
@@ -315,7 +316,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agno", specifier = "==1.7.5" },
+    { name = "agno", specifier = "==1.7.10" },
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "aiohttp", specifier = ">=3.12.14" },
     { name = "alembic", specifier = ">=1.16.4" },

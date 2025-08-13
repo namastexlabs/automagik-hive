@@ -328,7 +328,7 @@ endef
 
 define start_agent_background
     $(call print_status,Starting agent server via Docker...); \
-    $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml up -d app-agent; \
+    $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml up -d agent-dev-server; \
     sleep 5; \
     if docker ps --filter "name=hive-agent-dev-server" --format "{{.Names}}" | grep -q hive-agent-dev-server; then \
         $(call print_success,Agent server started via Docker); \
@@ -346,7 +346,7 @@ endef
 define stop_agent_background
     if docker ps --filter "name=hive-agent-dev-server" --format "{{.Names}}" | grep -q hive-agent-dev-server; then \
         $(call print_status,Stopping agent server via Docker...); \
-        $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml stop app-agent; \
+        $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml stop agent-dev-server; \
         $(call print_success,Agent server stopped); \
     else \
         $(call print_warning,Agent server not running); \

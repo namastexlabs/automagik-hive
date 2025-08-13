@@ -78,7 +78,7 @@ async def get_mcp_tools(server_name: str) -> AsyncContextManager[MCPTools]:
         raise MCPConnectionError(f"Failed to connect to {server_name}: {e}")
 
 
-def create_mcp_tools_sync(server_name: str) -> MCPTools:
+def create_mcp_tools_sync(server_name: str) -> MCPTools | None:
     """
     Create MCP tools synchronously for legacy compatibility.
 
@@ -89,17 +89,18 @@ def create_mcp_tools_sync(server_name: str) -> MCPTools:
         server_name: Name of the MCP server
 
     Returns:
-        MCPTools instance (not async context managed)
+        MCPTools instance (not async context managed) or None if unavailable
 
     Raises:
-        MCPConnectionError: If server not found or connection fails
+        MCPConnectionError: Only for critical configuration errors, not missing servers
     """
     catalog = get_catalog()
 
     try:
         server_config = catalog.get_server_config(server_name)
     except Exception as e:
-        raise MCPConnectionError(f"Server '{server_name}' not found: {e}")
+        logger.warning(f"🌐 MCP server '{server_name}' not configured in .mcp.json - tool will be unavailable")
+        return None
 
     try:
         if server_config.is_sse_server:
@@ -116,11 +117,12 @@ def create_mcp_tools_sync(server_name: str) -> MCPTools:
                 transport="stdio",
                 env=server_config.env or {},
             )
-        raise MCPConnectionError(f"Unknown server type for {server_name}")
+        logger.warning(f"🌐 Unknown server type for {server_name} - tool will be unavailable")
+        return None
 
     except Exception as e:
-        logger.error(f"🌐 Failed to create MCP tools for {server_name}: {e}")
-        raise MCPConnectionError(f"Failed to connect to {server_name}: {e}")
+        logger.warning(f"🌐 Failed to create MCP tools for {server_name}: {e} - tool will be unavailable")
+        return None
 
 
 # Legacy compatibility for existing code

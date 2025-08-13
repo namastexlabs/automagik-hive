@@ -151,7 +151,7 @@ def create_knowledge_base(
         filter_config = config.get("knowledge", {}).get("filters", {})
         valid_filters = set(
             filter_config.get(
-                "valid_metadata_fields", ["business_unit", "solution", "typification"]
+                "valid_metadata_fields", ["category", "tags"]
             )
         )
         _shared_kb.valid_metadata_filters = valid_filters

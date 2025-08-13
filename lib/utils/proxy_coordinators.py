@@ -331,20 +331,36 @@ class AgnoCoordinatorProxy:
         component_id: str,
         db_url: str | None,
     ):
-        """Handle model configuration with dynamic provider support."""
+        """Handle model configuration with truly dynamic provider support.
+        
+        Uses runtime introspection instead of hardcoded parameter lists.
+        """
         from lib.config.models import resolve_model
-
-        # Use dynamic model resolution to support all providers
-        return resolve_model(
-            model_id=model_config.get("id"),
-            temperature=model_config.get("temperature", 0.7),
-            max_tokens=model_config.get("max_tokens", 2000),
-            **{
-                k: v
-                for k, v in model_config.items()
-                if k not in ["id", "temperature", "max_tokens"]
-            },
-        )
+        from lib.utils.dynamic_model_resolver import filter_model_parameters
+        from lib.config.provider_registry import get_provider_registry
+        
+        model_id = model_config.get("id")
+        if not model_id:
+            # Use default resolution
+            return resolve_model(model_id=None, **model_config)
+        
+        # Detect provider and get model class
+        provider = get_provider_registry().detect_provider(model_id)
+        if not provider:
+            # Fallback to standard resolution
+            return resolve_model(model_id=model_id, **model_config)
+        
+        # Get the actual model class
+        model_class = get_provider_registry().resolve_model_class(provider, model_id)
+        if not model_class:
+            # Fallback to standard resolution
+            return resolve_model(model_id=model_id, **model_config)
+        
+        # Use dynamic filtering to only pass parameters the model class accepts
+        filtered_config = filter_model_parameters(model_class, model_config)
+        
+        # Create model instance with filtered parameters
+        return model_class(**filtered_config)
 
     def _handle_storage_config(
         self,

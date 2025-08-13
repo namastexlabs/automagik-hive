@@ -20,8 +20,13 @@ mcp_servers:
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
-  temperature: 0.1  # Maximum precision for debugging
+  temperature: 0.1
   max_tokens: 4000
+  output_model:
+    provider: openai
+    id: gpt-5
+    service_tier: "scale"
+    temperature: 0.05
 
 storage:
   type: postgres

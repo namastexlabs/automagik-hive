@@ -13,6 +13,11 @@ model:
   provider: anthropic
   max_tokens: 8000
   temperature: 0.1
+  output_model:
+    provider: openai
+    id: gpt-5
+    service_tier: "scale"
+    temperature: 0.2
 memory:
   num_history_runs: 30
   retention_days: 180

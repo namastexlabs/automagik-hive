@@ -65,43 +65,36 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                 reader = csv.DictReader(f)
                 rows = list(reader)
 
-                # Process rows
+                # Process rows with new AI framework schema
                 for row_index, row in enumerate(rows):
-                    # Create content combining all columns with clear formatting
+                    # Primary content is the answer
+                    answer = row.get("answer", "").strip()
+                    if not answer:
+                        continue  # Skip rows without answers
+                    
+                    # Create content with question context if available
                     content_parts = []
-
-                    # Add problem
-                    if row.get("problem"):
-                        content_parts.append(f"**Problem:** {row['problem'].strip()}")
-
-                    # Add solution
-                    if row.get("solution"):
-                        content_parts.append(f"**Solution:** {row['solution'].strip()}")
-
-                    # Add typification
-                    if row.get("typification"):
-                        content_parts.append(
-                            f"**Typification:** {row['typification'].strip()}"
-                        )
-
-                    # Add business unit
-                    if row.get("business_unit"):
-                        content_parts.append(
-                            f"**Business Unit:** {row['business_unit'].strip()}"
-                        )
+                    
+                    # Add question for context
+                    question = row.get("question", "").strip()
+                    if question:
+                        content_parts.append(f"**Q:** {question}")
+                    
+                    # Add main answer content
+                    content_parts.append(f"**A:** {answer}")
 
                     # Create document content
                     content = "\n\n".join(content_parts)
 
                     if content.strip():  # Only create document if there's content
-                        # Create metadata for better filtering and search
+                        # Create metadata for filtering and search
                         meta_data = {
                             "row_index": row_index + 1,
                             "source": "knowledge_rag_csv",
-                            "business_unit": row.get("business_unit", "").strip(),
-                            "typification": row.get("typification", "").strip(),
-                            "has_problem": bool(row.get("problem", "").strip()),
-                            "has_solution": bool(row.get("solution", "").strip()),
+                            "category": row.get("category", "").strip(),
+                            "tags": row.get("tags", "").strip(),
+                            "has_question": bool(question),
+                            "has_answer": bool(answer),
                         }
 
                         # Create document with unique ID based on row index
@@ -112,16 +105,16 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
                         )
                         documents.append(doc)
 
-            # Count documents by business unit for final summary
-            business_unit_counts = {}
+            # Count documents by category for final summary
+            category_counts = {}
             for doc in documents:
-                bu = doc.meta_data.get("business_unit", "Unknown")
-                business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
+                category = doc.meta_data.get("category", "Unknown")
+                category_counts[category] = category_counts.get(category, 0) + 1
 
-            # Display business unit summary
-            for bu, count in business_unit_counts.items():
-                if bu and bu != "Unknown":
-                    logger.debug(f"📊 ✓ {bu}: {count} documents processed")
+            # Display category summary
+            for category, count in category_counts.items():
+                if category and category != "Unknown":
+                    logger.debug(f"📊 ✓ {category}: {count} documents processed")
 
         except Exception as e:
             logger.error("Error loading CSV file", error=str(e), csv_path=str(csv_path))
@@ -174,11 +167,11 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             log_info("No documents to load")
             return
 
-        # Count documents by business unit for progress tracking
-        business_unit_counts = {}
+        # Count documents by category for progress tracking
+        category_counts = {}
         for doc in all_documents:
-            bu = doc.meta_data.get("business_unit", "Unknown")
-            business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
+            category = doc.meta_data.get("category", "Unknown")
+            category_counts[category] = category_counts.get(category, 0) + 1
 
         # Process documents efficiently with batching - this eliminates logging spam at the root cause
         from agno.utils.log import logger as agno_logger
@@ -220,13 +213,13 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             # Remove the filter to avoid side effects elsewhere
             agno_logger.removeFilter(batch_filter)
 
-        # Show final business unit summary like the CSV loading does
+        # Show final category summary like the CSV loading does
         logger.debug("Vector database loading completed")
-        for bu, count in business_unit_counts.items():
-            if bu and bu != "Unknown":
+        for category, count in category_counts.items():
+            if category and category != "Unknown":
                 logger.debug(
-                    "Business unit processing completed",
-                    business_unit=bu,
+                    "Category processing completed",
+                    category=category,
                     document_count=count,
                 )
 

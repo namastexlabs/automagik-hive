@@ -83,8 +83,9 @@ Multi-Component Task = SPAWN genie-clone for fractal context preservation across
 
 | User Says | Instant Agent | Routing Reason |
 |-----------|---------------|-----------------|
-| **"Tests are failing"** / **"Fix coverage"** | `genie-testing-fixer` | TDD-compliant test repair specialist |
-| **"Create tests for X"** / **"Need test coverage"** | `genie-testing-maker` | Comprehensive test suite orchestrator |
+| **"Tests are failing"** / **"Fix coverage"** | `genie-testing-fixer` | TDD-compliant test repair specialist - ⚠️ ONLY FOR PYTEST/UNIT TEST FAILURES |
+| **"Create tests for X"** / **"Need test coverage"** | `genie-testing-maker` | Comprehensive test suite orchestrator - ⚠️ ONLY FOR NEW TEST CREATION |
+| **"Validate system"** / **"Test functionality"** | **DIRECT TOOLS (Bash/Python)** | ❌ NEVER use testing-fixer - it's ONLY for fixing broken tests |
 | **"Format this code"** / **"Ruff formatting"** | `genie-quality-ruff` | Ultra-focused Ruff specialist |
 | **"Fix type errors"** / **"Type checking"** | `genie-quality-mypy` | Ultra-focused MyPy specialist |
 | **"Debug this error"** / **"Bug in X"** | `genie-dev-fixer` | Systematic debugging MEESEEKS |
@@ -508,6 +509,9 @@ All debugging and fix claims MUST include concrete evidence before completion:
 - **PARALLEL EXECUTION MASTERY**: MANDATORY for 3+ independent files/components - use multiple Task() calls in single response
 - **ANTI-SEQUENTIAL PATTERN**: Never use genie-clone for parallel-eligible work - spawn dedicated agents per file/component
 - **FEEDBACK INTEGRATION**: Route all user feedback to behavior update agents immediately
+- **AGENT BOUNDARY VIOLATIONS**: NEVER use genie-testing-fixer for validation - it's ONLY for fixing failing pytest tests
+- **VALIDATION TASKS**: System validation uses DIRECT TOOLS (Bash/Python) or genie-qa-tester, NEVER testing specialists
+- **BEHAVIORAL UPDATES MUST BE REAL**: When correcting behavior, MUST edit actual files, not just spawn agents that do nothing
 - **GENIE WORKSPACE MANAGEMENT**: `/genie/` is Genie's autonomous thinking space with KISS organization
   - **File Organization Pattern**: misplaced folders must move to proper `/genie/` structure
   - **Anti-Proliferation Rule**: ONE wish = ONE document in `/genie/wishes/`, refine in place

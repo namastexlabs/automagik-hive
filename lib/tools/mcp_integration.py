@@ -106,16 +106,17 @@ class RealMCPTool:
             return self._mcp_tools
 
         try:
-            # Create real MCP connection
+            # Create real MCP connection - now handles None gracefully
             self._mcp_tools = create_mcp_tools_sync(self._server_name)
-            logger.debug(f"🌐 Connected to MCP server: {self._server_name}")
+            if self._mcp_tools:
+                logger.debug(f"🌐 Connected to MCP server: {self._server_name}")
             return self._mcp_tools
 
         except MCPConnectionError as e:
-            logger.error(f"🌐 Failed to connect to MCP server {self._server_name}: {e}")
+            logger.warning(f"🌐 Failed to connect to MCP server {self._server_name}: {e}")
             return None
         except Exception as e:
-            logger.error(
+            logger.warning(
                 f"🌐 Unexpected error connecting to MCP server {self._server_name}: {e}"
             )
             return None
@@ -131,8 +132,8 @@ class RealMCPTool:
         # Agno will handle the tool execution internally
         mcp_tools = self.get_mcp_tools()
         if not mcp_tools:
-            logger.error(
-                f"🌐 Cannot get tool function - no MCP connection for {self.name}"
+            logger.warning(
+                f"🌐 MCP tool {self.name} unavailable - server '{self._server_name}' not configured or not accessible"
             )
             return None
 
@@ -142,7 +143,7 @@ class RealMCPTool:
             return mcp_tools
 
         except Exception as e:
-            logger.error(f"🌐 Error retrieving MCP tools for {self.name}: {e}")
+            logger.warning(f"🌐 MCP tool {self.name} unavailable due to error: {e}")
             return None
 
     def __str__(self) -> str:

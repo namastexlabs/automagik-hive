@@ -13,6 +13,11 @@ model:
   id: claude-sonnet-4-20250514
   temperature: 0.2
   max_tokens: 4000
+  output_model:
+    provider: openai
+    id: gpt-5
+    service_tier: "scale"
+    temperature: 0.1
 storage:
   type: postgres
   table_name: genie_quality

@@ -61,20 +61,23 @@ class ToolRegistry:
             try:
                 # Determine tool type and load accordingly
                 if tool_name.startswith("mcp__"):
-                    real_tool = ToolRegistry.resolve_mcp_tool(tool_name)
-                    if real_tool:
-                        # Get the MCPTools instance which Agno can use directly
-                        mcp_tools_instance = real_tool.get_tool_function()
-                        if mcp_tools_instance:
-                            # Add the MCPTools instance directly - Agno knows how to handle this
-                            tools.append(mcp_tools_instance)
-                            logger.debug(f"🌐 Added MCPTools instance for {tool_name}")
+                    try:
+                        real_tool = ToolRegistry.resolve_mcp_tool(tool_name)
+                        if real_tool:
+                            # Get the MCPTools instance which Agno can use directly
+                            mcp_tools_instance = real_tool.get_tool_function()
+                            if mcp_tools_instance:
+                                # Add the MCPTools instance directly - Agno knows how to handle this
+                                tools.append(mcp_tools_instance)
+                                logger.debug(f"🌐 Added MCPTools instance for {tool_name}")
+                            else:
+                                logger.warning(
+                                    f"🌐 MCPTools instance unavailable for {tool_name} - tool will be skipped"
+                                )
                         else:
-                            logger.warning(
-                                f"Failed to get MCPTools instance for {tool_name}"
-                            )
-                    else:
-                        logger.warning(f"Failed to resolve MCP tool: {tool_name}")
+                            logger.warning(f"🌐 MCP tool unavailable: {tool_name} - tool will be skipped")
+                    except Exception as e:
+                        logger.warning(f"🌐 MCP tool {tool_name} unavailable due to connection error: {e} - tool will be skipped")
                 elif tool_name.startswith("shared__"):
                     shared_tool_name = tool_name[8:]  # Remove "shared__" prefix
                     tool = ToolRegistry._load_shared_tool(shared_tool_name)
@@ -154,7 +157,7 @@ class ToolRegistry:
                 logger.debug(f"🌐 Cached real MCP tool: {name}")
                 return real_tool
         except Exception as e:
-            logger.error(f"Failed to resolve MCP tool {name}: {e}")
+            logger.warning(f"🌐 MCP tool {name} unavailable - will be skipped: {e}")
 
         return None
 

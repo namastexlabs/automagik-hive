@@ -9,9 +9,9 @@ handle the heavy lifting via claude-mcp.
 from pathlib import Path
 
 import yaml
-from agno import Agent
+from agno.agent import Agent
 from agno.memory import AgentMemory
-from agno.storage import PostgresStorage
+from agno.storage.postgres import PostgresStorage
 
 
 def get_genie_testing(

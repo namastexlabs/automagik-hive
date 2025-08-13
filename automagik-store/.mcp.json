@@ -1,0 +1,93 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "mcp-server-postgres",
+      "args": [
+        "--connection-string",
+        "${DATABASE_URL}"
+      ],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      },
+      "enabled": true,
+      "description": "PostgreSQL database for agent memory and state persistence"
+    },
+    "automagik-forge": {
+      "command": "mcp-server-forge",
+      "args": [
+        "--api-key",
+        "${HIVE_API_KEY}",
+        "--base-url",
+        "${HIVE_API_URL:-http://localhost:38886}"
+      ],
+      "env": {
+        "HIVE_API_KEY": "${HIVE_API_KEY}",
+        "HIVE_API_URL": "${HIVE_API_URL}"
+      },
+      "enabled": true,
+      "description": "Automagik Forge for task and project management"
+    },
+    "web-search": {
+      "command": "mcp-server-websearch",
+      "args": [
+        "--api-key",
+        "${SEARCH_API_KEY}",
+        "--engine-id", 
+        "${SEARCH_ENGINE_ID}"
+      ],
+      "env": {
+        "SEARCH_API_KEY": "${SEARCH_API_KEY}",
+        "SEARCH_ENGINE_ID": "${SEARCH_ENGINE_ID}"
+      },
+      "enabled": "${MCP_WEBSEARCH_ENABLED:-false}",
+      "description": "Web search capabilities for research agents"
+    },
+    "github": {
+      "command": "mcp-server-github",
+      "args": [
+        "--token",
+        "${GITHUB_TOKEN}"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "enabled": "${MCP_GITHUB_ENABLED:-false}",
+      "description": "GitHub integration for repository operations"
+    },
+    "airbnb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@openbnb/mcp-server-airbnb",
+        "--ignore-robots-txt"
+      ],
+      "env": {
+        "APIFY_TOKEN": "${APIFY_TOKEN}"
+      },
+      "enabled": "${MCP_AIRBNB_ENABLED:-true}",
+      "description": "Airbnb listings search via Apify integration"
+    },
+    "google-maps": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-google-maps"
+      ],
+      "env": {
+        "GOOGLE_MAPS_API_KEY": "${GOOGLE_MAPS_API_KEY}"
+      },
+      "enabled": "${MCP_MAPS_ENABLED:-true}",
+      "description": "Google Maps for attractions, directions, and location services"
+    }
+  },
+  "config": {
+    "autoReconnect": true,
+    "reconnectInterval": 5000,
+    "maxReconnectAttempts": 10,
+    "requestTimeout": 30000,
+    "logging": {
+      "level": "${LOG_LEVEL:-INFO}",
+      "format": "${LOG_FORMAT:-json}"
+    }
+  }
+}

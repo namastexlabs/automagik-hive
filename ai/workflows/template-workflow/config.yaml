@@ -1,8 +1,9 @@
 workflow:
   name: Template Workflow
   workflow_id: template-workflow
-  version: 7
+  version: 1
   description: Template demonstrating all Agno Workflow parameters
+  background_execution: true
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514

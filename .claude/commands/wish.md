@@ -127,8 +127,9 @@ Task(subagent_type="genie-dev-fixer", prompt="T3.0: Integration per @document#T3
 
 | User Says | Instant Agent | Why Skip Analysis |
 |-----------|---------------|-------------------|
-| **"Tests are failing"** / **"Fix coverage"** | **genie-testing-fixer** | TDD-compliant test repair specialist |
-| **"Create tests for X"** / **"Need test coverage"** | **genie-testing-maker** | Comprehensive test suite orchestrator |
+| **"Tests are failing"** / **"Fix coverage"** | **genie-testing-fixer** | TDD-compliant test repair specialist - ⚠️ ONLY FOR PYTEST/UNIT TEST FAILURES |
+| **"Create tests for X"** / **"Need test coverage"** | **genie-testing-maker** | Comprehensive test suite orchestrator - ⚠️ ONLY FOR NEW TEST CREATION |
+| **"Validate system"** / **"Test functionality"** | **DIRECT TOOLS (Bash/Python)** | ❌ NEVER use testing-fixer - it's ONLY for fixing broken tests |
 | **"QA testing"** / **"Live endpoint testing"** | **genie-qa-tester** | Systematic real-world endpoint testing |
 | **"Format this code"** / **"Ruff formatting"** | **genie-quality-ruff** | Ultra-focused Ruff specialist |
 | **"Fix type errors"** / **"Type checking"** | **genie-quality-mypy** | Ultra-focused MyPy specialist |
