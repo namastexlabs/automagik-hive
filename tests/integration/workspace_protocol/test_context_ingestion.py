@@ -10,8 +10,8 @@ import tempfile
 
 import pytest
 
-from tests.workspace_protocol.utils.agent_tester import AgentTester
-from tests.workspace_protocol.utils.protocol_validator import ProtocolValidator
+from tests.integration.workspace_protocol.utils.agent_tester import AgentTester
+from tests.integration.workspace_protocol.utils.protocol_validator import ProtocolValidator
 
 
 class TestContextIngestion:

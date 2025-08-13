@@ -7,19 +7,20 @@ Provides input validation and sanitization for all API endpoints.
 import re
 from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class BaseValidatedRequest(BaseModel):
     """Base model for all validated requests."""
 
-    class Config:
+    model_config = {
         # Allow extra fields but validate known ones
-        extra = "forbid"
+        "extra": "forbid",
         # Validate assignment to prevent modification after creation
-        validate_assignment = True
+        "validate_assignment": True,
         # Use enum values instead of names
-        use_enum_values = True
+        "use_enum_values": True,
+    }
 
 
 class AgentRequest(BaseValidatedRequest):
@@ -30,14 +31,14 @@ class AgentRequest(BaseValidatedRequest):
     )
     session_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional session ID for conversation continuity",
     )
     user_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional user ID for personalization",
@@ -47,8 +48,9 @@ class AgentRequest(BaseValidatedRequest):
     )
     stream: bool = Field(False, description="Whether to stream the response")
 
-    @validator("message")
-    def sanitize_message(self, v):
+    @field_validator("message")
+    @classmethod
+    def sanitize_message(cls, v):
         """Sanitize message content."""
         if not v or not v.strip():
             raise ValueError("Message cannot be empty")
@@ -57,8 +59,9 @@ class AgentRequest(BaseValidatedRequest):
         # This is a basic sanitization - adjust based on your needs
         return re.sub(r'[<>"\']', "", v.strip())
 
-    @validator("context")
-    def validate_context(self, v):
+    @field_validator("context")
+    @classmethod
+    def validate_context(cls, v):
         """Validate context dictionary."""
         if v is None:
             return v
@@ -84,21 +87,21 @@ class TeamRequest(BaseValidatedRequest):
     )
     team_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=50,
         description="Optional specific team ID",
     )
     session_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional session ID for conversation continuity",
     )
     user_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional user ID",
@@ -108,8 +111,9 @@ class TeamRequest(BaseValidatedRequest):
     )
     stream: bool = Field(False, description="Whether to stream the response")
 
-    @validator("task")
-    def sanitize_task(self, v):
+    @field_validator("task")
+    @classmethod
+    def sanitize_task(cls, v):
         """Sanitize task description."""
         if not v or not v.strip():
             raise ValueError("Task cannot be empty")
@@ -123,7 +127,7 @@ class WorkflowRequest(BaseValidatedRequest):
 
     workflow_id: str = Field(
         ...,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=50,
         description="Workflow identifier",
@@ -133,21 +137,22 @@ class WorkflowRequest(BaseValidatedRequest):
     )
     session_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional session ID",
     )
     user_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional user ID",
     )
 
-    @validator("input_data")
-    def validate_input_data(self, v):
+    @field_validator("input_data")
+    @classmethod
+    def validate_input_data(cls, v):
         """Validate workflow input data."""
         if len(str(v)) > 10000:
             raise ValueError("Input data too large (max 10000 characters)")

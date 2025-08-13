@@ -2,7 +2,18 @@
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from ai.teams.template_team.team import *
+import importlib.util
+from pathlib import Path
+
+# Import from hyphenated directory using importlib
+# From tests/ai/teams/template-team/test_team.py, go up to project root then to ai/teams/template-team/team.py
+_team_module_path = Path(__file__).parent.parent.parent.parent.parent / "ai" / "teams" / "template-team" / "team.py"
+_spec = importlib.util.spec_from_file_location("team", _team_module_path)
+_team_module = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_team_module)
+
+# Make team module functions available
+globals().update({name: getattr(_team_module, name) for name in dir(_team_module) if not name.startswith('_')})
 
 
 class TestTemplateTeam:

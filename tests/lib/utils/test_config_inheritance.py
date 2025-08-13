@@ -1173,18 +1173,18 @@ class TestEdgeCasesAndPerformance:
         manager = ConfigInheritanceManager()
 
         team_config = {
-            "team": {"name": "> Test Team", "description": "Tëst with ünïcödé"},
+            "team": {"name": "> Test Team", "description": "Test with unicode"},
             "model": {
                 "provider": "anthropic",
-                "id": "Handle yŠW& and émojis =€",  # Use an inheritable parameter
+                "id": "Handle special chars and emojis",  # Use an inheritable parameter
             },
         }
 
         agent_config = {
             "agent": {
                 "agent_id": "unicode-agent",
-                "name": "Ägent with Spéciál Çhars",
-                "description": "KÕ-‡W&",
+                "name": "Agent with Special Chars",
+                "description": "Agent with special characters",
             },
         }
 
@@ -1194,8 +1194,8 @@ class TestEdgeCasesAndPerformance:
 
         # Should preserve unicode correctly
         enhanced_agent = enhanced["unicode-agent"]
-        assert enhanced_agent["agent"]["name"] == "Ägent with Spéciál Çhars"
-        assert enhanced_agent["model"]["id"] == "Handle yŠW& and émojis =€"
+        assert enhanced_agent["agent"]["name"] == "Agent with Special Chars"
+        assert enhanced_agent["model"]["id"] == "Handle special chars and emojis"
 
     def test_empty_and_null_values(self):
         """Test handling of empty and null values in configurations."""

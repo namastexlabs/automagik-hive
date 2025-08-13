@@ -17,7 +17,7 @@ import os
 import importlib.util
 
 # Load the genie-dev agent module  
-genie_dev_path = os.path.join(os.path.dirname(__file__), '../../../../../ai/agents/genie-dev/agent.py')
+genie_dev_path = os.path.join(os.path.dirname(__file__), '../../../../ai/agents/genie-dev/agent.py')
 spec = importlib.util.spec_from_file_location("genie_dev_agent", genie_dev_path)
 genie_dev_agent = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(genie_dev_agent)

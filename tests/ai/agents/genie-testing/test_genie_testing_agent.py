@@ -19,7 +19,7 @@ import os
 import importlib.util
 
 # Load the genie-testing agent module
-genie_testing_path = os.path.join(os.path.dirname(__file__), '../../../../../ai/agents/genie-testing/agent.py')
+genie_testing_path = os.path.join(os.path.dirname(__file__), '../../../../ai/agents/genie-testing/agent.py')
 spec = importlib.util.spec_from_file_location("genie_testing_agent", genie_testing_path)
 genie_testing_agent = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(genie_testing_agent)

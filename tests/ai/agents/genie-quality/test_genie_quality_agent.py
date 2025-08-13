@@ -17,7 +17,7 @@ import os
 import importlib.util
 
 # Load the genie-quality agent module
-genie_quality_path = os.path.join(os.path.dirname(__file__), '../../../../../ai/agents/genie-quality/agent.py')
+genie_quality_path = os.path.join(os.path.dirname(__file__), '../../../../ai/agents/genie-quality/agent.py')
 spec = importlib.util.spec_from_file_location("genie_quality_agent", genie_quality_path)
 genie_quality_agent = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(genie_quality_agent)

@@ -64,6 +64,16 @@ class TestAnalysis:
         return [issue for issue in self.issues if issue.issue_type == 'orphaned']
     
     @property
+    def integration_tests(self) -> List[TestIssue]:
+        """Integration tests that don't need source mirrors (severity='info')."""
+        return [issue for issue in self.orphaned_tests if issue.severity == 'info']
+    
+    @property
+    def true_orphaned_tests(self) -> List[TestIssue]:
+        """Actually orphaned tests that might need removal (severity='low')."""
+        return [issue for issue in self.orphaned_tests if issue.severity == 'low']
+    
+    @property
     def misplaced_tests(self) -> List[TestIssue]:
         return [issue for issue in self.issues if issue.issue_type == 'misplaced']
     
@@ -95,6 +105,8 @@ class TestAnalysis:
             "covered_source_files": len(self.coverage_map),
             "missing_tests": len(self.missing_tests),
             "orphaned_tests": len(self.orphaned_tests),
+            "integration_tests": len(self.integration_tests),
+            "true_orphaned_tests": len(self.true_orphaned_tests),
             "misplaced_tests": len(self.misplaced_tests),
             "naming_issues": len(self.naming_issues),
             "total_issues": self.total_issues,
@@ -272,6 +284,9 @@ class UnifiedTestStructureAnalyzer:
                     )
                     self.analysis.issues.append(issue)
         
+        # Integration and support directories that don't need source mirrors
+        INTEGRATION_PATTERNS = {'integration', 'fixtures', 'mocks', 'utilities', 'e2e', 'scenarios'}
+        
         # Analyze test files for orphans, misplaced, and naming issues
         for test_file in test_files:
             # Skip __init__.py files
@@ -295,6 +310,10 @@ class UnifiedTestStructureAnalyzer:
             if test_file in matched_test_files:
                 continue
             
+            # Check if this is an integration or support test
+            path_parts = test_file.parts
+            is_integration = any(part in INTEGRATION_PATTERNS for part in path_parts)
+            
             # Check if this test has an expected source file
             expected_source = self.get_expected_source_path(test_file)
             if expected_source:
@@ -314,26 +333,50 @@ class UnifiedTestStructureAnalyzer:
                         )
                         self.analysis.issues.append(issue)
                 else:
-                    # Test exists but source doesn't - orphaned test
+                    # Test exists but source doesn't - check if it's integration
+                    if is_integration:
+                        # This is expected - integration tests don't mirror source files
+                        severity = 'info'
+                        description = f"Integration test {test_file.relative_to(self.project_root)} (no source mirror needed)"
+                        recommendation = "Integration/support test - no action needed"
+                        file_operation = f"# Integration test - no action needed for {test_file}"
+                    else:
+                        # Regular orphaned test
+                        severity = 'low'
+                        description = f"Orphaned test {test_file.relative_to(self.project_root)} has no corresponding source"
+                        recommendation = f"Remove orphaned test or create source file at {expected_source.relative_to(self.project_root)}"
+                        file_operation = f"rm {test_file}  # Or create {expected_source}"
+                    
                     issue = TestIssue(
                         issue_type='orphaned',
                         current_path=test_file,
                         expected_path=expected_source,
-                        severity='low',
-                        description=f"Orphaned test {test_file.relative_to(self.project_root)} has no corresponding source",
-                        recommendation=f"Remove orphaned test or create source file at {expected_source.relative_to(self.project_root)}",
-                        file_operation=f"rm {test_file}  # Or create {expected_source}"
+                        severity=severity,
+                        description=description,
+                        recommendation=recommendation,
+                        file_operation=file_operation
                     )
                     self.analysis.issues.append(issue)
             else:
-                # Can't determine expected source - likely a special test or naming issue
+                # Can't determine expected source - check if it's integration
+                if is_integration:
+                    severity = 'info'
+                    description = f"Integration test {test_file.relative_to(self.project_root)} (expected - no source mirror needed)"
+                    recommendation = "Integration/support test - no action needed"
+                    file_operation = f"# Integration test - no action needed for {test_file}"
+                else:
+                    severity = 'low'
+                    description = f"Test file {test_file.relative_to(self.project_root)} can't be mapped to source"
+                    recommendation = "Review test file purpose and location"
+                    file_operation = f"# Manual review needed for {test_file}"
+                
                 issue = TestIssue(
                     issue_type='orphaned',
                     current_path=test_file,
-                    severity='low',
-                    description=f"Test file {test_file.relative_to(self.project_root)} can't be mapped to source",
-                    recommendation="Review test file purpose and location",
-                    file_operation=f"# Manual review needed for {test_file}"
+                    severity=severity,
+                    description=description,
+                    recommendation=recommendation,
+                    file_operation=file_operation
                 )
                 self.analysis.issues.append(issue)
         

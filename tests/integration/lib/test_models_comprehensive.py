@@ -8,31 +8,16 @@ NOTE: Due to Pydantic V1 production code with V2 environment, using compatibilit
 import pytest
 from pydantic import ValidationError
 
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockAgentRequest as AgentRequest,
-)
-
-# Import mock models due to Pydantic V1/V2 compatibility issues
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockBaseValidatedRequest as BaseValidatedRequest,
-)
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockErrorResponse as ErrorResponse,
-)
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockHealthRequest as HealthRequest,
-)
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockSuccessResponse as SuccessResponse,
-)
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockTeamRequest as TeamRequest,
-)
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockVersionRequest as VersionRequest,
-)
-from tests.lib.validation.test_models_compatibility_layer import (
-    MockWorkflowRequest as WorkflowRequest,
+# Import actual models from lib/validation/models.py
+from lib.validation.models import (
+    AgentRequest,
+    BaseValidatedRequest,
+    ErrorResponse,
+    HealthRequest,
+    SuccessResponse,
+    TeamRequest,
+    VersionRequest,
+    WorkflowRequest,
 )
 
 
@@ -41,7 +26,7 @@ class TestBaseValidatedRequest:
 
     def test_base_model_config(self):
         """Test base model configuration."""
-        # Test configuration attributes in Pydantic V2 (using mock models)
+        # Test configuration attributes in Pydantic V2
         config = BaseValidatedRequest.model_config
         assert config["extra"] == "forbid"
         assert config["validate_assignment"] is True

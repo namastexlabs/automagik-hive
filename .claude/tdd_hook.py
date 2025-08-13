@@ -172,7 +172,16 @@ class TDDValidator:
                 f"Use proper mirror structure: tests/<source_dir>/test_<name>.py"
             )
         
-        # Check if test follows naming convention
+        # Integration and support directories with special rules
+        INTEGRATION_PATTERNS = {'integration', 'fixtures', 'mocks', 'utilities', 'e2e', 'scenarios'}
+        is_integration = any(part in INTEGRATION_PATTERNS for part in path.parts)
+        
+        # Fixture and utility files don't need test_ prefix
+        if 'fixtures' in path.parts or 'utilities' in path.parts or 'mocks' in path.parts:
+            # These are support files, not actual test files
+            return True, "Test support file (fixture/utility/mock) - allowed"
+        
+        # Check if test follows naming convention (for actual test files)
         if not (path.name.startswith('test_') or path.name.endswith('_test.py')):
             return False, (
                 "❌ TEST NAMING VIOLATION\n"
@@ -184,13 +193,21 @@ class TDDValidator:
         # Check if test has corresponding source (warn only, don't block)
         expected_source = self.get_expected_source_path(file_path)
         if expected_source and not expected_source.exists():
-            # This is an orphaned test - warn but allow (might be creating test first)
-            message = (
-                "⚠️ TDD WARNING: Creating test for non-existent source file\n"
-                f"Test: {file_path}\n"
-                f"Expected source: {expected_source}\n"
-                "This is OK if you're in RED phase (test-first development)"
-            )
+            # For integration tests, this is expected
+            if is_integration:
+                message = (
+                    "✅ Integration test - no source file needed\n"
+                    f"Test: {file_path}\n"
+                    "Integration tests don't require mirror source files"
+                )
+            else:
+                # This is an orphaned test - warn but allow (might be creating test first)
+                message = (
+                    "⚠️ TDD WARNING: Creating test for non-existent source file\n"
+                    f"Test: {file_path}\n"
+                    f"Expected source: {expected_source}\n"
+                    "This is OK if you're in RED phase (test-first development)"
+                )
             print(message, file=sys.stderr)
         
         return True, "Test file creation/modification allowed"
