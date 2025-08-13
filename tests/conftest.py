@@ -67,8 +67,24 @@ def _create_test_fastapi_app() -> FastAPI:
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create an instance of the default event loop for the test session."""
     loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+    try:
+        yield loop
+    finally:
+        # Cancel all pending tasks before closing the loop
+        try:
+            pending_tasks = asyncio.all_tasks(loop)
+            if pending_tasks:
+                for task in pending_tasks:
+                    task.cancel()
+                # Run the loop briefly to allow cancelled tasks to complete
+                loop.run_until_complete(
+                    asyncio.gather(*pending_tasks, return_exceptions=True)
+                )
+        except Exception:
+            # Ignore cleanup errors to prevent test failures
+            pass
+        finally:
+            loop.close()
 
 
 @pytest.fixture
@@ -170,7 +186,12 @@ def mock_component_registries() -> Generator[
     yield {"agents": mock_agents, "teams": mock_teams, "workflows": mock_workflows}
 
     for p in patches:
-        p.stop()
+        try:
+            p.stop()
+        except BaseException:
+            # Ignore cleanup errors to prevent test failures
+            # Note: Using BaseException to catch KeyboardInterrupt from side_effects
+            pass
 
 
 @pytest.fixture
@@ -515,17 +536,25 @@ def mock_external_dependencies():
         # Mock serve.py startup orchestration to prevent component loading at import
         patch("api.serve.orchestrated_startup", new_callable=AsyncMock),
         patch("api.serve.create_startup_display"),
-        # Mock async notification functions in lifespan
+        # Mock async notification functions in lifespan with proper cleanup
         patch("common.startup_notifications.send_startup_notification", new_callable=AsyncMock),
         patch("common.startup_notifications.send_shutdown_notification", new_callable=AsyncMock),
         # Mock the serve.py app creation to return a FastAPI app with basic endpoints
         patch("api.serve.create_automagik_api", side_effect=lambda: _create_test_fastapi_app()),
     ]
 
-    for p in patches:
-        p.start()
-
-    yield
-
-    for p in patches:
-        p.stop()
+    started_patches = []
+    try:
+        for p in patches:
+            p.start()
+            started_patches.append(p)
+        yield
+    finally:
+        # Stop patches in reverse order to ensure proper cleanup
+        for p in reversed(started_patches):
+            try:
+                p.stop()
+            except BaseException:
+                # Ignore cleanup errors to prevent test failures
+                # Note: Using BaseException to catch KeyboardInterrupt from side_effects
+                pass

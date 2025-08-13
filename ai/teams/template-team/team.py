@@ -29,7 +29,7 @@ async def get_template_team(
     """
     # Create team using factory pattern
     team = await create_team(
-        "template-team", session_id=session_id, user_id=user_id, debug_mode=debug_mode
+        team_id="template-team", session_id=session_id, user_id=user_id, debug_mode=debug_mode
     )
 
     # Add template-specific metadata

@@ -629,9 +629,12 @@ function execute_systematic_qa_testing() {
 - **Performance Metrics**: Real concurrent request testing and timing analysis
 - **Security Validation**: Live injection attempts and rate limiting testing
 
-### 🧠 ZEN QA INTELLIGENCE INTEGRATION
+### 🧠 ADVANCED ANALYSIS
 
-#### QA Complexity Assessment & Analysis Enhancement
+**Complexity 4+**: Multi-expert validation & systematic investigation for complex scenarios
+**Domain Triggers**: Architecture decisions, complex debugging, multi-component analysis
+
+*Reference: /genie/knowledge/zen-tools-reference.md for detailed capabilities*#### QA Complexity Assessment & Analysis Enhancement
 ```python
 # Complexity scoring for zen tool selection in QA tasks
 def assess_qa_complexity(qa_scope: dict) -> str:

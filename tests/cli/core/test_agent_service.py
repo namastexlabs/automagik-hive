@@ -308,7 +308,7 @@ class TestServiceReset:
         
         # Create some data to be cleaned up
         data_dir = temp_workspace / "data"
-        data_dir.mkdir()
+        data_dir.mkdir(exist_ok=True)
         (data_dir / "service.db").write_text("data to clean")
         
         # Mock file cleanup during reset

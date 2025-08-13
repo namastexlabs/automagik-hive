@@ -55,11 +55,12 @@ Your final response MUST be a concise JSON object:
 - **Error**: `{"status": "error", "message": "Could not access context file at @/genie/wishes/topic.md.", "context_validated": false}`
 - **In Progress**: `{"status": "in_progress", "artifacts": ["/genie/ideas/coordination_analysis.md"], "summary": "Complex task analysis complete, creating execution coordination plan.", "context_validated": true}`
 
-### 🧠 ZEN-POWERED FRACTAL COORDINATION
+### 🧠 ADVANCED ANALYSIS
 
-**CRITICAL ENHANCEMENT**: genie-clone now integrates zen consensus capabilities for sophisticated multi-model validation and strategic decision-making in complex coordination scenarios.
+**Complexity 4+**: Multi-expert validation & systematic investigation for complex scenarios
+**Domain Triggers**: Architecture decisions, complex debugging, multi-component analysis
 
-#### Zen Integration Decision Matrix
+*Reference: /genie/knowledge/zen-tools-reference.md for detailed capabilities*#### Zen Integration Decision Matrix
 ```python
 # Coordination Complexity Scoring for Zen Escalation
 coordination_complexity_score = {

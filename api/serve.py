@@ -472,10 +472,7 @@ async def _async_create_automagik_api():
 
         app.include_router(v1_router)
 
-        # Add version router
-        from api.routes.version_router import version_router
-
-        app.include_router(version_router)
+        # Version router already included via v1_router above
 
         if is_development and not is_reloader_context:
             # Add development URLs

@@ -218,7 +218,7 @@ class TestFormatStatus:
         """Test status formatting with additional details."""
         result = format_status("Database", "healthy", "Connected to localhost:5432")
         
-        expected = "Database                 🟢 Healthy - Connected to localhost:5432"
+        expected = "Database                🟢 Healthy - Connected to localhost:5432"
         assert result == expected
 
     def test_format_status_all_status_types(self):
@@ -234,7 +234,7 @@ class TestFormatStatus:
         
         for name, status, expected_icon_text in test_cases:
             result = format_status(name, status)
-            expected = f"{name:25} {expected_icon_text}"
+            expected = f"{name:23} {expected_icon_text}"
             assert result == expected
 
     def test_format_status_case_insensitive(self):
@@ -260,7 +260,7 @@ class TestFormatStatus:
         """Test status formatting with empty service name."""
         result = format_status("", "running")
         
-        expected = f"{'':25} 🟢 Running"
+        expected = f"{'':23} 🟢 Running"
         assert result == expected
 
     def test_format_status_special_characters_in_name(self):

@@ -155,7 +155,7 @@ class VersionFactory:
 
         return await creation_methods[component_type](
             component_id=component_id,
-            config=config[component_type],  # Extract inner config for creation methods
+            config=config,  # Pass full config - let methods extract what they need
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -175,8 +175,11 @@ class VersionFactory:
     ) -> Agent:
         """Create versioned agent using dynamic Agno proxy with inheritance support."""
 
+        # Extract agent-specific config if full config provided
+        agent_config = config.get("agent", config) if "agent" in config else config
+        
         # Apply inheritance from team configuration if agent is part of a team
-        inherited_config = self._apply_team_inheritance(component_id, config)
+        inherited_config = self._apply_team_inheritance(component_id, agent_config)
 
         # Use the dynamic proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_proxy
@@ -435,7 +438,7 @@ class VersionFactory:
         )
 
         try:
-            # Validate team inheritance configuration
+            # Validate team inheritance configuration using full config
             logger.debug(f"🔧 Validating inheritance for team {component_id}")
             validated_config = self._validate_team_inheritance(component_id, config)
             logger.debug(f"🔧 Team {component_id} inheritance validation completed")
@@ -449,11 +452,11 @@ class VersionFactory:
                 f"🔧 AgnoTeamProxy loaded successfully for team {component_id}"
             )
 
-            # Create team using dynamic proxy
+            # Create team using dynamic proxy with full config
             logger.debug(f"🔧 Creating team instance via proxy for {component_id}")
             team = await proxy.create_team(
                 component_id=component_id,
-                config=validated_config,
+                config=validated_config,  # Pass full validated config
                 session_id=session_id,
                 debug_mode=debug_mode,
                 user_id=user_id,
@@ -610,6 +613,9 @@ class VersionFactory:
         **kwargs,
     ) -> Workflow:
         """Create workflow using dynamic Agno Workflow proxy for future compatibility."""
+        
+        # Extract workflow-specific config if full config provided
+        workflow_config = config.get("workflow", config) if "workflow" in config else config
 
         # Use the dynamic workflow proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_workflow_proxy
@@ -619,7 +625,7 @@ class VersionFactory:
         # Create workflow using dynamic proxy
         workflow = await proxy.create_workflow(
             component_id=component_id,
-            config=config,
+            config=workflow_config,
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -656,6 +662,9 @@ class VersionFactory:
         **kwargs,
     ) -> Agent:
         """Create coordinator using dynamic Agno Agent proxy configured as coordinator."""
+        
+        # Extract coordinator-specific config if full config provided
+        coordinator_config = config.get("coordinator", config) if "coordinator" in config else config
 
         # Use the dynamic coordinator proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_coordinator_proxy
@@ -665,7 +674,7 @@ class VersionFactory:
         # Create coordinator using dynamic proxy
         coordinator = await proxy.create_coordinator(
             component_id=component_id,
-            config=config,
+            config=coordinator_config,
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,

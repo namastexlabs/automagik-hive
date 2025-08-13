@@ -30,7 +30,7 @@ async def get_genie_team(
     """
     # Create team using factory pattern with correct team ID
     team = await create_team(
-        "genie",
+        team_id="genie",
         session_id=session_id,
         user_id=user_id,
         debug_mode=debug_mode,

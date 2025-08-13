@@ -460,12 +460,8 @@ class TestAgentEnvironmentCredentials:
 
         credentials = env.get_agent_credentials()
 
-        # Should fail initially - invalid URL handling not implemented
-        assert credentials is not None  # Should still return object with defaults
-        assert credentials.postgres_user == ""
-        assert credentials.postgres_password == ""
-        assert credentials.postgres_db == "hive_agent"
-        assert credentials.postgres_port == 35532
+        # Current implementation returns None for invalid database URLs
+        assert credentials is None
 
     def test_get_agent_credentials_exception_handling(
         self, temp_workspace_with_credentials

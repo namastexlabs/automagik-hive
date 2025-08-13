@@ -55,6 +55,7 @@ def _get_factory_function_patterns(
     team_name_underscore = team_name.replace("-", "_")
     patterns.extend(
         [
+            f"get_{team_name_underscore}",  # Direct function name (e.g., get_template_team)
             f"get_{team_name_underscore}_team",  # Current default
             f"create_{team_name_underscore}_team",
             f"build_{team_name_underscore}_team",
