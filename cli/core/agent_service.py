@@ -212,15 +212,62 @@ HIVE_MCP_CONFIG_PATH=ai/.mcp.json
             return False
     
     def _generate_agent_api_key(self, workspace_path: str) -> bool:
-        """Create docker/agent/.env with simple fixed credentials."""
+        """Generate dynamic API key and update both .env.agent files."""
+        import secrets
+        
         try:
             workspace = Path(workspace_path)
+            
+            # Check if .env.agent file exists at workspace root - required for update
+            env_agent_root = workspace / ".env.agent"
+            if not env_agent_root.exists():
+                return False
+            
+            # Generate secure API key using secrets.token_urlsafe()
+            api_key = f"hive_agent_{secrets.token_urlsafe(32)}"
+            
+            # Update workspace root .env.agent file
+            # Read existing content
+            content = env_agent_root.read_text()
+            
+            # Replace HIVE_API_KEY line with new dynamic key
+            lines = content.split('\n')
+            updated_lines = []
+            key_updated = False
+            
+            for line in lines:
+                if line.startswith('HIVE_API_KEY='):
+                    updated_lines.append(f'HIVE_API_KEY={api_key}')
+                    key_updated = True
+                else:
+                    updated_lines.append(line)
+            
+            # If key wasn't found, add it to security section
+            if not key_updated:
+                # Find security section and add key
+                security_index = -1
+                for i, line in enumerate(updated_lines):
+                    if '# SECURITY & AUTHENTICATION' in line:
+                        security_index = i
+                        break
+                
+                if security_index >= 0:
+                    # Insert after the security header
+                    updated_lines.insert(security_index + 2, f'HIVE_API_KEY={api_key}')
+                else:
+                    # Append at the end
+                    updated_lines.append(f'HIVE_API_KEY={api_key}')
+            
+            # Write back updated content
+            env_agent_root.write_text('\n'.join(updated_lines))
+            
+            # Update docker/agent/.env file
             docker_agent_dir = workspace / "docker" / "agent"
             docker_agent_dir.mkdir(parents=True, exist_ok=True)
-            env_agent = docker_agent_dir / ".env"
+            env_agent_docker = docker_agent_dir / ".env"
             
-            # Simple fixed Docker environment configuration
-            docker_env_content = """# Simple Docker Agent Environment - Fixed Test Credentials
+            # Simple fixed Docker environment configuration with dynamic API key
+            docker_env_content = f"""# Simple Docker Agent Environment - Dynamic API Key
 POSTGRES_HOST=postgres-agent
 POSTGRES_PORT=5432
 POSTGRES_DB=hive_agent
@@ -232,15 +279,15 @@ HIVE_API_PORT=38886
 HIVE_API_WORKERS=1
 HIVE_ENVIRONMENT=development
 
-HIVE_API_KEY=agent-test-key-12345
+HIVE_API_KEY={api_key}
 
 HIVE_LOG_LEVEL=INFO
 PYTHONUNBUFFERED=1
 PYTHONDONTWRITEBYTECODE=1
 """
             
-            # Write simple fixed content to docker/agent/.env
-            env_agent.write_text(docker_env_content)
+            # Write dynamic content to docker/agent/.env
+            env_agent_docker.write_text(docker_env_content)
             
             return True
             
@@ -287,7 +334,7 @@ PYTHONDONTWRITEBYTECODE=1
         # Check if containers are already running
         status = self.get_agent_status(workspace_path)
         postgres_running = "✅ Running" in status.get("agent-postgres", "")
-        server_running = "✅ Running" in status.get("agent-dev-server", "")
+        server_running = "✅ Running" in status.get("agent-server", "")
         
         if postgres_running and server_running:
             print("✅ Both agent containers are already running")
@@ -606,7 +653,7 @@ PYTHONDONTWRITEBYTECODE=1
             # Check both containers using Docker Compose
             for service_name, display_name, port in [
                 ("postgres-agent", "agent-postgres", "35532"), 
-                ("agent-dev-server", "agent-dev-server", "38886")
+                ("agent-dev-server", "agent-server", "38886")
             ]:
                 try:
                     # Use docker compose ps to check if service is running
@@ -637,7 +684,7 @@ PYTHONDONTWRITEBYTECODE=1
                 
         except Exception:
             # Fallback to stopped status on any error
-            status = {"agent-postgres": "🛑 Stopped", "agent-dev-server": "🛑 Stopped"}
+            status = {"agent-postgres": "🛑 Stopped", "agent-server": "🛑 Stopped"}
         
         return status
 
