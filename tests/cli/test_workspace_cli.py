@@ -50,7 +50,9 @@ class TestWorkspaceInitialization:
             
             with patch('builtins.input', return_value=workspace_name), \
                  patch('shutil.which', return_value='/usr/bin/git'), \
-                 patch.object(manager, '_run_command') as mock_run:
+                 patch.object(manager, '_run_command') as mock_run, \
+                 patch('pathlib.Path.mkdir') as mock_mkdir, \
+                 patch('pathlib.Path.write_text') as mock_write_text:
                 
                 result = manager.init_workspace()
                 
@@ -63,6 +65,10 @@ class TestWorkspaceInitialization:
                     call(["git", "commit", "-m", "Initial workspace setup"], cwd=Path(workspace_name))
                 ]
                 mock_run.assert_has_calls(expected_calls)
+                
+                # Verify directory creation was attempted
+                assert mock_mkdir.called
+                assert mock_write_text.called
                 
         finally:
             os.chdir(original_cwd)
@@ -78,13 +84,17 @@ class TestWorkspaceInitialization:
             os.chdir(temp_workspace)
             
             with patch('shutil.which', return_value=None), \
-                 patch.object(manager, '_run_command'):
+                 patch.object(manager, '_run_command'), \
+                 patch('pathlib.Path.mkdir') as mock_mkdir, \
+                 patch('pathlib.Path.write_text') as mock_write_text, \
+                 patch('pathlib.Path.exists', return_value=False):
                 
                 result = manager.init_workspace(workspace_name)
             
             assert result is True
-            workspace_path = temp_workspace / workspace_name
-            assert workspace_path.exists()
+            # Verify directory creation was attempted instead of checking real filesystem
+            assert mock_mkdir.called
+            assert mock_write_text.called
             
         finally:
             os.chdir(original_cwd)
@@ -557,12 +567,20 @@ class TestWorkspaceEdgeCases:
         
         with patch('pathlib.Path.cwd', return_value=temp_workspace), \
              patch('shutil.which', return_value=None), \
-             patch.object(manager, '_run_command'):
+             patch.object(manager, '_run_command'), \
+             patch('pathlib.Path.mkdir') as mock_mkdir, \
+             patch('pathlib.Path.write_text') as mock_write_text, \
+             patch('pathlib.Path.exists', return_value=False):
             
             result = manager.init_workspace(long_name)
             
             # Should handle long names (may succeed or fail depending on filesystem)
             assert isinstance(result, bool)
+            
+            # Verify file operations were attempted but no real directories created
+            if result:
+                assert mock_mkdir.called
+                assert mock_write_text.called
 
     def test_start_server_with_corrupted_api_file(self, temp_workspace):
         """Test server startup with corrupted API file."""

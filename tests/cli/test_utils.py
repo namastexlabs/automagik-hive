@@ -484,10 +484,13 @@ class TestUtilsEdgeCases:
         extreme_inputs = ["x" * 1000, "", "\n" * 100, "😀🎉🔥"]
         
         for extreme_input in extreme_inputs:
-            with patch('builtins.input', return_value=extreme_input):
+            with patch('builtins.input', return_value=extreme_input), \
+                 patch('pathlib.Path.mkdir', side_effect=Exception("Directory creation blocked during extreme input test")) as mock_mkdir:
                 result = confirm_action("Test?", default=True)
                 # Should not crash and should return boolean
                 assert isinstance(result, bool)
+                # Ensure no directories were created with extreme input
+                assert not mock_mkdir.called, f"Directory creation attempted with extreme input: {extreme_input[:50]}..."
 
     def test_concurrent_utility_function_calls(self):
         """Test utility functions handle concurrent access safely."""

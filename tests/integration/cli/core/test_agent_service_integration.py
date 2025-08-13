@@ -32,7 +32,9 @@ class TestAgentServiceInitialization:
 
         # Test actual stub implementation attributes
         assert hasattr(service, "workspace_path")
-        assert service.workspace_path == Path(".")
+        # AgentService resolves the path, so we need to compare against the resolved current directory
+        expected_path = Path(".").resolve()
+        assert service.workspace_path == expected_path
         
         # Test stub methods exist
         assert hasattr(service, "install")
@@ -43,10 +45,15 @@ class TestAgentServiceInitialization:
         assert hasattr(service, "logs")
         assert hasattr(service, "reset")
         
-        # Test custom workspace path
+        # Test custom workspace path - should also be resolved
         custom_path = Path("/tmp/test")
         service_custom = AgentService(custom_path)
-        assert service_custom.workspace_path == custom_path
+        try:
+            expected_custom_path = custom_path.resolve()
+        except NotImplementedError:
+            # Handle cross-platform testing scenarios
+            expected_custom_path = custom_path
+        assert service_custom.workspace_path == expected_custom_path
 
     def test_agent_service_compose_manager_creation(self):
         """Test AgentService stub methods work correctly."""
@@ -907,31 +914,50 @@ services:
         """
         service = AgentService()
 
-        # Mock Docker Compose commands to return running containers
-        with patch("subprocess.run") as mock_run:
-            # First call: docker compose ps -q postgres-agent (returns container ID)
-            # Second call: docker inspect (returns true for running state)
-            # Third call: docker compose ps -q agent-dev-server (returns container ID) 
-            # Fourth call: docker inspect (returns true for running state)
-            mock_run.side_effect = [
-                # postgres-agent ps command - returns container ID
-                Mock(returncode=0, stdout="postgres_container_id\n"),
-                # postgres-agent inspect command - returns running state
-                Mock(returncode=0, stdout="true\n"),
-                # agent-dev-server ps command - returns container ID
-                Mock(returncode=0, stdout="server_container_id\n"),
-                # agent-dev-server inspect command - returns running state
-                Mock(returncode=0, stdout="true\n"),
-            ]
+        # Create a temporary workspace with proper docker compose structure
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
             
-            result = service.get_agent_status("test_workspace")
+            # Create the expected docker/agent directory structure
+            docker_agent_dir = workspace / "docker" / "agent"
+            docker_agent_dir.mkdir(parents=True)
+            
+            # Create a minimal docker-compose.yml file to satisfy the file existence check
+            compose_file = docker_agent_dir / "docker-compose.yml"
+            compose_file.write_text("""
+version: '3.8'
+services:
+  postgres-agent:
+    image: postgres:15
+  agent-dev-server:
+    image: test:latest
+""")
 
-        # Expected status based on current implementation (blocked by task-5ca0f350)
-        expected_status = {
-            "agent-postgres": "✅ Running (Port: 35532)",
-            "agent-server": "✅ Running (Port: 38886)",
-        }
-        assert result == expected_status
+            # Mock Docker Compose commands to return running containers
+            with patch("subprocess.run") as mock_run:
+                # First call: docker compose ps -q postgres-agent (returns container ID)
+                # Second call: docker inspect (returns true for running state)
+                # Third call: docker compose ps -q agent-dev-server (returns container ID) 
+                # Fourth call: docker inspect (returns true for running state)
+                mock_run.side_effect = [
+                    # postgres-agent ps command - returns container ID
+                    Mock(returncode=0, stdout="postgres_container_id\n"),
+                    # postgres-agent inspect command - returns running state
+                    Mock(returncode=0, stdout="true\n"),
+                    # agent-dev-server ps command - returns container ID
+                    Mock(returncode=0, stdout="server_container_id\n"),
+                    # agent-dev-server inspect command - returns running state
+                    Mock(returncode=0, stdout="true\n"),
+                ]
+                
+                result = service.get_agent_status(str(workspace))
+
+            # Expected status based on current implementation (blocked by task-5ca0f350)
+            expected_status = {
+                "agent-postgres": "✅ Running (Port: 35532)",
+                "agent-server": "✅ Running (Port: 38886)",
+            }
+            assert result == expected_status
 
     def test_get_agent_status_server_stopped(self, mock_compose_manager):
         """Test agent status when server is stopped.
@@ -965,18 +991,31 @@ services:
         """
         service = AgentService()
 
-        # Mock Docker Compose commands to return mixed states (postgres running, server stopped)
-        with patch("subprocess.run") as mock_run:
-            mock_run.side_effect = [
-                # postgres-agent ps command - returns container ID (running)
-                Mock(returncode=0, stdout="postgres_container_id\n"),
-                # postgres-agent inspect command - returns running state
-                Mock(returncode=0, stdout="true\n"),
-                # agent-dev-server ps command - returns empty (stopped)
-                Mock(returncode=0, stdout=""),
-            ]
+        # Mock pathlib.Path to simulate compose file exists 
+        with patch("pathlib.Path") as mock_path_class:
+            # Setup mock to simulate docker/agent/docker-compose.yml exists
+            mock_workspace = mock_path_class.return_value.resolve.return_value
+            mock_compose_agent = mock_workspace.__truediv__.return_value.__truediv__.return_value.__truediv__.return_value
+            mock_compose_root = mock_workspace.__truediv__.return_value
             
-            result = service.get_agent_status("test_workspace")
+            # postgres-agent compose file exists
+            mock_compose_agent.exists.return_value = True
+            mock_compose_root.exists.return_value = False
+            
+            # Mock os.fspath to return a valid path string
+            with patch("os.fspath", return_value="/test/docker/agent/docker-compose.yml"):
+                # Mock Docker Compose commands to return mixed states (postgres running, server stopped)
+                with patch("subprocess.run") as mock_run:
+                    mock_run.side_effect = [
+                        # postgres-agent ps command - returns container ID (running)
+                        Mock(returncode=0, stdout="postgres_container_id\n"),
+                        # postgres-agent inspect command - returns running state
+                        Mock(returncode=0, stdout="true\n"),
+                        # agent-dev-server ps command - returns empty (stopped)
+                        Mock(returncode=0, stdout=""),
+                    ]
+                    
+                    result = service.get_agent_status("test_workspace")
 
         # Expected status based on current implementation (blocked by task-5ca0f350)
         expected_status = {
@@ -1075,9 +1114,30 @@ class TestAgentServiceIntegration:
             workspace = Path(temp_dir)
             # Create expected directory structure
             (workspace / "docker" / "agent").mkdir(parents=True)
-            (workspace / "docker" / "agent" / "docker-compose.yml").write_text(
-                "version: '3.8'\n"
-            )
+            # Create proper docker-compose.yml with service definitions that match actual containers
+            (workspace / "docker" / "agent" / "docker-compose.yml").write_text("""
+services:
+  postgres-agent:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: hive_agent
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+    ports:
+      - "35532:5432"
+    restart: unless-stopped
+    
+  agent-dev-server:
+    image: python:3.12-slim
+    command: sleep infinity
+    environment:
+      HIVE_API_PORT: 38886
+    ports:
+      - "38886:38886"
+    depends_on:
+      - postgres-agent
+    restart: unless-stopped
+""")
             (workspace / ".env.example").write_text(
                 "HIVE_API_PORT=8886\n"
                 "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"
@@ -1103,33 +1163,46 @@ class TestAgentServiceIntegration:
                                 with patch.object(
                                     service, "_stop_agent_background", return_value=True
                                 ):
-                                    # Install
-                                    install_result = service.install_agent_environment(
-                                        str(workspace)
-                                    )
-                                    assert install_result is True
+                                    # Mock subprocess.run for docker compose commands
+                                    with patch("subprocess.run") as mock_subprocess:
+                                        # Configure mock to return success for all docker compose operations
+                                        mock_subprocess.return_value.returncode = 0
+                                        mock_subprocess.return_value.stdout = ""
+                                        mock_subprocess.return_value.stderr = ""
+                                        
+                                        # Install
+                                        install_result = service.install_agent_environment(
+                                            str(workspace)
+                                        )
+                                        assert install_result is True
 
-                                    # Serve
-                                    serve_result = service.serve_agent(str(workspace))
-                                    assert serve_result is True
+                                        # Serve
+                                        serve_result = service.serve_agent(str(workspace))
+                                        assert serve_result is True
 
-                                    # Stop
-                                    stop_result = service.stop_agent(str(workspace))
-                                    assert stop_result is True
+                                        # Stop
+                                        stop_result = service.stop_agent(str(workspace))
+                                        assert stop_result is True
 
-                                    # Reset
-                                    reset_result = service.reset_agent_environment(
-                                        str(workspace)
-                                    )
-                                    assert reset_result is True
+                                        # Reset
+                                        reset_result = service.reset_agent_environment(
+                                            str(workspace)
+                                        )
+                                        assert reset_result is True
 
     def test_concurrent_agent_operations(self, mock_compose_manager):
         """Test handling of concurrent agent operations."""
         service = AgentService()
 
-        # Simulate concurrent serve attempts
+        # Simulate concurrent serve attempts with proper mocking
         with patch.object(service, "_validate_agent_environment", return_value=True):
-            with patch.object(service, "_is_agent_running", side_effect=[True, True]):
+            with patch.object(service, "get_agent_status") as mock_status:
+                # Mock status to indicate both containers are already running
+                mock_status.return_value = {
+                    "agent-postgres": "✅ Running (Port: 35532)",
+                    "agent-server": "✅ Running (Port: 38886)"
+                }
+                
                 with patch.object(service, "_get_agent_pid", return_value=1234):
                     # First serve should return True (already running)
                     result1 = service.serve_agent("test_workspace")

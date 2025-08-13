@@ -377,28 +377,24 @@ class AgnoAgentProxy:
         from lib.utils.dynamic_model_resolver import filter_model_parameters
         from lib.config.provider_registry import get_provider_registry
         
+        # Debug: Log the incoming model config to trace the issue
+        logger.info(f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {model_config}")
+        print(f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {model_config}")
+        
         model_id = model_config.get("id")
-        if not model_id:
-            # Use default resolution
+        provider = model_config.get("provider")
+        
+        # Fix: Ensure we respect the configured provider and model ID
+        if model_id:
+            logger.info(f"🚀 Using configured model: {model_id} for {component_id} with config: {model_config}")
+            print(f"🚀 Using configured model: {model_id} for {component_id} with config: {model_config}")
+            # Use the specific model ID from config (provider is included in model_config)
+            return resolve_model(model_id=model_id, **model_config)
+        else:
+            # Fallback to default resolution only when no model ID is specified
+            logger.warning(f"⚠️ No model ID specified for {component_id}, using default resolution")
+            print(f"⚠️ No model ID specified for {component_id}, using default resolution")
             return resolve_model(model_id=None, **model_config)
-        
-        # Detect provider and get model class
-        provider = get_provider_registry().detect_provider(model_id)
-        if not provider:
-            # Fallback to standard resolution
-            return resolve_model(model_id=model_id, **model_config)
-        
-        # Get the actual model class
-        model_class = get_provider_registry().resolve_model_class(provider, model_id)
-        if not model_class:
-            # Fallback to standard resolution
-            return resolve_model(model_id=model_id, **model_config)
-        
-        # Use dynamic filtering to only pass parameters the model class accepts
-        filtered_config = filter_model_parameters(model_class, model_config)
-        
-        # Create model instance with filtered parameters
-        return model_class(**filtered_config)
 
     def _handle_storage_config(
         self,

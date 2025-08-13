@@ -1,15 +1,15 @@
 agent:
   name: "🔧 Template Agent"
   agent_id: "template-agent"
-  version: 1  # Rolled back to original version
+  version: 1
   description: >
     TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents. 
     This configuration serves as a starting point for building domain-specific 
     agents with standardized patterns, memory management, and tool integration.
 
 model:
-  provider: anthropic
-  id: claude-sonnet-4-20250514
+  provider: openai
+  id: gpt-5
   temperature: 0.3
   max_tokens: 4000
 
@@ -45,6 +45,7 @@ events:
 mcp_servers:
   - "ask-repo-agent:*"
   - "search-repo-docs:*"
+  - "mcp-server-chart:*"
 
 streaming:
   stream: true

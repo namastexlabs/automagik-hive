@@ -14,7 +14,6 @@ from lib.logging import logger
 _agno_agent_proxy = None
 _agno_team_proxy = None
 _agno_workflow_proxy = None
-_agno_coordinator_proxy = None
 
 
 def get_agno_proxy():
@@ -84,12 +83,10 @@ def reset_proxy_instances():
     global \
         _agno_agent_proxy, \
         _agno_team_proxy, \
-        _agno_workflow_proxy, \
-        _agno_coordinator_proxy
+        _agno_workflow_proxy
     _agno_agent_proxy = None
     _agno_team_proxy = None
     _agno_workflow_proxy = None
-    _agno_coordinator_proxy = None
     logger.info("All proxy instances reset")
 
 
@@ -161,20 +158,3 @@ async def create_workflow(*args, **kwargs):
     return await get_agno_workflow_proxy().create_workflow(*args, **kwargs)
 
 
-def get_agno_coordinator_proxy():
-    """
-    Get or create the global Agno Coordinator proxy instance.
-
-    Uses lazy import to avoid circular dependencies and improve startup time.
-
-    Returns:
-        AgnoCoordinatorProxy: Configured coordinator proxy instance
-    """
-    global _agno_coordinator_proxy
-    if _agno_coordinator_proxy is None:
-        # Lazy import to prevent circular dependencies
-        from .proxy_coordinators import AgnoCoordinatorProxy
-
-        _agno_coordinator_proxy = AgnoCoordinatorProxy()
-        logger.debug("Created new AgnoCoordinatorProxy instance")
-    return _agno_coordinator_proxy

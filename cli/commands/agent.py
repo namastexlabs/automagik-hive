@@ -27,7 +27,8 @@ class AgentCommands:
         """Start agent services."""
         try:
             print(f"🚀 Starting agent services in: {workspace}")
-            return self.agent_service.serve_agent(workspace)
+            result = self.agent_service.serve_agent(workspace)
+            return bool(result)
         except Exception:
             return False
     

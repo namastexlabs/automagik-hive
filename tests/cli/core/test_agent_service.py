@@ -26,7 +26,9 @@ class TestAgentServiceInitialization:
         """Test AgentService initializes with current directory when no path provided."""
         service = AgentService()
         
-        assert service.workspace_path == Path(".")
+        # The service should resolve to the current working directory
+        expected_path = Path(".").resolve()
+        assert service.workspace_path == expected_path
 
 
 class TestServiceLifecycleOperations:

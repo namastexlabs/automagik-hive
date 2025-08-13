@@ -322,19 +322,51 @@ class TestAgnoTeamProxyConfigurationProcessing:
         }
 
         with (
-            patch.object(proxy, "_handle_model_config") as mock_model,
-            patch.object(proxy, "_handle_storage_config") as mock_storage,
-            patch.object(proxy, "_handle_team_metadata") as mock_team,
+            patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create_storage,
+            patch('lib.config.provider_registry.get_provider_registry') as mock_registry,
+            patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter,
         ):
-            mock_model.return_value = MagicMock()
-            mock_storage.return_value = MagicMock()
-            mock_team.return_value = {"name": "Custom Team"}
+            # Mock storage creation to avoid database connection
+            mock_storage_instance = MagicMock()
+            mock_create_storage.return_value = mock_storage_instance
+            
+            # Mock provider registry for model handling
+            mock_provider_registry = MagicMock()
+            mock_registry.return_value = mock_provider_registry
+            mock_provider_registry.detect_provider.return_value = "anthropic"
+            
+            # Mock model class
+            mock_model_class = MagicMock()
+            mock_model_instance = MagicMock()
+            mock_model_class.return_value = mock_model_instance
+            mock_provider_registry.resolve_model_class.return_value = mock_model_class
+            
+            # Mock model parameter filtering
+            mock_filter.return_value = {"id": "claude-3-sonnet"}
 
-            await proxy._process_config(config, "test-team", "postgresql://test_db")
+            result = await proxy._process_config(config, "test-team", "postgresql://test_db")
 
-            mock_model.assert_called_once()
-            mock_storage.assert_called_once()
-            mock_team.assert_called_once()
+            # Verify storage creation was called properly
+            mock_create_storage.assert_called_once_with(
+                storage_config={"type": "postgres"},
+                component_id="test-team",
+                component_mode="team",
+                db_url="postgresql://test_db",
+            )
+            
+            # Verify model configuration was processed
+            mock_provider_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
+            mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
+            mock_filter.assert_called_once_with(mock_model_class, {"id": "claude-3-sonnet"})
+            mock_model_class.assert_called_once_with(**{"id": "claude-3-sonnet"})
+            
+            # Verify result contains expected processed config
+            assert "storage" in result
+            assert "model" in result
+            assert "name" in result
+            assert result["name"] == "Custom Team"
+            assert result["storage"] == mock_storage_instance
+            assert result["model"] == mock_model_instance
 
     @pytest.mark.asyncio
     async def test_process_config_async_members_handler(self, proxy):
@@ -343,17 +375,18 @@ class TestAgnoTeamProxyConfigurationProcessing:
 
         mock_members = [MagicMock(), MagicMock()]
 
-        with patch.object(
-            proxy, "_handle_members", new_callable=AsyncMock
-        ) as mock_handler:
-            mock_handler.return_value = mock_members
+        # Create an async mock handler
+        mock_handler = AsyncMock(return_value=mock_members)
+        
+        # Patch the handler in the _custom_params dictionary since that's how _process_config calls it
+        proxy._custom_params["members"] = mock_handler
 
-            result = await proxy._process_config(
-                config, "test-team", "postgresql://test_db"
-            )
+        result = await proxy._process_config(
+            config, "test-team", "postgresql://test_db"
+        )
 
-            assert result["members"] == mock_members
-            mock_handler.assert_called_once()
+        assert result["members"] == mock_members
+        mock_handler.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_process_config_unknown_params_logging(self, proxy):
@@ -371,22 +404,25 @@ class TestAgnoTeamProxyConfigurationProcessing:
         """Test handling of dict results from custom handlers."""
         config = {"team": {"name": "Test", "mode": "route"}}
 
-        # MagicMock handler that returns a dict
-        with patch.object(proxy, "_handle_team_metadata") as mock_handler:
-            mock_handler.return_value = {
-                "name": "Test Team",
-                "mode": "route",
-                "extra_field": "value",
-            }
+        # Create a mock handler that returns a dict
+        mock_handler = MagicMock(return_value={
+            "name": "Test Team",
+            "mode": "route",
+            "extra_field": "value",
+        })
+        
+        # Patch the handler in the _custom_params dictionary since that's how _process_config calls it
+        proxy._custom_params["team"] = mock_handler
 
-            result = await proxy._process_config(
-                config, "test-team", "postgresql://test_db"
-            )
+        result = await proxy._process_config(
+            config, "test-team", "postgresql://test_db"
+        )
 
-            # Dict result should be merged into processed config
-            assert result["name"] == "Test Team"
-            assert result["mode"] == "route"
-            assert result["extra_field"] == "value"
+        # Dict result should be merged into processed config
+        assert result["name"] == "Test Team"
+        assert result["mode"] == "route"
+        assert result["extra_field"] == "value"
+        mock_handler.assert_called_once()
 
 
 class TestAgnoTeamProxyParameterHandlers:
@@ -1062,12 +1098,13 @@ class TestAgnoTeamProxyEdgeCases:
     @pytest.mark.asyncio
     async def test_process_config_handler_exception_propagation(self, proxy):
         """Test that handler exceptions are properly propagated."""
-        config = {"model": {"id": "invalid"}}
+        config = {"storage": {"type": "invalid"}}
 
-        with patch.object(proxy, "_handle_model_config") as mock_handler:
-            mock_handler.side_effect = ValueError("Invalid model config")
+        # Test with storage config which is easier to mock and still tests exception propagation
+        with patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create_storage:
+            mock_create_storage.side_effect = ValueError("Invalid storage config")
 
-            with pytest.raises(ValueError, match="Invalid model config"):
+            with pytest.raises(ValueError, match="Invalid storage config"):
                 await proxy._process_config(config, "test-team", "postgresql://test_db")
 
     def test_fallback_parameters_completeness(self, proxy):

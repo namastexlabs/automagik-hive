@@ -147,7 +147,6 @@ class VersionFactory:
             "agent": self._create_agent,
             "team": self._create_team,
             "workflow": self._create_workflow,
-            "coordinator": self._create_coordinator,
         }
 
         if component_type not in creation_methods:
@@ -651,54 +650,6 @@ class VersionFactory:
 
         return workflow
 
-    async def _create_coordinator(
-        self,
-        component_id: str,
-        config: dict[str, Any],
-        session_id: str | None,
-        debug_mode: bool,
-        user_id: str | None,
-        metrics_service: object | None = None,
-        **kwargs,
-    ) -> Agent:
-        """Create coordinator using dynamic Agno Agent proxy configured as coordinator."""
-        
-        # Extract coordinator-specific config if full config provided
-        coordinator_config = config.get("coordinator", config) if "coordinator" in config else config
-
-        # Use the dynamic coordinator proxy system for automatic Agno compatibility
-        from lib.utils.agno_proxy import get_agno_coordinator_proxy
-
-        proxy = get_agno_coordinator_proxy()
-
-        # Create coordinator using dynamic proxy
-        coordinator = await proxy.create_coordinator(
-            component_id=component_id,
-            config=coordinator_config,
-            session_id=session_id,
-            debug_mode=debug_mode,
-            user_id=user_id,
-            db_url=self.db_url,
-            metrics_service=metrics_service,
-            **kwargs,
-        )
-
-        # Get supported parameters count safely
-        try:
-            supported_params = proxy.get_supported_parameters()
-            if hasattr(supported_params, '__await__'):
-                # Handle async case in testing scenarios
-                supported_params = await supported_params
-            param_count = len(supported_params)
-        except Exception:
-            # Fallback if parameters aren't available
-            param_count = "unknown"
-        
-        logger.debug(
-            f"🎯 Coordinator {component_id} created with {param_count} available Agno Agent parameters"
-        )
-
-        return coordinator
 
     async def _load_from_yaml_only(
         self, component_id: str, component_type: str, **kwargs
@@ -721,7 +672,6 @@ class VersionFactory:
             "agent": f"ai/agents/{component_id}/config.yaml",
             "team": f"ai/teams/{component_id}/config.yaml",
             "workflow": f"ai/workflows/{component_id}/config.yaml",
-            "coordinator": f"ai/coordinators/{component_id}/config.yaml",
         }
 
         config_file = config_paths.get(component_type)
@@ -801,7 +751,6 @@ class VersionFactory:
             "agent": f"ai/agents/{component_id}/config.yaml",
             "team": f"ai/teams/{component_id}/config.yaml",
             "workflow": f"ai/workflows/{component_id}/config.yaml",
-            "coordinator": f"ai/coordinators/{component_id}/config.yaml",
         }
 
         config_file = config_paths.get(component_type)
@@ -833,7 +782,6 @@ class VersionFactory:
             "agent": self._create_agent,
             "team": self._create_team,
             "workflow": self._create_workflow,
-            "coordinator": self._create_coordinator,
         }
 
         return await creation_methods[component_type](
@@ -893,17 +841,3 @@ async def create_versioned_workflow(
     )
 
 
-async def create_coordinator(
-    coordinator_id: str,
-    version: int | None = None,
-    metrics_service: object | None = None,
-    **kwargs,
-) -> Agent:
-    """Create coordinator using factory pattern."""
-    return await get_version_factory().create_versioned_component(
-        coordinator_id,
-        "coordinator",
-        version,
-        metrics_service=metrics_service,
-        **kwargs,
-    )

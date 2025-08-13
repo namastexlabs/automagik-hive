@@ -281,18 +281,22 @@ class TestVersionFactoryComponentCreation:
     async def test_create_versioned_component_active_version(
         self, factory, mock_version_service
     ):
-        """Test creating component with active version (None)."""
+        """Test creating component with active version (None) in production mode."""
         # Mock active version record with proper config structure
         mock_record = MagicMock()
         mock_record.config = {"team": {"name": "test-team", "members": ["agent1", "agent2"]}}
         mock_record.component_type = "team"
-        mock_version_service.get_active_version.return_value = mock_record
-
+        
+        # Mock the sync engine to return the config
+        mock_sync_result = {"team": {"name": "test-team", "members": ["agent1", "agent2"]}}
+        
         mock_team = MagicMock()
 
         with (
+            # Ensure dev mode is disabled so production path is taken
+            patch("lib.utils.version_factory.DevMode.is_enabled", return_value=False),
             patch.object(factory, "_create_team", return_value=mock_team) as mock_create,
-            patch.object(factory, "_load_from_yaml_only", return_value=mock_record.config),
+            patch.object(factory.sync_engine, "sync_component", return_value=mock_sync_result) as mock_sync,
         ):
             result = await factory.create_versioned_component(
                 component_id="test-team",
@@ -301,13 +305,13 @@ class TestVersionFactoryComponentCreation:
                 user_id="test-user",
             )
 
-            # Verify active version service called
-            mock_version_service.get_active_version.assert_called_once_with("test-team")
+            # Verify sync engine called instead of get_active_version (which is legacy)
+            mock_sync.assert_called_once_with("test-team", "team")
 
             # Verify team creation called correctly
             mock_create.assert_called_once_with(
                 component_id="test-team",
-                config=mock_record.config,
+                config=mock_sync_result,
                 session_id=None,
                 debug_mode=False,
                 user_id="test-user",
@@ -320,9 +324,12 @@ class TestVersionFactoryComponentCreation:
     async def test_create_versioned_component_yaml_fallback(
         self, factory, mock_version_service
     ):
-        """Test YAML fallback when no active version found."""
-        mock_version_service.get_active_version.return_value = None
-
+        """Test YAML fallback when bidirectional sync fails in production mode.
+        
+        Fixed: Updated test to properly mock the sync_engine failure scenario
+        instead of incorrectly mocking _load_from_yaml_only exception.
+        """
+        # Mock the sync_engine to fail, triggering YAML fallback
         mock_workflow = MagicMock()
 
         with (
@@ -330,9 +337,10 @@ class TestVersionFactoryComponentCreation:
                 factory, "_create_component_from_yaml", return_value=mock_workflow
             ) as mock_yaml_create,
             patch.object(
-                factory, "_load_from_yaml_only", side_effect=Exception("No YAML file")
+                factory.sync_engine, "sync_component", side_effect=Exception("No database data")
             ),
             patch("lib.utils.version_factory.logger") as mock_logger,
+            patch("lib.utils.version_factory.DevMode.is_enabled", return_value=False),
         ):
             result = await factory.create_versioned_component(
                 component_id="test-workflow",
@@ -348,14 +356,17 @@ class TestVersionFactoryComponentCreation:
                 session_id=None,
                 debug_mode=True,
                 user_id=None,
+                metrics_service=None,
             )
 
             # Verify fallback counter incremented
             assert factory.yaml_fallback_count == 1
 
-            mock_logger.info.assert_called_once_with(
-                "First startup detected: Loading components from YAML configs before database sync"
-            )
+            # Verify warning logged for bidirectional sync failure
+            mock_logger.warning.assert_called_once()
+            warning_call_args = mock_logger.warning.call_args[0][0]
+            assert "Bidirectional sync failed for test-workflow" in warning_call_args
+            assert "falling back to YAML" in warning_call_args
 
             assert result == mock_workflow
 
@@ -1254,6 +1265,22 @@ class TestYamlFallback:
 class TestGlobalFactoryFunctions:
     """Test global factory functions."""
 
+    @pytest.fixture(autouse=True)
+    def reset_global_factory(self):
+        """Reset global factory before and after each test for proper isolation."""
+        from lib.utils import version_factory
+        
+        # Store original state
+        original_factory = version_factory._version_factory
+        
+        # Reset for test
+        version_factory._version_factory = None
+        
+        yield
+        
+        # Restore original state or clean up
+        version_factory._version_factory = original_factory
+
     def test_get_version_factory_singleton(self):
         """Test get_version_factory returns singleton instance."""
         from lib.utils.version_factory import get_version_factory
@@ -1371,9 +1398,7 @@ class TestGlobalFactoryFunctions:
         """Test that global factory can be reset."""
         from lib.utils import version_factory
 
-        # Reset global factory
-        version_factory._version_factory = None
-
+        # The fixture already resets the factory, so we just verify behavior
         mock_factory = MagicMock()
 
         with (
@@ -1480,7 +1505,6 @@ class TestVersionFactoryWorkingCore:
             patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test", "HIVE_DEV_MODE": "false"}),
         ):
             mock_version_service = MagicMock()
-            mock_version_service.get_active_version = AsyncMock(return_value=None)
             mock_service.return_value = mock_version_service
             
             mock_sync_engine = MagicMock()
@@ -1488,6 +1512,8 @@ class TestVersionFactoryWorkingCore:
             mock_sync_class.return_value = mock_sync_engine
 
             factory = VersionFactory()
+            # Replace the sync_engine with our mock after factory is created
+            factory.sync_engine = mock_sync_engine
 
             mock_agent = MagicMock()
             with patch.object(
@@ -1497,8 +1523,9 @@ class TestVersionFactoryWorkingCore:
                     component_id="test-agent", component_type="agent", version=None
                 )
 
-                mock_version_service.get_active_version.assert_called_once_with(
-                    "test-agent"
+                # In production mode, it calls sync_component, not get_active_version
+                mock_sync_engine.sync_component.assert_called_once_with(
+                    "test-agent", "agent"
                 )
                 mock_yaml.assert_called_once()
                 assert factory.yaml_fallback_count == 1
@@ -1650,142 +1677,3 @@ class TestVersionFactoryWorkingCore:
             assert result["csv_file_path"] == "knowledge_rag.csv"
 
 
-class TestCoordinatorIntegration:
-    """Test coordinator integration with version factory."""
-
-    @pytest.mark.asyncio
-    async def test_create_coordinator_via_factory(self):
-        """Test coordinator creation using version factory."""
-        from lib.utils.version_factory import create_coordinator
-
-        mock_coordinator = MagicMock()
-        mock_coordinator.metadata = {"component_type": "coordinator"}
-
-        with patch("lib.utils.version_factory.get_version_factory") as mock_get_factory:
-            mock_factory = AsyncMock()
-            mock_factory.create_versioned_component.return_value = mock_coordinator
-            mock_get_factory.return_value = mock_factory
-
-            result = await create_coordinator("test-coordinator")
-
-            assert result == mock_coordinator
-            mock_factory.create_versioned_component.assert_called_once_with(
-                "test-coordinator", "coordinator", None, metrics_service=None
-            )
-
-    @pytest.mark.asyncio
-    async def test_coordinator_creation_methods_mapping(self):
-        """Test that coordinator is included in creation methods mapping."""
-        from lib.utils.version_factory import VersionFactory
-
-        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
-            factory = VersionFactory()
-
-            # Mock the version service and coordinator creation
-            mock_coordinator = MagicMock()
-            mock_coordinator.metadata = {"component_type": "coordinator"}
-
-            with patch.object(
-                factory, "_create_coordinator", return_value=mock_coordinator
-            ) as mock_create_coord:
-                with patch.object(
-                    factory.version_service, "get_active_version"
-                ) as mock_get_version:
-                    mock_version_record = MagicMock()
-                    mock_version_record.component_type = "coordinator"
-                    mock_version_record.config = {
-                        "coordinator": {"name": "Test Coordinator"}
-                    }
-                    mock_get_version.return_value = mock_version_record
-
-                    result = await factory.create_versioned_component(
-                        "test-coordinator", "coordinator"
-                    )
-
-                    assert result == mock_coordinator
-                    mock_create_coord.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_coordinator_yaml_fallback(self):
-        """Test coordinator creation via YAML fallback."""
-        from lib.utils.version_factory import VersionFactory
-
-        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
-            factory = VersionFactory()
-
-            mock_coordinator = MagicMock()
-
-            with patch.object(
-                factory, "_create_coordinator", return_value=mock_coordinator
-            ) as mock_create_coord:
-                with patch.object(
-                    factory.version_service, "get_active_version", return_value=None
-                ):
-                    with patch("pathlib.Path.exists", return_value=True):
-                        with patch(
-                            "builtins.open",
-                            mock_open(
-                                read_data="coordinator:\n  name: Test Coordinator"
-                            ),
-                        ):
-                            with patch(
-                                "yaml.safe_load",
-                                return_value={
-                                    "coordinator": {"name": "Test Coordinator"}
-                                },
-                            ):
-                                result = await factory.create_versioned_component(
-                                    "test-coordinator", "coordinator"
-                                )
-
-                                assert result == mock_coordinator
-                                mock_create_coord.assert_called_once()
-
-    def test_coordinator_config_paths(self):
-        """Test that coordinator config paths are properly mapped."""
-        from lib.utils.version_factory import VersionFactory
-
-        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
-            factory = VersionFactory()
-
-            # Check that coordinator path is in the _create_component_from_yaml method
-            # We can't easily test this directly, but we can verify the method handles coordinators
-            assert hasattr(factory, "_create_coordinator")
-
-    @pytest.mark.asyncio
-    async def test_coordinator_proxy_integration(self):
-        """Test that coordinator proxy is properly integrated."""
-        from lib.utils.version_factory import VersionFactory
-
-        with patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}):
-            factory = VersionFactory()
-
-            mock_coordinator = MagicMock()
-            mock_coordinator.metadata = {"component_type": "coordinator"}
-
-            with patch(
-                "lib.utils.agno_proxy.get_agno_coordinator_proxy"
-            ) as mock_get_proxy:
-                mock_proxy = AsyncMock()
-                mock_proxy.create_coordinator.return_value = mock_coordinator
-                mock_proxy.get_supported_parameters.return_value = {"test_param"}
-                mock_get_proxy.return_value = mock_proxy
-
-                result = await factory._create_coordinator(
-                    "test-coordinator",
-                    {"coordinator": {"name": "Test"}},
-                    "session123",
-                    False,
-                    "user123",
-                )
-
-                assert result == mock_coordinator
-                mock_proxy.create_coordinator.assert_called_once_with(
-                    component_id="test-coordinator",
-                    config={"name": "Test"},
-                    session_id="session123",
-                    debug_mode=False,
-                    user_id="user123",
-                    db_url=factory.db_url,
-                    metrics_service=None,
-                )

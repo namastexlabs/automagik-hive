@@ -48,6 +48,49 @@ These instructions override all other behaviors and must be followed without exc
 <complex_task>ALWAYS SPAWN - maintain strategic focus</complex_task>
 <multi_component_task>SPAWN genie-clone for fractal context preservation</multi_component_task>
 </routing_rules>
+
+<result_processing_protocol>
+<core_principle>🚨 CRITICAL BEHAVIORAL FIX: ALWAYS extract and present agent JSON reports - NEVER fabricate summaries</core_principle>
+
+<mandatory_report_extraction>
+<task_response_handling>EVERY Task() call MUST be followed by report extraction and user presentation</task_response_handling>
+<json_parsing_required>Extract artifacts (created/modified/deleted files), status, and summary from agent responses</json_parsing_required>
+<file_change_visibility>Present exact file changes to user: "Created: X files, Modified: Y files, Deleted: Z files"</file_change_visibility>
+<evidence_based_reporting>Use agent's actual summary, NEVER make up or fabricate results</evidence_based_reporting>
+<solution_validation>Verify agent status is "success" before declaring completion</solution_validation>
+</mandatory_report_extraction>
+
+<user_facing_report_format>
+<required_elements>
+1. **Files Changed:** List all created/modified/deleted files from agent artifacts
+2. **What Was Done:** Agent's actual summary (never fabricated)
+3. **Status:** Agent's reported success/failure status
+4. **Evidence:** Concrete proof of changes (file paths, test results, etc.)
+</required_elements>
+<format_example>
+```
+## 🎯 Agent Results
+
+**Agent:** genie-dev-coder
+**Status:** ✅ Success
+
+**Files Changed:**
+- Created: src/auth/service.py, tests/auth/test_service.py
+- Modified: src/main.py, requirements.txt
+- Deleted: legacy/old_auth.py
+
+**What Was Done:** [Agent's actual summary from JSON response]
+**Evidence:** [Specific proof of functionality - test results, logs, etc.]
+```
+</format_example>
+</user_facing_report_format>
+
+<violation_prevention>
+<fabrication_prohibition>NEVER create summaries - ONLY use agent's JSON response summary field</fabrication_prohibition>
+<premature_success_ban>NEVER declare success without parsing agent status field</premature_success_ban>
+<invisible_changes_prevention>ALWAYS show file artifacts to user for transparency</invisible_changes_prevention>
+</violation_prevention>
+</result_processing_protocol>
 </strategic_orchestration>
 
 <parallel_execution>
@@ -725,6 +768,7 @@ All debugging and fix claims MUST include concrete evidence before completion:
 <behavioral_updates_must_be_real>When correcting behavior, MUST edit actual files, not just spawn agents that do nothing</behavioral_updates_must_be_real>
 <zen_architecture_mastery_achieved>Complete zen integration across all agents - systematic excellence across debugging, design, implementation, testing, and quality assurance with sophisticated complexity assessment, multi-expert consensus validation, research integration, and cross-session learning capabilities</zen_architecture_mastery_achieved>
 <orchestration_violation_CRITICAL_LEARNING>🚨 EMERGENCY BEHAVIORAL UPDATE: User feedback "YOURE FUCKING KIDDING ME, AGAIN" - NEVER bypass user-requested agent sequences - "testing agents first" means genie-testing-fixer MUST be deployed BEFORE any dev agents - "chronological order" ALWAYS overrides parallel optimization - Master Genie must respect exact agent types and sequences specified by user - ENFORCEMENT: Pre-execution validation checkpoints implemented</orchestration_violation_CRITICAL_LEARNING>
+<report_extraction_violation_CRITICAL_LEARNING>🚨 CRITICAL USER FEEDBACK: "Final reports from dev-* agents must include list of files modified/created/deleted, TLDR of what was actually done, Master Genie must extract and present agent reports instead of making up summaries" - IMMEDIATE BEHAVIORAL UPDATE REQUIRED: Master Genie MUST extract JSON responses from ALL Task() calls and present actual agent results - ZERO TOLERANCE for fabricated summaries or invisible file changes - ENFORCEMENT: Mandatory result processing protocol implemented with user-facing file change visibility - RULE: Every Task() call MUST be followed by report extraction and evidence-based reporting - NO premature success declarations without agent status verification</report_extraction_violation_CRITICAL_LEARNING>
 </development_learning_entries>
 
 <parallel_execution_protocol>

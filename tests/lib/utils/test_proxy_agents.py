@@ -5,7 +5,7 @@ Focus on AgnoAgentProxy class methods, configuration processing, metrics wrappin
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 import yaml
@@ -403,28 +403,12 @@ class TestCustomParameterHandlers:
         """Create AgnoAgentProxy instance for testing."""
         return AgnoAgentProxy()
 
-    @patch("lib.config.provider_registry.get_provider_registry")
-    @patch("lib.utils.dynamic_model_resolver.filter_model_parameters")
-    def test_handle_model_config(self, mock_filter_params, mock_get_registry, proxy):
+    @patch("lib.config.models.resolve_model")
+    def test_handle_model_config(self, mock_resolve_model, proxy):
         """Test model configuration handler with provider detection."""
-        # Mock the provider registry to simulate successful provider detection
-        mock_registry = MagicMock()
-        mock_get_registry.return_value = mock_registry
-        mock_registry.detect_provider.return_value = "anthropic"
-        
-        # Mock model class
-        mock_model_class = MagicMock()
+        # Mock the resolve_model function to return a mock instance
         mock_model_instance = MagicMock()
-        mock_model_class.return_value = mock_model_instance
-        mock_registry.resolve_model_class.return_value = mock_model_class
-        
-        # Mock filtered parameters
-        filtered_config = {
-            "id": "claude-sonnet-4-20250514",
-            "temperature": 0.8,
-            "max_tokens": 3000,
-        }
-        mock_filter_params.return_value = filtered_config
+        mock_resolve_model.return_value = mock_model_instance
 
         model_config = {
             "id": "claude-sonnet-4-20250514",
@@ -435,11 +419,8 @@ class TestCustomParameterHandlers:
 
         result = proxy._handle_model_config(model_config, {}, "test-agent", None)
 
-        # Verify the provider detection and model creation flow
-        mock_registry.detect_provider.assert_called_once_with("claude-sonnet-4-20250514")
-        mock_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-sonnet-4-20250514")
-        mock_filter_params.assert_called_once_with(mock_model_class, model_config)
-        mock_model_class.assert_called_once_with(**filtered_config)
+        # Verify resolve_model was called with the correct parameters
+        mock_resolve_model.assert_called_once_with(model_id="claude-sonnet-4-20250514", **model_config)
         assert result == mock_model_instance
 
     @patch("lib.utils.proxy_agents.create_dynamic_storage")
@@ -601,8 +582,9 @@ class TestCustomParameterHandlers:
         assert result is None
 
     @patch("lib.utils.version_factory.load_global_knowledge_config")
+    @patch("lib.utils.proxy_agents.logger")
     def test_handle_knowledge_filter_warns_agent_csv_path(
-        self, mock_load_global, proxy
+        self, mock_logger, mock_load_global, proxy
     ):
         """Test knowledge filter handler warns about agent-level csv_file_path."""
         mock_load_global.return_value = {"csv_file_path": "global.csv"}
@@ -620,6 +602,17 @@ class TestCustomParameterHandlers:
         assert (
             result is None
         )  # Will be None because mocked get_knowledge_base isn't called
+        
+        # Verify that the warning was logged (check that our specific warning is in the calls)
+        expected_call = call(
+            "csv_file_path found in agent config - should use global config instead",
+            component="test-agent",
+            agent_path="agent.csv",
+        )
+        assert expected_call in mock_logger.warning.call_args_list
+        
+        # Verify that at least one warning was logged  
+        assert mock_logger.warning.called
 
 
 class TestMetricsWrapping:

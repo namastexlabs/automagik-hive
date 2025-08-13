@@ -38,6 +38,7 @@ mcp_servers:
   - "postgres:query"      # System state
   - "search-repo-docs:*"  # Research
   - "ask-repo-agent:*"    # Framework docs
+  - "mcp-server-chart:*"  # Chart visualization
 
 # Native Agno tools for system commands
 tools:

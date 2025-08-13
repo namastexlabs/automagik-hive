@@ -76,7 +76,7 @@ class ConfigInheritanceManager:
             "add_references",
         ],
         "storage": ["type", "auto_upgrade_schema"],
-        "model": ["provider", "id", "temperature", "max_tokens"],
+        # NOTE: "model" removed from inheritance - each agent must have independent model config
     }
 
     def __init__(self):
