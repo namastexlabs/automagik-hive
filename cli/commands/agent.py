@@ -1,11 +1,11 @@
-"""Agent Commands Stubs.
+"""Agent Commands Implementation.
 
-Minimal stub implementations to fix import errors in tests.
-These are placeholders that satisfy import requirements.
+Real implementation connecting to AgentService for actual functionality.
 """
 
 from typing import Optional, Dict, Any
 from pathlib import Path
+from cli.core.agent_service import AgentService
 
 
 class AgentCommands:
@@ -13,12 +13,13 @@ class AgentCommands:
     
     def __init__(self, workspace_path: Optional[Path] = None):
         self.workspace_path = workspace_path or Path(".")
+        self.agent_service = AgentService(self.workspace_path)
     
     def install(self, workspace: str = ".") -> bool:
         """Install agent services."""
         try:
             print(f"🚀 Installing agent services in: {workspace}")
-            return True
+            return self.agent_service.install_agent_environment(workspace)
         except Exception:
             return False
     
@@ -26,7 +27,7 @@ class AgentCommands:
         """Start agent services."""
         try:
             print(f"🚀 Starting agent services in: {workspace}")
-            return True
+            return self.agent_service.serve_agent(workspace)
         except Exception:
             return False
     
@@ -38,7 +39,7 @@ class AgentCommands:
         """Stop agent services."""
         try:
             print(f"🛑 Stopping agent services in: {workspace}")
-            return True
+            return self.agent_service.stop_agent(workspace)
         except Exception:
             return False
     
@@ -46,7 +47,7 @@ class AgentCommands:
         """Restart agent services."""
         try:
             print(f"🔄 Restarting agent services in: {workspace}")
-            return True
+            return self.agent_service.restart_agent(workspace)
         except Exception:
             return False
     
@@ -54,7 +55,12 @@ class AgentCommands:
         """Check agent status."""
         try:
             print(f"🔍 Checking agent status in: {workspace}")
-            print("Agent status: running")
+            status = self.agent_service.get_agent_status(workspace)
+            
+            # Display status for each service
+            for service, service_status in status.items():
+                print(f"  {service}: {service_status}")
+            
             return True
         except Exception:
             return False
@@ -63,7 +69,7 @@ class AgentCommands:
         """Show agent logs."""
         try:
             print(f"📋 Showing agent logs from: {workspace} (last {tail} lines)")
-            return True
+            return self.agent_service.show_agent_logs(workspace, tail)
         except Exception:
             return False
     
@@ -71,7 +77,8 @@ class AgentCommands:
         """Agent health command."""
         try:
             print(f"🔍 Checking agent health in: {workspace}")
-            return {"status": "healthy", "uptime": "1h", "workspace": workspace}
+            status = self.agent_service.get_agent_status(workspace)
+            return {"status": "healthy" if status else "unhealthy", "workspace": workspace, "services": status}
         except Exception:
             return {"status": "error", "workspace": workspace}
     
@@ -79,6 +86,6 @@ class AgentCommands:
         """Reset agent services."""
         try:
             print(f"🔄 Resetting agent services in: {workspace}")
-            return True
+            return self.agent_service.reset_agent_environment(workspace)
         except Exception:
             return False

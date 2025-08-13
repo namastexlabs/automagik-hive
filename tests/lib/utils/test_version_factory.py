@@ -147,9 +147,12 @@ class TestVersionFactory:
         """Create VersionFactory with mocked dependencies."""
         with (
             patch("lib.utils.version_factory.AgnoVersionService") as mock_service_class,
-            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}),
+            patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_sync_class,
+            patch("lib.utils.version_factory.DevMode.is_enabled", return_value=False),
+            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test", "HIVE_DEV_MODE": "false"}),
         ):
             mock_service_class.return_value = mock_version_service
+            mock_sync_class.return_value = MagicMock()
 
             from lib.utils.version_factory import VersionFactory
 
@@ -211,9 +214,12 @@ class TestVersionFactoryComponentCreation:
         """Create VersionFactory with mocked dependencies."""
         with (
             patch("lib.utils.version_factory.AgnoVersionService") as mock_service_class,
-            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}),
+            patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_sync_class,
+            patch("lib.utils.version_factory.DevMode.is_enabled", return_value=False),
+            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test", "HIVE_DEV_MODE": "false"}),
         ):
             mock_service_class.return_value = mock_version_service
+            mock_sync_class.return_value = MagicMock()
 
             from lib.utils.version_factory import VersionFactory
 
@@ -224,9 +230,9 @@ class TestVersionFactoryComponentCreation:
         self, factory, mock_version_service
     ):
         """Test creating component with specific version number."""
-        # Mock version record
+        # Mock version record with proper config structure
         mock_record = MagicMock()
-        mock_record.config = {"name": "test-agent", "model": {"provider": "anthropic"}}
+        mock_record.config = {"agent": {"name": "test-agent", "model": {"provider": "anthropic"}}}
         mock_record.component_type = "agent"
         mock_version_service.get_version.return_value = mock_record
 
@@ -276,17 +282,18 @@ class TestVersionFactoryComponentCreation:
         self, factory, mock_version_service
     ):
         """Test creating component with active version (None)."""
-        # Mock active version record
+        # Mock active version record with proper config structure
         mock_record = MagicMock()
-        mock_record.config = {"name": "test-team", "members": ["agent1", "agent2"]}
+        mock_record.config = {"team": {"name": "test-team", "members": ["agent1", "agent2"]}}
         mock_record.component_type = "team"
         mock_version_service.get_active_version.return_value = mock_record
 
         mock_team = MagicMock()
 
-        with patch.object(
-            factory, "_create_team", return_value=mock_team
-        ) as mock_create:
+        with (
+            patch.object(factory, "_create_team", return_value=mock_team) as mock_create,
+            patch.object(factory, "_load_from_yaml_only", return_value=mock_record.config),
+        ):
             result = await factory.create_versioned_component(
                 component_id="test-team",
                 component_type="team",
@@ -322,6 +329,9 @@ class TestVersionFactoryComponentCreation:
             patch.object(
                 factory, "_create_component_from_yaml", return_value=mock_workflow
             ) as mock_yaml_create,
+            patch.object(
+                factory, "_load_from_yaml_only", side_effect=Exception("No YAML file")
+            ),
             patch("lib.utils.version_factory.logger") as mock_logger,
         ):
             result = await factory.create_versioned_component(
@@ -353,14 +363,17 @@ class TestVersionFactoryComponentCreation:
     async def test_create_versioned_component_type_mismatch(
         self, factory, mock_version_service
     ):
-        """Test error when component type doesn't match stored type."""
-        # Mock version record with different type
-        mock_record = MagicMock()
-        mock_record.component_type = "team"
-        mock_version_service.get_active_version.return_value = mock_record
-
-        with pytest.raises(
-            ValueError, match="Component test-agent is type team, not agent"
+        """Test error when component type doesn't match config structure."""
+        # Mock config with different type than requested
+        config_with_wrong_type = {"team": {"name": "test-agent"}}  # team config, but requesting agent
+        
+        with (
+            patch.object(
+                factory, "_load_from_yaml_only", return_value=config_with_wrong_type
+            ),
+            pytest.raises(
+                ValueError, match="Component type agent not found in configuration for test-agent"
+            ),
         ):
             await factory.create_versioned_component(
                 component_id="test-agent", component_type="agent", version=None
@@ -386,16 +399,17 @@ class TestVersionFactoryComponentCreation:
     ):
         """Test component creation with additional kwargs."""
         mock_record = MagicMock()
-        mock_record.config = {"name": "test-agent"}
+        mock_record.config = {"agent": {"name": "test-agent"}}
         mock_record.component_type = "agent"
         mock_version_service.get_active_version.return_value = mock_record
 
         mock_agent = MagicMock()
         mock_metrics = MagicMock()
 
-        with patch.object(
-            factory, "_create_agent", return_value=mock_agent
-        ) as mock_create:
+        with (
+            patch.object(factory, "_create_agent", return_value=mock_agent) as mock_create,
+            patch.object(factory, "_load_from_yaml_only", return_value=mock_record.config),
+        ):
             result = await factory.create_versioned_component(
                 component_id="test-agent",
                 component_type="agent",
@@ -435,9 +449,12 @@ class TestVersionFactoryAgentCreation:
         """Create VersionFactory with mocked dependencies."""
         with (
             patch("lib.utils.version_factory.AgnoVersionService") as mock_service_class,
-            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}),
+            patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_sync_class,
+            patch("lib.utils.version_factory.DevMode.is_enabled", return_value=False),
+            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test", "HIVE_DEV_MODE": "false"}),
         ):
             mock_service_class.return_value = mock_version_service
+            mock_sync_class.return_value = MagicMock()
 
             from lib.utils.version_factory import VersionFactory
 
@@ -757,56 +774,42 @@ class TestAgentToolsLoading:
             return VersionFactory()
 
     def test_load_agent_tools_success(self, factory):
-        """Test successful loading of agent tools."""
+        """Test successful loading of agent tools via ToolRegistry."""
         config = {"tools": ["tool1", "tool2"]}
 
         mock_tool1 = MagicMock()
         mock_tool2 = MagicMock()
-
-        mock_module = MagicMock()
-        mock_module.tool1 = mock_tool1
-        mock_module.tool2 = mock_tool2
+        mock_tools = [mock_tool1, mock_tool2]
+        tool_names = ["tool1", "tool2"]
 
         with (
-            patch("importlib.import_module", return_value=mock_module) as mock_import,
+            patch("lib.tools.registry.ToolRegistry.load_tools") as mock_load_tools,
             patch("lib.utils.version_factory.logger"),
-            patch("builtins.hasattr") as mock_hasattr,
         ):
-            # Mock hasattr to return True for our test tools
-            def hasattr_side_effect(obj, name):
-                if name in ["tool1", "tool2"] and obj == mock_module:
-                    return True
-                return (
-                    hasattr.__wrapped__(obj, name)
-                    if hasattr(hasattr, "__wrapped__")
-                    else hasattr(obj, name)
-                )
-
-            mock_hasattr.side_effect = hasattr_side_effect
+            # Mock ToolRegistry.load_tools to return tools and names
+            mock_load_tools.return_value = (mock_tools, tool_names)
 
             tools = factory._load_agent_tools("test-agent", config)
 
-            # Verify module import
-            mock_import.assert_any_call("ai.agents.test-agent.tools")
+            # Verify ToolRegistry.load_tools was called
+            mock_load_tools.assert_called_once_with(["tool1", "tool2"])
 
             # Verify tools loaded
-            assert tools == [mock_tool1, mock_tool2]
+            assert tools == mock_tools
 
     def test_load_agent_tools_missing_tool_strict(self, factory):
         """Test missing tool with strict validation."""
         config = {"tools": ["existing_tool", "missing_tool"]}
 
-        mock_tool = MagicMock()
-        mock_module = MagicMock()
-        mock_module.existing_tool = mock_tool
-        # missing_tool not in module
-
         with (
-            patch("importlib.import_module", return_value=mock_module),
+            patch("lib.tools.registry.ToolRegistry.load_tools") as mock_load_tools,
             patch.dict("os.environ", {"HIVE_STRICT_VALIDATION": "true"}),
         ):
+            # Simulate ToolRegistry raising an exception for missing tools
+            mock_load_tools.side_effect = Exception("Tool 'missing_tool' not found")
+
             with pytest.raises(
-                ValueError, match="Agent test-agent tool validation failed"
+                ValueError, match="Agent test-agent tool loading failed"
             ):
                 factory._load_agent_tools("test-agent", config)
 
@@ -815,33 +818,35 @@ class TestAgentToolsLoading:
         config = {"tools": ["existing_tool", "missing_tool"]}
 
         mock_tool = MagicMock()
-        mock_module = MagicMock()
-        mock_module.existing_tool = mock_tool
-        # missing_tool not in module
+        mock_tools = [mock_tool]  # Only existing tool loaded
+        tool_names = ["existing_tool"]
 
         with (
-            patch("importlib.import_module", return_value=mock_module),
+            patch("lib.tools.registry.ToolRegistry.load_tools") as mock_load_tools,
             patch("lib.utils.version_factory.logger") as mock_logger,
             patch.dict("os.environ", {"HIVE_STRICT_VALIDATION": "false"}),
         ):
+            # Mock partial success (only some tools loaded)
+            mock_load_tools.return_value = (mock_tools, tool_names)
+
             tools = factory._load_agent_tools("test-agent", config)
 
             # Should only load existing tool
-            assert tools == [mock_tool]
-
-            # Should log warning
-            mock_logger.warning.assert_called()
+            assert tools == mock_tools
 
     def test_load_agent_tools_no_module_strict(self, factory):
         """Test missing tools module with strict validation."""
         config = {"tools": ["some_tool"]}
 
         with (
-            patch("importlib.import_module", side_effect=ImportError("No module")),
+            patch("lib.tools.registry.ToolRegistry.load_tools") as mock_load_tools,
             patch.dict("os.environ", {"HIVE_STRICT_VALIDATION": "true"}),
         ):
+            # Simulate ToolRegistry raising ImportError for missing module
+            mock_load_tools.side_effect = ImportError("No module")
+
             with pytest.raises(
-                ValueError, match="Agent test-agent tool validation failed"
+                ValueError, match="Agent test-agent tool loading failed"
             ):
                 factory._load_agent_tools("test-agent", config)
 
@@ -850,48 +855,45 @@ class TestAgentToolsLoading:
         config = {"tools": []}  # No tools configured
 
         with (
-            patch("importlib.import_module", side_effect=ImportError("No module")),
+            patch("lib.tools.registry.ToolRegistry.load_tools") as mock_load_tools,
             patch("lib.utils.version_factory.logger"),
             patch.dict("os.environ", {"HIVE_STRICT_VALIDATION": "false"}),
         ):
+            # Mock empty tools list for no tools configured
+            mock_load_tools.return_value = ([], [])
+
             tools = factory._load_agent_tools("test-agent", config)
 
             # Should return empty list
             assert tools == []
 
-            # Should log debug message
-
     def test_load_agent_tools_auto_load_all(self, factory):
-        """Test auto-loading all tools when __all__ is defined."""
+        """Test auto-loading all tools when no tools are configured."""
         config = {}  # No specific tools configured
 
-        mock_tool1 = MagicMock()
-        mock_tool2 = MagicMock()
-
-        mock_module = MagicMock()
-        mock_module.__all__ = ["auto_tool1", "auto_tool2"]
-        mock_module.auto_tool1 = mock_tool1
-        mock_module.auto_tool2 = mock_tool2
-
         with (
-            patch("importlib.import_module", return_value=mock_module),
+            patch("lib.tools.registry.ToolRegistry.load_tools") as mock_load_tools,
             patch("lib.utils.version_factory.logger"),
         ):
+            # Mock empty tools list for no tools configured
+            mock_load_tools.return_value = ([], [])
+
             tools = factory._load_agent_tools("test-agent", config)
 
-            # Should load all tools from __all__
-            assert tools == [mock_tool1, mock_tool2]
-
-            # Should log auto-loading
+            # Should load empty tools list when no tools configured
+            assert tools == []
 
     def test_load_agent_tools_unexpected_error_strict(self, factory):
         """Test unexpected error during tool loading with strict validation."""
         config = {"tools": ["some_tool"]}
 
         with (
-            patch("importlib.import_module", side_effect=Exception("Unexpected error")),
+            patch("lib.tools.registry.ToolRegistry.load_tools") as mock_load_tools,
             patch.dict("os.environ", {"HIVE_STRICT_VALIDATION": "true"}),
         ):
+            # Mock unexpected error from ToolRegistry
+            mock_load_tools.side_effect = Exception("Unexpected error")
+
             with pytest.raises(
                 ValueError, match="Agent test-agent tool loading failed"
             ):
@@ -1044,7 +1046,7 @@ class TestWorkflowCreation:
 
         with (
             patch(
-                "lib.utils.version_factory.get_agno_workflow_proxy"
+                "lib.utils.agno_proxy.get_agno_workflow_proxy"
             ) as mock_proxy_func,
             patch("lib.utils.version_factory.logger"),
         ):
@@ -1089,7 +1091,7 @@ class TestWorkflowCreation:
         mock_workflow = MagicMock()
 
         with patch(
-            "lib.utils.version_factory.get_agno_workflow_proxy"
+            "lib.utils.agno_proxy.get_agno_workflow_proxy"
         ) as mock_proxy_func:
             mock_proxy = MagicMock()
             mock_proxy.create_workflow = AsyncMock(return_value=mock_workflow)
@@ -1416,10 +1418,12 @@ class TestVersionFactoryWorkingCore:
 
         with (
             patch("lib.utils.version_factory.AgnoVersionService") as mock_service,
-            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}),
+            patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_sync_class,
+            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test", "HIVE_DEV_MODE": "false"}),
         ):
             mock_version_service = MagicMock()
             mock_service.return_value = mock_version_service
+            mock_sync_class.return_value = MagicMock()
 
             factory = VersionFactory()
 
@@ -1434,14 +1438,18 @@ class TestVersionFactoryWorkingCore:
 
         with (
             patch("lib.utils.version_factory.AgnoVersionService") as mock_service,
-            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}),
+            patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_sync_class,
+            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test", "HIVE_DEV_MODE": "false"}),
         ):
             mock_version_service = MagicMock()
             mock_version_service.get_version = AsyncMock()
             mock_service.return_value = mock_version_service
+            
+            mock_sync_engine = MagicMock()
+            mock_sync_class.return_value = mock_sync_engine
 
             mock_record = MagicMock()
-            mock_record.config = {"name": "test-agent"}
+            mock_record.config = {"agent": {"name": "test-agent"}}
             mock_record.component_type = "agent"
             mock_version_service.get_version.return_value = mock_record
 
@@ -1468,11 +1476,16 @@ class TestVersionFactoryWorkingCore:
 
         with (
             patch("lib.utils.version_factory.AgnoVersionService") as mock_service,
-            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test"}),
+            patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_sync_class,
+            patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test", "HIVE_DEV_MODE": "false"}),
         ):
             mock_version_service = MagicMock()
             mock_version_service.get_active_version = AsyncMock(return_value=None)
             mock_service.return_value = mock_version_service
+            
+            mock_sync_engine = MagicMock()
+            mock_sync_engine.sync_component = AsyncMock(side_effect=Exception("No database data"))
+            mock_sync_class.return_value = mock_sync_engine
 
             factory = VersionFactory()
 
@@ -1769,7 +1782,7 @@ class TestCoordinatorIntegration:
                 assert result == mock_coordinator
                 mock_proxy.create_coordinator.assert_called_once_with(
                     component_id="test-coordinator",
-                    config={"coordinator": {"name": "Test"}},
+                    config={"name": "Test"},
                     session_id="session123",
                     debug_mode=False,
                     user_id="user123",

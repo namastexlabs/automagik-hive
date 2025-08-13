@@ -12,9 +12,28 @@ class TestAgnoCoordinatorProxy:
         """Test that _handle_model_config properly filters out output_model parameter."""
         proxy = AgnoCoordinatorProxy()
         
-        # Mock the resolve_model function
-        with patch('lib.config.models.resolve_model') as mock_resolve_model:
-            mock_resolve_model.return_value = Mock()
+        # Mock the components that are actually called in the new implementation
+        with patch('lib.config.provider_registry.get_provider_registry') as mock_registry, \
+             patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter:
+            
+            # Create mock registry with provider detection and model class resolution
+            mock_provider_registry = Mock()
+            mock_registry.return_value = mock_provider_registry
+            mock_provider_registry.detect_provider.return_value = "anthropic"
+            
+            # Create mock model class
+            mock_model_class = Mock()
+            mock_model_instance = Mock()
+            mock_model_class.return_value = mock_model_instance
+            mock_provider_registry.resolve_model_class.return_value = mock_model_class
+            
+            # Mock filter to return filtered parameters
+            filtered_config = {
+                "id": "claude-sonnet-4-20250514",
+                "temperature": 0.7,
+                "max_tokens": 2000,
+            }
+            mock_filter.return_value = filtered_config
             
             # Test config with output_model that should be filtered out
             model_config = {
@@ -39,27 +58,39 @@ class TestAgnoCoordinatorProxy:
                 db_url=None
             )
             
-            # Verify resolve_model was called with filtered parameters
-            mock_resolve_model.assert_called_once()
-            call_args = mock_resolve_model.call_args
+            # Verify provider detection was called
+            mock_provider_registry.detect_provider.assert_called_once_with("claude-sonnet-4-20250514")
             
-            # Check positional arguments
-            assert call_args[1]["model_id"] == "claude-sonnet-4-20250514"
-            assert call_args[1]["temperature"] == 0.7
-            assert call_args[1]["max_tokens"] == 2000
+            # Verify model class resolution was called
+            mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-sonnet-4-20250514")
             
-            # Check that filtered parameters are NOT in the call
-            assert "output_model" not in call_args[1]
-            assert "provider" not in call_args[1]
-            assert "reasoning" not in call_args[1]
-            assert "reasoning_model" not in call_args[1]
+            # Verify filtering was called with the model class and original config
+            mock_filter.assert_called_once_with(mock_model_class, model_config)
+            
+            # Verify model class was called with filtered parameters
+            mock_model_class.assert_called_once_with(**filtered_config)
+            
+            # Verify result is the model instance
+            assert result == mock_model_instance
 
     def test_handle_model_config_preserves_valid_params(self):
         """Test that _handle_model_config preserves valid model parameters."""
         proxy = AgnoCoordinatorProxy()
         
-        with patch('lib.config.models.resolve_model') as mock_resolve_model:
-            mock_resolve_model.return_value = Mock()
+        # Mock the components that are actually called in the new implementation
+        with patch('lib.config.provider_registry.get_provider_registry') as mock_registry, \
+             patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter:
+            
+            # Create mock registry with provider detection and model class resolution
+            mock_provider_registry = Mock()
+            mock_registry.return_value = mock_provider_registry
+            mock_provider_registry.detect_provider.return_value = "openai"
+            
+            # Create mock model class
+            mock_model_class = Mock()
+            mock_model_instance = Mock()
+            mock_model_class.return_value = mock_model_instance
+            mock_provider_registry.resolve_model_class.return_value = mock_model_class
             
             # Test config with valid parameters that should be preserved
             model_config = {
@@ -70,6 +101,9 @@ class TestAgnoCoordinatorProxy:
                 "frequency_penalty": 0.1,  # Valid parameter that should be preserved
             }
             
+            # Mock filter to return all parameters (none filtered)
+            mock_filter.return_value = model_config
+            
             # Call the method
             result = proxy._handle_model_config(
                 model_config=model_config,
@@ -78,13 +112,17 @@ class TestAgnoCoordinatorProxy:
                 db_url=None
             )
             
-            # Verify resolve_model was called with all valid parameters
-            mock_resolve_model.assert_called_once()
-            call_args = mock_resolve_model.call_args
+            # Verify provider detection was called
+            mock_provider_registry.detect_provider.assert_called_once_with("gpt-4o-mini")
             
-            # Check that valid parameters are preserved
-            assert call_args[1]["model_id"] == "gpt-4o-mini"
-            assert call_args[1]["temperature"] == 0.5
-            assert call_args[1]["max_tokens"] == 1500
-            assert call_args[1]["top_p"] == 0.9
-            assert call_args[1]["frequency_penalty"] == 0.1
+            # Verify model class resolution was called
+            mock_provider_registry.resolve_model_class.assert_called_once_with("openai", "gpt-4o-mini")
+            
+            # Verify filtering was called with the model class and original config
+            mock_filter.assert_called_once_with(mock_model_class, model_config)
+            
+            # Verify model class was called with all valid parameters
+            mock_model_class.assert_called_once_with(**model_config)
+            
+            # Verify result is the model instance
+            assert result == mock_model_instance

@@ -82,3 +82,4 @@ test-workspace-fix/
 test-workspace-validation/
 docker-migration-backup-*/
 interactive/
+.env.agent

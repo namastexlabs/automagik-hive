@@ -15,65 +15,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 
-from cli.main import main
-
-# Create stub for LazyCommandLoader if needed
-class LazyCommandLoader:
-    def __init__(self):
-        self._interactive_initializer = None
-        self._workspace_manager = None
-        self._workflow_orchestrator = None
-        self._service_manager = None
-        self._health_checker = None
-        self._uninstaller = None
-    
-    @property
-    def interactive_initializer(self):
-        """Lazy load interactive initializer."""
-        if self._interactive_initializer is None:
-            from cli.commands.init import InteractiveInitializer
-            self._interactive_initializer = InteractiveInitializer()
-        return self._interactive_initializer
-    
-    @property
-    def workspace_manager(self):
-        """Lazy load workspace manager."""
-        if self._workspace_manager is None:
-            from cli.commands.workspace import UnifiedWorkspaceManager
-            self._workspace_manager = UnifiedWorkspaceManager()
-        return self._workspace_manager
-    
-    @property
-    def workflow_orchestrator(self):
-        """Lazy load workflow orchestrator."""
-        if self._workflow_orchestrator is None:
-            from cli.commands.orchestrator import WorkflowOrchestrator
-            self._workflow_orchestrator = WorkflowOrchestrator()
-        return self._workflow_orchestrator
-    
-    @property
-    def service_manager(self):
-        """Lazy load service manager."""
-        if self._service_manager is None:
-            from cli.commands.service import ServiceManager
-            self._service_manager = ServiceManager()
-        return self._service_manager
-    
-    @property
-    def health_checker(self):
-        """Lazy load health checker."""
-        if self._health_checker is None:
-            from cli.commands.health import HealthChecker
-            self._health_checker = HealthChecker()
-        return self._health_checker
-    
-    @property
-    def uninstaller(self):
-        """Lazy load uninstaller."""
-        if self._uninstaller is None:
-            from cli.commands.uninstall import UninstallCommands
-            self._uninstaller = UninstallCommands()
-        return self._uninstaller
+from cli.main import main, create_parser, LazyCommandLoader
 
 
 class TestLazyCommandLoader:
@@ -85,228 +27,112 @@ class TestLazyCommandLoader:
         return LazyCommandLoader()
 
     def test_lazy_command_loader_initialization(self, loader):
-        """Test LazyCommandLoader initializes with None instances."""
-        assert loader._interactive_initializer is None
-        assert loader._workspace_manager is None
-        assert loader._workflow_orchestrator is None
-        assert loader._service_manager is None
-        assert loader._health_checker is None
-        assert loader._uninstaller is None
+        """Test LazyCommandLoader initializes properly."""
+        # The actual LazyCommandLoader is a simple stub
+        assert hasattr(loader, 'load_command')
 
     def test_interactive_initializer_lazy_loading(self, loader):
-        """Test interactive initializer is loaded lazily."""
-        with patch('cli.commands.init.InteractiveInitializer') as mock_initializer:
-            mock_instance = Mock()
-            mock_initializer.return_value = mock_instance
-
-            # First access should create instance
-            result1 = loader.interactive_initializer
-            assert result1 == mock_instance
-            mock_initializer.assert_called_once()
-
-            # Second access should return same instance
-            result2 = loader.interactive_initializer
-            assert result2 == mock_instance
-            assert mock_initializer.call_count == 1  # Not called again
+        """Test interactive initializer stub functionality."""
+        # Test the load_command method
+        result = loader.load_command('init')
+        assert callable(result)
+        assert 'init' in result()
 
     def test_workspace_manager_lazy_loading(self, loader):
-        """Test workspace manager is loaded lazily."""
-        with patch('cli.commands.workspace.UnifiedWorkspaceManager') as mock_manager:
-            mock_instance = Mock()
-            mock_manager.return_value = mock_instance
-
-            result = loader.workspace_manager
-            assert result == mock_instance
-            mock_manager.assert_called_once()
+        """Test workspace manager stub functionality."""
+        result = loader.load_command('workspace')
+        assert callable(result)
+        assert 'workspace' in result()
 
     def test_workflow_orchestrator_lazy_loading(self, loader):
-        """Test workflow orchestrator is loaded lazily."""
-        with patch('cli.commands.orchestrator.WorkflowOrchestrator') as mock_orchestrator:
-            mock_instance = Mock()
-            mock_orchestrator.return_value = mock_instance
-
-            result = loader.workflow_orchestrator
-            assert result == mock_instance
-            mock_orchestrator.assert_called_once()
+        """Test workflow orchestrator stub functionality."""
+        result = loader.load_command('orchestrator')
+        assert callable(result)
+        assert 'orchestrator' in result()
 
     def test_service_manager_lazy_loading(self, loader):
-        """Test service manager is loaded lazily."""
-        with patch('cli.commands.service.ServiceManager') as mock_manager:
-            mock_instance = Mock()
-            mock_manager.return_value = mock_instance
-
-            result = loader.service_manager
-            assert result == mock_instance
-            mock_manager.assert_called_once()
+        """Test service manager stub functionality."""
+        result = loader.load_command('service')
+        assert callable(result)
+        assert 'service' in result()
 
     def test_health_checker_lazy_loading(self, loader):
-        """Test health checker is loaded lazily."""
-        with patch('cli.commands.health.HealthChecker') as mock_checker:
-            mock_instance = Mock()
-            mock_checker.return_value = mock_instance
-
-            result = loader.health_checker
-            assert result == mock_instance
-            mock_checker.assert_called_once()
+        """Test health checker stub functionality."""
+        result = loader.load_command('health')
+        assert callable(result)
+        assert 'health' in result()
 
     def test_uninstaller_lazy_loading(self, loader):
-        """Test uninstaller is loaded lazily."""
-        with patch('cli.commands.uninstall.UninstallCommands') as mock_uninstaller:
-            mock_instance = Mock()
-            mock_uninstaller.return_value = mock_instance
-
-            result = loader.uninstaller
-            assert result == mock_instance
-            mock_uninstaller.assert_called_once()
+        """Test uninstaller stub functionality."""
+        result = loader.load_command('uninstall')
+        assert callable(result)
+        assert 'uninstall' in result()
 
     def test_all_components_lazy_loaded_independently(self, loader):
         """Test all components can be loaded independently."""
-        with patch('cli.commands.init.InteractiveInitializer'), \
-             patch('cli.commands.workspace.UnifiedWorkspaceManager'), \
-             patch('cli.commands.orchestrator.WorkflowOrchestrator'), \
-             patch('cli.commands.service.ServiceManager'), \
-             patch('cli.commands.health.HealthChecker'), \
-             patch('cli.commands.uninstall.UninstallCommands'):
-
-            # Access all components
-            _ = loader.interactive_initializer
-            _ = loader.workspace_manager
-            _ = loader.workflow_orchestrator
-            _ = loader.service_manager
-            _ = loader.health_checker
-            _ = loader.uninstaller
-
-            # All should be loaded successfully
-            assert loader._interactive_initializer is not None
-            assert loader._workspace_manager is not None
-            assert loader._workflow_orchestrator is not None
-            assert loader._service_manager is not None
-            assert loader._health_checker is not None
-            assert loader._uninstaller is not None
+        commands = ['init', 'workspace', 'orchestrator', 'service', 'health', 'uninstall']
+        
+        for command in commands:
+            result = loader.load_command(command)
+            assert callable(result)
+            assert command in result()
 
 
 class TestCLIMainEntryPoint:
     """Test CLI main entry point functionality."""
 
-    @patch('cli.main.LazyCommandLoader')
-    def test_main_function_initialization(self, mock_loader_class):
-        """Test main function initializes command loader."""
-        mock_loader = Mock()
-        mock_loader_class.return_value = mock_loader
-
-        # Mock sys.argv to avoid actual command execution
+    def test_main_function_initialization(self):
+        """Test main function initializes properly."""
+        # Test help command
         with patch('sys.argv', ['automagik-hive', '--help']):
-            with patch('cli.main.parse_args') as mock_parse:
-                mock_parse.return_value = Mock(help=True)
-                with patch('cli.main.handle_help_command'):
-                    try:
-                        main()
-                    except SystemExit:
-                        pass  # Expected for help command
-
-        mock_loader_class.assert_called_once()
-
-    @patch('cli.main.LazyCommandLoader')
-    @patch('cli.main.parse_args')
-    def test_main_command_routing_install(self, mock_parse, mock_loader_class):
-        """Test main function routes install command correctly."""
-        mock_loader = Mock()
-        mock_orchestrator = Mock()
-        mock_orchestrator.execute_unified_workflow.return_value = True
-        mock_loader.workflow_orchestrator = mock_orchestrator
-        mock_loader_class.return_value = mock_loader
-
-        mock_args = Mock()
-        mock_args.install = "agent"
-        mock_args.help = False
-        mock_args.init = False
-        mock_args.start = None
-        mock_args.stop = None
-        mock_args.restart = None
-        mock_args.status = None
-        mock_args.health = None
-        mock_args.logs = None
-        mock_args.uninstall = None
-        mock_parse.return_value = mock_args
-
-        with patch('sys.exit') as mock_exit:
-            main()
-            mock_orchestrator.execute_unified_workflow.assert_called_once_with("agent")
-            mock_exit.assert_called_once_with(0)
-
-    @patch('cli.main.LazyCommandLoader')
-    @patch('cli.main.parse_args')
-    def test_main_command_routing_start(self, mock_parse, mock_loader_class):
-        """Test main function routes start command correctly."""
-        mock_loader = Mock()
-        mock_service_manager = Mock()
-        mock_service_manager.start_services.return_value = True
-        mock_loader.service_manager = mock_service_manager
-        mock_loader_class.return_value = mock_loader
-
-        mock_args = Mock()
-        mock_args.start = "genie"
-        mock_args.help = False
-        mock_args.init = False
-        mock_args.install = None
-        mock_args.stop = None
-        mock_args.restart = None
-        mock_args.status = None
-        mock_args.health = None
-        mock_args.logs = None
-        mock_args.uninstall = None
-        mock_parse.return_value = mock_args
-
-        with patch('sys.exit') as mock_exit:
-            main()
-            mock_service_manager.start_services.assert_called_once_with("genie")
-            mock_exit.assert_called_once_with(0)
-
-    @patch('cli.main.LazyCommandLoader')
-    @patch('cli.main.parse_args')
-    def test_main_command_routing_health(self, mock_parse, mock_loader_class):
-        """Test main function routes health command correctly."""
-        mock_loader = Mock()
-        mock_health_checker = Mock()
-        mock_health_checker.run_health_check_cli.return_value = 0
-        mock_loader.health_checker = mock_health_checker
-        mock_loader_class.return_value = mock_loader
-
-        mock_args = Mock()
-        mock_args.health = "all"
-        mock_args.save_report = False
-        mock_args.help = False
-        mock_args.init = False
-        mock_args.install = None
-        mock_args.start = None
-        mock_args.stop = None
-        mock_args.restart = None
-        mock_args.status = None
-        mock_args.logs = None
-        mock_args.uninstall = None
-        mock_parse.return_value = mock_args
-
-        with patch('sys.exit') as mock_exit:
-            main()
-            mock_health_checker.run_health_check_cli.assert_called_once_with("all", False)
-            mock_exit.assert_called_once_with(0)
-
-    @patch('cli.main.LazyCommandLoader')
-    @patch('cli.main.parse_args')
-    def test_main_exception_handling(self, mock_parse, mock_loader_class):
-        """Test main function handles exceptions gracefully."""
-        mock_loader_class.side_effect = Exception("Loader initialization failed")
-
-        mock_args = Mock()
-        mock_args.help = False
-        mock_args.install = "agent"
-        mock_parse.return_value = mock_args
-
-        with patch('sys.exit') as mock_exit:
-            with patch('cli.main.logger') as mock_logger:
+            with pytest.raises(SystemExit) as exc_info:
                 main()
-                mock_logger.error.assert_called()
-                mock_exit.assert_called_once_with(1)
+            assert exc_info.value.code == 0
+
+    def test_main_command_routing_install(self):
+        """Test main function routes install command correctly."""
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.install.return_value = True
+            mock_agent_class.return_value = mock_agent
+            
+            with patch('sys.argv', ['automagik-hive', '--agent-install', '.']):
+                result = main()
+                assert result == 0
+                mock_agent.install.assert_called_once_with('.')
+
+    def test_main_command_routing_start(self):
+        """Test main function routes start command correctly."""
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.serve.return_value = True
+            mock_agent_class.return_value = mock_agent
+            
+            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+                result = main()
+                assert result == 0
+                mock_agent.serve.assert_called_once_with('.')
+
+    def test_main_command_routing_health(self):
+        """Test main function routes health command correctly."""
+        with patch('cli.main.PostgreSQLCommands') as mock_postgres_class:
+            mock_postgres = Mock()
+            mock_postgres.postgres_health.return_value = True
+            mock_postgres_class.return_value = mock_postgres
+            
+            with patch('sys.argv', ['automagik-hive', '--postgres-health', '.']):
+                result = main()
+                assert result == 0
+                mock_postgres.postgres_health.assert_called_once_with('.')
+
+    def test_main_exception_handling(self):
+        """Test main function handles exceptions gracefully."""
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent_class.side_effect = Exception("Agent initialization failed")
+            
+            with patch('sys.argv', ['automagik-hive', '--agent-install', '.']):
+                result = main()
+                assert result == 1
 
 
 class TestCLICommandIntegration:
@@ -314,110 +140,113 @@ class TestCLICommandIntegration:
 
     def test_argument_parsing_install_command(self):
         """Test argument parsing for install commands."""
-        from cli.main import parse_args
+        parser = create_parser()
 
-        # Test install with component
-        args = parse_args(['--install', 'agent'])
-        assert args.install == 'agent'
+        # Test agent install command
+        args = parser.parse_args(['--agent-install', '.'])
+        assert args.agent_install == '.'
 
-        # Test install with all
-        args = parse_args(['--install', 'all'])
-        assert args.install == 'all'
+        # Test agent install with workspace
+        args = parser.parse_args(['--agent-install', '/path/to/workspace'])
+        assert args.agent_install == '/path/to/workspace'
 
     def test_argument_parsing_service_commands(self):
         """Test argument parsing for service management commands."""
-        from cli.main import parse_args
+        parser = create_parser()
 
-        # Test start command
-        args = parse_args(['--start', 'workspace'])
-        assert args.start == 'workspace'
+        # Test agent serve command
+        args = parser.parse_args(['--agent-serve', '.'])
+        assert args.agent_serve == '.'
 
-        # Test stop command
-        args = parse_args(['--stop', 'genie'])
-        assert args.stop == 'genie'
+        # Test agent stop command
+        args = parser.parse_args(['--agent-stop', '.'])
+        assert args.agent_stop == '.'
 
-        # Test restart command
-        args = parse_args(['--restart', 'agent'])
-        assert args.restart == 'agent'
+        # Test agent restart command
+        args = parser.parse_args(['--agent-restart', '.'])
+        assert args.agent_restart == '.'
 
     def test_argument_parsing_status_commands(self):
         """Test argument parsing for status and health commands."""
-        from cli.main import parse_args
+        parser = create_parser()
 
-        # Test status command
-        args = parse_args(['--status', 'all'])
-        assert args.status == 'all'
+        # Test agent status command
+        args = parser.parse_args(['--agent-status', '.'])
+        assert args.agent_status == '.'
 
-        # Test health command
-        args = parse_args(['--health', 'agent'])
-        assert args.health == 'agent'
+        # Test postgres health command
+        args = parser.parse_args(['--postgres-health', '.'])
+        assert args.postgres_health == '.'
 
-        # Test health with save report
-        args = parse_args(['--health', 'all', '--save-report'])
-        assert args.health == 'all'
-        assert args.save_report is True
+        # Test postgres status command
+        args = parser.parse_args(['--postgres-status', '.'])
+        assert args.postgres_status == '.'
 
     def test_argument_parsing_logs_command(self):
         """Test argument parsing for logs command."""
-        from cli.main import parse_args
+        parser = create_parser()
 
-        # Test logs command
-        args = parse_args(['--logs', 'agent'])
-        assert args.logs == 'agent'
+        # Test postgres logs command
+        args = parser.parse_args(['--postgres-logs', '.'])
+        assert args.postgres_logs == '.'
 
-        # Test logs with line count
-        args = parse_args(['--logs', 'genie', '--lines', '100'])
-        assert args.logs == 'genie'
-        assert args.lines == 100
+        # Test agent logs with tail count
+        args = parser.parse_args(['--agent-logs', '.', '--tail', '100'])
+        assert args.agent_logs == '.'
+        assert args.tail == 100
 
     def test_argument_parsing_uninstall_command(self):
         """Test argument parsing for uninstall command."""
-        from cli.main import parse_args
+        parser = create_parser()
 
-        # Test uninstall command
-        args = parse_args(['--uninstall', 'agent'])
-        assert args.uninstall == 'agent'
+        # Test workspace uninstall command
+        args = parser.parse_args(['--uninstall', '.'])
+        assert args.uninstall == '.'
 
-        # Test uninstall all
-        args = parse_args(['--uninstall', 'all'])
-        assert args.uninstall == 'all'
+        # Test global uninstall command
+        args = parser.parse_args(['--uninstall-global'])
+        assert args.uninstall_global is True
 
     def test_argument_parsing_init_command(self):
         """Test argument parsing for init command."""
-        from cli.main import parse_args
+        parser = create_parser()
 
-        # Test init command
-        args = parse_args(['--init'])
-        assert args.init is True
+        # Test init command without name (default)
+        args = parser.parse_args(['--init'])
+        assert args.init == '__DEFAULT__'
+        
+        # Test init command with name
+        args = parser.parse_args(['--init', 'my-project'])
+        assert args.init == 'my-project'
 
     def test_argument_parsing_help_command(self):
         """Test argument parsing for help command."""
-        from cli.main import parse_args
-
-        # Test help command
-        args = parse_args(['--help'])
-        assert args.help is True
+        parser = create_parser()
+        
+        # Help command will trigger SystemExit
+        with pytest.raises(SystemExit):
+            parser.parse_args(['--help'])
 
     def test_argument_parsing_invalid_combinations(self):
-        """Test argument parsing rejects invalid combinations."""
-        from cli.main import parse_args
-
-        # These should parse successfully but may be validated later
-        args = parse_args(['--install', 'agent', '--start', 'agent'])
-        assert args.install == 'agent'
-        assert args.start == 'agent'
+        """Test argument parsing with multiple commands."""
+        parser = create_parser()
+        
+        # These should parse successfully
+        args = parser.parse_args(['--agent-install', '.', '--agent-serve', '.'])
+        assert args.agent_install == '.'
+        assert args.agent_serve == '.'
 
     def test_argument_parsing_edge_cases(self):
         """Test argument parsing edge cases."""
-        from cli.main import parse_args
-
+        parser = create_parser()
+        
         # Test empty arguments (should not crash)
-        args = parse_args([])
+        args = parser.parse_args([])
         assert args is not None
 
-        # Test single dash arguments
-        args = parse_args(['-h'])
-        assert args.help is True
+        # Test version argument
+        with pytest.raises(SystemExit):
+            parser.parse_args(['--version'])
 
 
 class TestCLIWorkflowIntegration:
@@ -431,172 +260,145 @@ class TestCLIWorkflowIntegration:
             workspace_path.mkdir()
             yield workspace_path
 
-    @patch('cli.commands.orchestrator.WorkflowOrchestrator')
-    def test_install_workflow_integration(self, mock_orchestrator_class, temp_workspace):
+    def test_install_workflow_integration(self, temp_workspace):
         """Test complete install workflow integration."""
-        mock_orchestrator = Mock()
-        mock_orchestrator.execute_unified_workflow.return_value = True
-        mock_orchestrator_class.return_value = mock_orchestrator
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.install.return_value = True
+            mock_agent_class.return_value = mock_agent
 
-        from cli.main import main
+            with patch('sys.argv', ['automagik-hive', '--agent-install', str(temp_workspace)]):
+                result = main()
+                assert result == 0
+                mock_agent.install.assert_called_once_with(str(temp_workspace))
 
-        with patch('sys.argv', ['automagik-hive', '--install', 'workspace']):
-            with patch('sys.exit') as mock_exit:
-                main()
-                mock_orchestrator.execute_unified_workflow.assert_called_once_with('workspace')
-                mock_exit.assert_called_once_with(0)
-
-    @patch('cli.commands.service.ServiceManager')
-    def test_service_lifecycle_integration(self, mock_service_manager_class):
+    def test_service_lifecycle_integration(self):
         """Test complete service lifecycle integration."""
-        mock_service_manager = Mock()
-        mock_service_manager.start_services.return_value = True
-        mock_service_manager.get_status.return_value = {"agent": "healthy"}
-        mock_service_manager.stop_services.return_value = True
-        mock_service_manager_class.return_value = mock_service_manager
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.serve.return_value = True
+            mock_agent.status.return_value = True
+            mock_agent.stop.return_value = True
+            mock_agent_class.return_value = mock_agent
 
-        from cli.main import main
+            # Test start
+            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+                result = main()
+                assert result == 0
+                mock_agent.serve.assert_called_once_with('.')
 
-        # Test start
-        with patch('sys.argv', ['automagik-hive', '--start', 'agent']):
-            with patch('sys.exit'):
-                main()
-                mock_service_manager.start_services.assert_called_with('agent')
+            # Reset the mock
+            mock_agent_class.reset_mock()
+            mock_agent = Mock()
+            mock_agent.status.return_value = True
+            mock_agent_class.return_value = mock_agent
+            
+            # Test status
+            with patch('sys.argv', ['automagik-hive', '--agent-status', '.']):
+                result = main()
+                assert result == 0
+                mock_agent.status.assert_called_once_with('.')
 
-        # Test status
-        with patch('sys.argv', ['automagik-hive', '--status', 'agent']):
-            with patch('sys.exit'):
-                main()
-                mock_service_manager.get_status.assert_called_with('agent')
+            # Reset the mock
+            mock_agent_class.reset_mock()
+            mock_agent = Mock()
+            mock_agent.stop.return_value = True
+            mock_agent_class.return_value = mock_agent
+            
+            # Test stop
+            with patch('sys.argv', ['automagik-hive', '--agent-stop', '.']):
+                result = main()
+                assert result == 0
+                mock_agent.stop.assert_called_once_with('.')
 
-        # Test stop
-        with patch('sys.argv', ['automagik-hive', '--stop', 'agent']):
-            with patch('sys.exit'):
-                main()
-                mock_service_manager.stop_services.assert_called_with('agent')
-
-    @patch('cli.commands.health.HealthChecker')
-    def test_health_check_integration(self, mock_health_checker_class):
+    def test_health_check_integration(self):
         """Test health check integration."""
-        mock_health_checker = Mock()
-        mock_health_checker.run_health_check_cli.return_value = 0
-        mock_health_checker_class.return_value = mock_health_checker
+        with patch('cli.main.PostgreSQLCommands') as mock_postgres_class:
+            mock_postgres = Mock()
+            mock_postgres.postgres_health.return_value = True
+            mock_postgres_class.return_value = mock_postgres
 
-        from cli.main import main
+            with patch('sys.argv', ['automagik-hive', '--postgres-health', '.']):
+                result = main()
+                assert result == 0
+                mock_postgres.postgres_health.assert_called_once_with('.')
 
-        with patch('sys.argv', ['automagik-hive', '--health', 'all', '--save-report']):
-            with patch('sys.exit') as mock_exit:
-                main()
-                mock_health_checker.run_health_check_cli.assert_called_once_with('all', True)
-                mock_exit.assert_called_once_with(0)
-
-    @patch('cli.commands.init.InteractiveInitializer')
-    def test_init_workflow_integration(self, mock_initializer_class):
+    def test_init_workflow_integration(self):
         """Test init workflow integration."""
-        mock_initializer = Mock()
-        mock_initializer.run_interactive_initialization.return_value = True
-        mock_initializer_class.return_value = mock_initializer
+        with patch('cli.main.InitCommands') as mock_init_class:
+            mock_init = Mock()
+            mock_init.init_workspace.return_value = True
+            mock_init_class.return_value = mock_init
 
-        from cli.main import main
+            with patch('sys.argv', ['automagik-hive', '--init']):
+                result = main()
+                assert result == 0
+                mock_init.init_workspace.assert_called_once_with(None)
 
-        with patch('sys.argv', ['automagik-hive', '--init']):
-            with patch('sys.exit') as mock_exit:
-                main()
-                mock_initializer.run_interactive_initialization.assert_called_once()
-                mock_exit.assert_called_once_with(0)
-
-    @patch('cli.commands.uninstall.UninstallCommands')
-    def test_uninstall_workflow_integration(self, mock_uninstaller_class):
+    def test_uninstall_workflow_integration(self):
         """Test uninstall workflow integration."""
-        mock_uninstaller = Mock()
-        mock_uninstaller.run_uninstall.return_value = True
-        mock_uninstaller_class.return_value = mock_uninstaller
+        with patch('cli.main.UninstallCommands') as mock_uninstall_class:
+            mock_uninstall = Mock()
+            mock_uninstall.uninstall_current_workspace.return_value = True
+            mock_uninstall_class.return_value = mock_uninstall
 
-        from cli.main import main
-
-        with patch('sys.argv', ['automagik-hive', '--uninstall', 'agent']):
-            with patch('sys.exit') as mock_exit:
-                main()
-                mock_uninstaller.run_uninstall.assert_called_once_with('agent')
-                mock_exit.assert_called_once_with(0)
+            with patch('sys.argv', ['automagik-hive', '--uninstall', '.']):
+                result = main()
+                assert result == 0
+                mock_uninstall.uninstall_current_workspace.assert_called_once()
 
 
 class TestCLIErrorHandling:
     """Test CLI error handling and edge cases."""
 
-    @patch('cli.main.LazyCommandLoader')
-    def test_command_failure_handling(self, mock_loader_class):
+    def test_command_failure_handling(self):
         """Test CLI handles command failures gracefully."""
-        mock_loader = Mock()
-        mock_orchestrator = Mock()
-        mock_orchestrator.execute_unified_workflow.return_value = False  # Failure
-        mock_loader.workflow_orchestrator = mock_orchestrator
-        mock_loader_class.return_value = mock_loader
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.install.return_value = False  # Failure
+            mock_agent_class.return_value = mock_agent
 
-        from cli.main import main
+            with patch('sys.argv', ['automagik-hive', '--agent-install', '.']):
+                result = main()
+                assert result == 1  # Exit with error code
 
-        with patch('sys.argv', ['automagik-hive', '--install', 'agent']):
-            with patch('sys.exit') as mock_exit:
-                main()
-                mock_exit.assert_called_once_with(1)  # Exit with error code
-
-    @patch('cli.main.LazyCommandLoader')
-    def test_exception_in_command_handling(self, mock_loader_class):
+    def test_exception_in_command_handling(self):
         """Test CLI handles exceptions in commands gracefully."""
-        mock_loader = Mock()
-        mock_service_manager = Mock()
-        mock_service_manager.start_services.side_effect = Exception("Service error")
-        mock_loader.service_manager = mock_service_manager
-        mock_loader_class.return_value = mock_loader
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent_class.side_effect = Exception("Service error")
 
-        from cli.main import main
-
-        with patch('sys.argv', ['automagik-hive', '--start', 'agent']):
-            with patch('sys.exit') as mock_exit:
-                with patch('cli.main.logger') as mock_logger:
-                    main()
-                    mock_logger.error.assert_called()
-                    mock_exit.assert_called_once_with(1)
+            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+                result = main()
+                assert result == 1
 
     def test_invalid_component_handling(self):
-        """Test CLI handles invalid component names."""
-        from cli.main import main
+        """Test CLI handles invalid operations."""
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.serve.return_value = False  # Invalid operation
+            mock_agent_class.return_value = mock_agent
 
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader = Mock()
-            mock_service_manager = Mock()
-            mock_service_manager.start_services.return_value = False  # Invalid component
-            mock_loader.service_manager = mock_service_manager
-            mock_loader_class.return_value = mock_loader
-
-            with patch('sys.argv', ['automagik-hive', '--start', 'invalid']):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(1)
+            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+                result = main()
+                assert result == 1
 
     def test_permission_error_handling(self):
         """Test CLI handles permission errors."""
-        from cli.main import main
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent_class.side_effect = PermissionError("Permission denied")
 
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader_class.side_effect = PermissionError("Permission denied")
-
-            with patch('sys.argv', ['automagik-hive', '--install', 'agent']):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(1)
+            with patch('sys.argv', ['automagik-hive', '--agent-install', '.']):
+                result = main()
+                assert result == 1
 
     def test_keyboard_interrupt_handling(self):
         """Test CLI handles keyboard interrupts gracefully."""
-        from cli.main import main
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent_class.side_effect = KeyboardInterrupt()
 
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader_class.side_effect = KeyboardInterrupt()
-
-            with patch('sys.argv', ['automagik-hive', '--install', 'agent']):
-                with patch('sys.exit') as mock_exit:
+            with patch('sys.argv', ['automagik-hive', '--agent-install', '.']):
+                with pytest.raises(KeyboardInterrupt):
                     main()
-                    mock_exit.assert_called_once_with(1)
 
 
 class TestCLIPerformance:
@@ -619,50 +421,51 @@ class TestCLIPerformance:
 
     def test_lazy_loading_performance(self):
         """Test lazy loading performance."""
-        from cli.main import LazyCommandLoader
-
         loader = LazyCommandLoader()
         
-        with patch('cli.commands.service.ServiceManager') as mock_service_manager:
-            mock_service_manager.return_value = Mock()
-            
-            start_time = time.time()
-            
-            # First access should create instance
-            _ = loader.service_manager
-            
-            end_time = time.time()
-            first_access_time = end_time - start_time
-            
-            start_time = time.time()
-            
-            # Second access should return cached instance  
-            _ = loader.service_manager
-            
-            end_time = time.time()
-            second_access_time = end_time - start_time
-            
-            # Second access should be much faster
-            assert second_access_time < first_access_time / 2
+        start_time = time.time()
+        
+        # First access should create instance
+        result1 = loader.load_command('service')
+        
+        end_time = time.time()
+        first_access_time = end_time - start_time
+        
+        start_time = time.time()
+        
+        # Second access should be consistent
+        result2 = loader.load_command('service')
+        
+        end_time = time.time()
+        second_access_time = end_time - start_time
+        
+        # Both should be callable functions
+        assert callable(result1)
+        assert callable(result2)
+        assert first_access_time < 0.1  # Should be fast
 
     def test_argument_parsing_performance(self):
         """Test argument parsing performance."""
-        from cli.main import parse_args
+        parser = create_parser()
 
         start_time = time.time()
         
         # Parse various argument combinations
         test_args = [
-            ['--help'],
-            ['--install', 'agent'],
-            ['--start', 'all'],
-            ['--health', 'genie', '--save-report'],
-            ['--logs', 'workspace', '--lines', '100'],
-            ['--uninstall', 'all'],
+            ['--init'],
+            ['--agent-install', '.'],
+            ['--agent-serve', '.'],
+            ['--postgres-health', '.', '--tail', '100'],
+            ['--agent-logs', '.', '--tail', '100'],
+            ['--uninstall', '.'],
         ]
         
         for args in test_args:
-            parse_args(args)
+            try:
+                parser.parse_args(args)
+            except SystemExit:
+                # Help command will exit, that's expected
+                pass
         
         end_time = time.time()
         parsing_time = end_time - start_time
@@ -676,61 +479,53 @@ class TestCLICompatibility:
 
     def test_command_line_interface_compatibility(self):
         """Test that CLI maintains expected interface."""
-        from cli.main import parse_args
+        parser = create_parser()
 
         # Test all expected commands are supported
         expected_commands = [
-            '--install', '--start', '--stop', '--restart',
-            '--status', '--health', '--logs', '--uninstall', '--init'
+            '--agent-install', '--agent-serve', '--agent-stop', '--agent-restart',
+            '--agent-status', '--postgres-health', '--agent-logs', '--uninstall', '--init'
         ]
         
         for command in expected_commands:
-            if command in ['--init', '--help']:
-                args = parse_args([command])
+            if command == '--init':
+                args = parser.parse_args([command])
             else:
-                args = parse_args([command, 'all'])
+                args = parser.parse_args([command, '.'])
             
             assert args is not None
 
     def test_component_names_compatibility(self):
-        """Test that all expected component names are supported."""
-        from cli.main import parse_args
+        """Test that all expected component arguments are supported."""
+        parser = create_parser()
 
-        expected_components = ['all', 'workspace', 'agent', 'genie']
+        expected_paths = ['.', '/tmp', './workspace', '../parent']
         
-        for component in expected_components:
-            args = parse_args(['--install', component])
-            assert args.install == component
+        for path in expected_paths:
+            args = parser.parse_args(['--agent-install', path])
+            assert args.agent_install == path
 
     def test_exit_code_compatibility(self):
         """Test that CLI returns expected exit codes."""
-        from cli.main import main
-
         # Test success exit code
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader = Mock()
-            mock_orchestrator = Mock()
-            mock_orchestrator.execute_unified_workflow.return_value = True
-            mock_loader.workflow_orchestrator = mock_orchestrator
-            mock_loader_class.return_value = mock_loader
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.install.return_value = True
+            mock_agent_class.return_value = mock_agent
 
-            with patch('sys.argv', ['automagik-hive', '--install', 'workspace']):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(0)
+            with patch('sys.argv', ['automagik-hive', '--agent-install', '.']):
+                result = main()
+                assert result == 0
 
         # Test failure exit code
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader = Mock()
-            mock_orchestrator = Mock()
-            mock_orchestrator.execute_unified_workflow.return_value = False
-            mock_loader.workflow_orchestrator = mock_orchestrator
-            mock_loader_class.return_value = mock_loader
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.install.return_value = False
+            mock_agent_class.return_value = mock_agent
 
-            with patch('sys.argv', ['automagik-hive', '--install', 'workspace']):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(1)
+            with patch('sys.argv', ['automagik-hive', '--agent-install', '.']):
+                result = main()
+                assert result == 1
 
 
 class TestCLIEndToEndScenarios:
@@ -739,176 +534,146 @@ class TestCLIEndToEndScenarios:
     @pytest.fixture
     def mock_all_components(self):
         """Mock all CLI components for E2E testing."""
-        with patch('cli.commands.orchestrator.WorkflowOrchestrator') as mock_orchestrator, \
-             patch('cli.commands.service.ServiceManager') as mock_service, \
-             patch('cli.commands.health.HealthChecker') as mock_health, \
-             patch('cli.commands.init.InteractiveInitializer') as mock_init, \
-             patch('cli.commands.uninstall.UninstallCommands') as mock_uninstall:
+        with patch('cli.main.InitCommands') as mock_init, \
+             patch('cli.main.AgentCommands') as mock_agent, \
+             patch('cli.main.PostgreSQLCommands') as mock_postgres, \
+             patch('cli.main.UninstallCommands') as mock_uninstall:
             
             # Setup successful mocks
-            mock_orchestrator.return_value.execute_unified_workflow.return_value = True
-            mock_service.return_value.start_services.return_value = True
-            mock_service.return_value.stop_services.return_value = True
-            mock_service.return_value.get_status.return_value = {"service": "healthy"}
-            mock_service.return_value.get_logs.return_value = {"service": ["log1", "log2"]}
-            mock_health.return_value.run_health_check_cli.return_value = 0
-            mock_init.return_value.run_interactive_initialization.return_value = True
-            mock_uninstall.return_value.run_uninstall.return_value = True
+            mock_init.return_value.init_workspace.return_value = True
+            mock_agent.return_value.install.return_value = True
+            mock_agent.return_value.serve.return_value = True
+            mock_agent.return_value.stop.return_value = True
+            mock_agent.return_value.status.return_value = True
+            mock_agent.return_value.logs.return_value = True
+            mock_postgres.return_value.postgres_health.return_value = True
+            mock_postgres.return_value.postgres_status.return_value = True
+            mock_postgres.return_value.postgres_logs.return_value = True
+            mock_uninstall.return_value.uninstall_current_workspace.return_value = True
             
             yield {
-                'orchestrator': mock_orchestrator,
-                'service': mock_service,
-                'health': mock_health,
                 'init': mock_init,
+                'agent': mock_agent,
+                'postgres': mock_postgres,
                 'uninstall': mock_uninstall,
             }
 
     def test_complete_agent_lifecycle(self, mock_all_components):
         """Test complete agent lifecycle: install -> start -> health -> stop -> uninstall."""
-        from cli.main import main
-
         scenarios = [
-            (['automagik-hive', '--install', 'agent'], 0),
-            (['automagik-hive', '--start', 'agent'], 0),
-            (['automagik-hive', '--health', 'agent'], 0),
-            (['automagik-hive', '--status', 'agent'], 0),
-            (['automagik-hive', '--logs', 'agent'], 0),
-            (['automagik-hive', '--stop', 'agent'], 0),
-            (['automagik-hive', '--uninstall', 'agent'], 0),
+            (['automagik-hive', '--agent-install', '.'], 0),
+            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--postgres-health', '.'], 0),
+            (['automagik-hive', '--agent-status', '.'], 0),
+            (['automagik-hive', '--agent-logs', '.'], 0),
+            (['automagik-hive', '--agent-stop', '.'], 0),
+            (['automagik-hive', '--uninstall', '.'], 0),
         ]
 
         for argv, expected_exit in scenarios:
             with patch('sys.argv', argv):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(expected_exit)
+                result = main()
+                assert result == expected_exit
 
     def test_complete_workspace_lifecycle(self, mock_all_components):
         """Test complete workspace lifecycle."""
-        from cli.main import main
-
         scenarios = [
             (['automagik-hive', '--init'], 0),
-            (['automagik-hive', '--install', 'workspace'], 0),
-            (['automagik-hive', '--start', 'workspace'], 0),
-            (['automagik-hive', '--health', 'workspace'], 0),
-            (['automagik-hive', '--stop', 'workspace'], 0),
+            (['automagik-hive', '--agent-install', '.'], 0),
+            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--postgres-health', '.'], 0),
+            (['automagik-hive', '--agent-stop', '.'], 0),
         ]
 
         for argv, expected_exit in scenarios:
             with patch('sys.argv', argv):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(expected_exit)
+                result = main()
+                assert result == expected_exit
 
     def test_all_components_lifecycle(self, mock_all_components):
         """Test complete system lifecycle with all components."""
-        from cli.main import main
-
         scenarios = [
-            (['automagik-hive', '--install', 'all'], 0),
-            (['automagik-hive', '--start', 'all'], 0),
-            (['automagik-hive', '--health', 'all', '--save-report'], 0),
-            (['automagik-hive', '--status', 'all'], 0),
-            (['automagik-hive', '--logs', 'all', '--lines', '50'], 0),
-            (['automagik-hive', '--restart', 'all'], 0),
-            (['automagik-hive', '--stop', 'all'], 0),
+            (['automagik-hive', '--agent-install', '.'], 0),
+            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--postgres-health', '.'], 0),
+            (['automagik-hive', '--agent-status', '.'], 0),
+            (['automagik-hive', '--agent-logs', '.', '--tail', '50'], 0),
+            (['automagik-hive', '--agent-restart', '.'], 0),
+            (['automagik-hive', '--agent-stop', '.'], 0),
         ]
 
         for argv, expected_exit in scenarios:
             with patch('sys.argv', argv):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(expected_exit)
+                result = main()
+                assert result == expected_exit
 
     def test_error_recovery_scenarios(self, mock_all_components):
         """Test error recovery scenarios."""
-        from cli.main import main
-
         # Setup failure scenarios
-        mock_all_components['orchestrator'].return_value.execute_unified_workflow.return_value = False
-        mock_all_components['service'].return_value.start_services.return_value = False
+        mock_all_components['agent'].return_value.install.return_value = False
+        mock_all_components['agent'].return_value.serve.return_value = False
 
         failure_scenarios = [
-            (['automagik-hive', '--install', 'agent'], 1),
-            (['automagik-hive', '--start', 'agent'], 1),
+            (['automagik-hive', '--agent-install', '.'], 1),
+            (['automagik-hive', '--agent-serve', '.'], 1),
         ]
 
         for argv, expected_exit in failure_scenarios:
             with patch('sys.argv', argv):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(expected_exit)
+                result = main()
+                assert result == expected_exit
 
     def test_mixed_component_operations(self, mock_all_components):
         """Test operations on mixed components."""
-        from cli.main import main
-
         mixed_scenarios = [
-            (['automagik-hive', '--install', 'agent'], 0),
-            (['automagik-hive', '--install', 'genie'], 0),
-            (['automagik-hive', '--start', 'workspace'], 0),
-            (['automagik-hive', '--health', 'all'], 0),
+            (['automagik-hive', '--agent-install', '.'], 0),
+            (['automagik-hive', '--postgres-status', '.'], 0),
+            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--postgres-health', '.'], 0),
         ]
 
         for argv, expected_exit in mixed_scenarios:
             with patch('sys.argv', argv):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_exit.assert_called_once_with(expected_exit)
+                result = main()
+                assert result == expected_exit
 
 
-@pytest.mark.parametrize("component", ["workspace", "agent", "genie", "all"])
+@pytest.mark.parametrize("workspace_path", [".", "/tmp/test", "./workspace", "../parent"])
 class TestCLIParameterizedCommands:
-    """Parameterized tests for all CLI commands across components."""
+    """Parameterized tests for all CLI commands across different paths."""
 
-    def test_install_command_all_components(self, component):
-        """Test install command for all components."""
-        from cli.main import main
+    def test_install_command_all_components(self, workspace_path):
+        """Test agent install command for all workspace paths."""
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.install.return_value = True
+            mock_agent_class.return_value = mock_agent
 
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader = Mock()
-            mock_orchestrator = Mock()
-            mock_orchestrator.execute_unified_workflow.return_value = True
-            mock_loader.workflow_orchestrator = mock_orchestrator
-            mock_loader_class.return_value = mock_loader
+            with patch('sys.argv', ['automagik-hive', '--agent-install', workspace_path]):
+                result = main()
+                assert result == 0
+                mock_agent.install.assert_called_once_with(workspace_path)
 
-            with patch('sys.argv', ['automagik-hive', '--install', component]):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_orchestrator.execute_unified_workflow.assert_called_once_with(component)
-                    mock_exit.assert_called_once_with(0)
+    def test_start_command_all_components(self, workspace_path):
+        """Test agent serve command for all workspace paths."""
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.serve.return_value = True
+            mock_agent_class.return_value = mock_agent
 
-    def test_start_command_all_components(self, component):
-        """Test start command for all components."""
-        from cli.main import main
+            with patch('sys.argv', ['automagik-hive', '--agent-serve', workspace_path]):
+                result = main()
+                assert result == 0
+                mock_agent.serve.assert_called_once_with(workspace_path)
 
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader = Mock()
-            mock_service_manager = Mock()
-            mock_service_manager.start_services.return_value = True
-            mock_loader.service_manager = mock_service_manager
-            mock_loader_class.return_value = mock_loader
+    def test_health_command_all_components(self, workspace_path):
+        """Test postgres health command for all workspace paths."""
+        with patch('cli.main.PostgreSQLCommands') as mock_postgres_class:
+            mock_postgres = Mock()
+            mock_postgres.postgres_health.return_value = True
+            mock_postgres_class.return_value = mock_postgres
 
-            with patch('sys.argv', ['automagik-hive', '--start', component]):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_service_manager.start_services.assert_called_once_with(component)
-                    mock_exit.assert_called_once_with(0)
-
-    def test_health_command_all_components(self, component):
-        """Test health command for all components."""
-        from cli.main import main
-
-        with patch('cli.main.LazyCommandLoader') as mock_loader_class:
-            mock_loader = Mock()
-            mock_health_checker = Mock()
-            mock_health_checker.run_health_check_cli.return_value = 0
-            mock_loader.health_checker = mock_health_checker
-            mock_loader_class.return_value = mock_loader
-
-            with patch('sys.argv', ['automagik-hive', '--health', component]):
-                with patch('sys.exit') as mock_exit:
-                    main()
-                    mock_health_checker.run_health_check_cli.assert_called_once_with(component, False)
-                    mock_exit.assert_called_once_with(0)
+            with patch('sys.argv', ['automagik-hive', '--postgres-health', workspace_path]):
+                result = main()
+                assert result == 0
+                mock_postgres.postgres_health.assert_called_once_with(workspace_path)

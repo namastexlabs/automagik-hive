@@ -8,7 +8,6 @@
             "type": "command",
             "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/tdd_hook.py"
           }
-
         ]
       }
     ]

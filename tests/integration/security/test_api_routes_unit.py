@@ -92,15 +92,10 @@ def test_app(mock_database_service, mock_version_service, mock_mcp_catalog):
     app = FastAPI()
 
     # Import and include routers with mocked dependencies
-    from api.routes.health import health_check_router
-    from api.routes.mcp_router import router as mcp_router
     from api.routes.v1_router import v1_router
-    from api.routes.version_router import router as version_router
 
-    app.include_router(health_check_router, prefix="/api/v1")
-    app.include_router(mcp_router)  # MCP router already has prefix
-    app.include_router(version_router)  # Version router already has prefix
-    app.include_router(v1_router, prefix="/api/v1")
+    # Only include v1_router which already contains all subrouters with proper prefixes
+    app.include_router(v1_router)
 
     return app
 

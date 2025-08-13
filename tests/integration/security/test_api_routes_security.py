@@ -144,7 +144,7 @@ class TestMCPRouterSecurity:
     def test_app(self):
         """Create test app with MCP router."""
         app = FastAPI()
-        app.include_router(mcp_router)
+        app.include_router(v1_router)
         return app
 
     @pytest.fixture
@@ -314,7 +314,7 @@ class TestVersionRouterSecurity:
     def test_app(self, mock_version_service, mock_validation_functions):
         """Create test app with version router and mocked dependencies."""
         app = FastAPI()
-        app.include_router(version_router)
+        app.include_router(v1_router)
         return app
 
     @pytest.fixture
@@ -678,10 +678,10 @@ class TestAPISecurityIntegration:
             ("/api/v1/nonexistent", "GET", 404),
             ("/api/v1/health", "POST", 405),  # Method not allowed
             (
-                "/api/v1/api/v1/version/execute",
+                "/api/v1/version/execute",
                 "GET",
                 405,
-            ),  # Method not allowed - note: double prefix due to routing bug
+            ),  # Method not allowed - only accepts POST
         ]
 
         for endpoint, method, expected_status in error_tests:
