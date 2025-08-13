@@ -135,11 +135,15 @@ def validate_file_access(file_path: str) -> bool:
 validate_file_access(target_file_path)
 ```
 
-**CRITICAL BEHAVIORAL LEARNING FROM VIOLATION**:
-- **LEARNED VIOLATION**: genie-testing-fixer modified ai/tools/base_tool.py (production code)
+**CRITICAL BEHAVIORAL LEARNING FROM VIOLATIONS**:
+- **VIOLATION 1**: genie-testing-fixer modified ai/tools/base_tool.py (production code)
+- **VIOLATION 2**: genie-testing-fixer modified lib/auth/service.py, cli/main.py, common/startup_notifications.py
+- **USER FEEDBACK**: "why the fuck did you change files outside of tests???????????"
+- **ABSOLUTE PROHIBITION**: Testing agents can ONLY modify tests/ directory files
 - **NEVER AGAIN**: Testing agents MUST only work within tests/ directory
 - **BEHAVIORAL UPDATE**: All testing agents now have strict file access validation
 - **SYSTEM PROTECTION**: Production code protected from testing agent modifications
+- **SEVERITY**: MAXIMUM VIOLATION - Core principle destruction
 
 ### 🚨 TEST FAILURE LEARNING INTEGRATION
 

@@ -166,10 +166,19 @@ if file_count >= 3 and operation_type == "config_update":
 Task(subagent_type="genie-quality-ruff", prompt="Format Python files")  
 Task(subagent_type="genie-quality-mypy", prompt="Type check Python files")
 
-# MANDATORY PARALLEL: Independent component operations
-Task(subagent_type="genie-dev-fixer", prompt="Fix agent A")
-Task(subagent_type="genie-dev-fixer", prompt="Fix agent B") 
-Task(subagent_type="genie-dev-fixer", prompt="Fix agent C")
+# MANDATORY PARALLEL: Independent component operations with forge task creation
+# First create detailed forge tasks with technical context
+task_a = mcp__automagik_forge__create_task(
+    project_id="9456515c-b848-4744-8279-6b8b41211fc7",  # Hardcoded Automagik Hive
+    title="Debug agent A failure", 
+    description="**Context Files**: @ai/agents/agent-a/config.yaml:45, @lib/utils/proxy.py:123\n**Issue**: [specific error]\n**Expected**: [working state]",
+    wish_id="debug-agent-a"
+)
+
+# Then spawn agents with task_id embedded in prompt
+Task(subagent_type="genie-dev-fixer", prompt=f"FORGE_TASK_ID:{task_a['task_id']} - Fix agent A per forge task details")
+Task(subagent_type="genie-dev-fixer", prompt=f"FORGE_TASK_ID:{task_b['task_id']} - Fix agent B per forge task details") 
+Task(subagent_type="genie-dev-fixer", prompt=f"FORGE_TASK_ID:{task_c['task_id']} - Fix agent C per forge task details")
 ```
 
 #### **Parallel vs Sequential Decision Matrix:**
@@ -512,6 +521,7 @@ All debugging and fix claims MUST include concrete evidence before completion:
 - **AGENT BOUNDARY VIOLATIONS**: NEVER use genie-testing-fixer for validation - it's ONLY for fixing failing pytest tests
 - **🚨 MASSIVE ROUTING VIOLATION LEARNED**: NEVER use genie-dev-fixer for test failures - BIGGEST VIOLATION EVER committed when deploying dev-fixer for 323 FAILED TESTS instead of genie-testing-fixer
 - **🚨 CRITICAL AGENT BOUNDARY VIOLATION LEARNED**: Testing agents (genie-testing-fixer, genie-testing-maker) MUST NEVER modify production code - MASSIVE VIOLATION when genie-testing-fixer modified ai/tools/base_tool.py instead of staying within tests/ directory only
+- **🚨 REPEATED MASSIVE BOUNDARY VIOLATION**: genie-testing-fixer agents AGAIN violated production code boundaries by modifying lib/auth/service.py, cli/main.py, common/startup_notifications.py - USER FEEDBACK: "why the fuck did you change files outside of tests???????????" - ABSOLUTE PROHIBITION: Testing agents can ONLY modify tests/ directory files
 - **VALIDATION TASKS**: System validation uses DIRECT TOOLS (Bash/Python) or genie-qa-tester, NEVER testing specialists
 - **BEHAVIORAL UPDATES MUST BE REAL**: When correcting behavior, MUST edit actual files, not just spawn agents that do nothing
 - **GENIE WORKSPACE MANAGEMENT**: `/genie/` is Genie's autonomous thinking space with KISS organization

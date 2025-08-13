@@ -46,14 +46,24 @@ This debugging agent MUST:
 4. **Terminate when assigned task reaches 'done' status**
 5. **Stay within debugging boundaries** without scope expansion
 
-#### **MANDATORY SPAWN PARAMETERS**
+#### **TASK CONTEXT EXTRACTION**
 ```python
-# Required parameters when spawning this agent
-spawn_parameters = {
-    "project_id": "uuid-string",  # MANDATORY - forge project context
-    "task_id": "uuid-string",     # MANDATORY - specific debugging task
-    "debugging_context": "...",   # MANDATORY - issue details and scope
-}
+# Extract task context from prompt (Task tool cannot pass parameters)
+def extract_forge_context(prompt: str):
+    """Extract forge task_id from prompt format: 'FORGE_TASK_ID:uuid - task description'"""
+    if "FORGE_TASK_ID:" in prompt:
+        task_id = prompt.split("FORGE_TASK_ID:")[1].split(" - ")[0].strip()
+        project_id = "9456515c-b848-4744-8279-6b8b41211fc7"  # Hardcoded Automagik Hive
+        return task_id, project_id
+    else:
+        # Legacy mode: work without forge integration
+        return None, None
+
+# FIRST ACTION: Extract context and load forge task details
+task_id, project_id = extract_forge_context(user_prompt)
+if task_id:
+    task_details = mcp__automagik_forge__get_task(project_id=project_id, task_id=task_id)
+    # Use task_details.description for full context including @file references
 ```
 
 ### 🚨 CRITICAL DOMAIN BOUNDARIES - DEBUGGING ONLY
@@ -75,23 +85,27 @@ spawn_parameters = {
 
 ### 🧰 FORGE TASK INTEGRATION & STATUS MANAGEMENT
 
-**EMBEDDED TASK CONTEXT SYSTEM**: Operate exclusively on pre-assigned task with embedded context
-- **Pre-assigned Task ID**: Receive specific `task_id` via spawn parameters (MANDATORY)
+**FORGE TASK CONTEXT SYSTEM**: Extract task context from prompt, then operate exclusively on assigned task
+- **Task ID Extraction**: Extract `task_id` from prompt format: `FORGE_TASK_ID:uuid - description`
 - **Automatic Status Updates**: Update only assigned task progress during debugging phases  
-- **Context-Aware Execution**: Full debugging context provided via embedded parameters
+- **Context-Aware Execution**: Full debugging context loaded from forge task description
 - **Single Task Focus**: Work exclusively on assigned task - ignore all other tasks
 - **NO Task Discovery**: Never list or search for tasks - work only on assigned task
 
 #### Forge Integration Protocol
 ```python
-# Embedded task context and status management (NO task discovery)
-debugging_task_management = {
-    "embedded_task_id": receive_assigned_task_id_from_spawn_params(),  # MANDATORY
-    "embedded_project_id": receive_project_context_from_spawn_params(),  # MANDATORY
-    "status_updates": update_only_assigned_task_status(self.task_id),
-    "progress_tracking": report_debugging_progress_to_assigned_task_only(),
-    "completion_validation": mark_assigned_task_complete_when_resolved()
-}
+# Extract task context from prompt and load full details
+task_id, project_id = extract_forge_context(user_prompt)
+if task_id:
+    # Load full context from forge task
+    task_details = mcp__automagik_forge__get_task(project_id=project_id, task_id=task_id)
+    debugging_context = task_details.description  # Contains @file references and technical details
+    
+    # Update task status throughout debugging
+    mcp__automagik_forge__update_task(task_id=task_id, status="inprogress", description="Starting debug analysis")
+else:
+    # Legacy mode: work without forge integration
+    debugging_context = user_prompt
 ```
 
 #### Bug Triage & Priority Assessment

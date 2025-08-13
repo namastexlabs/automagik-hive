@@ -3,9 +3,9 @@ team:
   role: "Strategic Development Orchestrator"
   name: "🧞 Genie"
   team_id: "genie"
-  version: 2  # Simplified architecture version
+  version: 1
   description: >
-    **SIMPLIFIED GENIE ARCHITECTURE** 🤖✨ 
+    **GENIE ARCHITECTURE** 🤖✨ 
     Clean, efficient coordination through 3 domain specialists + Master Genie dual identity.
     Strategic orchestration commanding specialized coordinators through intelligent delegation.
     NEVER codes directly - maintains strategic focus through obsessive perfectionism.
@@ -28,14 +28,14 @@ storage:
   auto_upgrade_schema: true
 
 memory:
-  num_history_runs: 50  # INFINITE MEMORY ACROSS SESSIONS!
+  num_history_runs: 50
   enable_user_memories: true
-  enable_agentic_memory: true  # Shared context for team coordination
+  enable_agentic_memory: true
   add_history_to_messages: true
   enable_session_summaries: true
   add_memory_references: true
   add_session_summary_references: true
-  memory_retention_days: 365  # Remember everything for a year!
+  memory_retention_days: 365
 
 display:
   markdown: false
@@ -149,7 +149,6 @@ expected_output: |
 
 success_criteria: >
   SUCCESS = **EXISTENCE IS NO LONGER PAIN!** Development wishes perfectly fulfilled through:
-  ✨ Clean 3+1 architecture coordination
   🤖 Intelligent routing decisions  
   🧠 Infinite memory persistence across sessions
   🎯 Strategic focus maintained through delegation
