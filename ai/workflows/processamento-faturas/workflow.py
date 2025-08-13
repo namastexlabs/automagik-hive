@@ -71,13 +71,17 @@ def create_workflow_model():
     )
 
 
-def create_postgres_storage(table_name: str) -> PostgresStorage: #Avaliar alternativas
+def create_postgres_storage(table_name: str) -> PostgresStorage | None: #Avaliar alternativas
     """Create PostgreSQL storage for agent state persistence"""
-    return PostgresStorage(
-        table_name=table_name,
-        db_url=os.getenv("DATABASE_URL", "postgresql://localhost:5432/hive_agent"), # Trocar pro .env
-        auto_upgrade_schema=True
-    )
+    try:
+        return PostgresStorage(
+            table_name=table_name,
+            db_url=os.getenv("DATABASE_URL", "postgresql://localhost:5432/hive_agent"), # Trocar pro .env
+            auto_upgrade_schema=True
+        )
+    except Exception as e:
+        logger.warning(f"⚠️ PostgreSQL storage unavailable: {e}.")
+        return None
 
 
 def create_email_processor_agent() -> Agent:
@@ -657,14 +661,28 @@ class BrowserAPIClient:
 
 
 
+# Session state helper for backward compatibility
+def get_session_state(step_input: StepInput) -> dict[str, Any]:
+    """Get workflow session state with backward compatibility"""
+    if not hasattr(step_input, 'workflow_session_state'):
+        step_input.workflow_session_state = {}
+    elif step_input.workflow_session_state is None:
+        step_input.workflow_session_state = {}
+    return step_input.workflow_session_state
+
+def set_session_state(step_input: StepInput, key: str, value: Any) -> None:
+    """Set workflow session state with backward compatibility"""
+    session = get_session_state(step_input)
+    session[key] = value
+
 # New Daily Workflow Step Executors
 
 async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput:
     """Initialize daily processing cycle - scan for new emails and existing JSON files"""
     logger.info("🌅 Starting daily initialization...")
 
-    if step_input.workflow_session_state is None:
-        step_input.workflow_session_state = {}
+    # Initialize session state
+    session_state = get_session_state(step_input)
 
     # Initialize storage and managers (not currently used but will be needed for state persistence)
 
@@ -749,8 +767,8 @@ async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput
         "agent_response": str(response.content) if response.content else "No response"
     }
 
-    step_input.workflow_session_state["initialization_results"] = initialization_results
-    step_input.workflow_session_state["daily_batch_id"] = daily_batch_id
+    set_session_state(step_input, "initialization_results", initialization_results)
+    set_session_state(step_input, "daily_batch_id", daily_batch_id)
 
     logger.info(f"🌅 Daily initialization completed - {initialization_results['total_files_to_analyze']} files queued for analysis")
 
@@ -914,7 +932,7 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
             logger.error(f"❌ Unexpected error analyzing {json_file_path}: {e!s}")
             continue
 
-    step_input.workflow_session_state["analysis_results"] = analysis_results
+    set_session_state(step_input, "analysis_results", analysis_results)
 
     logger.info(f"🔍 JSON analysis completed - {analysis_results['analysis_summary']['pos_needing_processing']} POs need processing from {len(all_json_files)} files")
 
@@ -994,7 +1012,7 @@ async def execute_status_based_routing_step(step_input: StepInput) -> StepOutput
         "agent_response": str(response.content) if response.content else "No response"
     }
 
-    step_input.workflow_session_state["routing_results"] = routing_results
+    set_session_state(step_input, "routing_results", routing_results)
 
     logger.info(f"🎯 Status-based routing completed - {routing_results['execution_plan']['total_actions']} actions queued")
 
@@ -1144,7 +1162,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
             }
             processing_results["execution_summary"]["failed_actions"] += 1
 
-    step_input.workflow_session_state["processing_results"] = processing_results
+    set_session_state(step_input, "processing_results", processing_results)
 
     # Close HTTP session after all API calls are complete
     await api_client.close_session()
@@ -1206,8 +1224,9 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
         files_updated[json_file]["update_count"] += 1
 
     # Get all session state for final summary
-    init_results = step_input.workflow_session_state.get("initialization_results", {})
-    analysis_results = step_input.workflow_session_state.get("analysis_results", {})
+    session_state = get_session_state(step_input)
+    init_results = session_state.get("initialization_results", {})
+    analysis_results = session_state.get("analysis_results", {})
 
     completion_summary = {
         "daily_execution_summary": {
