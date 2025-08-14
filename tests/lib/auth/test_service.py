@@ -81,7 +81,7 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5433/hive
         calculated = service.calculate_ports("genie", base_ports)
         
         # Genie uses prefixed database port and prefixed API port
-        assert calculated == {"db": 45532, "api": 48886}
+        assert calculated == {"db": 45532, "api": 45886}
 
     def test_get_deployment_ports_dynamic(self, tmp_path):
         """Test that deployment ports are calculated dynamically from .env."""

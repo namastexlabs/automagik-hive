@@ -1,7 +1,7 @@
 # ===========================================================================
 # Automagik Hive Genie All-in-One Container
 # PostgreSQL + FastAPI unified in single container with supervisord
-# External Port: 48886, Internal PostgreSQL: 5432
+# External Port: 45886, Internal PostgreSQL: 5432
 # ===========================================================================
 
 # Stage 1: Python Dependencies Builder
@@ -79,11 +79,11 @@ COPY --chown=1000:1000 docker/genie/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Expose Genie API port
-EXPOSE 48886
+EXPOSE 45886
 
 # Health check for both PostgreSQL and FastAPI
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:48886/api/v1/health && \
+    CMD curl -f http://localhost:45886/api/v1/health && \
         pg_isready -h localhost -p 5432 -U hive -d hive_genie
 
 # Switch to application user and start

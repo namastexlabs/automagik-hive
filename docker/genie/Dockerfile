@@ -8,7 +8,7 @@
 # 3. Supervisord process management for coordination
 #
 # Target: Single container for Genie consultation service
-# External Port: 48886 (FastAPI)
+# External Port: 45886 (FastAPI)
 # Internal Port: 5432 (PostgreSQL)
 # Database: hive_genie
 #
@@ -165,7 +165,7 @@ redirect_stderr=true
 stdout_logfile=/var/log/supervisor/fastapi.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=5
-environment=PATH="/app/.venv/bin:%(ENV_PATH)s",HIVE_API_PORT="48886",HIVE_DATABASE_URL="postgresql+psycopg://%(ENV_POSTGRES_USER)s:%(ENV_POSTGRES_PASSWORD)s@localhost:5432/%(ENV_POSTGRES_DB)s"
+environment=PATH="/app/.venv/bin:%(ENV_PATH)s",HIVE_API_PORT="45886",HIVE_DATABASE_URL="postgresql+psycopg://%(ENV_POSTGRES_USER)s:%(ENV_POSTGRES_PASSWORD)s@localhost:5432/%(ENV_POSTGRES_DB)s"
 EOF
 
 # PostgreSQL initialization script
@@ -191,7 +191,7 @@ RUN mkdir -p /var/lib/postgresql/data/pgdata \
     && chmod 750 /var/lib/postgresql/data/pgdata
 
 # Port configuration
-ARG API_PORT=48886
+ARG API_PORT=45886
 ENV HIVE_API_PORT=${API_PORT}
 
 # Expose ports
@@ -201,7 +201,7 @@ EXPOSE 5432
 # Health check for both services
 HEALTHCHECK --interval=30s --timeout=15s --start-period=90s --retries=3 \
     CMD pg_isready -U ${POSTGRES_USER:-genie} -d ${POSTGRES_DB:-hive_genie} && \
-        curl -f http://localhost:${HIVE_API_PORT:-48886}/api/v1/health || exit 1
+        curl -f http://localhost:${HIVE_API_PORT:-45886}/api/v1/health || exit 1
 
 # Container startup script
 COPY --chown=root:root <<EOF /usr/local/bin/genie-startup.sh

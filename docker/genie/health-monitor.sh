@@ -10,7 +10,7 @@ while true; do
     fi
     
     # Check API health  
-    if curl -f http://localhost:48886/api/v1/health > /dev/null 2>&1; then
+    if curl -f http://localhost:45886/api/v1/health > /dev/null 2>&1; then
         api_status="healthy"
     else
         api_status="unhealthy"

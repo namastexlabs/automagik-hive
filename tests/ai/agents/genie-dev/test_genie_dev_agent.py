@@ -8,20 +8,34 @@ Agent Under Test: ai/agents/genie-dev/agent.py
 Pattern: Async version_factory routing to create_agent function
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add project root to Python path to fix module import issues
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 import pytest
 from unittest.mock import AsyncMock, Mock, patch
 
-# Import the module under test using importlib for better isolation
-import sys
-import os
-import importlib.util
+# For these TDD tests, we'll mock the lib.utils.version_factory module entirely
+# Create a mock module with the expected function
+mock_version_factory = Mock()
+mock_version_factory.create_agent = AsyncMock()
 
-# Load the genie-dev agent module  
-genie_dev_path = os.path.join(os.path.dirname(__file__), '../../../../ai/agents/genie-dev/agent.py')
-spec = importlib.util.spec_from_file_location("genie_dev_agent", genie_dev_path)
-genie_dev_agent = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(genie_dev_agent)
-get_genie_dev_agent = genie_dev_agent.get_genie_dev_agent
+with patch.dict('sys.modules', {
+    'lib.utils.version_factory': mock_version_factory,
+}):
+    # Now we can import the agent module - use importlib since Python can't import hyphenated names
+    import importlib.util
+    
+    genie_dev_path = os.path.join(os.path.dirname(__file__), '../../../../ai/agents/genie-dev/agent.py')
+    spec = importlib.util.spec_from_file_location("genie_dev_agent", genie_dev_path)
+    genie_dev_agent = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(genie_dev_agent)
+    get_genie_dev_agent = genie_dev_agent.get_genie_dev_agent
 
 
 class TestGenieDevAgentFactory:

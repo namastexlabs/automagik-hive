@@ -4,6 +4,7 @@ Enhanced service management for Docker orchestration and local development.
 Supports both local development (uvicorn) and production Docker modes.
 """
 
+import os
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -166,7 +167,8 @@ class ServiceManager:
             postgres_db = "hive"
             
             # Update .env file
-            new_url = f"postgresql+psycopg://{postgres_user}:{postgres_pass}@localhost:5532/{postgres_db}"
+            postgres_port = os.getenv("HIVE_WORKSPACE_POSTGRES_PORT", "5532")
+            new_url = f"postgresql+psycopg://{postgres_user}:{postgres_pass}@localhost:{postgres_port}/{postgres_db}"
             
             # Replace or add the database URL
             if "HIVE_DATABASE_URL=" in env_content:

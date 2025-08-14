@@ -3,7 +3,7 @@
 This directory contains the Docker configuration for the Genie consultation environment - a specialized container for Genie-specific operations.
 
 ## Environment Details
-- **API Port**: 48886
+- **API Port**: 45886
 - **Container Names**: `hive-genie-server`
 - **Network**: `automagik-hive_genie_default`
 

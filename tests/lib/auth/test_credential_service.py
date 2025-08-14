@@ -572,7 +572,7 @@ HIVE_API_PORT=8888
         calculated = service.calculate_ports("genie", base_ports)
         
         assert calculated["db"] == 45532  # Prefixed with 4
-        assert calculated["api"] == 48886  # Prefixed with 4
+        assert calculated["api"] == 45886  # Prefixed with 4
         
     def test_calculate_ports_invalid_mode(self):
         """Test port calculation with invalid mode raises error."""
@@ -602,7 +602,7 @@ HIVE_API_PORT=8888
         
         # Check genie (prefix 4)
         assert deployment_ports["genie"]["db"] == 45532
-        assert deployment_ports["genie"]["api"] == 48886
+        assert deployment_ports["genie"]["api"] == 45886
 
 
 class TestMasterCredentialsAndMultiMode:

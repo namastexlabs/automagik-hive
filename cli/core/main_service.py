@@ -403,9 +403,12 @@ class MainService:
                 return {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
             
             # Check both containers using Docker Compose
+            main_postgres_port = os.getenv("HIVE_WORKSPACE_POSTGRES_PORT", "5532")
+            main_api_port = os.getenv("HIVE_API_PORT", "8886")
+            
             for service_name, display_name, port in [
-                ("postgres", "main-postgres", "5532"),
-                ("app", "main-app", "8886")
+                ("postgres", "main-postgres", main_postgres_port),
+                ("app", "main-app", main_api_port)
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths

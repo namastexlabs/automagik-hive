@@ -17,7 +17,7 @@ docker/
 │   └── README.md              # Agent environment documentation
 ├── genie/                      # Genie consultation environment
 │   ├── Dockerfile             # Genie all-in-one container
-│   ├── docker-compose.yml     # Genie services (port 48886)
+│   ├── docker-compose.yml     # Genie services (port 45886)
 │   └── README.md              # Genie environment documentation
 ├── templates/                  # Reusable Docker templates
 │   ├── workspace.yml          # Generic workspace template
@@ -44,7 +44,7 @@ docker/
 - **Integration**: Used by `make agent`, `make install-agent`
 
 ### Genie Environment (docker/genie/)
-- **Ports**: API 48886
+- **Ports**: API 45886
 - **Usage**: Specialized Genie consultation workflows
 - **Integration**: Manual or specialized workflows
 

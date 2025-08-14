@@ -104,7 +104,7 @@ class TestAgentEnvironmentInitialization:
         assert config.target_file == temp_workspace / "docker" / "agent" / "docker-compose.yml"
         assert config.port_mappings == {"HIVE_API_PORT": 38886, "POSTGRES_PORT": 35532}
         assert config.database_suffix == "_agent"
-        assert config.cors_port_mapping == {8886: 38886, 5532: 35532}
+        assert config.cors_port_mapping == {8887: 38886, 5532: 35532}
 
 
 class TestMainEnvManagement:
@@ -229,7 +229,7 @@ class TestEnvironmentValidation:
         result = env.validate_environment()
         
         assert result["valid"] is True  # No errors, just warnings
-        assert any("Main .env should use port 8886, agent gets 38886 via docker-compose" in warning for warning in result["warnings"])
+        assert any("Main .env should use port 8887, agent gets 38886 via docker-compose" in warning for warning in result["warnings"])
 
     def test_validate_environment_exception_handling(self, temp_workspace):
         """Test validation handles file reading exceptions gracefully."""

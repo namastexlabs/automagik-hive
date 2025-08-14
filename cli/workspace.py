@@ -177,8 +177,8 @@ Automagik Hive workspace for building multi-agent AI applications.
 
 ## Services
 
-- Agent API: http://localhost:38886
-- Agent Database: postgresql://localhost:35532
+- Agent API: http://localhost:{HIVE_AGENT_API_PORT}
+- Agent Database: postgresql://localhost:{HIVE_AGENT_POSTGRES_PORT}
 - Development Server: http://localhost:8000
 """
     
@@ -187,7 +187,7 @@ Automagik Hive workspace for building multi-agent AI applications.
         return """# Automagik Hive Environment Configuration
 
 # Database
-DATABASE_URL=postgresql://hive_user:hive_password@localhost:35532/hive_agent
+DATABASE_URL=postgresql://hive_user:hive_password@localhost:{HIVE_AGENT_POSTGRES_PORT}/hive_agent
 
 # API Configuration  
 HIVE_API_KEY=your_api_key_here

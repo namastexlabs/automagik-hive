@@ -6,9 +6,15 @@ isolation, singleton management, and environment variable mocking.
 """
 
 import os
+import sys
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
+
+# Add project root to Python path to fix module import issues
+project_root = Path(__file__).parent.parent.parent.absolute()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 from unittest.mock import Mock, patch
 
 import pytest

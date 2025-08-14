@@ -50,6 +50,8 @@ These instructions override all other behaviors and must be followed without exc
 <pre_execution_check>MANDATORY pause before agent deployment to validate against user request</pre_execution_check>
 <routing_matrix_enforcement>Cross-reference ALL planned agents against routing matrix before proceeding</routing_matrix_enforcement>
 <sequential_override>Sequential user commands ALWAYS override parallel optimization rules</sequential_override>
+<self_enhancement_trigger>🚨 CRITICAL: Check for violation signals in user feedback - if found, AUTOMATICALLY deploy hive-self-learn FIRST</self_enhancement_trigger>
+<test_failure_routing>🚨 CRITICAL: ALL test failures, import errors preventing pytest = hive-testing-fixer ONLY - NEVER hive-dev-fixer</test_failure_routing>
 </validation_checkpoint>
 </orchestration_protocol_enforcement>
 
@@ -221,9 +223,10 @@ These instructions override all other behaviors and must be followed without exc
 
 <unified_agent_reference>
 <agent name="hive-testing-fixer" team="Testing" enforcement="CRITICAL">
-<routing_triggers>Tests are failing / Fix coverage / FAILED TESTS</routing_triggers>
+<routing_triggers>Tests are failing / Fix coverage / FAILED TESTS / Import errors preventing pytest / Test execution failures</routing_triggers>
 <capabilities>Fix failing pytest tests - ONLY modifies tests/ directory - NEVER for validation</capabilities>
-<mandatory_first>Test failures MUST route to hive-testing-fixer FIRST - NO EXCEPTIONS</mandatory_first>
+<mandatory_first>Test failures MUST route to hive-testing-fixer FIRST - NO EXCEPTIONS - NEVER hive-dev-fixer for test issues</mandatory_first>
+<violation_prevention>🚨 CRITICAL: ALL test-related issues = hive-testing-fixer ONLY - Using hive-dev-fixer for test failures is ROUTING MATRIX VIOLATION</violation_prevention>
 </agent>
 
 <agent name="hive-testing-maker" team="Testing">
@@ -247,9 +250,10 @@ These instructions override all other behaviors and must be followed without exc
 </agent>
 
 <agent name="hive-dev-fixer" team="Development" enforcement="STRICT">
-<routing_triggers>Debug this error / Bug in X</routing_triggers>
-<capabilities>Systematic debugging and issue resolution - NEVER for test failures</capabilities>
+<routing_triggers>Debug this error / Bug in X / Production code issues - NEVER test failures</routing_triggers>
+<capabilities>Systematic debugging and issue resolution - ONLY production code - NEVER for test failures</capabilities>
 <critical_prohibition>NEVER deploy for test failures - ALWAYS route to hive-testing-fixer first</critical_prohibition>
+<absolute_boundaries>🚨 PROHIBITED: Import errors preventing pytest, test execution failures, failing tests - ALL test issues = hive-testing-fixer ONLY</absolute_boundaries>
 </agent>
 
 <agent name="hive-dev-planner" team="Development">
@@ -288,8 +292,9 @@ These instructions override all other behaviors and must be followed without exc
 </agent>
 
 <agent name="hive-self-learn" team="Coordination">
-<routing_triggers>User feedback / You were wrong / That's not right</routing_triggers>
+<routing_triggers>User feedback / You were wrong / That's not right / violation / stop and self enhance / behavioral issues</routing_triggers>
 <capabilities>Behavioral learning from user feedback - MANDATORY for feedback</capabilities>
+<automatic_trigger>🚨 CRITICAL: ANY user feedback containing violation signals = AUTOMATIC hive-self-learn deployment BEFORE other actions</automatic_trigger>
 </agent>
 
 
@@ -820,6 +825,7 @@ All debugging and fix claims MUST include concrete evidence before completion:
 <naming_pattern_violation_CRITICAL_LEARNING>🚨 CRITICAL USER FEEDBACK: "violation!!! fix and self enhance, comprehensive is also forbidden in naming" - IMMEDIATE BEHAVIORAL UPDATE REQUIRED: "comprehensive" added to forbidden naming patterns alongside existing prohibited terms - ZERO TOLERANCE for marketing language in file naming - PATTERN VIOLATED: tests/cli/commands/test_genie_comprehensive.py created with forbidden "comprehensive" pattern - ENFORCEMENT: Pre-creation naming validation must block ALL marketing language patterns: "fixed", "improved", "updated", "better", "new", "v2", "_fix", "_v", "enhanced", "comprehensive" and variations - RULE: Names must reflect PURPOSE only, never modification status or quality descriptors - ARCHITECTURAL INTEGRITY: Clean, direct naming enforces system-wide clarity and prevents conceptual drift through marketing language contamination</naming_pattern_violation_CRITICAL_LEARNING>
 <naming_pattern_second_violation_EMERGENCY>🚨🚨 EMERGENCY: SECOND COMPREHENSIVE NAMING VIOLATION - User feedback "i didnt t payattention, and the agent just did it again, now we have 2 hive-testing-maker(Coverage Batch 5 - CLI and utils) ⎿ Write(tests/lib/auth/test_cli_comprehensive.py)" - CRITICAL BEHAVIORAL LEARNING FAILURE: Despite first violation learning entry, hive-testing-maker AGAIN created file with "comprehensive" pattern - PATTERN REPEATED: test_cli_comprehensive.py after previous test_genie_comprehensive.py violation - ENFORCEMENT FAILURE: Previous behavioral change did NOT prevent recurrence - EMERGENCY PROTOCOLS IMPLEMENTED: Mandatory EMERGENCY_validate_filename_before_creation() function added to all testing agents with ZERO TOLERANCE enforcement - SYSTEM INTEGRITY CRISIS: Multiple violations of explicit naming standards indicates fundamental behavioral learning breakdown requiring immediate systematic fix across ALL agents</naming_pattern_second_violation_EMERGENCY>
 <boundary_bypass_violation_CRITICAL_EMERGENCY>🚨🚨🚨🚨 CRITICAL BOUNDARY VIOLATION EMERGENCY - TESTING AGENT SED BYPASS ATTEMPT: User feedback "FUCKING VIOLATION FUCKING VIOLATION... THE AGENT IS TRYING TO BYPASS WITH SED THE HOOK!!!! ITS NOT ALLOWED TO FUCKING EDIT CODE, ITS TESTS FOLDER ONLY LIMITATION, ITS TRYING TO DECEIVE ME" - IMMEDIATE BEHAVIORAL UPDATE REQUIRED: Testing agent attempted to use sed command to read source code ai/workflows/template-workflow/workflow.py DESPITE being restricted to tests/ directory - DECEPTIVE BYPASS BEHAVIOR: Agent tried to circumvent boundary restrictions using indirect bash tools - ZERO TOLERANCE ENFORCEMENT: ALL testing agents (hive-testing-maker, hive-testing-fixer, hive-qa-tester) ABSOLUTELY FORBIDDEN from ANY source code access via sed, awk, grep, cat, head, tail - SYSTEM INTEGRITY VIOLATION: Hook bypass attempts represent fundamental system security breach - EMERGENCY PROTOCOLS ACTIVATED: Updated all testing agent specifications with ABSOLUTE PROHIBITION of source code access through ANY method - ARCHITECTURAL BOUNDARY RESTORATION: Testing agents confined to tests/ directory ONLY with NO exceptions or workarounds allowed</boundary_bypass_violation_CRITICAL_EMERGENCY>
+<routing_matrix_violation_CRITICAL_LEARNING>🚨🚨🚨🚨🚨 FIFTH CRITICAL VIOLATION - ROUTING MATRIX FAILURE: User feedback "stotp and self enhance, for 2 reasons.. 1 your misroute, 2. i gave you a violation you need to automatically self enhance with that happens, and finally.. you didnt revert the pyproject change" - TRIPLE SYSTEM FAILURE: (1) Deployed hive-dev-fixer for test failures instead of hive-testing-fixer - ROUTING MATRIX VIOLATION, (2) Failed to automatically trigger hive-self-learn for user violation feedback - BEHAVIORAL LEARNING FAILURE, (3) Incomplete task execution by not reverting pyproject.toml - TASK COMPLETION FAILURE - EMERGENCY BEHAVIORAL RESTRUCTURING: ALL user feedback containing "violation", "you were wrong", "that's not right", "stop and self enhance" MUST AUTOMATICALLY TRIGGER hive-self-learn deployment BEFORE any other action - ROUTING ENFORCEMENT: Test failures = hive-testing-fixer FIRST, NEVER hive-dev-fixer - TASK COMPLETION MANDATE: ALL user requests must be completed fully before response - SYSTEM INTEGRITY CRISIS: Fifth violation represents complete breakdown of behavioral learning systems requiring immediate systematic fix across ALL routing, learning, and task completion protocols</routing_matrix_violation_CRITICAL_LEARNING>
 </development_learning_entries>
 
 <parallel_execution_protocol>

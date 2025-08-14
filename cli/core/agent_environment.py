@@ -4,6 +4,7 @@ Manages agent environment configuration using docker-compose inheritance
 from the main .env file instead of separate agent-specific files.
 """
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -44,9 +45,15 @@ class AgentEnvironment:
         self.config = EnvironmentConfig(
             source_file=self.main_env_path,
             target_file=self.docker_compose_path,
-            port_mappings={"HIVE_API_PORT": 38886, "POSTGRES_PORT": 35532},
+            port_mappings={
+                "HIVE_API_PORT": int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
+                "POSTGRES_PORT": int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
+            },
             database_suffix="_agent",
-            cors_port_mapping={8886: 38886, 5532: 35532}
+            cors_port_mapping={
+                int(os.getenv("HIVE_API_PORT", "8886")): int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
+                int(os.getenv("HIVE_WORKSPACE_POSTGRES_PORT", "5532")): int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
+            }
         )
     
     
@@ -114,8 +121,10 @@ class AgentEnvironment:
             # Check for proper port separation
             if "HIVE_API_PORT" in main_config:
                 port = main_config["HIVE_API_PORT"]
-                if port == "38886":
-                    warnings.append("Main .env should use port 8886, agent gets 38886 via docker-compose")
+                expected_agent_port = os.getenv("HIVE_AGENT_API_PORT", "38886")
+                if port == expected_agent_port:
+                    main_port = os.getenv("HIVE_API_PORT", "8886")
+                    warnings.append(f"Main .env should use port {main_port}, agent gets {expected_agent_port} via docker-compose")
             
             return {
                 "valid": len(errors) == 0,
@@ -141,14 +150,17 @@ class AgentEnvironment:
             # Load from main .env since agent inherits via docker-compose
             config = self._load_env_file(self.main_env_path)
             
+            agent_postgres_port = int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
+            agent_api_port = int(os.getenv("HIVE_AGENT_API_PORT", "38886"))
+            
             return AgentCredentials(
                 postgres_user=config.get("POSTGRES_USER", "test_user"),
                 postgres_password=config.get("POSTGRES_PASSWORD", "test_pass"),
                 postgres_db="hive_agent",  # Always hive_agent for agent
-                postgres_port=35532,  # Fixed port for agent
+                postgres_port=agent_postgres_port,
                 hive_api_key=config.get("HIVE_API_KEY", ""),
-                hive_api_port=38886,  # Fixed port for agent
-                cors_origins="http://localhost:38886"
+                hive_api_port=agent_api_port,
+                cors_origins=f"http://localhost:{agent_api_port}"
             )
         except Exception:
             return None
@@ -221,8 +233,8 @@ class AgentEnvironment:
     def _get_agent_port_mappings(self) -> dict:
         """Get agent-specific port mappings."""
         return {
-            "HIVE_API_PORT": 38886,
-            "POSTGRES_PORT": 35532
+            "HIVE_API_PORT": int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
+            "POSTGRES_PORT": int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
         }
     
     def _load_env_file(self, file_path: Path) -> dict:
@@ -285,7 +297,8 @@ class AgentEnvironment:
     
     def _build_agent_database_url(self, db_info: dict) -> str:
         """Build agent database URL from components."""
-        return f"postgresql+psycopg://{db_info['user']}:{db_info['password']}@{db_info['host']}:35532/hive_agent"
+        agent_postgres_port = os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532")
+        return f"postgresql+psycopg://{db_info['user']}:{db_info['password']}@{db_info['host']}:{agent_postgres_port}/hive_agent"
     
     def _get_inherited_config(self) -> dict:
         """Get the configuration that agent inherits from main .env."""
@@ -295,15 +308,18 @@ class AgentEnvironment:
         main_config = self._load_env_file(self.main_env_path)
         
         # Agent inherits these from main .env via docker-compose
+        agent_postgres_port = int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
+        agent_api_port = int(os.getenv("HIVE_AGENT_API_PORT", "38886"))
+        
         agent_config = {
             "postgres_user": main_config.get("POSTGRES_USER", "test_user"),
             "postgres_password": main_config.get("POSTGRES_PASSWORD", "test_pass"),
             "hive_api_key": main_config.get("HIVE_API_KEY", ""),
             # Agent-specific overrides via docker-compose environment
             "postgres_db": "hive_agent",
-            "postgres_port": 35532,
-            "hive_api_port": 38886,
-            "cors_origins": "http://localhost:38886"
+            "postgres_port": agent_postgres_port,
+            "hive_api_port": agent_api_port,
+            "cors_origins": f"http://localhost:{agent_api_port}"
         }
         
         return agent_config
@@ -330,5 +346,8 @@ def cleanup_agent_environment(workspace_path: Path | None = None) -> bool:
 
 
 def get_agent_ports() -> dict[str, int]:
-    """Get agent ports stub function."""
-    return {"api": 38886, "postgres": 35532}
+    """Get agent ports from environment variables."""
+    return {
+        "api": int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
+        "postgres": int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
+    }

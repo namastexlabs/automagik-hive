@@ -920,7 +920,7 @@ class TestPortAndModeManagement:
         
         ports = service.calculate_ports('genie', base_ports)
         
-        assert ports == {'db': 45532, 'api': 48886}
+        assert ports == {'db': 45532, 'api': 45886}
 
     def test_calculate_ports_invalid_mode(self):
         """Test calculate_ports with invalid mode."""
@@ -945,7 +945,7 @@ class TestPortAndModeManagement:
             
             assert deployment_ports['workspace'] == {'db': 5532, 'api': 8886}
             assert deployment_ports['agent'] == {'db': 35532, 'api': 38886}
-            assert deployment_ports['genie'] == {'db': 45532, 'api': 48886}
+            assert deployment_ports['genie'] == {'db': 45532, 'api': 45886}
 
 
 class TestMasterCredentialExtraction:

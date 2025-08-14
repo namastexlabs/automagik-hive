@@ -30,11 +30,11 @@ RUN useradd -m -u 1000 hive && chown -R hive:hive /app
 USER hive
 
 # Expose API port
-EXPOSE 48886
+EXPOSE 45886
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:48886/api/v1/health || exit 1
+    CMD curl -f http://localhost:45886/api/v1/health || exit 1
 
 # Start the API server
-CMD ["uv", "run", "python", "-m", "uvicorn", "api.serve:app", "--host", "0.0.0.0", "--port", "48886"]
+CMD ["uv", "run", "python", "-m", "uvicorn", "api.serve:app", "--host", "0.0.0.0", "--port", "45886"]

@@ -11,7 +11,14 @@ with proper isolation, authentication, and database setup.
 
 import asyncio
 import os
+import sys
 import tempfile
+from pathlib import Path
+
+# Add project root to Python path to fix module import issues
+project_root = Path(__file__).parent.parent.absolute()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 from collections.abc import Generator
 from datetime import UTC, datetime
 from typing import Any
@@ -22,6 +29,25 @@ import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
+
+# Register pytest markers to avoid "Unknown marker" warnings
+def pytest_configure(config):
+    """Configure pytest with custom markers."""
+    config.addinivalue_line(
+        "markers", "integration: marks tests as integration tests requiring external services"
+    )
+    config.addinivalue_line(
+        "markers", "postgres: marks tests as requiring PostgreSQL database connection"
+    )
+    config.addinivalue_line(
+        "markers", "safe: marks tests as safe to run in any environment without side effects"
+    )
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow running"
+    )
+    config.addinivalue_line(
+        "markers", "unit: marks tests as unit tests with no external dependencies"
+    )
 
 # Pytest plugins must be defined at the top level conftest.py
 # Note: tests.config.conftest is auto-discovered, so we only include explicit fixture modules

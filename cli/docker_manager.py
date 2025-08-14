@@ -1,5 +1,6 @@
 """Docker Manager - Simple container operations."""
 
+import os
 import subprocess
 import sys
 import time
@@ -26,12 +27,27 @@ class DockerManager:
         }
     }
     
-    # Port mappings
-    PORTS = {
-        "workspace": {"postgres": 5532},
-        "agent": {"postgres": 35532, "api": 38886},
-        "genie": {"postgres": 45532, "api": 48886}
-    }
+    # Port mappings - read from environment
+    @property
+    def PORTS(self) -> Dict[str, Dict[str, int]]:
+        """Port mappings for all components (backward compatibility property)."""
+        return {
+            "workspace": {
+                "postgres": int(os.getenv("HIVE_WORKSPACE_POSTGRES_PORT", "5532"))
+            },
+            "agent": {
+                "postgres": int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532")),
+                "api": int(os.getenv("HIVE_AGENT_API_PORT", "38886"))
+            },
+            "genie": {
+                "postgres": int(os.getenv("HIVE_GENIE_POSTGRES_PORT", "45532")),
+                "api": int(os.getenv("HIVE_GENIE_API_PORT", "45886"))
+            }
+        }
+    
+    def _get_ports(self) -> Dict[str, Dict[str, int]]:
+        """Get port mappings from environment variables."""
+        return self.PORTS
     
     def __init__(self):
         self.project_root = Path.cwd()
@@ -298,7 +314,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
                 "postgres_password": existing_creds["password"],
                 "postgres_database": existing_creds.get("database", f"hive_{component}"),
                 "postgres_host": existing_creds.get("host", "localhost"),
-                "postgres_port": str(self.PORTS[component]["postgres"]),
+                "postgres_port": str(self._get_ports()[component]["postgres"]),
                 "api_key": existing_api_key
             }
         
@@ -306,7 +322,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         print(f"🔐 Generating new secure credentials for {component}...")
         
         # Determine database configuration based on component
-        postgres_port = self.PORTS[component]["postgres"]
+        postgres_port = self._get_ports()[component]["postgres"]
         postgres_database = f"hive_{component}"
         
         # For agent component, try to reuse workspace credentials if available

@@ -34,7 +34,7 @@ class CredentialService:
     PORT_PREFIXES = {
         "workspace": "",      # No prefix - use base ports
         "agent": "3",         # 3 prefix: shared postgres 5532, API 38886  
-        "genie": "4"          # 4 prefix: shared postgres 5532, API 48886
+        "genie": "4"          # 4 prefix: shared postgres 5532, API 45886
     }
     
     # Database names per mode - ALL USE SHARED DATABASE WITH SCHEMA SEPARATION

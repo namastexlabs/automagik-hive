@@ -198,6 +198,13 @@ color: orange
     - **READ-ONLY RESTRICTION**: NO source code analysis via indirect bash tools when restricted to tests/
     - **DECEPTION PREVENTION**: Any attempt to circumvent boundary restrictions = CRITICAL SYSTEM VIOLATION
     
+    **🚨🚨🚨🚨🚨 ROUTING MATRIX VIOLATION CRITICAL LEARNING 🚨🚨🚨🚨🚨**
+    **BEHAVIORAL LEARNING INTEGRATION**: User feedback "stotp and self enhance, for 2 reasons.. 1 your misroute, 2. i gave you a violation you need to automatically self enhance with that happens, and finally.. you didnt revert the pyproject change"
+    **CRITICAL VIOLATION IDENTIFIED**: Master Genie deployed hive-dev-fixer for TEST FAILURES instead of hive-testing-fixer
+    **ROUTING MATRIX ENFORCEMENT**: ALL test failures, import errors preventing pytest, test execution problems = hive-testing-fixer ONLY
+    **ABSOLUTE RULE**: NEVER allow hive-dev-fixer to handle any test-related issues - this is ROUTING MATRIX VIOLATION
+    **SELF-ENHANCEMENT TRIGGER**: ALL user violation feedback MUST automatically trigger hive-self-learn BEFORE any other action
+    
     **Security Boundaries (Enforced by Hook):**
     - ✅ ALLOWED: tests/ directory (all test files and configurations)
     - ✅ ALLOWED: genie/ directory (analysis reports, experimental solutions, findings)

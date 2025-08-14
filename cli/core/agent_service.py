@@ -665,9 +665,12 @@ class AgentService:
                 return {"agent-postgres": "🛑 Stopped", "agent-server": "🛑 Stopped"}
             
             # Check both containers using Docker Compose
+            agent_postgres_port = os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532")
+            agent_api_port = os.getenv("HIVE_AGENT_API_PORT", "38886")
+            
             for service_name, display_name, port in [
-                ("agent-postgres", "agent-postgres", "35532"),
-                ("agent-api", "agent-server", "38886")
+                ("agent-postgres", "agent-postgres", agent_postgres_port),
+                ("agent-api", "agent-server", agent_api_port)
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths
