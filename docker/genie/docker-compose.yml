@@ -74,8 +74,14 @@ services:
     env_file:
       - ../../.env
     environment:
-      # Genie-specific database connection (connects to postgres-genie service)
-      - HIVE_DATABASE_URL=postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres-genie:5432/$POSTGRES_DB
+      # Genie-specific overrides only
+      - HIVE_API_PORT=48886
+      - HIVE_DATABASE_URL=postgresql+psycopg://genie_user:genie_secure_pass@postgres-genie:5432/hive_genie
+      - HIVE_API_KEY=genie-test-key-12345
+      - HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:48886
+      - POSTGRES_USER=genie_user
+      - POSTGRES_PASSWORD=genie_secure_pass
+      - POSTGRES_DB=hive_genie
       - RUNTIME_ENV=prd
     volumes:
       - genie_app_logs:/app/logs                        # Application logs

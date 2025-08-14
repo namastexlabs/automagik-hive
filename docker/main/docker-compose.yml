@@ -13,6 +13,7 @@ services:
     env_file:
       - ../../.env
     environment:
+      # Main app postgres settings - inherits from root .env but can override
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - ../../data/postgres:/var/lib/postgresql/data
