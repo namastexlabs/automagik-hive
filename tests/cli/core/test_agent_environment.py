@@ -112,7 +112,8 @@ class TestMainEnvManagement:
 
     def test_ensure_main_env_success(self, temp_workspace, sample_env_example_content):
         """Test successful setup of main .env for docker-compose inheritance."""
-        # Setup
+        # Setup - remove existing .env from fixture to test clean creation
+        (temp_workspace / ".env").unlink(missing_ok=True)
         env_example_file = temp_workspace / ".env.example"
         env_example_file.write_text(sample_env_example_content)
         env = AgentEnvironment(temp_workspace)
@@ -143,6 +144,9 @@ class TestMainEnvManagement:
 
     def test_ensure_main_env_no_example(self, temp_workspace):
         """Test setup fails gracefully when .env.example is missing."""
+        # Remove both .env and .env.example from fixture to test clean creation
+        (temp_workspace / ".env").unlink(missing_ok=True)
+        (temp_workspace / ".env.example").unlink(missing_ok=True)
         env = AgentEnvironment(temp_workspace)
         
         result = env.ensure_main_env()
@@ -176,6 +180,8 @@ class TestEnvironmentValidation:
 
     def test_validate_environment_missing_main_env(self, temp_workspace):
         """Test validation fails when main .env file is missing."""
+        # Remove .env file from fixture to test missing file scenario
+        (temp_workspace / ".env").unlink(missing_ok=True)
         env = AgentEnvironment(temp_workspace)
         
         result = env.validate_environment()
@@ -229,6 +235,10 @@ class TestEnvironmentValidation:
         """Test validation handles file reading exceptions gracefully."""
         env = AgentEnvironment(temp_workspace)
         
+        # Create the docker compose directory to pass the first check
+        env.docker_compose_path.parent.mkdir(parents=True, exist_ok=True)
+        env.docker_compose_path.write_text("version: '3.8'\nservices: {}")
+        
         # Create the main .env file so the file existence check passes
         env.main_env_path.write_text("dummy content")
         
@@ -266,6 +276,8 @@ class TestCredentialExtraction:
 
     def test_get_agent_credentials_missing_file(self, temp_workspace):
         """Test credential extraction returns None when file is missing."""
+        # Remove .env file from fixture to test missing file scenario
+        (temp_workspace / ".env").unlink(missing_ok=True)
         env = AgentEnvironment(temp_workspace)
         
         creds = env.get_agent_credentials()
@@ -329,6 +341,8 @@ class TestEnvironmentUpdates:
 
     def test_update_environment_missing_file(self, temp_workspace):
         """Test update fails when environment file doesn't exist."""
+        # Remove .env file from fixture to test missing file scenario
+        (temp_workspace / ".env").unlink(missing_ok=True)
         env = AgentEnvironment(temp_workspace)
         
         success = env.update_environment({"KEY": "value"})
@@ -547,6 +561,8 @@ class TestInternalHelperMethods:
 
     def test_validate_main_env_for_agent(self, temp_workspace):
         """Test _validate_main_env_for_agent helper method."""
+        # Remove .env file from fixture to test missing file scenario
+        (temp_workspace / ".env").unlink(missing_ok=True)
         env = AgentEnvironment(temp_workspace)
         
         # Test with missing file

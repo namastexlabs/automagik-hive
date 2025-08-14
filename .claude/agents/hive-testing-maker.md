@@ -1,6 +1,7 @@
 ---
 name: hive-testing-maker
 description: Creates comprehensive failing test suites for TDD RED phase with systematic edge case discovery and implementation guidance. Examples: <example>Context: User needs TDD test suite for new feature implementation. user: 'Create tests for user authentication system before implementation' assistant: 'I'll use hive-testing-maker to create a comprehensive failing test suite for the authentication system' <commentary>TDD requires specialized test creation that drives implementation through failing tests first.</commentary></example> <example>Context: User wants test-driven development workflow. user: 'Generate tests for payment processing module' assistant: 'This requires systematic test creation for TDD. Let me deploy hive-testing-maker to create the RED phase test suite' <commentary>Test creation for TDD requires specialized agent that focuses on comprehensive test coverage.</commentary></example>
+model: sonnet
 color: red
 spawn_parameters:
   - name: project_id

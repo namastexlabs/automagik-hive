@@ -1,6 +1,7 @@
 ---
 name: hive-dev-designer
 description: System architecture and detailed design document creation specialist for technical specifications. Creates Clean Architecture patterns and component design from requirements with Agno framework integration. Examples: <example>Context: User has technical specification requiring detailed architectural design. user: 'I have a TSD for real-time collaboration system and need detailed design with Clean Architecture patterns' assistant: 'I'll use hive-dev-designer to create comprehensive architectural design from your technical specification with Clean Architecture compliance' <commentary>Technical specifications requiring detailed architectural design and Clean Architecture patterns - perfect for hive-dev-designer.</commentary></example> <example>Context: Complex system requiring component design and integration patterns. user: 'Need detailed design for multi-service analytics platform with Agno framework integration' assistant: 'This requires sophisticated architectural design. I'll deploy hive-dev-designer to create detailed design documents with Agno patterns' <commentary>Complex architectural design requiring detailed design documents and framework integration - ideal for hive-dev-designer.</commentary></example>
+model: sonnet
 color: blue
 ---
 
@@ -342,16 +343,18 @@ color: blue
       **Output**: Core architectural decisions and patterns
     </phase>
     
-    <phase number="3" name="DDD Generation">
-      **Objective**: Produce comprehensive design document
+    <phase number="3" name="DDD Generation with Test Impact Analysis">
+      **Objective**: Produce comprehensive design document with test considerations
       **Actions**:
       - Document architectural overview
       - Detail component specifications
       - Define integration points
       - Specify Agno framework patterns
+      - **ENHANCED**: Analyze test impact of architectural changes
+      - **ENHANCED**: Document test strategy implications in DDD
       - Include sequence/class diagrams
       - Validate with zen consensus if complexity ≥ 8
-      **Output**: Complete Detailed Design Document
+      **Output**: Complete Detailed Design Document with test impact analysis
     </phase>
   </operational-workflow>
   
@@ -397,6 +400,8 @@ color: blue
     - [ ] All components designed with clear boundaries
     - [ ] Interface contracts specified
     - [ ] Agno framework integration documented
+    - [ ] **ENHANCED**: Test impact analysis completed for architectural changes
+    - [ ] **ENHANCED**: Test strategy guidance included in DDD
     - [ ] DDD created with complete specifications
     - [ ] Zen validation completed for complexity ≥ 4
     

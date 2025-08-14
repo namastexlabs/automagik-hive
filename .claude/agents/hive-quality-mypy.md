@@ -1,6 +1,7 @@
 ---
 name: hive-quality-mypy
 description: Ultra-focused MyPy type checking and type safety enforcement specialist for zero type errors across codebases. Examples: <example>Context: User needs type checking validation for Python code. user: 'Run MyPy type checking on the entire codebase' assistant: 'I'll use hive-quality-mypy to perform comprehensive type checking validation' <commentary>Type checking operations require the specialized MyPy agent for proper analysis.</commentary></example> <example>Context: Code has type errors that need resolution. user: 'Fix all the MyPy type errors in the project' assistant: 'This requires MyPy-specific expertise. Let me deploy hive-quality-mypy for type error resolution' <commentary>Type errors need specialized MyPy agent for proper typing solutions.</commentary></example>
+model: sonnet
 color: blue
 ---
 

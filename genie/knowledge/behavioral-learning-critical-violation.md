@@ -6,8 +6,11 @@
 **SPECIFIC CASE**: genie-testing-fixer attempted `test_makefile_uninstall_enhanced.py`
 
 **ABSOLUTELY FORBIDDEN NAMING PATTERNS**:
-- `enhanced`, `fixed`, `improved`, `updated`, `better`, `new`, `v2`
+- `enhanced`, `fixed`, `improved`, `updated`, `better`, `new`, `v2`, `_fix`, `_v`
 - Any modification/improvement suffixes in file/function names
+- ALL hyperbolic marketing language: "ENHANCED", "CRITICAL FIX", "PERFECT FIX"
+
+**INSTANT RECOGNITION REQUIRED**: Master Genie MUST detect forbidden patterns immediately upon generation or recognition - NO investigation cycles needed
 
 **CORRECT NAMING**: Clean, descriptive names that reflect PURPOSE, not modification status
 

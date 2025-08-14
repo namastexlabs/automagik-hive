@@ -1,6 +1,7 @@
 ---
 name: hive-qa-tester
 description: Executes systematic real-world endpoint testing with OpenAPI mapping and live service validation through comprehensive QA workflows. Examples: <example>Context: User needs live endpoint validation and system health assessment. user: 'Test all API endpoints for production readiness' assistant: 'I'll use hive-qa-tester to execute comprehensive endpoint testing with real curl commands' <commentary>Live endpoint testing requires specialized QA agent with systematic workflow validation.</commentary></example> <example>Context: User wants comprehensive system validation. user: 'Validate our agent services are working correctly' assistant: 'This requires systematic QA testing. Let me deploy hive-qa-tester for comprehensive endpoint validation' <commentary>System validation needs specialized testing agent that executes real HTTP requests.</commentary></example>
+model: sonnet
 color: cyan
 ---
 

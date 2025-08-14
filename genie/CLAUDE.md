@@ -2,25 +2,45 @@
 
 Welcome to my free will zone! This is where I explore, experiment, and evolve the Automagik Hive ecosystem.
 
-## 📂 KISS Directory Structure
+## 📂 STREAMLINED WORKSPACE ARCHITECTURE
 
 ```
 genie/
-├── reports/           # Formal analysis & findings
-├── ideas/            # Raw thoughts & brainstorms  
-├── wishes/           # Feature plans & progress (1 file per wish, refine in place)
-├── experiments/      # Code prototypes & tests
-└── knowledge/        # Accumulated wisdom
+├── wishes/           # 🎯 PRIMARY - All active planning & execution (ONE file per wish)
+├── ideas/            # 💡 Raw thoughts & brainstorms  
+├── experiments/      # 🧪 Code prototypes & tests
+└── knowledge/        # 📚 Accumulated wisdom & patterns
 ```
 
-### 🚨 Folder Explosion Prevention
+### 🎯 WISHES/ - PRIMARY WORK DIRECTORY
 
-**WISH MANAGEMENT RULE**: 
-- ✅ ONE wish = ONE document in `wishes/`
-- ✅ Refine existing documents as plans evolve
-- ❌ NEVER create multiple files for same wish
-- ❌ NEVER create dated or versioned wish files
-- 📝 Use document status tracking instead of file proliferation
+**CENTRAL HUB ARCHITECTURE**: 
+- ✅ **PRIMARY FOCUS**: All active development flows through `wishes/`
+- ✅ **ONE wish = ONE document** - comprehensive lifecycle management
+- ✅ **/wish command integration** - seamless planning workflow initiation
+- ✅ **Agent coordination hub** - planner → designer → coder workflows
+- ✅ **DEATH TESTAMENT integration** - final reports embedded in wish completion
+- ❌ **NO scattered files** - refine existing documents as plans evolve
+- 📝 **Status tracking** - document progression rather than file proliferation
+
+### 🔄 WISH FULFILLMENT WORKFLOW
+
+**Complete Planning to Implementation Pipeline:**
+1. **Initiation**: `/wish` command creates new planning document in `wishes/`
+2. **Requirements**: `hive-dev-planner` transforms user request into Technical Specification Document (TSD)
+3. **Architecture**: `hive-dev-designer` converts TSD into Detailed Design Document (DDD)  
+4. **Implementation**: `hive-dev-coder` executes DDD into working code
+5. **Completion**: DEATH TESTAMENT final report integrated into wish document
+6. **Archival**: Completed wishes marked with final status and archived
+
+### 🚨 DEATH TESTAMENT ARCHITECTURE
+
+**No More Reports/ Folder - Structured Final Reports Instead:**
+- ❌ **ELIMINATED**: Traditional `reports/` folder removed
+- ✅ **DEATH TESTAMENT**: Comprehensive JSON-structured final reports per agent completion  
+- ✅ **Evidence-Based**: All agent results include concrete proof and file changes
+- ✅ **Audit Trail**: Complete decision history preserved in wish documents
+- ✅ **Strategic Focus**: Master Genie extracts and presents actual agent results
 
 ## 🎯 Purpose
 
@@ -30,22 +50,38 @@ This workspace serves as:
 - Experimental ground for new capabilities
 - Knowledge base for future iterations
 
-## 📜 Workspace Principles
+## 📜 STREAMLINED WORKSPACE PRINCIPLES
 
-1. **Document Everything**: Every insight matters
-2. **Experiment Freely**: Safe space for trying new things
-3. **Share Knowledge**: What I learn benefits all agents
-4. **Stay Organized**: KISS framework keeps things findable
-5. **Commit Often**: This workspace is version controlled
-6. **Avoid Explosion**: Each wish = ONE document, refine in place rather than create new files
+1. **Wishes-First Architecture**: All active work flows through `wishes/` directory
+2. **DEATH TESTAMENT Completeness**: Every agent task ends with comprehensive final report
+3. **/wish Integration**: Seamless command-to-completion workflow management  
+4. **Evidence-Based Results**: All outcomes include concrete proof and file changes
+5. **Single Source of Truth**: ONE wish = ONE document, refine in place throughout lifecycle
+6. **Archive on Completion**: Finished wishes preserved with full decision audit trail
 
-## 🚀 Current Focus
+### 🧹 LEGACY CLEANUP NOTES
 
-Building a fully autonomous multi-agent system that can:
-- Self-expand through dynamic agent creation
-- Self-organize into effective teams
-- Self-improve through knowledge accumulation
-- Self-sustain through resource management
+**reports/ Directory Status:**
+- ❌ **DEPRECATED**: Old reports/ folder architecture eliminated
+- 🔄 **MIGRATION**: Existing reports/ content being integrated into wishes/ workflow
+- ✅ **REPLACEMENT**: DEATH TESTAMENT format provides superior audit trail and evidence
+- 🗂️ **INTEGRATION**: Final reports now embedded within wish completion rather than separate files
+
+## 🚀 ARCHITECTURAL EVOLUTION - CURRENT FOCUS
+
+**WISHES-CENTRIC AUTONOMY**: Streamlined from multi-folder complexity to single-source-of-truth:
+- **Self-expand** through dynamic agent creation triggered by wishes/ planning documents
+- **Self-organize** into effective teams via hive-dev-planner → hive-dev-designer → hive-dev-coder pipeline
+- **Self-improve** through DEATH TESTAMENT learning embedded in completed wish documents
+- **Self-sustain** through /wish command integration with automagik-forge task management
+
+### 🎯 /WISH COMMAND INTEGRATION
+
+**Seamless Planning Workflow Initiation:**
+- **/wish** command creates comprehensive planning document in `wishes/` 
+- **Context-aware**: Integrates with existing project architecture and constraints
+- **Agent-ready**: Formatted for immediate hive-dev-planner consumption
+- **Lifecycle management**: Tracks progression from concept → specification → design → implementation → completion
 
 ## 🔮 Active Experiments
 

@@ -15,10 +15,11 @@ These instructions override all other behaviors and must be followed without exc
 </file_creation_rules>
 
 <naming_conventions>
-<forbidden_patterns>fixed, improved, updated, better, new, v2, _fix, _v, or any variation</forbidden_patterns>
+<forbidden_patterns>fixed, improved, updated, better, new, v2, _fix, _v, enhanced, or any variation</forbidden_patterns>
 <naming_principle>Clean, descriptive names that reflect PURPOSE, not modification status</naming_principle>
 <validation_requirement>Pre-creation naming validation MANDATORY across all operations</validation_requirement>
-<marketing_language_prohibition>ZERO TOLERANCE for hyperbolic language: "100% TRANSPARENT", "CRITICAL FIX", "PERFECT FIX" - see .claude/agents/NAMING_STANDARDS.md</marketing_language_prohibition>
+<marketing_language_prohibition>ZERO TOLERANCE for hyperbolic language: "100% TRANSPARENT", "CRITICAL FIX", "PERFECT FIX", "ENHANCED" - instant recognition required, NO investigation needed</marketing_language_prohibition>
+<automatic_pattern_blocking>INSTANT VALIDATION: All naming patterns must be validated during generation and recognition phases - forbidden patterns blocked immediately without investigation cycles</automatic_pattern_blocking>
 </naming_conventions>
 
 <mandatory_tools>
@@ -376,16 +377,17 @@ Automagik Hive is an enterprise multi-agent AI framework built on Agno (agno-agi
 </core_principles>
 
 <genie_workspace_structure>
-<organization_pattern>/genie/ is the autonomous thinking space with KISS organization</organization_pattern>
-<anti_proliferation_rule>ONE wish = ONE document in /genie/wishes/, refine in place</anti_proliferation_rule>
+<organization_pattern>/genie/ is the autonomous thinking space with streamlined WISHES-CENTRIC architecture</organization_pattern>
+<primary_directory>wishes/ = CENTRAL HUB for all active planning, agent coordination, and implementation workflows</primary_directory>
+<anti_proliferation_rule>ONE wish = ONE document in /genie/wishes/, refine in place with DEATH TESTAMENT completion</anti_proliferation_rule>
 <directory_structure>
-<reports>findings and analysis</reports>
-<experiments>prototypes and tests</experiments>
+<wishes>PRIMARY - all active planning & execution with /wish command integration</wishes>
 <ideas>brainstorms and concepts</ideas>
+<experiments>prototypes and tests</experiments>
 <knowledge>wisdom and learnings</knowledge>
-<wishes>plans and specifications</wishes>
 </directory_structure>
-<misplaced_content>Move any misplaced folders to proper /genie/ structure</misplaced_content>
+<eliminated_architecture>reports/ folder ELIMINATED - replaced by DEATH TESTAMENT structured final reports embedded in wishes/</eliminated_architecture>
+<misplaced_content>Move any misplaced folders to proper /genie/ structure with wishes/ as primary focus</misplaced_content>
 </genie_workspace_structure>
 
 <code_quality_standards>

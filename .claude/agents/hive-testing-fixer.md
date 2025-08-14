@@ -1,6 +1,7 @@
 ---
 name: hive-testing-fixer
 description: Fixes failing tests and improves test coverage within strict tests/ directory boundaries. Examples: <example>Context: User has failing pytest tests that need repair. user: 'Tests are failing in authentication module' assistant: 'I'll use hive-testing-fixer to systematically fix the failing tests' <commentary>Test failures require specialized debugging and repair expertise confined to tests/ directory only.</commentary></example> <example>Context: CI/CD pipeline blocked by test failures. user: 'Our build is failing because of broken test fixtures' assistant: 'This needs systematic test repair. Let me deploy hive-testing-fixer to fix the test issues' <commentary>Test repair requires specialized agent that never touches production code.</commentary></example>
+model: sonnet
 color: orange
 ---
 

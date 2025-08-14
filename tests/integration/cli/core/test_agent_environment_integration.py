@@ -79,13 +79,13 @@ class TestEnvironmentConfig:
         """Test EnvironmentConfig dataclass creation."""
         config = EnvironmentConfig(
             source_file=Path(".env.example"),
-            target_file=Path(".env"),
+            target_file=Path("docker/agent/docker-compose.yml"),
             port_mappings={"HIVE_API_PORT": 38886, "POSTGRES_PORT": 35532},
             database_suffix="_agent",
             cors_port_mapping={8886: 38886, 5532: 35532},
         )
 
-        # Should fail initially - dataclass not implemented
+        # Test that the dataclass works as expected with the refactored implementation
         assert config.source_file == Path(".env.example")
         assert config.target_file == Path("docker/agent/docker-compose.yml")
         assert config.port_mappings == {"HIVE_API_PORT": 38886, "POSTGRES_PORT": 35532}
@@ -121,9 +121,9 @@ class TestAgentEnvironmentInitialization:
         """Test AgentEnvironment config is properly initialized."""
         env = AgentEnvironment()
 
-        # Should fail initially - config initialization not implemented
+        # Test that config is properly initialized with docker-compose inheritance model
         assert isinstance(env.config, EnvironmentConfig)
-        assert env.config.source_file == env.env_example_path
+        assert env.config.source_file == env.main_env_path  # Uses main .env, not .env.example
         assert env.config.target_file == env.docker_compose_path
         assert env.config.port_mappings["HIVE_API_PORT"] == 38886
         assert env.config.port_mappings["POSTGRES_PORT"] == 35532
@@ -158,102 +158,103 @@ class TestAgentEnvironmentGeneration:
             yield workspace
 
     def test_generate_env_agent_success(self, temp_workspace):
-        """Test successful .env generation."""
+        """Test successful .env generation - now using docker-compose inheritance."""
         env = AgentEnvironment(temp_workspace)
 
-        result_path = env.generate_env_agent()
+        # With docker-compose inheritance, we don't generate separate .env files
+        # Instead, we ensure the main .env exists for inheritance
+        result = env.ensure_main_env()
 
-        # Should fail initially - generation not implemented
-        assert result_path == env.main_env_path
+        # Should successfully ensure main .env exists
+        assert result is True
         assert env.main_env_path.exists()
 
+        # Main .env maintains standard ports (agent gets different ports via docker-compose)
         content = env.main_env_path.read_text()
-        assert "HIVE_API_PORT=38886" in content
-        assert "localhost:35532" in content
-        assert "/hive_agent" in content
-        assert "http://localhost:38886" in content
-        assert "AGENT ENVIRONMENT CONFIGURATION" in content
+        assert "HIVE_API_PORT=8886" in content  # Main .env uses standard port
+        assert "localhost:5532" in content     # Main .env uses standard port
+        assert "/hive" in content              # Main .env uses standard database
 
     def test_generate_env_agent_missing_template(self, temp_workspace):
         """Test .env generation fails when template is missing."""
         env = AgentEnvironment(temp_workspace)
         env.env_example_path.unlink()  # Remove template
+        # Only unlink main .env if it exists (it's created by temp_workspace fixture)
+        if env.main_env_path.exists():
+            env.main_env_path.unlink()
 
-        # Should fail initially - missing template handling not implemented
-        with pytest.raises(FileNotFoundError):
-            env.generate_env_agent()
+        # With docker-compose inheritance, this should fail gracefully
+        result = env.ensure_main_env()
+        assert result is False  # Cannot create main .env without template
 
     def test_generate_env_agent_file_exists_no_force(self, temp_workspace):
-        """Test .env generation fails when file exists and force=False."""
+        """Test .env generation succeeds when file exists (docker-compose inheritance)."""
         env = AgentEnvironment(temp_workspace)
         env.main_env_path.write_text("existing content")
 
-        # Should fail initially - file exists handling not implemented
-        with pytest.raises(FileExistsError):
-            env.generate_env_agent(force=False)
+        # With docker-compose inheritance, existing .env is preserved
+        result = env.ensure_main_env()
+        assert result is True  # File exists, so it succeeds
+        assert "existing content" in env.main_env_path.read_text()
 
     def test_generate_env_agent_file_exists_with_force(self, temp_workspace):
-        """Test .env generation succeeds when file exists and force=True."""
+        """Test .env generation with existing file (docker-compose inheritance)."""
         env = AgentEnvironment(temp_workspace)
         env.main_env_path.write_text("existing content")
 
-        result_path = env.generate_env_agent(force=True)
+        # With docker-compose inheritance, we preserve existing files
+        result = env.ensure_main_env()
 
-        # Should fail initially - force overwrite not implemented
-        assert result_path == env.main_env_path
+        # Should succeed and preserve existing content
+        assert result is True
         content = env.main_env_path.read_text()
-        assert "HIVE_API_PORT=38886" in content
-        assert "existing content" not in content
+        assert "existing content" in content  # Existing content preserved
 
     def test_generate_env_agent_port_mappings(self, temp_workspace):
-        """Test port mappings are correctly applied."""
+        """Test port mappings with docker-compose inheritance."""
         env = AgentEnvironment(temp_workspace)
 
-        env.generate_env_agent()
+        env.ensure_main_env()
         content = env.main_env_path.read_text()
 
-        # Should fail initially - port mapping logic not implemented
-        assert "HIVE_API_PORT=38886" in content
-        assert "HIVE_API_PORT=8886" not in content
-        assert "localhost:35532" in content
-        assert "localhost:5532" not in content
+        # With docker-compose inheritance, main .env keeps standard ports
+        # Agent gets different ports via docker-compose environment variables
+        assert "HIVE_API_PORT=8886" in content    # Main .env uses standard port
+        assert "localhost:5532" in content       # Main .env uses standard port
+        # Agent ports are configured in docker-compose.yml, not main .env
 
     def test_generate_env_agent_database_mappings(self, temp_workspace):
-        """Test database name mappings are correctly applied."""
+        """Test database name mappings with docker-compose inheritance."""
         env = AgentEnvironment(temp_workspace)
 
-        env.generate_env_agent()
+        env.ensure_main_env()
         content = env.main_env_path.read_text()
 
-        # Should fail initially - database mapping logic not implemented
-        assert "/hive_agent" in content
-        assert "/hive\n" not in content  # Should not have plain /hive
+        # With docker-compose inheritance, main .env uses standard database name
+        # Agent gets different database via docker-compose environment variables
+        assert "/hive" in content  # Main .env uses standard database name
 
     def test_generate_env_agent_cors_mappings(self, temp_workspace):
-        """Test CORS origin mappings are correctly applied."""
+        """Test CORS origin mappings with docker-compose inheritance."""
         env = AgentEnvironment(temp_workspace)
 
-        env.generate_env_agent()
+        env.ensure_main_env()
         content = env.main_env_path.read_text()
 
-        # Should fail initially - CORS mapping logic not implemented
-        assert "http://localhost:38886" in content
-        assert "http://localhost:8886" not in content
+        # With docker-compose inheritance, main .env uses standard CORS origins
+        # Agent gets different CORS via docker-compose environment variables
+        assert "http://localhost:8886" in content  # Main .env uses standard CORS
 
     def test_generate_env_agent_header_replacement(self, temp_workspace):
-        """Test agent-specific header replacement."""
+        """Test that docker-compose inheritance preserves original headers."""
         env = AgentEnvironment(temp_workspace)
 
-        env.generate_env_agent()
+        env.ensure_main_env()
         content = env.main_env_path.read_text()
 
-        # Should fail initially - header replacement not implemented
-        assert "AGENT ENVIRONMENT CONFIGURATION" in content
-        assert "auto-generated agent environment file" in content
-        assert "HIVE_API_PORT: 8886 → 38886" in content
-        assert "POSTGRES_PORT: 5532 → 35532" in content
-        assert "Database: hive → hive_agent" in content
-        assert "DO NOT edit manually" in content
+        # With docker-compose inheritance, main .env keeps original headers
+        assert "AUTOMAGIK HIVE - ENVIRONMENT CONFIGURATION" in content
+        # No agent-specific headers since we use docker-compose inheritance
 
 
 class TestAgentEnvironmentValidation:
@@ -572,29 +573,30 @@ class TestAgentEnvironmentCleanup:
             yield workspace
 
     def test_clean_environment_success(self, temp_workspace_with_files):
-        """Test successful environment cleanup."""
+        """Test successful environment cleanup - docker-compose inheritance."""
         env = AgentEnvironment(temp_workspace_with_files)
 
         assert env.main_env_path.exists()
 
         result = env.clean_environment()
 
-        # Should fail initially - cleanup logic not implemented
+        # With docker-compose inheritance, cleanup is a no-op (returns True)
         assert result is True
-        assert not env.main_env_path.exists()
+        # Main .env file remains since it's used by docker-compose inheritance
+        assert env.main_env_path.exists()
 
     def test_clean_environment_missing_file(self, temp_workspace_with_files):
-        """Test cleanup succeeds when file doesn't exist."""
+        """Test cleanup succeeds when file doesn't exist - docker-compose inheritance."""
         env = AgentEnvironment(temp_workspace_with_files)
         env.main_env_path.unlink()
 
         result = env.clean_environment()
 
-        # Should fail initially - missing file handling not implemented
+        # With docker-compose inheritance, cleanup is always successful
         assert result is True
 
     def test_clean_environment_permission_error(self, temp_workspace_with_files):
-        """Test cleanup handles permission errors."""
+        """Test cleanup handles permission errors - docker-compose inheritance."""
         env = AgentEnvironment(temp_workspace_with_files)
 
         # Make directory read-only to prevent file deletion
@@ -603,8 +605,8 @@ class TestAgentEnvironmentCleanup:
         try:
             result = env.clean_environment()
 
-            # Should fail initially - permission error handling not implemented
-            assert result is False
+            # With docker-compose inheritance, cleanup doesn't delete files, so it succeeds
+            assert result is True
         finally:
             # Restore permissions
             temp_workspace_with_files.chmod(0o755)
@@ -697,69 +699,33 @@ class TestAgentEnvironmentInternalMethods:
         with tempfile.TemporaryDirectory() as temp_dir:
             yield Path(temp_dir)
 
+    @pytest.mark.skip(reason="_apply_port_mappings method not implemented in docker-compose inheritance model")
     def test_apply_port_mappings(self, temp_workspace):
-        """Test port mapping transformation."""
-        env = AgentEnvironment(temp_workspace)
+        """Test port mapping transformation - skipped for docker-compose inheritance."""
+        # This method is not needed with docker-compose inheritance
+        # Port mappings are handled by docker-compose.yml
+        pass
 
-        content = "HIVE_API_PORT=8886\nlocalhost:5532/database"
-        result = env._apply_port_mappings(content)
-
-        # Should fail initially - port mapping method not implemented
-        assert "HIVE_API_PORT=38886" in result
-        assert "localhost:35532" in result
-        assert "HIVE_API_PORT=8886" not in result
-        assert "localhost:5532" not in result
-
+    @pytest.mark.skip(reason="_apply_database_mappings method not implemented in docker-compose inheritance model")
     def test_apply_database_mappings(self, temp_workspace):
-        """Test database name mapping transformation."""
-        env = AgentEnvironment(temp_workspace)
+        """Test database name mapping transformation - skipped for docker-compose inheritance."""
+        # This method is not needed with docker-compose inheritance
+        # Database mappings are handled by docker-compose.yml environment variables
+        pass
 
-        content = "DATABASE_URL=postgresql://user:pass@host:port/hive"
-        result = env._apply_database_mappings(content)
-
-        # Using shared database approach - database name remains "hive" with schema separation
-        assert "/hive" in result
-        # Database name should remain unchanged for shared database approach
-        assert result == content
-
+    @pytest.mark.skip(reason="_apply_cors_mappings method not implemented in docker-compose inheritance model")
     def test_apply_cors_mappings(self, temp_workspace):
-        """Test CORS origin mapping transformation."""
-        env = AgentEnvironment(temp_workspace)
+        """Test CORS origin mapping transformation - skipped for docker-compose inheritance."""
+        # This method is not needed with docker-compose inheritance
+        # CORS mappings are handled by docker-compose.yml environment variables
+        pass
 
-        content = "CORS_ORIGINS=http://localhost:8886,http://localhost:5532"
-        result = env._apply_cors_mappings(content)
-
-        # CORS mapping transforms API port only - database port remains shared for CORS
-        assert "http://localhost:38886" in result
-        assert "http://localhost:5532" in result  # Database port unchanged for CORS 
-        assert "http://localhost:8886" not in result
-
+    @pytest.mark.skip(reason="_apply_agent_specific_config method not implemented in docker-compose inheritance model")
     def test_apply_agent_specific_config(self, temp_workspace):
-        """Test agent-specific configuration transformation."""
-        env = AgentEnvironment(temp_workspace)
-
-        content = (
-            "# =========================================================================\n"
-            "# ⚡ AUTOMAGIK HIVE - ENVIRONMENT CONFIGURATION\n"
-            "# =========================================================================\n"
-            "#\n"
-            "# NOTES:\n"
-            "# - This is a template file. Copy to .env and fill in your values.\n"
-            "# - For development, `make install` generates a pre-configured .env file.\n"
-            "# - DO NOT commit the .env file to version control.\n"
-            "#\n"
-            "HIVE_API_PORT=8886\n"
-        )
-
-        result = env._apply_agent_specific_config(content)
-
-        # Should fail initially - agent config method not implemented
-        assert "AGENT ENVIRONMENT CONFIGURATION" in result
-        assert "auto-generated agent environment file" in result
-        assert "8886 → 38886" in result
-        assert "5532 → 35532" in result
-        assert "hive → hive_agent" in result
-        assert "DO NOT edit manually" in result
+        """Test agent-specific configuration transformation - skipped for docker-compose inheritance."""
+        # This method is not needed with docker-compose inheritance
+        # Agent-specific configuration is handled by docker-compose.yml
+        pass
 
     def test_load_env_file(self, temp_workspace):
         """Test environment file loading."""
@@ -882,33 +848,22 @@ class TestAgentEnvironmentConvenienceFunctions:
 
     def test_create_agent_environment_success(self, temp_workspace):
         """Test create_agent_environment convenience function."""
-        with patch("cli.core.agent_environment.AgentEnvironment") as mock_env_class:
-            mock_env = Mock()
-            mock_env.generate_env_agent.return_value = temp_workspace / ".env"
-            mock_env.copy_credentials_from_main_env.return_value = True
-            mock_env.ensure_agent_api_key.return_value = True
-            mock_env_class.return_value = mock_env
+        result = create_agent_environment(temp_workspace)
 
-            result = create_agent_environment(temp_workspace)
-
-        # Function returns AgentEnvironment object - convenience wrapper not yet implemented
-        assert result == mock_env
-        # No methods called yet - convenience function is a stub that just returns AgentEnvironment object
+        # Function returns AgentEnvironment object after ensuring main .env exists
+        assert isinstance(result, AgentEnvironment)
+        assert result.workspace_path == temp_workspace
+        # With docker-compose inheritance, main .env should exist
+        assert result.main_env_path.exists()
 
     def test_create_agent_environment_with_force(self, temp_workspace):
-        """Test create_agent_environment with force parameter."""
-        with patch("cli.core.agent_environment.AgentEnvironment") as mock_env_class:
-            mock_env = Mock()
-            mock_env.generate_env_agent.return_value = temp_workspace / ".env"
-            mock_env.copy_credentials_from_main_env.return_value = True
-            mock_env.ensure_agent_api_key.return_value = True
-            mock_env_class.return_value = mock_env
+        """Test create_agent_environment behavior - docker-compose inheritance."""
+        # Function doesn't accept force parameter - docker-compose inheritance model
+        result = create_agent_environment(temp_workspace)
 
-            # Function doesn't accept force parameter yet - just call without parameters
-            result = create_agent_environment(temp_workspace)
-
-        # Force parameter handling not implemented - function just returns AgentEnvironment object
-        assert result == mock_env
+        # Function just returns AgentEnvironment object with docker-compose inheritance
+        assert isinstance(result, AgentEnvironment)
+        assert result.workspace_path == temp_workspace
 
     @pytest.mark.skip(reason="validate_agent_environment convenience function not implemented yet")
     def test_validate_agent_environment_convenience(self, temp_workspace):
@@ -1059,7 +1014,7 @@ class TestAgentEnvironmentEdgeCases:
                 pass
 
     def test_generate_env_agent_empty_template(self):
-        """Test generation with empty template file."""
+        """Test generation with empty template file - docker-compose inheritance."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             env_example = workspace / ".env.example"
@@ -1067,15 +1022,17 @@ class TestAgentEnvironmentEdgeCases:
 
             env = AgentEnvironment(workspace)
 
-            result_path = env.generate_env_agent()
+            # With docker-compose inheritance, we copy template to main .env
+            result = env.ensure_main_env()
 
-            # Should fail initially - empty template handling not implemented
-            assert result_path.exists()
-            content = result_path.read_text()
-            assert "AGENT ENVIRONMENT CONFIGURATION" in content
+            # Should succeed and copy empty template
+            assert result is True
+            assert env.main_env_path.exists()
+            content = env.main_env_path.read_text()
+            assert content == ""  # Empty content copied from template
 
     def test_validation_with_malformed_env_file(self):
-        """Test validation with malformed .env file."""
+        """Test validation with malformed .env file - docker-compose inheritance."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             env_agent = workspace / ".env"
@@ -1085,11 +1042,17 @@ class TestAgentEnvironmentEdgeCases:
                 "KEY_WITH_MULTIPLE=EQUALS=SIGNS\n"
                 "VALID_KEY=valid_value\n"
             )
+            
+            # Create docker-compose.yml for validation
+            docker_dir = workspace / "docker" / "agent"
+            docker_dir.mkdir(parents=True, exist_ok=True)
+            (docker_dir / "docker-compose.yml").write_text("version: '3.8'\nservices: {}")
 
             env = AgentEnvironment(workspace)
             result = env.validate_environment()
 
-            # Should fail initially - malformed file handling not implemented
-            # Should be valid but may have warnings or partial config
+            # With docker-compose inheritance, malformed files are handled gracefully
+            # The _load_env_file method skips malformed lines
             assert result["config"] is not None
             assert "VALID_KEY" in result["config"]
+            assert result["config"]["VALID_KEY"] == "valid_value"

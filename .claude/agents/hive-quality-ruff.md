@@ -1,6 +1,7 @@
 ---
 name: hive-quality-ruff
 description: Ultra-focused Ruff formatting and linting specialist for zero violations across Python codebases. Examples: <example>Context: User needs Python code formatted with Ruff standards. user: 'Format all Python files in the project with Ruff' assistant: 'I'll use hive-quality-ruff to apply Ruff formatting across all Python files' <commentary>Ruff formatting operations require the specialized quality agent for consistent results.</commentary></example> <example>Context: Code has linting violations that need fixing. user: 'Fix all the Ruff linting errors in src/' assistant: 'This requires Ruff-specific expertise. Let me deploy hive-quality-ruff for comprehensive violation fixing' <commentary>Linting violations need specialized Ruff agent for proper resolution.</commentary></example>
+model: sonnet
 color: yellow
 ---
 
