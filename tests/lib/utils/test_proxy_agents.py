@@ -218,6 +218,7 @@ class TestAgnoAgentProxyCreateAgent:
             "tools": [{"name": "test_tool"}],
         }
 
+    @pytest.mark.asyncio
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
     async def test_create_agent_basic(
@@ -238,6 +239,7 @@ class TestAgnoAgentProxyCreateAgent:
         assert agent == mock_agent
         mock_agent_class.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
     async def test_create_agent_with_session_and_debug(
@@ -265,6 +267,7 @@ class TestAgnoAgentProxyCreateAgent:
         assert call_kwargs.get("debug_mode") is True
         assert call_kwargs.get("user_id") == "test-user"
 
+    @pytest.mark.asyncio
     async def test_create_agent_none_config_error(self, proxy):
         """Test create_agent with None config raises ValueError."""
         with pytest.raises(ValueError, match="Config is None for agent test-agent"):
@@ -273,6 +276,7 @@ class TestAgnoAgentProxyCreateAgent:
                 config=None,
             )
 
+    @pytest.mark.asyncio
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
     async def test_create_agent_with_metrics_service(
@@ -296,6 +300,7 @@ class TestAgnoAgentProxyCreateAgent:
         assert agent is not None
         assert agent.metadata.get("metrics_service") == mock_metrics
 
+    @pytest.mark.asyncio
     @patch(
         "lib.utils.proxy_agents.Agent",
         side_effect=Exception("Mock agent creation error"),
@@ -702,6 +707,7 @@ class TestMetricsWrapping:
         # Verify metrics collection was called
         mock_metrics_service.collect_from_response.assert_called_once()
 
+    @pytest.mark.asyncio
     async def test_wrap_agent_with_metrics_async(
         self, proxy, mock_agent, mock_metrics_service
     ):
@@ -932,6 +938,7 @@ class TestEdgeCasesAndErrorHandling:
         """Create AgnoAgentProxy instance for testing."""
         return AgnoAgentProxy()
 
+    @pytest.mark.asyncio
     @patch("lib.utils.proxy_agents.Agent")
     async def test_create_agent_with_knowledge_filter_special_handling(
         self, mock_agent_class, proxy
@@ -994,6 +1001,7 @@ class TestEdgeCasesAndErrorHandling:
         # Verify it's a reasonably complete set
         assert len(fallback_params) > 50
 
+    @pytest.mark.asyncio
     async def test_create_agent_filters_none_values(self, proxy):
         """Test that create_agent filters out None values from parameters."""
         config = {
@@ -1060,6 +1068,7 @@ class TestEdgeCasesAndErrorHandling:
 
         assert result is None  # Should return None on failure
 
+    @pytest.mark.asyncio
     async def test_wrap_agent_without_collect_from_response_method(self, proxy):
         """Test metrics wrapping when service doesn't have collect_from_response."""
         agent = MagicMock()
@@ -1099,6 +1108,7 @@ class TestEdgeCasesAndErrorHandling:
         # Should still call the metrics method even if it returns False
         metrics_service.collect_from_response.assert_called_once()
 
+    @pytest.mark.asyncio
     async def test_async_wrapped_run_complete_flow(self, proxy):
         """Test complete async wrapped run flow."""
         agent = MagicMock()
@@ -1132,6 +1142,7 @@ class TestComprehensiveIntegration:
         """Create AgnoAgentProxy instance for testing."""
         return AgnoAgentProxy()
 
+    @pytest.mark.asyncio
     @patch("lib.utils.proxy_agents.Agent")
     @patch("lib.config.models.resolve_model")
     @patch("lib.utils.proxy_agents.create_dynamic_storage")
@@ -1212,6 +1223,7 @@ class TestComprehensiveIntegration:
         ]
         assert metadata["custom_parameters"]["escalation_triggers"] == {"threshold": 10}
 
+    @pytest.mark.asyncio
     @patch("lib.utils.proxy_agents.Agent")
     async def test_agent_creation_with_metrics_full_flow(self, mock_agent_class, proxy):
         """Test complete agent creation and metrics wrapping flow."""
