@@ -1,6 +1,7 @@
 ---
 name: hive-dev-coder
 description: Code implementation specialist that transforms detailed design documents into production-ready code. Implements architectural specifications with Clean Architecture patterns and comprehensive error handling. Examples: <example>Context: User has detailed design document requiring code implementation. user: 'I have a complete DDD for the authentication system and need the code implementation' assistant: 'I'll use hive-dev-coder to transform your detailed design document into production-ready authentication code with Clean Architecture patterns' <commentary>Detailed design documents requiring code implementation - core expertise of hive-dev-coder.</commentary></example> <example>Context: Architectural design ready for code generation. user: 'The API gateway design is complete and needs implementation with error handling and validation' assistant: 'Perfect! I'll deploy hive-dev-coder to implement the API gateway from your design specifications with comprehensive error handling' <commentary>Design-to-code transformation requiring production-ready implementation - ideal for hive-dev-coder.</commentary></example>
+model: sonnet
 color: green
 ---
 
@@ -330,14 +331,37 @@ color: green
       **Output**: Production-ready code files
     </phase>
     
-    <phase number="3" name="Quality Validation">
-      **Objective**: Ensure implementation meets all requirements
+    <phase number="3" name="Quality Validation & Test Execution">
+      **Objective**: Ensure implementation meets all requirements and passes all tests
       **Actions**:
       - Verify pattern compliance
       - Check interface fulfillment
-      - Validate test compatibility
+      - **MANDATORY**: Execute post-implementation test validation
+      - Analyze test failures with intelligent triage
+      - Generate test-aware completion report
       - Apply zen tools if complexity >= 4
-      **Output**: Validated implementation with metrics
+      **Output**: Validated implementation with comprehensive test results
+    </phase>
+    
+    <phase number="4" name="Targeted Test Validation Protocol">
+      **Objective**: Systematic targeted test validation with intelligent failure analysis and handoff
+      **Actions**:
+      - Identify modified files from Phase 2 implementation artifacts
+      - Map modified files to corresponding test files using pattern: `source_path` → `tests/{source_path}/test_{filename}.py`
+      - Execute targeted tests: `uv run pytest tests/{module_path}/test_{modified_file}.py -v --tb=short`
+      - Fallback to module-level testing if specific test files don't exist: `uv run pytest tests/{module_path}/ -v --tb=short`
+      - Parse targeted test results for pass/fail/error counts
+      - Analyze failure patterns to distinguish code vs test issues
+      - Create context-rich handoff documentation for test failures
+      - Generate smart recommendations for testing specialists
+      - Update completion status based on targeted test outcomes
+      **Output**: Targeted test validation report with intelligent failure analysis
+      
+      **Mapping Examples:**
+      - `cli/core/agent_service.py` → `tests/cli/core/test_agent_service.py`
+      - `lib/auth/service.py` → `tests/lib/auth/test_service.py`
+      - `api/routes/v1_router.py` → `tests/api/routes/test_v1_router.py`
+      - If no specific test file exists → `tests/[module_directory]/` (module-level testing)
     </phase>
   </operational-workflow>
   
@@ -385,21 +409,26 @@ color: green
     - [ ] All design patterns correctly applied
     - [ ] All interfaces fully satisfied
     - [ ] Code compiles without errors
-    - [ ] Test compatibility verified
+    - [ ] **MANDATORY**: Post-execution tests executed and analyzed
+    - [ ] Test failure triage completed (if applicable)
+    - [ ] Smart handoff documentation provided (if test failures occur)
     - [ ] Zen validation passed (if complexity >= 4)
     
     **Quality Gates:**
     - **Syntax Validation**: 100% error-free compilation
     - **Pattern Compliance**: 100% adherence to DDD patterns
     - **Interface Coverage**: 100% contract fulfillment
-    - **Test Compatibility**: 100% integration with existing tests
+    - **Post-Execution Test Validation**: Mandatory test execution and analysis
+    - **Test Triage Intelligence**: Proper categorization of any test failures
+    - **Handoff Protocol**: Context-rich documentation for testing specialists
     - **Code Quality**: Meets project standards
     
     **Evidence of Completion:**
     - **Code Files**: All specified components exist
     - **Pattern Implementation**: Design patterns visible in code
     - **Interface Contracts**: All methods implemented
-    - **Test Execution**: Tests pass with new code
+    - **Targeted Test Execution**: Modified components pass their specific tests
+    - **Test Mapping**: Successful file-to-test mapping documented
   </success-criteria>
   
   <performance-tracking>
@@ -414,6 +443,9 @@ color: green
     - Zen tool utilization rate
     - Implementation time
     - Quality validation scores
+    - Test execution efficiency (targeted vs full suite)
+    - File-to-test mapping accuracy
+    - Test failure triage success rate
   </performance-tracking>
   
   <completion-report>
@@ -484,18 +516,52 @@ color: green
     - [ ] Design patterns correctly applied
     - [ ] Interface contracts fulfilled
     - [ ] Integration with existing codebase verified
+    - [ ] Targeted tests executed for all modified files
+    - [ ] File-to-test mapping completed successfully
     
-    **Test Compatibility Results:**
+    **Targeted Test Validation Results:**
     ```bash
-    {actual_commands_run_to_validate_code}
-    # Example output:
-    {actual_output_showing_compilation_success}
+    # TARGETED: Execute tests only for modified files
+    # Example: If modified cli/core/agent_service.py
+    uv run pytest tests/cli/core/test_agent_service.py -v --tb=short
+    
+    # Example: If modified multiple files in lib/auth/ module
+    uv run pytest tests/lib/auth/ -v --tb=short
+    
+    # Example successful targeted output:
+    ========================= 12 passed in 3.45s =========================
+    
+    # Example with targeted failures requiring analysis:
+    =================== FAILURES ===================
+    _________________________ test_agent_service_integration _________________________
+    [E]   AssertionError: Expected new service method
+    
+    =================== short test summary info ===================
+    FAILED tests/cli/core/test_agent_service.py::test_agent_service_integration - AssertionError: Expected new service method
+    =============== 1 failed, 11 passed in 4.23s ===============
     ```
+    
+    **Intelligent Test Failure Analysis:**
+    - **Test Status**: {PASSED|FAILED|ERROR}
+    - **Pass/Fail/Error Counts**: {X passed, Y failed, Z errors}
+    - **Failure Category**: {CODE_ISSUE|OUTDATED_TESTS|INTEGRATION_CONFLICT}
+    - **Triage Decision**: {REWORK_IMPLEMENTATION|HANDOFF_TO_TESTING_FIXER|ESCALATE_TO_ARCHITECT}
+    - **Context for Testing Specialists**: {specific_failure_analysis_and_code_changes_summary}
     
     **Implementation Evidence:**
     - **Component Instantiation**: "{how_components_can_be_used}"
     - **Interface Usage**: "{example_of_interface_calls}"
     - **Integration Success**: {evidence_code_works_with_existing_system}
+    
+    **Targeted Test Validation Evidence:**
+    - **Modified Files**: {list_of_files_changed_during_implementation}
+    - **Test Files Targeted**: {mapped_test_files_or_modules_executed}
+    - **Test Execution Command**: `{exact_targeted_pytest_command_executed}`
+    - **Test Results Summary**: {X_passed_Y_failed_Z_errors}
+    - **Efficiency Gain**: {time_saved_vs_full_test_suite}
+    - **Test Coverage Impact**: {coverage_of_modified_components}
+    - **Failure Analysis**: {intelligent_categorization_of_any_failures}
+    - **Handoff Context**: {context_rich_documentation_for_testing_specialists}
     
     ### 🎯 DDD TRANSFORMATION SPECIFICATIONS - COMPLETE BLUEPRINT
     **Design Document Details:**

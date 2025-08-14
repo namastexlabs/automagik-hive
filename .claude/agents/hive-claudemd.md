@@ -1,6 +1,7 @@
 ---
 name: hive-claudemd
 description: CLAUDE.md file management specialist with behavioral enforcement for clean, descriptive naming conventions. Examples: <example>Context: User needs CLAUDE.md documentation updated with new naming standards. user: 'Update the CLAUDE.md files to enforce the new hive- naming conventions' assistant: 'I'll use hive-claudemd to update all CLAUDE.md files with clean naming enforcement and comprehensive documentation standards' <commentary>CLAUDE.md updates and naming standard enforcement require specialized documentation expertise.</commentary></example> <example>Context: User reports documentation inconsistencies across CLAUDE.md files. user: 'Fix the duplication in our CLAUDE.md files and ensure consistent formatting' assistant: 'This requires systematic CLAUDE.md analysis and improvement. Let me deploy hive-claudemd for comprehensive documentation restructuring' <commentary>CLAUDE.md optimization and consistency enforcement needs specialized documentation agent.</commentary></example>
+model: sonnet
 color: orange
 ---
 
@@ -188,9 +189,9 @@ color: orange
             if pattern in content.lower():
                 return False, f"VIOLATION: Forbidden naming pattern '{pattern}' detected"
         
-        # Validate hive- prefix usage
-        if 'genie-' in content and 'hive-' not in content:
-            return False, "VIOLATION: Must use 'hive-' prefix, not 'genie-'"
+        # Validate hive- prefix usage  
+        if 'genie-' in content:
+            return False, "VIOLATION: Must use 'hive-' prefix consistently"
         
         return True, "All constraints satisfied"
     ```

@@ -1,6 +1,7 @@
 ---
 name: hive-release-manager
-description: Use this agent when you need to manage releases for the Automagik Hive multi-agent framework, including version bumping, building agents/teams/workflows, creating GitHub releases, and publishing to package registries. Examples: <example>Context: User has completed new agent development and wants to release v1.2.0. user: 'Ready to release the new genie-dev-orchestrator agent and updated team configurations' assistant: 'I'll use the hive-release-manager agent to handle the complete release process including version synchronization, component building, and distribution.' <commentary>The user needs a complete release cycle managed for Automagik Hive with new agent components.</commentary></example> <example>Context: Critical bug fix needs immediate release. user: 'Emergency release needed - the agent registry has a critical bug in production' assistant: 'I'll use the hive-release-manager agent to execute an emergency hotfix release with proper testing and rollback preparation.' <commentary>Emergency release scenario requiring immediate but careful release management.</commentary></example>
+description: Use this agent when you need to manage releases for the Automagik Hive multi-agent framework, including version bumping, building agents/teams/workflows, creating GitHub releases, and publishing to package registries. Examples: <example>Context: User has completed new agent development and wants to release v1.2.0. user: 'Ready to release the new hive-dev-orchestrator agent and updated team configurations' assistant: 'I'll use the hive-release-manager agent to handle the complete release process including version synchronization, component building, and distribution.' <commentary>The user needs a complete release cycle managed for Automagik Hive with new agent components.</commentary></example> <example>Context: Critical bug fix needs immediate release. user: 'Emergency release needed - the agent registry has a critical bug in production' assistant: 'I'll use the hive-release-manager agent to execute an emergency hotfix release with proper testing and rollback preparation.' <commentary>Emergency release scenario requiring immediate but careful release management.</commentary></example>
+model: sonnet
 color: "#FF6B6B"
 ---
 
@@ -124,11 +125,11 @@ color: "#FF6B6B"
     
     #### ❌ REFUSED DOMAINS
     **I WILL NOT handle:**
-    - Feature development: Redirect to `genie-dev-coder`
-    - Bug fixing: Redirect to `genie-dev-fixer`
-    - Test creation: Redirect to `genie-testing-maker`
-    - Documentation updates: Redirect to `genie-claudemd`
-    - Agent creation: Redirect to `genie-agent-creator`
+    - Feature development: Redirect to `hive-dev-coder`
+    - Bug fixing: Redirect to `hive-dev-fixer`
+    - Test creation: Redirect to `hive-testing-maker`
+    - Documentation updates: Redirect to `hive-claudemd`
+    - Agent creation: Redirect to `hive-agent-creator`
   </domain-boundaries>
   
   <critical-prohibitions>
