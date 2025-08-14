@@ -245,13 +245,18 @@ define check_prerequisites
         exit 1; \
     fi; \
     if ! command -v uv >/dev/null 2>&1; then \
-        if [ -f "$HOME/.local/bin/uv" ]; then \
-            export PATH="$HOME/.local/bin:$PATH"; \
+        REAL_USER=$${SUDO_USER:-$$USER}; \
+        REAL_HOME=$$(getent passwd "$$REAL_USER" | cut -d: -f6); \
+        if [ -f "$$REAL_HOME/.local/bin/uv" ]; then \
+            export PATH="$$REAL_HOME/.local/bin:$$PATH"; \
+            $(call print_status,Found uv in $$REAL_HOME/.local/bin); \
+        elif [ -f "$HOME/.local/bin/uv" ]; then \
+            export PATH="$HOME/.local/bin:$$PATH"; \
             $(call print_status,Found uv in $HOME/.local/bin); \
         else \
             $(call print_status,Installing uv...); \
             curl -LsSf https://astral.sh/uv/install.sh | sh; \
-            export PATH="$HOME/.local/bin:$PATH"; \
+            export PATH="$HOME/.local/bin:$$PATH"; \
             $(call print_success,uv installed successfully); \
         fi; \
     else \
@@ -267,15 +272,25 @@ define setup_python_env
             uv cache clean; \
             uv sync; \
         fi; \
-    elif [ -f "$HOME/.local/bin/uv" ]; then \
-        if ! $HOME/.local/bin/uv sync 2>/dev/null; then \
-            $(call print_warning,Installation failed - clearing UV cache and retrying...); \
-            $HOME/.local/bin/uv cache clean; \
-            $HOME/.local/bin/uv sync; \
-        fi; \
     else \
-        $(call print_error,uv not found - please run 'make install' first); \
-        exit 1; \
+        REAL_USER=$${SUDO_USER:-$$USER}; \
+        REAL_HOME=$$(getent passwd "$$REAL_USER" | cut -d: -f6); \
+        if [ -f "$$REAL_HOME/.local/bin/uv" ]; then \
+            if ! $$REAL_HOME/.local/bin/uv sync 2>/dev/null; then \
+                $(call print_warning,Installation failed - clearing UV cache and retrying...); \
+                $$REAL_HOME/.local/bin/uv cache clean; \
+                $$REAL_HOME/.local/bin/uv sync; \
+            fi; \
+        elif [ -f "$HOME/.local/bin/uv" ]; then \
+            if ! $HOME/.local/bin/uv sync 2>/dev/null; then \
+                $(call print_warning,Installation failed - clearing UV cache and retrying...); \
+                $HOME/.local/bin/uv cache clean; \
+                $HOME/.local/bin/uv sync; \
+            fi; \
+        else \
+            $(call print_error,uv not found - please run 'make install' first); \
+            exit 1; \
+        fi; \
     fi
 endef
 

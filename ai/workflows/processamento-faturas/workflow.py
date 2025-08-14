@@ -76,7 +76,7 @@ def create_postgres_storage(table_name: str) -> PostgresStorage | None: #Avaliar
     try:
         return PostgresStorage(
             table_name=table_name,
-            db_url=os.getenv("DATABASE_URL", "postgresql://localhost:5432/hive_agent"), # Trocar pro .env
+            db_url=os.getenv("HIVE_DATABASE_URL", "postgresql://localhost:5532/hive"), # Trocar pro .env
             auto_upgrade_schema=True
         )
     except Exception as e:
@@ -717,7 +717,7 @@ async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput
     # REAL GMAIL INTEGRATION - Download Excel files from emails
     new_emails_processed = []
 
-    if datetime.now(UTC).hour < 12:  # Only process new emails in morning
+    if datetime.now(UTC).hour < 24:  # Only process new emails in morning
         try:
             logger.info("🚀 Starting real Gmail email processing...")
             gmail_downloader = GmailDownloader()

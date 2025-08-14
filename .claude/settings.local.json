@@ -1,0 +1,12 @@
+{
+  "enabledMcpjsonServers": [
+    "automagik-forge",
+    "ask-repo-agent",
+    "search-repo-docs",
+    "send_whatsapp_message",
+    "postgres",
+    "automagik-hive",
+    "wait"
+  ],
+  "enableAllProjectMcpServers": true
+}

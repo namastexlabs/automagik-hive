@@ -31,18 +31,18 @@ x-agent-build-args: &agent-build-args
 services:
   # Standalone PostgreSQL for Agent Development
   postgres-agent:
-    image: agnohq/pgvector:16
+    image: pgvector/pgvector:pg16
     container_name: hive-postgres-agent
     restart: unless-stopped
-    user: "1000:1000"
+    privileged: true
     ports:
       - "35532:5432"  # Agent PostgreSQL port
     env_file:
       - .env
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
-      - ../../data/postgres-agent:/var/lib/postgresql/data
+      - agent_postgres_data:/var/lib/postgresql/data
     networks:
       - agent_network
     healthcheck:
@@ -95,6 +95,9 @@ networks:
 
 # Agent persistent volumes
 volumes:
+  agent_postgres_data:
+    driver: local
+    name: hive_agent_postgres_data
   agent_app_logs:
     driver: local
     name: hive_agent_app_logs
