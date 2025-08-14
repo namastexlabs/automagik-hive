@@ -9,7 +9,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -118,24 +118,77 @@ class TestServeModuleFunctions:
                     assert result.title == "Automagik Hive Multi-Agent System"
 
     def test_create_automagik_api_no_event_loop(self):
-        """Test create_automagik_api when no event loop is running."""
+        """Test create_automagik_api when no event loop is running with proper database mocking."""
         with patch("asyncio.get_running_loop", side_effect=RuntimeError("No event loop")):
-            # Focus on testing the actual behavior rather than specific mocking
-            result = api.serve.create_automagik_api()
-            # Just verify we get a FastAPI instance (the core functionality)
-            assert isinstance(result, FastAPI)
-            assert hasattr(result, 'title')
-            # The function should successfully create an app regardless of event loop state
+            # Mock all database operations to prevent any real database connections
+            with patch("lib.utils.db_migration.check_and_run_migrations", return_value=False):
+                with patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup:
+                    with patch("api.serve.get_startup_display_with_results") as mock_display:
+                        with patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team:
+                            # Mock startup results with proper structure
+                            mock_startup_results = MagicMock()
+                            mock_startup_results.registries.agents = {"test_agent": MagicMock()}
+                            mock_startup_results.registries.teams = {"test_team": "test"}
+                            mock_startup_results.registries.workflows = {"test_workflow": "test"}
+                            
+                            # Mock auth service
+                            mock_auth_service = MagicMock()
+                            mock_auth_service.is_auth_enabled.return_value = False
+                            mock_startup_results.services.auth_service = mock_auth_service
+                            
+                            # Mock metrics service
+                            mock_startup_results.services.metrics_service = MagicMock()
+                            mock_startup.return_value = mock_startup_results
+                            
+                            # Mock startup display
+                            mock_display.return_value = MagicMock()
+                            
+                            # Mock team creation to return a mock team
+                            mock_create_team.return_value = MagicMock()
+                            
+                            # Test the function
+                            result = api.serve.create_automagik_api()
+                            
+                            # Verify we get a FastAPI instance with proper attributes
+                            assert isinstance(result, FastAPI)
+                            assert hasattr(result, 'title')
+                            # The function should successfully create an app regardless of event loop state
 
     def test_create_automagik_api_with_event_loop(self):
-        """Test create_automagik_api when event loop is running."""
+        """Test create_automagik_api when event loop is running with proper database mocking."""
         with patch("asyncio.get_running_loop"):
-            # Test that the function handles the event loop case gracefully
-            result = api.serve.create_automagik_api()
-            # Just verify we get a FastAPI instance (the core functionality)
-            assert isinstance(result, FastAPI)
-            assert hasattr(result, 'title')
-            # The function should successfully create an app in event loop scenarios
+            # Mock all database operations to prevent any real database connections
+            with patch("lib.utils.db_migration.check_and_run_migrations", return_value=False):
+                with patch("api.serve.orchestrated_startup", new_callable=AsyncMock) as mock_startup:
+                    with patch("api.serve.get_startup_display_with_results") as mock_display:
+                        with patch("api.serve.create_team", new_callable=AsyncMock) as mock_create_team:
+                            # Mock startup results with proper structure
+                            mock_startup_results = MagicMock()
+                            mock_startup_results.registries.agents = {"test_agent": MagicMock()}
+                            mock_startup_results.registries.teams = {"test_team": "test"}
+                            mock_startup_results.registries.workflows = {"test_workflow": "test"}
+                            
+                            # Mock auth service
+                            mock_auth_service = MagicMock()
+                            mock_auth_service.is_auth_enabled.return_value = False
+                            mock_startup_results.services.auth_service = mock_auth_service
+                            
+                            # Mock metrics service
+                            mock_startup_results.services.metrics_service = MagicMock()
+                            mock_startup.return_value = mock_startup_results
+                            
+                            # Mock startup display
+                            mock_display.return_value = MagicMock()
+                            
+                            # Mock team creation to return a mock team
+                            mock_create_team.return_value = MagicMock()
+                            
+                            # Test that the function handles the event loop case gracefully
+                            result = api.serve.create_automagik_api()
+                            # Just verify we get a FastAPI instance (the core functionality)
+                            assert isinstance(result, FastAPI)
+                            assert hasattr(result, 'title')
+                            # The function should successfully create an app in event loop scenarios
 
     def test_create_lifespan_function(self):
         """Test create_lifespan function creation."""

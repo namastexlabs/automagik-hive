@@ -403,22 +403,10 @@ def real_agent_start_available():
 
 @pytest.fixture(scope="session")
 def real_postgres_available():
-    """Check if real PostgreSQL container is available for testing."""
-    if psycopg2 is None:
-        return False
-    try:
-        conn = psycopg2.connect(
-            host="localhost",
-            port=35532,
-            database="hive_agent",
-            user="hive_agent",
-            password="agent_password",
-            connect_timeout=5,
-        )
-        conn.close()
-        return True
-    except psycopg2.OperationalError:
-        return False
+    """SAFETY: Mock PostgreSQL availability check to prevent real connections."""
+    # SAFETY: Always return False to prevent real database connections in tests
+    # This ensures complete test isolation and eliminates security risks
+    return False
 
 
 @pytest.fixture(scope="session")
@@ -864,9 +852,9 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     terminalreporter.write_line("")
     terminalreporter.write_line("🎯 Coverage Target: >95% for CLI components")
     terminalreporter.write_line(
-        "🚀 Real Server Tests: Set TEST_REAL_AGENT_SERVER=true to enable"
+        "🔒 SECURITY: Real server/database connections DISABLED for safety"
     )
     terminalreporter.write_line(
-        "🐘 Real PostgreSQL Tests: Set TEST_REAL_POSTGRES=true to enable"
+        "✅ All tests use mocked connections for complete isolation"
     )
     terminalreporter.write_line("")
