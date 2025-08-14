@@ -83,3 +83,5 @@ test-local/
 test-workspace-fix/
 test-workspace-validation/
 docker-migration-backup-*/
+
+mctech/

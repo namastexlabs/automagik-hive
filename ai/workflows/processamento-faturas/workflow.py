@@ -13,14 +13,18 @@ Based on existing Python system but leveraging Agno Workflows 2.0 architecture.
 
 import asyncio
 import base64
+import calendar
 import hashlib
 import json
+import math
 import os
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+
+from dateutil import relativedelta
 
 import aiohttp
 from agno.agent import Agent
@@ -167,7 +171,7 @@ def create_data_extractor_agent() -> Agent:
             # "- Validation Logic: Ensure classification accuracy >99.5%",
             "",
             "**📋 DATA VALIDATION REQUIREMENTS**", 
-            "- Required Fields: All CTE records must have 'NF/CTE', 'valor CHAVE', 'Competência', 'CNPJ Fornecedor'",
+            "- Required Fields: All CTE records must have 'NF/CTE', 'valor CHAVE', 'Competência' (stored as data_original), 'CNPJ Fornecedor'",
             "- CTE Filter: Use TIPO == 'CTE' to exclude MINUTA records", 
             "- Format Validation: CNPJ format, date ranges, numeric values",
             "- Business Rules: Value limits, date ranges, customer validations",
@@ -435,7 +439,7 @@ class BrowserAPIClient:
             "flow_name": "invoiceGen",
             "parameters": {
                 "orders": pending_orders,
-                "headless": True
+                "headless": False  # Changed to false for better visibility
             }
         }
 
@@ -455,7 +459,7 @@ class BrowserAPIClient:
             "flow_name": "invoiceMonitor",
             "parameters": {
                 "orders": monitoring_orders,
-                "headless": True
+                "headless": False  # Changed to false for better visibility
             }
         }
 
@@ -476,7 +480,7 @@ class BrowserAPIClient:
                 "total_value": order["po_total_value"],
                 "startDate": order["start_date"],
                 "endDate": order["end_date"],
-                "headless": True
+                "headless": False  # Changed to false for better visibility
             }
         }
 
@@ -494,7 +498,7 @@ class BrowserAPIClient:
                 "po": po_number,
                 "invoice": f"base64_content_for_{po_number}",  # In real implementation, convert PDF to base64
                 "invoice_filename": f"fatura_{po_number}.pdf",
-                "headless": True
+                "headless": False  # Changed to false for better visibility
             }
         }
 
@@ -516,13 +520,13 @@ class BrowserAPIClient:
                 timeout = aiohttp.ClientTimeout(total=5)  # Quick check
                 self.session = aiohttp.ClientSession(timeout=timeout)
 
-            url = f"{self.base_url}/health"  # Try health endpoint first
+            url = f"{self.base_url}/"  # Try root endpoint first
             async with self.session.get(url) as response:
                 return response.status == 200
         except:
-            # Try the main endpoint if health doesn't exist
+            # Try the main endpoint if root doesn't exist
             try:
-                url = f"{self.base_url}/execute_flow"
+                url = f"{self.base_url}/execute-flow"
                 async with self.session.post(url, json={"flow_name": "test"}) as response:
                     # Any response (even error) means API is available
                     return True
@@ -533,13 +537,15 @@ class BrowserAPIClient:
         """Execute real HTTP API call to Browser API"""
         start_time = datetime.now(UTC)
 
-        # Create aiohttp session if not exists
-        if self.session is None:
+        # Create aiohttp session if not exists OR recreate with proper timeout
+        if self.session is None or self.session.timeout.total != self.timeout:
+            if self.session:
+                await self.session.close()
             timeout = aiohttp.ClientTimeout(total=self.timeout)
             self.session = aiohttp.ClientSession(timeout=timeout)
 
-        # Build URL for execute_flow endpoint
-        url = f"{self.base_url}/execute_flow"
+        # Build URL for execute-flow endpoint
+        url = f"{self.base_url}/execute-flow"
 
         # Prepare request payload
         request_payload = {
@@ -549,42 +555,112 @@ class BrowserAPIClient:
         }
 
         # Execute HTTP POST request
-        async with self.session.post(url, json=request_payload) as response:
-            # Calculate execution time
-            execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+        try:
+            async with self.session.post(url, json=request_payload) as response:
+                # Calculate execution time
+                execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
-            # Get response data
-            if response.content_type == "application/json":
-                response_data = await response.json()
-            else:
-                response_text = await response.text()
-                response_data = {"text_output": response_text}
+                # Get response data
+                if response.content_type == "application/json":
+                    response_data = await response.json()
+                else:
+                    response_text = await response.text()
+                    response_data = {"text_output": response_text}
 
-            # Check if request was successful
-            if response.status == 200:
-                api_result = {
-                    "success": True,
-                    "text_output": response_data.get("result", response_data.get("text_output", "API execution completed")),
-                    "message": f"Flow {flow_name} executed successfully",
-                    "timestamp": datetime.now(UTC).isoformat(),
-                    "raw_response": response_data
-                }
+                # Log response details for debugging
+                logger.info(f"📊 HTTP Response: {response.status} {response.reason}")
+                logger.info(f"📊 Content-Type: {response.content_type}")
+                logger.info(f"⏱️ Execution time: {execution_time:.2f}ms")
 
-                return {
-                    "api_result": api_result,
-                    "success": True,
-                    "execution_time_ms": int(execution_time),
-                    "endpoint": url,
-                    "flow_name": flow_name,
-                    "http_status": response.status,
-                    "mode": "REAL_HTTP"
-                }
-            raise aiohttp.ClientResponseError(
-                request_info=response.request_info,
-                history=response.history,
-                status=response.status,
-                message=f"HTTP {response.status}: {response_data.get('error', 'Unknown error')}"
-            )
+                # Check if request was successful
+                if response.status == 200:
+                    logger.info(f"📡 HTTP call successful for {flow_name}")
+                    
+                    # Extract Browser API response pattern
+                    api_status = response_data.get("status")
+                    output_data = response_data.get("output", {})
+                    browser_success = output_data.get("success", False)
+                    text_output = output_data.get("text_output", "No output")
+                    error_output = output_data.get("error", "")
+                    
+                    # Check both HTTP success AND browser process success
+                    overall_success = (api_status == "success" or api_status is True) and browser_success
+                    
+                    if overall_success:
+                        logger.info(f"✅ Browser process successful for {flow_name}")
+                        api_result = {
+                            "success": True,
+                            "text_output": text_output,
+                            "message": f"Flow {flow_name} executed successfully",
+                            "timestamp": datetime.now(UTC).isoformat(),
+                            "raw_response": response_data
+                        }
+
+                        return {
+                            "api_result": api_result,
+                            "success": True,
+                            "execution_time_ms": int(execution_time),
+                            "endpoint": url,
+                            "flow_name": flow_name,
+                            "http_status": response.status,
+                            "mode": "REAL_HTTP"
+                        }
+                    else:
+                        # HTTP 200 but browser process failed
+                        logger.error(f"❌ Browser process failed for {flow_name}")
+                        logger.error(f"🔗 API Status: {api_status}")
+                        logger.error(f"🔗 Browser Success: {browser_success}")
+                        logger.error(f"📄 Browser Output: {text_output}")
+                        if error_output:
+                            logger.error(f"💥 Browser Error: {error_output}")
+                        
+                        api_result = {
+                            "success": False,
+                            "text_output": text_output,
+                            "error": error_output or "Browser process failed",
+                            "message": f"Flow {flow_name} browser process failed",
+                            "timestamp": datetime.now(UTC).isoformat(),
+                            "raw_response": response_data
+                        }
+
+                        return {
+                            "api_result": api_result,
+                            "success": False,
+                            "execution_time_ms": int(execution_time),
+                            "endpoint": url,
+                            "flow_name": flow_name,
+                            "http_status": response.status,
+                            "browser_success": browser_success,
+                            "mode": "REAL_HTTP"
+                        }
+                else:
+                    # Log detailed error information
+                    logger.error(f"❌ HTTP {response.status} {response.reason} for {flow_name}")
+                    logger.error(f"🔗 URL: {url}")
+                    logger.error(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
+                    logger.error(f"📄 Response content: {json.dumps(response_data, indent=2) if response_data else 'No content'}")
+                    
+                    error_message = response_data.get('error', response_data.get('detail', f'HTTP {response.status}'))
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message=f"HTTP {response.status}: {error_message}"
+                    )
+        
+        except Exception as e:
+            # Handle timeouts and other connection errors
+            error_type = type(e).__name__
+            import traceback
+            traceback_str = traceback.format_exc()
+            
+            logger.error(f"❌ Connection error: {error_type} - {e!s}")
+            logger.error(f"🔗 Failed URL: {url}")
+            logger.error(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
+            logger.error(f"💥 Traceback: {traceback_str}")
+            
+            # Re-raise the exception to be handled by the retry logic
+            raise
 
 
     async def execute_api_call(self, flow_name: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -617,7 +693,10 @@ class BrowserAPIClient:
                 return result
 
             except aiohttp.ClientError as e:
-                logger.warning(f"⚠️ HTTP client error on attempt {attempt + 1}: {e!s}")
+                error_type = type(e).__name__
+                logger.warning(f"⚠️ HTTP client error on attempt {attempt + 1}: {error_type} - {e!s}")
+                logger.warning(f"🔗 Failed URL: {url}")
+                logger.warning(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
 
                 if attempt < self.max_retries - 1:
                     wait_time = 2 ** attempt
@@ -626,15 +705,23 @@ class BrowserAPIClient:
                 else:
                     # All real HTTP attempts failed
                     logger.error(f"❌ All HTTP attempts failed for {flow_name}")
+                    logger.error(f"❌ Final error type: {error_type}")
                     raise ProcessamentoFaturasError(
                         f"HTTP request to {flow_name} failed after {self.max_retries} attempts",
                         "HTTPClientError",
-                        str(e),
+                        f"{error_type}: {str(e)}",
                         "check_browser_api_server_status"
                     )
 
             except Exception as e:
-                logger.error(f"❌ Unexpected error on attempt {attempt + 1}: {e!s}")
+                error_type = type(e).__name__
+                import traceback
+                traceback_str = traceback.format_exc()
+                
+                logger.error(f"❌ Unexpected error on attempt {attempt + 1}: {error_type} - {e!s}")
+                logger.error(f"🔗 Failed URL: {url}")
+                logger.error(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
+                logger.error(f"💥 Traceback: {traceback_str}")
 
                 if attempt < self.max_retries - 1:
                     wait_time = 2 ** attempt
@@ -643,10 +730,11 @@ class BrowserAPIClient:
                 else:
                     # All attempts failed
                     logger.error(f"❌ All attempts failed for {flow_name}")
+                    logger.error(f"❌ Final error type: {error_type}")
                     raise ProcessamentoFaturasError(
                         f"API call to {flow_name} failed after {self.max_retries} attempts",
                         "UnexpectedError",
-                        str(e),
+                        f"{error_type}: {str(e)}",
                         "check_browser_api_server_and_network"
                     )
 
@@ -674,6 +762,52 @@ def set_session_state(step_input: StepInput, key: str, value: Any) -> None:
     """Set workflow session state with backward compatibility"""
     session = get_session_state(step_input)
     session[key] = value
+
+
+def xldate_to_datetime(xldatetime: int) -> datetime:
+    """Convert Excel numeric date to datetime object"""
+    temp_date = datetime(1899, 12, 31)
+    (days, portion) = math.modf(xldatetime)
+    
+    delta_days = timedelta(days=days)
+    secs = int(24 * 60 * 60 * portion)
+    delta_seconds = timedelta(seconds=secs)
+    the_time = temp_date + delta_days + delta_seconds
+    return the_time
+
+
+def process_order_dates(competencia_value: Any) -> tuple[str, str, int]:
+    """
+    Process competencia value and return start_date, end_date, and original data
+    
+    Args:
+        competencia_value: Raw value from Excel (can be int, float, or string)
+        
+    Returns:
+        tuple: (start_date_str, end_date_str, data_original)
+    """
+    # Handle different input types
+    if isinstance(competencia_value, (int, float)):
+        order_date = xldate_to_datetime(int(competencia_value))
+        data_original = int(competencia_value)
+    elif isinstance(competencia_value, str) and competencia_value.isdigit():
+        order_date = xldate_to_datetime(int(competencia_value))
+        data_original = int(competencia_value)
+    else:
+        # Fallback for non-numeric dates
+        data_original = str(competencia_value)
+        order_date = datetime.now()
+    
+    # Calculate previous month (first day)
+    past_month = order_date + relativedelta.relativedelta(months=-1, day=1)
+    past_month_string = past_month.strftime('%d/%m/%Y')
+    
+    # Calculate next month (last day)
+    next_month = order_date + relativedelta.relativedelta(months=1, day=1)
+    next_month = next_month.replace(day=calendar.monthrange(next_month.year, next_month.month)[1])
+    next_month_string = next_month.strftime('%d/%m/%Y')
+    
+    return past_month_string, next_month_string, data_original
 
 async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) -> bool:
     """
@@ -742,16 +876,19 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
             # Extract CTEs for this PO
             ctes = []
             po_total_value = 0
-            start_dates = []
-            end_dates = []
+            competencia_values = []
             
             for _, row in po_group.iterrows():
+                # Process competencia value using helper function
+                competencia_raw = row.get('Competência', '')
+                start_date_str, end_date_str, data_original = process_order_dates(competencia_raw)
+                
                 cte_data = {
                     "NF/CTE": str(row.get('NF/CTE', '')),
                     "valor_chave": str(row.get('valor CHAVE', '')),
                     "empresa_origem": str(row.get('Empresa Origem', '')),
                     "cnpj_fornecedor": str(row.get('CNPJ Fornecedor', '')),
-                    "competencia": str(row.get('Competência', ''))
+                    "data_original": data_original  # Changed from 'competencia' to 'data_original'
                 }
                 ctes.append(cte_data)
                 
@@ -762,15 +899,15 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
                 except (ValueError, TypeError):
                     pass
                 
-                # Collect dates for PO date range
-                competencia = str(row.get('Competência', ''))
-                if competencia and competencia != 'nan':
-                    start_dates.append(competencia)
-                    end_dates.append(competencia)
+                # Collect competencia values for PO date range calculation
+                competencia_values.append(competencia_raw)
             
-            # Determine date range
-            start_date = min(start_dates) if start_dates else "01/01/2025"
-            end_date = max(end_dates) if end_dates else "31/12/2025"
+            # Calculate PO-level start and end dates using the first competencia value
+            if competencia_values:
+                start_date, end_date, _ = process_order_dates(competencia_values[0])
+            else:
+                start_date = "01/01/2025"
+                end_date = "31/12/2025"
             
             # Create PO order structure
             order = {
@@ -813,10 +950,12 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
 
 async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput:
     """Initialize daily processing cycle - scan for new emails and existing JSON files"""
+    workflow_start_time = datetime.now(UTC)
     logger.info("🌅 Starting daily initialization...")
 
     # Initialize session state
     session_state = get_session_state(step_input)
+    set_session_state(step_input, "workflow_start_time", workflow_start_time)
 
     # Initialize storage and managers (not currently used but will be needed for state persistence)
 
@@ -853,7 +992,20 @@ async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput
 
     try:
         logger.info("🚀 Starting real Gmail email processing...")
-        gmail_downloader = GmailDownloader()
+        
+        # Use absolute paths for Gmail credentials (project root)
+        project_root = Path(__file__).parent.parent.parent.parent
+        credentials_path = project_root / "credentials.json"
+        token_path = project_root / "token.json"
+        
+        logger.info(f"📁 Using credentials: {credentials_path}")
+        logger.info(f"📁 Using token: {token_path}")
+        
+        gmail_authenticator = GmailAuthenticator(
+            credentials_file=str(credentials_path),
+            token_file=str(token_path)
+        )
+        gmail_downloader = GmailDownloader(authenticator=gmail_authenticator)
 
         # Download Excel attachments (max 3 emails per day)
         downloaded_files = gmail_downloader.download_excel_attachments(max_emails=3)
@@ -1195,10 +1347,13 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
     processing_results = {
         "api_executions": {},
         "status_updates": {},
+        "failed_orders": {},  # Track orders that failed browser processing
         "execution_summary": {
             "successful_actions": 0,
             "failed_actions": 0,
-            "pos_updated": 0
+            "browser_failures": 0,  # Failed due to browser process
+            "pos_updated": 0,
+            "pos_failed": 0
         },
         "processing_timestamp": datetime.now(UTC).isoformat()
     }
@@ -1223,28 +1378,38 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                     "flow_name": action,
                     "parameters": {
                         "orders": po_numbers,
-                        "headless": True
+                        "headless": False  # Changed to false for better visibility
                     }
                 }
 
                 api_response = await api_client.execute_api_call(action, payload)
 
+                # Extract browser success information
+                browser_success = api_response.get("api_result", {}).get("success", False) if api_response["success"] else False
+                browser_error = api_response.get("api_result", {}).get("error", "Unknown error")
+                browser_output = api_response.get("api_result", {}).get("text_output", "No output")
+
                 processing_results["api_executions"][queue_name] = {
                     "action": action,
                     "pos_processed": po_numbers,
                     "batch_mode": True,
-                    "success": api_response["success"],
+                    "http_success": api_response["success"],
+                    "browser_success": browser_success,
+                    "overall_success": api_response["success"] and browser_success,
                     "execution_time_ms": api_response.get("execution_time_ms", 0),
-                    "api_response": api_response.get("api_result", {})
+                    "api_response": api_response.get("api_result", {}),
+                    "browser_error": browser_error if not browser_success else None,
+                    "browser_output": browser_output
                 }
 
-                # Update status for all POs in batch
-                if api_response["success"]:
+                # Update status ONLY if both HTTP and browser process succeeded
+                if api_response["success"] and browser_success:
                     new_status = {
                         "invoiceGen": "WAITING_MONITORING",
                         "invoiceMonitor": "MONITORED"
                     }.get(action, "UNKNOWN")
 
+                    logger.info(f"✅ Batch {action} successful - updating {len(pos)} POs to {new_status}")
                     for po_data in pos:
                         processing_results["status_updates"][po_data["po_number"]] = {
                             "old_status": action.replace("invoice", "").upper(),
@@ -1254,8 +1419,38 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
 
                     processing_results["execution_summary"]["successful_actions"] += 1
                     processing_results["execution_summary"]["pos_updated"] += len(pos)
+                
+                elif api_response["success"] and not browser_success:
+                    # HTTP successful but browser process failed - track all POs as failed
+                    logger.error(f"❌ Batch {action} browser process failed - all {len(pos)} POs affected")
+                    logger.error(f"💥 Browser Error: {browser_error}")
+                    
+                    for po_data in pos:
+                        processing_results["failed_orders"][po_data["po_number"]] = {
+                            "action": action,
+                            "failure_type": "browser_process_failure",
+                            "error": browser_error,
+                            "output": browser_output,
+                            "json_file": po_data["json_file"]
+                        }
+                    
+                    processing_results["execution_summary"]["browser_failures"] += 1
+                    processing_results["execution_summary"]["pos_failed"] += len(pos)
+                
                 else:
+                    # HTTP call failed
+                    logger.error(f"❌ HTTP call failed for batch {action} - all {len(pos)} POs affected")
+                    
+                    for po_data in pos:
+                        processing_results["failed_orders"][po_data["po_number"]] = {
+                            "action": action,
+                            "failure_type": "http_failure",
+                            "error": api_response.get("error", "HTTP call failed"),
+                            "json_file": po_data["json_file"]
+                        }
+                    
                     processing_results["execution_summary"]["failed_actions"] += 1
+                    processing_results["execution_summary"]["pos_failed"] += len(pos)
 
             else:
                 # Individual processing for downloads and uploads
@@ -1281,19 +1476,28 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
 
                     api_response = await api_client.execute_api_call(action, payload)
 
+                    # Extract browser success information for individual processing
+                    browser_success = api_response.get("api_result", {}).get("success", False) if api_response["success"] else False
+                    browser_error = api_response.get("api_result", {}).get("error", "Unknown error")
+                    browser_output = api_response.get("api_result", {}).get("text_output", "No output")
+
                     individual_results[po_number] = {
-                        "success": api_response["success"],
+                        "http_success": api_response["success"],
+                        "browser_success": browser_success,
+                        "overall_success": api_response["success"] and browser_success,
                         "execution_time_ms": api_response.get("execution_time_ms", 0),
-                        "api_response": api_response.get("api_result", {})
+                        "api_response": api_response.get("api_result", {}),
+                        "browser_error": browser_error if not browser_success else None
                     }
 
-                    # Update individual PO status
-                    if api_response["success"]:
+                    # Update individual PO status ONLY if both HTTP and browser process succeeded
+                    if api_response["success"] and browser_success:
                         new_status = {
                             "main-download-invoice": "DOWNLOADED",
                             "invoiceUpload": "UPLOADED"
                         }.get(action, "UNKNOWN")
 
+                        logger.info(f"✅ Individual {action} successful for PO {po_number} - updating to {new_status}")
                         processing_results["status_updates"][po_number] = {
                             "old_status": "MONITORED" if action == "main-download-invoice" else "DOWNLOADED",
                             "new_status": new_status,
@@ -1302,8 +1506,36 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
 
                         processing_results["execution_summary"]["successful_actions"] += 1
                         processing_results["execution_summary"]["pos_updated"] += 1
+                    
+                    elif api_response["success"] and not browser_success:
+                        # HTTP successful but browser process failed
+                        logger.error(f"❌ Individual {action} browser process failed for PO {po_number}")
+                        logger.error(f"💥 Browser Error: {browser_error}")
+                        
+                        processing_results["failed_orders"][po_number] = {
+                            "action": action,
+                            "failure_type": "browser_process_failure",
+                            "error": browser_error,
+                            "output": browser_output,
+                            "json_file": json_file
+                        }
+                        
+                        processing_results["execution_summary"]["browser_failures"] += 1
+                        processing_results["execution_summary"]["pos_failed"] += 1
+                    
                     else:
+                        # HTTP call failed
+                        logger.error(f"❌ HTTP call failed for individual {action} for PO {po_number}")
+                        
+                        processing_results["failed_orders"][po_number] = {
+                            "action": action,
+                            "failure_type": "http_failure",
+                            "error": api_response.get("error", "HTTP call failed"),
+                            "json_file": json_file
+                        }
+                        
                         processing_results["execution_summary"]["failed_actions"] += 1
+                        processing_results["execution_summary"]["pos_failed"] += 1
 
                 processing_results["api_executions"][queue_name] = {
                     "action": action,
@@ -1332,6 +1564,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
 
 async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
     """Complete daily processing cycle and update JSON files with new statuses"""
+    completion_start_time = datetime.now(UTC)
     logger.info("🏁 Starting daily completion and JSON updates...")
 
     # Get processing results
@@ -1365,10 +1598,12 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 
     response = file_manager.run(completion_context)
 
-    # Simulate JSON file updates
+    # REAL JSON file updates - Actually update the files
     files_updated = {}
     for po_number, update_info in status_updates.items():
         json_file = update_info["json_file"]
+        new_status = update_info["new_status"]
+        
         if json_file not in files_updated:
             files_updated[json_file] = {
                 "pos_updated": [],
@@ -1377,20 +1612,60 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 
         files_updated[json_file]["pos_updated"].append({
             "po_number": po_number,
-            "status_change": f"{update_info['old_status']} → {update_info['new_status']}"
+            "status_change": f"{update_info['old_status']} → {new_status}"
         })
         files_updated[json_file]["update_count"] += 1
+
+        # REAL FILE UPDATE: Update the actual JSON file
+        try:
+            import os
+            if os.path.exists(json_file):
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    json_data = json.load(f)
+                
+                # Update the status for this specific PO
+                for order in json_data.get("orders", []):
+                    if order.get("po_number") == po_number:
+                        order["status"] = new_status
+                        order["last_updated"] = datetime.now(UTC).isoformat()
+                        logger.info(f"✅ Updated PO {po_number} status to {new_status} in {json_file}")
+                        break
+                
+                # Write updated JSON back to file
+                with open(json_file, 'w', encoding='utf-8') as f:
+                    json.dump(json_data, f, ensure_ascii=False, indent=2)
+                    
+                logger.info(f"💾 JSON file updated successfully: {json_file}")
+            else:
+                logger.warning(f"⚠️ JSON file not found: {json_file}")
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to update JSON file {json_file}: {e!s}")
+            # Continue with other files if one fails
 
     # Get all session state for final summary
     session_state = get_session_state(step_input)
     init_results = session_state.get("initialization_results", {})
     analysis_results = session_state.get("analysis_results", {})
+    
+    # Calculate actual execution time
+    completion_end_time = datetime.now(UTC)
+    
+    # Get workflow start time from session state or use completion start as fallback
+    workflow_start_time = session_state.get("workflow_start_time", completion_start_time)
+    if isinstance(workflow_start_time, str):
+        workflow_start_time = datetime.fromisoformat(workflow_start_time.replace('Z', '+00:00'))
+    
+    total_execution_time_seconds = (completion_end_time - workflow_start_time).total_seconds()
+    total_execution_time_minutes = round(total_execution_time_seconds / 60, 2)
 
     completion_summary = {
         "daily_execution_summary": {
             "execution_date": datetime.now(UTC).strftime("%Y-%m-%d"),
-            "daily_batch_id": init_results.get("daily_batch_id", "unknown"),
-            "total_execution_time_minutes": 15,
+            "daily_batch_id": session_state.get("daily_batch_id", init_results.get("daily_batch_id", "unknown")),
+            "total_execution_time_minutes": total_execution_time_minutes,
+            "workflow_start_time": workflow_start_time.isoformat(),
+            "workflow_end_time": completion_end_time.isoformat(),
             "overall_status": "SUCCESS"
         },
         "processing_statistics": {
@@ -1398,12 +1673,15 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
             "existing_files_analyzed": len(init_results.get("existing_json_files_found", [])),
             "total_pos_found": analysis_results.get("analysis_summary", {}).get("total_pos_found", 0),
             "pos_processed_today": processing_results["execution_summary"]["pos_updated"],
+            "pos_failed_today": processing_results["execution_summary"]["pos_failed"],
             "pos_completed_today": len([po for po, update in status_updates.items() if update["new_status"] == "UPLOADED"]),
             "api_calls_successful": processing_results["execution_summary"]["successful_actions"],
-            "api_calls_failed": processing_results["execution_summary"]["failed_actions"]
+            "api_calls_failed": processing_results["execution_summary"]["failed_actions"],
+            "browser_process_failures": processing_results["execution_summary"]["browser_failures"]
         },
         "json_file_updates": files_updated,
         "status_transitions_applied": status_updates,
+        "failed_orders_detail": processing_results.get("failed_orders", {}),
         "next_execution_scheduled": {
             "next_run": (datetime.now(UTC) + timedelta(days=1)).replace(hour=8, minute=0, second=0).isoformat(),
             "frequency": "daily",
@@ -1413,8 +1691,28 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
         "agent_response": str(response.content) if response.content else "No response"
     }
 
-    logger.info("🏁 Daily processing cycle completed successfully!")
-    logger.info(f"📊 Processed {completion_summary['processing_statistics']['pos_processed_today']} POs with {completion_summary['processing_statistics']['pos_completed_today']} reaching UPLOADED status")
+    logger.info("🏁 Daily processing cycle completed!")
+    
+    # Log detailed processing results
+    stats = completion_summary['processing_statistics']
+    logger.info(f"✅ Successfully processed: {stats['pos_processed_today']} POs")
+    logger.info(f"❌ Failed to process: {stats['pos_failed_today']} POs")
+    logger.info(f"🎯 Reached UPLOADED status: {stats['pos_completed_today']} POs")
+    
+    # Log failure details if any
+    failed_orders = processing_results.get("failed_orders", {})
+    if failed_orders:
+        logger.warning(f"⚠️ {len(failed_orders)} POs failed processing:")
+        for po_number, failure_info in failed_orders.items():
+            failure_type = failure_info.get("failure_type", "unknown")
+            error = failure_info.get("error", "No error details")
+            logger.warning(f"   • PO {po_number}: {failure_type} - {error}")
+    
+    # Log API call statistics
+    logger.info(f"📡 API calls successful: {stats['api_calls_successful']}")
+    logger.info(f"📡 API calls failed: {stats['api_calls_failed']}")
+    logger.info(f"🌐 Browser process failures: {stats['browser_process_failures']}")
+    
     logger.info(f"⏰ Next execution scheduled: {completion_summary['next_execution_scheduled']['next_run']}")
 
     return StepOutput(content=json.dumps(completion_summary))
