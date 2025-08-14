@@ -133,6 +133,13 @@ python_files = [ "test_*.py", "*_test.py",]
 python_classes = [ "Test*",]
 python_functions = [ "test_*",]
 asyncio_mode = "auto"
+markers = [
+    "docker: tests for Docker functionality (fully mocked, no real containers)",
+    "postgres: tests for PostgreSQL functionality (fully mocked, no real database)",
+    "cli: CLI component tests",
+    "safe: tests safe to run in any environment",
+    "integration: integration tests"
+]
 
 [tool.coverage.run]
 source = [ "ai", "api", "lib",]
