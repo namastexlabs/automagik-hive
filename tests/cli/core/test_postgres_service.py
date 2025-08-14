@@ -312,8 +312,8 @@ services:
         """Test service integrates with PostgreSQL environment configuration."""
         service = PostgreSQLService(temp_workspace)
         
-        # Create mock .env.agent file with PostgreSQL config
-        env_file = temp_workspace / ".env.agent"
+        # Create mock main .env file with PostgreSQL config (docker-compose inheritance)
+        env_file = temp_workspace / ".env"
         env_file.write_text("""
 POSTGRES_PORT=35532
 POSTGRES_DB=hive_agent

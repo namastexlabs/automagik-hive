@@ -16,7 +16,7 @@ from agno.playground import Playground
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-# CRITICAL FIX: Load environment variables FIRST before any other imports
+# Load environment variables FIRST before any other imports
 # This ensures AGNO_LOG_LEVEL is available when logging system initializes
 try:
     from dotenv import load_dotenv

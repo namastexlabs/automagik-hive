@@ -212,6 +212,16 @@ def setup_logging():
     agno_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
     agno_log_level = getattr(logging, agno_level, logging.WARNING)
     logging.getLogger("agno").setLevel(agno_log_level)
+    
+    # CRITICAL FIX: Agno internal loggers have propagate=False, so we must set their levels directly
+    try:
+        from agno.utils.log import agent_logger, team_logger, workflow_logger
+        agent_logger.setLevel(agno_log_level)
+        team_logger.setLevel(agno_log_level)
+        workflow_logger.setLevel(agno_log_level)
+    except ImportError:
+        # Agno not installed or not available
+        pass
 
     # Note: Agno logging emoji injection is handled via agno_emoji_patch.py
     # when knowledge base loading occurs
@@ -229,6 +239,6 @@ def ensure_logging_initialized():
         _logging_initialized = True
 
 
-# CRITICAL FIX: Remove auto-initialization on import to prevent race condition
+# Remove auto-initialization on import to prevent race condition
 # This was causing logging to be configured before .env files were loaded
 # Now logging is initialized explicitly in api/serve.py after environment setup

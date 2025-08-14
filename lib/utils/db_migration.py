@@ -23,7 +23,7 @@ def _find_alembic_config() -> Path:
     """
     Find alembic.ini with UVX-aware path resolution.
 
-    CRITICAL FIX: In UVX environments, __file__ points to the installed package
+    In UVX environments, __file__ points to the installed package
     location, not the workspace directory. This function implements multiple
     strategies to locate alembic.ini in the correct location.
 
@@ -85,7 +85,7 @@ def _ensure_environment_loaded():
     """
     Ensure environment variables are loaded consistently across all environments.
 
-    CRITICAL FIX: This function handles UVX environments where working directory
+    This function handles UVX environments where working directory
     differs from development, preventing .env file loading issues.
     """
     try:
@@ -98,15 +98,10 @@ def _ensure_environment_loaded():
         project_root = current_dir
         while project_root.parent != project_root:
             env_file = project_root / ".env"
-            env_agent_file = project_root / ".env.agent"
 
             if env_file.exists():
                 load_dotenv(dotenv_path=env_file)
                 logger.debug(f"Loaded environment from {env_file}")
-                return
-            if env_agent_file.exists():
-                load_dotenv(dotenv_path=env_agent_file)
-                logger.debug(f"Loaded environment from {env_agent_file}")
                 return
 
             # Look for pyproject.toml as project root indicator
@@ -129,13 +124,13 @@ async def check_and_run_migrations() -> bool:
     """
     Check if database migrations are needed and run them if necessary.
 
-    CRITICAL FIX: Ensures consistent environment loading across all environments.
+    Ensures consistent environment loading across all environments.
 
     Returns:
         bool: True if migrations were run, False if not needed
     """
     try:
-        # CRITICAL FIX: Ensure environment variables are loaded before migration check
+        # Ensure environment variables are loaded before migration check
         # This handles UVX environments where .env may not be auto-loaded
         _ensure_environment_loaded()
 
@@ -201,7 +196,7 @@ async def check_and_run_migrations() -> bool:
                     "📝 ACTION REQUIRED: Check your database credentials in .env files"
                 )
                 logger.error("🔧 Steps to fix:")
-                logger.error("   1. Verify HIVE_DATABASE_URL in .env and .env.agent")
+                logger.error("   1. Verify HIVE_DATABASE_URL in .env file")
                 logger.error("   2. Ensure PostgreSQL is running on the specified port")
                 logger.error("   3. Confirm username/password are correct")
                 logger.error("   4. Test connection: psql 'your-database-url-here'")

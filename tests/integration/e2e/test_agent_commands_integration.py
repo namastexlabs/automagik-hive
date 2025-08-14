@@ -44,7 +44,7 @@ class TestAgentCommandsIntegration:
             (workspace / "docker-compose.yml").write_text("""
 version: '3.8'
 services:
-  postgres-agent:
+  agent-postgres:
     image: postgres:15
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -53,7 +53,7 @@ services:
     ports:
       - "35532:5432"
     volumes:
-      - ../../data/postgres-agent:/var/lib/postgresql/data
+      - ../../data/agent-postgres:/var/lib/postgresql/data
 """)
 
             # Create .env.example
@@ -81,7 +81,7 @@ OPENAI_API_KEY=your-openai-key-here
             (docker_dir / "docker-compose.yml").write_text("""
 version: '3.8'
 services:
-  postgres-agent:
+  agent-postgres:
     image: postgres:15
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -90,7 +90,7 @@ services:
     ports:
       - "35532:5432"
     volumes:
-      - ../../data/postgres-agent:/var/lib/postgresql/data
+      - ../../data/agent-postgres:/var/lib/postgresql/data
 """)
 
             # Create .venv directory for environment validation
@@ -240,7 +240,7 @@ class TestFunctionalParityMakeVsUvx:
 
 agent:
 \t@echo "🚀 Starting agent server via Make..."
-\t@docker compose -f docker/agent/docker-compose.yml up -d postgres-agent
+\t@docker compose -f docker/agent/docker-compose.yml up -d agent-postgres
 
 agent-logs:
 \t@echo "📋 Showing agent logs via Make..."
@@ -259,13 +259,13 @@ agent-restart: agent-stop agent
 
 install-agent:
 \t@echo "🤖 Installing agent environment via Make..."
-\t@cp .env.example .env.agent
+\t@echo "Agent inherits from main .env via docker-compose - no separate .env.agent needed"
 """)
 
             yield str(workspace)
 
-    def test_agent_serve_parity(self, temp_workspace_with_makefile):
-        """Test parity between 'make agent' and 'uvx automagik-hive --agent-serve'."""
+    def test_agent_start_parity(self, temp_workspace_with_makefile):
+        """Test parity between 'make agent' and 'uvx automagik-hive --agent-start'."""
 
         # Mock both command executions
         with patch("subprocess.run") as mock_run:
@@ -326,7 +326,7 @@ install-agent:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = "postgres-agent   Up"
+            mock_run.return_value.stdout = "agent-postgres   Up"
 
             # Test make command
             make_result = subprocess.run(
@@ -370,11 +370,11 @@ install-agent:
         assert ports["postgres"] == 35532
 
     def test_environment_file_generation_parity(self, temp_workspace_with_makefile):
-        """Test that both approaches generate equivalent .env.agent files."""
+        """Test that both approaches handle environment configuration via docker-compose inheritance."""
 
         # Simulate make install-agent
         workspace = Path(temp_workspace_with_makefile)
-        make_env_path = workspace / ".env.agent.make"
+        make_env_path = workspace / ".env.make"
 
         # Copy template (simulating make behavior)
         env_example = workspace / ".env.example"
@@ -442,7 +442,7 @@ class TestEndToEndAgentWorkflows:
 
             # Create directories
             (workspace / "logs").mkdir()
-            (workspace / "data" / "postgres-agent").mkdir(parents=True)
+            (workspace / "data" / "agent-postgres").mkdir(parents=True)
             (workspace / ".venv").mkdir()
 
             docker_dir = workspace / "docker" / "agent"
@@ -476,9 +476,9 @@ class TestEndToEndAgentWorkflows:
                         install_result = commands.install(complete_workspace)
                         assert install_result is True
 
-                        # Verify environment file was created
-                        env_agent_path = Path(complete_workspace) / ".env.agent"
-                        assert env_agent_path.exists()
+                        # Verify main environment file exists for docker-compose inheritance
+                        main_env_path = Path(complete_workspace) / ".env"
+                        assert main_env_path.exists()
 
                         # Step 2: Start development server
                         serve_result = commands.serve(complete_workspace)
@@ -620,7 +620,7 @@ class TestCrossPlatformCompatibility:
             # Create docker/agent directory structure for AgentService.stop_agent()
             docker_agent_dir = workspace / "docker" / "agent"
             docker_agent_dir.mkdir(parents=True, exist_ok=True)
-            (docker_agent_dir / "docker-compose.yml").write_text("version: '3.8'\nservices:\n  postgres-agent:\n    image: postgres:13\n  agent-dev-server:\n    image: python:3.12\n")
+            (docker_agent_dir / "docker-compose.yml").write_text("version: '3.8'\nservices:\n  agent-postgres:\n    image: postgres:13\n  agent-api:\n    image: python:3.12\n")
             yield str(workspace)
 
     def test_windows_compatibility_patterns(self, cross_platform_workspace):

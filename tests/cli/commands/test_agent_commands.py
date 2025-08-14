@@ -58,26 +58,30 @@ class TestAgentCommandsInstall:
     """Test agent installation functionality."""
 
     @patch.object(AgentService, 'install_agent_environment', return_value=True)
-    def test_install_success_default_workspace(self, mock_install_env):
-        """Test successful agent installation with default workspace."""
+    @patch.object(AgentService, 'serve_agent', return_value=True)
+    def test_install_success_default_workspace(self, mock_serve_agent, mock_install_env):
+        """Test successful agent installation and start with default workspace."""
         agent_cmd = AgentCommands()
         
         result = agent_cmd.install()
         
-        # Should succeed with mocked dependencies
+        # Should succeed with mocked dependencies - install now also starts services
         assert result is True
         mock_install_env.assert_called_once_with(".")
+        mock_serve_agent.assert_called_once_with(".")
 
     @patch.object(AgentService, 'install_agent_environment', return_value=True)
-    def test_install_success_custom_workspace(self, mock_install_env):
-        """Test successful agent installation with custom workspace."""
+    @patch.object(AgentService, 'serve_agent', return_value=True)
+    def test_install_success_custom_workspace(self, mock_serve_agent, mock_install_env):
+        """Test successful agent installation and start with custom workspace."""
         agent_cmd = AgentCommands()
         
         result = agent_cmd.install("/custom/workspace")
         
-        # Should succeed with mocked dependencies
+        # Should succeed with mocked dependencies - install now also starts services
         assert result is True
         mock_install_env.assert_called_once_with("/custom/workspace")
+        mock_serve_agent.assert_called_once_with("/custom/workspace")
 
     def test_install_failure_scenario(self):
         """Test agent installation failure handling."""
@@ -96,7 +100,7 @@ class TestAgentCommandsInstall:
         agent_cmd.install("/test/workspace")
         
         # Should fail initially - print message format not implemented
-        mock_print.assert_called_with("🚀 Installing agent services in: /test/workspace")
+        mock_print.assert_called_with("🚀 Installing and starting agent services in: /test/workspace")
 
 
 class TestAgentCommandsServiceLifecycle:
@@ -115,18 +119,6 @@ class TestAgentCommandsServiceLifecycle:
         mock_print.assert_called_with("🚀 Starting agent services in: /test/workspace")
         mock_serve_agent.assert_called_once_with("/test/workspace")
 
-    @patch('builtins.print')
-    @patch.object(AgentService, 'serve_agent', return_value=True)
-    def test_serve_is_alias_for_start(self, mock_serve_agent, mock_print):
-        """Test serve method is alias for start method."""
-        agent_cmd = AgentCommands()
-        
-        result = agent_cmd.serve("/test/workspace")
-        
-        # Should pass with proper mocking - serve alias calls start method
-        assert result is True
-        mock_print.assert_called_with("🚀 Starting agent services in: /test/workspace")
-        mock_serve_agent.assert_called_once_with("/test/workspace")
 
     @patch('builtins.print')
     @patch.object(AgentService, 'stop_agent', return_value=True)
@@ -141,17 +133,21 @@ class TestAgentCommandsServiceLifecycle:
         mock_print.assert_called_with("🛑 Stopping agent services in: /test/workspace")
         mock_stop_agent.assert_called_once_with("/test/workspace")
 
-    @pytest.mark.skip(reason="Production bug: restart fails when agent not running - see forge task 6ea9a883-3a1c-4aec-9e6c-bfbcb0ea34a1")
     @patch('builtins.print')
-    def test_restart_success(self, mock_print):
-        """Test successful agent service restart."""
+    def test_restart_calls_stop_and_start(self, mock_print):
+        """Test restart method calls stop and start methods."""
         agent_cmd = AgentCommands()
         
-        result = agent_cmd.restart("/test/workspace")
-        
-        # Should fail initially - real restart logic not implemented
-        assert result is True
-        mock_print.assert_called_with("🔄 Restarting agent services in: /test/workspace")
+        with patch.object(agent_cmd, 'stop', return_value=True) as mock_stop, \
+             patch.object(agent_cmd, 'start', return_value=True) as mock_start:
+            
+            result = agent_cmd.restart("/test/workspace")
+            
+            # Should succeed - restart now calls stop + start
+            assert result is True
+            mock_print.assert_called_with("🔄 Restarting agent services in: /test/workspace")
+            mock_stop.assert_called_once_with("/test/workspace")
+            mock_start.assert_called_once_with("/test/workspace")
 
     def test_service_lifecycle_exception_handling(self):
         """Test service lifecycle methods handle exceptions."""
@@ -272,7 +268,12 @@ class TestAgentCommandsReset:
         
         # Should succeed with mocked implementation
         assert result is True
-        mock_print.assert_called_with("🔄 Resetting agent services in: /test/workspace")
+        # Updated print message format
+        expected_calls = [
+            call("🗑️ Resetting agent environment in: /test/workspace"),
+            call("This will destroy all containers and data, then reinstall and start fresh...")
+        ]
+        mock_print.assert_has_calls(expected_calls)
         mock_reset.assert_called_once_with("/test/workspace")
 
     def test_reset_exception_handling(self):
@@ -293,7 +294,7 @@ class TestAgentCommandsCLIIntegration:
         # Mock successful subprocess execution with expected output
         mock_result = Mock()
         mock_result.returncode = 0
-        mock_result.stdout = "🚀 Installing agent services in: .\n✅ Agent installation completed successfully"
+        mock_result.stdout = "🚀 Installing and starting agent services in: .\n✅ Agent installation completed successfully"
         mock_result.stderr = ""
         mock_subprocess.return_value = mock_result
         
@@ -306,7 +307,7 @@ class TestAgentCommandsCLIIntegration:
         
         # CLI integration now properly mocked for testing
         assert result.returncode == 0
-        assert "Installing agent services" in result.stdout or "Installing agent services" in result.stderr
+        assert "Installing" in result.stdout or "Installing" in result.stderr
         
         # Verify subprocess was called with correct arguments
         mock_subprocess.assert_called_once_with(
@@ -382,7 +383,7 @@ class TestAgentCommandsEdgeCases:
         
         # Boolean return methods
         boolean_methods = [
-            'install', 'start', 'serve', 'stop', 'restart', 'status', 'logs', 'reset'
+            'install', 'start', 'stop', 'restart', 'status', 'logs', 'reset'
         ]
         
         for method_name in boolean_methods:
@@ -452,8 +453,9 @@ class TestAgentCommandsParameterValidation:
         result_start = agent_cmd.start()
         assert result_start is True
         
-        # Verify serve was called with default workspace parameter
-        mock_serve_agent.assert_called_once_with(".")
+        # Verify serve was called with default workspace parameter (install calls it once, start calls it once more)
+        assert mock_serve_agent.call_count == 2
+        mock_serve_agent.assert_has_calls([call("."), call(".")])
         
         # Test logs without tail parameter should succeed with mocked service
         result_logs = agent_cmd.logs(".")

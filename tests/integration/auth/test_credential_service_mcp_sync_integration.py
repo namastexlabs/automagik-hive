@@ -226,14 +226,14 @@ HIVE_API_KEY=template-api-key
                 assert "agent" in result
                 mock_sync.assert_called_once()
                 
-                # Verify agent-specific environment file was created
-                agent_env = tmp_path / ".env.agent"
-                assert agent_env.exists()
+                # Verify main environment file exists for docker-compose inheritance
+                main_env = tmp_path / ".env"
+                assert main_env.exists()
                 
-                agent_content = agent_env.read_text()
-                # Should contain agent-specific configuration
-                assert "38886" in agent_content  # Agent API port
-                assert result["agent"]["postgres_user"] in agent_content
+                main_content = main_env.read_text()
+                # Should contain configuration that agent inherits via docker-compose
+                assert "8886" in main_content  # Main API port, agent gets 38886 via docker-compose  
+                assert result["agent"]["postgres_user"] in main_content
 
 
 class TestCredentialServiceMcpSyncErrorHandling:

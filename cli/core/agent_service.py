@@ -18,7 +18,7 @@ class DockerComposeManager:
     def __init__(self, workspace_path: Optional[Path] = None):
         self.workspace_path = workspace_path or Path(".")
     
-    def get_service_status(self, service_name: str = "postgres-agent"):
+    def get_service_status(self, service_name: str = "agent-postgres"):
         """Get service status stub."""
         class MockStatus:
             name = "RUNNING"
@@ -98,18 +98,11 @@ class AgentService:
         if not self._validate_workspace(Path(workspace_path)):
             return False
             
-        # Create agent env file
-        if not self._create_agent_env_file(workspace_path):
-            return False
-            
         # Setup both postgres and dev server
         if not self._setup_agent_containers(workspace_path):
             return False
             
-        # Generate API key
-        if not self._generate_agent_api_key(workspace_path):
-            return False
-            
+        print("✅ Agent environment installed successfully")
         return True
     
     def _validate_workspace(self, workspace_path: Path) -> bool:
@@ -145,87 +138,6 @@ class AgentService:
             # Handle other path-related errors gracefully
             return False
     
-    def _create_agent_env_file(self, workspace_path: str) -> bool:
-        """Create .env.agent with simple fixed test credentials."""
-        try:
-            # Normalize workspace path for cross-platform compatibility
-            try:
-                workspace = Path(workspace_path).resolve()
-            except NotImplementedError:
-                # Handle cross-platform testing scenarios
-                workspace = Path(workspace_path)
-            env_agent = workspace / ".env.agent"
-            
-            # Simple fixed configuration for agent testing
-            agent_content = """# Agent Environment - Fixed Test Credentials
-# Simple configuration for agent development and testing
-
-# -------------------------------------------------------------------------
-# CORE APPLICATION SETTINGS
-# -------------------------------------------------------------------------
-HIVE_ENVIRONMENT=development
-HIVE_LOG_LEVEL=INFO
-AGNO_LOG_LEVEL=INFO
-
-# -------------------------------------------------------------------------
-# SERVER & API (Agent-specific ports)
-# -------------------------------------------------------------------------
-HIVE_API_HOST=0.0.0.0
-HIVE_API_PORT=38886
-HIVE_API_WORKERS=1
-
-# -------------------------------------------------------------------------
-# DATABASE (Agent-specific with fixed test credentials)
-# -------------------------------------------------------------------------
-HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@localhost:35532/hive_agent
-
-# Docker PostgreSQL user permissions
-POSTGRES_UID=1000
-POSTGRES_GID=1000
-
-# -------------------------------------------------------------------------
-# AI PROVIDER KEYS & DEFAULTS
-# -------------------------------------------------------------------------
-HIVE_DEFAULT_MODEL=gpt-5
-
-# AI Provider API Keys (inherit from environment if needed)
-# ANTHROPIC_API_KEY=
-# GEMINI_API_KEY=
-# OPENAI_API_KEY=
-# GROK_API_KEY=
-# GROQ_API_KEY=
-# COHERE_API_KEY=
-
-# -------------------------------------------------------------------------
-# SECURITY & AUTHENTICATION
-# -------------------------------------------------------------------------
-HIVE_API_KEY=agent-test-key-12345
-HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:38886
-HIVE_AUTH_DISABLED=true
-
-# -------------------------------------------------------------------------
-# DEVELOPMENT MODE
-# -------------------------------------------------------------------------
-HIVE_DEV_MODE=true
-
-# -------------------------------------------------------------------------
-# METRICS & MONITORING
-# -------------------------------------------------------------------------
-HIVE_ENABLE_METRICS=true
-HIVE_AGNO_MONITOR=false
-
-# MCP Configuration path
-HIVE_MCP_CONFIG_PATH=ai/.mcp.json
-"""
-            
-            # Write simple fixed content to .env.agent
-            env_agent.write_text(agent_content)
-            
-            return True
-            
-        except (IOError, OSError, TypeError, AttributeError):
-            # Handle file I/O errors and mocking issues
-            return False
     
     def _setup_agent_containers(self, workspace_path: str) -> bool:
         """Setup agent postgres AND dev server using docker compose command."""
@@ -263,7 +175,7 @@ HIVE_MCP_CONFIG_PATH=ai/.mcp.json
             print("✅ Using ephemeral PostgreSQL storage - fresh database on each restart")
             
             # Execute docker compose command with cross-platform path normalization
-            print("🚀 Starting both postgres-agent and agent-dev-server containers...")
+            print("🚀 Starting both agent-postgres and agent-api containers...")
             result = subprocess.run(
                 ["docker", "compose", "-f", os.fspath(compose_file), "up", "-d"],
                 check=False,
@@ -283,101 +195,6 @@ HIVE_MCP_CONFIG_PATH=ai/.mcp.json
             print(f"❌ Error starting agent containers: {e}")
             return False
     
-    def _generate_agent_api_key(self, workspace_path: str) -> bool:
-        """Generate dynamic API key and update both .env.agent files."""
-        import secrets
-        
-        try:
-            # Normalize workspace path for cross-platform compatibility
-            try:
-                workspace = Path(workspace_path).resolve()
-            except NotImplementedError:
-                # Handle cross-platform testing scenarios
-                workspace = Path(workspace_path)
-            
-            # Check if .env.agent file exists at workspace root - required for update
-            env_agent_root = workspace / ".env.agent"
-            try:
-                if not env_agent_root.exists():
-                    return False
-            except (TypeError, AttributeError):
-                # Handle mocking issues with exists() - assume file exists in test environment
-                pass
-            
-            # Generate secure API key using secrets.token_urlsafe()
-            api_key = f"hive_agent_{secrets.token_urlsafe(32)}"
-            
-            # Update workspace root .env.agent file
-            # Read existing content
-            content = env_agent_root.read_text()
-            
-            # Replace HIVE_API_KEY line with new dynamic key
-            lines = content.split('\n')
-            updated_lines = []
-            key_updated = False
-            
-            for line in lines:
-                if line.startswith('HIVE_API_KEY='):
-                    updated_lines.append(f'HIVE_API_KEY={api_key}')
-                    key_updated = True
-                else:
-                    updated_lines.append(line)
-            
-            # If key wasn't found, add it to security section
-            if not key_updated:
-                # Find security section and add key
-                security_index = -1
-                for i, line in enumerate(updated_lines):
-                    if '# SECURITY & AUTHENTICATION' in line:
-                        security_index = i
-                        break
-                
-                if security_index >= 0:
-                    # Insert after the security header
-                    updated_lines.insert(security_index + 2, f'HIVE_API_KEY={api_key}')
-                else:
-                    # Append at the end
-                    updated_lines.append(f'HIVE_API_KEY={api_key}')
-            
-            # Write back updated content
-            env_agent_root.write_text('\n'.join(updated_lines))
-            
-            # Update docker/agent/.env file
-            docker_agent_dir = workspace / "docker" / "agent"
-            docker_agent_dir.mkdir(parents=True, exist_ok=True)
-            env_agent_docker = docker_agent_dir / ".env"
-            
-            # Simple fixed Docker environment configuration with dynamic API key
-            docker_env_content = f"""# Simple Docker Agent Environment - Dynamic API Key
-POSTGRES_HOST=postgres-agent
-POSTGRES_PORT=5432
-POSTGRES_DB=hive_agent
-POSTGRES_USER=test_user
-POSTGRES_PASSWORD=test_pass
-
-HIVE_API_HOST=0.0.0.0
-HIVE_API_PORT=38886
-HIVE_API_WORKERS=1
-HIVE_ENVIRONMENT=development
-
-HIVE_API_KEY={api_key}
-
-# AI Provider API Keys
-# OPENAI_API_KEY=
-
-HIVE_LOG_LEVEL=INFO
-PYTHONUNBUFFERED=1
-PYTHONDONTWRITEBYTECODE=1
-"""
-            
-            # Write dynamic content to docker/agent/.env
-            env_agent_docker.write_text(docker_env_content)
-            
-            return True
-            
-        except (IOError, OSError, TypeError, AttributeError):
-            # Handle file I/O errors and mocking issues
-            return False
 
     # Validation methods
     def _validate_agent_environment(self, workspace_path: Path) -> bool:
@@ -387,7 +204,7 @@ PYTHONDONTWRITEBYTECODE=1
             workspace_path: Path to the workspace directory
             
         Returns:
-            bool: True if both .env.agent file and .venv directory exist, False otherwise
+            bool: True if .env file and .venv directory exist, False otherwise
         """
         try:
             # Normalize workspace path for cross-platform compatibility
@@ -397,9 +214,9 @@ PYTHONDONTWRITEBYTECODE=1
                 # Handle cross-platform testing scenarios
                 normalized_workspace = Path(workspace_path)
             
-            # Check if .env.agent file exists at workspace root
-            env_agent_file = normalized_workspace / ".env.agent"
-            if not env_agent_file.exists():
+            # Check if .env file exists at workspace root
+            env_file = normalized_workspace / ".env"
+            if not env_file.exists():
                 return False
             
             # Check if .venv directory exists and is a directory
@@ -572,12 +389,6 @@ PYTHONDONTWRITEBYTECODE=1
         
         try:
             workspace = Path(workspace_path)
-            docker_agent_dir = workspace / "docker" / "agent"
-            env_agent = docker_agent_dir / ".env"
-            
-            # Check if docker/agent/.env file exists
-            if not env_agent.exists():
-                return False
             
             # Create logs directory if it doesn't exist
             logs_dir = workspace / "logs"
@@ -594,7 +405,7 @@ PYTHONDONTWRITEBYTECODE=1
                     cwd=workspace,
                     stdout=log_file,
                     stderr=subprocess.STDOUT,
-                    env={**os.environ, "HIVE_ENV_FILE": str(env_agent)}
+                    env=os.environ
                 )
             
             # Store the PID
@@ -782,8 +593,8 @@ PYTHONDONTWRITEBYTECODE=1
             
             # Show logs for both containers
             for service_name, display_name in [
-                ("postgres-agent", "PostgreSQL Database"),
-                ("agent-dev-server", "FastAPI Development Server")
+                ("agent-postgres", "PostgreSQL Database"),
+                ("agent-api", "FastAPI Development Server")
             ]:
                 print(f"\n🔍 {display_name} ({service_name}):")
                 print("-" * 50)
@@ -840,8 +651,8 @@ PYTHONDONTWRITEBYTECODE=1
             
             # Check both containers using Docker Compose
             for service_name, display_name, port in [
-                ("postgres-agent", "agent-postgres", "35532"), 
-                ("agent-dev-server", "agent-server", "38886")
+                ("agent-postgres", "agent-postgres", "35532"), 
+                ("agent-api", "agent-server", "38886")
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths
@@ -878,13 +689,21 @@ PYTHONDONTWRITEBYTECODE=1
 
     # Reset and cleanup methods
     def reset_agent_environment(self, workspace_path: str) -> bool:
-        """Reset agent environment with proper orchestration."""
+        """Reset agent environment with proper orchestration (destroy all + reinstall + start)."""
+        print("🗑️ Destroying all agent containers and data...")
+        
         # Cleanup existing environment first
         if not self._cleanup_agent_environment(workspace_path):
+            print("⚠️ Cleanup had issues, continuing with reset...")
+            
+        print("🔄 Reinstalling agent environment...")
+        # Reinstall the environment
+        if not self.install_agent_environment(workspace_path):
             return False
             
-        # Reinstall the environment
-        return self.install_agent_environment(workspace_path)
+        print("🚀 Starting agent services...")
+        # Start the services after reinstallation
+        return self.serve_agent(workspace_path)
     
     def _cleanup_agent_environment(self, workspace_path: str) -> bool:
         """Cleanup agent environment with comprehensive cleanup."""
@@ -906,22 +725,6 @@ PYTHONDONTWRITEBYTECODE=1
                 # Continue cleanup even if stop fails
                 pass
             
-            # Remove docker/agent/.env file if it exists
-            docker_agent_dir = workspace / "docker" / "agent"
-            env_agent = docker_agent_dir / ".env"
-            try:
-                if env_agent.exists():
-                    try:
-                        env_agent.unlink()
-                    except OSError:
-                        # Continue cleanup even if file removal fails
-                        pass
-            except (TypeError, AttributeError):
-                # Handle mocking issues where mock functions have wrong signatures
-                # This specifically catches test mocking issues like:
-                # "exists_side_effect() missing 1 required positional argument: 'path_self'"
-                # In test environments with broken mocking, assume file doesn't exist
-                pass
             
             # Stop and remove Docker containers
             try:

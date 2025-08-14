@@ -110,61 +110,87 @@ class DynamicModelResolver:
         """
         Fallback approach: try instantiation and progressively remove problematic parameters.
         
-        This is slower but ensures compatibility even when introspection fails.
+        Uses trial instantiation to ensure compatibility when introspection fails.
+        Works by attempting to create a test instance and removing parameters that cause errors.
         """
         filtered_params = parameters.copy()
         problematic_params = set()
         
-        max_attempts = 10  # Prevent infinite loops
+        max_attempts = 15  # Increased to handle more complex parameter sets
         attempt = 0
         
         while attempt < max_attempts:
             try:
                 # Try to instantiate with current parameters
+                # Note: We only test the constructor, we don't need a working instance
                 test_instance = model_class(**filtered_params)
+                
                 # Success! Return the working parameter set
                 logger.debug(
-                    f"Trial instantiation succeeded with {len(filtered_params)} parameters"
+                    f"✅ Trial instantiation succeeded with {len(filtered_params)} parameters for {model_class.__name__}"
                 )
+                if problematic_params:
+                    logger.info(
+                        f"🔧 Successfully filtered out {len(problematic_params)} incompatible parameters: {sorted(problematic_params)}"
+                    )
                 return filtered_params
                 
             except TypeError as e:
                 # Parse error message to find problematic parameter
                 error_msg = str(e)
                 
-                # Common error patterns
+                # Enhanced error pattern matching
+                bad_param = None
+                
                 if "unexpected keyword argument" in error_msg:
-                    # Extract the parameter name from error message
                     # E.g., "unexpected keyword argument 'output_model'"
                     parts = error_msg.split("'")
                     if len(parts) >= 2:
                         bad_param = parts[1]
-                        if bad_param in filtered_params:
-                            problematic_params.add(bad_param)
-                            del filtered_params[bad_param]
-                            logger.debug(
-                                f"Removed problematic parameter '{bad_param}' from model config"
-                            )
-                            attempt += 1
-                            continue
+                        
+                elif "got an unexpected keyword argument" in error_msg:
+                    # Alternative format: "Constructor() got an unexpected keyword argument 'param'"
+                    parts = error_msg.split("'")
+                    if len(parts) >= 2:
+                        bad_param = parts[1]
+                        
+                elif "takes" in error_msg and "positional argument" in error_msg:
+                    # Handle cases where too many positional args provided
+                    # This is less common but can happen with certain parameter combinations
+                    logger.debug(f"Positional argument error, trying to remove least essential parameters")
+                    # Remove non-essential parameters in order of importance
+                    for param_to_try in ['timeout', 'retries', 'max_tokens']:
+                        if param_to_try in filtered_params:
+                            bad_param = param_to_try
+                            break
                 
-                # If we can't parse the error, give up
-                logger.warning(
-                    f"Could not parse TypeError to identify problematic parameter: {e}"
-                )
-                break
+                if bad_param and bad_param in filtered_params:
+                    problematic_params.add(bad_param)
+                    del filtered_params[bad_param]
+                    logger.debug(
+                        f"🔧 Removed problematic parameter '{bad_param}' from {model_class.__name__} config"
+                    )
+                    attempt += 1
+                    continue
+                else:
+                    # If we can't parse the error or parameter not found, give up
+                    logger.warning(
+                        f"⚠️ Could not parse TypeError for {model_class.__name__}: {e}"
+                    )
+                    break
                 
             except Exception as e:
-                # Other errors - can't handle automatically
-                logger.warning(
-                    f"Unexpected error during trial instantiation: {e}"
+                # Other errors - might be due to missing required parameters or invalid values
+                # These are not parameter compatibility issues, so we stop filtering
+                logger.debug(
+                    f"⚠️ Non-TypeError during trial instantiation for {model_class.__name__}: {type(e).__name__}: {e}"
                 )
                 break
         
-        # Return whatever we managed to filter
+        # Return whatever we managed to filter, even if not perfect
         if problematic_params:
             logger.info(
-                f"Filtered out {len(problematic_params)} incompatible parameters: {problematic_params}"
+                f"🔧 Filtered out {len(problematic_params)} incompatible parameters from {model_class.__name__}: {sorted(problematic_params)}"
             )
         
         return filtered_params

@@ -109,7 +109,6 @@ class GenieStructure:
                 "/genie/docs/",  # Design documents and architecture
                 "/genie/ideas/",  # Brainstorming and analysis files
                 "/genie/wishes/",  # Execution-ready plans
-                "/genie/reports/",  # Completion reports and findings
                 "/genie/experiments/",  # Prototype and test files
                 "/genie/knowledge/",  # Learning and wisdom storage
             ]
@@ -161,7 +160,7 @@ class GenieStructure:
             word in filename_lower
             for word in ["report", "complete", "summary", "result"]
         ):
-            return f"/genie/reports/{filename}"
+            return f"/genie/ideas/{filename}"
         if any(
             word in filename_lower
             for word in ["learn", "knowledge", "pattern", "wisdom"]

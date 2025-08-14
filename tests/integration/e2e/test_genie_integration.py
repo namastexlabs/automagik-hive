@@ -95,7 +95,7 @@ volumes:
 """)
 
             # Create environment file
-            (workspace / ".env.genie").write_text("""
+            (workspace / ".env").write_text("""
 POSTGRES_USER=integration_genie_user
 POSTGRES_PASSWORD=integration_genie_pass_123
 POSTGRES_DB=hive_genie
@@ -375,7 +375,7 @@ class TestGenieRealDockerComposeIntegration:
 
     def test_docker_compose_environment_integration(self, integration_workspace):
         """Test docker-compose environment variable integration."""
-        env_file = Path(integration_workspace) / ".env.genie"
+        env_file = Path(integration_workspace) / ".env"
         assert env_file.exists()
 
         env_content = env_file.read_text()

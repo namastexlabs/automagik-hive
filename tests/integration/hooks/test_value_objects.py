@@ -120,7 +120,6 @@ class TestGenieStructure:
             "/genie/docs/",
             "/genie/ideas/",
             "/genie/wishes/",
-            "/genie/reports/",
             "/genie/experiments/",
             "/genie/knowledge/",
         ]
@@ -145,7 +144,7 @@ class TestGenieStructure:
             "/genie/docs/architecture.md",
             "/genie/ideas/brainstorm.md",
             "/genie/wishes/feature-plan.md",
-            "/genie/reports/completion.md",
+            "/genie/ideas/completion.md",
             "/genie/experiments/prototype.py",
             "/genie/knowledge/patterns.md",
         ]
@@ -220,7 +219,7 @@ class TestGenieStructure:
 
         for filename in report_files:
             suggestion = structure.get_suggested_genie_path(filename)
-            assert suggestion.startswith("/genie/reports/"), (
+            assert suggestion.startswith("/genie/ideas/"), (
                 f"Wrong suggestion for {filename}"
             )
             assert suggestion.endswith(filename)

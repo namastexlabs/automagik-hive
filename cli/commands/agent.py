@@ -16,10 +16,14 @@ class AgentCommands:
         self.agent_service = AgentService(self.workspace_path)
     
     def install(self, workspace: str = ".") -> bool:
-        """Install agent services."""
+        """Install and start agent services."""
         try:
-            print(f"🚀 Installing agent services in: {workspace}")
-            return self.agent_service.install_agent_environment(workspace)
+            print(f"🚀 Installing and starting agent services in: {workspace}")
+            # Install and then start services
+            if not self.agent_service.install_agent_environment(workspace):
+                return False
+            # After installation, start the services
+            return self.agent_service.serve_agent(workspace)
         except Exception:
             return False
     
@@ -32,9 +36,6 @@ class AgentCommands:
         except Exception:
             return False
     
-    def serve(self, workspace: str = ".") -> bool:
-        """Start agent server (alias for start)."""
-        return self.start(workspace)
     
     def stop(self, workspace: str = ".") -> bool:
         """Stop agent services."""
@@ -45,10 +46,14 @@ class AgentCommands:
             return False
     
     def restart(self, workspace: str = ".") -> bool:
-        """Restart agent services."""
+        """Restart agent services (stop + start)."""
         try:
             print(f"🔄 Restarting agent services in: {workspace}")
-            return self.agent_service.restart_agent(workspace)
+            # Stop first
+            if not self.stop(workspace):
+                print("⚠️ Stop failed, attempting restart anyway...")
+            # Then start
+            return self.start(workspace)
         except Exception:
             return False
     
@@ -84,9 +89,11 @@ class AgentCommands:
             return {"status": "error", "workspace": workspace}
     
     def reset(self, workspace: str = ".") -> bool:
-        """Reset agent services."""
+        """Reset agent environment (destroy all + reinstall + start)."""
         try:
-            print(f"🔄 Resetting agent services in: {workspace}")
+            print(f"🗑️ Resetting agent environment in: {workspace}")
+            print("This will destroy all containers and data, then reinstall and start fresh...")
+            # Reset includes full cleanup, reinstall, and start
             return self.agent_service.reset_agent_environment(workspace)
         except Exception:
             return False

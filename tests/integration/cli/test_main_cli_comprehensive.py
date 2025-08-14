@@ -58,7 +58,7 @@ class TestCLIParserConstruction:
 
         # Agent commands
         assert "--agent-install" in help_text
-        assert "--agent-serve" in help_text
+        assert "--agent-start" in help_text
         assert "--agent-stop" in help_text
         assert "--agent-restart" in help_text
         assert "--agent-logs" in help_text
@@ -370,11 +370,11 @@ class TestCLICommandRouting:
         assert result == 0
         mock_command_handlers["agent"].install.assert_called_once_with(".")
 
-    def test_agent_serve_command(self, mock_command_handlers):
-        """Test --agent-serve command routing."""
+    def test_agent_start_command(self, mock_command_handlers):
+        """Test --agent-start command routing."""
         mock_command_handlers["agent"].serve.return_value = True
 
-        with patch("sys.argv", ["automagik-hive", "--agent-serve"]):
+        with patch("sys.argv", ["automagik-hive", "--agent-start"]):
             result = main()
 
         # Should fail initially - agent serve not implemented
@@ -531,7 +531,7 @@ class TestCLIErrorHandling:
             ["--postgres-logs"],
             ["--postgres-health"],
             ["--agent-install"],
-            ["--agent-serve"],
+            ["--agent-start"],
             ["--agent-stop"],
             ["--agent-restart"],
             ["--agent-logs"],
@@ -685,7 +685,7 @@ class TestCLICommandCombinations:
             "--postgres-restart",
             "--postgres-health",
             "--agent-install",
-            "--agent-serve",
+            "--agent-start",
             "--agent-stop",
             "--agent-restart",
             "--agent-status",

@@ -134,26 +134,21 @@ HIVE_API_PORT=9000
         # Check that main .env exists
         assert (tmp_path / ".env").exists()
         
-        # For now, the service creates mode-specific env files in root
-        # This matches the current implementation
-        assert (tmp_path / ".env.agent").exists()
-        assert (tmp_path / ".env.genie").exists()
+        # Agent inherits from main .env via docker-compose, no separate .env.agent needed
+        # This matches the new docker-compose inheritance implementation
         
         # The workspace uses the main .env file
         main_env = (tmp_path / ".env").read_text()
         assert "HIVE_DATABASE_URL=" in main_env
         assert "HIVE_API_KEY=" in main_env
         
-        # Agent and genie have their own files with shared database approach
-        agent_env = (tmp_path / ".env.agent").read_text()
-        assert "HIVE_DATABASE_URL=" in agent_env
-        assert "POSTGRES_PORT=5532" in agent_env  # Shared database port
-        assert "38886" in agent_env  # Agent API port
+        # Agent inherits configuration from main .env via docker-compose
+        # Verify main .env has the configuration that agent will inherit
+        assert "HIVE_DATABASE_URL=" in main_env
+        assert "8886" in main_env  # Main API port, agent gets 38886 via docker-compose
         
-        genie_env = (tmp_path / ".env.genie").read_text()
-        assert "HIVE_DATABASE_URL=" in genie_env  
-        assert "POSTGRES_PORT=5532" in genie_env  # Shared database port
-        assert "48886" in genie_env  # Genie API port
+        # Genie inherits configuration from main .env via docker-compose as well
+        # No separate .env.genie file needed - unified credential system
 
     def test_backward_compatibility(self, tmp_path):
         """Test that existing installations continue to work."""

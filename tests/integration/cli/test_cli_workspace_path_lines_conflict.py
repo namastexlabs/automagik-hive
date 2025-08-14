@@ -273,7 +273,7 @@ class TestActualFunctionalityValidation:
         # Existing commands work correctly
         backward_compatible_cases = [
             ["--agent-install", "."],
-            ["--agent-serve", "."],
+            ["--agent-start", "."],
             ["--agent-stop", "."],
             ["--agent-status", "."],
             ["--postgres-status", "."],
@@ -363,7 +363,7 @@ class TestCliValidationWithActualInterface:
         # Test actual commands that exist
         actual_commands = [
             ["--agent-install", "."],
-            ["--agent-serve", "."],
+            ["--agent-start", "."],
             ["--agent-logs", ".", "--tail", "100"],
             ["--postgres-status", "./workspace"],
             ["--postgres-logs", "./workspace", "--tail", "50"],

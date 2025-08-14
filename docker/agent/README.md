@@ -5,7 +5,7 @@ This directory contains the Docker configuration for the agent development envir
 ## Environment Details
 - **API Port**: 38886
 - **Database Port**: 35532
-- **Container Names**: `hive-agents-agent`, `hive-postgres-agent`
+- **Container Names**: `hive-agent-api`, `hive-agent-postgres`
 - **Network**: `automagik-hive_agent_default`
 
 ## Files
@@ -35,4 +35,4 @@ make agent-logs     # View agent logs
 ```
 
 ## Environment Variables
-The agent environment uses `.env.agent` file with agent-specific ports and database configuration.
+The agent environment inherits from the main `.env` file and overrides only agent-specific settings (ports, database) directly in docker-compose.yml.

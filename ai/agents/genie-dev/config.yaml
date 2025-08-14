@@ -34,7 +34,6 @@ storage:
 # Claude MCP coordination - spawn .claude/agents for execution
 mcp_servers:
   - "claude-mcp:*"        # Core: Spawn .claude/agents
-  - "automagik-forge:*"   # Task management
   - "postgres:query"      # System state
   - "search-repo-docs:*"  # Research
   - "ask-repo-agent:*"    # Framework docs

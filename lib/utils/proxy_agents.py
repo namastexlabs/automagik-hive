@@ -156,6 +156,8 @@ class AgnoAgentProxy:
             "parser_model_prompt",
             "response_model",
             "parse_response",
+            "output_model",
+            "output_model_prompt",
             "structured_outputs",
             "use_json_mode",
             "save_response_to_file",
@@ -367,11 +369,11 @@ class AgnoAgentProxy:
         component_id: str,
         db_url: str | None,
     ):
-        """Handle model configuration with truly dynamic provider support.
+        """Handle model configuration with dynamic parameter filtering.
         
-        This method now uses runtime introspection to determine valid parameters
-        instead of maintaining hardcoded lists. This ensures automatic compatibility
-        with any Agno version.
+        Uses runtime introspection to determine which parameters
+        belong to the model vs the Agent, ensuring compatibility
+        across Agno updates.
         """
         from lib.config.models import resolve_model
         from lib.utils.dynamic_model_resolver import filter_model_parameters
@@ -384,17 +386,45 @@ class AgnoAgentProxy:
         model_id = model_config.get("id")
         provider = model_config.get("provider")
         
-        # Fix: Ensure we respect the configured provider and model ID
+        # Use dynamic introspection to determine model parameters
+        # This automatically adapts to ANY Agno updates without requiring code changes
+        try:
+            # First, get the provider and model class to inspect its parameters
+            registry = get_provider_registry()
+            detected_provider = registry.detect_provider(model_id) if model_id else provider
+            
+            if detected_provider:
+                # Get the specific model class for this provider/model
+                provider_classes = registry.get_provider_classes(detected_provider)
+                model_class = registry.resolve_model_class(detected_provider, model_id or "default")
+                
+                # Use our dynamic model resolver to filter parameters
+                filtered_model_config = filter_model_parameters(model_class, model_config)
+                
+                logger.debug(f"🔍 Dynamically filtered model config for {component_id}: {filtered_model_config}")
+                if len(model_config) != len(filtered_model_config):
+                    filtered_out = set(model_config.keys()) - set(filtered_model_config.keys())
+                    logger.debug(f"🔍 Dynamically filtered out parameters: {filtered_out}")
+                
+            else:
+                # Fallback: if we can't detect provider, use original config and let resolve_model handle it
+                logger.warning(f"⚠️ Could not detect provider for {model_id}, using original config")
+                filtered_model_config = model_config
+                
+        except Exception as e:
+            logger.warning(f"🔍 Dynamic filtering failed for {component_id}: {e}. Using original config.")
+            filtered_model_config = model_config
+        
+        # Fix: Return model configuration instead of creating instances during startup
+        # This prevents multiple Agno model instantiations during bulk component discovery
         if model_id:
-            logger.info(f"🚀 Using configured model: {model_id} for {component_id} with config: {model_config}")
-            print(f"🚀 Using configured model: {model_id} for {component_id} with config: {model_config}")
-            # Use the specific model ID from config (provider is included in model_config)
-            return resolve_model(model_id=model_id, **model_config)
+            logger.debug(f"🚀 Configured model: {model_id} for {component_id}")
+            # Return configuration for lazy instantiation by Agno Agent
+            return {"id": model_id, **filtered_model_config}
         else:
             # Fallback to default resolution only when no model ID is specified
             logger.warning(f"⚠️ No model ID specified for {component_id}, using default resolution")
-            print(f"⚠️ No model ID specified for {component_id}, using default resolution")
-            return resolve_model(model_id=None, **model_config)
+            return resolve_model(model_id=None, **filtered_model_config)
 
     def _handle_storage_config(
         self,

@@ -44,7 +44,6 @@ events:
 # MCP servers configuration for debugging tools
 mcp_servers:
   - "postgres:*"
-  - "automagik-forge:*"
   - "ask-repo-agent:*"
   - "search-repo-docs:*"
 

@@ -192,14 +192,37 @@ def temp_workspace_agent(test_environment_manager):
     """Create a temporary workspace with agent configuration."""
     workspace = test_environment_manager.create_temp_workspace("agent")
 
-    # Create agent-focused configuration
-    (workspace / ".env.agent").write_text("""
-HIVE_API_PORT=38886
-POSTGRES_PORT=35532
-POSTGRES_DB=hive_agent
+    # Create main .env configuration for agent inheritance via docker-compose
+    (workspace / ".env").write_text("""
+HIVE_API_PORT=8886
+POSTGRES_PORT=5532
+POSTGRES_DB=hive
 POSTGRES_USER=hive_agent
 POSTGRES_PASSWORD=agent_test_password
 HIVE_API_KEY=agent_test_key_fixture
+""")
+    
+    # Create docker-compose.yml for agent environment
+    docker_dir = workspace / "docker" / "agent"
+    docker_dir.mkdir(parents=True, exist_ok=True)
+    (docker_dir / "docker-compose.yml").write_text("""
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "35532:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=hive_agent
+  api:
+    build: .
+    ports:
+      - "38886:8886"
+    environment:
+      - HIVE_API_PORT=8886
+      - HIVE_API_KEY=${HIVE_API_KEY}
 """)
 
     # Create logs directory with sample log file
@@ -367,7 +390,7 @@ def performance_timer():
 
 
 @pytest.fixture(scope="session")
-def real_agent_server_available():
+def real_agent_start_available():
     """Check if real agent server is available for testing."""
     if requests is None:
         return False
@@ -544,13 +567,37 @@ POSTGRES_PASSWORD=test_password
             """Create workspace with agent configuration."""
             workspace = self.env_manager.create_temp_workspace(name)
 
-            (workspace / ".env.agent").write_text(f"""
-HIVE_API_PORT={api_port}
-POSTGRES_PORT={db_port}
-POSTGRES_DB=hive_agent
+            # Create main .env for docker-compose inheritance
+            (workspace / ".env").write_text(f"""
+HIVE_API_PORT=8886
+POSTGRES_PORT=5532
+POSTGRES_DB=hive
 POSTGRES_USER=hive_agent
 POSTGRES_PASSWORD=agent_password
 HIVE_API_KEY=agent_test_key
+""")
+            
+            # Create docker-compose.yml for agent environment
+            docker_dir = workspace / "docker" / "agent"
+            docker_dir.mkdir(parents=True, exist_ok=True)
+            (docker_dir / "docker-compose.yml").write_text(f"""
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "{db_port}:5432"
+    environment:
+      - POSTGRES_USER=${{POSTGRES_USER}}
+      - POSTGRES_PASSWORD=${{POSTGRES_PASSWORD}}
+      - POSTGRES_DB=hive_agent
+  api:
+    build: .
+    ports:
+      - "{api_port}:8886"
+    environment:
+      - HIVE_API_PORT=8886
+      - HIVE_API_KEY=${{HIVE_API_KEY}}
 """)
 
             # Create logs directory
@@ -604,14 +651,27 @@ OPENAI_API_KEY=sk-test-openai-key
 ANTHROPIC_API_KEY=sk-ant-test-key
 """)
 
-            # Create .env.agent file
-            (workspace / ".env.agent").write_text("""
-HIVE_API_PORT=38886
-POSTGRES_PORT=35532
-POSTGRES_DB=hive_agent
-POSTGRES_USER=hive_agent
-POSTGRES_PASSWORD=agent_full_password
-HIVE_API_KEY=agent_full_key
+            # Create docker-compose for agent environment
+            docker_dir = workspace / "docker" / "agent"
+            docker_dir.mkdir(parents=True, exist_ok=True)
+            (docker_dir / "docker-compose.yml").write_text("""
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "35532:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=hive_agent
+  api:
+    build: .
+    ports:
+      - "38886:8886"
+    environment:
+      - HIVE_API_PORT=8886
+      - HIVE_API_KEY=${HIVE_API_KEY}
 """)
 
             # Create directory structure

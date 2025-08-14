@@ -10,7 +10,6 @@ model:
   temperature: 0.7
   max_tokens: 2000
 mcp_servers:
-  - "automagik-forge:*"
   - "ask-repo-agent:*"
   - "search-repo-docs:*"
   - "send_whatsapp_message:*"

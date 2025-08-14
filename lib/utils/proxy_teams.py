@@ -339,8 +339,8 @@ class AgnoTeamProxy:
         if "temperature" not in filtered_config and "temperature" in inspect.signature(model_class.__init__).parameters:
             filtered_config["temperature"] = 1.0  # Teams often use higher temp
         
-        # Create model instance with filtered parameters
-        return model_class(**filtered_config)
+        # Return configuration for lazy instantiation by Agno Team instead of creating instances
+        return {"id": model_id, **filtered_config}
 
     def _handle_storage_config(
         self,

@@ -63,7 +63,7 @@ class FileChange:
             if any(
                 word in self.path.lower() for word in ["report", "complete", "summary"]
             ):
-                return f"/genie/reports/{self.path}"
+                return f"/genie/ideas/{self.path}"
             return f"/genie/docs/{self.path}"
         if self.is_directory:
             return f"/lib/{self.path}/"

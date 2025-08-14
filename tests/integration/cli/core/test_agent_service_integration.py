@@ -243,7 +243,7 @@ class TestAgentServiceValidation:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            (workspace / ".env.agent").write_text("HIVE_API_PORT=38886\n")
+            (workspace / ".env").write_text("HIVE_API_PORT=8886\n")  # Main env, agent gets 38886 via docker-compose
             (workspace / ".venv").mkdir()
 
             result = service._validate_agent_environment(workspace)
@@ -252,7 +252,7 @@ class TestAgentServiceValidation:
         assert result is True
 
     def test_validate_agent_environment_missing_env_file(self, mock_compose_manager):
-        """Test agent environment validation fails when .env.agent is missing."""
+        """Test agent environment validation fails when main .env is missing."""
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -270,7 +270,7 @@ class TestAgentServiceValidation:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            (workspace / ".env.agent").write_text("HIVE_API_PORT=38886\n")
+            (workspace / ".env").write_text("HIVE_API_PORT=8886\n")  # Main env, agent gets 38886 via docker-compose
             # Don't create .venv
 
             result = service._validate_agent_environment(workspace)
@@ -280,7 +280,7 @@ class TestAgentServiceValidation:
 
 
 class TestAgentServiceEnvironmentFileCreation:
-    """Test .env.agent file creation and management."""
+    """Test environment configuration via docker-compose inheritance."""
 
     @pytest.fixture
     def mock_compose_manager(self):
@@ -291,7 +291,7 @@ class TestAgentServiceEnvironmentFileCreation:
         yield mock_manager
 
     def test_create_agent_env_file_success(self, mock_compose_manager):
-        """Test successful .env.agent file creation."""
+        """Test successful main .env file validation for docker-compose inheritance."""
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -308,7 +308,7 @@ class TestAgentServiceEnvironmentFileCreation:
             # Should fail initially - env file creation not implemented
             assert result is True
 
-            env_agent = workspace / ".env.agent"
+            main_env = workspace / ".env"
             assert env_agent.exists()
 
             content = env_agent.read_text()
@@ -318,27 +318,27 @@ class TestAgentServiceEnvironmentFileCreation:
             assert "http://localhost:38886" in content
 
     def test_create_agent_env_file_missing_example(self, mock_compose_manager):
-        """Test .env.agent creation succeeds with hardcoded content when .env.example is missing."""
+        """Test main .env validation succeeds when using docker-compose inheritance model."""
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            result = service._create_agent_env_file(str(temp_dir))
+            result = service.install_agent_environment(str(temp_dir))
 
-            # Current implementation creates .env.agent with hardcoded content regardless of .env.example
+            # Current implementation validates main .env for docker-compose inheritance
             assert result is True
             
-            # Verify .env.agent was created
-            env_agent = Path(temp_dir) / ".env.agent"
-            assert env_agent.exists()
+            # Verify main .env exists for docker-compose inheritance
+            main_env = Path(temp_dir) / ".env"
+            assert main_env.exists()
             
-            # Verify it contains expected hardcoded content
-            content = env_agent.read_text()
-            assert "HIVE_API_PORT=38886" in content
-            assert "hive_agent" in content
-            assert "agent-test-key-12345" in content
+            # Verify it contains expected configuration for agent inheritance
+            content = main_env.read_text()
+            assert "HIVE_API_PORT=" in content  # Base port, agent gets 38886 via docker-compose
+            assert "hive" in content  # Database prefix, agent gets hive_agent via docker-compose
+            assert "test-key" in content  # Base key, agent gets prefix via docker-compose
 
     def test_create_agent_env_file_read_write_error(self, mock_compose_manager):
-        """Test .env.agent creation handles read/write errors."""
+        """Test main .env validation handles read/write errors."""
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -456,7 +456,7 @@ class TestAgentServiceCredentialsGeneration:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            main_env = workspace / ".env"
             env_agent.write_text("HIVE_API_KEY=old-api-key\n")
 
             with patch("secrets.token_urlsafe") as mock_secrets:
@@ -470,7 +470,7 @@ class TestAgentServiceCredentialsGeneration:
             assert "hive_agent_new_api_token" in content
 
     def test_generate_agent_api_key_missing_env_file(self, mock_compose_manager):
-        """Test API key generation fails when .env.agent is missing."""
+        """Test API key generation fails when main .env is missing."""
         service = AgentService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -604,7 +604,7 @@ class TestAgentServiceBackgroundProcessManagement:
             # Create the correct docker/agent directory structure that _start_agent_background expects
             docker_agent_dir = workspace / "docker" / "agent"
             docker_agent_dir.mkdir(parents=True)
-            # Create the .env file in docker/agent/ directory (not .env.agent in workspace)
+            # Create the main .env file for docker-compose inheritance
             env_agent = docker_agent_dir / ".env"
             env_agent.write_text("HIVE_API_PORT=38886\n")
             logs_dir = workspace / "logs"
@@ -636,7 +636,7 @@ class TestAgentServiceBackgroundProcessManagement:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            main_env = workspace / ".env"
             env_agent.write_text("HIVE_API_PORT=38886\n")
 
             with patch("subprocess.Popen") as mock_popen:
@@ -847,9 +847,9 @@ class TestAgentServiceLogsAndStatus:
             compose_file.write_text("""
 version: '3.8'
 services:
-  postgres-agent:
+  agent-postgres:
     image: postgres:15
-  agent-dev-server:
+  agent-api:
     image: test:latest
 """)
             
@@ -927,26 +927,26 @@ services:
             compose_file.write_text("""
 version: '3.8'
 services:
-  postgres-agent:
+  agent-postgres:
     image: postgres:15
-  agent-dev-server:
+  agent-api:
     image: test:latest
 """)
 
             # Mock Docker Compose commands to return running containers
             with patch("subprocess.run") as mock_run:
-                # First call: docker compose ps -q postgres-agent (returns container ID)
+                # First call: docker compose ps -q agent-postgres (returns container ID)
                 # Second call: docker inspect (returns true for running state)
-                # Third call: docker compose ps -q agent-dev-server (returns container ID) 
+                # Third call: docker compose ps -q agent-api (returns container ID) 
                 # Fourth call: docker inspect (returns true for running state)
                 mock_run.side_effect = [
-                    # postgres-agent ps command - returns container ID
+                    # agent-postgres ps command - returns container ID
                     Mock(returncode=0, stdout="postgres_container_id\n"),
-                    # postgres-agent inspect command - returns running state
+                    # agent-postgres inspect command - returns running state
                     Mock(returncode=0, stdout="true\n"),
-                    # agent-dev-server ps command - returns container ID
+                    # agent-api ps command - returns container ID
                     Mock(returncode=0, stdout="server_container_id\n"),
-                    # agent-dev-server inspect command - returns running state
+                    # agent-api inspect command - returns running state
                     Mock(returncode=0, stdout="true\n"),
                 ]
                 
@@ -971,9 +971,9 @@ services:
         with patch("subprocess.run") as mock_run:
             # Both docker compose ps commands return no output (no containers running)
             mock_run.side_effect = [
-                # postgres-agent ps command - returns empty (no container running)
+                # agent-postgres ps command - returns empty (no container running)
                 Mock(returncode=0, stdout=""),
-                # agent-dev-server ps command - returns empty (no container running)
+                # agent-api ps command - returns empty (no container running)
                 Mock(returncode=0, stdout=""),
             ]
             
@@ -998,7 +998,7 @@ services:
             mock_compose_agent = mock_workspace.__truediv__.return_value.__truediv__.return_value.__truediv__.return_value
             mock_compose_root = mock_workspace.__truediv__.return_value
             
-            # postgres-agent compose file exists
+            # agent-postgres compose file exists
             mock_compose_agent.exists.return_value = True
             mock_compose_root.exists.return_value = False
             
@@ -1007,11 +1007,11 @@ services:
                 # Mock Docker Compose commands to return mixed states (postgres running, server stopped)
                 with patch("subprocess.run") as mock_run:
                     mock_run.side_effect = [
-                        # postgres-agent ps command - returns container ID (running)
+                        # agent-postgres ps command - returns container ID (running)
                         Mock(returncode=0, stdout="postgres_container_id\n"),
-                        # postgres-agent inspect command - returns running state
+                        # agent-postgres inspect command - returns running state
                         Mock(returncode=0, stdout="true\n"),
-                        # agent-dev-server ps command - returns empty (stopped)
+                        # agent-api ps command - returns empty (stopped)
                         Mock(returncode=0, stdout=""),
                     ]
                     
@@ -1064,10 +1064,10 @@ class TestAgentServiceResetAndCleanup:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            main_env = workspace / ".env"
             env_agent.write_text("HIVE_API_PORT=38886\n")
 
-            data_dir = workspace / "data" / "postgres-agent"
+            data_dir = workspace / "data" / "agent-postgres"
             data_dir.mkdir(parents=True)
 
             with patch.object(service, "_stop_agent_background", return_value=True):
@@ -1117,7 +1117,7 @@ class TestAgentServiceIntegration:
             # Create proper docker-compose.yml with service definitions that match actual containers
             (workspace / "docker" / "agent" / "docker-compose.yml").write_text("""
 services:
-  postgres-agent:
+  agent-postgres:
     image: postgres:15
     environment:
       POSTGRES_DB: hive_agent
@@ -1127,7 +1127,7 @@ services:
       - "35532:5432"
     restart: unless-stopped
     
-  agent-dev-server:
+  agent-api:
     image: python:3.12-slim
     command: sleep infinity
     environment:
@@ -1135,7 +1135,7 @@ services:
     ports:
       - "38886:38886"
     depends_on:
-      - postgres-agent
+      - agent-postgres
     restart: unless-stopped
 """)
             (workspace / ".env.example").write_text(

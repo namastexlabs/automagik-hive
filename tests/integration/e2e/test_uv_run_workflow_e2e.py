@@ -174,9 +174,9 @@ HIVE_API_KEY=test_agent_key_12345
         (docker_agent_dir / "docker-compose.yml").write_text("""
 version: '3.8'
 services:
-  postgres-agent:
+  agent-postgres:
     image: postgres:15
-    container_name: hive-postgres-agent
+    container_name: hive-agent-postgres
     ports:
       - "35532:5432"
     environment:
@@ -184,7 +184,7 @@ services:
       POSTGRES_USER: hive_agent
       POSTGRES_PASSWORD: agent_password
     volumes:
-      - ../../../data/postgres-agent:/var/lib/postgresql/data
+      - ../../../data/agent-postgres:/var/lib/postgresql/data
 """)
 
         # Create .venv directory required by agent environment validation
@@ -202,7 +202,7 @@ services:
             assert result == 0, "Agent install should complete successfully"
 
             # Test agent serve - testing modern uv run command structure
-            with patch("sys.argv", ["automagik-hive", "--agent-serve"]):
+            with patch("sys.argv", ["automagik-hive", "--agent-start"]):
                 result = main()
             # Allow serve to fail if environment isn't fully set up - focus on workflow pattern testing
             assert result in [0, 1], "Agent serve should handle command properly"
@@ -316,7 +316,7 @@ class TestRealAgentServerValidation:
             pass
 
     @pytest.fixture
-    def agent_server_available(self):
+    def agent_start_available(self):
         """Check if agent server is available on port 38886."""
         try:
             response = requests.get("http://localhost:38886/health", timeout=5)
@@ -328,9 +328,9 @@ class TestRealAgentServerValidation:
         os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
-    def test_agent_server_health_endpoint(self, agent_server_available):
+    def test_agent_start_health_endpoint(self, agent_start_available):
         """Test real agent server health endpoint."""
-        if not agent_server_available:
+        if not agent_start_available:
             pytest.skip("Agent server not available on port 38886")
 
         # Should fail initially - real server connection not tested
@@ -345,9 +345,9 @@ class TestRealAgentServerValidation:
         os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
-    def test_agent_server_api_endpoints(self, agent_server_available):
+    def test_agent_start_api_endpoints(self, agent_start_available):
         """Test real agent server API endpoints."""
-        if not agent_server_available:
+        if not agent_start_available:
             pytest.skip("Agent server not available on port 38886")
 
         base_url = "http://localhost:38886"
@@ -678,7 +678,7 @@ class TestWorkflowErrorRecovery:
 
         commands_to_test = [
             ["--agent-status"],
-            ["--agent-serve"],
+            ["--agent-start"],
             ["--agent-logs"],
         ]
 

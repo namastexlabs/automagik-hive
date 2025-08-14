@@ -30,7 +30,6 @@ tool:
   integration:
     # MCP servers this tool might interact with
     mcp_servers:
-      - name: "automagik-forge"
         enabled: true
         config:
           base_url: "http://localhost:38886"

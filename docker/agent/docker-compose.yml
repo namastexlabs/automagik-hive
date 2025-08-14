@@ -30,15 +30,19 @@ x-agent-build-args: &agent-build-args
 
 services:
   # Standalone PostgreSQL for Agent Development
-  postgres-agent:
+  agent-postgres:
     image: agnohq/pgvector:16
-    container_name: hive-postgres-agent
+    container_name: hive-agent-postgres
     restart: unless-stopped
     ports:
       - "35532:5432"  # Agent PostgreSQL port
     env_file:
-      - .env
+      - ../../.env  # Load main environment as base
     environment:
+      # Agent-specific postgres overrides
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_pass
+      - POSTGRES_DB=hive_agent
       - PGDATA=/var/lib/postgresql/data/pgdata
     # Note: No volume mapping = ephemeral storage
     # Each container restart creates a fresh database
@@ -57,8 +61,8 @@ services:
       retries: 5
       start_period: 30s
 
-  # Agent FastAPI Service (connects to postgres-agent)
-  agent-dev-server:
+  # Agent FastAPI Service (connects to agent-postgres)
+  agent-api:
     build:
       context: ../../
       dockerfile: docker/agent/Dockerfile.agent
@@ -67,21 +71,27 @@ services:
       platforms:
         - linux/amd64
       target: agent-production
-    container_name: hive-agent-dev-server
+    container_name: hive-agent-api
     restart: unless-stopped
     ports:
       - "38886:38886"  # Agent development API (different from postgres port)
     env_file:
-      - .env
+      - ../../.env  # Load main environment as base
     environment:
-      # Agent-specific database connection (connects to postgres-agent service)
-      - HIVE_DATABASE_URL=postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres-agent:5432/$POSTGRES_DB
+      # Agent-specific overrides only
+      - HIVE_API_PORT=38886
+      - HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@agent-postgres:5432/hive_agent
+      - HIVE_API_KEY=agent-test-key-12345
+      - HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:38886
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_pass
+      - POSTGRES_DB=hive_agent
       - RUNTIME_ENV=prd
     volumes:
       - agent_app_logs:/app/logs                        # Application logs
       - agent_app_data:/app/data                        # Application data
     depends_on:
-      postgres-agent:
+      agent-postgres:
         condition: service_healthy
     networks:
       - agent_network

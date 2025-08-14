@@ -195,7 +195,7 @@ class TestPerformanceBenchmarkValidation:
             ["--init"],
             ["--postgres-status"],
             ["--agent-install"],
-            ["--agent-serve", "./workspace"],
+            ["--agent-start", "./workspace"],
             ["--postgres-logs", "--tail", "100"],
             ["--agent-status", "./workspace"],
         ]
@@ -342,7 +342,7 @@ class TestRealAgentServerValidation:
     """Tests requiring real agent server validation."""
 
     @pytest.fixture
-    def agent_server_check(self):
+    def agent_start_check(self):
         """Check if agent server is available for testing."""
         try:
             response = requests.get("http://localhost:38886/health", timeout=5)
@@ -354,9 +354,9 @@ class TestRealAgentServerValidation:
         os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
-    def test_agent_server_connectivity_validation(self, agent_server_check):
+    def test_agent_start_connectivity_validation(self, agent_start_check):
         """Test connectivity to real agent server."""
-        if not agent_server_check:
+        if not agent_start_check:
             pytest.skip("Agent server not available on port 38886")
 
         # Should fail initially - real server connectivity not tested
@@ -370,9 +370,9 @@ class TestRealAgentServerValidation:
         os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
-    def test_agent_server_endpoints_comprehensive(self, agent_server_check):
+    def test_agent_start_endpoints_comprehensive(self, agent_start_check):
         """Test comprehensive agent server endpoint validation."""
-        if not agent_server_check:
+        if not agent_start_check:
             pytest.skip("Agent server not available on port 38886")
 
         base_url = "http://localhost:38886"
@@ -403,9 +403,9 @@ class TestRealAgentServerValidation:
         os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
-    def test_agent_server_performance_validation(self, agent_server_check):
+    def test_agent_start_performance_validation(self, agent_start_check):
         """Test agent server performance characteristics."""
-        if not agent_server_check:
+        if not agent_start_check:
             pytest.skip("Agent server not available on port 38886")
 
         base_url = "http://localhost:38886"
@@ -428,9 +428,9 @@ class TestRealAgentServerValidation:
         os.environ.get("TEST_REAL_AGENT_SERVER", "").lower() != "true",
         reason="Real agent server testing disabled. Set TEST_REAL_AGENT_SERVER=true to enable.",
     )
-    def test_agent_server_concurrent_requests(self, agent_server_check):
+    def test_agent_start_concurrent_requests(self, agent_start_check):
         """Test agent server under concurrent load."""
-        if not agent_server_check:
+        if not agent_start_check:
             pytest.skip("Agent server not available on port 38886")
 
         import threading

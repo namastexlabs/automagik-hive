@@ -218,7 +218,7 @@ class TestFixValidationCriteria:
         # These existing commands work correctly
         existing_commands = [
             ["--agent-install", "."],
-            ["--agent-serve", "."],
+            ["--agent-start", "."],
             ["--agent-stop", "."],
             ["--agent-status", "."],
             ["--postgres-status", "."],
@@ -263,7 +263,7 @@ class TestErrorScenarioHandling:
         """Test: Conflicting commands are handled by main() function."""
         # These command combinations are handled by the main() function
         conflicting_cases = [
-            ['automagik-hive', '--agent-install', '.', '--agent-serve', '.'],
+            ['automagik-hive', '--agent-install', '.', '--agent-start', '.'],
             ['automagik-hive', '--agent-start', '.', '--agent-stop', '.'],
         ]
         

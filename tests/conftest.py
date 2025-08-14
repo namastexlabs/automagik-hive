@@ -102,7 +102,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
         finally:
             loop.close()
             
-        # CRITICAL FIX: Ensure builtins.input is restored to prevent 
+        # Ensure builtins.input is restored to prevent 
         # KeyboardInterrupt during pytest shutdown
         try:
             import builtins

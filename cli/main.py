@@ -18,6 +18,7 @@ from .commands.workspace import WorkspaceCommands
 from .commands.postgres import PostgreSQLCommands
 from .commands.agent import AgentCommands
 from .commands.uninstall import UninstallCommands
+from .commands.service import ServiceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -30,7 +31,8 @@ def create_parser() -> argparse.ArgumentParser:
 
     # Core commands  
     parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
-    parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start workspace server")
+    parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start production server (Docker)")
+    parser.add_argument("--dev", nargs="?", const=".", metavar="WORKSPACE", help="Start development server (local)")
     # Get actual version for the version argument
     try:
         from lib.utils.version_reader import get_project_version
@@ -49,13 +51,20 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--postgres-health", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL health")
     
     # Agent commands
-    parser.add_argument("--agent-install", nargs="?", const=".", metavar="WORKSPACE", help="Install agent services")
-    parser.add_argument("--agent-serve", nargs="?", const=".", metavar="WORKSPACE", help="Start agent server")
+    parser.add_argument("--agent-install", nargs="?", const=".", metavar="WORKSPACE", help="Install and start agent services")
+    parser.add_argument("--agent-start", nargs="?", const=".", metavar="WORKSPACE", help="Start agent services")
     parser.add_argument("--agent-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop agent services")
-    parser.add_argument("--agent-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart agent services")
+    parser.add_argument("--agent-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart agent services (stop + start)")
     parser.add_argument("--agent-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show agent logs")
     parser.add_argument("--agent-status", nargs="?", const=".", metavar="WORKSPACE", help="Check agent status")
-    parser.add_argument("--agent-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset agent services")
+    parser.add_argument("--agent-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset agent environment (destroy all + reinstall + start)")
+    
+    # Production environment commands
+    parser.add_argument("--install", nargs="?", const=".", metavar="WORKSPACE", help="Complete environment setup with .env generation and PostgreSQL")
+    parser.add_argument("--stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop production environment")
+    parser.add_argument("--restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart production environment")
+    parser.add_argument("--status", nargs="?", const=".", metavar="WORKSPACE", help="Check production environment status")
+    parser.add_argument("--logs", nargs="?", const=".", metavar="WORKSPACE", help="Show production environment logs")
     
     # Uninstall commands
     parser.add_argument("--uninstall", nargs="?", const=".", metavar="WORKSPACE", help="Uninstall current workspace")
@@ -79,11 +88,12 @@ def main() -> int:
     
     # Count commands
     commands = [
-        args.init != False, args.serve,
+        args.init != False, args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop, 
         args.postgres_restart, args.postgres_logs, args.postgres_health,
-        args.agent_install, args.agent_serve, args.agent_stop,
+        args.agent_install, args.agent_start, args.agent_stop,
         args.agent_restart, args.agent_logs, args.agent_status, args.agent_reset,
+        args.install, args.stop, args.restart, args.status, args.logs,
         args.uninstall, args.uninstall_global,
         args.workspace
     ]
@@ -104,24 +114,17 @@ def main() -> int:
             workspace_name = None if args.init == "__DEFAULT__" else args.init
             return 0 if init_cmd.init_workspace(workspace_name) else 1
         
-        # Serve workspace
+        # Production server (Docker)
         if args.serve:
-            import subprocess
-            try:
-                # Build uvicorn command
-                cmd = [
-                    "uv", "run", "uvicorn", "api.serve:app",
-                    "--host", args.host,
-                    "--port", str(args.port),
-                    "--reload"
-                ]
-                subprocess.run(cmd)
-                return 0
-            except KeyboardInterrupt:
-                return 0  # Graceful shutdown on keyboard interrupt
-            except OSError as e:
-                print(f"❌ Failed to start server: {e}")
-                return 1
+            service_manager = ServiceManager()
+            result = service_manager.serve_docker(args.serve)
+            return 0 if result else 1
+        
+        # Development server (local)
+        if args.dev:
+            service_manager = ServiceManager()
+            result = service_manager.serve_local(args.host, args.port, reload=True)
+            return 0 if result else 1
         
         # Start workspace server (positional argument)
         if args.workspace:
@@ -150,8 +153,8 @@ def main() -> int:
         agent_cmd = AgentCommands()
         if args.agent_install:
             return 0 if agent_cmd.install(args.agent_install) else 1
-        elif args.agent_serve:
-            return 0 if agent_cmd.serve(args.agent_serve) else 1
+        elif args.agent_start:
+            return 0 if agent_cmd.start(args.agent_start) else 1
         elif args.agent_stop:
             return 0 if agent_cmd.stop(args.agent_stop) else 1
         elif args.agent_restart:
@@ -163,11 +166,30 @@ def main() -> int:
         elif args.agent_reset:
             return 0 if agent_cmd.reset(args.agent_reset) else 1
         
+        # Production environment commands
+        service_manager = ServiceManager()
+        if args.install:
+            return 0 if service_manager.install_full_environment(args.install) else 1
+        elif args.stop:
+            return 0 if service_manager.stop_docker(args.stop) else 1
+        elif args.restart:
+            return 0 if service_manager.restart_docker(args.restart) else 1
+        elif args.status:
+            status = service_manager.docker_status(args.status)
+            print(f"🔍 Production environment status in: {args.status}")
+            for service, service_status in status.items():
+                print(f"  {service}: {service_status}")
+            return 0
+        elif args.logs:
+            return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
+        
         # Uninstall commands
-        uninstall_cmd = UninstallCommands()
         if args.uninstall:
-            return 0 if uninstall_cmd.uninstall_current_workspace() else 1
+            # Use the new production environment uninstall
+            service_manager = ServiceManager()
+            return 0 if service_manager.uninstall_environment(args.uninstall) else 1
         elif args.uninstall_global:
+            uninstall_cmd = UninstallCommands()
             return 0 if uninstall_cmd.uninstall_global() else 1
         
         return 0

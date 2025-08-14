@@ -1,105 +1,75 @@
 # =============================================================================
-# Automagik Hive Multi-Container Architecture - Complete Docker Compose
+# Main Application Container - PostgreSQL + FastAPI with Persistent Storage
 # =============================================================================
-#
-# UVX Phase 1 Multi-Container orchestration for:
-# - Main workspace server (port 8886) with PostgreSQL (port 5532)
-# - Genie consultation container (port 48886) - all-in-one PostgreSQL + FastAPI
-# - Agent development container (port 35532) - all-in-one PostgreSQL + FastAPI
-# - BuildKit optimizations for fast builds
-#
-# Usage:
-#   docker-compose up -d                    # Start all services
-#   docker-compose up postgres              # Start only main PostgreSQL
-#   docker-compose up app                   # Start main workspace server
-#   docker-compose -f docker-compose-genie.yml up -d      # Start Genie container
-#   docker-compose -f docker-compose-agent.yml up -d      # Start Agent container
-#
-# Integration with UVX CLI:
-#   uvx automagik-hive ./my-workspace       # Start workspace (uses postgres + app services)
-#   uvx automagik-hive --genie-serve        # Start Genie container
-#   uvx automagik-hive --agent-serve        # Start Agent container
-#
-# =============================================================================
-
-# Shared build arguments for consistent builds across services
-x-build-args: &build-args
-  BUILD_VERSION: ${BUILD_VERSION:-latest}
-  BUILD_DATE: ${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
-  GIT_SHA: ${GIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo "unknown")}
-  API_PORT: ${HIVE_API_PORT:-8886}
 
 services:
-  # Main application service with optimized build
-  app:
-    build:
-      context: ../..
-      dockerfile: docker/main/Dockerfile
-      args:
-        <<: *build-args
-      platforms:
-        - linux/amd64
-      target: production
-    container_name: hive-agents
-    restart: unless-stopped
-    ports:
-      - "8886:8886"
-    env_file:
-      - .env
-    environment:
-      # Database connection with psycopg3 syntax
-      - HIVE_DATABASE_URL=postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB
-      - RUNTIME_ENV=prd
-    volumes:
-      - app_logs:/app/logs
-      - app_data:/app/data
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - app_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8886/api/v1/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  # PostgreSQL database with pgvector extension
+  # Main PostgreSQL with persistent storage
   postgres:
     image: agnohq/pgvector:16
-    container_name: hive-postgres
+    container_name: hive-main-postgres
     restart: unless-stopped
-    user: "1000:1000"
+    ports:
+      - "${HIVE_DATABASE_PORT:-5532}:5432"
     env_file:
-      - .env
+      - ../../.env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - ../../data/postgres:/var/lib/postgresql/data
+    user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"
     command: >
       postgres
       -c max_connections=200
       -c shared_buffers=256MB
       -c effective_cache_size=1GB
-    ports:
-      - "5532:5432"
     networks:
-      - app_network
+      - main_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
-# Network configuration
+  # Main FastAPI Application
+  app:
+    build:
+      context: ../../
+      dockerfile: docker/main/Dockerfile
+      target: production
+    container_name: hive-main-app
+    restart: unless-stopped
+    ports:
+      - "${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"
+    env_file:
+      - ../../.env
+    environment:
+      - RUNTIME_ENV=prd
+    volumes:
+      - main_app_logs:/app/logs
+      - main_app_data:/app/data
+      - ../../data:/app/shared_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - main_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
 networks:
-  app_network:
+  main_network:
     driver: bridge
+    name: hive_main_network
 
-# Persistent volumes
 volumes:
-  app_logs:
+  main_app_logs:
     driver: local
-  app_data:
+    name: hive_main_app_logs
+  main_app_data:
     driver: local
+    name: hive_main_app_data

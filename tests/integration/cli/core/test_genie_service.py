@@ -53,7 +53,7 @@ networks:
   genie_network:
     driver: bridge
 """)
-        (workspace / ".env.genie").write_text("""
+        (workspace / ".env").write_text("""
 POSTGRES_USER=test_genie_user
 POSTGRES_PASSWORD=test_genie_pass
 POSTGRES_DB=hive_genie
@@ -162,7 +162,7 @@ except ImportError:
             
             # Basic validation for testing - check if required files exist
             return (workspace_path / "docker-compose-genie.yml").exists() and \
-                   (workspace_path / ".env.genie").exists()
+                   (workspace_path / ".env").exists()
         
         # Setup methods
         def _setup_genie_postgres(self, workspace_path: str) -> bool:
@@ -461,7 +461,7 @@ class TestGenieServiceValidation:
             assert result is False
 
     def test_validate_genie_environment_missing_env_file(self):
-        """Test validation with missing .env.genie file."""
+        """Test validation with missing .env file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             # Create compose file but not env file
@@ -629,7 +629,7 @@ class TestGenieServiceCredentialManagement:
         assert result is True
 
         # Check credentials were generated
-        env_file = Path(temp_workspace) / ".env.genie"
+        env_file = Path(temp_workspace) / ".env"
         if env_file.exists():
             env_content = env_file.read_text()
             assert "POSTGRES_USER=" in env_content
@@ -661,7 +661,7 @@ class TestGenieServiceCredentialManagement:
         # Should fail initially - secure storage not implemented
         service._generate_genie_credentials(temp_workspace)
 
-        env_file = Path(temp_workspace) / ".env.genie"
+        env_file = Path(temp_workspace) / ".env"
         if env_file.exists():
             # Check file permissions are secure
             file_mode = oct(env_file.stat().st_mode)[-3:]

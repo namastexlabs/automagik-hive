@@ -105,13 +105,13 @@ class TestCLIMainEntryPoint:
         """Test main function routes start command correctly."""
         with patch('cli.main.AgentCommands') as mock_agent_class:
             mock_agent = Mock()
-            mock_agent.serve.return_value = True
+            mock_agent.start.return_value = True
             mock_agent_class.return_value = mock_agent
             
-            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+            with patch('sys.argv', ['automagik-hive', '--agent-start', '.']):
                 result = main()
                 assert result == 0
-                mock_agent.serve.assert_called_once_with('.')
+                mock_agent.start.assert_called_once_with('.')
 
     def test_main_command_routing_health(self):
         """Test main function routes health command correctly."""
@@ -155,8 +155,8 @@ class TestCLICommandIntegration:
         parser = create_parser()
 
         # Test agent serve command
-        args = parser.parse_args(['--agent-serve', '.'])
-        assert args.agent_serve == '.'
+        args = parser.parse_args(['--agent-start', '.'])
+        assert args.agent_start == '.'
 
         # Test agent stop command
         args = parser.parse_args(['--agent-stop', '.'])
@@ -232,9 +232,9 @@ class TestCLICommandIntegration:
         parser = create_parser()
         
         # These should parse successfully
-        args = parser.parse_args(['--agent-install', '.', '--agent-serve', '.'])
+        args = parser.parse_args(['--agent-install', '.', '--agent-start', '.'])
         assert args.agent_install == '.'
-        assert args.agent_serve == '.'
+        assert args.agent_start == '.'
 
     def test_argument_parsing_edge_cases(self):
         """Test argument parsing edge cases."""
@@ -276,16 +276,16 @@ class TestCLIWorkflowIntegration:
         """Test complete service lifecycle integration."""
         with patch('cli.main.AgentCommands') as mock_agent_class:
             mock_agent = Mock()
-            mock_agent.serve.return_value = True
+            mock_agent.start.return_value = True
             mock_agent.status.return_value = True
             mock_agent.stop.return_value = True
             mock_agent_class.return_value = mock_agent
 
             # Test start
-            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+            with patch('sys.argv', ['automagik-hive', '--agent-start', '.']):
                 result = main()
                 assert result == 0
-                mock_agent.serve.assert_called_once_with('.')
+                mock_agent.start.assert_called_once_with('.')
 
             # Reset the mock
             mock_agent_class.reset_mock()
@@ -367,7 +367,7 @@ class TestCLIErrorHandling:
         with patch('cli.main.AgentCommands') as mock_agent_class:
             mock_agent_class.side_effect = Exception("Service error")
 
-            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+            with patch('sys.argv', ['automagik-hive', '--agent-start', '.']):
                 result = main()
                 assert result == 1
 
@@ -375,10 +375,10 @@ class TestCLIErrorHandling:
         """Test CLI handles invalid operations."""
         with patch('cli.main.AgentCommands') as mock_agent_class:
             mock_agent = Mock()
-            mock_agent.serve.return_value = False  # Invalid operation
+            mock_agent.start.return_value = False  # Invalid operation
             mock_agent_class.return_value = mock_agent
 
-            with patch('sys.argv', ['automagik-hive', '--agent-serve', '.']):
+            with patch('sys.argv', ['automagik-hive', '--agent-start', '.']):
                 result = main()
                 assert result == 1
 
@@ -454,7 +454,7 @@ class TestCLIPerformance:
         test_args = [
             ['--init'],
             ['--agent-install', '.'],
-            ['--agent-serve', '.'],
+            ['--agent-start', '.'],
             ['--postgres-health', '.', '--tail', '100'],
             ['--agent-logs', '.', '--tail', '100'],
             ['--uninstall', '.'],
@@ -483,7 +483,7 @@ class TestCLICompatibility:
 
         # Test all expected commands are supported
         expected_commands = [
-            '--agent-install', '--agent-serve', '--agent-stop', '--agent-restart',
+            '--agent-install', '--agent-start', '--agent-stop', '--agent-restart',
             '--agent-status', '--postgres-health', '--agent-logs', '--uninstall', '--init'
         ]
         
@@ -562,7 +562,7 @@ class TestCLIEndToEndScenarios:
         """Test complete agent lifecycle: install -> start -> health -> stop -> uninstall."""
         scenarios = [
             (['automagik-hive', '--agent-install', '.'], 0),
-            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--agent-start', '.'], 0),
             (['automagik-hive', '--postgres-health', '.'], 0),
             (['automagik-hive', '--agent-status', '.'], 0),
             (['automagik-hive', '--agent-logs', '.'], 0),
@@ -580,7 +580,7 @@ class TestCLIEndToEndScenarios:
         scenarios = [
             (['automagik-hive', '--init'], 0),
             (['automagik-hive', '--agent-install', '.'], 0),
-            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--agent-start', '.'], 0),
             (['automagik-hive', '--postgres-health', '.'], 0),
             (['automagik-hive', '--agent-stop', '.'], 0),
         ]
@@ -594,7 +594,7 @@ class TestCLIEndToEndScenarios:
         """Test complete system lifecycle with all components."""
         scenarios = [
             (['automagik-hive', '--agent-install', '.'], 0),
-            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--agent-start', '.'], 0),
             (['automagik-hive', '--postgres-health', '.'], 0),
             (['automagik-hive', '--agent-status', '.'], 0),
             (['automagik-hive', '--agent-logs', '.', '--tail', '50'], 0),
@@ -615,7 +615,7 @@ class TestCLIEndToEndScenarios:
 
         failure_scenarios = [
             (['automagik-hive', '--agent-install', '.'], 1),
-            (['automagik-hive', '--agent-serve', '.'], 1),
+            (['automagik-hive', '--agent-start', '.'], 1),
         ]
 
         for argv, expected_exit in failure_scenarios:
@@ -628,7 +628,7 @@ class TestCLIEndToEndScenarios:
         mixed_scenarios = [
             (['automagik-hive', '--agent-install', '.'], 0),
             (['automagik-hive', '--postgres-status', '.'], 0),
-            (['automagik-hive', '--agent-serve', '.'], 0),
+            (['automagik-hive', '--agent-start', '.'], 0),
             (['automagik-hive', '--postgres-health', '.'], 0),
         ]
 
@@ -658,13 +658,13 @@ class TestCLIParameterizedCommands:
         """Test agent serve command for all workspace paths."""
         with patch('cli.main.AgentCommands') as mock_agent_class:
             mock_agent = Mock()
-            mock_agent.serve.return_value = True
+            mock_agent.start.return_value = True
             mock_agent_class.return_value = mock_agent
 
-            with patch('sys.argv', ['automagik-hive', '--agent-serve', workspace_path]):
+            with patch('sys.argv', ['automagik-hive', '--agent-start', workspace_path]):
                 result = main()
                 assert result == 0
-                mock_agent.serve.assert_called_once_with(workspace_path)
+                mock_agent.start.assert_called_once_with(workspace_path)
 
     def test_health_command_all_components(self, workspace_path):
         """Test postgres health command for all workspace paths."""

@@ -12,7 +12,7 @@ echo "🤖 Stopping agent Docker containers..."
 docker compose -f docker-compose-agent.yml down 2>/dev/null || true
 
 echo "🗑️ Removing all containers..."
-docker container rm hive-agents hive-postgres hive-agents-agent hive-postgres-agent 2>/dev/null || true
+docker container rm hive-agents hive-postgres hive-agents-agent hive-agent-postgres 2>/dev/null || true
 
 echo "🖼️ Removing Docker images..."
 docker image rm automagik-hive-app 2>/dev/null || true
@@ -49,14 +49,13 @@ fi
 
 echo "📁 Removing directories and environment files..."
 rm -rf .venv/ logs/ 2>/dev/null || true
-rm -f .env.agent 2>/dev/null || true
 
 echo "🗑️ Removing PostgreSQL data (with Docker)..."
-if [ -d "./data/postgres" ] || [ -d "./data/postgres-agent" ]; then
+if [ -d "./data/postgres" ]; then
     # Use Docker to remove data with proper permissions
     docker run --rm -v "$(pwd)/data:/data" --entrypoint="" postgres:16 sh -c "rm -rf /data/*" 2>/dev/null || true
     rmdir ./data 2>/dev/null || true
-    echo "  Removed main and agent database data"
+    echo "  Removed main database data (agent uses ephemeral storage)"
 else
     rm -rf ./data/ 2>/dev/null || true
     echo "  Removed data directory"

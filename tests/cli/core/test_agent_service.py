@@ -423,12 +423,27 @@ services:
         """Test service integrates with agent environment configuration."""
         service = AgentService(temp_workspace)
         
-        # Create mock .env.agent file
-        env_file = temp_workspace / ".env.agent"
+        # Create main .env file for docker-compose inheritance
+        env_file = temp_workspace / ".env"
         env_file.write_text("""
-HIVE_API_PORT=38886
-HIVE_DATABASE_URL=postgresql://user:pass@localhost:35532/hive_agent
+HIVE_API_PORT=8886
+HIVE_DATABASE_URL=postgresql://user:pass@localhost:5532/hive
 HIVE_API_KEY=test-key
+POSTGRES_USER=user
+POSTGRES_PASSWORD=pass
+""")
+        
+        # Create docker-compose for agent environment
+        docker_dir = temp_workspace / "docker" / "agent"
+        docker_dir.mkdir(parents=True, exist_ok=True)
+        (docker_dir / "docker-compose.yml").write_text("""
+version: '3.8'
+services:
+  api:
+    ports:
+      - "38886:8886"
+    environment:
+      - HIVE_API_KEY=${HIVE_API_KEY}
 """)
         
         # Service should read configuration when implemented

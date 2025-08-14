@@ -79,7 +79,7 @@ class TestEnvironmentConfig:
         """Test EnvironmentConfig dataclass creation."""
         config = EnvironmentConfig(
             source_file=Path(".env.example"),
-            target_file=Path(".env.agent"),
+            target_file=Path(".env"),
             port_mappings={"HIVE_API_PORT": 38886, "POSTGRES_PORT": 35532},
             database_suffix="_agent",
             cors_port_mapping={8886: 38886, 5532: 35532},
@@ -87,7 +87,7 @@ class TestEnvironmentConfig:
 
         # Should fail initially - dataclass not implemented
         assert config.source_file == Path(".env.example")
-        assert config.target_file == Path(".env.agent")
+        assert config.target_file == Path("docker/agent/docker-compose.yml")
         assert config.port_mappings == {"HIVE_API_PORT": 38886, "POSTGRES_PORT": 35532}
         assert config.database_suffix == "_agent"
         assert config.cors_port_mapping == {8886: 38886, 5532: 35532}
@@ -103,8 +103,8 @@ class TestAgentEnvironmentInitialization:
         # Should fail initially - initialization not implemented
         assert env.workspace_path == Path.cwd()
         assert env.env_example_path == Path.cwd() / ".env.example"
-        assert env.env_agent_path == Path.cwd() / ".env.agent"
         assert env.main_env_path == Path.cwd() / ".env"
+        assert env.docker_compose_path == Path.cwd() / "docker" / "agent" / "docker-compose.yml"
 
     def test_agent_environment_initialization_custom_workspace(self):
         """Test AgentEnvironment initializes with custom workspace."""
@@ -114,8 +114,8 @@ class TestAgentEnvironmentInitialization:
         # Should fail initially - custom workspace handling not implemented
         assert env.workspace_path == custom_path
         assert env.env_example_path == custom_path / ".env.example"
-        assert env.env_agent_path == custom_path / ".env.agent"
         assert env.main_env_path == custom_path / ".env"
+        assert env.docker_compose_path == custom_path / "docker" / "agent" / "docker-compose.yml"
 
     def test_agent_environment_config_initialization(self):
         """Test AgentEnvironment config is properly initialized."""
@@ -124,7 +124,7 @@ class TestAgentEnvironmentInitialization:
         # Should fail initially - config initialization not implemented
         assert isinstance(env.config, EnvironmentConfig)
         assert env.config.source_file == env.env_example_path
-        assert env.config.target_file == env.env_agent_path
+        assert env.config.target_file == env.docker_compose_path
         assert env.config.port_mappings["HIVE_API_PORT"] == 38886
         assert env.config.port_mappings["POSTGRES_PORT"] == 35532
         assert env.config.database_suffix == "_agent"
@@ -132,7 +132,7 @@ class TestAgentEnvironmentInitialization:
 
 
 class TestAgentEnvironmentGeneration:
-    """Test .env.agent file generation functionality."""
+    """Test .env file generation functionality."""
 
     @pytest.fixture
     def temp_workspace(self):
@@ -158,16 +158,16 @@ class TestAgentEnvironmentGeneration:
             yield workspace
 
     def test_generate_env_agent_success(self, temp_workspace):
-        """Test successful .env.agent generation."""
+        """Test successful .env generation."""
         env = AgentEnvironment(temp_workspace)
 
         result_path = env.generate_env_agent()
 
         # Should fail initially - generation not implemented
-        assert result_path == env.env_agent_path
-        assert env.env_agent_path.exists()
+        assert result_path == env.main_env_path
+        assert env.main_env_path.exists()
 
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
         assert "HIVE_API_PORT=38886" in content
         assert "localhost:35532" in content
         assert "/hive_agent" in content
@@ -175,7 +175,7 @@ class TestAgentEnvironmentGeneration:
         assert "AGENT ENVIRONMENT CONFIGURATION" in content
 
     def test_generate_env_agent_missing_template(self, temp_workspace):
-        """Test .env.agent generation fails when template is missing."""
+        """Test .env generation fails when template is missing."""
         env = AgentEnvironment(temp_workspace)
         env.env_example_path.unlink()  # Remove template
 
@@ -184,24 +184,24 @@ class TestAgentEnvironmentGeneration:
             env.generate_env_agent()
 
     def test_generate_env_agent_file_exists_no_force(self, temp_workspace):
-        """Test .env.agent generation fails when file exists and force=False."""
+        """Test .env generation fails when file exists and force=False."""
         env = AgentEnvironment(temp_workspace)
-        env.env_agent_path.write_text("existing content")
+        env.main_env_path.write_text("existing content")
 
         # Should fail initially - file exists handling not implemented
         with pytest.raises(FileExistsError):
             env.generate_env_agent(force=False)
 
     def test_generate_env_agent_file_exists_with_force(self, temp_workspace):
-        """Test .env.agent generation succeeds when file exists and force=True."""
+        """Test .env generation succeeds when file exists and force=True."""
         env = AgentEnvironment(temp_workspace)
-        env.env_agent_path.write_text("existing content")
+        env.main_env_path.write_text("existing content")
 
         result_path = env.generate_env_agent(force=True)
 
         # Should fail initially - force overwrite not implemented
-        assert result_path == env.env_agent_path
-        content = env.env_agent_path.read_text()
+        assert result_path == env.main_env_path
+        content = env.main_env_path.read_text()
         assert "HIVE_API_PORT=38886" in content
         assert "existing content" not in content
 
@@ -210,7 +210,7 @@ class TestAgentEnvironmentGeneration:
         env = AgentEnvironment(temp_workspace)
 
         env.generate_env_agent()
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
 
         # Should fail initially - port mapping logic not implemented
         assert "HIVE_API_PORT=38886" in content
@@ -223,7 +223,7 @@ class TestAgentEnvironmentGeneration:
         env = AgentEnvironment(temp_workspace)
 
         env.generate_env_agent()
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
 
         # Should fail initially - database mapping logic not implemented
         assert "/hive_agent" in content
@@ -234,7 +234,7 @@ class TestAgentEnvironmentGeneration:
         env = AgentEnvironment(temp_workspace)
 
         env.generate_env_agent()
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
 
         # Should fail initially - CORS mapping logic not implemented
         assert "http://localhost:38886" in content
@@ -245,7 +245,7 @@ class TestAgentEnvironmentGeneration:
         env = AgentEnvironment(temp_workspace)
 
         env.generate_env_agent()
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
 
         # Should fail initially - header replacement not implemented
         assert "AGENT ENVIRONMENT CONFIGURATION" in content
@@ -261,10 +261,10 @@ class TestAgentEnvironmentValidation:
 
     @pytest.fixture
     def temp_workspace_with_agent_env(self):
-        """Create temporary workspace with .env.agent."""
+        """Create temporary workspace with .env."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            env_agent = workspace / ".env"
             env_agent.write_text(
                 "HIVE_API_PORT=38886\n"
                 "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
@@ -287,9 +287,9 @@ class TestAgentEnvironmentValidation:
         assert "HIVE_API_KEY" in result["config"]
 
     def test_validate_environment_missing_file(self, temp_workspace_with_agent_env):
-        """Test validation fails when .env.agent is missing."""
+        """Test validation fails when .env is missing."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
-        env.env_agent_path.unlink()
+        env.main_env_path.unlink()
 
         result = env.validate_environment()
 
@@ -303,7 +303,7 @@ class TestAgentEnvironmentValidation:
     ):
         """Test validation fails when required keys are missing."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
-        env.env_agent_path.write_text("SOME_OTHER_KEY=value\n")
+        env.main_env_path.write_text("SOME_OTHER_KEY=value\n")
 
         result = env.validate_environment()
 
@@ -323,7 +323,7 @@ class TestAgentEnvironmentValidation:
     def test_validate_environment_invalid_port(self, temp_workspace_with_agent_env):
         """Test validation warns about unexpected port values."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
-        env.env_agent_path.write_text(
+        env.main_env_path.write_text(
             "HIVE_API_PORT=8886\n"  # Wrong port
             "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
             "HIVE_API_KEY=test-api-key\n"
@@ -343,7 +343,7 @@ class TestAgentEnvironmentValidation:
     ):
         """Test validation warns about unexpected database URL values."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
-        env.env_agent_path.write_text(
+        env.main_env_path.write_text(
             "HIVE_API_PORT=38886\n"
             "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"  # Wrong port and db
             "HIVE_API_KEY=test-api-key\n"
@@ -366,7 +366,7 @@ class TestAgentEnvironmentValidation:
     ):
         """Test validation fails with invalid port format."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
-        env.env_agent_path.write_text(
+        env.main_env_path.write_text(
             "HIVE_API_PORT=not-a-number\n"
             "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
             "HIVE_API_KEY=test-api-key\n"
@@ -388,7 +388,7 @@ class TestAgentEnvironmentValidation:
         env = AgentEnvironment(temp_workspace_with_agent_env)
 
         # Make file unreadable to cause exception
-        env.env_agent_path.chmod(0o000)
+        env.main_env_path.chmod(0o000)
 
         try:
             result = env.validate_environment()
@@ -400,7 +400,7 @@ class TestAgentEnvironmentValidation:
             )
         finally:
             # Restore permissions for cleanup
-            env.env_agent_path.chmod(0o644)
+            env.main_env_path.chmod(0o644)
 
 
 class TestAgentEnvironmentCredentials:
@@ -408,10 +408,10 @@ class TestAgentEnvironmentCredentials:
 
     @pytest.fixture
     def temp_workspace_with_credentials(self):
-        """Create temporary workspace with credential-containing .env.agent."""
+        """Create temporary workspace with credential-containing .env."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            env_agent = workspace / ".env"
             env_agent.write_text(
                 "HIVE_API_PORT=38886\n"
                 "HIVE_DATABASE_URL=postgresql+psycopg://testuser:testpass@localhost:35532/hive_agent\n"
@@ -440,7 +440,7 @@ class TestAgentEnvironmentCredentials:
     def test_get_agent_credentials_missing_file(self, temp_workspace_with_credentials):
         """Test credential extraction returns None when file is missing."""
         env = AgentEnvironment(temp_workspace_with_credentials)
-        env.env_agent_path.unlink()
+        env.main_env_path.unlink()
 
         credentials = env.get_agent_credentials()
 
@@ -452,7 +452,7 @@ class TestAgentEnvironmentCredentials:
     ):
         """Test credential extraction handles invalid database URL."""
         env = AgentEnvironment(temp_workspace_with_credentials)
-        env.env_agent_path.write_text(
+        env.main_env_path.write_text(
             "HIVE_API_PORT=38886\n"
             "HIVE_DATABASE_URL=invalid-url\n"
             "HIVE_API_KEY=test-api-key\n"
@@ -470,7 +470,7 @@ class TestAgentEnvironmentCredentials:
         env = AgentEnvironment(temp_workspace_with_credentials)
 
         # Make file unreadable
-        env.env_agent_path.chmod(0o000)
+        env.main_env_path.chmod(0o000)
 
         try:
             credentials = env.get_agent_credentials()
@@ -479,7 +479,7 @@ class TestAgentEnvironmentCredentials:
             assert credentials is None
         finally:
             # Restore permissions
-            env.env_agent_path.chmod(0o644)
+            env.main_env_path.chmod(0o644)
 
 
 class TestAgentEnvironmentUpdate:
@@ -487,10 +487,10 @@ class TestAgentEnvironmentUpdate:
 
     @pytest.fixture
     def temp_workspace_with_agent_env(self):
-        """Create temporary workspace with .env.agent."""
+        """Create temporary workspace with .env."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            env_agent = workspace / ".env"
             env_agent.write_text(
                 "HIVE_API_PORT=38886\n"
                 "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
@@ -511,7 +511,7 @@ class TestAgentEnvironmentUpdate:
         # Should fail initially - update logic not implemented
         assert result is True
 
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
         assert "HIVE_API_KEY=new-api-key" in content
         assert "HIVE_API_PORT=39886" in content
         assert "OTHER_KEY=other_value" in content
@@ -528,14 +528,14 @@ class TestAgentEnvironmentUpdate:
         # Should fail initially - new key addition not implemented
         assert result is True
 
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
         assert "EXTRA_KEY=extra_value" in content
         assert "ANOTHER_KEY=another_value" in content
 
     def test_update_environment_missing_file(self, temp_workspace_with_agent_env):
         """Test environment update fails when file is missing."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
-        env.env_agent_path.unlink()
+        env.main_env_path.unlink()
 
         result = env.update_environment({"KEY": "value"})
 
@@ -547,7 +547,7 @@ class TestAgentEnvironmentUpdate:
         env = AgentEnvironment(temp_workspace_with_agent_env)
 
         # Make file read-only
-        env.env_agent_path.chmod(0o444)
+        env.main_env_path.chmod(0o444)
 
         try:
             result = env.update_environment({"KEY": "value"})
@@ -556,7 +556,7 @@ class TestAgentEnvironmentUpdate:
             assert result is False
         finally:
             # Restore permissions
-            env.env_agent_path.chmod(0o644)
+            env.main_env_path.chmod(0o644)
 
 
 class TestAgentEnvironmentCleanup:
@@ -567,7 +567,7 @@ class TestAgentEnvironmentCleanup:
         """Create temporary workspace with agent files."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            env_agent = workspace / ".env"
             env_agent.write_text("HIVE_API_PORT=38886\n")
             yield workspace
 
@@ -575,18 +575,18 @@ class TestAgentEnvironmentCleanup:
         """Test successful environment cleanup."""
         env = AgentEnvironment(temp_workspace_with_files)
 
-        assert env.env_agent_path.exists()
+        assert env.main_env_path.exists()
 
         result = env.clean_environment()
 
         # Should fail initially - cleanup logic not implemented
         assert result is True
-        assert not env.env_agent_path.exists()
+        assert not env.main_env_path.exists()
 
     def test_clean_environment_missing_file(self, temp_workspace_with_files):
         """Test cleanup succeeds when file doesn't exist."""
         env = AgentEnvironment(temp_workspace_with_files)
-        env.env_agent_path.unlink()
+        env.main_env_path.unlink()
 
         result = env.clean_environment()
 
@@ -626,7 +626,7 @@ class TestAgentEnvironmentCredentialCopy:
                 "HIVE_DEFAULT_MODEL=claude-3-sonnet\n"
                 "UNRELATED_KEY=unrelated-value\n"
             )
-            env_agent = workspace / ".env.agent"
+            env_agent = workspace / ".env"
             env_agent.write_text("HIVE_API_PORT=38886\nHIVE_API_KEY=agent-key\n")
             yield workspace
 
@@ -639,7 +639,7 @@ class TestAgentEnvironmentCredentialCopy:
         # Should fail initially - credential copying not implemented
         assert result is True
 
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
         assert "ANTHROPIC_API_KEY=anthropic-key-123" in content
         assert "OPENAI_API_KEY=openai-key-456" in content
         assert "HIVE_DEFAULT_MODEL=claude-3-sonnet" in content
@@ -656,7 +656,7 @@ class TestAgentEnvironmentCredentialCopy:
         # Should fail initially - database URL transformation not implemented
         assert result is True
 
-        content = env.env_agent_path.read_text()
+        content = env.main_env_path.read_text()
         # Should transform to agent-specific URL
         assert "localhost:35532/hive_agent" in content
         assert "mainuser:mainpass" in content  # Should preserve credentials
@@ -676,7 +676,7 @@ class TestAgentEnvironmentCredentialCopy:
         env = AgentEnvironment(temp_workspace_with_main_env)
 
         # Make agent env file read-only
-        env.env_agent_path.chmod(0o444)
+        env.main_env_path.chmod(0o444)
 
         try:
             result = env.copy_credentials_from_main_env()
@@ -685,7 +685,7 @@ class TestAgentEnvironmentCredentialCopy:
             assert result is False
         finally:
             # Restore permissions
-            env.env_agent_path.chmod(0o644)
+            env.main_env_path.chmod(0o644)
 
 
 class TestAgentEnvironmentInternalMethods:
@@ -830,7 +830,7 @@ class TestAgentEnvironmentInternalMethods:
     def test_ensure_agent_api_key_missing_key(self, temp_workspace):
         """Test ensuring API key when key is missing."""
         env = AgentEnvironment(temp_workspace)
-        env.env_agent_path.write_text("HIVE_API_PORT=38886\n")
+        env.main_env_path.write_text("HIVE_API_PORT=38886\n")
 
         with patch.object(env, "generate_agent_api_key", return_value="new-key"):
             with patch.object(
@@ -845,7 +845,7 @@ class TestAgentEnvironmentInternalMethods:
     def test_ensure_agent_api_key_placeholder_key(self, temp_workspace):
         """Test ensuring API key when placeholder key exists."""
         env = AgentEnvironment(temp_workspace)
-        env.env_agent_path.write_text("HIVE_API_KEY=your-hive-api-key-here\n")
+        env.main_env_path.write_text("HIVE_API_KEY=your-hive-api-key-here\n")
 
         with patch.object(env, "generate_agent_api_key", return_value="new-key"):
             with patch.object(
@@ -860,7 +860,7 @@ class TestAgentEnvironmentInternalMethods:
     def test_ensure_agent_api_key_valid_key(self, temp_workspace):
         """Test ensuring API key when valid key exists."""
         env = AgentEnvironment(temp_workspace)
-        env.env_agent_path.write_text("HIVE_API_KEY=valid-existing-key\n")
+        env.main_env_path.write_text("HIVE_API_KEY=valid-existing-key\n")
 
         result = env.ensure_agent_api_key()
 
@@ -884,7 +884,7 @@ class TestAgentEnvironmentConvenienceFunctions:
         """Test create_agent_environment convenience function."""
         with patch("cli.core.agent_environment.AgentEnvironment") as mock_env_class:
             mock_env = Mock()
-            mock_env.generate_env_agent.return_value = temp_workspace / ".env.agent"
+            mock_env.generate_env_agent.return_value = temp_workspace / ".env"
             mock_env.copy_credentials_from_main_env.return_value = True
             mock_env.ensure_agent_api_key.return_value = True
             mock_env_class.return_value = mock_env
@@ -899,7 +899,7 @@ class TestAgentEnvironmentConvenienceFunctions:
         """Test create_agent_environment with force parameter."""
         with patch("cli.core.agent_environment.AgentEnvironment") as mock_env_class:
             mock_env = Mock()
-            mock_env.generate_env_agent.return_value = temp_workspace / ".env.agent"
+            mock_env.generate_env_agent.return_value = temp_workspace / ".env"
             mock_env.copy_credentials_from_main_env.return_value = True
             mock_env.ensure_agent_api_key.return_value = True
             mock_env_class.return_value = mock_env
@@ -968,7 +968,7 @@ class TestAgentEnvironmentCrossPlatform:
         # Should fail initially - Windows path handling not implemented
         assert env.workspace_path == workspace
         assert env.env_example_path == workspace / ".env.example"
-        assert env.env_agent_path == workspace / ".env.agent"
+        assert env.main_env_path == workspace / ".env"
 
     def test_agent_environment_unix_paths(self):
         """Test AgentEnvironment with Unix-style paths."""
@@ -978,7 +978,7 @@ class TestAgentEnvironmentCrossPlatform:
         # Should fail initially - Unix path handling not implemented
         assert env.workspace_path == workspace
         assert env.env_example_path == workspace / ".env.example"
-        assert env.env_agent_path == workspace / ".env.agent"
+        assert env.main_env_path == workspace / ".env"
 
     def test_agent_environment_relative_paths(self):
         """Test AgentEnvironment with relative paths."""
@@ -1001,7 +1001,7 @@ class TestAgentEnvironmentCrossPlatform:
         # All paths should be relative to the same workspace
         base_path = env.workspace_path
         assert env.env_example_path.parent == base_path
-        assert env.env_agent_path.parent == base_path
+        assert env.main_env_path.parent == base_path
         assert env.main_env_path.parent == base_path
 
 
@@ -1019,7 +1019,7 @@ class TestAgentEnvironmentEdgeCases:
 
             # Should fail initially - long path handling not implemented
             assert env.workspace_path == long_path
-            assert len(str(env.env_agent_path)) > 250  # Very long path
+            assert len(str(env.main_env_path)) > 250  # Very long path
         except OSError:
             # Expected on some systems with path length limits
             pass
@@ -1039,7 +1039,7 @@ class TestAgentEnvironmentEdgeCases:
 
             # Should fail initially - special character handling not implemented
             assert env.workspace_path == workspace
-            assert char_name in str(env.env_agent_path)
+            assert char_name in str(env.main_env_path)
 
     def test_agent_environment_unicode_paths(self):
         """Test AgentEnvironment with Unicode characters in paths."""
@@ -1053,7 +1053,7 @@ class TestAgentEnvironmentEdgeCases:
 
                 # Should fail initially - Unicode path handling not implemented
                 assert env.workspace_path == workspace
-                assert unicode_name in str(env.env_agent_path)
+                assert unicode_name in str(env.main_env_path)
             except (UnicodeError, OSError):
                 # Expected on some systems with Unicode limitations
                 pass
@@ -1075,10 +1075,10 @@ class TestAgentEnvironmentEdgeCases:
             assert "AGENT ENVIRONMENT CONFIGURATION" in content
 
     def test_validation_with_malformed_env_file(self):
-        """Test validation with malformed .env.agent file."""
+        """Test validation with malformed .env file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            env_agent = workspace / ".env.agent"
+            env_agent = workspace / ".env"
             env_agent.write_text(
                 "MALFORMED_LINE_NO_EQUALS\n"
                 "=VALUE_WITHOUT_KEY\n"

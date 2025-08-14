@@ -40,7 +40,7 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 - `TestAgentServiceInitialization` - Service setup
 - `TestAgentServiceInstallation` - Environment installation
 - `TestAgentServiceValidation` - Workspace/environment validation
-- `TestAgentServiceEnvironmentFileCreation` - .env.agent generation
+- `TestAgentServiceEnvironmentFileCreation` - agent environment generation
 - `TestAgentServicePostgresSetup` - Database container management
 - `TestAgentServiceCredentialsGeneration` - Security credential handling
 - `TestAgentServiceServerManagement` - Server process lifecycle
@@ -51,7 +51,7 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 
 ### 3. Environment Management Tests (`tests/core/test_agent_environment.py`)
 - **AgentEnvironment class**: All environment management methods
-- **File generation**: .env.agent creation with transformations
+- **File generation**: agent environment creation with transformations
 - **Validation**: Configuration and credential validation
 - **Cross-platform**: Path handling across operating systems
 - **Convenience functions**: Helper utilities
@@ -60,7 +60,7 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 - `TestAgentCredentials` - Credential dataclass functionality
 - `TestEnvironmentConfig` - Configuration dataclass
 - `TestAgentEnvironmentInitialization` - Setup and configuration
-- `TestAgentEnvironmentGeneration` - .env.agent file generation
+- `TestAgentEnvironmentGeneration` - agent environment file generation
 - `TestAgentEnvironmentValidation` - Configuration validation
 - `TestAgentEnvironmentCredentials` - Credential extraction
 - `TestAgentEnvironmentUpdate` - Environment file updates

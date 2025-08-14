@@ -6,7 +6,6 @@ team:
   version: 1
   description: Template demonstrating all Agno Team parameters
 mcp_servers:
-  - "automagik-forge:*"
   - "ask-repo-agent:*"
   - "search-repo-docs:*"
   - "send_whatsapp_message:*"

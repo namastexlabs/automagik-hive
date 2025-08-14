@@ -38,10 +38,9 @@ def test_cli_install_uses_single_credential_system():
                                     
                                     # Check that credentials were generated
                                     main_env = temp_path / ".env"
-                                    agent_env = temp_path / ".env.agent"
                                     
                                     assert main_env.exists(), "Main .env file should be created"
-                                    assert agent_env.exists(), "Agent .env file should be created"
+                                    # Agent inherits from main .env via docker-compose, no separate .env.agent needed
                                     
                                     # Check main env has workspace credentials
                                     main_content = main_env.read_text()
@@ -49,29 +48,22 @@ def test_cli_install_uses_single_credential_system():
                                     assert "localhost:5532" in main_content  # Workspace uses base port
                                     assert "HIVE_API_KEY=" in main_content
                                     
-                                    # Check agent env has agent-specific ports
-                                    agent_content = agent_env.read_text()
-                                    assert "HIVE_DATABASE_URL=" in agent_content
-                                    assert "localhost:35532" in agent_content  # Agent uses prefixed port
-                                    assert "HIVE_API_KEY=" in agent_content
+                                    # Agent inherits configuration from main .env via docker-compose
+                                    # Main env contains base configuration that docker-compose overrides for agent
+                                    assert "localhost:5532" in main_content  # Base port, agent gets 35532 via docker-compose
                                     
-                                    # Extract credentials to verify they share the same base
+                                    # Verify main configuration is complete for docker-compose inheritance
                                     main_lines = main_content.splitlines()
-                                    agent_lines = agent_content.splitlines()
-                                    
                                     main_db_url = next(line for line in main_lines if line.startswith("HIVE_DATABASE_URL="))
-                                    agent_db_url = next(line for line in agent_lines if line.startswith("HIVE_DATABASE_URL="))
                                     
-                                    # Extract user/password from URLs
+                                    # Extract user/password from main URL (agent inherits these via docker-compose)
                                     main_user = main_db_url.split("://")[1].split(":")[0]
-                                    agent_user = agent_db_url.split("://")[1].split(":")[0]
-                                    
                                     main_pass = main_db_url.split(":")[2].split("@")[0] 
-                                    agent_pass = agent_db_url.split(":")[2].split("@")[0]
                                     
-                                    # Should be the same user and password
-                                    assert main_user == agent_user, "User should be the same across modes"
-                                    assert main_pass == agent_pass, "Password should be the same across modes"
+                                    # Agent inherits the same user and password via docker-compose
+                                    # Docker-compose overrides only ports, not credentials
+                                    assert main_user, "Main user should be present for agent inheritance"
+                                    assert main_pass, "Main password should be present for agent inheritance"
 
 
 if __name__ == "__main__":

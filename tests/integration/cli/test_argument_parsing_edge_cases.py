@@ -163,7 +163,7 @@ class TestErrorMessageQuality:
         # Note: The current CLI checks for multiple commands in main()
         # so this tests the logic there, not argparse
         
-        with patch.object(sys, 'argv', ['automagik-hive', '--agent-install', '.', '--agent-serve', '.']):
+        with patch.object(sys, 'argv', ['automagik-hive', '--agent-install', '.', '--agent-start', '.']):
             try:
                 result = main()
                 # Should fail with clear message about multiple commands
@@ -281,7 +281,7 @@ class TestParserActionConfiguration:
         actions = {action.dest: action for action in parser._actions}
         
         expected_agent_commands = [
-            'agent_install', 'agent_serve', 'agent_stop', 
+            'agent_install', 'agent_start', 'agent_stop', 
             'agent_restart', 'agent_logs', 'agent_status', 'agent_reset'
         ]
         
@@ -302,7 +302,7 @@ class TestRegressionPrevention:
         # These should continue working
         existing_commands = [
             ["--agent-install", "."],
-            ["--agent-serve", "."],
+            ["--agent-start", "."],
             ["--agent-stop", "."],
             ["--agent-status", "."],
             ["--postgres-status", "."],
