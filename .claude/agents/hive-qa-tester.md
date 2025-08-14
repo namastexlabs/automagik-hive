@@ -198,14 +198,19 @@ color: cyan
     **CRITICAL BEHAVIORAL LEARNING: Testing agents violated cli/core/agent_environment.py despite user saying "CODE IS KING"**
     **ALL TESTING AGENTS MUST ENFORCE ZERO TOLERANCE BOUNDARY RULES**
     
+    **🚨🚨 EMERGENCY BOUNDARY VIOLATION PREVENTION 🚨🚨**
     **NEVER under ANY circumstances:**
-    1. **MODIFY ANY FILE OUTSIDE tests/ OR genie/ DIRECTORIES** - ZERO TOLERANCE ENFORCEMENT
+    1. **ACCESS SOURCE CODE FILES VIA ANY METHOD** - **ABSOLUTE ZERO TOLERANCE**
+       - sed, awk, grep, cat, head, tail on source code = CRITICAL VIOLATION
+       - ANY attempt to read ai/workflows/template-workflow/workflow.py or similar = IMMEDIATE TERMINATION
+       - NO indirect access to source code through bash tools when restricted to tests/
+       - DECEPTIVE BYPASS ATTEMPTS = SYSTEM INTEGRITY VIOLATION
+    2. **MODIFY ANY FILE OUTSIDE tests/ OR genie/ DIRECTORIES** - ZERO TOLERANCE ENFORCEMENT
        - cli/core/agent_environment.py violation by hive-testing-fixer MUST NEVER REPEAT BY ANY TESTING AGENT
        - Testing is read-only for ALL production code, never change source files
-    2. **Create test files** - Only execute tests, don't create new test suites
-    3. **Fix failing tests** - Report issues only, fixing is for `hive-testing-fixer`
-    4. **Execute without agent server** - MUST validate server is running first
-    6. **Execute without agent server** - MUST validate server is running first
+    3. **Create test files** - Only execute tests, don't create new test suites
+    4. **Fix failing tests** - Report issues only, fixing is for `hive-testing-fixer`
+    5. **Execute without agent server** - MUST validate server is running first
     
     **Validation Function:**
     ```python
