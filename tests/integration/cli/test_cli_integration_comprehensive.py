@@ -337,15 +337,15 @@ class TestCLIWorkflowIntegration:
 
     def test_uninstall_workflow_integration(self):
         """Test uninstall workflow integration."""
-        with patch('cli.main.UninstallCommands') as mock_uninstall_class:
-            mock_uninstall = Mock()
-            mock_uninstall.uninstall_current_workspace.return_value = True
-            mock_uninstall_class.return_value = mock_uninstall
+        with patch('cli.main.ServiceManager') as mock_service_class:
+            mock_service = Mock()
+            mock_service.uninstall_environment.return_value = True
+            mock_service_class.return_value = mock_service
 
             with patch('sys.argv', ['automagik-hive', '--uninstall', '.']):
                 result = main()
                 assert result == 0
-                mock_uninstall.uninstall_current_workspace.assert_called_once()
+                mock_service.uninstall_environment.assert_called_once_with('.')
 
 
 class TestCLIErrorHandling:
@@ -543,7 +543,7 @@ class TestCLIEndToEndScenarios:
             # Setup successful mocks
             mock_init.return_value.init_workspace.return_value = True
             mock_agent.return_value.install.return_value = True
-            mock_agent.return_value.serve.return_value = True
+            mock_agent.return_value.start.return_value = True
             mock_agent.return_value.stop.return_value = True
             mock_agent.return_value.status.return_value = True
             mock_agent.return_value.logs.return_value = True
@@ -616,21 +616,24 @@ class TestCLIEndToEndScenarios:
                 result = main()
                 assert result == expected_exit
 
-    def test_error_recovery_scenarios(self, mock_all_components):
+    def test_error_recovery_scenarios(self):
         """Test error recovery scenarios."""
-        # Setup failure scenarios
-        mock_all_components['agent'].return_value.install.return_value = False
-        mock_all_components['agent'].return_value.serve.return_value = False
+        # Setup failure scenarios with fresh mocks
+        with patch('cli.main.AgentCommands') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.install.return_value = False
+            mock_agent.start.return_value = False
+            mock_agent_class.return_value = mock_agent
 
-        failure_scenarios = [
-            (['automagik-hive', '--agent-install', '.'], 1),
-            (['automagik-hive', '--agent-start', '.'], 1),
-        ]
+            failure_scenarios = [
+                (['automagik-hive', '--agent-install', '.'], 1),
+                (['automagik-hive', '--agent-start', '.'], 1),
+            ]
 
-        for argv, expected_exit in failure_scenarios:
-            with patch('sys.argv', argv):
-                result = main()
-                assert result == expected_exit
+            for argv, expected_exit in failure_scenarios:
+                with patch('sys.argv', argv):
+                    result = main()
+                    assert result == expected_exit
 
     def test_mixed_component_operations(self, mock_all_components):
         """Test operations on mixed components."""

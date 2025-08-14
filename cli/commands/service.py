@@ -45,6 +45,9 @@ class ServiceManager:
         try:
             print(f"🐳 Starting Docker production environment in: {workspace}")
             return self.main_service.serve_main(workspace)
+        except KeyboardInterrupt:
+            print("\n🛑 Docker service startup interrupted by user")
+            return True  # Graceful shutdown
         except Exception as e:
             print(f"❌ Failed to start Docker services: {e}")
             return False

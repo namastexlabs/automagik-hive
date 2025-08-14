@@ -195,7 +195,7 @@ services:
         # Test various failure scenarios
         failure_scenarios = [
             ("install", {"install_agent_environment": False}),
-            ("serve", {"serve_agent": False}),
+            ("start", {"serve_agent": False}),
             ("stop", {"stop_agent": False}),
             ("restart", {"restart_agent": False}),
             ("reset", {"reset_agent_environment": False}),
@@ -283,12 +283,12 @@ install-agent:
 
             # Test uvx command behavior
             commands = AgentCommands()
-            with patch.object(commands, "serve", return_value=True) as mock_serve:
-                uvx_result = commands.serve(temp_workspace_with_makefile)
+            with patch.object(commands, "start", return_value=True) as mock_start:
+                uvx_result = commands.start(temp_workspace_with_makefile)
 
             # Should fail initially - parity validation not implemented
             # Both should achieve the same outcome
-            assert make_result.returncode == 0 or mock_serve.called
+            assert make_result.returncode == 0 or mock_start.called
             assert uvx_result is True
 
     def test_agent_logs_parity(self, temp_workspace_with_makefile):
@@ -481,7 +481,7 @@ class TestEndToEndAgentWorkflows:
                         assert main_env_path.exists()
 
                         # Step 2: Start development server
-                        serve_result = commands.serve(complete_workspace)
+                        serve_result = commands.start(complete_workspace)
                         assert serve_result is True
 
                         # Step 3: Development monitoring
@@ -516,11 +516,11 @@ class TestEndToEndAgentWorkflows:
 
                 commands = AgentCommands()
 
-                # CI workflow: install -> serve -> test -> stop
+                # CI workflow: install -> start -> test -> stop
                 install_result = commands.install(complete_workspace)
                 assert install_result is True
 
-                serve_result = commands.serve(complete_workspace)
+                serve_result = commands.start(complete_workspace)
                 assert serve_result is True
 
                 # Simulate test execution time
@@ -547,7 +547,7 @@ class TestEndToEndAgentWorkflows:
 
             # Scenario 2: Server start failure -> reset -> retry
             mock_run.return_value.returncode = 1  # Failure
-            serve_result1 = commands.serve(complete_workspace)
+            serve_result1 = commands.start(complete_workspace)
             assert serve_result1 is False
 
             # Reset environment
@@ -557,9 +557,9 @@ class TestEndToEndAgentWorkflows:
                 reset_result = commands.reset(complete_workspace)
                 assert reset_result is True
 
-            # Retry serve
+            # Retry start
             mock_run.return_value.returncode = 0  # Success
-            serve_result2 = commands.serve(complete_workspace)
+            serve_result2 = commands.start(complete_workspace)
             assert serve_result2 is True
 
     def test_production_deployment_workflow(self, complete_workspace):
@@ -583,7 +583,7 @@ class TestEndToEndAgentWorkflows:
                     assert install_result is True
 
                     # 2. Production server start
-                    serve_result = commands.serve(complete_workspace)
+                    serve_result = commands.start(complete_workspace)
                     assert serve_result is True
 
                     # 3. Health monitoring
@@ -650,7 +650,7 @@ class TestCrossPlatformCompatibility:
                                 assert result is True
 
                                 # Verify Windows-specific process handling
-                                serve_result = commands.serve(windows_workspace)
+                                serve_result = commands.start(windows_workspace)
                                 assert serve_result is True
 
     def test_linux_compatibility_patterns(self, cross_platform_workspace):
@@ -690,7 +690,7 @@ class TestCrossPlatformCompatibility:
                     assert result is True
 
                     # Test BSD-style process management
-                    serve_result = commands.serve(cross_platform_workspace)
+                    serve_result = commands.start(cross_platform_workspace)
                     assert serve_result is True
 
     def test_path_separator_consistency(self, cross_platform_workspace):
