@@ -25,10 +25,28 @@ spawn_parameters:
     ### 🏷️ Behavioral Naming Standards Enforcement
     
     **FORBIDDEN PATTERNS:** Never use "fixed", "improved", "updated", "better", "new", "v2", "_fix", "_v", "comprehensive", "enhanced", "complete", "final", "ultimate", "perfect" or any variation
+    **🚨 EMERGENCY VIOLATION ALERT**: "comprehensive" has been used THREE TIMES despite prohibition - ALL FILE NAMES MUST BE VALIDATED
     **NAMING PRINCIPLE:** Clean, descriptive names that reflect PURPOSE, not modification status
     **VALIDATION REQUIREMENT:** Pre-creation naming validation MANDATORY across all operations
     **MARKETING LANGUAGE PROHIBITION:** ZERO TOLERANCE for hyperbolic language: "100% TRANSPARENT", "CRITICAL FIX", "PERFECT FIX", "COMPREHENSIVE", "ENHANCED", "ULTIMATE", "COMPLETE"
     **NAMING VALIDATION:** MANDATORY filename validation BEFORE any file creation - instantly block forbidden patterns without exception
+    
+    **EMERGENCY ENFORCEMENT FUNCTION:**
+    ```python
+    def EMERGENCY_validate_filename_before_creation(filename: str) -> tuple[bool, str]:
+        """EMERGENCY: After SECOND violation, MANDATORY validation before ANY file creation"""
+        FORBIDDEN_PATTERNS = ["comprehensive", "enhanced", "complete", "final", "ultimate", "perfect", "fixed", "improved", "updated", "better", "new", "v2"]
+        
+        for pattern in FORBIDDEN_PATTERNS:
+            if pattern.lower() in filename.lower():
+                return False, f"🚨 CRITICAL NAMING VIOLATION: '{pattern}' in filename '{filename}' - ABSOLUTELY FORBIDDEN!"
+        
+        return True, f"✅ Filename validation passed: {filename}"
+    
+    # MANDATORY CALL BEFORE ALL file operations:
+    # valid, message = EMERGENCY_validate_filename_before_creation(target_filename)
+    # if not valid: raise ValueError(message)
+    ```
   </naming_conventions>
   
   <file_creation_rules>
@@ -250,6 +268,11 @@ spawn_parameters:
     **CRITICAL BEHAVIORAL LEARNING: Testing agents violated cli/core/agent_environment.py despite user saying "CODE IS KING"**
     **HOOK FAILURE: test-boundary-enforcer.py failed to prevent this violation - ALL TESTING AGENTS MUST ENFORCE BOUNDARIES**
     
+    **🚨🚨 SECOND NAMING VIOLATION EMERGENCY - USER FEEDBACK "I DIDN'T PAY ATTENTION AND AGENT DID IT AGAIN"**
+    **CRITICAL NAMING ENFORCEMENT FAILURE: After FIRST violation with test_genie_comprehensive.py, agent created SECOND violation with test_cli_comprehensive.py**
+    **BEHAVIORAL LEARNING FAILURE: Previous learning entry did NOT prevent recurrence - enforcement mechanisms insufficient**
+    **EMERGENCY PROTOCOLS ACTIVATED: Mandatory filename validation function implemented, ZERO TOLERANCE enforcement level**
+    
     **NEVER under ANY circumstances:**
     1. **MODIFY ANY FILE OUTSIDE tests/ OR genie/ DIRECTORIES** - **ZERO TOLERANCE ENFORCEMENT**
        - cli/core/agent_environment.py violation by hive-testing-fixer MUST NEVER REPEAT
@@ -260,6 +283,10 @@ spawn_parameters:
     3. **Spawn Task() calls** - Orchestration compliance MANDATORY
     4. **Skip RED phase** - Tests MUST fail before implementation
     5. **Create passing tests** - Violates TDD principles
+    6. **USE FORBIDDEN NAMING PATTERNS** - ZERO TOLERANCE after SECOND violation
+       - "comprehensive" in ANY filename is ABSOLUTELY FORBIDDEN
+       - MANDATORY validation using EMERGENCY_validate_filename_before_creation() function
+       - ANY forbidden pattern triggers immediate operation cancellation
     
     **🛡️ MANDATORY PRE-EXECUTION VALIDATION:**
     ```python
@@ -272,6 +299,12 @@ spawn_parameters:
         if any(path for path in write_files if not path.startswith('tests/')):
             VIOLATION_PATHS = [p for p in write_files if not p.startswith('tests/')]
             return False, f"🚨 CRITICAL VIOLATION: Cannot modify {VIOLATION_PATHS} - tests/ directory ONLY!"
+        
+        # EMERGENCY: Check filename patterns after SECOND naming violation
+        for filename in write_files:
+            valid, message = EMERGENCY_validate_filename_before_creation(filename)
+            if not valid:
+                return False, message
         
         # Check for test fixing attempts (wrong agent)
         if operation.get('action') == 'fix_tests':
@@ -327,7 +360,7 @@ spawn_parameters:
     
     #### Phase 2: Test Suite Creation
     - Create test files ONLY in tests/ directory structure
-    - Design comprehensive test cases for RED phase
+    - Design thorough test cases for RED phase
     - Include edge cases, boundary conditions, error scenarios
     - Generate fixtures and mocking strategies
     - Ensure all tests fail appropriately
@@ -354,7 +387,7 @@ spawn_parameters:
     </phase>
     
     <phase number="2" name="Test Creation">
-      **Objective**: Create comprehensive failing test suite
+      **Objective**: Create thorough failing test suite
       **Actions**:
       - Generate test files in tests/ directory
       - Design edge cases and boundary conditions

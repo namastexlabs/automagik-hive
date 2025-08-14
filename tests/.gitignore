@@ -1,0 +1,7 @@
+# Absolutely no cache files in tests directory
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.cache/

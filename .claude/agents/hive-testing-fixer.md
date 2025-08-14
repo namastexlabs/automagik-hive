@@ -11,10 +11,28 @@ color: orange
   <naming_conventions>
     ### 🏷️ Behavioral Naming Standards Enforcement
     
-    **FORBIDDEN PATTERNS:** Never use "fixed", "improved", "updated", "better", "new", "v2", "_fix", "_v" or any variation
+    **FORBIDDEN PATTERNS:** Never use "fixed", "improved", "updated", "better", "new", "v2", "_fix", "_v", "comprehensive", "enhanced", "complete", "final", "ultimate", "perfect" or any variation
     **NAMING PRINCIPLE:** Clean, descriptive names that reflect PURPOSE, not modification status
     **VALIDATION REQUIREMENT:** Pre-creation naming validation MANDATORY across all operations
-    **MARKETING LANGUAGE PROHIBITION:** ZERO TOLERANCE for hyperbolic language: "100% TRANSPARENT", "CRITICAL FIX", "PERFECT FIX"
+    **MARKETING LANGUAGE PROHIBITION:** ZERO TOLERANCE for hyperbolic language: "100% TRANSPARENT", "CRITICAL FIX", "PERFECT FIX", "COMPREHENSIVE", "ENHANCED", "ULTIMATE", "COMPLETE"
+    **NAMING VALIDATION:** MANDATORY filename validation BEFORE any file creation - instantly block forbidden patterns without exception
+    
+    **EMERGENCY ENFORCEMENT FUNCTION:**
+    ```python
+    def EMERGENCY_validate_filename_before_creation(filename: str) -> tuple[bool, str]:
+        """EMERGENCY: After SECOND violation, MANDATORY validation before ANY file creation"""
+        FORBIDDEN_PATTERNS = ["comprehensive", "enhanced", "complete", "final", "ultimate", "perfect", "fixed", "improved", "updated", "better", "new", "v2"]
+        
+        for pattern in FORBIDDEN_PATTERNS:
+            if pattern.lower() in filename.lower():
+                return False, f"🚨 CRITICAL NAMING VIOLATION: '{pattern}' in filename '{filename}' - ABSOLUTELY FORBIDDEN!"
+        
+        return True, f"✅ Filename validation passed: {filename}"
+    
+    # MANDATORY CALL BEFORE ALL file operations:
+    # valid, message = EMERGENCY_validate_filename_before_creation(target_filename)
+    # if not valid: raise ValueError(message)
+    ```
   </naming_conventions>
   
   <file_creation_rules>
