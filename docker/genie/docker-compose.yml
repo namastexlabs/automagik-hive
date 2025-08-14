@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     user: "1000:1000"
     ports:
-      - "48532:5432"  # Genie PostgreSQL port
+      - "45532:5432"  # Genie PostgreSQL port
     env_file:
       - ../../.env
     environment:

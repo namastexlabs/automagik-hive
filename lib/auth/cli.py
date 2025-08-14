@@ -23,8 +23,8 @@ def show_current_key() -> None:
     key = init_service.get_current_key()
 
     if key:
-        logger.info("Current API key retrieved", key_length=len(key))
-        os.getenv("HIVE_API_PORT", "8886")
+        port = os.getenv("HIVE_API_PORT", "8886")
+        logger.info("Current API key retrieved", key_length=len(key), port=port)
     else:
         logger.warning("No API key found")
 

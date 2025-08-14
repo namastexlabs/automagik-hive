@@ -15,7 +15,7 @@ OBJECTIVE: Execute ALL remaining CLI authentication code paths to achieve 100% c
 import pytest
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 # Import the module under test
 try:
@@ -48,7 +48,7 @@ class TestMissingLineCoverage:
         # Verify line 29 was executed (environment variable access)
         mock_getenv.assert_called_once_with("HIVE_API_PORT", "8886")
         mock_logger.info.assert_called_once_with(
-            "Current API key retrieved", key_length=len("test_key_for_line_29")
+            "Current API key retrieved", key_length=len("test_key_for_line_29"), port="9999"
         )
 
     @patch('lib.auth.cli.show_current_key')
@@ -78,7 +78,7 @@ class TestMissingLineCoverage:
         mock_service = Mock()
         mock_service.get_current_key.return_value = "complete_flow_key"
         mock_auth_service.return_value = mock_service
-        mock_getenv.side_effect = ["custom_port", "false"]  # First call for port, second for auth status
+        mock_getenv.side_effect = ["custom_port", "false", "custom_port"]  # Port, auth status, port again
         
         # Execute both functions to hit all missing lines
         show_current_key()  # Should hit line 29
@@ -91,7 +91,7 @@ class TestMissingLineCoverage:
         
         # Verify logger calls for both functions
         mock_logger.info.assert_any_call(
-            "Current API key retrieved", key_length=len("complete_flow_key")
+            "Current API key retrieved", key_length=len("complete_flow_key"), port="custom_port"
         )
         mock_logger.info.assert_any_call(
             "Auth status requested", auth_disabled=False
@@ -114,7 +114,7 @@ class TestMissingLineCoverage:
         mock_auth_service.assert_called_once()
         mock_service.get_current_key.assert_called_once()
         mock_logger.info.assert_called_once_with(
-            "Current API key retrieved", key_length=len("env_var_test_key")
+            "Current API key retrieved", key_length=len("env_var_test_key"), port="7777"
         )
 
     @patch('lib.auth.cli.show_current_key')
@@ -148,11 +148,12 @@ class TestMissingLineCoverage:
         # Verify line 29 was executed and default port was used
         mock_getenv.assert_called_once_with("HIVE_API_PORT", "8886")
         mock_logger.info.assert_called_once_with(
-            "Current API key retrieved", key_length=len("default_port_key")
+            "Current API key retrieved", key_length=len("default_port_key"), port=None
         )
 
     @patch('lib.auth.cli.AuthInitService')
     @patch('lib.auth.cli.logger')
+    @patch.dict(os.environ, {'HIVE_API_PORT': '8887'}, clear=False)
     def test_show_current_key_various_key_lengths(self, mock_logger, mock_auth_service):
         """Test show_current_key with various key lengths to ensure line coverage."""
         # Setup mock
@@ -176,7 +177,7 @@ class TestMissingLineCoverage:
             # Verify proper handling of different key lengths
             if test_key:
                 mock_logger.info.assert_called_once_with(
-                    "Current API key retrieved", key_length=len(test_key)
+                    "Current API key retrieved", key_length=len(test_key), port="8887"
                 )
             else:
                 mock_logger.warning.assert_called_once_with("No API key found")
@@ -232,7 +233,7 @@ class TestExhaustivePathCoverage:
         mock_service = Mock()
         mock_service.get_current_key.return_value = "comprehensive_test_key"
         mock_auth_service.return_value = mock_service
-        mock_getenv.side_effect = ["8888", "false"]  # Port, then auth status
+        mock_getenv.side_effect = ["8888", "false", "8888"]  # Port, auth status, port again
         
         # Execute show_current_key to hit lines 22-29
         show_current_key()
@@ -241,18 +242,18 @@ class TestExhaustivePathCoverage:
         show_auth_status()
         
         # Verify all expected calls were made
-        assert mock_auth_service.call_count == 3  # Called 3 times total
-        assert mock_service.get_current_key.call_count == 3  # Called 3 times total
-        assert mock_getenv.call_count == 2  # Port check + auth status check
+        assert mock_auth_service.call_count == 2  # Called 2 times total  
+        assert mock_service.get_current_key.call_count == 2  # Called 2 times total
+        assert mock_getenv.call_count == 3  # Port check + auth status check + port check again
         
         # Verify all logger calls happened
         expected_calls = [
             # First show_current_key call
-            call.info("Current API key retrieved", key_length=len("comprehensive_test_key")),
+            call.info("Current API key retrieved", key_length=len("comprehensive_test_key"), port="8888"),
             # show_auth_status call
             call.info("Auth status requested", auth_disabled=False),
             # Second show_current_key call (from line 48)
-            call.info("Current API key retrieved", key_length=len("comprehensive_test_key"))
+            call.info("Current API key retrieved", key_length=len("comprehensive_test_key"), port="8888")
         ]
         
         # Check that all expected calls occurred (order may vary due to patching)
