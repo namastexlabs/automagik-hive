@@ -675,6 +675,140 @@ def set_session_state(step_input: StepInput, key: str, value: Any) -> None:
     session = get_session_state(step_input)
     session[key] = value
 
+async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) -> bool:
+    """
+    Process Excel file and create structured JSON with CTE data
+    Returns True if JSON was created successfully, False otherwise
+    """
+    try:
+        import pandas as pd
+        import os
+        from pathlib import Path
+        
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(json_path), exist_ok=True)
+        
+        logger.info(f"📊 Processing Excel file: {excel_path}")
+        
+        # Read Excel file (.xlsb format)
+        try:
+            df = pd.read_excel(excel_path, engine='pyxlsb')
+        except Exception as e:
+            logger.error(f"❌ Failed to read Excel file {excel_path}: {e!s}")
+            return False
+        
+        if df.empty:
+            logger.warning(f"⚠️ Excel file is empty: {excel_path}")
+            return False
+            
+        logger.info(f"📋 Excel loaded: {len(df)} rows, columns: {list(df.columns)}")
+        
+        # Filter only CTE records (exclude MINUTAS)
+        if 'TIPO' not in df.columns:
+            logger.error(f"❌ Required column 'TIPO' not found in Excel. Available columns: {list(df.columns)}")
+            return False
+            
+        cte_df = df[df['TIPO'] == 'CTE'].copy()
+        logger.info(f"🔍 Filtered CTEs: {len(cte_df)} records (excluded {len(df) - len(cte_df)} MINUTA records)")
+        
+        if cte_df.empty:
+            logger.warning(f"⚠️ No CTE records found in Excel file: {excel_path}")
+            return False
+        
+        # Validate required columns
+        required_columns = ['NF/CTE', 'PO', 'valor CHAVE', 'Empresa Origem', 'CNPJ Fornecedor', 'Competência']
+        missing_columns = [col for col in required_columns if col not in cte_df.columns]
+        if missing_columns:
+            logger.error(f"❌ Missing required columns: {missing_columns}")
+            return False
+        
+        # Group CTEs by PO and create structured JSON
+        consolidated_data = {
+            "batch_info": {
+                "batch_id": batch_id,
+                "source_file": excel_path,
+                "processing_timestamp": datetime.now(UTC).isoformat(),
+                "total_ctes": len(cte_df),
+                "total_minutas_excluded": len(df) - len(cte_df)
+            },
+            "orders": []
+        }
+        
+        # Group by PO column
+        for po_number, po_group in cte_df.groupby('PO'):
+            if pd.isna(po_number) or po_number == '':
+                continue
+                
+            # Extract CTEs for this PO
+            ctes = []
+            po_total_value = 0
+            start_dates = []
+            end_dates = []
+            
+            for _, row in po_group.iterrows():
+                cte_data = {
+                    "NF/CTE": str(row.get('NF/CTE', '')),
+                    "valor_chave": str(row.get('valor CHAVE', '')),
+                    "empresa_origem": str(row.get('Empresa Origem', '')),
+                    "cnpj_fornecedor": str(row.get('CNPJ Fornecedor', '')),
+                    "competencia": str(row.get('Competência', ''))
+                }
+                ctes.append(cte_data)
+                
+                # Extract value for PO total (if numeric)
+                try:
+                    value = float(str(row.get('valor CHAVE', '0')).replace(',', '.'))
+                    po_total_value += value
+                except (ValueError, TypeError):
+                    pass
+                
+                # Collect dates for PO date range
+                competencia = str(row.get('Competência', ''))
+                if competencia and competencia != 'nan':
+                    start_dates.append(competencia)
+                    end_dates.append(competencia)
+            
+            # Determine date range
+            start_date = min(start_dates) if start_dates else "01/01/2025"
+            end_date = max(end_dates) if end_dates else "31/12/2025"
+            
+            # Create PO order structure
+            order = {
+                "po_number": str(po_number),
+                "status": "PENDING",  # Initial status for new CTEs
+                "ctes": ctes,
+                "cte_count": len(ctes),
+                "po_total_value": round(po_total_value, 2),
+                "start_date": start_date,
+                "end_date": end_date,
+                "created_at": datetime.now(UTC).isoformat(),
+                "last_updated": datetime.now(UTC).isoformat()
+            }
+            
+            consolidated_data["orders"].append(order)
+        
+        consolidated_data["summary"] = {
+            "total_orders": len(consolidated_data["orders"]),
+            "total_ctes": sum(order["cte_count"] for order in consolidated_data["orders"]),
+            "total_value": sum(order["po_total_value"] for order in consolidated_data["orders"])
+        }
+        
+        # Write JSON file
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(consolidated_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"✅ JSON created successfully: {json_path}")
+        logger.info(f"📊 Summary: {consolidated_data['summary']['total_orders']} POs, {consolidated_data['summary']['total_ctes']} CTEs, Total: R$ {consolidated_data['summary']['total_value']:,.2f}")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Error processing Excel to JSON: {e!s}")
+        import traceback
+        logger.error(f"💥 Traceback: {traceback.format_exc()}")
+        return False
+
+
 # New Daily Workflow Step Executors
 
 async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput:
@@ -717,33 +851,57 @@ async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput
     # REAL GMAIL INTEGRATION - Download Excel files from emails
     new_emails_processed = []
 
-    if datetime.now(UTC).hour < 12:  # Only process new emails in morning
-        try:
-            logger.info("🚀 Starting real Gmail email processing...")
-            gmail_downloader = GmailDownloader()
+    try:
+        logger.info("🚀 Starting real Gmail email processing...")
+        gmail_downloader = GmailDownloader()
 
-            # Download Excel attachments (max 3 emails per day)
-            downloaded_files = gmail_downloader.download_excel_attachments(max_emails=3)
+        # Download Excel attachments (max 3 emails per day)
+        downloaded_files = gmail_downloader.download_excel_attachments(max_emails=3)
 
-            for file_info in downloaded_files:
+        for file_info in downloaded_files:
+            # Process each Excel file and create corresponding JSON
+            excel_path = file_info["path"]
+            json_path = f"mctech/ctes/consolidated_ctes_{daily_batch_id}_{file_info['email_id'][:8]}.json"
+            
+            try:
+                # REAL EXCEL PROCESSING - Convert Excel to structured JSON
+                json_created_successfully = await process_excel_to_json(excel_path, json_path, daily_batch_id)
+                
                 new_emails_processed.append({
                     "filename": file_info["filename"],
                     "file_path": file_info["path"],
                     "size_bytes": file_info["size_bytes"],
                     "checksum": file_info["checksum"],
                     "email_id": file_info["email_id"],
-                    "json_created": f"mctech/ctes/consolidated_ctes_{daily_batch_id}.json",
-                    "status": "NEW_PENDING"
+                    "json_created": json_path,
+                    "json_exists": json_created_successfully,
+                    "status": "NEW_PENDING" if json_created_successfully else "FAILED_EXTRACTION"
+                })
+                
+                if json_created_successfully:
+                    logger.info(f"✅ Excel processed successfully: {excel_path} → {json_path}")
+                else:
+                    logger.error(f"❌ Failed to process Excel: {excel_path}")
+                    
+            except Exception as e:
+                logger.error(f"❌ Error processing Excel {excel_path}: {e!s}")
+                new_emails_processed.append({
+                    "filename": file_info["filename"],
+                    "file_path": file_info["path"],
+                    "size_bytes": file_info["size_bytes"],
+                    "checksum": file_info["checksum"],
+                    "email_id": file_info["email_id"],
+                    "json_created": json_path,
+                    "json_exists": False,
+                    "status": "FAILED_EXTRACTION",
+                    "error": str(e)
                 })
 
-            logger.info(f"📧 Real Gmail processing completed: {len(new_emails_processed)} files downloaded")
+        logger.info(f"📧 Real Gmail processing completed: {len(new_emails_processed)} files downloaded and processed")
 
-        except Exception as e:
-            logger.error(f"❌ Gmail processing failed: {e!s}")
-            # Continue workflow without new emails if Gmail fails
-            new_emails_processed = []
-    else:
-        logger.info("⏰ Skipping email processing - only process emails in morning (<12PM)")
+    except Exception as e:
+        logger.error(f"❌ Gmail processing failed: {e!s}")
+        # Continue workflow without new emails if Gmail fails
         new_emails_processed = []
 
     # REAL DIRECTORY SCANNING - Find all existing JSON files
@@ -807,19 +965,19 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
        - FAILED_*: Needs error handling
 
     OUTPUT STRUCTURE:
-    {
-        "processing_categories": {
+    {{
+        "processing_categories": {{
             "pending_pos": [...],
             "monitoring_pos": [...],
             "download_pos": [...],
             "upload_pos": [...],
             "completed_pos": [...],
             "failed_pos": [...]
-        },
-        "json_file_status": {
+        }},
+        "json_file_status": {{
             "file_path": "po_status_summary_placeholder"
-        }
-    }
+        }}
+    }}
     """
 
     response = data_extractor.run(analysis_context)
@@ -847,8 +1005,8 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
         "agent_response": str(response.content) if response.content else "No response"
     }
 
-    all_json_files = initialization_results["existing_json_files_found"] + [
-        file_info["json_created"] for file_info in initialization_results["new_json_files_created"]
+    all_json_files = init_results["existing_json_files_found"] + [
+        file_info["json_created"] for file_info in init_results["new_json_files_created"]
     ]
 
     for json_file_path in all_json_files:
