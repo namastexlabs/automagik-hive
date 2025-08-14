@@ -6,15 +6,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 /home/namastex/workspace/automagik-hive/.claude/hooks/naming_validation.py"
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/naming_validation.py"
           },
           {
             "type": "command",
-            "command": "/usr/bin/python3 /home/namastex/workspace/automagik-hive/.claude/hooks/tdd_hook.py"
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/tdd_hook.py"
           },
           {
             "type": "command",
-            "command": "/usr/bin/python3 /home/namastex/workspace/automagik-hive/.claude/hooks/test-boundary-enforcer.py"
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/test_boundary_enforcer.py"
           }
         ]
       }

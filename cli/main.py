@@ -9,16 +9,16 @@ import argparse
 import sys
 from pathlib import Path
 
-from .docker_manager import DockerManager
-from .workspace import WorkspaceManager
+from .commands.agent import AgentCommands
 
 # Import command classes for test compatibility
 from .commands.init import InitCommands
-from .commands.workspace import WorkspaceCommands
 from .commands.postgres import PostgreSQLCommands
-from .commands.agent import AgentCommands
-from .commands.uninstall import UninstallCommands
 from .commands.service import ServiceManager
+from .commands.uninstall import UninstallCommands
+from .commands.workspace import WorkspaceCommands
+from .docker_manager import DockerManager
+from .workspace import WorkspaceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -29,7 +29,7 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # Core commands  
+    # Core commands
     parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
     parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start production server (Docker)")
     parser.add_argument("--dev", nargs="?", const=".", metavar="WORKSPACE", help="Start development server (local)")
@@ -89,7 +89,7 @@ def main() -> int:
     # Count commands
     commands = [
         args.init != False, args.serve, args.dev,
-        args.postgres_status, args.postgres_start, args.postgres_stop, 
+        args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.agent_install, args.agent_start, args.agent_stop,
         args.agent_restart, args.agent_logs, args.agent_status, args.agent_reset,
@@ -138,49 +138,49 @@ def main() -> int:
         postgres_cmd = PostgreSQLCommands()
         if args.postgres_status:
             return 0 if postgres_cmd.postgres_status(args.postgres_status) else 1
-        elif args.postgres_start:
+        if args.postgres_start:
             return 0 if postgres_cmd.postgres_start(args.postgres_start) else 1
-        elif args.postgres_stop:
+        if args.postgres_stop:
             return 0 if postgres_cmd.postgres_stop(args.postgres_stop) else 1
-        elif args.postgres_restart:
+        if args.postgres_restart:
             return 0 if postgres_cmd.postgres_restart(args.postgres_restart) else 1
-        elif args.postgres_logs:
+        if args.postgres_logs:
             return 0 if postgres_cmd.postgres_logs(args.postgres_logs, args.tail) else 1
-        elif args.postgres_health:
+        if args.postgres_health:
             return 0 if postgres_cmd.postgres_health(args.postgres_health) else 1
         
         # Agent commands
         agent_cmd = AgentCommands()
         if args.agent_install:
             return 0 if agent_cmd.install(args.agent_install) else 1
-        elif args.agent_start:
+        if args.agent_start:
             return 0 if agent_cmd.start(args.agent_start) else 1
-        elif args.agent_stop:
+        if args.agent_stop:
             return 0 if agent_cmd.stop(args.agent_stop) else 1
-        elif args.agent_restart:
+        if args.agent_restart:
             return 0 if agent_cmd.restart(args.agent_restart) else 1
-        elif args.agent_logs:
+        if args.agent_logs:
             return 0 if agent_cmd.logs(args.agent_logs, args.tail) else 1
-        elif args.agent_status:
+        if args.agent_status:
             return 0 if agent_cmd.status(args.agent_status) else 1
-        elif args.agent_reset:
+        if args.agent_reset:
             return 0 if agent_cmd.reset(args.agent_reset) else 1
         
         # Production environment commands
         service_manager = ServiceManager()
         if args.install:
             return 0 if service_manager.install_full_environment(args.install) else 1
-        elif args.stop:
+        if args.stop:
             return 0 if service_manager.stop_docker(args.stop) else 1
-        elif args.restart:
+        if args.restart:
             return 0 if service_manager.restart_docker(args.restart) else 1
-        elif args.status:
+        if args.status:
             status = service_manager.docker_status(args.status)
             print(f"🔍 Production environment status in: {args.status}")
             for service, service_status in status.items():
                 print(f"  {service}: {service_status}")
             return 0
-        elif args.logs:
+        if args.logs:
             return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
         
         # Uninstall commands
@@ -188,7 +188,7 @@ def main() -> int:
             # Use the new production environment uninstall
             service_manager = ServiceManager()
             return 0 if service_manager.uninstall_environment(args.uninstall) else 1
-        elif args.uninstall_global:
+        if args.uninstall_global:
             uninstall_cmd = UninstallCommands()
             return 0 if uninstall_cmd.uninstall_global() else 1
         

@@ -3,16 +3,17 @@
 Real implementation connecting to AgentService for actual functionality.
 """
 
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
+
 from cli.core.agent_service import AgentService
 
 
 class AgentCommands:
     """Agent commands implementation."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
         self.agent_service = AgentService(self.workspace_path)
     
     def install(self, workspace: str = ".") -> bool:
@@ -79,7 +80,7 @@ class AgentCommands:
         except Exception:
             return False
     
-    def health(self, workspace: str = ".") -> Dict[str, Any]:
+    def health(self, workspace: str = ".") -> dict[str, Any]:
         """Agent health command."""
         try:
             print(f"🔍 Checking agent health in: {workspace}")

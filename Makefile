@@ -346,16 +346,8 @@ help: ## 🐝 Show this help message
 	@echo -e "  $(FONT_PURPLE)postgres-logs$(FONT_RESET)   Show PostgreSQL logs (mirrors --postgres-logs)"
 	@echo -e "  $(FONT_PURPLE)postgres-health$(FONT_RESET) Check PostgreSQL health (mirrors --postgres-health)"
 	@echo ""
-	@echo -e "$(FONT_CYAN)🏭 Main Application (UV Integration):$(FONT_RESET)"
-	@echo -e "  $(FONT_PURPLE)install-main$(FONT_RESET)    Install and start main services (mirrors --main-install)"
-	@echo -e "  $(FONT_PURPLE)main$(FONT_RESET)            Start main services (mirrors --main-start)"
-	@echo -e "  $(FONT_PURPLE)main-start$(FONT_RESET)      Start main services (alias for main)"
-	@echo -e "  $(FONT_PURPLE)main-stop$(FONT_RESET)       Stop main services (mirrors --main-stop)"
-	@echo -e "  $(FONT_PURPLE)main-restart$(FONT_RESET)    Restart main services (mirrors --main-restart)"
-	@echo -e "  $(FONT_PURPLE)main-logs$(FONT_RESET)       Show main logs (mirrors --main-logs)"
-	@echo -e "  $(FONT_PURPLE)main-status$(FONT_RESET)     Check main status (mirrors --main-status)"
-	@echo -e "  $(FONT_PURPLE)main-reset$(FONT_RESET)      Reset main environment (mirrors --main-reset)"
-	@echo -e "  $(FONT_PURPLE)uninstall-main$(FONT_RESET)  Uninstall main environment completely"
+	@echo -e "$(FONT_CYAN)🏭 Production Environment (UV Integration):$(FONT_RESET)"
+	@echo -e "  $(FONT_PURPLE)restart$(FONT_RESET)         Restart production environment (mirrors --restart)"
 	@echo ""
 	@echo -e "$(FONT_CYAN)🤖 Agent Environment (UV Integration):$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)install-agent$(FONT_RESET)   Install and start agent services (mirrors --agent-install)"
@@ -405,10 +397,14 @@ install-local: ## 🛠️ Install development environment (local only)
 	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
 
 .PHONY: install
-install: ## 🛠️ Install with optional Docker PostgreSQL setup
-	@$(MAKE) install-local
-	@$(call setup_docker_postgres)
+install: ## 🛠️ Complete environment setup with .env generation and PostgreSQL (mirrors --install)
+	@$(call print_status,Installing complete Automagik Hive environment...)
+	@$(call check_prerequisites)
+	@$(call setup_python_env)
+	@uv run automagik-hive --install
 	@$(call sync_mcp_config_with_credentials)
+	@$(call print_success,Environment ready!)
+	@echo -e "$(FONT_CYAN)🌐 API available at: http://localhost:$(HIVE_PORT)$(FONT_RESET)"
 
 
 # ===========================================
@@ -530,12 +526,16 @@ version: ## 📄 Show version (mirrors --version)
 	@uv run automagik-hive --version
 
 .PHONY: stop
-stop: ## 🛑 Stop application services (keeps PostgreSQL running)
-	@$(call print_status,Stopping application services...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) stop app 2>/dev/null || true
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) rm -f app 2>/dev/null || true
-	@pkill -f "python.*api/serve.py" 2>/dev/null || true
-	@$(call print_success,Application services stopped! PostgreSQL remains running.)
+stop: ## 🛑 Stop production environment (mirrors --stop)
+	@$(call print_status,Stopping production environment...)
+	@uv run automagik-hive --stop
+	@$(call print_success,Production environment stopped!)
+
+.PHONY: restart
+restart: ## 🔄 Restart production environment (mirrors --restart)
+	@$(call print_status,Restarting production environment...)
+	@uv run automagik-hive --restart
+	@$(call print_success,Production environment restarted!)
 
 .PHONY: stop-all
 stop-all: ## 🛑 Stop all services including PostgreSQL
@@ -566,60 +566,17 @@ rebuild: ## 🔄 Force full rebuild without cache (for clean state)
 	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
 
 .PHONY: status
-status: ## 📊 Show service status
-	@$(call print_status,Service Status)
-	@echo ""
-	@echo -e "$(FONT_PURPLE)┌─────────────────────────┬──────────┬─────────┬──────────┐$(FONT_RESET)"
-	@echo -e "$(FONT_PURPLE)│ Service                 │ Status   │ Port    │ Container│$(FONT_RESET)"
-	@echo -e "$(FONT_PURPLE)├─────────────────────────┼──────────┼─────────┼──────────┤$(FONT_RESET)"
-	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"hive-agents" "running" "$(HIVE_PORT)" "$(shell docker ps --filter 'name=hive-agents' --format '{{.ID}}' | head -c 6)"; \
-	else \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"hive-agents" "stopped" "-" "-"; \
-	fi
-	@if docker ps --filter "name=hive-postgres" --format "{{.Names}}" | grep -q hive-postgres; then \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"hive-postgres" "running" "5432" "$(shell docker ps --filter 'name=hive-postgres' --format '{{.ID}}' | head -c 6)"; \
-	else \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"hive-postgres" "stopped" "-" "-"; \
-	fi
-	@if pgrep -f "python.*api/serve.py" > /dev/null 2>&1; then \
-		pid=$(pgrep -f "python.*api/serve.py"); \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-8s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET) %-7s $(FONT_PURPLE)│$(FONT_RESET) %-8s $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"local-development" "running" "$$pid"; \
-	fi
-	@echo -e "$(FONT_PURPLE)└─────────────────────────┴──────────┴─────────┴──────────┘$(FONT_RESET)"
+status: ## 📊 Show production environment status (mirrors --status)
+	@$(call print_status,Production Environment Status)
+	@uv run automagik-hive --status
 
 # ===========================================
 # 📋 Monitoring
 # ===========================================
 .PHONY: logs
-logs: ## 📄 Show logs (container or local development)
-	@echo -e "$(FONT_PURPLE)🐝 Application Logs$(FONT_RESET)"
-	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
-		echo -e "$(FONT_CYAN)=== Hive Agents Container Logs ====$(FONT_RESET)"; \
-		docker logs --tail=50 hive-agents; \
-	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
-		echo -e "$(FONT_CYAN)=== Local Development Server Logs ====$(FONT_RESET)"; \
-		echo -e "$(FONT_YELLOW)💡 Local development server is running (PID: $$(pgrep -f 'python.*api/serve.py'))$(FONT_RESET)"; \
-		echo -e "$(FONT_GRAY)📋 To see live logs, use: tail -f logs/app.log (if logging to file)$(FONT_RESET)"; \
-		echo -e "$(FONT_GRAY)📋 Or check the terminal where 'make dev' is running$(FONT_RESET)"; \
-		if [ -f "logs/app.log" ]; then \
-			echo -e "$(FONT_CYAN)=== Recent Application Logs ====$(FONT_RESET)"; \
-			tail -50 logs/app.log 2>/dev/null || echo -e "$(FONT_YELLOW)⚠️ Could not read logs/app.log$(FONT_RESET)"; \
-		elif [ -f "app.log" ]; then \
-			echo -e "$(FONT_CYAN)=== Recent Application Logs ====$(FONT_RESET)"; \
-			tail -50 app.log 2>/dev/null || echo -e "$(FONT_YELLOW)⚠️ Could not read app.log$(FONT_RESET)"; \
-		else \
-			echo -e "$(FONT_GRAY)📝 No log files found - logs are displayed in the development terminal$(FONT_RESET)"; \
-		fi \
-	else \
-		echo -e "$(FONT_YELLOW)⚠️ No running services found$(FONT_RESET)"; \
-		echo -e "$(FONT_GRAY)💡 Start services with 'make dev' (local) or 'make prod' (Docker)$(FONT_RESET)"; \
-	fi
+logs: ## 📄 Show production environment logs (mirrors --logs)
+	@echo -e "$(FONT_PURPLE)🐝 Production Environment Logs$(FONT_RESET)"
+	@uv run automagik-hive --logs --tail 50
 
 .PHONY: logs-live
 logs-live: ## 📄 Follow logs in real-time
@@ -677,23 +634,10 @@ clean: ## 🧹 Clean temporary files
 
 
 .PHONY: uninstall
-uninstall: ## 🗑️ Complete uninstall - removes everything
-	@$(call print_status,Complete Automagik Hive Uninstall)
-	@echo -e "$(FONT_YELLOW)This will remove ALL containers, images, volumes, data, and environment files$(FONT_RESET)"
-	@echo -e "$(FONT_CYAN)🐳 Stopping all services...$(FONT_RESET)"
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --remove-orphans 2>/dev/null || true
-	@$(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml down --remove-orphans 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🗑️ Removing containers...$(FONT_RESET)"
-	@docker container rm hive-agents hive-postgres hive-agents-agent hive-agent-postgres 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🖼️ Removing Docker images...$(FONT_RESET)"
-	@docker image rm automagik-hive-app 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)💾 Removing Docker volumes...$(FONT_RESET)"
-	@docker volume rm automagik-hive_app_logs automagik-hive_app_data 2>/dev/null || true
-	@docker volume rm automagik-hive_agent_app_logs automagik-hive_agent_app_data 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)📁 Removing files and data...$(FONT_RESET)"
-	@rm -rf .venv/ data/ logs/ 2>/dev/null || true
-	@$(call print_success,Complete uninstall finished)
-	@echo -e "$(FONT_GREEN)✓ Everything removed: containers, images, volumes, data, venv$(FONT_RESET)"
+uninstall: ## 🗑️ Uninstall production environment (mirrors --uninstall)
+	@$(call print_status,Uninstalling production environment...)
+	@uv run automagik-hive --uninstall
+	@$(call print_success,Production environment uninstalled!)
 
 
 # ===========================================
@@ -763,72 +707,6 @@ uninstall-agent: ## 🗑️ Uninstall agent environment completely
 	@docker network rm hive_agent_network 2>/dev/null || true
 	@$(call print_success,Agent environment uninstalled!)
 
-# ===========================================
-# 🏭 Main Application Commands (UV Integration)
-# ===========================================
-.PHONY: install-main
-install-main: ## 🏭 Install and start main services (mirrors --main-install)
-	@$(call print_status,Installing and starting main services...)
-	@$(call check_prerequisites)
-	@$(call setup_python_env)
-	@uv run automagik-hive --main-install
-	@$(call sync_mcp_config_with_credentials)
-	@$(call print_success,Main environment ready!)
-	@echo -e "$(FONT_CYAN)🌐 Main API available at: http://localhost:$(HIVE_PORT)$(FONT_RESET)"
-
-.PHONY: main
-main: ## 🏭 Start main services (mirrors --main-start)
-	@$(call print_status,Starting main services...)
-	@if [ ! -f ".env" ]; then \
-		$(call print_error,Environment not found - run 'make install-main' first); \
-		exit 1; \
-	fi
-	@uv run automagik-hive --main-start
-
-.PHONY: main-start
-main-start: ## 🏭 Start main services (alias for main)
-	@$(MAKE) main
-
-.PHONY: main-stop
-main-stop: ## 🛑 Stop main services (mirrors --main-stop)
-	@$(call print_status,Stopping main services...)
-	@uv run automagik-hive --main-stop
-
-.PHONY: main-restart
-main-restart: ## 🔄 Restart main services (mirrors --main-restart)
-	@$(call print_status,Restarting main services...)
-	@uv run automagik-hive --main-restart
-
-.PHONY: main-logs
-main-logs: ## 📄 Show main logs (mirrors --main-logs)
-	@echo -e "$(FONT_PURPLE)🏭 Main Container Logs$(FONT_RESET)"
-	@uv run automagik-hive --main-logs --tail 50
-
-.PHONY: main-status
-main-status: ## 📊 Check main status (mirrors --main-status)
-	@$(call print_status,Main Environment Status)
-	@uv run automagik-hive --main-status
-
-.PHONY: main-reset
-main-reset: ## 🗑️ Reset main environment (mirrors --main-reset)
-	@$(call print_status,Resetting main environment...)
-	@echo -e "$(FONT_YELLOW)This will destroy all containers and data, then reinstall and start fresh$(FONT_RESET)"
-	@uv run automagik-hive --main-reset
-	@$(call sync_mcp_config_with_credentials)
-	@$(call print_success,Main environment reset complete!)
-
-.PHONY: uninstall-main
-uninstall-main: ## 🗑️ Uninstall main environment completely
-	@$(call print_status,Uninstalling main environment...)
-	@uv run automagik-hive --main-stop 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🐳 Stopping main services...$(FONT_RESET)"
-	@$(DOCKER_COMPOSE) -f docker/main/docker-compose.yml down --remove-orphans -v 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🗑️ Removing main containers and volumes...$(FONT_RESET)"
-	@docker container rm hive-main-postgres hive-main-app 2>/dev/null || true
-	@docker volume rm hive_main_app_logs hive_main_app_data 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🔗 Removing main network...$(FONT_RESET)"
-	@docker network rm hive_main_network 2>/dev/null || true
-	@$(call print_success,Main environment uninstalled!)
 
 .PHONY: test
 test: ## 🧪 Run test suite
@@ -1069,7 +947,7 @@ publish: ## 📦 Build and publish alpha release to PyPI
 # ===========================================
 # 🧹 Phony Targets  
 # ===========================================
-.PHONY: help install install-local dev prod stop status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health install-agent uninstall-agent agent agent-start agent-stop agent-restart agent-logs agent-status agent-reset install-main uninstall-main main main-start main-stop main-restart main-logs main-status main-reset uninstall-workspace uninstall-global install-hooks uninstall-hooks bypass-hooks restore-hooks test-hooks hook-status bump publish
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health install-agent uninstall-agent agent agent-start agent-stop agent-restart agent-logs agent-status agent-reset uninstall-workspace uninstall-global install-hooks uninstall-hooks bypass-hooks restore-hooks test-hooks hook-status bump publish
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================

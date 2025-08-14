@@ -5,15 +5,14 @@ import sys
 from typing import Optional
 
 
-def run_command(cmd: list, capture_output: bool = False, cwd: Optional[str] = None) -> Optional[str]:
+def run_command(cmd: list, capture_output: bool = False, cwd: str | None = None) -> str | None:
     """Run shell command with error handling."""
     try:
         if capture_output:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=cwd)
             return result.stdout.strip()
-        else:
-            subprocess.run(cmd, check=True, cwd=cwd)
-            return None
+        subprocess.run(cmd, check=True, cwd=cwd)
+        return None
     except subprocess.CalledProcessError as e:
         if capture_output:
             print(f"❌ Command failed: {' '.join(cmd)}")
@@ -48,7 +47,7 @@ def format_status(name: str, status: str, details: str = "") -> str:
     """Format status line with consistent width."""
     status_icons = {
         "running": "🟢",
-        "stopped": "🔴", 
+        "stopped": "🔴",
         "missing": "❌",
         "healthy": "🟢",
         "unhealthy": "🟡"
@@ -75,10 +74,9 @@ def confirm_action(message: str, default: bool = False) -> bool:
     if not response:
         return default
     
-    if response in ['y', 'yes']:
+    if response in ["y", "yes"]:
         return True
-    elif response in ['n', 'no']:
+    if response in ["n", "no"]:
         return False
-    else:
-        # Invalid response - return default
-        return default
+    # Invalid response - return default
+    return default

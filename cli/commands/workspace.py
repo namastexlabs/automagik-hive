@@ -4,15 +4,15 @@ Minimal stub implementations to fix import errors in tests.
 These are placeholders that satisfy import requirements.
 """
 
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class WorkspaceCommands:
     """CLI WorkspaceCommands implementation."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
     
     def start_workspace(self, workspace_path: str) -> bool:
         """Start workspace server."""
@@ -68,8 +68,8 @@ class WorkspaceCommands:
 class UnifiedWorkspaceManager:
     """Unified workspace management for CLI operations."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
     
     def manage_workspace(self, action: str) -> bool:
         """Manage workspace operations."""

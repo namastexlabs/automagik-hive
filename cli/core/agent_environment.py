@@ -4,9 +4,9 @@ Manages agent environment configuration using docker-compose inheritance
 from the main .env file instead of separate agent-specific files.
 """
 
-from typing import Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Optional
 
 
 @dataclass
@@ -34,7 +34,7 @@ class EnvironmentConfig:
 class AgentEnvironment:
     """Agent environment management."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
+    def __init__(self, workspace_path: Path | None = None):
         self.workspace_path = workspace_path or Path.cwd()
         self.env_example_path = self.workspace_path / ".env.example"
         self.main_env_path = self.workspace_path / ".env"
@@ -127,12 +127,12 @@ class AgentEnvironment:
         except Exception as e:
             return {
                 "valid": False,
-                "errors": [f"Failed to validate environment: {str(e)}"],
+                "errors": [f"Failed to validate environment: {e!s}"],
                 "warnings": [],
                 "config": None
             }
     
-    def get_agent_credentials(self) -> Optional[AgentCredentials]:
+    def get_agent_credentials(self) -> AgentCredentials | None:
         """Extract agent credentials from main .env file (docker-compose inheritance)."""
         if not self.main_env_path.exists():
             return None
@@ -160,13 +160,13 @@ class AgentEnvironment:
         
         try:
             content = self.main_env_path.read_text()
-            lines = content.split('\n')
+            lines = content.split("\n")
             
             # Update existing keys and track what was processed
             processed_keys = set()
             for i, line in enumerate(lines):
-                if '=' in line and not line.strip().startswith('#'):
-                    key = line.split('=')[0].strip()
+                if "=" in line and not line.strip().startswith("#"):
+                    key = line.split("=")[0].strip()
                     if key in updates:
                         lines[i] = f"{key}={updates[key]}"
                         processed_keys.add(key)
@@ -177,7 +177,7 @@ class AgentEnvironment:
                     lines.append(f"{key}={value}")
             
             # Write back to main .env file
-            self.main_env_path.write_text('\n'.join(lines))
+            self.main_env_path.write_text("\n".join(lines))
             return True
             
         except Exception:
@@ -229,37 +229,37 @@ class AgentEnvironment:
         """Load environment file as key-value dictionary."""
         config = {}
         if file_path.exists():
-            for line in file_path.read_text().split('\n'):
+            for line in file_path.read_text().split("\n"):
                 line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
                     config[key.strip()] = value.strip()
         return config
     
-    def _parse_database_url(self, url: str) -> Optional[dict]:
+    def _parse_database_url(self, url: str) -> dict | None:
         """Parse database URL into components."""
         try:
             # Simple regex-like parsing for postgresql URLs
-            if not url.startswith('postgresql'):
+            if not url.startswith("postgresql"):
                 return None
             
             # Extract user:password@host:port/database
-            parts = url.split('://', 1)[1]  # Remove postgresql://
-            if '@' not in parts:
+            parts = url.split("://", 1)[1]  # Remove postgresql://
+            if "@" not in parts:
                 return None
             
-            auth_part, host_part = parts.split('@', 1)
-            user, password = auth_part.split(':', 1) if ':' in auth_part else (auth_part, '')
+            auth_part, host_part = parts.split("@", 1)
+            user, password = auth_part.split(":", 1) if ":" in auth_part else (auth_part, "")
             
-            if '/' not in host_part:
+            if "/" not in host_part:
                 return None
             
-            host_port, database = host_part.split('/', 1)
+            host_port, database = host_part.split("/", 1)
             
             # Validate host:port format - if no colon found, this is invalid
             # URLs like "host_port" suggest port should be present but malformed
-            if ':' in host_port:
-                host, port_str = host_port.split(':', 1)
+            if ":" in host_port:
+                host, port_str = host_port.split(":", 1)
                 # Validate port is numeric
                 try:
                     port = int(port_str)
@@ -310,20 +310,20 @@ class AgentEnvironment:
 
 
 # Convenience functions
-def create_agent_environment(workspace_path: Optional[Path] = None) -> AgentEnvironment:
+def create_agent_environment(workspace_path: Path | None = None) -> AgentEnvironment:
     """Create agent environment using docker-compose inheritance."""
     env = AgentEnvironment(workspace_path)
     env.ensure_main_env()  # Ensure main .env exists for inheritance
     return env
 
 
-def validate_agent_environment(workspace_path: Optional[Path] = None) -> bool:
+def validate_agent_environment(workspace_path: Path | None = None) -> bool:
     """Validate agent environment using docker-compose inheritance."""
     env = AgentEnvironment(workspace_path)
     return env.validate_agent_setup()
 
 
-def cleanup_agent_environment(workspace_path: Optional[Path] = None) -> bool:
+def cleanup_agent_environment(workspace_path: Path | None = None) -> bool:
     """Cleanup agent environment - no longer needed with docker-compose inheritance."""
     # With docker-compose inheritance, no separate files to clean
     return True

@@ -4,17 +4,17 @@ Minimal stub implementations to fix import errors in tests.
 These are placeholders that satisfy import requirements.
 """
 
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class WorkflowOrchestrator:
     """Workflow orchestration for CLI operations."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
     
-    def orchestrate_workflow(self, workflow_name: Optional[str] = None) -> bool:
+    def orchestrate_workflow(self, workflow_name: str | None = None) -> bool:
         """Orchestrate workflow execution."""
         try:
             if workflow_name:
@@ -31,6 +31,6 @@ class WorkflowOrchestrator:
         """Execute workflow orchestrator."""
         return self.orchestrate_workflow()
     
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get orchestrator status."""
         return {"status": "running", "healthy": True}

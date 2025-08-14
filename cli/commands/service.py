@@ -5,16 +5,17 @@ Supports both local development (uvicorn) and production Docker modes.
 """
 
 import subprocess
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
+
 from cli.core.main_service import MainService
 
 
 class ServiceManager:
     """Enhanced service management with Docker orchestration support."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
         self.main_service = MainService(self.workspace_path)
     
     def serve_local(self, host: str = "0.0.0.0", port: int = 8886, reload: bool = True) -> bool:
@@ -30,7 +31,7 @@ class ServiceManager:
             if reload:
                 cmd.append("--reload")
             
-            subprocess.run(cmd)
+            subprocess.run(cmd, check=False)
             return True
         except KeyboardInterrupt:
             print("\n🛑 Server stopped by user")
@@ -70,8 +71,8 @@ class ServiceManager:
     def _setup_env_file(self, workspace: str) -> bool:
         """Setup .env file with API key generation if needed."""
         try:
-            from pathlib import Path
             import shutil
+            from pathlib import Path
             
             workspace_path = Path(workspace)
             env_file = workspace_path / ".env"
@@ -131,12 +132,12 @@ class ServiceManager:
     def _generate_postgres_credentials(self) -> bool:
         """Generate secure PostgreSQL credentials and update .env."""
         try:
+            import re
             import secrets
             import string
-            import re
             from pathlib import Path
             
-            workspace_path = Path(".")
+            workspace_path = Path()
             env_file = workspace_path / ".env"
             
             if not env_file.exists():
@@ -148,7 +149,7 @@ class ServiceManager:
             
             # Check if credentials already exist and are not placeholder values
             if "HIVE_DATABASE_URL=" in env_content:
-                current_url = re.search(r'^HIVE_DATABASE_URL=(.*)$', env_content, re.MULTILINE)
+                current_url = re.search(r"^HIVE_DATABASE_URL=(.*)$", env_content, re.MULTILINE)
                 if current_url:
                     url = current_url.group(1)
                     if "your-secure-password-here" not in url and "hive_user" not in url:
@@ -157,8 +158,8 @@ class ServiceManager:
             
             # Generate secure credentials
             alphabet = string.ascii_letters + string.digits
-            postgres_user = ''.join(secrets.choice(alphabet) for _ in range(16))
-            postgres_pass = ''.join(secrets.choice(alphabet) for _ in range(16))
+            postgres_user = "".join(secrets.choice(alphabet) for _ in range(16))
+            postgres_pass = "".join(secrets.choice(alphabet) for _ in range(16))
             postgres_db = "hive"
             
             # Update .env file
@@ -167,9 +168,9 @@ class ServiceManager:
             # Replace or add the database URL
             if "HIVE_DATABASE_URL=" in env_content:
                 env_content = re.sub(
-                    r'^HIVE_DATABASE_URL=.*$', 
-                    f'HIVE_DATABASE_URL={new_url}', 
-                    env_content, 
+                    r"^HIVE_DATABASE_URL=.*$",
+                    f"HIVE_DATABASE_URL={new_url}",
+                    env_content,
                     flags=re.MULTILINE
                 )
             else:
@@ -206,7 +207,7 @@ class ServiceManager:
             print(f"❌ Failed to restart Docker services: {e}")
             return False
     
-    def docker_status(self, workspace: str = ".") -> Dict[str, str]:
+    def docker_status(self, workspace: str = ".") -> dict[str, str]:
         """Get Docker containers status."""
         try:
             return self.main_service.get_main_status(workspace)
@@ -262,7 +263,7 @@ class ServiceManager:
             print(f"❌ Failed to uninstall environment: {e}")
             return False
     
-    def manage_service(self, service_name: Optional[str] = None) -> bool:
+    def manage_service(self, service_name: str | None = None) -> bool:
         """Legacy method for compatibility."""
         try:
             if service_name:
@@ -278,11 +279,11 @@ class ServiceManager:
         """Execute service manager."""
         return self.manage_service()
     
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get service manager status."""
         docker_status = self.docker_status()
         return {
-            "status": "running", 
+            "status": "running",
             "healthy": True,
             "docker_services": docker_status
         }

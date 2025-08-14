@@ -7,36 +7,35 @@ Mirrors AgentService pattern but adapted for production main application require
 import os
 import subprocess
 import time
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class MainService:
     """Main service management for production Docker orchestration."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
+    def __init__(self, workspace_path: Path | None = None):
         # Normalize workspace path for cross-platform compatibility
         if workspace_path is None:
             try:
-                self.workspace_path = Path(".").resolve()
+                self.workspace_path = Path().resolve()
             except NotImplementedError:
                 # Handle cross-platform testing where resolve() fails
-                self.workspace_path = Path(".")
+                self.workspace_path = Path()
+        # Ensure we have a proper Path object, handle string paths for Windows
+        elif isinstance(workspace_path, str):
+            # Convert Windows-style paths (C:\tmp\xyz) to Path objects
+            try:
+                self.workspace_path = Path(workspace_path).resolve()
+            except NotImplementedError:
+                # Handle cross-platform testing scenarios
+                self.workspace_path = Path(workspace_path)
         else:
-            # Ensure we have a proper Path object, handle string paths for Windows
-            if isinstance(workspace_path, str):
-                # Convert Windows-style paths (C:\tmp\xyz) to Path objects
-                try:
-                    self.workspace_path = Path(workspace_path).resolve()
-                except NotImplementedError:
-                    # Handle cross-platform testing scenarios
-                    self.workspace_path = Path(workspace_path)
-            else:
-                try:
-                    self.workspace_path = workspace_path.resolve()
-                except NotImplementedError:
-                    # Handle cross-platform testing scenarios
-                    self.workspace_path = workspace_path
+            try:
+                self.workspace_path = workspace_path.resolve()
+            except NotImplementedError:
+                # Handle cross-platform testing scenarios
+                self.workspace_path = workspace_path
     
     def install_main_environment(self, workspace_path: str) -> bool:
         """Install main environment with proper orchestration."""
@@ -238,7 +237,7 @@ class MainService:
             # Stop all containers using Docker Compose with cross-platform paths
             result = subprocess.run(
                 ["docker", "compose", "-f", os.fspath(compose_file), "stop"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=60
             )
@@ -246,9 +245,8 @@ class MainService:
             if result.returncode == 0:
                 print("✅ Main containers stopped successfully")
                 return True
-            else:
-                print(f"❌ Failed to stop containers: {result.stderr}")
-                return False
+            print(f"❌ Failed to stop containers: {result.stderr}")
+            return False
                 
         except Exception as e:
             print(f"❌ Error stopping main containers: {e}")
@@ -293,7 +291,7 @@ class MainService:
             # Restart all containers using Docker Compose with cross-platform paths
             result = subprocess.run(
                 ["docker", "compose", "-f", os.fspath(compose_file), "restart"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=120
             )
@@ -301,19 +299,18 @@ class MainService:
             if result.returncode == 0:
                 print("✅ Main containers restarted successfully")
                 return True
-            else:
-                print(f"❌ Failed to restart containers: {result.stderr}")
-                # Fallback: try stop and start
-                print("🔄 Attempting fallback: stop and start...")
-                self.stop_main(workspace_path)
-                time.sleep(2)
-                return self.serve_main(workspace_path)
+            print(f"❌ Failed to restart containers: {result.stderr}")
+            # Fallback: try stop and start
+            print("🔄 Attempting fallback: stop and start...")
+            self.stop_main(workspace_path)
+            time.sleep(2)
+            return self.serve_main(workspace_path)
                 
         except Exception as e:
             print(f"❌ Error restarting main containers: {e}")
             return False
     
-    def show_main_logs(self, workspace_path: str, tail: Optional[int] = None) -> bool:
+    def show_main_logs(self, workspace_path: str, tail: int | None = None) -> bool:
         """Show main logs from Docker containers with proper error handling."""
         try:
             # Normalize workspace path for cross-platform compatibility
@@ -381,7 +378,7 @@ class MainService:
             print(f"❌ Error getting main logs: {e}")
             return False
     
-    def get_main_status(self, workspace_path: str) -> Dict[str, str]:
+    def get_main_status(self, workspace_path: str) -> dict[str, str]:
         """Get main status with Docker Compose integration."""
         status = {}
         
@@ -407,14 +404,14 @@ class MainService:
             
             # Check both containers using Docker Compose
             for service_name, display_name, port in [
-                ("postgres", "main-postgres", "5532"), 
+                ("postgres", "main-postgres", "5532"),
                 ("app", "main-app", "8886")
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths
                     result = subprocess.run(
                         ["docker", "compose", "-f", os.fspath(compose_file), "ps", "-q", service_name],
-                        capture_output=True,
+                        check=False, capture_output=True,
                         text=True,
                         timeout=10
                     )
@@ -424,7 +421,7 @@ class MainService:
                         container_id = result.stdout.strip()
                         inspect_result = subprocess.run(
                             ["docker", "inspect", "--format", "{{.State.Running}}", container_id],
-                            capture_output=True,
+                            check=False, capture_output=True,
                             text=True,
                             timeout=5
                         )
@@ -554,9 +551,17 @@ class MainService:
                 # Continue cleanup even if Docker operations fail
                 pass
             
-            # Note: We preserve the data directory for persistent storage
-            # Unlike agents which use ephemeral storage, main uses persistent storage
-            print("✅ Preserving persistent data in data/postgres")
+            # For wipe operation, also remove data directory
+            try:
+                import shutil
+                data_dir = workspace / "data" / "postgres"
+                if data_dir.exists():
+                    print("🗑️ Wiping database data directory...")
+                    shutil.rmtree(data_dir)
+                    print("✅ Database data wiped")
+            except Exception as e:
+                print(f"⚠️ Failed to wipe data directory: {e}")
+                # Continue anyway - container cleanup succeeded
             
             return True
             

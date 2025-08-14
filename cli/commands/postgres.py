@@ -4,15 +4,15 @@ Minimal stub implementations to fix import errors in tests.
 These are placeholders that satisfy import requirements.
 """
 
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class PostgreSQLCommands:
     """CLI PostgreSQLCommands implementation."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
     
     def postgres_status(self, workspace: str) -> bool:
         """Check PostgreSQL status."""

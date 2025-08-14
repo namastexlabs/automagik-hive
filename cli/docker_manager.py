@@ -3,9 +3,10 @@
 import subprocess
 import sys
 import time
-import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
+
+import yaml
 
 from lib.auth.credential_service import CredentialService
 
@@ -44,15 +45,14 @@ class DockerManager:
         # Initialize credential service for secure credential generation
         self.credential_service = CredentialService(project_root=self.project_root)
     
-    def _run_command(self, cmd: List[str], capture_output: bool = False) -> Optional[str]:
+    def _run_command(self, cmd: list[str], capture_output: bool = False) -> str | None:
         """Run shell command."""
         try:
             if capture_output:
                 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
                 return result.stdout.strip()
-            else:
-                subprocess.run(cmd, check=True)
-                return None
+            subprocess.run(cmd, check=True)
+            return None
         except subprocess.CalledProcessError as e:
             if capture_output:
                 print(f"❌ Command failed: {' '.join(cmd)}")
@@ -75,18 +75,17 @@ class DockerManager:
         
         return True
     
-    def _get_containers(self, component: str) -> List[str]:
+    def _get_containers(self, component: str) -> list[str]:
         """Get container names for component."""
         if component == "all":
             containers = []
             for comp in self.CONTAINERS:
                 containers.extend(self.CONTAINERS[comp].values())
             return containers
-        elif component in self.CONTAINERS:
+        if component in self.CONTAINERS:
             return list(self.CONTAINERS[component].values())
-        else:
-            print(f"❌ Unknown component: {component}")
-            return []
+        print(f"❌ Unknown component: {component}")
+        return []
     
     def _container_exists(self, container: str) -> bool:
         """Check if container exists."""
@@ -145,14 +144,14 @@ class DockerManager:
             return fallback_images.get(component, "agnohq/pgvector:16")
         
         try:
-            with open(template_file, 'r') as f:
+            with open(template_file) as f:
                 compose_data = yaml.safe_load(f)
             
             # Look for postgres service image
-            services = compose_data.get('services', {})
+            services = compose_data.get("services", {})
             for service_name, service_config in services.items():
-                if 'postgres' in service_name.lower() or service_name == 'postgres':
-                    return service_config.get('image', 'agnohq/pgvector:16')
+                if "postgres" in service_name.lower() or service_name == "postgres":
+                    return service_config.get("image", "agnohq/pgvector:16")
             
             # Fallback if no postgres service found
             return "agnohq/pgvector:16"
@@ -246,7 +245,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
                 os.chown(data_path, uid, gid)
                 print(f"✅ Set data directory ownership: {uid}:{gid}")
             else:  # Windows - no ownership change needed
-                print(f"✅ Data directory created (Windows - no ownership change needed)")
+                print("✅ Data directory created (Windows - no ownership change needed)")
         except PermissionError:
             # Try to use subprocess like Makefile fallback
             try:
@@ -254,7 +253,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
                 subprocess.run(["sudo", "chown", "-R", f"{uid}:{gid}", str(data_path)], check=False)
                 print(f"✅ Set data directory ownership via sudo: {uid}:{gid}")
             except:
-                print(f"⚠️ Could not set directory ownership - containers may need to run as root")
+                print("⚠️ Could not set directory ownership - containers may need to run as root")
         
     def _create_postgres_container(self, component: str, credentials: dict) -> bool:
         """Create PostgreSQL container - now uses Docker Compose for consistency."""
@@ -282,7 +281,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
     
     def _get_or_generate_credentials_legacy(self, component: str) -> dict[str, str]:
         """Get existing or generate new secure credentials for component."""
-        docker_folder = self.project_root / "docker" / component  
+        docker_folder = self.project_root / "docker" / component
         env_file_path = docker_folder / ".env"
         
         # Configure credential service for component-specific .env file
@@ -359,7 +358,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         print(f"   Database: {complete_creds['postgres_database']}")
         print(f"   Port: {complete_creds['postgres_port']}")
         print(f"   User: {complete_creds['postgres_user'][:4]}... (16 chars)")
-        print(f"   Password: ****... (16 chars)")
+        print("   Password: ****... (16 chars)")
         print(f"   API Key: {complete_creds['api_key'][:12]}... ({len(complete_creds['api_key'])} chars)")
         
         return complete_creds
@@ -524,7 +523,7 @@ PYTHONDONTWRITEBYTECODE=1
                 if self._container_running(container):
                     # Get port info
                     port_info = self._run_command(["docker", "port", container], capture_output=True)
-                    status = f"🟢 Running"
+                    status = "🟢 Running"
                     if port_info:
                         status += f" - {port_info.split(' -> ')[0]}"
                 else:
@@ -606,7 +605,7 @@ PYTHONDONTWRITEBYTECODE=1
         if component != "all":
             env_file = compose_file.parent / ".env" if compose_file else None
             if env_file and env_file.exists():
-                print(f"🗑️ Removing Docker Compose .env file...")
+                print("🗑️ Removing Docker Compose .env file...")
                 env_file.unlink()
         
         if success:

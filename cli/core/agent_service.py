@@ -5,18 +5,18 @@ These are placeholders that satisfy import requirements.
 """
 
 import os
+import platform
 import signal
 import time
-import platform
-from typing import Optional, Dict, Any
 from pathlib import Path, PurePath
+from typing import Any, Dict, Optional
 
 
 class DockerComposeManager:
     """Docker Compose management stub for testing compatibility."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
     
     def get_service_status(self, service_name: str = "agent-postgres"):
         """Get service status stub."""
@@ -28,29 +28,28 @@ class DockerComposeManager:
 class AgentService:
     """Agent service management stub."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
+    def __init__(self, workspace_path: Path | None = None):
         # Normalize workspace path for cross-platform compatibility
         if workspace_path is None:
             try:
-                self.workspace_path = Path(".").resolve()
+                self.workspace_path = Path().resolve()
             except NotImplementedError:
                 # Handle cross-platform testing where resolve() fails
-                self.workspace_path = Path(".")
+                self.workspace_path = Path()
+        # Ensure we have a proper Path object, handle string paths for Windows
+        elif isinstance(workspace_path, str):
+            # Convert Windows-style paths (C:\tmp\xyz) to Path objects
+            try:
+                self.workspace_path = Path(workspace_path).resolve()
+            except NotImplementedError:
+                # Handle cross-platform testing scenarios
+                self.workspace_path = Path(workspace_path)
         else:
-            # Ensure we have a proper Path object, handle string paths for Windows
-            if isinstance(workspace_path, str):
-                # Convert Windows-style paths (C:\tmp\xyz) to Path objects
-                try:
-                    self.workspace_path = Path(workspace_path).resolve()
-                except NotImplementedError:
-                    # Handle cross-platform testing scenarios
-                    self.workspace_path = Path(workspace_path)
-            else:
-                try:
-                    self.workspace_path = workspace_path.resolve()
-                except NotImplementedError:
-                    # Handle cross-platform testing scenarios
-                    self.workspace_path = workspace_path
+            try:
+                self.workspace_path = workspace_path.resolve()
+            except NotImplementedError:
+                # Handle cross-platform testing scenarios
+                self.workspace_path = workspace_path
         
         # Create files relative to workspace with proper cross-platform paths
         try:
@@ -79,7 +78,7 @@ class AgentService:
         """Restart agent service stub."""
         return True
     
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get agent service status stub."""
         return {"status": "running", "healthy": True}
     
@@ -141,8 +140,8 @@ class AgentService:
     
     def _setup_agent_containers(self, workspace_path: str) -> bool:
         """Setup agent postgres AND dev server using docker compose command."""
-        import subprocess
         import os
+        import subprocess
         from pathlib import Path
         
         try:
@@ -301,7 +300,7 @@ class AgentService:
             # Stop all containers using Docker Compose with cross-platform paths
             result = subprocess.run(
                 ["docker", "compose", "-f", os.fspath(compose_file), "stop"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=60
             )
@@ -309,9 +308,8 @@ class AgentService:
             if result.returncode == 0:
                 print("✅ Agent containers stopped successfully")
                 return True
-            else:
-                print(f"❌ Failed to stop containers: {result.stderr}")
-                return False
+            print(f"❌ Failed to stop containers: {result.stderr}")
+            return False
                 
         except Exception as e:
             print(f"❌ Error stopping agent containers: {e}")
@@ -320,8 +318,8 @@ class AgentService:
     def restart_agent(self, workspace_path: str) -> bool:
         """Restart agent containers with proper error handling."""
         import subprocess
-        from pathlib import Path
         import time
+        from pathlib import Path
         
         try:
             # Normalize workspace path for cross-platform compatibility
@@ -360,7 +358,7 @@ class AgentService:
             # Restart all containers using Docker Compose with cross-platform paths
             result = subprocess.run(
                 ["docker", "compose", "-f", os.fspath(compose_file), "restart"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=120
             )
@@ -368,13 +366,12 @@ class AgentService:
             if result.returncode == 0:
                 print("✅ Agent containers restarted successfully")
                 return True
-            else:
-                print(f"❌ Failed to restart containers: {result.stderr}")
-                # Fallback: try stop and start
-                print("🔄 Attempting fallback: stop and start...")
-                self.stop_agent(workspace_path)
-                time.sleep(2)
-                return self.serve_agent(workspace_path)
+            print(f"❌ Failed to restart containers: {result.stderr}")
+            # Fallback: try stop and start
+            print("🔄 Attempting fallback: stop and start...")
+            self.stop_agent(workspace_path)
+            time.sleep(2)
+            return self.serve_agent(workspace_path)
                 
         except Exception as e:
             print(f"❌ Error restarting agent containers: {e}")
@@ -417,7 +414,7 @@ class AgentService:
             # Validate that the process actually started successfully
             return self._is_agent_running()
             
-        except (subprocess.SubprocessError, OSError, IOError):
+        except (subprocess.SubprocessError, OSError):
             # Handle any errors during process startup
             return False
     
@@ -427,7 +424,6 @@ class AgentService:
         Returns:
             bool: True on successful termination, False on failure (no PID file, process already dead, etc.)
         """
-        
         # Check if PID file exists
         if not self.pid_file.exists():
             return True  # Agent already stopped, success
@@ -500,7 +496,7 @@ class AgentService:
                 self.pid_file.unlink()
                 return True
                 
-        except (IOError, OSError, ValueError):
+        except (OSError, ValueError):
             # Handle file read errors, permission errors, or invalid PID
             return False
     
@@ -516,7 +512,7 @@ class AgentService:
         except (ValueError, OSError, ProcessLookupError):
             return False
     
-    def _get_agent_pid(self) -> Optional[int]:
+    def _get_agent_pid(self) -> int | None:
         """Get agent PID from file and verify process exists.
         
         Returns:
@@ -546,12 +542,12 @@ class AgentService:
                 # This counts as existing for our purposes
                 return pid
                 
-        except (IOError, OSError, ValueError):
+        except (OSError, ValueError):
             # Handle file read errors or invalid PID
             return None
 
     # Logs and status methods
-    def show_agent_logs(self, workspace_path: str, tail: Optional[int] = None) -> bool:
+    def show_agent_logs(self, workspace_path: str, tail: int | None = None) -> bool:
         """Show agent logs from Docker containers with proper error handling."""
         import subprocess
         from pathlib import Path
@@ -622,7 +618,7 @@ class AgentService:
             print(f"❌ Error getting agent logs: {e}")
             return False
     
-    def get_agent_status(self, workspace_path: str) -> Dict[str, str]:
+    def get_agent_status(self, workspace_path: str) -> dict[str, str]:
         """Get agent status with Docker Compose integration."""
         status = {}
         
@@ -651,14 +647,14 @@ class AgentService:
             
             # Check both containers using Docker Compose
             for service_name, display_name, port in [
-                ("agent-postgres", "agent-postgres", "35532"), 
+                ("agent-postgres", "agent-postgres", "35532"),
                 ("agent-api", "agent-server", "38886")
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths
                     result = subprocess.run(
                         ["docker", "compose", "-f", os.fspath(compose_file), "ps", "-q", service_name],
-                        capture_output=True,
+                        check=False, capture_output=True,
                         text=True,
                         timeout=10
                     )
@@ -668,7 +664,7 @@ class AgentService:
                         container_id = result.stdout.strip()
                         inspect_result = subprocess.run(
                             ["docker", "inspect", "--format", "{{.State.Running}}", container_id],
-                            capture_output=True,
+                            check=False, capture_output=True,
                             text=True,
                             timeout=5
                         )

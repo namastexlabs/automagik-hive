@@ -14,15 +14,14 @@ class WorkspaceManager:
     def __init__(self):
         self.project_root = Path.cwd()
     
-    def _run_command(self, cmd: list, cwd: Optional[Path] = None, capture_output: bool = False) -> Optional[str]:
+    def _run_command(self, cmd: list, cwd: Path | None = None, capture_output: bool = False) -> str | None:
         """Run shell command."""
         try:
             if capture_output:
                 result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=True)
                 return result.stdout.strip()
-            else:
-                subprocess.run(cmd, cwd=cwd, check=True)
-                return None
+            subprocess.run(cmd, cwd=cwd, check=True)
+            return None
         except subprocess.CalledProcessError as e:
             if capture_output:
                 print(f"❌ Command failed: {' '.join(cmd)}")
@@ -33,7 +32,7 @@ class WorkspaceManager:
             print(f"❌ Command not found: {cmd[0]}")
             return None
     
-    def init_workspace(self, workspace_name: Optional[str] = None) -> bool:
+    def init_workspace(self, workspace_name: str | None = None) -> bool:
         """Initialize new workspace."""
         if not workspace_name:
             workspace_name = input("📝 Enter workspace name: ").strip()
@@ -84,10 +83,10 @@ class WorkspaceManager:
             
             print(f"✅ Workspace {workspace_name} created successfully!")
             print(f"📁 Location: {workspace_path.absolute()}")
-            print(f"\n🚀 Next steps:")
+            print("\n🚀 Next steps:")
             print(f"   cd {workspace_name}")
-            print(f"   uvx automagik-hive --install agent")
-            print(f"   uvx automagik-hive --start agent")
+            print("   uvx automagik-hive --install agent")
+            print("   uvx automagik-hive --start agent")
             
             return True
             
@@ -111,7 +110,7 @@ class WorkspaceManager:
             return False
         
         print(f"🚀 Starting workspace server: {workspace_path}")
-        print(f"🌐 Server will be available at: http://localhost:8000")
+        print("🌐 Server will be available at: http://localhost:8000")
         print("Press Ctrl+C to stop the server")
         
         try:
@@ -128,7 +127,7 @@ class WorkspaceManager:
     
     def _get_pyproject_template(self, name: str) -> str:
         """Get pyproject.toml template."""
-        return f'''[project]
+        return f"""[project]
 name = "{name}"
 version = "0.1.0"
 description = "Automagik Hive workspace"
@@ -144,11 +143,11 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ai", "api", "lib"]
-'''
+"""
     
     def _get_readme_template(self, name: str) -> str:
         """Get README template."""
-        return f'''# {name}
+        return f"""# {name}
 
 Automagik Hive workspace for building multi-agent AI applications.
 
@@ -181,11 +180,11 @@ Automagik Hive workspace for building multi-agent AI applications.
 - Agent API: http://localhost:38886
 - Agent Database: postgresql://localhost:35532
 - Development Server: http://localhost:8000
-'''
+"""
     
     def _get_env_template(self) -> str:
         """Get .env template."""
-        return '''# Automagik Hive Environment Configuration
+        return """# Automagik Hive Environment Configuration
 
 # Database
 DATABASE_URL=postgresql://hive_user:hive_password@localhost:35532/hive_agent
@@ -198,7 +197,7 @@ ENVIRONMENT=development
 # External APIs (optional)
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
-'''
+"""
     
     def _get_api_template(self) -> str:
         """Get API template."""
@@ -232,7 +231,7 @@ if __name__ == "__main__":
     
     def _get_agent_template(self) -> str:
         """Get agent template."""
-        return '''name: hello_agent
+        return """name: hello_agent
 description: Simple hello world agent
 version: 1.0.0
 
@@ -253,4 +252,4 @@ memory:
 
 knowledge_base:
   enabled: false
-'''
+"""

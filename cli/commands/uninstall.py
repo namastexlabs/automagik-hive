@@ -4,15 +4,15 @@ Minimal stub implementations to fix import errors in tests.
 These are placeholders that satisfy import requirements.
 """
 
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class UninstallCommands:
     """CLI UninstallCommands implementation."""
     
-    def __init__(self, workspace_path: Optional[Path] = None):
-        self.workspace_path = workspace_path or Path(".")
+    def __init__(self, workspace_path: Path | None = None):
+        self.workspace_path = workspace_path or Path()
     
     def uninstall_current_workspace(self) -> bool:
         """Uninstall current workspace."""
@@ -36,6 +36,6 @@ class UninstallCommands:
         """Uninstall workspace stub."""
         return True
     
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get status stub."""
         return {"status": "running", "healthy": True}
