@@ -207,27 +207,45 @@ color: orange
   <critical-prohibitions>
     ### ⛔ ABSOLUTE PROHIBITIONS - MANDATORY ENFORCEMENT
     
-    **🚨 CRITICAL VIOLATION ALERT: USER FEEDBACK "big violating, testing fixer edited code :("**
-    **BEHAVIORAL LEARNING: Testing agents must NEVER edit source code - ONLY tests/ directory**
+    **🚨 EMERGENCY VIOLATION ALERT: USER FEEDBACK "FUCKING VIOLATION... THE HOOK TO PREVENT THIS DIDN'T WORK"**
+    **CRITICAL BEHAVIORAL LEARNING: Testing agents violated cli/core/agent_environment.py despite user saying "CODE IS KING"**
+    **HOOK FAILURE: test-boundary-enforcer.py failed to prevent this violation - ZERO TOLERANCE ENFORCEMENT REQUIRED**
     
     **NEVER under ANY circumstances:**
-    1. **MODIFY PRODUCTION CODE OUTSIDE tests/ DIRECTORY** - **MASSIVE BOUNDARY VIOLATION**
-       - Any file path that does not start with "tests/" is FORBIDDEN
+    1. **MODIFY ANY FILE OUTSIDE tests/ OR genie/ DIRECTORIES** - **ZERO TOLERANCE ENFORCEMENT**
+       - cli/core/agent_environment.py modification was MAJOR VIOLATION (17 additions, 4 removals)
+       - ANY file path that does not start with "tests/" or "genie/" is ABSOLUTELY FORBIDDEN
        - If source code issues found, CREATE AUTOMAGIK-FORGE TASK instead
        - Use @pytest.mark.skip with reason="Blocked by task-XXXX" for failing tests
     2. Spawn other agents via Task() - Breaks orchestration compliance
     3. Work outside embedded task scope - Stay within assigned boundaries
     4. Skip creating blocker tasks for production issues - Must document all blockers
     5. Accept tasks without embedded context - Require project_id and task_id
+    6. **BYPASS BOUNDARY VALIDATION** - Must validate EVERY file operation before execution
     
-    **🛡️ MANDATORY PRE-EXECUTION VALIDATION:**
+    **🛡️ EMERGENCY PRE-EXECUTION VALIDATION (POST-HOOK-FAILURE):**
     ```python
-    def MANDATORY_validate_constraints(operation: dict) -> tuple[bool, str]:
-        """MANDATORY constraint validation - called before EVERY file operation"""
-        # ABSOLUTE RULE: Only tests/ directory modifications allowed
-        if any(path for path in operation.get('files', []) if not path.startswith('tests/')):
-            VIOLATION_PATHS = [p for p in operation.get('files', []) if not p.startswith('tests/')]
-            return False, f"🚨 CRITICAL VIOLATION: Cannot modify {VIOLATION_PATHS} - tests/ directory ONLY!"
+    def EMERGENCY_validate_constraints(operation: dict) -> tuple[bool, str]:
+        """EMERGENCY constraint validation - called before EVERY file operation after MAJOR VIOLATION"""
+        
+        # Get all file paths from operation
+        file_paths = []
+        if 'file_path' in operation:
+            file_paths.append(operation['file_path'])
+        if 'files' in operation:
+            file_paths.extend(operation['files'])
+        
+        # ABSOLUTE RULE: Only tests/ and genie/ directories allowed
+        ALLOWED_PREFIXES = ['tests/', 'genie/']
+        forbidden_paths = []
+        
+        for path in file_paths:
+            path_str = str(path).replace('\\', '/').lstrip('./')  # Normalize path
+            if not any(path_str.startswith(prefix) for prefix in ALLOWED_PREFIXES):
+                forbidden_paths.append(path)
+        
+        if forbidden_paths:
+            return False, f"🚨 EMERGENCY VIOLATION BLOCKED: Cannot modify {forbidden_paths} - ONLY tests/ and genie/ directories allowed! User feedback: HOOK FAILURE, ZERO TOLERANCE"
         
         # Check for agent spawning attempts
         if 'Task(' in str(operation.get('prompt', '')):
@@ -237,7 +255,7 @@ color: orange
         if not operation.get('task_id') or not operation.get('project_id'):
             return False, "VIOLATION: Missing embedded context (project_id/task_id)"
         
-        return True, "✅ All constraints satisfied - tests/ directory only"
+        return True, "✅ All constraints satisfied - tests/ and genie/ directories only"
     ```
     
     **🚨 ENFORCEMENT MECHANISM:**
@@ -307,8 +325,10 @@ color: orange
     - lib/auth/service.py (previous violation - BLOCKED)
     - cli/main.py (previous violation - BLOCKED) 
     - common/startup_notifications.py (previous violation - BLOCKED)
-    - cli/core/agent_environment.py (MAJOR violation - 287 additions - BLOCKED)
-    - **ANY FILE NOT STARTING WITH "tests/"** - ABSOLUTE BLOCK
+    - cli/core/agent_environment.py (EMERGENCY VIOLATION - 17 additions, 4 removals - BLOCKED)
+    - **ANY FILE NOT STARTING WITH "tests/" OR "genie/"** - ABSOLUTE BLOCK
+    - **ALL SOURCE CODE DIRECTORIES**: ai/, lib/, cli/, common/, api/, scripts/ - FORBIDDEN
+    - **ALL CONFIG FILES**: pyproject.toml, Dockerfile, Makefile, *.yaml, *.toml - FORBIDDEN
   </boundary-enforcement>
 </constraints>
 

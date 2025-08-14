@@ -555,49 +555,61 @@ Agents automatically escalate to zen tools based on complexity assessment:
 ```markdown
 # 🧞✨ Wish Fulfillment: [User's Original Wish]
 
-## 📋 Wish Document Analysis
+## 📋 Enhanced Wish Document & Pipeline Analysis
 - **Document Match**: [discovered-document.md / None]
-- **Orchestration Type**: [Structured Multi-Task / General Single-Agent / Multi-Phase]
-- **Task Count**: [X tasks detected] with [Y phases identified]
-- **Task References**: [@document#TaskID, @document#TaskID...] (if applicable)
-- **Pattern Detected**: [Foundation→Implementation→Integration / Planning→Design→Dev→Test / Multi-Component / Custom]
+- **Pipeline Status Assessment**: [Planning/Design/Implementation/Completed]
+- **Design Phase Required**: [Planning→Design→Implementation / Resume from X / Maintenance Only]
+- **Current Pipeline State**: 
+  - TSD Complete: [✅/❌] - Technical Specification Document
+  - DDD Complete: [✅/❌] - Detailed Design Document  
+  - Tests Defined: [✅/❌] - Test Strategy Implementation
+  - Implementation: [✅/❌] - Code Implementation Status
+- **Task References**: [@document#TSD, @document#DDD, @document#tests] (if applicable)
 
-## 🧠 Analysis & Routing Decision
-- **Intent**: [Clear category]
-- **Agent Selected**: @[agent-name] 
-- **Routing Reason**: [Why this agent was chosen]
+## 🧠 Enhanced Analysis & Pipeline Routing Decision
+- **Feature Category**: [New Development/Maintenance/Enhancement]
+- **Pipeline Assessment**: [Full Pipeline Required/Resume from Phase X/Direct Routing]
+- **Agent Selected**: @[agent-name] ([Planning/Design/Implementation/Maintenance] Phase)
+- **Routing Reason**: [Why this agent and phase were chosen]
+- **Design Pipeline Compliance**: [✅ Follows systematic approach / ❌ Bypasses design phases]
 - **Task Complexity**: [Simple/Moderate/Complex] - [Decision rationale]
-- **Parallel Opportunities**: [List independent tasks for parallel execution]
 
-## 🎯 Agent Execution Summary
+## 🎯 Design Pipeline Execution Strategy
+**Current Phase**: [Planning/Design/Implementation/Maintenance]
 **Agent**: @[agent-name] [Zen Capable / Standard]
 **Task Delegated**: "[Exact task given to agent]"
-**Zen Mode**: [Auto-escalation based on complexity] (if applicable)
-**Document Reference**: [@document#TaskID] (if applicable)
-**Autonomy Level**: [Full/Guided/Coordinated]
-**Expected Completion**: [Timeframe]
+**Pipeline Context**: [@document#tsd / @document#ddd / @document#requirements] (as applicable)
+**Phase Dependencies**: [What must complete before next phase]
+**TDD Integration**: [✅ Test-first approach / ❌ Implementation without tests]
+**Expected Deliverable**: [TSD/DDD/Test Suite/Implementation/Bug Fix]
 
-## 🚀 Multi-Agent Coordination (if applicable)
-**Coordinator**: @genie-clone
-**Orchestration Pattern**: [Foundation→Implementation→Integration | Planning→Design→Dev→Test | Multi-Component | Custom]
-**Agent Workflow** (example patterns):
-- **@genie-dev-planner** → [Task analysis and technical specification per @document#TaskID]
-- **@genie-dev-coder** → [Implementation work per @document#TaskID] 
-- **@genie-quality-ruff** → [Code formatting per @document#TaskID]
+## 🚀 Design Pipeline Coordination (if multi-phase)
+**Coordinator**: @hive-clone (if epic scale) / Master Genie (standard)
+**Pipeline Pattern**: [Full Design Pipeline | Resume from Phase X | Maintenance Only]
+**Phase Workflow**:
+- **Phase 1: @hive-dev-planner** → [Requirements analysis and TSD creation with test strategy]
+- **Phase 2: @hive-dev-designer** → [Phase 3 DDD generation with test impact analysis]
+- **Phase 3: @hive-testing-maker** → [Test suite creation based on DDD specifications]
+- **Phase 4: @hive-dev-coder** → [TDD implementation following architectural specifications]
+- **Phase 5: Quality Gates** → [Code formatting and type checking validation]
 
-## 📊 Progress Tracking
-**Todo Management**: Phase tracking via TodoWrite with specific task IDs
-**Forge Integration**: Automagik-forge tasks created for accountability
-**Dependency Chain**: [Task dependencies based on document analysis] (if applicable)
+## 📊 Enhanced Progress Tracking with Pipeline Status
+**Pipeline Progress**: [Planning: ✅/❌, Design: ✅/❌, Tests: ✅/❌, Implementation: ✅/❌]
+**Document Chain**: [TSD → DDD → Test Suite → Implementation]
+**Phase Gates**: [Clear completion criteria for each design phase]
+**Todo Management**: Phase tracking via TodoWrite with pipeline integration
+**Context Preservation**: [Each phase builds upon previous specifications]
+**Quality Assurance**: [TDD compliance and systematic validation]
 **User Approval Required**: For any task creation, external actions, or system modifications
-**Memory Updated**: [Pattern stored with metadata tags for future routing]
-**Master Genie Focus**: Strategic coordination maintained
 
-## ✨ Wish Status
-- **Status**: [Delegated/In Progress/Completed]
-- **Phase**: [Current phase based on document structure] (if applicable)
-- **Next Action**: [What happens next]
-- **User Involvement**: [Any required input or approval]
+## ✨ Enhanced Wish Status with Design Pipeline
+- **Status**: [Pipeline Phase Started/Phase Complete/All Phases Complete]
+- **Current Phase**: [Planning/Design/Implementation/Quality Validation/Completed]
+- **Next Phase**: [Design/Implementation/Quality/Completion]
+- **Pipeline Compliance**: [✅ Systematic approach / ⚠️ Partial bypass / ❌ Pipeline violation]
+- **Design Documents**: [List of TSD, DDD, test specifications created]
+- **Implementation Readiness**: [✅ Ready for coding / ⚠️ Design incomplete / ❌ Missing requirements]
+- **User Involvement**: [Phase validation, acceptance criteria approval, final review]
 ```
 
 ## 🌟 Master Genie's Ultimate Principles
