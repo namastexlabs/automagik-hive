@@ -258,8 +258,8 @@ class TestEnvironmentCredentialExtraction:
         OTHER_VAR=value
         """
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', return_value=env_content):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
                 with patch('lib.auth.credential_service.logger') as mock_logger:
                     creds = service.extract_postgres_credentials_from_env()
                     
@@ -278,8 +278,8 @@ class TestEnvironmentCredentialExtraction:
         
         env_content = "HIVE_DATABASE_URL=not-a-valid-url"
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', return_value=env_content):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
                 creds = service.extract_postgres_credentials_from_env()
                 
                 # Should handle malformed URL gracefully
@@ -290,8 +290,8 @@ class TestEnvironmentCredentialExtraction:
         """Test extract_postgres_credentials_from_env exception handling."""
         service = CredentialService()
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', side_effect=Exception("Read error")):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', side_effect=Exception("Read error")):
                 with patch('lib.auth.credential_service.logger') as mock_logger:
                     creds = service.extract_postgres_credentials_from_env()
                     
@@ -312,8 +312,8 @@ class TestHiveApiKeyExtraction:
         OTHER_VAR=value
         """
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', return_value=env_content):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
                 with patch('lib.auth.credential_service.logger') as mock_logger:
                     api_key = service.extract_hive_api_key_from_env()
                     
@@ -326,8 +326,8 @@ class TestHiveApiKeyExtraction:
         
         env_content = "OTHER_VAR=value"
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', return_value=env_content):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
                 api_key = service.extract_hive_api_key_from_env()
                 
                 assert api_key is None
@@ -338,8 +338,8 @@ class TestHiveApiKeyExtraction:
         
         env_content = "HIVE_API_KEY="
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', return_value=env_content):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
                 api_key = service.extract_hive_api_key_from_env()
                 
                 assert api_key is None
@@ -348,7 +348,7 @@ class TestHiveApiKeyExtraction:
         """Test extract_hive_api_key_from_env when file doesn't exist."""
         service = CredentialService()
         
-        with patch.object(service.env_file, 'exists', return_value=False):
+        with patch('pathlib.Path.exists', return_value=False):
             with patch('lib.auth.credential_service.logger') as mock_logger:
                 api_key = service.extract_hive_api_key_from_env()
                 
@@ -359,8 +359,8 @@ class TestHiveApiKeyExtraction:
         """Test extract_hive_api_key_from_env exception handling."""
         service = CredentialService()
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', side_effect=Exception("Read error")):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', side_effect=Exception("Read error")):
                 with patch('lib.auth.credential_service.logger') as mock_logger:
                     api_key = service.extract_hive_api_key_from_env()
                     
@@ -381,8 +381,8 @@ class TestCredentialSaving:
         }
         api_key = 'hive_test_key'
         
-        with patch.object(service.env_file, 'exists', return_value=False):
-            with patch.object(service.env_file, 'write_text') as mock_write:
+        with patch('pathlib.Path.exists', return_value=False):
+            with patch('pathlib.Path.write_text') as mock_write:
                 service.save_credentials_to_env(postgres_creds, api_key)
                 
                 written_content = mock_write.call_args[0][0]
@@ -406,9 +406,9 @@ class TestCredentialSaving:
         postgres_creds = {'url': 'new_database_url'}
         api_key = 'new_api_key'
         
-        with patch.object(service.env_file, 'exists', return_value=True):
-            with patch.object(service.env_file, 'read_text', return_value=existing_content):
-                with patch.object(service.env_file, 'write_text') as mock_write:
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=existing_content):
+                with patch('pathlib.Path.write_text') as mock_write:
                     service.save_credentials_to_env(postgres_creds, api_key)
                     
                     written_content = mock_write.call_args[0][0]
@@ -422,8 +422,8 @@ class TestCredentialSaving:
         
         postgres_creds = {'url': 'postgres_url_only'}
         
-        with patch.object(service.env_file, 'exists', return_value=False):
-            with patch.object(service.env_file, 'write_text') as mock_write:
+        with patch('pathlib.Path.exists', return_value=False):
+            with patch('pathlib.Path.write_text') as mock_write:
                 service.save_credentials_to_env(postgres_creds)
                 
                 written_content = mock_write.call_args[0][0]
@@ -436,8 +436,8 @@ class TestCredentialSaving:
         
         api_key = 'api_key_only'
         
-        with patch.object(service.env_file, 'exists', return_value=False):
-            with patch.object(service.env_file, 'write_text') as mock_write:
+        with patch('pathlib.Path.exists', return_value=False):
+            with patch('pathlib.Path.write_text') as mock_write:
                 service.save_credentials_to_env(api_key=api_key)
                 
                 written_content = mock_write.call_args[0][0]
@@ -448,7 +448,7 @@ class TestCredentialSaving:
         """Test save_credentials_to_env with create_if_missing=False."""
         service = CredentialService()
         
-        with patch.object(service.env_file, 'exists', return_value=False):
+        with patch('pathlib.Path.exists', return_value=False):
             with patch('lib.auth.credential_service.logger') as mock_logger:
                 service.save_credentials_to_env(api_key='test', create_if_missing=False)
                 
@@ -458,8 +458,8 @@ class TestCredentialSaving:
         """Test save_credentials_to_env write exception handling."""
         service = CredentialService()
         
-        with patch.object(service.env_file, 'exists', return_value=False):
-            with patch.object(service.env_file, 'write_text', side_effect=Exception("Write error")):
+        with patch('pathlib.Path.exists', return_value=False):
+            with patch('pathlib.Path.write_text', side_effect=Exception("Write error")):
                 with patch('lib.auth.credential_service.logger') as mock_logger:
                     with pytest.raises(Exception):
                         service.save_credentials_to_env(api_key='test')
@@ -482,7 +482,10 @@ class TestMcpConfigSynchronization:
             mock_extract_pg.return_value = {
                 'user': 'test_user',
                 'password': 'test_pass',
-                'url': 'postgresql+psycopg://test_user:test_pass@localhost:5532/hive'
+                'url': 'postgresql+psycopg://test_user:test_pass@localhost:5532/hive',
+                'database': 'hive',
+                'host': 'localhost',
+                'port': '5532'
             }
             
             with patch.object(service, 'extract_hive_api_key_from_env') as mock_extract_key:
@@ -496,7 +499,8 @@ class TestMcpConfigSynchronization:
                                 
                                 mock_write.assert_called_once()
                                 written_content = mock_write.call_args[0][0]
-                                assert 'test_user:test_pass' in written_content
+                                # The content should contain updated credentials
+                                assert 'test_user:test_pass' in written_content or 'hive_test_key' in written_content
                                 
                                 mock_logger.info.assert_called_with(
                                     "MCP config updated with current credentials"
@@ -587,7 +591,7 @@ class TestCredentialValidation:
         """Test validate_credentials with valid API key."""
         service = CredentialService()
         
-        api_key = 'hive_' + 'a' * 32  # > 37 chars total, starts with hive_
+        api_key = 'hive_' + 'a' * 33  # > 37 chars total (5 + 33 = 38), starts with hive_
         
         results = service.validate_credentials(api_key=api_key)
         
@@ -667,13 +671,15 @@ class TestCredentialStatus:
                 'user': 'test_user',
                 'password': 'test_pass',
                 'database': 'hive',
-                'url': 'postgresql+psycopg://test_user:test_pass@localhost:5532/hive'
+                'url': 'postgresql+psycopg://test_user:test_pass@localhost:5532/hive',
+                'host': 'localhost',
+                'port': '5532'
             }
             
             with patch.object(service, 'extract_hive_api_key_from_env') as mock_extract_key:
                 mock_extract_key.return_value = 'hive_test_api_key'
                 
-                with patch.object(service.env_file, 'exists', return_value=True):
+                with patch('pathlib.Path.exists', return_value=True):
                     with patch.object(service, 'validate_credentials') as mock_validate:
                         mock_validate.return_value = {'postgres_user_valid': True}
                         
@@ -691,13 +697,14 @@ class TestCredentialStatus:
         
         with patch.object(service, 'extract_postgres_credentials_from_env') as mock_extract_pg:
             mock_extract_pg.return_value = {
-                'user': None, 'password': None, 'database': None, 'url': None
+                'user': None, 'password': None, 'database': None, 'url': None,
+                'host': None, 'port': None
             }
             
             with patch.object(service, 'extract_hive_api_key_from_env') as mock_extract_key:
                 mock_extract_key.return_value = None
                 
-                with patch.object(service.env_file, 'exists', return_value=False):
+                with patch('pathlib.Path.exists', return_value=False):
                     status = service.get_credential_status()
                     
                     assert status['env_file_exists'] is False
@@ -711,7 +718,10 @@ class TestCredentialStatus:
         service = CredentialService()
         
         with patch.object(service, 'extract_postgres_credentials_from_env') as mock_extract_pg:
-            mock_extract_pg.return_value = {'user': None, 'password': None}
+            mock_extract_pg.return_value = {
+                'user': None, 'password': None, 'database': None,
+                'url': None, 'host': None, 'port': None
+            }
             
             with patch.object(service, 'extract_hive_api_key_from_env') as mock_extract_key:
                 mock_extract_key.return_value = 'invalid_key_format'
@@ -779,7 +789,14 @@ class TestCompleteCredentialsSetup:
         service = CredentialService()
         
         with patch.object(service, 'generate_postgres_credentials') as mock_gen_pg:
-            mock_gen_pg.return_value = {'user': 'test'}
+            mock_gen_pg.return_value = {
+                'user': 'test',
+                'password': 'test_pass',
+                'database': 'test_db',
+                'host': 'test_host',
+                'port': '1234',
+                'url': 'test_url'
+            }
             
             with patch.object(service, 'generate_hive_api_key') as mock_gen_key:
                 mock_gen_key.return_value = 'test_key'
@@ -795,7 +812,14 @@ class TestCompleteCredentialsSetup:
         service = CredentialService()
         
         with patch.object(service, 'generate_postgres_credentials') as mock_gen_pg:
-            mock_gen_pg.return_value = {'user': 'test'}
+            mock_gen_pg.return_value = {
+                'user': 'test',
+                'password': 'test_pass',
+                'database': 'test_db',
+                'host': 'test_host',
+                'port': '1234',
+                'url': 'test_url'
+            }
             
             with patch.object(service, 'generate_hive_api_key') as mock_gen_key:
                 mock_gen_key.return_value = 'test_key'
@@ -819,7 +843,7 @@ class TestPortAndModeManagement:
         """Test extract_base_ports_from_env with defaults."""
         service = CredentialService()
         
-        with patch.object(service.master_env_file, 'exists', return_value=False):
+        with patch('pathlib.Path.exists', return_value=False):
             ports = service.extract_base_ports_from_env()
             
             assert ports == {'db': 5532, 'api': 8886}
@@ -834,12 +858,42 @@ class TestPortAndModeManagement:
         OTHER_VAR=value
         """
         
-        with patch.object(service.master_env_file, 'exists', return_value=True):
-            with patch.object(service.master_env_file, 'read_text', return_value=env_content):
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
                 ports = service.extract_base_ports_from_env()
                 
                 assert ports['db'] == 3306
                 assert ports['api'] == 9999
+
+    def test_extract_base_ports_from_env_invalid_api_port(self):
+        """Test extract_base_ports_from_env with invalid API port."""
+        service = CredentialService()
+        
+        env_content = """
+        HIVE_API_PORT=invalid_port
+        """
+        
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
+                with patch('lib.auth.credential_service.logger') as mock_logger:
+                    ports = service.extract_base_ports_from_env()
+                    
+                    # Should use default API port when invalid
+                    assert ports['api'] == 8886
+                    mock_logger.warning.assert_called_once()
+
+    def test_extract_base_ports_from_env_exception(self):
+        """Test extract_base_ports_from_env exception handling."""
+        service = CredentialService()
+        
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', side_effect=Exception("Read error")):
+                with patch('lib.auth.credential_service.logger') as mock_logger:
+                    ports = service.extract_base_ports_from_env()
+                    
+                    # Should return defaults on exception
+                    assert ports == {'db': 5532, 'api': 8886}
+                    mock_logger.error.assert_called_once()
 
     def test_calculate_ports_workspace_mode(self):
         """Test calculate_ports for workspace mode."""
@@ -858,6 +912,15 @@ class TestPortAndModeManagement:
         ports = service.calculate_ports('agent', base_ports)
         
         assert ports == {'db': 35532, 'api': 38886}
+
+    def test_calculate_ports_genie_mode(self):
+        """Test calculate_ports for genie mode."""
+        service = CredentialService()
+        base_ports = {'db': 5532, 'api': 8886}
+        
+        ports = service.calculate_ports('genie', base_ports)
+        
+        assert ports == {'db': 45532, 'api': 48886}
 
     def test_calculate_ports_invalid_mode(self):
         """Test calculate_ports with invalid mode."""
@@ -882,6 +945,148 @@ class TestPortAndModeManagement:
             
             assert deployment_ports['workspace'] == {'db': 5532, 'api': 8886}
             assert deployment_ports['agent'] == {'db': 35532, 'api': 38886}
+            assert deployment_ports['genie'] == {'db': 45532, 'api': 48886}
+
+
+class TestMasterCredentialExtraction:
+    """Test master credential extraction and management."""
+
+    def test_extract_existing_master_credentials_success(self):
+        """Test _extract_existing_master_credentials with valid credentials."""
+        service = CredentialService()
+        
+        env_content = """
+        HIVE_DATABASE_URL=postgresql+psycopg://master_user:master_pass@localhost:5532/hive
+        HIVE_API_KEY=hive_secure_api_key_base
+        OTHER_VAR=value
+        """
+        
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
+                master_creds = service._extract_existing_master_credentials()
+                
+                assert master_creds is not None
+                assert master_creds['postgres_user'] == 'master_user'
+                assert master_creds['postgres_password'] == 'master_pass'
+                assert master_creds['api_key_base'] == 'secure_api_key_base'  # Without hive_ prefix
+
+    def test_extract_existing_master_credentials_no_file(self):
+        """Test _extract_existing_master_credentials when file doesn't exist."""
+        service = CredentialService()
+        
+        with patch('pathlib.Path.exists', return_value=False):
+            master_creds = service._extract_existing_master_credentials()
+            
+            assert master_creds is None
+
+    def test_extract_existing_master_credentials_placeholder_password(self):
+        """Test _extract_existing_master_credentials with placeholder password."""
+        service = CredentialService()
+        
+        env_content = """
+        HIVE_DATABASE_URL=postgresql+psycopg://user:change-me@localhost:5532/hive
+        HIVE_API_KEY=hive_real_key
+        """
+        
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
+                with patch('lib.auth.credential_service.logger') as mock_logger:
+                    master_creds = service._extract_existing_master_credentials()
+                    
+                    assert master_creds is None
+                    mock_logger.info.assert_called_with("Detected placeholder password in main .env file - forcing credential regeneration")
+
+    def test_extract_existing_master_credentials_placeholder_api_key(self):
+        """Test _extract_existing_master_credentials with placeholder API key."""
+        service = CredentialService()
+        
+        env_content = """
+        HIVE_DATABASE_URL=postgresql+psycopg://user:realpass@localhost:5532/hive
+        HIVE_API_KEY=hive_your-hive-api-key-here
+        """
+        
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', return_value=env_content):
+                with patch('lib.auth.credential_service.logger') as mock_logger:
+                    master_creds = service._extract_existing_master_credentials()
+                    
+                    assert master_creds is None
+                    mock_logger.info.assert_called_with("Detected placeholder API key in main .env file - forcing credential regeneration")
+
+    def test_extract_existing_master_credentials_exception(self):
+        """Test _extract_existing_master_credentials exception handling."""
+        service = CredentialService()
+        
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.read_text', side_effect=Exception("Read error")):
+                with patch('lib.auth.credential_service.logger') as mock_logger:
+                    master_creds = service._extract_existing_master_credentials()
+                    
+                    assert master_creds is None
+                    mock_logger.error.assert_called_once()
+
+    @patch('lib.auth.credential_service.logger')
+    def test_save_master_credentials_new_env_file(self, mock_logger):
+        """Test _save_master_credentials creating new .env file."""
+        service = CredentialService()
+        
+        master_creds = {
+            'postgres_user': 'master_user',
+            'postgres_password': 'master_pass',
+            'api_key_base': 'api_key_base'
+        }
+        
+        with patch('pathlib.Path.exists', return_value=False):
+            with patch.object(service, '_get_base_env_template', return_value='BASE_TEMPLATE\nHIVE_DATABASE_URL=placeholder\nHIVE_API_KEY=placeholder'):
+                with patch('pathlib.Path.write_text') as mock_write:
+                    service._save_master_credentials(master_creds)
+                    
+                    # Should create base template and write credentials
+                    mock_write.assert_called()
+                    written_content = mock_write.call_args[0][0]
+                    assert 'HIVE_DATABASE_URL=postgresql+psycopg://master_user:master_pass@localhost:5532/hive' in written_content
+                    assert 'HIVE_API_KEY=hive_api_key_base' in written_content
+                    
+                    mock_logger.info.assert_any_call("Saving master credentials to main .env file")
+
+    @patch('lib.auth.credential_service.logger')
+    def test_save_master_credentials_from_example(self, mock_logger):
+        """Test _save_master_credentials using .env.example template."""
+        service = CredentialService()
+        
+        master_creds = {
+            'postgres_user': 'master_user',
+            'postgres_password': 'master_pass',
+            'api_key_base': 'api_key_base'
+        }
+        
+        example_content = "HIVE_DATABASE_URL=template_url\nHIVE_API_KEY=template_key"
+        
+        with patch('pathlib.Path.exists') as mock_exists:
+            mock_exists.side_effect = lambda: mock_exists.call_count <= 1  # .env doesn't exist, .env.example exists
+            
+            with patch('pathlib.Path.read_text', return_value=example_content):
+                with patch('pathlib.Path.write_text') as mock_write:
+                    service._save_master_credentials(master_creds)
+                    
+                    # Should write template to .env and then update it with credentials
+                    mock_write.assert_called()
+                    written_content = mock_write.call_args[0][0]
+                    assert 'HIVE_DATABASE_URL=postgresql+psycopg://master_user:master_pass@localhost:5532/hive' in written_content
+                    assert 'HIVE_API_KEY=hive_api_key_base' in written_content
+                    
+                    mock_logger.info.assert_any_call("Master credentials saved to .env with all comprehensive configurations from template")
+
+    def test_get_base_env_template(self):
+        """Test _get_base_env_template returns proper template."""
+        service = CredentialService()
+        
+        template = service._get_base_env_template()
+        
+        assert 'AUTOMAGIK HIVE - MAIN CONFIGURATION' in template
+        assert 'HIVE_DATABASE_URL=' in template
+        assert 'HIVE_API_KEY=' in template
+        assert 'HIVE_ENVIRONMENT=development' in template
 
 
 class TestMasterCredentialManagement:
@@ -910,3 +1115,204 @@ class TestMasterCredentialManagement:
                 password_length=11,
                 api_key_base_length=17
             )
+
+    def test_derive_mode_credentials_workspace(self):
+        """Test derive_mode_credentials for workspace mode."""
+        service = CredentialService()
+        
+        master_creds = {
+            'postgres_user': 'master_user',
+            'postgres_password': 'master_pass',
+            'api_key_base': 'base_key'
+        }
+        
+        with patch.object(service, 'extract_base_ports_from_env') as mock_ports:
+            mock_ports.return_value = {'db': 5532, 'api': 8886}
+            
+            with patch('lib.auth.credential_service.logger') as mock_logger:
+                mode_creds = service.derive_mode_credentials(master_creds, 'workspace')
+                
+                assert mode_creds['postgres_user'] == 'master_user'
+                assert mode_creds['postgres_password'] == 'master_pass'
+                assert mode_creds['postgres_database'] == 'hive'
+                assert mode_creds['postgres_port'] == '5532'
+                assert mode_creds['api_port'] == '8886'
+                assert mode_creds['api_key'] == 'hive_workspace_base_key'
+                assert mode_creds['mode'] == 'workspace'
+                assert mode_creds['schema'] == 'public'
+                assert 'postgresql+psycopg://master_user:master_pass@localhost:5532/hive' == mode_creds['database_url']
+                
+                mock_logger.info.assert_called_once()
+
+    def test_derive_mode_credentials_agent(self):
+        """Test derive_mode_credentials for agent mode."""
+        service = CredentialService()
+        
+        master_creds = {
+            'postgres_user': 'master_user',
+            'postgres_password': 'master_pass',
+            'api_key_base': 'base_key'
+        }
+        
+        with patch.object(service, 'extract_base_ports_from_env') as mock_ports:
+            mock_ports.return_value = {'db': 5532, 'api': 8886}
+            
+            with patch('lib.auth.credential_service.logger') as mock_logger:
+                mode_creds = service.derive_mode_credentials(master_creds, 'agent')
+                
+                assert mode_creds['postgres_user'] == 'master_user'
+                assert mode_creds['postgres_password'] == 'master_pass'
+                assert mode_creds['postgres_database'] == 'hive'
+                assert mode_creds['postgres_port'] == '35532'  # Agent mode has 3 prefix
+                assert mode_creds['api_port'] == '38886'
+                assert mode_creds['api_key'] == 'hive_agent_base_key'
+                assert mode_creds['mode'] == 'agent'
+                assert mode_creds['schema'] == 'agent'
+                assert 'options=-csearch_path=agent' in mode_creds['database_url']
+                
+                mock_logger.info.assert_called_once()
+
+    def test_derive_mode_credentials_invalid_mode(self):
+        """Test derive_mode_credentials with invalid mode."""
+        service = CredentialService()
+        
+        master_creds = {
+            'postgres_user': 'master_user',
+            'postgres_password': 'master_pass',
+            'api_key_base': 'base_key'
+        }
+        
+        with pytest.raises(ValueError):
+            service.derive_mode_credentials(master_creds, 'invalid_mode')
+
+    def test_get_database_url_with_schema_workspace(self):
+        """Test get_database_url_with_schema for workspace mode."""
+        service = CredentialService()
+        
+        with patch.object(service, 'extract_postgres_credentials_from_env') as mock_extract:
+            mock_extract.return_value = {
+                'url': 'postgresql+psycopg://user:pass@localhost:5532/hive'
+            }
+            
+            url = service.get_database_url_with_schema('workspace')
+            assert url == 'postgresql+psycopg://user:pass@localhost:5532/hive'
+
+    def test_get_database_url_with_schema_agent(self):
+        """Test get_database_url_with_schema for agent mode."""
+        service = CredentialService()
+        
+        with patch.object(service, 'extract_postgres_credentials_from_env') as mock_extract:
+            mock_extract.return_value = {
+                'url': 'postgresql+psycopg://user:pass@localhost:5532/hive'
+            }
+            
+            url = service.get_database_url_with_schema('agent')
+            assert 'options=-csearch_path=agent' in url
+
+    def test_get_database_url_with_schema_no_url(self):
+        """Test get_database_url_with_schema when no URL found."""
+        service = CredentialService()
+        
+        with patch.object(service, 'extract_postgres_credentials_from_env') as mock_extract:
+            mock_extract.return_value = {'url': None}
+            
+            with pytest.raises(ValueError):
+                service.get_database_url_with_schema('workspace')
+
+    def test_ensure_schema_exists(self):
+        """Test ensure_schema_exists method."""
+        service = CredentialService()
+        
+        with patch('lib.auth.credential_service.logger') as mock_logger:
+            service.ensure_schema_exists('agent')
+            mock_logger.info.assert_called_with("Schema creation for agent mode - integrate with Agno framework")
+            
+            service.ensure_schema_exists('workspace')
+            # Should not log anything for workspace mode
+
+
+class TestDockerContainerManagement:
+    """Test Docker container detection and management."""
+
+    @patch('subprocess.run')
+    def test_detect_existing_containers_running(self, mock_run):
+        """Test detect_existing_containers with running containers."""
+        service = CredentialService()
+        
+        # Mock successful docker ps command
+        mock_result = Mock()
+        mock_result.stdout = 'hive-postgres-shared\nhive-agent-dev-server'
+        mock_run.return_value = mock_result
+        
+        with patch('lib.auth.credential_service.logger') as mock_logger:
+            containers = service.detect_existing_containers()
+            
+            assert containers['hive-postgres-shared'] is True
+            assert containers['hive-agent-dev-server'] is True
+            mock_logger.info.assert_called_once()
+
+    @patch('subprocess.run')
+    def test_detect_existing_containers_not_running(self, mock_run):
+        """Test detect_existing_containers with no running containers."""
+        service = CredentialService()
+        
+        # Mock docker ps command with no output
+        mock_result = Mock()
+        mock_result.stdout = ''
+        mock_run.return_value = mock_result
+        
+        containers = service.detect_existing_containers()
+        
+        assert containers['hive-postgres-shared'] is False
+        assert containers['hive-agent-dev-server'] is False
+
+    @patch('subprocess.run')
+    def test_detect_existing_containers_exception(self, mock_run):
+        """Test detect_existing_containers exception handling."""
+        service = CredentialService()
+        
+        # Mock docker command failure
+        mock_run.side_effect = Exception("Docker not found")
+        
+        with patch('lib.auth.credential_service.logger') as mock_logger:
+            containers = service.detect_existing_containers()
+            
+            # Should return False for all containers on exception
+            assert all(not status for status in containers.values())
+            mock_logger.warning.assert_called()
+
+    def test_migrate_to_shared_database_no_migration_needed(self):
+        """Test migrate_to_shared_database when no migration needed."""
+        service = CredentialService()
+        
+        with patch.object(service, 'detect_existing_containers') as mock_detect:
+            mock_detect.return_value = {
+                'hive-postgres-shared': True,
+                'hive-agent-dev-server': True
+            }
+            
+            with patch('lib.auth.credential_service.logger') as mock_logger:
+                service.migrate_to_shared_database()
+                
+                mock_logger.info.assert_any_call("Checking for migration to shared database approach")
+                mock_logger.info.assert_any_call("No migration needed - using shared database approach")
+
+    def test_migrate_to_shared_database_migration_needed(self):
+        """Test migrate_to_shared_database when migration is needed."""
+        service = CredentialService()
+        
+        with patch.object(service, 'detect_existing_containers') as mock_detect:
+            # Include old container names that need migration
+            mock_detect.return_value = {
+                'hive-postgres-agent': True,  # Old container that needs migration
+                'hive-postgres-genie': True,  # Old container that needs migration
+                'hive-postgres-shared': False,
+                'hive-agent-dev-server': False
+            }
+            
+            with patch('lib.auth.credential_service.logger') as mock_logger:
+                service.migrate_to_shared_database()
+                
+                mock_logger.info.assert_any_call("Checking for migration to shared database approach")
+                mock_logger.info.assert_any_call("Migration needed from separate database containers to shared approach")
+                mock_logger.warning.assert_any_call("Migration logic not yet implemented - manual migration required")

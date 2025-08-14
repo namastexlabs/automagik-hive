@@ -58,7 +58,7 @@ class TestCSVHotReloadManagerInitialization:
         csv_path = tmp_path / "test.csv"
         csv_path.write_text("id,content\n1,test content\n")
         
-        with patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager._initialize_knowledge_base') as mock_init:
+        with patch.object(CSVHotReloadManager, '_initialize_knowledge_base') as mock_init:
             manager = CSVHotReloadManager(csv_path=str(csv_path))
             mock_init.assert_called_once()
 
@@ -108,10 +108,11 @@ class TestKnowledgeBaseInitialization:
                         
     def test_initialize_knowledge_base_no_database_url(self):
         """Test knowledge base initialization fails without database URL."""
-        manager = CSVHotReloadManager()
-        
-        # Should handle missing database URL gracefully
-        assert manager.knowledge_base is None
+        with patch.dict(os.environ, {}, clear=True):  # Clear all env vars including HIVE_DATABASE_URL
+            manager = CSVHotReloadManager()
+            
+            # Should handle missing database URL gracefully
+            assert manager.knowledge_base is None
         
     def test_initialize_knowledge_base_config_error(self, mock_environment_setup):
         """Test knowledge base initialization with config error."""
@@ -166,7 +167,7 @@ class TestFileWatching:
         """Test starting file watching initializes observer."""
         manager = manager_with_mock_knowledge_base
         
-        with patch('lib.knowledge.csv_hot_reload.Observer') as mock_observer_class:
+        with patch('watchdog.observers.Observer') as mock_observer_class:
             mock_observer = Mock()
             mock_observer_class.return_value = mock_observer
             
@@ -182,7 +183,7 @@ class TestFileWatching:
         manager = manager_with_mock_knowledge_base
         manager.is_running = True
         
-        with patch('lib.knowledge.csv_hot_reload.Observer') as mock_observer_class:
+        with patch('watchdog.observers.Observer') as mock_observer_class:
             manager.start_watching()
             
             # Should not create new observer
@@ -192,17 +193,18 @@ class TestFileWatching:
         """Test starting file watching when watchdog import fails."""
         manager = manager_with_mock_knowledge_base
         
-        with patch('lib.knowledge.csv_hot_reload.Observer', side_effect=ImportError("No watchdog")):
+        with patch('watchdog.observers.Observer', side_effect=ImportError("No watchdog")):
             manager.start_watching()
             
-            # Should handle import error gracefully
-            assert manager.is_running is True  # Still sets running to True initially
+            # Should handle import error gracefully and set running to False on error
+            assert manager.is_running is False  # Should be False after error cleanup
+            assert manager.observer is None
             
     def test_start_watching_observer_error(self, manager_with_mock_knowledge_base):
         """Test starting file watching when observer setup fails."""
         manager = manager_with_mock_knowledge_base
         
-        with patch('lib.knowledge.csv_hot_reload.Observer') as mock_observer_class:
+        with patch('watchdog.observers.Observer') as mock_observer_class:
             mock_observer = Mock()
             mock_observer.schedule.side_effect = Exception("Observer error")
             mock_observer_class.return_value = mock_observer
@@ -242,43 +244,50 @@ class TestFileWatching:
         """Test file system event handler on file modification."""
         manager = manager_with_mock_knowledge_base
         
-        with patch('lib.knowledge.csv_hot_reload.Observer'):
-            with patch('lib.knowledge.csv_hot_reload.FileSystemEventHandler') as mock_handler_class:
+        with patch('watchdog.observers.Observer') as mock_observer_class:
+            mock_observer = Mock()
+            mock_observer_class.return_value = mock_observer
+            
+            with patch.object(manager, '_reload_knowledge_base') as mock_reload:
                 manager.start_watching()
                 
-                # Get the handler instance created
-                handler_call = mock_handler_class.call_args
-                handler = handler_call[0][0] if handler_call else None
+                # Get the handler passed to schedule
+                assert mock_observer.schedule.called
+                handler = mock_observer.schedule.call_args[0][0]
                 
                 # Create mock event
                 mock_event = Mock()
                 mock_event.is_directory = False
                 mock_event.src_path = str(manager.csv_path)
                 
-                # Test that modification triggers reload
-                with patch.object(manager, '_reload_knowledge_base') as mock_reload:
-                    if handler:
-                        handler._reload_knowledge_base = mock_reload
-                        # Simulate the event handler logic
-                        if not mock_event.is_directory and mock_event.src_path.endswith(manager.csv_path.name):
-                            mock_reload()
-                        
-                        mock_reload.assert_called_once()
+                # Test handler on_modified method
+                handler.on_modified(mock_event)
+                
+                mock_reload.assert_called_once()
                         
     def test_file_handler_on_moved(self, manager_with_mock_knowledge_base):
         """Test file system event handler on file move."""
         manager = manager_with_mock_knowledge_base
         
-        # Create mock event
-        mock_event = Mock()
-        mock_event.dest_path = str(manager.csv_path)
-        
-        with patch.object(manager, '_reload_knowledge_base') as mock_reload:
-            # Simulate the handler logic for moved files
-            if hasattr(mock_event, "dest_path") and mock_event.dest_path.endswith(manager.csv_path.name):
-                mock_reload()
+        with patch('watchdog.observers.Observer') as mock_observer_class:
+            mock_observer = Mock()
+            mock_observer_class.return_value = mock_observer
+            
+            with patch.object(manager, '_reload_knowledge_base') as mock_reload:
+                manager.start_watching()
                 
-            mock_reload.assert_called_once()
+                # Get the handler passed to schedule
+                assert mock_observer.schedule.called
+                handler = mock_observer.schedule.call_args[0][0]
+                
+                # Create mock event for moved file
+                mock_event = Mock()
+                mock_event.dest_path = str(manager.csv_path)
+                
+                # Test handler on_moved method
+                handler.on_moved(mock_event)
+                
+                mock_reload.assert_called_once()
 
 
 class TestKnowledgeBaseReloading:
@@ -569,12 +578,12 @@ class TestEdgeCasesAndErrorHandling:
         manager = CSVHotReloadManager(csv_path=str(csv_path))
         
         # Mock watchdog import failure
-        with patch.dict('sys.modules', {'watchdog.observers': None}):
-            with patch('lib.knowledge.csv_hot_reload.Observer', side_effect=ImportError("No watchdog")):
-                manager.start_watching()
-                
-                # Should handle import error gracefully
-                assert manager.is_running is True
+        with patch('watchdog.observers.Observer', side_effect=ImportError("No watchdog")):
+            manager.start_watching()
+            
+            # Should handle import error gracefully and clean up
+            assert manager.is_running is False
+            assert manager.observer is None
                 
     def test_database_connection_failure(self, tmp_path):
         """Test manager handles database connection failures."""
@@ -610,7 +619,7 @@ class TestIntegrationScenarios:
         assert status["file_exists"] is True
         
         # Start watching
-        with patch('lib.knowledge.csv_hot_reload.Observer') as mock_observer_class:
+        with patch('watchdog.observers.Observer') as mock_observer_class:
             mock_observer = Mock()
             mock_observer_class.return_value = mock_observer
             

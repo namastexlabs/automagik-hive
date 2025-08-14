@@ -365,8 +365,13 @@ class ProviderRegistry:
         self._pattern_cache = None
         self._class_cache.clear()
 
-        # Clear function caches
-        self.get_available_providers.cache_clear()
+        # Clear function caches (only @lru_cache methods have cache_clear)
+        # get_available_providers uses @cache which doesn't have cache_clear
+        try:
+            self.get_available_providers.cache_clear()
+        except AttributeError:
+            pass  # @cache decorator doesn't support cache_clear
+        
         self.get_provider_patterns.cache_clear()
         self.detect_provider.cache_clear()
         self.get_provider_classes.cache_clear()

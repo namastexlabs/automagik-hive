@@ -26,17 +26,22 @@ class TemplateTool(BaseTool):
         Args:
             **kwargs: Tool-specific initialization parameters
         """
-        # Set initialization parameters
-        self.timeout_seconds = kwargs.get("timeout_seconds", 30)
-        self.max_retries = kwargs.get("max_retries", 3)
-        self.debug_mode = kwargs.get("debug_mode", False)
+        # Start with defaults
+        default_timeout = 30
+        default_retries = 3
+        default_debug = False
 
-        # Load configuration parameters if available
+        # Apply configuration parameters first
         if self.config:
             params = self.config.parameters
-            self.timeout_seconds = params.get("timeout_seconds", self.timeout_seconds)
-            self.max_retries = params.get("max_retries", self.max_retries)
-            self.debug_mode = params.get("debug_mode", self.debug_mode)
+            default_timeout = params.get("timeout_seconds", default_timeout)
+            default_retries = params.get("max_retries", default_retries)
+            default_debug = params.get("debug_mode", default_debug)
+
+        # Apply kwargs (which override config)
+        self.timeout_seconds = kwargs.get("timeout_seconds", default_timeout)
+        self.max_retries = kwargs.get("max_retries", default_retries)
+        self.debug_mode = kwargs.get("debug_mode", default_debug)
 
         # Template-specific initialization
         self._setup_template_resources()
@@ -225,6 +230,31 @@ class TemplateTool(BaseTool):
         """Clear tool execution history"""
         self._execution_history.clear()
         logger.info("Execution history cleared")
+
+    def validate_inputs(self, inputs: dict[str, Any]) -> bool:
+        """
+        Validate tool inputs.
+        
+        Args:
+            inputs: Dictionary of input parameters to validate
+            
+        Returns:
+            True if inputs are valid, False otherwise
+        """
+        # Template validation logic - customize for your tool
+        if not inputs:
+            return False
+            
+        # Example validation: check for required input_data field
+        if "input_data" not in inputs:
+            return False
+            
+        # Example validation: ensure input_data is a string
+        if not isinstance(inputs["input_data"], str):
+            return False
+            
+        # Additional validation can be added here
+        return True
 
     def get_status(self) -> dict[str, Any]:
         """

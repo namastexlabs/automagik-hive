@@ -689,6 +689,546 @@ class TestComponentVersionServiceEdgeCases:
         assert "action='update'" in history_repr
 
 
+class TestComponentVersionServiceAdditionalMethods:
+    """Test additional methods for coverage boost."""
+
+    @pytest.mark.asyncio
+    async def test_close_method_with_db_service(self):
+        """Test close method when db_service exists."""
+        service = ComponentVersionService()
+        
+        # Mock a db_service with close method
+        mock_db = AsyncMock()
+        mock_db.close = AsyncMock()
+        service._db_service = mock_db
+        
+        await service.close()
+        
+        # Should call close and reset to None
+        mock_db.close.assert_called_once()
+        assert service._db_service is None
+
+    @pytest.mark.asyncio
+    async def test_close_method_without_db_service(self):
+        """Test close method when db_service is None."""
+        service = ComponentVersionService()
+        
+        # No db_service initially
+        await service.close()
+        
+        # Should not raise error and db_service remains None
+        assert service._db_service is None
+
+    @pytest.mark.asyncio
+    async def test_close_method_without_close_attribute(self):
+        """Test close method when db_service has no close method."""
+        service = ComponentVersionService()
+        
+        # Create a mock without close method
+        class MockDBWithoutClose:
+            pass
+        
+        mock_db = MockDBWithoutClose()
+        service._db_service = mock_db
+        
+        await service.close()
+        
+        # According to the code, _db_service is NOT reset to None if it doesn't have close method
+        # The close method only sets _db_service = None inside the if condition
+        assert service._db_service is mock_db
+
+    @pytest.mark.asyncio
+    async def test_add_version_history_success(self):
+        """Test successfully adding version history record."""
+        mock_db = AsyncMock()
+        mock_db.fetch_one.return_value = {"id": 42}
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            history_id = await service.add_version_history(
+                component_id="test-agent",
+                from_version=1,
+                to_version=2,
+                action="update",
+                description="Updated configuration",
+                changed_by="admin"
+            )
+        
+        assert history_id == 42
+        
+        # Verify database call
+        mock_db.fetch_one.assert_called_once()
+        call_args = mock_db.fetch_one.call_args
+        assert "INSERT INTO hive.version_history" in call_args[0][0]
+        
+        # Check parameters
+        params = call_args[0][1]
+        assert params["component_id"] == "test-agent"
+        assert params["from_version"] == 1
+        assert params["to_version"] == 2
+        assert params["action"] == "update"
+        assert params["description"] == "Updated configuration"
+        assert params["changed_by"] == "admin"
+
+    @pytest.mark.asyncio
+    async def test_add_version_history_with_defaults(self):
+        """Test adding version history with default parameters."""
+        mock_db = AsyncMock()
+        mock_db.fetch_one.return_value = {"id": 100}
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            history_id = await service.add_version_history(
+                component_id="default-agent",
+                from_version=None,
+                to_version=1,
+                action="create"
+            )
+        
+        assert history_id == 100
+        
+        # Check default parameters were used
+        params = mock_db.fetch_one.call_args[0][1]
+        assert params["description"] is None
+        assert params["changed_by"] == "system"
+
+    @pytest.mark.asyncio
+    async def test_get_version_history_success(self):
+        """Test successfully retrieving version history."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.return_value = [
+            {
+                "id": 1,
+                "component_id": "test-agent",
+                "from_version": None,
+                "to_version": 1,
+                "action": "create",
+                "description": "Initial version",
+                "changed_by": "creator",
+                "changed_at": datetime(2024, 1, 1, 12, 0, 0),
+            },
+            {
+                "id": 2,
+                "component_id": "test-agent",
+                "from_version": 1,
+                "to_version": 2,
+                "action": "update",
+                "description": "Configuration update",
+                "changed_by": "admin",
+                "changed_at": datetime(2024, 1, 2, 12, 0, 0),
+            }
+        ]
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            history = await service.get_version_history("test-agent")
+        
+        assert len(history) == 2
+        assert all(isinstance(h, VersionHistory) for h in history)
+        
+        # Check first record
+        assert history[0].id == 1
+        assert history[0].component_id == "test-agent"
+        assert history[0].from_version is None
+        assert history[0].to_version == 1
+        assert history[0].action == "create"
+        assert history[0].description == "Initial version"
+        assert history[0].changed_by == "creator"
+        
+        # Check second record
+        assert history[1].id == 2
+        assert history[1].from_version == 1
+        assert history[1].to_version == 2
+        assert history[1].action == "update"
+        
+        # Verify database query
+        mock_db.fetch_all.assert_called_once()
+        call_args = mock_db.fetch_all.call_args
+        assert "FROM hive.version_history" in call_args[0][0]
+        assert "ORDER BY changed_at DESC" in call_args[0][0]
+        assert call_args[0][1]["component_id"] == "test-agent"
+
+    @pytest.mark.asyncio
+    async def test_get_version_history_empty(self):
+        """Test getting version history for component with no history."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.return_value = []
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            history = await service.get_version_history("no-history-agent")
+        
+        assert history == []
+
+    @pytest.mark.asyncio
+    async def test_get_all_components_success(self):
+        """Test successfully getting all component IDs."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.return_value = [
+            {"component_id": "agent-1"},
+            {"component_id": "agent-2"},
+            {"component_id": "team-1"},
+            {"component_id": "workflow-1"},
+        ]
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            components = await service.get_all_components()
+        
+        assert len(components) == 4
+        assert "agent-1" in components
+        assert "agent-2" in components
+        assert "team-1" in components
+        assert "workflow-1" in components
+        
+        # Verify database query
+        mock_db.fetch_all.assert_called_once()
+        call_args = mock_db.fetch_all.call_args
+        assert "SELECT DISTINCT component_id" in call_args[0][0]
+        assert "FROM hive.component_versions" in call_args[0][0]
+        assert "ORDER BY component_id" in call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_get_all_components_empty(self):
+        """Test getting all components when none exist."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.return_value = []
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            components = await service.get_all_components()
+        
+        assert components == []
+
+    @pytest.mark.asyncio
+    async def test_get_components_by_type_success(self):
+        """Test successfully getting component IDs by type."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.return_value = [
+            {"component_id": "agent-1"},
+            {"component_id": "agent-2"},
+            {"component_id": "agent-3"},
+        ]
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            agents = await service.get_components_by_type("agent")
+        
+        assert len(agents) == 3
+        assert "agent-1" in agents
+        assert "agent-2" in agents
+        assert "agent-3" in agents
+        
+        # Verify database query
+        mock_db.fetch_all.assert_called_once()
+        call_args = mock_db.fetch_all.call_args
+        assert "SELECT DISTINCT component_id" in call_args[0][0]
+        assert "FROM hive.component_versions" in call_args[0][0]
+        assert "WHERE component_type =" in call_args[0][0]
+        assert "ORDER BY component_id" in call_args[0][0]
+        assert call_args[0][1]["component_type"] == "agent"
+
+    @pytest.mark.asyncio
+    async def test_get_components_by_type_empty(self):
+        """Test getting components by type when none exist."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.return_value = []
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            components = await service.get_components_by_type("nonexistent")
+        
+        assert components == []
+
+    @pytest.mark.asyncio
+    async def test_get_components_by_type_different_types(self):
+        """Test getting components by different types."""
+        service = ComponentVersionService()
+        mock_db = AsyncMock()
+        
+        # Mock different responses for different types
+        def mock_fetch_all(query, params=None):
+            if params and params.get("component_type") == "team":
+                return [{"component_id": "team-1"}, {"component_id": "team-2"}]
+            elif params and params.get("component_type") == "workflow":
+                return [{"component_id": "workflow-1"}]
+            return []
+        
+        mock_db.fetch_all.side_effect = mock_fetch_all
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            teams = await service.get_components_by_type("team")
+            workflows = await service.get_components_by_type("workflow")
+        
+        assert len(teams) == 2
+        assert "team-1" in teams
+        assert "team-2" in teams
+        
+        assert len(workflows) == 1
+        assert "workflow-1" in workflows
+
+
+class TestComponentVersionServiceErrorHandling:
+    """Test error handling for additional methods."""
+
+    @pytest.mark.asyncio
+    async def test_add_version_history_database_error(self):
+        """Test add_version_history with database error."""
+        mock_db = AsyncMock()
+        mock_db.fetch_one.side_effect = Exception("Database error")
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            with pytest.raises(Exception, match="Database error"):
+                await service.add_version_history(
+                    component_id="error-agent",
+                    from_version=1,
+                    to_version=2,
+                    action="update"
+                )
+
+    @pytest.mark.asyncio
+    async def test_get_version_history_database_error(self):
+        """Test get_version_history with database error."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.side_effect = Exception("Connection lost")
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            with pytest.raises(Exception, match="Connection lost"):
+                await service.get_version_history("error-agent")
+
+    @pytest.mark.asyncio
+    async def test_get_all_components_database_error(self):
+        """Test get_all_components with database error."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.side_effect = Exception("Query failed")
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            with pytest.raises(Exception, match="Query failed"):
+                await service.get_all_components()
+
+    @pytest.mark.asyncio
+    async def test_get_components_by_type_database_error(self):
+        """Test get_components_by_type with database error."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.side_effect = Exception("Timeout error")
+        
+        service = ComponentVersionService()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            with pytest.raises(Exception, match="Timeout error"):
+                await service.get_components_by_type("agent")
+
+
+class TestComponentVersionServiceConfigHandling:
+    """Test configuration JSON handling edge cases."""
+
+    @pytest.mark.asyncio
+    async def test_get_version_with_string_config(self):
+        """Test getting version where config is stored as JSON string."""
+        mock_db = AsyncMock()
+        mock_db.fetch_one.return_value = {
+            "id": 1,
+            "component_id": "test-agent",
+            "component_type": "agent",
+            "version": 1,
+            "config": '{"model": "claude-3", "temperature": 0.7}',  # JSON string
+            "description": "Test version",
+            "is_active": True,
+            "created_at": datetime.now(),
+            "created_by": "test-user",
+        }
+
+        service = ComponentVersionService()
+
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            version = await service.get_component_version("test-agent", 1)
+
+        assert isinstance(version.config, dict)
+        assert version.config["model"] == "claude-3"
+        assert version.config["temperature"] == 0.7
+
+    @pytest.mark.asyncio
+    async def test_get_version_with_dict_config(self):
+        """Test getting version where config is already a dict."""
+        config_dict = {"model": "claude-3", "temperature": 0.7}
+        mock_db = AsyncMock()
+        mock_db.fetch_one.return_value = {
+            "id": 1,
+            "component_id": "test-agent",
+            "component_type": "agent",
+            "version": 1,
+            "config": config_dict,  # Already a dict
+            "description": "Test version",
+            "is_active": True,
+            "created_at": datetime.now(),
+            "created_by": "test-user",
+        }
+
+        service = ComponentVersionService()
+
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            version = await service.get_component_version("test-agent", 1)
+
+        assert isinstance(version.config, dict)
+        assert version.config["model"] == "claude-3"
+        assert version.config["temperature"] == 0.7
+
+    @pytest.mark.asyncio
+    async def test_get_active_version_with_string_config(self):
+        """Test getting active version with JSON string config."""
+        mock_db = AsyncMock()
+        mock_db.fetch_one.return_value = {
+            "id": 1,
+            "component_id": "active-agent",
+            "component_type": "agent",
+            "version": 2,
+            "config": '{"active": true, "model": "gpt-4"}',  # JSON string
+            "description": "Active version",
+            "is_active": True,
+            "created_at": datetime.now(),
+            "created_by": "admin",
+        }
+
+        service = ComponentVersionService()
+
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            version = await service.get_active_version("active-agent")
+
+        assert isinstance(version.config, dict)
+        assert version.config["active"] is True
+        assert version.config["model"] == "gpt-4"
+
+    @pytest.mark.asyncio
+    async def test_list_versions_with_mixed_config_formats(self):
+        """Test listing versions with mixed config formats."""
+        mock_db = AsyncMock()
+        mock_db.fetch_all.return_value = [
+            {
+                "id": 1,
+                "component_id": "mixed-agent",
+                "component_type": "agent",
+                "version": 1,
+                "config": '{"v1": true}',  # JSON string
+                "description": "Version 1",
+                "is_active": False,
+                "created_at": datetime.now(),
+                "created_by": "user1",
+            },
+            {
+                "id": 2,
+                "component_id": "mixed-agent",
+                "component_type": "agent",
+                "version": 2,
+                "config": {"v2": True},  # Already a dict
+                "description": "Version 2",
+                "is_active": True,
+                "created_at": datetime.now(),
+                "created_by": "user2",
+            }
+        ]
+
+        service = ComponentVersionService()
+
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            versions = await service.list_component_versions("mixed-agent")
+
+        assert len(versions) == 2
+        # Both should have dict configs
+        assert isinstance(versions[0].config, dict)
+        assert isinstance(versions[1].config, dict)
+        assert versions[0].config["v1"] is True
+        assert versions[1].config["v2"] is True
+
+    @pytest.mark.asyncio
+    async def test_create_version_json_serialization(self):
+        """Test that complex config gets JSON serialized."""
+        mock_db = AsyncMock()
+        mock_db.fetch_one.return_value = {"id": 1}
+
+        complex_config = {
+            "nested": {"key": "value", "number": 42},
+            "array": ["item1", "item2"],
+            "boolean": True,
+            "null_value": None
+        }
+
+        service = ComponentVersionService()
+
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            with patch("lib.services.component_version_service.json.dumps") as mock_dumps:
+                mock_dumps.return_value = '{"serialized": true}'
+                
+                await service.create_component_version(
+                    component_id="json-agent",
+                    component_type="agent",
+                    version=1,
+                    config=complex_config
+                )
+
+        # Verify json.dumps was called with the config
+        mock_dumps.assert_called_once_with(complex_config)
+
+
+class TestComponentVersionServiceCaching:
+    """Test database service caching behavior."""
+
+    @pytest.mark.asyncio
+    async def test_db_service_caching_with_url(self):
+        """Test that db_service is cached when using custom URL."""
+        service = ComponentVersionService("postgresql://test:test@localhost/test")
+        
+        with patch("lib.services.component_version_service.DatabaseService") as mock_db_class:
+            mock_db_instance = AsyncMock()
+            mock_db_instance.initialize = AsyncMock()
+            mock_db_class.return_value = mock_db_instance
+            
+            # First call should create new instance
+            db1 = await service._get_db_service()
+            
+            # Second call should return cached instance
+            db2 = await service._get_db_service()
+            
+            # Should be same instance
+            assert db1 is db2
+            # Should only create one instance
+            mock_db_class.assert_called_once()
+            mock_db_instance.initialize.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_db_service_caching_with_global(self):
+        """Test that db_service is cached when using global service."""
+        service = ComponentVersionService()
+        
+        with patch("lib.services.component_version_service.get_db_service") as mock_get_db:
+            mock_db_instance = AsyncMock()
+            mock_get_db.return_value = mock_db_instance
+            
+            # First call should get global service
+            db1 = await service._get_db_service()
+            
+            # Second call should return cached instance
+            db2 = await service._get_db_service()
+            
+            # Should be same instance
+            assert db1 is db2
+            # Should only call get_db_service once
+            mock_get_db.assert_called_once()
+
+
 class TestComponentVersionServiceIntegration:
     """Test integration scenarios."""
 
@@ -696,3 +1236,85 @@ class TestComponentVersionServiceIntegration:
         """Test that the module can be imported without errors."""
         import lib.services.component_version_service
         assert lib.services.component_version_service is not None
+
+    @pytest.mark.asyncio
+    async def test_full_version_lifecycle(self):
+        """Test complete version lifecycle simulation."""
+        service = ComponentVersionService()
+        mock_db = AsyncMock()
+        
+        # Simulate creating, retrieving, activating, and tracking history
+        create_responses = [
+            {"id": 1},  # create_component_version
+            {"id": 10},  # add_version_history  
+        ]
+        
+        get_responses = [
+            # get_component_version
+            {
+                "id": 1,
+                "component_id": "lifecycle-agent",
+                "component_type": "agent",
+                "version": 1,
+                "config": '{"initial": true}',
+                "description": "Initial version",
+                "is_active": False,
+                "created_at": datetime.now(),
+                "created_by": "creator",
+            },
+            # get_version_history
+            [
+                {
+                    "id": 10,
+                    "component_id": "lifecycle-agent",
+                    "from_version": None,
+                    "to_version": 1,
+                    "action": "create",
+                    "description": "Initial version created",
+                    "changed_by": "creator",
+                    "changed_at": datetime.now(),
+                }
+            ]
+        ]
+        
+        mock_db.fetch_one.side_effect = create_responses + [get_responses[0]]
+        mock_db.fetch_all.return_value = get_responses[1]
+        mock_db.execute_transaction = AsyncMock()
+        
+        with patch.object(service, "_get_db_service", return_value=mock_db):
+            # Create version
+            version_id = await service.create_component_version(
+                component_id="lifecycle-agent",
+                component_type="agent",
+                version=1,
+                config={"initial": True},
+                description="Initial version",
+                created_by="creator"
+            )
+            
+            # Add history
+            history_id = await service.add_version_history(
+                component_id="lifecycle-agent",
+                from_version=None,
+                to_version=1,
+                action="create",
+                description="Initial version created",
+                changed_by="creator"
+            )
+            
+            # Get version
+            version = await service.get_component_version("lifecycle-agent", 1)
+            
+            # Set as active
+            await service.set_active_version("lifecycle-agent", 1, "activator")
+            
+            # Get history
+            history = await service.get_version_history("lifecycle-agent")
+        
+        # Verify results
+        assert version_id == 1
+        assert history_id == 10
+        assert version is not None
+        assert version.component_id == "lifecycle-agent"
+        assert len(history) == 1
+        assert history[0].action == "create"

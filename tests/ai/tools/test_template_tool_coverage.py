@@ -9,7 +9,14 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from typing import Any
 
-from ai.tools.template_tool import TemplateTool
+# Import TemplateTool from the template-tool module (dash in module name)
+# Python imports with dashes need to use importlib or __import__
+import importlib
+template_tool_module = importlib.import_module('ai.tools.template-tool')
+TemplateTool = template_tool_module.TemplateTool
+
+# For patching purposes, get the tool module
+tool_module = importlib.import_module('ai.tools.template-tool.tool')
 from ai.tools.base_tool import ToolConfig
 
 
@@ -18,7 +25,7 @@ class TestTemplateTool:
 
     def test_initialize_without_config(self):
         """Test initialization without config file - should set defaults."""
-        with patch('ai.tools.template_tool.tool.logger') as mock_logger:
+        with patch.object(tool_module, 'logger') as mock_logger:
             tool = TemplateTool()
             
             # Tool should initialize with default values
@@ -42,7 +49,7 @@ class TestTemplateTool:
             'debug_mode': True,
         }
         
-        with patch('ai.tools.template_tool.tool.logger') as mock_logger:
+        with patch.object(tool_module, 'logger') as mock_logger:
             tool = TemplateTool()
             tool.config = mock_config
             
@@ -58,7 +65,7 @@ class TestTemplateTool:
 
     def test_setup_template_resources(self):
         """Test template resource setup creates required attributes."""
-        with patch('ai.tools.template_tool.tool.logger'):
+        with patch.object(tool_module, 'logger'):
             tool = TemplateTool()
             tool._setup_template_resources()
             
@@ -77,7 +84,7 @@ class TestTemplateTool:
 
     def test_execute_successful_processing(self):
         """Test successful execution with input processing."""
-        with patch('ai.tools.template_tool.tool.logger') as mock_logger:
+        with patch.object(tool_module, 'logger') as mock_logger:
             tool = TemplateTool()
             
             result = tool.execute("test input data", {"transform": "uppercase"})
@@ -101,7 +108,7 @@ class TestTemplateTool:
 
     def test_execute_with_analysis_option(self):
         """Test execution with analysis option enabled."""
-        with patch('ai.tools.template_tool.tool.logger'):
+        with patch.object(tool_module, 'logger'):
             tool = TemplateTool()
             
             result = tool.execute("test123", {"analyze": True})
@@ -122,7 +129,7 @@ class TestTemplateTool:
         
         # Mock _process_input to raise an exception
         with patch.object(tool, '_process_input', side_effect=ValueError("Processing failed")):
-            with patch('ai.tools.template_tool.tool.logger') as mock_logger:
+            with patch.object(tool_module, 'logger') as mock_logger:
                 result = tool.execute("test input")
                 
                 assert result["status"] == "error"
@@ -213,7 +220,7 @@ class TestTemplateTool:
         tool.execute("test2")
         assert len(tool._execution_history) == 2
         
-        with patch('ai.tools.template_tool.tool.logger') as mock_logger:
+        with patch.object(tool_module, 'logger') as mock_logger:
             tool.clear_execution_history()
             
             assert len(tool._execution_history) == 0
@@ -309,7 +316,7 @@ tool:
 
     def test_initialization_with_config_file(self, temp_config_file):
         """Test tool initialization loads configuration from file."""
-        with patch('ai.tools.template_tool.tool.logger'):
+        with patch.object(tool_module, 'logger'):
             tool = TemplateTool(config_path=temp_config_file)
             
             assert tool.config.tool_id == "test-template-tool"
@@ -320,7 +327,7 @@ tool:
 
     def test_execution_uses_config_template_version(self, temp_config_file):
         """Test execution uses template version from config file."""
-        with patch('ai.tools.template_tool.tool.logger'):
+        with patch.object(tool_module, 'logger'):
             tool = TemplateTool(config_path=temp_config_file)
             
             result = tool.execute("test")

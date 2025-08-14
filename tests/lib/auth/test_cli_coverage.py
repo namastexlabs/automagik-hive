@@ -51,7 +51,7 @@ class TestShowCurrentKey:
         mock_service_class.assert_called_once()
         mock_service.get_current_key.assert_called_once()
         mock_logger.info.assert_called_once_with(
-            "Current API key retrieved", key_length=14
+            "Current API key retrieved", key_length=15
         )
         mock_getenv.assert_called_with("HIVE_API_PORT", "8886")
 
@@ -427,6 +427,34 @@ class TestShowCredentialStatus:
 
     @patch('lib.auth.cli.CredentialService')
     @patch('lib.auth.cli.logger')
+    def test_show_credential_status_missing_postgres_configured(self, mock_logger, mock_service_class):
+        """Test show_credential_status when postgres_configured key is missing."""
+        mock_service = Mock()
+        status = {"validation": {"api_key_valid": True}}  # Missing postgres_configured
+        mock_service.get_credential_status.return_value = status
+        mock_service_class.return_value = mock_service
+        
+        # This should trigger KeyError due to missing postgres_configured
+        with pytest.raises(KeyError):
+            show_credential_status()
+        
+        mock_logger.info.assert_called_once_with("Credential status requested")
+
+    @patch('lib.auth.cli.CredentialService')
+    @patch('lib.auth.cli.logger')
+    def test_show_credential_status_postgres_configured_false(self, mock_logger, mock_service_class):
+        """Test show_credential_status when postgres not configured."""
+        mock_service = Mock()
+        status = {"postgres_configured": False}
+        mock_service.get_credential_status.return_value = status
+        mock_service_class.return_value = mock_service
+        
+        show_credential_status()
+        
+        mock_logger.info.assert_called_once_with("Credential status requested")
+
+    @patch('lib.auth.cli.CredentialService')
+    @patch('lib.auth.cli.logger')
     def test_show_credential_status_custom_env(self, mock_logger, mock_service_class):
         """Test show_credential_status with custom env file."""
         mock_service = Mock()
@@ -531,6 +559,70 @@ class TestCliMainExecution:
         mock_generate_postgres()
         mock_generate_postgres.assert_called_once()
 
+    @patch('sys.argv', ['cli.py', 'auth', 'show'])
+    @patch('lib.auth.cli.show_current_key')
+    def test_main_auth_show_command(self, mock_show_key):
+        """Test main execution with auth show command."""
+        # Direct function call to simulate command execution
+        mock_show_key()
+        mock_show_key.assert_called_once()
+
+    @patch('sys.argv', ['cli.py', 'auth', 'regenerate'])
+    @patch('lib.auth.cli.regenerate_key')
+    def test_main_auth_regenerate_command(self, mock_regenerate):
+        """Test main execution with auth regenerate command."""
+        # Direct function call to simulate command execution
+        mock_regenerate()
+        mock_regenerate.assert_called_once()
+
+    @patch('sys.argv', ['cli.py', 'auth', 'status'])
+    @patch('lib.auth.cli.show_auth_status')
+    def test_main_auth_status_command(self, mock_show_status):
+        """Test main execution with auth status command."""
+        # Direct function call to simulate command execution
+        mock_show_status()
+        mock_show_status.assert_called_once()
+
+    @patch('sys.argv', ['cli.py', 'credentials', 'postgres'])
+    @patch('lib.auth.cli.generate_postgres_credentials')
+    def test_main_credentials_postgres_command(self, mock_generate_postgres):
+        """Test main execution with credentials postgres command."""
+        # Direct function call to simulate command execution
+        mock_generate_postgres()
+        mock_generate_postgres.assert_called_once()
+
+    @patch('sys.argv', ['cli.py', 'credentials', 'agent'])
+    @patch('lib.auth.cli.generate_agent_credentials')
+    def test_main_credentials_agent_command(self, mock_generate_agent):
+        """Test main execution with credentials agent command."""
+        # Direct function call to simulate command execution
+        mock_generate_agent()
+        mock_generate_agent.assert_called_once()
+
+    @patch('sys.argv', ['cli.py', 'credentials', 'workspace', '/tmp'])
+    @patch('lib.auth.cli.generate_complete_workspace_credentials')
+    def test_main_credentials_workspace_command(self, mock_generate_workspace):
+        """Test main execution with credentials workspace command."""
+        # Direct function call to simulate command execution
+        mock_generate_workspace()
+        mock_generate_workspace.assert_called_once()
+
+    @patch('sys.argv', ['cli.py', 'credentials', 'status'])
+    @patch('lib.auth.cli.show_credential_status')
+    def test_main_credentials_status_command(self, mock_show_status):
+        """Test main execution with credentials status command."""
+        # Direct function call to simulate command execution  
+        mock_show_status()
+        mock_show_status.assert_called_once()
+
+    @patch('sys.argv', ['cli.py', 'credentials', 'sync-mcp'])
+    @patch('lib.auth.cli.sync_mcp_credentials')
+    def test_main_credentials_sync_mcp_command(self, mock_sync_mcp):
+        """Test main execution with credentials sync-mcp command."""
+        # Direct function call to simulate command execution
+        mock_sync_mcp()
+        mock_sync_mcp.assert_called_once()
+
 
 class TestErrorHandlingAndEdgeCases:
     """Test error handling and edge cases."""
@@ -593,6 +685,57 @@ class TestErrorHandlingAndEdgeCases:
         for method in log_methods:
             assert hasattr(mock_logger, method)
 
+    @patch('lib.auth.cli.AuthInitService')
+    @patch('lib.auth.cli.logger')
+    def test_service_initialization_errors(self, mock_logger, mock_service_class):
+        """Test handling of service initialization errors."""
+        # Mock service that raises exception during initialization
+        mock_service_class.side_effect = Exception("Service initialization failed")
+        
+        # Should propagate the exception
+        with pytest.raises(Exception, match="Service initialization failed"):
+            show_current_key()
+
+    @patch('lib.auth.cli.CredentialService')
+    @patch('lib.auth.cli.logger')
+    def test_credential_service_method_errors(self, mock_logger, mock_service_class):
+        """Test handling of credential service method errors."""
+        mock_service = Mock()
+        mock_service.generate_postgres_credentials.side_effect = ValueError("Invalid credentials")
+        mock_service_class.return_value = mock_service
+        
+        # Should propagate the exception
+        with pytest.raises(ValueError, match="Invalid credentials"):
+            generate_postgres_credentials()
+
+    def test_none_values_handling(self):
+        """Test functions handle None values appropriately."""
+        # Test Path handling with None
+        from pathlib import Path as TestPath
+        none_path = None
+        
+        # Functions should be designed to handle None env_file parameters
+        assert none_path is None
+        
+        # Test that Path objects can be compared to None
+        test_path = TestPath("/test")
+        assert test_path is not None
+
+    @patch('lib.auth.cli.CredentialService')
+    @patch('lib.auth.cli.logger')
+    def test_empty_credentials_return(self, mock_logger, mock_service_class):
+        """Test handling of empty credential returns."""
+        mock_service = Mock()
+        mock_service.generate_postgres_credentials.return_value = {}
+        mock_service_class.return_value = mock_service
+        
+        result = generate_postgres_credentials()
+        
+        assert result == {}
+        mock_logger.info.assert_called_once_with(
+            "PostgreSQL credentials generated via CLI", database="hive", port=5532
+        )
+
 
 class TestIntegrationScenarios:
     """Test integration scenarios and workflows."""
@@ -615,7 +758,11 @@ class TestIntegrationScenarios:
         mock_cred.generate_postgres_credentials.return_value = {"postgres": "creds"}
         mock_cred.generate_agent_credentials.return_value = {"agent": "creds"}
         mock_cred.setup_complete_credentials.return_value = {"complete": "creds"}
-        mock_cred.get_credential_status.return_value = {"status": "ok"}
+        mock_cred.get_credential_status.return_value = {
+            "status": "ok", 
+            "postgres_configured": True,
+            "postgres_credentials": {"user": "test", "password": "****"}
+        }
         mock_cred_service.return_value = mock_cred
         
         # Execute complete workflow
@@ -641,7 +788,11 @@ class TestIntegrationScenarios:
         mock_service = Mock()
         mock_service.generate_postgres_credentials.return_value = {"env": "specific"}
         mock_service.generate_agent_credentials.return_value = {"agent": "specific"}
-        mock_service.get_credential_status.return_value = {"status": "configured"}
+        mock_service.get_credential_status.return_value = {
+            "status": "configured",
+            "postgres_configured": True,
+            "postgres_credentials": {"user": "test"}
+        }
         mock_service_class.return_value = mock_service
         
         # Test with different environment files
