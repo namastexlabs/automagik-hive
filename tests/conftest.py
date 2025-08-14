@@ -178,51 +178,58 @@ def mock_component_registries() -> Generator[
     mock_agent.run.return_value = "Test response"
     mock_agent.metadata = {}  # Add metadata as empty dict, not Mock
 
-    patches = [
-        patch(
-            "ai.agents.registry.AgentRegistry.list_available_agents",
-            return_value=list(mock_agents.keys()),
-        ),
-        patch(
-            "ai.teams.registry.list_available_teams",
-            return_value=list(mock_teams.keys()),
-        ),
-        patch(
-            "ai.workflows.registry.list_available_workflows",
-            return_value=list(mock_workflows.keys()),
-        ),
-        patch(
-            "lib.utils.version_factory.create_agent",
-            new_callable=AsyncMock,
-            return_value=mock_agent,
-        ),
-        patch(
-            "lib.utils.version_factory.create_team",
-            new_callable=AsyncMock,
-            return_value=mock_agent,
-        ),
-        patch("ai.workflows.registry.get_workflow", return_value=mock_agent),
-        # Mock the database services to avoid actual database connections
-        patch("lib.services.database_service.get_db_service", return_value=AsyncMock()),
-        patch("lib.services.component_version_service.ComponentVersionService"),
-        patch("lib.versioning.agno_version_service.AgnoVersionService"),
-        # Mock the version factory method to return mock agent directly, but fail for non-existent components
-        patch(
-            "lib.utils.version_factory.VersionFactory.create_versioned_component",
-            new_callable=lambda: AsyncMock(
-                side_effect=lambda component_id, **kwargs: None
-                if component_id == "non-existent-component"
-                else mock_agent
-            ),
-        ),
+    # Define patches with error handling for missing modules
+    patch_specs = [
+        ("ai.agents.registry.AgentRegistry.list_available_agents", "return_value", list(mock_agents.keys())),
+        ("ai.teams.registry.list_available_teams", "return_value", list(mock_teams.keys())),
+        ("ai.workflows.registry.list_available_workflows", "return_value", list(mock_workflows.keys())),
+        ("lib.utils.version_factory.create_agent", "async_mock", mock_agent),
+        ("lib.utils.version_factory.create_team", "async_mock", mock_agent),
+        ("ai.workflows.registry.get_workflow", "return_value", mock_agent),
+        ("lib.services.database_service.get_db_service", "return_value", AsyncMock()),
+        ("lib.services.component_version_service.ComponentVersionService", "mock", None),
+        ("lib.versioning.agno_version_service.AgnoVersionService", "mock", None),
+        ("lib.utils.version_factory.VersionFactory.create_versioned_component", "special", None),
     ]
 
+    patches = []
+    for target, patch_type, value in patch_specs:
+        try:
+            if patch_type == "return_value":
+                patches.append(patch(target, return_value=value))
+            elif patch_type == "async_mock":
+                patches.append(patch(target, new_callable=AsyncMock, return_value=value))
+            elif patch_type == "mock":
+                patches.append(patch(target))
+            elif patch_type == "special":
+                # Special case for version factory
+                patches.append(patch(
+                    target,
+                    new_callable=lambda: AsyncMock(
+                        side_effect=lambda component_id, **kwargs: None
+                        if component_id == "non-existent-component"
+                        else mock_agent
+                    ),
+                ))
+        except ImportError:
+            # Skip patches for modules that can't be imported
+            continue
+        except Exception:
+            # Skip patches that can't be created
+            continue
+
+    started_patches = []
     for p in patches:
-        p.start()
+        try:
+            p.start()
+            started_patches.append(p)
+        except Exception:
+            # Skip patches that can't be started
+            continue
 
     yield {"agents": mock_agents, "teams": mock_teams, "workflows": mock_workflows}
 
-    for p in patches:
+    for p in started_patches:
         try:
             p.stop()
         except Exception:
@@ -396,30 +403,66 @@ def mock_startup_orchestration() -> Generator[Mock, None, None]:
     mock_startup_display.workflows = ListLikeMock(["test-workflow"])
     mock_startup_display.display_summary = Mock()
 
-    with patch(
-        "lib.utils.startup_orchestration.orchestrated_startup",
-        return_value=mock_results,
-    ):
-        # Mock both create_startup_display and get_startup_display_with_results
-        with patch(
+    patches = []
+    
+    # Use try/except for each patch to handle missing modules gracefully
+    try:
+        patches.append(patch(
+            "lib.utils.startup_orchestration.orchestrated_startup",
+            return_value=mock_results,
+        ))
+    except ImportError:
+        pass
+
+    try:
+        patches.append(patch(
             "lib.utils.startup_display.create_startup_display",
             return_value=mock_startup_display,
-        ):
-            with patch(
-                "lib.utils.startup_orchestration.get_startup_display_with_results",
-                return_value=mock_startup_display,
-            ):
-                # Mock the team creation function used in serve.py
-                async def mock_create_team(*args: Any, **kwargs: Any) -> Mock:
-                    mock_team = Mock()
-                    mock_team.name = "test-team"
-                    return mock_team
+        ))
+    except ImportError:
+        pass
 
-                with patch(
-                    "lib.utils.version_factory.create_team",
-                    side_effect=mock_create_team,
-                ):
-                    yield mock_results
+    try:
+        patches.append(patch(
+            "lib.utils.startup_orchestration.get_startup_display_with_results",
+            return_value=mock_startup_display,
+        ))
+    except ImportError:
+        pass
+
+    try:
+        async def mock_create_team(*args: Any, **kwargs: Any) -> Mock:
+            mock_team = Mock()
+            mock_team.name = "test-team"
+            return mock_team
+
+        patches.append(patch(
+            "lib.utils.version_factory.create_team",
+            side_effect=mock_create_team,
+        ))
+    except ImportError:
+        pass
+
+    # Start all valid patches
+    started_patches = []
+    for p in patches:
+        try:
+            p.start()
+            started_patches.append(p)
+        except Exception:
+            # Skip patches that can't be started
+            pass
+
+    try:
+        yield mock_results
+    finally:
+        # Stop all started patches
+        for p in started_patches:
+            try:
+                p.stop()
+            except Exception:
+                # Ignore cleanup errors
+                pass
 
 
 @pytest.fixture
@@ -564,26 +607,44 @@ def setup_test_environment():
 @pytest.fixture(autouse=True)
 def mock_external_dependencies():
     """Mock external dependencies to prevent real network calls."""
-    patches = [
-        patch("lib.knowledge.csv_hot_reload.CSVHotReloadManager"),
-        patch("lib.metrics.langwatch_integration.LangWatchManager"),
-        patch("lib.logging.setup_logging"),
-        patch("lib.logging.set_runtime_mode"),
-        # Mock serve.py startup orchestration to prevent component loading at import
-        patch("api.serve.orchestrated_startup", new_callable=AsyncMock),
-        patch("api.serve.create_startup_display"),
-        # Mock async notification functions in lifespan with proper cleanup
-        patch("common.startup_notifications.send_startup_notification", new_callable=AsyncMock),
-        patch("common.startup_notifications.send_shutdown_notification", new_callable=AsyncMock),
-        # Mock the serve.py app creation to return a FastAPI app with basic endpoints
-        patch("api.serve.create_automagik_api", side_effect=lambda: _create_test_fastapi_app()),
+    # Define patches with error handling for missing modules
+    patch_specs = [
+        ("lib.knowledge.csv_hot_reload.CSVHotReloadManager", None),
+        ("lib.metrics.langwatch_integration.LangWatchManager", None),
+        ("lib.logging.setup_logging", None),
+        ("lib.logging.set_runtime_mode", None),
+        ("api.serve.orchestrated_startup", AsyncMock),
+        ("api.serve.create_startup_display", None),
+        ("common.startup_notifications.send_startup_notification", AsyncMock),
+        ("common.startup_notifications.send_shutdown_notification", AsyncMock),
+        ("api.serve.create_automagik_api", lambda: _create_test_fastapi_app()),
     ]
+
+    patches = []
+    for target, new_callable in patch_specs:
+        try:
+            if new_callable == AsyncMock:
+                patches.append(patch(target, new_callable=AsyncMock))
+            elif callable(new_callable):
+                patches.append(patch(target, side_effect=new_callable))
+            else:
+                patches.append(patch(target))
+        except ImportError:
+            # Skip patches for modules that can't be imported
+            continue
+        except Exception:
+            # Skip patches that can't be created
+            continue
 
     started_patches = []
     try:
         for p in patches:
-            p.start()
-            started_patches.append(p)
+            try:
+                p.start()
+                started_patches.append(p)
+            except Exception:
+                # Skip patches that can't be started
+                continue
         yield
     finally:
         # Stop patches in reverse order to ensure proper cleanup

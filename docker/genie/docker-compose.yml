@@ -82,7 +82,6 @@ services:
       - POSTGRES_USER=genie_user
       - POSTGRES_PASSWORD=genie_secure_pass
       - POSTGRES_DB=hive_genie
-      - RUNTIME_ENV=prd
     volumes:
       - genie_app_logs:/app/logs                        # Application logs
       - genie_app_data:/app/data                        # Application data

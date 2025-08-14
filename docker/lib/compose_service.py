@@ -167,7 +167,6 @@ class DockerComposeService:
             "ports": ["${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"],
             "environment": [
                 "HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hive}",
-                "RUNTIME_ENV=prd",
                 "HIVE_LOG_LEVEL=info",
                 "HIVE_API_HOST=0.0.0.0",
                 "HIVE_API_PORT=${HIVE_API_PORT:-8886}",
@@ -253,7 +252,6 @@ HIVE_API_WORKERS=4
 HIVE_API_KEY={credentials["api_key"]}
 
 # Runtime Configuration
-RUNTIME_ENV=dev
 HIVE_LOG_LEVEL=info
 HIVE_AUTH_DISABLED=false
 

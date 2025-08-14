@@ -86,7 +86,6 @@ services:
       - POSTGRES_USER=test_user
       - POSTGRES_PASSWORD=test_pass
       - POSTGRES_DB=hive_agent
-      - RUNTIME_ENV=prd
     volumes:
       - agent_app_logs:/app/logs                        # Application logs
       - agent_app_data:/app/data                        # Application data

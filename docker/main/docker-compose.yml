@@ -44,8 +44,6 @@ services:
       - "${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"
     env_file:
       - ../../.env
-    environment:
-      - RUNTIME_ENV=prd
     volumes:
       - main_app_logs:/app/logs
       - main_app_data:/app/data
