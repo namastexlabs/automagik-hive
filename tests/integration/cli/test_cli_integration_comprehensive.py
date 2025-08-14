@@ -537,7 +537,8 @@ class TestCLIEndToEndScenarios:
         with patch('cli.main.InitCommands') as mock_init, \
              patch('cli.main.AgentCommands') as mock_agent, \
              patch('cli.main.PostgreSQLCommands') as mock_postgres, \
-             patch('cli.main.UninstallCommands') as mock_uninstall:
+             patch('cli.main.UninstallCommands') as mock_uninstall, \
+             patch('cli.main.ServiceManager') as mock_service:
             
             # Setup successful mocks
             mock_init.return_value.init_workspace.return_value = True
@@ -550,12 +551,20 @@ class TestCLIEndToEndScenarios:
             mock_postgres.return_value.postgres_status.return_value = True
             mock_postgres.return_value.postgres_logs.return_value = True
             mock_uninstall.return_value.uninstall_current_workspace.return_value = True
+            mock_service.return_value.uninstall_environment.return_value = True
+            mock_service.return_value.serve_docker.return_value = True
+            mock_service.return_value.serve_local.return_value = True
+            mock_service.return_value.stop_docker.return_value = True
+            mock_service.return_value.restart_docker.return_value = True
+            mock_service.return_value.docker_logs.return_value = True
+            mock_service.return_value.install_full_environment.return_value = True
             
             yield {
                 'init': mock_init,
                 'agent': mock_agent,
                 'postgres': mock_postgres,
                 'uninstall': mock_uninstall,
+                'service': mock_service,
             }
 
     def test_complete_agent_lifecycle(self, mock_all_components):

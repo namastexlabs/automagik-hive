@@ -115,7 +115,7 @@ services:
                                     assert install_result is True
 
                                     # Step 2: Start agent server
-                                    serve_result = commands.serve(temp_workspace)
+                                    serve_result = commands.start(temp_workspace)
                                     assert serve_result is True
 
                                     # Step 3: Check agent status
@@ -181,8 +181,8 @@ services:
                         mock_open.return_value.__enter__.return_value = mock_file
 
                         # Simulate concurrent serve attempts
-                        serve_result1 = commands1.serve(temp_workspace)
-                        serve_result2 = commands2.serve(temp_workspace)
+                        serve_result1 = commands1.start(temp_workspace)
+                        serve_result2 = commands2.start(temp_workspace)
 
                         # Both should succeed (second should detect already running)
                         assert serve_result1 is True
