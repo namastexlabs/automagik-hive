@@ -858,7 +858,7 @@ class TestSingleComponentSyncLogic:
         mock_agno_version = MagicMock()
         mock_agno_version.version = '1.0.0'
         mock_agno_version.config = agno_config
-        service.version_service.get_active_version.return_value = mock_agno_version
+        service.version_service.get_active_version = AsyncMock(return_value=mock_agno_version)
         
         with patch('builtins.open', mock_open()), \
              patch('yaml.safe_load', return_value=yaml_config):
@@ -886,7 +886,7 @@ class TestSingleComponentSyncLogic:
         mock_agno_version = MagicMock()
         mock_agno_version.version = '1.0.0'
         mock_agno_version.config = matching_config
-        service.version_service.get_active_version.return_value = mock_agno_version
+        service.version_service.get_active_version = AsyncMock(return_value=mock_agno_version)
         
         with patch('builtins.open', mock_open()), \
              patch('yaml.safe_load', return_value=matching_config):
@@ -926,7 +926,7 @@ class TestYAMLUpdateMethods:
                 'version': '2.0.0'
             }
         }
-        service.version_service.get_active_version.return_value = mock_agno_version
+        service.version_service.get_active_version = AsyncMock(return_value=mock_agno_version)
         
         with patch('shutil.copy2') as mock_copy, \
              patch('builtins.open', mock_open()) as mock_file, \
@@ -945,7 +945,7 @@ class TestYAMLUpdateMethods:
         """Test YAML update when no active Agno version exists."""
         service = AgnoVersionSyncService(db_url="test_url")
         service.version_service = MagicMock()
-        service.version_service.get_active_version.return_value = None
+        service.version_service.get_active_version = AsyncMock(return_value=None)
         
         await service.update_yaml_from_agno("test.yaml", "nonexistent-agent", "agent")
         
@@ -957,7 +957,7 @@ class TestYAMLUpdateMethods:
         """Test YAML update when version service fails."""
         service = AgnoVersionSyncService(db_url="test_url")
         service.version_service = MagicMock()
-        service.version_service.get_active_version.side_effect = Exception("Version service error")
+        service.version_service.get_active_version = AsyncMock(side_effect=Exception("Version service error"))
         
         await service.update_yaml_from_agno("test.yaml", "error-agent", "agent")
         
@@ -971,7 +971,7 @@ class TestYAMLUpdateMethods:
         
         mock_agno_version = MagicMock()
         mock_agno_version.config = {'test': 'config'}
-        service.version_service.get_active_version.return_value = mock_agno_version
+        service.version_service.get_active_version = AsyncMock(return_value=mock_agno_version)
         
         with patch('shutil.copy2', side_effect=Exception("Backup failed")), \
              patch('builtins.open', mock_open()) as mock_file, \
@@ -991,7 +991,7 @@ class TestYAMLUpdateMethods:
         
         mock_agno_version = MagicMock()
         mock_agno_version.config = {'test': 'config'}
-        service.version_service.get_active_version.return_value = mock_agno_version
+        service.version_service.get_active_version = AsyncMock(return_value=mock_agno_version)
         
         with patch('shutil.copy2') as mock_copy, \
              patch('builtins.open', mock_open()), \
@@ -1012,7 +1012,7 @@ class TestYAMLUpdateMethods:
         
         mock_agno_version = MagicMock()
         mock_agno_version.config = {'test': 'config'}
-        service.version_service.get_active_version.return_value = mock_agno_version
+        service.version_service.get_active_version = AsyncMock(return_value=mock_agno_version)
         
         with patch('shutil.copy2', side_effect=[None, Exception("Restore failed")]), \
              patch('builtins.open', mock_open()), \
@@ -1203,8 +1203,8 @@ class TestDiscoveryAndUtilityMethods:
             
             service.cleanup_old_backups(max_backups=5)
         
-        # Should remove 5 oldest files
-        assert mock_remove.call_count == 5
+        # Should remove 5 oldest files for each of 3 component types (agent, team, workflow) = 15 total
+        assert mock_remove.call_count == 15
 
     def test_cleanup_old_backups_with_removal_error(self):
         """Test cleanup when file removal fails."""
@@ -1521,8 +1521,8 @@ def temp_yaml_files():
 def mock_version_service():
     """Create mock version service."""
     mock_service = MagicMock()
-    mock_service.get_active_version.return_value = None
-    mock_service.sync_from_yaml.return_value = (None, 'created')
+    mock_service.get_active_version = AsyncMock(return_value=None)
+    mock_service.sync_from_yaml = AsyncMock(return_value=(None, 'created'))
     return mock_service
 
 

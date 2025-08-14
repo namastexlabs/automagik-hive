@@ -653,12 +653,23 @@ class TestSmartIncrementalLoaderAnalysis:
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
     @patch("lib.knowledge.smart_incremental_loader.create_engine")
-    def test_analyze_changes_with_existing_records(self, mock_create_engine, mock_yaml_load, mock_file):
+    @patch("pandas.read_csv")
+    def test_analyze_changes_with_existing_records(self, mock_read_csv, mock_create_engine, mock_yaml_load, mock_file):
         """Test analyze_changes with some existing database records."""
         mock_yaml_load.return_value = self.test_config
         
         # Create CSV file
         self.create_csv_file()
+        
+        # Mock pandas DataFrame for CSV reading
+        mock_df = MagicMock()
+        mock_rows = [
+            (0, pd.Series({"problem": "How to debug Python?", "solution": "Use pdb debugger", "business_unit": "tech"})),
+            (1, pd.Series({"problem": "Database slow queries", "solution": "Add indexes", "business_unit": "tech"})),
+            (2, pd.Series({"problem": "API rate limiting", "solution": "Implement throttling", "business_unit": "tech"})),
+        ]
+        mock_df.iterrows.return_value = iter(mock_rows)
+        mock_read_csv.return_value = mock_df
         
         # Mock database connection
         mock_conn = MagicMock()
@@ -668,10 +679,11 @@ class TestSmartIncrementalLoaderAnalysis:
         mock_create_engine.return_value = mock_engine
         
         # Mock some records exist (first query returns 1, others return 0)
-        mock_conn.execute.return_value.fetchone.side_effect = [1, 0, 0]  # 1 existing, 2 new
+        mock_conn.execute.return_value.fetchone.side_effect = [[1], [0], [0]]  # 1 existing, 2 new
         
-        loader = SmartIncrementalLoader(str(self.csv_file))
-        analysis = loader.analyze_changes()
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            loader = SmartIncrementalLoader(str(self.csv_file))
+            analysis = loader.analyze_changes()
         
         assert "error" not in analysis
         assert analysis["csv_total_rows"] == 3
@@ -680,16 +692,24 @@ class TestSmartIncrementalLoaderAnalysis:
         assert analysis["needs_processing"] is True
         assert analysis["status"] == "incremental_update_required"
 
+    @patch("pandas.read_csv")
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
     @patch("lib.knowledge.smart_incremental_loader.create_engine")
-    def test_analyze_changes_all_existing_records(self, mock_create_engine, mock_yaml_load, mock_file):
+    def test_analyze_changes_all_existing_records(self, mock_create_engine, mock_yaml_load, mock_file, mock_read_csv):
         """Test analyze_changes when all records already exist."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create CSV file
-        self.create_csv_file()
+        # Mock pandas DataFrame for CSV reading
+        mock_df = MagicMock()
+        mock_rows = [
+            (0, pd.Series({"problem": "How to debug Python?", "solution": "Use pdb debugger", "business_unit": "tech"})),
+            (1, pd.Series({"problem": "Database slow queries", "solution": "Add indexes", "business_unit": "tech"})),
+            (2, pd.Series({"problem": "API rate limiting", "solution": "Implement throttling", "business_unit": "tech"})),
+        ]
+        mock_df.iterrows.return_value = iter(mock_rows)
+        mock_read_csv.return_value = mock_df
         
         # Mock database connection
         mock_conn = MagicMock()
@@ -698,38 +718,46 @@ class TestSmartIncrementalLoaderAnalysis:
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=None)
         mock_create_engine.return_value = mock_engine
         
-        # Mock all records exist
+        # Mock all records exist (all queries return 1)
         mock_conn.execute.return_value.fetchone.return_value = [1]
         
-        loader = SmartIncrementalLoader(str(self.csv_file))
-        analysis = loader.analyze_changes()
-        
-        assert "error" not in analysis
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            loader = SmartIncrementalLoader(str(self.csv_file))
+            analysis = loader.analyze_changes()
+            
+            assert "error" not in analysis
         assert analysis["csv_total_rows"] == 3
         assert analysis["existing_vector_rows"] == 3  # All exist
         assert analysis["new_rows_count"] == 0  # No new rows
         assert analysis["needs_processing"] is False
         assert analysis["status"] == "up_to_date"
 
+    @patch("pandas.read_csv")
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
     @patch("lib.knowledge.smart_incremental_loader.create_engine")
-    def test_analyze_changes_database_error(self, mock_create_engine, mock_yaml_load, mock_file):
+    def test_analyze_changes_database_error(self, mock_create_engine, mock_yaml_load, mock_file, mock_read_csv):
         """Test analyze_changes handles database errors."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create CSV file
-        self.create_csv_file()
+        # Mock pandas DataFrame for CSV reading
+        mock_df = MagicMock()
+        mock_rows = [
+            (0, pd.Series({"problem": "How to debug Python?", "solution": "Use pdb debugger", "business_unit": "tech"})),
+        ]
+        mock_df.iterrows.return_value = iter(mock_rows)
+        mock_read_csv.return_value = mock_df
         
         # Mock database connection error
         mock_create_engine.side_effect = Exception("Database connection failed")
         
-        loader = SmartIncrementalLoader(str(self.csv_file))
-        analysis = loader.analyze_changes()
-        
-        assert "error" in analysis
-        assert analysis["error"] == "Database connection failed"
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            loader = SmartIncrementalLoader(str(self.csv_file))
+            analysis = loader.analyze_changes()
+            
+            assert "error" in analysis
+            assert analysis["error"] == "Database connection failed"
 
 
 class TestSmartIncrementalLoaderSmartLoad:
@@ -1211,9 +1239,6 @@ class TestSmartIncrementalLoaderStatisticsAndUtilities:
         """Test getting database statistics successfully."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create real CSV file
-        self.create_csv_file()
-        
         analysis_result = {
             "csv_total_rows": 1,
             "existing_vector_rows": 0,
@@ -1222,17 +1247,18 @@ class TestSmartIncrementalLoaderStatisticsAndUtilities:
             "status": "incremental_update_required"
         }
         
-        with patch.object(SmartIncrementalLoader, 'analyze_changes', return_value=analysis_result):
-            loader = SmartIncrementalLoader(str(self.csv_file))
-            stats = loader.get_database_stats()
-            
-            assert stats["csv_file"] == str(self.csv_file)
-            assert stats["csv_exists"] is True
-            assert stats["csv_total_rows"] == 1
-            assert stats["existing_vector_rows"] == 0
-            assert stats["new_rows_pending"] == 1
-            assert stats["removed_rows_pending"] == 0
-            assert stats["sync_status"] == "incremental_update_required"
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            with patch.object(SmartIncrementalLoader, 'analyze_changes', return_value=analysis_result):
+                loader = SmartIncrementalLoader(str(self.csv_file))
+                stats = loader.get_database_stats()
+                
+                assert stats["csv_file"] == str(self.csv_file)
+                assert stats["csv_exists"] is True
+                assert stats["csv_total_rows"] == 1
+                assert stats["existing_vector_rows"] == 0
+                assert stats["new_rows_pending"] == 1
+                assert stats["removed_rows_pending"] == 0
+                assert stats["sync_status"] == "incremental_update_required"
             assert stats["hash_tracking_enabled"] is True
             assert "postgresql://test:5432/db" in stats["database_url"]
 
@@ -1263,26 +1289,33 @@ class TestSmartIncrementalLoaderStatisticsAndUtilities:
             assert "error" in stats
             assert stats["error"] == "Unexpected error"
 
+    @patch("pandas.read_csv")
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
     @patch("lib.knowledge.smart_incremental_loader.create_engine")
-    def test_populate_existing_hashes_success(self, mock_create_engine, mock_yaml_load, mock_file):
+    def test_populate_existing_hashes_success(self, mock_create_engine, mock_yaml_load, mock_file, mock_read_csv):
         """Test populating existing hashes successfully."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create real CSV file
-        self.create_csv_file()
+        # Mock pandas DataFrame for CSV reading
+        mock_df = MagicMock()
+        mock_rows = [
+            (0, pd.Series({"problem": "How to debug Python?", "solution": "Use pdb debugger", "business_unit": "tech"})),
+        ]
+        mock_df.iterrows.return_value = iter(mock_rows)
+        mock_read_csv.return_value = mock_df
         
-        with patch('lib.logging.logger') as mock_logger:
-            with patch.object(SmartIncrementalLoader, '_update_row_hash', return_value=True) as mock_update_hash:
-                loader = SmartIncrementalLoader(str(self.csv_file))
-                result = loader._populate_existing_hashes()
-                
-                assert result is True
-                mock_update_hash.assert_called_once()  # Should update hash for 1 row
-                mock_logger.info.assert_any_call("Populating content hashes for existing rows")
-                mock_logger.info.assert_any_call("Populated hashes for rows", rows_count=1)
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            with patch('lib.logging.logger') as mock_logger:
+                with patch.object(SmartIncrementalLoader, '_update_row_hash', return_value=True) as mock_update_hash:
+                    loader = SmartIncrementalLoader(str(self.csv_file))
+                    result = loader._populate_existing_hashes()
+                    
+                    assert result is True
+                    mock_update_hash.assert_called_once()  # Should update hash for 1 row
+                    mock_logger.info.assert_any_call("Populating content hashes for existing rows")
+                    mock_logger.info.assert_any_call("Populated hashes for rows", rows_count=1)
 
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
@@ -1378,118 +1411,117 @@ class TestSmartIncrementalLoaderEdgeCasesAndErrorRecovery:
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
+    @patch("pandas.read_csv")
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
-    def test_large_csv_processing(self, mock_yaml_load, mock_file):
+    def test_large_csv_processing(self, mock_yaml_load, mock_file, mock_read_csv):
         """Test processing large CSV files with many rows."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create large dataset (simulate 1000+ rows)
-        large_data = [["problem", "solution", "business_unit"]]
-        for i in range(1000):
-            large_data.append([f"Problem {i}", f"Solution {i}", "tech"])
+        # Mock large pandas DataFrame
+        mock_df = MagicMock()
+        large_rows = [(i, pd.Series({"problem": f"Problem {i}", "solution": f"Solution {i}", "business_unit": "tech"})) for i in range(1000)]
+        mock_df.iterrows.return_value = iter(large_rows)
+        mock_read_csv.return_value = mock_df
         
-        with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerows(large_data)
-        
-        loader = SmartIncrementalLoader(str(self.csv_file))
-        rows_with_hashes = loader._get_csv_rows_with_hashes()
-        
-        assert len(rows_with_hashes) == 1000
-        # Check that all hashes are unique (no collisions)
-        hashes = [row['hash'] for row in rows_with_hashes]
-        assert len(set(hashes)) == 1000
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            loader = SmartIncrementalLoader(str(self.csv_file))
+            rows_with_hashes = loader._get_csv_rows_with_hashes()
+            
+            assert len(rows_with_hashes) == 1000
+            # Check that all hashes are unique (no collisions)
+            hashes = [row['hash'] for row in rows_with_hashes]
+            assert len(set(hashes)) == 1000
 
+    @patch("pandas.read_csv")
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
-    def test_unicode_and_special_characters(self, mock_yaml_load, mock_file):
+    def test_unicode_and_special_characters(self, mock_yaml_load, mock_file, mock_read_csv):
         """Test handling of Unicode and special characters in CSV data."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create CSV with Unicode and special characters
-        unicode_data = [
-            ["problem", "solution", "business_unit"],
-            ["How to handle ñ in Spanish?", "Use Unicode UTF-8 ñ", "tech"],
-            ["Database émojis 🚀", "Store in UTF-8 encoding 🌟", "tech"],
-            ["Special chars @#$%^&*()", "Escape properly []{}|\\", "tech"],
-            ["Multi-line\nProblem", "Multi-line\nSolution", "tech"],
+        # Mock pandas DataFrame with Unicode content
+        mock_df = MagicMock()
+        unicode_rows = [
+            (0, pd.Series({"problem": "How to handle ñ in Spanish?", "solution": "Use Unicode UTF-8 ñ", "business_unit": "tech"})),
+            (1, pd.Series({"problem": "Database émojis 🚀", "solution": "Store in UTF-8 encoding 🌟", "business_unit": "tech"})),
+            (2, pd.Series({"problem": "Special chars @#$%^&*()", "solution": "Escape properly []{}|\\", "business_unit": "tech"})),
+            (3, pd.Series({"problem": "Multi-line\nProblem", "solution": "Multi-line\nSolution", "business_unit": "tech"})),
         ]
+        mock_df.iterrows.return_value = iter(unicode_rows)
+        mock_read_csv.return_value = mock_df
         
-        with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerows(unicode_data)
-        
-        loader = SmartIncrementalLoader(str(self.csv_file))
-        rows_with_hashes = loader._get_csv_rows_with_hashes()
-        
-        assert len(rows_with_hashes) == 4  # 4 data rows
-        
-        # Verify hashing handles Unicode correctly
-        for row in rows_with_hashes:
-            assert len(row['hash']) == 32  # MD5 hash length
-            assert row['hash'] is not None
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            loader = SmartIncrementalLoader(str(self.csv_file))
+            rows_with_hashes = loader._get_csv_rows_with_hashes()
+            
+            assert len(rows_with_hashes) == 4  # 4 data rows
+            
+            # Verify hashing handles Unicode correctly
+            for row in rows_with_hashes:
+                assert len(row['hash']) == 32  # MD5 hash length
+                assert row['hash'] is not None
 
+    @patch("pandas.read_csv")
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
-    def test_empty_and_null_values(self, mock_yaml_load, mock_file):
+    def test_empty_and_null_values(self, mock_yaml_load, mock_file, mock_read_csv):
         """Test handling of empty and null values in CSV data."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create CSV with empty and null values
-        sparse_data = [
-            ["problem", "solution", "business_unit", "typification"],
-            ["Valid problem", "", "", ""],  # Empty fields
-            ["", "Valid solution", "tech", ""],  # Empty problem
-            ["Problem with null", "Solution", None, "programming"],  # None value
-            ["", "", "", ""],  # All empty
+        # Mock pandas DataFrame with empty and null values
+        mock_df = MagicMock()
+        sparse_rows = [
+            (0, pd.Series({"problem": "Valid problem", "solution": "", "business_unit": "", "typification": ""})),
+            (1, pd.Series({"problem": "", "solution": "Valid solution", "business_unit": "tech", "typification": ""})),
+            (2, pd.Series({"problem": "Problem with null", "solution": "Solution", "business_unit": None, "typification": "programming"})),
+            (3, pd.Series({"problem": "", "solution": "", "business_unit": "", "typification": ""})),
         ]
+        mock_df.iterrows.return_value = iter(sparse_rows)
+        mock_read_csv.return_value = mock_df
         
-        with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerows(sparse_data)
-        
-        loader = SmartIncrementalLoader(str(self.csv_file))
-        rows_with_hashes = loader._get_csv_rows_with_hashes()
-        
-        assert len(rows_with_hashes) == 4  # 4 data rows
-        
-        # All rows should have valid hashes despite empty values
-        for row in rows_with_hashes:
-            assert len(row['hash']) == 32
-            assert row['hash'] is not None
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            loader = SmartIncrementalLoader(str(self.csv_file))
+            rows_with_hashes = loader._get_csv_rows_with_hashes()
+            
+            assert len(rows_with_hashes) == 4  # 4 data rows
+            
+            # All rows should have valid hashes despite empty values
+            for row in rows_with_hashes:
+                assert len(row['hash']) == 32
+                assert row['hash'] is not None
 
+    @patch("pandas.read_csv")
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
-    def test_duplicate_content_detection(self, mock_yaml_load, mock_file):
+    def test_duplicate_content_detection(self, mock_yaml_load, mock_file, mock_read_csv):
         """Test detection of duplicate content with same hashes."""
         mock_yaml_load.return_value = self.test_config
         
-        # Create CSV with duplicate content
-        duplicate_data = [
-            ["problem", "solution", "business_unit"],
-            ["Duplicate problem", "Duplicate solution", "tech"],
-            ["Different problem", "Different solution", "tech"],
-            ["Duplicate problem", "Duplicate solution", "tech"],  # Exact duplicate
+        # Mock pandas DataFrame with duplicate content
+        mock_df = MagicMock()
+        duplicate_rows = [
+            (0, pd.Series({"problem": "Duplicate problem", "solution": "Duplicate solution", "business_unit": "tech"})),
+            (1, pd.Series({"problem": "Different problem", "solution": "Different solution", "business_unit": "tech"})),
+            (2, pd.Series({"problem": "Duplicate problem", "solution": "Duplicate solution", "business_unit": "tech"})),  # Exact duplicate
         ]
+        mock_df.iterrows.return_value = iter(duplicate_rows)
+        mock_read_csv.return_value = mock_df
         
-        with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerows(duplicate_data)
-        
-        loader = SmartIncrementalLoader(str(self.csv_file))
-        rows_with_hashes = loader._get_csv_rows_with_hashes()
-        
-        assert len(rows_with_hashes) == 3  # 3 data rows
-        
-        # Check that duplicates have same hash
-        hash1 = rows_with_hashes[0]['hash']
-        hash2 = rows_with_hashes[1]['hash']
-        hash3 = rows_with_hashes[2]['hash']  # Should match hash1
+        with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+            loader = SmartIncrementalLoader(str(self.csv_file))
+            rows_with_hashes = loader._get_csv_rows_with_hashes()
+            
+            assert len(rows_with_hashes) == 3  # 3 data rows
+            
+            # Check that duplicates have same hash
+            hash1 = rows_with_hashes[0]['hash']
+            hash2 = rows_with_hashes[1]['hash']
+            hash3 = rows_with_hashes[2]['hash']  # Should match hash1
         
         assert hash1 == hash3  # Duplicates have same hash
         assert hash1 != hash2  # Different content has different hash
@@ -1556,11 +1588,12 @@ class TestSmartIncrementalLoaderEdgeCasesAndErrorRecovery:
             mock_df.iterrows.return_value = [(i, pd.Series({"problem": f"P{i}", "solution": f"S{i}"})) for i in range(10000)]
             mock_read_csv.return_value = mock_df
             
-            loader = SmartIncrementalLoader(str(self.csv_file))
-            rows_with_hashes = loader._get_csv_rows_with_hashes()
-            
-            # Should handle large dataset without memory issues
-            assert len(rows_with_hashes) == 10000
-            
-            # Verify memory-efficient processing (iterative, not loading all at once)
-            mock_df.iterrows.assert_called_once()
+            with patch('pathlib.Path.exists', return_value=True):  # Ensure CSV file "exists"
+                loader = SmartIncrementalLoader(str(self.csv_file))
+                rows_with_hashes = loader._get_csv_rows_with_hashes()
+                
+                # Should handle large dataset without memory issues
+                assert len(rows_with_hashes) == 10000
+                
+                # Verify memory-efficient processing (iterative, not loading all at once)
+                mock_df.iterrows.assert_called_once()

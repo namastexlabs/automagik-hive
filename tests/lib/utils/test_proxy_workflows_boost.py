@@ -75,31 +75,32 @@ class TestProxyWorkflowCoverageBoost:
             "unknown_param": "ignored"
         }
         
-        # Mock the storage creation
+        # Mock the storage creation and Workflow class
         with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_storage:
-            mock_storage.return_value = Mock()
-            
-            # Test the full create_workflow pipeline
-            workflow = await proxy.create_workflow(
-                component_id="test-workflow",
-                config=config,
-                session_id="test-session",
-                debug_mode=True,
-                user_id="test-user",
-                db_url="postgres://localhost/db"
-            )
-            
-            # Verify workflow was created
-            assert isinstance(workflow, MockWorkflow)
-            assert workflow.workflow_id == "test-workflow"
-            assert workflow.session_id == "test-session"
-            assert workflow.debug_mode is True
-            assert workflow.user_id == "test-user"
-            
-            # Verify metadata was added
-            assert hasattr(workflow, 'metadata')
-            assert workflow.metadata["workflow_id"] == "test-workflow"
-            assert workflow.metadata["loaded_from"] == "proxy_workflows"
+            with patch('lib.utils.proxy_workflows.Workflow', MockWorkflow):
+                mock_storage.return_value = Mock()
+                
+                # Test the full create_workflow pipeline
+                workflow = await proxy.create_workflow(
+                    component_id="test-workflow",
+                    config=config,
+                    session_id="test-session",
+                    debug_mode=True,
+                    user_id="test-user",
+                    db_url="postgres://localhost/db"
+                )
+                
+                # Verify workflow was created
+                assert isinstance(workflow, MockWorkflow)
+                assert workflow.workflow_id == "test-workflow"
+                assert workflow.session_id == "test-session"
+                assert workflow.debug_mode is True
+                assert workflow.user_id == "test-user"
+                
+                # Verify metadata was added
+                assert hasattr(workflow, 'metadata')
+                assert workflow.metadata["workflow_id"] == "test-workflow"
+                assert workflow.metadata["loaded_from"] == "proxy_workflows"
 
     @pytest.mark.asyncio
     async def test_create_workflow_error_handling(self, proxy):
@@ -140,17 +141,19 @@ class TestProxyWorkflowCoverageBoost:
             "unknown_parameter": "should_be_logged"
         }
         
-        # Mock the handlers that would normally fail
-        with patch.object(proxy, '_handle_storage_config', return_value=Mock()):
+        # Mock the storage creation to prevent real database connections
+        with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_storage:
             with patch('lib.utils.proxy_workflows.logger') as mock_logger:
+                mock_storage.return_value = Mock()
                 
                 result = proxy._process_config(config, "test-id", "db-url")
                 
-                # Verify direct mappings
+                # Verify direct mappings (note: workflow handler overrides direct name mapping)
                 assert "name" in result
-                assert result["name"] == "Test Workflow"
+                assert result["name"] == "Custom Name"  # From workflow config, not direct mapping
                 assert "description" in result
                 assert "debug_mode" in result
+                assert result["debug_mode"] is True
                 
                 # Verify handler was called for storage
                 assert "storage" in result or result.get("storage") is not None

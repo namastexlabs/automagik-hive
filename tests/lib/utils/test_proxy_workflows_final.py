@@ -241,7 +241,8 @@ class TestCoverageAchievementSuite:
                 assert "name" in result
                 assert "description" in result
                 assert "debug_mode" in result
-                assert result["name"] == "Test Config"
+                # Workflow handler should override the direct name parameter
+                assert result["name"] == "Custom"
                 assert result["debug_mode"] is True
 
     def test_config_processing_handler_return_types(self, proxy):

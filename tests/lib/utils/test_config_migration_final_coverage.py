@@ -260,7 +260,8 @@ class TestConfigMigrationFinalCoverage:
         team_dir.mkdir(parents=True)
         
         team_config = {
-            "team": {"name": "line112-team", "members": ["line112-agent"]},
+            "team": {"name": "line112-team"},
+            "members": ["line112-agent"],  # This should be at root level, not inside "team"
             "memory": {"enable_user_memories": True, "num_history_runs": 10},
             "display": {"markdown": False, "show_tool_calls": True},
         }

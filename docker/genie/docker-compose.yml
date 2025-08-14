@@ -38,8 +38,12 @@ services:
     ports:
       - "48532:5432"  # Genie PostgreSQL port
     env_file:
-      - .env
+      - ../../.env
     environment:
+      # Genie-specific postgres overrides
+      - POSTGRES_USER=genie_user
+      - POSTGRES_PASSWORD=genie_secure_pass
+      - POSTGRES_DB=hive_genie
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - ../../data/postgres-genie:/var/lib/postgresql/data
@@ -68,7 +72,7 @@ services:
     ports:
       - "48886:48886"  # Genie consultation API
     env_file:
-      - .env
+      - ../../.env
     environment:
       # Genie-specific database connection (connects to postgres-genie service)
       - HIVE_DATABASE_URL=postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres-genie:5432/$POSTGRES_DB

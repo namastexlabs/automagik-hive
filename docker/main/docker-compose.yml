@@ -12,7 +12,6 @@ services:
       - "${HIVE_DATABASE_PORT:-5532}:5432"
     env_file:
       - ../../.env
-      - ./.env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
