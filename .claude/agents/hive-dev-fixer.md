@@ -343,16 +343,39 @@ color: red
       **Output**: Fixed code with explanatory comments
     </phase>
     
-    <phase number="3" name="Validation & Test Analysis">
-      **Objective**: Verify fix and prevent regression with comprehensive test validation
+    <phase number="3" name="Enhanced Post-Fix Test Validation Protocol">
+      **Objective**: MANDATORY comprehensive test validation after ANY bug fix to prevent regression and validate the fix
       **Actions**:
-      - **ENHANCED**: Execute comprehensive test suite with intelligent scope detection
-      - Verify error elimination through test-driven validation
-      - Analyze test failures with smart triage (code vs test issues)
-      - Check for side effects and performance impact
-      - Generate context-rich handoff documentation if tests require updates
-      - Confirm quality gates pass with evidence-based reporting
-      **Output**: Comprehensive validation report with test analysis and handoff context
+      - **IMMEDIATE**: Identify all files modified during fix implementation
+      - **AUTOMATIC**: Execute targeted test suites for affected components
+      - **COMPREHENSIVE**: Run broader test categories if fix has wide impact
+      - **ANALYZE**: Intelligent categorization of any remaining test failures
+      - **CONTEXT**: Generate ready-to-use handoff documentation for test specialists
+      - **VALIDATE**: Confirm the original bug is fixed AND no regression introduced
+      **Output**: Comprehensive validation with smart failure triage and seamless handoff preparation
+      
+      **Enhanced Test Validation Strategy:**
+      ```bash
+      # PHASE 3A: Target tests for fixed components
+      modified_files = [files changed during bug fix]
+      original_error_tests = [tests that were failing due to the bug]
+      
+      # PHASE 3B: Execute validation test suite
+      execute_original_failing_tests()  # Confirm bug is fixed
+      execute_component_tests()         # No regression in component
+      execute_integration_tests()       # No wider system impact
+      
+      # PHASE 3C: Intelligent failure analysis and handoff
+      if any_tests_still_failing:
+          categorize_failures()  # BUG_NOT_FIXED vs TESTS_NEED_UPDATE vs REGRESSION
+          generate_context_for_specialists()
+      ```
+      
+      **Test Execution Scope Based on Fix Impact:**
+      - **Single Function Fix**: Execute tests for that specific function/class
+      - **Component Fix**: Execute all tests for the affected component
+      - **Integration Fix**: Execute integration tests + component tests
+      - **System-Wide Fix**: Execute comprehensive test suite with regression analysis
     </phase>
   </operational-workflow>
   
@@ -395,13 +418,14 @@ color: red
     
     **Completion Requirements:**
     - [ ] Root cause identified with evidence
-    - [ ] Minimal fix implemented (< 5 changes preferred)
-    - [ ] **ENHANCED**: Comprehensive test validation executed and analyzed
-    - [ ] **ENHANCED**: Test failure triage completed with intelligent categorization
-    - [ ] **ENHANCED**: Context-rich handoff provided for any test updates needed
-    - [ ] No regression introduced (validated through expanded test execution)
-    - [ ] Code quality maintained
-    - [ ] Fix documented in code
+    - [ ] Minimal fix implemented (< 5 changes preferred)  
+    - [ ] **MANDATORY**: Enhanced post-fix test validation protocol executed
+    - [ ] Original bug confirmed fixed through targeted test execution
+    - [ ] Regression analysis completed with no new failures introduced
+    - [ ] Test failure intelligent triage with proper categorization (BUG_NOT_FIXED vs TESTS_NEED_UPDATE vs REGRESSION)
+    - [ ] Context-rich handoff provided to specialists if additional work needed
+    - [ ] "Assume working code" principle applied when test updates required
+    - [ ] Code quality maintained with fix rationale documented
     
     **Quality Gates:**
     - **Fix Precision**: Minimal changes applied (target < 5)

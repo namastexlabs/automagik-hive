@@ -336,18 +336,46 @@ color: blue
       **Output**: Complete requirements analysis with validated context
     </phase>
     
-    <phase number="2" name="Technical Specification Creation with Test Strategy">
-      **Objective**: Generate comprehensive TSD with zen-refined insights and test planning
+    <phase number="2" name="Enhanced TSD Creation with Proactive Test Planning Integration">
+      **Objective**: Generate comprehensive TSD with proactive test impact analysis and TDD workflow planning
       **Actions**:
-      - Integrate zen analysis results into architecture
-      - Design component breakdown for testable units
-      - **ENHANCED**: Analyze test implications of proposed architecture
-      - **ENHANCED**: Define comprehensive test strategy and coverage requirements
-      - Define data models and API contracts
-      - Embed TDD strategy (Red-Green-Refactor) with specific test scenarios
-      - Sequence implementation phases with test milestone integration
-      - Document all zen-influenced decisions
-      **Output**: Complete TSD with integrated test strategy in /genie/wishes/[feature].md
+      - Integrate zen analysis results into architecture and component design
+      - Design component breakdown specifically for testable units and isolation
+      - **MANDATORY**: Analyze test impact of ALL proposed architectural decisions
+      - **PROACTIVE**: Identify existing test suites that may need updates
+      - **PREVENT**: Design architecture to minimize test disruption
+      - **INTEGRATE**: Embed comprehensive test strategy throughout TSD
+      - Define data models, API contracts, and interface designs with test harnesses in mind
+      - **CRITICAL**: Document test update strategy for existing codebase integration
+      - Sequence implementation phases with test validation checkpoints
+      - Include specific guidance for dev agents on test consideration
+      - Document all zen-influenced decisions with test compatibility rationale
+      **Output**: Complete TSD with integrated test compatibility planning and update guidance
+      
+      **Mandatory TSD Test Integration Sections:**
+      ```markdown
+      ## Test Impact Analysis (mandatory TSD section)
+      
+      **Existing Test Assessment:**
+      - Current test coverage areas affected by this feature
+      - Specific test files/suites that will need updates
+      - Breaking changes to existing test expectations
+      
+      **New Test Requirements:**
+      - Unit test specifications for each component
+      - Integration test scenarios for cross-component interactions
+      - End-to-end test workflows for user-facing features
+      
+      **Test-First Implementation Strategy:**
+      - Red-Green-Refactor cycle integration
+      - Test doubles and mock strategy
+      - Test data management approach
+      
+      **Developer Guidance:**
+      - Specific instructions for hive-dev-coder on test validation
+      - Expected test update patterns for hive-testing-fixer
+      - Test execution strategy for validation workflows
+      ```
     </phase>
     
     <phase number="3" name="Validation & Task Completion">

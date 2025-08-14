@@ -12,8 +12,17 @@ import os
 from pathlib import Path
 
 def main():
+    # DEBUG: Log that hook is being executed
+    import datetime
+    debug_log = f"[{datetime.datetime.now()}] HOOK EXECUTED: test_boundary_enforcer.py\n"
+    with open("/tmp/claude_hook_debug.log", "a") as f:
+        f.write(debug_log)
+    
     try:
         input_data = json.load(sys.stdin)
+        # DEBUG: Log input data
+        with open("/tmp/claude_hook_debug.log", "a") as f:
+            f.write(f"INPUT: {json.dumps(input_data, indent=2)}\n\n")
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
         sys.exit(1)
@@ -52,10 +61,10 @@ def main():
             
             # DETECT TESTING SUBAGENT ACTIVITY: Look for actual subagent spawning/activity
             testing_subagent_activity_patterns = [
-                '"subagent_type": "genie-testing-fixer"',
-                '"subagent_type": "genie-testing-maker"',
-                'Task(subagent_type="genie-testing-fixer"',
-                'Task(subagent_type="genie-testing-maker"'
+                '"subagent_type": "hive-testing-fixer"',
+                '"subagent_type": "hive-testing-maker"',
+                'Task(subagent_type="hive-testing-fixer"',
+                'Task(subagent_type="hive-testing-maker"'
             ]
             
             # Check if testing subagents are being spawned/used in recent activity
@@ -95,7 +104,7 @@ def main():
 
 FILE MODIFICATION DENIED: {relative_path}
 
-VIOLATION: Testing agents (genie-testing-fixer/genie-testing-maker) are FORBIDDEN from modifying files outside tests/ and genie/ directories.
+VIOLATION: Testing agents (hive-testing-fixer/hive-testing-maker) are FORBIDDEN from modifying files outside tests/ and genie/ directories.
 
 ALLOWED DIRECTORIES:
 - ✅ tests/ - All test files and test configurations
@@ -119,10 +128,10 @@ mcp__automagik_forge__create_task(
 ```
 
 DOMAIN BOUNDARIES:
-- genie-testing-fixer: ONLY tests/ and genie/ directory modifications
-- genie-testing-maker: ONLY tests/ and genie/ directory modifications  
-- genie-dev-fixer: Source code debugging and fixes
-- genie-dev-coder: Source code implementation
+- hive-testing-fixer: ONLY tests/ and genie/ directory modifications
+- hive-testing-maker: ONLY tests/ and genie/ directory modifications  
+- hive-dev-fixer: Source code debugging and fixes
+- hive-dev-coder: Source code implementation
 
 REMEMBER: Testing agents fix TESTS and create ANALYSIS, not source code!
             """.strip()

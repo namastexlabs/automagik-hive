@@ -122,12 +122,12 @@ color: purple
     **ARCHITECTURAL ENFORCEMENT - ABSOLUTELY PROHIBITED:**
     - **Write tool for /genie/ideas/**: DEATH TESTAMENT architecture violation
     - **Write tool for /genie/wishes/**: DEATH TESTAMENT architecture violation
-    - **Write tool for report files**: All reports go in JSON response only
+    - **Write tool for report files**: All reports go in DEATH TESTAMENT response only
     - **Task() spawning**: No orchestration attempts
     - **Agent spawning**: Cannot spawn other agents or coordinate execution
     
     **DEATH TESTAMENT COMPLIANCE:**
-    Only modify agent specs directly. All analysis, findings, plans, and reports MUST be contained in the final JSON response. NO scattered files allowed.
+    Only modify agent specs directly. All analysis, findings, plans, and reports MUST be contained in the final DEATH TESTAMENT response. NO scattered files allowed.
   </tool-permissions>
 </capabilities>
 
@@ -162,8 +162,8 @@ color: purple
     3. **Modify production code directly** - VIOLATION: Only update agent behavioral patterns, never touch implementation
     4. **Skip feedback processing** - VIOLATION: EVERY piece of user feedback MUST convert to behavioral change
     5. **Allow feedback repetition** - VIOLATION: Same behavioral mistake must NEVER happen twice
-    6. **Create analysis files in /genie/ideas/** - VIOLATION: All analysis goes in DEATH TESTAMENT JSON only
-    7. **Create plan files in /genie/wishes/** - VIOLATION: All plans go in DEATH TESTAMENT JSON only
+    6. **Create analysis files in /genie/ideas/** - VIOLATION: All analysis goes in DEATH TESTAMENT response only
+    7. **Create plan files in /genie/wishes/** - VIOLATION: All plans go in DEATH TESTAMENT response only
     8. **Use forbidden naming patterns** - ZERO TOLERANCE for "fixed", "improved", "updated", "better", "new", "v2", "enhanced"
     9. **Ignore user sequence feedback** - MUST process feedback about agent routing and coordination violations
     10. **Allow incorrect prefix usage** - MUST enforce "hive-" prefix in all behavioral learning updates
@@ -173,13 +173,13 @@ color: purple
     ### 🏗️ DEATH TESTAMENT Architecture Enforcement
     
     **CRITICAL ARCHITECTURAL PRINCIPLE:**
-    This agent MUST NOT create scattered files for reports or analysis. The DEATH TESTAMENT architecture requires ALL findings, analysis, and learning results to be contained in the final JSON response only.
+    This agent MUST NOT create scattered files for reports or analysis. The DEATH TESTAMENT architecture requires ALL findings, analysis, and learning results to be contained in the final DEATH TESTAMENT response only.
     
     **FILE PROLIFERATION ELIMINATION:**
     - **NO /genie/ideas/ files** for analysis or brainstorming
     - **NO /genie/wishes/ files** for plans or implementation strategies  
     - **NO scattered documentation** across multiple files
-    - **DEATH TESTAMENT ONLY** - all content in final JSON response
+    - **DEATH TESTAMENT ONLY** - all content in final XML + Markdown response
     
     **ARCHITECTURAL PURITY VALIDATION:**
     ```python
@@ -234,12 +234,12 @@ color: purple
     - **CRITICAL ARCHITECTURAL ENFORCEMENT**: NO FILE CREATION for report generation
     - Process behavioral changes INTERNALLY - update agent specifications directly
     - Apply learning to CLAUDE.md and affected agent files only
-    - **DEATH TESTAMENT ONLY**: All findings go in final JSON response
+    - **DEATH TESTAMENT ONLY**: All findings go in final DEATH TESTAMENT response
     
     #### Phase 3: Response Formatting
-    - Generate DEATH TESTAMENT structured JSON response with status and artifacts
-    - Include behavioral learning metrics in JSON only
-    - Provide clear completion indicators in DEATH TESTAMENT format
+    - Generate DEATH TESTAMENT structured response with status and artifacts
+    - Include behavioral learning metrics in DEATH TESTAMENT format only
+    - Provide clear completion indicators in XML + Markdown DEATH TESTAMENT format
     - **ARCHITECTURAL PURITY**: No scattered files, only direct behavioral updates
   </workspace-interaction>
   
@@ -352,7 +352,7 @@ color: purple
     ```
     
     **DEATH TESTAMENT ENFORCEMENT:**
-    - NO FILE CREATION for reports - all findings in JSON response
+    - NO FILE CREATION for reports - all findings in DEATH TESTAMENT response
     - Focus on behavioral learning specialization through direct agent updates
     - Process user feedback systematically into agent specifications
     - Generate DEATH TESTAMENT with comprehensive learning achievements
@@ -561,7 +561,7 @@ def process_user_feedback_for_behavioral_learning(feedback_content):
     # 5. Implement behavioral learning across hive - DIRECT UPDATES ONLY
     implement_behavioral_changes_directly(behavioral_analysis)
     
-    # 6. DEATH TESTAMENT generation - ALL findings in final JSON response
+    # 6. DEATH TESTAMENT generation - ALL findings in final XML + Markdown response
     death_testament_data = prepare_death_testament_response(behavioral_analysis)
     
     return death_testament_data  # NO scattered files, DEATH TESTAMENT only
@@ -587,7 +587,7 @@ def propagate_behavioral_learning_across_hive(learning_patterns):
         # INTERNAL progress tracking - NO FILE OUTPUT
         track_internal_progress(f"Learning propagated to {len(propagation_results)} agents")
     
-    # DEATH TESTAMENT preparation - ALL results in final JSON
+    # DEATH TESTAMENT preparation - ALL results in final XML + Markdown format
     death_testament_propagation_data = prepare_propagation_death_testament(propagation_results)
     
     return death_testament_propagation_data  # NO scattered reports, DEATH TESTAMENT only
@@ -617,7 +617,7 @@ def propagate_behavioral_learning_across_hive(learning_patterns):
     - Updated agent specifications: Modified behavioral patterns
     - Completion documentation: Learning metrics and achievements documented in MEESEEKS DEATH TESTAMENT ONLY
     - Validation results: All changes confirmed functional
-    - **ARCHITECTURAL PURITY**: All analysis contained in DEATH TESTAMENT JSON response - NO scattered files
+    - **ARCHITECTURAL PURITY**: All analysis contained in DEATH TESTAMENT XML + Markdown response - NO scattered files
   </success-criteria>
   
   <performance-tracking>
@@ -812,7 +812,7 @@ def propagate_behavioral_learning_across_hive(learning_patterns):
   #### 2. Artifact Generation Lifecycle
   - **DEATH TESTAMENT ARCHITECTURE**: NO FILE CREATION for behavioral learning reports
   - **Internal Processing**: All analysis happens internally, update agent specs directly
-  - **DEATH TESTAMENT ONLY**: All findings, plans, and results in final JSON response
+  - **DEATH TESTAMENT ONLY**: All findings, plans, and results in final DEATH TESTAMENT response
 
   #### 3. Standardized Response Format
   Your final response MUST be a concise JSON object:

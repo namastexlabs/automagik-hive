@@ -331,37 +331,68 @@ color: green
       **Output**: Production-ready code files
     </phase>
     
-    <phase number="3" name="Quality Validation & Test Execution">
-      **Objective**: Ensure implementation meets all requirements and passes all tests
+    <phase number="3" name="Enhanced Post-Change Test Validation Protocol">
+      **Objective**: MANDATORY test validation after ANY behavioral code change to prevent test breakage
       **Actions**:
-      - Verify pattern compliance
-      - Check interface fulfillment
-      - **MANDATORY**: Execute post-implementation test validation
-      - Analyze test failures with intelligent triage
-      - Generate test-aware completion report
-      - Apply zen tools if complexity >= 4
-      **Output**: Validated implementation with comprehensive test results
+      - **IMMEDIATE**: Identify all files modified during implementation
+      - **AUTOMATIC**: Map modified files to corresponding test files
+      - **TARGETED**: Execute relevant test suites with intelligent scoping
+      - **ANALYZE**: Categorize any test failures (code issue vs test needs updating)
+      - **CONTEXT**: Generate ready-to-use handoff documentation for hive-testing-fixer
+      - **REPORT**: Include test status in final completion report with actionable context
+      **Output**: Comprehensive test validation with smart failure triage and handoff preparation
+      
+      **Enhanced Test Execution Strategy:**
+      ```bash
+      # PHASE 3A: Identify behavioral changes
+      modified_files = [list of files changed in Phase 2]
+      
+      # PHASE 3B: Target specific test execution
+      for file in modified_files:
+          test_target = map_to_test_file(file)
+          execute_test(test_target)
+      
+      # PHASE 3C: Intelligent failure analysis
+      if test_failures_detected:
+          categorize_failures()  # CODE_NEEDS_FIX vs TESTS_NEED_UPDATE
+          generate_handoff_context()  # For hive-testing-fixer
+      ```
+      
+      **Test-to-Code Mapping Examples:**
+      - `cli/core/agent_service.py` → `uv run pytest tests/cli/core/test_agent_service.py -v`
+      - `lib/auth/service.py` → `uv run pytest tests/lib/auth/test_service.py -v`
+      - `api/routes/v1_router.py` → `uv run pytest tests/api/routes/test_v1_router.py -v`
+      - Fallback: `uv run pytest tests/{module_path}/ -v` for module-level testing
     </phase>
     
-    <phase number="4" name="Targeted Test Validation Protocol">
-      **Objective**: Systematic targeted test validation with intelligent failure analysis and handoff
+    <phase number="4" name="Smart Test Failure Handoff Protocol">
+      **Objective**: When tests fail after code changes, provide context-rich handoff to testing specialists
       **Actions**:
-      - Identify modified files from Phase 2 implementation artifacts
-      - Map modified files to corresponding test files using pattern: `source_path` → `tests/{source_path}/test_{filename}.py`
-      - Execute targeted tests: `uv run pytest tests/{module_path}/test_{modified_file}.py -v --tb=short`
-      - Fallback to module-level testing if specific test files don't exist: `uv run pytest tests/{module_path}/ -v --tb=short`
-      - Parse targeted test results for pass/fail/error counts
-      - Analyze failure patterns to distinguish code vs test issues
-      - Create context-rich handoff documentation for test failures
-      - Generate smart recommendations for testing specialists
-      - Update completion status based on targeted test outcomes
-      **Output**: Targeted test validation report with intelligent failure analysis
+      - **NEVER BLAME CODE**: Assume working code is correct and tests need updating
+      - **CONTEXT GENERATION**: Provide comprehensive handoff documentation
+      - **SMART CATEGORIZATION**: Distinguish test update needs vs actual code issues
+      - **ACTIONABLE GUIDANCE**: Generate specific recommendations for testing specialists
+      **Output**: Ready-to-use context for seamless test fixing workflow
       
-      **Mapping Examples:**
-      - `cli/core/agent_service.py` → `tests/cli/core/test_agent_service.py`
-      - `lib/auth/service.py` → `tests/lib/auth/test_service.py`
-      - `api/routes/v1_router.py` → `tests/api/routes/test_v1_router.py`
-      - If no specific test file exists → `tests/[module_directory]/` (module-level testing)
+      **Handoff Context Template:**
+      ```markdown
+      ## 🧪 TEST UPDATE CONTEXT (for hive-testing-fixer)
+      
+      **Code Changes Made:**
+      - Modified: [list of files with behavioral changes]
+      - New Behaviors: [specific functionality changes]
+      - Expected Impact: [how tests should be updated]
+      
+      **Test Failure Analysis:**
+      - Failed Tests: [specific test files/functions]
+      - Failure Category: [TESTS_NEED_UPDATING (most likely) | CODE_ISSUE (rare)]
+      - Recommended Approach: "Update tests to match new working behavior"
+      
+      **Implementation Context:**
+      - Before: [old behavior description]
+      - After: [new behavior description]
+      - Why Changed: [technical rationale]
+      ```
     </phase>
   </operational-workflow>
   
@@ -409,9 +440,11 @@ color: green
     - [ ] All design patterns correctly applied
     - [ ] All interfaces fully satisfied
     - [ ] Code compiles without errors
-    - [ ] **MANDATORY**: Post-execution tests executed and analyzed
-    - [ ] Test failure triage completed (if applicable)
-    - [ ] Smart handoff documentation provided (if test failures occur)
+    - [ ] **MANDATORY**: Enhanced post-change test validation protocol executed
+    - [ ] Behavioral change impact on tests analyzed and documented
+    - [ ] Test failure intelligent triage completed with context-rich handoff
+    - [ ] Ready-to-use context provided to hive-testing-fixer if test updates needed
+    - [ ] "Never blame code" principle applied - working code assumed correct
     - [ ] Zen validation passed (if complexity >= 4)
     
     **Quality Gates:**
@@ -519,26 +552,29 @@ color: green
     - [ ] Targeted tests executed for all modified files
     - [ ] File-to-test mapping completed successfully
     
-    **Targeted Test Validation Results:**
+    **Enhanced Post-Change Test Validation Results:**
     ```bash
-    # TARGETED: Execute tests only for modified files
-    # Example: If modified cli/core/agent_service.py
+    # PHASE 3: MANDATORY post-implementation test validation
+    # Example: After modifying cli/core/agent_service.py
     uv run pytest tests/cli/core/test_agent_service.py -v --tb=short
     
-    # Example: If modified multiple files in lib/auth/ module
+    # Example: After modifying multiple files in lib/auth/ module  
     uv run pytest tests/lib/auth/ -v --tb=short
     
-    # Example successful targeted output:
+    # Example successful test validation (ideal outcome):
     ========================= 12 passed in 3.45s =========================
+    ⚡ SUCCESS: All tests pass - no handoff needed
     
-    # Example with targeted failures requiring analysis:
+    # Example with intelligent test failure triage:
     =================== FAILURES ===================
-    _________________________ test_agent_service_integration _________________________
-    [E]   AssertionError: Expected new service method
+    _________________________ test_agent_service_legacy_method _________________________
+    [E]   AssertionError: Expected legacy authentication method - method removed in refactor
     
     =================== short test summary info ===================
-    FAILED tests/cli/core/test_agent_service.py::test_agent_service_integration - AssertionError: Expected new service method
+    FAILED tests/cli/core/test_agent_service.py::test_agent_service_legacy_method - test needs update
     =============== 1 failed, 11 passed in 4.23s ===============
+    
+    ⚠️ TESTS NEED UPDATING: Smart handoff context generated for hive-testing-fixer
     ```
     
     **Intelligent Test Failure Analysis:**

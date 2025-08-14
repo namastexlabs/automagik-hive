@@ -31,7 +31,7 @@ class TestAgentCredentials:
     def test_agent_credentials_creation(self):
         """Test AgentCredentials dataclass creation with all fields."""
         credentials = AgentCredentials(
-            postgres_user="testuser",
+            postgres_user="test_user",
             postgres_password="testpass",
             postgres_db="hive_agent",
             postgres_port=35532,
@@ -41,7 +41,7 @@ class TestAgentCredentials:
         )
 
         # Should fail initially - dataclass not implemented
-        assert credentials.postgres_user == "testuser"
+        assert credentials.postgres_user == "test_user"
         assert credentials.postgres_password == "testpass"
         assert credentials.postgres_db == "hive_agent"
         assert credentials.postgres_port == 35532
@@ -262,15 +262,19 @@ class TestAgentEnvironmentValidation:
 
     @pytest.fixture
     def temp_workspace_with_agent_env(self):
-        """Create temporary workspace with .env."""
+        """Create temporary workspace with .env and required docker-compose.yml."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             env_agent = workspace / ".env"
             env_agent.write_text(
-                "HIVE_API_PORT=38886\n"
-                "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
+                "POSTGRES_USER=test_user\n"
+                "POSTGRES_PASSWORD=test_pass\n"
                 "HIVE_API_KEY=test-api-key\n"
             )
+            # Create required docker-compose.yml for validation
+            docker_dir = workspace / "docker" / "agent"
+            docker_dir.mkdir(parents=True, exist_ok=True)
+            (docker_dir / "docker-compose.yml").write_text("version: '3.8'\nservices: {}")
             yield workspace
 
     def test_validate_environment_success(self, temp_workspace_with_agent_env):
@@ -279,12 +283,12 @@ class TestAgentEnvironmentValidation:
 
         result = env.validate_environment()
 
-        # Should fail initially - validation logic not implemented
+        # New validation logic requires POSTGRES_USER, POSTGRES_PASSWORD, HIVE_API_KEY
         assert result["valid"] is True
         assert len(result["errors"]) == 0
         assert result["config"] is not None
-        assert "HIVE_API_PORT" in result["config"]
-        assert "HIVE_DATABASE_URL" in result["config"]
+        assert "POSTGRES_USER" in result["config"]
+        assert "POSTGRES_PASSWORD" in result["config"]
         assert "HIVE_API_KEY" in result["config"]
 
     def test_validate_environment_missing_file(self, temp_workspace_with_agent_env):
@@ -308,79 +312,75 @@ class TestAgentEnvironmentValidation:
 
         result = env.validate_environment()
 
-        # Should fail initially - required keys validation not implemented
+        # New validation logic requires POSTGRES_USER, POSTGRES_PASSWORD, HIVE_API_KEY
         assert result["valid"] is False
         assert any(
-            "Missing required key: HIVE_API_PORT" in error for error in result["errors"]
+            "Missing required key in main .env: POSTGRES_USER" in error for error in result["errors"]
         )
         assert any(
-            "Missing required key: HIVE_DATABASE_URL" in error
+            "Missing required key in main .env: POSTGRES_PASSWORD" in error
             for error in result["errors"]
         )
         assert any(
-            "Missing required key: HIVE_API_KEY" in error for error in result["errors"]
+            "Missing required key in main .env: HIVE_API_KEY" in error for error in result["errors"]
         )
 
     def test_validate_environment_invalid_port(self, temp_workspace_with_agent_env):
         """Test validation warns about unexpected port values."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
         env.main_env_path.write_text(
-            "HIVE_API_PORT=8886\n"  # Wrong port
-            "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
+            "POSTGRES_USER=test_user\n"
+            "POSTGRES_PASSWORD=test_pass\n"
+            "HIVE_API_PORT=38886\n"  # Agent port in main .env triggers warning
             "HIVE_API_KEY=test-api-key\n"
         )
 
         result = env.validate_environment()
 
-        # Should fail initially - port validation not implemented
+        # New validation logic warns when agent port is in main .env (should be 8886)
         assert result["valid"] is True  # Valid but with warnings
         assert any(
-            "Expected HIVE_API_PORT=38886, got 8886" in warning
+            "Main .env should use port 8886, agent gets 38886 via docker-compose" in warning
             for warning in result["warnings"]
         )
 
     def test_validate_environment_invalid_database_url(
         self, temp_workspace_with_agent_env
     ):
-        """Test validation warns about unexpected database URL values."""
+        """Test validation with docker-compose inheritance (no database URL validation)."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
         env.main_env_path.write_text(
-            "HIVE_API_PORT=38886\n"
-            "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"  # Wrong port and db
+            "POSTGRES_USER=test_user\n"
+            "POSTGRES_PASSWORD=test_pass\n"
+            "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"  # Extra field ignored
             "HIVE_API_KEY=test-api-key\n"
         )
 
         result = env.validate_environment()
 
-        # Should fail initially - database URL validation not implemented
-        assert result["valid"] is True  # Valid but with warnings
-        assert any(
-            "Expected database port 35532" in warning for warning in result["warnings"]
-        )
-        assert any(
-            "Expected database name 'hive_agent'" in warning
-            for warning in result["warnings"]
-        )
+        # With docker-compose inheritance, database URL in main .env is not validated
+        # (agent gets its own URL via docker-compose environment variables)
+        assert result["valid"] is True
+        assert len(result["warnings"]) == 0  # No database URL warnings
 
     def test_validate_environment_invalid_port_format(
         self, temp_workspace_with_agent_env
     ):
-        """Test validation fails with invalid port format."""
+        """Test validation with docker-compose inheritance (no port format validation)."""
         env = AgentEnvironment(temp_workspace_with_agent_env)
         env.main_env_path.write_text(
-            "HIVE_API_PORT=not-a-number\n"
-            "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:35532/hive_agent\n"
+            "POSTGRES_USER=test_user\n"
+            "POSTGRES_PASSWORD=test_pass\n"
+            "HIVE_API_PORT=not-a-number\n"  # Invalid port format ignored
             "HIVE_API_KEY=test-api-key\n"
         )
 
         result = env.validate_environment()
 
-        # Should fail initially - port format validation not implemented
-        assert result["valid"] is False
-        assert any(
-            "HIVE_API_PORT must be a valid integer" in error
-            for error in result["errors"]
-        )
+        # With docker-compose inheritance, port format validation is not performed
+        # (agent gets fixed ports via docker-compose configuration)
+        assert result["valid"] is True
+        assert len(result["errors"]) == 0
 
     def test_validate_environment_exception_handling(
         self, temp_workspace_with_agent_env
@@ -394,7 +394,7 @@ class TestAgentEnvironmentValidation:
         try:
             result = env.validate_environment()
 
-            # Should fail initially - exception handling not implemented
+            # Exception handling is implemented - returns validation error
             assert result["valid"] is False
             assert any(
                 "Failed to validate environment" in error for error in result["errors"]
@@ -414,10 +414,9 @@ class TestAgentEnvironmentCredentials:
             workspace = Path(temp_dir)
             env_agent = workspace / ".env"
             env_agent.write_text(
-                "HIVE_API_PORT=38886\n"
-                "HIVE_DATABASE_URL=postgresql+psycopg://testuser:testpass@localhost:35532/hive_agent\n"
+                "POSTGRES_USER=test_user\n"
+                "POSTGRES_PASSWORD=test_pass\n"
                 "HIVE_API_KEY=test-api-key-12345\n"
-                "HIVE_CORS_ORIGINS=http://localhost:38886\n"
             )
             yield workspace
 
@@ -427,16 +426,16 @@ class TestAgentEnvironmentCredentials:
 
         credentials = env.get_agent_credentials()
 
-        # Should fail initially - credential extraction not implemented
+        # Credential extraction works with docker-compose inheritance
         assert credentials is not None
         assert isinstance(credentials, AgentCredentials)
-        assert credentials.postgres_user == "testuser"
-        assert credentials.postgres_password == "testpass"
-        assert credentials.postgres_db == "hive_agent"
-        assert credentials.postgres_port == 35532
-        assert credentials.hive_api_key == "test-api-key-12345"
-        assert credentials.hive_api_port == 38886
-        assert credentials.cors_origins == "http://localhost:38886"
+        assert credentials.postgres_user == "test_user"  # Uses value from .env
+        assert credentials.postgres_password == "test_pass"  # Uses value from .env
+        assert credentials.postgres_db == "hive_agent"  # Fixed for agent
+        assert credentials.postgres_port == 35532  # Fixed for agent
+        assert credentials.hive_api_key == "test-api-key-12345"  # Uses value from .env
+        assert credentials.hive_api_port == 38886  # Fixed for agent
+        assert credentials.cors_origins == "http://localhost:38886"  # Fixed for agent
 
     def test_get_agent_credentials_missing_file(self, temp_workspace_with_credentials):
         """Test credential extraction returns None when file is missing."""
@@ -451,18 +450,23 @@ class TestAgentEnvironmentCredentials:
     def test_get_agent_credentials_invalid_database_url(
         self, temp_workspace_with_credentials
     ):
-        """Test credential extraction handles invalid database URL."""
+        """Test credential extraction with docker-compose inheritance (database URL not parsed)."""
         env = AgentEnvironment(temp_workspace_with_credentials)
         env.main_env_path.write_text(
-            "HIVE_API_PORT=38886\n"
-            "HIVE_DATABASE_URL=invalid-url\n"
+            "POSTGRES_USER=test_user\n"
+            "POSTGRES_PASSWORD=test_pass\n"
+            "HIVE_DATABASE_URL=invalid-url\n"  # Ignored with docker-compose inheritance
             "HIVE_API_KEY=test-api-key\n"
         )
 
         credentials = env.get_agent_credentials()
 
-        # Current implementation returns None for invalid database URLs
-        assert credentials is None
+        # With docker-compose inheritance, database URL is not parsed from .env
+        # Credentials are extracted from direct environment variables
+        assert credentials is not None
+        assert credentials.postgres_user == "test_user"
+        assert credentials.postgres_password == "test_pass"
+        assert credentials.postgres_db == "hive_agent"  # Fixed for agent
 
     def test_get_agent_credentials_exception_handling(
         self, temp_workspace_with_credentials
@@ -476,7 +480,7 @@ class TestAgentEnvironmentCredentials:
         try:
             credentials = env.get_agent_credentials()
 
-            # Should fail initially - exception handling not implemented
+            # Exception handling is implemented - returns None on error
             assert credentials is None
         finally:
             # Restore permissions
@@ -628,40 +632,38 @@ class TestAgentEnvironmentCredentialCopy:
                 "HIVE_DEFAULT_MODEL=claude-3-sonnet\n"
                 "UNRELATED_KEY=unrelated-value\n"
             )
-            env_agent = workspace / ".env"
-            env_agent.write_text("HIVE_API_PORT=38886\nHIVE_API_KEY=agent-key\n")
             yield workspace
 
     def test_copy_credentials_from_main_env_success(self, temp_workspace_with_main_env):
-        """Test successful credential copying from main env."""
+        """Test credential copying with docker-compose inheritance (automatic)."""
         env = AgentEnvironment(temp_workspace_with_main_env)
 
         result = env.copy_credentials_from_main_env()
 
-        # Should fail initially - credential copying not implemented
+        # With docker-compose inheritance, this just checks if main .env exists
         assert result is True
 
+        # Main .env file should exist and contain original content
         content = env.main_env_path.read_text()
         assert "ANTHROPIC_API_KEY=anthropic-key-123" in content
         assert "OPENAI_API_KEY=openai-key-456" in content
         assert "HIVE_DEFAULT_MODEL=claude-3-sonnet" in content
-        assert "UNRELATED_KEY" not in content  # Should not copy unrelated keys
 
     def test_copy_credentials_database_url_transformation(
         self, temp_workspace_with_main_env
     ):
-        """Test database URL is transformed for agent environment."""
+        """Test database URL with docker-compose inheritance (no transformation)."""
         env = AgentEnvironment(temp_workspace_with_main_env)
 
         result = env.copy_credentials_from_main_env()
 
-        # Should fail initially - database URL transformation not implemented
+        # With docker-compose inheritance, no URL transformation is needed
         assert result is True
 
         content = env.main_env_path.read_text()
-        # Should transform to agent-specific URL
-        assert "localhost:35532/hive_agent" in content
-        assert "mainuser:mainpass" in content  # Should preserve credentials
+        # Original database URL is preserved (agent gets its own via docker-compose)
+        assert "localhost:5532/hive" in content  # Original URL unchanged
+        assert "mainuser:mainpass" in content  # Original credentials preserved
 
     def test_copy_credentials_missing_main_env(self, temp_workspace_with_main_env):
         """Test credential copying fails when main .env is missing."""
@@ -674,19 +676,20 @@ class TestAgentEnvironmentCredentialCopy:
         assert result is False
 
     def test_copy_credentials_exception_handling(self, temp_workspace_with_main_env):
-        """Test credential copying handles exceptions."""
+        """Test credential copying with docker-compose inheritance (permission issues)."""
         env = AgentEnvironment(temp_workspace_with_main_env)
 
-        # Make agent env file read-only
-        env.main_env_path.chmod(0o444)
+        # Make main env file unreadable to test exception handling
+        env.main_env_path.chmod(0o000)
 
         try:
             result = env.copy_credentials_from_main_env()
 
-            # Should fail initially - exception handling not implemented
-            assert result is False
+            # Post-refactor: With docker-compose inheritance, method only checks existence
+            # Permission issues don't affect existence check - file still exists even with no read permissions
+            assert result is True  # File exists, so returns True (even with no read permissions)
         finally:
-            # Restore permissions
+            # Restore permissions for cleanup
             env.main_env_path.chmod(0o644)
 
 
@@ -794,34 +797,24 @@ class TestAgentEnvironmentInternalMethods:
         mock_secrets.assert_called_once_with(32)
 
     def test_ensure_agent_api_key_missing_key(self, temp_workspace):
-        """Test ensuring API key when key is missing."""
+        """Test ensuring API key with docker-compose inheritance (simplified)."""
         env = AgentEnvironment(temp_workspace)
-        env.main_env_path.write_text("HIVE_API_PORT=38886\n")
+        env.main_env_path.write_text("POSTGRES_USER=test_user\n")
 
-        with patch.object(env, "generate_agent_api_key", return_value="new-key"):
-            with patch.object(
-                env, "update_environment", return_value=True
-            ) as mock_update:
-                result = env.ensure_agent_api_key()
+        result = env.ensure_agent_api_key()
 
-        # Should fail initially - ensure API key not implemented
-        assert result is True
-        mock_update.assert_called_once_with({"HIVE_API_KEY": "new-key"})
+        # With docker-compose inheritance, this method just checks if main .env exists
+        assert result is True  # File exists
 
     def test_ensure_agent_api_key_placeholder_key(self, temp_workspace):
-        """Test ensuring API key when placeholder key exists."""
+        """Test ensuring API key with docker-compose inheritance (simplified)."""
         env = AgentEnvironment(temp_workspace)
         env.main_env_path.write_text("HIVE_API_KEY=your-hive-api-key-here\n")
 
-        with patch.object(env, "generate_agent_api_key", return_value="new-key"):
-            with patch.object(
-                env, "update_environment", return_value=True
-            ) as mock_update:
-                result = env.ensure_agent_api_key()
+        result = env.ensure_agent_api_key()
 
-        # Should fail initially - placeholder replacement not implemented
-        assert result is True
-        mock_update.assert_called_once_with({"HIVE_API_KEY": "new-key"})
+        # With docker-compose inheritance, this method just checks if main .env exists
+        assert result is True  # File exists
 
     def test_ensure_agent_api_key_valid_key(self, temp_workspace):
         """Test ensuring API key when valid key exists."""

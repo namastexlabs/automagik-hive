@@ -343,18 +343,39 @@ color: blue
       **Output**: Core architectural decisions and patterns
     </phase>
     
-    <phase number="3" name="DDD Generation with Test Impact Analysis">
-      **Objective**: Produce comprehensive design document with test considerations
+    <phase number="3" name="DDD Generation with Comprehensive Test Strategy Integration">
+      **Objective**: Produce comprehensive design document with proactive test compatibility planning
       **Actions**:
-      - Document architectural overview
-      - Detail component specifications
-      - Define integration points
-      - Specify Agno framework patterns
-      - **ENHANCED**: Analyze test impact of architectural changes
-      - **ENHANCED**: Document test strategy implications in DDD
-      - Include sequence/class diagrams
+      - Document architectural overview and component specifications
+      - Define integration points and Agno framework patterns
+      - **MANDATORY**: Analyze test impact of all architectural decisions
+      - **PROACTIVE**: Include test strategy considerations directly in DDD
+      - **ANTICIPATE**: Identify potential test challenges from design choices
+      - **DOCUMENT**: Provide clear testing approach for each component
+      - **PREVENT**: Address test-breaking architectural patterns before implementation
+      - Include sequence/class diagrams with test interaction points
       - Validate with zen consensus if complexity ≥ 8
-      **Output**: Complete Detailed Design Document with test impact analysis
+      **Output**: Complete DDD with integrated test strategy and impact analysis
+      
+      **Test Strategy Integration Requirements:**
+      ```markdown
+      ## Test Strategy Considerations (mandatory DDD section)
+      
+      **Component Test Strategy:**
+      - [Component Name]: Unit testing approach, mock points, test doubles needed
+      - [Integration Points]: Integration testing strategy, external dependencies
+      
+      **Architectural Test Impact:**
+      - **Existing Tests**: [Analysis of how design affects current test suite]
+      - **New Test Requirements**: [Additional tests needed for new architecture]
+      - **Test Challenges**: [Potential testing difficulties from design choices]
+      - **Recommended Test Updates**: [Specific areas where tests will need modification]
+      
+      **Test-Friendly Design Decisions:**
+      - [Design Pattern]: Why chosen for testability
+      - [Interface Design]: How interfaces support test isolation
+      - [Dependency Injection]: DI patterns for test harness integration
+      ```
     </phase>
   </operational-workflow>
   

@@ -1,0 +1,1 @@
+# Test file to verify hooks allow test directory modifications

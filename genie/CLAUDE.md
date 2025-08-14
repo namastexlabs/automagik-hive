@@ -19,7 +19,7 @@ genie/
 - ✅ **ONE wish = ONE document** - comprehensive lifecycle management
 - ✅ **/wish command integration** - seamless planning workflow initiation
 - ✅ **Agent coordination hub** - planner → designer → coder workflows
-- ✅ **DEATH TESTAMENT integration** - final reports embedded in wish completion
+- ✅ **DEATH TESTAMENT integration** - final XML + Markdown reports embedded in wish completion
 - ❌ **NO scattered files** - refine existing documents as plans evolve
 - 📝 **Status tracking** - document progression rather than file proliferation
 
@@ -37,7 +37,7 @@ genie/
 
 **No More Reports/ Folder - Structured Final Reports Instead:**
 - ❌ **ELIMINATED**: Traditional `reports/` folder removed
-- ✅ **DEATH TESTAMENT**: Comprehensive JSON-structured final reports per agent completion  
+- ✅ **DEATH TESTAMENT**: Comprehensive XML + Markdown structured final reports per agent completion  
 - ✅ **Evidence-Based**: All agent results include concrete proof and file changes
 - ✅ **Audit Trail**: Complete decision history preserved in wish documents
 - ✅ **Strategic Focus**: Master Genie extracts and presents actual agent results
