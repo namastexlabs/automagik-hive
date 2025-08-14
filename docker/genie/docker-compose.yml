@@ -34,7 +34,6 @@ services:
     image: agnohq/pgvector:16
     container_name: hive-postgres-genie
     restart: unless-stopped
-    user: "1000:1000"
     ports:
       - "45532:5432"  # Genie PostgreSQL port
     env_file:
@@ -45,8 +44,8 @@ services:
       - POSTGRES_PASSWORD=genie_secure_pass
       - POSTGRES_DB=hive_genie
       - PGDATA=/var/lib/postgresql/data/pgdata
-    volumes:
-      - ../../data/postgres-genie:/var/lib/postgresql/data
+    # Note: No volume mapping = ephemeral storage
+    # Each container restart creates a fresh database
     networks:
       - genie_network
     healthcheck:
@@ -65,7 +64,6 @@ services:
         <<: *genie-build-args
       platforms:
         - linux/amd64
-      target: genie-production
     container_name: hive-genie-server
     restart: unless-stopped
     user: "1000:1000"

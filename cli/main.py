@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from .commands.agent import AgentCommands
+from .commands.genie import GenieCommands
 
 # Import command classes for test compatibility
 from .commands.init import InitCommands
@@ -22,7 +23,7 @@ from .workspace import WorkspaceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
-    """Create simple argument parser."""
+    """Create simple argument parser with subcommands."""
     parser = argparse.ArgumentParser(
         prog="automagik-hive",
         description="UVX Development Environment",
@@ -59,6 +60,15 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--agent-status", nargs="?", const=".", metavar="WORKSPACE", help="Check agent status")
     parser.add_argument("--agent-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset agent environment (destroy all + reinstall + start)")
     
+    # Genie commands
+    parser.add_argument("--genie-install", nargs="?", const=".", metavar="WORKSPACE", help="Install and start genie services")
+    parser.add_argument("--genie-start", nargs="?", const=".", metavar="WORKSPACE", help="Start genie services")
+    parser.add_argument("--genie-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop genie services")
+    parser.add_argument("--genie-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart genie services (stop + start)")
+    parser.add_argument("--genie-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show genie logs")
+    parser.add_argument("--genie-status", nargs="?", const=".", metavar="WORKSPACE", help="Check genie status")
+    parser.add_argument("--genie-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset genie environment (destroy all + reinstall + start)")
+    
     # Production environment commands
     parser.add_argument("--install", nargs="?", const=".", metavar="WORKSPACE", help="Complete environment setup with .env generation and PostgreSQL")
     parser.add_argument("--stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop production environment")
@@ -75,6 +85,13 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind server to")
     parser.add_argument("--port", type=int, default=8886, help="Port to bind server to")
     
+    # Create subparsers for commands
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    
+    # Genie subcommand
+    genie_parser = subparsers.add_parser("genie", help="Launch claude with GENIE.md as system prompt")
+    genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
+    
     # Workspace path - primary positional argument
     parser.add_argument("workspace", nargs="?", help="Workspace directory path")
 
@@ -88,11 +105,13 @@ def main() -> int:
     
     # Count commands
     commands = [
-        args.init != False, args.serve, args.dev,
+        args.init, args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.agent_install, args.agent_start, args.agent_stop,
         args.agent_restart, args.agent_logs, args.agent_status, args.agent_reset,
+        args.command == "genie", args.genie_install, args.genie_start, args.genie_stop,
+        args.genie_restart, args.genie_logs, args.genie_status, args.genie_reset,
         args.install, args.stop, args.restart, args.status, args.logs,
         args.uninstall, args.uninstall_global,
         args.workspace
@@ -109,7 +128,7 @@ def main() -> int:
 
     try:
         # Init workspace
-        if args.init != False:
+        if args.init:
             init_cmd = InitCommands()
             workspace_name = None if args.init == "__DEFAULT__" else args.init
             return 0 if init_cmd.init_workspace(workspace_name) else 1
@@ -125,6 +144,11 @@ def main() -> int:
             service_manager = ServiceManager()
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
+        
+        # Launch claude with GENIE.md
+        if args.command == "genie":
+            genie_cmd = GenieCommands()
+            return 0 if genie_cmd.launch_claude(args.args) else 1
         
         # Start workspace server (positional argument)
         if args.workspace:
@@ -165,6 +189,23 @@ def main() -> int:
             return 0 if agent_cmd.status(args.agent_status) else 1
         if args.agent_reset:
             return 0 if agent_cmd.reset(args.agent_reset) else 1
+        
+        # Genie commands
+        genie_cmd = GenieCommands()
+        if args.genie_install:
+            return 0 if genie_cmd.install(args.genie_install) else 1
+        if args.genie_start:
+            return 0 if genie_cmd.start(args.genie_start) else 1
+        if args.genie_stop:
+            return 0 if genie_cmd.stop(args.genie_stop) else 1
+        if args.genie_restart:
+            return 0 if genie_cmd.restart(args.genie_restart) else 1
+        if args.genie_logs:
+            return 0 if genie_cmd.logs(args.genie_logs, args.tail) else 1
+        if args.genie_status:
+            return 0 if genie_cmd.status(args.genie_status) else 1
+        if args.genie_reset:
+            return 0 if genie_cmd.reset(args.genie_reset) else 1
         
         # Production environment commands
         service_manager = ServiceManager()

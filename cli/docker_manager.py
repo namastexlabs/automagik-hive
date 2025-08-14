@@ -41,7 +41,7 @@ class DockerManager:
             },
             "genie": {
                 "postgres": int(os.getenv("HIVE_GENIE_POSTGRES_PORT", "45532")),
-                "api": int(os.getenv("HIVE_GENIE_API_PORT", "45886"))
+                "api": int(os.getenv("HIVE_GENIE_API_PORT", "48886"))
             }
         }
     
