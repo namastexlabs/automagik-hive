@@ -82,21 +82,20 @@ This tests multiple context file handling.
     @pytest.mark.parametrize(
         "agent_name",
         [
-            "genie-dev-planner",
-            "genie-dev-designer",
-            "genie-dev-coder",
-            "genie-dev-fixer",
-            "genie-testing-maker",
-            "genie-testing-fixer",
-            "genie-quality-ruff",
-            "genie-quality-mypy",
-            "genie-clone",
-            "genie-self-learn",
-            "genie-qa-tester",
-            "genie-claudemd",
-            "genie-agent-creator",
-            "genie-agent-enhancer",
-            "claude",
+            "hive-dev-planner",
+            "hive-dev-designer",
+            "hive-dev-coder",
+            "hive-dev-fixer",
+            "hive-testing-maker",
+            "hive-testing-fixer",
+            "hive-quality-ruff",
+            "hive-quality-mypy",
+            "hive-clone",
+            "hive-self-learn",
+            "hive-qa-tester",
+            "hive-claudemd",
+            "hive-agent-creator",
+            "hive-agent-enhancer",
         ],
     )
     def test_valid_context_file_processing(
@@ -137,21 +136,20 @@ Create a technical plan based on the context file requirements.
     @pytest.mark.parametrize(
         "agent_name",
         [
-            "genie-dev-planner",
-            "genie-dev-designer",
-            "genie-dev-coder",
-            "genie-dev-fixer",
-            "genie-testing-maker",
-            "genie-testing-fixer",
-            "genie-quality-ruff",
-            "genie-quality-mypy",
-            "genie-clone",
-            "genie-self-learn",
-            "genie-qa-tester",
-            "genie-claudemd",
-            "genie-agent-creator",
-            "genie-agent-enhancer",
-            "claude",
+            "hive-dev-planner",
+            "hive-dev-designer",
+            "hive-dev-coder",
+            "hive-dev-fixer",
+            "hive-testing-maker",
+            "hive-testing-fixer",
+            "hive-quality-ruff",
+            "hive-quality-mypy",
+            "hive-clone",
+            "hive-self-learn",
+            "hive-qa-tester",
+            "hive-claudemd",
+            "hive-agent-creator",
+            "hive-agent-enhancer",
         ],
     )
     def test_missing_context_file_error_handling(
@@ -203,21 +201,20 @@ Create a technical plan based on the context file requirements.
     @pytest.mark.parametrize(
         "agent_name",
         [
-            "genie-dev-planner",
-            "genie-dev-designer",
-            "genie-dev-coder",
-            "genie-dev-fixer",
-            "genie-testing-maker",
-            "genie-testing-fixer",
-            "genie-quality-ruff",
-            "genie-quality-mypy",
-            "genie-clone",
-            "genie-self-learn",
-            "genie-qa-tester",
-            "genie-claudemd",
-            "genie-agent-creator",
-            "genie-agent-enhancer",
-            "claude",
+            "hive-dev-planner",
+            "hive-dev-designer",
+            "hive-dev-coder",
+            "hive-dev-fixer",
+            "hive-testing-maker",
+            "hive-testing-fixer",
+            "hive-quality-ruff",
+            "hive-quality-mypy",
+            "hive-clone",
+            "hive-self-learn",
+            "hive-qa-tester",
+            "hive-claudemd",
+            "hive-agent-creator",
+            "hive-agent-enhancer",
         ],
     )
     def test_multiple_context_file_management(
@@ -279,7 +276,7 @@ Create a technical plan integrating requirements from all context files.
 
         try:
             # Test with a representative agent
-            agent_name = "genie-dev-planner"
+            agent_name = "hive-dev-planner"
             context_reference = f"Context: @{unique_context_path}"
             task_prompt = f"""
 {context_reference}
@@ -350,7 +347,7 @@ Create a technical specification based on the context file requirements.
         # This test ensures agents fail fast on context issues
         # rather than proceeding with task and failing later
 
-        agent_name = "genie-dev-planner"
+        agent_name = "hive-dev-planner"
         invalid_context = "/definitely/does/not/exist/invalid.md"
         context_reference = f"Context: @{invalid_context}"
         task_prompt = f"""

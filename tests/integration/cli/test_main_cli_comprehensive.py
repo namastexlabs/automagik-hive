@@ -376,14 +376,14 @@ class TestCLICommandRouting:
 
     def test_agent_start_command(self, mock_command_handlers):
         """Test --agent-start command routing."""
-        mock_command_handlers["agent"].serve.return_value = True
+        mock_command_handlers["agent"].start.return_value = True
 
         with patch("sys.argv", ["automagik-hive", "--agent-start"]):
             result = main()
 
-        # Should fail initially - agent serve not implemented
+        # Should fail initially - agent start not implemented
         assert result == 0
-        mock_command_handlers["agent"].serve.assert_called_once_with(".")
+        mock_command_handlers["agent"].start.assert_called_once_with(".")
 
     def test_agent_stop_command(self, mock_command_handlers):
         """Test --agent-stop command routing."""
@@ -512,7 +512,7 @@ class TestCLIErrorHandling:
             mock_postgres.return_value.postgres_logs.return_value = False
             mock_postgres.return_value.postgres_health.return_value = False
             mock_agent.return_value.install.return_value = False
-            mock_agent.return_value.serve.return_value = False
+            mock_agent.return_value.start.return_value = False
             mock_agent.return_value.stop.return_value = False
             mock_agent.return_value.restart.return_value = False
             mock_agent.return_value.logs.return_value = False

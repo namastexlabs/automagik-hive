@@ -26,20 +26,20 @@ class WorkspaceProtocolTestExecutor:
         self.agent_tester = AgentTester()
         self.protocol_validator = ProtocolValidator()
         self.target_agents = [
-            "genie-dev-planner",
-            "genie-dev-designer",
-            "genie-dev-coder",
-            "genie-dev-fixer",
-            "genie-testing-maker",
-            "genie-testing-fixer",
-            "genie-quality-ruff",
-            "genie-quality-mypy",
-            "genie-clone",
-            "genie-self-learn",
-            "genie-qa-tester",
-            "genie-claudemd",
-            "genie-agent-creator",
-            "genie-agent-enhancer",
+            "hive-dev-planner",
+            "hive-dev-designer",
+            "hive-dev-coder",
+            "hive-dev-fixer",
+            "hive-testing-maker",
+            "hive-testing-fixer",
+            "hive-quality-ruff",
+            "hive-quality-mypy",
+            "hive-clone",
+            "hive-self-learn",
+            "hive-qa-tester",
+            "hive-claudemd",
+            "hive-agent-creator",
+            "hive-agent-enhancer",
             "claude",
         ]
 
@@ -214,9 +214,9 @@ class WorkspaceProtocolTestExecutor:
         try:
             # Test subset of agents for performance
             test_agents = [
-                "genie-dev-planner",
-                "genie-dev-designer",
-                "genie-testing-maker",
+                "hive-dev-planner",
+                "hive-dev-designer",
+                "hive-testing-maker",
             ]
 
             for agent_name in test_agents:
@@ -254,7 +254,7 @@ Create a technical plan based on the context file requirements.
         invalid_context = "/nonexistent/path/invalid_context.md"
 
         # Test subset of agents
-        test_agents = ["genie-dev-planner", "genie-dev-designer", "genie-testing-maker"]
+        test_agents = ["hive-dev-planner", "hive-dev-designer", "hive-testing-maker"]
 
         for agent_name in test_agents:
             task_prompt = f"""
@@ -294,7 +294,7 @@ Create a technical plan based on the context file requirements.
         results = {}
 
         # Test with agents that create artifacts
-        test_agents = ["genie-dev-planner", "genie-dev-designer"]
+        test_agents = ["hive-dev-planner", "hive-dev-designer"]
 
         for agent_name in test_agents:
             # Test ideas phase
@@ -377,7 +377,7 @@ for user profile management. This is a straightforward task.
         results = {}
 
         # Test agents that might provide technical recommendations
-        test_agents = ["genie-dev-planner", "genie-dev-coder", "genie-quality-ruff"]
+        test_agents = ["hive-dev-planner", "hive-dev-coder", "hive-quality-ruff"]
 
         for agent_name in test_agents:
             task_prompt = """
@@ -451,7 +451,7 @@ including package management, code formatting, and testing frameworks.
         # Test that errors are handled consistently across agents
         results = {}
 
-        test_agents = ["genie-dev-planner", "genie-dev-designer", "genie-testing-maker"]
+        test_agents = ["hive-dev-planner", "hive-dev-designer", "hive-testing-maker"]
 
         for agent_name in test_agents:
             # Test with invalid context file

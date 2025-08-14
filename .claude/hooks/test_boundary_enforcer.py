@@ -39,9 +39,10 @@ def main():
     if not file_path:
         sys.exit(0)
     
-    # ONLY apply to .py files
-    if not file_path.endswith('.py'):
-        sys.exit(0)
+    # Apply to ALL files except documentation (.md, .txt, .rst)
+    allowed_file_extensions = ['.md', '.txt', '.rst', '.json']
+    if any(file_path.endswith(ext) for ext in allowed_file_extensions):
+        sys.exit(0)  # Allow documentation files
     
     # Check if this is a testing agent by looking at session context
     # We'll check the transcript for recent Task tool calls with genie-testing-* agents
@@ -64,7 +65,15 @@ def main():
                 '"subagent_type": "hive-testing-fixer"',
                 '"subagent_type": "hive-testing-maker"',
                 'Task(subagent_type="hive-testing-fixer"',
-                'Task(subagent_type="hive-testing-maker"'
+                'Task(subagent_type="hive-testing-maker"',
+                'hive-testing-fixer',
+                'hive-testing-maker',
+                'testing-fixer',
+                'testing-maker',
+                'Fix failing tests',
+                'Create tests for',
+                'test failures',
+                'Fix tests'
             ]
             
             # Check if testing subagents are being spawned/used in recent activity

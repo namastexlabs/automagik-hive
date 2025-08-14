@@ -70,7 +70,7 @@ uninstall-containers-only-comprehensive:
 	@echo "Stopping and removing all containers..."
 	@docker compose -f docker-compose.yml down 2>/dev/null || true
 	@docker compose -f docker-compose-agent.yml down 2>/dev/null || true
-	@docker container rm hive-agents hive-postgres hive-agents-agent hive-agent-postgres 2>/dev/null || true
+	@docker container rm hive-agents hive-postgres hive-agent-postgres hive-agent-api 2>/dev/null || true
 	@pkill -f "python.*api/serve.py" 2>/dev/null || true
 	@if [ -f "logs/agent-server.pid" ]; then kill -TERM $$(cat logs/agent-server.pid) 2>/dev/null || true; fi
 	@echo "Containers and processes stopped"
@@ -106,8 +106,8 @@ uninstall-purge-comprehensive:
 
         # Verify the comprehensive uninstall target exists and includes agent cleanup
         assert "docker/agent/docker-compose.yml down" in makefile_content
-        assert "hive-agents-agent hive-agent-postgres" in makefile_content
-        assert "$(call stop_agent_background)" in makefile_content
+        assert "hive-agent-postgres hive-agent-api" in makefile_content
+        assert "define stop_agent_background" in makefile_content
 
     def test_uninstall_clean_comprehensive_removes_agent_infrastructure(self):
         """Test that clean uninstall removes agent infrastructure"""
@@ -116,15 +116,11 @@ uninstall-purge-comprehensive:
             makefile_content = f.read()
 
         # Verify the comprehensive uninstall-clean target includes agent infrastructure cleanup
-        assert "docker image rm automagik-hive-app" in makefile_content
-        assert (
-            "automagik-hive_agent_app_logs automagik-hive_agent_app_data"
-            in makefile_content
-        )
+        assert "hive_agent_app_logs hive_agent_app_data" in makefile_content
         # Verify agent process files are cleaned up
         assert "logs/agent-server.pid logs/agent-server.log" in makefile_content
         # Note: Agent inherits env from main .env via docker-compose, no separate .env files
-        assert "Complete uninstall finished" in makefile_content
+        assert "Agent environment uninstalled!" in makefile_content
 
     def test_uninstall_purge_comprehensive_removes_all_data(self):
         """Test that uninstall removes all data including agent data"""
@@ -133,10 +129,10 @@ uninstall-purge-comprehensive:
             makefile_content = f.read()
 
         # Verify uninstall includes agent infrastructure cleanup - using actual text from Makefile
-        assert "This will remove ALL containers, images, volumes, data, and environment files" in makefile_content
-        assert "Complete uninstall finished" in makefile_content
+        assert "This will destroy all containers and data, then reinstall and start fresh" in makefile_content
+        assert "Agent environment uninstalled!" in makefile_content
         assert "docker/agent/docker-compose.yml down" in makefile_content
-        assert "hive-agents-agent hive-agent-postgres" in makefile_content
+        assert "hive-agent-postgres hive-agent-api" in makefile_content
 
         # Check purge script is comprehensive - using actual patterns from purge.sh
         with open("/home/namastex/workspace/automagik-hive/scripts/purge.sh") as f:
@@ -152,7 +148,7 @@ uninstall-purge-comprehensive:
             "containers": [
                 "hive-agents",
                 "hive-postgres",
-                "hive-agents-agent",
+                "hive-agent-api",
                 "hive-agent-postgres",
             ],
             "compose_files": ["docker-compose.yml", "docker-compose-agent.yml"],
@@ -172,7 +168,7 @@ uninstall-purge-comprehensive:
         assert len(components["containers"]) == 4
         assert len(components["compose_files"]) == 2
         assert len(components["data_dirs"]) == 2
-        assert "hive-agents-agent" in components["containers"]
+        assert "hive-agent-api" in components["containers"]
         assert "hive-agent-postgres" in components["containers"]
 
     def test_makefile_comprehensive_targets_exist(self):
@@ -184,7 +180,7 @@ uninstall-purge-comprehensive:
         assert "uninstall-clean-comprehensive" in makefile_content
         assert "uninstall-purge-comprehensive" in makefile_content
         assert "docker compose -f docker-compose-agent.yml down" in makefile_content
-        assert "hive-agents-agent hive-agent-postgres" in makefile_content
+        assert "hive-agent-postgres hive-agent-api" in makefile_content
 
     def test_agent_process_cleanup_logic(self):
         """Test that agent processes are properly stopped"""

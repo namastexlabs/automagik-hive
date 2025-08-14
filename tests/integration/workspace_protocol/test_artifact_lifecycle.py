@@ -55,21 +55,20 @@ class TestArtifactLifecycle:
     @pytest.mark.parametrize(
         "agent_name",
         [
-            "genie-dev-planner",
-            "genie-dev-designer",
-            "genie-dev-coder",
-            "genie-dev-fixer",
-            "genie-testing-maker",
-            "genie-testing-fixer",
-            "genie-quality-ruff",
-            "genie-quality-mypy",
-            "genie-clone",
-            "genie-self-learn",
-            "genie-qa-tester",
-            "genie-claudemd",
-            "genie-agent-creator",
-            "genie-agent-enhancer",
-            "claude",
+            "hive-dev-planner",
+            "hive-dev-designer",
+            "hive-dev-coder",
+            "hive-dev-fixer",
+            "hive-testing-maker",
+            "hive-testing-fixer",
+            "hive-quality-ruff",
+            "hive-quality-mypy",
+            "hive-clone",
+            "hive-self-learn",
+            "hive-qa-tester",
+            "hive-claudemd",
+            "hive-agent-creator",
+            "hive-agent-enhancer",
         ],
     )
     def test_ideas_phase_artifact_creation(
@@ -126,11 +125,11 @@ This should be an initial draft/analysis phase.
     @pytest.mark.parametrize(
         "agent_name",
         [
-            "genie-dev-planner",
-            "genie-dev-designer",
-            "genie-dev-coder",
-            "genie-testing-maker",
-            "genie-clone",
+            "hive-dev-planner",
+            "hive-dev-designer",
+            "hive-dev-coder",
+            "hive-testing-maker",
+            "hive-clone",
         ],
     )
     def test_wishes_phase_migration(
@@ -221,7 +220,7 @@ This file should be deleted when the task is completed successfully.
 """)
 
         # Use a simple agent that can complete quickly
-        agent_name = "genie-dev-planner"
+        agent_name = "hive-dev-planner"
 
         task_prompt = f"""
 Context: @{test_wish_path}

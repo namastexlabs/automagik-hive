@@ -403,13 +403,10 @@ class TestCustomParameterHandlers:
         """Create AgnoAgentProxy instance for testing."""
         return AgnoAgentProxy()
 
-    @patch("lib.config.models.resolve_model")
-    def test_handle_model_config(self, mock_resolve_model, proxy):
+    @patch('lib.config.provider_registry.get_provider_registry')
+    @patch('lib.utils.dynamic_model_resolver.filter_model_parameters')
+    def test_handle_model_config(self, mock_filter, mock_registry, proxy):
         """Test model configuration handler with provider detection."""
-        # Mock the resolve_model function to return a mock instance
-        mock_model_instance = MagicMock()
-        mock_resolve_model.return_value = mock_model_instance
-
         model_config = {
             "id": "claude-sonnet-4-20250514",
             "temperature": 0.8,
@@ -417,10 +414,49 @@ class TestCustomParameterHandlers:
             "custom_param": "value",
         }
 
+        # Mock provider registry
+        mock_provider_registry = MagicMock()
+        mock_registry.return_value = mock_provider_registry
+        mock_provider_registry.detect_provider.return_value = "anthropic"
+        
+        # Mock model class
+        mock_model_class = MagicMock()
+        mock_provider_registry.resolve_model_class.return_value = mock_model_class
+        
+        # Mock filter to return filtered parameters (remove custom_param)
+        filtered_config = {
+            "id": "claude-sonnet-4-20250514",
+            "temperature": 0.8,
+            "max_tokens": 3000,
+        }
+        mock_filter.return_value = filtered_config
+
         result = proxy._handle_model_config(model_config, {}, "test-agent", None)
 
-        # Verify resolve_model was called with the correct parameters
-        mock_resolve_model.assert_called_once_with(model_id="claude-sonnet-4-20250514", **model_config)
+        # Verify provider detection was called
+        mock_provider_registry.detect_provider.assert_called_once_with("claude-sonnet-4-20250514")
+        
+        # Verify model class resolution was called
+        mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-sonnet-4-20250514")
+        
+        # Verify filtering was called with the model class and original config
+        mock_filter.assert_called_once_with(mock_model_class, model_config)
+        
+        # The result should be the filtered configuration for lazy instantiation
+        assert result == {"id": "claude-sonnet-4-20250514", **filtered_config}
+
+    @patch("lib.config.models.resolve_model")
+    def test_handle_model_config_no_model_id(self, mock_resolve_model, proxy):
+        """Test model configuration handler when no model ID is provided."""
+        mock_model_instance = MagicMock()
+        mock_resolve_model.return_value = mock_model_instance
+
+        model_config = {"temperature": 0.5}  # No model ID
+
+        result = proxy._handle_model_config(model_config, {}, "test-agent", None)
+
+        # Should fallback to resolve_model when no model ID is specified
+        mock_resolve_model.assert_called_once_with(model_id=None, **model_config)
         assert result == mock_model_instance
 
     @patch("lib.utils.proxy_agents.create_dynamic_storage")

@@ -442,7 +442,7 @@ class TestAgnoTeamProxyParameterHandlers:
             "custom_param": "value",
         }
 
-        # MagicMock the components that are actually called in the new implementation
+        # Mock the components that are actually called in the new implementation
         with patch('lib.config.provider_registry.get_provider_registry') as mock_registry, \
              patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter:
             
@@ -453,11 +453,9 @@ class TestAgnoTeamProxyParameterHandlers:
             
             # Create mock model class
             mock_model_class = MagicMock()
-            mock_model_instance = MagicMock()
-            mock_model_class.return_value = mock_model_instance
             mock_provider_registry.resolve_model_class.return_value = mock_model_class
             
-            # MagicMock filter to return filtered parameters (remove custom_param)
+            # Mock filter to return filtered parameters (remove custom_param)
             filtered_config = {
                 "id": "claude-3-sonnet",
                 "temperature": 0.7,
@@ -476,17 +474,14 @@ class TestAgnoTeamProxyParameterHandlers:
             # Verify filtering was called with the model class and original config
             mock_filter.assert_called_once_with(mock_model_class, model_config)
             
-            # Verify model class was called with filtered parameters
-            mock_model_class.assert_called_once_with(**filtered_config)
-            
-            # Verify result is the model instance
-            assert result == mock_model_instance
+            # The result should be the filtered configuration for lazy instantiation
+            assert result == {"id": "claude-3-sonnet", **filtered_config}
 
     def test_handle_model_config_defaults(self, proxy):
         """Test model configuration with defaults."""
         model_config = {"id": "claude-3-sonnet"}
 
-        # MagicMock the components that are actually called in the new implementation
+        # Mock the components that are actually called in the new implementation
         with patch('lib.config.provider_registry.get_provider_registry') as mock_registry, \
              patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter:
             
@@ -497,11 +492,9 @@ class TestAgnoTeamProxyParameterHandlers:
             
             # Create mock model class
             mock_model_class = MagicMock()
-            mock_model_instance = MagicMock()
-            mock_model_class.return_value = mock_model_instance
             mock_provider_registry.resolve_model_class.return_value = mock_model_class
             
-            # MagicMock filter to return the model config as-is
+            # Mock filter to return the model config as-is
             mock_filter.return_value = model_config
 
             result = proxy._handle_model_config(model_config, {}, "test-team", None)
@@ -515,8 +508,8 @@ class TestAgnoTeamProxyParameterHandlers:
             # Verify filtering was called with the model class and original config
             mock_filter.assert_called_once_with(mock_model_class, model_config)
             
-            # Verify model class was called with config
-            mock_model_class.assert_called_once_with(**model_config)
+            # The result should be the filtered configuration for lazy instantiation
+            assert result == {"id": "claude-3-sonnet", **model_config}
 
     def test_handle_storage_config(self, proxy):
         """Test storage configuration handler."""
