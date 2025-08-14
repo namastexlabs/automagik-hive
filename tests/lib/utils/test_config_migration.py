@@ -226,13 +226,13 @@ class TestAGNOConfigMigrator:
         assert "memory.enable_user_memories" in removable
         assert "memory.add_memory_references" in removable
         assert "display.markdown" in removable
-        assert "model.provider" in removable
+        # NOTE: model.provider is NOT removable - agents must have independent model configs
 
         # Check preserved overrides for agent-1
         preserved = agent1_plan["preserved_overrides"]
         assert "memory.num_history_runs" in preserved
         assert "display.show_tool_calls" in preserved
-        assert "model.temperature" in preserved
+        # NOTE: model.temperature is NOT in preserved overrides - model configs are agent-independent
 
     def test_create_migration_plan_no_inheritable_params(self, migrator_dry_run):
         """Test migration plan when team has no inheritable parameters."""
@@ -600,8 +600,8 @@ class TestAGNOConfigMigrator:
             {
                 "team_id": "team-1",
                 "member_id": "agent-2",
-                "removed_params": ["model.provider"],
-                "preserved_overrides": ["model.temperature", "display.show_tool_calls"],
+                "removed_params": ["memory.enable_user_memories"],  # No model params since they're agent-independent
+                "preserved_overrides": ["display.show_tool_calls"],  # No model params since they're agent-independent
             },
         ]
 
@@ -616,8 +616,8 @@ class TestAGNOConfigMigrator:
         assert "Teams processed: 1" in report
         assert "Agents migrated: 2" in report
         assert "Parameters removed: 3" in report
-        assert "Overrides preserved: 3" in report
-        assert "Configuration reduction: 50.0%" in report
+        assert "Overrides preserved: 2" in report
+        assert "Configuration reduction: 60.0%" in report
 
     def test_generate_migration_report_no_migrations(self, migrator_dry_run):
         """Test migration report generation with no migrations."""

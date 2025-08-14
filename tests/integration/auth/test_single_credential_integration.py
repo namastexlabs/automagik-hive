@@ -84,9 +84,10 @@ HIVE_API_PORT=9000
         
         assert workspace_base == agent_base == genie_base
 
+    @patch('cli.docker_manager.time.sleep')  # Mock the 8-second health check delay
     @patch('cli.docker_manager.subprocess.run')
-    def test_docker_manager_uses_unified_credentials(self, mock_subprocess, tmp_path):
-        """Test that DockerManager uses CredentialService."""
+    def test_docker_manager_uses_unified_credentials(self, mock_subprocess, mock_sleep, tmp_path):
+        """Test that DockerManager uses CredentialService - optimized for fast execution."""
         # Mock successful Docker operations
         mock_subprocess.return_value = MagicMock()
         
@@ -95,34 +96,36 @@ HIVE_API_PORT=9000
             with patch('cli.docker_manager.DockerManager._create_network'):
                 with patch('cli.docker_manager.DockerManager._container_exists', return_value=False):
                     with patch('cli.docker_manager.DockerManager._container_running', return_value=False):
-                        docker_manager = DockerManager()
-                        docker_manager.project_root = tmp_path
-                        docker_manager.credential_service = CredentialService(project_root=tmp_path)
-                        
-                        # Test that the credential service is CredentialService
-                        assert isinstance(docker_manager.credential_service, CredentialService)
-                        
-                        # Test that install would use unified credentials
-                        with patch.object(docker_manager.credential_service, 'install_all_modes') as mock_install:
-                            mock_install.return_value = {
-                                "agent": {
-                                    "postgres_user": "test_user",
-                                    "postgres_password": "test_pass",
-                                    "postgres_database": "hive_agent",
-                                    "postgres_host": "localhost",
-                                    "postgres_port": "35532",
-                                    "api_port": "38886",
-                                    "api_key": "hive_agent_test_key"
-                                }
-                            }
+                        # Mock the actual container creation method that gets called
+                        with patch('cli.docker_manager.DockerManager._create_containers_via_compose', return_value=True):
+                            docker_manager = DockerManager()
+                            docker_manager.project_root = tmp_path
+                            docker_manager.credential_service = CredentialService(project_root=tmp_path)
                             
-                            with patch('cli.docker_manager.DockerManager._create_postgres_container', return_value=True):
-                                with patch('cli.docker_manager.DockerManager._create_api_container', return_value=True):
-                                    result = docker_manager.install("agent")
-                                    
+                            # Test that the credential service is CredentialService
+                            assert isinstance(docker_manager.credential_service, CredentialService)
+                            
+                            # Test that install would use unified credentials
+                            with patch.object(docker_manager.credential_service, 'install_all_modes') as mock_install:
+                                mock_install.return_value = {
+                                    "agent": {
+                                        "postgres_user": "test_user",
+                                        "postgres_password": "test_pass",
+                                        "postgres_database": "hive_agent",
+                                        "postgres_host": "localhost",
+                                        "postgres_port": "35532",
+                                        "api_port": "38886",
+                                        "api_key": "hive_agent_test_key"
+                                    }
+                                }
+                                
+                                result = docker_manager.install("agent")
+                                
                             # Should succeed and use unified credentials
                             assert result is True
                             mock_install.assert_called_once_with(["agent"])
+                            # Verify that the sleep was called (but mocked, so no actual delay)
+                            mock_sleep.assert_called_once_with(8)
 
     def test_environment_file_organization(self, tmp_path):
         """Test that environment files are created in proper docker folder structure."""

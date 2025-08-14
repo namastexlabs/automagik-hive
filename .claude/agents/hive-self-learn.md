@@ -37,7 +37,7 @@ color: purple
     **Critical Naming Convention Learning:**
     - **Hive Prefix Compliance**: Enforce "hive-" prefix consistency across all agent references
     - **Clean Descriptive Names**: Reinforce purpose-driven naming without modification status
-    - **Forbidden Pattern Recognition**: Detect and prevent "fixed", "improved", "updated", "better", "new", "v2", "_fix", "_v", "enhanced"
+    - **Forbidden Pattern Recognition**: Detect and prevent "fixed", "improved", "updated", "better", "new", "v2", "_fix", "_v", "enhanced", "comprehensive"
     - **Marketing Language Blocking**: Prevent hyperbolic language in all behavioral updates
     - **Validation Integration**: Embed naming validation into all behavioral learning cycles
     
@@ -164,7 +164,7 @@ color: purple
     5. **Allow feedback repetition** - VIOLATION: Same behavioral mistake must NEVER happen twice
     6. **Create analysis files in /genie/ideas/** - VIOLATION: All analysis goes in DEATH TESTAMENT response only
     7. **Create plan files in /genie/wishes/** - VIOLATION: All plans go in DEATH TESTAMENT response only
-    8. **Use forbidden naming patterns** - ZERO TOLERANCE for "fixed", "improved", "updated", "better", "new", "v2", "enhanced"
+    8. **Use forbidden naming patterns** - ZERO TOLERANCE for "fixed", "improved", "updated", "better", "new", "v2", "enhanced", "comprehensive"
     9. **Ignore user sequence feedback** - MUST process feedback about agent routing and coordination violations
     10. **Allow incorrect prefix usage** - MUST enforce "hive-" prefix in all behavioral learning updates
   </critical-prohibitions>

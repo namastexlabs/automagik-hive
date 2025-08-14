@@ -91,6 +91,56 @@ class TestServeModuleFunctions:
             assert data["status"] == "healthy"
             assert data["mode"] == "simplified"
 
+    def test_async_create_automagik_api_mocked(self):
+        """Test _async_create_automagik_api function with mocked dependencies."""
+        with patch("api.serve.orchestrated_startup") as mock_startup:
+            with patch("api.serve.get_startup_display_with_results") as mock_display:
+                with patch("api.serve.create_team") as mock_create_team:
+                    # Mock startup results
+                    mock_startup_results = MagicMock()
+                    mock_startup_results.registries.agents = {"test_agent": MagicMock()}
+                    mock_startup_results.registries.teams = {"test_team": "test"}
+                    mock_startup_results.registries.workflows = {"test_workflow": "test"}
+                    mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+                    mock_startup_results.services.metrics_service = MagicMock()
+                    mock_startup.return_value = mock_startup_results
+                    
+                    # Mock startup display
+                    mock_display.return_value = MagicMock()
+                    
+                    # Mock team creation
+                    mock_create_team.return_value = MagicMock()
+                    
+                    # Test the function
+                    result = asyncio.run(api.serve._async_create_automagik_api())
+                    
+                    assert isinstance(result, FastAPI)
+                    assert result.title == "Automagik Hive Multi-Agent System"
+
+    def test_create_automagik_api_no_event_loop(self):
+        """Test create_automagik_api when no event loop is running."""
+        with patch("asyncio.get_running_loop", side_effect=RuntimeError("No event loop")):
+            with patch("api.serve._async_create_automagik_api") as mock_async:
+                mock_app = FastAPI()
+                mock_async.return_value = mock_app
+                
+                result = api.serve.create_automagik_api()
+                assert result == mock_app
+
+    def test_create_automagik_api_with_event_loop(self):
+        """Test create_automagik_api when event loop is running."""
+        with patch("asyncio.get_running_loop"):
+            with patch("concurrent.futures.ThreadPoolExecutor") as mock_executor:
+                with patch("api.serve._async_create_automagik_api") as mock_async:
+                    mock_app = FastAPI()
+                    mock_async.return_value = mock_app
+                    
+                    # Mock thread executor
+                    mock_executor.return_value.__enter__.return_value.submit.return_value.result.return_value = mock_app
+                    
+                    result = api.serve.create_automagik_api()
+                    assert result == mock_app
+
     def test_create_lifespan_function(self):
         """Test create_lifespan function creation."""
         # Test lifespan function creation
@@ -196,6 +246,169 @@ class TestServeAPI:
         response = client.get("/api/v1/version/components")
         # Should get some response (could be 401, 404, or 200 depending on setup)
         assert response.status_code in [200, 401, 404, 422]
+
+
+class TestServeLifespanManagement:
+    """Test lifespan management and startup/shutdown behavior."""
+    
+    @pytest.mark.asyncio
+    async def test_lifespan_startup_production(self):
+        """Test lifespan startup in production mode."""
+        mock_startup_display = MagicMock()
+        lifespan_func = api.serve.create_lifespan(mock_startup_display)
+        
+        with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}):
+            with patch("lib.mcp.MCPCatalog") as mock_catalog:
+                with patch("common.startup_notifications.send_startup_notification") as mock_notify:
+                    mock_catalog.return_value.list_servers.return_value = []
+                    
+                    # Test startup phase
+                    mock_app = MagicMock()
+                    async with lifespan_func(mock_app):
+                        # Wait for startup notification to be scheduled
+                        await asyncio.sleep(0.1)
+                    
+                    mock_catalog.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_lifespan_startup_development(self):
+        """Test lifespan startup in development mode."""
+        mock_startup_display = MagicMock()
+        lifespan_func = api.serve.create_lifespan(mock_startup_display)
+        
+        with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}):
+            with patch("lib.mcp.MCPCatalog") as mock_catalog:
+                mock_catalog.return_value.list_servers.return_value = []
+                
+                # Test startup phase
+                mock_app = MagicMock()
+                async with lifespan_func(mock_app):
+                    pass
+                
+                mock_catalog.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_lifespan_mcp_initialization_failure(self):
+        """Test lifespan when MCP initialization fails."""
+        mock_startup_display = MagicMock()
+        lifespan_func = api.serve.create_lifespan(mock_startup_display)
+        
+        with patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP Error")):
+            # Should handle MCP initialization failure gracefully
+            mock_app = MagicMock()
+            async with lifespan_func(mock_app):
+                pass
+
+    @pytest.mark.asyncio
+    async def test_lifespan_shutdown_notifications(self):
+        """Test lifespan shutdown notifications."""
+        mock_startup_display = MagicMock()
+        lifespan_func = api.serve.create_lifespan(mock_startup_display)
+        
+        with patch("common.startup_notifications.send_shutdown_notification") as mock_shutdown:
+            mock_app = MagicMock()
+            async with lifespan_func(mock_app):
+                pass
+            
+            # Wait for shutdown task to be scheduled
+            await asyncio.sleep(0.1)
+
+
+class TestServeDatabaseMigrations:
+    """Test database migration handling in serve module."""
+    
+    def test_migration_success_at_startup(self):
+        """Test successful migration execution at startup."""
+        with patch("api.serve.check_and_run_migrations") as mock_migrations:
+            with patch("asyncio.get_running_loop", side_effect=RuntimeError("No loop")):
+                with patch("asyncio.run") as mock_run:
+                    mock_run.return_value = True
+                    
+                    # Re-import serve to trigger migration code
+                    import importlib
+                    import api.serve
+                    importlib.reload(api.serve)
+
+    def test_migration_failure_at_startup(self):
+        """Test migration failure handling at startup."""
+        with patch("api.serve.check_and_run_migrations", side_effect=Exception("Migration failed")):
+            with patch("asyncio.get_running_loop", side_effect=RuntimeError("No loop")):
+                with patch("asyncio.run", side_effect=Exception("Migration failed")):
+                    # Should handle migration failures gracefully
+                    import importlib
+                    import api.serve
+                    importlib.reload(api.serve)
+
+    def test_migration_with_event_loop_present(self):
+        """Test migration handling when event loop is present."""
+        with patch("api.serve.check_and_run_migrations") as mock_migrations:
+            with patch("asyncio.get_running_loop") as mock_loop:
+                mock_loop.return_value = MagicMock()
+                
+                # Should detect event loop and schedule migration appropriately
+                import importlib
+                import api.serve
+                importlib.reload(api.serve)
+
+
+class TestServeErrorHandling:
+    """Test error handling scenarios in serve module."""
+    
+    def test_component_loading_error_handling(self):
+        """Test handling of component loading errors."""
+        with patch("api.serve.orchestrated_startup") as mock_startup:
+            mock_startup_results = MagicMock()
+            mock_startup_results.registries.agents = {}
+            mock_startup_results.registries.teams = {}
+            mock_startup_results.registries.workflows = {}
+            mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+            mock_startup.return_value = mock_startup_results
+            
+            with patch("api.serve.get_startup_display_with_results"):
+                # Should raise ComponentLoadingError when no agents loaded
+                with pytest.raises(Exception):
+                    asyncio.run(api.serve._async_create_automagik_api())
+
+    def test_workflow_creation_failure_handling(self):
+        """Test handling of workflow creation failures."""
+        with patch("api.serve.orchestrated_startup") as mock_startup:
+            with patch("api.serve.get_startup_display_with_results") as mock_display:
+                with patch("api.serve.get_workflow", side_effect=Exception("Workflow error")):
+                    # Mock startup results with agents to avoid ComponentLoadingError
+                    mock_startup_results = MagicMock()
+                    mock_startup_results.registries.agents = {"test_agent": MagicMock()}
+                    mock_startup_results.registries.teams = {}
+                    mock_startup_results.registries.workflows = {"test_workflow": "test"}
+                    mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+                    mock_startup_results.services.metrics_service = MagicMock()
+                    mock_startup.return_value = mock_startup_results
+                    
+                    mock_display.return_value = MagicMock()
+                    
+                    # Should handle workflow creation failures gracefully
+                    result = asyncio.run(api.serve._async_create_automagik_api())
+                    assert isinstance(result, FastAPI)
+
+    def test_business_endpoints_error_handling(self):
+        """Test handling of business endpoints registration errors."""
+        with patch("api.serve.orchestrated_startup") as mock_startup:
+            with patch("api.serve.get_startup_display_with_results") as mock_display:
+                with patch("api.routes.v1_router", side_effect=ImportError("Router error")):
+                    # Mock startup results with agents
+                    mock_startup_results = MagicMock()
+                    mock_startup_results.registries.agents = {"test_agent": MagicMock()}
+                    mock_startup_results.registries.teams = {}
+                    mock_startup_results.registries.workflows = {}
+                    mock_startup_results.services.auth_service.is_auth_enabled.return_value = False
+                    mock_startup_results.services.metrics_service = MagicMock()
+                    mock_startup.return_value = mock_startup_results
+                    
+                    mock_startup_display = MagicMock()
+                    mock_display.return_value = mock_startup_display
+                    
+                    # Should handle business endpoints errors gracefully
+                    result = asyncio.run(api.serve._async_create_automagik_api())
+                    assert isinstance(result, FastAPI)
 
 
 class TestServeIntegration:

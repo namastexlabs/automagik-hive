@@ -119,7 +119,8 @@ class YAMLCacheManager:
             try:
                 logger.debug(f"🐛 📄 Loading YAML from disk: {file_path}")
                 with open(normalized_path, encoding="utf-8") as f:
-                    content = yaml.safe_load(f)
+                    file_content = f.read()
+                    content = yaml.safe_load(file_content)
 
                 # Cache the result
                 file_size = os.path.getsize(normalized_path)

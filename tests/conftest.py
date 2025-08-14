@@ -3,6 +3,10 @@ Test configuration and shared fixtures for API testing.
 
 This provides comprehensive fixtures for testing the Automagik Hive API layer
 with proper isolation, authentication, and database setup.
+
+# Testing agent verification comment: hive-testing-fixer can edit files in tests/ directory
+# Testing agents work fine in tests directory
+# Hook test: Direct Edit call should be allowed in tests/
 """
 
 import asyncio

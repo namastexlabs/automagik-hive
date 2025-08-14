@@ -361,8 +361,11 @@ class TestConfigurationProcessing:
         assert len(result) > 0
         
         # Check that custom handlers were used by verifying result structure
-        # The model handler should return a model object
-        assert "model" in result
+        # The model handler returns a dict that gets merged into top-level
+        assert "id" in result  # model id should be in top-level
+        assert result["id"] == "claude-sonnet-4-20250514"
+        assert "temperature" in result  # model temperature should be in top-level
+        assert result["temperature"] == 0.7
         
         # The agent handler returns a dict that gets merged
         assert "name" in result
@@ -617,10 +620,11 @@ class TestCustomParameterHandlers:
 
         assert result is None
 
+    @patch("lib.knowledge.knowledge_factory.get_knowledge_base", return_value=None)
     @patch("lib.utils.version_factory.load_global_knowledge_config")
     @patch("lib.utils.proxy_agents.logger")
     def test_handle_knowledge_filter_warns_agent_csv_path(
-        self, mock_logger, mock_load_global, proxy
+        self, mock_logger, mock_load_global, mock_get_kb, proxy
     ):
         """Test knowledge filter handler warns about agent-level csv_file_path."""
         mock_load_global.return_value = {"csv_file_path": "global.csv"}
@@ -634,10 +638,8 @@ class TestCustomParameterHandlers:
             knowledge_filter, {}, "test-agent", "test://db"
         )
 
-        # Should still process but warn about the agent-level path
-        assert (
-            result is None
-        )  # Will be None because mocked get_knowledge_base isn't called
+        # Should return None as mocked get_knowledge_base returns None
+        assert result is None
         
         # Verify that the warning was logged (check that our specific warning is in the calls)
         expected_call = call(
@@ -1191,8 +1193,8 @@ class TestComprehensiveIntegration:
             db_url="sqlite:///:memory:",  # Use valid SQLAlchemy URL for in-memory SQLite
         )
 
-        # Verify all handlers were called
-        mock_model.assert_called_once()
+        # Verify storage and memory handlers were called
+        # Note: resolve_model is NOT called when model_id is present (uses lazy instantiation)
         mock_storage.assert_called_once()
         mock_memory.assert_called_once()
 

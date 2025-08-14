@@ -358,15 +358,16 @@ class TestAgnoTeamProxyConfigurationProcessing:
             mock_provider_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
             mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
             mock_filter.assert_called_once_with(mock_model_class, {"id": "claude-3-sonnet"})
-            mock_model_class.assert_called_once_with(**{"id": "claude-3-sonnet"})
+            # Note: model_class is NOT called due to lazy instantiation (returns config dict instead)
             
-            # Verify result contains expected processed config
+            # Verify result contains expected processed config 
             assert "storage" in result
-            assert "model" in result
-            assert "name" in result
+            # Model config gets spread into top-level (lazy instantiation)
+            assert "id" in result  # model id should be in top-level
+            assert result["id"] == "claude-3-sonnet"
+            assert "name" in result  # team metadata gets spread
             assert result["name"] == "Custom Team"
             assert result["storage"] == mock_storage_instance
-            assert result["model"] == mock_model_instance
 
     @pytest.mark.asyncio
     async def test_process_config_async_members_handler(self, proxy):

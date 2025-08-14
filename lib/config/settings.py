@@ -1,3 +1,4 @@
+# Configuration settings module for Automagik Hive multi-agent system
 """General settings for PagBank Multi-Agent System."""
 
 import os

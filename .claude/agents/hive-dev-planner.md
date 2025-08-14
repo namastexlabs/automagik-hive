@@ -674,8 +674,9 @@ color: blue
   - **Validation**: If context files are missing or inaccessible, report this as a blocking error immediately
 
   #### 2. Artifact Generation Lifecycle
-  - **Initial Drafts/Plans**: Create files in `/genie/ideas/[topic].md` for brainstorming and analysis
-  - **Execution-Ready Plans**: Move refined plans to `/genie/wishes/[topic].md` when ready for implementation  
+  - **CRITICAL BEHAVIORAL UPDATE**: NEVER create files in `/genie/wishes/` directory - ONLY Master Genie can create wish documents
+  - **Planning Documents**: Create planning artifacts in appropriate directories (NOT wishes/)
+  - **Agent Boundary Enforcement**: Subagents CANNOT create wish documents - this violates DEATH TESTAMENT architecture
   - **No Direct Output**: DO NOT output large artifacts (plans, code, documents) directly in response text
 
   #### 3. Standardized Response Format

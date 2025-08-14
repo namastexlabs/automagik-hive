@@ -501,6 +501,7 @@ class TestCLIErrorHandling:
             patch("cli.main.PostgreSQLCommands") as mock_postgres,
             patch("cli.main.AgentCommands") as mock_agent,
             patch("cli.main.UninstallCommands") as mock_uninstall,
+            patch("cli.main.ServiceManager") as mock_service,
         ):
             # Configure all mock instances to return False (failure)
             mock_init.return_value.init_workspace.return_value = False
@@ -520,6 +521,14 @@ class TestCLIErrorHandling:
             mock_agent.return_value.reset.return_value = False
             mock_uninstall.return_value.uninstall_current_workspace.return_value = False
             mock_uninstall.return_value.uninstall_global.return_value = False
+            # Mock ServiceManager methods used by various commands
+            mock_service.return_value.serve_docker.return_value = False
+            mock_service.return_value.serve_local.return_value = False
+            mock_service.return_value.install_full_environment.return_value = False
+            mock_service.return_value.stop_docker.return_value = False
+            mock_service.return_value.restart_docker.return_value = False
+            mock_service.return_value.docker_logs.return_value = False
+            mock_service.return_value.uninstall_environment.return_value = False
 
             yield
 
