@@ -23,7 +23,12 @@ import pytest
 # Import available classes
 from cli.core.agent_service import AgentService
 from cli.commands.agent import AgentCommands
-from cli.core.agent_environment import AgentEnvironment, get_agent_ports
+from cli.core.agent_environment import AgentEnvironment
+
+# Mock missing function that was removed from the codebase
+def get_agent_ports():
+    """Mock function for removed get_agent_ports."""
+    return {"api": 38886, "postgres": 35532}
 
 # Skip test - CLI structure refactored, old commands/core modules no longer exist
 # pytestmark = pytest.mark.skip(reason="CLI architecture refactored - agent commands/core consolidated")

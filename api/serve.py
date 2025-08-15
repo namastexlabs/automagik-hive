@@ -31,6 +31,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from lib.config.server_config import get_server_config
+from lib.config.settings import settings
 from lib.exceptions import ComponentLoadingError
 
 # Configure unified logging system AFTER environment variables are loaded
@@ -250,13 +251,13 @@ async def _async_create_automagik_api():
             "Environment configuration",
             environment=environment,
             auth_enabled=auth_service.is_auth_enabled(),
-            docs_url=f"http://localhost:{os.getenv('HIVE_API_PORT', '8886')}/docs",
+            docs_url=f"http://localhost:{settings().hive_api_port}/docs",
         )
         if auth_service.is_auth_enabled():
             logger.debug(
                 "API authentication details",
                 api_key=auth_service.get_current_key(),
-                usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:{os.getenv("HIVE_API_PORT", "8886")}/playground/status',
+                usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:{settings().hive_api_port}/playground/status',
             )
         logger.debug("Development features status", enabled=is_development)
 

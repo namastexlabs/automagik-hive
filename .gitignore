@@ -27,7 +27,6 @@ MANIFEST
 *.spec
 
 # Virtual environments
-.env
 .venv
 env/
 venv/
@@ -68,14 +67,18 @@ data/
 # MacOS
 .DS_Store
 
-# Environment variables
+# Environment variables - CRITICAL SECURITY
+.env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
+
+# MCP Configuration - Contains API keys
+.mcp.json
+ai/.mcp.json
 
 # Temporary files
 .tmp/
 temp/
-
-# MCP configuration with sensitive keys
-.mcp.json
-ai/.mcp.json

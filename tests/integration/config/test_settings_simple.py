@@ -5,11 +5,14 @@ from pathlib import Path
 from unittest.mock import patch
 
 from lib.config.settings import (
-    Settings,
+    HiveSettings,  # Updated from Settings
     get_project_root,
     get_setting,
     validate_environment,
 )
+
+# Mock missing Settings class for backward compatibility
+Settings = HiveSettings
 
 
 class TestSettingsBasic:

@@ -68,9 +68,6 @@ class DockerComposeService:
             "restart": "unless-stopped",
             "user": "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}",
             "environment": [
-                "POSTGRES_USER=${POSTGRES_USER}",
-                "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}",
-                f"POSTGRES_DB={database}",
                 "PGDATA=/var/lib/postgresql/data/pgdata",
             ],
             "volumes": [f"{volume_path}:/var/lib/postgresql/data"],
@@ -158,18 +155,18 @@ class DockerComposeService:
                 "dockerfile": "Dockerfile",
                 "args": {
                     "BUILD_VERSION": "${BUILD_VERSION:-latest}",
-                    "API_PORT": "${HIVE_API_PORT:-8886}",
+                    "API_PORT": "${HIVE_API_PORT}",
                 },
                 "target": "production",
             },
             "container_name": "hive-agents",
             "restart": "unless-stopped",
-            "ports": ["${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"],
+            "ports": ["${HIVE_API_PORT}:${HIVE_API_PORT}"],
             "environment": [
                 "HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hive}",
                 "HIVE_LOG_LEVEL=info",
                 "HIVE_API_HOST=0.0.0.0",
-                "HIVE_API_PORT=${HIVE_API_PORT:-8886}",
+                "HIVE_API_PORT=${HIVE_API_PORT}",
                 "HIVE_API_WORKERS=${API_WORKERS:-4}",
                 "PYTHONUNBUFFERED=1",
                 "PYTHONDONTWRITEBYTECODE=1",
@@ -182,7 +179,7 @@ class DockerComposeService:
                     "CMD",
                     "curl",
                     "-f",
-                    "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health",
+                    "http://localhost:${HIVE_API_PORT}/api/v1/health",
                 ],
                 "interval": "30s",
                 "timeout": "10s",
@@ -191,51 +188,56 @@ class DockerComposeService:
             },
         }
 
-    def get_environment_template_variables(
-        self,
-        credentials: dict[str, str] | None = None,
-        postgres_port: int = 5532,
-        postgres_database: str = "hive",
-        api_port: int = 8886,
-    ) -> dict[str, str]:
-        """Get environment variables for docker-compose.yml template substitution.
+    def validate_environment_file_required(self) -> bool:
+        """Validate that required .env file exists for Docker Compose template substitution.
 
-        ARCHITECTURAL RULE: Docker Compose service ONLY generates docker-compose.yml templates.
-        Environment variables come from .env files, NOT Python generation.
-
-        Args:
-            credentials: Pre-generated credentials (optional)
-            postgres_port: PostgreSQL port
-            postgres_database: PostgreSQL database name
-            api_port: API server port
+        ARCHITECTURAL RULE: Docker Compose service NEVER generates environment variables.
+        All variables come from .env files created externally.
 
         Returns:
-            Dictionary of environment variables for template substitution
+            True if .env file exists with required variables, False otherwise
         """
-        logger.info(
-            "Getting environment template variables",
-            postgres_port=postgres_port,
-            api_port=api_port,
-        )
-
-        # Generate credentials if not provided
-        if not credentials:
-            credentials = self.credential_service.setup_complete_credentials(
-                postgres_host="localhost",
-                postgres_port=postgres_port,
-                postgres_database=postgres_database,
+        logger.info("Validating required environment variables for Docker Compose")
+        
+        env_file = self.workspace_path / ".env"
+        if not env_file.exists():
+            logger.error(
+                "Required .env file missing. Docker Compose templates require environment variables "
+                "to be defined externally. Please create .env from .env.example."
             )
-
-        # Return only variables needed for docker-compose.yml template
-        template_vars = {
-            "POSTGRES_USER": credentials.get("postgres_user", ""),
-            "POSTGRES_PASSWORD": credentials.get("postgres_password", ""),
-            "POSTGRES_DB": credentials.get("postgres_database", postgres_database),
-            "HIVE_API_KEY": credentials.get("api_key", ""),
-        }
-
-        logger.info("Environment template variables prepared")
-        return template_vars
+            return False
+        
+        # Check for critical variables that Docker Compose templates expect
+        required_vars = [
+            "HIVE_DATABASE_URL",
+            "HIVE_API_KEY", 
+            "HIVE_API_PORT"
+        ]
+        
+        try:
+            env_content = env_file.read_text()
+            missing_vars = []
+            
+            for var in required_vars:
+                if f"{var}=" not in env_content:
+                    missing_vars.append(var)
+            
+            if missing_vars:
+                logger.error(
+                    "Missing required environment variables in .env file",
+                    missing_vars=missing_vars
+                )
+                logger.error(
+                    "Please add missing variables to .env file. See .env.example for reference."
+                )
+                return False
+            
+            logger.info("Environment file validation successful")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to validate environment file: {e}")
+            return False
 
     def save_docker_compose_template(
         self, compose_config: dict, output_path: Path | None = None

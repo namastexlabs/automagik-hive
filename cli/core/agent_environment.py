@@ -1,100 +1,58 @@
 """Agent Environment Management.
 
-Manages agent environment configuration using docker-compose inheritance
-from the main .env file instead of separate agent-specific files.
+Container-first environment management focused on Docker service health
+and .env file validation without hardcoded port mappings.
 """
 
 import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
 
 @dataclass
-class AgentCredentials:
-    """Agent credentials for agent environment."""
-    postgres_user: str
-    postgres_password: str
-    postgres_db: str
-    postgres_port: int
-    hive_api_key: str
-    hive_api_port: int
-    cors_origins: str
-
-
-@dataclass
-class EnvironmentConfig:
-    """Environment configuration for agent setup."""
-    source_file: Path
-    target_file: Path
-    port_mappings: dict
-    database_suffix: str
-    cors_port_mapping: dict
+class ServiceHealth:
+    """Container service health status."""
+    name: str
+    running: bool
+    healthy: bool
+    container_id: Optional[str] = None
 
 
 class AgentEnvironment:
-    """Agent environment management."""
+    """Container-first agent environment management."""
     
     def __init__(self, workspace_path: Path | None = None):
         self.workspace_path = workspace_path or Path.cwd()
         self.env_example_path = self.workspace_path / ".env.example"
         self.main_env_path = self.workspace_path / ".env"
         self.docker_compose_path = self.workspace_path / "docker" / "agent" / "docker-compose.yml"
-        
-        # Initialize config with docker-compose inheritance model
-        # ARCHITECTURAL RULE: All ports must come from environment variables
-        self._validate_required_env_vars()
-        
-        self.config = EnvironmentConfig(
-            source_file=self.main_env_path,
-            target_file=self.docker_compose_path,
-            port_mappings={
-                "HIVE_API_PORT": int(os.getenv("HIVE_AGENT_API_PORT")),
-                "POSTGRES_PORT": int(os.getenv("HIVE_AGENT_POSTGRES_PORT"))
-            },
-            database_suffix="_agent",
-            cors_port_mapping={
-                int(os.getenv("HIVE_API_PORT")): int(os.getenv("HIVE_AGENT_API_PORT")),
-                int(os.getenv("HIVE_WORKSPACE_POSTGRES_PORT")): int(os.getenv("HIVE_AGENT_POSTGRES_PORT"))
-            }
-        )
     
-    def _validate_required_env_vars(self) -> None:
-        """Validate that all required environment variables are set.
+    def _get_compose_file(self) -> Path | None:
+        """Get the docker-compose file path."""
+        if self.docker_compose_path.exists():
+            return self.docker_compose_path
         
-        ARCHITECTURAL RULE: All ports must be defined in environment variables.
-        No hardcoded fallbacks allowed.
-        """
-        required_vars = [
-            "HIVE_AGENT_API_PORT", 
-            "HIVE_AGENT_POSTGRES_PORT",
-            "HIVE_API_PORT",
-            "HIVE_WORKSPACE_POSTGRES_PORT"
-        ]
+        root_compose = self.workspace_path / "docker-compose.yml"
+        if root_compose.exists():
+            return root_compose
         
-        missing_vars = []
-        for var in required_vars:
-            if not os.getenv(var):
-                missing_vars.append(var)
-        
-        if missing_vars:
-            raise ValueError(
-                f"Missing required environment variables: {', '.join(missing_vars)}. "
-                "Please configure these in your .env file."
-            )
+        return None
     
     def validate_agent_setup(self, force: bool = False) -> bool:
-        """Validate agent setup using docker-compose inheritance model."""
+        """Validate agent setup using container health checks."""
         # Check that main .env exists
         if not self.main_env_path.exists():
             return False
         
         # Check that docker-compose.yml exists
-        if not self.docker_compose_path.exists():
+        compose_file = self._get_compose_file()
+        if not compose_file:
             return False
         
-        # Validate main .env has required keys for agent inheritance
-        return self._validate_main_env_for_agent()
+        # Validate database URL format instead of credentials
+        return self._validate_database_url()
     
     def ensure_main_env(self) -> bool:
         """Ensure main .env file exists for docker-compose inheritance."""
@@ -110,7 +68,7 @@ class AgentEnvironment:
         return False
     
     def validate_environment(self) -> dict:
-        """Validate agent environment configuration using docker-compose inheritance."""
+        """Validate agent environment configuration using container health."""
         if not self.main_env_path.exists():
             return {
                 "valid": False,
@@ -119,18 +77,19 @@ class AgentEnvironment:
                 "config": None
             }
         
-        if not self.docker_compose_path.exists():
+        compose_file = self._get_compose_file()
+        if not compose_file:
             return {
                 "valid": False,
-                "errors": [f"Docker compose file {self.docker_compose_path} not found"],
+                "errors": ["Docker compose file not found"],
                 "warnings": [],
                 "config": None
             }
         
         try:
-            # Load main .env file for inheritance check
+            # Load main .env file
             main_config = self._load_env_file(self.main_env_path)
-            required_keys = ["POSTGRES_USER", "POSTGRES_PASSWORD", "HIVE_API_KEY"]
+            required_keys = ["HIVE_API_KEY"]
             
             errors = []
             warnings = []
@@ -140,17 +99,17 @@ class AgentEnvironment:
                 if key not in main_config:
                     errors.append(f"Missing required key in main .env: {key}")
             
-            # Validate docker-compose configuration exists
-            if not self._validate_docker_compose_config():
-                errors.append("Invalid docker-compose.yml configuration")
+            # Validate database URL instead of credentials
+            db_url = main_config.get("HIVE_DATABASE_URL")
+            if db_url and not self._validate_database_url_format(db_url):
+                errors.append("Invalid HIVE_DATABASE_URL format")
             
-            # Check for proper port separation
-            if "HIVE_API_PORT" in main_config:
-                port = main_config["HIVE_API_PORT"]
-                expected_agent_port = os.getenv("HIVE_AGENT_API_PORT", "38886")
-                if port == expected_agent_port:
-                    main_port = os.getenv("HIVE_API_PORT", "8886")
-                    warnings.append(f"Main .env should use port {main_port}, agent gets {expected_agent_port} via docker-compose")
+            # Check container health
+            service_health = self._check_container_health(compose_file)
+            for service in ["agent-postgres", "agent-api"]:
+                health = service_health.get(service)
+                if health and not health.running:
+                    warnings.append(f"Service {service} is not running")
             
             return {
                 "valid": len(errors) == 0,
@@ -167,29 +126,13 @@ class AgentEnvironment:
                 "config": None
             }
     
-    def get_agent_credentials(self) -> AgentCredentials | None:
-        """Extract agent credentials from main .env file (docker-compose inheritance)."""
-        if not self.main_env_path.exists():
-            return None
+    def get_service_health(self) -> dict[str, ServiceHealth]:
+        """Get health status of agent containers."""
+        compose_file = self._get_compose_file()
+        if not compose_file:
+            return {}
         
-        try:
-            # Load from main .env since agent inherits via docker-compose
-            config = self._load_env_file(self.main_env_path)
-            
-            agent_postgres_port = int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
-            agent_api_port = int(os.getenv("HIVE_AGENT_API_PORT", "38886"))
-            
-            return AgentCredentials(
-                postgres_user=config.get("POSTGRES_USER", "test_user"),
-                postgres_password=config.get("POSTGRES_PASSWORD", "test_pass"),
-                postgres_db="hive_agent",  # Always hive_agent for agent
-                postgres_port=agent_postgres_port,
-                hive_api_key=config.get("HIVE_API_KEY", ""),
-                hive_api_port=agent_api_port,
-                cors_origins=f"http://localhost:{agent_api_port}"
-            )
-        except Exception:
-            return None
+        return self._check_container_health(compose_file)
     
     def update_environment(self, updates: dict) -> bool:
         """Update main .env file with provided values (agent inherits via docker-compose)."""
@@ -222,46 +165,120 @@ class AgentEnvironment:
             return False
     
     def clean_environment(self) -> bool:
-        """Clean up agent environment - no longer needed with docker-compose inheritance."""
-        # With docker-compose inheritance, no separate files to clean
-        return True
+        """Clean up agent containers and volumes."""
+        compose_file = self._get_compose_file()
+        if not compose_file:
+            return True
+        
+        try:
+            subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "down", "-v"],
+                check=False, capture_output=True, timeout=60
+            )
+            return True
+        except Exception:
+            return False
     
-    def copy_credentials_from_main_env(self) -> bool:
-        """Copy credentials from main .env to agent environment - automatic with docker-compose."""
-        # With docker-compose inheritance, this happens automatically
-        return self.main_env_path.exists()
+    def start_containers(self) -> bool:
+        """Start agent containers using docker-compose."""
+        compose_file = self._get_compose_file()
+        if not compose_file:
+            return False
+        
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "up", "-d"],
+                check=False, capture_output=True, text=True, timeout=120
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
     
-    def ensure_agent_api_key(self) -> bool:
-        """Ensure agent has a valid API key."""
-        # API keys are handled in the main .env file
-        return self.main_env_path.exists()
+    def stop_containers(self) -> bool:
+        """Stop agent containers using docker-compose."""
+        compose_file = self._get_compose_file()
+        if not compose_file:
+            return True
+        
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "stop"],
+                check=False, capture_output=True, timeout=60
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
     
-    def generate_agent_api_key(self) -> str:
-        """Generate an agent API key."""
-        import secrets
-        return secrets.token_urlsafe(32)
+    def restart_containers(self) -> bool:
+        """Restart agent containers using docker-compose."""
+        compose_file = self._get_compose_file()
+        if not compose_file:
+            return False
+        
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "restart"],
+                check=False, capture_output=True, timeout=120
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
     
     # Internal helper methods
-    def _validate_main_env_for_agent(self) -> bool:
-        """Validate that main .env has required keys for agent inheritance."""
+    def _validate_database_url(self) -> bool:
+        """Validate database URL exists and has correct format."""
         if not self.main_env_path.exists():
             return False
         
         config = self._load_env_file(self.main_env_path)
-        required_keys = ["POSTGRES_USER", "POSTGRES_PASSWORD", "HIVE_API_KEY"]
+        db_url = config.get("HIVE_DATABASE_URL")
         
-        return all(key in config for key in required_keys)
+        if not db_url:
+            return False
+        
+        return self._validate_database_url_format(db_url)
     
-    def _validate_docker_compose_config(self) -> bool:
-        """Validate that docker-compose.yml exists and has proper structure."""
-        return self.docker_compose_path.exists()
+    def _validate_database_url_format(self, url: str) -> bool:
+        """Validate database URL format."""
+        return url.startswith("postgresql") and "@" in url and "/" in url
     
-    def _get_agent_port_mappings(self) -> dict:
-        """Get agent-specific port mappings."""
-        return {
-            "HIVE_API_PORT": int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
-            "POSTGRES_PORT": int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
-        }
+    def _check_container_health(self, compose_file: Path) -> dict[str, ServiceHealth]:
+        """Check health of containers using docker-compose."""
+        health = {}
+        
+        for service_name in ["agent-postgres", "agent-api"]:
+            try:
+                # Get container ID
+                result = subprocess.run(
+                    ["docker", "compose", "-f", str(compose_file), "ps", "-q", service_name],
+                    check=False, capture_output=True, text=True, timeout=10
+                )
+                
+                if result.returncode != 0 or not result.stdout.strip():
+                    health[service_name] = ServiceHealth(service_name, False, False)
+                    continue
+                
+                container_id = result.stdout.strip()
+                
+                # Check if running
+                inspect_result = subprocess.run(
+                    ["docker", "inspect", "--format", "{{.State.Running}}", container_id],
+                    check=False, capture_output=True, text=True, timeout=5
+                )
+                
+                running = (
+                    inspect_result.returncode == 0 and 
+                    inspect_result.stdout.strip() == "true"
+                )
+                
+                health[service_name] = ServiceHealth(
+                    service_name, running, running, container_id
+                )
+                
+            except Exception:
+                health[service_name] = ServiceHealth(service_name, False, False)
+        
+        return health
     
     def _load_env_file(self, file_path: Path) -> dict:
         """Load environment file as key-value dictionary."""
@@ -274,106 +291,68 @@ class AgentEnvironment:
                     config[key.strip()] = value.strip()
         return config
     
-    def _parse_database_url(self, url: str) -> dict | None:
-        """Parse database URL into components."""
+    def get_container_logs(self, service_name: str, tail: int | None = None) -> str:
+        """Get logs from a specific container service."""
+        compose_file = self._get_compose_file()
+        if not compose_file:
+            return "No compose file found"
+        
         try:
-            # Simple regex-like parsing for postgresql URLs
-            if not url.startswith("postgresql"):
-                return None
+            cmd = ["docker", "compose", "-f", str(compose_file), "logs"]
+            if tail is not None:
+                cmd.extend(["--tail", str(tail)])
+            cmd.append(service_name)
             
-            # Extract user:password@host:port/database
-            parts = url.split("://", 1)[1]  # Remove postgresql://
-            if "@" not in parts:
-                return None
+            result = subprocess.run(
+                cmd, check=False, capture_output=True, text=True, timeout=30
+            )
             
-            auth_part, host_part = parts.split("@", 1)
-            user, password = auth_part.split(":", 1) if ":" in auth_part else (auth_part, "")
-            
-            if "/" not in host_part:
-                return None
-            
-            host_port, database = host_part.split("/", 1)
-            
-            # Validate host:port format - if no colon found, this is invalid
-            # URLs like "host_port" suggest port should be present but malformed
-            if ":" in host_port:
-                host, port_str = host_port.split(":", 1)
-                # Validate port is numeric
-                try:
-                    port = int(port_str)
-                except ValueError:
-                    return None  # Invalid port number
+            return result.stdout if result.returncode == 0 else f"Error: {result.stderr}"
+        except Exception as e:
+            return f"Error getting logs: {e}"
+    
+    def get_all_container_logs(self, tail: int | None = None) -> dict[str, str]:
+        """Get logs from all agent containers."""
+        logs = {}
+        for service_name in ["agent-postgres", "agent-api"]:
+            logs[service_name] = self.get_container_logs(service_name, tail)
+        return logs
+    
+    def get_container_status_summary(self) -> dict[str, str]:
+        """Get a summary of container status."""
+        health = self.get_service_health()
+        status = {}
+        
+        for service_name, service_health in health.items():
+            if service_health.running:
+                status[service_name] = "✅ Running"
             else:
-                # No port specified - only allow this for URLs without explicit port indication
-                # URLs containing "_port" suggest malformed port specification
-                if "_port" in host_port:
-                    return None  # Malformed URL with port indication but no separator
-                host = host_port
-                port = 5432  # Default PostgreSQL port
-            
-            return {
-                "user": user,
-                "password": password,
-                "host": host,
-                "port": port,
-                "database": database
-            }
-        except Exception:
-            return None
-    
-    def _build_agent_database_url(self, db_info: dict) -> str:
-        """Build agent database URL from components."""
-        agent_postgres_port = os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532")
-        return f"postgresql+psycopg://{db_info['user']}:{db_info['password']}@{db_info['host']}:{agent_postgres_port}/hive_agent"
-    
-    def _get_inherited_config(self) -> dict:
-        """Get the configuration that agent inherits from main .env."""
-        if not self.main_env_path.exists():
-            return {}
+                status[service_name] = "🛑 Stopped"
         
-        main_config = self._load_env_file(self.main_env_path)
-        
-        # Agent inherits these from main .env via docker-compose
-        agent_postgres_port = int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
-        agent_api_port = int(os.getenv("HIVE_AGENT_API_PORT", "38886"))
-        
-        agent_config = {
-            "postgres_user": main_config.get("POSTGRES_USER", "test_user"),
-            "postgres_password": main_config.get("POSTGRES_PASSWORD", "test_pass"),
-            "hive_api_key": main_config.get("HIVE_API_KEY", ""),
-            # Agent-specific overrides via docker-compose environment
-            "postgres_db": "hive_agent",
-            "postgres_port": agent_postgres_port,
-            "hive_api_port": agent_api_port,
-            "cors_origins": f"http://localhost:{agent_api_port}"
-        }
-        
-        return agent_config
+        return status
 
 
 # Convenience functions
 def create_agent_environment(workspace_path: Path | None = None) -> AgentEnvironment:
-    """Create agent environment using docker-compose inheritance."""
+    """Create agent environment with container management."""
     env = AgentEnvironment(workspace_path)
-    env.ensure_main_env()  # Ensure main .env exists for inheritance
+    env.ensure_main_env()  # Ensure main .env exists
     return env
 
 
 def validate_agent_environment(workspace_path: Path | None = None) -> bool:
-    """Validate agent environment using docker-compose inheritance."""
+    """Validate agent environment using container health checks."""
     env = AgentEnvironment(workspace_path)
     return env.validate_agent_setup()
 
 
 def cleanup_agent_environment(workspace_path: Path | None = None) -> bool:
-    """Cleanup agent environment - no longer needed with docker-compose inheritance."""
-    # With docker-compose inheritance, no separate files to clean
-    return True
+    """Cleanup agent environment containers."""
+    env = AgentEnvironment(workspace_path)
+    return env.clean_environment()
 
 
-def get_agent_ports() -> dict[str, int]:
-    """Get agent ports from environment variables."""
-    return {
-        "api": int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
-        "postgres": int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
-    }
+def get_agent_status() -> dict[str, str]:
+    """Get agent container status."""
+    env = AgentEnvironment()
+    return env.get_container_status_summary()

@@ -403,23 +403,9 @@ class MainService:
                 return {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
             
             # Check both containers using Docker Compose
-            # ARCHITECTURAL RULE: Ports must come from environment variables
-            main_postgres_port = os.getenv("HIVE_WORKSPACE_POSTGRES_PORT")
-            main_api_port = os.getenv("HIVE_API_PORT")
-            
-            # Validate required environment variables exist
-            if not main_postgres_port or not main_api_port:
-                missing = []
-                if not main_postgres_port:
-                    missing.append("HIVE_WORKSPACE_POSTGRES_PORT")
-                if not main_api_port:
-                    missing.append("HIVE_API_PORT")
-                print(f"⚠️ Missing environment variables: {', '.join(missing)}")
-                return {"main-postgres": "❌ Config Error", "main-app": "❌ Config Error"}
-            
-            for service_name, display_name, port in [
-                ("postgres", "main-postgres", main_postgres_port),
-                ("app", "main-app", main_api_port)
+            for service_name, display_name in [
+                ("postgres", "main-postgres"),
+                ("app", "main-app")
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths
@@ -440,7 +426,7 @@ class MainService:
                             timeout=5
                         )
                         if inspect_result.returncode == 0 and inspect_result.stdout.strip() == "true":
-                            status[display_name] = f"✅ Running (Port: {port})"
+                            status[display_name] = "✅ Running"
                         else:
                             status[display_name] = "🛑 Stopped"
                     else:

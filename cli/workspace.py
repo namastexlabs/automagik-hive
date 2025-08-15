@@ -177,8 +177,8 @@ Automagik Hive workspace for building multi-agent AI applications.
 
 ## Services
 
-- Agent API: http://localhost:{HIVE_AGENT_API_PORT}
-- Agent Database: postgresql://localhost:{HIVE_AGENT_POSTGRES_PORT}
+- Agent API: Check docker-compose.yml for port configuration
+- Agent Database: Check docker-compose.yml for port configuration  
 - Development Server: http://localhost:8000
 """
     
@@ -186,8 +186,8 @@ Automagik Hive workspace for building multi-agent AI applications.
         """Get .env template."""
         return """# Automagik Hive Environment Configuration
 
-# Database
-DATABASE_URL=postgresql://hive_user:hive_password@localhost:{HIVE_AGENT_POSTGRES_PORT}/hive_agent
+# Database - Configure ports in docker-compose.yml
+DATABASE_URL=postgresql://hive_user:hive_password@localhost:35532/hive_agent
 
 # API Configuration  
 HIVE_API_KEY=your_api_key_here

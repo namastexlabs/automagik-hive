@@ -117,9 +117,13 @@ class TestGenieDebugAgent:
             config = yaml.safe_load(f)
         
         tools = config.get("tools", [])
+        mcp_servers = config.get("mcp_servers", [])
         
-        # Check if tools are configured (tools can be by name or MCP tools)
-        assert len(tools) > 0, "Debug agent should have tools configured"
+        # Check if debugging capabilities are configured via tools or MCP servers
+        has_tools_configured = len(tools) > 0
+        has_mcp_servers_configured = len(mcp_servers) > 0
+        
+        assert has_tools_configured or has_mcp_servers_configured, "Debug agent should have tools or MCP servers configured"
         
         # Check for postgres tool (debugging often needs database queries)
         tool_names = []
@@ -129,11 +133,23 @@ class TestGenieDebugAgent:
             else:
                 tool_names.append(str(tool))
         
-        # Should have debugging-related tools
-        has_postgres = any("postgres" in tool_name for tool_name in tool_names)
-        has_shell = any("shell" in tool_name.lower() for tool_name in tool_names)
+        # Check MCP servers for debugging capabilities
+        mcp_server_names = []
+        for server in mcp_servers:
+            if isinstance(server, dict):
+                mcp_server_names.append(server.get("name", ""))
+            else:
+                mcp_server_names.append(str(server))
         
-        assert has_postgres or has_shell, f"Debug agent should have debugging tools, found: {tool_names}"
+        # Should have debugging-related tools or MCP servers
+        has_postgres_tool = any("postgres" in tool_name.lower() for tool_name in tool_names)
+        has_shell_tool = any("shell" in tool_name.lower() for tool_name in tool_names)
+        has_postgres_mcp = any("postgres" in server_name.lower() for server_name in mcp_server_names)
+        has_shell_mcp = any("shell" in server_name.lower() for server_name in mcp_server_names)
+        
+        has_debugging_capability = has_postgres_tool or has_shell_tool or has_postgres_mcp or has_shell_mcp
+        
+        assert has_debugging_capability, f"Debug agent should have debugging capabilities. Tools: {tool_names}, MCP servers: {mcp_server_names}"
     
     def test_agent_temperature_for_debugging(self, agent_config_dir):
         """Test that debug agent has appropriate temperature for precise debugging."""

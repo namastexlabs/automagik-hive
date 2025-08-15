@@ -19,8 +19,8 @@ import pytest
 
 # Add project root to path for direct imports
 # Current path: /tests/cli/commands/test_agent_direct.py
-# Need to go up 3 levels to get to project root
-project_root = Path(__file__).parent.parent.parent
+# Need to go up 4 levels to get to project root
+project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 print(f"Current file: {__file__}")

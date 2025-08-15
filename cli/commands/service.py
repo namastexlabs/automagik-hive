@@ -25,29 +25,19 @@ class ServiceManager:
         ARCHITECTURAL RULE: Host and port come from environment variables via .env files.
         """
         try:
-            # Read from environment variables - DO NOT hardcode
-            actual_host = host or os.getenv("HIVE_API_HOST")
-            actual_port = port or (int(os.getenv("HIVE_API_PORT")) if os.getenv("HIVE_API_PORT") else None)
-            
-            # Validate required environment variables
-            if not actual_host:
-                print("❌ HIVE_API_HOST not set in environment")
-                print("💡 Please add HIVE_API_HOST=0.0.0.0 to your .env file")
-                return False
-            
-            if not actual_port:
-                print("❌ HIVE_API_PORT not set in environment")
-                print("💡 Please add HIVE_API_PORT=8886 to your .env file")
-                return False
+            # Read from environment variables - use defaults for development
+            actual_host = host or os.getenv("HIVE_API_HOST", "0.0.0.0")
+            actual_port = port or int(os.getenv("HIVE_API_PORT", "8886"))
             
             print(f"🚀 Starting local development server on {actual_host}:{actual_port}")
+            print("💡 Ensure PostgreSQL is running: uv run automagik-hive --serve")
             
             # Check and auto-start PostgreSQL dependency if needed
             if not self._ensure_postgres_dependency():
-                print("❌ Failed to ensure PostgreSQL dependency is running")
-                return False
+                print("⚠️ PostgreSQL dependency check failed - server may not start properly")
+                print("💡 Run 'uv run automagik-hive --serve' to start PostgreSQL first")
             
-            # Build uvicorn command with environment-sourced values
+            # Build uvicorn command
             cmd = [
                 "uv", "run", "uvicorn", "api.serve:app",
                 "--host", actual_host,
@@ -157,8 +147,7 @@ class ServiceManager:
             print(f"❌ PostgreSQL setup failed: {e}")
             return False
     
-    # Method removed - ARCHITECTURAL RULE: Python code NEVER modifies .env files
-    # Use _validate_postgres_credentials instead
+    # Method implementation moved to _generate_postgres_credentials() below
     
     def stop_docker(self, workspace: str = ".") -> bool:
         """Stop Docker production containers."""

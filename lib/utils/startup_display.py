@@ -11,6 +11,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from lib.config.settings import settings
+
 # Import simplified emoji system
 try:
     from lib.utils.emoji_loader import get_emoji_loader
@@ -365,8 +367,7 @@ def display_simple_status(
     table.add_row(f"{agent_emoji} Agents:", str(agent_count))
     if workflow_count > 0:
         table.add_row(f"{workflow_emoji} Workflows:", str(workflow_count))
-    port = os.getenv("HIVE_API_PORT", "8886")
-    table.add_row(f"{api_emoji} API:", f"http://localhost:{port}")
+    table.add_row(f"{api_emoji} API:", f"http://localhost:{settings().hive_api_port}")
 
     panel = Panel(
         table, title="[bold green]System Ready[/bold green]", border_style="green"

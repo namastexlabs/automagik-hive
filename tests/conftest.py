@@ -65,6 +65,8 @@ os.environ["HIVE_DATABASE_URL"] = (
 os.environ["HIVE_API_PORT"] = "8887"
 os.environ["HIVE_LOG_LEVEL"] = "ERROR"  # Reduce log noise in tests
 os.environ["AGNO_LOG_LEVEL"] = "ERROR"
+os.environ["HIVE_API_KEY"] = "hive_test_key_12345678901234567890123456789012"
+os.environ["HIVE_CORS_ORIGINS"] = "http://localhost:3000,http://localhost:8080"
 
 # Mock external dependencies to avoid real API calls
 os.environ["ANTHROPIC_API_KEY"] = "test-key"
@@ -615,6 +617,8 @@ def setup_test_environment():
         "HIVE_API_PORT": "8887",
         "HIVE_LOG_LEVEL": "ERROR",
         "AGNO_LOG_LEVEL": "ERROR",
+        "HIVE_API_KEY": "hive_test_key_12345678901234567890123456789012",
+        "HIVE_CORS_ORIGINS": "http://localhost:3000,http://localhost:8080",
         "ANTHROPIC_API_KEY": "test-key",
         "OPENAI_API_KEY": "test-key",
         "DISABLE_RELOAD": "true",
