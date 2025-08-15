@@ -77,8 +77,7 @@ mcp_servers:
   - "zen:*"               # Deep thinking and consensus
 
 # Native Agno tools
-tools:
-  - name: ShellTools
+tools: []
 
 tool_choice: "auto"  # Intelligent tool routing
 tool_call_limit: 20  # Allow complex orchestration workflows

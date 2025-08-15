@@ -18,11 +18,19 @@ from unittest.mock import Mock, patch, call
 import pytest
 
 # Import the module under test
+import sys
+from pathlib import Path
+
+# Add the project root to Python path
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 try:
     from cli.commands.agent import AgentCommands
     from cli.core.agent_service import AgentService
-except ImportError:
-    pytest.skip(f"Module cli.commands.agent not available", allow_module_level=True)
+except ImportError as e:
+    pytest.skip(f"Module cli.commands.agent not available: {e}", allow_module_level=True)
 
 
 class TestAgentCommandsInitialization:

@@ -17,6 +17,9 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - ../../data/postgres:/var/lib/postgresql/data
+    # Sets the container user to match the host user, preventing volume permission
+    # issues on Linux/macOS. Defaults to 1000:1000.
+    # Override by setting POSTGRES_UID and POSTGRES_GID in your shell environment.
     user: "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}"
     command: >
       postgres

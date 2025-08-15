@@ -780,6 +780,18 @@ class AgentService:
         # Start the services after reinstallation
         return self.serve_agent(workspace_path)
     
+    def uninstall_agent_environment(self, workspace_path: str) -> bool:
+        """Uninstall agent environment with cleanup ONLY (destroy all + remove - NO reinstall)."""
+        print("🗑️ Uninstalling agent environment - removing all containers and data...")
+        
+        # Cleanup existing environment - this is the ONLY step for uninstall
+        if not self._cleanup_agent_environment(workspace_path):
+            print("❌ Failed to completely uninstall agent environment")
+            return False
+            
+        print("✅ Agent environment uninstalled successfully - all containers and data removed")
+        return True
+    
     def _cleanup_agent_environment(self, workspace_path: str) -> bool:
         """Cleanup agent environment with comprehensive cleanup."""
         import subprocess

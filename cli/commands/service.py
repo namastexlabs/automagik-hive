@@ -19,15 +19,39 @@ class ServiceManager:
         self.workspace_path = workspace_path or Path()
         self.main_service = MainService(self.workspace_path)
     
-    def serve_local(self, host: str = "0.0.0.0", port: int = 8886, reload: bool = True) -> bool:
-        """Start local development server with uvicorn."""
+    def serve_local(self, host: str | None = None, port: int | None = None, reload: bool = True) -> bool:
+        """Start local development server with uvicorn.
+        
+        ARCHITECTURAL RULE: Host and port come from environment variables via .env files.
+        """
         try:
-            print(f"🚀 Starting local development server on {host}:{port}")
-            # Build uvicorn command
+            # Read from environment variables - DO NOT hardcode
+            actual_host = host or os.getenv("HIVE_API_HOST")
+            actual_port = port or (int(os.getenv("HIVE_API_PORT")) if os.getenv("HIVE_API_PORT") else None)
+            
+            # Validate required environment variables
+            if not actual_host:
+                print("❌ HIVE_API_HOST not set in environment")
+                print("💡 Please add HIVE_API_HOST=0.0.0.0 to your .env file")
+                return False
+            
+            if not actual_port:
+                print("❌ HIVE_API_PORT not set in environment")
+                print("💡 Please add HIVE_API_PORT=8886 to your .env file")
+                return False
+            
+            print(f"🚀 Starting local development server on {actual_host}:{actual_port}")
+            
+            # Check and auto-start PostgreSQL dependency if needed
+            if not self._ensure_postgres_dependency():
+                print("❌ Failed to ensure PostgreSQL dependency is running")
+                return False
+            
+            # Build uvicorn command with environment-sourced values
             cmd = [
                 "uv", "run", "uvicorn", "api.serve:app",
-                "--host", host,
-                "--port", str(port)
+                "--host", actual_host,
+                "--port", str(actual_port)
             ]
             if reload:
                 cmd.append("--reload")
@@ -133,66 +157,8 @@ class ServiceManager:
             print(f"❌ PostgreSQL setup failed: {e}")
             return False
     
-    def _generate_postgres_credentials(self) -> bool:
-        """Generate secure PostgreSQL credentials and update .env."""
-        try:
-            import re
-            import secrets
-            import string
-            from pathlib import Path
-            
-            workspace_path = Path()
-            env_file = workspace_path / ".env"
-            
-            if not env_file.exists():
-                print("❌ .env file not found")
-                return False
-            
-            # Read current .env
-            env_content = env_file.read_text()
-            
-            # Check if credentials already exist and are not placeholder values
-            if "HIVE_DATABASE_URL=" in env_content:
-                current_url = re.search(r"^HIVE_DATABASE_URL=(.*)$", env_content, re.MULTILINE)
-                if current_url:
-                    url = current_url.group(1)
-                    if "your-secure-password-here" not in url and "hive_user" not in url:
-                        print("✅ Using existing PostgreSQL credentials from .env")
-                        return True
-            
-            # Generate secure credentials
-            alphabet = string.ascii_letters + string.digits
-            postgres_user = "".join(secrets.choice(alphabet) for _ in range(16))
-            postgres_pass = "".join(secrets.choice(alphabet) for _ in range(16))
-            postgres_db = "hive"
-            
-            # Update .env file
-            postgres_port = os.getenv("HIVE_WORKSPACE_POSTGRES_PORT", "5532")
-            new_url = f"postgresql+psycopg://{postgres_user}:{postgres_pass}@localhost:{postgres_port}/{postgres_db}"
-            
-            # Replace or add the database URL
-            if "HIVE_DATABASE_URL=" in env_content:
-                env_content = re.sub(
-                    r"^HIVE_DATABASE_URL=.*$",
-                    f"HIVE_DATABASE_URL={new_url}",
-                    env_content,
-                    flags=re.MULTILINE
-                )
-            else:
-                env_content += f"\nHIVE_DATABASE_URL={new_url}\n"
-            
-            env_file.write_text(env_content)
-            
-            print("✅ PostgreSQL credentials generated and saved to .env")
-            print(f"  User: {postgres_user}")
-            print(f"  Password: {postgres_pass}")
-            print(f"  Database: {postgres_db}")
-            
-            return True
-            
-        except Exception as e:
-            print(f"❌ Failed to generate PostgreSQL credentials: {e}")
-            return False
+    # Method removed - ARCHITECTURAL RULE: Python code NEVER modifies .env files
+    # Use _validate_postgres_credentials instead
     
     def stop_docker(self, workspace: str = ".") -> bool:
         """Stop Docker production containers."""
@@ -229,10 +195,94 @@ class ServiceManager:
             return False
     
     def uninstall_environment(self, workspace: str = ".") -> bool:
-        """Uninstall production environment with database preservation option."""
+        """Uninstall ALL environments (main + agent + genie) - COMPLETE SYSTEM WIPE."""
         try:
-            print(f"🗑️ Uninstalling production environment in: {workspace}")
-            print("This will stop and remove Docker containers.")
+            print(f"🗑️ COMPLETE SYSTEM UNINSTALL for workspace: {workspace}")
+            print("This will uninstall ALL environments:")
+            print("  • Main environment (production containers + postgres)")
+            print("  • Agent environment (agent containers + postgres)")  
+            print("  • Genie environment (unified genie container)")
+            print()
+            print("⚠️  This is a COMPLETE SYSTEM WIPE - use individual commands for partial uninstall:")
+            print("     --agent-reset   (agent only)")
+            print("     --genie-reset   (genie only)")
+            print("     Use ServiceManager.uninstall_main_only() for main environment only")
+            print()
+            
+            # Get user confirmation for complete wipe
+            print("Type 'WIPE ALL' to confirm complete system uninstall:")
+            try:
+                response = input().strip()
+            except (EOFError, KeyboardInterrupt):
+                print("❌ Uninstall cancelled by user")
+                return False
+            
+            if response != "WIPE ALL":
+                print("❌ Uninstall cancelled - confirmation not received")
+                print("💡 Use --agent-reset or --genie-reset for individual environment resets")
+                return False
+            
+            # Import the specific command classes for comprehensive uninstall
+            from .agent import AgentCommands
+            from .genie import GenieCommands
+            
+            success_count = 0
+            total_environments = 3
+            
+            # 1. Uninstall Agent Environment
+            print("\n🤖 1/3: Uninstalling Agent Environment...")
+            try:
+                agent_cmd = AgentCommands()
+                if agent_cmd.uninstall(workspace):
+                    print("✅ Agent environment uninstalled")
+                    success_count += 1
+                else:
+                    print("⚠️ Agent environment uninstall had issues")
+            except Exception as e:
+                print(f"⚠️ Agent environment uninstall failed: {e}")
+            
+            # 2. Uninstall Genie Environment  
+            print("\n🧞 2/3: Uninstalling Genie Environment...")
+            try:
+                genie_cmd = GenieCommands()
+                if genie_cmd.uninstall(workspace):
+                    print("✅ Genie environment uninstalled")
+                    success_count += 1
+                else:
+                    print("⚠️ Genie environment uninstall had issues")
+            except Exception as e:
+                print(f"⚠️ Genie environment uninstall failed: {e}")
+            
+            # 3. Uninstall Main Environment
+            print("\n🏭 3/3: Uninstalling Main Environment...")
+            try:
+                if self.uninstall_main_only(workspace):
+                    print("✅ Main environment uninstalled")
+                    success_count += 1
+                else:
+                    print("⚠️ Main environment uninstall had issues")
+            except Exception as e:
+                print(f"⚠️ Main environment uninstall failed: {e}")
+            
+            # Final status
+            print(f"\n🎯 System Uninstall Complete: {success_count}/{total_environments} environments uninstalled")
+            
+            if success_count == total_environments:
+                print("✅ COMPLETE SYSTEM WIPE successful - all environments removed")
+                return True
+            else:
+                print("⚠️ Partial uninstall completed - some environments may need manual cleanup")
+                return success_count > 0  # Consider partial success as success
+                
+        except Exception as e:
+            print(f"❌ Failed to uninstall complete system: {e}")
+            return False
+    
+    def uninstall_main_only(self, workspace: str = ".") -> bool:
+        """Uninstall ONLY the main production environment with database preservation option."""
+        try:
+            print(f"🗑️ Uninstalling MAIN production environment in: {workspace}")
+            print("This will stop and remove Docker containers for main environment only.")
             
             # Ask about database preservation
             print("\nWould you like to preserve the database data? (Y/n)")
@@ -265,7 +315,7 @@ class ServiceManager:
             
             return result
         except Exception as e:
-            print(f"❌ Failed to uninstall environment: {e}")
+            print(f"❌ Failed to uninstall main environment: {e}")
             return False
     
     def manage_service(self, service_name: str | None = None) -> bool:
@@ -292,3 +342,71 @@ class ServiceManager:
             "healthy": True,
             "docker_services": docker_status
         }
+    
+    def _ensure_postgres_dependency(self) -> bool:
+        """Ensure PostgreSQL dependency is running for development server.
+        
+        Checks if main PostgreSQL container is running and starts it if needed.
+        This prevents --dev command from failing due to database connection refused.
+        
+        Returns:
+            bool: True if PostgreSQL is running or successfully started, False otherwise
+        """
+        try:
+            # Check current PostgreSQL status
+            status = self.main_service.get_main_status(str(self.workspace_path))
+            postgres_status = status.get("main-postgres", "")
+            
+            if "✅ Running" in postgres_status:
+                print("✅ PostgreSQL dependency is already running")
+                return True
+            
+            print("🔍 PostgreSQL dependency not running, starting...")
+            
+            # Check if .env file exists for environment validation
+            env_file = self.workspace_path / ".env"
+            if not env_file.exists():
+                print("❌ .env file not found. Run --install to set up the environment first.")
+                return False
+            
+            # Start only PostgreSQL container using Docker Compose
+            try:
+                # Use same Docker Compose file location logic as main_service
+                docker_compose_main = self.workspace_path / "docker" / "main" / "docker-compose.yml"
+                docker_compose_root = self.workspace_path / "docker-compose.yml"
+                
+                if docker_compose_main.exists():
+                    compose_file = docker_compose_main
+                elif docker_compose_root.exists():
+                    compose_file = docker_compose_root
+                else:
+                    print("❌ Docker compose file not found. Run --install to set up the environment.")
+                    return False
+                
+                # Start only the postgres service
+                print("🐳 Starting PostgreSQL container...")
+                result = subprocess.run(
+                    ["docker", "compose", "-f", str(compose_file), "up", "-d", "postgres"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+                
+                if result.returncode != 0:
+                    print(f"❌ Failed to start PostgreSQL: {result.stderr}")
+                    return False
+                
+                print("✅ PostgreSQL dependency started successfully")
+                return True
+                
+            except subprocess.TimeoutExpired:
+                print("❌ Timeout starting PostgreSQL container")
+                return False
+            except FileNotFoundError:
+                print("❌ Docker not found. Please install Docker and try again.")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error ensuring PostgreSQL dependency: {e}")
+            return False

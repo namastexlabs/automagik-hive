@@ -42,20 +42,46 @@ class AgentEnvironment:
         self.docker_compose_path = self.workspace_path / "docker" / "agent" / "docker-compose.yml"
         
         # Initialize config with docker-compose inheritance model
+        # ARCHITECTURAL RULE: All ports must come from environment variables
+        self._validate_required_env_vars()
+        
         self.config = EnvironmentConfig(
             source_file=self.main_env_path,
             target_file=self.docker_compose_path,
             port_mappings={
-                "HIVE_API_PORT": int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
-                "POSTGRES_PORT": int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
+                "HIVE_API_PORT": int(os.getenv("HIVE_AGENT_API_PORT")),
+                "POSTGRES_PORT": int(os.getenv("HIVE_AGENT_POSTGRES_PORT"))
             },
             database_suffix="_agent",
             cors_port_mapping={
-                int(os.getenv("HIVE_API_PORT", "8886")): int(os.getenv("HIVE_AGENT_API_PORT", "38886")),
-                int(os.getenv("HIVE_WORKSPACE_POSTGRES_PORT", "5532")): int(os.getenv("HIVE_AGENT_POSTGRES_PORT", "35532"))
+                int(os.getenv("HIVE_API_PORT")): int(os.getenv("HIVE_AGENT_API_PORT")),
+                int(os.getenv("HIVE_WORKSPACE_POSTGRES_PORT")): int(os.getenv("HIVE_AGENT_POSTGRES_PORT"))
             }
         )
     
+    def _validate_required_env_vars(self) -> None:
+        """Validate that all required environment variables are set.
+        
+        ARCHITECTURAL RULE: All ports must be defined in environment variables.
+        No hardcoded fallbacks allowed.
+        """
+        required_vars = [
+            "HIVE_AGENT_API_PORT", 
+            "HIVE_AGENT_POSTGRES_PORT",
+            "HIVE_API_PORT",
+            "HIVE_WORKSPACE_POSTGRES_PORT"
+        ]
+        
+        missing_vars = []
+        for var in required_vars:
+            if not os.getenv(var):
+                missing_vars.append(var)
+        
+        if missing_vars:
+            raise ValueError(
+                f"Missing required environment variables: {', '.join(missing_vars)}. "
+                "Please configure these in your .env file."
+            )
     
     def validate_agent_setup(self, force: bool = False) -> bool:
         """Validate agent setup using docker-compose inheritance model."""

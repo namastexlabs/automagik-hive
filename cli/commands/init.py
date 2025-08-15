@@ -1,9 +1,11 @@
-"""CLI InitCommands Stubs.
+"""CLI InitCommands - Workspace Initialization.
 
-Minimal stub implementations to fix import errors in tests.
-These are placeholders that satisfy import requirements.
+Complete workspace initialization with directory creation and configuration files.
+Creates proper Automagik Hive workspace structure with essential files.
 """
 
+import os
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -18,8 +20,9 @@ class InteractiveInitializer:
         """Run interactive workspace setup."""
         try:
             print("🚀 Starting interactive workspace setup...")
-            # Stub implementation - would run interactive setup flow
-            return True
+            # Use the same workspace creation logic
+            init_cmd = InitCommands(self.workspace_path)
+            return init_cmd.init_workspace()
         except Exception as e:
             print(f"❌ Interactive setup failed: {e}")
             return False
@@ -29,10 +32,13 @@ class InteractiveInitializer:
         try:
             if workspace_name:
                 print(f"🎯 Guided initialization for: {workspace_name}")
+                workspace_path = Path(workspace_name)
             else:
                 print("🎯 Guided initialization for current directory")
-            # Stub implementation - would run guided setup
-            return True
+                workspace_path = self.workspace_path
+            
+            init_cmd = InitCommands(workspace_path)
+            return init_cmd.init_workspace(workspace_name)
         except Exception as e:
             print(f"❌ Guided initialization failed: {e}")
             return False
@@ -43,28 +49,327 @@ class InteractiveInitializer:
 
 
 class InitCommands:
-    """CLI InitCommands implementation."""
+    """CLI InitCommands implementation with actual workspace creation."""
     
     def __init__(self, workspace_path: Path | None = None):
         self.workspace_path = workspace_path or Path()
     
+    def _create_directory_structure(self, base_path: Path) -> bool:
+        """Create the basic Automagik Hive directory structure."""
+        directories = [
+            "ai/agents",
+            "ai/teams", 
+            "ai/workflows",
+            "ai/tools",
+            "api/routes",
+            "lib/knowledge",
+            "lib/config",
+            "tests/ai",
+            "tests/api",
+            "tests/lib",
+            "docker/main",
+            "data/postgres",
+            "logs",
+        ]
+        
+        try:
+            for directory in directories:
+                dir_path = base_path / directory
+                dir_path.mkdir(parents=True, exist_ok=True)
+                
+                # Create __init__.py files for Python packages
+                if any(part in directory for part in ["ai", "api", "lib", "tests"]):
+                    init_file = dir_path / "__init__.py"
+                    if not init_file.exists():
+                        init_file.write_text('"""Package initialization."""\n')
+            
+            return True
+        except Exception as e:
+            print(f"❌ Failed to create directory structure: {e}")
+            return False
+    
+    def _create_env_file(self, base_path: Path) -> bool:
+        """Create .env file from .env.example if it exists."""
+        try:
+            # Get the current project's .env.example as template
+            current_dir = Path(__file__).parent.parent.parent
+            env_example = current_dir / ".env.example"
+            
+            if env_example.exists():
+                env_file = base_path / ".env"
+                if not env_file.exists():
+                    shutil.copy2(env_example, env_file)
+                    print(f"✅ Created .env file from template")
+            else:
+                # Create minimal .env file
+                env_content = """# Automagik Hive Environment Configuration
+HIVE_ENVIRONMENT=development
+HIVE_LOG_LEVEL=INFO
+HIVE_API_HOST=0.0.0.0
+HIVE_API_PORT=8886
+HIVE_DATABASE_URL=postgresql+psycopg://hive_user:password@localhost:5532/hive
+HIVE_API_KEY=your-api-key-here
+ANTHROPIC_API_KEY=your-anthropic-key-here
+OPENAI_API_KEY=your-openai-key-here
+HIVE_DEV_MODE=true
+HIVE_AUTH_DISABLED=true
+"""
+                env_file = base_path / ".env"
+                env_file.write_text(env_content)
+                print(f"✅ Created minimal .env file")
+            
+            return True
+        except Exception as e:
+            print(f"❌ Failed to create .env file: {e}")
+            return False
+    
+    def _create_pyproject_toml(self, base_path: Path, workspace_name: str) -> bool:
+        """Create pyproject.toml file for the workspace."""
+        try:
+            pyproject_content = f'''[project]
+name = "{workspace_name}"
+version = "0.1.0"
+description = "Automagik Hive Workspace - {workspace_name}"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "automagik-hive>=0.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "S", "B", "A", "C4", "T20"]
+ignore = ["E501", "S101", "S603", "S607"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+'''
+            pyproject_file = base_path / "pyproject.toml"
+            pyproject_file.write_text(pyproject_content)
+            print(f"✅ Created pyproject.toml")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to create pyproject.toml: {e}")
+            return False
+    
+    def _create_readme(self, base_path: Path, workspace_name: str) -> bool:
+        """Create README.md file for the workspace."""
+        try:
+            readme_content = f'''# {workspace_name}
+
+Automagik Hive Workspace
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   uv sync
+   ```
+
+2. Configure environment:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
+
+3. Start the workspace:
+   ```bash
+   uv run automagik-hive --install
+   uv run automagik-hive --dev
+   ```
+
+## Structure
+
+- `ai/` - Agent definitions, teams, and workflows
+- `api/` - API routes and endpoints
+- `lib/` - Shared libraries and utilities
+- `tests/` - Test suite
+- `docker/` - Docker configuration
+
+## Development
+
+- Run tests: `uv run pytest`
+- Lint code: `uv run ruff check --fix`
+- Type check: `uv run mypy .`
+
+## Documentation
+
+See [Automagik Hive Documentation](https://github.com/namastex-ai/automagik-hive) for more details.
+'''
+            readme_file = base_path / "README.md"
+            readme_file.write_text(readme_content)
+            print(f"✅ Created README.md")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to create README.md: {e}")
+            return False
+    
+    def _create_gitignore(self, base_path: Path) -> bool:
+        """Create .gitignore file for the workspace."""
+        try:
+            gitignore_content = '''# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Virtual environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Logs
+logs/
+*.log
+
+# Database
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore
+
+# MacOS
+.DS_Store
+
+# Environment variables - CRITICAL SECURITY
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
+
+# Temporary files
+.tmp/
+temp/
+'''
+            gitignore_file = base_path / ".gitignore"
+            gitignore_file.write_text(gitignore_content)
+            print(f"✅ Created .gitignore")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to create .gitignore: {e}")
+            return False
+    
     def init_workspace(self, workspace_name: str | None = None) -> bool:
-        """Initialize a new workspace."""
+        """Initialize a new workspace with complete structure."""
         try:
             if workspace_name:
                 print(f"🚀 Initializing workspace: {workspace_name}")
+                workspace_path = Path(workspace_name)
+                
+                # Create the workspace directory
+                if workspace_path.exists():
+                    if any(workspace_path.iterdir()):
+                        print(f"⚠️  Directory {workspace_name} already exists and is not empty")
+                        return False
+                else:
+                    workspace_path.mkdir(parents=True, exist_ok=True)
+                    print(f"📁 Created workspace directory: {workspace_name}")
             else:
                 print("🚀 Initializing workspace in current directory")
-            # Stub implementation - would create workspace structure
+                workspace_path = Path(".")
+                workspace_name = workspace_path.absolute().name
+            
+            # Create directory structure
+            if not self._create_directory_structure(workspace_path):
+                return False
+            print("📁 Created directory structure")
+            
+            # Create configuration files
+            if not self._create_env_file(workspace_path):
+                return False
+            
+            if not self._create_pyproject_toml(workspace_path, workspace_name):
+                return False
+            
+            if not self._create_readme(workspace_path, workspace_name):
+                return False
+            
+            if not self._create_gitignore(workspace_path):
+                return False
+            
+            print(f"✅ Workspace '{workspace_name}' initialized successfully!")
+            print(f"📋 Next steps:")
+            if workspace_name != "." and workspace_name != workspace_path.absolute().name:
+                print(f"   cd {workspace_name}")
+            print(f"   uv sync")
+            print(f"   uv run automagik-hive --install")
+            
             return True
+            
         except Exception as e:
             print(f"❌ Failed to initialize workspace: {e}")
             return False
     
     def execute(self) -> bool:
-        """Execute command stub."""
-        return True
+        """Execute command."""
+        return self.init_workspace()
     
     def status(self) -> dict[str, Any]:
-        """Get status stub."""
+        """Get command status."""
         return {"status": "running", "healthy": True}

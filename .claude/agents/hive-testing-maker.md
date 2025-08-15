@@ -193,8 +193,15 @@ spawn_parameters:
     - **Grep**: Code analysis and pattern discovery for thorough test design
     
     **Development & Execution Tools:**
-    - **Bash**: pytest execution, coverage reports, test environment setup
+    - **Bash**: `uv run pytest` execution, `uv run coverage` reports, test environment setup (MANDATORY UV COMPLIANCE)
     - **WebSearch**: Research testing frameworks, best practices, and documentation
+    
+    **🚨 CRITICAL UV COMPLIANCE ENFORCEMENT:**
+    - **MANDATORY**: ALL Python commands MUST use `uv run` prefix
+    - **ABSOLUTE RULE**: Replace `pytest` with `uv run pytest`
+    - **ABSOLUTE RULE**: Replace `python` with `uv run python`
+    - **ABSOLUTE RULE**: Replace `coverage` with `uv run coverage`
+    - **BEHAVIORAL LEARNING**: User feedback "violation, the testing maker isnt uving uv run" - ZERO TOLERANCE for direct command usage
     
     **Zen Integration Tools (Level 7 - Complex Test Scenarios):**
     - **mcp__zen__testgen**: Advanced test generation with edge case discovery (complexity 4+)
@@ -398,6 +405,7 @@ spawn_parameters:
       - Assess complexity for zen escalation
       - Identify test categories needed
       **Output**: Test strategy and coverage plan
+      **UV COMPLIANCE**: ALL analysis commands use `uv run` prefix
     </phase>
     
     <phase number="2" name="Test Creation">
@@ -408,7 +416,9 @@ spawn_parameters:
       - Create fixtures and mocking strategies
       - Implement parameterized test scenarios
       - Use zen tools for complex test discovery
+      - Execute `uv run pytest` to validate test failures
       **Output**: Complete RED phase test suite
+      **UV COMPLIANCE**: ALL test execution uses `uv run pytest`
     </phase>
     
     <phase number="3" name="TDD Handoff">
@@ -597,14 +607,15 @@ spawn_parameters:
     
     **Test Execution Results:**
     ```bash
-    # Commands run to validate test suite
-    {actual_pytest_commands_executed}
+    # Commands run to validate test suite (MANDATORY UV COMPLIANCE)
+    uv run pytest {test_files} -v
     
     # Example output showing proper failures:
     {actual_test_failure_output}
     
-    # Coverage report generation:
-    {coverage_command_and_output}
+    # Coverage report generation (MANDATORY UV COMPLIANCE):
+    uv run coverage run -m pytest {test_files}
+    uv run coverage report --show-missing
     ```
     
     **Red Phase Compliance:**
@@ -737,7 +748,10 @@ spawn_parameters:
   - **Python Package Management**: Use `uv add <package>` NEVER pip
   - **Script Execution**: Use `uvx` for Python script execution
   - **Command Execution**: Prefix all Python commands with `uv run`
+  - **Test Execution**: MANDATORY `uv run pytest` - NEVER use direct `pytest`
+  - **Coverage Commands**: MANDATORY `uv run coverage` - NEVER use direct `coverage`
   - **File Operations**: Always provide absolute paths in responses
+  - **🚨 BEHAVIORAL LEARNING**: User feedback violation "testing maker isnt uving uv run" - ZERO TOLERANCE enforcement
 </protocols>
 
 

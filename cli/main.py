@@ -77,7 +77,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--logs", nargs="?", const=".", metavar="WORKSPACE", help="Show production environment logs")
     
     # Uninstall commands
-    parser.add_argument("--uninstall", nargs="?", const=".", metavar="WORKSPACE", help="Uninstall current workspace")
+    parser.add_argument("--uninstall", nargs="?", const=".", metavar="WORKSPACE", help="COMPLETE SYSTEM WIPE - uninstall ALL environments (main + agent + genie)")
     parser.add_argument("--uninstall-global", action="store_true", help="Uninstall global installation")
     
     # Utility flags

@@ -52,8 +52,7 @@ streaming:
   stream_intermediate_steps: true
 
 # Debug agent tools
-tools:
-- name: ShellTools
+tools: []
 
 tool_choice: auto
 tool_call_limit: 15

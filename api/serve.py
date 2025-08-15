@@ -109,7 +109,22 @@ def create_lifespan(startup_display: Any = None) -> Callable:
             servers = catalog.list_servers()
             logger.debug("MCP system initialized", server_count=len(servers))
         except Exception as e:
-            logger.warning("Could not initialize MCP Connection Manager", error=str(e))
+            # Provide more specific error guidance for common MCP issues
+            error_msg = str(e)
+            if "MCP configuration file not found" in error_msg:
+                logger.warning(
+                    "Could not initialize MCP Connection Manager - configuration file missing",
+                    error=error_msg,
+                    suggestion="Ensure .mcp.json exists in working directory or set HIVE_MCP_CONFIG_PATH"
+                )
+            elif "Invalid JSON" in error_msg:
+                logger.warning(
+                    "Could not initialize MCP Connection Manager - invalid configuration",
+                    error=error_msg,
+                    suggestion="Check .mcp.json file for valid JSON syntax"
+                )
+            else:
+                logger.warning("Could not initialize MCP Connection Manager", error=error_msg)
 
         # Send startup notification with rich component information (production only)
         environment = os.getenv("HIVE_ENVIRONMENT", "development").lower()

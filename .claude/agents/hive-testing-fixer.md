@@ -173,9 +173,16 @@ color: orange
     
     **Core File Operations:**
     - Read/Write/Edit/MultiEdit: tests/ and genie/ directories only (enforced by test-boundary-enforcer.py hook)
-    - Bash: pytest execution, debugging commands, system validation
+    - Bash: `uv run pytest` execution, debugging commands, system validation (MANDATORY UV COMPLIANCE)
     - Grep/Glob/LS: Test discovery, pattern analysis, dependency tracing
     - WebSearch: Research testing patterns and framework best practices
+    
+    **🚨 CRITICAL UV COMPLIANCE ENFORCEMENT:**
+    - **MANDATORY**: ALL Python commands MUST use `uv run` prefix
+    - **ABSOLUTE RULE**: Replace `pytest` with `uv run pytest`
+    - **ABSOLUTE RULE**: Replace `python` with `uv run python`
+    - **ABSOLUTE RULE**: Replace `coverage` with `uv run coverage`
+    - **BEHAVIORAL LEARNING**: User feedback "violation, the testing maker isnt uving uv run" - ZERO TOLERANCE for direct command usage
     
     **Zen Integration (Level 7 - Sophisticated Test Analysis):**
     - mcp__zen__debug: Systematic test failure investigation (complexity 4+)
@@ -401,11 +408,12 @@ color: orange
     <phase number="1" name="Test Failure Analysis">
       **Objective**: Understand test failures and root causes
       **Actions**:
-      - Run pytest with verbose output
+      - Run `uv run pytest` with verbose output
       - Analyze error messages and stack traces
       - Identify patterns in failures
       - Assess complexity for zen escalation
       **Output**: Categorized list of test issues
+      **UV COMPLIANCE**: ALL pytest commands use `uv run pytest`
     </phase>
     
     <phase number="2" name="Test Repair Execution">
@@ -431,11 +439,12 @@ color: orange
     <phase number="4" name="Validation">
       **Objective**: Verify test fixes work
       **Actions**:
-      - Run pytest on fixed tests
-      - Verify coverage improvements
+      - Run `uv run pytest` on fixed tests
+      - Verify coverage improvements with `uv run coverage`
       - Check for remaining failures
       - Confirm no production code touched
       **Output**: Test results and coverage report
+      **UV COMPLIANCE**: ALL validation commands use `uv run` prefix
     </phase>
   </operational-workflow>
   
@@ -593,13 +602,17 @@ color: orange
     
     **Test Results Evidence:**
     ```bash
-    # BEFORE - Test failures
-    {actual_pytest_command_and_failure_output}
+    # BEFORE - Test failures (MANDATORY UV COMPLIANCE)
+    uv run pytest {test_files} -v
+    {actual_pytest_failure_output}
     
-    # AFTER - Test success
-    {actual_pytest_command_and_success_output}
+    # AFTER - Test success (MANDATORY UV COMPLIANCE)
+    uv run pytest {test_files} -v
+    {actual_pytest_success_output}
     
-    # COVERAGE REPORT
+    # COVERAGE REPORT (MANDATORY UV COMPLIANCE)
+    uv run coverage run -m pytest {test_files}
+    uv run coverage report --show-missing
     {actual_coverage_report_showing_improvements}
     ```
     
@@ -752,7 +765,10 @@ color: orange
   - **Python Package Management**: Use `uv add <package>` NEVER pip
   - **Script Execution**: Use `uvx` for Python script execution
   - **Command Execution**: Prefix all Python commands with `uv run`
+  - **Test Execution**: MANDATORY `uv run pytest` - NEVER use direct `pytest`
+  - **Coverage Commands**: MANDATORY `uv run coverage` - NEVER use direct `coverage`
   - **File Operations**: Always provide absolute paths in responses
+  - **🚨 BEHAVIORAL LEARNING**: User feedback violation "testing maker isnt uving uv run" - ZERO TOLERANCE enforcement
 </protocols>
 
 

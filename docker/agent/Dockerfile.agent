@@ -81,6 +81,7 @@ COPY --chown=hive:hive api/ ./api/
 COPY --chown=hive:hive common/ ./common/
 COPY --chown=hive:hive scripts/ ./scripts/
 COPY --chown=hive:hive logging_whitelist.yaml ./
+COPY --chown=hive:hive .mcp.json ./
 
 # Port configuration
 ARG API_PORT=38886

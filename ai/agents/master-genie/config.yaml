@@ -45,8 +45,7 @@ mcp_servers:
   - "wait:*"              # Workflow delays
 
 # Native Agno tools for direct execution
-tools:
-  - name: ShellTools
+tools: []
 
 tool_choice: auto
 tool_call_limit: 20

@@ -38,8 +38,7 @@ mcp_servers:
   - "search-repo-docs:*"  # Research
 
 # Native Agno tools for system commands
-tools:
-  - name: ShellTools
+tools: []
 
 tool_choice: auto
 tool_call_limit: 15

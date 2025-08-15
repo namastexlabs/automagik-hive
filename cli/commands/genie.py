@@ -86,6 +86,17 @@ class GenieCommands:
         except Exception:
             return False
     
+    def uninstall(self, workspace: str = ".") -> bool:
+        """Uninstall genie environment (destroy all + remove - NO reinstall)."""
+        try:
+            print(f"🗑️ Uninstalling genie environment in: {workspace}")
+            print("This will destroy all containers and data permanently...")
+            # Stop and uninstall only - NO reinstall, NO restart
+            self.stop(workspace)  # Don't fail if already stopped
+            return self.genie_service.uninstall_genie_environment(workspace)
+        except Exception:
+            return False
+    
     def launch_claude(self, extra_args: List[str] = None) -> bool:
         """Launch claude with GENIE.md as system prompt."""
         try:

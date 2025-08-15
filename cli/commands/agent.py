@@ -98,3 +98,13 @@ class AgentCommands:
             return self.agent_service.reset_agent_environment(workspace)
         except Exception:
             return False
+    
+    def uninstall(self, workspace: str = ".") -> bool:
+        """Uninstall agent environment (destroy all + remove - NO reinstall)."""
+        try:
+            print(f"🗑️ Uninstalling agent environment in: {workspace}")
+            print("This will destroy all containers and data permanently...")
+            # Uninstall only does cleanup - NO reinstall, NO restart
+            return self.agent_service.uninstall_agent_environment(workspace)
+        except Exception:
+            return False

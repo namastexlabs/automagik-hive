@@ -187,7 +187,22 @@ async def initialize_other_services(
         mcp_system = catalog
         logger.debug("MCP system ready", server_count=len(servers))
     except Exception as e:
-        logger.warning("MCP system initialization failed", error=str(e))
+        # Provide more specific error guidance for common MCP issues
+        error_msg = str(e)
+        if "MCP configuration file not found" in error_msg:
+            logger.warning(
+                "MCP system initialization failed - configuration file missing",
+                error=error_msg,
+                suggestion="Ensure .mcp.json exists in working directory or set HIVE_MCP_CONFIG_PATH"
+            )
+        elif "Invalid JSON" in error_msg:
+            logger.warning(
+                "MCP system initialization failed - invalid configuration",
+                error=error_msg,
+                suggestion="Check .mcp.json file for valid JSON syntax"
+            )
+        else:
+            logger.warning("MCP system initialization failed", error=error_msg)
 
     # Initialize metrics service
     metrics_service = None

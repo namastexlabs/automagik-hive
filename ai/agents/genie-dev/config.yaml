@@ -39,8 +39,7 @@ mcp_servers:
   - "ask-repo-agent:*"    # Framework docs
 
 # Native Agno tools for system commands
-tools:
-  - name: ShellTools
+tools: []
 
 tool_choice: auto
 tool_call_limit: 15

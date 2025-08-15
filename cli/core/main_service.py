@@ -403,8 +403,19 @@ class MainService:
                 return {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
             
             # Check both containers using Docker Compose
-            main_postgres_port = os.getenv("HIVE_WORKSPACE_POSTGRES_PORT", "5532")
-            main_api_port = os.getenv("HIVE_API_PORT", "8886")
+            # ARCHITECTURAL RULE: Ports must come from environment variables
+            main_postgres_port = os.getenv("HIVE_WORKSPACE_POSTGRES_PORT")
+            main_api_port = os.getenv("HIVE_API_PORT")
+            
+            # Validate required environment variables exist
+            if not main_postgres_port or not main_api_port:
+                missing = []
+                if not main_postgres_port:
+                    missing.append("HIVE_WORKSPACE_POSTGRES_PORT")
+                if not main_api_port:
+                    missing.append("HIVE_API_PORT")
+                print(f"⚠️ Missing environment variables: {', '.join(missing)}")
+                return {"main-postgres": "❌ Config Error", "main-app": "❌ Config Error"}
             
             for service_name, display_name, port in [
                 ("postgres", "main-postgres", main_postgres_port),

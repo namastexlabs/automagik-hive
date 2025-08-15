@@ -41,6 +41,79 @@ Automagik Hive is an enterprise multi-agent AI framework built on Agno (agno-agi
 <violations_trigger>Immediate cross-agent behavioral updates</violations_trigger>
 <personal_violation_memory>Maintained to prevent repetition</personal_violation_memory>
 <validation_requirement>All agents must validate against these rules before file operations</validation_requirement>
+
+<critical_uv_compliance_enforcement>
+<absolute_prohibition>
+CRITICAL VIOLATION PREVENTION: ALL testing agents MUST use `uv run` for Python commands.
+USER FEEDBACK VIOLATION: "violation, the testing maker isnt uving uv run"
+ARCHITECTURE RULE: "NEVER use python directly - Always use `uv run` for ALL Python commands"
+NO testing agent will use direct `pytest`, `python`, or `coverage` commands.
+</absolute_prohibition>
+
+<violation_patterns_to_prevent>
+<direct_pytest_usage>FORBIDDEN: Direct `pytest` command usage in testing agents</direct_pytest_usage>
+<direct_python_usage>FORBIDDEN: Direct `python` command usage in testing agents</direct_python_usage>
+<direct_coverage_usage>FORBIDDEN: Direct `coverage` command usage in testing agents</direct_coverage_usage>
+<testing_command_bypass>FORBIDDEN: Any testing command that bypasses UV protocol</testing_command_bypass>
+</violation_patterns_to_prevent>
+
+<architectural_compliance>
+<testing_agent_responsibility>Testing agents MUST use `uv run pytest` for ALL test execution</testing_agent_responsibility>
+<coverage_agent_responsibility>Testing agents MUST use `uv run coverage` for ALL coverage reporting</coverage_agent_responsibility>
+<python_execution_responsibility>Testing agents MUST use `uv run python` for ALL Python execution</python_execution_responsibility>
+<uv_protocol_enforcement>Mandatory UV compliance across ALL testing operations</uv_protocol_enforcement>
+</architectural_compliance>
+
+<enforcement_actions>
+<immediate_behavioral_learning>Update ALL testing agents with UV compliance requirements</immediate_behavioral_learning>
+<zero_tolerance_pattern>Any direct command usage = CRITICAL VIOLATION requiring immediate behavioral update</zero_tolerance_pattern>
+<cross_agent_propagation>UV compliance requirements must propagate to ALL new testing agents</cross_agent_propagation>
+</enforcement_actions>
+</critical_uv_compliance_enforcement>
+
+<critical_architecture_rule_environment_variables>
+<absolute_prohibition>
+CRITICAL VIOLATION PREVENTION: Python files must NEVER contain environment variable generation or hardcoded environment variables.
+ARCHITECTURE RULE: ".env > docker compose yaml specific overrides, and THATS IT"
+NO py file or anywhere else will contain ports, env variables etc.
+</absolute_prohibition>
+
+<violation_patterns_to_prevent>
+<env_file_generation>FORBIDDEN: Python code generating .env file content or templates (docker/lib/compose_service.py violation)</env_file_generation>
+<env_file_modification>FORBIDDEN: Python code modifying existing .env files (cli/commands/service.py violation)</env_file_modification>
+<hardcoded_env_defaults>FORBIDDEN: os.getenv("VAR", "hardcoded_default") patterns scattered across code</hardcoded_env_defaults>
+<credential_generation>FORBIDDEN: Python generating credentials and writing to .env files</credential_generation>
+<port_management>FORBIDDEN: Python code managing port configurations instead of docker compose</port_management>
+<template_creation>FORBIDDEN: Python creating .env templates with hardcoded HIVE_* variables</template_creation>
+</violation_patterns_to_prevent>
+
+<architectural_compliance>
+<env_file_responsibility>Only developers or deployment pipelines create/modify .env files</env_file_responsibility>
+<python_code_responsibility>Python code ONLY reads environment variables, never writes them</python_code_responsibility>
+<docker_compose_overrides>Only docker-compose.yml files may override .env values</docker_compose_overrides>
+<configuration_separation>Strict separation between application config (.env) and Python code</configuration_separation>
+<centralized_settings>Use centralized settings module instead of scattered hardcoded defaults</centralized_settings>
+</architectural_compliance>
+
+<enforcement_actions>
+<immediate_refactoring>Remove all .env generation/modification functions from Python code</immediate_refactoring>
+<fail_fast_pattern>Missing required environment variables should cause application startup failure</fail_fast_pattern>
+<credential_guidance>Provide guidance scripts for manual credential generation, not automated injection</credential_guidance>
+</enforcement_actions>
+</critical_architecture_rule_environment_variables>
+
+<configuration_architecture_principles>
+<critical_separation>STRICT separation between application-level (.env) and infrastructure-level (docker-compose.yml) configuration</critical_separation>
+<prohibited_env_variables>
+<infrastructure_variables>NEVER include in .env/.env.example files: POSTGRES_UID, POSTGRES_GID, port mappings for Docker</infrastructure_variables>
+<docker_compose_only>Infrastructure variables belong ONLY in docker-compose.yml with ${VAR:-default} pattern</docker_compose_only>
+</prohibited_env_variables>
+<violation_prevention>
+<env_file_scope>Application runtime configuration ONLY - database URLs, API keys, app settings</env_file_scope>
+<docker_compose_scope>Container orchestration configuration ONLY - user permissions, port mappings, volume mounts</docker_compose_scope>
+<override_mechanism>Use shell environment or docker-compose.override.yml for infrastructure overrides</override_mechanism>
+</violation_prevention>
+</configuration_architecture_principles>
 </behavioral_enforcement>
 </file_organization_standards>
 </project_context>
@@ -146,14 +219,6 @@ uv run pytest tests/api/         # Test API endpoints
 uv run pytest --cov=ai --cov=api --cov=lib  # With coverage report
 ```
 </code_quality_testing>
-
-<database_operations>
-```bash
-uv run alembic revision --autogenerate -m "Description"  # Create migration
-uv run alembic upgrade head                              # Apply migrations
-```
-</database_operations>
-
 <agent_development_cli>
 ```bash
 # Complete agent development workflow via uv run automagik-hive
