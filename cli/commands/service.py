@@ -136,10 +136,10 @@ class ServiceManager:
             return False
     
     def _setup_postgresql_interactive(self, workspace: str) -> bool:
-        """Interactive PostgreSQL setup with credential generation."""
+        """Interactive PostgreSQL setup - validates credentials exist in .env."""
         try:
             print("\n🐳 PostgreSQL Setup")
-            print("Would you like to set up Docker PostgreSQL with secure credentials? (Y/n)")
+            print("Would you like to set up Docker PostgreSQL? (Y/n)")
             
             try:
                 response = input().strip().lower()
@@ -150,11 +150,34 @@ class ServiceManager:
                 print("⏭️ Skipping PostgreSQL setup")
                 return True
             
-            print("🔐 Generating secure PostgreSQL credentials...")
-            if not self._generate_postgres_credentials():
+            # Per architectural rule: Python only validates, doesn't generate/write credentials
+            # The Makefile handles credential generation via openssl and .env updates
+            print("🔐 Checking PostgreSQL credentials...")
+            env_file = Path(workspace) / ".env"
+            if not env_file.exists():
+                print("❌ .env file not found")
+                print("💡 Run 'make install' to properly set up the environment")
                 return False
                 
-            print("🐳 Starting PostgreSQL container...")
+            env_content = env_file.read_text()
+            if "HIVE_DATABASE_URL=" not in env_content:
+                print("❌ HIVE_DATABASE_URL not found in .env")
+                print("💡 The .env file needs to be created from .env.example")
+                print("💡 Run 'make install' for proper setup with credential generation")
+                return False
+            
+            # Extract and validate that it's not a placeholder
+            db_url_line = [line for line in env_content.split('\n') if line.startswith('HIVE_DATABASE_URL=')][0]
+            db_url = db_url_line.split('=', 1)[1].strip()
+            
+            if 'your-' in db_url or 'password-here' in db_url:
+                print("❌ HIVE_DATABASE_URL contains placeholder values")
+                print("💡 PostgreSQL credentials need to be generated")
+                print("💡 Run 'make install' which will use openssl to generate secure credentials")
+                return False
+            
+            print("✅ PostgreSQL credentials found in .env")
+            print("🐳 Docker will handle PostgreSQL startup...")
             # The main service will handle the actual Docker setup
             return True
             
