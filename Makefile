@@ -122,8 +122,8 @@ define check_env_file
 endef
 
 define generate_hive_api_key
-    $(call print_status,Generating secure Hive API key...); \
-    uv run python -c "from lib.auth.cli import regenerate_key; regenerate_key()"
+    $(call print_status,Checking/generating secure Hive API key...); \
+    uv run python -c "from lib.auth.init_service import AuthInitService; auth = AuthInitService(); key = auth.get_current_key(); print('API key already exists') if key else auth.ensure_api_key()"
 endef
 
 define generate_agent_hive_api_key

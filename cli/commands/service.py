@@ -118,9 +118,14 @@ class ServiceManager:
             # Generate API key if needed
             print("🔐 Checking API key...")
             try:
-                from lib.auth.cli import regenerate_key
-                regenerate_key()
-                print("✅ API key verified/generated")
+                from lib.auth.init_service import AuthInitService
+                auth_service = AuthInitService()
+                existing_key = auth_service.get_current_key()
+                if existing_key:
+                    print(f"✅ API key already exists: {existing_key}")
+                else:
+                    new_key = auth_service.ensure_api_key()
+                    print(f"✅ API key generated: {new_key}")
             except Exception as e:
                 print(f"⚠️ API key generation failed: {e}")
                 # Continue anyway - not critical for basic setup
