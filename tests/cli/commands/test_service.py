@@ -1,10 +1,8 @@
 """Comprehensive tests for CLI service commands."""
 
-import os
-import pytest
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import patch
+
 from cli.commands.service import ServiceManager
 
 
@@ -280,62 +278,59 @@ class TestServiceManagerEnvironmentSetup:
 class TestServiceManagerEnvFileSetup:
     """Test .env file setup functionality."""
     
-    def test_setup_env_file_creates_from_example(self):
+    def test_setup_env_file_creates_from_example(self, isolated_workspace):
         """Test .env creation from .env.example."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace_path = Path(temp_dir)
-            env_example = workspace_path / ".env.example"
-            env_file = workspace_path / ".env"
-            
-            # Create example file
-            env_example.write_text("EXAMPLE_VAR=value")
-            
-            with patch('lib.auth.cli.regenerate_key'):
-                manager = ServiceManager()
-                result = manager._setup_env_file(str(workspace_path))
-                
-                assert result is True
-                assert env_file.exists()
-                assert env_file.read_text() == "EXAMPLE_VAR=value"
-
-    def test_setup_env_file_already_exists(self):
-        """Test .env setup when file already exists."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace_path = Path(temp_dir)
-            env_file = workspace_path / ".env"
-            
-            # Create existing file
-            env_file.write_text("EXISTING_VAR=value")
-            
-            with patch('lib.auth.cli.regenerate_key'):
-                manager = ServiceManager()
-                result = manager._setup_env_file(str(workspace_path))
-                
-                assert result is True
-                assert env_file.read_text() == "EXISTING_VAR=value"
-
-    def test_setup_env_file_no_example(self):
-        """Test .env setup when .env.example doesn't exist."""
-        with tempfile.TemporaryDirectory() as temp_dir:
+        workspace_path = isolated_workspace
+        env_example = workspace_path / ".env.example"
+        env_file = workspace_path / ".env"
+        
+        # Create example file
+        env_example.write_text("EXAMPLE_VAR=value")
+        
+        with patch('lib.auth.cli.regenerate_key'):
             manager = ServiceManager()
-            result = manager._setup_env_file(str(temp_dir))
+            result = manager._setup_env_file(str(workspace_path))
             
-            assert result is False
+            assert result is True
+            assert env_file.exists()
+            assert env_file.read_text() == "EXAMPLE_VAR=value"
 
-    def test_setup_env_file_api_key_generation_fails(self):
+    def test_setup_env_file_already_exists(self, isolated_workspace):
+        """Test .env setup when file already exists."""
+        workspace_path = isolated_workspace
+        env_file = workspace_path / ".env"
+        
+        # Create existing file
+        env_file.write_text("EXISTING_VAR=value")
+        
+        with patch('lib.auth.cli.regenerate_key'):
+            manager = ServiceManager()
+            result = manager._setup_env_file(str(workspace_path))
+            
+            assert result is True
+            assert env_file.read_text() == "EXISTING_VAR=value"
+
+    def test_setup_env_file_no_example(self, isolated_workspace):
+        """Test .env setup when .env.example doesn't exist."""
+        workspace_path = isolated_workspace
+        manager = ServiceManager()
+        result = manager._setup_env_file(str(workspace_path))
+        
+        assert result is False
+
+    def test_setup_env_file_api_key_generation_fails(self, isolated_workspace):
         """Test .env setup when API key generation fails."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace_path = Path(temp_dir)
-            env_example = workspace_path / ".env.example"
+        workspace_path = isolated_workspace
+        env_example = workspace_path / ".env.example"
+        
+        # Create example file
+        env_example.write_text("EXAMPLE_VAR=value")
+        
+        with patch('lib.auth.cli.regenerate_key', side_effect=Exception("Key error")):
+            manager = ServiceManager()
+            result = manager._setup_env_file(str(workspace_path))
             
-            # Create example file
-            env_example.write_text("EXAMPLE_VAR=value")
-            
-            with patch('lib.auth.cli.regenerate_key', side_effect=Exception("Key error")):
-                manager = ServiceManager()
-                result = manager._setup_env_file(str(workspace_path))
-                
-                assert result is True  # Should continue despite key error
+            assert result is True  # Should continue despite key error
 
     def test_setup_env_file_exception(self):
         """Test .env setup with general exception."""
@@ -405,65 +400,65 @@ class TestServiceManagerPostgreSQLSetup:
 class TestServiceManagerPostgreSQLCredentials:
     """Test PostgreSQL credential generation."""
     
-    def test_generate_postgres_credentials_success(self):
+    def test_generate_postgres_credentials_success(self, isolated_workspace):
         """Test successful PostgreSQL credential generation."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            env_file = Path(temp_dir) / ".env"
-            env_file.write_text("EXAMPLE_VAR=value\n")
+        workspace_path = isolated_workspace
+        env_file = workspace_path / ".env"
+        env_file.write_text("EXAMPLE_VAR=value\n")
+        
+        with patch('pathlib.Path', return_value=workspace_path):
+            manager = ServiceManager()
+            result = manager._generate_postgres_credentials()
             
-            with patch('pathlib.Path', return_value=Path(temp_dir)):
-                manager = ServiceManager()
-                result = manager._generate_postgres_credentials()
-                
-                assert result is True
-                
-                # Check that credentials were added
-                env_content = env_file.read_text()
-                assert "HIVE_DATABASE_URL=" in env_content
-                assert "postgresql+psycopg://" in env_content
+            assert result is True
+            
+            # Check that credentials were added
+            env_content = env_file.read_text()
+            assert "HIVE_DATABASE_URL=" in env_content
+            assert "postgresql+psycopg://" in env_content
 
-    def test_generate_postgres_credentials_existing_valid(self):
+    def test_generate_postgres_credentials_existing_valid(self, isolated_workspace):
         """Test credential generation with existing valid credentials."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            env_file = Path(temp_dir) / ".env"
-            env_file.write_text("HIVE_DATABASE_URL=postgresql://existing_user:existing_pass@localhost:5532/hive\n")
+        workspace_path = isolated_workspace
+        env_file = workspace_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://existing_user:existing_pass@localhost:5532/hive\n")
+        
+        with patch('pathlib.Path', return_value=workspace_path):
+            manager = ServiceManager()
+            result = manager._generate_postgres_credentials()
             
-            with patch('pathlib.Path', return_value=Path(temp_dir)):
-                manager = ServiceManager()
-                result = manager._generate_postgres_credentials()
-                
-                assert result is True
-                
-                # Should not change existing valid credentials
-                env_content = env_file.read_text()
-                assert "existing_user" in env_content
-                assert "existing_pass" in env_content
+            assert result is True
+            
+            # Should not change existing valid credentials
+            env_content = env_file.read_text()
+            assert "existing_user" in env_content
+            assert "existing_pass" in env_content
 
-    def test_generate_postgres_credentials_existing_placeholder(self):
+    def test_generate_postgres_credentials_existing_placeholder(self, isolated_workspace):
         """Test credential generation with placeholder credentials."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            env_file = Path(temp_dir) / ".env"
-            env_file.write_text("HIVE_DATABASE_URL=postgresql://hive_user:your-secure-password-here@localhost:5532/hive\n")
+        workspace_path = isolated_workspace
+        env_file = workspace_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://hive_user:your-secure-password-here@localhost:5532/hive\n")
+        
+        with patch('pathlib.Path', return_value=workspace_path):
+            manager = ServiceManager()
+            result = manager._generate_postgres_credentials()
             
-            with patch('pathlib.Path', return_value=Path(temp_dir)):
-                manager = ServiceManager()
-                result = manager._generate_postgres_credentials()
-                
-                assert result is True
-                
-                # Should replace placeholder credentials
-                env_content = env_file.read_text()
-                assert "your-secure-password-here" not in env_content
-                assert "hive_user" not in env_content
+            assert result is True
+            
+            # Should replace placeholder credentials
+            env_content = env_file.read_text()
+            assert "your-secure-password-here" not in env_content
+            assert "hive_user" not in env_content
 
-    def test_generate_postgres_credentials_no_env_file(self):
+    def test_generate_postgres_credentials_no_env_file(self, isolated_workspace):
         """Test credential generation when .env file doesn't exist."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with patch('pathlib.Path', return_value=Path(temp_dir)):
-                manager = ServiceManager()
-                result = manager._generate_postgres_credentials()
-                
-                assert result is False
+        workspace_path = isolated_workspace
+        with patch('pathlib.Path', return_value=workspace_path):
+            manager = ServiceManager()
+            result = manager._generate_postgres_credentials()
+            
+            assert result is False
 
     def test_generate_postgres_credentials_exception(self):
         """Test credential generation with exception."""

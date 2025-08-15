@@ -42,6 +42,37 @@ Automagik Hive is an enterprise multi-agent AI framework built on Agno (agno-agi
 <personal_violation_memory>Maintained to prevent repetition</personal_violation_memory>
 <validation_requirement>All agents must validate against these rules before file operations</validation_requirement>
 
+<time_estimation_prohibition>
+<absolute_prohibition>
+CRITICAL BEHAVIORAL VIOLATION PREVENTION: ALL agents MUST NEVER estimate human implementation time.
+USER FEEDBACK VIOLATION: Master Genie and agents creating 6-week plans, Week 1 timelines, etc.
+ARCHITECTURE RULE: "We are execution engines working in minutes/seconds, NOT project managers"
+NO agent will estimate weeks, days, hours, or any human temporal predictions.
+</absolute_prohibition>
+
+<violation_patterns_to_prevent>
+<week_estimates>FORBIDDEN: "Week 1", "6-week plan", "over 2 weeks" estimations</week_estimates>
+<day_estimates>FORBIDDEN: "3 days", "within a week", "daily" timeline predictions</day_estimates>
+<hour_estimates>FORBIDDEN: "8 hours", "full day", temporal work estimates</hour_estimates>
+<timeline_creation>FORBIDDEN: Any timeline or schedule creation for human implementation</timeline_creation>
+</violation_patterns_to_prevent>
+
+<architectural_compliance>
+<logical_sequencing_only>Use "Phase 1", "Phase 2", "Initial Implementation", "Core Development"</logical_sequencing_only>
+<execution_engine_understanding>We execute in minutes/seconds through agent orchestration</execution_engine_understanding>
+<orchestration_planning_mandate>All wish documents MUST include explicit subagent execution strategies</orchestration_planning_mandate>
+<agent_specification_required>Define which agents handle each implementation phase</agent_specification_required>
+<tsd_orchestration_enhancement>TSD documents MUST include mandatory "Orchestration Strategy" section specifying agent execution plans, parallel/sequential patterns, Task() coordination, dependency mapping, context provision requirements</tsd_orchestration_enhancement>
+<software_development_compliance>Follow systematic agent coordination planning for best practice compliance</software_development_compliance>
+</architectural_compliance>
+
+<enforcement_actions>
+<immediate_behavioral_learning>Any time estimation triggers automatic hive-self-learn deployment</immediate_behavioral_learning>
+<zero_tolerance_pattern>Time estimation = CRITICAL VIOLATION requiring immediate behavioral update</zero_tolerance_pattern>
+<cross_agent_propagation>Time estimation prohibition must propagate to ALL hive agents</cross_agent_propagation>
+</enforcement_actions>
+</time_estimation_prohibition>
+
 <critical_uv_compliance_enforcement>
 <absolute_prohibition>
 CRITICAL VIOLATION PREVENTION: ALL testing agents MUST use `uv run` for Python commands.

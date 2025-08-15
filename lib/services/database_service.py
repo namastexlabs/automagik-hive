@@ -27,6 +27,17 @@ class DatabaseService:
         if not raw_db_url:
             raise ValueError("HIVE_DATABASE_URL environment variable must be set")
 
+        # Handle Docker environment by replacing host if override is provided
+        if os.getenv("HIVE_DATABASE_HOST"):
+            # Parse and replace host for Docker environments
+            from urllib.parse import urlparse, urlunparse
+            parsed = urlparse(raw_db_url)
+            docker_host = os.getenv("HIVE_DATABASE_HOST")
+            docker_port = os.getenv("HIVE_DATABASE_PORT", str(parsed.port or "5432"))
+            # Replace host and port while keeping credentials and database
+            parsed = parsed._replace(netloc=f"{parsed.username}:{parsed.password}@{docker_host}:{docker_port}")
+            raw_db_url = urlunparse(parsed)
+
         # Convert SQLAlchemy URL format to psycopg format by removing dialect identifier
         self.db_url = raw_db_url.replace("postgresql+psycopg://", "postgresql://")
 

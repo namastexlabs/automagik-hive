@@ -4,7 +4,7 @@
 
 services:
   # Main PostgreSQL with persistent storage
-  postgres:
+  main-postgres:
     image: agnohq/pgvector:16
     container_name: hive-main-postgres
     restart: unless-stopped
@@ -15,8 +15,11 @@ services:
     environment:
       # Main app postgres settings - inherits from root .env but can override
       - PGDATA=/var/lib/postgresql/data/pgdata
+      # Credentials extracted from HIVE_DATABASE_URL by entrypoint
     volumes:
       - ../../data/postgres:/var/lib/postgresql/data
+      - ./extract_db_credentials.sh:/extract_db_credentials.sh:ro
+    entrypoint: ["/extract_db_credentials.sh", "docker-entrypoint.sh"]
     # Sets the container user to match the host user, preventing volume permission
     # issues on Linux/macOS. Defaults to 1000:1000.
     # Override by setting POSTGRES_UID and POSTGRES_GID in your shell environment.
@@ -47,12 +50,16 @@ services:
       - "${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"
     env_file:
       - ../../.env
+    environment:
+      # Override just the host part of database URL for Docker service discovery
+      - HIVE_DATABASE_HOST=main-postgres
+      - HIVE_DATABASE_PORT=5432
     volumes:
       - main_app_logs:/app/logs
       - main_app_data:/app/data
       - ../../data:/app/shared_data
     depends_on:
-      postgres:
+      main-postgres:
         condition: service_healthy
     networks:
       - main_network

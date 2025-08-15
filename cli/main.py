@@ -88,9 +88,21 @@ def create_parser() -> argparse.ArgumentParser:
     # Create subparsers for commands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
+    # Install subcommand
+    install_parser = subparsers.add_parser("install", help="Complete environment setup with .env generation and PostgreSQL")
+    install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    
+    # Uninstall subcommand
+    uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments (main + agent + genie)")
+    uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    
     # Genie subcommand
     genie_parser = subparsers.add_parser("genie", help="Launch claude with GENIE.md as system prompt")
     genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
+    
+    # Dev subcommand
+    dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
+    dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Workspace path - primary positional argument
     parser.add_argument("workspace", nargs="?", help="Workspace directory path")
@@ -110,7 +122,8 @@ def main() -> int:
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.agent_install, args.agent_start, args.agent_stop,
         args.agent_restart, args.agent_logs, args.agent_status, args.agent_reset,
-        args.command == "genie", args.genie_install, args.genie_start, args.genie_stop,
+        args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
+        args.genie_install, args.genie_start, args.genie_stop,
         args.genie_restart, args.genie_logs, args.genie_status, args.genie_reset,
         args.install, args.stop, args.restart, args.status, args.logs,
         args.uninstall, args.uninstall_global,
@@ -149,6 +162,22 @@ def main() -> int:
         if args.command == "genie":
             genie_cmd = GenieCommands()
             return 0 if genie_cmd.launch_claude(args.args) else 1
+        
+        # Development server (subcommand)
+        if args.command == "dev":
+            service_manager = ServiceManager()
+            result = service_manager.serve_local(args.host, args.port, reload=True)
+            return 0 if result else 1
+        
+        # Install subcommand
+        if args.command == "install":
+            service_manager = ServiceManager()
+            return 0 if service_manager.install_full_environment(args.workspace) else 1
+        
+        # Uninstall subcommand
+        if args.command == "uninstall":
+            service_manager = ServiceManager()
+            return 0 if service_manager.uninstall_environment(args.workspace) else 1
         
         # Start workspace server (positional argument)
         if args.workspace:

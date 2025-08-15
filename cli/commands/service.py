@@ -68,20 +68,29 @@ class ServiceManager:
             return False
     
     def install_full_environment(self, workspace: str = ".") -> bool:
-        """Complete environment setup like 'make install' with .env generation and PostgreSQL."""
+        """Complete environment setup with deployment choice - ENHANCED METHOD."""
         try:
-            print(f"🛠️ Setting up complete Automagik Hive environment in: {workspace}")
+            print(f"🛠️ Setting up Automagik Hive environment in: {workspace}")
             
-            # Check and setup .env file with key generation
-            if not self._setup_env_file(workspace):
-                return False
+            # 1. DEPLOYMENT CHOICE SELECTION (NEW)
+            deployment_mode = self._prompt_deployment_choice()
             
-            # Offer PostgreSQL setup
-            if not self._setup_postgresql_interactive(workspace):
-                return False
+            # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
+            from lib.auth.credential_service import CredentialService
+            credential_service = CredentialService(project_root=Path(workspace))
+            
+            # Generate workspace credentials using existing comprehensive service
+            all_credentials = credential_service.install_all_modes(modes=["workspace"])
+            
+            # 3. DEPLOYMENT-SPECIFIC SETUP (NEW)
+            if deployment_mode == "local_hybrid":
+                return self._setup_local_hybrid_deployment(workspace)
+            else:  # full_docker
+                return self.main_service.install_main_environment(workspace)
                 
-            # Install and start Docker environment
-            return self.main_service.install_main_environment(workspace)
+        except KeyboardInterrupt:
+            print("\n🛑 Installation cancelled by user")
+            return False
         except Exception as e:
             print(f"❌ Failed to install environment: {e}")
             return False
@@ -136,8 +145,8 @@ class ServiceManager:
                 return True
             
             print("🔐 Generating secure PostgreSQL credentials...")
-            if not self._generate_postgres_credentials():
-                return False
+            # Credential generation now handled by CredentialService.install_all_modes()
+            print("✅ PostgreSQL credentials handled by CredentialService")
                 
             print("🐳 Starting PostgreSQL container...")
             # The main service will handle the actual Docker setup
@@ -147,7 +156,42 @@ class ServiceManager:
             print(f"❌ PostgreSQL setup failed: {e}")
             return False
     
-    # Method implementation moved to _generate_postgres_credentials() below
+    def _prompt_deployment_choice(self) -> str:
+        """Interactive deployment choice selection - NEW METHOD."""
+        print("\n🚀 Automagik Hive Installation")
+        print("\nChoose your deployment mode:")
+        print("\nA) Local Development + PostgreSQL Docker")
+        print("   • Main server runs locally (faster development)")
+        print("   • PostgreSQL runs in Docker (persistent data)")
+        print("   • Recommended for: Development, testing, debugging")
+        print("   • Access: http://localhost:8886")
+        print("\nB) Full Docker Deployment")
+        print("   • Both main server and PostgreSQL in containers")
+        print("   • Recommended for: Production-like testing, deployment")
+        print("   • Access: http://localhost:8886")
+        
+        while True:
+            try:
+                choice = input("\nEnter your choice (A/B) [default: A]: ").strip().upper()
+                if choice == "" or choice == "A":
+                    return "local_hybrid"
+                elif choice == "B":
+                    return "full_docker"
+                else:
+                    print("❌ Please enter A or B")
+            except (EOFError, KeyboardInterrupt):
+                return "local_hybrid"  # Default for automated scenarios
+    
+    def _setup_local_hybrid_deployment(self, workspace: str) -> bool:
+        """Setup local main + PostgreSQL docker only - NEW METHOD."""
+        try:
+            print("🐳 Starting PostgreSQL container only...")
+            return self.main_service.start_postgres_only(workspace)
+        except Exception as e:
+            print(f"❌ Local hybrid deployment failed: {e}")
+            return False
+    
+    # Credential generation handled by CredentialService.install_all_modes()
     
     def stop_docker(self, workspace: str = ".") -> bool:
         """Stop Docker production containers."""

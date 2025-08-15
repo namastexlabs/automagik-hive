@@ -568,3 +568,59 @@ class MainService:
         except Exception:
             # Return True even on exceptions - cleanup should be best-effort
             return True
+    
+    def start_postgres_only(self, workspace_path: str) -> bool:
+        """Start only PostgreSQL container for local hybrid deployment - NEW METHOD."""
+        try:
+            print("🐳 Starting PostgreSQL container for local development...")
+            
+            # Normalize workspace path
+            workspace = Path(workspace_path).resolve()
+            
+            # Use existing Docker Compose file resolution logic
+            docker_compose_main = workspace / "docker" / "main" / "docker-compose.yml"
+            docker_compose_root = workspace / "docker-compose.yml"
+            
+            if docker_compose_main.exists():
+                compose_file = docker_compose_main
+            elif docker_compose_root.exists():
+                compose_file = docker_compose_root
+            else:
+                print("❌ No docker-compose.yml found")
+                return False
+            
+            # Ensure data directory exists (reuse existing pattern)
+            data_dir = workspace / "data"
+            data_dir.mkdir(parents=True, exist_ok=True)
+            postgres_data_dir = data_dir / "postgres"
+            postgres_data_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Start only postgres service (pattern from _ensure_postgres_dependency)
+            result = subprocess.run([
+                "docker", "compose", "-f", str(compose_file),
+                "up", "-d", "postgres"
+            ], capture_output=True, text=True, timeout=120)
+            
+            if result.returncode == 0:
+                print("✅ PostgreSQL container started successfully")
+                
+                response = input("Start main server now? (Y/n): ").strip().lower()
+                if response in ["", "y", "yes"]:
+                    subprocess.run(["uv", "run", "automagik-hive", "dev"])
+                else:
+                    print("💡 Start manually: uv run automagik-hive dev")
+                
+                return True
+            else:
+                print(f"❌ Failed to start PostgreSQL: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            print("❌ Timeout starting PostgreSQL container")
+            return False
+        except FileNotFoundError:
+            print("❌ Docker not found. Please install Docker and try again.")
+            return False
+        except Exception as e:
+            print(f"❌ PostgreSQL startup failed: {e}")
+            return False

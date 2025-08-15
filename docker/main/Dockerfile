@@ -6,6 +6,12 @@
 # ============================================================================
 FROM python:3.12-slim as builder
 
+# Install system dependencies for PostgreSQL
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install UV from official source
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
@@ -22,6 +28,11 @@ RUN uv sync --frozen --no-dev
 # STAGE 2: Production Runtime
 # ============================================================================
 FROM python:3.12-slim as production
+
+# Install runtime dependencies for PostgreSQL
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Build metadata labels for enterprise tracking
 LABEL org.opencontainers.image.title="Automagik Hive Multi-Agent System"

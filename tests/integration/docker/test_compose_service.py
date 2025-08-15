@@ -7,7 +7,6 @@ within Docker Compose strategy.
 """
 
 import os
-import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -19,25 +18,18 @@ from lib.auth.credential_service import CredentialService
 
 
 @pytest.fixture
-def temp_workspace():
-    """Create temporary workspace directory for testing."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        yield Path(temp_dir)
-
-
-@pytest.fixture
-def compose_service(temp_workspace):
-    """Create DockerComposeService instance with temp workspace."""
-    return DockerComposeService(temp_workspace)
+def compose_service(isolated_workspace):
+    """Create DockerComposeService instance with isolated workspace."""
+    return DockerComposeService(isolated_workspace)
 
 
 class TestDockerComposeService:
     """Test Docker Compose Service functionality."""
 
-    def test_init_with_workspace_path(self, temp_workspace):
+    def test_init_with_workspace_path(self, isolated_workspace):
         """Test service initialization with workspace path."""
-        service = DockerComposeService(temp_workspace)
-        assert service.workspace_path == temp_workspace
+        service = DockerComposeService(isolated_workspace)
+        assert service.workspace_path == isolated_workspace
         assert isinstance(service.credential_service, CredentialService)
 
     def test_init_default_workspace(self):
@@ -91,9 +83,7 @@ class TestDockerComposeService:
         assert "POSTGRES_DB=custom_db" in service_config["environment"]
         assert "./custom/data:/var/lib/postgresql/data" in service_config["volumes"]
 
-    def test_generate_complete_docker_compose_template_postgres_only(
-        self, compose_service
-    ):
+    def test_generate_complete_docker_compose_template_postgres_only(self, compose_service):
         """Test complete Docker Compose template with PostgreSQL only."""
         compose_config = compose_service.generate_complete_docker_compose_template(
             postgres_port=5532, postgres_database="hive", include_app_service=False
@@ -140,9 +130,7 @@ class TestDockerComposeService:
         assert app_service["depends_on"]["postgres"]["condition"] == "service_healthy"
 
     @patch.object(CredentialService, "setup_complete_credentials")
-    def test_generate_workspace_environment_file_with_credentials(
-        self, mock_credentials, compose_service
-    ):
+    def test_generate_workspace_environment_file_with_credentials(self, mock_credentials, compose_service):
         """Test environment file generation with provided credentials."""
         # Mock credentials
         mock_creds = {
@@ -163,10 +151,7 @@ class TestDockerComposeService:
         assert "POSTGRES_USER=test_user" in env_content
         assert "POSTGRES_PASSWORD=test_pass" in env_content
         assert "POSTGRES_DB=hive" in env_content
-        assert (
-            "HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@localhost:5532/hive"
-            in env_content
-        )
+        assert "HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@localhost:5532/hive" in env_content
         assert "HIVE_API_KEY=hive_test_api_key_12345" in env_content
 
         # Check API configuration
@@ -186,9 +171,7 @@ class TestDockerComposeService:
             assert "POSTGRES_GID=1000" in env_content
 
     @patch.object(CredentialService, "setup_complete_credentials")
-    def test_generate_workspace_environment_file_generate_credentials(
-        self, mock_credentials, compose_service
-    ):
+    def test_generate_workspace_environment_file_generate_credentials(self, mock_credentials, compose_service):
         """Test environment file generation with credential generation."""
         # Mock credential generation
         mock_creds = {
@@ -219,17 +202,13 @@ class TestDockerComposeService:
         """Test saving Docker Compose template to file."""
         # Generate test config
         compose_config = {
-            "services": {
-                "postgres": {"image": "agnohq/pgvector:16", "ports": ["5532:5432"]}
-            },
+            "services": {"postgres": {"image": "agnohq/pgvector:16", "ports": ["5532:5432"]}},
             "networks": {"app_network": {"driver": "bridge"}},
         }
 
         # Save template
         output_path = temp_workspace / "test-compose.yml"
-        saved_path = compose_service.save_docker_compose_template(
-            compose_config, output_path
-        )
+        saved_path = compose_service.save_docker_compose_template(compose_config, output_path)
 
         # Verify file was saved
         assert saved_path == output_path
@@ -242,9 +221,7 @@ class TestDockerComposeService:
         assert saved_config["services"]["postgres"]["image"] == "agnohq/pgvector:16"
         assert saved_config["networks"]["app_network"]["driver"] == "bridge"
 
-    def test_save_docker_compose_template_default_path(
-        self, compose_service, temp_workspace
-    ):
+    def test_save_docker_compose_template_default_path(self, compose_service, temp_workspace):
         """Test saving Docker Compose template with default path."""
         compose_config = {"services": {"test": {"image": "test"}}}
 
@@ -302,9 +279,7 @@ HIVE_API_KEY=hive_test_key"""
         dir_permissions = expected_dir.stat().st_mode & 0o777
         assert dir_permissions == 0o755
 
-    def test_create_data_directories_already_exists(
-        self, compose_service, temp_workspace
-    ):
+    def test_create_data_directories_already_exists(self, compose_service, temp_workspace):
         """Test creating data directories when they already exist."""
         data_path = "./data/postgres"
         expected_dir = temp_workspace / "data/postgres"
@@ -317,9 +292,7 @@ HIVE_API_KEY=hive_test_key"""
         assert created_dir == expected_dir
         assert expected_dir.exists()
 
-    def test_update_gitignore_for_security_new_file(
-        self, compose_service, temp_workspace
-    ):
+    def test_update_gitignore_for_security_new_file(self, compose_service, temp_workspace):
         """Test updating .gitignore for security with new file."""
         gitignore_path = temp_workspace / ".gitignore"
 
@@ -337,9 +310,7 @@ HIVE_API_KEY=hive_test_key"""
         assert "data/postgres/" in content
         assert "__pycache__/" in content
 
-    def test_update_gitignore_for_security_existing_file(
-        self, compose_service, temp_workspace
-    ):
+    def test_update_gitignore_for_security_existing_file(self, compose_service, temp_workspace):
         """Test updating .gitignore for security with existing file."""
         gitignore_path = temp_workspace / ".gitignore"
 
@@ -358,9 +329,7 @@ HIVE_API_KEY=hive_test_key"""
         assert "UVX Automagik Hive - Security Exclusions" in content
         assert ".env" in content
 
-    def test_update_gitignore_for_security_already_updated(
-        self, compose_service, temp_workspace
-    ):
+    def test_update_gitignore_for_security_already_updated(self, compose_service, temp_workspace):
         """Test updating .gitignore when already contains UVX exclusions."""
         gitignore_path = temp_workspace / ".gitignore"
 
@@ -380,9 +349,7 @@ HIVE_API_KEY=hive_test_key"""
         assert gitignore_path.stat().st_size == original_size
 
     @patch.object(CredentialService, "setup_complete_credentials")
-    def test_setup_foundational_services_complete(
-        self, mock_credentials, compose_service, temp_workspace
-    ):
+    def test_setup_foundational_services_complete(self, mock_credentials, compose_service, temp_workspace):
         """Test complete foundational services setup."""
         # Mock credentials
         mock_creds = {
@@ -443,13 +410,9 @@ HIVE_API_KEY=hive_test_key"""
             gitignore_content = f.read()
         assert "UVX Automagik Hive - Security Exclusions" in gitignore_content
 
-    def test_setup_foundational_services_custom_parameters(
-        self, compose_service, temp_workspace
-    ):
+    def test_setup_foundational_services_custom_parameters(self, compose_service, temp_workspace):
         """Test foundational services setup with custom parameters."""
-        with patch.object(
-            CredentialService, "setup_complete_credentials"
-        ) as mock_creds:
+        with patch.object(CredentialService, "setup_complete_credentials") as mock_creds:
             mock_creds.return_value = {
                 "postgres_user": "custom_user",
                 "postgres_password": "custom_pass",
@@ -457,13 +420,11 @@ HIVE_API_KEY=hive_test_key"""
                 "api_key": "hive_custom_key",
             }
 
-            compose_path, env_path, data_dir = (
-                compose_service.setup_foundational_services(
-                    postgres_port=5433,
-                    postgres_database="custom_db",
-                    api_port=8887,
-                    include_app_service=True,
-                )
+            compose_path, env_path, data_dir = compose_service.setup_foundational_services(
+                postgres_port=5433,
+                postgres_database="custom_db",
+                api_port=8887,
+                include_app_service=True,
             )
 
             # Verify custom parameters were used

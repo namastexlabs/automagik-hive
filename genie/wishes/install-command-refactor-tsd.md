@@ -262,446 +262,391 @@ Option B - Full Docker:
 
 ## 🔧 Implementation Details
 
-### 1. Credential Generation Strategy
+### 1. Refactoring Approach Summary
 
-**PostgreSQL Credentials**:
-- Username: Keep existing from .env.example (`hive_user`)
-- Password: Generate 32-character secure random string
-- Database: Keep existing from .env.example (`hive`)
+**Key Principle**: Enhance existing components instead of creating new ones
+- ✅ **Reuse**: CredentialService.install_all_modes() handles all credential logic
+- ✅ **Enhance**: ServiceManager.install_full_environment() adds deployment choice
+- ✅ **Extend**: MainService gets start_postgres_only() method
+- ❌ **Remove**: Dead code and missing method references
 
-**API Keys**:
-- HIVE_API_KEY: Generate UUID4-based secure key
-- Third-party keys (Anthropic, OpenAI): Keep as placeholders with clear instructions
+### 2. Credential Management (Existing CredentialService)
 
-**Security Requirements**:
-- Use `secrets.SystemRandom()` for password generation
-- Include uppercase, lowercase, digits, special characters
-- Minimum 32 characters for database passwords
-- Cryptographically secure random generation
+**Leveraging Existing Capabilities**:
+- ✅ Master credential generation with mode derivation
+- ✅ Automatic .env file creation from .env.example templates
+- ✅ Placeholder credential detection and replacement
+- ✅ Force regeneration and validation logic
+- ✅ Secure random generation with proper entropy
 
-### 2. Environment File Management Logic
-
+**Call Pattern**:
 ```python
-def manage_env_file(workspace_path: Path, deployment_mode: DeploymentMode) -> bool:
-    """
-    Environment file management with deployment mode consideration.
-    
-    Logic Flow:
-    1. Check if .env exists
-    2. If missing: Copy .env.example, generate all credentials
-    3. If exists: Validate credentials, generate missing ones
-    4. Update deployment-specific configuration
-    5. Validate final configuration
-    """
+credential_service = CredentialService(project_root=Path(workspace))
+all_credentials = credential_service.install_all_modes(modes=["workspace"])
 ```
 
-**Placeholder Detection Patterns**:
-- `"your-*-here"` patterns  
-- `"CHANGE_ME"` patterns
-- `"TODO:"` prefixed values
-- Empty string values for required credentials
-
-### 3. Deployment Mode Configuration
+### 3. Deployment Mode Implementation
 
 **Local Hybrid Mode (Option A)**:
-```yaml
-# Uses docker/main/docker-compose.yml with postgres service only
-services:
-  postgres:
-    # ... existing postgres configuration
-    # Only start postgres container
-    
-# Main app runs locally via uvicorn:
-# uv run uvicorn api.serve:app --host 0.0.0.0 --port 8886
+```bash
+# PostgreSQL container only via docker-compose
+docker-compose -f docker/main/docker-compose.yml up -d postgres
+
+# Main server runs locally
+uv run automagik-hive --dev
 ```
 
 **Full Docker Mode (Option B)**:
-```yaml
-# Uses complete docker/main/docker-compose.yml
-services:
-  postgres:
-    # ... existing postgres configuration
-  app:
-    # ... existing app configuration
-    # Both services run in containers
+```bash
+# Both containers via existing MainService logic
+# Uses complete docker/main/docker-compose.yml setup
 ```
 
-### 4. User Interaction Design
+### 4. Dead Code Removal Strategy
 
-**Deployment Choice Prompt**:
-```
-🚀 Automagik Hive Installation
+**ServiceManager cleanup**:
+```python
+# REMOVE: Line 139 call to non-existent method
+# BEFORE:
+if not self._generate_postgres_credentials():
+    return False
 
-Choose your deployment mode:
+# AFTER: 
+# (Remove entirely - handled by CredentialService)
 
-A) Local Development + PostgreSQL Docker
-   • Main server runs locally (faster development)
-   • PostgreSQL runs in Docker (persistent data)
-   • Recommended for: Development, testing, debugging
-   • Access: http://localhost:8886
+# REMOVE: Line 150 false comment
+# BEFORE:
+# Method implementation moved to _generate_postgres_credentials() below
 
-B) Full Docker Deployment  
-   • Both main server and PostgreSQL in containers
-   • Recommended for: Production-like testing, deployment preparation
-   • Access: http://localhost:8886
-
-Enter your choice (A/B) [default: A]: 
+# AFTER:
+# (Remove entirely - method doesn't exist)
 ```
 
-**Credential Generation Feedback**:
+### 5. Integration Points
+
+**ServiceManager → CredentialService**:
+```python
+from lib.auth.credential_service import CredentialService
+credential_service = CredentialService(project_root=Path(workspace))
 ```
-🔐 Environment Configuration
-✅ .env file found
-⚠️  Placeholder credentials detected: POSTGRES_PASSWORD, HIVE_API_KEY
-🎲 Generating secure credentials...
-✅ PostgreSQL password generated (32 characters)
-✅ Hive API key generated
-✅ Environment configuration complete
+
+**ServiceManager → MainService**:
+```python
+# Existing integration enhanced with new method
+self.main_service.start_postgres_only(workspace)
 ```
 
 ---
 
 ## 🧪 Test Strategy Integration
 
-### 1. Test Coverage Requirements
+### 1. Refactoring Test Approach
 
-**Unit Tests**:
-- EnvironmentManager credential detection logic
-- DeploymentManager configuration generation  
-- InstallOrchestrator workflow coordination
-- Credential generation security and randomness
+**Focus**: Test enhanced ServiceManager methods and MainService integration
+- ✅ **Reuse**: Existing CredentialService tests already validate credential logic
+- ✅ **Enhance**: ServiceManager tests for deployment choice logic
+- ✅ **Add**: MainService.start_postgres_only() unit tests
+- ✅ **Integration**: Full workflow tests for both deployment modes
 
-**Integration Tests**:
-- Full installation workflow for both deployment modes
-- Environment file creation and modification
-- Docker container management
-- Service connectivity validation
+### 2. Test Coverage Requirements
 
-**Edge Case Tests**:
-- Missing Docker installation
-- Permission denied scenarios
-- Corrupted .env files
-- Network connectivity issues
-- Container startup failures
-
-### 2. TDD Implementation Strategy
-
-**Red-Green-Refactor Cycles**:
-
-**Cycle 1: Environment Detection**
+**Unit Tests (New)**:
 ```python
-# RED: Test for .env state detection
-def test_detect_env_state_missing():
-    assert env_manager.detect_env_state(workspace) == EnvState.MISSING
+# ServiceManager enhancements
+def test_prompt_deployment_choice_default():
+    """Test deployment choice prompt with default selection."""
+    
+def test_prompt_deployment_choice_full_docker():
+    """Test deployment choice prompt with full docker selection."""
+    
+def test_setup_local_hybrid_deployment():
+    """Test local hybrid deployment setup."""
 
-# GREEN: Implement minimal detection logic
-def detect_env_state(self, workspace_path: Path) -> EnvState:
-    if not (workspace_path / ".env").exists():
-        return EnvState.MISSING
-
-# REFACTOR: Add validation and edge cases
+# MainService enhancements  
+def test_start_postgres_only_success():
+    """Test PostgreSQL-only container startup."""
+    
+def test_start_postgres_only_failure():
+    """Test PostgreSQL startup failure handling."""
 ```
 
-**Cycle 2: Credential Generation**
+**Integration Tests (Enhanced)**:
 ```python
-# RED: Test secure credential generation
-def test_generate_postgres_password():
-    password = env_manager.generate_postgres_password()
-    assert len(password) >= 32
-    assert has_mixed_case_and_special_chars(password)
-
-# GREEN: Implement basic generation
-# REFACTOR: Add security requirements
+def test_install_full_environment_local_hybrid():
+    """Test complete installation with local hybrid mode."""
+    
+def test_install_full_environment_full_docker():
+    """Test complete installation with full docker mode."""
+    
+def test_credential_service_integration():
+    """Test CredentialService.install_all_modes() integration."""
 ```
 
-**Cycle 3: Deployment Configuration**
+**Regression Tests**:
 ```python
-# RED: Test deployment mode configuration
-def test_configure_local_hybrid():
-    result = deployment_manager.configure_local_hybrid_deployment(".")
-    assert result == True
-    assert postgres_container_only_running()
+def test_no_missing_postgres_credentials_error():
+    """Ensure _generate_postgres_credentials() error is fixed."""
+    
+def test_dead_code_removed():
+    """Verify dead code and comments are removed."""
+```
 
-# GREEN: Implement basic configuration
+### 3. TDD Implementation Strategy
+
+**Red-Green-Refactor for Enhancements Only**:
+
+**Cycle 1: Deployment Choice**
+```python
+# RED: Test deployment choice prompt
+def test_prompt_deployment_choice():
+    with patch('builtins.input', return_value='A'):
+        result = service_manager._prompt_deployment_choice()
+        assert result == "local_hybrid"
+
+# GREEN: Implement basic prompt logic
 # REFACTOR: Add error handling and validation
 ```
 
-### 3. Test Milestones
+**Cycle 2: Local Hybrid Setup**
+```python
+# RED: Test local hybrid deployment
+def test_setup_local_hybrid():
+    result = service_manager._setup_local_hybrid_deployment(".")
+    assert result == True
+    # Verify only PostgreSQL container running
 
-- **Milestone 1**: Environment detection and credential validation (75% coverage)
-- **Milestone 2**: Deployment mode selection and configuration (85% coverage)  
-- **Milestone 3**: Full installation workflow integration (95% coverage)
-- **Milestone 4**: Edge cases and error handling (98% coverage)
+# GREEN: Implement MainService.start_postgres_only()
+# REFACTOR: Add error handling and feedback
+```
 
 ---
 
 ## 🚨 Error Handling & Recovery
 
-### 1. Failure Scenarios & Recovery
+### 1. Enhanced Error Handling (Refactoring Focus)
 
-**Docker Not Available**:
+**Leverage Existing CredentialService Error Handling**:
+- ✅ CredentialService already handles .env corruption, missing files, permission issues
+- ✅ Comprehensive error recovery and backup strategies already implemented
+- ➕ Add deployment-specific error handling for new functionality
+
+**ServiceManager Enhanced Error Handling**:
 ```python
-def _validate_docker_availability(self) -> bool:
+def install_full_environment(self, workspace: str = ".") -> bool:
+    """Enhanced with deployment choice error handling."""
     try:
-        subprocess.run(["docker", "--version"], check=True, capture_output=True)
-        return True
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        print("❌ Docker not found. Please install Docker and try again.")
-        print("💡 Visit: https://docs.docker.com/get-docker/")
+        # Deployment choice with error handling
+        deployment_mode = self._prompt_deployment_choice()
+        
+        # Leverage existing CredentialService error handling
+        credential_service = CredentialService(project_root=Path(workspace))
+        all_credentials = credential_service.install_all_modes(modes=["workspace"])
+        
+        # Deployment-specific error handling
+        if deployment_mode == "local_hybrid":
+            return self._setup_local_hybrid_deployment(workspace)
+        else:
+            return self.main_service.install_main_environment(workspace)
+            
+    except KeyboardInterrupt:
+        print("\n🛑 Installation cancelled by user")
         return False
-```
-
-**Environment File Corruption**:
-```python
-def _handle_corrupted_env_file(self, workspace_path: Path) -> bool:
-    """Handle corrupted .env files by backing up and recreating."""
-    env_file = workspace_path / ".env"
-    backup_file = workspace_path / f".env.backup.{int(time.time())}"
-    
-    try:
-        shutil.copy2(env_file, backup_file)
-        print(f"📋 Corrupted .env backed up to: {backup_file.name}")
-        return self._create_env_from_template(workspace_path)
     except Exception as e:
-        print(f"❌ Failed to handle corrupted .env: {e}")
+        print(f"❌ Installation failed: {e}")
         return False
 ```
 
-**Container Startup Failures**:
+**MainService Error Handling Enhancement**:
 ```python
-def _handle_container_startup_failure(self, service_name: str) -> bool:
-    """Handle container startup failures with retry logic."""
-    max_retries = 3
-    for attempt in range(max_retries):
-        print(f"🔄 Retry {attempt + 1}/{max_retries}: Starting {service_name}...")
-        if self._start_service_with_logs(service_name):
-            return True
-        time.sleep(5)
-    
-    print(f"❌ Failed to start {service_name} after {max_retries} attempts")
-    return self._cleanup_partial_installation()
-```
-
-### 2. Rollback Strategy
-
-**Partial Installation Cleanup**:
-```python
-def _cleanup_partial_installation(self) -> bool:
-    """Clean up partial installation state."""
-    cleanup_tasks = [
-        ("Stop containers", self._stop_all_containers),
-        ("Remove volumes", self._remove_installation_volumes),
-        ("Reset .env file", self._restore_env_backup),
-    ]
-    
-    success_count = 0
-    for task_name, task_func in cleanup_tasks:
-        try:
-            if task_func():
-                print(f"✅ {task_name}")
-                success_count += 1
-            else:
-                print(f"⚠️ {task_name} had issues")
-        except Exception as e:
-            print(f"❌ {task_name} failed: {e}")
-    
-    return success_count == len(cleanup_tasks)
+def start_postgres_only(self, workspace_path: str) -> bool:
+    """PostgreSQL-only startup with error handling."""
+    try:
+        # Docker availability check
+        subprocess.run(["docker", "--version"], check=True, capture_output=True)
+        
+        # Container startup with retry logic
+        max_retries = 3
+        for attempt in range(max_retries):
+            if self._start_postgres_container(workspace_path):
+                return True
+            if attempt < max_retries - 1:
+                print(f"🔄 Retry {attempt + 2}/{max_retries}...")
+                time.sleep(5)
+        
+        return False
+    except FileNotFoundError:
+        print("❌ Docker not found. Please install Docker and try again.")
+        return False
+    except Exception as e:
+        print(f"❌ PostgreSQL startup failed: {e}")
+        return False
 ```
 
 ---
 
-## 🔗 Integration Points
+## 🔗 Integration Strategy
 
-### 1. ServiceManager Integration
+### 1. Zero New Dependencies
 
-**Compatibility Requirements**:
-- Maintain existing interface for `install_full_environment()`
-- Extend functionality without breaking existing callers
-- Preserve Docker container naming conventions
+**Reuse Existing Infrastructure**:
+- ✅ ServiceManager existing interface maintained
+- ✅ MainService existing container logic leveraged  
+- ✅ CredentialService comprehensive functionality reused
+- ✅ No new external dependencies required
 
-**Integration Strategy**:
+### 2. Backward Compatibility
+
+**Interface Preservation**:
 ```python
-class ServiceManager:
-    def __init__(self, workspace_path: Path | None = None):
-        self.workspace_path = workspace_path or Path()
-        self.install_orchestrator = InstallOrchestrator(self.workspace_path)
-    
-    def install_full_environment(self, workspace: str) -> bool:
-        """Enhanced installation with deployment choice."""
-        # Delegate to new orchestrator while maintaining compatibility
-        return self.install_orchestrator.install_with_deployment_choice(workspace)
+# Existing callers continue to work unchanged
+service_manager.install_full_environment(".")  # ✅ Still works
+service_manager.install_full_environment("/path")  # ✅ Still works
+
+# New functionality added transparently
+# User gets deployment choice prompt automatically
 ```
 
-### 2. MainService Integration
+### 3. Configuration Compatibility
 
-**Requirements**:
-- Support partial service startup (PostgreSQL only for local hybrid)
-- Maintain existing container management logic
-- Add local development server integration
-
-**Implementation Approach**:
-```python
-class MainService:
-    def start_postgres_only(self, workspace_path: str) -> bool:
-        """Start only PostgreSQL container for local hybrid deployment."""
-        return self._setup_postgres_container(workspace_path)
-    
-    def prepare_local_development(self, workspace_path: str) -> Dict[str, str]:
-        """Prepare configuration for local main server."""
-        return {
-            "database_url": self._get_postgres_connection_string(),
-            "api_port": os.getenv("HIVE_API_PORT", "8886"),
-            "host": os.getenv("HIVE_API_HOST", "0.0.0.0")
-        }
-```
+**Docker Compose Reuse**:
+- ✅ Existing `docker/main/docker-compose.yml` used for both modes
+- ✅ PostgreSQL service configuration unchanged
+- ✅ App service configuration unchanged
+- ➕ Deployment mode determines which services start
 
 ---
 
-## 📈 Success Criteria
+## 📈 Success Criteria (Refactoring Focus)
 
 ### 1. Functional Requirements
 
 **Installation Success Metrics**:
-- [ ] User can choose between local hybrid and full Docker deployment
-- [ ] .env file is created or updated with secure credentials  
-- [ ] PostgreSQL container starts and accepts connections
-- [ ] Main service (local or Docker) responds to health checks
+- [ ] User can choose between local hybrid and full Docker deployment via interactive prompt
+- [ ] CredentialService.install_all_modes() handles all .env file creation/updates
+- [ ] Missing `_generate_postgres_credentials()` method error is resolved
+- [ ] PostgreSQL container starts correctly for both deployment modes
+- [ ] Main service (local or Docker) responds appropriately based on mode
 - [ ] Installation completes within 60 seconds for normal cases
+- [ ] No new files created - pure refactoring approach
 
 **User Experience Metrics**:
-- [ ] Clear deployment mode explanation and selection
-- [ ] Progress feedback throughout installation process  
+- [ ] Clear deployment mode explanation and selection (interactive prompt)
+- [ ] Seamless integration with existing installation flow
 - [ ] Helpful error messages with actionable guidance
 - [ ] Successful installations require no manual intervention
+- [ ] Agent and genie installations remain unaffected
 
-### 2. Technical Requirements
+### 2. Technical Requirements (Refactoring)
 
 **Code Quality Gates**:
-- [ ] 95%+ test coverage for new components
-- [ ] All tests pass in CI/CD pipeline
+- [ ] Enhanced ServiceManager methods tested (95%+ coverage for new code)
+- [ ] All existing tests continue to pass (backward compatibility)
+- [ ] Dead code removed (lines 139, 150 in ServiceManager)
 - [ ] Static analysis (mypy, ruff) passes without errors
-- [ ] Architecture follows existing patterns and constraints
+- [ ] Zero new file creation - enhancement-only approach
 
 **Performance Requirements**:
-- [ ] Installation completes within 60 seconds (normal case)
-- [ ] Memory usage stays under 100MB during installation
-- [ ] No resource leaks after installation completion
-- [ ] Graceful handling of slow Docker operations
+- [ ] Installation performance unchanged or improved
+- [ ] Memory usage unchanged - no new object creation overhead
+- [ ] Leverage existing CredentialService performance optimizations
+- [ ] Docker startup times unchanged
 
-### 3. Security Requirements
+### 3. Integration Requirements
 
-**Credential Security**:
-- [ ] Generated passwords meet security complexity requirements
-- [ ] No credentials logged or exposed in plain text
-- [ ] .env file has appropriate file permissions (600)
-- [ ] Secure random number generation for all credentials
+**Reuse Validation**:
+- [ ] CredentialService.install_all_modes() correctly integrated
+- [ ] ServiceManager interface backward compatibility maintained
+- [ ] MainService.start_postgres_only() properly implemented
+- [ ] All existing credential security features preserved
 
 ---
 
-## 🎯 Implementation Plan
+## 🎯 Implementation Plan (Refactoring)
 
 ### Development Phases
 
-**Phase 1: Core Infrastructure (Week 1)**
-- Create EnvironmentManager with credential detection
-- Implement DeploymentManager with mode configuration
-- Set up basic InstallOrchestrator structure
-- Write comprehensive unit tests
+**Phase 1: ServiceManager Enhancement **
+- Remove dead code (lines 139, 150) causing the installation error
+- Add `_prompt_deployment_choice()` method to ServiceManager
+- Integrate `CredentialService.install_all_modes(modes=["workspace"])`
+- Add `_setup_local_hybrid_deployment()` method
+- Write unit tests for new ServiceManager methods
 
-**Phase 2: Integration & Workflow (Week 2)**  
-- Integrate with existing ServiceManager
-- Implement complete installation workflow
-- Add user interaction and progress feedback
-- Integration testing with both deployment modes
+**Phase 2: MainService Enhancement **  
+- Implement `MainService.start_postgres_only()` method
+- Add error handling and retry logic for PostgreSQL-only startup
+- Integration testing with ServiceManager deployment choice
+- Test both deployment modes end-to-end
 
-**Phase 3: Error Handling & Polish (Week 3)**
-- Comprehensive error handling and recovery
-- User experience improvements
-- Documentation and help text
-- Performance optimization and testing
+**Phase 3: Polish & Validation **
+- Comprehensive error handling and user feedback
+- Performance validation (ensure no regression)
+- Backward compatibility testing
+- Documentation updates for deployment modes
 
-**Phase 4: Validation & Release (Week 4)**
-- Full system testing across environments
-- Security review and validation
-- Final integration with CLI command structure
-- Release preparation and deployment
+**Phase 4: Final Integration **
+- Full system testing across environments  
+- Regression testing to ensure agent/genie installs unaffected
+- User acceptance testing with deployment choice
+- Release preparation
 
 ---
 
-## 🔍 Validation Strategy
+## 🔍 Validation Strategy (Refactoring)
 
-### 1. Test Environments
+### 1. Regression Testing Focus
 
-**Local Development Testing**:
-- macOS with Docker Desktop
-- Ubuntu 22.04 with Docker CE
-- Windows 11 with WSL2 and Docker Desktop
+**Backward Compatibility Validation**:
+- Existing `install_full_environment()` callers continue to work
+- Agent and genie installation commands remain functional
+- Docker container configurations unchanged
+- Credential generation maintains security standards
 
-**CI/CD Pipeline Testing**:
-- Automated testing in GitHub Actions
-- Container builds and integration tests
-- Security scanning and dependency checks
+### 2. Enhancement Testing
 
-### 2. Acceptance Criteria Validation
-
-**User Acceptance Tests**:
+**New Functionality Validation**:
 ```gherkin
-Scenario: First-time installation with deployment choice
+Scenario: Enhanced installation with deployment choice
   Given user runs `uv run automagik-hive --install`
-  And no .env file exists in workspace
-  When user selects deployment mode A (local hybrid)
-  Then system generates .env file with secure credentials
-  And PostgreSQL container starts successfully
-  And user receives next steps guidance
+  When deployment choice prompt appears
+  And user selects local hybrid mode
+  Then CredentialService handles .env file automatically
+  And only PostgreSQL container starts
+  And user receives local development instructions
 
-Scenario: Installation with existing .env file
-  Given user has .env file with placeholder credentials  
-  When user runs installation process
-  Then system detects placeholder credentials
-  And generates secure replacements
-  And preserves existing valid credentials
-  And installation completes successfully
+Scenario: Dead code bug fix validation
+  Given the missing _generate_postgres_credentials() method
+  When installation process runs
+  Then no AttributeError occurs
+  And credential generation works via CredentialService
 ```
 
 ---
 
-## 📚 Documentation Requirements
+## ⚡ Conclusion (Refactoring Approach)
 
-### 1. User Documentation
-
-**Installation Guide Updates**:
-- Clear explanation of deployment mode differences
-- Prerequisites and system requirements
-- Troubleshooting guide for common issues
-- Migration guide from existing installations
-
-### 2. Developer Documentation
-
-**Code Documentation**:
-- Comprehensive docstrings for all new classes and methods
-- Architecture decision records for major design choices
-- Integration guide for extending deployment modes
-- Testing guide and coverage requirements
-
----
-
-## ⚡ Conclusion
-
-This Technical Specification Document provides a comprehensive blueprint for refactoring the `--install` command to meet the user's exact requirements. The solution maintains compatibility with existing architecture while adding the requested deployment choice functionality and intelligent credential management.
+This Technical Specification Document provides a comprehensive blueprint for refactoring the `--install` command through pure enhancement of existing components. The solution leverages extensive existing infrastructure while adding the requested deployment choice functionality.
 
 **Key Success Factors**:
-1. **User-Centric Design**: Interactive deployment mode selection puts control in user hands
-2. **Intelligent Automation**: Automatic credential detection and generation reduces manual work
-3. **Robust Error Handling**: Comprehensive failure recovery ensures reliable installation experience  
-4. **Architectural Compatibility**: Seamless integration with existing ServiceManager and Docker infrastructure
-5. **Comprehensive Testing**: TDD approach ensures reliability and maintainability
+1. **Zero New Files**: Pure refactoring approach leverages existing comprehensive CredentialService
+2. **Reuse Over Recreation**: CredentialService.install_all_modes() eliminates need for new credential logic
+3. **Surgical Enhancement**: Targeted improvements to ServiceManager and MainService only
+4. **Dead Code Elimination**: Fixes the missing method error while removing redundant patterns
+5. **Backward Compatibility**: Existing interfaces preserved, new functionality added transparently
+
+**Architecture Wins**:
+- ✅ **1068-line CredentialService reused** instead of creating new EnvironmentManager
+- ✅ **ServiceManager enhanced** instead of creating new InstallOrchestrator  
+- ✅ **MainService extended** instead of creating new DeploymentManager
+- ✅ **Zero new dependencies** - pure enhancement approach
+- ✅ **Agent/genie separation respected** - no unwanted unification
 
 **Next Steps**:
-1. Review and validate this specification with stakeholders
-2. Begin implementation starting with EnvironmentManager core functionality
-3. Follow TDD approach with incremental feature delivery
-4. Maintain focus on user requirements without architectural gold-plating
+1. Begin implementation with ServiceManager dead code removal
+2. Add deployment choice prompt and CredentialService integration
+3. Implement MainService.start_postgres_only() method
+4. Focus on user requirements without architectural over-engineering
 
 ---
 
-**Implementation Ready**: ✅ This specification provides complete technical guidance for implementing the enhanced `--install` command according to user requirements.
+**Implementation Ready**: ✅ This specification provides complete technical guidance for implementing the enhanced `--install` command through surgical refactoring of existing components.
