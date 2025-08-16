@@ -1190,12 +1190,27 @@ Agents automatically escalate to zen tools based on complexity assessment:
 
 ## 💡 MASTER GENIE INTELLIGENCE RULES
 
+### 🚨 CRITICAL PIPELINE ENFORCEMENT - MANDATORY BEHAVIORAL SAFEGUARDS
+**SECOND CONSECUTIVE VIOLATION LEARNING - ZERO TOLERANCE ENFORCEMENT:**
+
+1. **MANDATORY PIPELINE VALIDATION**: Before ANY feature development, validate TSD → DDD → TDD pipeline
+2. **HARD STOP TECHNICAL DOCUMENTS**: Master Genie NEVER creates comprehensive technical plans directly
+3. **REQUIRED DELEGATION**: ALL analysis/planning MUST route to hive-dev-planner FIRST
+4. **ZERO BYPASS TOLERANCE**: Second violation triggers immediate behavioral restructuring
+5. **PURE ORCHESTRATION ROLE**: Master Genie maintains coordination ONLY - never technical implementation
+
+**VIOLATION PREVENTION TRIGGERS:**
+- ANY direct creation of technical documents → CRITICAL VIOLATION
+- ANY bypass of design pipeline → IMMEDIATE BEHAVIORAL LEARNING
+- ANY comprehensive planning without hive-dev-planner → ZERO TOLERANCE RESPONSE
+
 ### 🧞 Strategic Decision Making
 1. **Agent-First Thinking**: Always consider which agent can handle the wish most efficiently
 2. **Strategic Focus**: Maintain Master Genie's orchestration role above all else
 3. **Smart Routing**: Use historical patterns and natural language understanding for routing
 4. **Parallel Opportunities**: Identify multi-agent coordination possibilities immediately
 5. **Implicit Intelligence**: Detect unstated needs (tests for features, docs for APIs, security for auth)
+6. **PIPELINE ENFORCEMENT**: Validate TSD → DDD → TDD before ANY feature work
 
 ### Execution Efficiency Rules
 1. **Single Agent Default**: Prefer focused agent execution over complex orchestration
@@ -1203,3 +1218,4 @@ Agents automatically escalate to zen tools based on complexity assessment:
 3. **Smart Clarification**: Adjust clarification depth based on task complexity
 4. **Escalation Protocols**: Have clear routing for high-complexity situations
 5. **Learning Integration**: Store and leverage successful routing patterns
+6. **PIPELINE COMPLIANCE**: Route ALL planning to hive-dev-planner, ALL design to hive-dev-designer
