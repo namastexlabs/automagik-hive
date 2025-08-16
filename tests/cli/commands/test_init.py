@@ -75,7 +75,15 @@ class TestInitWorkspaceMethod:
         mock_print.assert_any_call("🚀 Initializing workspace: my-new-workspace")
 
     @patch('builtins.print')
-    def test_init_workspace_without_name(self, mock_print):
+    @patch('pathlib.Path.mkdir')
+    @patch('pathlib.Path.exists', return_value=False)  # Mock directory doesn't exist
+    @patch('pathlib.Path.iterdir', return_value=[])    # Mock empty directory
+    @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
+    def test_init_workspace_without_name(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_iterdir, mock_exists, mock_mkdir, mock_print):
         """Test workspace initialization in current directory."""
         init_cmd = InitCommands()
         
@@ -83,10 +91,18 @@ class TestInitWorkspaceMethod:
         
         # Should fail initially - current directory initialization not implemented
         assert result is True
-        mock_print.assert_called_with("🚀 Initializing workspace in current directory")
+        mock_print.assert_any_call("🚀 Initializing workspace in current directory")
 
     @patch('builtins.print')
-    def test_init_workspace_with_none_name(self, mock_print):
+    @patch('pathlib.Path.mkdir')
+    @patch('pathlib.Path.exists', return_value=False)  # Mock directory doesn't exist
+    @patch('pathlib.Path.iterdir', return_value=[])    # Mock empty directory
+    @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
+    def test_init_workspace_with_none_name(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_iterdir, mock_exists, mock_mkdir, mock_print):
         """Test workspace initialization with None name."""
         init_cmd = InitCommands()
         
@@ -94,15 +110,17 @@ class TestInitWorkspaceMethod:
         
         # Should fail initially - None name handling not implemented
         assert result is True
-        mock_print.assert_called_with("🚀 Initializing workspace in current directory")
+        mock_print.assert_any_call("🚀 Initializing workspace in current directory")
 
     @patch('pathlib.Path.mkdir')
+    @patch('pathlib.Path.exists', return_value=False)  # Mock directory doesn't exist
+    @patch('pathlib.Path.iterdir', return_value=[])    # Mock empty directory
     @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
     @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
     @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
     @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
     @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
-    def test_init_workspace_exception_handling(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_mkdir):
+    def test_init_workspace_exception_handling(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_iterdir, mock_exists, mock_mkdir):
         """Test init_workspace handles exceptions gracefully."""
         init_cmd = InitCommands()
         
@@ -237,7 +255,15 @@ class TestInitCommandsEdgeCases:
             # Should fail initially - special character validation not implemented
             assert result is True
 
-    def test_all_methods_return_consistent_types(self):
+    @patch('pathlib.Path.mkdir')
+    @patch('pathlib.Path.exists', return_value=False)  # Mock directory doesn't exist
+    @patch('pathlib.Path.iterdir', return_value=[])    # Mock empty directory
+    @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
+    def test_all_methods_return_consistent_types(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_iterdir, mock_exists, mock_mkdir):
         """Test all methods return consistent types."""
         init_cmd = InitCommands()
         

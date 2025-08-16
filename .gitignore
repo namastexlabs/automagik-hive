@@ -10,7 +10,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-# lib/ - Commented out because it conflicts with our project's lib/ directory
+# lib/  # DISABLED - this ignores our project's lib/ directory
 lib64/
 parts/
 sdist/
