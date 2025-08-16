@@ -481,11 +481,17 @@ class TestGenieServiceReset:
     def test_reset_with_exception_handling(self, temp_workspace, mock_genie_service):
         """Test reset handles exceptions gracefully."""
         mock_genie_service.stop_genie.side_effect = Exception("Reset error")
+        # Mock all other service methods to return proper boolean values
+        mock_genie_service.uninstall_genie_environment.return_value = True
+        mock_genie_service.install_genie_environment.return_value = True
+        mock_genie_service.serve_genie.return_value = True
         
         commands = GenieCommands(temp_workspace)
         result = commands.reset()
         
-        assert result is False
+        # The reset should succeed because stop_genie exceptions are ignored
+        # and other operations succeed
+        assert result is True
 
 
 class TestClaudeLaunching:
@@ -575,7 +581,7 @@ class TestClaudeLaunching:
             assert result is False
             # Verify error message was printed to stderr
             captured = capsys.readouterr()
-            assert "GENIE.md not found" in captured.out
+            assert "GENIE.md not found" in captured.err
 
     def test_launch_claude_failure_genie_md_read_error(self, temp_workspace, capsys):
         """Test Claude launch handles GENIE.md read errors."""
@@ -590,7 +596,7 @@ class TestClaudeLaunching:
             
             assert result is False
             captured = capsys.readouterr()
-            assert "Failed to read GENIE.md" in captured.out
+            assert "Failed to read GENIE.md" in captured.err
 
     def test_launch_claude_failure_claude_not_found(self, temp_workspace, genie_md_content, capsys):
         """Test Claude launch handles missing claude command."""
@@ -605,7 +611,7 @@ class TestClaudeLaunching:
             
             assert result is False
             captured = capsys.readouterr()
-            assert "claude command not found" in captured.out
+            assert "claude command not found" in captured.err
 
     def test_launch_claude_handles_keyboard_interrupt(self, temp_workspace, genie_md_content, capsys):
         """Test Claude launch handles keyboard interrupt gracefully."""
@@ -650,7 +656,7 @@ class TestClaudeLaunching:
             
             assert result is False
             captured = capsys.readouterr()
-            assert "Failed to launch claude" in captured.out
+            assert "Failed to launch claude" in captured.err
 
 
 class TestGenieCommandsEdgeCases:

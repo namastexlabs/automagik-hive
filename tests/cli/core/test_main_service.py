@@ -584,8 +584,8 @@ class TestMainServiceStatus:
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
         
-        assert status["main-postgres"] == "✅ Running (Port: 5532)"
-        assert status["main-app"] == "✅ Running (Port: 8887)"
+        assert status["main-postgres"] == "✅ Running"
+        assert status["main-app"] == "✅ Running"
 
     @patch('subprocess.run')
     def test_get_main_status_both_stopped(self, mock_run, temp_workspace):

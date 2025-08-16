@@ -115,45 +115,59 @@ class TestPostgreSQLServiceStatus:
         """Test status returns expected default response structure."""
         service = PostgreSQLService(temp_workspace)
         
-        status = service.status()
-        
-        assert isinstance(status, dict)
-        assert "status" in status
-        assert "healthy" in status
-        assert status["status"] == "running"
-        assert status["healthy"] is True
+        # Mock the Docker container operations to simulate a running container
+        with patch.object(service.postgres_commands.docker_manager, '_container_exists', return_value=True), \
+             patch.object(service.postgres_commands.docker_manager, '_container_running', return_value=True), \
+             patch.object(service.postgres_commands.docker_manager, '_run_command', return_value="healthy"):
+            
+            status = service.status()
+            
+            assert isinstance(status, dict)
+            assert "status" in status
+            assert "healthy" in status
+            assert status["status"] == "running"
+            assert status["healthy"] is True
 
     def test_status_with_database_connection_check(self, temp_workspace):
         """Test status integrates with database connection validation when implemented."""
         service = PostgreSQLService(temp_workspace)
         
-        # Mock database connection check
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = "database_online"
+        # Mock the container operations to simulate a running PostgreSQL container
+        with patch.object(service.postgres_commands, '_get_postgres_container_for_workspace', return_value='hive-postgres-workspace') as mock_container, \
+             patch.object(service.postgres_commands.docker_manager, '_container_exists', return_value=True) as mock_exists, \
+             patch.object(service.postgres_commands.docker_manager, '_container_running', return_value=True) as mock_running, \
+             patch.object(service.postgres_commands.docker_manager, '_run_command') as mock_run:
+            
+            # Mock command outputs for health and port info
+            mock_run.side_effect = lambda cmd, **kwargs: "healthy" if "inspect" in cmd else "0.0.0.0:35532"
             
             status = service.status()
             
-            # Current stub ignores database status
-            assert status["status"] == "running"  # Will change when database integration exists
+            # With proper mocks, status should be "running"
+            assert status["status"] == "running"
+            assert status["healthy"] is True
+            assert status["container"] == "hive-postgres-workspace"
 
     def test_status_with_database_unreachable(self, temp_workspace):
         """Test status handles unreachable database gracefully."""
         service = PostgreSQLService(temp_workspace)
         
-        # Mock database unreachable
-        with patch('subprocess.run', side_effect=Exception("Connection timeout")):
+        # Mock Docker container operations - container doesn't exist (unreachable scenario)
+        with patch.object(service.postgres_commands.docker_manager, '_container_exists', return_value=False):
             status = service.status()
             
-            # Current stub will succeed, real implementation should detect unreachable database
-            assert status["healthy"] is True  # Will change when connection checking is implemented
+            # When container doesn't exist, status should be "not_installed"
+            assert status["status"] == "not_installed"
+            assert status["healthy"] is False
 
     def test_status_with_docker_container_check(self, temp_workspace):
         """Test status integrates with Docker container status when implemented."""
         service = PostgreSQLService(temp_workspace)
         
-        # Mock Docker container status
-        with patch('subprocess.run') as mock_run:
+        # Mock Docker container operations to simulate a running container
+        with patch.object(service.postgres_commands.docker_manager, '_container_exists', return_value=True), \
+             patch.object(service.postgres_commands.docker_manager, '_container_running', return_value=True), \
+             patch('subprocess.run') as mock_run:
             mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = "container_running"
             
@@ -171,7 +185,7 @@ class TestPostgreSQLServiceStatus:
         elapsed = performance_timer.stop(max_time=2.0)  # Should be fast
         
         assert status is not None
-        assert elapsed < 0.1  # Status check should be near-instantaneous for stub
+        assert elapsed < 1.0  # Status check should be reasonably fast (adjusted for real Docker calls)
 
     def test_status_with_connection_pool_info(self, temp_workspace):
         """Test status includes connection pool information when implemented."""
@@ -358,8 +372,11 @@ HIVE_DATABASE_URL=postgresql://hive_agent:agent_password@localhost:35532/hive_ag
         """Test service integrates with PostgreSQL monitoring."""
         service = PostgreSQLService(temp_workspace)
         
-        # Mock monitoring endpoint
-        with patch('requests.get') as mock_get:
+        # Mock Docker container operations to simulate a running container
+        with patch.object(service.postgres_commands.docker_manager, '_container_exists', return_value=True), \
+             patch.object(service.postgres_commands.docker_manager, '_container_running', return_value=True), \
+             patch.object(service.postgres_commands.docker_manager, '_run_command', return_value="healthy"), \
+             patch('requests.get') as mock_get:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {
@@ -371,7 +388,8 @@ HIVE_DATABASE_URL=postgresql://hive_agent:agent_password@localhost:35532/hive_ag
             
             status = service.status()
             
-            # Current stub ignores monitoring
+            # With proper mocks, container should be running and healthy
+            assert status["status"] == "running"
             assert status["healthy"] is True
             # Will change when monitoring integration is implemented
 

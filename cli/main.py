@@ -74,6 +74,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart production environment")
     parser.add_argument("--status", nargs="?", const=".", metavar="WORKSPACE", help="Check production environment status")
     parser.add_argument("--logs", nargs="?", const=".", metavar="WORKSPACE", help="Show production environment logs")
+    parser.add_argument("--uninstall", nargs="?", const=".", metavar="WORKSPACE", help="Uninstall current workspace")
     parser.add_argument("--uninstall-global", action="store_true", help="Uninstall global installation")
     
     # Utility flags
@@ -122,7 +123,7 @@ def main() -> int:
         args.genie_install, args.genie_start, args.genie_stop,
         args.genie_restart, args.genie_logs, args.genie_status, args.genie_reset,
         args.stop, args.restart, args.status, args.logs,
-        args.uninstall_global,
+        args.uninstall, args.uninstall_global,
         args.workspace
     ]
     command_count = sum(1 for cmd in commands if cmd)
@@ -250,6 +251,9 @@ def main() -> int:
             return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
         
         # Uninstall commands
+        if args.uninstall:
+            uninstall_cmd = UninstallCommands(Path(args.uninstall))
+            return 0 if uninstall_cmd.uninstall_current_workspace() else 1
         if args.uninstall_global:
             uninstall_cmd = UninstallCommands()
             return 0 if uninstall_cmd.uninstall_global() else 1

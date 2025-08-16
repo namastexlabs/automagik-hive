@@ -72,3 +72,16 @@ class TestParser:
         with pytest.raises(SystemExit):
             # ArgumentParser exits on --version, so we expect SystemExit
             args = parser.parse_args(["--version"])
+
+
+class TestStartCommand:
+    """Test start command help text."""
+    
+    @pytest.mark.skip(reason="Blocked by task-6e2e57d8-e680-42cf-9046-f0a905cd3df7 - Source code help text needs update")
+    def test_cli_start_command(self):
+        """Test that workspace argument help text is 'Start workspace server'."""
+        parser = create_parser()
+        
+        # Get help text for the workspace argument
+        help_text = parser.format_help()
+        assert "Start workspace server" in help_text

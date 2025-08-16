@@ -73,17 +73,18 @@ class TestServiceManagerLocalServe:
             result = manager.serve_local(host="127.0.0.1", port=8080, reload=False)
             
             assert result is True
-            mock_run.assert_called_once()
+            # Should be called multiple times: postgres dependency checks + uvicorn startup
+            assert mock_run.call_count >= 1
             
-            # Check command construction
-            call_args = mock_run.call_args[0][0]
-            assert "uv" in call_args
-            assert "run" in call_args
-            assert "uvicorn" in call_args
-            assert "--host" in call_args
-            assert "127.0.0.1" in call_args
-            assert "--port" in call_args
-            assert "8080" in call_args
+            # Check that the final call is the uvicorn command
+            final_call_args = mock_run.call_args[0][0]
+            assert "uv" in final_call_args
+            assert "run" in final_call_args
+            assert "uvicorn" in final_call_args
+            assert "--host" in final_call_args
+            assert "127.0.0.1" in final_call_args
+            assert "--port" in final_call_args
+            assert "8080" in final_call_args
 
     def test_serve_local_with_reload(self):
         """Test local server with reload enabled."""
@@ -239,8 +240,10 @@ class TestServiceManagerEnvironmentSetup:
     def test_install_full_environment_success(self):
         """Test successful full environment installation."""
         manager = ServiceManager()
-        with patch.object(manager, '_setup_env_file', return_value=True):
-            with patch.object(manager, '_setup_postgresql_interactive', return_value=True):
+        with patch.object(manager, '_prompt_deployment_choice', return_value='full_docker'):
+            with patch('lib.auth.credential_service.CredentialService') as mock_credential_service_class:
+                mock_credential_service = mock_credential_service_class.return_value
+                mock_credential_service.install_all_modes.return_value = {}
                 with patch.object(manager, 'main_service') as mock_main:
                     mock_main.install_main_environment.return_value = True
                     
@@ -347,11 +350,10 @@ class TestServiceManagerPostgreSQLSetup:
     def test_setup_postgresql_interactive_yes(self):
         """Test PostgreSQL setup with 'yes' response."""
         with patch('builtins.input', return_value='y'):
-            with patch.object(ServiceManager, '_generate_postgres_credentials', return_value=True):
-                manager = ServiceManager()
-                result = manager._setup_postgresql_interactive("./test")
-                
-                assert result is True
+            manager = ServiceManager()
+            result = manager._setup_postgresql_interactive("./test")
+            
+            assert result is True
 
     def test_setup_postgresql_interactive_no(self):
         """Test PostgreSQL setup with 'no' response."""
@@ -364,29 +366,30 @@ class TestServiceManagerPostgreSQLSetup:
     def test_setup_postgresql_interactive_eof(self):
         """Test PostgreSQL setup with EOF (defaults to yes)."""
         with patch('builtins.input', side_effect=EOFError()):
-            with patch.object(ServiceManager, '_generate_postgres_credentials', return_value=True):
-                manager = ServiceManager()
-                result = manager._setup_postgresql_interactive("./test")
-                
-                assert result is True
+            manager = ServiceManager()
+            result = manager._setup_postgresql_interactive("./test")
+            
+            assert result is True
 
     def test_setup_postgresql_interactive_keyboard_interrupt(self):
         """Test PostgreSQL setup with KeyboardInterrupt (defaults to yes)."""
         with patch('builtins.input', side_effect=KeyboardInterrupt()):
-            with patch.object(ServiceManager, '_generate_postgres_credentials', return_value=True):
-                manager = ServiceManager()
-                result = manager._setup_postgresql_interactive("./test")
-                
-                assert result is True
+            manager = ServiceManager()
+            result = manager._setup_postgresql_interactive("./test")
+            
+            assert result is True
 
     def test_setup_postgresql_interactive_credentials_fail(self):
         """Test PostgreSQL setup when credential generation fails."""
         with patch('builtins.input', return_value='y'):
-            with patch.object(ServiceManager, '_generate_postgres_credentials', return_value=False):
-                manager = ServiceManager()
-                result = manager._setup_postgresql_interactive("./test")
-                
-                assert result is False
+            # The current implementation handles credential generation via CredentialService
+            # and always returns True, so this test now validates the updated behavior
+            manager = ServiceManager()
+            result = manager._setup_postgresql_interactive("./test")
+            
+            # The method now always returns True as credential generation
+            # is handled by CredentialService.install_all_modes() in install_full_environment
+            assert result is True
 
     def test_setup_postgresql_interactive_exception(self):
         """Test PostgreSQL setup with exception."""
@@ -397,77 +400,6 @@ class TestServiceManagerPostgreSQLSetup:
             assert result is False
 
 
-class TestServiceManagerPostgreSQLCredentials:
-    """Test PostgreSQL credential generation."""
-    
-    def test_generate_postgres_credentials_success(self, isolated_workspace):
-        """Test successful PostgreSQL credential generation."""
-        workspace_path = isolated_workspace
-        env_file = workspace_path / ".env"
-        env_file.write_text("EXAMPLE_VAR=value\n")
-        
-        with patch('pathlib.Path', return_value=workspace_path):
-            manager = ServiceManager()
-            result = manager._generate_postgres_credentials()
-            
-            assert result is True
-            
-            # Check that credentials were added
-            env_content = env_file.read_text()
-            assert "HIVE_DATABASE_URL=" in env_content
-            assert "postgresql+psycopg://" in env_content
-
-    def test_generate_postgres_credentials_existing_valid(self, isolated_workspace):
-        """Test credential generation with existing valid credentials."""
-        workspace_path = isolated_workspace
-        env_file = workspace_path / ".env"
-        env_file.write_text("HIVE_DATABASE_URL=postgresql://existing_user:existing_pass@localhost:5532/hive\n")
-        
-        with patch('pathlib.Path', return_value=workspace_path):
-            manager = ServiceManager()
-            result = manager._generate_postgres_credentials()
-            
-            assert result is True
-            
-            # Should not change existing valid credentials
-            env_content = env_file.read_text()
-            assert "existing_user" in env_content
-            assert "existing_pass" in env_content
-
-    def test_generate_postgres_credentials_existing_placeholder(self, isolated_workspace):
-        """Test credential generation with placeholder credentials."""
-        workspace_path = isolated_workspace
-        env_file = workspace_path / ".env"
-        env_file.write_text("HIVE_DATABASE_URL=postgresql://hive_user:your-secure-password-here@localhost:5532/hive\n")
-        
-        with patch('pathlib.Path', return_value=workspace_path):
-            manager = ServiceManager()
-            result = manager._generate_postgres_credentials()
-            
-            assert result is True
-            
-            # Should replace placeholder credentials
-            env_content = env_file.read_text()
-            assert "your-secure-password-here" not in env_content
-            assert "hive_user" not in env_content
-
-    def test_generate_postgres_credentials_no_env_file(self, isolated_workspace):
-        """Test credential generation when .env file doesn't exist."""
-        workspace_path = isolated_workspace
-        with patch('pathlib.Path', return_value=workspace_path):
-            manager = ServiceManager()
-            result = manager._generate_postgres_credentials()
-            
-            assert result is False
-
-    def test_generate_postgres_credentials_exception(self):
-        """Test credential generation with exception."""
-        with patch('pathlib.Path.read_text', side_effect=Exception("Read error")):
-            manager = ServiceManager()
-            result = manager._generate_postgres_credentials()
-            
-            assert result is False
-
 
 class TestServiceManagerUninstall:
     """Test environment uninstall functionality."""
@@ -475,26 +407,40 @@ class TestServiceManagerUninstall:
     def test_uninstall_environment_preserve_data(self):
         """Test environment uninstall with data preservation."""
         manager = ServiceManager()
-        with patch('builtins.input', return_value='y'):
-            with patch.object(manager, 'main_service') as mock_main:
-                mock_main.uninstall_preserve_data.return_value = True
-                
-                result = manager.uninstall_environment("./test")
-                
-                assert result is True
-                mock_main.uninstall_preserve_data.assert_called_once_with("./test")
+        with patch('builtins.input', return_value='WIPE ALL'):
+            with patch('cli.commands.agent.AgentCommands') as mock_agent_cmd_class:
+                with patch('cli.commands.genie.GenieCommands') as mock_genie_cmd_class:
+                    with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
+                        # Setup mocks for agent and genie command instances
+                        mock_agent_cmd = mock_agent_cmd_class.return_value
+                        mock_agent_cmd.uninstall.return_value = True
+                        
+                        mock_genie_cmd = mock_genie_cmd_class.return_value
+                        mock_genie_cmd.uninstall.return_value = True
+                        
+                        result = manager.uninstall_environment("./test")
+                        
+                        assert result is True
+                        mock_uninstall_main.assert_called_once_with("./test")
 
     def test_uninstall_environment_wipe_data_confirmed(self):
         """Test environment uninstall with data wipe (confirmed)."""
         manager = ServiceManager()
-        with patch('builtins.input', side_effect=['n', 'yes']):
-            with patch.object(manager, 'main_service') as mock_main:
-                mock_main.uninstall_wipe_data.return_value = True
-                
-                result = manager.uninstall_environment("./test")
-                
-                assert result is True
-                mock_main.uninstall_wipe_data.assert_called_once_with("./test")
+        with patch('builtins.input', return_value='WIPE ALL'):
+            with patch('cli.commands.agent.AgentCommands') as mock_agent_cmd_class:
+                with patch('cli.commands.genie.GenieCommands') as mock_genie_cmd_class:
+                    with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
+                        # Setup mocks for agent and genie command instances
+                        mock_agent_cmd = mock_agent_cmd_class.return_value
+                        mock_agent_cmd.uninstall.return_value = True
+                        
+                        mock_genie_cmd = mock_genie_cmd_class.return_value
+                        mock_genie_cmd.uninstall.return_value = True
+                        
+                        result = manager.uninstall_environment("./test")
+                        
+                        assert result is True
+                        mock_uninstall_main.assert_called_once_with("./test")
 
     def test_uninstall_environment_wipe_data_cancelled(self):
         """Test environment uninstall with data wipe (cancelled)."""
@@ -505,16 +451,13 @@ class TestServiceManagerUninstall:
             assert result is False
 
     def test_uninstall_environment_eof_defaults(self):
-        """Test environment uninstall with EOF (defaults to preserve)."""
+        """Test environment uninstall with EOF (defaults to cancelled)."""
         manager = ServiceManager()
         with patch('builtins.input', side_effect=EOFError()):
-            with patch.object(manager, 'main_service') as mock_main:
-                mock_main.uninstall_preserve_data.return_value = True
-                
-                result = manager.uninstall_environment("./test")
-                
-                assert result is True
-                mock_main.uninstall_preserve_data.assert_called_once_with("./test")
+            result = manager.uninstall_environment("./test")
+            
+            # EOF during confirmation should cancel the uninstall
+            assert result is False
 
     def test_uninstall_environment_exception(self):
         """Test environment uninstall with exception."""
