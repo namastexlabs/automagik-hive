@@ -586,10 +586,16 @@ class TestWorkflowPerformanceBenchmarks:
         ]
 
         start_time = time.time()
-
-        with patch("builtins.input", side_effect=user_inputs):
-            with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
-                result = main()
+        
+        # Change to temp directory to avoid creating test-workspace in project root
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(temp_workspace_dir)
+            with patch("builtins.input", side_effect=user_inputs):
+                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
+                    result = main()
+        finally:
+            os.chdir(original_cwd)
 
         elapsed = time.time() - start_time
 
@@ -711,7 +717,10 @@ class TestWorkflowErrorRecovery:
 
         user_inputs = [str(workspace_path), "n", ""]
 
+        # Change to temp directory to avoid creating test-workspace in project root
+        original_cwd = os.getcwd()
         try:
+            os.chdir(temp_workspace_dir)
             with patch("builtins.input", side_effect=user_inputs):
                 with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
                     result = main()
@@ -720,6 +729,7 @@ class TestWorkflowErrorRecovery:
             assert result in [0, 1]  # May return success or failure depending on implementation
 
         finally:
+            os.chdir(original_cwd)
             # Restore permissions for cleanup
             readonly_path.chmod(0o755)
 
@@ -834,10 +844,6 @@ class TestWorkflowCrossPlatformValidation:
 
         user_inputs = [str(unix_workspace), "n", ""]
 
-        with patch("builtins.input", side_effect=user_inputs):
-            with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
-                result = main()
-
         # Change to temp directory for workspace creation
         original_cwd = os.getcwd()
         
@@ -863,9 +869,15 @@ class TestWorkflowCrossPlatformValidation:
 
         user_inputs = [str(workspace_path), "n", ""]
 
-        with patch("builtins.input", side_effect=user_inputs):
-            with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
-                result = main()
+        # Change to temp directory to avoid creating test-workspace in project root
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(temp_workspace_dir)
+            with patch("builtins.input", side_effect=user_inputs):
+                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
+                    result = main()
+        finally:
+            os.chdir(original_cwd)
 
         if result == 0 and workspace_path.exists():
             # Check that files have appropriate permissions
@@ -913,14 +925,20 @@ class TestWorkflowCrossPlatformValidation:
                 str(temp_workspace_dir).replace("/", "\\") + "\\workspace3"
             )
 
-        for path_format in path_formats:
-            user_inputs = [path_format, "n", ""]
+        # Change to temp directory to avoid creating test-workspace in project root
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(temp_workspace_dir)
+            for path_format in path_formats:
+                user_inputs = [path_format, "n", ""]
 
-            with patch("builtins.input", side_effect=user_inputs):
-                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
-                    result = main()
+                with patch("builtins.input", side_effect=user_inputs):
+                    with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
+                        result = main()
 
-            # Should fail initially - path separator normalization not implemented
-            assert result in [0, 1], (
-                f"Path format {path_format} caused unexpected result"
-            )
+                # Should fail initially - path separator normalization not implemented
+                assert result in [0, 1], (
+                    f"Path format {path_format} caused unexpected result"
+                )
+        finally:
+            os.chdir(original_cwd)
