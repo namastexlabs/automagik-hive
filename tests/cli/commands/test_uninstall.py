@@ -174,30 +174,34 @@ class TestUninstallCommandsCLIIntegration:
     def test_cli_uninstall_current_workspace_subprocess(self):
         """Test uninstall current workspace command via CLI subprocess."""
         result = subprocess.run(
-            [sys.executable, "-m", "cli.main", "--uninstall", "."],
+            [sys.executable, "-m", "cli.main", "uninstall", "."],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent.parent.parent
         )
         
-        # Should fail initially - CLI uninstall integration not properly implemented
-        assert result.returncode == 0
+        # Should exit with 1 because confirmation is required and not provided
+        assert result.returncode == 1
         output = result.stdout + result.stderr
-        assert "Uninstalling" in output or "uninstall" in output.lower()
+        assert "COMPLETE SYSTEM UNINSTALL" in output
+        assert "Type 'WIPE ALL' to confirm" in output
+        assert "Uninstall cancelled by user" in output
 
     def test_cli_uninstall_global_subprocess(self):
-        """Test uninstall global command via CLI subprocess."""
+        """Test uninstall command does complete system wipe via CLI subprocess."""
         result = subprocess.run(
-            [sys.executable, "-m", "cli.main", "--uninstall-global"],
+            [sys.executable, "-m", "cli.main", "uninstall", "."],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent.parent.parent
         )
         
-        # Should fail initially - CLI global uninstall integration not implemented
-        assert result.returncode == 0
+        # Should exit with 1 because confirmation is required and not provided
+        assert result.returncode == 1
         output = result.stdout + result.stderr
-        assert "Uninstalling global" in output or "global" in output.lower()
+        assert "COMPLETE SYSTEM UNINSTALL" in output
+        assert "Type 'WIPE ALL' to confirm" in output
+        assert "Uninstall cancelled by user" in output
 
     def test_cli_uninstall_help_displays_commands(self):
         """Test CLI help displays uninstall commands."""
@@ -208,11 +212,11 @@ class TestUninstallCommandsCLIIntegration:
             cwd=Path(__file__).parent.parent.parent.parent
         )
         
-        # Should fail initially - help text not properly configured for uninstall
+        # Should succeed - help text should show uninstall subcommand
         assert result.returncode == 0
-        uninstall_commands = ["--uninstall", "--uninstall-global"]
-        for cmd in uninstall_commands:
-            assert cmd in result.stdout, f"Missing {cmd} in help output"
+        # Check that uninstall subcommand is mentioned in help
+        assert "uninstall" in result.stdout.lower(), "Missing uninstall subcommand in help output"
+        assert "COMPLETE SYSTEM WIPE" in result.stdout, "Missing uninstall description in help output"
 
 
 class TestUninstallCommandsEdgeCases:

@@ -577,22 +577,22 @@ class TestWorkflowPerformanceBenchmarks:
 
     def test_init_command_performance(self, temp_workspace_dir):
         """Benchmark --init command performance."""
-        workspace_path = temp_workspace_dir / "perf-test-init"
+        workspace_name = "perf-test-init"
+        workspace_path = temp_workspace_dir / workspace_name
 
         user_inputs = [
-            str(workspace_path),
             "n",  # No PostgreSQL
             "",  # Skip API keys
         ]
 
         start_time = time.time()
         
-        # Change to temp directory to avoid creating test-workspace in project root
+        # Use absolute path to ensure workspace is created in temp directory
         original_cwd = os.getcwd()
         try:
             os.chdir(temp_workspace_dir)
             with patch("builtins.input", side_effect=user_inputs):
-                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
+                with patch("sys.argv", ["automagik-hive", "--init", workspace_name]):
                     result = main()
         finally:
             os.chdir(original_cwd)
@@ -713,16 +713,17 @@ class TestWorkflowErrorRecovery:
         # Make directory read-only
         readonly_path.chmod(0o444)
 
-        workspace_path = readonly_path / "test-workspace"
+        workspace_name = "readonly-test-workspace"
+        workspace_path = readonly_path / workspace_name
 
         user_inputs = [str(workspace_path), "n", ""]
 
-        # Change to temp directory to avoid creating test-workspace in project root
+        # Change to temp directory to avoid creating workspace in project root
         original_cwd = os.getcwd()
         try:
             os.chdir(temp_workspace_dir)
             with patch("builtins.input", side_effect=user_inputs):
-                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
+                with patch("sys.argv", ["automagik-hive", "--init", workspace_name]):
                     result = main()
 
             # Should fail initially - permission error handling not implemented
@@ -865,16 +866,17 @@ class TestWorkflowCrossPlatformValidation:
     @pytest.mark.skipif(os.name == "nt", reason="Unix-specific permission testing")
     def test_unix_file_permissions(self, temp_workspace_dir):
         """Test file permissions on Unix systems."""
-        workspace_path = temp_workspace_dir / "test-permissions"
+        workspace_name = "test-permissions"
+        workspace_path = temp_workspace_dir / workspace_name
 
-        user_inputs = [str(workspace_path), "n", ""]
+        user_inputs = ["n", ""]
 
-        # Change to temp directory to avoid creating test-workspace in project root
+        # Change to temp directory to avoid creating workspace in project root
         original_cwd = os.getcwd()
         try:
             os.chdir(temp_workspace_dir)
             with patch("builtins.input", side_effect=user_inputs):
-                with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
+                with patch("sys.argv", ["automagik-hive", "--init", workspace_name]):
                     result = main()
         finally:
             os.chdir(original_cwd)
@@ -925,15 +927,16 @@ class TestWorkflowCrossPlatformValidation:
                 str(temp_workspace_dir).replace("/", "\\") + "\\workspace3"
             )
 
-        # Change to temp directory to avoid creating test-workspace in project root
+        # Change to temp directory to avoid creating workspace in project root
         original_cwd = os.getcwd()
         try:
             os.chdir(temp_workspace_dir)
-            for path_format in path_formats:
-                user_inputs = [path_format, "n", ""]
+            for i, path_format in enumerate(path_formats):
+                workspace_name = f"path-format-test-{i}"
+                user_inputs = ["n", ""]
 
                 with patch("builtins.input", side_effect=user_inputs):
-                    with patch("sys.argv", ["automagik-hive", "--init", "test-workspace"]):
+                    with patch("sys.argv", ["automagik-hive", "--init", workspace_name]):
                         result = main()
 
                 # Should fail initially - path separator normalization not implemented

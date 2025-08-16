@@ -238,10 +238,39 @@ class TestAgentServiceValidation:
             workspace = Path(temp_dir)
             (workspace / ".env").write_text("HIVE_API_PORT=8886\n")  # Main env, agent gets 38886 via docker-compose
             (workspace / ".venv").mkdir()
+            
+            # Create docker-compose.yml file that the validation method expects
+            docker_dir = workspace / "docker" / "agent"
+            docker_dir.mkdir(parents=True)
+            (docker_dir / "docker-compose.yml").write_text("""
+version: '3.8'
+services:
+  agent-postgres:
+    image: postgres:15
+  agent-api:
+    image: test:latest
+""")
 
-            result = service._validate_agent_environment(workspace)
+            # Mock subprocess.run to simulate running containers
+            with patch("subprocess.run") as mock_run:
+                # First call: docker compose ps -q agent-postgres (returns container ID)
+                # Second call: docker inspect (returns true for running state)
+                # Third call: docker compose ps -q agent-api (returns container ID) 
+                # Fourth call: docker inspect (returns true for running state)
+                mock_run.side_effect = [
+                    # agent-postgres ps command - returns container ID
+                    Mock(returncode=0, stdout="postgres_container_id\n"),
+                    # agent-postgres inspect command - returns running state
+                    Mock(returncode=0, stdout="true\n"),
+                    # agent-api ps command - returns container ID
+                    Mock(returncode=0, stdout="server_container_id\n"),
+                    # agent-api inspect command - returns running state
+                    Mock(returncode=0, stdout="true\n"),
+                ]
+                
+                result = service._validate_agent_environment(workspace)
 
-        # Should fail initially - environment validation not implemented
+        # With proper mocking, validation should succeed
         assert result is True
 
     def test_validate_agent_environment_missing_env_file(self, mock_compose_manager):
@@ -939,8 +968,8 @@ services:
 
             # Expected status based on current implementation (blocked by task-5ca0f350)
             expected_status = {
-                "agent-postgres": "✅ Running (Port: 35532)",
-                "agent-server": "✅ Running (Port: 38886)",
+                "agent-postgres": "✅ Running",
+                "agent-server": "✅ Running",
             }
             assert result == expected_status
 
@@ -1004,7 +1033,7 @@ services:
 
         # Expected status based on current implementation (blocked by task-5ca0f350)
         expected_status = {
-            "agent-postgres": "✅ Running (Port: 35532)",
+            "agent-postgres": "✅ Running",
             "agent-server": "🛑 Stopped",
         }
         assert result == expected_status

@@ -23,10 +23,57 @@ from .workspace import WorkspaceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
-    """Create simple argument parser with subcommands."""
+    """Create comprehensive argument parser with organized help."""
     parser = argparse.ArgumentParser(
         prog="automagik-hive",
-        description="UVX Development Environment",
+        description="""Automagik Hive - Multi-Agent AI Framework CLI
+
+CORE COMMANDS (Quick Start):
+  --init [NAME]               Initialize new workspace 
+  --serve [WORKSPACE]         Start production server (Docker)
+  --dev [WORKSPACE]           Start development server (local)
+  --version                   Show version information
+
+AGENT ENVIRONMENT (Isolated Development):
+  --agent-install             Install and start agent services
+  --agent-start               Start agent services  
+  --agent-stop                Stop agent services
+  --agent-restart             Restart agent services
+  --agent-status              Check agent service status
+  --agent-logs [--tail N]     View agent logs
+  --agent-reset               Reset agent environment
+
+GENIE ENVIRONMENT (Claude Integration):
+  --genie-install             Install and start genie services
+  --genie-start               Start genie services
+  --genie-stop                Stop genie services  
+  --genie-restart             Restart genie services
+  --genie-status              Check genie service status
+  --genie-logs [--tail N]     View genie logs
+  --genie-reset               Reset genie environment
+
+POSTGRESQL DATABASE:
+  --postgres-status           Check PostgreSQL status
+  --postgres-start            Start PostgreSQL
+  --postgres-stop             Stop PostgreSQL
+  --postgres-restart          Restart PostgreSQL
+  --postgres-logs [--tail N]  Show PostgreSQL logs
+  --postgres-health           Check PostgreSQL health
+
+PRODUCTION ENVIRONMENT:
+  --stop                      Stop production environment
+  --restart                   Restart production environment  
+  --status                    Check production environment status
+  --logs [--tail N]           Show production environment logs
+
+SUBCOMMANDS:
+  install                     Complete environment setup
+  uninstall                   COMPLETE SYSTEM WIPE - uninstall ALL environments
+  genie                       Launch claude with GENIE.md as system prompt
+  dev                         Start development server (alternative syntax)
+
+Use --help for detailed options or see documentation.
+""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -74,8 +121,6 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart production environment")
     parser.add_argument("--status", nargs="?", const=".", metavar="WORKSPACE", help="Check production environment status")
     parser.add_argument("--logs", nargs="?", const=".", metavar="WORKSPACE", help="Show production environment logs")
-    parser.add_argument("--uninstall", nargs="?", const=".", metavar="WORKSPACE", help="Uninstall current workspace")
-    parser.add_argument("--uninstall-global", action="store_true", help="Uninstall global installation")
     
     # Utility flags
     parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
@@ -123,7 +168,6 @@ def main() -> int:
         args.genie_install, args.genie_start, args.genie_stop,
         args.genie_restart, args.genie_logs, args.genie_status, args.genie_reset,
         args.stop, args.restart, args.status, args.logs,
-        args.uninstall, args.uninstall_global,
         args.workspace
     ]
     command_count = sum(1 for cmd in commands if cmd)
@@ -250,13 +294,7 @@ def main() -> int:
         if args.logs:
             return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
         
-        # Uninstall commands
-        if args.uninstall:
-            uninstall_cmd = UninstallCommands(Path(args.uninstall))
-            return 0 if uninstall_cmd.uninstall_current_workspace() else 1
-        if args.uninstall_global:
-            uninstall_cmd = UninstallCommands()
-            return 0 if uninstall_cmd.uninstall_global() else 1
+        # No direct uninstall commands - use 'uninstall' subcommand instead
         
         return 0
     
