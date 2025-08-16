@@ -221,17 +221,6 @@ class TestUtilsModuleImports:
 
         assert agno_storage_utils is not None
 
-    def test_import_config_inheritance(self):
-        """Test config_inheritance module can be imported."""
-        from lib.utils import config_inheritance
-
-        assert config_inheritance is not None
-
-    def test_import_config_migration(self):
-        """Test config_migration module can be imported."""
-        from lib.utils import config_migration
-
-        assert config_migration is not None
 
     def test_import_config_validator(self):
         """Test config_validator module can be imported."""

@@ -419,7 +419,7 @@ class ServiceManager:
                 # Start only the postgres service
                 print("🐳 Starting PostgreSQL container...")
                 result = subprocess.run(
-                    ["docker", "compose", "-f", str(compose_file), "up", "-d", "postgres"],
+                    ["docker", "compose", "-f", str(compose_file), "up", "-d", "main-postgres"],
                     check=False,
                     capture_output=True,
                     text=True,

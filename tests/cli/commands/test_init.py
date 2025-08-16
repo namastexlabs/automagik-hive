@@ -57,7 +57,13 @@ class TestInitWorkspaceMethod:
     """Test workspace initialization functionality."""
 
     @patch('builtins.print')
-    def test_init_workspace_with_name(self, mock_print):
+    @patch('pathlib.Path.mkdir')
+    @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
+    def test_init_workspace_with_name(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_mkdir, mock_print):
         """Test workspace initialization with custom name."""
         init_cmd = InitCommands()
         
@@ -65,7 +71,8 @@ class TestInitWorkspaceMethod:
         
         # Should fail initially - real workspace creation not implemented
         assert result is True
-        mock_print.assert_called_with("🚀 Initializing workspace: my-new-workspace")
+        # Check that initialization message was printed (it's one of the calls, not necessarily the last)
+        mock_print.assert_any_call("🚀 Initializing workspace: my-new-workspace")
 
     @patch('builtins.print')
     def test_init_workspace_without_name(self, mock_print):
@@ -89,7 +96,13 @@ class TestInitWorkspaceMethod:
         assert result is True
         mock_print.assert_called_with("🚀 Initializing workspace in current directory")
 
-    def test_init_workspace_exception_handling(self):
+    @patch('pathlib.Path.mkdir')
+    @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
+    def test_init_workspace_exception_handling(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_mkdir):
         """Test init_workspace handles exceptions gracefully."""
         init_cmd = InitCommands()
         
@@ -188,7 +201,13 @@ class TestInitCommandsCLIIntegration:
 class TestInitCommandsEdgeCases:
     """Test edge cases and error scenarios."""
 
-    def test_init_workspace_empty_string_name(self):
+    @patch('pathlib.Path.mkdir')
+    @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
+    def test_init_workspace_empty_string_name(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_mkdir):
         """Test init_workspace with empty string name."""
         init_cmd = InitCommands()
         
@@ -197,7 +216,13 @@ class TestInitCommandsEdgeCases:
         # Should fail initially - empty string handling not implemented
         assert result is True  # Stub implementation returns True
 
-    def test_init_workspace_special_characters(self):
+    @patch('pathlib.Path.mkdir')
+    @patch('cli.commands.init.InitCommands._create_directory_structure', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_env_file', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_pyproject_toml', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_readme', return_value=True)
+    @patch('cli.commands.init.InitCommands._create_gitignore', return_value=True)
+    def test_init_workspace_special_characters(self, mock_gitignore, mock_readme, mock_pyproject, mock_env, mock_dir_struct, mock_mkdir):
         """Test init_workspace with special characters in name."""
         init_cmd = InitCommands()
         

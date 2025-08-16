@@ -70,14 +70,10 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--genie-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset genie environment (destroy all + reinstall + start)")
     
     # Production environment commands
-    parser.add_argument("--install", nargs="?", const=".", metavar="WORKSPACE", help="Complete environment setup with .env generation and PostgreSQL")
     parser.add_argument("--stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop production environment")
     parser.add_argument("--restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart production environment")
     parser.add_argument("--status", nargs="?", const=".", metavar="WORKSPACE", help="Check production environment status")
     parser.add_argument("--logs", nargs="?", const=".", metavar="WORKSPACE", help="Show production environment logs")
-    
-    # Uninstall commands
-    parser.add_argument("--uninstall", nargs="?", const=".", metavar="WORKSPACE", help="COMPLETE SYSTEM WIPE - uninstall ALL environments (main + agent + genie)")
     parser.add_argument("--uninstall-global", action="store_true", help="Uninstall global installation")
     
     # Utility flags
@@ -125,8 +121,8 @@ def main() -> int:
         args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
         args.genie_install, args.genie_start, args.genie_stop,
         args.genie_restart, args.genie_logs, args.genie_status, args.genie_reset,
-        args.install, args.stop, args.restart, args.status, args.logs,
-        args.uninstall, args.uninstall_global,
+        args.stop, args.restart, args.status, args.logs,
+        args.uninstall_global,
         args.workspace
     ]
     command_count = sum(1 for cmd in commands if cmd)
@@ -172,12 +168,14 @@ def main() -> int:
         # Install subcommand
         if args.command == "install":
             service_manager = ServiceManager()
-            return 0 if service_manager.install_full_environment(args.workspace) else 1
+            workspace = getattr(args, 'workspace', '.') or '.'
+            return 0 if service_manager.install_full_environment(workspace) else 1
         
         # Uninstall subcommand
         if args.command == "uninstall":
             service_manager = ServiceManager()
-            return 0 if service_manager.uninstall_environment(args.workspace) else 1
+            workspace = getattr(args, 'workspace', '.') or '.'
+            return 0 if service_manager.uninstall_environment(workspace) else 1
         
         # Start workspace server (positional argument)
         if args.workspace:
@@ -238,8 +236,6 @@ def main() -> int:
         
         # Production environment commands
         service_manager = ServiceManager()
-        if args.install:
-            return 0 if service_manager.install_full_environment(args.install) else 1
         if args.stop:
             return 0 if service_manager.stop_docker(args.stop) else 1
         if args.restart:
@@ -254,10 +250,6 @@ def main() -> int:
             return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
         
         # Uninstall commands
-        if args.uninstall:
-            # Use the new production environment uninstall
-            service_manager = ServiceManager()
-            return 0 if service_manager.uninstall_environment(args.uninstall) else 1
         if args.uninstall_global:
             uninstall_cmd = UninstallCommands()
             return 0 if uninstall_cmd.uninstall_global() else 1

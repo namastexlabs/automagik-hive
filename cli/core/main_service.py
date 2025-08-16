@@ -598,7 +598,7 @@ class MainService:
             # Start only postgres service (pattern from _ensure_postgres_dependency)
             result = subprocess.run([
                 "docker", "compose", "-f", str(compose_file),
-                "up", "-d", "postgres"
+                "up", "-d", "main-postgres"
             ], capture_output=True, text=True, timeout=120)
             
             if result.returncode == 0:

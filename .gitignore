@@ -10,7 +10,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - Commented out because it conflicts with our project's lib/ directory
 lib64/
 parts/
 sdist/
@@ -74,10 +74,6 @@ data/
 .env.production
 .env.staging
 .env.development
-
-# MCP Configuration - Contains API keys
-.mcp.json
-ai/.mcp.json
 
 # Temporary files
 .tmp/
