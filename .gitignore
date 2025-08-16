@@ -75,6 +75,13 @@ data/
 .env.staging
 .env.development
 
+# MCP Configuration - CRITICAL SECURITY
+.mcp.json
+**/.mcp.json
+ai/.mcp.json
+*mcp.json
+agent.pid
+
 # Temporary files
 .tmp/
 temp/
