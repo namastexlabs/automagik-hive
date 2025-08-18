@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This TSD defines the reorganization of the Automagik Hive CLI folder structure to follow Python best practices, improve maintainability, and enhance testability. The current structure suffers from mixed responsibilities, code duplication, and violation of single responsibility principles.
+This TSD defines the complete refactoring of the Automagik Hive CLI folder structure to follow Python best practices, improve maintainability, enhance testability, and provide an exceptional Developer Experience (DX). This is a clean-break refactor - no backward compatibility, no legacy code, just modern CLI patterns.
 
 ## Problem Analysis
 
@@ -28,6 +28,14 @@ cli/
 6. **Violation of SRP**: Single files handling multiple concerns
 7. **Import Complexity**: Complex cross-dependencies between modules
 8. **Service Layer Confusion**: `core/` mixes actual services with stubs
+9. **Poor DX**: Current `--command` style (e.g., `--agent-install`) less intuitive than direct commands
+10. **Confusing Command Style**: Mix of flags (`--help`), double-dash commands (`--agent-install`), and subcommands
+11. **Fake Workspace Parameters**: Every command accepts `[WORKSPACE]` but ignores it:
+    - Agent/Genie are Docker-only (no workspace concept)
+    - PostgreSQL is single instance (no per-workspace DB)
+    - Install/uninstall are system-wide operations
+    - Serve/dev always use current directory
+12. **Misleading "Global" Flags**: `--tail`, `--host`, `--port` only work with specific commands
 
 ### Test Dependencies Analysis
 
@@ -40,70 +48,91 @@ Current test files that depend on CLI structure:
 
 ## Proposed Solution
 
-### New Folder Structure
+### New Folder Structure (Optimized for Direct Commands)
 
 ```
 cli/
 ├── __init__.py
-├── main.py (simplified entry point, ~50 lines)
-├── parsers/
-│   ├── __init__.py
-│   ├── base_parser.py (base argument parser)
-│   ├── subcommand_parsers/
-│   │   ├── __init__.py
-│   │   ├── agent_parser.py
-│   │   ├── genie_parser.py
-│   │   ├── postgres_parser.py
-│   │   ├── production_parser.py
-│   │   └── workspace_parser.py
-│   └── parser_factory.py
+├── __main__.py (python -m automagik entry)
+├── main.py (simplified entry point, ~30 lines)
+├── app.py (main application class)
+├── parser.py (unified argument parser)
 ├── commands/
 │   ├── __init__.py
-│   ├── base_command.py (base command interface)
-│   ├── agent/
-│   │   ├── __init__.py
-│   │   ├── command.py (agent command handler)
-│   │   └── operations.py (agent operations)
-│   ├── genie/
-│   │   ├── __init__.py
-│   │   ├── command.py
-│   │   └── operations.py
-│   ├── postgres/
-│   │   ├── __init__.py
-│   │   ├── command.py
-│   │   └── operations.py
-│   ├── production/
-│   │   ├── __init__.py
-│   │   ├── command.py
-│   │   └── operations.py
-│   ├── workspace/
-│   │   ├── __init__.py
-│   │   ├── command.py
-│   │   └── operations.py
-│   └── system/
-│       ├── __init__.py
-│       ├── health.py
-│       ├── init.py
-│       └── uninstall.py
+│   ├── base.py (base command interface)
+│   ├── agent.py (all agent commands in one file)
+│   ├── genie.py (all genie commands)
+│   ├── postgres.py (all postgres commands)
+│   ├── serve.py (production server commands)
+│   ├── dev.py (development server commands)
+│   ├── workspace.py (workspace management)
+│   ├── install.py (system installation)
+│   ├── uninstall.py (system cleanup)
+│   └── health.py (health checks)
 ├── services/
 │   ├── __init__.py
-│   ├── base_service.py
-│   ├── agent_service.py
-│   ├── genie_service.py
-│   ├── postgres_service.py
-│   ├── docker_service.py
-│   └── workspace_service.py
+│   ├── base.py (base service class)
+│   ├── agent.py (agent service)
+│   ├── genie.py (genie service)
+│   ├── postgres.py (postgres service)
+│   ├── docker.py (docker operations)
+│   └── workspace.py (workspace service)
 ├── utils/
 │   ├── __init__.py
-│   ├── common.py
-│   ├── validation.py
-│   └── output.py
-└── exceptions.py
+│   ├── console.py (rich console output)
+│   ├── process.py (subprocess utilities)
+│   ├── validation.py (input validation)
+│   └── paths.py (path utilities)
+└── exceptions.py (custom exceptions)
+```
+
+### Command Style Migration (DX Improvement)
+
+#### Current Style (Confusing Mix)
+```bash
+# Double-dash commands (unintuitive)
+automagik-hive --agent-install
+automagik-hive --agent-start
+automagik-hive --postgres-status
+
+# Subcommands (inconsistent)
+automagik-hive install
+automagik-hive genie
+```
+
+#### New Style (Direct Commands - No Fake Parameters)
+```bash
+# Clean, honest command structure
+hive agent install      # Docker containers - no workspace
+hive agent start        # Docker containers - no workspace
+hive agent stop         # Docker containers - no workspace
+hive agent status       # Docker containers - no workspace
+hive agent logs --tail 50
+hive agent reset
+
+hive genie install      # Docker containers - no workspace
+hive genie start        # Docker containers - no workspace
+hive genie launch       # Launches claude with GENIE.md
+
+hive postgres start     # Single main instance - no workspace
+hive postgres status    # Single main instance - no workspace
+hive postgres health    # Single main instance - no workspace
+
+hive serve              # Current directory - no workspace param
+hive dev                # Current directory - no workspace param
+hive install            # System-wide - no workspace param
+hive uninstall          # System-wide - no workspace param
+hive init [name]        # Only command that needs optional param
+
+# Standard flags only for actual flags
+hive --help
+hive --version
+hive agent --help       # Context-aware help
 ```
 
 ### Architectural Patterns
 
-#### 1. Command Pattern Implementation
+#### 1. Direct Command Pattern with argparse subparsers
 ```python
 # cli/commands/base_command.py
 from abc import ABC, abstractmethod
@@ -142,88 +171,232 @@ class BaseService(ABC):
         pass
 ```
 
-#### 3. Parser Factory Pattern
+#### 3. Unified Parser with Subcommands
 ```python
-# cli/parsers/parser_factory.py
-class ParserFactory:
-    """Factory for creating specialized argument parsers."""
+# cli/parser.py
+def create_parser() -> argparse.ArgumentParser:
+    """Create parser with direct command approach."""
+    parser = argparse.ArgumentParser(
+        prog='hive',
+        description='Automagik Hive - Multi-Agent AI Framework'
+    )
     
-    @staticmethod
-    def create_parser() -> argparse.ArgumentParser:
-        """Create the main CLI parser with all subcommands."""
-        pass
+    # Global flags
+    parser.add_argument('--version', action='version')
+    parser.add_argument('--verbose', '-v', action='store_true')
+    
+    # Subcommands
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    
+    # Agent commands (Docker-only, no workspace)
+    agent = subparsers.add_parser('agent', help='Agent Docker management')
+    agent_sub = agent.add_subparsers(dest='action')
+    agent_sub.add_parser('install', help='Install agent Docker containers')
+    agent_sub.add_parser('start', help='Start agent containers')
+    agent_sub.add_parser('stop', help='Stop agent containers')
+    agent_sub.add_parser('restart', help='Restart agent containers')
+    agent_sub.add_parser('status', help='Check container status')
+    agent_logs = agent_sub.add_parser('logs', help='View container logs')
+    agent_logs.add_argument('--tail', type=int, default=20)
+    agent_sub.add_parser('reset', help='Reset Docker environment')
+    
+    # Genie commands (Docker-only, no workspace)
+    genie = subparsers.add_parser('genie', help='Genie Docker management')
+    genie_sub = genie.add_subparsers(dest='action')
+    genie_sub.add_parser('install', help='Install genie Docker containers')
+    genie_sub.add_parser('start', help='Start genie containers')
+    genie_sub.add_parser('stop', help='Stop genie containers')
+    genie_sub.add_parser('restart', help='Restart genie containers')
+    genie_sub.add_parser('status', help='Check container status')
+    genie_logs = genie_sub.add_parser('logs', help='View container logs')
+    genie_logs.add_argument('--tail', type=int, default=20)
+    genie_sub.add_parser('reset', help='Reset Docker environment')
+    genie_launch = genie_sub.add_parser('launch', help='Launch Claude with GENIE.md')
+    genie_launch.add_argument('claude_args', nargs='*', help='Args to pass to claude')
+    
+    # PostgreSQL commands (Single instance, no workspace)
+    postgres = subparsers.add_parser('postgres', help='Main PostgreSQL management')
+    postgres_sub = postgres.add_subparsers(dest='action')
+    postgres_sub.add_parser('start', help='Start main PostgreSQL')
+    postgres_sub.add_parser('stop', help='Stop main PostgreSQL')
+    postgres_sub.add_parser('restart', help='Restart main PostgreSQL')
+    postgres_sub.add_parser('status', help='Check PostgreSQL status')
+    postgres_logs = postgres_sub.add_parser('logs', help='View PostgreSQL logs')
+    postgres_logs.add_argument('--tail', type=int, default=20)
+    postgres_sub.add_parser('health', help='Check database health')
+    
+    # Direct commands (no subcommands, no workspace params)
+    serve = subparsers.add_parser('serve', help='Start production server')
+    serve.add_argument('--host', default='0.0.0.0', help='Host to bind')
+    serve.add_argument('--port', type=int, default=8886, help='Port to bind')
+    
+    dev = subparsers.add_parser('dev', help='Start development server')
+    dev.add_argument('--host', default='0.0.0.0', help='Host to bind')
+    dev.add_argument('--port', type=int, default=8886, help='Port to bind')
+    
+    subparsers.add_parser('install', help='Install automagik-hive system')
+    subparsers.add_parser('uninstall', help='Uninstall entire system')
+    
+    init = subparsers.add_parser('init', help='Initialize workspace')
+    init.add_argument('name', nargs='?', help='Workspace name (current dir if omitted)')
+    
+    subparsers.add_parser('health', help='System health check')
+    
+    return parser
 ```
 
-### Migration Strategy
+#### 4. Simplified Main Entry
+```python
+# cli/main.py (30 lines max)
+import sys
+from cli.app import Application
 
-#### Phase 1: Structure Creation (No Breaking Changes)
-- Create new folder structure alongside existing code
-- Implement base classes and interfaces
-- Create new service implementations that wrap existing functionality
-- Ensure all existing imports continue to work
+def main():
+    """Main entry point."""
+    app = Application()
+    return app.run(sys.argv[1:])
 
-#### Phase 2: Gradual Migration (Command by Command)
-- Migrate `agent` commands first (lowest risk)
-- Update tests for migrated commands
-- Migrate `postgres` commands
-- Migrate `genie` commands
-- Migrate `production` commands
-- Migrate `workspace` commands
-- Migrate `system` commands last
+if __name__ == '__main__':
+    sys.exit(main())
+```
 
-#### Phase 3: Main.py Refactoring
-- Simplify main.py to use new parser factory
-- Update command routing to use new command classes
-- Maintain backward compatibility for all CLI interfaces
+#### 5. Application Class (Command Router)
+```python
+# cli/app.py
+from cli.parser import create_parser
+from cli.commands import COMMAND_MAP
 
-#### Phase 4: Cleanup
-- Remove old command files after confirming all tests pass
+class Application:
+    """Main application that routes commands."""
+    
+    def run(self, args):
+        parser = create_parser()
+        parsed = parser.parse_args(args)
+        
+        # Route to appropriate command
+        if parsed.command in COMMAND_MAP:
+            command = COMMAND_MAP[parsed.command]()
+            return command.execute(parsed)
+        
+        parser.print_help()
+        return 1
+```
+
+### Migration Strategy (Clean Break Refactor)
+
+#### Phase 1: Parser Revolution
+- Create new unified parser.py with direct command structure
+- Implement clean command routing in app.py
+- NO backward compatibility - clean break from old patterns
+
+#### Phase 2: Structure Creation (Clean Slate)
+- Create simplified folder structure
+- Implement base command and service classes
+- Build new service implementations from scratch
+- Delete old patterns immediately
+
+#### Phase 3: Command Implementation
+- Implement each command group in single file (agent.py, genie.py, etc.)
+- Build clean command structure from scratch
+- Create new import structure
+- Ensure all file names are descriptive and clean
+- No aliases - explicit commands only
+
+#### Phase 4: Clean Entry Point
+- Create new main.py with ~30 lines
+- Implement app.py with clean routing logic
+- Build parser.py with modern command structure
+- Add rich console output for UX
+- Validate naming rules compliance
+
+#### Phase 5: Test Refactor
+- Reorganize entire tests/ folder to mirror new CLI structure
+- Update all test imports to use new paths
+- Remove any test files with forbidden naming patterns
+- Ensure 95%+ coverage with clean test names
+
+#### Phase 6: Final Polish
+- Ensure all tests pass with new structure
 - Remove duplicate workspace.py
-- Clean up unused imports
-- Update documentation
+- Update all documentation with new command style
+- Validate all file names follow naming rules
 
-### Import Migration Map
+### Import Replacement Map
 
 ```python
-# OLD -> NEW import mappings
+# Complete replacement - no compatibility imports
+# OLD imports will be DELETED, NEW imports will be the only option
 {
     "cli.commands.agent.AgentCommands": "cli.commands.agent.AgentCommand",
     "cli.commands.postgres.PostgreSQLCommands": "cli.commands.postgres.PostgresCommand",
     "cli.commands.genie.GenieCommands": "cli.commands.genie.GenieCommand",
-    "cli.commands.service.ServiceManager": "cli.commands.production.ProductionCommand",
-    "cli.commands.init.InitCommands": "cli.commands.system.InitCommand",
-    "cli.commands.uninstall.UninstallCommands": "cli.commands.system.UninstallCommand",
-    "cli.docker_manager.DockerManager": "cli.services.docker_service.DockerService",
-    "cli.workspace.WorkspaceManager": "cli.services.workspace_service.WorkspaceService"
+    "cli.commands.service.ServiceManager": "cli.commands.serve.ServeCommand",
+    "cli.commands.init.InitCommands": "cli.commands.install.InstallCommand",
+    "cli.commands.uninstall.UninstallCommands": "cli.commands.uninstall.UninstallCommand",
+    "cli.docker_manager.DockerManager": "cli.services.docker.DockerService",
+    "cli.workspace.WorkspaceManager": "cli.services.workspace.WorkspaceService",
+    # Core service replacements
+    "cli.core.agent_service.AgentService": "cli.services.agent.AgentService",
+    "cli.core.genie_service.GenieService": "cli.services.genie.GenieService",
+    "cli.core.postgres_service.PostgreSQLService": "cli.services.postgres.PostgresService"
 }
 ```
 
-## Enhanced Test Strategy
+## Test Strategy and Structure Refactor
 
-### Unit Test Structure
+### Test Folder Reorganization
 ```
 tests/
-├── cli/
-│   ├── commands/
-│   │   ├── test_agent_command.py
-│   │   ├── test_genie_command.py
-│   │   ├── test_postgres_command.py
-│   │   └── test_workspace_command.py
-│   ├── services/
-│   │   ├── test_agent_service.py
-│   │   ├── test_docker_service.py
-│   │   └── test_workspace_service.py
-│   ├── parsers/
-│   │   ├── test_parser_factory.py
-│   │   └── test_subcommand_parsers.py
-│   └── test_main.py
+├── unit/
+│   └── cli/
+│       ├── commands/
+│       │   ├── test_agent.py
+│       │   ├── test_genie.py
+│       │   ├── test_postgres.py
+│       │   ├── test_serve.py
+│       │   ├── test_dev.py
+│       │   ├── test_workspace.py
+│       │   ├── test_install.py
+│       │   └── test_uninstall.py
+│       ├── services/
+│       │   ├── test_agent_service.py
+│       │   ├── test_genie_service.py
+│       │   ├── test_postgres_service.py
+│       │   ├── test_docker_service.py
+│       │   └── test_workspace_service.py
+│       ├── test_app.py
+│       ├── test_parser.py
+│       └── test_main.py
+├── integration/
+│   └── cli/
+│       ├── test_agent_workflow.py
+│       ├── test_genie_workflow.py
+│       ├── test_postgres_workflow.py
+│       ├── test_server_workflow.py
+│       └── test_workspace_workflow.py
+└── e2e/
+    └── cli/
+        ├── test_installation.py
+        ├── test_full_workflow.py
+        └── test_command_aliases.py
 ```
+
+### Naming Rules Compliance
+- **FORBIDDEN PATTERNS**: No files named with "improved", "better", "enhanced", "fixed", "new", "v2", "comprehensive"
+- **CLEAN NAMES**: Use descriptive, purpose-based names only
+- **EXAMPLES**: 
+  - ❌ `test_cli_improved.py`
+  - ❌ `test_agent_enhanced.py`
+  - ✅ `test_agent.py`
+  - ✅ `test_workflow.py`
 
 ### Test Coverage Requirements
 - **Unit Tests**: 95%+ coverage for all new command and service classes
-- **Integration Tests**: Maintain existing integration test coverage
-- **End-to-End Tests**: All CLI commands must pass existing E2E tests
-- **Migration Tests**: Special tests to ensure import compatibility during migration
+- **Integration Tests**: Rewrite all integration tests for new structure
+- **End-to-End Tests**: Update all E2E tests for new CLI patterns
+- **DX Tests**: Validate new command style works as expected
+- **Alias Tests**: Ensure command aliases work properly
+- **No Legacy Tests**: All old test patterns must be removed
 
 ### TDD Integration Points
 - **Red Phase**: Create failing tests for each new command class before implementation
@@ -234,14 +407,16 @@ tests/
 
 ### High Risk Items
 1. **Import Breaking**: Test files import specific command classes
-2. **CLI Interface Changes**: Any change to CLI arguments or behavior
-3. **Service Dependencies**: Complex dependencies between services
+2. **CLI Interface Changes**: Complete replacement of --command with direct commands
+3. **Removing Workspace Parameters**: All fake workspace params must be removed
 
 ### Mitigation Strategies
-1. **Backward Compatibility**: Maintain all existing imports during migration
-2. **Gradual Migration**: Migrate one command group at a time
-3. **Comprehensive Testing**: Run full test suite after each migration step
-4. **Rollback Plan**: Keep old structure until full migration is validated
+1. **Clean Refactor**: Replace entire CLI structure in one coordinated change
+2. **Remove Fake Parameters**: Eliminate all meaningless workspace params
+3. **Test Update**: Update all tests to use new patterns immediately
+4. **Comprehensive Testing**: Run full test suite after refactor
+5. **Clear Documentation**: Document which commands are Docker-only
+6. **No Legacy Code**: Remove all old patterns immediately
 
 ### Low Risk Items
 1. **Internal Refactoring**: Changes to internal structure without import changes
@@ -251,10 +426,14 @@ tests/
 ## Success Criteria
 
 ### Functional Requirements
-- [ ] All existing CLI commands work identically to current behavior
-- [ ] All test files pass without modification
-- [ ] No breaking changes to public CLI interface
-- [ ] Import statements in tests continue to work
+- [ ] New direct command style works intuitively with `hive` command
+- [ ] All tests updated to new command patterns
+- [ ] Test folder reorganized to mirror new structure
+- [ ] Import statements in tests updated to new structure
+- [ ] Help text is clear and helpful for each command
+- [ ] Zero legacy code remains after refactor
+- [ ] All file names follow clean naming rules (no "improved", "better", etc.)
+- [ ] Program executable renamed from `automagik-hive` to `hive`
 
 ### Quality Requirements  
 - [ ] Single Responsibility Principle followed in all new classes
@@ -263,15 +442,18 @@ tests/
 - [ ] Improved testability with mockable service layer
 
 ### Performance Requirements
-- [ ] CLI startup time remains under 100ms
+- [ ] CLI startup time remains under 50ms (improved from 100ms)
 - [ ] Memory usage does not increase significantly
-- [ ] All commands execute in same time as current implementation
+- [ ] All commands execute in same time or faster
+- [ ] Subcommand parsing adds minimal overhead
 
 ### Maintainability Requirements
-- [ ] Each file under 200 lines (except integration files)
-- [ ] Clear domain boundaries between command groups
-- [ ] Consistent naming and structure patterns
-- [ ] Easy to add new commands following established patterns
+- [ ] Each command file under 300 lines (consolidated logic)
+- [ ] Services under 200 lines each
+- [ ] Main.py under 30 lines
+- [ ] Clear separation between commands and services
+- [ ] Easy to add new commands or subcommands
+- [ ] Consistent patterns across all commands
 
 ## Orchestration Strategy
 
@@ -408,22 +590,30 @@ Phase 7 (Cleanup & Final Validation)
 ## Implementation Notes
 
 ### Key Design Decisions
-1. **Command Pattern**: Separates command parsing from execution
-2. **Service Layer**: Isolates business logic from CLI concerns  
-3. **Factory Pattern**: Centralizes parser creation and configuration
-4. **Domain Separation**: Groups related functionality by service domain
+1. **Direct Commands**: Modern CLI patterns only - no legacy
+2. **Clean Break**: No backward compatibility - fresh start
+3. **Simplified Structure**: One file per command group
+4. **Service Layer**: Clean separation of business logic from CLI
+5. **Subparser Pattern**: Native argparse subcommands for logical grouping
+6. **No Aliases**: Explicit commands only for clarity
+7. **Rich Output**: Clean console output with rich library
+8. **No Legacy Code**: Complete removal of old patterns
+9. **Short Program Name**: `hive` instead of `automagik-hive`
 
 ### File Size Targets
-- Main entry point: ~50 lines
-- Individual command files: <150 lines
-- Service files: <200 lines  
-- Parser files: <100 lines
-- Utility files: <100 lines
+- Main entry point: ~30 lines
+- App.py: ~100 lines
+- Parser.py: ~150 lines
+- Command files: <300 lines each (consolidated)
+- Service files: <200 lines each
+- Utility files: <100 lines each
+- Test files: <350 lines each (focused testing)
 
 ### Testing Strategy Integration
 - Unit tests for each command and service class
-- Integration tests for parser factory and command routing
-- End-to-end tests for complete CLI workflows
-- Migration tests for import compatibility
+- Integration tests for command workflows
+- End-to-end tests for complete CLI scenarios
+- All test files follow clean naming patterns
+- Test structure mirrors source code structure
 
-This refactoring will create a maintainable, testable, and extensible CLI architecture that follows Python best practices while ensuring zero breaking changes to existing functionality.
+This refactoring will create a maintainable, testable, and extensible CLI architecture that follows Python best practices with a complete clean-break approach - no legacy code, no backward compatibility, just modern patterns and clean naming throughout both source and test files.

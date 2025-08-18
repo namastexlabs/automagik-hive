@@ -81,17 +81,18 @@ def test_temp_path_is_safe_by_default(tmp_path):
 class TestGlobalIsolationBehavior:
     """Test class to verify isolation works across different test patterns."""
 
-    def test_class_based_test_isolation(self):
+    def test_class_based_test_isolation(self, isolated_workspace):
         """Test that class-based tests also get isolation protection."""
-        # This should be protected by the global fixture
+        # This should be protected by the isolated_workspace fixture
         current_dir = Path.cwd()
         # Should not be in project root if isolation is working
         project_root = Path(__file__).parent.parent.absolute()
 
-        # If we're using isolated_workspace, we shouldn't be in project root
+        # We're using isolated_workspace, so we shouldn't be in project root
         assert current_dir != project_root
-        # If we're not, the global fixture should at least be monitoring
-        assert True  # This test mainly ensures no exceptions occur
+        # Verify we're in the isolated workspace
+        assert "test_workspace" in str(current_dir)
+        assert isolated_workspace in current_dir.parents or current_dir == isolated_workspace
 
 
 @pytest.mark.parametrize("filename", ["test_artifact.txt", "temporary_file.tmp", "output_data.json"])

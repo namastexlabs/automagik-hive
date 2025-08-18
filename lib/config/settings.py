@@ -158,6 +158,11 @@ class HiveSettings(BaseSettings):
         """Log level alias for legacy compatibility."""
         return self.hive_log_level
     
+    @property
+    def enable_langwatch(self) -> bool:
+        """LangWatch enable alias for legacy compatibility."""
+        return self.hive_enable_langwatch
+    
     # =========================================================================
     # VALIDATORS (Fail-Fast Configuration)
     # =========================================================================
@@ -251,6 +256,24 @@ class HiveSettings(BaseSettings):
                 environment=self.hive_environment
             )
             self.hive_auth_disabled = False
+        return self
+    
+    @model_validator(mode='after')
+    def auto_disable_langwatch_without_api_key(self):
+        """Auto-disable LangWatch when no API key is provided."""
+        # Check if langwatch_api_key is None, empty, or a placeholder value
+        invalid_api_key = (
+            not self.langwatch_api_key or 
+            self.langwatch_api_key.startswith('your-langwatch-api-key')
+        )
+        
+        if invalid_api_key and self.hive_enable_langwatch:
+            logger.info(
+                "LangWatch automatically disabled - no valid API key provided",
+                enable_langwatch=False,
+                api_key_provided=bool(self.langwatch_api_key)
+            )
+            self.hive_enable_langwatch = False
         return self
     
     # =========================================================================

@@ -169,10 +169,10 @@ class TestSettings:
             test_settings = Settings()
             assert test_settings.hive_enable_langwatch is False
 
-        # Test no API key - LangWatch uses default value (True) since auto-disable logic not implemented
+        # Test no API key - LangWatch automatically disabled when no valid API key provided
         with patch.dict(os.environ, {"HIVE_ENABLE_METRICS": "true"}, clear=True):
             test_settings = Settings()
-            assert test_settings.hive_enable_langwatch is True
+            assert test_settings.hive_enable_langwatch is False
 
     def test_settings_langwatch_config_cleanup(self, clean_singleton):
         """Test LangWatch config cleanup removes None values."""

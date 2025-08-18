@@ -94,11 +94,7 @@ def generate_complete_workspace_credentials(
     Returns:
         Complete credentials dictionary
     """
-    env_file = None
-    if workspace_path:
-        env_file = workspace_path / ".env"
-
-    credential_service = CredentialService(env_file)
+    credential_service = CredentialService(project_root=workspace_path)
     creds = credential_service.setup_complete_credentials(
         postgres_host, postgres_port, postgres_database
     )

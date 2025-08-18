@@ -147,7 +147,7 @@ Use --help for detailed options or see documentation.
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Workspace path - primary positional argument
-    parser.add_argument("workspace", nargs="?", help="Workspace directory path")
+    parser.add_argument("workspace", nargs="?", help="Start workspace server")
 
     return parser
 

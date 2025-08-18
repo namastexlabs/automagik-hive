@@ -1544,6 +1544,13 @@ RESULT: 100% safe Docker testing with zero real container operations.
 class TestComprehensiveCoverage:
     """Comprehensive coverage validation tests."""
     
+    @patch.dict('os.environ', {
+        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
+        'HIVE_AGENT_POSTGRES_PORT': '35532', 
+        'HIVE_AGENT_API_PORT': '38886',
+        'HIVE_GENIE_POSTGRES_PORT': '45532',
+        'HIVE_GENIE_API_PORT': '48886'
+    })
     def test_all_public_methods_covered(self):
         """Verify all public methods have test coverage."""
         manager = DockerManager()
@@ -1560,6 +1567,13 @@ class TestComprehensiveCoverage:
         for method in expected_methods:
             assert method in public_methods, f"Public method {method} should exist"
 
+    @patch.dict('os.environ', {
+        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
+        'HIVE_AGENT_POSTGRES_PORT': '35532', 
+        'HIVE_AGENT_API_PORT': '38886',
+        'HIVE_GENIE_POSTGRES_PORT': '45532',
+        'HIVE_GENIE_API_PORT': '48886'
+    })
     def test_all_container_types_covered(self):
         """Verify all container types are properly handled."""
         manager = DockerManager()
@@ -1572,6 +1586,13 @@ class TestComprehensiveCoverage:
             # Verify port mappings exist
             assert component in manager.PORTS, f"Component {component} should have port mappings"
 
+    @patch.dict('os.environ', {
+        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
+        'HIVE_AGENT_POSTGRES_PORT': '35532', 
+        'HIVE_AGENT_API_PORT': '38886',
+        'HIVE_GENIE_POSTGRES_PORT': '45532',
+        'HIVE_GENIE_API_PORT': '48886'
+    })
     def test_error_path_coverage(self):
         """Verify error handling paths are covered."""
         manager = DockerManager()
