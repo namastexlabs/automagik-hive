@@ -39,51 +39,177 @@ cli/
 
 ### Test Dependencies Analysis
 
-Current test files that depend on CLI structure:
-- `tests/integration/cli/test_cli_integration.py` (696 lines)
-- `tests/integration/cli/test_cli_argument_validation.py`
-- `tests/integration/cli/test_cli_workspace_path_lines_conflict.py`
-- `tests/cli/commands/test_init.py`
-- Multiple other integration tests
+**Complete list of 35 test files** that depend on CLI structure (20,800+ lines total):
+
+#### Unit Tests - CLI Commands (12 files, ~6,000 lines)
+- `tests/cli/commands/test_agent_commands.py` (631 lines) - AgentCommands, AgentService
+- `tests/cli/commands/test_agent_coverage.py` (580 lines) - AgentCommands
+- `tests/cli/commands/test_genie.py` (977 lines) - GenieCommands  
+- `tests/cli/commands/test_genie_cli_command.py` (126 lines) - GenieCommands
+- `tests/cli/commands/test_health.py` (45 lines) - HealthChecker
+- `tests/cli/commands/test_init.py` (281 lines) - InitCommands
+- `tests/cli/commands/test_orchestrator.py` (45 lines) - WorkflowOrchestrator
+- `tests/cli/commands/test_postgres.py` (740 lines) - PostgreSQLCommands
+- `tests/cli/commands/test_service.py` (467 lines) - ServiceManager
+- `tests/cli/commands/test_uninstall.py` (443 lines) - UninstallCommands
+- `tests/cli/commands/test_workspace_commands.py` (614 lines) - WorkspaceCommands
+
+#### Unit Tests - CLI Core Services (4 files, ~3,500 lines)
+- `tests/cli/core/test_agent_environment.py` (641 lines) - AgentEnvironment
+- `tests/cli/core/test_agent_service.py` (1,139 lines) - AgentService
+- `tests/cli/core/test_main_service.py` (1,238 lines) - MainService  
+- `tests/cli/core/test_postgres_service.py` (447 lines) - PostgreSQLService
+
+#### Unit Tests - CLI Root (4 files, ~3,000 lines)
+- `tests/cli/test_main.py` (85 lines) - main, create_parser
+- `tests/cli/test_utils.py` (515 lines) - cli.utils functions
+- `tests/cli/test_workspace.py` (758 lines) - WorkspaceManager
+- `tests/cli/test_docker_manager.py` (1,606 lines) - DockerManager
+
+#### Integration Tests - CLI (7 files, ~4,000 lines)
+- `tests/integration/cli/test_cli_integration.py` (695 lines) - main, create_parser
+- `tests/integration/cli/test_cli_argument_validation.py` (327 lines) - create_parser
+- `tests/integration/cli/test_cli_workspace_path_lines_conflict.py` (417 lines) - create_parser
+- `tests/integration/cli/test_argument_parsing_edge_cases.py` (381 lines) - create_parser
+- `tests/integration/cli/test_coverage_validation.py` (952 lines) - all command imports
+- `tests/integration/cli/test_health_system.py` (282 lines) - HealthChecker
+- `tests/integration/cli/test_main_cli.py` (934 lines) - app, main
+
+#### Integration Tests - Other (8 files, ~4,500 lines)
+- `tests/integration/cli/core/test_agent_environment_integration.py` (1,152 lines)
+- `tests/integration/cli/core/test_agent_service_integration.py` (1,282 lines)
+- `tests/integration/docker/test_docker_manager_integration.py` (47 lines)
+- `tests/integration/auth/test_cli_credential_integration.py` (70 lines)
+- `tests/integration/auth/test_single_credential_integration.py` (178 lines)
+- `tests/integration/e2e/test_agent_commands_integration.py` (1,090 lines)
+- `tests/integration/e2e/test_uv_run_workflow_e2e.py` (947 lines)
+- `tests/integration/e2e/test_version_sync.py` (145 lines)
 
 ## Proposed Solution
 
-### New Folder Structure (Optimized for Direct Commands)
+### New Folder Structure (CLI-Only Refactor)
+
+**CLI Migration to automagik_hive/cli/ - Phase 1 of Package Structure:**
+
+This refactor focuses ONLY on CLI reorganization:
+- CLI moves to `automagik_hive/cli/` for future PyPI readiness
+- Other modules (ai/, api/, lib/) remain at root for now (separate wish)
+- Clean break refactor - no backward compatibility
+- All CLI imports updated to use `automagik_hive.cli.*`
 
 ```
-cli/
-├── __init__.py
-├── __main__.py (python -m automagik entry)
-├── main.py (simplified entry point, ~30 lines)
-├── app.py (main application class)
-├── parser.py (unified argument parser)
-├── commands/
-│   ├── __init__.py
-│   ├── base.py (base command interface)
-│   ├── agent.py (all agent commands in one file)
-│   ├── genie.py (all genie commands)
-│   ├── postgres.py (all postgres commands)
-│   ├── serve.py (production server commands)
-│   ├── dev.py (development server commands)
-│   ├── workspace.py (workspace management)
-│   ├── install.py (system installation)
-│   ├── uninstall.py (system cleanup)
-│   └── health.py (health checks)
-├── services/
-│   ├── __init__.py
-│   ├── base.py (base service class)
-│   ├── agent.py (agent service)
-│   ├── genie.py (genie service)
-│   ├── postgres.py (postgres service)
-│   ├── docker.py (docker operations)
-│   └── workspace.py (workspace service)
-├── utils/
-│   ├── __init__.py
-│   ├── console.py (rich console output)
-│   ├── process.py (subprocess utilities)
-│   ├── validation.py (input validation)
-│   └── paths.py (path utilities)
-└── exceptions.py (custom exceptions)
+# Project structure after CLI-only migration
+automagik_hive/                    # Package directory (CLI only for now)
+├── __init__.py                    # Package initialization
+└── cli/                           # Refactored CLI module
+    ├── __init__.py
+    ├── main.py                    # Entry point + routing (~130 lines)
+    ├── parser.py                  # Unified argument parser
+    ├── commands/
+    │   ├── __init__.py
+    │   ├── base.py                # Base command interface
+    │   ├── agent.py               # All agent commands
+    │   ├── genie.py               # All genie commands
+    │   ├── postgres.py            # All postgres commands
+    │   ├── serve.py               # Production server commands
+    │   ├── dev.py                 # Development server commands
+    │   ├── workspace.py           # Workspace management
+    │   ├── install.py             # System installation
+    │   ├── uninstall.py           # System cleanup
+    │   └── health.py              # Health checks
+    ├── services/
+    │   ├── __init__.py
+    │   ├── base.py                # Base service class
+    │   ├── agent.py               # Agent service
+    │   ├── genie.py               # Genie service
+    │   ├── postgres.py            # Postgres service
+    │   ├── docker.py              # Docker operations
+    │   └── workspace.py           # Workspace service
+    ├── utils/
+    │   ├── __init__.py
+    │   ├── console.py             # Rich console output
+    │   ├── process.py             # Subprocess utilities
+    │   ├── validation.py          # Input validation
+    │   └── paths.py               # Path utilities
+    ├── exceptions.py              # Custom exceptions
+    └── CLAUDE.md                  # CLI architectural documentation for future agents
+
+# These remain at root (unchanged for now - separate wish)
+ai/                                # Multi-agent system (stays at root)
+api/                               # API layer (stays at root)
+lib/                               # Shared services (stays at root)
+tests/                             # Tests (stays at root)
+
+# Project root files
+pyproject.toml                     # Package configuration
+README.md                          # Project documentation
+.gitignore                         # Git ignore patterns
+```
+
+### Import Changes After CLI Migration
+
+**Before (current flat structure):**
+```python
+# Current CLI imports
+from cli.main import main
+from cli.commands.agent import AgentCommands
+from cli.core.agent_service import AgentService
+from cli.docker_manager import DockerManager
+from cli.workspace import WorkspaceManager
+
+# Other module imports (unchanged)
+from lib.auth.service import AuthService
+from ai.agents.registry import AgentRegistry
+from api.serve import app
+```
+
+**After (CLI-only migration):**
+```python
+# New CLI imports with package namespace
+from automagik_hive.cli.main import main
+from automagik_hive.cli.commands.agent import AgentCommand
+from automagik_hive.cli.services.agent import AgentService
+from automagik_hive.cli.services.docker import DockerService
+from automagik_hive.cli.services.workspace import WorkspaceService
+
+# Other module imports (remain unchanged for now)
+from lib.auth.service import AuthService  # Still at root
+from ai.agents.registry import AgentRegistry  # Still at root
+from api.serve import app  # Still at root
+```
+
+### PyPI Package Configuration
+
+**pyproject.toml updates:**
+```toml
+[project]
+name = "automagik-hive"
+version = "0.1.0"
+description = "Enterprise Multi-Agent AI Framework"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "agno>=0.0.35",
+    "rich>=13.0.0",
+    "docker>=6.0.0",
+    # ... other dependencies
+]
+
+[project.scripts]
+automagik-hive = "automagik_hive.cli.main:main"
+hive = "automagik_hive.cli.main:main"  # Short alias
+
+[tool.setuptools]
+packages = ["automagik_hive"]
+package-dir = {"": "."}
+
+[tool.setuptools.package-data]
+automagik_hive = [
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.md",
+    "**/*.csv",
+]
 ```
 
 ### Command Style Migration (DX Improvement)
@@ -102,32 +228,36 @@ automagik-hive genie
 
 #### New Style (Direct Commands - No Fake Parameters)
 ```bash
-# Clean, honest command structure
-hive agent install      # Docker containers - no workspace
-hive agent start        # Docker containers - no workspace
-hive agent stop         # Docker containers - no workspace
-hive agent status       # Docker containers - no workspace
-hive agent logs --tail 50
-hive agent reset
+# Clean, honest command structure (using full package name for consistency)
+automagik-hive agent install      # Docker containers - no workspace
+automagik-hive agent start        # Docker containers - no workspace
+automagik-hive agent stop         # Docker containers - no workspace
+automagik-hive agent status       # Docker containers - no workspace
+automagik-hive agent logs --tail 50
+automagik-hive agent reset
 
-hive genie install      # Docker containers - no workspace
-hive genie start        # Docker containers - no workspace
-hive genie launch       # Launches claude with GENIE.md
+automagik-hive genie install      # Docker containers - no workspace
+automagik-hive genie start        # Docker containers - no workspace
+automagik-hive genie              # Launches claude with GENIE.md (direct, like current)
+automagik-hive genie -- --model opus  # Pass args to claude after --
 
-hive postgres start     # Single main instance - no workspace
-hive postgres status    # Single main instance - no workspace
-hive postgres health    # Single main instance - no workspace
+automagik-hive postgres start     # Single main instance - no workspace
+automagik-hive postgres status    # Single main instance - no workspace
+automagik-hive postgres health    # Single main instance - no workspace
 
-hive serve              # Current directory - no workspace param
-hive dev                # Current directory - no workspace param
-hive install            # System-wide - no workspace param
-hive uninstall          # System-wide - no workspace param
-hive init [name]        # Only command that needs optional param
+automagik-hive serve              # Current directory - no workspace param
+automagik-hive dev                # Current directory - no workspace param
+automagik-hive install            # System-wide - no workspace param
+automagik-hive uninstall          # System-wide - no workspace param
+automagik-hive init [name]        # Only command that needs optional param
 
 # Standard flags only for actual flags
-hive --help
-hive --version
-hive agent --help       # Context-aware help
+automagik-hive --help
+automagik-hive --version
+automagik-hive agent --help       # Context-aware help
+
+# Users can create shell alias: alias hive=automagik-hive
+# Or use with uvx: uvx automagik-hive agent install
 ```
 
 ### Architectural Patterns
@@ -177,7 +307,7 @@ class BaseService(ABC):
 def create_parser() -> argparse.ArgumentParser:
     """Create parser with direct command approach."""
     parser = argparse.ArgumentParser(
-        prog='hive',
+        prog='automagik-hive',
         description='Automagik Hive - Multi-Agent AI Framework'
     )
     
@@ -201,7 +331,8 @@ def create_parser() -> argparse.ArgumentParser:
     agent_sub.add_parser('reset', help='Reset Docker environment')
     
     # Genie commands (Docker-only, no workspace)
-    genie = subparsers.add_parser('genie', help='Genie Docker management')
+    genie = subparsers.add_parser('genie', help='Genie Docker management / Launch Claude with GENIE.md')
+    genie.add_argument('claude_args', nargs='*', help='Arguments to pass to claude')
     genie_sub = genie.add_subparsers(dest='action')
     genie_sub.add_parser('install', help='Install genie Docker containers')
     genie_sub.add_parser('start', help='Start genie containers')
@@ -211,8 +342,8 @@ def create_parser() -> argparse.ArgumentParser:
     genie_logs = genie_sub.add_parser('logs', help='View container logs')
     genie_logs.add_argument('--tail', type=int, default=20)
     genie_sub.add_parser('reset', help='Reset Docker environment')
-    genie_launch = genie_sub.add_parser('launch', help='Launch Claude with GENIE.md')
-    genie_launch.add_argument('claude_args', nargs='*', help='Args to pass to claude')
+    # Note: Direct 'genie' command (without subcommand) launches Claude with GENIE.md
+    # This is handled in the main routing logic, not as a subparser
     
     # PostgreSQL commands (Single instance, no workspace)
     postgres = subparsers.add_parser('postgres', help='Main PostgreSQL management')
@@ -245,100 +376,171 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 ```
 
-#### 4. Simplified Main Entry
+#### 4. Simplified Main Entry with Routing
 ```python
-# cli/main.py (30 lines max)
+# cli/main.py (~130 lines - entry point + routing)
 import sys
-from cli.app import Application
+from cli.parser import create_parser
+from cli.commands import get_command
+
+def route_command(args):
+    """Route parsed args to appropriate command."""
+    # Handle subcommands
+    if args.command == 'agent' and args.action:
+        from cli.commands.agent import AgentCommand
+        command = AgentCommand()
+        return command.execute(args.action, args)
+    
+    if args.command == 'genie':
+        from cli.commands.genie import GenieCommand
+        command = GenieCommand()
+        if args.action:
+            # Handle genie subcommands (install, start, stop, etc.)
+            return command.execute(args.action, args)
+        else:
+            # Direct 'genie' command launches Claude
+            return command.launch_claude(args.claude_args)
+    
+    if args.command == 'postgres' and args.action:
+        from cli.commands.postgres import PostgresCommand
+        command = PostgresCommand()
+        return command.execute(args.action, args)
+    
+    # Handle direct commands
+    if args.command in ['serve', 'dev', 'install', 'uninstall', 'init', 'health']:
+        command = get_command(args.command)
+        return command.execute(args)
+    
+    return None
 
 def main():
     """Main entry point."""
-    app = Application()
-    return app.run(sys.argv[1:])
+    parser = create_parser()
+    args = parser.parse_args()
+    
+    # Route to appropriate command
+    result = route_command(args)
+    if result is None:
+        parser.print_help()
+        return 1
+    
+    return 0 if result else 1
 
 if __name__ == '__main__':
     sys.exit(main())
 ```
 
-#### 5. Application Class (Command Router)
-```python
-# cli/app.py
-from cli.parser import create_parser
-from cli.commands import COMMAND_MAP
+### Migration Strategy (CLI-Only Clean Break Refactor)
 
-class Application:
-    """Main application that routes commands."""
-    
-    def run(self, args):
-        parser = create_parser()
-        parsed = parser.parse_args(args)
-        
-        # Route to appropriate command
-        if parsed.command in COMMAND_MAP:
-            command = COMMAND_MAP[parsed.command]()
-            return command.execute(parsed)
-        
-        parser.print_help()
-        return 1
-```
+#### Phase 1: CLI Package Directory Creation
+- Create `automagik_hive/` directory at project root
+- Create `automagik_hive/cli/` subdirectory structure
+- Add `__init__.py` files for proper package initialization
+- Keep ai/, api/, lib/ at root (unchanged for now)
+- Keep tests/ at project root
 
-### Migration Strategy (Clean Break Refactor)
-
-#### Phase 1: Parser Revolution
-- Create new unified parser.py with direct command structure
-- Implement clean command routing in app.py
-- NO backward compatibility - clean break from old patterns
-
-#### Phase 2: Structure Creation (Clean Slate)
-- Create simplified folder structure
+#### Phase 2: CLI Structure Creation (Clean Slate)
+- Create new folder structure under automagik_hive/cli/
 - Implement base command and service classes
-- Build new service implementations from scratch
-- Delete old patterns immediately
+- Build service layer separating business logic from CLI
+- Create utils subdirectory for shared utilities
+- Add exceptions.py for custom CLI exceptions
+- Create CLAUDE.md documenting CLI architecture for future agents
 
-#### Phase 3: Command Implementation
+#### Phase 3: Parser Revolution
+- Create new unified parser.py with direct command structure
+- Implement clean command routing in main.py (~130 lines)
+- NO backward compatibility - clean break from old patterns
+- Remove ALL fake workspace parameters
+- Implement proper subcommand structure
+
+#### Phase 4: Command Implementation
 - Implement each command group in single file (agent.py, genie.py, etc.)
-- Build clean command structure from scratch
-- Create new import structure
+- Consolidate related commands into single files (<300 lines each)
+- Create new import structure with package prefix
 - Ensure all file names are descriptive and clean
 - No aliases - explicit commands only
 
-#### Phase 4: Clean Entry Point
-- Create new main.py with ~30 lines
-- Implement app.py with clean routing logic
-- Build parser.py with modern command structure
-- Add rich console output for UX
-- Validate naming rules compliance
+#### Phase 5: Service Layer Implementation
+- Move business logic from commands to services
+- Create AgentService, GenieService, PostgresService, etc.
+- Implement DockerService replacing DockerManager
+- Create WorkspaceService consolidating workspace logic
+- Remove duplicate workspace.py file
 
-#### Phase 5: Test Refactor
-- Reorganize entire tests/ folder to mirror new CLI structure
-- Update all test imports to use new paths
-- Remove any test files with forbidden naming patterns
-- Ensure 95%+ coverage with clean test names
+#### Phase 6: CLI Import Updates
+- Update ALL CLI imports to use `automagik_hive.cli.*` prefix
+- Update test imports for CLI modules only
+- Update entry point script (.venv/bin/automagik-hive)
+- Fix any circular import issues in CLI
+- Keep non-CLI imports unchanged (lib.*, ai.*, api.*)
 
-#### Phase 6: Final Polish
-- Ensure all tests pass with new structure
-- Remove duplicate workspace.py
-- Update all documentation with new command style
+#### Phase 7: Test Refactor (CLI Tests Only)
+- Update all 35 test files that import CLI modules
+- Reorganize CLI test structure to mirror new layout
+- Remove test_agent_commands_improved.py (forbidden pattern)
+- Ensure 95%+ coverage for CLI code
+- Keep non-CLI tests unchanged
+
+#### Phase 8: Final Polish and Validation
+- Ensure all CLI tests pass with new structure
+- Delete old cli/ directory after migration complete
+- Update CLI documentation with new import patterns
 - Validate all file names follow naming rules
+- Test with `uv run automagik-hive` commands
 
-### Import Replacement Map
+### Import Replacement Map (CLI-Only Migration)
 
 ```python
-# Complete replacement - no compatibility imports
-# OLD imports will be DELETED, NEW imports will be the only option
+# CLI-only import replacement map
+# Only CLI imports get the automagik_hive prefix
 {
-    "cli.commands.agent.AgentCommands": "cli.commands.agent.AgentCommand",
-    "cli.commands.postgres.PostgreSQLCommands": "cli.commands.postgres.PostgresCommand",
-    "cli.commands.genie.GenieCommands": "cli.commands.genie.GenieCommand",
-    "cli.commands.service.ServiceManager": "cli.commands.serve.ServeCommand",
-    "cli.commands.init.InitCommands": "cli.commands.install.InstallCommand",
-    "cli.commands.uninstall.UninstallCommands": "cli.commands.uninstall.UninstallCommand",
-    "cli.docker_manager.DockerManager": "cli.services.docker.DockerService",
-    "cli.workspace.WorkspaceManager": "cli.services.workspace.WorkspaceService",
-    # Core service replacements
-    "cli.core.agent_service.AgentService": "cli.services.agent.AgentService",
-    "cli.core.genie_service.GenieService": "cli.services.genie.GenieService",
-    "cli.core.postgres_service.PostgreSQLService": "cli.services.postgres.PostgresService"
+    # CLI Command replacements (35 test files depend on these)
+    "cli.commands.agent.AgentCommands": "automagik_hive.cli.commands.agent.AgentCommand",
+    "cli.commands.postgres.PostgreSQLCommands": "automagik_hive.cli.commands.postgres.PostgresCommand",
+    "cli.commands.genie.GenieCommands": "automagik_hive.cli.commands.genie.GenieCommand",
+    "cli.commands.service.ServiceManager": "automagik_hive.cli.commands.serve.ServeCommand",
+    "cli.commands.init.InitCommands": "automagik_hive.cli.commands.workspace.WorkspaceCommand",
+    "cli.commands.uninstall.UninstallCommands": "automagik_hive.cli.commands.uninstall.UninstallCommand",
+    "cli.commands.workspace.WorkspaceCommands": "automagik_hive.cli.commands.workspace.WorkspaceCommand",
+    "cli.commands.health.HealthChecker": "automagik_hive.cli.commands.health.HealthCommand",
+    "cli.commands.orchestrator.WorkflowOrchestrator": "DELETED - not needed",
+    
+    # CLI Service replacements
+    "cli.core.agent_service.AgentService": "automagik_hive.cli.services.agent.AgentService",
+    "cli.core.genie_service.GenieService": "automagik_hive.cli.services.genie.GenieService",
+    "cli.core.postgres_service.PostgreSQLService": "automagik_hive.cli.services.postgres.PostgresService",
+    "cli.core.main_service.MainService": "automagik_hive.cli.services.main.MainService",
+    "cli.core.agent_environment.AgentEnvironment": "automagik_hive.cli.services.agent.AgentEnvironment",
+    "cli.core.agent_service.DockerComposeManager": "automagik_hive.cli.services.docker.DockerComposeManager",
+    
+    # CLI Utility replacements
+    "cli.docker_manager.DockerManager": "automagik_hive.cli.services.docker.DockerService",
+    "cli.workspace.WorkspaceManager": "automagik_hive.cli.services.workspace.WorkspaceService",
+    "cli.workspace.UnifiedWorkspaceManager": "automagik_hive.cli.services.workspace.WorkspaceService",
+    
+    # CLI Main entry point (critical for 20+ test files)
+    "cli.main.main": "automagik_hive.cli.main.main",
+    "cli.main.create_parser": "automagik_hive.cli.parser.create_parser",
+    "cli.main.LazyCommandLoader": "DELETED - not needed",
+    "cli.main.app": "automagik_hive.cli.main.main",  # app() was just calling main()
+    
+    # CLI Utils (used by test_utils.py)
+    "cli.utils": "automagik_hive.cli.utils.*", # Split into console.py, process.py, validation.py, paths.py
+    
+    # Entry point script update
+    ".venv/bin/automagik-hive": "from automagik_hive.cli.main import main",
+    
+    # NON-CLI imports remain unchanged (for now)
+    "ai.agents.registry": "ai.agents.registry",  # Stays at root
+    "ai.teams.registry": "ai.teams.registry",  # Stays at root  
+    "ai.workflows.registry": "ai.workflows.registry",  # Stays at root
+    "api.serve": "api.serve",  # Stays at root
+    "api.main": "api.main",  # Stays at root
+    "lib.auth.service": "lib.auth.service",  # Stays at root
+    "lib.config.settings": "lib.config.settings",  # Stays at root
+    "lib.knowledge.csv_hot_reload": "lib.knowledge.csv_hot_reload",  # Stays at root
+    "lib.utils.agno_proxy": "lib.utils.agno_proxy",  # Stays at root
 }
 ```
 
@@ -389,6 +591,7 @@ tests/
   - ❌ `test_agent_enhanced.py`
   - ✅ `test_agent.py`
   - ✅ `test_workflow.py`
+- **ALREADY FIXED**: Renamed `test_agent_commands_improved.py` → `test_agent_commands.py` (kept the version with 40 tests vs 31)
 
 ### Test Coverage Requirements
 - **Unit Tests**: 95%+ coverage for all new command and service classes
@@ -426,14 +629,22 @@ tests/
 ## Success Criteria
 
 ### Functional Requirements
-- [ ] New direct command style works intuitively with `hive` command
-- [ ] All tests updated to new command patterns
-- [ ] Test folder reorganized to mirror new structure
-- [ ] Import statements in tests updated to new structure
+- [ ] New direct command style works intuitively with `automagik-hive` command
+- [ ] All CLI tests updated to new command patterns
+- [ ] CLI test folder reorganized to mirror new structure
+- [ ] CLI import statements in tests updated to use `automagik_hive.cli.*` imports
+- [ ] Non-CLI imports remain unchanged (ai.*, api.*, lib.* stay at root)
 - [ ] Help text is clear and helpful for each command
-- [ ] Zero legacy code remains after refactor
+- [ ] Zero legacy CLI code remains after refactor
 - [ ] All file names follow clean naming rules (no "improved", "better", etc.)
-- [ ] Program executable renamed from `automagik-hive` to `hive`
+- [ ] CLI migrated to `automagik_hive/cli/` structure
+- [ ] Other modules (ai/, api/, lib/) remain at root for future migration
+- [ ] Entry point script works: `.venv/bin/automagik-hive`
+- [ ] All 35 test files that import CLI modules updated
+- [ ] Old cli/ directory deleted after successful migration
+- [ ] CLAUDE.md created in automagik_hive/cli/ with complete architecture documentation
+- [ ] Direct 'genie' command launches Claude with GENIE.md (no 'launch' subcommand)
+- [ ] Genie command properly passes arguments to claude after --
 
 ### Quality Requirements  
 - [ ] Single Responsibility Principle followed in all new classes
@@ -587,6 +798,49 @@ Phase 7 (Cleanup & Final Validation)
 - **Parallel Safety**: Only independent services implemented in parallel
 - **Import Compatibility**: Maintained throughout all phases until final cleanup
 
+## CLI Architecture Documentation (CLAUDE.md)
+
+### Purpose
+Create a comprehensive CLAUDE.md file in the automagik_hive/cli/ directory that documents the CLI architecture for future agents and developers. This file will ensure consistent implementation patterns when adding new commands or maintaining existing ones.
+
+### Content Requirements
+The CLAUDE.md file should include:
+
+1. **Architecture Overview**
+   - Command pattern implementation
+   - Service layer separation
+   - Parser structure and routing logic
+   - Import conventions and package structure
+
+2. **Command Creation Guide**
+   - How to add a new command group
+   - BaseCommand interface requirements
+   - Service layer integration patterns
+   - Testing requirements for new commands
+
+3. **Key Patterns**
+   - Direct command style (no --flags for actions)
+   - Subcommand organization (agent/genie/postgres groups)
+   - Service layer for business logic separation
+   - Utils organization for shared functionality
+
+4. **Import Map**
+   - Clear documentation of all import paths
+   - Examples of correct imports from automagik_hive.cli.*
+   - Common pitfalls to avoid
+
+5. **Testing Guidelines**
+   - How to test new commands
+   - Mocking patterns for services
+   - Integration test requirements
+
+6. **Future Agent Instructions**
+   - DO NOT add backward compatibility
+   - DO NOT create files with forbidden naming patterns
+   - DO NOT add fake workspace parameters
+   - ALWAYS use the service layer for business logic
+   - ALWAYS follow the established command patterns
+
 ## Implementation Notes
 
 ### Key Design Decisions
@@ -601,9 +855,8 @@ Phase 7 (Cleanup & Final Validation)
 9. **Short Program Name**: `hive` instead of `automagik-hive`
 
 ### File Size Targets
-- Main entry point: ~30 lines
-- App.py: ~100 lines
-- Parser.py: ~150 lines
+- Main.py: ~130 lines (entry point + routing)
+- Parser.py: ~150 lines (argument parsing)
 - Command files: <300 lines each (consolidated)
 - Service files: <200 lines each
 - Utility files: <100 lines each

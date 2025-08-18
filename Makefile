@@ -376,7 +376,7 @@ help: ## 🐝 Show this help message
 	@echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run Python test suite"
 	@echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files (__pycache__, etc.)"
 	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Complete uninstall - removes everything"
-	@echo -e "  $(FONT_PURPLE)uninstall-workspace$(FONT_RESET) Uninstall current workspace (mirrors --uninstall)"
+	@echo -e "  $(FONT_PURPLE)uninstall-workspace$(FONT_RESET) Uninstall current workspace (mirrors uninstall)"
 	@echo -e "  $(FONT_PURPLE)uninstall-global$(FONT_RESET) Uninstall global installation (mirrors --uninstall-global)"
 	@echo ""
 	@echo -e "$(FONT_YELLOW)💡 For detailed commands, inspect the Makefile.$(FONT_RESET)"
@@ -636,7 +636,7 @@ clean: ## 🧹 Clean temporary files
 .PHONY: uninstall
 uninstall: ## 🗑️ Uninstall production environment (mirrors --uninstall)
 	@$(call print_status,Uninstalling production environment...)
-	@uv run automagik-hive --uninstall
+	@uv run automagik-hive uninstall
 	@$(call print_success,Production environment uninstalled!)
 
 

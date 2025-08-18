@@ -179,7 +179,8 @@ class ParserFactory:
     @staticmethod
     def _add_genie_commands(subparsers):
         """Add genie command group."""
-        genie = subparsers.add_parser('genie', help='Genie Docker management')
+        genie = subparsers.add_parser('genie', help='Genie Docker management / Launch Claude with GENIE.md')
+        genie.add_argument('claude_args', nargs='*', help='Arguments to pass to claude')
         genie_sub = genie.add_subparsers(dest='action', help='Genie actions')
         
         genie_sub.add_parser('install', help='Install genie Docker containers')
@@ -193,8 +194,8 @@ class ParserFactory:
         
         genie_sub.add_parser('reset', help='Reset Docker environment')
         
-        launch = genie_sub.add_parser('launch', help='Launch Claude with GENIE.md')
-        launch.add_argument('claude_args', nargs='*', help='Arguments to pass to Claude')
+        # Note: Direct 'genie' command (without subcommand) launches Claude with GENIE.md
+        # This is handled in the main routing logic, not as a subparser
     
     @staticmethod
     def _add_postgres_commands(subparsers):
@@ -300,6 +301,14 @@ class Application:
         if not command_class:
             self.parser.print_help()
             return 1
+        
+        # Special handling for genie command
+        if args.command == 'genie' and not args.action:
+            # Direct 'genie' command launches Claude
+            from cli.commands.genie import GenieCommand
+            service = self.service_factory.get_service('genie')
+            command = GenieCommand(service)
+            return 0 if command.launch_claude(args.claude_args) else 1
         
         # Inject appropriate service
         service = self.service_factory.get_service(args.command)
@@ -773,7 +782,6 @@ class ErrorHandler:
 ```
 cli/
 ├── __init__.py                    # Package initialization
-├── __main__.py                    # Python -m cli entry point
 ├── main.py                        # Main entry point (~30 lines)
 ├── app.py                         # Application router (~100 lines)
 ├── parser.py                      # Argument parser factory (~150 lines)
@@ -799,12 +807,184 @@ cli/
 │   ├── postgres.py                # PostgreSQL service (~150 lines)
 │   ├── docker.py                  # Docker operations (~300 lines)
 │   └── workspace.py               # Workspace service (~150 lines)
-└── utils/
-    ├── __init__.py
-    ├── console.py                 # Rich console utilities (~80 lines)
-    ├── process.py                 # Subprocess utilities (~100 lines)
-    ├── validation.py              # Input validation (~80 lines)
-    └── paths.py                   # Path utilities (~60 lines)
+├── utils/
+│   ├── __init__.py
+│   ├── console.py                 # Rich console utilities (~80 lines)
+│   ├── process.py                 # Subprocess utilities (~100 lines)
+│   ├── validation.py              # Input validation (~80 lines)
+│   └── paths.py                   # Path utilities (~60 lines)
+├── exceptions.py                  # Custom exceptions (~50 lines)
+└── CLAUDE.md                      # CLI architectural documentation
+```
+
+### CLAUDE.md Documentation Specification
+
+**Purpose**: Comprehensive architectural documentation for future agents working with the CLI module.
+
+**Location**: `automagik_hive/cli/CLAUDE.md`
+
+**Content Requirements**:
+
+```markdown
+# CLAUDE.md - CLI Module
+
+🗺️ **Command Line Interface Domain**
+
+## 🧭 Navigation
+
+**🔙 Main Hub**: [/CLAUDE.md](../../CLAUDE.md)  
+**🔗 Related**: [Tests](../../tests/CLAUDE.md) | [API](../../api/CLAUDE.md)
+
+## Purpose
+
+Modern CLI implementation for Automagik Hive using direct command patterns. No backward compatibility - clean, intuitive interface.
+
+## Architecture Overview
+
+**Command Structure**: `hive <command> <subcommand> [options]`
+**Program Name**: `hive` (not `automagik-hive`)
+**Pattern**: Command Pattern with Service Layer and Dependency Injection
+
+## Quick Reference
+
+### Available Commands
+
+**Agent Management** (Docker-only):
+- `hive agent install` - Install agent containers (ports 35532/38886)
+- `hive agent start/stop/restart` - Container lifecycle
+- `hive agent status` - Check container health
+- `hive agent logs [--tail N]` - View logs
+- `hive agent reset` - Full environment reset
+
+**Genie Management** (Docker-only):
+- `hive genie` - Launch Claude with GENIE.md personality
+- `hive genie install` - Install genie containers (ports 45532/48886)  
+- `hive genie start/stop/restart` - Container lifecycle
+- `hive genie status` - Check container health
+- `hive genie logs [--tail N]` - View logs
+- `hive genie reset` - Full environment reset
+
+**PostgreSQL Management** (Single instance):
+- `hive postgres start/stop/restart` - Main DB control (port 5532)
+- `hive postgres status` - Database health
+- `hive postgres logs [--tail N]` - View logs
+- `hive postgres health` - Detailed health check
+
+**Direct Commands**:
+- `hive serve [--host H] [--port P]` - Production server
+- `hive dev [--host H] [--port P]` - Development server
+- `hive install` - System installation
+- `hive uninstall` - Complete removal
+- `hive init [name]` - Initialize workspace
+- `hive health` - System health check
+
+## Key Patterns
+
+### Command Pattern Implementation
+Every command inherits from `BaseCommand`:
+- `execute(args)` - Main execution logic
+- `validate_args(args)` - Argument validation
+- `handle_error(error)` - Error handling
+
+### Service Layer Pattern
+Business logic separated into services:
+- Commands handle CLI interaction
+- Services handle business operations
+- Docker service handles container management
+
+### Dependency Injection
+Services injected into commands:
+- ServiceFactory creates service instances
+- Application injects services into commands
+- Enables easy testing with mocks
+
+## Import Map
+
+### Commands
+- `from cli.commands.agent import AgentCommand`
+- `from cli.commands.genie import GenieCommand`
+- `from cli.commands.postgres import PostgresCommand`
+- `from cli.commands.serve import ServeCommand`
+- `from cli.commands.dev import DevCommand`
+- `from cli.commands.install import InstallCommand`
+- `from cli.commands.uninstall import UninstallCommand`
+- `from cli.commands.workspace import WorkspaceCommand`
+- `from cli.commands.health import HealthCommand`
+
+### Services
+- `from cli.services.agent import AgentService`
+- `from cli.services.genie import GenieService`
+- `from cli.services.postgres import PostgresService`
+- `from cli.services.docker import DockerService`
+- `from cli.services.workspace import WorkspaceService`
+- `from cli.services.service_factory import ServiceFactory`
+
+### Core Components
+- `from cli.app import Application`
+- `from cli.parser import ParserFactory`
+- `from cli.commands.base import BaseCommand`
+- `from cli.services.base import BaseService`
+
+## Testing Guidelines
+
+**Unit Tests**: Mock services when testing commands
+**Integration Tests**: Use real services with Docker
+**E2E Tests**: Full command line execution flows
+
+Example test pattern:
+```python
+@pytest.fixture
+def mock_agent_service():
+    return Mock(spec=AgentService)
+
+def test_agent_start(mock_agent_service):
+    command = AgentCommand(mock_agent_service)
+    mock_agent_service.start.return_value = True
+    result = command.execute(Namespace(action='start'))
+    assert result == 0
+```
+
+## Adding New Commands
+
+1. Create command class inheriting from `BaseCommand`
+2. Add to command registry in `app.py`
+3. Add parser configuration in `parser.py`
+4. Create corresponding service if needed
+5. Add comprehensive tests
+
+## Critical Rules
+
+- **NO backward compatibility** - clean breaks only
+- **NO fake parameters** - remove meaningless options
+- **NO aliases** - one way to do things
+- **File size limits** - keep files under 300 lines
+- **Single responsibility** - each file has one purpose
+- **Test coverage** - maintain 95%+ coverage
+
+## Integration Points
+
+- **Docker**: All container operations via DockerService
+- **Rich Console**: Output formatting via console utils
+- **Process Management**: Subprocess operations via process utils
+- **Path Resolution**: Path operations via path utils
+
+## Future Agent Instructions
+
+### DO NOTs
+- Don't add backward compatibility code
+- Don't create aliases for commands
+- Don't add workspace parameters where not needed
+- Don't create files over 300 lines
+- Don't use forbidden naming patterns (improved, better, enhanced)
+
+### ALWAYs
+- Always use dependency injection for services
+- Always validate arguments before execution
+- Always handle errors gracefully
+- Always maintain test coverage
+- Always follow the established patterns
+
+Navigate to [Main Hub](../../CLAUDE.md) for system-wide guidelines.
 ```
 
 ### File Content Specifications
@@ -1111,7 +1291,7 @@ class TestAgentWorkflow:
 **Actions**:
 1. Implement Application class with command routing
 2. Create new main.py with simplified entry point
-3. Implement __main__.py for python -m cli support
+3. Ensure main.py works as entry point
 4. Update pyproject.toml to change script name to 'hive'
 
 **Validation**:
@@ -1518,9 +1698,10 @@ if __name__ == '__main__':
 
 #### cli/commands/genie.py (280 lines)
 - GenieCommand class implementation
-- All genie subcommands including launch
+- All genie subcommands (install, start, stop, etc.)
+- Direct 'genie' command launches Claude with GENIE.md
 - Genie-specific validation
-- Claude integration for launch command
+- Claude integration with argument passing
 
 ### Service Layer Files
 

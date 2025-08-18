@@ -880,7 +880,7 @@ class TestCliRealExecution:
         # This tests the actual __main__ block execution
         result = subprocess.run([
             sys.executable, '-c',
-            'import lib.auth.cli; import sys; sys.argv=["cli.py", "--help"]; exec(open("lib/auth/cli.py").read())'
+            'lib.auth.cli', '--help'
         ], capture_output=True, text=True, cwd='/home/namastex/workspace/automagik-hive')
         
         # Should show help text (or exit cleanly)
