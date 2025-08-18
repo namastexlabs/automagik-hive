@@ -142,7 +142,7 @@ POs FAILED_*       → Tratamento de erro e lógica de retry    → Recuperaçã
       {
         "index": 154,
         "NF/CTE": "96765", 
-        "valor CHAVE": 1644.67,
+        "Valor": 1644.67,
         "Empresa Origem": "CLARO MOVEL ENG",
         "CNPJ Fornecedor": "9351138000100",
         "Competência": "45778"
