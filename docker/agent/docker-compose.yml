@@ -81,7 +81,7 @@ services:
       # Agent-specific overrides only
       - HIVE_API_PORT=38886
       - HIVE_DATABASE_URL=postgresql+psycopg://test_user:test_pass@agent-postgres:5432/hive_agent
-      - HIVE_API_KEY=agent-test-key-12345
+      - HIVE_API_KEY=hive_agent-test-key-12345-67890-abcdef-ghijkl
       - HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:38886
       - POSTGRES_USER=test_user
       - POSTGRES_PASSWORD=test_pass

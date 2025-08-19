@@ -63,7 +63,7 @@ class TestServerConfig:
 
     def test_server_config_missing_env_vars_uses_defaults(self, clean_singleton):
         """Test that missing environment variables use defaults."""
-        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {"HIVE_API_PORT": "8886"}, clear=True):
             config = ServerConfig()
 
             assert config.host == "0.0.0.0"

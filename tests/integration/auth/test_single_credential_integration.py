@@ -70,7 +70,7 @@ HIVE_API_PORT=9000
         
         assert workspace_creds["api_port"] == "8886"        # Default base
         assert agent_creds["api_port"] == "38886"           # 3 + 8886
-        assert genie_creds["api_port"] == "45886"           # 4 + 5886
+        assert genie_creds["api_port"] == "48886"           # 4 + 8886
         
         # Different API keys with mode prefixes
         assert workspace_creds["api_key"].startswith("hive_workspace_")

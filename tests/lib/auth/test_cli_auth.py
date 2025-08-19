@@ -53,7 +53,7 @@ class TestShowCurrentKey:
         mock_auth_service.assert_called_once()
         mock_service.get_current_key.assert_called_once()
         mock_logger.info.assert_called_once_with(
-            "Current API key retrieved", key_length=len("test_api_key_12345")
+            "Current API key retrieved", key_length=len("test_api_key_12345"), port=8887
         )
 
     @patch('lib.auth.cli.AuthInitService')
@@ -319,8 +319,7 @@ class TestGenerateCompleteWorkspaceCredentials:
         result = generate_complete_workspace_credentials(workspace_path=workspace_path)
         
         # Should pass - function creates complete credentials
-        expected_env_file = workspace_path / ".env"
-        mock_service_class.assert_called_once_with(expected_env_file)
+        mock_service_class.assert_called_once_with(project_root=workspace_path)
         mock_service.setup_complete_credentials.assert_called_once_with(
             "localhost", 5532, "hive"
         )
@@ -343,7 +342,7 @@ class TestGenerateCompleteWorkspaceCredentials:
         result = generate_complete_workspace_credentials()
         
         # Should pass - function handles None workspace path
-        mock_service_class.assert_called_once_with(None)
+        mock_service_class.assert_called_once_with(project_root=None)
         mock_service.setup_complete_credentials.assert_called_once_with(
             "localhost", 5532, "hive"
         )
@@ -371,8 +370,7 @@ class TestGenerateCompleteWorkspaceCredentials:
         )
         
         # Should pass - function uses custom parameters
-        expected_env_file = workspace_path / ".env"
-        mock_service_class.assert_called_once_with(expected_env_file)
+        mock_service_class.assert_called_once_with(project_root=workspace_path)
         mock_service.setup_complete_credentials.assert_called_once_with(
             "custom.postgres", 9999, "custom_workspace_db"
         )

@@ -14,7 +14,7 @@
 # ============================================================================
 # STAGE 1: UV Dependencies Builder (reuse existing pattern)
 # ============================================================================
-FROM python:3.11-slim as builder
+FROM python:3.12-slim as builder
 
 # Install UV from official source
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # ============================================================================
 # STAGE 2: Agent Production - FastAPI Service Only
 # ============================================================================
-FROM python:3.11-slim as agent-production
+FROM python:3.12-slim as agent-production
 
 # Build metadata labels for enterprise tracking
 LABEL org.opencontainers.image.title="Automagik Hive Agent FastAPI"
@@ -95,4 +95,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:${HIVE_API_PORT:-38886}/api/v1/health || exit 1
 
 # Start FastAPI application using UV (as root to avoid permission issues)
-CMD ["uv", "run", "python", "api/serve.py"]
+CMD ["python", "api/serve.py"]

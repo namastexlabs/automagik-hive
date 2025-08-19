@@ -1,161 +1,36 @@
 [project]
 name = "automagik-hive"
-version = "0.1.0a61"
-description = "Automagik Multi-Agent Framework - Extensible Agent Creation System"
+version = "0.1.0"
+description = "Automagik Hive Workspace - automagik-hive"
 readme = "README.md"
-license = "MIT"
 requires-python = ">=3.12"
-keywords = [ "ai", "agents", "multi-agent", "framework", "agno",]
-classifiers = [ "Development Status :: 4 - Beta", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Scientific/Engineering :: Artificial Intelligence",]
 dependencies = [
- "agno==1.7.10",
- "aiofiles>=24.1.0",
- "jinja2>=3.1.6",
- "markdown>=3.8.2",
- "watchdog>=6.0.0",
- "psutil>=5.9.0",
- "asyncpg>=0.29.0",
- "pgvector>=0.2.0",
- "alembic>=1.16.4",
- "psycopg[binary]>=3.1.0",
- "psycopg-pool>=3.1.0",
- "sqlalchemy>=2.0.0",
- "anthropic>=0.31.0",
- "openai>=1.93.2",
- "cohere>=5.15.0",
- "google-generativeai>=0.8.5",
- "google-genai>=1.25.0",
- "fastapi>=0.116.0",
- "uvicorn>=0.35.0",
- "aiohttp>=3.12.14",
- "requests>=2.32.4",
- "mcp>=1.10.1",
- "loguru>=0.7.3",
- "langwatch>=0.2.9",
- "openinference-instrumentation-agno>=0.1.9",
- "pandas>=2.3.1",
- "docker>=7.1.0",
- "psycopg2-binary>=2.9.10",
+    "automagik-hive>=0.1.0",
 ]
-[[project.authors]]
-name = "Automagik"
-email = "hive@namastex.ai"
-
-[build-system]
-requires = [ "hatchling",]
-build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
- "autoflake>=2.3.1",
- "bandit>=1.8.6",
- "flake8>=7.3.0",
- "pathlib>=1.0.1",
- "pip-audit>=2.9.0",
- "pyflakes>=3.4.0",
- "safety>=3.6.0",
- "twine>=6.1.0",
- "types-pyyaml>=6.0.12.20250516",
+    "pytest>=8.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
 ]
 
-[project.optional-dependencies]
-dev = [ "pytest>=8.4.1", "pytest-asyncio>=1.0.0", "pytest-cov>=6.2.1", "pytest-mock>=3.14.1", "coverage>=7.9.2", "faker>=37.4.2", "ruff>=0.12.3", "mypy>=1.16.1", "langwatch-scenario>=0.7.8",]
-analytics = [ "numpy>=1.24.0", "pandas>=2.0.0", "scipy>=1.16.0", "matplotlib>=3.10.3", "seaborn>=0.13.2", "plotly>=6.2.0", "sentence-transformers>=2.2.0",]
-
-[project.urls]
-Homepage = "https://github.com/namastex/automagik-hive"
-Repository = "https://github.com/namastex/automagik-hive"
-Documentation = "https://docs.automagik.ai"
-"Bug Tracker" = "https://github.com/namastex/automagik-hive/issues"
-
-[project.scripts]
-automagik-hive = "cli.main:main"
-automagik-hive-server = "api.serve:main"
-
-[tool.uv]
-dev-dependencies = [ "pytest>=8.4.1", "pytest-asyncio>=1.0.0", "coverage>=7.9.2", "ruff>=0.12.3", "mypy>=1.16.1", "pytest-cov>=6.2.1", "pytest-mock>=3.14.1", "faker>=37.4.2",]
-
 [tool.ruff]
+line-length = 120
 target-version = "py312"
-line-length = 88
-exclude = [ ".venv", "__pycache__", ".git", "*.egg-info", "build", "dist",]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "S", "B", "A", "C4", "T20"]
+ignore = ["E501", "S101", "S603", "S607"]
 
 [tool.mypy]
 python_version = "3.12"
-strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-ignore_missing_imports = true
-follow_imports = "skip"
-exclude = [ ".venv/", "__pycache__/", ".git/", "build/", "dist/",]
-[[tool.mypy.overrides]]
-module = [ "agno.*", "anthropic.*", "openai.*", "cohere.*", "google.*", "sentence_transformers.*", "pgvector.*", "asyncpg.*", "psycopg.*", "alembic.*", "langwatch.*", "openinference.*", "uvicorn.*", "aiohttp.*", "aiofiles.*", "loguru.*", "pandas.*", "numpy.*", "matplotlib.*", "seaborn.*", "plotly.*", "scipy.*",]
-ignore_missing_imports = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-strict = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-warn_return_any = true
-
-[tool.uv.workspace]
-members = [ ".",]
-
-[tool.ruff.lint]
-select = [ "E", "W", "F", "I", "N", "D", "UP", "YTT", "BLE", "B", "A", "C4", "DTZ", "T10", "EM", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "NPY", "PERF", "RUF",]
-ignore = [ "D100", "D101", "D102", "D103", "D104", "D105", "D107", "D205", "E501", "TRY003", "EM101", "EM102", "E402", "PLR2004", "PLR0913", "PLR0912", "PLR0915", "PLR0911", "TRY300", "PLW0603", "PTH123", "BLE001", "PLC0415", "ARG001", "ARG002", "ARG003", "PTH109", "PTH108", "PTH110", "PTH119", "PTH120", "DTZ005", "TRY301", "PT011", "G004", "PERF401", "PLW2901", "TRY002", "SLF001", "B904", "E722", "F821", "F401", "F403", "F811", "F823", "PTH122", "PTH117", "PTH100", "PTH103", "DTZ006", "DTZ003", "RUF005", "RUF006", "RUF034", "RUF012", "B018", "B008", "B017", "B019", "B023", "B007", "INP001", "ERA001", "SIM102", "SIM105", "SIM108", "SIM117", "ICN001", "TRY203", "TRY004", "PYI036", "UP035", "A001", "A002", "N818", "PD901", "PTH112", "PTH202", "PTH204", "PTH207", "PTH208", "PLC0206", "PLE1205", "PLW0602", "PLW1508", "G003", "G201", "W293", "E721", "PT017", "PTH101", "PTH107", "RUF001", "TRY401", "T201", "PTH118",]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
 
 [tool.pytest.ini_options]
-minversion = "8.0"
-addopts = [ "--strict-markers", "--strict-config", "--disable-warnings", "-ra",]
-testpaths = [ "tests",]
-python_files = [ "test_*.py", "*_test.py",]
-python_classes = [ "Test*",]
-python_functions = [ "test_*",]
-asyncio_mode = "auto"
-
-[tool.coverage.run]
-source = [ "ai", "api", "lib",]
-omit = [ "tests/*", "*/__pycache__/*", "*/migrations/*", "*/venv/*", "*/.venv/*",]
-
-[tool.coverage.report]
-exclude_lines = [ "pragma: no cover", "def __repr__", "if self.debug:", "if settings.DEBUG", "raise AssertionError", "raise NotImplementedError", "if 0:", "if __name__ == .__main__.:", "class .*\\bProtocol\\):", "@(abc\\.)?abstractmethod",]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [ "D", "ARG", "PLC0415", "SLF001", "INP001", "BLE001", "SIM117", "DTZ",]
-"api/**/*.py" = [ "D",]
-"ai/**/*.py" = [ "D",]
-"lib/**/*.py" = [ "D",]
-
-[tool.ruff.lint.isort]
-known-first-party = [ "automagik", "hive", "ai", "api", "lib",]
-known-third-party = [ "agno", "anthropic", "pydantic", "sqlalchemy", "fastapi", "uvicorn",]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-[tool.hatch.build.targets.wheel]
-packages = [ "ai", "api", "lib", "cli", "docker",]
-
-[tool.hatch.build.targets.sdist]
-include = [ "/ai", "/api", "/lib", "/cli", "/docker", "/tests", "/README.md", "/pyproject.toml",]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

@@ -400,10 +400,14 @@ class TestAgentEnvironmentManagement:
         """Test successful agent environment installation."""
         service = AgentService(temp_workspace_agent)
         
-        result = service.install_agent_environment(str(temp_workspace_agent))
-        
-        # Currently returns True as stub implementation
-        assert result is True
+        # Mock subprocess.run to avoid actual Docker execution in unit tests
+        with patch('subprocess.run') as mock_run:
+            mock_run.return_value.returncode = 0
+            
+            result = service.install_agent_environment(str(temp_workspace_agent))
+            
+            # Should succeed with mocked Docker execution
+            assert result is True
 
     def test_install_agent_environment_invalid_workspace(self, temp_workspace):
         """Test agent environment installation with invalid workspace."""
@@ -414,8 +418,8 @@ class TestAgentEnvironmentManagement:
         
         result = service.install_agent_environment(str(temp_workspace))
         
-        # Should fail with invalid workspace when validation is implemented
-        assert result is True  # Will change when proper validation is implemented
+        # Should fail with invalid workspace since validation is implemented
+        assert result is False
 
     def test_validate_workspace_valid(self, temp_workspace_agent):
         """Test workspace validation with valid workspace."""
@@ -432,8 +436,8 @@ class TestAgentEnvironmentManagement:
         
         result = service._validate_workspace(invalid_path)
         
-        # Should fail with non-existent directory when validation is implemented
-        assert result is True  # Will change when proper validation is implemented
+        # Should fail with non-existent directory
+        assert result is False
 
     def test_setup_agent_containers_success(self, temp_workspace_agent):
         """Test successful agent container setup."""
@@ -464,13 +468,22 @@ class TestAgentEnvironmentManagement:
         service = AgentService(temp_workspace_agent)
         
         with patch('subprocess.run') as mock_run:
-            # Mock successful container status checks
-            mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = "container-id-123"
+            # Mock successful container status checks for both services
+            # The method calls subprocess.run twice per service:
+            # 1. docker compose ps -q service_name (returns container ID)
+            # 2. docker inspect --format "{{.State.Running}}" container_id (returns "true")
+            mock_run.side_effect = [
+                # First service (agent-postgres)
+                Mock(returncode=0, stdout="postgres-container-id\n"),  # docker compose ps
+                Mock(returncode=0, stdout="true\n"),                   # docker inspect
+                # Second service (agent-api)  
+                Mock(returncode=0, stdout="api-container-id\n"),       # docker compose ps
+                Mock(returncode=0, stdout="true\n"),                   # docker inspect
+            ]
             
             result = service._validate_agent_environment(temp_workspace_agent)
             
-            # Currently returns True due to mocking handling
+            # Should return True when both containers are running and healthy
             assert result is True
 
     def test_validate_agent_environment_with_retry_success(self, temp_workspace_agent):

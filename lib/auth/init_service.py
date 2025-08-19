@@ -104,8 +104,8 @@ class AuthInitService:
         logger.info(f"🔐 \nAPI Key: {api_key}")
         logger.info("🔐 \nUse this key in your API requests:")
         logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\\\')
-        port = os.getenv("HIVE_API_PORT", "8886")
-        logger.info(f"🔐      http://localhost:{port}/api/v1/health")
+        from lib.config.settings import settings
+        logger.info(f"🔐      http://localhost:{settings().hive_api_port}/api/v1/health")
         logger.info("🔐 \n" + "=" * 60 + "\n")
 
     def regenerate_key(self) -> str:

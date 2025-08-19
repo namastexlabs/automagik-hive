@@ -45,12 +45,18 @@ class TestRealCliCommandExecution:
 
     @patch('lib.auth.cli.AuthInitService')
     @patch('lib.auth.cli.logger')
-    def test_auth_show_command_execution(self, mock_logger, mock_auth_service):
+    @patch('lib.config.settings.settings')
+    def test_auth_show_command_execution(self, mock_settings, mock_logger, mock_auth_service):
         """Test auth show command execution with real argument simulation."""
         # Setup mock
         mock_service = Mock()
         mock_service.get_current_key.return_value = "auth_show_test_key"
         mock_auth_service.return_value = mock_service
+        
+        # Mock settings to return expected port
+        mock_settings_instance = Mock()
+        mock_settings_instance.hive_api_port = 8887
+        mock_settings.return_value = mock_settings_instance
         
         # Simulate real CLI execution
         # This represents: python cli.py auth show
@@ -60,7 +66,7 @@ class TestRealCliCommandExecution:
         mock_auth_service.assert_called_once()
         mock_service.get_current_key.assert_called_once()
         mock_logger.info.assert_called_once_with(
-            "Current API key retrieved", key_length=len("auth_show_test_key")
+            "Current API key retrieved", key_length=len("auth_show_test_key"), port=8887
         )
 
     @patch('lib.auth.cli.AuthInitService')
@@ -172,8 +178,7 @@ class TestRealCliCommandExecution:
         result = generate_complete_workspace_credentials(workspace_path=workspace_path)
         
         # Verify command executed successfully
-        expected_env_file = workspace_path / ".env"
-        mock_service_class.assert_called_once_with(expected_env_file)
+        mock_service_class.assert_called_once_with(project_root=workspace_path)
         mock_service.setup_complete_credentials.assert_called_once_with(
             "localhost", 5532, "hive"
         )
@@ -305,8 +310,7 @@ class TestCliArgumentVariations:
         )
         
         # Verify custom postgres parameters were used
-        expected_env_file = workspace_path / ".env"
-        mock_service_class.assert_called_once_with(expected_env_file)
+        mock_service_class.assert_called_once_with(project_root=workspace_path)
         mock_service.setup_complete_credentials.assert_called_once_with(
             "db.server", 9999, "workspace_db"
         )
@@ -339,8 +343,12 @@ class TestCliIntegrationWorkflows:
     @patch('lib.auth.cli.AuthInitService')
     @patch('lib.auth.cli.CredentialService')
     @patch('lib.auth.cli.logger')
-    def test_complete_cli_setup_workflow(self, mock_logger, mock_cred_service_class, mock_auth_service_class):
+    @patch('os.getenv')
+    def test_complete_cli_setup_workflow(self, mock_getenv, mock_logger, mock_cred_service_class, mock_auth_service_class):
         """Test complete CLI setup workflow execution."""
+        # Setup environment to enable auth (ensure show_auth_status calls show_current_key)
+        mock_getenv.return_value = "false"  # Auth enabled
+        
         # Setup mocks
         mock_auth_service = Mock()
         mock_auth_service.get_current_key.return_value = "workflow_key_123"
@@ -388,7 +396,7 @@ class TestCliIntegrationWorkflows:
         sync_mcp_credentials()
         
         # Verify complete workflow executed successfully
-        assert mock_auth_service.get_current_key.call_count == 3  # show_current_key called 3 times
+        assert mock_auth_service.get_current_key.call_count == 2  # show_current_key called 2 times (direct + via show_auth_status)
         assert mock_auth_service.regenerate_key.call_count == 1
         assert mock_cred_service.generate_postgres_credentials.call_count == 1
         assert mock_cred_service.generate_agent_credentials.call_count == 1
@@ -497,8 +505,17 @@ class TestCliExecutionValidation:
             'import lib.auth.cli; print("CLI module validation successful")'
         ], capture_output=True, text=True, cwd='/home/namastex/workspace/automagik-hive')
         
-        assert result.returncode == 0
-        assert "CLI module validation successful" in result.stdout
+        # Debug information for troubleshooting intermittent failures
+        if result.returncode != 0:
+            print(f"Process failed with return code: {result.returncode}")
+            print(f"stderr: {result.stderr}")
+            print(f"stdout: {result.stdout}")
+        
+        assert result.returncode == 0, f"Subprocess failed: returncode={result.returncode}, stderr={result.stderr}"
+        
+        # Clean up stdout and check for expected message
+        cleaned_stdout = result.stdout.strip()
+        assert "CLI module validation successful" in cleaned_stdout, f"Expected message not found in stdout: {repr(cleaned_stdout)}"
 
 
 class TestCliEdgeCasesAndBoundaries:
@@ -506,10 +523,16 @@ class TestCliEdgeCasesAndBoundaries:
 
     @patch('lib.auth.cli.AuthInitService')
     @patch('lib.auth.cli.logger')
-    def test_show_current_key_with_various_key_types(self, mock_logger, mock_auth_service):
+    @patch('lib.config.settings.settings')
+    def test_show_current_key_with_various_key_types(self, mock_settings, mock_logger, mock_auth_service):
         """Test show_current_key with various key types and lengths."""
         mock_service = Mock()
         mock_auth_service.return_value = mock_service
+        
+        # Mock settings to return expected port
+        mock_settings_instance = Mock()
+        mock_settings_instance.hive_api_port = 8887
+        mock_settings.return_value = mock_settings_instance
         
         test_cases = [
             None,  # No key
@@ -527,7 +550,7 @@ class TestCliEdgeCasesAndBoundaries:
             
             if test_key:
                 mock_logger.info.assert_called_once_with(
-                    "Current API key retrieved", key_length=len(test_key)
+                    "Current API key retrieved", key_length=len(test_key), port=8887
                 )
             else:
                 mock_logger.warning.assert_called_once_with("No API key found")

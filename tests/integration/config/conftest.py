@@ -12,7 +12,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 # Add project root to Python path to fix module import issues
-project_root = Path(__file__).parent.parent.parent.absolute()
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 from unittest.mock import Mock, patch
@@ -38,7 +38,8 @@ def temp_project_dir() -> Generator[Path, None, None]:
 def clean_singleton() -> Generator[None, None, None]:
     """Clean singleton instances before and after tests."""
     # Import here to avoid circular imports
-    from lib.config.settings import Settings
+    from lib.config.settings import HiveSettings
+    Settings = HiveSettings  # Alias for compatibility
 
     # Clear any existing singleton instance before test
     if hasattr(Settings, "_instance"):

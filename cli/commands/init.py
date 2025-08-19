@@ -101,22 +101,22 @@ class InitCommands:
                     shutil.copy2(env_example, env_file)
                     print(f"✅ Created .env file from template")
             else:
-                # Create minimal .env file
+                # Create minimal .env file - NO hardcoded infrastructure values
                 env_content = """# Automagik Hive Environment Configuration
 HIVE_ENVIRONMENT=development
 HIVE_LOG_LEVEL=INFO
-HIVE_API_HOST=0.0.0.0
-HIVE_API_PORT=8886
-HIVE_DATABASE_URL=postgresql+psycopg://hive_user:password@localhost:5532/hive
 HIVE_API_KEY=your-api-key-here
 ANTHROPIC_API_KEY=your-anthropic-key-here
 OPENAI_API_KEY=your-openai-key-here
 HIVE_DEV_MODE=true
 HIVE_AUTH_DISABLED=true
+
+# Copy values from .env.example for infrastructure configuration
+# Docker Compose will handle ports and database URLs
 """
                 env_file = base_path / ".env"
                 env_file.write_text(env_content)
-                print(f"✅ Created minimal .env file")
+                print(f"✅ Created minimal .env file - copy infrastructure config from .env.example")
             
             return True
         except Exception as e:
@@ -224,93 +224,24 @@ See [Automagik Hive Documentation](https://github.com/namastex-ai/automagik-hive
             return False
     
     def _create_gitignore(self, base_path: Path) -> bool:
-        """Create .gitignore file for the workspace."""
+        """Create .gitignore file for the workspace by copying from project template."""
         try:
-            gitignore_content = '''# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Virtual environments
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Testing
-.coverage
-.pytest_cache/
-.tox/
-.nox/
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-
-# Logs
-logs/
-*.log
-
-# Database
-data/
-*.db
-*.sqlite
-*.sqlite3
-
-# Docker
-.dockerignore
-
-# MacOS
-.DS_Store
-
-# Environment variables - CRITICAL SECURITY
-.env
-.env.local
-.env.*.local
-.env.production
-.env.staging
-.env.development
-
-# Temporary files
-.tmp/
-temp/
-'''
-            gitignore_file = base_path / ".gitignore"
-            gitignore_file.write_text(gitignore_content)
-            print(f"✅ Created .gitignore")
-            return True
+            # Find the project's .gitignore file (works in development and from PyPI)
+            current_file = Path(__file__)
+            project_root = current_file.parent.parent.parent  # cli/commands/init.py -> project root
+            source_gitignore = project_root / ".gitignore"
+            
+            if source_gitignore.exists():
+                # Copy the exact .gitignore from our project (maintains security and patterns)
+                gitignore_content = source_gitignore.read_text()
+                gitignore_file = base_path / ".gitignore"
+                gitignore_file.write_text(gitignore_content)
+                print(f"✅ Copied .gitignore from project template: {source_gitignore}")
+                return True
+            else:
+                print(f"❌ Project .gitignore not found at: {source_gitignore}")
+                print(f"❌ Cannot create workspace .gitignore without project template")
+                return False
         except Exception as e:
             print(f"❌ Failed to create .gitignore: {e}")
             return False
@@ -357,6 +288,7 @@ temp/
             print(f"📋 Next steps:")
             if workspace_name != "." and workspace_name != workspace_path.absolute().name:
                 print(f"   cd {workspace_name}")
+            print(f"   cp .env.example .env  # Configure infrastructure settings")
             print(f"   uv sync")
             print(f"   uv run automagik-hive --install")
             

@@ -243,44 +243,8 @@ class AGNOConfigValidator:
         member_configs: dict[str, dict[str, Any]],
     ) -> ValidationResult:
         """Validate inheritance compliance between team and members."""
-        from lib.utils.config_inheritance import ConfigInheritanceManager
-
+        # Config inheritance system removed - skip validation
         result = ValidationResult(is_valid=True, errors=[], warnings=[], suggestions=[])
-
-        try:
-            manager = ConfigInheritanceManager()
-
-            # Validate configuration
-            errors = manager.validate_configuration(team_config, member_configs)
-            for error in errors:
-                result.warnings.append(f"Team {team_id}: {error}")
-
-            # Check for redundancy opportunities
-            team_defaults = manager._extract_team_defaults(team_config)
-            redundancy_count = 0
-
-            for member_id, member_config in member_configs.items():
-                for category, defaults in team_defaults.items():
-                    if category in member_config:
-                        for param, team_value in defaults.items():
-                            if param in member_config[category]:
-                                member_value = member_config[category][param]
-                                if member_value == team_value:
-                                    redundancy_count += 1
-                                    result.suggestions.append(
-                                        f"Team {team_id} member {member_id}: "
-                                        f"Parameter {category}.{param} could inherit from team"
-                                    )
-
-            if redundancy_count > 5:
-                result.warnings.append(
-                    f"Team {team_id}: High redundancy detected ({redundancy_count} parameters). "
-                    f"Consider using inheritance to reduce configuration size."
-                )
-
-        except Exception as e:
-            result.warnings.append(f"Team {team_id}: Error validating inheritance: {e}")
-
         return result
 
     def _validate_project_consistency(self) -> ValidationResult:

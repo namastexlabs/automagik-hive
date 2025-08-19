@@ -10,7 +10,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/  # DISABLED - this ignores our project's lib/ directory
 lib64/
 parts/
 sdist/
@@ -27,7 +27,6 @@ MANIFEST
 *.spec
 
 # Virtual environments
-.env
 .venv
 env/
 venv/
@@ -68,14 +67,21 @@ data/
 # MacOS
 .DS_Store
 
-# Environment variables
+# Environment variables - CRITICAL SECURITY
+.env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
+
+# MCP Configuration - CRITICAL SECURITY
+.mcp.json
+**/.mcp.json
+ai/.mcp.json
+*mcp.json
+agent.pid
 
 # Temporary files
 .tmp/
 temp/
-
-# MCP configuration with sensitive keys
-.mcp.json
-ai/.mcp.json

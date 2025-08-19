@@ -13,14 +13,10 @@ import asyncio
 import os
 import sys
 import tempfile
-from pathlib import Path
-
-# Add project root to Python path to fix module import issues
-project_root = Path(__file__).parent.parent.absolute()
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+import warnings
 from collections.abc import Generator
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -30,24 +26,147 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
+# Add project root to Python path to fix module import issues
+project_root = Path(__file__).parent.parent.absolute()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+# ============================================================================
+# GLOBAL TEST ISOLATION ENFORCEMENT
+# ============================================================================
+
+
+@pytest.fixture(autouse=True)
+def enforce_global_test_isolation(request, tmp_path, monkeypatch):
+    """
+    Enforce global test isolation to prevent project directory pollution.
+
+    This fixture automatically:
+    1. Monitors project directory for new file creation during tests
+    2. Redirects common file operations to temp directories
+    3. Warns about potential project pollution
+    4. Provides defense-in-depth against test artifacts
+
+    Applied to ALL tests automatically via autouse=True.
+    """
+    # Store original directory state
+    original_cwd = Path.cwd()
+
+    # Identify safe temp directories for this test
+    test_temp_dir = tmp_path / "test_isolation"
+    test_temp_dir.mkdir(exist_ok=True)
+
+    # Track files that existed before test
+    if original_cwd == project_root:
+        # Only monitor if we're in the project root
+        existing_files = set()
+        try:
+            # Capture current project files (not recursively, just root level)
+            for item in project_root.iterdir():
+                if item.is_file() and not item.name.startswith("."):
+                    existing_files.add(item.name)
+        except Exception:
+            # If we can't read directory, skip monitoring
+            existing_files = set()
+    else:
+        existing_files = set()
+
+    # Patch common file creation functions to redirect to temp
+    original_open = open
+
+    def safe_open(filename, mode="r", *args, **kwargs):
+        """Redirect file creation to temp directory if in project root."""
+        file_path = Path(filename)
+
+        # If trying to create a file in project root with write mode
+        if (
+            file_path.parent == project_root
+            and isinstance(mode, str)
+            and any(write_mode in mode for write_mode in ["w", "a", "x"])
+            and not file_path.name.startswith(".")
+        ):
+            # Create a warning but allow the operation
+            warnings.warn(
+                f"Test '{request.node.name}' attempted to create file '{filename}' "
+                f"in project root. Consider using isolated_workspace fixture or tmp_path.",
+                category=UserWarning,
+                stacklevel=3,
+            )
+
+        return original_open(filename, mode, *args, **kwargs)
+
+    # Apply the patch
+    monkeypatch.setattr("builtins.open", safe_open)
+
+    # Yield control to the test
+    yield test_temp_dir
+
+    # Post-test validation: Check for new files in project root
+    if existing_files is not None and original_cwd == project_root:
+        try:
+            current_files = set()
+            for item in project_root.iterdir():
+                if item.is_file() and not item.name.startswith("."):
+                    current_files.add(item.name)
+
+            new_files = current_files - existing_files
+            if new_files:
+                # Filter out expected test artifacts
+                concerning_files = [
+                    f
+                    for f in new_files
+                    if not any(pattern in f.lower() for pattern in ["test-", "tmp_", ".tmp", ".bak", ".test"])
+                ]
+
+                if concerning_files:
+                    warnings.warn(
+                        f"Test '{request.node.name}' may have created files in project root: "
+                        f"{concerning_files}. Use isolated_workspace fixture to prevent pollution.",
+                        category=UserWarning,
+                        stacklevel=2,
+                    )
+        except Exception:
+            # If we can't validate, skip the check
+            pass
+
+
+@pytest.fixture
+def isolated_workspace(tmp_path):
+    """Enhanced test isolation with working directory change.
+
+    Creates a temporary directory and changes working directory to it
+    for the duration of the test. This provides the strongest protection
+    against test pollution by ensuring relative paths point to temp space.
+
+    Used in combination with enforce_global_test_isolation for defense-in-depth:
+    - Global fixture: Monitors and warns about project pollution
+    - This fixture: Completely isolates working directory
+
+    Args:
+        tmp_path: pytest's built-in tmp_path fixture
+
+    Yields:
+        Path: The temporary workspace directory
+    """
+    original_cwd = os.getcwd()
+    workspace_dir = tmp_path / "test_workspace"
+    workspace_dir.mkdir()
+    os.chdir(workspace_dir)
+    try:
+        yield workspace_dir
+    finally:
+        os.chdir(original_cwd)
+
+
 # Register pytest markers to avoid "Unknown marker" warnings
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests requiring external services"
-    )
-    config.addinivalue_line(
-        "markers", "postgres: marks tests as requiring PostgreSQL database connection"
-    )
-    config.addinivalue_line(
-        "markers", "safe: marks tests as safe to run in any environment without side effects"
-    )
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests with no external dependencies"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests requiring external services")
+    config.addinivalue_line("markers", "postgres: marks tests as requiring PostgreSQL database connection")
+    config.addinivalue_line("markers", "safe: marks tests as safe to run in any environment without side effects")
+    config.addinivalue_line("markers", "slow: marks tests as slow running")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests with no external dependencies")
+
 
 # Pytest plugins must be defined at the top level conftest.py
 # Note: tests.config.conftest is auto-discovered, so we only include explicit fixture modules
@@ -59,12 +178,12 @@ pytest_plugins = [
 
 # Set test environment before importing API modules
 os.environ["HIVE_ENVIRONMENT"] = "development"
-os.environ["HIVE_DATABASE_URL"] = (
-    "postgresql+psycopg://test:test@localhost:5432/test_db"
-)
+os.environ["HIVE_DATABASE_URL"] = "postgresql+psycopg://test:test@localhost:5432/test_db"
 os.environ["HIVE_API_PORT"] = "8887"
 os.environ["HIVE_LOG_LEVEL"] = "ERROR"  # Reduce log noise in tests
 os.environ["AGNO_LOG_LEVEL"] = "ERROR"
+os.environ["HIVE_API_KEY"] = "hive_test_key_12345678901234567890123456789012"
+os.environ["HIVE_CORS_ORIGINS"] = "http://localhost:3000,http://localhost:8080"
 
 # Mock external dependencies to avoid real API calls
 os.environ["ANTHROPIC_API_KEY"] = "test-key"
@@ -73,8 +192,10 @@ os.environ["OPENAI_API_KEY"] = "test-key"
 
 def _create_test_fastapi_app() -> FastAPI:
     """Create a minimal FastAPI app for testing with basic endpoints."""
-    test_app = FastAPI(title="Automagik Hive Multi-Agent System", description="Test Multi-Agent System", version="1.0.0")
-    
+    test_app = FastAPI(
+        title="Automagik Hive Multi-Agent System", description="Test Multi-Agent System", version="1.0.0"
+    )
+
     @test_app.get("/health")
     async def health():
         return {
@@ -85,11 +206,11 @@ def _create_test_fastapi_app() -> FastAPI:
             "utc": datetime.now(tz=UTC).isoformat(),
             "message": "System operational",
         }
-    
+
     @test_app.get("/")
     async def root():
         return {"status": "ok"}
-    
+
     return test_app
 
 
@@ -97,12 +218,13 @@ def _create_test_fastapi_app() -> FastAPI:
 def preserve_builtin_input():
     """Preserve and restore the original input function to prevent KeyboardInterrupt during pytest shutdown."""
     import builtins
+
     # Back up the original input function
     original_input = builtins.input
     builtins.__original_input__ = original_input
-    
+
     yield
-    
+
     # Restore the original input function during session cleanup
     # This prevents any lingering mocks with KeyboardInterrupt side effects
     # from interfering with pytest's shutdown process
@@ -123,30 +245,30 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
                 for task in pending_tasks:
                     task.cancel()
                 # Run the loop briefly to allow cancelled tasks to complete
-                loop.run_until_complete(
-                    asyncio.gather(*pending_tasks, return_exceptions=True)
-                )
+                loop.run_until_complete(asyncio.gather(*pending_tasks, return_exceptions=True))
         except Exception:
             # Ignore cleanup errors to prevent test failures
             pass
         finally:
             loop.close()
-            
-        # Ensure builtins.input is restored to prevent 
+
+        # Ensure builtins.input is restored to prevent
         # KeyboardInterrupt during pytest shutdown
         try:
             import builtins
+
             # Force restore the original input function to prevent any lingering mocks
             # that might have KeyboardInterrupt side effects
-            if hasattr(builtins, '__original_input__'):
+            if hasattr(builtins, "__original_input__"):
                 builtins.input = builtins.__original_input__
             else:
                 # Restore input to a safe default implementation
                 def safe_input(prompt=""):
                     return ""
+
                 builtins.input = safe_input
         except Exception:
-            # Fail silently to avoid affecting test results  
+            # Fail silently to avoid affecting test results
             pass
 
 
@@ -171,9 +293,7 @@ def mock_database() -> Generator[Mock, None, None]:
 
 
 @pytest.fixture
-def mock_component_registries() -> Generator[
-    dict[str, dict[str, dict[str, Any]]], None, None
-]:
+def mock_component_registries() -> Generator[dict[str, dict[str, dict[str, Any]]], None, None]:
     """Mock component registries to avoid loading real agents/teams/workflows."""
     mock_agents = {
         "test-agent": {
@@ -229,14 +349,16 @@ def mock_component_registries() -> Generator[
                 patches.append(patch(target))
             elif patch_type == "special":
                 # Special case for version factory
-                patches.append(patch(
-                    target,
-                    new_callable=lambda: AsyncMock(
-                        side_effect=lambda component_id, **kwargs: None
-                        if component_id == "non-existent-component"
-                        else mock_agent
-                    ),
-                ))
+                patches.append(
+                    patch(
+                        target,
+                        new_callable=lambda: AsyncMock(
+                            side_effect=lambda component_id, **kwargs: None
+                            if component_id == "non-existent-component"
+                            else mock_agent
+                        ),
+                    )
+                )
         except ImportError:
             # Skip patches for modules that can't be imported
             continue
@@ -352,11 +474,7 @@ def mock_version_service() -> Generator[AsyncMock, None, None]:
 
         async def mock_list_versions(component_id):
             # Return all versions for this component
-            versions = [
-                v
-                for k, v in created_versions.items()
-                if k.startswith(f"{component_id}-")
-            ]
+            versions = [v for k, v in created_versions.items() if k.startswith(f"{component_id}-")]
             return versions if versions else [create_mock_version(component_id)]
 
         async def mock_get_active_version(component_id):
@@ -430,42 +548,51 @@ def mock_startup_orchestration() -> Generator[Mock, None, None]:
     mock_startup_display.display_summary = Mock()
 
     patches = []
-    
+
     # Use try/except for each patch to handle missing modules gracefully
     try:
-        patches.append(patch(
-            "lib.utils.startup_orchestration.orchestrated_startup",
-            return_value=mock_results,
-        ))
+        patches.append(
+            patch(
+                "lib.utils.startup_orchestration.orchestrated_startup",
+                return_value=mock_results,
+            )
+        )
     except ImportError:
         pass
 
     try:
-        patches.append(patch(
-            "lib.utils.startup_display.create_startup_display",
-            return_value=mock_startup_display,
-        ))
+        patches.append(
+            patch(
+                "lib.utils.startup_display.create_startup_display",
+                return_value=mock_startup_display,
+            )
+        )
     except ImportError:
         pass
 
     try:
-        patches.append(patch(
-            "lib.utils.startup_orchestration.get_startup_display_with_results",
-            return_value=mock_startup_display,
-        ))
+        patches.append(
+            patch(
+                "lib.utils.startup_orchestration.get_startup_display_with_results",
+                return_value=mock_startup_display,
+            )
+        )
     except ImportError:
         pass
 
     try:
+
         async def mock_create_team(*args: Any, **kwargs: Any) -> Mock:
             mock_team = Mock()
             mock_team.name = "test-team"
             return mock_team
 
-        patches.append(patch(
-            "lib.utils.version_factory.create_team",
-            side_effect=mock_create_team,
-        ))
+        patches.append(
+            patch(
+                "lib.utils.version_factory.create_team",
+                side_effect=mock_create_team,
+            )
+        )
     except ImportError:
         pass
 
@@ -503,8 +630,6 @@ def simple_fastapi_app(
     from starlette.middleware.cors import CORSMiddleware
 
     from api.routes.health import health_check_router
-    from api.routes.mcp_router import router as mcp_router
-    from api.routes.version_router import version_router
     from lib.utils.version_reader import get_api_version
 
     # Create a simple test app with just the routes we need
@@ -516,9 +641,10 @@ def simple_fastapi_app(
 
     # Add health router directly at root level for /health endpoint compatibility
     app.include_router(health_check_router)
-    
+
     # Add the v1_router which includes all sub-routers with proper /api/v1 prefix
     from api.routes.v1_router import v1_router
+
     app.include_router(v1_router)
 
     # Add CORS middleware
@@ -615,6 +741,8 @@ def setup_test_environment():
         "HIVE_API_PORT": "8887",
         "HIVE_LOG_LEVEL": "ERROR",
         "AGNO_LOG_LEVEL": "ERROR",
+        "HIVE_API_KEY": "hive_test_key_12345678901234567890123456789012",
+        "HIVE_CORS_ORIGINS": "http://localhost:3000,http://localhost:8080",
         "ANTHROPIC_API_KEY": "test-key",
         "OPENAI_API_KEY": "test-key",
         "DISABLE_RELOAD": "true",

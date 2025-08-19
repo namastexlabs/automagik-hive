@@ -403,23 +403,9 @@ class MainService:
                 return {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
             
             # Check both containers using Docker Compose
-            # ARCHITECTURAL RULE: Ports must come from environment variables
-            main_postgres_port = os.getenv("HIVE_WORKSPACE_POSTGRES_PORT")
-            main_api_port = os.getenv("HIVE_API_PORT")
-            
-            # Validate required environment variables exist
-            if not main_postgres_port or not main_api_port:
-                missing = []
-                if not main_postgres_port:
-                    missing.append("HIVE_WORKSPACE_POSTGRES_PORT")
-                if not main_api_port:
-                    missing.append("HIVE_API_PORT")
-                print(f"⚠️ Missing environment variables: {', '.join(missing)}")
-                return {"main-postgres": "❌ Config Error", "main-app": "❌ Config Error"}
-            
-            for service_name, display_name, port in [
-                ("postgres", "main-postgres", main_postgres_port),
-                ("app", "main-app", main_api_port)
+            for service_name, display_name in [
+                ("postgres", "main-postgres"),
+                ("app", "main-app")
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths
@@ -440,7 +426,7 @@ class MainService:
                             timeout=5
                         )
                         if inspect_result.returncode == 0 and inspect_result.stdout.strip() == "true":
-                            status[display_name] = f"✅ Running (Port: {port})"
+                            status[display_name] = "✅ Running"
                         else:
                             status[display_name] = "🛑 Stopped"
                     else:
@@ -582,3 +568,59 @@ class MainService:
         except Exception:
             # Return True even on exceptions - cleanup should be best-effort
             return True
+    
+    def start_postgres_only(self, workspace_path: str) -> bool:
+        """Start only PostgreSQL container for local hybrid deployment - NEW METHOD."""
+        try:
+            print("🐳 Starting PostgreSQL container for local development...")
+            
+            # Normalize workspace path
+            workspace = Path(workspace_path).resolve()
+            
+            # Use existing Docker Compose file resolution logic
+            docker_compose_main = workspace / "docker" / "main" / "docker-compose.yml"
+            docker_compose_root = workspace / "docker-compose.yml"
+            
+            if docker_compose_main.exists():
+                compose_file = docker_compose_main
+            elif docker_compose_root.exists():
+                compose_file = docker_compose_root
+            else:
+                print("❌ No docker-compose.yml found")
+                return False
+            
+            # Ensure data directory exists (reuse existing pattern)
+            data_dir = workspace / "data"
+            data_dir.mkdir(parents=True, exist_ok=True)
+            postgres_data_dir = data_dir / "postgres"
+            postgres_data_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Start only postgres service (pattern from _ensure_postgres_dependency)
+            result = subprocess.run([
+                "docker", "compose", "-f", str(compose_file),
+                "up", "-d", "main-postgres"
+            ], capture_output=True, text=True, timeout=120)
+            
+            if result.returncode == 0:
+                print("✅ PostgreSQL container started successfully")
+                
+                response = input("Start main server now? (Y/n): ").strip().lower()
+                if response in ["", "y", "yes"]:
+                    subprocess.run(["uv", "run", "automagik-hive", "dev"])
+                else:
+                    print("💡 Start manually: uv run automagik-hive dev")
+                
+                return True
+            else:
+                print(f"❌ Failed to start PostgreSQL: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            print("❌ Timeout starting PostgreSQL container")
+            return False
+        except FileNotFoundError:
+            print("❌ Docker not found. Please install Docker and try again.")
+            return False
+        except Exception as e:
+            print(f"❌ PostgreSQL startup failed: {e}")
+            return False

@@ -23,8 +23,8 @@ def show_current_key() -> None:
     key = init_service.get_current_key()
 
     if key:
-        port = os.getenv("HIVE_API_PORT", "8886")
-        logger.info("Current API key retrieved", key_length=len(key), port=port)
+        from lib.config.settings import settings
+        logger.info("Current API key retrieved", key_length=len(key), port=settings().hive_api_port)
     else:
         logger.warning("No API key found")
 
@@ -94,11 +94,7 @@ def generate_complete_workspace_credentials(
     Returns:
         Complete credentials dictionary
     """
-    env_file = None
-    if workspace_path:
-        env_file = workspace_path / ".env"
-
-    credential_service = CredentialService(env_file)
+    credential_service = CredentialService(project_root=workspace_path)
     creds = credential_service.setup_complete_credentials(
         postgres_host, postgres_port, postgres_database
     )

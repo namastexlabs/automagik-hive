@@ -38,10 +38,10 @@ class TestShowCurrentKey:
 
     @patch('lib.auth.cli.AuthInitService')
     @patch('lib.auth.cli.logger')
-    @patch('os.getenv')
-    def test_show_current_key_with_key_and_port(self, mock_getenv, mock_logger, mock_service_class):
+    @patch('lib.config.settings.settings')
+    def test_show_current_key_with_key_and_port(self, mock_settings, mock_logger, mock_service_class):
         """Test show_current_key with API key and port."""
-        mock_getenv.return_value = "9876"
+        mock_settings.return_value.hive_api_port = 8887
         mock_service = Mock()
         mock_service.get_current_key.return_value = "test_key_abc123"
         mock_service_class.return_value = mock_service
@@ -51,9 +51,8 @@ class TestShowCurrentKey:
         mock_service_class.assert_called_once()
         mock_service.get_current_key.assert_called_once()
         mock_logger.info.assert_called_once_with(
-            "Current API key retrieved", key_length=15
+            "Current API key retrieved", key_length=15, port=8887
         )
-        mock_getenv.assert_called_with("HIVE_API_PORT", "8886")
 
     @patch('lib.auth.cli.AuthInitService')
     @patch('lib.auth.cli.logger')
@@ -263,8 +262,7 @@ class TestGenerateCompleteWorkspaceCredentials:
         workspace_path = Path("/home/user/workspace")
         result = generate_complete_workspace_credentials(workspace_path=workspace_path)
         
-        expected_env_file = workspace_path / ".env"
-        mock_service_class.assert_called_once_with(expected_env_file)
+        mock_service_class.assert_called_once_with(project_root=workspace_path)
         mock_service.setup_complete_credentials.assert_called_once_with(
             "localhost", 5532, "hive"
         )
@@ -284,7 +282,7 @@ class TestGenerateCompleteWorkspaceCredentials:
         
         result = generate_complete_workspace_credentials()
         
-        mock_service_class.assert_called_once_with(None)
+        mock_service_class.assert_called_once_with(project_root=None)
         mock_logger.info.assert_called_once_with(
             "Complete workspace credentials generated", workspace_path="None"
         )

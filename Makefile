@@ -376,7 +376,7 @@ help: ## 🐝 Show this help message
 	@echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run Python test suite"
 	@echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files (__pycache__, etc.)"
 	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Complete uninstall - removes everything"
-	@echo -e "  $(FONT_PURPLE)uninstall-workspace$(FONT_RESET) Uninstall current workspace (mirrors --uninstall)"
+	@echo -e "  $(FONT_PURPLE)uninstall-workspace$(FONT_RESET) Uninstall current workspace (mirrors uninstall)"
 	@echo -e "  $(FONT_PURPLE)uninstall-global$(FONT_RESET) Uninstall global installation (mirrors --uninstall-global)"
 	@echo ""
 	@echo -e "$(FONT_YELLOW)💡 For detailed commands, inspect the Makefile.$(FONT_RESET)"
@@ -636,7 +636,7 @@ clean: ## 🧹 Clean temporary files
 .PHONY: uninstall
 uninstall: ## 🗑️ Uninstall production environment (mirrors --uninstall)
 	@$(call print_status,Uninstalling production environment...)
-	@uv run automagik-hive --uninstall
+	@uv run automagik-hive uninstall
 	@$(call print_success,Production environment uninstalled!)
 
 
@@ -734,127 +734,6 @@ uninstall-global: ## 🗑️ Uninstall global installation (mirrors --uninstall-
 	@$(call print_success,Global installation uninstalled!)
 
 # ===========================================
-# 🔒 Pre-Commit Hook Management
-# ===========================================
-.PHONY: install-hooks
-install-hooks: ## 🔒 Install pre-commit hooks for root-level file validation
-	@$(call print_status,Installing pre-commit hooks...)
-	@if [ ! -f "scripts/validate_root_files.py" ]; then \
-		$(call print_error,Validation script not found: scripts/validate_root_files.py); \
-		echo -e "$(FONT_YELLOW)💡 Make sure the pre-commit hook system is properly implemented$(FONT_RESET)"; \
-		exit 1; \
-	fi
-	@if [ ! -f "scripts/pre-commit-hook.sh" ]; then \
-		$(call print_error,Pre-commit hook script not found: scripts/pre-commit-hook.sh); \
-		echo -e "$(FONT_YELLOW)💡 Make sure the pre-commit hook system is properly implemented$(FONT_RESET)"; \
-		exit 1; \
-	fi
-	@mkdir -p .git/hooks
-	@cp scripts/pre-commit-hook.sh .git/hooks/pre-commit
-	@chmod +x .git/hooks/pre-commit
-	@$(call print_success,Pre-commit hooks installed successfully!)
-	@echo -e "$(FONT_CYAN)🔍 Hook validates root-level file organization$(FONT_RESET)"
-	@echo -e "$(FONT_CYAN)💡 Test with: make test-hooks$(FONT_RESET)"
-	@echo -e "$(FONT_CYAN)🚨 Emergency bypass: git commit --no-verify$(FONT_RESET)"
-
-.PHONY: uninstall-hooks
-uninstall-hooks: ## 🗑️ Remove pre-commit hooks
-	@$(call print_status,Removing pre-commit hooks...)
-	@rm -f .git/hooks/pre-commit
-	@rm -f .git/hooks/BYPASS_ROOT_VALIDATION
-	@rm -f .git/hooks/validation_metrics.json
-	@$(call print_success,Pre-commit hooks removed!)
-
-.PHONY: bypass-hooks
-bypass-hooks: ## ⚠️ Create bypass flag (emergency use only)
-	@$(call print_warning,Creating bypass flag for emergency use...)
-	@mkdir -p .git/hooks
-	@echo "# Emergency bypass flag - validation temporarily disabled" > .git/hooks/BYPASS_ROOT_VALIDATION
-	@echo "# Created: $$(date)" >> .git/hooks/BYPASS_ROOT_VALIDATION
-	@echo "# Reason: Emergency bypass via Makefile" >> .git/hooks/BYPASS_ROOT_VALIDATION
-	@echo '{"reason": "Emergency bypass via Makefile", "duration_hours": 1, "created_by": "'$$(git config user.name || echo "unknown")'", "created_at": "'$$(date -Iseconds)'", "expires_at": "'$$(date -Iseconds -d '+1 hour' 2>/dev/null || date -Iseconds -v+1H 2>/dev/null || echo "unknown")'"}' >> .git/hooks/BYPASS_ROOT_VALIDATION
-	@echo -e "$(FONT_YELLOW)⚠️ BYPASS ACTIVE: Root-level file validation disabled for 1 hour$(FONT_RESET)"
-	@echo -e "$(FONT_CYAN)🔄 Restore validation: make restore-hooks$(FONT_RESET)"
-
-.PHONY: restore-hooks
-restore-hooks: ## 🔄 Restore hook validation (remove bypass)
-	@$(call print_status,Restoring hook validation...)
-	@rm -f .git/hooks/BYPASS_ROOT_VALIDATION
-	@$(call print_success,Hook validation restored!)
-	@echo -e "$(FONT_CYAN)✅ Pre-commit validation is now active$(FONT_RESET)"
-
-.PHONY: test-hooks
-test-hooks: ## 🧪 Test pre-commit hook validation system
-	@$(call print_status,Testing pre-commit hook validation...)
-	@if [ ! -f "scripts/validate_root_files.py" ]; then \
-		$(call print_error,Validation script not found); \
-		echo -e "$(FONT_YELLOW)💡 Run 'make install-hooks' first$(FONT_RESET)"; \
-		exit 1; \
-	fi
-	@echo -e "$(FONT_CYAN)🧪 Running validation system test...$(FONT_RESET)"
-	@if uv run python scripts/validate_root_files.py --test; then \
-		$(call print_success,Pre-commit hook validation system is working correctly!); \
-	else \
-		$(call print_error,Pre-commit hook validation test failed); \
-		echo -e "$(FONT_YELLOW)💡 Check the validation system implementation$(FONT_RESET)"; \
-		exit 1; \
-	fi
-	@echo -e "$(FONT_CYAN)📊 Checking hook installation...$(FONT_RESET)"
-	@if [ -f ".git/hooks/pre-commit" ]; then \
-		echo -e "$(FONT_GREEN)✅ Pre-commit hook installed$(FONT_RESET)"; \
-	else \
-		echo -e "$(FONT_YELLOW)⚠️ Pre-commit hook not installed - run 'make install-hooks'$(FONT_RESET)"; \
-	fi
-	@if [ -f ".git/hooks/BYPASS_ROOT_VALIDATION" ]; then \
-		echo -e "$(FONT_YELLOW)⚠️ Bypass flag active - validation will be skipped$(FONT_RESET)"; \
-	else \
-		echo -e "$(FONT_GREEN)✅ Validation active (no bypass flag)$(FONT_RESET)"; \
-	fi
-
-.PHONY: hook-status
-hook-status: ## 📊 Show pre-commit hook status and metrics
-	@$(call print_status,Pre-Commit Hook Status)
-	@echo ""
-	@echo -e "$(FONT_PURPLE)┌─────────────────────────┬──────────────────────────────┐$(FONT_RESET)"
-	@echo -e "$(FONT_PURPLE)│ Hook Component          │ Status                       │$(FONT_RESET)"
-	@echo -e "$(FONT_PURPLE)├─────────────────────────┼──────────────────────────────┤$(FONT_RESET)"
-	@if [ -f ".git/hooks/pre-commit" ]; then \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Pre-commit hook" "Installed and active"; \
-	else \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Pre-commit hook" "Not installed"; \
-	fi
-	@if [ -f "scripts/validate_root_files.py" ]; then \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Validation script" "Available"; \
-	else \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_RED)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Validation script" "Missing"; \
-	fi
-	@if [ -f ".git/hooks/BYPASS_ROOT_VALIDATION" ]; then \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_YELLOW)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Bypass flag" "Active (validation disabled)"; \
-	else \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GREEN)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Bypass flag" "Not active"; \
-	fi
-	@if [ -f ".git/hooks/validation_metrics.json" ]; then \
-		METRICS_COUNT=$$(wc -l < .git/hooks/validation_metrics.json 2>/dev/null || echo "0"); \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_CYAN)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Validation metrics" "$$METRICS_COUNT records collected"; \
-	else \
-		printf "$(FONT_PURPLE)│$(FONT_RESET) %-23s $(FONT_PURPLE)│$(FONT_RESET) $(FONT_GRAY)%-28s$(FONT_RESET) $(FONT_PURPLE)│$(FONT_RESET)\n" \
-			"Validation metrics" "No data collected yet"; \
-	fi
-	@echo -e "$(FONT_PURPLE)└─────────────────────────┴──────────────────────────────┘$(FONT_RESET)"
-	@if [ -f ".git/hooks/BYPASS_ROOT_VALIDATION" ]; then \
-		echo ""; \
-		echo -e "$(FONT_YELLOW)⚠️ BYPASS INFORMATION:$(FONT_RESET)"; \
-		if command -v python3 >/dev/null 2>&1; then \
-			python3 -c "import json; exec('try:\n    with open(\".git/hooks/BYPASS_ROOT_VALIDATION\", \"r\") as f: content = f.read()\n    lines = content.split(\"\\n\")\n    for i, line in enumerate(lines):\n        if line.strip() and not line.startswith(\"#\"):\n            data = json.loads(\"\\n\".join(lines[i:]))\n            print(f\"   Reason: {data.get(\\\"reason\\\", \\\"No reason provided\\\")}\")\n            print(f\"   Created by: {data.get(\\\"created_by\\\", \\\"unknown\\\")}\")\n            print(f\"   Expires: {data.get(\\\"expires_at\\\", \\\"unknown\\\")}\")\n            break\nexcept: print(\"   Unable to read bypass information\")')" 2>/dev/null || echo "   Unable to read bypass information"; \
-		fi; \
-	fi
 
 # ===========================================
 # 🚀 Release & Publishing (Alpha)
@@ -947,7 +826,7 @@ publish: ## 📦 Build and publish alpha release to PyPI
 # ===========================================
 # 🧹 Phony Targets  
 # ===========================================
-.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health install-agent uninstall-agent agent agent-start agent-stop agent-restart agent-logs agent-status agent-reset uninstall-workspace uninstall-global install-hooks uninstall-hooks bypass-hooks restore-hooks test-hooks hook-status bump publish
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health install-agent uninstall-agent agent agent-start agent-stop agent-restart agent-logs agent-status agent-reset uninstall-workspace uninstall-global bump publish
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================

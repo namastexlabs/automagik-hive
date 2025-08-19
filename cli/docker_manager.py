@@ -415,8 +415,8 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
     def _validate_workspace_env_file(self, component: str) -> bool:
         """Validate that workspace .env file exists.
         
-        ARCHITECTURAL RULE: Python code NEVER creates workspace .env files.
-        Only validates that they exist in the project root.
+        VALIDATION ONLY: Checks that .env files exist in the project root.
+        Installation commands handle .env file creation and management.
         """
         workspace_env_file = self.project_root / ".env"
         

@@ -80,7 +80,7 @@ class TestFileSyncTracker:
     def tracker(self):
         """Create FileSyncTracker instance."""
         with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
-            mock_settings.BASE_DIR = "/test/base"
+            mock_settings.return_value.BASE_DIR = "/test/base"
             return FileSyncTracker()
 
     @pytest.fixture
@@ -96,8 +96,8 @@ class TestFileSyncTracker:
         """Test YAML path resolution for agent."""
         expected_path = sample_yaml_paths[0]
 
-        def mock_exists(self):
-            return str(self) == str(expected_path)
+        def mock_exists(path_self):
+            return str(path_self) == str(expected_path)
 
         with patch.object(Path, "exists", mock_exists):
             path = tracker._get_yaml_path("test-agent")
@@ -107,8 +107,8 @@ class TestFileSyncTracker:
         """Test YAML path resolution for workflow."""
         expected_path = sample_yaml_paths[1]
 
-        def mock_exists(self):
-            return str(self) == str(expected_path)
+        def mock_exists(path_self):
+            return str(path_self) == str(expected_path)
 
         with patch.object(Path, "exists", mock_exists):
             path = tracker._get_yaml_path("test-workflow")
@@ -118,8 +118,8 @@ class TestFileSyncTracker:
         """Test YAML path resolution for team."""
         expected_path = sample_yaml_paths[2]
 
-        def mock_exists(self):
-            return str(self) == str(expected_path)
+        def mock_exists(path_self):
+            return str(path_self) == str(expected_path)
 
         with patch.object(Path, "exists", mock_exists):
             path = tracker._get_yaml_path("test-team")

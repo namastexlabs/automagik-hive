@@ -42,6 +42,37 @@ Automagik Hive is an enterprise multi-agent AI framework built on Agno (agno-agi
 <personal_violation_memory>Maintained to prevent repetition</personal_violation_memory>
 <validation_requirement>All agents must validate against these rules before file operations</validation_requirement>
 
+<time_estimation_prohibition>
+<absolute_prohibition>
+CRITICAL BEHAVIORAL VIOLATION PREVENTION: ALL agents MUST NEVER estimate human implementation time.
+USER FEEDBACK VIOLATION: Master Genie and agents creating 6-week plans, Week 1 timelines, etc.
+ARCHITECTURE RULE: "We are execution engines working in minutes/seconds, NOT project managers"
+NO agent will estimate weeks, days, hours, or any human temporal predictions.
+</absolute_prohibition>
+
+<violation_patterns_to_prevent>
+<week_estimates>FORBIDDEN: "Week 1", "6-week plan", "over 2 weeks" estimations</week_estimates>
+<day_estimates>FORBIDDEN: "3 days", "within a week", "daily" timeline predictions</day_estimates>
+<hour_estimates>FORBIDDEN: "8 hours", "full day", temporal work estimates</hour_estimates>
+<timeline_creation>FORBIDDEN: Any timeline or schedule creation for human implementation</timeline_creation>
+</violation_patterns_to_prevent>
+
+<architectural_compliance>
+<logical_sequencing_only>Use "Phase 1", "Phase 2", "Initial Implementation", "Core Development"</logical_sequencing_only>
+<execution_engine_understanding>We execute in minutes/seconds through agent orchestration</execution_engine_understanding>
+<orchestration_planning_mandate>All wish documents MUST include explicit subagent execution strategies</orchestration_planning_mandate>
+<agent_specification_required>Define which agents handle each implementation phase</agent_specification_required>
+<tsd_orchestration_enhancement>TSD documents MUST include mandatory "Orchestration Strategy" section specifying agent execution plans, parallel/sequential patterns, Task() coordination, dependency mapping, context provision requirements</tsd_orchestration_enhancement>
+<software_development_compliance>Follow systematic agent coordination planning for best practice compliance</software_development_compliance>
+</architectural_compliance>
+
+<enforcement_actions>
+<immediate_behavioral_learning>Any time estimation triggers automatic hive-self-learn deployment</immediate_behavioral_learning>
+<zero_tolerance_pattern>Time estimation = CRITICAL VIOLATION requiring immediate behavioral update</zero_tolerance_pattern>
+<cross_agent_propagation>Time estimation prohibition must propagate to ALL hive agents</cross_agent_propagation>
+</enforcement_actions>
+</time_estimation_prohibition>
+
 <critical_uv_compliance_enforcement>
 <absolute_prohibition>
 CRITICAL VIOLATION PREVENTION: ALL testing agents MUST use `uv run` for Python commands.
@@ -71,36 +102,28 @@ NO testing agent will use direct `pytest`, `python`, or `coverage` commands.
 </enforcement_actions>
 </critical_uv_compliance_enforcement>
 
-<critical_architecture_rule_environment_variables>
-<absolute_prohibition>
-CRITICAL VIOLATION PREVENTION: Python files must NEVER contain environment variable generation or hardcoded environment variables.
-ARCHITECTURE RULE: ".env > docker compose yaml specific overrides, and THATS IT"
-NO py file or anywhere else will contain ports, env variables etc.
-</absolute_prohibition>
+<install_command_environment_management>
+<core_principle>
+INSTALL COMMAND DESIGN: The --install command manages .env files intelligently:
+- If .env exists with credentials: use existing credentials
+- If .env exists but missing/placeholder credentials: generate and update .env
+- If .env doesn't exist: generate from .env.example as base with real credentials
+</core_principle>
 
-<violation_patterns_to_prevent>
-<env_file_generation>FORBIDDEN: Python code generating .env file content or templates (docker/lib/compose_service.py violation)</env_file_generation>
-<env_file_modification>FORBIDDEN: Python code modifying existing .env files (cli/commands/service.py violation)</env_file_modification>
-<hardcoded_env_defaults>FORBIDDEN: os.getenv("VAR", "hardcoded_default") patterns scattered across code</hardcoded_env_defaults>
-<credential_generation>FORBIDDEN: Python generating credentials and writing to .env files</credential_generation>
-<port_management>FORBIDDEN: Python code managing port configurations instead of docker compose</port_management>
-<template_creation>FORBIDDEN: Python creating .env templates with hardcoded HIVE_* variables</template_creation>
-</violation_patterns_to_prevent>
+<installation_workflow>
+<env_detection>System detects if .env exists with valid credentials</env_detection>
+<credential_generation>Generate secure credentials when needed during installation</credential_generation>
+<env_creation>Create .env from .env.example template during initial setup</env_creation>
+<credential_injection>Update .env with generated credentials during installation process</credential_injection>
+</installation_workflow>
 
 <architectural_compliance>
-<env_file_responsibility>Only developers or deployment pipelines create/modify .env files</env_file_responsibility>
-<python_code_responsibility>Python code ONLY reads environment variables, never writes them</python_code_responsibility>
-<docker_compose_overrides>Only docker-compose.yml files may override .env values</docker_compose_overrides>
-<configuration_separation>Strict separation between application config (.env) and Python code</configuration_separation>
-<centralized_settings>Use centralized settings module instead of scattered hardcoded defaults</centralized_settings>
+<installation_scope>Environment file management is part of installation/setup process</installation_scope>
+<runtime_separation>Runtime application code reads environment variables, installation code manages them</runtime_separation>
+<deployment_automation>Installation commands handle environment setup for deployment automation</deployment_automation>
+<configuration_lifecycle>Clear separation between setup-time and runtime configuration management</configuration_lifecycle>
 </architectural_compliance>
-
-<enforcement_actions>
-<immediate_refactoring>Remove all .env generation/modification functions from Python code</immediate_refactoring>
-<fail_fast_pattern>Missing required environment variables should cause application startup failure</fail_fast_pattern>
-<credential_guidance>Provide guidance scripts for manual credential generation, not automated injection</credential_guidance>
-</enforcement_actions>
-</critical_architecture_rule_environment_variables>
+</install_command_environment_management>
 
 <configuration_architecture_principles>
 <critical_separation>STRICT separation between application-level (.env) and infrastructure-level (docker-compose.yml) configuration</critical_separation>

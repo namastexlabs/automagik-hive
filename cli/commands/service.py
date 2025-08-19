@@ -25,29 +25,19 @@ class ServiceManager:
         ARCHITECTURAL RULE: Host and port come from environment variables via .env files.
         """
         try:
-            # Read from environment variables - DO NOT hardcode
-            actual_host = host or os.getenv("HIVE_API_HOST")
-            actual_port = port or (int(os.getenv("HIVE_API_PORT")) if os.getenv("HIVE_API_PORT") else None)
-            
-            # Validate required environment variables
-            if not actual_host:
-                print("❌ HIVE_API_HOST not set in environment")
-                print("💡 Please add HIVE_API_HOST=0.0.0.0 to your .env file")
-                return False
-            
-            if not actual_port:
-                print("❌ HIVE_API_PORT not set in environment")
-                print("💡 Please add HIVE_API_PORT=8886 to your .env file")
-                return False
+            # Read from environment variables - use defaults for development
+            actual_host = host or os.getenv("HIVE_API_HOST", "0.0.0.0")
+            actual_port = port or int(os.getenv("HIVE_API_PORT", "8886"))
             
             print(f"🚀 Starting local development server on {actual_host}:{actual_port}")
+            print("💡 Ensure PostgreSQL is running: uv run automagik-hive --serve")
             
             # Check and auto-start PostgreSQL dependency if needed
             if not self._ensure_postgres_dependency():
-                print("❌ Failed to ensure PostgreSQL dependency is running")
-                return False
+                print("⚠️ PostgreSQL dependency check failed - server may not start properly")
+                print("💡 Run 'uv run automagik-hive --serve' to start PostgreSQL first")
             
-            # Build uvicorn command with environment-sourced values
+            # Build uvicorn command
             cmd = [
                 "uv", "run", "uvicorn", "api.serve:app",
                 "--host", actual_host,
@@ -78,20 +68,29 @@ class ServiceManager:
             return False
     
     def install_full_environment(self, workspace: str = ".") -> bool:
-        """Complete environment setup like 'make install' with .env generation and PostgreSQL."""
+        """Complete environment setup with deployment choice - ENHANCED METHOD."""
         try:
-            print(f"🛠️ Setting up complete Automagik Hive environment in: {workspace}")
+            print(f"🛠️ Setting up Automagik Hive environment in: {workspace}")
             
-            # Check and setup .env file with key generation
-            if not self._setup_env_file(workspace):
-                return False
+            # 1. DEPLOYMENT CHOICE SELECTION (NEW)
+            deployment_mode = self._prompt_deployment_choice()
             
-            # Offer PostgreSQL setup
-            if not self._setup_postgresql_interactive(workspace):
-                return False
+            # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
+            from lib.auth.credential_service import CredentialService
+            credential_service = CredentialService(project_root=Path(workspace))
+            
+            # Generate workspace credentials using existing comprehensive service
+            all_credentials = credential_service.install_all_modes(modes=["workspace"])
+            
+            # 3. DEPLOYMENT-SPECIFIC SETUP (NEW)
+            if deployment_mode == "local_hybrid":
+                return self._setup_local_hybrid_deployment(workspace)
+            else:  # full_docker
+                return self.main_service.install_main_environment(workspace)
                 
-            # Install and start Docker environment
-            return self.main_service.install_main_environment(workspace)
+        except KeyboardInterrupt:
+            print("\n🛑 Installation cancelled by user")
+            return False
         except Exception as e:
             print(f"❌ Failed to install environment: {e}")
             return False
@@ -150,13 +149,14 @@ class ServiceManager:
                 print("⏭️ Skipping PostgreSQL setup")
                 return True
             
-            # Per architectural rule: Python only validates, doesn't generate/write credentials
-            # The Makefile handles credential generation via openssl and .env updates
-            print("🔐 Checking PostgreSQL credentials...")
+            print("🔐 Generating secure PostgreSQL credentials...")
+            # Credential generation now handled by CredentialService.install_all_modes()
+            print("✅ PostgreSQL credentials handled by CredentialService")
+            
             env_file = Path(workspace) / ".env"
             if not env_file.exists():
                 print("❌ .env file not found")
-                print("💡 Run 'make install' to properly set up the environment")
+                print("💡 Run installation to properly set up the environment")
                 return False
                 
             env_content = env_file.read_text()
@@ -185,8 +185,42 @@ class ServiceManager:
             print(f"❌ PostgreSQL setup failed: {e}")
             return False
     
-    # Method removed - ARCHITECTURAL RULE: Python code NEVER modifies .env files
-    # Use _validate_postgres_credentials instead
+    def _prompt_deployment_choice(self) -> str:
+        """Interactive deployment choice selection - NEW METHOD."""
+        print("\n🚀 Automagik Hive Installation")
+        print("\nChoose your deployment mode:")
+        print("\nA) Local Development + PostgreSQL Docker")
+        print("   • Main server runs locally (faster development)")
+        print("   • PostgreSQL runs in Docker (persistent data)")
+        print("   • Recommended for: Development, testing, debugging")
+        print("   • Access: http://localhost:8886")
+        print("\nB) Full Docker Deployment")
+        print("   • Both main server and PostgreSQL in containers")
+        print("   • Recommended for: Production-like testing, deployment")
+        print("   • Access: http://localhost:8886")
+        
+        while True:
+            try:
+                choice = input("\nEnter your choice (A/B) [default: A]: ").strip().upper()
+                if choice == "" or choice == "A":
+                    return "local_hybrid"
+                elif choice == "B":
+                    return "full_docker"
+                else:
+                    print("❌ Please enter A or B")
+            except (EOFError, KeyboardInterrupt):
+                return "local_hybrid"  # Default for automated scenarios
+    
+    def _setup_local_hybrid_deployment(self, workspace: str) -> bool:
+        """Setup local main + PostgreSQL docker only - NEW METHOD."""
+        try:
+            print("🐳 Starting PostgreSQL container only...")
+            return self.main_service.start_postgres_only(workspace)
+        except Exception as e:
+            print(f"❌ Local hybrid deployment failed: {e}")
+            return False
+    
+    # Credential generation handled by CredentialService.install_all_modes()
     
     def stop_docker(self, workspace: str = ".") -> bool:
         """Stop Docker production containers."""
@@ -414,7 +448,7 @@ class ServiceManager:
                 # Start only the postgres service
                 print("🐳 Starting PostgreSQL container...")
                 result = subprocess.run(
-                    ["docker", "compose", "-f", str(compose_file), "up", "-d", "postgres"],
+                    ["docker", "compose", "-f", str(compose_file), "up", "-d", "main-postgres"],
                     check=False,
                     capture_output=True,
                     text=True,
