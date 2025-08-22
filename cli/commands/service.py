@@ -40,6 +40,7 @@ class ServiceManager:
             # Build uvicorn command
             cmd = [
                 "uv", "run", "uvicorn", "api.serve:app",
+                "--factory",  # Explicitly declare app factory pattern
                 "--host", actual_host,
                 "--port", str(actual_port)
             ]

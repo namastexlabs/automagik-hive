@@ -397,11 +397,11 @@ install-local: ## 🛠️ Install development environment (local only)
 	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
 
 .PHONY: install
-install: ## 🛠️ Complete environment setup with .env generation and PostgreSQL (mirrors --install)
+install: ## 🛠️ Complete environment setup - mirrors CLI install
 	@$(call print_status,Installing complete Automagik Hive environment...)
 	@$(call check_prerequisites)
 	@$(call setup_python_env)
-	@uv run automagik-hive --install
+	@uv run automagik-hive install
 	@$(call sync_mcp_config_with_credentials)
 	@$(call print_success,Environment ready!)
 	@echo -e "$(FONT_CYAN)🌐 API available at: http://localhost:$(HIVE_PORT)$(FONT_RESET)"
@@ -422,82 +422,45 @@ dev: ## 🛠️ Start development server with hot reload
 	fi
 	@echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
 	@echo -e "$(FONT_PURPLE)🚀 Starting server...$(FONT_RESET)"
-	@uv run python api/serve.py
+	@uv run automagik-hive --dev
 
-.PHONY: prod
-prod: ## 🏭 Start production Docker stack (app + PostgreSQL)
-	@$(call print_status,Starting production Docker stack...)
-	@$(call check_docker)
+.PHONY: serve
+serve: ## 🚀 Start production server (Docker) - mirrors CLI --serve
+	@$(call print_status,Starting production server...)
 	@$(call check_env_file)
-	@echo -e "$(FONT_CYAN)🐳 Building and starting containers...$(FONT_RESET)"
-	@if [ -f .env ]; then \
-		DB_URL=$$(grep '^HIVE_DATABASE_URL=' .env | cut -d'=' -f2-); \
-		if [ -n "$$DB_URL" ]; then \
-			WITHOUT_PROTOCOL=$${DB_URL#*://}; \
-			CREDENTIALS=$${WITHOUT_PROTOCOL%%@*}; \
-			AFTER_AT=$${WITHOUT_PROTOCOL##*@}; \
-			export POSTGRES_USER=$${CREDENTIALS%%:*}; \
-			export POSTGRES_PASSWORD=$${CREDENTIALS##*:}; \
-			export POSTGRES_DB=$${AFTER_AT##*/}; \
-			if [ "$$(uname -s)" = "Linux" ] || [ "$$(uname -s)" = "Darwin" ]; then \
-				export POSTGRES_UID=$$(id -u); \
-				export POSTGRES_GID=$$(id -g); \
-			else \
-				export POSTGRES_UID=1000; \
-				export POSTGRES_GID=1000; \
-			fi; \
-			echo -e "$(FONT_CYAN)📋 Creating Docker environment file for compose...$(FONT_RESET)"; \
-			mkdir -p docker/main; \
-			echo "POSTGRES_USER=$$POSTGRES_USER" > docker/main/.env; \
-			echo "POSTGRES_PASSWORD=$$POSTGRES_PASSWORD" >> docker/main/.env; \
-			echo "POSTGRES_DB=$$POSTGRES_DB" >> docker/main/.env; \
-			echo "POSTGRES_UID=$$POSTGRES_UID" >> docker/main/.env; \
-			echo "POSTGRES_GID=$$POSTGRES_GID" >> docker/main/.env; \
-			echo "HIVE_API_PORT=$$(grep '^HIVE_API_PORT=' .env | cut -d'=' -f2 | head -1 || echo '8886')" >> docker/main/.env; \
-			$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build; \
-		else \
-			echo "Error: Could not extract database URL from .env"; \
-			exit 1; \
-		fi; \
-	else \
-		echo "Error: .env file not found"; \
-		exit 1; \
-	fi
-	@$(call show_hive_logo)
-	@$(call print_success,Production stack started!)
-	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
-	@echo -e "$(FONT_CYAN)💡 Check status with 'make status'$(FONT_RESET)"
+	@uv run automagik-hive --serve
+	@$(call print_success,Production server started!)
 
 # ===========================================
 # 🐘 PostgreSQL Management (UV Integration)
 # ===========================================
 .PHONY: postgres-status
-postgres-status: ## 📊 Check PostgreSQL status (mirrors --postgres-status)
+postgres-status: ## 📊 Check PostgreSQL status - mirrors CLI --postgres-status
 	@$(call print_status,PostgreSQL Status)
 	@uv run automagik-hive --postgres-status
 
 .PHONY: postgres-start
-postgres-start: ## 🚀 Start PostgreSQL (mirrors --postgres-start)
+postgres-start: ## 🚀 Start PostgreSQL - mirrors CLI --postgres-start
 	@$(call print_status,Starting PostgreSQL...)
 	@uv run automagik-hive --postgres-start
 
 .PHONY: postgres-stop
-postgres-stop: ## 🛑 Stop PostgreSQL (mirrors --postgres-stop)
+postgres-stop: ## 🛑 Stop PostgreSQL - mirrors CLI --postgres-stop
 	@$(call print_status,Stopping PostgreSQL...)
 	@uv run automagik-hive --postgres-stop
 
 .PHONY: postgres-restart
-postgres-restart: ## 🔄 Restart PostgreSQL (mirrors --postgres-restart)
+postgres-restart: ## 🔄 Restart PostgreSQL - mirrors CLI --postgres-restart
 	@$(call print_status,Restarting PostgreSQL...)
 	@uv run automagik-hive --postgres-restart
 
 .PHONY: postgres-logs
-postgres-logs: ## 📄 Show PostgreSQL logs (mirrors --postgres-logs)
+postgres-logs: ## 📄 Show PostgreSQL logs - mirrors CLI --postgres-logs
 	@echo -e "$(FONT_PURPLE)🐘 PostgreSQL Logs$(FONT_RESET)"
 	@uv run automagik-hive --postgres-logs --tail 50
 
 .PHONY: postgres-health
-postgres-health: ## 💊 Check PostgreSQL health (mirrors --postgres-health)
+postgres-health: ## 💊 Check PostgreSQL health - mirrors CLI --postgres-health
 	@$(call print_status,PostgreSQL Health Check)
 	@uv run automagik-hive --postgres-health
 
@@ -505,68 +468,35 @@ postgres-health: ## 💊 Check PostgreSQL health (mirrors --postgres-health)
 # 🚀 Core Development Commands (UV Integration)
 # ===========================================
 .PHONY: init
-init: ## 🛠️ Initialize workspace (mirrors --init)
+init: ## 🛠️ Initialize workspace - mirrors CLI --init
 	@$(call print_status,Initializing workspace...)
 	@$(call check_prerequisites)
 	@$(call setup_python_env)
 	@uv run automagik-hive --init
 	@$(call print_success,Workspace initialized!)
 
-.PHONY: serve
-serve: ## 🚀 Start workspace server (mirrors --serve)
-	@$(call print_status,Starting workspace server...)
-	@if [ ! -f ".env" ]; then \
-		$(call print_error,Environment not found - run 'make install' first); \
-		exit 1; \
-	fi
-	@uv run automagik-hive --serve
 
 .PHONY: version
-version: ## 📄 Show version (mirrors --version)
+version: ## 📄 Show version - mirrors CLI --version
 	@uv run automagik-hive --version
 
 .PHONY: stop
-stop: ## 🛑 Stop production environment (mirrors --stop)
+stop: ## 🛑 Stop production environment - mirrors CLI --stop
 	@$(call print_status,Stopping production environment...)
 	@uv run automagik-hive --stop
 	@$(call print_success,Production environment stopped!)
 
 .PHONY: restart
-restart: ## 🔄 Restart production environment (mirrors --restart)
+restart: ## 🔄 Restart production environment - mirrors CLI --restart
 	@$(call print_status,Restarting production environment...)
 	@uv run automagik-hive --restart
 	@$(call print_success,Production environment restarted!)
 
-.PHONY: stop-all
-stop-all: ## 🛑 Stop all services including PostgreSQL
-	@$(call print_status,Stopping all services...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down 2>/dev/null || true
-	@pkill -f "python.*api/serve.py" 2>/dev/null || true
-	@$(call print_success,All services stopped!)
 
-.PHONY: update
-update: ## 🔄 Fast rebuild using cache (recommended for development)
-	@$(call print_status,Fast updating Automagik Hive application...)
-	@$(call print_status,Rebuilding with cache optimization...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build app
-	@$(call print_success,Application updated successfully! PostgreSQL data preserved.)
-	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
 
-.PHONY: rebuild
-rebuild: ## 🔄 Force full rebuild without cache (for clean state)
-	@$(call print_status,Force rebuilding Automagik Hive application...)
-	@$(call print_status,Stopping application container...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) stop app 2>/dev/null || true
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) rm -f app 2>/dev/null || true
-	@$(call print_status,Rebuilding application container (no cache)...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) build --no-cache app
-	@$(call print_status,Starting updated application...)
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d app
-	@$(call print_success,Application rebuilt successfully! PostgreSQL data preserved.)
-	@echo -e "$(FONT_CYAN)💡 API available at http://localhost:$(HIVE_PORT)$(FONT_RESET)"
 
 .PHONY: status
-status: ## 📊 Show production environment status (mirrors --status)
+status: ## 📊 Show production environment status - mirrors CLI --status
 	@$(call print_status,Production Environment Status)
 	@uv run automagik-hive --status
 
@@ -574,33 +504,34 @@ status: ## 📊 Show production environment status (mirrors --status)
 # 📋 Monitoring
 # ===========================================
 .PHONY: logs
-logs: ## 📄 Show production environment logs (mirrors --logs)
+logs: ## 📄 Show production environment logs - mirrors CLI --logs
 	@echo -e "$(FONT_PURPLE)🐝 Production Environment Logs$(FONT_RESET)"
 	@uv run automagik-hive --logs --tail 50
 
-.PHONY: logs-live
-logs-live: ## 📄 Follow logs in real-time
-	@echo -e "$(FONT_PURPLE)🐝 Live Application Logs$(FONT_RESET)"
-	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
-		echo -e "$(FONT_CYAN)=== Following Hive Agents Container Logs ====$(FONT_RESET)"; \
-		echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
-		docker logs -f hive-agents; \
-	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
-		echo -e "$(FONT_CYAN)=== Following Local Development Logs ====$(FONT_RESET)"; \
-		if [ -f "logs/app.log" ]; then \
-			echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
-			tail -f logs/app.log; \
-		elif [ -f "app.log" ]; then \
-			echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
-			tail -f app.log; \
-		else \
-			echo -e "$(FONT_YELLOW)⚠️ No log files found for local development$(FONT_RESET)"; \
-			echo -e "$(FONT_GRAY)📋 Logs are displayed in the terminal where 'make dev' is running$(FONT_RESET)"; \
-		fi \
-	else \
-		echo -e "$(FONT_YELLOW)⚠️ No running services found$(FONT_RESET)"; \
-		echo -e "$(FONT_GRAY)💡 Start services with 'make dev' (local) or 'make prod' (Docker)$(FONT_RESET)"; \
-	fi
+# DEPRECATED: No CLI equivalent - kept for backward compatibility
+# .PHONY: logs-live
+# logs-live: ## 📄 Follow logs in real-time
+# 	@echo -e "$(FONT_PURPLE)🐝 Live Application Logs$(FONT_RESET)"
+# 	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
+# 		echo -e "$(FONT_CYAN)=== Following Hive Agents Container Logs ====$(FONT_RESET)"; \
+# 		echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
+# 		docker logs -f hive-agents; \
+# 	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
+# 		echo -e "$(FONT_CYAN)=== Following Local Development Logs ====$(FONT_RESET)"; \
+# 		if [ -f "logs/app.log" ]; then \
+# 			echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
+# 			tail -f logs/app.log; \
+# 		elif [ -f "app.log" ]; then \
+# 			echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
+# 			tail -f app.log; \
+# 		else \
+# 			echo -e "$(FONT_YELLOW)⚠️ No log files found for local development$(FONT_RESET)"; \
+# 			echo -e "$(FONT_GRAY)📋 Logs are displayed in the terminal where 'make dev' is running$(FONT_RESET)"; \
+# 		fi \
+# 	else \
+# 		echo -e "$(FONT_YELLOW)⚠️ No running services found$(FONT_RESET)"; \
+# 		echo -e "$(FONT_GRAY)💡 Start services with 'make dev' (local) or 'make prod' (Docker)$(FONT_RESET)"; \
+# 	fi
 
 .PHONY: health
 health: ## 💊 Check service health
@@ -634,7 +565,7 @@ clean: ## 🧹 Clean temporary files
 
 
 .PHONY: uninstall
-uninstall: ## 🗑️ Uninstall production environment (mirrors --uninstall)
+uninstall: ## 🗑️ Uninstall production environment - mirrors CLI uninstall
 	@$(call print_status,Uninstalling production environment...)
 	@uv run automagik-hive uninstall
 	@$(call print_success,Production environment uninstalled!)
@@ -643,8 +574,8 @@ uninstall: ## 🗑️ Uninstall production environment (mirrors --uninstall)
 # ===========================================
 # 🤖 Agent Environment Commands (UV Integration)
 # ===========================================
-.PHONY: install-agent
-install-agent: ## 🤖 Install and start agent services (mirrors --agent-install)
+.PHONY: agent-install
+agent-install: ## 🤖 Install and start agent services - mirrors CLI --agent-install
 	@$(call print_status,Installing and starting agent services...)
 	@$(call check_prerequisites)
 	@$(call setup_python_env)
@@ -653,41 +584,37 @@ install-agent: ## 🤖 Install and start agent services (mirrors --agent-install
 	@$(call print_success,Agent environment ready!)
 	@echo -e "$(FONT_CYAN)🌐 Agent API available at: http://localhost:$(AGENT_PORT)$(FONT_RESET)"
 
-.PHONY: agent
-agent: ## 🤖 Start agent services (mirrors --agent-start)
+.PHONY: agent-start
+agent-start: ## 🤖 Start agent services - mirrors CLI --agent-start
 	@$(call print_status,Starting agent services...)
 	@if [ ! -f ".env" ]; then \
-		$(call print_error,Environment not found - run 'make install-agent' first); \
+		$(call print_error,Environment not found - run 'make agent-install' first); \
 		exit 1; \
 	fi
 	@uv run automagik-hive --agent-start
 
-.PHONY: agent-start
-agent-start: ## 🤖 Start agent services (alias for agent)
-	@$(MAKE) agent
-
 .PHONY: agent-stop
-agent-stop: ## 🛑 Stop agent services (mirrors --agent-stop)
+agent-stop: ## 🛑 Stop agent services - mirrors CLI --agent-stop
 	@$(call print_status,Stopping agent services...)
 	@uv run automagik-hive --agent-stop
 
 .PHONY: agent-restart
-agent-restart: ## 🔄 Restart agent services (mirrors --agent-restart)
+agent-restart: ## 🔄 Restart agent services - mirrors CLI --agent-restart
 	@$(call print_status,Restarting agent services...)
 	@uv run automagik-hive --agent-restart
 
 .PHONY: agent-logs
-agent-logs: ## 📄 Show agent logs (mirrors --agent-logs)
+agent-logs: ## 📄 Show agent logs - mirrors CLI --agent-logs
 	@echo -e "$(FONT_PURPLE)🤖 Agent Container Logs$(FONT_RESET)"
 	@uv run automagik-hive --agent-logs --tail 50
 
 .PHONY: agent-status
-agent-status: ## 📊 Check agent status (mirrors --agent-status)
+agent-status: ## 📊 Check agent status - mirrors CLI --agent-status
 	@$(call print_status,Agent Environment Status)
 	@uv run automagik-hive --agent-status
 
 .PHONY: agent-reset
-agent-reset: ## 🗑️ Reset agent environment (mirrors --agent-reset)
+agent-reset: ## 🗑️ Reset agent environment - mirrors CLI --agent-reset
 	@$(call print_status,Resetting agent environment...)
 	@echo -e "$(FONT_YELLOW)This will destroy all containers and data, then reinstall and start fresh$(FONT_RESET)"
 	@uv run automagik-hive --agent-reset
