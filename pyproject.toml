@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.1.0"
+version = "0.1.2"
 description = "Automagik Hive Workspace - automagik-hive"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -13,7 +13,7 @@ dependencies = [
     "langwatch>=0.2.11",
     "loguru>=0.7.3",
     "mcp>=1.13.1",
-    "openinference-instrumentation-agno>=0.1.13",
+    "openinference-instrumentation-agno>=0.1.23",
     "pandas>=2.3.2",
     "psycopg>=3.2.9",
     "psycopg-pool>=3.2.6",
@@ -29,6 +29,19 @@ dependencies = [
     "uvicorn>=0.35.0",
     "watchdog>=6.0.0",
 ]
+
+[project.scripts]
+automagik-hive = "cli.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["ai", "api", "lib", "cli", "common"]
 
 [dependency-groups]
 dev = [

@@ -165,12 +165,42 @@ class TDDValidator:
         
         # Check if test is in proper location
         if 'tests' not in path.parts:
-            return False, (
-                "❌ TEST STRUCTURE VIOLATION\n"
-                f"Test file must be in tests/ directory!\n"
-                f"File: {file_path}\n"
-                f"Use proper mirror structure: tests/<source_dir>/test_<name>.py"
-            )
+            error_msg = f"""🚨 TEST STRUCTURE VIOLATION 🚨
+
+FILE LOCATION DENIED: {file_path}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ TEST FILES MUST BE IN tests/ DIRECTORY
+
+All test files must follow the mirror structure pattern.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ VIOLATION:
+• Incorrect location: {file_path}
+• Required structure: tests/<source_dir>/test_<name>.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CORRECT TEST STRUCTURE:
+
+Source → Test Mapping:
+• api/routes.py → tests/api/test_routes.py
+• lib/auth.py → tests/lib/test_auth.py
+• ai/agents/foo.py → tests/ai/agents/test_foo.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ NEVER TRY TO BYPASS THIS STRUCTURE
+❌ No tests outside tests/ directory
+❌ No using sed/awk to create misplaced tests
+❌ No shell tricks or workarounds
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REMEMBER: Mirror structure keeps tests organized!"""
+            return False, error_msg
         
         # Integration and support directories with special rules
         INTEGRATION_PATTERNS = {'integration', 'fixtures', 'mocks', 'utilities', 'e2e', 'scenarios'}
@@ -183,12 +213,45 @@ class TDDValidator:
         
         # Check if test follows naming convention (for actual test files)
         if not (path.name.startswith('test_') or path.name.endswith('_test.py')):
-            return False, (
-                "❌ TEST NAMING VIOLATION\n"
-                f"Test file must start with 'test_' or end with '_test.py'\n"
-                f"File: {path.name}\n"
-                f"Rename to: test_{path.name}"
-            )
+            error_msg = f"""🚨 TEST NAMING VIOLATION 🚨
+
+INCORRECT TEST NAME: {path.name}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ TEST FILES MUST FOLLOW NAMING CONVENTION
+
+Test files must start with 'test_' or end with '_test.py'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ VIOLATION:
+• Invalid name: {path.name}
+• Valid name: test_{path.name}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CORRECT TEST NAMING:
+• test_authentication.py ✅
+• test_user_service.py ✅
+• authentication_test.py ✅
+• user_service_test.py ✅
+
+❌ INCORRECT NAMING:
+• authentication.py ❌ (missing test_ prefix)
+• tests_auth.py ❌ (should be test_auth.py)
+• auth_tests.py ❌ (should be test_auth.py)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ NEVER TRY TO BYPASS THIS NAMING
+❌ No using sed/awk to rename incorrectly
+❌ No shell tricks or workarounds
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REMEMBER: Consistent naming helps test discovery!"""
+            return False, error_msg
         
         # Check if test has corresponding source (warn only, don't block)
         expected_source = self.get_expected_source_path(file_path)
@@ -234,13 +297,47 @@ class TDDValidator:
         
         # If creating new source file without test, block it
         if not path.exists() and not test_exists:
-            return False, (
-                "❌ TDD VIOLATION: RED PHASE REQUIRED\n"
-                f"Cannot create source file without test!\n"
-                f"Source: {file_path}\n"
-                f"Create test first: {expected_test}\n"
-                "Follow TDD: Write failing test → Implement → Refactor"
-            )
+            error_msg = f"""🚨 TDD VIOLATION: RED PHASE REQUIRED 🚨
+
+FILE CREATION DENIED: {file_path}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CANNOT CREATE SOURCE WITHOUT TEST
+
+Test-Driven Development requires tests BEFORE implementation.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ VIOLATION DETECTED:
+• Attempting to create: {file_path}
+• Required test missing: {expected_test}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ NEVER TRY TO BYPASS THIS PROTECTION
+❌ No using sed/awk to create source files
+❌ No shell tricks or workarounds
+❌ No indirect file creation methods
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CORRECT TDD WORKFLOW:
+
+1. CREATE TEST FIRST (RED):
+   uv run automagik-hive testing-maker \\
+     --create {expected_test}
+
+2. RUN TEST TO SEE FAILURE:
+   uv run pytest {expected_test}
+
+3. THEN CREATE SOURCE (GREEN):
+   After test exists and fails, create source file
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REMEMBER: Write failing test → Implement → Refactor"""
+            return False, error_msg
         
         # If test doesn't exist for existing file, warn but allow
         if not test_exists:
@@ -288,6 +385,72 @@ def main():
     
     tool_name = input_data.get("tool_name", "")
     tool_input = input_data.get("tool_input", {})
+    
+    # Check for sed/awk bypass attempts on Python files
+    if tool_name == "Bash":
+        command = tool_input.get("command", "").lower()
+        
+        # Check for sed/awk attempts to bypass TDD on Python files
+        if any(cmd in command for cmd in ["sed", "awk"]):
+            # Check if targeting Python files without tests
+            if ".py" in command and not "test" in command:
+                error_message = """🚨 TDD BYPASS ATTEMPT BLOCKED 🚨
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ NEVER TRY TO BYPASS TDD WITH SED/AWK
+
+Using shell commands to modify Python files without tests is NOT allowed.
+This violates our Test-Driven Development practices.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ FORBIDDEN PRACTICES:
+• NO creating source files without tests
+• NO using sed/awk to bypass TDD requirements
+• NO shell tricks to avoid test-first development
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CORRECT TDD APPROACH:
+
+1. RED PHASE: Write failing tests first
+   - Create test file: tests/<module>/test_<name>.py
+   - Define expected behavior with tests
+   - Run tests to confirm they fail
+
+2. GREEN PHASE: Implement minimal code
+   - Write just enough code to pass tests
+   - Keep implementation simple and focused
+
+3. REFACTOR PHASE: Improve while tests pass
+   - Clean up code structure
+   - Optimize performance
+   - Maintain test coverage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ USE PROPER TOOLS:
+• Use Write/Edit for file creation (TDD rules apply)
+• Use 'uv run pytest' to run tests
+• Follow the RED-GREEN-REFACTOR cycle
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REMEMBER: Tests drive development, not the other way around!"""
+                
+                output = {
+                    "hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": error_message
+                    }
+                }
+                print(json.dumps(output))
+                sys.exit(0)
+        
+        # Allow other Bash commands
+        sys.exit(0)
     
     # Get file path based on tool
     file_path = None
