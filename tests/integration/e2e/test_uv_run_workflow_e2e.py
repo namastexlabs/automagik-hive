@@ -17,7 +17,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-import requests
+import httpx
 from unittest.mock import patch, MagicMock
 
 # SAFETY: Mock psycopg2 to prevent any real database connections
@@ -363,9 +363,10 @@ class TestRealAgentServerValidation:
     def agent_start_available(self):
         """Check if agent server is available on port 38886."""
         try:
-            response = requests.get("http://localhost:38886/health", timeout=5)
-            return response.status_code == 200
-        except requests.RequestException:
+            with httpx.Client() as client:
+                response = client.get("http://localhost:38886/health", timeout=5)
+                return response.status_code == 200
+        except httpx.RequestError:
             return False
 
     @pytest.mark.skipif(
@@ -378,7 +379,8 @@ class TestRealAgentServerValidation:
             pytest.skip("Agent server not available on port 38886")
 
         # Should fail initially - real server connection not tested
-        response = requests.get("http://localhost:38886/health", timeout=10)
+        with httpx.Client() as client:
+            response = client.get("http://localhost:38886/health", timeout=10)
         assert response.status_code == 200
 
         health_data = response.json()

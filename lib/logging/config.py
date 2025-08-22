@@ -193,8 +193,8 @@ def setup_logging():
     # Suppress other commonly noisy libraries only when not in DEBUG
     if level != "DEBUG":
         logging.getLogger("urllib3").setLevel(logging.WARNING)
-        logging.getLogger("requests").setLevel(logging.WARNING)
         logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     # Always suppress extremely noisy watchdog DEBUG logs (even in DEBUG mode)
     # Watchdog can generate hundreds of inotify_buffer DEBUG messages per second

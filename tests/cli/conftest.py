@@ -28,9 +28,9 @@ import pytest
 
 # Optional imports for real server testing
 try:
-    import requests
+    import httpx
 except ImportError:
-    requests = None
+    httpx = None
 
 try:
     import docker
@@ -398,12 +398,13 @@ def performance_timer():
 @pytest.fixture(scope="session")
 def real_agent_start_available():
     """Check if real agent server is available for testing."""
-    if requests is None:
+    if httpx is None:
         return False
     try:
-        response = requests.get("http://localhost:38886/health", timeout=5)
-        return response.status_code == 200
-    except requests.RequestException:
+        with httpx.Client() as client:
+            response = client.get("http://localhost:38886/health", timeout=5)
+            return response.status_code == 200
+    except httpx.RequestError:
         return False
 
 

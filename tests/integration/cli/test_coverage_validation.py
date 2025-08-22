@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 import coverage
 import pytest
-import requests
+import httpx
 
 # Test adapted for new CLI architecture - skip marker removed
 
@@ -351,9 +351,10 @@ class TestRealAgentServerValidation:
     def agent_start_check(self):
         """Check if agent server is available for testing."""
         try:
-            response = requests.get("http://localhost:38886/health", timeout=5)
-            return response.status_code == 200
-        except requests.RequestException:
+            with httpx.Client() as client:
+                response = client.get("http://localhost:38886/health", timeout=5)
+                return response.status_code == 200
+        except httpx.RequestError:
             return False
 
     @pytest.mark.skipif(
@@ -366,7 +367,8 @@ class TestRealAgentServerValidation:
             pytest.skip("Agent server not available on port 38886")
 
         # Should fail initially - real server connectivity not tested
-        response = requests.get("http://localhost:38886/health", timeout=10)
+        with httpx.Client() as client:
+            response = client.get("http://localhost:38886/health", timeout=10)
         assert response.status_code == 200
 
         health_data = response.json()
