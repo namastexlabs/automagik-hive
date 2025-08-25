@@ -85,3 +85,4 @@ agent.pid
 # Temporary files
 .tmp/
 temp/
+env
