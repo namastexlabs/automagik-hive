@@ -207,7 +207,9 @@ async def initialize_other_services(
     # Initialize metrics service
     metrics_service = None
     try:
-        from lib.config.settings import settings
+        from lib.config.settings import get_settings
+        
+        settings = get_settings()
 
         if settings.enable_metrics:
             from lib.metrics import (

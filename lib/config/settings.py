@@ -164,6 +164,35 @@ class HiveSettings(BaseSettings):
         """LangWatch enable alias for legacy compatibility."""
         return self.hive_enable_langwatch
     
+    @property
+    def enable_metrics(self) -> bool:
+        """Metrics enable alias for legacy compatibility."""
+        return self.hive_enable_metrics
+    
+    @property
+    def metrics_batch_size(self) -> int:
+        """Metrics batch size alias for legacy compatibility."""
+        return self.hive_metrics_batch_size
+    
+    @property
+    def metrics_flush_interval(self) -> float:
+        """Metrics flush interval alias for legacy compatibility."""
+        return self.hive_metrics_flush_interval
+    
+    @property
+    def metrics_queue_size(self) -> int:
+        """Metrics queue size alias for legacy compatibility."""
+        return self.hive_metrics_queue_size
+    
+    @property
+    def langwatch_config(self) -> dict:
+        """LangWatch configuration for legacy compatibility."""
+        config = {}
+        if self.langwatch_api_key:
+            config["api_key"] = self.langwatch_api_key
+        # Add any other langwatch config options if needed
+        return config
+    
     # =========================================================================
     # VALIDATORS (Fail-Fast Configuration)
     # =========================================================================
