@@ -20,10 +20,10 @@
         "evolution-api"
       ],
       "env": {
-        "EVOLUTION_API_BASE_URL": "http://192.168.112.142:8080",
+        "EVOLUTION_API_BASE_URL": "http://localhost:8080",
         "EVOLUTION_API_API_KEY": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF",
-        "EVOLUTION_API_INSTANCE": "SofIA",
-        "EVOLUTION_API_FIXED_RECIPIENT": "120363402149983989@g.us"
+        "EVOLUTION_API_INSTANCE": "jack",
+        "EVOLUTION_API_FIXED_RECIPIENT": "5527981813600@s.whatsapp.net"
       }
     },
     "postgres": {
@@ -31,7 +31,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql+psycopg://Zdeg0fnMgMorUVfa:VSplA9sTdN60hm@localhost:35532/hive_agent"
+        "postgresql+psycopg://yMHOafNXNOqx1sRP:UqeOoQqeXonRooIm@localhost:35532/hive_agent"
       ]
     },
     "automagik-hive": {
@@ -43,7 +43,7 @@
       ],
       "env": {
         "HIVE_API_BASE_URL": "http://localhost:38886",
-        "HIVE_API_KEY": "hive_HPoVjrYwYX01ao1gIbdbGnmI8BEsklDFCeVmiEspkNg",
+        "HIVE_API_KEY": "hive_voZl5YkivHGXNS7y57TM4tLnYjSc92gis-vhNR0rL3M",
         "HIVE_TIMEOUT": "300"
       }
     },

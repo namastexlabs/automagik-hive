@@ -1,4 +1,22 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "mcp__postgres__query",
+      "mcp__search-repo-docs__resolve-library-id",
+      "mcp__search-repo-docs__get-library-docs",
+      "Bash(mkdir:*)",
+      "Bash(uv run pytest ai/agents/jack_retrieval/test_agent.py::TestJackRetrievalAgent::test_validate_agent_config_valid -v)",
+      "Bash(uv run:*)",
+      "Bash(find:*)",
+      "Bash(make:*)",
+      "Bash(docker logs:*)",
+      "Bash(grep:*)",
+      "Bash(export PGPASSWORD=UqeOoQqeXonRooIm)",
+      "Bash(psql:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "automagik-forge",
     "ask-repo-agent",
@@ -7,6 +25,5 @@
     "postgres",
     "automagik-hive",
     "wait"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

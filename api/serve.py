@@ -476,6 +476,11 @@ async def _async_create_automagik_api():
         from api.routes.version_router import version_router
 
         app.include_router(version_router)
+        
+        # Add WhatsApp webhook router (public, no auth required)
+        from api.routes.whatsapp_webhook import router as whatsapp_webhook_router
+        
+        app.include_router(whatsapp_webhook_router)
 
         if is_development and not is_reloader:
             # Add development URLs

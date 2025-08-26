@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  evolution-api:
+    image: atendai/evolution-api:v1.7.4
+    container_name: evolution-api
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Minimal config for v1.7.4
+      - SERVER_URL=http://localhost:8080
+      - AUTHENTICATION_API_KEY=BEE0266C2040-4D83-8FAA-A9A3EF89DDEF
+      - LOG_LEVEL=ERROR
+    volumes:
+      - evolution_instances:/evolution/instances
+      - evolution_store:/evolution/store
+    networks:
+      - evolution
+
+  mongodb:
+    image: mongo:7.0.4
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    volumes:
+      - evolution_db:/data/db
+    networks:
+      - evolution
+
+  redis:
+    image: redis:7.2.3
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - evolution_redis:/data
+    networks:
+      - evolution
+
+volumes:
+  evolution_instances:
+  evolution_store:
+  evolution_db:
+  evolution_redis:
+
+networks:
+  evolution:
+    driver: bridge

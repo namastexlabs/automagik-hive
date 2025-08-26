@@ -189,6 +189,8 @@ class AgnoAgentProxy:
         return {
             # Our custom knowledge filter system
             "knowledge_filter": self._handle_knowledge_filter,
+            # JSONKnowledgeBase configuration
+            "knowledge": self._handle_knowledge_config,
             # Model configuration with thinking support
             "model": self._handle_model_config,
             # Storage configuration (now uses shared utilities)
@@ -504,6 +506,102 @@ class AgnoAgentProxy:
             )
 
         return None
+
+    def _handle_knowledge_config(
+        self,
+        knowledge_config: dict[str, Any],
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+    ) -> object | None:
+        """Handle knowledge base configuration to create JSONKnowledgeBase instance."""
+        try:
+            if not knowledge_config or not isinstance(knowledge_config, dict):
+                logger.debug(f"🤖 No knowledge configuration for {component_id}")
+                return None
+
+            # Check knowledge type - must be 'json' for JSONKnowledgeBase
+            knowledge_type = knowledge_config.get("type", "").lower()
+            if knowledge_type != "json":
+                logger.warning(
+                    f"🤖 Unsupported knowledge type '{knowledge_type}' for {component_id}. Only 'json' type supported for JSONKnowledgeBase."
+                )
+                return None
+
+            # Validate required fields
+            sources_raw = knowledge_config.get("sources", [])
+            if not sources_raw:
+                logger.warning(f"🤖 No knowledge sources configured for {component_id}")
+                return None
+
+            # Expand wildcards in source paths to actual files
+            sources = []
+            for source in sources_raw:
+                if isinstance(source, dict) and 'path' in source:
+                    path_pattern = source['path']
+                    # Expand wildcards using glob
+                    import glob
+                    expanded_paths = glob.glob(path_pattern)
+                    if expanded_paths:
+                        # Add each expanded path as a source
+                        for expanded_path in expanded_paths:
+                            sources.append({
+                                'path': expanded_path,
+                                'metadata': source.get('metadata', {})
+                            })
+                    else:
+                        logger.warning(f"🤖 No files found matching pattern '{path_pattern}' for {component_id}")
+                elif isinstance(source, str):
+                    # Handle simple string paths (may also have wildcards)
+                    expanded_paths = glob.glob(source)
+                    sources.extend(expanded_paths if expanded_paths else [source])
+                else:
+                    # Pass through other formats as-is
+                    sources.append(source)
+            
+            if not sources:
+                logger.warning(f"🤖 No valid knowledge sources found after wildcard expansion for {component_id}")
+                return None
+                
+            logger.info(f"🤖 Expanded {len(sources_raw)} source patterns to {len(sources)} actual files for {component_id}")
+
+            # Validate db_url for PostgreSQL storage
+            if not db_url:
+                logger.error(f"🤖 Database URL required for JSONKnowledgeBase creation for {component_id}")
+                return None
+
+            # Import Agno JSONKnowledgeBase and PgVector
+            from agno.knowledge.json import JSONKnowledgeBase
+            from agno.vectordb.pgvector.pgvector import PgVector
+
+            # Create PgVector database for embeddings
+            vector_db = PgVector(
+                table_name=f"{component_id}_vectors",
+                schema="agno",
+                db_url=db_url,
+                auto_upgrade_schema=True
+            )
+
+            # Create JSONKnowledgeBase instance with PgVector
+            json_kb = JSONKnowledgeBase(
+                path=sources,  # JSONKnowledgeBase expects 'path' parameter, not 'sources'
+                vector_db=vector_db,
+                num_documents=knowledge_config.get("num_documents", 50),
+                search_knowledge=knowledge_config.get("search_knowledge", True),
+                enable_agentic_knowledge_filters=knowledge_config.get("enable_agentic_knowledge_filters", True)
+            )
+
+            logger.info(
+                f"🤖 Created JSONKnowledgeBase for {component_id} with {len(sources)} sources"
+            )
+            return json_kb
+
+        except Exception as e:
+            logger.error(
+                f"🤖 Failed to create JSONKnowledgeBase for {component_id}: {e}"
+            )
+            # Don't fail agent creation if knowledge base can't be created
+            return None
 
     def _handle_custom_metadata(
         self,

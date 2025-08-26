@@ -1,7 +1,7 @@
 workflow:
   name: "ProcessamentoFaturas - CTE Invoice Processing Pipeline"
   workflow_id: "processamento-faturas"
-  version: 1
+  version: 2
   description: "Automated CTE invoice processing workflow that monitors emails, extracts Excel data, and orchestrates browser API flows"
 
 model:

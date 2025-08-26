@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 from api.routes.health import health_check_router
 from api.routes.mcp_router import router as mcp_router
 from api.routes.version_router import version_router
+from api.routes.whatsapp_webhook import router as whatsapp_webhook_router
 from api.settings import api_settings
 from lib.auth.dependencies import get_auth_service, require_api_key
 from lib.logging import logger
@@ -51,6 +52,9 @@ def create_app() -> FastAPI:
 
     # Add health check router (public, no auth required)
     app.include_router(health_check_router)
+    
+    # Add WhatsApp webhook (public, no auth required for Evolution API)
+    app.include_router(whatsapp_webhook_router)
 
     # Create protected router for all other endpoints
     protected_router = APIRouter(dependencies=[Depends(require_api_key)])

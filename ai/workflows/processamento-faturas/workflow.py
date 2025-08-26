@@ -1715,6 +1715,69 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
     
     logger.info(f"⏰ Next execution scheduled: {completion_summary['next_execution_scheduled']['next_run']}")
 
+    # 📱 SEND WHATSAPP NOTIFICATION - Daily completion report
+    try:
+        # Format completion message for WhatsApp
+        next_run = completion_summary['next_execution_scheduled']['next_run']
+        next_run_formatted = datetime.fromisoformat(next_run.replace('Z', '+00:00')).strftime('%d/%m/%Y às %H:%M')
+        
+        whatsapp_message = f"""🏁 *PROCESSAMENTO FATURAS CONCLUÍDO*
+
+📊 *Estatísticas do Dia:*
+✅ POs processados: {stats['pos_processed_today']}
+❌ POs falharam: {stats['pos_failed_today']} 
+🎯 POs finalizados: {stats['pos_completed_today']}
+📧 Novos emails: {stats['new_emails_processed']}
+
+📡 *APIs executadas:*
+✅ Sucessos: {stats['api_calls_successful']}
+❌ Falhas: {stats['api_calls_failed']}
+🌐 Falhas navegador: {stats['browser_process_failures']}
+
+⏰ *Próxima execução:* {next_run_formatted}
+
+⏱️ *Tempo total:* {total_execution_time_minutes} min
+📁 *Batch ID:* {completion_summary['daily_execution_summary']['daily_batch_id']}"""
+
+        # Send WhatsApp notification via Evolution API
+        import requests
+        
+        # Use Evolution API directly
+        url = "http://localhost:8080/message/sendText/jack"
+        headers = {
+            "Content-Type": "application/json",
+            "apikey": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF"
+        }
+        payload = {
+            "number": "5527981813600",
+            "textMessage": {
+                "text": whatsapp_message
+            }
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        
+        if response.status_code == 201:
+            result = response.json()
+        else:
+            raise Exception(f"HTTP {response.status_code}: {response.text}")
+        
+        logger.info("📱 Daily completion notification sent via WhatsApp successfully")
+        completion_summary["whatsapp_notification"] = {
+            "sent": True,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "message_preview": whatsapp_message[:100] + "...",
+            "response": result
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error sending WhatsApp notification: {e}")
+        completion_summary["whatsapp_notification"] = {
+            "sent": False,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "error": str(e)
+        }
+
     return StepOutput(content=json.dumps(completion_summary))
 
 
