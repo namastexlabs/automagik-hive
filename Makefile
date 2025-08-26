@@ -663,24 +663,24 @@ uninstall-global: ## 🗑️ Uninstall global installation (mirrors --uninstall-
 # ===========================================
 
 # ===========================================
-# 🚀 Release & Publishing (Alpha)
+# 🚀 Release & Publishing (Beta)
 # ===========================================
 .PHONY: bump
-bump: ## 🏷️ Bump alpha version and prepare for release
-	@$(call print_status,Bumping alpha version...)
+bump: ## 🏷️ Bump beta version and prepare for release
+	@$(call print_status,Bumping beta version...)
 	@if [ ! -f "pyproject.toml" ]; then \
 		$(call print_error,pyproject.toml not found); \
 		exit 1; \
 	fi
 	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
-	if echo "$$CURRENT_VERSION" | grep -q "a[0-9]*$$"; then \
-		ALPHA_NUM=$$(echo "$$CURRENT_VERSION" | grep -o "a[0-9]*$$" | sed 's/a//'); \
-		NEW_ALPHA_NUM=$$((ALPHA_NUM + 1)); \
-		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/a[0-9]*$$//'); \
-		NEW_VERSION="$${BASE_VERSION}a$${NEW_ALPHA_NUM}"; \
+	if echo "$$CURRENT_VERSION" | grep -q "b[0-9]*$$"; then \
+		BETA_NUM=$$(echo "$$CURRENT_VERSION" | grep -o "b[0-9]*$$" | sed 's/b//'); \
+		NEW_BETA_NUM=$$((BETA_NUM + 1)); \
+		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/b[0-9]*$$//'); \
+		NEW_VERSION="$${BASE_VERSION}b$${NEW_BETA_NUM}"; \
 	else \
-		$(call print_error,Current version is not an alpha version: $$CURRENT_VERSION); \
-		echo -e "$(FONT_YELLOW)💡 Only alpha versions can be bumped with this command$(FONT_RESET)"; \
+		$(call print_error,Current version is not a beta version: $$CURRENT_VERSION); \
+		echo -e "$(FONT_YELLOW)💡 Only beta versions can be bumped with this command$(FONT_RESET)"; \
 		exit 1; \
 	fi; \
 	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
@@ -689,16 +689,16 @@ bump: ## 🏷️ Bump alpha version and prepare for release
 	echo -e "$(FONT_CYAN)💡 Next: make publish$(FONT_RESET)"
 
 .PHONY: publish
-publish: ## 📦 Build and publish alpha release to PyPI
-	@$(call print_status,Publishing alpha release...)
+publish: ## 📦 Build and publish beta release to PyPI
+	@$(call print_status,Publishing beta release...)
 	@if [ ! -f "pyproject.toml" ]; then \
 		$(call print_error,pyproject.toml not found); \
 		exit 1; \
 	fi
 	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
-	if ! echo "$$CURRENT_VERSION" | grep -q "a[0-9]*$$"; then \
-		$(call print_error,Not an alpha version: $$CURRENT_VERSION); \
-		echo -e "$(FONT_YELLOW)💡 Only alpha versions can be published with this command$(FONT_RESET)"; \
+	if ! echo "$$CURRENT_VERSION" | grep -q "b[0-9]*$$"; then \
+		$(call print_error,Not a beta version: $$CURRENT_VERSION); \
+		echo -e "$(FONT_YELLOW)💡 Only beta versions can be published with this command$(FONT_RESET)"; \
 		exit 1; \
 	fi; \
 	$(call print_status,Building package for version $$CURRENT_VERSION); \
@@ -711,8 +711,8 @@ publish: ## 📦 Build and publish alpha release to PyPI
 	fi; \
 	$(call print_status,Committing version bump...); \
 	git add pyproject.toml; \
-	git commit -m "bump: alpha version $$CURRENT_VERSION" \
-		-m "🏷️ ALPHA RELEASE PREPARATION:" \
+	git commit -m "bump: beta version $$CURRENT_VERSION" \
+		-m "🏷️ BETA RELEASE PREPARATION:" \
 		-m "- Bumped version to $$CURRENT_VERSION" \
 		-m "- Ready for PyPI publication via 'make publish'" \
 		-m "- UVX testing enabled with: uvx automagik-hive@$$CURRENT_VERSION" \
@@ -721,7 +721,7 @@ publish: ## 📦 Build and publish alpha release to PyPI
 		-m "uvx automagik-hive@$$CURRENT_VERSION --version" \
 		--trailer "Co-Authored-By: Automagik Genie <genie@namastex.ai>"; \
 	$(call print_status,Creating and pushing git tag...); \
-	git tag "v$$CURRENT_VERSION" -m "Alpha release v$$CURRENT_VERSION"; \
+	git tag "v$$CURRENT_VERSION" -m "Beta release v$$CURRENT_VERSION"; \
 	git push origin dev; \
 	git push origin "v$$CURRENT_VERSION"; \
 	$(call print_status,Publishing to PyPI...); \
@@ -745,7 +745,7 @@ publish: ## 📦 Build and publish alpha release to PyPI
 		uv add --dev twine; \
 		uv run twine upload dist/*; \
 	fi; \
-	$(call print_success,Alpha release $$CURRENT_VERSION published!); \
+	$(call print_success,Beta release $$CURRENT_VERSION published!); \
 	echo -e "$(FONT_CYAN)🚀 Test with: uvx automagik-hive@$$CURRENT_VERSION --version$(FONT_RESET)"; \
 	echo -e "$(FONT_CYAN)🧪 UVX Genie commands: uvx automagik-hive@$$CURRENT_VERSION --genie-serve$(FONT_RESET)"; \
 	echo -e "$(FONT_YELLOW)💡 Wait 5-10 minutes for PyPI propagation$(FONT_RESET)"

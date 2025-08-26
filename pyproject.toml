@@ -55,6 +55,7 @@ dev = [
     "coverage>=7.10.4",
     "pytest-mock>=3.14.1",
     "psutil>=7.0.0",
+    "twine>=6.1.0",
 ]
 
 [tool.ruff]
