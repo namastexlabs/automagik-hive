@@ -5,6 +5,7 @@ description = "Automagik Hive"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "ag-ui-protocol>=0.1.8",
     "agno>=1.7.12",
     "alembic>=1.16.4",
     "anthropic>=0.64.0",
