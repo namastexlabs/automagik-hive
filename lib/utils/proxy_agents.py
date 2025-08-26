@@ -210,6 +210,8 @@ class AgnoAgentProxy:
             "display_config": self._handle_custom_metadata,
             # Display section handler (flattens display parameters)
             "display": self._handle_display_section,
+            # Context section handler (flattens context parameters)
+            "context": self._handle_context_section,
         }
 
     async def create_agent(
@@ -447,16 +449,35 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
-    ) -> object | None:
-        """Handle memory configuration."""
-        if memory_config is not None and memory_config.get(
-            "enable_user_memories", False
-        ):
-            from lib.memory.memory_factory import create_agent_memory
+    ) -> dict[str, Any]:
+        """Handle memory configuration by creating Memory object and flattening memory parameters."""
+        if not isinstance(memory_config, dict):
+            logger.warning(
+                f"🤖 Invalid memory config for {component_id}: expected dict, got {type(memory_config)}"
+            )
+            return {}
 
-            # Let MemoryFactoryError bubble up - no silent failures
-            return create_agent_memory(component_id, db_url)
-        return None
+        result = {}
+        
+        # Create Memory object if user memories are enabled
+        if memory_config.get("enable_user_memories", False):
+            try:
+                from lib.memory.memory_factory import create_agent_memory
+                memory_obj = create_agent_memory(component_id, db_url)
+                result["memory"] = memory_obj
+                logger.debug(f"🤖 Created Memory object for {component_id}")
+            except Exception as e:
+                logger.error(f"🤖 Failed to create Memory object for {component_id}: {e}")
+        
+        # Flatten memory parameters to agent level
+        for key, value in memory_config.items():
+            if key in self._supported_params:
+                result[key] = value
+            else:
+                logger.debug(f"🤖 Unknown memory parameter '{key}' for {component_id}")
+        
+        logger.debug(f"🤖 Processed {len(result)} memory parameters for {component_id}")
+        return result
 
     def _handle_agent_metadata(
         self,
@@ -574,6 +595,33 @@ class AgnoAgentProxy:
 
         logger.debug(
             f"🤖 Flattened {len(flattened)} display parameters for {component_id}"
+        )
+        return flattened
+
+    def _handle_context_section(
+        self,
+        context_config: dict[str, Any],
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+    ) -> dict[str, Any]:
+        """Handle context section by flattening context parameters to root level."""
+        if not isinstance(context_config, dict):
+            logger.warning(
+                f"🤖 Invalid context config for {component_id}: expected dict, got {type(context_config)}"
+            )
+            return {}
+
+        # Flatten context parameters to root level for Agno Agent
+        flattened = {}
+        for key, value in context_config.items():
+            if key in self._supported_params:
+                flattened[key] = value
+            else:
+                logger.debug(f"🤖 Unknown context parameter '{key}' for {component_id}")
+
+        logger.debug(
+            f"🤖 Flattened {len(flattened)} context parameters for {component_id}"
         )
         return flattened
 
