@@ -258,17 +258,13 @@ class ServiceManager:
             return False
     
     def uninstall_environment(self, workspace: str = ".") -> bool:
-        """Uninstall ALL environments (main + agent + genie) - COMPLETE SYSTEM WIPE."""
+        """Uninstall main environment - COMPLETE SYSTEM WIPE."""
         try:
             print(f"🗑️ COMPLETE SYSTEM UNINSTALL for workspace: {workspace}")
-            print("This will uninstall ALL environments:")
+            print("This will uninstall the main environment:")
             print("  • Main environment (production containers + postgres)")
-            print("  • Agent environment (agent containers + postgres)")  
-            print("  • Genie environment (unified genie container)")
             print()
-            print("⚠️  This is a COMPLETE SYSTEM WIPE - use individual commands for partial uninstall:")
-            print("     --agent-reset   (agent only)")
-            print("     --genie-reset   (genie only)")
+            print("⚠️  This is a COMPLETE SYSTEM WIPE")
             print("     Use ServiceManager.uninstall_main_only() for main environment only")
             print()
             
@@ -282,42 +278,14 @@ class ServiceManager:
             
             if response != "WIPE ALL":
                 print("❌ Uninstall cancelled - confirmation not received")
-                print("💡 Use --agent-reset or --genie-reset for individual environment resets")
+                print("💡 Use 'uninstall' command to remove the main environment")
                 return False
             
-            # Import the specific command classes for comprehensive uninstall
-            from .agent import AgentCommands
-            from .genie import GenieCommands
-            
             success_count = 0
-            total_environments = 3
+            total_environments = 1
             
-            # 1. Uninstall Agent Environment
-            print("\n🤖 1/3: Uninstalling Agent Environment...")
-            try:
-                agent_cmd = AgentCommands()
-                if agent_cmd.uninstall(workspace):
-                    print("✅ Agent environment uninstalled")
-                    success_count += 1
-                else:
-                    print("⚠️ Agent environment uninstall had issues")
-            except Exception as e:
-                print(f"⚠️ Agent environment uninstall failed: {e}")
-            
-            # 2. Uninstall Genie Environment  
-            print("\n🧞 2/3: Uninstalling Genie Environment...")
-            try:
-                genie_cmd = GenieCommands()
-                if genie_cmd.uninstall(workspace):
-                    print("✅ Genie environment uninstalled")
-                    success_count += 1
-                else:
-                    print("⚠️ Genie environment uninstall had issues")
-            except Exception as e:
-                print(f"⚠️ Genie environment uninstall failed: {e}")
-            
-            # 3. Uninstall Main Environment
-            print("\n🏭 3/3: Uninstalling Main Environment...")
+            # Uninstall Main Environment
+            print("\n🏭 Uninstalling Main Environment...")
             try:
                 if self.uninstall_main_only(workspace):
                     print("✅ Main environment uninstalled")

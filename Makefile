@@ -126,9 +126,6 @@ define generate_hive_api_key
     uv run python -c "from lib.auth.init_service import AuthInitService; auth = AuthInitService(); key = auth.get_current_key(); print('API key already exists') if key else auth.ensure_api_key()"
 endef
 
-define generate_agent_hive_api_key
-    $(call use_unified_api_key_for_agent)
-endef
 
 define show_api_key_info
     echo ""; \
@@ -165,21 +162,6 @@ define generate_postgres_credentials
     fi
 endef
 
-define generate_agent_postgres_credentials
-    $(call use_unified_credentials_for_agent); \
-    $(call extract_postgres_credentials_from_env); \
-    if [ -z "$$POSTGRES_USER" ]; then \
-        $(call print_status,Generating secure Agent PostgreSQL credentials...); \
-        POSTGRES_USER=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-        POSTGRES_PASS=$$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-16); \
-        POSTGRES_DB="hive_agent"; \
-        $(call print_success,Agent PostgreSQL credentials generated and will be used via docker-compose inheritance); \
-        echo -e "$(FONT_CYAN)Generated agent credentials:$(FONT_RESET)"; \
-        echo -e "  User: $$POSTGRES_USER"; \
-        echo -e "  Password: $$POSTGRES_PASS"; \
-        echo -e "  Database: $$POSTGRES_DB"; \
-    fi
-endef
 
 define setup_docker_postgres
     echo ""; \
@@ -272,53 +254,10 @@ define setup_python_env
     fi
 endef
 
-define setup_agent_env
-    $(call print_status,Agent environment inherits from main .env with overrides...); \
-    mkdir -p docker/agent; \
-    $(call print_success,Agent environment uses main .env + docker-compose overrides)
-endef
 
-define setup_agent_postgres
-    $(call check_docker); \
-    echo -e "$(FONT_CYAN)🐳 Starting Agent PostgreSQL container (ephemeral storage)...$(FONT_RESET)"; \
-    $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml up -d agent-postgres; \
-    $(call print_success,Agent PostgreSQL container started on port 35532 with ephemeral storage!)
-endef
 
-define cleanup_agent_environment
-    $(call print_status,Cleaning up existing agent environment...); \
-    $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml down 2>/dev/null || true; \
-    docker container rm hive-agent-api hive-agent-postgres 2>/dev/null || true; \
-    rm -f logs/agent-server.pid logs/agent-server.log 2>/dev/null || true; \
-    $(call print_success,Agent environment cleaned up)
-endef
 
-define start_agent_background
-    $(call print_status,Starting agent server via Docker...); \
-    $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml up -d agent-api; \
-    sleep 5; \
-    if docker ps --filter "name=hive-agent-api" --format "{{.Names}}" | grep -q hive-agent-api; then \
-        $(call print_success,Agent server started via Docker); \
-        echo -e "$(FONT_CYAN)🌐 Agent API: http://localhost:$(AGENT_PORT)$(FONT_RESET)"; \
-        echo -e "$(FONT_CYAN)📋 Logs: make agent-logs$(FONT_RESET)"; \
-        echo -e "$(FONT_YELLOW)--- Startup logs ---$(FONT_RESET)"; \
-        docker logs hive-agent-api 2>/dev/null | head -20 || echo "No logs yet"; \
-    else \
-        $(call print_error,Failed to start agent server); \
-        echo -e "$(FONT_YELLOW)Check logs: docker logs hive-agent-api$(FONT_RESET)"; \
-        exit 1; \
-    fi
-endef
 
-define stop_agent_background
-    if docker ps --filter "name=hive-agent-api" --format "{{.Names}}" | grep -q hive-agent-api; then \
-        $(call print_status,Stopping agent server via Docker...); \
-        $(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml stop agent-api; \
-        $(call print_success,Agent server stopped); \
-    else \
-        $(call print_warning,Agent server not running); \
-    fi
-endef
 
 # ===========================================
 # 📋 Help System
@@ -349,16 +288,6 @@ help: ## 🐝 Show this help message
 	@echo -e "$(FONT_CYAN)🏭 Production Environment (UV Integration):$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)restart$(FONT_RESET)         Restart production environment (mirrors --restart)"
 	@echo ""
-	@echo -e "$(FONT_CYAN)🤖 Agent Environment (UV Integration):$(FONT_RESET)"
-	@echo -e "  $(FONT_PURPLE)install-agent$(FONT_RESET)   Install and start agent services (mirrors --agent-install)"
-	@echo -e "  $(FONT_PURPLE)agent$(FONT_RESET)           Start agent services (mirrors --agent-start)"
-	@echo -e "  $(FONT_PURPLE)agent-start$(FONT_RESET)     Start agent services (alias for agent)"
-	@echo -e "  $(FONT_PURPLE)agent-stop$(FONT_RESET)      Stop agent services (mirrors --agent-stop)"
-	@echo -e "  $(FONT_PURPLE)agent-restart$(FONT_RESET)   Restart agent services (mirrors --agent-restart)"
-	@echo -e "  $(FONT_PURPLE)agent-logs$(FONT_RESET)      Show agent logs (mirrors --agent-logs)"
-	@echo -e "  $(FONT_PURPLE)agent-status$(FONT_RESET)    Check agent status (mirrors --agent-status)"
-	@echo -e "  $(FONT_PURPLE)agent-reset$(FONT_RESET)     Reset agent environment (mirrors --agent-reset)"
-	@echo -e "  $(FONT_PURPLE)uninstall-agent$(FONT_RESET) Uninstall agent environment completely"
 	@echo ""
 	@echo -e "$(FONT_CYAN)🎛️ Service Control:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)status$(FONT_RESET)          Show running services status"
@@ -571,70 +500,6 @@ uninstall: ## 🗑️ Uninstall production environment - mirrors CLI uninstall
 	@$(call print_success,Production environment uninstalled!)
 
 
-# ===========================================
-# 🤖 Agent Environment Commands (UV Integration)
-# ===========================================
-.PHONY: agent-install
-agent-install: ## 🤖 Install and start agent services - mirrors CLI --agent-install
-	@$(call print_status,Installing and starting agent services...)
-	@$(call check_prerequisites)
-	@$(call setup_python_env)
-	@uv run automagik-hive --agent-install
-	@$(call sync_mcp_config_with_credentials)
-	@$(call print_success,Agent environment ready!)
-	@echo -e "$(FONT_CYAN)🌐 Agent API available at: http://localhost:$(AGENT_PORT)$(FONT_RESET)"
-
-.PHONY: agent-start
-agent-start: ## 🤖 Start agent services - mirrors CLI --agent-start
-	@$(call print_status,Starting agent services...)
-	@if [ ! -f ".env" ]; then \
-		$(call print_error,Environment not found - run 'make agent-install' first); \
-		exit 1; \
-	fi
-	@uv run automagik-hive --agent-start
-
-.PHONY: agent-stop
-agent-stop: ## 🛑 Stop agent services - mirrors CLI --agent-stop
-	@$(call print_status,Stopping agent services...)
-	@uv run automagik-hive --agent-stop
-
-.PHONY: agent-restart
-agent-restart: ## 🔄 Restart agent services - mirrors CLI --agent-restart
-	@$(call print_status,Restarting agent services...)
-	@uv run automagik-hive --agent-restart
-
-.PHONY: agent-logs
-agent-logs: ## 📄 Show agent logs - mirrors CLI --agent-logs
-	@echo -e "$(FONT_PURPLE)🤖 Agent Container Logs$(FONT_RESET)"
-	@uv run automagik-hive --agent-logs --tail 50
-
-.PHONY: agent-status
-agent-status: ## 📊 Check agent status - mirrors CLI --agent-status
-	@$(call print_status,Agent Environment Status)
-	@uv run automagik-hive --agent-status
-
-.PHONY: agent-reset
-agent-reset: ## 🗑️ Reset agent environment - mirrors CLI --agent-reset
-	@$(call print_status,Resetting agent environment...)
-	@echo -e "$(FONT_YELLOW)This will destroy all containers and data, then reinstall and start fresh$(FONT_RESET)"
-	@uv run automagik-hive --agent-reset
-	@$(call sync_mcp_config_with_credentials)
-	@$(call print_success,Agent environment reset complete!)
-
-.PHONY: uninstall-agent
-uninstall-agent: ## 🗑️ Uninstall agent environment completely
-	@$(call print_status,Uninstalling agent environment...)
-	@uv run automagik-hive --agent-stop 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🐳 Stopping agent services...$(FONT_RESET)"
-	@$(DOCKER_COMPOSE) -f docker/agent/docker-compose.yml down --remove-orphans -v 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🗑️ Removing agent containers and volumes...$(FONT_RESET)"
-	@docker container rm hive-agent-postgres hive-agent-api 2>/dev/null || true
-	@docker volume rm hive_agent_app_logs hive_agent_app_data hive_agent_supervisor_logs 2>/dev/null || true
-	@echo -e "$(FONT_CYAN)🔗 Removing agent network...$(FONT_RESET)"
-	@docker network rm hive_agent_network 2>/dev/null || true
-	@$(call print_success,Agent environment uninstalled!)
-
-
 .PHONY: test
 test: ## 🧪 Run test suite
 	@$(call print_status,Running tests...)
@@ -747,13 +612,12 @@ publish: ## 📦 Build and publish beta release to PyPI
 	fi; \
 	$(call print_success,Beta release $$CURRENT_VERSION published!); \
 	echo -e "$(FONT_CYAN)🚀 Test with: uvx automagik-hive@$$CURRENT_VERSION --version$(FONT_RESET)"; \
-	echo -e "$(FONT_CYAN)🧪 UVX Genie commands: uvx automagik-hive@$$CURRENT_VERSION --genie-serve$(FONT_RESET)"; \
 	echo -e "$(FONT_YELLOW)💡 Wait 5-10 minutes for PyPI propagation$(FONT_RESET)"
 
 # ===========================================
 # 🧹 Phony Targets  
 # ===========================================
-.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health install-agent uninstall-agent agent agent-start agent-stop agent-restart agent-logs agent-status agent-reset uninstall-workspace uninstall-global bump publish
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================
@@ -780,28 +644,7 @@ define extract_hive_api_key_from_env
 endef
 
 
-# Use unified credentials from main .env for agent (shared user/pass, different port/db)
-define use_unified_credentials_for_agent
-    $(call extract_postgres_credentials_from_env); \
-    if [ -n "$$POSTGRES_USER" ] && [ -n "$$POSTGRES_PASS" ]; then \
-        $(call print_status,Using unified credentials from main .env for agent...); \
-        echo -e "$(FONT_CYAN)Unified agent credentials:$(FONT_RESET)"; \
-        echo -e "  User: $$POSTGRES_USER (shared)"; \
-        echo -e "  Password: $$POSTGRES_PASS (shared)"; \
-        echo -e "  Database: hive_agent"; \
-        echo -e "  Port: 35532 (agent-specific)"; \
-    fi
-endef
-
-# Use unified API key from main .env for agent  
-define use_unified_api_key_for_agent
-    $(call extract_hive_api_key_from_env); \
-    if [ -n "$$HIVE_API_KEY" ]; then \
-        $(call print_status,Using unified API key from main .env for agent...); \
-        echo -e "$(FONT_CYAN)Unified agent API key:$(FONT_RESET)"; \
-        echo -e "  API Key: $$HIVE_API_KEY (shared)"; \
-    fi
-endef
+  
 
 # Generate MCP configuration with current credentials
 define sync_mcp_config_with_credentials

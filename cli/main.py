@@ -9,8 +9,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from .commands.agent import AgentCommands
-from .commands.genie import GenieCommands
 
 # Import command classes for test compatibility
 from .commands.init import InitCommands
@@ -34,23 +32,6 @@ CORE COMMANDS (Quick Start):
   --dev [WORKSPACE]           Start development server (local)
   --version                   Show version information
 
-AGENT ENVIRONMENT (Isolated Development):
-  --agent-install             Install and start agent services
-  --agent-start               Start agent services  
-  --agent-stop                Stop agent services
-  --agent-restart             Restart agent services
-  --agent-status              Check agent service status
-  --agent-logs [--tail N]     View agent logs
-  --agent-reset               Reset agent environment
-
-GENIE ENVIRONMENT (Claude Integration):
-  --genie-install             Install and start genie services
-  --genie-start               Start genie services
-  --genie-stop                Stop genie services  
-  --genie-restart             Restart genie services
-  --genie-status              Check genie service status
-  --genie-logs [--tail N]     View genie logs
-  --genie-reset               Reset genie environment
 
 POSTGRESQL DATABASE:
   --postgres-status           Check PostgreSQL status
@@ -98,23 +79,7 @@ Use --help for detailed options or see documentation.
     parser.add_argument("--postgres-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show PostgreSQL logs")
     parser.add_argument("--postgres-health", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL health")
     
-    # Agent commands
-    parser.add_argument("--agent-install", nargs="?", const=".", metavar="WORKSPACE", help="Install and start agent services")
-    parser.add_argument("--agent-start", nargs="?", const=".", metavar="WORKSPACE", help="Start agent services")
-    parser.add_argument("--agent-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop agent services")
-    parser.add_argument("--agent-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart agent services (stop + start)")
-    parser.add_argument("--agent-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show agent logs")
-    parser.add_argument("--agent-status", nargs="?", const=".", metavar="WORKSPACE", help="Check agent status")
-    parser.add_argument("--agent-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset agent environment (destroy all + reinstall + start)")
     
-    # Genie commands
-    parser.add_argument("--genie-install", nargs="?", const=".", metavar="WORKSPACE", help="Install and start genie services")
-    parser.add_argument("--genie-start", nargs="?", const=".", metavar="WORKSPACE", help="Start genie services")
-    parser.add_argument("--genie-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop genie services")
-    parser.add_argument("--genie-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart genie services (stop + start)")
-    parser.add_argument("--genie-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show genie logs")
-    parser.add_argument("--genie-status", nargs="?", const=".", metavar="WORKSPACE", help="Check genie status")
-    parser.add_argument("--genie-reset", nargs="?", const=".", metavar="WORKSPACE", help="Reset genie environment (destroy all + reinstall + start)")
     
     # Production environment commands
     parser.add_argument("--stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop production environment")
@@ -162,11 +127,7 @@ def main() -> int:
         args.init, args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
-        args.agent_install, args.agent_start, args.agent_stop,
-        args.agent_restart, args.agent_logs, args.agent_status, args.agent_reset,
         args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
-        args.genie_install, args.genie_start, args.genie_stop,
-        args.genie_restart, args.genie_logs, args.genie_status, args.genie_reset,
         args.stop, args.restart, args.status, args.logs,
         args.workspace
     ]
@@ -201,6 +162,7 @@ def main() -> int:
         
         # Launch claude with GENIE.md
         if args.command == "genie":
+            from .commands.genie import GenieCommands
             genie_cmd = GenieCommands()
             return 0 if genie_cmd.launch_claude(args.args) else 1
         
@@ -245,39 +207,6 @@ def main() -> int:
         if args.postgres_health:
             return 0 if postgres_cmd.postgres_health(args.postgres_health) else 1
         
-        # Agent commands
-        agent_cmd = AgentCommands()
-        if args.agent_install:
-            return 0 if agent_cmd.install(args.agent_install) else 1
-        if args.agent_start:
-            return 0 if agent_cmd.start(args.agent_start) else 1
-        if args.agent_stop:
-            return 0 if agent_cmd.stop(args.agent_stop) else 1
-        if args.agent_restart:
-            return 0 if agent_cmd.restart(args.agent_restart) else 1
-        if args.agent_logs:
-            return 0 if agent_cmd.logs(args.agent_logs, args.tail) else 1
-        if args.agent_status:
-            return 0 if agent_cmd.status(args.agent_status) else 1
-        if args.agent_reset:
-            return 0 if agent_cmd.reset(args.agent_reset) else 1
-        
-        # Genie commands
-        genie_cmd = GenieCommands()
-        if args.genie_install:
-            return 0 if genie_cmd.install(args.genie_install) else 1
-        if args.genie_start:
-            return 0 if genie_cmd.start(args.genie_start) else 1
-        if args.genie_stop:
-            return 0 if genie_cmd.stop(args.genie_stop) else 1
-        if args.genie_restart:
-            return 0 if genie_cmd.restart(args.genie_restart) else 1
-        if args.genie_logs:
-            return 0 if genie_cmd.logs(args.genie_logs, args.tail) else 1
-        if args.genie_status:
-            return 0 if genie_cmd.status(args.genie_status) else 1
-        if args.genie_reset:
-            return 0 if genie_cmd.reset(args.genie_reset) else 1
         
         # Production environment commands
         service_manager = ServiceManager()

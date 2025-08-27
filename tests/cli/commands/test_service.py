@@ -408,11 +408,7 @@ class TestServiceManagerUninstall:
         """Test environment uninstall with data preservation."""
         manager = ServiceManager()
         with patch('builtins.input', return_value='WIPE ALL'):
-            with patch('cli.commands.agent.AgentCommands') as mock_agent_cmd_class:
-                with patch('cli.commands.genie.GenieCommands') as mock_genie_cmd_class:
-                    with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
-                        # Setup mocks for agent and genie command instances
-                        mock_agent_cmd = mock_agent_cmd_class.return_value
+            with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
                         mock_agent_cmd.uninstall.return_value = True
                         
                         mock_genie_cmd = mock_genie_cmd_class.return_value
@@ -427,11 +423,7 @@ class TestServiceManagerUninstall:
         """Test environment uninstall with data wipe (confirmed)."""
         manager = ServiceManager()
         with patch('builtins.input', return_value='WIPE ALL'):
-            with patch('cli.commands.agent.AgentCommands') as mock_agent_cmd_class:
-                with patch('cli.commands.genie.GenieCommands') as mock_genie_cmd_class:
-                    with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
-                        # Setup mocks for agent and genie command instances
-                        mock_agent_cmd = mock_agent_cmd_class.return_value
+            with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
                         mock_agent_cmd.uninstall.return_value = True
                         
                         mock_genie_cmd = mock_genie_cmd_class.return_value

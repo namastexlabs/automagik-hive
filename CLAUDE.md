@@ -202,25 +202,37 @@ Task(subagent_type="hive-dev-coder", prompt="Implement [feature] to make tests p
 </development_methodologies>
 
 <environment_workflow>
-<unified_agent_commands>
+<modern_development_workflow>
 ```bash
-# Unified agent environment management via uv run automagik-hive
-uv run automagik-hive --agent-install      # Setup agent services (ports 38886/35532) - unified config from .env.example
-uv run automagik-hive --agent-serve        # Start agent services 
-uv run automagik-hive --agent-stop         # Stop agent services  
-uv run automagik-hive --agent-restart      # Restart agent services
-uv run automagik-hive --agent-status       # Check agent service status
-uv run automagik-hive --agent-logs         # View agent logs (default 20 lines)
-uv run automagik-hive --agent-logs --tail 50  # View last 50 log lines
+# MODERN DEVELOPMENT WORKFLOW - Background CLI + Live Testing
+# Claude Code's background CLI capabilities enable real-time development and testing
 
-# Your isolated agent environment:
-# - Agent API: http://localhost:38886 
-# - Agent DB: postgresql://localhost:35532 
-# - Agent config: .env (unified credential system)
-# - Docker containers: hive-postgres-agent, hive-agent-dev-server
-# - Zero prompts or confirmations for automation compatibility
+# 1. Start development server in background (enables live testing)
+make dev &                       # Start development server on http://localhost:8886
+# OR
+uv run automagik-hive --dev &    # Alternative command
+
+# 2. Monitor server logs in real-time
+tail -f logs/server.log          # Watch server activity
+# OR check server status
+curl http://localhost:8886/api/v1/health  # Health check
+
+# 3. Live API testing and exploration
+curl http://localhost:8886/docs                    # Swagger UI documentation  
+curl http://localhost:8886/playground/status       # Playground availability
+curl http://localhost:8886/playground/agents       # Available agents
+curl http://localhost:8886/playground/teams        # Available teams
+curl http://localhost:8886/playground/workflows    # Available workflows
+
+# 4. Test agent functionality live
+curl -X POST http://localhost:8886/playground/teams/genie/runs \
+  -H "Content-Type: application/json" \
+  -d '{"task_description": "Test system functionality"}'
+
+# 5. Stop development server
+pkill -f "make dev" || pkill -f "uvicorn"
 ```
-</unified_agent_commands>
+</modern_development_workflow>
 
 <uv_command_reference>
 <package_management>
@@ -242,33 +254,22 @@ uv run pytest tests/api/         # Test API endpoints
 uv run pytest --cov=ai --cov=api --cov=lib  # With coverage report
 ```
 </code_quality_testing>
-<agent_development_cli>
+
+<development_server_management>
 ```bash
-# Complete agent development workflow via uv run automagik-hive
-uv run automagik-hive --agent-install      # Initial setup and service installation
-uv run automagik-hive --agent-serve        # Start agent services (if stopped)
-uv run automagik-hive --agent-stop         # Stop agent services (preserve state)
-uv run automagik-hive --agent-restart      # Restart agent services
-uv run automagik-hive --agent-status       # Agent service health check
-uv run automagik-hive --agent-logs         # Agent application logs (default 20 lines)
-uv run automagik-hive --agent-logs --tail 50  # Last 50 log lines
-uv run automagik-hive --agent-reset        # Complete reset (destructive)
+# Development server lifecycle management
+make dev                         # Start development server (foreground)
+make dev &                       # Start development server (background)
+make stop                        # Stop development server
 
-# Agent Environment Status:
-# ✅ Agent Postgres: Runs on port 35532 (isolated from main postgres on 5532)
-# ✅ Agent Server: Runs on port 38886 (isolated from main server on 8886)
-# ✅ Configuration: Uses unified .env configuration
-# ✅ Data: Stores data in data/postgres-agent (isolated from main data)
-
-# Typical Development Workflow:
-# 1. uv run automagik-hive --agent-install    # Set up isolated agent environment
-# 2. uv run automagik-hive --agent-serve      # Start both postgres and server
-# 3. uv run automagik-hive --agent-status     # Verify both services running
-# 4. [Develop and test agent functionality]
-# 5. uv run automagik-hive --agent-logs       # Debug issues if needed
+# Real-time development workflow
+make dev &                       # 1. Start in background
+curl http://localhost:8886/api/v1/health  # 2. Verify server running
+# 3. Make code changes - server auto-reloads
+# 4. Test changes via API calls
+# 5. Monitor logs for issues
 ```
-</agent_development_cli>
-
+</development_server_management>
 </uv_command_reference>
 </environment_workflow>
 
@@ -305,7 +306,7 @@ You operate within a live, instrumented Automagik Hive system with direct contro
 
 <tool_arsenal>
 <tool name="postgres" status="Working">
-<purpose>Direct SQL queries on agent DB (port 35532)</purpose>
+<purpose>Direct SQL queries on main system DB (port 5532)</purpose>
 <example>SELECT * FROM hive.component_versions</example>
 </tool>
 
@@ -342,7 +343,7 @@ You operate within a live, instrumented Automagik Hive system with direct contro
 
 <database_schema_discovery>
 ```sql
--- Agent instance database (postgresql://localhost:35532/hive_agent)
+-- Main system database (postgresql://localhost:5532/automagik_hive)
 -- agno schema
 agno.knowledge_base         -- Vector embeddings for RAG system
   ├── id, name, content    -- Core fields
@@ -369,7 +370,7 @@ SELECT * FROM agno.knowledge_base WHERE meta_data->>'domain' = 'development';
 </discovery_pattern>
 
 <integration_with_development_workflow>
-<before_mcp_tools>Ensure agent environment is running (see UV Command Reference)</before_mcp_tools>
+<before_mcp_tools>Ensure development server is running (use `make dev &` for background mode)</before_mcp_tools>
 <after_tool_usage>Bump version in YAML files per our rules when configs are modified</after_tool_usage>
 </integration_with_development_workflow>
 </mcp_integration_guidelines>
@@ -383,8 +384,8 @@ cat .env | grep HIVE_API_KEY  # Verify API key exists
 </auth_errors>
 
 <connection_failures>
-<restart_command>Use `uv run automagik-hive --agent-restart` for graceful service restart</restart_command>
-<agent_api_port>Agent API on http://localhost:38886</agent_api_port>
+<restart_command>Use `make stop && make dev &` for graceful server restart</restart_command>
+<main_api_port>Main API on http://localhost:8886</main_api_port>
 </connection_failures>
 </troubleshooting>
 
