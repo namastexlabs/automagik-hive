@@ -50,7 +50,7 @@ PRODUCTION ENVIRONMENT:
 SUBCOMMANDS:
   install                     Complete environment setup
   uninstall                   COMPLETE SYSTEM WIPE - uninstall ALL environments
-  genie                       Launch claude with GENIE.md as system prompt
+  genie                       Launch claude with AGENTS.md as system prompt
   dev                         Start development server (alternative syntax)
 
 Use --help for detailed options or see documentation.
@@ -104,7 +104,7 @@ Use --help for detailed options or see documentation.
     uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Genie subcommand
-    genie_parser = subparsers.add_parser("genie", help="Launch claude with GENIE.md as system prompt")
+    genie_parser = subparsers.add_parser("genie", help="Launch claude with AGENTS.md as system prompt")
     genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
     
     # Dev subcommand
@@ -160,7 +160,7 @@ def main() -> int:
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
         
-        # Launch claude with GENIE.md
+        # Launch claude with AGENTS.md
         if args.command == "genie":
             from .commands.genie import GenieCommands
             genie_cmd = GenieCommands()
