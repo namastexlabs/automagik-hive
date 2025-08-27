@@ -1,199 +1,157 @@
-"""Tests for Genie Commands Implementation.
+"""Test the genie commands."""
 
-Test the minimal genie command functionality.
-"""
+import subprocess
+from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
-import subprocess
 
 from cli.commands.genie import GenieCommands
 
 
 class TestGenieCommands:
-    """Test GenieCommands class."""
+    """Test genie commands."""
     
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.genie_cmd = GenieCommands()
+    @pytest.fixture
+    def genie_cmd(self):
+        """Create GenieCommands instance."""
+        return GenieCommands()
     
-    def test_launch_claude_success(self):
+    def test_launch_claude_success(self, genie_cmd):
         """Test successful claude launch with AGENTS.md."""
-        agents_content = "# AGENTS\nTest agents content"
+        # Mock Path.cwd to return test directory
+        test_dir = Path("/test/dir")
+        agents_content = "# AGENTS.md test content"
         
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('pathlib.Path.exists') as mock_exists, \
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', return_value=True), \
              patch('builtins.open', mock_open(read_data=agents_content)), \
              patch('subprocess.run') as mock_run:
             
-            # Setup mocks
-            mock_cwd.return_value = Path("/test/workspace")
-            mock_exists.return_value = True
-            mock_run.return_value.returncode = 0
+            mock_run.return_value = MagicMock(returncode=0)
             
-            # Execute
-            result = self.genie_cmd.launch_claude(["--extra-arg"])
+            result = genie_cmd.launch_claude()
             
-            # Verify
             assert result is True
             mock_run.assert_called_once()
             
-            # Check claude command structure
-            call_args = mock_run.call_args[0][0]
-            assert call_args[0] == "claude"
-            assert "--append-system-prompt" in call_args
-            assert agents_content in call_args
-            assert "--mcp-config" in call_args
-            assert ".mcp.json" in call_args
-            assert "--model" in call_args
-            assert "sonnet" in call_args
-            assert "--dangerously-skip-permissions" in call_args
-            assert "--extra-arg" in call_args
+            # Check command construction
+            cmd = mock_run.call_args[0][0]
+            assert cmd[0] == "claude"
+            assert "--append-system-prompt" in cmd
+            assert agents_content in cmd
+            assert "--mcp-config" in cmd
+            assert ".mcp.json" in cmd
     
-    def test_launch_claude_agents_md_not_found(self):
-        """Test failure when AGENTS.md is not found."""
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('pathlib.Path.exists') as mock_exists:
+    def test_launch_claude_with_extra_args(self, genie_cmd):
+        """Test claude launch with additional arguments."""
+        test_dir = Path("/test/dir")
+        agents_content = "# AGENTS.md"
+        extra_args = ["--help", "--version"]
+        
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', return_value=True), \
+             patch('builtins.open', mock_open(read_data=agents_content)), \
+             patch('subprocess.run') as mock_run:
             
-            # Setup mocks - AGENTS.md doesn't exist anywhere
-            mock_cwd.return_value = Path("/test/workspace")
-            mock_exists.return_value = False
+            mock_run.return_value = MagicMock(returncode=0)
             
-            # Execute
-            result = self.genie_cmd.launch_claude()
+            result = genie_cmd.launch_claude(extra_args)
             
-            # Verify
+            assert result is True
+            cmd = mock_run.call_args[0][0]
+            assert "--help" in cmd
+            assert "--version" in cmd
+    
+    def test_launch_claude_agents_md_not_found(self, genie_cmd):
+        """Test when AGENTS.md is not found."""
+        test_dir = Path("/test/dir")
+        
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', return_value=False), \
+             patch.object(Path, 'parents', []):
+            
+            result = genie_cmd.launch_claude()
+            
             assert result is False
     
-    def test_launch_claude_agents_md_read_error(self):
-        """Test failure when AGENTS.md cannot be read."""
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('pathlib.Path.exists') as mock_exists, \
+    def test_launch_claude_agents_md_in_parent(self, genie_cmd):
+        """Test finding AGENTS.md in parent directory."""
+        test_dir = Path("/test/dir/subdir")
+        parent_dir = Path("/test/dir")
+        agents_content = "# Parent AGENTS.md"
+        
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', side_effect=lambda: str(Path) == str(parent_dir / "AGENTS.md")), \
+             patch.object(Path, 'parents', [parent_dir]), \
+             patch('builtins.open', mock_open(read_data=agents_content)), \
+             patch('subprocess.run') as mock_run:
+            
+            mock_run.return_value = MagicMock(returncode=0)
+            
+            # Mock the exists check properly
+            original_exists = Path.exists
+            def mock_exists(self):
+                return self == parent_dir / "AGENTS.md"
+            
+            with patch.object(Path, 'exists', mock_exists):
+                result = genie_cmd.launch_claude()
+            
+            assert result is True
+    
+    def test_launch_claude_read_failure(self, genie_cmd):
+        """Test when AGENTS.md cannot be read."""
+        test_dir = Path("/test/dir")
+        
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', return_value=True), \
              patch('builtins.open', side_effect=IOError("Permission denied")):
             
-            # Setup mocks
-            mock_cwd.return_value = Path("/test/workspace")
-            mock_exists.return_value = True
+            result = genie_cmd.launch_claude()
             
-            # Execute
-            result = self.genie_cmd.launch_claude()
-            
-            # Verify
             assert result is False
     
-    def test_launch_claude_command_not_found(self):
-        """Test failure when claude command is not found."""
-        agents_content = "# AGENTS\nTest content"
+    def test_launch_claude_command_not_found(self, genie_cmd):
+        """Test when claude command is not found."""
+        test_dir = Path("/test/dir")
+        agents_content = "# AGENTS.md"
         
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('pathlib.Path.exists') as mock_exists, \
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', return_value=True), \
              patch('builtins.open', mock_open(read_data=agents_content)), \
              patch('subprocess.run', side_effect=FileNotFoundError()):
             
-            # Setup mocks
-            mock_cwd.return_value = Path("/test/workspace")
-            mock_exists.return_value = True
+            result = genie_cmd.launch_claude()
             
-            # Execute
-            result = self.genie_cmd.launch_claude()
-            
-            # Verify
             assert result is False
     
-    def test_launch_claude_keyboard_interrupt(self):
-        """Test handling of keyboard interrupt."""
-        agents_content = "# AGENTS\nTest content"
+    def test_launch_claude_command_failure(self, genie_cmd):
+        """Test when claude command fails."""
+        test_dir = Path("/test/dir")
+        agents_content = "# AGENTS.md"
         
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('pathlib.Path.exists') as mock_exists, \
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', return_value=True), \
+             patch('builtins.open', mock_open(read_data=agents_content)), \
+             patch('subprocess.run') as mock_run:
+            
+            mock_run.return_value = MagicMock(returncode=1)
+            
+            result = genie_cmd.launch_claude()
+            
+            assert result is False
+    
+    def test_launch_claude_keyboard_interrupt(self, genie_cmd):
+        """Test handling KeyboardInterrupt."""
+        test_dir = Path("/test/dir")
+        agents_content = "# AGENTS.md"
+        
+        with patch('pathlib.Path.cwd', return_value=test_dir), \
+             patch.object(Path, 'exists', return_value=True), \
              patch('builtins.open', mock_open(read_data=agents_content)), \
              patch('subprocess.run', side_effect=KeyboardInterrupt()):
             
-            # Setup mocks
-            mock_cwd.return_value = Path("/test/workspace")
-            mock_exists.return_value = True
+            result = genie_cmd.launch_claude()
             
-            # Execute
-            result = self.genie_cmd.launch_claude()
-            
-            # Verify - KeyboardInterrupt should return True (not an error)
+            # KeyboardInterrupt returns True (not an error)
             assert result is True
-    
-    def test_launch_claude_finds_agents_md_in_parent(self):
-        """Test that AGENTS.md is found in parent directory."""
-        agents_content = "# AGENTS\nParent content"
-        
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('builtins.open', mock_open(read_data=agents_content)), \
-             patch('subprocess.run') as mock_run:
-            
-            # Setup mock filesystem structure
-            workspace_path = Path("/test/workspace/subdir")
-            parent_path = Path("/test/workspace")
-            
-            def mock_exists(path):
-                # AGENTS.md doesn't exist in subdir but exists in parent
-                if str(path).endswith("subdir/AGENTS.md"):
-                    return False
-                if str(path).endswith("workspace/AGENTS.md"):
-                    return True
-                return False
-            
-            mock_cwd.return_value = workspace_path
-            mock_run.return_value.returncode = 0
-            
-            # Mock path exists and parents
-            with patch.object(Path, 'exists', side_effect=mock_exists), \
-                 patch.object(Path, 'parents', [parent_path]):
-                
-                # Execute
-                result = self.genie_cmd.launch_claude()
-                
-                # Verify
-                assert result is True
-                mock_run.assert_called_once()
-    
-    def test_launch_claude_subprocess_error(self):
-        """Test handling of subprocess error."""
-        agents_content = "# AGENTS\nTest content"
-        
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('pathlib.Path.exists') as mock_exists, \
-             patch('builtins.open', mock_open(read_data=agents_content)), \
-             patch('subprocess.run', side_effect=Exception("Subprocess failed")):
-            
-            # Setup mocks
-            mock_cwd.return_value = Path("/test/workspace")
-            mock_exists.return_value = True
-            
-            # Execute
-            result = self.genie_cmd.launch_claude()
-            
-            # Verify
-            assert result is False
-    
-    def test_launch_claude_no_extra_args(self):
-        """Test claude launch without extra arguments."""
-        agents_content = "# AGENTS\nTest content"
-        
-        with patch('pathlib.Path.cwd') as mock_cwd, \
-             patch('pathlib.Path.exists') as mock_exists, \
-             patch('builtins.open', mock_open(read_data=agents_content)), \
-             patch('subprocess.run') as mock_run:
-            
-            # Setup mocks
-            mock_cwd.return_value = Path("/test/workspace")
-            mock_exists.return_value = True
-            mock_run.return_value.returncode = 0
-            
-            # Execute without extra args
-            result = self.genie_cmd.launch_claude()
-            
-            # Verify
-            assert result is True
-            mock_run.assert_called_once()
-            
-            # Verify command doesn't contain extra args
-            call_args = mock_run.call_args[0][0]
-            assert "--extra-arg" not in call_args

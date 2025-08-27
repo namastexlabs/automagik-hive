@@ -388,7 +388,7 @@ class TestMainServiceOperations:
         """Test serve main detects already running containers."""
         with patch.object(MainService, '_validate_main_environment', return_value=True), \
              patch.object(MainService, 'get_main_status', return_value={
-                 "main-postgres": "✅ Running (Port: 5532)",
+                 "hive-postgres": "✅ Running (Port: 5532)",
                  "main-app": "✅ Running (Port: 8886)"
              }):
             
@@ -401,7 +401,7 @@ class TestMainServiceOperations:
         """Test serve main starts containers when not running."""
         with patch.object(MainService, '_validate_main_environment', return_value=True), \
              patch.object(MainService, 'get_main_status', return_value={
-                 "main-postgres": "🛑 Stopped",
+                 "hive-postgres": "🛑 Stopped",
                  "main-app": "🛑 Stopped"
              }), \
              patch.object(MainService, '_setup_main_containers', return_value=True):
@@ -584,7 +584,7 @@ class TestMainServiceStatus:
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
         
-        assert status["main-postgres"] == "✅ Running"
+        assert status["hive-postgres"] == "✅ Running"
         assert status["main-app"] == "✅ Running"
 
     @patch('subprocess.run')
@@ -599,7 +599,7 @@ class TestMainServiceStatus:
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
         
-        assert status["main-postgres"] == "🛑 Stopped"
+        assert status["hive-postgres"] == "🛑 Stopped"
         assert status["main-app"] == "🛑 Stopped"
 
     @patch('subprocess.run')
@@ -616,7 +616,7 @@ class TestMainServiceStatus:
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
         
-        assert status["main-postgres"] == "🛑 Stopped"
+        assert status["hive-postgres"] == "🛑 Stopped"
         assert status["main-app"] == "🛑 Stopped"
 
     def test_get_main_status_no_compose_file(self, temp_workspace):
@@ -627,7 +627,7 @@ class TestMainServiceStatus:
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
         
-        assert status["main-postgres"] == "🛑 Stopped"
+        assert status["hive-postgres"] == "🛑 Stopped"
         assert status["main-app"] == "🛑 Stopped"
 
     @patch('subprocess.run')
@@ -640,7 +640,7 @@ class TestMainServiceStatus:
         status = service.get_main_status(str(temp_workspace))
         
         # Should fallback to stopped status
-        assert status["main-postgres"] == "🛑 Stopped"
+        assert status["hive-postgres"] == "🛑 Stopped"
         assert status["main-app"] == "🛑 Stopped"
 
     @patch('subprocess.run')
@@ -990,7 +990,7 @@ class TestMainServiceEdgeCases:
         service = MainService(temp_workspace)
         
         # Mock concurrent status checks
-        with patch.object(MainService, 'get_main_status', return_value={"main-postgres": "✅ Running", "main-app": "✅ Running"}):
+        with patch.object(MainService, 'get_main_status', return_value={"hive-postgres": "✅ Running", "main-app": "✅ Running"}):
             # Multiple status checks should work
             status1 = service.get_main_status(str(temp_workspace))
             status2 = service.get_main_status(str(temp_workspace))
@@ -1117,7 +1117,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15
-    container_name: main-postgres
+    container_name: hive-postgres
     ports:
       - "5532:5432"
     environment:

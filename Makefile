@@ -44,11 +44,6 @@ ifeq ($(HIVE_PORT),)
     HIVE_PORT := 8886
 endif
 
-# Agent port is fixed at 38886 (no longer in separate .env file)
-AGENT_PORT := 38886
-ifeq ($(AGENT_PORT),)
-    AGENT_PORT := 38886
-endif
 
 # ===========================================
 # 🛠️ Utility Functions
@@ -441,10 +436,10 @@ logs: ## 📄 Show production environment logs - mirrors CLI --logs
 # .PHONY: logs-live
 # logs-live: ## 📄 Follow logs in real-time
 # 	@echo -e "$(FONT_PURPLE)🐝 Live Application Logs$(FONT_RESET)"
-# 	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
+# 	@if docker ps --filter "name=hive-api" --format "{{.Names}}" | grep -q hive-api; then \
 # 		echo -e "$(FONT_CYAN)=== Following Hive Agents Container Logs ====$(FONT_RESET)"; \
 # 		echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop following logs$(FONT_RESET)"; \
-# 		docker logs -f hive-agents; \
+# 		docker logs -f hive-api; \
 # 	elif pgrep -f "python.*api/serve.py" >/dev/null 2>&1; then \
 # 		echo -e "$(FONT_CYAN)=== Following Local Development Logs ====$(FONT_RESET)"; \
 # 		if [ -f "logs/app.log" ]; then \
@@ -465,7 +460,7 @@ logs: ## 📄 Show production environment logs - mirrors CLI --logs
 .PHONY: health
 health: ## 💊 Check service health
 	@$(call print_status,Health Check)
-	@if docker ps --filter "name=hive-agents" --format "{{.Names}}" | grep -q hive-agents; then \
+	@if docker ps --filter "name=hive-api" --format "{{.Names}}" | grep -q hive-api; then \
 		if curl -s http://localhost:$(HIVE_PORT)/health >/dev/null 2>&1; then \
 			echo -e "$(FONT_GREEN)$(CHECKMARK) API health check: passed$(FONT_RESET)"; \
 		else \

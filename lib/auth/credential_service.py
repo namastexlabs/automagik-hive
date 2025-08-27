@@ -9,7 +9,7 @@ DESIGN PRINCIPLES:
 1. Generate credentials ONCE during installation
 2. Share same DB user/password across all modes (security best practice)  
 3. SHARED DATABASE: All modes use postgres port 5532, different API ports
-4. Schema separation: workspace(public), agent(agent schema), genie(genie schema)
+4. Schema separation: workspace(public)
 5. Consistent API keys but with mode-specific prefixes for identification
 6. Template-based environment file generation
 7. Backward compatibility with existing Makefile and CLI installers
@@ -27,33 +27,15 @@ from lib.logging import logger
 class CredentialService:
     """SINGLE SOURCE OF TRUTH for all Automagik Hive credential management."""
     
-    # Default base ports (can be overridden by .env)
-    DEFAULT_BASE_PORTS = {"db": 5532, "api": 8886}
-    
-    # Port prefixes for each mode
-    PORT_PREFIXES = {
-        "workspace": "",      # No prefix - use base ports
-        "agent": "3",         # 3 prefix: shared postgres 5532, API 38886  
-        "genie": "4"          # 4 prefix: shared postgres 5532, API 45886
+    # Default ports (can be overridden by .env)
+    DEFAULT_PORTS = {
+        "postgres": 5532,
+        "api": 8886
     }
     
-    # Database names per mode - ALL USE SHARED DATABASE WITH SCHEMA SEPARATION
-    DATABASES = {
-        "workspace": "hive",    # All modes use same database  
-        "agent": "hive",        # Same database, different schema
-        "genie": "hive"         # Same database, different schema
-    }
-    
-    # Container names for shared approach
-    CONTAINERS = {
-        "agent": {
-            "postgres": "hive-postgres-shared",  # Shared container
-            "api": "hive-agent-dev-server"
-        },
-        "workspace": {
-            "postgres": "hive-postgres-shared"   # Same shared container
-        }
-    }
+    # Temporary compatibility - to be removed
+    PORT_PREFIXES = {"workspace": ""}
+    DATABASES = {"workspace": "hive"}
 
     def __init__(self, project_root: Path = None, env_file: Path = None) -> None:
         """
@@ -67,14 +49,11 @@ class CredentialService:
         if env_file is not None and project_root is None:
             # Legacy usage: CredentialService(env_file=Path(".env"))
             self.project_root = env_file.parent if env_file.parent != Path(".") else Path.cwd()
-            self.master_env_file = env_file
+            self.env_file = env_file
         else:
             # New usage: CredentialService(project_root=Path("/path"))
             self.project_root = project_root or Path.cwd()
-            self.master_env_file = self.project_root / ".env"
-        
-        # Legacy support for existing API
-        self.env_file = self.master_env_file
+            self.env_file = self.project_root / ".env"
         self.postgres_user_var = "POSTGRES_USER"
         self.postgres_password_var = "POSTGRES_PASSWORD"
         self.postgres_db_var = "POSTGRES_DB"
@@ -150,57 +129,49 @@ class CredentialService:
         logger.info("Hive API key generated", key_length=len(api_key))
 
         return api_key
-
-    def generate_agent_credentials(
-        self, port: int = 5532, database: str = "hive"
-    ) -> dict[str, str]:
+    
+    def generate_credentials(self) -> Dict[str, str]:
         """
-        Generate agent-specific credentials with unified user/pass from main.
+        Generate complete credential set for single-instance Automagik Hive.
         
-        SHARED DATABASE APPROACH: Uses same postgres port and database as main
-        Only schema separation differentiates agent from workspace mode
-
-        Replicates Makefile use_unified_credentials_for_agent function:
-        - Reuses main PostgreSQL user/password
-        - Uses shared database and port with schema separation
-
-        Args:
-            port: Shared database port (default: 5532)
-            database: Shared database name (default: hive)
-
         Returns:
-            Dict containing agent credentials with schema separation
+            Dict containing all required credentials
         """
-        logger.info("Generating agent credentials with unified approach")
+        logger.info("Generating credentials for Automagik Hive")
+        
+        # Generate secure PostgreSQL credentials
+        user = self._generate_secure_token(16, safe_chars=True)
+        password = self._generate_secure_token(16, safe_chars=True)
+        
+        # Use default ports
+        postgres_port = self.DEFAULT_PORTS["postgres"]
+        api_port = self.DEFAULT_PORTS["api"]
+        
+        # Create database URL
+        database_url = f"postgresql+psycopg://{user}:{password}@localhost:{postgres_port}/hive"
+        
+        # Generate API key
+        api_key = self.generate_hive_api_key()
+        
+        credentials = {
+            "HIVE_POSTGRES_USER": user,
+            "HIVE_POSTGRES_PASSWORD": password,
+            "HIVE_POSTGRES_DB": "hive",
+            "HIVE_POSTGRES_PORT": str(postgres_port),
+            "HIVE_API_PORT": str(api_port),
+            "HIVE_DATABASE_URL": database_url,
+            "HIVE_API_KEY": api_key,
+        }
+        
+        logger.info(
+            "Credentials generated successfully",
+            postgres_port=postgres_port,
+            api_port=api_port,
+            database="hive"
+        )
+        
+        return credentials
 
-        # Get main credentials
-        main_creds = self.extract_postgres_credentials_from_env()
-
-        if main_creds["user"] and main_creds["password"]:
-            # Reuse main credentials with different port/database
-            agent_creds = {
-                "user": main_creds["user"],
-                "password": main_creds["password"],
-                "database": database,
-                "host": "localhost",
-                "port": str(port),
-                "url": f"postgresql+psycopg://{main_creds['user']}:{main_creds['password']}@localhost:{port}/{database}",
-            }
-
-            logger.info(
-                "Agent credentials generated using unified approach",
-                database=database,
-                port=port,
-            )
-        else:
-            # Generate new credentials if main not available
-            agent_creds = self.generate_postgres_credentials(
-                host="localhost", port=port, database=database
-            )
-
-            logger.info("Agent credentials generated (new credentials)")
-
-        return agent_creds
 
     def extract_postgres_credentials_from_env(self) -> dict[str, str | None]:
         """
@@ -607,56 +578,10 @@ class CredentialService:
         return base_ports
     
     def calculate_ports(self, mode: str, base_ports: Dict[str, int]) -> Dict[str, int]:
-        """
-        Calculate ports by adding prefix to base ports.
-        
-        PREFIXED DATABASE APPROACH: Each mode uses prefixed database and API ports
-        Agent uses 35532, Genie uses 45532, Workspace uses base 5532
-        
-        Args:
-            mode: Mode name (workspace, agent, genie)
-            base_ports: Base ports dict with 'db' and 'api' keys
-            
-        Returns:
-            Dict containing calculated ports for the mode
-        """
-        if mode not in self.PORT_PREFIXES:
-            raise ValueError(f"Unknown mode: {mode}. Valid modes: {list(self.PORT_PREFIXES.keys())}")
-            
-        prefix = self.PORT_PREFIXES[mode]
-        
-        if not prefix:
-            # No prefix for workspace mode
-            return base_ports.copy()
-        
-        # Prefixed database ports for mode separation
-        calculated_ports = {
-            "db": int(f"{prefix}{base_ports['db']}"),  # Prefixed postgres port
-            "api": int(f"{prefix}{base_ports['api']}")  # Prefixed API port
-        }
-        
-        logger.debug(
-            "Calculated ports for prefixed database approach", 
-            mode=mode, prefix=prefix, ports=calculated_ports, 
-            base_postgres_port=base_ports["db"]
-        )
-        return calculated_ports
-    
-    def get_deployment_ports(self) -> Dict[str, Dict[str, int]]:
-        """
-        Get deployment ports for all modes using dynamic base ports.
-        
-        Returns:
-            Dict mapping mode names to their port configurations
-        """
-        base_ports = self.extract_base_ports_from_env()
-        
-        deployment_ports = {}
-        for mode in self.PORT_PREFIXES:
-            deployment_ports[mode] = self.calculate_ports(mode, base_ports)
-            
-        logger.info("Deployment ports calculated", ports=deployment_ports)
-        return deployment_ports
+        """Compatibility method - returns base ports for workspace."""
+        if mode != "workspace":
+            raise ValueError(f"Only 'workspace' mode is supported, got: {mode}")
+        return base_ports.copy()
     
     def derive_mode_credentials(
         self, 
@@ -672,7 +597,7 @@ class CredentialService:
         
         Args:
             master_credentials: Master credentials from generate_master_credentials()
-            mode: Mode name (workspace, agent, genie)
+            mode: Mode name (workspace)
             
         Returns:
             Dict containing mode-specific credentials with schema separation
@@ -697,7 +622,7 @@ class CredentialService:
                 f"{mode_ports['db']}/{database_name}"
             )
         else:
-            # Agent/genie modes use schema-specific connection
+            # Non-workspace modes would use schema-specific connection
             database_url = (
                 f"postgresql+psycopg://{master_credentials['postgres_user']}:"
                 f"{master_credentials['postgres_password']}@localhost:"
@@ -744,7 +669,7 @@ class CredentialService:
     
     def ensure_schema_exists(self, mode: str):
         """Ensure the appropriate schema exists for the mode."""
-        if mode in ["agent", "genie"]:
+        if mode != "workspace":
             # Schema creation should integrate with Agno framework
             # This is a placeholder for now - actual implementation should
             # integrate with the database initialization system
@@ -780,7 +705,7 @@ class CredentialService:
         existing_containers = self.detect_existing_containers()
         
         # Check for old container names that need migration
-        old_containers = ["hive-postgres-agent", "hive-postgres-genie"]
+        old_containers = []
         needs_migration = any(
             container for container in old_containers 
             if container in existing_containers and existing_containers[container]
@@ -833,47 +758,56 @@ class CredentialService:
         sync_mcp: bool = False
     ) -> Dict[str, Dict[str, str]]:
         """
-        MAIN INSTALLATION FUNCTION: Install credentials for all specified modes.
+        SIMPLIFIED INSTALLATION FUNCTION: Install credentials for single instance.
         
-        This is the primary entry point called by both Makefile and CLI installers.
-        Generates master credentials ONCE and derives mode-specific configs.
+        This is maintained for backward compatibility but now generates
+        credentials for the single hive instance.
         
         Args:
-            modes: List of modes to install (defaults to all: workspace, agent, genie)
+            modes: Ignored - kept for backward compatibility
             force_regenerate: Force regeneration even if credentials exist
             sync_mcp: Whether to sync credentials to MCP config (default: False)
             
         Returns:
-            Dict mapping mode names to their credential sets
+            Dict with single "workspace" entry for backward compatibility
         """
-        modes = modes or list(self.PORT_PREFIXES.keys())
-        logger.info(f"Installing credentials for modes: {modes}")
+        logger.info("Installing credentials for Automagik Hive")
         
-        # Check if master credentials exist and should be reused
-        existing_master = self._extract_existing_master_credentials()
+        # Check if credentials exist and should be reused
+        existing_creds = self.extract_postgres_credentials_from_env()
+        existing_api_key = self.extract_hive_api_key_from_env()
         
-        if existing_master and not force_regenerate:
-            logger.info("Reusing existing master credentials")
-            master_credentials = existing_master
+        if existing_creds.get("user") and existing_creds.get("password") and existing_api_key and not force_regenerate:
+            logger.info("Reusing existing credentials")
+            # Format existing credentials for backward compatibility
+            credentials = {
+                "postgres_user": existing_creds["user"],
+                "postgres_password": existing_creds["password"],
+                "postgres_database": existing_creds.get("database", "hive"),
+                "postgres_host": existing_creds.get("host", "localhost"),
+                "postgres_port": existing_creds.get("port", "5532"),
+                "api_key": existing_api_key
+            }
         else:
-            logger.info("Generating new master credentials")
-            master_credentials = self.generate_master_credentials()
+            logger.info("Generating new credentials")
+            # Generate new simplified credentials
+            new_creds = self.generate_credentials()
             
-            # Save master credentials to main .env file
-            self._save_master_credentials(master_credentials)
+            # Save credentials to .env file
+            self._save_master_credentials(new_creds)
+            
+            # Format for backward compatibility
+            credentials = {
+                "postgres_user": new_creds["HIVE_POSTGRES_USER"],
+                "postgres_password": new_creds["HIVE_POSTGRES_PASSWORD"],
+                "postgres_database": "hive",
+                "postgres_host": "localhost",
+                "postgres_port": new_creds["HIVE_POSTGRES_PORT"],
+                "api_key": new_creds["HIVE_API_KEY"]
+            }
         
-        # Generate credentials for each requested mode
-        all_mode_credentials = {}
-        
-        for mode in modes:
-            logger.info(f"Setting up {mode} mode...")
-            
-            # Derive mode-specific credentials
-            mode_creds = self.derive_mode_credentials(master_credentials, mode)
-            all_mode_credentials[mode] = mode_creds
-            
-            # Create environment file for this mode
-            self._create_mode_env_file(mode, mode_creds)
+        # Return in backward-compatible format with "workspace" key
+        all_mode_credentials = {"workspace": credentials}
         
         # Update MCP config if requested (once after all modes are set up)
         if sync_mcp:

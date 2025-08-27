@@ -16,16 +16,9 @@ class DockerManager:
     """Simple Docker operations manager."""
     
     # Container definitions (must match Docker Compose naming)
-    CONTAINERS = {
-        "agent": {
-            "postgres": "hive-agent-postgres",  # Matches docker/agent/docker-compose.yml
-            "api": "hive-agent-api"             # Matches docker/agent/docker-compose.yml
-        },
-        "workspace": {
-            "postgres": "hive-main-postgres"    # Matches docker/main/docker-compose.yml
-            # Note: workspace app runs locally, no API container
-        }
-    }
+    POSTGRES_CONTAINER = "hive-postgres"    # Matches docker/main/docker-compose.yml
+    API_CONTAINER = "hive-api"              # API container from docker-compose.yml
+    NETWORK_NAME = "hive_network"           # Docker network name
     
     # Port mappings - read from environment with no hardcoded fallbacks
     @property
@@ -37,11 +30,7 @@ class DockerManager:
         """
         # Validate required environment variables exist
         required_ports = {
-            "HIVE_WORKSPACE_POSTGRES_PORT": "workspace postgres",
-            "HIVE_AGENT_POSTGRES_PORT": "agent postgres",
-            "HIVE_AGENT_API_PORT": "agent api",
-            "HIVE_GENIE_POSTGRES_PORT": "genie postgres",
-            "HIVE_GENIE_API_PORT": "genie api"
+            "HIVE_POSTGRES_PORT": "postgres",
         }
         
         missing_vars = []
@@ -56,20 +45,11 @@ class DockerManager:
             )
         
         return {
-            "workspace": {
-                "postgres": int(os.getenv("HIVE_WORKSPACE_POSTGRES_PORT"))
-            },
-            "agent": {
-                "postgres": int(os.getenv("HIVE_AGENT_POSTGRES_PORT")),
-                "api": int(os.getenv("HIVE_AGENT_API_PORT"))
-            },
-            "genie": {
-                "postgres": int(os.getenv("HIVE_GENIE_POSTGRES_PORT")),
-                "api": int(os.getenv("HIVE_GENIE_API_PORT"))
-            }
+            "postgres": int(os.getenv("HIVE_POSTGRES_PORT")),
+            "api": int(os.getenv("HIVE_API_PORT", "8886"))
         }
     
-    def _get_ports(self) -> Dict[str, Dict[str, int]]:
+    def _get_ports(self) -> Dict[str, int]:
         """Get port mappings from environment variables."""
         return self.PORTS
     
@@ -79,7 +59,6 @@ class DockerManager:
         # Map component to docker template file
         self.template_files = {
             "workspace": self.project_root / "docker/main/docker-compose.yml",
-            "agent": self.project_root / "docker/agent/docker-compose.yml"
         }
         
         # Initialize credential service for secure credential generation
@@ -117,15 +96,15 @@ class DockerManager:
     
     def _get_containers(self, component: str) -> list[str]:
         """Get container names for component."""
-        if component == "all":
-            containers = []
-            for comp in self.CONTAINERS:
-                containers.extend(self.CONTAINERS[comp].values())
-            return containers
-        if component in self.CONTAINERS:
-            return list(self.CONTAINERS[component].values())
-        print(f"❌ Unknown component: {component}")
-        return []
+        if component == "all" or component == "workspace":
+            return [self.POSTGRES_CONTAINER, self.API_CONTAINER]
+        elif component == "postgres":
+            return [self.POSTGRES_CONTAINER]
+        elif component == "api":
+            return [self.API_CONTAINER]
+        else:
+            print(f"❌ Unknown component: {component}")
+            return []
     
     def _container_exists(self, container: str) -> bool:
         """Check if container exists."""
@@ -158,47 +137,18 @@ class DockerManager:
     
     def _create_network(self) -> None:
         """Create Docker network if it doesn't exist."""
-        networks = self._run_command(["docker", "network", "ls", "--filter", "name=hive-network", "--format", "{{.Name}}"], capture_output=True)
-        if "hive-network" not in (networks or ""):
+        networks = self._run_command(["docker", "network", "ls", "--filter", f"name={self.NETWORK_NAME}", "--format", "{{.Name}}"], capture_output=True)
+        if self.NETWORK_NAME not in (networks or ""):
             print("🔗 Creating Docker network...")
-            self._run_command(["docker", "network", "create", "hive-network"])
+            self._run_command(["docker", "network", "create", self.NETWORK_NAME])
     
     def _get_dockerfile_path(self, component: str) -> Path:
         """Get the Dockerfile path for a component."""
         dockerfile_mapping = {
             "workspace": self.project_root / "docker" / "main" / "Dockerfile",
-            "agent": self.project_root / "docker" / "agent" / "Dockerfile.api"
         }
         
         return dockerfile_mapping.get(component, self.project_root / "docker" / "main" / "Dockerfile")
-    
-    def _get_postgres_image(self, component: str) -> str:
-        """Get PostgreSQL image from docker compose template."""
-        template_file = self.template_files.get(component)
-        if not template_file or not template_file.exists():
-            # Fallback to defaults
-            fallback_images = {
-                "workspace": "agnohq/pgvector:16",
-                "agent": "pgvector/pgvector:pg16"
-            }
-            return fallback_images.get(component, "agnohq/pgvector:16")
-        
-        try:
-            with open(template_file) as f:
-                compose_data = yaml.safe_load(f)
-            
-            # Look for postgres service image
-            services = compose_data.get("services", {})
-            for service_name, service_config in services.items():
-                if "postgres" in service_name.lower() or service_name == "postgres":
-                    return service_config.get("image", "agnohq/pgvector:16")
-            
-            # Fallback if no postgres service found
-            return "agnohq/pgvector:16"
-            
-        except Exception:
-            # Fallback on any error
-            return "agnohq/pgvector:16"
     
     def _create_containers_via_compose(self, component: str, credentials: dict) -> bool:
         """Create containers using Docker Compose for consistency with Makefile."""
@@ -275,7 +225,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         
         # Define data directory paths for each component
         data_paths = {
-            "agent": self.project_root / "data" / "postgres-agent",
             "workspace": self.project_root / "data" / "postgres"
         }
         
@@ -306,7 +255,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         
     def _create_postgres_container(self, component: str, credentials: dict) -> bool:
         """Create PostgreSQL container - now uses Docker Compose for consistency."""
-        container_name = self.CONTAINERS[component]["postgres"]
+        container_name = self.POSTGRES_CONTAINER
         
         if self._container_exists(container_name):
             print(f"✅ PostgreSQL container {container_name} already exists")
@@ -317,7 +266,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
     
     def _create_api_container(self, component: str, credentials: dict) -> bool:
         """Create API container - now handled by Docker Compose for consistency."""
-        container_name = self.CONTAINERS[component]["api"]
+        container_name = self.API_CONTAINER
         
         if self._container_exists(container_name):
             print(f"✅ API container {container_name} already exists")
@@ -357,44 +306,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         # Determine database configuration based on component
         postgres_port = self._get_ports()[component]["postgres"]
         postgres_database = f"hive_{component}"
-        
-        # For agent component, try to reuse workspace credentials if available
-        if component == "agent":
-            workspace_env = self.project_root / "docker" / "main" / ".env"
-            if workspace_env.exists():
-                workspace_service = CredentialService(workspace_env)
-                workspace_creds = workspace_service.extract_postgres_credentials_from_env()
-                if workspace_creds.get("user") and workspace_creds.get("password"):
-                    print("🔗 Reusing workspace credentials for agent (unified approach)")
-                    api_key = component_credential_service.generate_hive_api_key()
-                    
-                    # Build credentials in format expected by CredentialService
-                    postgres_creds_for_save = {
-                        "user": workspace_creds["user"],
-                        "password": workspace_creds["password"],
-                        "database": postgres_database,
-                        "host": "localhost",
-                        "port": str(postgres_port),
-                        "url": f"postgresql+psycopg://{workspace_creds['user']}:{workspace_creds['password']}@localhost:{postgres_port}/{postgres_database}"
-                    }
-                    
-                    # Save to component .env file
-                    component_credential_service.save_credentials_to_env(
-                        postgres_creds=postgres_creds_for_save,
-                        api_key=api_key,
-                        create_if_missing=True
-                    )
-                    
-                    # Return in format expected by DockerManager
-                    credentials = {
-                        "postgres_user": workspace_creds["user"],
-                        "postgres_password": workspace_creds["password"],
-                        "postgres_database": postgres_database,
-                        "postgres_host": "localhost",
-                        "postgres_port": str(postgres_port),
-                        "api_key": api_key
-                    }
-                    return credentials
         
         # Generate completely new credentials
         complete_creds = component_credential_service.setup_complete_credentials(
@@ -452,8 +363,9 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         
         self._create_network()
         
+        # Since we only have one "workspace" mode now, just proceed
         for comp in components:
-            if comp not in self.CONTAINERS:
+            if comp not in ["workspace", "all"]:
                 print(f"❌ Unknown component: {comp}")
                 return False
             
@@ -680,7 +592,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
             use_container = True
             
             # Check if database already exists and prompt for reuse/recreate
-            postgres_container = self.CONTAINERS["workspace"]["postgres"]
+            postgres_container = self.POSTGRES_CONTAINER
             if self._container_exists(postgres_container):
                 print(f"\n🗄️ Found existing database container: {postgres_container}")
                 while True:

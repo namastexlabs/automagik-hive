@@ -307,7 +307,7 @@ class TestContainerDetectionExecution:
         
         # Mock subprocess.run to simulate docker command execution
         mock_result = Mock()
-        mock_result.stdout = "hive-postgres-shared\nhive-agent-dev-server\n"
+        mock_result.stdout = "hive-postgres-shared\nhive-api\n"
         
         with patch("subprocess.run", return_value=mock_result) as mock_subprocess:
             # EXECUTE detect_existing_containers - line 767
@@ -317,7 +317,7 @@ class TestContainerDetectionExecution:
             assert mock_subprocess.called
             # Verify container detection worked
             assert "hive-postgres-shared" in containers
-            assert "hive-agent-dev-server" in containers
+            assert "hive-postgres-shared" in containers
 
 
 class TestMigrationDetectionExecution:

@@ -12,11 +12,8 @@ class TestDockerManagerUpdates:
     """Test DockerManager with CredentialService integration."""
 
     @patch.dict('os.environ', {
-        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
-        'HIVE_AGENT_POSTGRES_PORT': '35532',
-        'HIVE_AGENT_API_PORT': '38886',
-        'HIVE_GENIE_POSTGRES_PORT': '45532',
-        'HIVE_GENIE_API_PORT': '48886'
+        'HIVE_POSTGRES_PORT': '5532',
+        'HIVE_API_PORT': '8886'
     })
     def test_docker_manager_init_with_unified_service(self):
         """Test that DockerManager initializes with CredentialService."""
@@ -30,11 +27,8 @@ class TestDockerManagerUpdates:
         assert hasattr(docker_manager, 'PORTS')
         
     @patch.dict('os.environ', {
-        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
-        'HIVE_AGENT_POSTGRES_PORT': '35532',
-        'HIVE_AGENT_API_PORT': '38886',
-        'HIVE_GENIE_POSTGRES_PORT': '45532',
-        'HIVE_GENIE_API_PORT': '48886'
+        'HIVE_POSTGRES_PORT': '5532',
+        'HIVE_API_PORT': '8886'
     })
     @patch('cli.docker_manager.subprocess.run')
     def test_docker_manager_can_check_docker(self, mock_subprocess):

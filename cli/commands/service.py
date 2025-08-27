@@ -246,7 +246,7 @@ class ServiceManager:
         try:
             return self.main_service.get_main_status(workspace)
         except Exception:
-            return {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
+            return {"hive-postgres": "🛑 Stopped", "hive-api": "🛑 Stopped"}
     
     def docker_logs(self, workspace: str = ".", tail: int = 50) -> bool:
         """Show Docker containers logs."""
@@ -386,7 +386,7 @@ class ServiceManager:
         try:
             # Check current PostgreSQL status
             status = self.main_service.get_main_status(str(self.workspace_path))
-            postgres_status = status.get("main-postgres", "")
+            postgres_status = status.get("hive-postgres", "")
             
             if "✅ Running" in postgres_status:
                 print("✅ PostgreSQL dependency is already running")
@@ -417,7 +417,7 @@ class ServiceManager:
                 # Start only the postgres service
                 print("🐳 Starting PostgreSQL container...")
                 result = subprocess.run(
-                    ["docker", "compose", "-f", str(compose_file), "up", "-d", "main-postgres"],
+                    ["docker", "compose", "-f", str(compose_file), "up", "-d", "hive-postgres"],
                     check=False,
                     capture_output=True,
                     text=True,

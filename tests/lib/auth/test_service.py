@@ -63,25 +63,15 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5433/hive
         # Workspace has no prefix
         assert calculated == {"db": 5532, "api": 8886}
 
-    def test_calculate_ports_agent(self):
-        """Test port calculation for agent mode."""
+    def test_calculate_ports_workspace(self):
+        """Test port calculation for workspace mode."""
         service = CredentialService()
         base_ports = {"db": 5532, "api": 8886}
         
-        calculated = service.calculate_ports("agent", base_ports)
+        calculated = service.calculate_ports("workspace", base_ports)
         
-        # Agent uses prefixed database port and prefixed API port
-        assert calculated == {"db": 35532, "api": 38886}
-
-    def test_calculate_ports_genie(self):
-        """Test port calculation for genie mode."""
-        service = CredentialService()
-        base_ports = {"db": 5532, "api": 8886}
-        
-        calculated = service.calculate_ports("genie", base_ports)
-        
-        # Genie uses prefixed database port and prefixed API port
-        assert calculated == {"db": 45532, "api": 48886}
+        # Workspace uses base ports as-is
+        assert calculated == {"db": 5532, "api": 8886}
 
     def test_get_deployment_ports_dynamic(self, tmp_path):
         """Test that deployment ports are calculated dynamically from .env."""

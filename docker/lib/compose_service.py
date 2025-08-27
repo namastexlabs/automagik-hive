@@ -159,7 +159,7 @@ class DockerComposeService:
                 },
                 "target": "production",
             },
-            "container_name": "hive-agents",
+            "container_name": "hive-api",
             "restart": "unless-stopped",
             "ports": ["${HIVE_API_PORT}:${HIVE_API_PORT}"],
             "environment": [

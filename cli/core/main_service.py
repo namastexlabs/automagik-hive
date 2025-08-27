@@ -119,7 +119,7 @@ class MainService:
             print("✅ Using persistent PostgreSQL storage in data/postgres")
             
             # Execute docker compose command with cross-platform path normalization
-            print("🚀 Starting both main-postgres and main-app containers...")
+            print("🚀 Starting both hive-postgres and hive-api containers...")
             result = subprocess.run(
                 ["docker", "compose", "-f", os.fspath(compose_file), "up", "-d"],
                 check=False,
@@ -148,8 +148,8 @@ class MainService:
         
         # Check if containers are already running
         status = self.get_main_status(workspace_path)
-        postgres_running = "✅ Running" in status.get("main-postgres", "")
-        app_running = "✅ Running" in status.get("main-app", "")
+        postgres_running = "✅ Running" in status.get("hive-postgres", "")
+        app_running = "✅ Running" in status.get("hive-api", "")
         
         if postgres_running and app_running:
             print("✅ Both main containers are already running")
@@ -400,12 +400,12 @@ class MainService:
                 compose_file = docker_compose_root
             else:
                 # No compose file found, return stopped status
-                return {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
+                return {"hive-postgres": "🛑 Stopped", "hive-api": "🛑 Stopped"}
             
             # Check both containers using Docker Compose
             for service_name, display_name in [
-                ("postgres", "main-postgres"),
-                ("app", "main-app")
+                ("postgres", "hive-postgres"),
+                ("app", "hive-api")
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths
@@ -436,7 +436,7 @@ class MainService:
                 
         except Exception:
             # Fallback to stopped status on any error
-            status = {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
+            status = {"hive-postgres": "🛑 Stopped", "hive-api": "🛑 Stopped"}
         
         return status
     
@@ -598,7 +598,7 @@ class MainService:
             # Start only postgres service (pattern from _ensure_postgres_dependency)
             result = subprocess.run([
                 "docker", "compose", "-f", str(compose_file),
-                "up", "-d", "main-postgres"
+                "up", "-d", "hive-postgres"
             ], capture_output=True, text=True, timeout=120)
             
             if result.returncode == 0:

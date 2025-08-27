@@ -100,7 +100,7 @@ Use --help for detailed options or see documentation.
     install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Uninstall subcommand
-    uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments (main + agent + genie)")
+    uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
     uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Genie subcommand

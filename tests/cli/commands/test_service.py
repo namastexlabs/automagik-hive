@@ -193,7 +193,7 @@ class TestServiceManagerDockerOperations:
         """Test successful Docker status retrieval."""
         manager = ServiceManager()
         with patch.object(manager, 'main_service') as mock_main:
-            expected_status = {"main-postgres": "🟢 Running", "main-app": "🟢 Running"}
+            expected_status = {"hive-postgres": "🟢 Running", "hive-api": "🟢 Running"}
             mock_main.get_main_status.return_value = expected_status
             
             result = manager.docker_status("./test")
@@ -209,7 +209,7 @@ class TestServiceManagerDockerOperations:
             
             result = manager.docker_status()
             
-            expected_default = {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
+            expected_default = {"hive-postgres": "🛑 Stopped", "hive-api": "🛑 Stopped"}
             assert result == expected_default
 
     def test_docker_logs_success(self):

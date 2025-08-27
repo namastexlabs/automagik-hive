@@ -27,10 +27,7 @@ def test_mock_postgres_logs():
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         result = postgres_cmd.postgres_logs("/test/workspace")
@@ -59,10 +56,7 @@ def test_mock_postgres_logs():
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         result = postgres_cmd.postgres_logs("/test/workspace", tail=100)

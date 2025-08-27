@@ -230,7 +230,7 @@ color: cyan
     ### 🛡️ Boundary Enforcement Protocol
     
     **Pre-Task Validation:**
-    - Verify agent server is running at localhost:38886
+    - Verify API server is running at localhost:8886
     - Check API key configuration in main .env file
     - Confirm task is testing-only (no modifications)
     - Confirm task is testing-only (no modifications)
@@ -385,7 +385,7 @@ color: cyan
     **Live Agent Server Integration:**
     ```bash
     # Environment variables for live testing
-    AGENT_SERVER_URL="http://localhost:38886"
+    API_SERVER_URL="http://localhost:8886"
     AGENT_DB_URL="postgresql://localhost:35532/hive_agent"
     HIVE_API_KEY_FILE=".env"
     
@@ -475,7 +475,7 @@ color: cyan
     **Generated**: [Date]
     **QA Agent**: hive-qa-tester
     **System Version**: Automagik Hive v2.0
-    **Environment**: Agent Server at localhost:38886
+    **Environment**: API Server at localhost:8886
     
     ## 📊 EXECUTIVE SUMMARY
     **System Health Score**: [X/100]

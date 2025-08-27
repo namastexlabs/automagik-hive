@@ -1241,14 +1241,14 @@ class TestDockerContainerManagement:
         
         # Mock successful docker ps command
         mock_result = Mock()
-        mock_result.stdout = 'hive-postgres-shared\nhive-agent-dev-server'
+        mock_result.stdout = 'hive-postgres-shared\nhive-api'
         mock_run.return_value = mock_result
         
         with patch('lib.auth.credential_service.logger') as mock_logger:
             containers = service.detect_existing_containers()
             
             assert containers['hive-postgres-shared'] is True
-            assert containers['hive-agent-dev-server'] is True
+            assert containers.get('hive-api', False) is True
             mock_logger.info.assert_called_once()
 
     @patch('subprocess.run')
@@ -1264,7 +1264,7 @@ class TestDockerContainerManagement:
         containers = service.detect_existing_containers()
         
         assert containers['hive-postgres-shared'] is False
-        assert containers['hive-agent-dev-server'] is False
+        assert containers.get('hive-api', False) is False
 
     @patch('subprocess.run')
     def test_detect_existing_containers_exception(self, mock_run):
@@ -1288,7 +1288,7 @@ class TestDockerContainerManagement:
         with patch.object(service, 'detect_existing_containers') as mock_detect:
             mock_detect.return_value = {
                 'hive-postgres-shared': True,
-                'hive-agent-dev-server': True
+                'hive-api': True
             }
             
             with patch('lib.auth.credential_service.logger') as mock_logger:
@@ -1307,7 +1307,7 @@ class TestDockerContainerManagement:
                 'hive-postgres-agent': True,  # Old container that needs migration
                 'hive-postgres-genie': True,  # Old container that needs migration
                 'hive-postgres-shared': False,
-                'hive-agent-dev-server': False
+                'hive-api': False
             }
             
             with patch('lib.auth.credential_service.logger') as mock_logger:

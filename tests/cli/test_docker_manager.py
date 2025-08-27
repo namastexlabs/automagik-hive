@@ -47,12 +47,6 @@ def mock_credential_service():
                 "postgres_password": "test_pass",
                 "postgres_database": "hive_workspace",
                 "api_key": "test-api-key"
-            },
-            "agent": {
-                "postgres_user": "agent_user", 
-                "postgres_password": "agent_pass",
-                "postgres_database": "hive_agent",
-                "api_key": "agent-api-key"
             }
         }
         mock_service.return_value = mock_instance
@@ -101,11 +95,8 @@ class TestDockerManagerCore:
     """Test core DockerManager functionality and initialization."""
     
     @patch.dict('os.environ', {
-        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
-        'HIVE_AGENT_POSTGRES_PORT': '35532', 
-        'HIVE_AGENT_API_PORT': '38886',
-        'HIVE_GENIE_POSTGRES_PORT': '45532',
-        'HIVE_GENIE_API_PORT': '48886'
+        'HIVE_POSTGRES_PORT': '5532',
+        'HIVE_API_PORT': '8886'
     })
     def test_docker_manager_initialization(self):
         """Test DockerManager initializes with proper configuration."""
@@ -115,24 +106,17 @@ class TestDockerManagerCore:
         assert manager.project_root == Path.cwd()
         
         # Should have container definitions
-        assert "agent" in manager.CONTAINERS
-        assert "workspace" in manager.CONTAINERS
-        assert manager.CONTAINERS["agent"]["postgres"] == "hive-agent-postgres"
-        assert manager.CONTAINERS["agent"]["api"] == "hive-agent-api"
-        assert manager.CONTAINERS["workspace"]["postgres"] == "hive-main-postgres"
+        assert manager.POSTGRES_CONTAINER == "hive-postgres"
+        assert manager.API_CONTAINER == "hive-api"
+        assert manager.NETWORK_NAME == "hive_network"
         
         # Should have port mappings
-        assert manager.PORTS["workspace"]["postgres"] == 5532
-        assert manager.PORTS["agent"]["postgres"] == 35532
-        assert manager.PORTS["agent"]["api"] == 38886
-        assert manager.PORTS["genie"]["postgres"] == 45532
-        assert manager.PORTS["genie"]["api"] == 48886
+        assert manager.PORTS["postgres"] == 5532
+        assert manager.PORTS["api"] == 8886
         
         # Should have template file mappings
         expected_workspace_template = manager.project_root / "docker/main/docker-compose.yml"
-        expected_agent_template = manager.project_root / "docker/agent/docker-compose.yml"
         assert manager.template_files["workspace"] == expected_workspace_template
-        assert manager.template_files["agent"] == expected_agent_template
         
         # Should initialize credential service
         assert hasattr(manager, 'credential_service')
@@ -143,23 +127,13 @@ class TestDockerManagerCore:
         manager = DockerManager()
         
         # Should have complete container definitions
-        assert len(manager.CONTAINERS) >= 2
+        assert manager.POSTGRES_CONTAINER == "hive-postgres"
+        assert manager.API_CONTAINER == "hive-api"
+        assert manager.NETWORK_NAME == "hive_network"
         
-        # Workspace should only have postgres (app runs locally)
-        workspace_containers = manager.CONTAINERS["workspace"]
-        assert "postgres" in workspace_containers
-        assert len(workspace_containers) == 1
-        
-        # Agent should have both postgres and api
-        agent_containers = manager.CONTAINERS["agent"]
-        assert "postgres" in agent_containers
-        assert "api" in agent_containers
-        assert len(agent_containers) == 2
-        
-        # Container names should match docker-compose conventions
-        assert workspace_containers["postgres"] == "hive-main-postgres"
-        assert agent_containers["postgres"] == "hive-agent-postgres"
-        assert agent_containers["api"] == "hive-agent-api"
+        # Verify container names match docker-compose conventions
+        assert manager.POSTGRES_CONTAINER == "hive-postgres"
+        assert manager.API_CONTAINER == "hive-api"
 
 
 class TestDockerEnvironmentValidation:
@@ -257,17 +231,20 @@ class TestContainerOperations:
         manager = DockerManager()
         
         workspace_containers = manager._get_containers("workspace")
-        assert workspace_containers == ["hive-main-postgres"]
+        assert set(workspace_containers) == {"hive-postgres", "hive-api"}
         
-        agent_containers = manager._get_containers("agent")
-        assert set(agent_containers) == {"hive-agent-postgres", "hive-agent-api"}
+        postgres_containers = manager._get_containers("postgres")
+        assert postgres_containers == ["hive-postgres"]
+        
+        api_containers = manager._get_containers("api")
+        assert api_containers == ["hive-api"]
 
     def test_get_containers_all_components(self):
         """Test getting containers for all components."""
         manager = DockerManager()
         all_containers = manager._get_containers("all")
         
-        expected = ["hive-main-postgres", "hive-agent-postgres", "hive-agent-api"]
+        expected = ["hive-postgres", "hive-api"]
         assert set(all_containers) == set(expected)
 
     @patch('builtins.print')
@@ -282,14 +259,14 @@ class TestContainerOperations:
     def test_container_exists_true(self, mock_all_subprocess):
         """Test container exists check returns True."""
         # SAFETY: Using auto-mocked subprocess - no real container queries
-        mock_all_subprocess.return_value = MagicMock(stdout="hive-main-postgres", returncode=0)
+        mock_all_subprocess.return_value = MagicMock(stdout="hive-postgres", returncode=0)
         
         manager = DockerManager()
-        result = manager._container_exists("hive-main-postgres")
+        result = manager._container_exists("hive-postgres")
         
         assert result is True
         mock_all_subprocess.assert_called_with(
-            ["docker", "ps", "-a", "--filter", "name=hive-main-postgres", "--format", "{{.Names}}"],
+            ["docker", "ps", "-a", "--filter", "name=hive-postgres", "--format", "{{.Names}}"],
             capture_output=True, text=True, check=True
         )
 
@@ -306,14 +283,14 @@ class TestContainerOperations:
     def test_container_running_true(self, mock_all_subprocess):
         """Test container running check returns True."""
         # SAFETY: Using auto-mocked subprocess - no real container status checks
-        mock_all_subprocess.return_value = MagicMock(stdout="hive-main-postgres", returncode=0)
+        mock_all_subprocess.return_value = MagicMock(stdout="hive-postgres", returncode=0)
         
         manager = DockerManager()
-        result = manager._container_running("hive-main-postgres")
+        result = manager._container_running("hive-postgres")
         
         assert result is True
         mock_all_subprocess.assert_called_with(
-            ["docker", "ps", "--filter", "name=hive-main-postgres", "--format", "{{.Names}}"],
+            ["docker", "ps", "--filter", "name=hive-postgres", "--format", "{{.Names}}"],
             capture_output=True, text=True, check=True
         )
 
@@ -335,7 +312,7 @@ class TestNetworkManagement:
         """Test creating network when it doesn't exist."""
         # SAFETY: Using auto-mocked subprocess - no real network operations
         mock_all_subprocess.side_effect = [
-            MagicMock(stdout="", returncode=0),  # network ls shows no hive-network
+            MagicMock(stdout="", returncode=0),  # network ls shows no hive_network
             MagicMock(returncode=0)              # network create succeeds
         ]
         
@@ -344,16 +321,16 @@ class TestNetworkManagement:
         
         assert mock_all_subprocess.call_count == 2
         mock_all_subprocess.assert_any_call(
-            ["docker", "network", "ls", "--filter", "name=hive-network", "--format", "{{.Name}}"],
+            ["docker", "network", "ls", "--filter", "name=hive_network", "--format", "{{.Name}}"],
             capture_output=True, text=True, check=True
         )
-        mock_all_subprocess.assert_any_call(["docker", "network", "create", "hive-network"], check=True)
+        mock_all_subprocess.assert_any_call(["docker", "network", "create", "hive_network"], check=True)
 
     @patch('builtins.print')
     def test_create_network_already_exists(self, mock_print, mock_all_subprocess):
         """Test network creation when network already exists."""
         # SAFETY: Using auto-mocked subprocess - simulating existing network
-        mock_all_subprocess.return_value = MagicMock(stdout="hive-network", returncode=0)
+        mock_all_subprocess.return_value = MagicMock(stdout="hive_network", returncode=0)
         
         manager = DockerManager()
         manager._create_network()
@@ -361,7 +338,7 @@ class TestNetworkManagement:
         # Should only check, not create
         assert mock_all_subprocess.call_count == 1
         mock_all_subprocess.assert_called_with(
-            ["docker", "network", "ls", "--filter", "name=hive-network", "--format", "{{.Name}}"],
+            ["docker", "network", "ls", "--filter", "name=hive_network", "--format", "{{.Name}}"],
             capture_output=True, text=True, check=True
         )
 
@@ -393,57 +370,6 @@ class TestDockerfileAndImageManagement:
         expected = manager.project_root / "docker" / "main" / "Dockerfile"
         assert result == expected
 
-    @patch('pathlib.Path.exists')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_postgres_image_from_template(self, mock_file, mock_exists):
-        """Test getting PostgreSQL image from docker-compose template."""
-        mock_exists.return_value = True
-        compose_content = """
-services:
-  postgres:
-    image: agnohq/pgvector:16
-    environment:
-      POSTGRES_DB: test
-"""
-        mock_file.return_value.read.return_value = compose_content
-        
-        manager = DockerManager()
-        result = manager._get_postgres_image("workspace")
-        
-        assert result == "agnohq/pgvector:16"
-
-    @patch('pathlib.Path.exists')
-    def test_get_postgres_image_fallback_workspace(self, mock_exists):
-        """Test getting PostgreSQL image fallback for workspace."""
-        mock_exists.return_value = False
-        
-        manager = DockerManager()
-        result = manager._get_postgres_image("workspace")
-        
-        assert result == "agnohq/pgvector:16"
-
-    @patch('pathlib.Path.exists')
-    def test_get_postgres_image_fallback_agent(self, mock_exists):
-        """Test getting PostgreSQL image fallback for agent."""
-        mock_exists.return_value = False
-        
-        manager = DockerManager()
-        result = manager._get_postgres_image("agent")
-        
-        assert result == "pgvector/pgvector:pg16"
-
-    @patch('pathlib.Path.exists')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_postgres_image_yaml_error(self, mock_file, mock_exists):
-        """Test getting PostgreSQL image when YAML parsing fails."""
-        mock_exists.return_value = True
-        mock_file.return_value.read.return_value = "invalid: yaml: content:"
-        
-        manager = DockerManager()
-        result = manager._get_postgres_image("workspace")
-        
-        # Should fallback to default
-        assert result == "agnohq/pgvector:16"
 
 
 class TestCredentialManagement:
@@ -691,7 +617,7 @@ class TestContainerLifecycle:
     def test_start_containers_success(self, mock_run_command, mock_running, mock_exists, mock_get_containers):
         """Test successful container start."""
         # SAFETY: Using mocked _run_command - no real container start operations
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_running.return_value = False
         mock_run_command.return_value = True  # Success
@@ -700,14 +626,14 @@ class TestContainerLifecycle:
         result = manager.start("workspace")
         
         assert result is True
-        mock_run_command.assert_called_once_with(["docker", "start", "hive-main-postgres"])
+        mock_run_command.assert_called_once_with(["docker", "start", "hive-postgres"])
 
     @patch.object(DockerManager, '_get_containers')
     @patch.object(DockerManager, '_container_exists')
     @patch.object(DockerManager, '_container_running')
     def test_start_containers_already_running(self, mock_running, mock_exists, mock_get_containers):
         """Test starting containers that are already running."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_running.return_value = True
         
@@ -720,7 +646,7 @@ class TestContainerLifecycle:
     @patch.object(DockerManager, '_container_exists')
     def test_start_containers_not_installed(self, mock_exists, mock_get_containers):
         """Test starting containers that don't exist."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = False
         
         manager = DockerManager()
@@ -734,7 +660,7 @@ class TestContainerLifecycle:
     def test_stop_containers_success(self, mock_run_command, mock_running, mock_get_containers):
         """Test successful container stop."""
         # SAFETY: Using mocked _run_command - no real container stop operations
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_running.return_value = True
         mock_run_command.return_value = True  # Success
         
@@ -742,13 +668,13 @@ class TestContainerLifecycle:
         result = manager.stop("workspace")
         
         assert result is True
-        mock_run_command.assert_called_once_with(["docker", "stop", "hive-main-postgres"])
+        mock_run_command.assert_called_once_with(["docker", "stop", "hive-postgres"])
 
     @patch.object(DockerManager, '_get_containers')
     @patch.object(DockerManager, '_container_running')
     def test_stop_containers_already_stopped(self, mock_running, mock_get_containers):
         """Test stopping containers that are already stopped."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_running.return_value = False
         
         manager = DockerManager()
@@ -761,7 +687,7 @@ class TestContainerLifecycle:
     @patch.object(DockerManager, '_run_command')
     def test_restart_containers_success(self, mock_run_command, mock_exists, mock_get_containers):
         """Test successful container restart."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_run_command.return_value = True  # Success
         
@@ -769,13 +695,13 @@ class TestContainerLifecycle:
         result = manager.restart("workspace")
         
         assert result is True
-        mock_run_command.assert_called_once_with(["docker", "restart", "hive-main-postgres"])
+        mock_run_command.assert_called_once_with(["docker", "restart", "hive-postgres"])
 
     @patch.object(DockerManager, '_get_containers')
     @patch.object(DockerManager, '_container_exists')
     def test_restart_containers_not_installed(self, mock_exists, mock_get_containers):
         """Test restarting containers that don't exist."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = False
         
         manager = DockerManager()
@@ -794,7 +720,7 @@ class TestStatusAndHealthChecks:
     @patch('builtins.print')
     def test_status_running_container(self, mock_print, mock_run, mock_running, mock_exists, mock_get_containers):
         """Test status display for running container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_running.return_value = True
         mock_run.return_value = MagicMock(stdout="5432/tcp -> 0.0.0.0:5532")
@@ -813,7 +739,7 @@ class TestStatusAndHealthChecks:
     @patch('builtins.print')
     def test_status_stopped_container(self, mock_print, mock_running, mock_exists, mock_get_containers):
         """Test status display for stopped container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_running.return_value = False
         
@@ -828,7 +754,7 @@ class TestStatusAndHealthChecks:
     @patch('builtins.print')
     def test_status_not_installed_container(self, mock_print, mock_exists, mock_get_containers):
         """Test status display for non-existent container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = False
         
         manager = DockerManager()
@@ -843,7 +769,7 @@ class TestStatusAndHealthChecks:
     @patch('builtins.print')
     def test_health_check_healthy(self, mock_print, mock_running, mock_exists, mock_get_containers):
         """Test health check for healthy container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_running.return_value = True
         
@@ -860,7 +786,7 @@ class TestStatusAndHealthChecks:
     @patch('builtins.print')
     def test_health_check_stopped(self, mock_print, mock_running, mock_exists, mock_get_containers):
         """Test health check for stopped container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_running.return_value = False
         
@@ -875,7 +801,7 @@ class TestStatusAndHealthChecks:
     @patch('builtins.print')
     def test_health_check_not_installed(self, mock_print, mock_exists, mock_get_containers):
         """Test health check for non-existent container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = False
         
         manager = DockerManager()
@@ -894,29 +820,29 @@ class TestLogManagement:
     @patch('builtins.print')
     def test_logs_container_exists(self, mock_print, mock_run, mock_exists, mock_get_containers):
         """Test log retrieval for existing container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_run.return_value = None
         
         manager = DockerManager()
         manager.logs("workspace", lines=100)
         
-        mock_run.assert_called_once_with(["docker", "logs", "--tail", "100", "hive-main-postgres"], check=True)
+        mock_run.assert_called_once_with(["docker", "logs", "--tail", "100", "hive-postgres"], check=True)
         calls = mock_print.call_args_list
-        assert any("📋 Logs for hive-main-postgres (last 100 lines):" in str(call) for call in calls)
+        assert any("📋 Logs for hive-postgres (last 100 lines):" in str(call) for call in calls)
 
     @patch.object(DockerManager, '_get_containers')
     @patch.object(DockerManager, '_container_exists')
     @patch('builtins.print')
     def test_logs_container_not_exists(self, mock_print, mock_exists, mock_get_containers):
         """Test log retrieval for non-existent container."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = False
         
         manager = DockerManager()
         manager.logs("workspace")
         
-        mock_print.assert_called_with("❌ Container hive-main-postgres not found")
+        mock_print.assert_called_with("❌ Container hive-postgres not found")
 
     @patch.object(DockerManager, '_get_containers')
     def test_logs_unknown_component(self, mock_get_containers):
@@ -939,7 +865,7 @@ class TestUninstallOperations:
     @patch('builtins.print')
     def test_uninstall_via_compose_success(self, mock_print, mock_unlink, mock_run, mock_get_compose, mock_exists, mock_get_containers):
         """Test successful uninstall via Docker Compose."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists.return_value = True
         mock_get_compose.return_value = "docker compose"
         mock_run.return_value = None
@@ -961,7 +887,7 @@ class TestUninstallOperations:
     @patch.object(DockerManager, '_run_command')
     def test_uninstall_manual_fallback(self, mock_run_command, mock_running, mock_exists_container, mock_exists_file, mock_get_containers):
         """Test manual container removal fallback."""
-        mock_get_containers.return_value = ["hive-main-postgres"]
+        mock_get_containers.return_value = ["hive-postgres"]
         mock_exists_file.return_value = False  # No compose file
         mock_exists_container.return_value = True
         mock_running.return_value = True
@@ -974,8 +900,8 @@ class TestUninstallOperations:
         # but uninstall() treats None as failure in line 601: if not self._run_command(...)
         assert result is False  # Current broken behavior
         assert mock_run_command.call_count == 2
-        mock_run_command.assert_any_call(["docker", "stop", "hive-main-postgres"])
-        mock_run_command.assert_any_call(["docker", "rm", "hive-main-postgres"])
+        mock_run_command.assert_any_call(["docker", "stop", "hive-postgres"])
+        mock_run_command.assert_any_call(["docker", "rm", "hive-postgres"])
 
     @patch.object(DockerManager, '_get_containers')
     def test_uninstall_unknown_component(self, mock_get_containers):
@@ -1030,8 +956,8 @@ class TestInteractiveInstallation:
         assert result is True
         mock_install.assert_called_once_with("workspace")
         # Should stop and remove existing container
-        mock_run_command.assert_any_call(["docker", "stop", "hive-main-postgres"])
-        mock_run_command.assert_any_call(["docker", "rm", "hive-main-postgres"])
+        mock_run_command.assert_any_call(["docker", "stop", "hive-postgres"])
+        mock_run_command.assert_any_call(["docker", "rm", "hive-postgres"])
 
     @patch('builtins.input')
     @patch.object(DockerManager, '_container_exists')
@@ -1210,7 +1136,7 @@ class TestIntegrationScenarios:
         mock_instance.install_all_modes.assert_called_once_with(["workspace"])
         mock_create_containers.assert_called_once()
 
-    @patch.object(DockerManager, '_get_containers', return_value=["hive-agent-postgres", "hive-agent-api"])
+    @patch.object(DockerManager, '_get_containers', return_value=["hive-postgres", "hive-api"])
     @patch.object(DockerManager, '_container_exists', return_value=True)
     @patch.object(DockerManager, '_container_running')
     @patch.object(DockerManager, '_run_command')
@@ -1218,9 +1144,9 @@ class TestIntegrationScenarios:
         """Test operations on agent component with multiple containers."""
         # Setup different running states for containers
         def running_side_effect(container):
-            if container == "hive-agent-postgres":
+            if container == "hive-postgres":
                 return True
-            elif container == "hive-agent-api":
+            elif container == "hive-api":
                 return False
             return False
         
@@ -1232,7 +1158,7 @@ class TestIntegrationScenarios:
         
         # Should start only the stopped container
         assert result is True
-        mock_run_command.assert_called_once_with(["docker", "start", "hive-agent-api"])
+        mock_run_command.assert_called_once_with(["docker", "start", "hive-api"])
 
     @patch.object(DockerManager, '_get_containers', return_value=[])
     def test_operations_on_empty_component(self, mock_get_containers):
@@ -1252,9 +1178,9 @@ class TestIntegrationScenarios:
 
 
 @pytest.mark.parametrize("component,expected_containers", [
-    ("workspace", ["hive-main-postgres"]),
-    ("agent", ["hive-agent-postgres", "hive-agent-api"]),
-    ("all", ["hive-main-postgres", "hive-agent-postgres", "hive-agent-api"]),
+    ("workspace", ["hive-postgres"]),
+    ("postgres", ["hive-postgres"]),
+    ("all", ["hive-postgres", "hive-api"]),
 ])
 def test_get_containers_parametrized(component, expected_containers):
     """Parametrized test for container retrieval."""
@@ -1269,7 +1195,7 @@ def test_get_containers_parametrized(component, expected_containers):
     ("genie", 45532),
 ])
 @patch.dict('os.environ', {
-    'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
+    'HIVE_POSTGRES_PORT': '5532',
     'HIVE_AGENT_POSTGRES_PORT': '35532', 
     'HIVE_AGENT_API_PORT': '38886',
     'HIVE_GENIE_POSTGRES_PORT': '45532',
@@ -1401,11 +1327,8 @@ class TestPerformanceEdgeCases:
                         assert manager._run_command.call_count == 100
 
     @patch.dict('os.environ', {
-        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
-        'HIVE_AGENT_POSTGRES_PORT': '35532', 
-        'HIVE_AGENT_API_PORT': '38886',
-        'HIVE_GENIE_POSTGRES_PORT': '45532',
-        'HIVE_GENIE_API_PORT': '48886'
+        'HIVE_POSTGRES_PORT': '5532',
+        'HIVE_API_PORT': '8886'
     })
     def test_concurrent_access_safety(self):
         """Test thread safety considerations."""
@@ -1429,7 +1352,7 @@ class TestPerformanceEdgeCases:
         
         # All results should be identical (thread-safe access)
         assert len(results) == 10
-        assert all(result == ["hive-main-postgres"] for result in results)
+        assert all(result == ["hive-postgres"] for result in results)
 
 
 # ============================================================================
@@ -1545,11 +1468,8 @@ class TestComprehensiveCoverage:
     """Comprehensive coverage validation tests."""
     
     @patch.dict('os.environ', {
-        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
-        'HIVE_AGENT_POSTGRES_PORT': '35532', 
-        'HIVE_AGENT_API_PORT': '38886',
-        'HIVE_GENIE_POSTGRES_PORT': '45532',
-        'HIVE_GENIE_API_PORT': '48886'
+        'HIVE_POSTGRES_PORT': '5532',
+        'HIVE_API_PORT': '8886'
     })
     def test_all_public_methods_covered(self):
         """Verify all public methods have test coverage."""
@@ -1568,11 +1488,8 @@ class TestComprehensiveCoverage:
             assert method in public_methods, f"Public method {method} should exist"
 
     @patch.dict('os.environ', {
-        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
-        'HIVE_AGENT_POSTGRES_PORT': '35532', 
-        'HIVE_AGENT_API_PORT': '38886',
-        'HIVE_GENIE_POSTGRES_PORT': '45532',
-        'HIVE_GENIE_API_PORT': '48886'
+        'HIVE_POSTGRES_PORT': '5532',
+        'HIVE_API_PORT': '8886'
     })
     def test_all_container_types_covered(self):
         """Verify all container types are properly handled."""
@@ -1587,11 +1504,8 @@ class TestComprehensiveCoverage:
             assert component in manager.PORTS, f"Component {component} should have port mappings"
 
     @patch.dict('os.environ', {
-        'HIVE_WORKSPACE_POSTGRES_PORT': '5532',
-        'HIVE_AGENT_POSTGRES_PORT': '35532', 
-        'HIVE_AGENT_API_PORT': '38886',
-        'HIVE_GENIE_POSTGRES_PORT': '45532',
-        'HIVE_GENIE_API_PORT': '48886'
+        'HIVE_POSTGRES_PORT': '5532',
+        'HIVE_API_PORT': '8886'
     })
     def test_error_path_coverage(self):
         """Verify error handling paths are covered."""

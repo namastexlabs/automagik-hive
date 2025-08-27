@@ -402,8 +402,8 @@ class TestServiceStatus:
         # Mock Docker container status
         mock_subprocess.return_value = Mock(
             returncode=0,
-            stdout='{"Names": "hive-agent-postgres", "State": "running"}\n'
-                   '{"Names": "hive-agent-api", "State": "running"}'
+            stdout='{"Names": "hive-postgres", "State": "running"}\n'
+                   '{"Names": "hive-api", "State": "running"}'
         )
 
         # Mock API health check

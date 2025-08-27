@@ -18,44 +18,12 @@ class PostgreSQLCommands:
         self.workspace_path = workspace_path or Path()
         self.docker_manager = DockerManager()
         
-        # Container mapping for PostgreSQL instances (matches DockerManager and actual Docker Compose names)
-        self.postgres_containers = self.docker_manager.CONTAINERS.copy()
-        # Flatten structure for PostgreSQL-specific access
-        self.postgres_containers_flat = {
-            "workspace": self.docker_manager.CONTAINERS["workspace"]["postgres"],
-            "agent": self.docker_manager.CONTAINERS["agent"]["postgres"],
-            "main": self.docker_manager.CONTAINERS["workspace"]["postgres"],  # Alias for workspace
-        }
+        # PostgreSQL container reference
+        self.postgres_container = self.docker_manager.POSTGRES_CONTAINER
     
     def _get_postgres_container_for_workspace(self, workspace: str) -> Optional[str]:
-        """Determine which PostgreSQL container to target based on workspace."""
-        workspace_path = Path(workspace).resolve()
-        
-        # Check if we're in an agent context (look for agent-specific markers)
-        agent_markers = [
-            workspace_path / "data" / "postgres-agent",
-            workspace_path / "docker" / "agent",
-        ]
-        
-        if any(marker.exists() for marker in agent_markers):
-            return self.postgres_containers_flat["agent"]
-        
-        # Check for main/workspace PostgreSQL
-        workspace_markers = [
-            workspace_path / "data" / "postgres",
-            workspace_path / "docker" / "main",
-        ]
-        
-        if any(marker.exists() for marker in workspace_markers):
-            # Try main container first (docker-compose naming), fallback to workspace
-            if self.docker_manager._container_exists(self.postgres_containers_flat["main"]):
-                return self.postgres_containers_flat["main"]
-            return self.postgres_containers_flat["workspace"]
-        
-        # Default to main container if it exists, otherwise workspace
-        if self.docker_manager._container_exists(self.postgres_containers_flat["main"]):
-            return self.postgres_containers_flat["main"]
-        return self.postgres_containers_flat["workspace"]
+        """Return the PostgreSQL container."""
+        return self.postgres_container
     
     def postgres_status(self, workspace: str) -> bool:
         """Check PostgreSQL status."""

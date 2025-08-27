@@ -32,13 +32,13 @@ tool:
     mcp_servers:
         enabled: true
         config:
-          base_url: "http://localhost:38886"
+          base_url: "http://localhost:8886"
           api_key: "${HIVE_API_KEY}"
     
     # API endpoints this tool might use
     api_endpoints:
       status_check: 
-        url: "http://localhost:38886/health"
+        url: "http://localhost:8886/health"
         method: "GET"
         timeout: 5
       
