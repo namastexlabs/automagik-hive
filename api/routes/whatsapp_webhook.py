@@ -1,6 +1,10 @@
 """
 WhatsApp webhook endpoint for jack_retrieval agent
 Receives messages from Evolution API and processes via jack_retrieval
+
+TODO: MIGRATION TO OMINIHUB - This entire Evolution API integration will be replaced
+      with ominihub WhatsApp integration. All Evolution-specific code should be 
+      removed when migrating to ominihub platform.
 """
 import asyncio
 from typing import Any, Dict
@@ -20,11 +24,13 @@ async def process_whatsapp_message(message_data: Dict[str, Any]):
     """Process WhatsApp message through jack_retrieval agent"""
     try:
         # Extract message info - handle both conversation and extendedTextMessage
+        # TODO: OMINIHUB MIGRATION - Update message parsing for ominihub format
         message = message_data.get("message", {})
         message_text = (
             message.get("conversation", "") or 
             message.get("extendedTextMessage", {}).get("text", "")
         )
+        # TODO: OMINIHUB MIGRATION - Update sender number extraction for ominihub format
         sender_number = message_data.get("key", {}).get("remoteJid", "").replace("@s.whatsapp.net", "")
         
         if not message_text or not sender_number:
@@ -62,14 +68,30 @@ async def process_whatsapp_message(message_data: Dict[str, Any]):
 
 
 async def send_whatsapp_response(number: str, message: str):
-    """Send response via Evolution API"""
-    import aiohttp
+    """
+    Send response via Evolution API
     
-    url = "http://localhost:8080/message/sendText/jack"
+    TODO: OMINIHUB MIGRATION - Replace this Evolution API call with ominihub 
+          WhatsApp sending functionality. Remove Evolution-specific URL, headers,
+          and payload format.
+    """
+    import aiohttp
+    import os
+    
+    # Get Evolution API config from environment variables
+    # TODO: Replace with ominihub environment variables
+    base_url = os.getenv("EVOLUTION_API_BASE_URL",)
+    api_key = os.getenv("EVOLUTION_API_KEY",)
+    instance = os.getenv("EVOLUTION_API_INSTANCE",)
+    
+    # TODO: Replace with ominihub endpoint format
+    url = f"{base_url}/message/sendText/{instance}"
+    # TODO: Replace with ominihub authentication
     headers = {
         "Content-Type": "application/json",
-        "apikey": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF"
+        "apikey": api_key  # Evolution API key - remove for ominihub
     }
+    # TODO: Replace with ominihub message format
     payload = {
         "number": f"{number}@s.whatsapp.net",
         "textMessage": {
@@ -91,6 +113,9 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     """
     Webhook endpoint for Evolution API WhatsApp messages
     Processes messages through jack_retrieval agent
+    
+    TODO: OMINIHUB MIGRATION - Replace this entire endpoint with ominihub webhook format.
+          Update endpoint path, request format, and response handling for ominihub.
     """
     try:
         data = await request.json()
@@ -99,19 +124,33 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         event = data.get("event", "unknown")
         sender = data.get("sender", "unknown")
         message_preview = str(data.get("data", {}).get("message", {}))[:100]
-        logger.info(f"📥 Webhook received - Event: {event}, Sender: {sender}, Message preview: {message_preview}...")
+        # Escape braces in message preview to prevent format string errors
+        safe_preview = message_preview.replace("{", "{{").replace("}", "}}")
+        logger.info(f"📥 Webhook received - Event: {event}, Sender: {sender}, Message preview: {safe_preview}...")
         
-        # Check if it's a text message from user (not from bot)
+        # Check if it's a text message from user (not from bot or group)
         message = data.get("data", {}).get("message", {})
+        key_info = data.get("data", {}).get("key", {})
+        
         has_text = (
             message.get("conversation") or 
             message.get("extendedTextMessage", {}).get("text")
         )
         
+        # Check if message is from a group (remoteJid ending with @g.us)
+        # TODO: OMINIHUB MIGRATION - Update group detection logic for ominihub message format
+        remote_jid = key_info.get("remoteJid", "")
+        is_group_message = remote_jid.endswith("@g.us")  # Evolution API group format
+        
+        if is_group_message and has_text:
+            logger.info(f"🚫 Ignoring group message from {remote_jid} (groups_ignore enabled)")
+            return {"status": "received", "message": "Group message ignored"}
+        
         if (
             data.get("event") == "messages.upsert" and 
             has_text and
-            not data.get("data", {}).get("key", {}).get("fromMe", False)
+            not key_info.get("fromMe", False) and
+            not is_group_message  # Filter out group messages
         ):
             # Process message in background to avoid timeout
             background_tasks.add_task(process_whatsapp_message, data.get("data", {}))
