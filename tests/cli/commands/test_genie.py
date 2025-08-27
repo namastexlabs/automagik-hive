@@ -88,7 +88,7 @@ class TestGenieCommands:
         
         with patch('pathlib.Path.cwd') as mock_cwd, \
              patch('pathlib.Path.exists') as mock_exists, \
-             patch('builtins.open', mock_open(read_data=genie_content)), \
+             patch('builtins.open', mock_open(read_data=agents_content)), \
              patch('subprocess.run', side_effect=FileNotFoundError()):
             
             # Setup mocks
@@ -107,7 +107,7 @@ class TestGenieCommands:
         
         with patch('pathlib.Path.cwd') as mock_cwd, \
              patch('pathlib.Path.exists') as mock_exists, \
-             patch('builtins.open', mock_open(read_data=genie_content)), \
+             patch('builtins.open', mock_open(read_data=agents_content)), \
              patch('subprocess.run', side_effect=KeyboardInterrupt()):
             
             # Setup mocks
@@ -160,7 +160,7 @@ class TestGenieCommands:
         
         with patch('pathlib.Path.cwd') as mock_cwd, \
              patch('pathlib.Path.exists') as mock_exists, \
-             patch('builtins.open', mock_open(read_data=genie_content)), \
+             patch('builtins.open', mock_open(read_data=agents_content)), \
              patch('subprocess.run', side_effect=Exception("Subprocess failed")):
             
             # Setup mocks
@@ -179,7 +179,7 @@ class TestGenieCommands:
         
         with patch('pathlib.Path.cwd') as mock_cwd, \
              patch('pathlib.Path.exists') as mock_exists, \
-             patch('builtins.open', mock_open(read_data=genie_content)), \
+             patch('builtins.open', mock_open(read_data=agents_content)), \
              patch('subprocess.run') as mock_run:
             
             # Setup mocks
