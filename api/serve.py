@@ -6,6 +6,7 @@ Production-ready API endpoint using V2 Ana Team architecture
 # import logging - replaced with unified logging
 import asyncio
 import os
+import signal
 import sys
 from collections.abc import Callable
 from contextlib import asynccontextmanager
@@ -188,17 +189,16 @@ def create_lifespan(startup_display: Any = None) -> Callable:
                 # Wait for them to complete cancellation
                 if background_tasks:
                     await asyncio.gather(*background_tasks, return_exceptions=True)
-                    logger.debug(f"Cancelled {len(background_tasks)} background tasks")
 
             # Step 2: Cleaning Up Services  
             with shutdown_progress.step(2):
-                # Shutdown metrics service to prevent resource leaks
+                # Shutdown metrics service if it exists
                 try:
                     from lib.metrics.async_metrics_service import shutdown_metrics_service
                     await shutdown_metrics_service()
-                    logger.debug("Metrics service shut down successfully")
                 except Exception as e:
-                    logger.warning("Metrics service shutdown error", error=str(e))
+                    # Don't warn about metrics shutdown - it may not have been fully initialized
+                    logger.debug("Metrics service shutdown note", error=str(e))
                 
                 # Send shutdown notification
                 try:
@@ -225,20 +225,14 @@ def create_lifespan(startup_display: Any = None) -> Callable:
             with shutdown_progress.step(4):
                 logger.debug("Automagik Hive shutdown complete")
 
-            # Print farewell message
+            # Print farewell message (only once)
             shutdown_progress.print_farewell_message()
 
         except asyncio.CancelledError:
             logger.debug("Shutdown cancelled")
         except Exception as e:
             logger.warning(f"Shutdown error: {e}")
-            # Still print farewell even if there were errors
-            try:
-                from lib.utils.shutdown_progress import create_automagik_shutdown_progress
-                progress = create_automagik_shutdown_progress()
-                progress.print_farewell_message()
-            except:
-                logger.info("Server stopped by user")
+            # Don't print farewell message again on error, just log
 
     return lifespan
 
@@ -377,31 +371,20 @@ async def _async_create_automagik_api():
     teams_list = loaded_teams if loaded_teams else []
 
     # ORCHESTRATION FIX: Reuse agents from orchestrated startup to prevent duplicate loading
-    # Agents were already loaded with proper configuration during batch_component_discovery()
+    # Agents were already loaded with proper metrics configuration during startup orchestration
     agents_list = []
     if startup_results.registries.agents:
-        # Use the already-loaded agents from orchestrated startup
+        # Use the already-loaded agents from orchestrated startup (now with metrics integration)
         for agent_id, agent_instance in startup_results.registries.agents.items():
             try:
-                # Add metrics service to existing agent if available
-                if (
-                    hasattr(agent_instance, "metrics_service")
-                    and startup_results.services.metrics_service
-                ):
-                    agent_instance.metrics_service = (
-                        startup_results.services.metrics_service
-                    )
-
                 agents_list.append(agent_instance)
-                logger.debug(f"Agent {agent_id} reused from orchestrated startup")
+                logger.debug(f"Agent {agent_id} loaded from orchestrated startup with metrics integration")
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to configure agent {agent_id} from orchestrated startup: {e}"
+                    f"Failed to use agent {agent_id} from orchestrated startup: {e}"
                 )
-                # Agent instance is still usable, add it anyway
-                agents_list.append(agent_instance)
-                logger.debug(f"Using agent {agent_id} without metrics enhancement")
+                continue
 
     logger.debug(f"Created {len(agents_list)} agents for Playground")
 
@@ -728,9 +711,23 @@ def app() -> FastAPI:
     return get_app()
 
 
+def _setup_signal_handlers():
+    """Setup signal handlers for graceful shutdown on Ctrl+C."""
+    def signal_handler(signum, frame):
+        # Let the normal shutdown process handle cleanup
+        sys.exit(0)
+    
+    # Setup signal handlers for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+
 def main():
     """Main entry point for Automagik Hive server."""
     import uvicorn
+
+    # Setup signal handlers for proper cleanup
+    _setup_signal_handlers()
 
     # Get server configuration from unified config
     config = get_server_config()
@@ -755,7 +752,7 @@ def main():
             reload=reload,
             mode="development" if reload else "production",
         )
-
+    
     # Use uvicorn with factory function to support reload
     uvicorn.run("api.serve:app", host=host, port=port, reload=reload, factory=True)
 

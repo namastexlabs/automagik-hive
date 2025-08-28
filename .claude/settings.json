@@ -19,6 +19,10 @@
           {
             "type": "command",
             "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/test_boundary_enforcer.py"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/no_root_files_hook.py"
           }
         ]
       }

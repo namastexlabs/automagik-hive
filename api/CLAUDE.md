@@ -31,6 +31,10 @@ api/
 
 **Development**:
 ```bash
+# From Claude Code - use Bash tool with background parameter:
+Bash(command="make dev", run_in_background=True)
+
+# From terminal:
 make dev  # Starts main.py with Playground auto-endpoints
 ```
 

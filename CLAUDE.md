@@ -305,9 +305,9 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
   <server_management>
     <startup_commands>
       ```bash
-      # Start development server (choose one)
-      make dev &                       # Start in background on http://localhost:8886
-      uv run automagik-hive --dev &    # Alternative command
+      # Start development server in background
+      # Use Bash tool with run_in_background=True parameter:
+      Bash(command="make dev", run_in_background=True)
       ```
     </startup_commands>
     
@@ -339,7 +339,7 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
       ```bash
       # Stop development server
       make stop                        # Graceful shutdown
-      pkill -f "make dev" || pkill -f "uvicorn"  # Force stop if needed
+      pkill -f "uvicorn"              # Force stop if needed
       ```
     </shutdown_commands>
   </server_management>
@@ -464,7 +464,7 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
     <step order="1">Query current state using postgres for system analysis</step>
     <step order="2">Document strategy in automagik-forge tasks before execution</step>
     <step order="3">Take actions only with explicit user approval</step>
-    <step order="4">Ensure development server is running (use `make dev &` for background mode)</step>
+    <step order="4">Ensure development server is running (use Bash tool with run_in_background=True)</step>
     <step order="5">Bump version in YAML files when configs are modified</step>
   </usage_workflow>
 
@@ -494,7 +494,7 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
     </auth_issues>
     
     <connection_issues>
-      <solution>Use `make stop && make dev &` for graceful server restart</solution>
+      <solution>Use `make stop` then Bash("make dev", run_in_background=True) for graceful restart</solution>
       <note>Main API runs on http://localhost:8886</note>
     </connection_issues>
   </troubleshooting>

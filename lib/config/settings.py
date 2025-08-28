@@ -104,9 +104,9 @@ class HiveSettings(BaseSettings):
     hive_team_routing_timeout: int = Field(30, description="Team routing timeout")
     hive_max_team_switches: int = Field(3, description="Max team switches per session")
     
-    # Metrics configuration
-    hive_metrics_batch_size: int = Field(50, description="Metrics batch size")
-    hive_metrics_flush_interval: float = Field(5.0, description="Metrics flush interval")
+    # Metrics configuration - Optimized for responsiveness
+    hive_metrics_batch_size: int = Field(5, description="Metrics batch size - small batches for responsiveness")
+    hive_metrics_flush_interval: float = Field(1.0, description="Metrics flush interval - faster flush for immediate persistence")
     hive_metrics_queue_size: int = Field(1000, description="Metrics queue size")
     
     # =========================================================================

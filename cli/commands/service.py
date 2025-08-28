@@ -50,7 +50,7 @@ class ServiceManager:
             subprocess.run(cmd, check=False)
             return True
         except KeyboardInterrupt:
-            print("\n🛑 Server stopped by user")
+            # Don't print here - let the shutdown progress handle the message
             return True  # Graceful shutdown
         except OSError as e:
             print(f"❌ Failed to start local server: {e}")

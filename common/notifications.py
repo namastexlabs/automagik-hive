@@ -210,7 +210,7 @@ class NotificationService:
     def register_provider(self, name: str, provider: NotificationProvider):
         """Register a notification provider."""
         self.providers[name] = provider
-        logger.info(f"📱 Registered notification provider: {name}")
+        logger.debug(f"📱 Registered notification provider: {name}")
 
     async def send(
         self, notification: NotificationMessage, provider_name: str | None = None

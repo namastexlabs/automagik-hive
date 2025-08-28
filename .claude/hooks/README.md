@@ -44,6 +44,20 @@ unset PYPROJECT_EDIT_APPROVED
 - Testing agents (`hive-testing-fixer`, `hive-testing-maker`) can only modify files in `tests/`
 - Blocks Task tool spawning of testing agents for source code work
 
+### 5. **no_root_files_hook.py** 🚫
+**Purpose**: Prevents creating files directly in the project root directory.
+
+**Rules**:
+- Blocks creation of files in project root (except allowed config files)
+- Forces use of appropriate subdirectories like `/genie/` for documentation
+- Allowed root files: `.env`, `pyproject.toml`, `Makefile`, `CLAUDE.md`, etc.
+
+**Correct Locations**:
+- `/genie/wishes/` → Planning & wish documents
+- `/genie/ideas/` → Brainstorms and concepts
+- `/tests/` → Test files
+- `/docs/` → User documentation
+
 ## Hook Configuration
 
 Hooks are registered in `.claude/settings.json`:
