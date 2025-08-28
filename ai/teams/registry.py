@@ -151,7 +151,7 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
 
                 if factory_func:
                     registry[team_name] = factory_func
-                    logger.info(f"Registered team: {team_name}", factory=used_pattern)
+                    logger.debug(f"Registered team: {team_name}", factory=used_pattern)
                 else:
                     attempted_patterns = ", ".join(
                         factory_patterns[:5]
@@ -179,7 +179,7 @@ def get_team_registry() -> dict[str, Callable[..., Team]]:
     if _TEAM_REGISTRY is None:
         logger.debug("Initializing team registry (lazy)")
         _TEAM_REGISTRY = _discover_teams()
-        logger.info(
+        logger.debug(
             "Team registry initialized",
             team_count=len(_TEAM_REGISTRY),
             teams=list(_TEAM_REGISTRY.keys()),

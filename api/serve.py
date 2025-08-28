@@ -152,24 +152,93 @@ def create_lifespan(startup_display: Any = None) -> Callable:
 
         yield
 
-        # Shutdown
-        async def _send_shutdown_notification():
-            try:
-                from common.startup_notifications import send_shutdown_notification
-
-                await send_shutdown_notification()
-                logger.debug("Shutdown notification sent successfully")
-            except Exception as e:
-                logger.warning("Could not send shutdown notification", error=str(e))
-
+        # Graceful Shutdown with Progress Display (following Langflow pattern)
         try:
-            asyncio.create_task(_send_shutdown_notification())
-            logger.debug("Shutdown notification scheduled")
-        except Exception as e:
-            logger.warning("Could not schedule shutdown notification", error=str(e))
+            # Import our new shutdown progress utility
+            from lib.utils.shutdown_progress import create_automagik_shutdown_progress
 
-        # MCP system has no resources to cleanup in simplified implementation
-        logger.debug("MCP system cleanup completed")
+            # Create shutdown progress with verbose mode based on log level
+            log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
+            shutdown_progress = create_automagik_shutdown_progress(verbose=(log_level == "DEBUG"))
+
+            # Step 0: Stopping Server
+            with shutdown_progress.step(0):
+                await asyncio.sleep(0.1)  # Brief pause for visual effect
+
+            # Step 1: Cancelling Background Tasks
+            with shutdown_progress.step(1):
+                # Cancel all background tasks to prevent resource leaks
+                current_tasks = [task for task in asyncio.all_tasks() if not task.done()]
+                background_tasks = []
+                
+                for task in current_tasks:
+                    task_name = getattr(task, '_name', 'unnamed')
+                    coro_name = getattr(task.get_coro(), '__qualname__', '') if hasattr(task, 'get_coro') else ''
+                    
+                    # Cancel background service tasks (metrics, notifications, etc)
+                    if any(keyword in task_name.lower() for keyword in ['notification', 'background', 'processor', 'metrics']):
+                        background_tasks.append(task)
+                    elif any(keyword in coro_name.lower() for keyword in ['_background_processor', 'notification', 'background']):
+                        background_tasks.append(task)
+                
+                # Cancel the tasks
+                for task in background_tasks:
+                    task.cancel()
+                
+                # Wait for them to complete cancellation
+                if background_tasks:
+                    await asyncio.gather(*background_tasks, return_exceptions=True)
+                    logger.debug(f"Cancelled {len(background_tasks)} background tasks")
+
+            # Step 2: Cleaning Up Services  
+            with shutdown_progress.step(2):
+                # Shutdown metrics service to prevent resource leaks
+                try:
+                    from lib.metrics.async_metrics_service import shutdown_metrics_service
+                    await shutdown_metrics_service()
+                    logger.debug("Metrics service shut down successfully")
+                except Exception as e:
+                    logger.warning("Metrics service shutdown error", error=str(e))
+                
+                # Send shutdown notification
+                try:
+                    from common.startup_notifications import send_shutdown_notification
+                    await send_shutdown_notification()
+                    logger.debug("Shutdown notification sent successfully")
+                except Exception as e:
+                    logger.warning("Could not send shutdown notification", error=str(e))
+
+                # MCP system cleanup
+                try:
+                    # Simple MCP cleanup - no complex resources in our implementation
+                    logger.debug("MCP system cleanup completed")
+                except Exception as e:
+                    logger.warning("MCP cleanup error", error=str(e))
+
+            # Step 3: Clearing Temporary Files
+            with shutdown_progress.step(3):
+                # Database connection cleanup would go here if needed
+                # Currently handled by connection pooling
+                await asyncio.sleep(0.1)  # Brief pause for completion
+
+            # Step 4: Finalizing Shutdown
+            with shutdown_progress.step(4):
+                logger.debug("Automagik Hive shutdown complete")
+
+            # Print farewell message
+            shutdown_progress.print_farewell_message()
+
+        except asyncio.CancelledError:
+            logger.debug("Shutdown cancelled")
+        except Exception as e:
+            logger.warning(f"Shutdown error: {e}")
+            # Still print farewell even if there were errors
+            try:
+                from lib.utils.shutdown_progress import create_automagik_shutdown_progress
+                progress = create_automagik_shutdown_progress()
+                progress.print_farewell_message()
+            except:
+                logger.info("Server stopped by user")
 
     return lifespan
 

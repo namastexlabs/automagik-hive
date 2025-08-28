@@ -68,9 +68,43 @@ class SmartIncrementalLoader:
 
     def _hash_row(self, row: pd.Series) -> str:
         """Create a unique hash for a CSV row based on its content"""
-        # Create deterministic hash from problem + solution content
-        content = f"{row.get('problem', '')}{row.get('solution', '')}{row.get('typification', '')}{row.get('business_unit', '')}"
-        return hashlib.md5(content.encode("utf-8")).hexdigest()
+        # Use configured columns from config.yaml consistently
+        csv_config = self.config.get("knowledge", {}).get("csv_reader", {})
+        content_column = csv_config.get("content_column", "answer")
+        metadata_columns = csv_config.get("metadata_columns", ["question"])
+        
+        # Build content string from configured columns in consistent order
+        # IMPORTANT: Maintain exact same order as original implementation for hash consistency
+        # Original order was: question + answer + category + tags
+        # This means: first_metadata_column + content_column + remaining_metadata_columns
+        content_parts = []
+        
+        # Add first metadata column (question)
+        if metadata_columns:
+            content_parts.append(str(row.get(metadata_columns[0], '')))
+        
+        # Add content column (answer) 
+        content_parts.append(str(row.get(content_column, '')))
+        
+        # Add remaining metadata columns (category, tags)
+        for col in metadata_columns[1:]:
+            content_parts.append(str(row.get(col, '')))
+        
+        # Create deterministic hash from all configured columns
+        content = "".join(content_parts)
+        hash_val = hashlib.md5(content.encode("utf-8")).hexdigest()
+        
+        # Debug first row at DEBUG level only
+        if row.name == 0:  # row.name is the index in pandas
+            from lib.logging import logger
+            logger.debug("Hash calculation debug (first row)", 
+                        content_column=content_column,
+                        content_preview=row.get(content_column, '')[:50],
+                        metadata_columns=metadata_columns,
+                        content_length=len(content),
+                        calculated_hash=hash_val)
+        
+        return hash_val
 
     def _get_existing_row_hashes(self) -> set[str]:
         """Get set of row hashes that already exist in PostgreSQL"""
@@ -173,39 +207,124 @@ class SmartIncrementalLoader:
         try:
             # Get CSV rows
             csv_rows = self._get_csv_rows_with_hashes()
+            csv_hashes = {row["hash"] for row in csv_rows}
 
-            # Check which CSV rows are missing from database using content matching
+            # Check which CSV rows are new or changed
             new_rows = []
+            changed_rows = []
             existing_count = 0
 
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
                 for row in csv_rows:
-                    problem = row["data"].get("problem", "")[
-                        :100
-                    ]  # First 100 chars for matching
-
-                    # Check if this content already exists in database
-                    # Note: Table name is validated from config, but use parameterized query for safety
-                    query = "SELECT COUNT(*) FROM agno.knowledge_base WHERE content LIKE :pattern"
-                    result = conn.execute(text(query), {"pattern": f"%{problem}%"})
-
-                    exists = result.fetchone()[0] > 0
-
-                    if exists:
-                        existing_count += 1
-                    else:
+                    # Use configured column names consistently
+                    csv_config = self.config.get("knowledge", {}).get("csv_reader", {})
+                    metadata_columns = csv_config.get("metadata_columns", ["question"])
+                    question_col = metadata_columns[0]  # First metadata column for search
+                    
+                    question_text = row["data"].get(question_col, "")[:100]  # First 100 chars
+                    
+                    # First check if a row with this question exists and get its hash
+                    query = """
+                        SELECT content_hash FROM agno.knowledge_base 
+                        WHERE content LIKE :question_pattern
+                        LIMIT 1
+                    """
+                    result = conn.execute(text(query), {
+                        "question_pattern": f"%{question_text}%"
+                    })
+                    
+                    db_row = result.fetchone()
+                    
+                    if db_row is None:
+                        # Row doesn't exist - it's new
                         new_rows.append(row)
+                    else:
+                        # Row exists - check if hash matches
+                        db_hash = db_row[0]
+                        csv_hash = row["hash"]
+                        
+                        # Debug: Show first row comparison at DEBUG level only
+                        if row["index"] == 0:
+                            from lib.logging import logger
+                            logger.debug("First row comparison debug",
+                                       question_preview=question_text[:50],
+                                       db_hash=db_hash,
+                                       csv_hash=csv_hash,
+                                       hashes_match=(db_hash == csv_hash))
+                        
+                        if db_hash != csv_hash:
+                            # Content has changed!
+                            changed_rows.append(row)
+                        else:
+                            # Content unchanged
+                            existing_count += 1
 
-            needs_processing = len(new_rows) > 0
+                # Now check for orphaned rows in DB that aren't in CSV
+                # First, let's understand what IDs we expect from the CSV
+                # The IDs should be content hashes based on the CSV data
+                
+                # Get all document IDs from database  
+                result = conn.execute(text("""
+                    SELECT id FROM agno.knowledge_base
+                    WHERE id IS NOT NULL
+                """))
+                db_ids = {row[0] for row in result.fetchall()}
+                
+                # Calculate the total count that SHOULD be in the DB
+                # This is the number of valid CSV rows
+                expected_count = len(csv_rows)
+                
+                # If DB has more documents than CSV rows, we have orphans
+                orphaned_ids = []
+                if len(db_ids) > expected_count:
+                    # We need a better way to identify orphans
+                    # Let's check which DB rows don't match ANY CSV content
+                    
+                    # Get config for column names
+                    csv_config = self.config.get("knowledge", {}).get("csv_reader", {})
+                    content_column = csv_config.get("content_column", "answer")
+                    
+                    for db_id in db_ids:
+                        # For each DB ID, check if it corresponds to a CSV row
+                        query = """
+                            SELECT content FROM agno.knowledge_base 
+                            WHERE id = :id
+                        """
+                        result = conn.execute(text(query), {"id": db_id})
+                        content = result.fetchone()
+                        
+                        if content:
+                            content_text = content[0]
+                            # Check if this content matches any CSV row
+                            found_match = False
+                            for csv_row in csv_rows:
+                                question = csv_row["data"].get(question_col, "")
+                                answer = csv_row["data"].get(content_column, "")
+                                # Check if DB content contains this CSV Q&A
+                                if question in content_text or answer[:100] in content_text:
+                                    found_match = True
+                                    break
+                            
+                            if not found_match:
+                                # This DB row doesn't match any CSV content - it's orphaned
+                                orphaned_ids.append(db_id)
 
+            removed_count = len(orphaned_ids)
+            needs_processing = len(new_rows) > 0 or len(changed_rows) > 0 or removed_count > 0
+
+            from lib.logging import logger
+            logger.debug("Analysis complete", new_rows=len(new_rows), changed_rows=len(changed_rows), removed_rows=removed_count)
+            
             return {
                 "csv_total_rows": len(csv_rows),
                 "existing_vector_rows": existing_count,
                 "new_rows_count": len(new_rows),
-                "removed_rows_count": 0,  # Simplified - no removal for now
+                "changed_rows_count": len(changed_rows),
+                "removed_rows_count": removed_count,
                 "new_rows": new_rows,
-                "removed_hashes": [],
+                "changed_rows": changed_rows,
+                "removed_hashes": orphaned_ids,
                 "needs_processing": needs_processing,
                 "status": "up_to_date"
                 if not needs_processing
@@ -225,7 +344,7 @@ class SmartIncrementalLoader:
         if force_recreate:
             from lib.logging import logger
 
-            logger.info("Force recreate requested - will rebuild everything")
+            logger.debug("Force recreate requested - will rebuild everything")
             return self._full_reload()
 
         # Analyze changes at row level
@@ -241,20 +360,42 @@ class SmartIncrementalLoader:
             }
 
         # Process incremental changes
-        if analysis["existing_vector_rows"] == 0:
+        # Check if database has any documents (not just unchanged ones)
+        engine = create_engine(self.db_url)
+        with engine.connect() as conn:
+            result = conn.execute(text(f"SELECT COUNT(*) FROM agno.{self.table_name}"))
+            db_row_count = result.fetchone()[0]
+        
+        if db_row_count == 0:
+            # Database is empty - do initial load
             return self._initial_load_with_hashes()
-        return self._incremental_update(analysis)
+        else:
+            # Database has data - do incremental update
+            return self._incremental_update(analysis)
 
     def _initial_load_with_hashes(self) -> dict[str, Any]:
         """Initial load of fresh database with hash tracking"""
         try:
             from lib.logging import logger
 
-            logger.info("Initial load: creating knowledge base with hash tracking")
+            logger.debug("Initial load: creating knowledge base with hash tracking")
             start_time = datetime.now()
 
-            # Load with recreate=True to get fresh start
-            self.kb.load(recreate=True)
+            # Check if database already has data (from a previous run)
+            # This handles the case where knowledge_factory already triggered a load
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                result = conn.execute(
+                    text(f"SELECT COUNT(*) FROM agno.{self.table_name}")
+                )
+                existing_count = result.fetchone()[0]
+                
+            if existing_count == 0:
+                # Fresh database, do initial load
+                logger.debug("Empty database detected, performing initial load")
+                self.kb.load(recreate=True)
+            else:
+                logger.debug("Database already has documents, skipping redundant load", existing_count=existing_count)
 
             # Add hash column and populate hashes for existing rows
             self._add_hash_column_to_table()
@@ -281,7 +422,7 @@ class SmartIncrementalLoader:
 
             from lib.logging import logger
 
-            logger.info(
+            logger.debug(
                 "Initial load with hash tracking completed",
                 load_time_seconds=round(load_time, 2),
             )
@@ -295,7 +436,7 @@ class SmartIncrementalLoader:
         try:
             from lib.logging import logger
 
-            logger.info("Full reload: recreating knowledge base")
+            logger.debug("Full reload: recreating knowledge base")
             start_time = datetime.now()
 
             # Load with recreate=True - this will show per-row upserts
@@ -317,25 +458,28 @@ class SmartIncrementalLoader:
 
             from lib.logging import logger
 
-            logger.info("Full reload completed", load_time_seconds=round(load_time, 2))
+            logger.debug("Full reload completed", load_time_seconds=round(load_time, 2))
             return result
 
         except Exception as e:
             return {"error": f"Full reload failed: {e}"}
 
     def _incremental_update(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Perform true incremental update - only process new rows"""
+        """Perform true incremental update - process new/changed rows and remove orphaned ones"""
         try:
             start_time = datetime.now()
 
             new_rows = analysis["new_rows"]
+            changed_rows = analysis.get("changed_rows", [])
             processed_count = 0
+            updated_count = 0
 
-            if len(new_rows) > 0:
-                # Add hash column if needed
+            # Add hash column if needed
+            if len(new_rows) > 0 or len(changed_rows) > 0:
                 self._add_hash_column_to_table()
 
-                # Process each new row individually
+            # Process new rows
+            if len(new_rows) > 0:
                 for row_data in new_rows:
                     # Create temporary CSV with just this row
                     success = self._process_single_row(row_data)
@@ -345,28 +489,52 @@ class SmartIncrementalLoader:
                         from lib.logging import logger
 
                         logger.warning(
-                            "Failed to process row", row_index=row_data["index"]
+                            "Failed to process new row", row_index=row_data["index"]
                         )
 
-            # Handle removed rows if any
+            # Process changed rows
+            if len(changed_rows) > 0:
+                from lib.logging import logger
+                logger.debug("Processing changed rows", count=len(changed_rows))
+                
+                for row_data in changed_rows:
+                    # First remove the old version
+                    question_col = self.config.get("knowledge", {}).get("csv_reader", {}).get("metadata_columns", ["question"])[0]
+                    question_text = row_data["data"].get(question_col, "")[:100]
+                    
+                    # Delete the old row
+                    success = self._remove_row_by_question(question_text)
+                    if success:
+                        # Now add the updated version
+                        success = self._process_single_row(row_data)
+                        if success:
+                            updated_count += 1
+                        else:
+                            logger.warning(
+                                "Failed to process changed row", row_index=row_data["index"]
+                            )
+
+            # Handle removed rows if any - ALWAYS check, not just when > 0
             removed_count = 0
-            if analysis["removed_rows_count"] > 0:
+            removed_hashes = analysis.get("removed_hashes", [])
+            if removed_hashes:
                 from lib.logging import logger
 
-                logger.info(
-                    "Removing obsolete entries",
-                    removed_count=analysis["removed_rows_count"],
+                logger.debug(
+                    "Removing orphaned database entries",
+                    removed_count=len(removed_hashes),
                 )
-                removed_count = self._remove_rows_by_hash(analysis["removed_hashes"])
+                removed_count = self._remove_rows_by_hash(removed_hashes)
 
             load_time = (datetime.now() - start_time).total_seconds()
 
             return {
                 "strategy": "incremental_update",
                 "new_rows_processed": processed_count,
+                "changed_rows_processed": updated_count,
                 "rows_removed": removed_count,
                 "load_time_seconds": load_time,
-                "embedding_tokens_used": f"Only {processed_count} new entries (cost savings!)",
+                "embedding_tokens_used": f"Only {processed_count + updated_count} entries (cost savings!)",
             }
 
         except Exception as e:
@@ -385,10 +553,15 @@ class SmartIncrementalLoader:
             df.to_csv(temp_csv_path, index=False)
 
             try:
-                # Use the existing knowledge base for this single row
-                temp_kb = self.kb
-
-                # Load just this row (upsert mode - no recreate)
+                # Create a new knowledge base instance for just this row
+                from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
+                
+                temp_kb = RowBasedCSVKnowledgeBase(
+                    csv_path=str(temp_csv_path),
+                    vector_db=self.kb.vector_db  # Reuse the same vector DB connection
+                )
+                
+                # Load just this single row (upsert mode - no recreate)
                 temp_kb.load(recreate=False, upsert=True)
 
                 # Add the content hash to the database record
@@ -412,21 +585,22 @@ class SmartIncrementalLoader:
         try:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
-                # Find the row by content matching and update hash
-                problem = row_data.get("problem", "")
+                # Use configured column names
+                question_col = self.config.get("knowledge", {}).get("csv_reader", {}).get("metadata_columns", ["question"])[0]
+                question_text = row_data.get(question_col, "")
 
                 # Update the hash for rows matching this content (use content column, not document)
+                # Remove the NULL check - we need to update even if hash exists (might be wrong)
                 update_query = """
                     UPDATE agno.knowledge_base
                     SET content_hash = :hash
                     WHERE content LIKE :problem_pattern
-                    AND content_hash IS NULL
                 """
                 conn.execute(
                     text(update_query),
                     {
                         "hash": content_hash,
-                        "problem_pattern": f"%{problem[:50]}%",  # Use first 50 chars for matching
+                        "problem_pattern": f"%{question_text[:50]}%",  # Use first 50 chars for matching
                     },
                 )
                 conn.commit()
@@ -443,7 +617,7 @@ class SmartIncrementalLoader:
         try:
             from lib.logging import logger
 
-            logger.info("Populating content hashes for existing rows")
+            logger.debug("Populating content hashes for existing rows")
 
             # Get all CSV rows to compute their hashes
             csv_rows = self._get_csv_rows_with_hashes()
@@ -454,7 +628,7 @@ class SmartIncrementalLoader:
 
             from lib.logging import logger
 
-            logger.info("Populated hashes for rows", rows_count=len(csv_rows))
+            logger.debug("Populated hashes for rows", rows_count=len(csv_rows))
             return True
 
         except Exception as e:
@@ -463,26 +637,52 @@ class SmartIncrementalLoader:
             logger.warning("Could not populate existing hashes", error=str(e))
             return False
 
-    def _remove_rows_by_hash(self, removed_hashes: list[str]) -> int:
-        """Remove rows from database by their content hash"""
+    def _remove_row_by_question(self, question_text: str) -> bool:
+        """Remove a row from database by its question text"""
         try:
-            if not removed_hashes:
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                # Delete row matching this question
+                delete_query = """
+                    DELETE FROM agno.knowledge_base
+                    WHERE content LIKE :question_pattern
+                """
+                result = conn.execute(text(delete_query), {
+                    "question_pattern": f"%{question_text}%"
+                })
+                conn.commit()
+                
+                return result.rowcount > 0
+                
+        except Exception as e:
+            from lib.logging import logger
+            logger.error("Error removing row by question", error=str(e))
+            return False
+
+    def _remove_rows_by_hash(self, removed_ids: list[str]) -> int:
+        """Remove rows from database by their IDs (can be hash IDs or other IDs)"""
+        try:
+            if not removed_ids:
                 return 0
 
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
-                # Delete rows with these hashes
-                delete_query = (
-                    "DELETE FROM agno.knowledge_base WHERE content_hash = :hash"
-                )
-                for hash_to_remove in removed_hashes:
-                    conn.execute(text(delete_query), {"hash": hash_to_remove})
+                # Delete rows with these IDs
+                # Using ID field directly since we're removing by primary key
+                delete_query = "DELETE FROM agno.knowledge_base WHERE id = :id"
+                
+                actual_removed = 0
+                for id_to_remove in removed_ids:
+                    result = conn.execute(text(delete_query), {"id": id_to_remove})
+                    actual_removed += result.rowcount
 
                 conn.commit()
                 from lib.logging import logger
 
-                logger.info("Removed obsolete rows", removed_count=len(removed_hashes))
-                return len(removed_hashes)
+                logger.debug("Removed orphaned database rows", 
+                          requested_count=len(removed_ids),
+                          actual_removed=actual_removed)
+                return actual_removed
 
         except Exception as e:
             from lib.logging import logger

@@ -275,7 +275,7 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             # Reload into vector database
             self.load(recreate=True, skip_existing=False)
 
-            logger.info(
+            logger.debug(
                 "CSV knowledge base reloaded", document_count=len(new_documents)
             )
 

@@ -274,7 +274,7 @@ async def initialize_other_services(
         metrics_service=metrics_service,
     )
 
-    logger.info("⚙️ Remaining services initialization completed")
+    logger.debug("⚙️ Remaining services initialization completed")
     return services
 
 
@@ -411,7 +411,7 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     """
     startup_start = datetime.now()
     if not quiet_mode:
-        logger.info("🚀 Starting Performance-Optimized Sequential Startup")
+        logger.debug("🚀 Starting Performance-Optimized Sequential Startup")
     else:
         logger.debug(
             "🚀 Starting Performance-Optimized Sequential Startup (quiet mode)"
@@ -424,7 +424,7 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     try:
         # 1. Database Migration (User requirement - first priority)
         if not quiet_mode:
-            logger.info("🗄️ Database migration check")
+            logger.debug("🗄️ Database migration check")
         try:
             from lib.utils.db_migration import check_and_run_migrations
 
@@ -445,16 +445,16 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
 
         # 2. Logging System Ready (implicit - already configured)
         if not quiet_mode:
-            logger.info("📝 Logging system ready")
+            logger.debug("📝 Logging system ready")
 
         # 3. Knowledge Base Init (CSV watching setup - shared KB initialized lazily)
         if not quiet_mode:
-            logger.info("Initializing knowledge base CSV watching")
+            logger.debug("Initializing knowledge base CSV watching")
         csv_manager = await initialize_knowledge_base()
 
         # 4. Component Discovery (Single batch operation - MOVED BEFORE version sync)
         if not quiet_mode:
-            logger.info("🔍 Discovering components")
+            logger.debug("🔍 Discovering components")
         registries = await batch_component_discovery()
 
         # 5. Version Synchronization (NOW uses actual discovered registries)
@@ -463,7 +463,7 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
 
         # 6. Configuration Resolution (implicit via registry lazy loading)
         if not quiet_mode:
-            logger.info("⚙️ Configuration resolution completed")
+            logger.debug("⚙️ Configuration resolution completed")
 
         # 7. Other Service Initialization (auth, MCP, metrics)
         services = await initialize_other_services(csv_manager)

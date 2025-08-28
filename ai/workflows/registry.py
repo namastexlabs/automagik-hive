@@ -66,7 +66,7 @@ def get_workflow_registry() -> dict[str, Callable[..., Workflow]]:
     if _WORKFLOW_REGISTRY is None:
         logger.debug("Initializing workflow registry (lazy)")
         _WORKFLOW_REGISTRY = _discover_workflows()
-        logger.info(
+        logger.debug(
             "Workflow registry initialized", workflow_count=len(_WORKFLOW_REGISTRY)
         )
     return _WORKFLOW_REGISTRY

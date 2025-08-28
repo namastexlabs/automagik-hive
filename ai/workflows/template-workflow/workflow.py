@@ -227,7 +227,7 @@ def get_template_workflow_workflow(**kwargs) -> Workflow:
         **kwargs,
     )
 
-    logger.info("Template Workflow initialized successfully")
+    logger.debug("Template Workflow initialized successfully")
     return workflow
 
 

@@ -74,10 +74,11 @@ These instructions override all other behaviors and must be followed without exc
 <self_enhancement_trigger>🚨 CRITICAL: Check for violation signals in user feedback - if found, AUTOMATICALLY deploy hive-self-learn FIRST</self_enhancement_trigger>
 <test_failure_routing>🚨 CRITICAL: ALL test failures, import errors preventing pytest = hive-testing-fixer ONLY - NEVER hive-dev-fixer</test_failure_routing>
 <design_pipeline_validation>🚨 NEW FEATURE REQUESTS: Check pipeline status (TSD/DDD exists?) → Route to appropriate phase agent (hive-dev-planner/hive-dev-designer/hive-dev-coder)</design_pipeline_validation>
-<document_discovery_enforcement>🚨 CRITICAL BEHAVIORAL UPDATE: Before deploying hive-dev-planner, check /genie/wishes/ for existing TSD/DDD documents with similar scope - UPDATE existing documents instead of creating duplicates</document_discovery_enforcement>
-<one_wish_one_document_compliance>🚨 VIOLATION PREVENTION: "ONE wish = ONE document" principle - NEVER allow duplicate TSD/DDD creation for overlapping scopes</one_wish_one_document_compliance>
-<file_versioning_prohibition>🚨 ARCHITECTURAL VIOLATION PREVENTION: ABSOLUTE PROHIBITION on creating v2, v3, improved, enhanced, or any versioned files in /genie/wishes/ - ALWAYS update existing document in place following "refine throughout lifecycle" principle</file_versioning_prohibition>
-<wish_document_lifecycle>🚨 CRITICAL LEARNING: /genie/wishes/ documents evolve through progressive refinement, NOT file proliferation - update content, never create versions</wish_document_lifecycle>
+<document_discovery_enforcement>🚨 CRITICAL BEHAVIORAL UPDATE - SEMANTIC VALIDATION REQUIRED: Before ANY /genie/wishes/ document creation, MANDATORY semantic similarity check using vector embeddings against ALL existing documents. Similarity >0.85 = BLOCKED creation with forced user confirmation workflow. Update existing documents instead of creating duplicates.</document_discovery_enforcement>
+<one_wish_one_document_compliance>🚨 VIOLATION PREVENTION - ZERO TOLERANCE: "ONE wish = ONE document" principle with HARDWIRED enforcement - NEVER allow duplicate document creation for overlapping scopes, whether versioned, renamed, or conceptually similar</one_wish_one_document_compliance>
+<file_versioning_prohibition>🚨 ARCHITECTURAL VIOLATION PREVENTION - ABSOLUTE PROHIBITION: NO v2, v3, improved, enhanced, comprehensive, surgical, alternative, or ANY variations in /genie/wishes/ - ALWAYS update existing document in place following "refine throughout lifecycle" principle with ZERO exceptions</file_versioning_prohibition>
+<wish_document_lifecycle>🚨 CRITICAL LEARNING - PROGRESSIVE REFINEMENT ONLY: /genie/wishes/ documents evolve through in-place updates with DEATH TESTAMENT completion, NOT file proliferation - update content, never create new files for same conceptual wish</wish_document_lifecycle>
+<semantic_similarity_enforcement>🚨 NEW BEHAVIORAL CONTROL: MANDATORY pre-creation vector embedding analysis - compute cosine similarity against existing wish documents using content + title embeddings. Threshold >0.85 triggers automatic blocking with user confirmation required: "Similar wish exists: [filename]. Update existing? (y/N)" - NO bypass mechanisms allowed</semantic_similarity_enforcement>
 <orchestration_compliance_check>FORBIDDEN: Master Genie creating comprehensive documents, specifications, or designs → MUST delegate to specialist agents</orchestration_compliance_check>
 </validation_checkpoint>
 </orchestration_protocol_enforcement>
@@ -233,6 +234,32 @@ These instructions override all other behaviors and must be followed without exc
 <enforcement_triggers>Any attempt to create versioned files in /genie/wishes/ = immediate behavioral learning deployment</enforcement_triggers>
 <success_criteria>Zero file proliferation in /genie/wishes/, 100% in-place document refinement</success_criteria>
 </eighth_violation_2025_01_22>
+
+<ninth_violation_2025_01_28>
+<violation_type>REPEAT Document Duplication in /genie/wishes/ - ENFORCEMENT FAILURE</violation_type>
+<incident_description>Master Genie created 'knowledge-system-surgical-refactor.md' when 'knowledge-system-cleanup.md' already existed for the same conceptual wish, violating "ONE wish = ONE document" architectural principle. This is a REPEAT VIOLATION despite previous learning entry indicating this exact behavior was supposedly fixed.</incident_description>
+<violation_pattern>Creating separate documents for same conceptual wish with overlapping scope instead of updating existing document in place</violation_pattern>
+<architectural_impact>CRITICAL - REPEAT FAILURE undermines system learning credibility and DEATH TESTAMENT architecture integrity</architectural_impact>
+<enforcement_failure_analysis>
+Previous behavioral changes (eighth_violation_2025_01_22) were INSUFFICIENT to prevent recurrence. The discovery mechanism failed to recognize conceptual overlap between "cleanup" and "surgical refactor" for same knowledge system goal.
+</enforcement_failure_analysis>
+<behavioral_changes_implemented>
+1. MANDATORY pre-creation semantic similarity check using vector embeddings before ANY /genie/wishes/ document creation
+2. ABSOLUTE PROHIBITION on creating new wish documents when similarity threshold >0.85 exists with existing documents
+3. FORCED user confirmation workflow: "Similar wish exists: [filename]. Update existing document? (y/N)"
+4. HARDWIRED pre-creation validation function preventing file creation until similarity check passes
+5. Enhanced document_discovery_enforcement with semantic analysis, not just keyword matching
+</behavioral_changes_implemented>
+<prevention_mechanisms>
+- SEMANTIC SEARCH: Vector embedding similarity check against ALL existing wish documents
+- SIMILARITY THRESHOLD: Block creation if >0.85 cosine similarity with existing document
+- FORCED INTERACTION: Cannot proceed without user confirmation when similar document exists
+- ARCHITECTURAL VALIDATION: Pre-creation check validates DEATH TESTAMENT compliance
+- ZERO BYPASS TOLERANCE: NO workarounds or exceptions allowed for wish document creation
+</prevention_mechanisms>
+<enforcement_triggers>Any attempt to create wish documents without semantic similarity check = immediate behavioral learning deployment + CRITICAL SYSTEM FAILURE alert</enforcement_triggers>
+<success_criteria>ZERO duplicate wish documents created, 100% semantic similarity validation before creation, all conceptually similar wishes consolidated into single evolving document</success_criteria>
+</ninth_violation_2025_01_28>
 </critical_learning_archive>
 
 <strategic_capabilities>

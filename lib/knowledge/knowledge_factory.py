@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 from agno.embedder.openai import OpenAIEmbedder
 from agno.vectordb.pgvector import HNSW, PgVector, SearchType
+from agno.knowledge.document import DocumentKnowledgeBase
 
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.logging import logger
@@ -100,7 +101,7 @@ def create_knowledge_base(
         # Use path from config relative to knowledge folder
         csv_path = config.get("knowledge", {}).get("csv_file_path", "knowledge_rag.csv")
         csv_path = Path(__file__).parent / csv_path
-        logger.info("Using CSV path from configuration", csv_path=str(csv_path))
+        logger.debug("Using CSV path from configuration", csv_path=str(csv_path))
     else:
         # Convert to Path and resolve if relative
         csv_path = Path(csv_path)
@@ -112,7 +113,7 @@ def create_knowledge_base(
             else:
                 # Path doesn't include knowledge folder, add it
                 csv_path = Path(__file__).parent / csv_path
-        logger.info("Using provided CSV path", csv_path=str(csv_path))
+        logger.debug("Using provided CSV path", csv_path=str(csv_path))
 
     # Get vector database configuration
     vector_config = config.get("knowledge", {}).get("vector_db", {})
@@ -141,6 +142,7 @@ def create_knowledge_base(
             return _shared_kb
 
         # Create shared knowledge base with row-based processing (one document per CSV row)
+        # Note: This will load documents from CSV, but smart loader will handle incremental updates
         _shared_kb = RowBasedCSVKnowledgeBase(
             csv_path=str(csv_path), vector_db=vector_db
         )
@@ -157,7 +159,7 @@ def create_knowledge_base(
         _shared_kb.valid_metadata_filters = valid_filters
 
     # Use smart incremental loading instead of basic Agno loading
-    logger.info("Initializing smart incremental knowledge base loading")
+    logger.debug("Initializing smart incremental knowledge base loading")
     try:
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
@@ -169,36 +171,45 @@ def create_knowledge_base(
         if "error" in result:
             logger.warning("Smart loading failed", error=result["error"])
             # Fallback to basic loading
-            logger.info("Falling back to basic knowledge base loading")
+            logger.debug("Falling back to basic knowledge base loading")
             _shared_kb.load(recreate=False, upsert=True)
         else:
             # Smart loading succeeded - just connect to the populated database
             strategy = result.get("strategy", "unknown")
             if strategy == "no_changes":
-                logger.info(
+                logger.debug(
                     "Smart loading: No changes needed (all documents already exist)"
                 )
             elif strategy == "incremental_update":
                 new_docs = result.get("new_rows_processed", 0)
-                logger.info(
+                logger.debug(
                     "Smart loading: Added new documents (incremental)",
                     new_docs=new_docs,
                 )
             elif strategy == "initial_load_with_hashes":
                 total_docs = result.get("entries_processed", "unknown")
-                logger.info(
+                logger.debug(
                     "Smart loading: Initial load completed", total_docs=total_docs
                 )
             else:
-                logger.info("Smart loading: Completed", strategy=strategy)
+                logger.debug("Smart loading: Completed", strategy=strategy)
 
     except Exception as e:
         logger.warning("Smart incremental loader failed", error=str(e))
         # Fallback to basic loading
-        logger.info("Falling back to basic knowledge base loading")
+        logger.debug("Falling back to basic knowledge base loading")
         _shared_kb.load(recreate=False, upsert=True)
 
-    logger.info("Shared knowledge base ready")
+    # Get final document count for user-facing summary
+    try:
+        from sqlalchemy import create_engine, text
+        engine = create_engine(db_url)
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT COUNT(*) FROM agno.knowledge_base"))
+            doc_count = result.fetchone()[0]
+            logger.info("Knowledge base ready", documents=doc_count)
+    except Exception:
+        logger.info("Knowledge base ready")
 
     return _shared_kb
 

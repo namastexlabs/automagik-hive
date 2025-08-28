@@ -41,7 +41,7 @@ class CSVHotReloadManager:
                 csv_filename = global_config.get("csv_file_path", "knowledge_rag.csv")
                 # Make path relative to knowledge directory (same as knowledge_factory.py)
                 csv_path = str(Path(__file__).parent / csv_filename)
-                logger.info("Using CSV path from centralized config", csv_path=csv_path)
+                logger.debug("Using CSV path from centralized config", csv_path=csv_path)
             except Exception as e:
                 logger.warning(
                     "Could not load centralized config, using fallback", error=str(e)
@@ -53,8 +53,8 @@ class CSVHotReloadManager:
         self.observer = None
         self.knowledge_base = None
 
-        # Log initialization at INFO level
-        logger.info(
+        # Log initialization at DEBUG level
+        logger.debug(
             "CSV Hot Reload Manager initialized",
             path=str(self.csv_path),
             mode="agno_native_incremental",
@@ -64,43 +64,21 @@ class CSVHotReloadManager:
         self._initialize_knowledge_base()
 
     def _initialize_knowledge_base(self):
-        """Initialize the Agno knowledge base."""
+        """Initialize the Agno knowledge base using the shared instance."""
         try:
-            # Get database URL from environment or config
-            db_url = os.getenv("HIVE_DATABASE_URL")
-            if not db_url:
-                raise ValueError("HIVE_DATABASE_URL environment variable is required")
-
-            # Load global knowledge config for embedder
-            try:
-                global_knowledge = load_global_knowledge_config()
-                embedder_model = global_knowledge.get("vector_db", {}).get(
-                    "embedder", "text-embedding-3-small"
-                )
-                embedder = OpenAIEmbedder(id=embedder_model)
-            except Exception as e:
-                logger.warning("Could not load global embedder config: %s", e)
-                embedder = OpenAIEmbedder(id="text-embedding-3-small")
-
-            # Create PgVector instance
-            vector_db = PgVector(
-                table_name="knowledge_base",
-                schema="agno",  # Use agno schema for Agno framework tables
-                db_url=db_url,
-                embedder=embedder,
-            )
-
-            # Create RowBasedCSVKnowledgeBase (one document per CSV row)
-            self.knowledge_base = RowBasedCSVKnowledgeBase(
-                csv_path=str(self.csv_path), vector_db=vector_db
-            )
-
-            # Load using Agno's native incremental loading
-            if self.csv_path.exists():
-                self.knowledge_base.load(recreate=False, skip_existing=True)
+            # Use the shared knowledge base from knowledge_factory
+            # This prevents duplicate loading and ensures we use the same instance
+            from lib.knowledge.knowledge_factory import get_knowledge_base
+            
+            self.knowledge_base = get_knowledge_base(csv_path=str(self.csv_path))
+            
+            # The knowledge base is already loaded by knowledge_factory
+            # No need to call smart_load here as it's handled there
+            logger.debug("Using shared knowledge base from knowledge_factory")
 
         except Exception as e:
-            logger.warning("Failed to initialize knowledge base", error=str(e))
+            import traceback
+            logger.error("Failed to initialize knowledge base", error=str(e), traceback=traceback.format_exc())
             self.knowledge_base = None
 
     def start_watching(self):
@@ -110,7 +88,7 @@ class CSVHotReloadManager:
 
         self.is_running = True
 
-        logger.info("File watching started", path=str(self.csv_path))
+        logger.debug("File watching started", path=str(self.csv_path))
 
         try:
             from watchdog.events import FileSystemEventHandler
@@ -155,22 +133,32 @@ class CSVHotReloadManager:
 
         self.is_running = False
 
-        logger.info("File watching stopped", path=str(self.csv_path))
+        logger.debug("File watching stopped", path=str(self.csv_path))
 
     def _reload_knowledge_base(self):
-        """Reload the knowledge base using Agno's incremental loading."""
+        """Reload the knowledge base using smart incremental updates."""
         if not self.knowledge_base:
             return
 
         try:
-            # Use Agno's native incremental loading
-            self.knowledge_base.load(recreate=False, skip_existing=True)
-
-            logger.info(
-                "Knowledge base reloaded",
-                component="csv_hot_reload",
-                method="agno_incremental",
-            )
+            # Use smart incremental loading directly - it handles everything
+            # It will read the CSV, compare with DB, and only process changes
+            from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+            smart_loader = SmartIncrementalLoader(csv_path=str(self.csv_path), kb=self.knowledge_base)
+            result = smart_loader.smart_load()
+            
+            if "error" in result:
+                logger.warning("Smart reload failed, using fallback", error=result["error"])
+                # Fallback to basic upsert - but this should only process new docs
+                self.knowledge_base.load(recreate=False, upsert=True)
+            else:
+                strategy = result.get("strategy", "unknown")
+                changes = {
+                    "new": result.get("new_rows_processed", 0),
+                    "strategy": strategy,
+                    "total": result.get("entries_processed", 0)
+                }
+                logger.debug("Smart reload completed", strategy=strategy, **changes)
 
         except Exception as e:
             logger.error(
@@ -188,7 +176,7 @@ class CSVHotReloadManager:
 
     def force_reload(self):
         """Manually force a reload."""
-        logger.info("Force reloading knowledge base", component="csv_hot_reload")
+        logger.debug("Force reloading knowledge base", component="csv_hot_reload")
         self._reload_knowledge_base()
 
 
