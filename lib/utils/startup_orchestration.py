@@ -121,7 +121,7 @@ async def initialize_knowledge_base() -> Any | None:
     try:
         from pathlib import Path
 
-        from lib.knowledge.csv_hot_reload import CSVHotReloadManager
+        from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
         from lib.utils.version_factory import load_global_knowledge_config
 
         # Load centralized knowledge configuration

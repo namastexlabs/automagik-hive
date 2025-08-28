@@ -17,7 +17,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 import pytest
 
-from lib.knowledge.csv_hot_reload import CSVHotReloadManager, main
+from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
 
 class TestCSVHotReloadSourceExecution:

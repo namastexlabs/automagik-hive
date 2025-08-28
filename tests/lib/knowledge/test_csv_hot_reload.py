@@ -19,7 +19,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from lib.knowledge.csv_hot_reload import CSVHotReloadManager, main
+from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
 
 class TestCSVHotReloadManagerInitialization:
@@ -336,7 +336,7 @@ class TestCSVHotReloadManagerFileWatching:
 
     def test_event_handler_methods_directly(self):
         """Test the event handler methods directly to increase coverage."""
-        from lib.knowledge.csv_hot_reload import CSVHotReloadManager
+        from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
         # Create manager and mock the reload method
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))

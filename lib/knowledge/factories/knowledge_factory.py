@@ -99,7 +99,7 @@ def create_knowledge_base(
     # Get CSV path from configuration or use default
     if csv_path is None:
         # Use path from config relative to knowledge folder
-        csv_path = config.get("knowledge", {}).get("csv_file_path", "knowledge_rag.csv")
+        csv_path = config.get("knowledge", {}).get("csv_file_path", "data/knowledge_rag.csv")
         csv_path = Path(__file__).parent / csv_path
         logger.debug("Using CSV path from configuration", csv_path=str(csv_path))
     else:
@@ -217,7 +217,7 @@ def create_knowledge_base(
 def _load_knowledge_config() -> dict[str, Any]:
     """Load knowledge configuration from config file"""
     try:
-        config_path = Path(__file__).parent / "config.yaml"
+        config_path = Path(__file__).parent.parent / "config.yaml"
         with open(config_path) as f:
             return yaml.safe_load(f)
     except Exception as e:

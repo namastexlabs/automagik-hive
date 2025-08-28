@@ -12,12 +12,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lib.knowledge.config_aware_filter import ConfigAwareFilter
+from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter
 
 # Import knowledge modules
-from lib.knowledge.csv_hot_reload import CSVHotReloadManager
-from lib.knowledge.knowledge_factory import create_knowledge_base, get_knowledge_base
-from lib.knowledge.metadata_csv_reader import MetadataCSVReader
+from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
+from lib.knowledge.factories.knowledge_factory import create_knowledge_base, get_knowledge_base
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
@@ -84,69 +83,6 @@ class TestCSVHotReloadManager:
             manager = CSVHotReloadManager("/non/existent/file.csv")
             status = manager.get_status()
             assert not status["file_exists"]
-
-
-class TestMetadataCSVReader:
-    """Test metadata CSV reading functionality."""
-
-    def setup_method(self):
-        """Set up test environment."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.csv_file = Path(self.temp_dir) / "metadata.csv"
-
-    def teardown_method(self):
-        """Clean up test environment."""
-        import shutil
-
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_csv_reading_basic(self):
-        """Test basic CSV file reading."""
-        # Create test CSV with metadata - use 'problem' as content column (default)
-        test_data = [
-            ["problem", "answer", "category", "priority"],
-            ["What is AI?", "Artificial Intelligence", "tech", "high"],
-            ["How to code?", "Practice daily", "programming", "medium"],
-        ]
-
-        with open(self.csv_file, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerows(test_data)
-
-        # Create reader with 'problem' as content column
-        reader = MetadataCSVReader(content_column="problem")
-        documents = reader.read(self.csv_file)
-
-        assert len(documents) == 2  # Excluding header
-        assert documents[0].content == "What is AI?"
-        assert documents[0].meta_data["category"] == "tech"
-        assert documents[1].content == "How to code?"
-        assert documents[1].meta_data["priority"] == "medium"
-
-    def test_empty_csv_handling(self):
-        """Test handling of empty CSV files."""
-        # Create empty CSV
-        with open(self.csv_file, "w"):
-            pass
-
-        reader = MetadataCSVReader()
-        # Empty CSV should raise FileNotFoundError or return empty list
-        try:
-            documents = reader.read(self.csv_file)
-            assert documents == []
-        except Exception:
-            # It's okay if it raises an exception for empty files
-            pass
-
-    def test_header_only_csv(self):
-        """Test CSV with only headers."""
-        with open(self.csv_file, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["problem", "answer", "metadata"])
-
-        reader = MetadataCSVReader(content_column="problem")
-        documents = reader.read(self.csv_file)
-        assert documents == []
 
 
 class TestRowBasedCSVKnowledge:
@@ -239,12 +175,12 @@ class TestRowBasedCSVKnowledge:
             assert len(results) >= 0  # Should not crash
 
 
-class TestConfigAwareFilter:
+class TestBusinessUnitFilter:
     """Test configuration-aware filtering."""
 
     @patch("lib.knowledge.config_aware_filter.load_global_knowledge_config")
     def test_filter_creation(self, mock_load_config):
-        """Test ConfigAwareFilter can be created."""
+        """Test BusinessUnitFilter can be created."""
         # Mock the global config loading
         mock_load_config.return_value = {
             "business_units": {
@@ -257,7 +193,7 @@ class TestConfigAwareFilter:
             "performance": {"cache_ttl": 300},
         }
 
-        filter_obj = ConfigAwareFilter()
+        filter_obj = BusinessUnitFilter()
         assert filter_obj is not None
         assert "engineering" in filter_obj.business_units
 
@@ -278,7 +214,7 @@ class TestConfigAwareFilter:
             "performance": {"cache_ttl": 300},
         }
 
-        filter_obj = ConfigAwareFilter()
+        filter_obj = BusinessUnitFilter()
 
         # Test business unit detection
         text = "I have a problem with Python code development"
@@ -403,7 +339,6 @@ class TestKnowledgeModuleImports:
         """Test all knowledge modules can be imported without errors."""
         modules_to_test = [
             "csv_hot_reload",
-            "metadata_csv_reader",
             "row_based_csv_knowledge",
             "config_aware_filter",
             "smart_incremental_loader",
@@ -426,14 +361,7 @@ class TestKnowledgeErrorHandling:
 
     def test_nonexistent_csv_handling(self):
         """Test handling of non-existent CSV files."""
-        # Test MetadataCSVReader
-        reader = MetadataCSVReader()
-        try:
-            documents = reader.read(Path("/non/existent/file.csv"))
-            assert documents == []
-        except FileNotFoundError:
-            # Expected behavior for missing files
-            pass
+        # MetadataCSVReader removed - was dead code
 
         # Test RowBasedCSVKnowledgeBase with missing file
         from agno.vectordb.base import VectorDb
@@ -469,13 +397,7 @@ class TestKnowledgeErrorHandling:
             f.flush()
 
             try:
-                # Test readers handle malformed CSV gracefully
-                reader = MetadataCSVReader(content_column="incomplete")
-                documents = reader.read(Path(f.name))
-                # Should handle gracefully, not crash
-                assert isinstance(documents, list)
-            except Exception:
-                # It's OK if it raises an exception, as long as it doesn't crash the test runner
+                # MetadataCSVReader removed - was dead code
                 pass
             finally:
                 os.unlink(f.name)
@@ -499,7 +421,7 @@ class TestKnowledgeIntegration:
     @patch("lib.knowledge.config_aware_filter.load_global_knowledge_config")
     def test_full_knowledge_pipeline(self, mock_config_load, mock_pgvector, mock_kb):
         """Test full knowledge processing pipeline."""
-        # Mock config for ConfigAwareFilter
+        # Mock config for BusinessUnitFilter
         mock_config_load.return_value = {
             "business_units": {
                 "engineering": {
@@ -526,10 +448,8 @@ class TestKnowledgeIntegration:
 
         # Test the pipeline
         try:
-            # 1. Test CSV reading
-            reader = MetadataCSVReader(content_column="problem")
-            documents = reader.read(csv_file)
-            assert len(documents) == 3
+            # CSV reading functionality moved to other components
+            # MetadataCSVReader was dead code, removed
 
             # 2. Test knowledge base
             from agno.vectordb.base import VectorDb
@@ -548,7 +468,7 @@ class TestKnowledgeIntegration:
                 assert status["file_exists"]
 
             # 4. Test filtering
-            filter_obj = ConfigAwareFilter()
+            filter_obj = BusinessUnitFilter()
             assert filter_obj is not None
             units = filter_obj.list_business_units()
             assert isinstance(units, dict)

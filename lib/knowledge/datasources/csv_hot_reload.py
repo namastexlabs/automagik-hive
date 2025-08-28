@@ -16,9 +16,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Use unified logging system
-from agno.vectordb.pgvector import PgVector
-from agno.embedder.openai import OpenAIEmbedder
-
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.logging import logger
 from lib.utils.version_factory import load_global_knowledge_config
@@ -40,7 +37,7 @@ class CSVHotReloadManager:
                 global_config = load_global_knowledge_config()
                 csv_filename = global_config.get("csv_file_path", "knowledge_rag.csv")
                 # Make path relative to knowledge directory (same as knowledge_factory.py)
-                csv_path = str(Path(__file__).parent / csv_filename)
+                csv_path = str(Path(__file__).parent.parent / csv_filename)
                 logger.debug("Using CSV path from centralized config", csv_path=csv_path)
             except Exception as e:
                 logger.warning(
@@ -68,7 +65,7 @@ class CSVHotReloadManager:
         try:
             # Use the shared knowledge base from knowledge_factory
             # This prevents duplicate loading and ensures we use the same instance
-            from lib.knowledge.knowledge_factory import get_knowledge_base
+            from lib.knowledge.factories.knowledge_factory import get_knowledge_base
             
             self.knowledge_base = get_knowledge_base(csv_path=str(self.csv_path))
             
@@ -180,37 +177,3 @@ class CSVHotReloadManager:
         self._reload_knowledge_base()
 
 
-def main():
-    """Main entry point for standalone execution"""
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="CSV Hot Reload Manager for PagBank Knowledge Base - Real-Time Watchdog"
-    )
-    parser.add_argument(
-        "--csv", default="knowledge/knowledge_rag.csv", help="Path to CSV file"
-    )
-    parser.add_argument("--status", action="store_true", help="Show status and exit")
-    parser.add_argument(
-        "--force-reload", action="store_true", help="Force reload and exit"
-    )
-
-    args = parser.parse_args()
-
-    manager = CSVHotReloadManager(args.csv)
-
-    if args.status:
-        status = manager.get_status()
-        logger.info("Status Report", **status)
-        return
-
-    if args.force_reload:
-        manager.force_reload()
-        return
-
-    # Start watching
-    manager.start_watching()
-
-
-if __name__ == "__main__":
-    main()

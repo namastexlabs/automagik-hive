@@ -12,8 +12,8 @@ from pathlib import Path
 from unittest.mock import patch, Mock, mock_open
 
 # Direct imports to trigger coverage
-import lib.knowledge.knowledge_factory as factory_module
-from lib.knowledge.knowledge_factory import (
+import lib.knowledge.factories.knowledge_factory as factory_module
+from lib.knowledge.factories.knowledge_factory import (
     _load_knowledge_config,
     _check_knowledge_base_exists,
     create_knowledge_base,
@@ -132,11 +132,11 @@ knowledge:
         
         with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
             # Mock the external dependencies but let the main logic run
-            with patch('lib.knowledge.knowledge_factory.PgVector') as mock_pgvector:
+            with patch('lib.knowledge.factories.knowledge_factory.PgVector') as mock_pgvector:
                 mock_vector_db = Mock()
                 mock_pgvector.return_value = mock_vector_db
                 
-                with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
+                with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
                     mock_kb = Mock()
                     mock_kb_class.return_value = mock_kb
                     
@@ -164,7 +164,7 @@ knowledge:
     def test_create_knowledge_base_csv_path_resolution(self):
         """Test CSV path resolution logic"""
         with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
-            with patch('lib.knowledge.knowledge_factory._load_knowledge_config') as mock_config:
+            with patch('lib.knowledge.factories.knowledge_factory._load_knowledge_config') as mock_config:
                 mock_config.return_value = {
                     'knowledge': {
                         'csv_file_path': 'custom_knowledge.csv',
@@ -173,8 +173,8 @@ knowledge:
                     }
                 }
                 
-                with patch('lib.knowledge.knowledge_factory.PgVector'):
-                    with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
+                with patch('lib.knowledge.factories.knowledge_factory.PgVector'):
+                    with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
                         mock_kb = Mock()
                         mock_kb_class.return_value = mock_kb
                         
@@ -200,7 +200,7 @@ knowledge:
         custom_path = "/custom/path/knowledge.csv"
         
         with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
-            with patch('lib.knowledge.knowledge_factory._load_knowledge_config') as mock_config:
+            with patch('lib.knowledge.factories.knowledge_factory._load_knowledge_config') as mock_config:
                 mock_config.return_value = {
                     'knowledge': {
                         'vector_db': {'table_name': 'test_kb'},
@@ -208,8 +208,8 @@ knowledge:
                     }
                 }
                 
-                with patch('lib.knowledge.knowledge_factory.PgVector'):
-                    with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
+                with patch('lib.knowledge.factories.knowledge_factory.PgVector'):
+                    with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
                         mock_kb = Mock()
                         mock_kb_class.return_value = mock_kb
                         
@@ -237,7 +237,7 @@ knowledge:
             factory_module._shared_kb = None  # Reset for each test case
             
             with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
-                with patch('lib.knowledge.knowledge_factory._load_knowledge_config') as mock_config:
+                with patch('lib.knowledge.factories.knowledge_factory._load_knowledge_config') as mock_config:
                     mock_config.return_value = {
                         'knowledge': {
                             'vector_db': {'table_name': 'test_kb'},
@@ -245,8 +245,8 @@ knowledge:
                         }
                     }
                     
-                    with patch('lib.knowledge.knowledge_factory.PgVector'):
-                        with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
+                    with patch('lib.knowledge.factories.knowledge_factory.PgVector'):
+                        with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
                             mock_kb = Mock()
                             mock_kb_class.return_value = mock_kb
                             
@@ -283,7 +283,7 @@ knowledge:
             factory_module._shared_kb = None  # Reset for each test
             
             with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
-                with patch('lib.knowledge.knowledge_factory._load_knowledge_config') as mock_config:
+                with patch('lib.knowledge.factories.knowledge_factory._load_knowledge_config') as mock_config:
                     mock_config.return_value = {
                         'knowledge': {
                             'csv_file_path': 'test.csv',
@@ -292,8 +292,8 @@ knowledge:
                         }
                     }
                     
-                    with patch('lib.knowledge.knowledge_factory.PgVector'):
-                        with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
+                    with patch('lib.knowledge.factories.knowledge_factory.PgVector'):
+                        with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
                             mock_kb = Mock()
                             mock_kb_class.return_value = mock_kb
                             
@@ -318,7 +318,7 @@ knowledge:
     def test_smart_loader_import_failure(self):
         """Test behavior when smart loader import fails"""
         with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
-            with patch('lib.knowledge.knowledge_factory._load_knowledge_config') as mock_config:
+            with patch('lib.knowledge.factories.knowledge_factory._load_knowledge_config') as mock_config:
                 mock_config.return_value = {
                     'knowledge': {
                         'csv_file_path': 'test.csv',
@@ -327,8 +327,8 @@ knowledge:
                     }
                 }
                 
-                with patch('lib.knowledge.knowledge_factory.PgVector'):
-                    with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
+                with patch('lib.knowledge.factories.knowledge_factory.PgVector'):
+                    with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
                         mock_kb = Mock()
                         mock_kb_class.return_value = mock_kb
                         
@@ -343,7 +343,7 @@ knowledge:
     def test_thread_safety_singleton(self):
         """Test thread-safe singleton behavior"""
         with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
-            with patch('lib.knowledge.knowledge_factory._load_knowledge_config') as mock_config:
+            with patch('lib.knowledge.factories.knowledge_factory._load_knowledge_config') as mock_config:
                 mock_config.return_value = {
                     'knowledge': {
                         'csv_file_path': 'test.csv',
@@ -352,8 +352,8 @@ knowledge:
                     }
                 }
                 
-                with patch('lib.knowledge.knowledge_factory.PgVector'):
-                    with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
+                with patch('lib.knowledge.factories.knowledge_factory.PgVector'):
+                    with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase') as mock_kb_class:
                         mock_kb = Mock()
                         mock_kb_class.return_value = mock_kb
                         
@@ -393,7 +393,7 @@ knowledge:
 
     def test_get_knowledge_base_delegation(self):
         """Test that get_knowledge_base delegates to create_knowledge_base"""
-        with patch('lib.knowledge.knowledge_factory.create_knowledge_base') as mock_create:
+        with patch('lib.knowledge.factories.knowledge_factory.create_knowledge_base') as mock_create:
             mock_kb = Mock()
             mock_create.return_value = mock_kb
             
@@ -412,7 +412,7 @@ knowledge:
     def test_vector_db_configuration_defaults(self):
         """Test vector database configuration with default values"""
         with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):
-            with patch('lib.knowledge.knowledge_factory._load_knowledge_config') as mock_config:
+            with patch('lib.knowledge.factories.knowledge_factory._load_knowledge_config') as mock_config:
                 # Config with minimal vector_db settings
                 mock_config.return_value = {
                     'knowledge': {
@@ -422,11 +422,11 @@ knowledge:
                     }
                 }
                 
-                with patch('lib.knowledge.knowledge_factory.PgVector') as mock_pgvector:
+                with patch('lib.knowledge.factories.knowledge_factory.PgVector') as mock_pgvector:
                     mock_vector_db = Mock()
                     mock_pgvector.return_value = mock_vector_db
                     
-                    with patch('lib.knowledge.knowledge_factory.RowBasedCSVKnowledgeBase'):
+                    with patch('lib.knowledge.factories.knowledge_factory.RowBasedCSVKnowledgeBase'):
                         with patch('lib.knowledge.smart_incremental_loader.SmartIncrementalLoader') as mock_loader:
                             mock_loader_instance = Mock()
                             mock_loader_instance.smart_load.return_value = {'strategy': 'no_changes'}

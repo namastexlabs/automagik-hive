@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch, MagicMock
 import pytest
 import sys
 
-from lib.knowledge.csv_hot_reload import CSVHotReloadManager, main
+from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
 
 class TestFileWatchingImplementationDetails:
@@ -94,7 +94,7 @@ class TestFileWatchingImplementationDetails:
         manager = manager_with_mocked_kb
         
         # Create the inner SimpleHandler class manually to test its methods
-        from lib.knowledge.csv_hot_reload import CSVHotReloadManager
+        from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
         
         # We need to create the handler as it would be created inside start_watching
         class TestSimpleHandler:

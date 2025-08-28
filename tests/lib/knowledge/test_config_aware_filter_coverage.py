@@ -1,5 +1,5 @@
 """
-Enhanced test suite for ConfigAwareFilter - targeting 50%+ coverage.
+Enhanced test suite for BusinessUnitFilter - targeting 50%+ coverage.
 
 This test suite covers business unit detection, configuration loading,
 document filtering, and performance settings with comprehensive edge cases.
@@ -8,11 +8,11 @@ document filtering, and performance settings with comprehensive edge cases.
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-from lib.knowledge.config_aware_filter import ConfigAwareFilter, test_config_filter
+from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter, test_config_filter
 
 
-class TestConfigAwareFilterInitialization:
-    """Test ConfigAwareFilter initialization and setup."""
+class TestBusinessUnitFilterInitialization:
+    """Test BusinessUnitFilter initialization and setup."""
     
     def test_init_loads_global_config(self):
         """Test initialization loads global configuration."""
@@ -35,10 +35,10 @@ class TestConfigAwareFilterInitialization:
             }
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             assert filter_instance.config == mock_config
             assert filter_instance.business_units == mock_config["business_units"]
@@ -66,10 +66,10 @@ class TestConfigAwareFilterInitialization:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Check keyword to business unit mapping
             assert "pix" in filter_instance.keyword_to_business_unit
@@ -95,10 +95,10 @@ class TestConfigAwareFilterInitialization:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = empty_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             assert filter_instance.business_units == {}
             assert filter_instance.keyword_to_business_unit == {}
@@ -117,10 +117,10 @@ class TestConfigAwareFilterInitialization:
             # Missing search_config and performance
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = partial_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Should use .get() with defaults to handle missing keys
             assert filter_instance.search_config == {}
@@ -164,9 +164,9 @@ class TestBusinessUnitDetection:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            return ConfigAwareFilter()
+            return BusinessUnitFilter()
             
     def test_detect_business_unit_single_match(self, filter_with_test_config):
         """Test detecting business unit with single keyword match."""
@@ -273,9 +273,9 @@ class TestConfigurationAccess:
             }
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            return ConfigAwareFilter()
+            return BusinessUnitFilter()
             
     def test_get_search_params_custom_values(self, filter_with_full_config):
         """Test getting search parameters with custom values."""
@@ -290,10 +290,10 @@ class TestConfigurationAccess:
         """Test getting search parameters with default values."""
         mock_config = {"business_units": {}, "search_config": {}, "performance": {}}
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             params = filter_instance.get_search_params()
             
             assert params["max_results"] == 3  # Default
@@ -313,10 +313,10 @@ class TestConfigurationAccess:
         """Test getting performance settings with default values."""
         mock_config = {"business_units": {}, "search_config": {}, "performance": {}}
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             settings = filter_instance.get_performance_settings()
             
             assert settings["cache_ttl"] == 300  # Default
@@ -349,9 +349,9 @@ class TestBusinessUnitInformationAccess:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            return ConfigAwareFilter()
+            return BusinessUnitFilter()
             
     def test_get_business_unit_info_existing_unit(self, filter_with_units):
         """Test getting information for existing business unit."""
@@ -381,10 +381,10 @@ class TestBusinessUnitInformationAccess:
         """Test listing business units when none are configured."""
         mock_config = {"business_units": {}, "search_config": {}, "performance": {}}
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             units = filter_instance.list_business_units()
             
             assert units == {}
@@ -415,9 +415,9 @@ class TestDocumentFiltering:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            return ConfigAwareFilter()
+            return BusinessUnitFilter()
             
     def test_filter_documents_with_metadata(self, filter_for_document_tests):
         """Test filtering documents that have business unit metadata."""
@@ -522,9 +522,9 @@ class TestDocumentFiltering:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Create a simple object without content attribute
             class DocWithoutContent:
@@ -573,10 +573,10 @@ class TestEdgeCasesAndErrorHandling:
             "performance": {}     # Empty but valid dict
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config_with_missing_fields
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Unit1 should work with defaults for missing fields
             assert "unit1" in filter_instance.business_unit_keywords
@@ -608,10 +608,10 @@ class TestEdgeCasesAndErrorHandling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Should detect keywords with special characters
             detected = filter_instance.detect_business_unit_from_text("I need help with pix@ transfer")
@@ -632,10 +632,10 @@ class TestEdgeCasesAndErrorHandling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             detected = filter_instance.detect_business_unit_from_text("Tenho problema com pagaménto")
             assert detected == "unicode"
@@ -655,9 +655,9 @@ class TestEdgeCasesAndErrorHandling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             doc = Mock()
             doc.meta_data = {}
@@ -693,10 +693,10 @@ class TestEdgeCasesAndErrorHandling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             results = []
             errors = []
             
@@ -753,9 +753,9 @@ class TestEdgeCasesAndErrorHandling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Document with exact team name match
             doc1 = Mock()
@@ -809,9 +809,9 @@ class TestEdgeCasesAndErrorHandling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Test text with only common keyword - should pick one (first or highest score)
             detected = filter_instance.detect_business_unit_from_text("I have a common issue")
@@ -851,7 +851,7 @@ class TestTestFunction:
             }
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
             # Should execute without raising exceptions
@@ -865,7 +865,7 @@ class TestTestFunction:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = empty_config
             
             # Should execute without raising exceptions even with empty config
@@ -911,10 +911,10 @@ class TestRealWorldScenarios:
             }
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = financial_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Test Portuguese text detection
             test_cases = [
@@ -965,10 +965,10 @@ class TestRealWorldScenarios:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = multilang_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             multilang_test_cases = [
                 ("I need help with my account", "support"),  # English
@@ -1003,10 +1003,10 @@ class TestRealWorldScenarios:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = large_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Should handle large keyword sets without performance issues
             import time

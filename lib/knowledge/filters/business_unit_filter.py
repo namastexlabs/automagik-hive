@@ -1,5 +1,5 @@
 """
-Config-Aware Knowledge Base Filter
+Business Unit Knowledge Base Filter
 Leverages the comprehensive business unit configuration for enhanced filtering
 """
 
@@ -9,9 +9,9 @@ from lib.logging import logger
 from lib.utils.version_factory import load_global_knowledge_config
 
 
-class ConfigAwareFilter:
+class BusinessUnitFilter:
     """
-    Enhanced filter that uses the comprehensive business unit configuration
+    Business unit filter that uses the comprehensive business unit configuration
     from config.yaml for intelligent keyword matching and content filtering.
     """
 
@@ -26,7 +26,7 @@ class ConfigAwareFilter:
         self._build_keyword_maps()
 
         logger.info(
-            "Config-aware filter initialized",
+            "Business unit filter initialized",
             business_units=len(self.business_units),
             total_keywords=sum(
                 len(bu.get("keywords", [])) for bu in self.business_units.values()
@@ -142,8 +142,6 @@ class ConfigAwareFilter:
             return documents
 
         filtered_docs = []
-        # Note: target_keywords would be used for filtering if needed
-        # target_keywords = self.business_unit_keywords[target_unit]["keywords"]
 
         for doc in documents:
             # Check existing metadata first
@@ -184,38 +182,31 @@ class ConfigAwareFilter:
 
 
 def test_config_filter():
-    """Test the config-aware filter functionality."""
-    logger.info("Testing Config-Aware Filter")
-    logger.info("" + "=" * 40)
-
-    filter_instance = ConfigAwareFilter()
-
+    """Test function to demonstrate BusinessUnitFilter functionality."""
+    # Create filter instance
+    filter_instance = BusinessUnitFilter()
+    
+    logger.info("Testing BusinessUnitFilter functionality")
+    
     # Test business unit detection
     test_texts = [
-        "Estou com problema no PIX, não consigo fazer transferência",
-        "Preciso antecipar vendas da minha máquina de cartão",
-        "Meu cartão de crédito não chegou ainda, qual o limite?",
+        "I need help with payment processing issues",
+        "My account has problems and I need support",
+        "Terminal configuration for merchant services"
     ]
-
+    
     for text in test_texts:
         detected = filter_instance.detect_business_unit_from_text(text)
         if detected:
             unit_info = filter_instance.get_business_unit_info(detected)
-            logger.info(f"📊 Text: {text[:50]}...")
-            logger.info(f"📊 Detected: {unit_info['name']} ({detected})")
-
-    # Test search and performance settings
+            logger.info(f"Detected '{detected}' for text: '{text}'", unit_info=unit_info)
+    
+    # Test configuration access
     search_params = filter_instance.get_search_params()
     performance_settings = filter_instance.get_performance_settings()
-
-    logger.info("Configuration Settings:")
-    logger.info(f"📊 Max Results: {search_params['max_results']}")
-    logger.info(f"⚡ Cache TTL: {performance_settings['cache_ttl']} seconds")
-
-    # List all business units
-    units = filter_instance.list_business_units()
-    logger.info(f"📊 Available Business Units: {list(units.values())}")
-
-
-if __name__ == "__main__":
-    test_config_filter()
+    business_units = filter_instance.list_business_units()
+    
+    logger.info("Configuration retrieved", 
+               search_params=search_params,
+               performance_settings=performance_settings,
+               business_units=business_units)

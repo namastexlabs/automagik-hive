@@ -1,34 +1,35 @@
-# 🧞✨ WISH: Knowledge System INCREMENTAL Cleanup & Refactoring
+# 🧞✨ WISH: Knowledge System SURGICAL Refactoring & Organization
 
 **Wish ID**: knowledge-system-cleanup-2025-01-28  
-**Status**: 📋 Planning Phase  
-**Complexity**: 9/10 - Major architectural refactoring WITH ZERO DOWNTIME  
-**Approach**: 🔪 **SURGICAL EXTRACTION with SAFETY-FIRST PRINCIPLES**  
-**Philosophy**: "If it works, don't rewrite it - just organize it better" with incremental safety-first migration  
-**Execution Strategy**: Progressive refinement through surgical code extraction while preserving ALL working functionality  
+**Status**: 📋 Planning Phase (Final Revision with Ultra-Deep Analysis)  
+**Complexity**: 7/10 - Surgical extraction and reorganization  
+**Approach**: 🔪 **SURGICAL EXTRACTION - Preserve ALL Working Algorithms**  
+**Philosophy**: "Extract and organize, don't reinvent the wheel"  
 
-## 🚨 REVISED APPROACH - ULTRA-DEEP ANALYSIS COMPLETE
+## 🚨 ULTRA-DEEP ANALYSIS COMPLETE
 
-### Dead Code Discovery (300+ Lines Found!)
-After comprehensive analysis, we found **~300 lines of dead code**:
-- **ENTIRE FILE DEAD**: `metadata_csv_reader.py` (229 lines) - only used in tests
-- **Dead Functions**: `test_config_filter()` (36 lines), `main()` in loader (35 lines)
+### Dead Code Discovery (400+ Lines Found!)
+After comprehensive analysis, we found **~400+ lines of dead code**:
+- **ENTIRE FILE DEAD**: `metadata_csv_reader.py` (229 lines) - only used in tests, never in production
+- **Dead Functions**: `test_config_filter()` (36 lines), `main()` in loader (35 lines)  
 - **Unused Imports**: PgVector, OpenAIEmbedder in csv_hot_reload.py
-- **Commented Code**: Multiple locations with stale comments
+- **Commented Code**: Line 146 in config_aware_filter.py
+- **Dead Config**: ~100 lines in config.yaml (60% of the file is unused!)
 
-### Organizational Chaos
-- **Everything in one folder**: 7 Python files all in `/lib/knowledge/`
-- **No separation of concerns**: Database, business logic, config all mixed
-- **God class**: SmartIncrementalLoader (751 lines) doing everything
+### Current Organizational Chaos
+- **Everything in one folder**: 7 Python files all crammed in `/lib/knowledge/`
+- **No separation of concerns**: Database, business logic, config all mixed together
+- **God class nightmare**: SmartIncrementalLoader (751 lines) doing EVERYTHING
+- **Confusing names**: config_aware_filter.py (actually business unit filter)
 
 ## 📋 Executive Summary
 
-**SURGICAL** refactoring of the `/lib/knowledge/` system to achieve:
-- **ZERO dead code** - 300+ lines removed (~300 found in deep analysis)
-- **ZERO naming violations** - Full CLAUDE.md compliance  
-- **ZERO architectural violations** - Clean subfolder organization
-- **100% KISS compliance** - Simplified with proper structure
-- **Full test coverage** - All tests passing as final validation
+**SURGICAL** refactoring to achieve ALL success criteria:
+- ✅ **ZERO dead code** - Remove 300+ lines identified
+- ✅ **ZERO naming violations** - Rename for clarity  
+- ✅ **ZERO architectural violations** - Proper subfolder organization
+- ✅ **100% KISS compliance** - Extract complexity, don't add it
+- ✅ **All tests passing** - Final validation of working system
 
 ## 📂 NEW FOLDER ORGANIZATION (Clean Architecture)
 
@@ -36,704 +37,407 @@ After comprehensive analysis, we found **~300 lines of dead code**:
 lib/knowledge/
 ├── core/                    # Core interfaces and base classes
 │   ├── __init__.py
-│   └── base.py             # KnowledgeBase abstract class (extracted)
+│   └── base.py             # KnowledgeBase abstract class (extracted from row_based_csv)
 │
 ├── repositories/            # Database layer (ALL SQL goes here)
 │   ├── __init__.py
-│   └── knowledge_repository.py  # All database operations
+│   └── knowledge_repository.py  # All database operations from SmartIncrementalLoader
 │
-├── services/               # Business logic (algorithms stay intact)
+├── services/               # Business logic (algorithms stay EXACTLY the same)
 │   ├── __init__.py
-│   ├── incremental_loader.py   # Refactored from SmartIncrementalLoader
-│   ├── hash_manager.py         # Hash calculation logic
-│   └── change_analyzer.py      # Change detection logic
+│   ├── incremental_loader.py   # Orchestrator (slim version of SmartIncrementalLoader)
+│   ├── hash_manager.py         # Hash calculation logic (extracted)
+│   └── change_analyzer.py      # Change detection logic (extracted)
 │
 ├── datasources/            # Data access layer
 │   ├── __init__.py
-│   ├── csv_datasource.py      # CSV file operations
-│   └── csv_hot_reload.py      # File watching (moved)
+│   ├── csv_datasource.py      # CSV operations (extracted from loader)
+│   ├── csv_hot_reload.py      # File watching (moved here, cleaned)
+│   └── row_based_csv.py       # Row-based knowledge (moved from root)
 │
-├── config/                 # Configuration management
+├── config/                 # Configuration management code
 │   ├── __init__.py
-│   ├── config.yaml            # All settings (moved)
-│   └── manager.py            # ConfigManager (consolidated)
+│   └── manager.py            # Single ConfigManager (replaces multiple loaders)
 │
 ├── filters/                # Business filters
 │   ├── __init__.py
-│   └── business_unit_filter.py  # Renamed from config_aware_filter
+│   └── business_unit_filter.py  # RENAMED from config_aware_filter.py
 │
 ├── factories/              # Object creation
 │   ├── __init__.py
-│   └── knowledge_factory.py    # Factory pattern (moved)
+│   └── knowledge_factory.py    # Factory pattern (moved here)
 │
-└── data/                   # Data files
-    └── knowledge_rag.csv      # CSV data (moved)
+├── data/                   # Data files
+│   └── knowledge_rag.csv      # CSV data (moved here)
+│
+└── config.yaml             # Configuration at root level (like agents/teams pattern)
+
+DELETED FILES:
+└── metadata_csv_reader.py     # 229 lines of dead code - DELETED
 ```
 
-## 🎯 Success Criteria
+## 🎯 Success Criteria (MUST ACHIEVE ALL)
 
-### Quantitative Metrics (MUST ACHIEVE ALL)
-- [ ] **Dead code**: ZERO (removing 300+ lines identified)
+- [ ] **Dead code**: ZERO (remove all 300+ lines identified)
 - [ ] **File size**: ALL files < 350 lines (split 751-line god class)
-- [ ] **Naming violations**: ZERO (all methods/variables follow standards)
+- [ ] **Naming violations**: ZERO (rename config_aware_filter → business_unit_filter)
 - [ ] **Architectural violations**: ZERO (proper subfolder organization)
-- [ ] **KISS compliance**: 100% (no over-engineering)
-- [ ] **Test coverage**: ALL existing tests still pass
-- [ ] **SQL separation**: 100% of queries in repositories/
+- [ ] **KISS compliance**: 100% (extract, don't complicate)
+- [ ] **Test validation**: ALL existing tests still pass
+- [ ] **SQL separation**: 100% of queries moved to repositories/
 
-### Qualitative Goals
-- [ ] SOLID principles compliance
-- [ ] Repository pattern implementation
-- [ ] Dependency injection throughout
-- [ ] Clear separation of concerns
-- [ ] Comprehensive documentation
-- [ ] Type hints on all methods
+## 🔪 Phase 1: Dead Code Elimination (45 minutes)
 
-## 🔄 ALTERNATIVE SURGICAL APPROACH INTEGRATION
+### T1.0: Remove ALL Dead Code - Files and Functions
+**Owner**: hive-dev-fixer  
+**Risk**: ZERO - only removing unused code  
 
-### Core Surgical Principles (Refined Strategy)
-1. **NO ALGORITHM CHANGES** - The logic that works stays EXACTLY the same
-2. **EXTRACT, DON'T REWRITE** - Move code blocks, don't recreate them  
-3. **SQL SEPARATION ONLY** - Pull database queries into repository layer
-4. **PRESERVE FUNCTIONALITY** - Every method keeps its current behavior
-5. **FIX VIOLATIONS** - Only change names and structure, not logic
+```bash
+# 1. DELETE entire unused file (229 lines)
+rm lib/knowledge/metadata_csv_reader.py
 
-### Surgical Phase Integration
-- **Phase 1**: Dead code removal (quick & safe) 
-- **Phase 2**: Extract SQL to repository (cut & paste)
-- **Phase 3**: Split god class (extract logical units)
-- **Phase 4**: Fix naming & organization
-- **Phase 5**: Validation with behavioral equivalence
+# 2. Remove dead functions from files
+# In config_aware_filter.py: DELETE lines 186-221 (test_config_filter)
+# In smart_incremental_loader.py: DELETE lines 716-750 (main function)
 
-This surgical approach is integrated into the comprehensive safety-first migration strategy below.
+# 3. Remove unused imports
+# In csv_hot_reload.py: DELETE lines 19-20 (PgVector, OpenAIEmbedder)
 
-## 🔪 Phase 1: Dead Code Elimination (IMMEDIATE - 300+ Lines)
+# 4. Remove commented code
+# In config_aware_filter.py: DELETE line 146 (commented target_keywords)
+```
 
-### T0.0: Create Comprehensive Test Baseline
-**Owner**: hive-testing-maker  
-**Dependencies**: None  
-**Parallel**: No - MUST complete first  
-**Priority**: CRITICAL - Ensures we don't break working functionality
-
-#### Tasks:
-1. **Document current behavior**:
-   - Create integration tests that capture CURRENT working behavior
-   - Test CSV hot reload functionality
-   - Test incremental loading with real data
-   - Test business unit filtering
-   - Test database sync operations
-   
-2. **Create performance baseline**:
-   - Benchmark current load times
-   - Document memory usage patterns
-   - Record query performance metrics
-
-3. **Backup strategy**:
-   ```bash
-   # Create snapshot branch
-   git checkout -b knowledge-system-backup-2025-01-28
-   
-   # Document current working state
-   make dev &
-   curl http://localhost:8886/api/v1/health
-   # Run knowledge system tests
-   ```
-
-**Validation**: ALL existing functionality must pass before proceeding
-
-### T0.1: Create Feature Flags for Migration
+### T1.1: Clean config.yaml (100+ lines of dead config)
 **Owner**: hive-dev-coder  
-**Dependencies**: T0.0  
-**Parallel**: No  
+**Risk**: ZERO - removing unused configuration  
 
-#### Tasks:
 ```yaml
-# lib/knowledge/config.yaml - Add migration flags
-migration_flags:
-  use_new_repository: false  # Switch to new repository pattern
-  use_new_datasource: false  # Switch to new CSV datasource
-  use_new_loader: false      # Switch to refactored loader
-  enable_parallel_run: true  # Run old and new in parallel for validation
+# DELETE from config.yaml:
+
+# 1. ENTIRE domains section (lines 17-97) - 80 lines COMPLETELY UNUSED
+knowledge.domains  # DELETE ALL - development, architecture, operations
+
+# 2. Unused filter settings
+knowledge.filters.manual_filtering  # DELETE - lines 106-109
+knowledge.filters.agentic_filtering  # DELETE - lines 112-118
+
+# 3. Unused search_config parameters
+knowledge.search_config.include_metadata  # DELETE
+knowledge.search_config.search_knowledge  # DELETE
+knowledge.search_config.enable_agentic_knowledge_filters  # DELETE
+
+# 4. Unused hot_reload section
+knowledge.hot_reload  # DELETE entire section - lines 131-133
+
+# 5. Unused vector_db parameters
+knowledge.vector_db.search_type  # DELETE
+knowledge.vector_db.vector_index  # DELETE
+knowledge.vector_db.reranker  # DELETE entire section - lines 143-147
+
+# 6. Duplicate parameters (keep only csv_reader versions)
+knowledge.content_column  # DELETE - line 10 (duplicate of csv_reader.content_column)
+knowledge.metadata_columns  # DELETE - lines 11-14 (duplicate of csv_reader.metadata_columns)
+
+# 7. Unused csv_reader parameter
+knowledge.csv_reader.encoding  # DELETE - line 156
 ```
 
-## 🏗️ Phase 1: Foundation & SAFE Dead Code Elimination
+**After cleanup, config.yaml should only have**:
+- csv_file_path
+- filters.valid_metadata_fields
+- search_config (only: max_results, relevance_threshold, enable_hybrid_search, use_semantic_search)
+- performance settings
+- vector_db (only: table_name, embedder, distance)
+- csv_reader (only: content_column, metadata_columns)
 
-### T1.0: Initial Cleanup & Dead Code Removal (REVISED - SAFE)
-**Owner**: hive-dev-fixer  
-**Dependencies**: T0.0, T0.1  
-**Parallel**: No - Must validate each removal  
+**Validation**: Run `uv run pytest tests/lib/knowledge/` - ALL must pass
 
-#### Tasks:
-1. **Remove ONLY confirmed dead code** (WITH VALIDATION):
-   - Delete unused `MetadataCSVReader` class from `metadata_csv_reader.py`
-   - Remove `main()` testing function from `smart_incremental_loader.py` (lines 716-750)
-   - Remove `test_config_filter()` from `config_aware_filter.py` (lines 186-221)
-   - Clean unused imports: `PgVector`, `OpenAIEmbedder` from `csv_hot_reload.py`
-   - Remove commented code blocks throughout
+## 📂 Phase 2: Create Organization Structure (30 minutes)
 
-2. **Move magic numbers to YAML configuration**:
-   ```yaml
-   # Update lib/knowledge/config.yaml
-   knowledge_settings:
-     processing:
-       default_batch_size: 10
-       max_preview_length: 100
-       max_file_size_lines: 350  # CLAUDE.md compliance
-     
-     caching:
-       default_cache_ttl: 300
-     
-     embedding:
-       default_model: "text-embedding-3-small"
-   ```
-   
-   Then update code to read from config:
-   ```python
-   # In code files, replace hardcoded values with:
-   config = load_knowledge_config()
-   batch_size = config.get('knowledge_settings.processing.default_batch_size', 10)
-   # etc.
-   ```
-
-3. **Fix immediate security issues**:
-   - Parameterize all SQL queries properly
-   - Validate file paths against directory traversal
-   - Sanitize CSV input data
-
-**Validation**: `uv run ruff check lib/knowledge/ --fix && uv run mypy lib/knowledge/`
-
-### T1.1: Create Test Infrastructure
-**Owner**: hive-testing-maker  
-**Dependencies**: T1.0  
-**Parallel**: Can start after T1.0  
-
-#### Tasks:
-1. Create `tests/lib/knowledge/` directory structure
-2. Write unit tests for existing functionality (baseline):
-   - `test_config_aware_filter.py`
-   - `test_csv_hot_reload.py`
-   - `test_knowledge_factory.py`
-   - `test_row_based_csv.py`
-3. Create test fixtures and mock data
-4. Establish coverage baseline (target > 85%)
-
-**Validation**: `uv run pytest tests/lib/knowledge/ --cov=lib.knowledge --cov-report=term-missing`
-
-## 🔄 Phase 2: PARALLEL Implementation - New Alongside Old
-
-### T2.0: Extract Repository Layer (NEW - PARALLEL SAFE)
+### T2.0: Create Folders and Move Files
 **Owner**: hive-dev-coder  
-**Dependencies**: T1.0, T1.1  
-**Parallel**: No - Foundation for other extractions  
-**Strategy**: CREATE NEW, DON'T MODIFY OLD  
+**Strategy**: Create structure, move files, update imports  
 
-#### Create `lib/knowledge/repositories/knowledge_repository.py` (NEW FILE - DOESN'T TOUCH EXISTING):
+```bash
+# Create clean folder structure
+mkdir -p lib/knowledge/{core,repositories,services,datasources,config,filters,factories,data}
+
+# Move and rename files
+mv lib/knowledge/config_aware_filter.py lib/knowledge/filters/business_unit_filter.py
+mv lib/knowledge/csv_hot_reload.py lib/knowledge/datasources/
+mv lib/knowledge/knowledge_factory.py lib/knowledge/factories/
+mv lib/knowledge/row_based_csv_knowledge.py lib/knowledge/datasources/row_based_csv.py
+mv lib/knowledge/knowledge_rag.csv lib/knowledge/data/
+# config.yaml stays at root level
+
+# smart_incremental_loader.py stays temporarily for extraction
+```
+
+### T2.1: Update All Imports
+**Owner**: hive-dev-coder  
+
 ```python
+# Update imports throughout codebase
+# OLD: from lib.knowledge.config_aware_filter import ConfigAwareFilter
+# NEW: from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter
+
+# OLD: from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledge
+# NEW: from lib.knowledge.datasources.row_based_csv import RowBasedCSVKnowledge
+```
+
+**Validation**: `uv run python -c "from lib.knowledge.factories.knowledge_factory import *"`
+
+## 🔨 Phase 3: Surgical Extraction from God Class (2 hours)
+
+### T3.0: Extract Database Repository
+**Owner**: hive-dev-coder  
+**Strategy**: CUT database code, PASTE into repository (NO REWRITING)
+
+Create `lib/knowledge/repositories/knowledge_repository.py`:
+```python
+"""All database operations extracted from SmartIncrementalLoader."""
+
 class KnowledgeRepository:
-    """Handles all database operations for knowledge base"""
+    def __init__(self, db_manager):
+        self.db_manager = db_manager
     
-    def __init__(self, connection_pool):
-        self._pool = connection_pool
+    # CUT & PASTE from smart_incremental_loader.py lines 192-235
+    def get_existing_row_hashes(self, knowledge_component: str) -> Dict[str, str]:
+        """EXACT code moved from SmartIncrementalLoader._get_existing_row_hashes"""
+        # [Paste entire method body here - NO CHANGES to logic]
     
-    async def get_by_hash(self, content_hash: str) -> Optional[KnowledgeRecord]:
-        """Retrieve record by content hash"""
+    # CUT & PASTE from smart_incremental_loader.py lines 237-260  
+    def delete_rows_by_hashes(self, hashes: List[str], component: str) -> int:
+        """EXACT code moved from SmartIncrementalLoader"""
+        # [Paste SQL execution code - NO CHANGES]
     
-    async def get_all_hashes(self) -> Set[str]:
-        """Get all content hashes from database"""
-    
-    async def bulk_insert(self, records: List[KnowledgeRecord]) -> int:
-        """Bulk insert records with proper transaction handling"""
-    
-    async def bulk_update(self, records: List[KnowledgeRecord]) -> int:
-        """Bulk update existing records"""
-    
-    async def delete_by_hashes(self, hashes: Set[str]) -> int:
-        """Delete records by content hash"""
+    # Continue moving ALL database methods...
+    # Every SQL query gets moved here UNCHANGED
 ```
 
-### T2.1: Extract Data Source Layer
+### T3.1: Extract Hash Manager
 **Owner**: hive-dev-coder  
-**Dependencies**: T1.0  
-**Parallel**: Yes - Can run with T2.0  
+**Strategy**: CUT hash logic, PASTE into service
 
-#### Create `lib/knowledge/datasources/csv_datasource.py`:
+Create `lib/knowledge/services/hash_manager.py`:
 ```python
+"""Hash operations extracted from SmartIncrementalLoader."""
+
+class HashManager:
+    # CUT & PASTE from smart_incremental_loader.py lines 133-142
+    def calculate_row_hash(self, row: pd.Series, columns: List[str]) -> str:
+        """EXACT code - just relocated"""
+        # [Paste hash calculation - NO CHANGES]
+    
+    def compare_hashes(self, csv_hashes: Set[str], db_hashes: Set[str]) -> Tuple[Set, Set, Set]:
+        """Extract comparison logic"""
+        rows_to_add = csv_hashes - db_hashes
+        rows_to_delete = db_hashes - csv_hashes  
+        rows_unchanged = csv_hashes & db_hashes
+        return rows_to_add, rows_to_delete, rows_unchanged
+```
+
+### T3.2: Extract CSV Operations
+**Owner**: hive-dev-coder  
+**Strategy**: CUT CSV logic, PASTE into datasource
+
+Create `lib/knowledge/datasources/csv_datasource.py`:
+```python
+"""CSV operations extracted from SmartIncrementalLoader."""
+
 class CSVDataSource:
-    """Handles CSV file operations and parsing"""
+    # CUT & PASTE from smart_incremental_loader.py lines 89-131
+    def read_csv_with_hashes(self, csv_path: Path, columns: List[str]) -> Tuple[DataFrame, Dict]:
+        """EXACT code moved from SmartIncrementalLoader"""
+        # [Paste entire CSV reading logic - NO CHANGES]
     
-    def __init__(self, file_path: Path, config: CSVConfig):
-        self._path = file_path
-        self._config = config
-    
-    def read_rows(self) -> Iterator[Dict[str, Any]]:
-        """Yield rows from CSV file"""
-    
-    def get_headers(self) -> List[str]:
-        """Get CSV headers"""
-    
-    def validate_structure(self) -> ValidationResult:
-        """Validate CSV structure against expected schema"""
+    # CUT & PASTE single row processing (but fix temp file issue)
+    def process_single_row(self, row_data: Dict) -> Document:
+        """Process single row WITHOUT temp files"""
+        # Use StringIO instead of temp files
+        from io import StringIO
+        csv_buffer = StringIO()
+        # [Rest of logic stays the same]
 ```
 
-### T2.2: Extract Hash Calculator Service
+### T3.3: Extract Change Analyzer
 **Owner**: hive-dev-coder  
-**Dependencies**: T1.0  
-**Parallel**: Yes - Can run with T2.0, T2.1  
+**Strategy**: CUT change detection, PASTE into service
 
-#### Create `lib/knowledge/services/hash_calculator.py`:
+Create `lib/knowledge/services/change_analyzer.py`:
 ```python
-class HashCalculator:
-    """Handles content hashing and comparison"""
-    
-    def calculate_content_hash(self, content: str) -> str:
-        """Calculate SHA256 hash of content"""
-    
-    def calculate_row_hash(self, row: Dict[str, Any], columns: List[str]) -> str:
-        """Calculate hash for CSV row based on specified columns"""
-    
-    def compare_hashes(self, set_a: Set[str], set_b: Set[str]) -> HashComparison:
-        """Compare two sets of hashes and return differences"""
-```
+"""Change analysis extracted from SmartIncrementalLoader."""
 
-### T2.3: Extract Change Analyzer Service
-**Owner**: hive-dev-coder  
-**Dependencies**: T2.2  
-**Parallel**: No - Depends on hash calculator  
-
-#### Create `lib/knowledge/services/change_analyzer.py`:
-```python
 class ChangeAnalyzer:
-    """Analyzes changes between CSV and database state"""
+    def __init__(self, hash_manager: HashManager):
+        self.hash_manager = hash_manager
     
-    def __init__(self, hash_calculator: HashCalculator):
-        self._hasher = hash_calculator
-    
-    def analyze_changes(self, csv_data: List[Dict], db_hashes: Set[str]) -> ChangeSet:
-        """Analyze differences between CSV and database"""
-        # Returns: added, modified, deleted record sets
-    
-    def generate_update_plan(self, changes: ChangeSet) -> UpdatePlan:
-        """Create execution plan for database updates"""
+    # CUT & PASTE from analyze_changes method
+    def analyze_changes(self, csv_data: DataFrame, db_hashes: Dict) -> Dict:
+        """EXACT logic from SmartIncrementalLoader.analyze_changes"""
+        # [Paste change detection logic - NO CHANGES]
 ```
 
-### T2.4: Create NEW IncrementalLoader (PARALLEL SAFE)
+### T3.4: Slim Down SmartIncrementalLoader
 **Owner**: hive-dev-coder  
-**Dependencies**: T2.0, T2.1, T2.2, T2.3  
-**Parallel**: No - Requires all extracted components  
-**Strategy**: NEW CLASS - OLD SmartIncrementalLoader UNTOUCHED  
+**Strategy**: Now it just orchestrates the extracted components
 
-#### Create NEW `lib/knowledge/loaders/incremental_loader.py`:
+Update `smart_incremental_loader.py` → Move to `lib/knowledge/services/incremental_loader.py`:
 ```python
-class IncrementalLoader:  # NEW class, doesn't replace old yet
-    """Coordinates incremental knowledge base updates"""
+"""Slim orchestrator using extracted components."""
+
+class IncrementalLoader:  # Renamed from SmartIncrementalLoader
+    def __init__(self, csv_path, db_manager, kb_factory, config):
+        # Initialize extracted components
+        self.repository = KnowledgeRepository(db_manager)
+        self.csv_source = CSVDataSource()
+        self.hash_mgr = HashManager()
+        self.analyzer = ChangeAnalyzer(self.hash_mgr)
+        # Keep same config
     
-    def __init__(
-        self,
-        repository: KnowledgeRepository,
-        datasource: CSVDataSource,
-        change_analyzer: ChangeAnalyzer,
-        knowledge_base: KnowledgeBase
-    ):
-        # Dependency injection instead of instantiation
-        self._repo = repository
-        self._source = datasource
-        self._analyzer = change_analyzer
-        self._kb = knowledge_base
-    
-    async def load(self) -> LoadResult:
-        """Orchestrate incremental loading process"""
-        # Simplified coordination logic only
-        # No direct SQL, file I/O, or hashing
+    def load(self):
+        """Same algorithm, but delegates to components"""
+        # Read CSV
+        df, csv_hashes = self.csv_source.read_csv_with_hashes(self.csv_path, self.columns)
+        
+        # Get DB state
+        db_hashes = self.repository.get_existing_row_hashes(self.component)
+        
+        # Analyze changes
+        changes = self.analyzer.analyze_changes(df, db_hashes)
+        
+        # Process changes (same logic, but cleaner)
+        # ...rest stays similar but uses components
 ```
 
-**Target**: Reduce from 751 lines to < 200 lines
+**Target**: Reduce from 751 lines to ~200 lines
 
-### 🔄 T2.5: Validation & Checkpoint Commit
-**Owner**: hive-qa-tester  
-**Dependencies**: T2.0-T2.4  
-**Parallel**: No - Critical validation point  
+## 🏷️ Phase 4: Fix Naming & Configuration (1 hour)
 
-#### Tasks:
-1. **Parallel validation**:
-   ```python
-   # Run both old and new implementations
-   old_result = SmartIncrementalLoader().load()
-   new_result = IncrementalLoader().load()
-   assert old_result == new_result  # Must produce identical results
-   ```
-
-2. **Create checkpoint commit**:
-   ```bash
-   git add lib/knowledge/repositories/
-   git add lib/knowledge/datasources/
-   git add lib/knowledge/services/
-   git add lib/knowledge/loaders/
-   git commit -m "feat(knowledge): parallel implementation of refactored components (safe - old code untouched)"
-   git tag checkpoint-phase-2-complete
-   ```
-
-3. **Rollback procedure documented**:
-   ```bash
-   # If issues detected:
-   git reset --hard checkpoint-phase-2-complete
-   # Or revert to previous checkpoint:
-   git reset --hard checkpoint-phase-1-complete
-   ```
-
-## 🔄 Phase 3: Gradual Migration & Architecture Enhancement
-
-### T3.0: Implement Feature Flag Migration System
+### T4.0: Consolidate Configuration
 **Owner**: hive-dev-coder  
-**Dependencies**: T2.5 checkpoint  
-**Parallel**: No  
-**Strategy**: GRADUAL SWITCHOVER  
 
-#### Update `lib/knowledge/knowledge_factory.py` WITH FLAGS:
-```python
-def get_knowledge_base():
-    """Factory with migration flags"""
-    config = load_knowledge_config()
-    
-    if config.get('migration_flags.use_new_loader'):
-        # Use new implementation
-        return IncrementalLoader(...)
-    else:
-        # Keep using old implementation
-        return SmartIncrementalLoader(...)
+Update `lib/knowledge/config.yaml` (at root level):
+```yaml
+knowledge_settings:
+  processing:
+    default_batch_size: 10
+    max_preview_length: 100
+    max_file_size_lines: 350
+  caching:
+    default_cache_ttl: 300
+  embedding:
+    default_model: "text-embedding-3-small"
+  # ... existing config
 ```
 
-### T3.1: Implement Dependency Injection (NEW - SAFE)
-**Owner**: hive-dev-designer  
-**Dependencies**: T3.0  
-**Parallel**: No  
-
-#### Create `lib/knowledge/container.py`:
+Create `lib/knowledge/config/manager.py`:
 ```python
-class KnowledgeContainer:
-    """Dependency injection container"""
+"""Single configuration manager."""
+
+class ConfigManager:
+    _instance = None
+    _config = None
     
-    def __init__(self, config: KnowledgeConfig):
-        self._config = config
-        self._instances = {}
-    
-    def get_repository(self) -> KnowledgeRepository:
-        """Get or create repository instance"""
-    
-    def get_incremental_loader(self) -> IncrementalLoader:
-        """Get fully configured loader with dependencies"""
+    @classmethod
+    def get_config(cls) -> Dict:
+        """Single source of truth for configuration"""
+        if cls._config is None:
+            # Consolidate all the different load_config methods
+            config_path = Path(__file__).parent.parent / "config.yaml"  # Go up to knowledge root
+            with open(config_path) as f:
+                cls._config = yaml.safe_load(f)
+        return cls._config
 ```
 
-### T3.1: Replace Singleton Pattern
-**Owner**: hive-dev-coder  
-**Dependencies**: T3.0  
-**Parallel**: No  
-
-#### Refactor `knowledge_factory.py`:
-```python
-class KnowledgeFactory:
-    """Factory for creating knowledge base instances"""
-    
-    def __init__(self, container: KnowledgeContainer):
-        self._container = container
-    
-    def create_shared_instance(self) -> KnowledgeBase:
-        """Create properly configured shared instance"""
-        # No global state or manual locking
-```
-
-### T3.2: Implement Configuration Manager
-**Owner**: hive-dev-coder  
-**Dependencies**: T3.0  
-**Parallel**: Yes - Can run with T3.1  
-
-#### Create `lib/knowledge/config/manager.py`:
-```python
-class ConfigurationManager:
-    """Centralized configuration management"""
-    
-    def __init__(self, config_path: Path):
-        self._path = config_path
-        self._config = self._load_config()
-    
-    def get_knowledge_config(self) -> KnowledgeConfig:
-        """Get knowledge-specific configuration"""
-    
-    def get_business_units(self) -> Dict[str, BusinessUnit]:
-        """Get business unit configurations"""
-    
-    # Single source of truth for all configuration
-```
-
-### T3.3: Add Error Handling Layer
-**Owner**: hive-dev-coder  
-**Dependencies**: Phase 2 complete  
-**Parallel**: Yes  
-
-#### Create `lib/knowledge/exceptions.py`:
-```python
-class KnowledgeBaseError(Exception):
-    """Base exception for knowledge system"""
-
-class ConfigurationError(KnowledgeBaseError):
-    """Configuration-related errors"""
-
-class DataSourceError(KnowledgeBaseError):
-    """Data source access errors"""
-
-class ValidationError(KnowledgeBaseError):
-    """Data validation errors"""
-
-class RepositoryError(KnowledgeBaseError):
-    """Database operation errors"""
-```
-
-## 🎨 Phase 4: Quality & Standards Compliance
-
-### T4.0: Fix All Naming Violations
+### T4.1: Fix Method and Variable Naming
 **Owner**: hive-quality-ruff  
-**Dependencies**: Phase 3 complete  
-**Parallel**: No  
 
-#### Naming Standards:
-1. **Methods**: `snake_case`, verb prefixes (`get_`, `set_`, `calculate_`, `validate_`)
-2. **Classes**: `PascalCase`, noun phrases
-3. **Constants**: `UPPER_SNAKE_CASE`
-4. **Private**: Leading underscore `_private_method`
-5. **Files**: `snake_case.py`, descriptive module names
-
-**Validation**: `uv run ruff check lib/knowledge/ --select N`
-
-### T4.1: Add Complete Type Hints
-**Owner**: hive-quality-mypy  
-**Dependencies**: T4.0  
-**Parallel**: No  
-
-#### Type Annotation Requirements:
-- All function signatures with parameter and return types
-- Use `typing` module for complex types
-- Create type aliases for commonly used types
-- Add `py.typed` marker file
-
-**Validation**: `uv run mypy lib/knowledge/ --strict`
-
-### T4.2: Add Comprehensive Documentation
-**Owner**: hive-dev-coder  
-**Dependencies**: T4.0  
-**Parallel**: Yes - Can run with T4.1  
-
-#### Documentation Standards:
 ```python
-def process_knowledge(
-    self,
-    data: List[Dict[str, Any]],
-    config: ProcessConfig
-) -> ProcessResult:
-    """Process knowledge data according to configuration.
-    
-    Args:
-        data: List of dictionaries containing knowledge entries.
-            Each entry must have 'id', 'content', and 'metadata' keys.
-        config: Processing configuration specifying filters and transforms.
-    
-    Returns:
-        ProcessResult containing processed entries and statistics.
-    
-    Raises:
-        ValidationError: If data format is invalid.
-        ConfigurationError: If config is malformed.
-    
-    Example:
-        >>> processor = KnowledgeProcessor()
-        >>> result = processor.process_knowledge(
-        ...     data=[{"id": "1", "content": "...", "metadata": {}}],
-        ...     config=ProcessConfig(filters=["active"])
-        ... )
-        >>> print(f"Processed {result.count} entries")
-    """
+# Consistent naming throughout:
+# - Private methods: prefix with underscore
+# - Public methods: no underscore
+# - Variables: be specific (csv_row vs db_row, not just "row")
+# - Classes: clear purpose (BusinessUnitFilter not ConfigAwareFilter)
 ```
 
-### T4.3: Performance Optimization
-**Owner**: hive-dev-coder  
-**Dependencies**: Phase 3 complete  
-**Parallel**: Yes  
+## ✅ Phase 5: Final Validation (1 hour)
 
-#### Optimization Tasks:
-1. **Eliminate temporary file creation**:
-   - Process single rows in memory
-   - Use `io.StringIO` for CSV operations
-   
-2. **Optimize database queries**:
-   - Use batch operations with proper sizing
-   - Implement connection pooling
-   - Add query result caching where appropriate
-   
-3. **Improve hashing performance**:
-   - Cache computed hashes
-   - Use faster hashing for non-cryptographic needs
-
-**Validation**: Performance benchmarks showing >50% improvement
-
-## ✅ Phase 5: Validation & Integration Testing
-
-### T5.0: Integration Test Suite
+### T5.0: Run All Tests
 **Owner**: hive-testing-maker  
-**Dependencies**: Phase 4 complete  
-**Parallel**: No  
 
-#### Test Coverage Requirements:
-```python
-# tests/lib/knowledge/integration/test_end_to_end.py
-class TestKnowledgeSystemIntegration:
-    """End-to-end integration tests"""
-    
-    def test_full_incremental_load_cycle(self):
-        """Test complete load, update, delete cycle"""
-    
-    def test_concurrent_access(self):
-        """Test thread-safe shared instance access"""
-    
-    def test_large_csv_processing(self):
-        """Test with 10K+ row CSV files"""
-    
-    def test_error_recovery(self):
-        """Test graceful handling of failures"""
+```bash
+# Must achieve 100% pass rate
+uv run pytest tests/lib/knowledge/ -v
+
+# Verify no import errors
+uv run python -c "from lib.knowledge.factories.knowledge_factory import get_shared_knowledge_base"
+
+# Check file sizes
+find lib/knowledge -name "*.py" -exec wc -l {} \; | awk '$1 > 350 {print}'  # Should be empty
 ```
 
-### T5.1: Security Validation
+### T5.1: Performance Validation
 **Owner**: hive-qa-tester  
-**Dependencies**: T5.0  
-**Parallel**: Yes  
 
-#### Security Tests:
-- SQL injection attempts
-- Path traversal attempts  
-- CSV injection vectors
-- Resource exhaustion scenarios
+```python
+# Ensure no performance regression
+# - Load time: Same or better
+# - Memory usage: Same or better
+# - Query speed: Same or better
+```
 
-### T5.2: Performance Validation
-**Owner**: hive-qa-tester  
-**Dependencies**: T5.0  
-**Parallel**: Yes - Can run with T5.1  
-
-#### Performance Benchmarks:
-- Load time for 10K records: < 5 seconds
-- Memory usage: < 500MB for large datasets
-- Query response time: < 100ms p95
-- Hot reload detection: < 1 second
-
-### T5.3: Final Quality Gates
+### T5.2: Final Checklist
 **Owner**: hive-dev-fixer  
-**Dependencies**: T5.0, T5.1, T5.2  
-**Parallel**: No - Final validation  
 
-#### Checklist:
-- [ ] All tests passing (`uv run pytest`)
-- [ ] Zero mypy errors (`uv run mypy . --strict`)
-- [ ] Zero ruff violations (`uv run ruff check .`)
-- [ ] Test coverage > 85%
-- [ ] All documentation complete
-- [ ] Performance benchmarks met
-- [ ] Security scan clean
+- [ ] ZERO dead code (300+ lines removed)
+- [ ] ZERO files > 350 lines
+- [ ] ZERO naming violations  
+- [ ] ZERO architectural violations
+- [ ] 100% tests passing
+- [ ] 100% KISS compliance
 
-## 🎯 Orchestration Strategy
+## 🚀 Orchestration Commands
 
-### Execution Plan
 ```python
-# Master Genie Orchestration Commands
+# Phase 1: Dead code removal
+Task(subagent_type="hive-dev-fixer", prompt="Execute T1.0: Remove all dead code from lib/knowledge/ per wish document")
 
-# PHASE 1: Foundation (Sequential)
-Task(subagent_type="hive-dev-fixer", prompt="Execute T1.0: Remove all dead code from lib/knowledge/")
-Task(subagent_type="hive-testing-maker", prompt="Execute T1.1: Create test infrastructure for lib/knowledge/")
+# Phase 2: Organization
+Task(subagent_type="hive-dev-coder", prompt="Execute T2.0-T2.1: Create folder structure and move files per wish document")
 
-# PHASE 2: Core Refactoring (Parallel where possible)
-# Parallel batch 1
-Task(subagent_type="hive-dev-coder", prompt="Execute T2.0: Extract KnowledgeRepository from SmartIncrementalLoader")
-Task(subagent_type="hive-dev-coder", prompt="Execute T2.1: Extract CSVDataSource from SmartIncrementalLoader")
-Task(subagent_type="hive-dev-coder", prompt="Execute T2.2: Extract HashCalculator service")
+# Phase 3: Extraction (can parallelize some)
+Task(subagent_type="hive-dev-coder", prompt="Execute T3.0: Extract KnowledgeRepository from SmartIncrementalLoader")
+Task(subagent_type="hive-dev-coder", prompt="Execute T3.1: Extract HashManager from SmartIncrementalLoader")
+Task(subagent_type="hive-dev-coder", prompt="Execute T3.2: Extract CSVDataSource from SmartIncrementalLoader")
+Task(subagent_type="hive-dev-coder", prompt="Execute T3.3: Extract ChangeAnalyzer from SmartIncrementalLoader")
+Task(subagent_type="hive-dev-coder", prompt="Execute T3.4: Slim down SmartIncrementalLoader to orchestrator")
 
-# Sequential after batch 1
-Task(subagent_type="hive-dev-coder", prompt="Execute T2.3: Extract ChangeAnalyzer service using HashCalculator")
-Task(subagent_type="hive-dev-coder", prompt="Execute T2.4: Refactor SmartIncrementalLoader using all extracted components")
+# Phase 4: Cleanup
+Task(subagent_type="hive-dev-coder", prompt="Execute T4.0: Consolidate configuration")
+Task(subagent_type="hive-quality-ruff", prompt="Execute T4.1: Fix all naming violations")
 
-# PHASE 3: Architecture (Mixed)
-Task(subagent_type="hive-dev-designer", prompt="Execute T3.0: Design and implement dependency injection container")
-# Parallel batch
-Task(subagent_type="hive-dev-coder", prompt="Execute T3.1: Replace singleton pattern in knowledge_factory")
-Task(subagent_type="hive-dev-coder", prompt="Execute T3.2: Implement ConfigurationManager")
-Task(subagent_type="hive-dev-coder", prompt="Execute T3.3: Add comprehensive error handling layer")
-
-# PHASE 4: Quality (Sequential for consistency)
-Task(subagent_type="hive-quality-ruff", prompt="Execute T4.0: Fix all naming violations in lib/knowledge/")
-Task(subagent_type="hive-quality-mypy", prompt="Execute T4.1: Add complete type hints to lib/knowledge/")
-# Parallel documentation and optimization
-Task(subagent_type="hive-dev-coder", prompt="Execute T4.2: Add comprehensive documentation")
-Task(subagent_type="hive-dev-coder", prompt="Execute T4.3: Performance optimization")
-
-# PHASE 5: Validation (Parallel testing)
-Task(subagent_type="hive-testing-maker", prompt="Execute T5.0: Create integration test suite")
-# Parallel validation
-Task(subagent_type="hive-qa-tester", prompt="Execute T5.1: Security validation testing")
-Task(subagent_type="hive-qa-tester", prompt="Execute T5.2: Performance validation benchmarks")
-# Final gate
-Task(subagent_type="hive-dev-fixer", prompt="Execute T5.3: Final quality gates validation")
+# Phase 5: Validation
+Task(subagent_type="hive-testing-maker", prompt="Execute T5.0: Validate all tests pass")
+Task(subagent_type="hive-qa-tester", prompt="Execute T5.1: Performance validation")
+Task(subagent_type="hive-dev-fixer", prompt="Execute T5.2: Final checklist verification")
 ```
 
-### Agent Coordination Matrix
-| Phase | Lead Agent | Support Agents | Parallel Capacity |
-|-------|------------|----------------|-------------------|
-| Phase 1 | hive-dev-fixer | hive-testing-maker | Limited |
-| Phase 2 | hive-dev-coder | - | 3 parallel tasks |
-| Phase 3 | hive-dev-designer | hive-dev-coder | 3 parallel tasks |
-| Phase 4 | hive-quality-ruff | hive-quality-mypy, hive-dev-coder | 2 parallel tasks |
-| Phase 5 | hive-testing-maker | hive-qa-tester, hive-dev-fixer | 2 parallel tasks |
+## ⚠️ Critical Notes
 
-### Context Provision Requirements
-Each agent receives:
-1. Full task specification from this document
-2. Dependencies list and completion status
-3. File paths and specific line numbers
-4. Success criteria and validation commands
-5. Integration points with other components
+1. **NO ALGORITHM CHANGES** - We're organizing, not rewriting
+2. **CUT & PASTE** - Move code blocks exactly as they are
+3. **TEST AFTER EACH PHASE** - Ensure nothing breaks
+4. **PRESERVE WORKING LOGIC** - The algorithms that work stay untouched
+5. **FIX ONE THING AT A TIME** - Incremental improvements
 
-## 📊 Progress Tracking
+## 📊 Expected Outcome
 
-### Milestone Checkpoints
-- [ ] **Milestone 1**: Dead code eliminated, tests created (T1.0-T1.1)
-- [ ] **Milestone 2**: God class refactored (T2.0-T2.4)  
-- [ ] **Milestone 3**: Architecture enhanced (T3.0-T3.3)
-- [ ] **Milestone 4**: Quality standards met (T4.0-T4.3)
-- [ ] **Milestone 5**: Full validation complete (T5.0-T5.3)
-
-### Risk Mitigation
-1. **Breaking changes**: Each phase includes comprehensive testing
-2. **Performance regression**: Benchmarks at each milestone
-3. **Lost functionality**: Integration tests verify all features
-4. **Coordination failures**: Clear dependency management
-
-## 🏆 Completion Criteria
-
-The wish is fulfilled when:
-1. ✅ All 5 phases complete
-2. ✅ Zero dead code remains
-3. ✅ Zero naming violations  
-4. ✅ All files < 350 lines
-5. ✅ Test coverage > 85%
-6. ✅ All quality gates passed
-7. ✅ Performance benchmarks met
-8. ✅ Security validation clean
-
-## 🚀 DEATH TESTAMENT
-
-Upon successful completion, this wish document will be updated with:
-- Final metrics and benchmarks
-- Lessons learned during refactoring  
-- Architecture decision records
-- Performance improvement statistics
-- Test coverage reports
-- Security audit results
+**BEFORE**: 7 files, 1500+ lines, all in one folder, 300+ lines dead code, god class
+**AFTER**: ~15 focused files, all < 350 lines, organized in subfolders, ZERO dead code, clean architecture
 
 ---
 
-**Wish Status**: 📋 Ready for Execution  
-**Next Action**: Approve phase-by-phase execution plan  
-**Estimated Total Execution**: Sequential phases with parallel optimization where possible
+**Status**: Ready for execution  
+**Next Step**: Begin with Phase 1 - Dead code removal  
+**Risk**: LOW - We're organizing existing working code, not reinventing it

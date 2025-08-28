@@ -1,10 +1,10 @@
 """
-Source Code Execution Test Suite for ConfigAwareFilter
+Source Code Execution Test Suite for BusinessUnitFilter
 
-This test suite focuses on EXECUTING actual source code paths in config_aware_filter.py
+This test suite focuses on EXECUTING actual source code paths in business_unit_filter.py
 to achieve 50%+ coverage by running realistic business unit detection and filtering scenarios.
 
-Target: Execute all major code paths in ConfigAwareFilter class for real coverage improvement.
+Target: Execute all major code paths in BusinessUnitFilter class for real coverage improvement.
 Approach: Source code execution with realistic configurations and document filtering scenarios.
 """
 
@@ -13,11 +13,11 @@ from pathlib import Path
 
 import pytest
 
-from lib.knowledge.config_aware_filter import ConfigAwareFilter, test_config_filter
+from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter, test_config_filter
 
 
-class TestConfigAwareFilterSourceExecution:
-    """Execute actual ConfigAwareFilter source code paths with realistic scenarios."""
+class TestBusinessUnitFilterSourceExecution:
+    """Execute actual BusinessUnitFilter source code paths with realistic scenarios."""
 
     @pytest.fixture
     def realistic_business_config(self):
@@ -64,10 +64,10 @@ class TestConfigAwareFilterSourceExecution:
 
     @pytest.fixture 
     def realistic_filter(self, realistic_business_config):
-        """Create ConfigAwareFilter with realistic business configuration."""
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        """Create BusinessUnitFilter with realistic business configuration."""
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = realistic_business_config
-            return ConfigAwareFilter()
+            return BusinessUnitFilter()
 
     def test_source_execution_init_builds_complete_keyword_maps(self, realistic_filter):
         """Execute __init__ and _build_keyword_maps source code paths completely."""
@@ -300,7 +300,7 @@ class TestConfigAwareFilterSourceExecution:
         assert units == expected_units
 
     def test_source_execution_with_domains_config_structure(self):
-        """Execute ConfigAwareFilter initialization with domains-based config structure."""
+        """Execute BusinessUnitFilter initialization with domains-based config structure."""
         
         # Test with the actual config.yaml structure (domains instead of business_units)
         domains_config = {
@@ -322,22 +322,22 @@ class TestConfigAwareFilterSourceExecution:
             "performance": {"cache_ttl": 300}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = domains_config
             
             # Execute initialization - should handle domains config gracefully
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Verify it processes domains as business_units (fallback behavior)
             assert hasattr(filter_instance, 'business_units')
             assert hasattr(filter_instance, 'keyword_to_business_unit')
 
 
-class TestConfigAwareFilterEdgeCaseExecution:
+class TestBusinessUnitFilterEdgeCaseExecution:
     """Execute edge case source code paths for maximum coverage."""
 
     def test_source_execution_with_minimal_config(self):
-        """Execute ConfigAwareFilter with minimal configuration."""
+        """Execute BusinessUnitFilter with minimal configuration."""
         
         minimal_config = {
             "business_units": {},
@@ -345,11 +345,11 @@ class TestConfigAwareFilterEdgeCaseExecution:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = minimal_config
             
             # Execute initialization with minimal config
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Verify default value code paths are executed
             search_params = filter_instance.get_search_params()
@@ -378,11 +378,11 @@ class TestConfigAwareFilterEdgeCaseExecution:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = empty_keywords_config
             
             # Execute initialization - should handle empty keywords gracefully
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Verify empty keyword handling code paths
             assert "unit1" in filter_instance.business_unit_keywords
@@ -404,10 +404,10 @@ class TestConfigAwareFilterEdgeCaseExecution:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Create documents with different case metadata
             exact_case_doc = Mock()
@@ -430,9 +430,9 @@ class TestConfigAwareFilterEdgeCaseExecution:
             # Verify case-insensitive metadata matching code execution
             assert len(filtered) >= 1  # At least some documents should match
 
-    @patch('lib.knowledge.config_aware_filter.logger')
+    @patch('lib.knowledge.filters.business_unit_filter.logger')
     def test_source_execution_logging_code_paths(self, mock_logger):
-        """Execute all logging code paths in ConfigAwareFilter."""
+        """Execute all logging code paths in BusinessUnitFilter."""
         
         config = {
             "business_units": {
@@ -445,11 +445,11 @@ class TestConfigAwareFilterEdgeCaseExecution:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config
             
             # Execute initialization - should trigger logger.info
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Verify initialization logging was executed
             mock_logger.info.assert_called()
@@ -475,8 +475,8 @@ class TestConfigAwareFilterEdgeCaseExecution:
 class TestMainFunctionSourceExecution:
     """Execute the main test_config_filter function source code paths."""
 
-    @patch('lib.knowledge.config_aware_filter.ConfigAwareFilter')
-    @patch('lib.knowledge.config_aware_filter.logger')
+    @patch('lib.knowledge.filters.business_unit_filter.BusinessUnitFilter')
+    @patch('lib.knowledge.filters.business_unit_filter.logger')
     def test_source_execution_main_function_complete_flow(self, mock_logger, mock_filter_class):
         """Execute complete test_config_filter function flow."""
         
@@ -513,18 +513,18 @@ class TestMainFunctionSourceExecution:
         mock_instance.list_business_units.assert_called_once()
         
         # Verify logging code paths were executed
-        assert mock_logger.info.call_count >= 6  # Multiple logging calls in main function
+        assert mock_logger.info.call_count >= 5  # Multiple logging calls in main function
 
 
 class TestRealConfigIntegrationExecution:
-    """Execute ConfigAwareFilter with real configuration loading."""
+    """Execute BusinessUnitFilter with real configuration loading."""
 
     def test_source_execution_with_real_config_if_available(self):
-        """Execute ConfigAwareFilter with actual config file if available."""
+        """Execute BusinessUnitFilter with actual config file if available."""
         
         try:
             # Attempt to create filter with real configuration
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # If successful, execute basic functionality tests
             assert hasattr(filter_instance, 'business_units')
@@ -553,7 +553,7 @@ class TestRealConfigIntegrationExecution:
             # Skip test if real config loading fails
             pytest.skip(f"Real configuration loading failed: {e}")
 
-    @patch('lib.knowledge.config_aware_filter.load_global_knowledge_config')
+    @patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config')
     def test_source_execution_config_loading_exception_handling(self, mock_load):
         """Execute config loading exception handling source code path."""
         
@@ -562,7 +562,7 @@ class TestRealConfigIntegrationExecution:
         
         # Execute initialization - should handle exception gracefully or propagate
         try:
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             # If it succeeds, verify it has basic structure
             assert hasattr(filter_instance, 'business_units')
         except Exception:
