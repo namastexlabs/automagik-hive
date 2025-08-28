@@ -258,3 +258,8 @@ def get_mcp_server_info(server_name: str) -> dict[str, Any]:
 def reload_mcp_catalog() -> None:
     """Reload the MCP catalog from configuration."""
     AgentRegistry.reload_mcp_catalog()
+
+
+def list_available_agents() -> list[str]:
+    """Get list of available agent IDs."""
+    return AgentRegistry.list_available_agents()

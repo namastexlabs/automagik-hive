@@ -579,8 +579,7 @@ class TestStartupNotificationIntegration:
         # Mock complex startup display
         startup_display = MagicMock()
         startup_display.agents = {
-            "genie-dev": {"status": "✅", "version": "2.1"},
-            "genie-testing": {"status": "✅", "version": "latest"},
+            "template-agent": {"status": "✅", "version": "2.1"},
             "failing-agent": {"status": "❌", "version": "1.0"}
         }
         startup_display.teams = {
@@ -609,8 +608,7 @@ class TestStartupNotificationIntegration:
         assert "🤖 Agents: 3" in message
         assert "🏢 Teams: 1" in message
         assert "⚡ Workflows: 2" in message
-        assert "✅ genie-dev (v2.1)" in message
-        assert "✅ genie-testing (latest)" in message
+        assert "✅ template-agent (v2.1)" in message
         assert "❌ failing-agent (v1.0)" in message
         assert "⚠️ *Issues Found: 1*" in message
         assert "failing-agent: Agent failed to load configuration file..." in message
