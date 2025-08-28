@@ -343,16 +343,18 @@ class TestWorkflowRegistry:
         with patch("ai.workflows.registry.logger") as mock_logger:
             get_workflow_registry()
 
-            # Should log debug and info messages
-            mock_logger.debug.assert_called_once()
-            mock_logger.info.assert_called_once()
+            # Should log debug messages twice (not info)
+            assert mock_logger.debug.call_count == 2
 
-            # Check log content
-            debug_call = mock_logger.debug.call_args[0][0]
-            info_call = mock_logger.info.call_args[0][0]
+            # Check log content - first debug call
+            first_debug_call = mock_logger.debug.call_args_list[0][0][0]
+            # Second debug call with keyword arguments
+            second_debug_args = mock_logger.debug.call_args_list[1]
 
-            assert "Initializing workflow registry" in debug_call
-            assert "Workflow registry initialized" in info_call
+            assert "Initializing workflow registry" in first_debug_call
+            assert "Workflow registry initialized" in second_debug_args[0][0]
+            # Verify the workflow count was logged
+            assert second_debug_args[1]["workflow_count"] == 2
 
 
 if __name__ == "__main__":
