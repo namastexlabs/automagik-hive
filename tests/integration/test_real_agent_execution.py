@@ -286,8 +286,8 @@ class TestRealSystemHealth:
         """Verify required configuration files exist."""
         required_files = [
             Path(".env"),
-            Path("pyproject.toml"),
-            Path("docker-compose.yml")
+            Path("pyproject.toml")
+            # docker-compose.yml is optional - not all deployments use Docker
         ]
         
         for file_path in required_files:
