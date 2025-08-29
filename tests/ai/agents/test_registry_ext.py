@@ -173,10 +173,7 @@ class TestAgentRegistry:
     
     def test_get_available_agents(self):
         """Test _get_available_agents method."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         expected_agents = ['agent1', 'agent2']
         with patch('ai.agents.registry._discover_agents', return_value=expected_agents):
             result = AgentRegistry._get_available_agents()
@@ -185,13 +182,6 @@ class TestAgentRegistry:
     @pytest.mark.asyncio
     async def test_get_agent_success(self):
         """Test successful agent retrieval."""
-<<<<<<< HEAD
-        mock_agent = Mock()
-        available_agents = ['test-agent']
-        
-        with patch.object(AgentRegistry, '_get_available_agents', return_value=available_agents), \
-             patch('ai.agents.registry.create_agent', return_value=mock_agent) as mock_create:
-=======
         from ai.agents.registry import AgentRegistry
         mock_agent = Mock(spec=object)
         available_agents = ['test-agent']
@@ -199,7 +189,6 @@ class TestAgentRegistry:
         # Patch create_agent where it's imported in the registry module
         with patch.object(AgentRegistry, '_get_available_agents', return_value=available_agents), \
              patch('ai.agents.registry.create_agent', new_callable=AsyncMock, return_value=mock_agent) as mock_create:
->>>>>>> feat/agents-registry-tests-clean
             
             result = await AgentRegistry.get_agent(
                 agent_id='test-agent',
@@ -211,31 +200,21 @@ class TestAgentRegistry:
             )
             
             assert result == mock_agent
-<<<<<<< HEAD
-=======
             # Check that create_agent was called with expected parameters
             from unittest.mock import ANY
->>>>>>> feat/agents-registry-tests-clean
             mock_create.assert_called_once_with(
                 agent_id='test-agent',
                 version=1,
                 session_id='test-session',
                 debug_mode=True,
                 user_id='test-user',
-<<<<<<< HEAD
-                metrics_service=mock_create.call_args[1]['metrics_service']
-=======
                 metrics_service=ANY
->>>>>>> feat/agents-registry-tests-clean
             )
     
     @pytest.mark.asyncio
     async def test_get_agent_not_found(self):
         """Test agent retrieval with invalid agent_id."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         available_agents = ['valid-agent']
         
         with patch.object(AgentRegistry, '_get_available_agents', return_value=available_agents):
@@ -245,10 +224,7 @@ class TestAgentRegistry:
     @pytest.mark.asyncio
     async def test_get_all_agents_success(self):
         """Test successful retrieval of all agents via get_all_agents method."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         mock_agent1 = Mock()
         mock_agent2 = Mock()
         available_agents = ['agent1', 'agent2']
@@ -267,10 +243,7 @@ class TestAgentRegistry:
     @pytest.mark.asyncio
     async def test_get_all_agents_with_failures(self):
         """Test get_all_agents with some agent loading failures."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         mock_agent1 = Mock()
         available_agents = ['agent1', 'failing-agent']
         
@@ -285,10 +258,7 @@ class TestAgentRegistry:
     
     def test_list_available_agents(self):
         """Test list_available_agents method."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         expected_agents = ['agent1', 'agent2']
         with patch.object(AgentRegistry, '_get_available_agents', return_value=expected_agents):
             result = AgentRegistry.list_available_agents()
@@ -300,10 +270,7 @@ class TestMCPIntegration:
     
     def test_get_mcp_catalog_singleton(self):
         """Test MCP catalog singleton pattern."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         # Reset singleton
         AgentRegistry._mcp_catalog = None
         
@@ -323,10 +290,7 @@ class TestMCPIntegration:
     
     def test_list_mcp_servers(self):
         """Test listing MCP servers."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         mock_catalog = Mock()
         mock_servers = ['server1', 'server2']
         mock_catalog.list_servers.return_value = mock_servers
@@ -338,10 +302,7 @@ class TestMCPIntegration:
     
     def test_get_mcp_server_info(self):
         """Test getting MCP server info."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         mock_catalog = Mock()
         mock_server_info = {'name': 'test-server', 'status': 'active'}
         mock_catalog.get_server_info.return_value = mock_server_info
@@ -353,10 +314,7 @@ class TestMCPIntegration:
     
     def test_reload_mcp_catalog(self):
         """Test MCP catalog reloading."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         AgentRegistry._mcp_catalog = Mock()  # Set existing catalog
         
         AgentRegistry.reload_mcp_catalog()
@@ -369,10 +327,7 @@ class TestFactoryFunctions:
     @pytest.mark.asyncio
     async def test_get_agent_function(self):
         """Test module-level get_agent function."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         mock_agent = Mock()
         
         with patch.object(AgentRegistry, 'get_agent', return_value=mock_agent) as mock_get:
@@ -420,26 +375,16 @@ class TestFactoryFunctions:
             assert mock_get.call_count == 2
     
     def test_list_available_agents_function(self):
-<<<<<<< HEAD
         """Test module-level list_available_agents function."""
         expected_agents = ['agent1', 'agent2']
+        from ai.agents.registry import AgentRegistry
         with patch.object(AgentRegistry, 'list_available_agents', return_value=expected_agents):
             result = list_available_agents()
-=======
-        """Test AgentRegistry.list_available_agents method."""
-        expected_agents = ['agent1', 'agent2']
-        from ai.agents.registry import AgentRegistry
-        with patch('ai.agents.registry._discover_agents', return_value=expected_agents):
-            result = AgentRegistry.list_available_agents()
->>>>>>> feat/agents-registry-tests-clean
             assert result == expected_agents
     
     def test_list_mcp_servers_function(self):
         """Test module-level list_mcp_servers function."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         expected_servers = ['server1', 'server2']
         with patch.object(AgentRegistry, 'list_mcp_servers', return_value=expected_servers):
             result = list_mcp_servers()
@@ -447,10 +392,7 @@ class TestFactoryFunctions:
     
     def test_get_mcp_server_info_function(self):
         """Test module-level get_mcp_server_info function."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         expected_info = {'name': 'test-server'}
         with patch.object(AgentRegistry, 'get_mcp_server_info', return_value=expected_info):
             result = get_mcp_server_info('test-server')
@@ -458,10 +400,7 @@ class TestFactoryFunctions:
     
     def test_reload_mcp_catalog_function(self):
         """Test module-level reload_mcp_catalog function."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         with patch.object(AgentRegistry, 'reload_mcp_catalog') as mock_reload:
             reload_mcp_catalog()
             mock_reload.assert_called_once()
@@ -473,18 +412,11 @@ class TestEdgeCasesAndErrors:
     @pytest.mark.asyncio
     async def test_get_agent_with_create_agent_failure(self):
         """Test get_agent when create_agent fails."""
-<<<<<<< HEAD
-        available_agents = ['test-agent']
-        
-        with patch.object(AgentRegistry, '_get_available_agents', return_value=available_agents), \
-             patch('ai.agents.registry.create_agent', side_effect=Exception("Creation failed")):
-=======
         from ai.agents.registry import AgentRegistry
         available_agents = ['test-agent']
         
         with patch.object(AgentRegistry, '_get_available_agents', return_value=available_agents), \
              patch('ai.agents.registry.create_agent', new_callable=AsyncMock, side_effect=Exception("Creation failed")):
->>>>>>> feat/agents-registry-tests-clean
             
             with pytest.raises(Exception, match="Creation failed"):
                 await AgentRegistry.get_agent(agent_id='test-agent')
@@ -520,20 +452,14 @@ class TestEdgeCasesAndErrors:
     @pytest.mark.asyncio
     async def test_get_all_agents_empty_available_agents(self):
         """Test get_all_agents with no available agents."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         with patch.object(AgentRegistry, '_get_available_agents', return_value=[]):
             result = await AgentRegistry.get_all_agents()
             assert result == {}
     
     def test_mcp_catalog_import_error(self):
         """Test MCP catalog creation with import error."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         AgentRegistry._mcp_catalog = None
         
         with patch('ai.agents.registry.MCPCatalog', side_effect=ImportError("MCP not available")):
@@ -547,13 +473,6 @@ class TestAsyncBehavior:
     @pytest.mark.asyncio
     async def test_concurrent_get_agent_calls(self):
         """Test multiple concurrent get_agent calls."""
-<<<<<<< HEAD
-        available_agents = ['agent1', 'agent2']
-        mock_agents = [Mock(), Mock()]
-        
-        with patch.object(AgentRegistry, '_get_available_agents', return_value=available_agents), \
-             patch('ai.agents.registry.create_agent', side_effect=mock_agents):
-=======
         from ai.agents.registry import AgentRegistry
         available_agents = ['agent1', 'agent2']
         mock_agent1 = Mock()
@@ -568,7 +487,6 @@ class TestAsyncBehavior:
         
         with patch.object(AgentRegistry, '_get_available_agents', return_value=available_agents), \
              patch('ai.agents.registry.create_agent', new_callable=AsyncMock, side_effect=mock_create_agent):
->>>>>>> feat/agents-registry-tests-clean
             
             # Create concurrent tasks
             tasks = [
@@ -577,19 +495,12 @@ class TestAsyncBehavior:
             ]
             
             results = await asyncio.gather(*tasks)
-<<<<<<< HEAD
-            assert results == mock_agents
-=======
             assert results == [mock_agent1, mock_agent2]
->>>>>>> feat/agents-registry-tests-clean
     
     @pytest.mark.asyncio
     async def test_get_all_agents_concurrent_processing(self):
         """Test that get_all_agents processes agents concurrently when possible."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         available_agents = ['agent1', 'agent2', 'agent3']
         mock_agents = [Mock(), Mock(), Mock()]
         
@@ -647,42 +558,27 @@ class TestIntegrationScenarios:
             
             with patch('builtins.open', mock_open()), \
                  patch('yaml.safe_load', return_value=mock_config), \
-<<<<<<< HEAD
-                 patch('ai.agents.registry.create_agent', return_value=mock_agent):
-=======
                  patch('ai.agents.registry.create_agent', new_callable=AsyncMock, return_value=mock_agent):
->>>>>>> feat/agents-registry-tests-clean
                 
                 # Discovery
                 discovered = _discover_agents()
                 assert 'integration-test-agent' in discovered
                 
                 # Registry listing
-<<<<<<< HEAD
-=======
                 from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
                 available = AgentRegistry.list_available_agents()
                 assert 'integration-test-agent' in available
                 
                 # Agent creation
-<<<<<<< HEAD
-                result = await AgentRegistry.get_agent(
-                    agent_id='integration-test-agent',
-=======
                 result = await get_agent(
                     name='integration-test-agent',
->>>>>>> feat/agents-registry-tests-clean
                     session_id='integration-test'
                 )
                 assert result == mock_agent
     
     def test_mcp_integration_scenario(self):
         """Test MCP integration with realistic server info."""
-<<<<<<< HEAD
-=======
         from ai.agents.registry import AgentRegistry
->>>>>>> feat/agents-registry-tests-clean
         mock_catalog = Mock()
         mock_servers = ['claude-mcp', 'postgres-mcp', 'filesystem-mcp']
         mock_server_info = {
