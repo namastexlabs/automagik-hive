@@ -86,7 +86,12 @@ class ToolRegistry:
                     if agno_shell_tool:
                         tools.append(agno_shell_tool)
                 else:
-                    logger.warning(f"Unknown tool type for: {tool_name}")
+                    # Try to load from ai/tools/ directory
+                    ai_tool = ToolRegistry._load_ai_tool(tool_name)
+                    if ai_tool:
+                        tools.append(ai_tool)
+                    else:
+                        logger.warning(f"Unknown tool type for: {tool_name}")
 
             except Exception as e:
                 logger.error(f"Failed to load tool {tool_name}: {e}")
@@ -203,6 +208,57 @@ class ToolRegistry:
 
         logger.warning(f"Shared tool not found: {tool_name}")
         return None
+
+    @staticmethod
+    def _load_ai_tool(tool_name: str) -> Callable:
+        """
+        Load @tool function from ai/tools/ directory.
+        
+        Args:
+            tool_name: Name of the @tool function (e.g., "get_po_status")
+            
+        Returns:
+            Tool function or None if not found
+        """
+        try:
+            # Check common ai/tools/ directories for the function
+            # Path from lib/tools/registry.py to ai/tools/
+            ai_tools_path = Path(__file__).parent.parent.parent / "ai" / "tools"
+            
+            if not ai_tools_path.exists():
+                logger.warning("ai/tools/ directory not found")
+                return None
+            
+            # Search through tool directories for the function
+            for tool_dir in ai_tools_path.iterdir():
+                if not tool_dir.is_dir() or tool_dir.name.startswith("__"):
+                    continue
+                
+                # Check if this directory contains the tool function
+                init_file = tool_dir / "__init__.py"
+                if init_file.exists():
+                    try:
+                        # Import the tool module
+                        module_name = f"ai.tools.{tool_dir.name}"
+                        module = importlib.import_module(module_name)
+                        
+                        # Check if the tool function exists in this module
+                        if hasattr(module, tool_name):
+                            tool_function = getattr(module, tool_name)
+                            # Accept both regular callables and Agno Function objects
+                            if callable(tool_function) or hasattr(tool_function, 'entrypoint'):
+                                logger.debug(f"🔧 Loaded ai/tools/ function: {tool_name} from {module_name}")
+                                return tool_function
+                    except Exception as e:
+                        logger.debug(f"Failed to import {module_name}: {e}")
+                        continue
+            
+            logger.debug(f"ai/tools/ function not found: {tool_name}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error loading ai/tools/ function {tool_name}: {e}")
+            return None
 
     @staticmethod
     def _validate_tool_config(tool_config: Any) -> bool:
