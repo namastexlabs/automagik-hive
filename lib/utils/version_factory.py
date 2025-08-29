@@ -175,7 +175,14 @@ class VersionFactory:
         """Create versioned agent using dynamic Agno proxy with inheritance support."""
 
         # Extract agent-specific config if full config provided
-        agent_config = config.get("agent", config) if "agent" in config else config
+        if "agent" in config:
+            agent_config = config["agent"].copy()  # Start with agent section
+            # Merge in root-level configurations (model, tools, etc.)
+            for key in config:
+                if key != "agent" and key not in agent_config:
+                    agent_config[key] = config[key]
+        else:
+            agent_config = config
         
         # Apply inheritance from team configuration if agent is part of a team
         inherited_config = self._apply_team_inheritance(component_id, agent_config)
