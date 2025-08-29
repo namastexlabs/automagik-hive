@@ -1,0 +1,84 @@
+tool:
+  name: "🔍 Jack PO Query Tools"
+  tool_id: "jack-po-tools"
+  version: 1
+  description: "SQL tools for Jack Retrieval Agent WhatsApp PO inquiries. Simple, secure database queries with Portuguese responses."
+  
+  category: "database"
+  tags:
+    - "sql"
+    - "database"
+    - "whatsapp"
+    - "portuguese"
+  
+  enabled: true
+  
+  # Simple dependencies  
+  dependencies:
+    - "psycopg2-binary>=2.9.0"
+  
+  # Database integration
+  integration:
+    databases:
+      - name: "hive_db"
+        type: "postgresql" 
+        connection_string: "${HIVE_DATABASE_URL}"
+  
+  # KISS parameters
+  parameters:
+    timeout_seconds: 5
+    max_retries: 1
+    debug_mode: false
+    db_connection_string: "${HIVE_DATABASE_URL}"
+
+metadata:
+  author: "Automagik Hive"
+  created_date: "2025-08-29"
+  license: "MIT"
+  
+  # Simple usage example
+  examples:
+    - name: "Basic PO Status Query"
+      description: "Get PO status with Portuguese response"
+      code: |
+        from ai.tools import get_tool
+        
+        tool = get_tool("jack-po-tools")
+        result = tool.execute("get_po_status:600714895")
+        print(f"Result: {result['result']}")
+
+interface:
+  inputs:
+    - name: "input_data"
+      type: "str"
+      required: true
+      description: "Command format: 'tool_name:po_number' (e.g., 'get_po_status:600714895')"
+      validation:
+        pattern: "^(get_po_status|get_po_details|check_po_exists):[0-9]{9,12}$"
+  
+  outputs:
+    - name: "status"
+      type: "str"
+      description: "Execution status ('success' or 'error')"
+      required: true
+    
+    - name: "result"
+      type: "str"
+      description: "Portuguese response"
+      required: false
+    
+    - name: "error"
+      type: "str"
+      description: "Error message if status is 'error'"
+      required: false
+    
+    - name: "metadata"
+      type: "dict"
+      description: "Execution metadata"
+      required: true
+      schema:
+        tool_id: "str"
+        po_number: "str" 
+        tool_used: "str"
+
+success_criteria: "Jack PO Tools configured ✓ Database ready ✓ SQL queries implemented ✓ Portuguese responses enabled ✓"
