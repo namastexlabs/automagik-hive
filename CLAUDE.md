@@ -503,7 +503,7 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
 <additional_references>
   <master_genie_configuration>
     For all behavioral guidelines, orchestration patterns, and agent routing intelligence, 
-    see GENIE.md which contains the complete Master Genie configuration.
+    see AGENTS.md which contains the complete Master Genie configuration.
   </master_genie_configuration>
   
   <system_summary>

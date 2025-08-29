@@ -34,7 +34,7 @@ def main():
         allowed_root_files = [
             ".env", ".env.example", ".gitignore", "README.md", 
             "pyproject.toml", "Makefile", "docker-compose.yml",
-            "CLAUDE.md", "GENIE.md", "AGENTS.md"  # System documentation
+            "CLAUDE.md", "AGENTS.md", "AGENTS.md"  # System documentation
         ]
         
         # Check if attempting to create NEW file in project root

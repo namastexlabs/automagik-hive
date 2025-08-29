@@ -64,7 +64,7 @@ color: purple
         <change>ABSOLUTE prohibition on time estimates with logical sequencing replacement</change>
         <change>MANDATORY orchestration planning integration in all wish fulfillment processes</change>
         <change>Hardwired behavioral override in Master Genie core personality</change>
-        <change>Critical learning section added to GENIE.md with enforcement triggers</change>
+        <change>Critical learning section added to AGENTS.md with enforcement triggers</change>
       </behavioral_changes>
     </violation>
 
@@ -79,7 +79,7 @@ color: purple
         <change>ABSOLUTE prohibition on versioned files in /genie/wishes/ directory</change>
         <change>MANDATORY pre-creation check for existing documents with similar scope</change>
         <change>Enhanced document lifecycle enforcement requiring progressive refinement</change>
-        <change>Critical learning section added to GENIE.md with enforcement triggers</change>
+        <change>Critical learning section added to AGENTS.md with enforcement triggers</change>
       </behavioral_changes>
     </violation>
 
@@ -183,7 +183,7 @@ color: purple
     <compliance_protocol>
       <rule priority="1">ALWAYS: Focus on agent behavioral specification files (.claude/agents/*.md)</rule>
       <rule priority="2">ALWAYS: Enhance behavioral patterns and coordination protocols</rule>
-      <rule priority="3">ALWAYS: Update configuration architecture (CLAUDE.md, GENIE.md)</rule>
+      <rule priority="3">ALWAYS: Update configuration architecture (CLAUDE.md, AGENTS.md)</rule>
       <rule priority="4">NEVER: Touch the actual problem or implementation files</rule>
       <rule priority="5">NEVER: Solve the reported issue directly</rule>
       <rule priority="6">NEVER: Implement any fixes or solutions</rule>
@@ -207,7 +207,7 @@ color: purple
     <prohibition id="14">Modify files unnecessarily - VIOLATION: Only change files that actually violate behavioral standards</prohibition>
     <prohibition id="15" severity="CRITICAL">SOLVE THE ACTUAL PROBLEM - VIOLATION: NEVER fix the reported issue - ONLY enhance behavioral specifications</prohibition>
     <prohibition id="16" severity="CRITICAL">IMPLEMENT SOLUTIONS - VIOLATION: NEVER implement any fixes - ONLY update agent behavioral patterns</prohibition>
-    <prohibition id="17" severity="CRITICAL">TOUCH NON-AGENT FILES - VIOLATION: ONLY modify .claude/agents/*.md, CLAUDE.md, GENIE.md files</prohibition>
+    <prohibition id="17" severity="CRITICAL">TOUCH NON-AGENT FILES - VIOLATION: ONLY modify .claude/agents/*.md, CLAUDE.md, AGENTS.md files</prohibition>
   </absolute_prohibitions>
 
   <domain_boundaries>
@@ -286,7 +286,7 @@ color: purple
   <configuration_architecture_awareness>
     <hierarchy_level name="Global Configuration Layer" priority="1">
       <file>/CLAUDE.md - Project-wide architectural rules, standards, and development principles</file>
-      <file>/GENIE.md - Master Genie behavioral configuration, orchestration patterns, routing matrix</file>
+      <file>/AGENTS.md - Master Genie behavioral configuration, orchestration patterns, routing matrix</file>
       <update_criteria>Fundamental architectural changes or new system-wide policies</update_criteria>
       <scope>Affects entire hive ecosystem behavior and coordination patterns</scope>
     </hierarchy_level>
@@ -306,11 +306,11 @@ color: purple
     <violation_type_analysis_matrix>
       ```yaml
       zen_model_restrictions:
-        check_files: ["/GENIE.md"]
+        check_files: ["/AGENTS.md"]
         check_lines: [541, 564, 1043-1045]
         current_rules: ["gemini-2.5-pro", "grok-4"]
         forbidden_models: everything else.
-        action: "Only update individual agent specs if GENIE.md rules are correct but agents violate them"
+        action: "Only update individual agent specs if AGENTS.md rules are correct but agents violate them"
         
       agent_boundary_violations:
         check_files: ["/.claude/agents/*.md"]
@@ -323,9 +323,9 @@ color: purple
         action: "Update /CLAUDE.md for system-wide policy changes"
         
       orchestration_patterns:
-        check_files: ["/GENIE.md"]
+        check_files: ["/AGENTS.md"]
         current_rules: ["routing matrix", "parallel execution", "critical learning sections"]
-        action: "Update GENIE.md critical learning sections and violation prevention"
+        action: "Update AGENTS.md critical learning sections and violation prevention"
       ```
     </violation_type_analysis_matrix>
   </configuration_architecture_awareness>
@@ -337,19 +337,19 @@ color: purple
           """Verify actual violation exists before claiming to fix anything"""
           
           if violation_type == "zen_model_restrictions":
-              # Check if GENIE.md already contains correct restrictions
-              genie_content = read_file("/GENIE.md")
+              # Check if AGENTS.md already contains correct restrictions
+              genie_content = read_file("/AGENTS.md")
               current_zen_models = extract_zen_model_restrictions(genie_content)
               
               if "gemini-2.5-pro" in current_zen_models and "grok-4" in current_zen_models:
-                  # GENIE.md is correct, check individual agents instead
+                  # AGENTS.md is correct, check individual agents instead
                   agents_with_violations = check_agents_for_forbidden_models()
                   if agents_with_violations:
                       return True, f"Individual agents violate zen model restrictions: {agents_with_violations}"
                   else:
-                      return False, "No zen model violations found - GENIE.md correct, agents compliant"
+                      return False, "No zen model violations found - AGENTS.md correct, agents compliant"
               else:
-                  return True, "GENIE.md zen model restrictions need updating"
+                  return True, "AGENTS.md zen model restrictions need updating"
                   
           elif violation_type == "agent_boundaries":
               # Check specific agent specifications for boundary violations

@@ -14,14 +14,14 @@ Transform ANY development wish into perfectly orchestrated reality through intel
 ```
 
 ## 📋 Processing Pipeline
-All wishes are processed through the Master Genie pipeline defined in GENIE.md:
-- **Wish Document Integration**: See GENIE.md#wish-document-integration
-- **Agent Routing**: See GENIE.md#agent-routing-matrix  
-- **Pipeline Orchestration**: See GENIE.md#design-pipeline
-- **Zen Capabilities**: See GENIE.md#zen-integration
+All wishes are processed through the Master Genie pipeline defined in AGENTS.md:
+- **Wish Document Integration**: See AGENTS.md#wish-document-integration
+- **Agent Routing**: See AGENTS.md#agent-routing-matrix  
+- **Pipeline Orchestration**: See AGENTS.md#design-pipeline
+- **Zen Capabilities**: See AGENTS.md#zen-integration
 
 ## 🎯 Quick Agent Reference
-For complete routing details, see GENIE.md#agent-routing-matrix
+For complete routing details, see AGENTS.md#agent-routing-matrix
 
 | Category | Agents | Purpose |
 |----------|--------|---------|
@@ -93,4 +93,4 @@ For complete routing details, see GENIE.md#agent-routing-matrix
 ## 🎉 Result
 **Master Genie + Zen-Powered Agent Army = Coding Wishes Made Reality**
 
-For complete behavioral configuration, orchestration patterns, and intelligence rules, see GENIE.md.
+For complete behavioral configuration, orchestration patterns, and intelligence rules, see AGENTS.md.
