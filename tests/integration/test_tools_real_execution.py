@@ -20,7 +20,7 @@ class TestRealToolsExecution:
     def test_mcp_catalog_discovers_real_servers(self):
         """Test that MCP catalog discovers actual configured servers."""
         catalog = MCPCatalog()
-        available_servers = catalog.list_available_servers()
+        available_servers = catalog.list_servers()
         
         # Should discover actual servers from configuration
         assert isinstance(available_servers, list)
@@ -201,7 +201,7 @@ class TestRealToolsExecution:
     def test_mcp_server_configuration_validation(self):
         """Test validation of actual MCP server configurations."""
         catalog = MCPCatalog()
-        available_servers = catalog.list_available_servers()
+        available_servers = catalog.list_servers()
         
         for server_name in available_servers:
             config = catalog.get_server_config(server_name)
@@ -226,7 +226,7 @@ class TestRealToolsExecution:
         
         # 1. Discover available MCP servers
         catalog = MCPCatalog()
-        servers = catalog.list_available_servers()
+        servers = catalog.list_servers()
         print(f"🔍 Step 1 - Discovered servers: {servers}")
         
         # 2. Build tool configs for discovered servers
