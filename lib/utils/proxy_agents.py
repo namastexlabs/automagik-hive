@@ -302,6 +302,11 @@ class AgnoAgentProxy:
         if config is None:
             raise ValueError(f"Config is None for agent {component_id}")
 
+        # DEBUG: Log what config is being processed
+        logger.debug(f"🔍 PROCESSING CONFIG for {component_id}: keys={list(config.keys())}")
+        if 'model' in config:
+            logger.info(f"🔍 MODEL SECTION FOUND for {component_id}: {config['model']}")
+
         processed = {}
 
         # Process each configuration section
@@ -422,7 +427,8 @@ class AgnoAgentProxy:
         if model_id:
             logger.debug(f"🚀 Configured model: {model_id} for {component_id}")
             # Return configuration for lazy instantiation by Agno Agent
-            return {"id": model_id, **filtered_model_config}
+            # Use resolve_model to create the actual model instance
+            return resolve_model(model_id=model_id, **filtered_model_config)
         else:
             # Fallback to default resolution only when no model ID is specified
             logger.warning(f"⚠️ No model ID specified for {component_id}, using default resolution")

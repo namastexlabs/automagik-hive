@@ -158,6 +158,16 @@ class ProviderRegistry:
                     r"^gecko-": provider,
                 }
             )
+        elif provider == "gemini":
+            # Support "gemini" as alias for "google" provider
+            patterns.update(
+                {
+                    r"^gemini-": provider,
+                    r"^palm-": provider,
+                    r"^bison-": provider,
+                    r"^gecko-": provider,
+                }
+            )
         elif provider == "xai":
             patterns.update({r"^grok-": provider})
         elif provider == "meta":
@@ -292,6 +302,7 @@ class ProviderRegistry:
             "openai": ["OpenAIChat", "OpenAI"],
             "anthropic": ["Claude"],
             "google": ["Gemini", "GoogleChat"],
+            "gemini": ["Gemini", "GoogleChat"],  # Support "gemini" as alias
             "xai": ["Grok"],
             "meta": ["Llama"],
             "mistral": ["Mistral"],
