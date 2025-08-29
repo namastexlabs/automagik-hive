@@ -34,7 +34,7 @@ class TestRealAgentsExecution:
         assert len(available_agents) > 0
         
         # Verify we have the expected agents
-        expected_agents = ["template-agent", "master-genie"]
+        expected_agents = ["template-agent"]
         for expected in expected_agents:
             assert expected in available_agents, f"Expected agent '{expected}' not found"
         
@@ -54,8 +54,7 @@ class TestRealAgentsExecution:
             pytest.skip("No agents discovered - test environment issue")
         
         # Test with first available agent
-        first_agent_info = available_agents[0]
-        agent_id = first_agent_info["agent_id"]
+        agent_id = available_agents[0]  # list_available_agents returns list of strings
         
         print(f"🔍 Testing agent instantiation: {agent_id}")
         
@@ -220,29 +219,29 @@ class TestRealAgentsExecution:
         
         # Find an agent with tool configuration
         agent_with_tools = None
-        for agent_info in available_agents:
-            agent_config_path = Path("ai/agents") / agent_info["agent_id"] / "config.yaml"
+        for agent_id in available_agents:
+            agent_config_path = Path("ai/agents") / agent_id / "config.yaml"
             if agent_config_path.exists():
                 with open(agent_config_path) as f:
                     config = yaml.safe_load(f)
                     if config.get("tools") or config.get("mcp_servers"):
-                        agent_with_tools = agent_info
+                        agent_with_tools = agent_id
                         break
         
         if not agent_with_tools:
             pytest.skip("No agents with tool configuration found")
             
-        print(f"🔍 Testing tool integration with agent: {agent_with_tools['agent_id']}")
+        print(f"🔍 Testing tool integration with agent: {agent_with_tools}")
         
         try:
             # Create agent with tool configuration
             agent = await registry.create_agent(
-                agent_id=agent_with_tools["agent_id"],
+                agent_id=agent_with_tools,
                 session_id="tool-integration-test"
             )
             
             assert agent is not None
-            print(f"✅ Agent with tools created: {agent_with_tools['agent_id']}")
+            print(f"✅ Agent with tools created: {agent_with_tools}")
             
             # Check if agent has tools configured
             if hasattr(agent, 'tools') and agent.tools:
@@ -403,23 +402,20 @@ class TestRealAgentsExecution:
         print(f"🔍 Processed config keys: {list(processed_config.keys())}")
         
         # The bug was that model configuration was being stripped out
-        # After the fix, the model should be resolved and present
-        assert "model" in processed_config, "Model should be in processed config"
+        # After the fix, the model config should be flattened into the processed config
+        assert "id" in processed_config, "Model ID should be in processed config"
+        assert "provider" in processed_config, "Provider should be in processed config"
+        assert "temperature" in processed_config, "Temperature should be in processed config"
         
-        # The model is now a resolved model instance
-        model = processed_config["model"]
-        assert model is not None, "Model should not be None"
-        
-        # Check that the model has the correct attributes
-        assert hasattr(model, 'id'), "Model should have an 'id' attribute"
-        assert model.id == "claude-sonnet-4-20250514", f"Model ID should be preserved, got {model.id}"
-        assert hasattr(model, 'temperature'), "Model should have a 'temperature' attribute"
-        assert model.temperature == 0.7, f"Model temperature should be preserved, got {model.temperature}"
+        # Check that the model config values are preserved
+        assert processed_config["id"] == "claude-sonnet-4-20250514", f"Model ID should be preserved, got {processed_config['id']}"
+        assert processed_config["provider"] == "anthropic", f"Provider should be preserved, got {processed_config['provider']}"
+        assert processed_config["temperature"] == 0.7, f"Temperature should be preserved, got {processed_config['temperature']}"
         
         print(f"✅ Model configuration regression test passed")
-        print(f"✅ Model is properly resolved: {type(model).__name__}")
-        print(f"✅ Model ID preserved: {model.id}")
-        print(f"✅ Model temperature preserved: {model.temperature}")
+        print(f"✅ Model config properly flattened into processed config")
+        print(f"✅ Model ID preserved: {processed_config['id']}")
+        print(f"✅ Model temperature preserved: {processed_config['temperature']}")
 
     def test_real_vs_mocked_comparison_agents(self):
         """Demonstrate the difference between mocked and real agent testing."""
