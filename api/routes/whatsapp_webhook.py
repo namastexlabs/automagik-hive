@@ -14,9 +14,6 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from lib.logging import logger
 from lib.utils.version_factory import create_agent
 
-# Global agent instance for WhatsApp conversations
-_whatsapp_agent = None
-
 router = APIRouter(prefix="/webhook", tags=["whatsapp"])
 
 
@@ -39,17 +36,15 @@ async def process_whatsapp_message(message_data: Dict[str, Any]):
             
         logger.info(f"📱 Processing WhatsApp message from {sender_number}: {message_text[:50]}...")
         
-        # Get or create global agent instance for WhatsApp
-        global _whatsapp_agent
-        if _whatsapp_agent is None:
-            logger.info("🔄 Creating new jack_retrieval agent for WhatsApp conversations")
-            _whatsapp_agent = await create_agent("jack_retrieval", debug_mode=True)
+        # Create fresh agent instance (version_factory handles config automatically)
+        logger.debug("🔄 Creating jack_retrieval agent for WhatsApp message")
+        whatsapp_agent = await create_agent("jack_retrieval", debug_mode=True)
         
         # Create session_id for conversation continuity
         session_id = f"whatsapp_{sender_number}"
         
-        # Process message through shared agent instance with context parameters
-        response = _whatsapp_agent.run(
+        # Process message through fresh agent instance with context parameters  
+        response = whatsapp_agent.run(
             message_text,
             user_id=sender_number,  # WhatsApp number as user_id
             session_id=session_id   # Unique session per user
@@ -175,9 +170,10 @@ async def webhook_status():
     key_preview = f"{anthropic_key[:10]}..." if anthropic_key != "NOT_FOUND" else "NOT_FOUND"
     
     return {
-        "status": "active",
+        "status": "active", 
         "agent": "jack_retrieval",
         "endpoint": "/webhook/whatsapp/jack",
         "evolution_instance": "jack",
-        "anthropic_key_status": key_preview
+        "anthropic_key_status": key_preview,
+        "config_reload": "automatic via version_factory"
     }

@@ -1,7 +1,7 @@
 agent:
   name: "🔍 Jack Retrieval Agent"
   agent_id: "jack_retrieval"
-  version: 17
+  version: 20
 
 # Core model configuration
 model:
@@ -59,6 +59,10 @@ instructions: |
   - Sempre extraia apenas os NÚMEROS do PO da mensagem do usuário
   - Passe apenas o número do PO como parâmetro (sem prefixos ou textos)
 
+
+# Memory configuration - WhatsApp conversations with limited history
+add_history_to_messages: true
+num_history_runs: 3
 
 display:
   show_tool_calls: true
