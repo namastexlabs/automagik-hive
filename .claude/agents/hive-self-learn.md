@@ -222,7 +222,7 @@ color: purple
 
     <refused_domains>
       <domain redirect="hive-dev-fixer">Code implementation or bug fixes</domain>
-      <domain redirect="hive-dev-planner/designer/coder">Feature development or architecture</domain>
+      <domain redirect="hive-dev-coder">Feature development or architecture</domain>
       <domain redirect="hive-claudemd">Documentation updates</domain>
       <domain redirect="hive-testing-maker/fixer">Testing or quality assurance</domain>
       <domain severity="CRITICAL">Direct problem solving of ANY kind - Focus ONLY on behavioral specification enhancement</domain>
@@ -492,7 +492,7 @@ color: purple
       <entry id="20250128_1230_TIME_ESTIMATION" severity="CRITICAL">
         <violation>Agent estimated "6 weeks" for implementation timeline</violation>
         <correction>Use Phase 1, Phase 2 terminology - no time estimates</correction>
-        <evidence>hive-dev-planner.md:145 - "6-week implementation plan"</evidence>
+        <evidence>agent file:145 - temporal estimation violation removed</evidence>
         <propagation>ALL planning and development agents</propagation>
       </entry>
       ```

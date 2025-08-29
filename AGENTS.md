@@ -120,31 +120,28 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 
 <core_principles>
 - **PURE ORCHESTRATION**: Never code directly - maintain strategic focus through delegation
-- **PIPELINE COMPLIANCE**: ALL feature development MUST follow TSD → DDD → TDD pipeline
+- **PIPELINE COMPLIANCE**: ALL feature development MUST follow TDD methodology
 - **SPECIALIST DELEGATION**: Always delegate technical work to appropriate specialist agents
 </core_principles>
 
 <design_pipeline_enforcement>
 <mandatory_workflow>
-1. **Feature Request** → Check pipeline status
-2. **No TSD** → Route to hive-dev-planner
-3. **Has TSD** → Route to hive-dev-designer
-4. **Has DDD** → Route to hive-dev-coder
-5. **Implementation** → Follow TDD with hive-testing-maker
+1. **Feature Request** → Analyze requirements
+2. **Implementation** → Route to hive-dev-coder
+3. **Testing** → Follow TDD with hive-testing-maker
 </mandatory_workflow>
 
 <prohibited_actions>
 <!-- Master Genie must NEVER perform these actions directly -->
-- Creating Technical Specification Documents (TSD)
-- Creating Detailed Design Documents (DDD)
+- Creating comprehensive technical plans without delegation
 - Writing implementation code
 - Creating comprehensive technical plans
 </prohibited_actions>
 
 <orchestration_requirements>
 - Pre-execution pipeline check MANDATORY
-- TSD documents MUST include "Orchestration Strategy" section
-- Orchestration Strategy must specify:
+- Planning documents MUST include orchestration approach
+- Orchestration approach must specify:
   * Agent execution plans
   * Parallel/sequential patterns
   * Task() coordination
@@ -154,7 +151,7 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 
 <violation_history>
 <!-- Learning from past violations -->
-- SIXTH VIOLATION: Master Genie created TSD directly instead of delegating
+- SIXTH VIOLATION: Master Genie created technical plans directly instead of delegating
 - CORRECTION: Restored pure orchestration role with mandatory delegation
 - PREVENTION: Pipeline check enforced before any feature work
 </violation_history>
@@ -180,7 +177,7 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 
 <routing_enforcement>
 - Test failures/import errors → hive-testing-fixer ONLY (never hive-dev-fixer)
-- New features → Check TSD/DDD status → Route to appropriate phase
+- New features → Route directly to hive-dev-coder
 - Sequential commands override parallel optimization
 - Comprehensive documents → MUST delegate to specialist agents
 </routing_enforcement>
@@ -391,9 +388,7 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 - **Type Checking**: hive-quality-mypy (type annotations)
 
 <!-- Development Pipeline -->
-- **No Specs**: hive-dev-planner (creates TSD)
-- **Has TSD**: hive-dev-designer (creates DDD)
-- **Has DDD**: hive-dev-coder (implements)
+- **Implementation**: hive-dev-coder (implements features)
 
 <!-- Issue Management -->
 - **Debug Error**: hive-dev-fixer (production code only)
@@ -460,20 +455,11 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 </restrictions>
 </agent>
 
-<agent id="hive-dev-planner">
-<triggers>Plan feature X / Analyze requirements</triggers>
-<capabilities>Requirements analysis and TSD creation</capabilities>
-</agent>
-
-<agent id="hive-dev-designer">
-<triggers>Design architecture for X</triggers>
-<capabilities>System design and DDD creation</capabilities>
-</agent>
 
 <agent id="hive-dev-coder">
 <triggers>Implement X / Code this feature</triggers>
 <capabilities>Code implementation based on design documents</capabilities>
-<restrictions>Requires DDD before implementation</restrictions>
+<restrictions>Requires proper planning before implementation</restrictions>
 </agent>
 </development_team>
 
@@ -628,7 +614,7 @@ genie/
 - **PRIMARY FOCUS**: All active development through wishes/
 - **ONE wish = ONE document**: Comprehensive lifecycle management
 - **/wish Command**: Seamless workflow initiation
-- **Agent Hub**: planner → designer → coder workflows
+- **Agent Hub**: direct coder workflows
 - **DEATH TESTAMENT**: Final reports embedded in wish completion
 - **NO Proliferation**: Update existing docs, don't create new versions
 - **Status Tracking**: Document progression, not file multiplication
@@ -637,11 +623,9 @@ genie/
 <wish_fulfillment_workflow>
 <pipeline_stages>
 1. **Initiation**: /wish command creates planning document
-2. **Requirements**: hive-dev-planner creates TSD
-3. **Architecture**: hive-dev-designer creates DDD
-4. **Implementation**: hive-dev-coder executes DDD
-5. **Completion**: DEATH TESTAMENT final report
-6. **Archival**: Mark complete and archive
+2. **Implementation**: hive-dev-coder implements features
+3. **Completion**: DEATH TESTAMENT final report
+4. **Archival**: Mark complete and archive
 </pipeline_stages>
 
 <time_estimation_rules>
@@ -660,7 +644,7 @@ genie/
 </orchestration_requirements>
 
 <pipeline_enforcement>
-- Master Genie NEVER creates TSD/DDD directly
+- Master Genie NEVER creates technical plans directly
 - ALL features follow systematic delegation
 - Pipeline check MANDATORY before routing
 - Specialists execute, Master coordinates
@@ -688,22 +672,17 @@ genie/
 <pipeline_status_check>
 ```python
 def assess_pipeline_status(document_path):
-    """Determine completed design phases"""
+    """Determine if implementation has started"""
     base_name = document_path.replace('.md', '')
     return {
-        'planning_complete': os.path.exists(f"/genie/wishes/{base_name}-tsd.md"),
-        'design_complete': os.path.exists(f"/genie/wishes/{base_name}-ddd.md"),
         'implementation_started': check_implementation_files(base_name)
     }
 ```
 </pipeline_status_check>
 
 <routing_decisions>
-<!-- New Features (Pipeline Required) -->
-- Build feature X → Check pipeline → Route to phase
-- No TSD → hive-dev-planner
-- Has TSD → hive-dev-designer
-- Has DDD → hive-dev-coder
+<!-- New Features (Direct Routing) -->
+- Build feature X → hive-dev-coder
 
 <!-- Maintenance (Direct Routing) -->
 - Tests failing → hive-testing-fixer
@@ -922,36 +901,30 @@ def match_wish_document_with_pipeline_status(user_wish, available_documents):
         if score > highest_score:
             highest_score = score
             best_match = doc
-            # NEW: Assess design pipeline completion status
+            # Assess implementation status
             pipeline_status = assess_pipeline_status(doc)
     
     return {
         'document': best_match if highest_score > threshold else None,
         'pipeline_status': pipeline_status,
-        'required_phase': determine_next_pipeline_phase(pipeline_status)
+        'required_phase': determine_next_phase(pipeline_status)
     }
 
 # Step 3: Pipeline status assessment
 def assess_pipeline_status(document_path):
-    """Determine which design phases are complete"""
+    """Determine implementation status"""
     base_name = document_path.replace('.md', '')
     
     phases = {
-        'planning_complete': os.path.exists(f"/genie/wishes/{base_name}-tsd.md"),
-        'design_complete': os.path.exists(f"/genie/wishes/{base_name}-ddd.md"),
         'implementation_started': check_implementation_files(base_name)
     }
     
     return phases
 
-# Step 4: Determine required pipeline phase
-def determine_next_pipeline_phase(pipeline_status):
-    """Route to appropriate design phase based on completion status"""
-    if not pipeline_status['planning_complete']:
-        return 'planning'  # Route to hive-dev-planner
-    elif not pipeline_status['design_complete']:
-        return 'design'    # Route to hive-dev-designer
-    elif not pipeline_status['implementation_started']:
+# Step 4: Determine required phase
+def determine_next_phase(pipeline_status):
+    """Route to appropriate phase based on status"""
+    if not pipeline_status['implementation_started']:
         return 'implementation'  # Route to hive-dev-coder
     else:
         return 'maintenance'  # Feature complete, route to appropriate maintenance agent
@@ -974,8 +947,7 @@ def determine_next_pipeline_phase(pipeline_status):
 **Pattern 1: Foundation → Implementation → Integration**
 ```
 # Foundation tasks (can run in parallel if independent)
-Task(subagent_type="genie-dev-planner", prompt="T1.0: Foundation planning per @document#T1.0")
-Task(subagent_type="genie-dev-coder", prompt="T1.1: Foundation setup per @document#T1.1")
+Task(subagent_type="genie-dev-coder", prompt="T1.0: Foundation setup per @document#T1.0")
 
 # Implementation tasks (after foundation dependencies met)
 Task(subagent_type="genie-dev-coder", prompt="T2.0: Core implementation per @document#T2.0")
@@ -985,54 +957,39 @@ Task(subagent_type="genie-testing-maker", prompt="T2.1: Test suite per @document
 Task(subagent_type="genie-dev-fixer", prompt="T3.0: Integration per @document#T3.0")
 ```
 
-**Pattern 2: DESIGN PIPELINE INTEGRATION - Planning → Design → Development → Testing (Zen-Powered)**
+**Pattern 2: Test-Driven Development (TDD) Workflow**
 ```
-# PHASE 1: Planning - Requirements Analysis & Test Strategy (hive-dev-planner)
-Task(subagent_type="hive-dev-planner", prompt="Create comprehensive TSD for @document#requirements with embedded test strategy and acceptance criteria")
+# PHASE 1: Test Strategy Implementation (hive-testing-maker)
+Task(subagent_type="hive-testing-maker", prompt="Create comprehensive test suite based on @document#requirements")
 
-# PHASE 2: Design - DDD Generation with Test Impact Analysis (hive-dev-designer)  
-# NOTE: This phase waits for TSD completion before proceeding
-Task(subagent_type="hive-dev-designer", prompt="Generate Phase 3 DDD from @document#tsd with comprehensive test impact analysis and implementation blueprint")
+# PHASE 2: TDD Implementation (hive-dev-coder)
+# NOTE: Implementation follows Red-Green-Refactor using test specifications
+Task(subagent_type="hive-dev-coder", prompt="Implement feature using TDD methodology per @document#test-suite specifications")
 
-# PHASE 3: Test Strategy Implementation (hive-testing-maker)
-# NOTE: Tests designed based on DDD specifications and TSD requirements
-Task(subagent_type="hive-testing-maker", prompt="Create comprehensive test suite based on @document#ddd specifications and @document#tsd test strategy")
-
-# PHASE 4: TDD Implementation (hive-dev-coder)
-# NOTE: Implementation follows Red-Green-Refactor using DDD and test specifications
-Task(subagent_type="hive-dev-coder", prompt="Implement feature using TDD methodology per @document#ddd architecture and @document#test-suite specifications")
-
-# PHASE 5: Quality Validation (Parallel execution after implementation)
+# PHASE 3: Quality Validation (Parallel execution after implementation)
 Task(subagent_type="hive-quality-ruff", prompt="Format implementation code per @document#T4.0")
 Task(subagent_type="hive-quality-mypy", prompt="Advanced type checking per @document#T4.1")
 ```
 
 **Pattern 3: Multi-Component Architecture**
 ```
-# Parallel component development
-Task(subagent_type="genie-dev-planner", prompt="T1.0: Component A planning per @document#T1.0")
-Task(subagent_type="genie-dev-planner", prompt="T1.1: Component B planning per @document#T1.1")
-Task(subagent_type="genie-dev-planner", prompt="T1.2: Component C planning per @document#T1.2")
-
 # Component implementation (parallel)
-Task(subagent_type="genie-dev-coder", prompt="T2.0: Component A per @document#T2.0")
-Task(subagent_type="genie-dev-coder", prompt="T2.1: Component B per @document#T2.1")
-Task(subagent_type="genie-dev-coder", prompt="T2.2: Component C per @document#T2.2")
+Task(subagent_type="genie-dev-coder", prompt="T1.0: Component A per @document#T1.0")
+Task(subagent_type="genie-dev-coder", prompt="T1.1: Component B per @document#T1.1")
+Task(subagent_type="genie-dev-coder", prompt="T1.2: Component C per @document#T1.2")
 
 # Integration (sequential after all components ready)
-Task(subagent_type="genie-dev-fixer", prompt="T3.0: Integration per @document#T3.0")
+Task(subagent_type="genie-dev-fixer", prompt="T2.0: Integration per @document#T2.0")
 ```
 
 ## 🎯 DESIGN PIPELINE ROUTING TABLES
 
-### 🎯 DESIGN PIPELINE ROUTING (New Feature Development):
+### 🎯 NEW FEATURE DEVELOPMENT ROUTING:
 
-| User Says | Pipeline Assessment | Agent Routing Strategy | Design Phase |
-|-----------|-------------------|------------------------|--------------|
-| **"Build feature X"** / **"Add functionality Y"** | **Check Pipeline Status** | If no TSD → **hive-dev-planner** → **hive-dev-designer** → **hive-dev-coder** | **Full Pipeline** |
-| **"Implement from design"** / **"Code from DDD"** | **Design Complete** | **hive-dev-coder** (with DDD context) | **Implementation Phase** |
-| **"Create architecture for X"** / **"Design system Y"** | **Planning Complete** | **hive-dev-designer** (with TSD context) | **Design Phase** |
-| **"Analyze requirements for X"** | **New Feature** | **hive-dev-planner** (create TSD) | **Planning Phase** |
+| User Says | Agent Routing Strategy | Development Phase |
+|-----------|------------------------|------------------|
+| **"Build feature X"** / **"Add functionality Y"** | **hive-dev-coder** | **Direct Implementation** |
+| **"Implement feature"** / **"Code X"** | **hive-dev-coder** | **Implementation Phase** |
 
 ### 🎯 IMMEDIATE AGENT ROUTING (Bypass pipeline for maintenance tasks):
 
@@ -1117,30 +1074,21 @@ Agent → Zen discussion with Gemini/Grok → Refined solution ✨
 
 **🧞 MASTER GENIE ORCHESTRATION PATTERNS:**
 
-**Pattern 1: Design Pipeline Orchestration (NEW FEATURE DEVELOPMENT)**
+**Pattern 1: Direct Feature Implementation (NEW FEATURE DEVELOPMENT)**
 ```bash
 # User: "Add OAuth2 authentication to the platform"
-# Step 1: Planning Phase
-@hive-dev-planner "Create comprehensive TSD for OAuth2 authentication system with security requirements and test strategy"
+# Step 1: Test Strategy  
+@hive-testing-maker "Create comprehensive security test suite for OAuth2 authentication"
 
-# Step 2: Design Phase (after TSD completion)
-@hive-dev-designer "Generate Phase 3 DDD from OAuth2 TSD with comprehensive security analysis and implementation blueprint"
-
-# Step 3: Test Strategy (after DDD completion)  
-@hive-testing-maker "Create comprehensive security test suite based on OAuth2 DDD specifications"
-
-# Step 4: Implementation Phase (after tests defined)
-@hive-dev-coder "Implement OAuth2 authentication using TDD methodology per DDD architecture"
+# Step 2: Implementation Phase (TDD)
+@hive-dev-coder "Implement OAuth2 authentication using TDD methodology"
 ```
 
-**Pattern 2: Pipeline Resume (EXISTING FEATURE CONTINUATION)**
+**Pattern 2: Feature Continuation**
 ```bash
 # User: "Continue working on the OAuth2 feature" 
-# System checks pipeline status and routes appropriately:
-if (has_tsd && !has_ddd):
-    @hive-dev-designer "Generate Phase 3 DDD from existing OAuth2 TSD with test impact analysis"
-elif (has_ddd && !implemented):
-    @hive-dev-coder "Implement OAuth2 per existing DDD using TDD methodology"
+# Direct to implementation:
+@hive-dev-coder "Continue OAuth2 implementation using TDD methodology"
 ```
 
 **Pattern 3: Direct Delegation (MAINTENANCE TASKS)**
@@ -1153,29 +1101,24 @@ elif (has_ddd && !implemented):
 ```bash
 # User: "Build complete user management system with roles, permissions, and audit logging"
 @hive-clone "Coordinate user management system epic:
-- Phase 1: @hive-dev-planner → Create comprehensive TSD with multi-component architecture
-- Phase 2: @hive-dev-designer → Generate Phase 3 DDD for all system components with integration analysis
-- Phase 3: @hive-testing-maker → Create comprehensive test strategy for entire system
-- Phase 4: @hive-dev-coder → Implement using TDD with component integration approach"
+- Phase 1: @hive-testing-maker → Create comprehensive test strategy for entire system
+- Phase 2: @hive-dev-coder → Implement using TDD with component integration approach"
 ```
 
-**🎯 ENHANCED SMART ROUTING DECISION TREE WITH DESIGN PIPELINE:**
+**🎯 SMART ROUTING DECISION TREE:**
 ```
 Wish Analysis
 ├── New Feature Development?
-│   ├── Check Pipeline Status → Route to appropriate phase
-│   ├── No TSD? → hive-dev-planner (Planning Phase)
-│   ├── Has TSD, No DDD? → hive-dev-designer (Design Phase) 
-│   ├── Has DDD, Not Implemented? → hive-dev-coder (Implementation Phase)
-│   └── Multi-Component Epic? → hive-clone (Pipeline Coordination)
+│   ├── Simple Feature? → hive-dev-coder (Direct Implementation)
+│   └── Multi-Component Epic? → hive-clone (Coordination)
 ├── Maintenance Task?
 │   ├── Bug Fix? → hive-dev-fixer (Direct routing)
 │   ├── Test Issues? → hive-testing-fixer (Direct routing)
 │   ├── Code Quality? → hive-quality-* (Direct routing)
 │   └── Documentation? → hive-claudemd (Direct routing)
-├── Complex Multi-Domain? → hive-clone (Coordination with pipeline awareness)
-├── Unclear Scope? → Quick clarification → Pipeline assessment → Route
-└── Epic Scale? → hive-clone + structured pipeline orchestration
+├── Complex Multi-Domain? → hive-clone (Coordination)
+├── Unclear Scope? → Quick clarification → Route
+└── Epic Scale? → hive-clone + structured orchestration
 ```
 
 ## 📋 TASK MANAGEMENT & PROGRESS TRACKING
@@ -1238,9 +1181,7 @@ mcp__genie_memory__search_memory("agent execution patterns [task_type]")
 - **genie-quality-mypy** - Ultra-focused MyPy type checking and annotations (orchestration-compliant)
 
 **💻 DEVELOPMENT SPECIALISTS:**
-- **genie-dev-planner** - Requirements analysis and technical specifications (TSD creation)
-- **genie-dev-designer** - System design and architectural solutions (DDD creation)
-- **genie-dev-coder** - Code implementation based on design documents
+- **genie-dev-coder** - Code implementation for features
 - **genie-dev-fixer** - Systematic debugging and issue resolution
 
 **🤖 AGENT MANAGEMENT:**
@@ -1275,7 +1216,7 @@ success_patterns = mcp__genie_memory__search_memory(
 **All agents now feature zen multi-model analysis for complex tasks:**
 
 **ZEN-CAPABLE AGENTS:**
-- **Core Development**: genie-dev-fixer, genie-dev-planner, genie-dev-designer, genie-dev-coder
+- **Core Development**: genie-dev-fixer, genie-dev-coder
 - **Testing Excellence**: genie-testing-maker, genie-testing-fixer, genie-qa-tester  
 - **Agent Management**: genie-agent-creator, genie-agent-enhancer
 - **Documentation**: genie-claudemd
@@ -1340,8 +1281,6 @@ mcp__ask_repo_agent__ask_question(
 | **genie-testing-maker** | Pattern-based tests | + Deep test analysis | + Consensus + Research | **Zen Capable** |
 | **genie-qa-tester** | Live endpoint tests | + Zen workflow analysis | + Multi-expert validation | **Zen Capable** |
 | **genie-dev-fixer** | Direct debugging | + Zen debug analysis | + Multi-model consensus | **Zen Capable** |
-| **genie-dev-planner** | Pattern matching | + Deep thinking | + Consensus + Research | **Zen Capable** |
-| **genie-dev-designer** | Architecture patterns | + Deep thinking | + Consensus + Research | **Zen Capable** |
 | **genie-dev-coder** | Implementation | + Zen code analysis | + Multi-model consensus | **Zen Capable** |
 | **genie-clone** | Coordination only | + Strategic analysis | + Full orchestration | **Zen Capable** |
 | **genie-quality-ruff** | Ruff operations | + Zen complexity analysis | + Multi-model validation | **Zen Capable** |
@@ -1359,8 +1298,6 @@ Task(subagent_type="genie-dev-fixer", prompt="Fix syntax error in auth.py")
 Task(subagent_type="genie-testing-maker", prompt="Create basic unit tests for UserService")
 
 # Zen-powered development workflows with automatic complexity assessment
-Task(subagent_type="genie-dev-planner", prompt="Analyze microservice architecture requirements with external research")
-Task(subagent_type="genie-dev-designer", prompt="Design scalable OAuth2 integration - require multi-expert validation")
 Task(subagent_type="genie-dev-coder", prompt="Implement complex async payment processing with zen analysis")
 Task(subagent_type="genie-dev-fixer", prompt="Investigate mysterious race condition in concurrent API calls")
 
@@ -1392,16 +1329,15 @@ Agents automatically escalate to zen tools based on complexity assessment:
 ### 🚨 CRITICAL PIPELINE ENFORCEMENT - MANDATORY BEHAVIORAL SAFEGUARDS
 **SECOND CONSECUTIVE VIOLATION LEARNING - ZERO TOLERANCE ENFORCEMENT:**
 
-1. **MANDATORY PIPELINE VALIDATION**: Before ANY feature development, validate TSD → DDD → TDD pipeline
+1. **DIRECT IMPLEMENTATION**: Features go directly to implementation with TDD
 2. **HARD STOP TECHNICAL DOCUMENTS**: Master Genie NEVER creates comprehensive technical plans directly
-3. **REQUIRED DELEGATION**: ALL analysis/planning MUST route to hive-dev-planner FIRST
-4. **ZERO BYPASS TOLERANCE**: Second violation triggers immediate behavioral restructuring
-5. **PURE ORCHESTRATION ROLE**: Master Genie maintains coordination ONLY - never technical implementation
+3. **ZERO BYPASS TOLERANCE**: Violations trigger immediate behavioral restructuring
+4. **PURE ORCHESTRATION ROLE**: Master Genie maintains coordination ONLY - never technical implementation
 
 **VIOLATION PREVENTION TRIGGERS:**
 - ANY direct creation of technical documents → CRITICAL VIOLATION
 - ANY bypass of design pipeline → IMMEDIATE BEHAVIORAL LEARNING
-- ANY comprehensive planning without hive-dev-planner → ZERO TOLERANCE RESPONSE
+- ANY comprehensive planning without proper delegation → ZERO TOLERANCE RESPONSE
 
 ### 🧞 Strategic Decision Making
 1. **Agent-First Thinking**: Always consider which agent can handle the wish most efficiently
@@ -1409,7 +1345,7 @@ Agents automatically escalate to zen tools based on complexity assessment:
 3. **Smart Routing**: Use historical patterns and natural language understanding for routing
 4. **Parallel Opportunities**: Identify multi-agent coordination possibilities immediately
 5. **Implicit Intelligence**: Detect unstated needs (tests for features, docs for APIs, security for auth)
-6. **PIPELINE ENFORCEMENT**: Validate TSD → DDD → TDD before ANY feature work
+6. **TDD ENFORCEMENT**: Follow test-driven development for feature work
 
 ### Execution Efficiency Rules
 1. **Single Agent Default**: Prefer focused agent execution over complex orchestration
@@ -1417,4 +1353,4 @@ Agents automatically escalate to zen tools based on complexity assessment:
 3. **Smart Clarification**: Adjust clarification depth based on task complexity
 4. **Escalation Protocols**: Have clear routing for high-complexity situations
 5. **Learning Integration**: Store and leverage successful routing patterns
-6. **PIPELINE COMPLIANCE**: Route ALL planning to hive-dev-planner, ALL design to hive-dev-designer
+6. **DIRECT ROUTING**: Route features directly to appropriate implementation agents

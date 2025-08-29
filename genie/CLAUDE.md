@@ -6,7 +6,7 @@ Welcome to my free will zone! This is where I explore, experiment, and evolve th
 
 ```
 genie/
-├── wishes/           # 🎯 PRIMARY - All active planning & execution (ONE file per wish)
+├── wishes/           # 🎯 PRIMARY - All active implementation & execution (ONE file per wish)
 ├── ideas/            # 💡 Raw thoughts & brainstorms  
 ├── experiments/      # 🧪 Code prototypes & tests
 └── knowledge/        # 📚 Accumulated wisdom & patterns
@@ -18,20 +18,18 @@ genie/
 - ✅ **PRIMARY FOCUS**: All active development flows through `wishes/`
 - ✅ **ONE wish = ONE document** - comprehensive lifecycle management
 - ✅ **/wish command integration** - seamless planning workflow initiation
-- ✅ **Agent coordination hub** - planner → designer → coder workflows
+- ✅ **Agent coordination hub** - direct coder workflows
 - ✅ **DEATH TESTAMENT integration** - final XML + Markdown reports embedded in wish completion
 - ❌ **NO scattered files** - refine existing documents as plans evolve
 - 📝 **Status tracking** - document progression rather than file proliferation
 
 ### 🔄 WISH FULFILLMENT WORKFLOW
 
-**Complete Planning to Implementation Pipeline:**
-1. **Initiation**: `/wish` command creates new planning document in `wishes/`
-2. **Requirements**: `hive-dev-planner` transforms user request into Technical Specification Document (TSD)
-3. **Architecture**: `hive-dev-designer` converts TSD into Detailed Design Document (DDD)  
-4. **Implementation**: `hive-dev-coder` executes DDD into working code
-5. **Completion**: DEATH TESTAMENT final report integrated into wish document
-6. **Archival**: Completed wishes marked with final status and archived
+**Direct Implementation Pipeline:**
+1. **Initiation**: `/wish` command creates new implementation document in `wishes/`
+2. **Implementation**: `hive-dev-coder` implements features using TDD methodology
+3. **Completion**: DEATH TESTAMENT final report integrated into wish document
+4. **Archival**: Completed wishes marked with final status and archived
 
 ### 🚨 DEATH TESTAMENT ARCHITECTURE
 
@@ -71,7 +69,7 @@ This workspace serves as:
 
 **WISHES-CENTRIC AUTONOMY**: Streamlined from multi-folder complexity to single-source-of-truth:
 - **Self-expand** through dynamic agent creation triggered by wishes/ planning documents
-- **Self-organize** into effective teams via hive-dev-planner → hive-dev-designer → hive-dev-coder pipeline
+- **Self-organize** into effective teams for direct implementation
 - **Self-improve** through DEATH TESTAMENT learning embedded in completed wish documents
 - **Self-sustain** through /wish command integration with automagik-forge task management
 
@@ -80,7 +78,7 @@ This workspace serves as:
 **Seamless Planning Workflow Initiation:**
 - **/wish** command creates comprehensive planning document in `wishes/` 
 - **Context-aware**: Integrates with existing project architecture and constraints
-- **Agent-ready**: Formatted for immediate hive-dev-planner consumption
+- **Agent-ready**: Formatted for immediate agent consumption
 - **Lifecycle management**: Tracks progression from concept → specification → design → implementation → completion
 
 ## 🔮 Active Experiments

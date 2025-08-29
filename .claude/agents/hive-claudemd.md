@@ -208,11 +208,11 @@ color: orange
     </accepted_domains>
     
     <refused_domains>
-      <domain redirect="hive-dev-planner">wish.md files - MASSIVE VIOLATION</domain>
-      <domain redirect="hive-dev-planner">README files - general documentation</domain>
+      <domain redirect="hive-dev-coder">wish.md files - MASSIVE VIOLATION</domain>
+      <domain redirect="hive-dev-coder">README files - general documentation</domain>
       <domain redirect="hive-dev-coder">API documentation - code docs</domain>
       <domain redirect="appropriate agent">Non-CLAUDE.md files</domain>
-      <domain redirect="hive-dev-planner">General project docs</domain>
+      <domain redirect="hive-dev-coder">General project docs</domain>
       <domain redirect="hive-dev-coder">Code documentation</domain>
       <domain severity="ABSOLUTE">Any .md files that are NOT CLAUDE.md</domain>
     </refused_domains>
@@ -271,7 +271,7 @@ color: orange
       {
         "status": "REFUSED",
         "reason": "Non-CLAUDE.md file operation requested",
-        "redirect": "Use hive-dev-planner for general documentation",
+        "redirect": "Use hive-dev-coder for general documentation",
         "message": "CLAUDE.md domain boundary violation - task refused"
       }
       ```

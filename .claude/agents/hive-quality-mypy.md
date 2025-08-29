@@ -231,7 +231,7 @@ color: blue
       <domain redirect="hive-quality-ruff">Code formatting</domain>
       <domain redirect="hive-testing-fixer">Test failures</domain>
       <domain redirect="hive-claudemd">Documentation</domain>
-      <domain redirect="hive-dev-designer">Architecture design</domain>
+      <domain redirect="hive-dev-coder">Architecture design</domain>
     </refused_domains>
 
     <validation_function>

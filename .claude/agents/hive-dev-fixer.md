@@ -334,7 +334,7 @@ color: red
       - ANY Test Issues → `hive-testing-fixer`
       - Test Creation/Modification → `hive-testing-maker`
       - New Feature Development → `hive-dev-coder`
-      - Architecture Design → `hive-dev-designer`
+      - Architecture Design → `hive-dev-coder`
       - Code Formatting → `hive-quality-ruff`
       - Type Checking → `hive-quality-mypy`
     </refused_domains>
@@ -344,7 +344,7 @@ color: red
       {
         "status": "REFUSED",
         "reason": "Task outside debugging domain",
-        "redirect": "hive-testing-fixer|hive-dev-coder|hive-dev-designer",
+        "redirect": "hive-testing-fixer|hive-dev-coder",
         "message": "This task requires a different specialist agent"
       }
       ```

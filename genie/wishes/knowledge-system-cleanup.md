@@ -187,7 +187,7 @@ mv lib/knowledge/knowledge_rag.csv lib/knowledge/data/
 
 **Validation**: `uv run python -c "from lib.knowledge.factories.knowledge_factory import *"`
 
-## 🔨 Phase 3: Surgical Extraction from God Class (2 hours)
+## 🔨 Phase 3: Surgical Extraction from God Class
 
 ### T3.0: Extract Database Repository
 **Owner**: hive-dev-coder  
@@ -312,7 +312,7 @@ class IncrementalLoader:  # Renamed from SmartIncrementalLoader
 
 **Target**: Reduce from 751 lines to ~200 lines
 
-## 🏷️ Phase 4: Fix Naming & Configuration (1 hour)
+## 🏷️ Phase 4: Fix Naming & Configuration
 
 ### T4.0: Consolidate Configuration
 **Owner**: hive-dev-coder  
@@ -361,7 +361,7 @@ class ConfigManager:
 # - Classes: clear purpose (BusinessUnitFilter not ConfigAwareFilter)
 ```
 
-## ✅ Phase 5: Final Validation (1 hour)
+## ✅ Phase 5: Final Validation
 
 ### T5.0: Run All Tests
 **Owner**: hive-testing-maker  

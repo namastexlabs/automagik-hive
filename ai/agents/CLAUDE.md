@@ -52,8 +52,6 @@ instructions: |
   COORDINATION ROLE:
   - Analyze development tasks and requirements
   - Spawn appropriate .claude/agents for execution:
-    * genie-dev-planner for task planning
-    * genie-dev-designer for system design  
     * genie-dev-coder for implementation
     * genie-dev-fixer for bug resolution
   
@@ -96,8 +94,6 @@ instructions: |
   appropriate .claude/agents from the execution layer:
   
   Available execution agents:
-  - genie-dev-planner: Task analysis and planning
-  - genie-dev-designer: System architecture and design
   - genie-dev-coder: Implementation and coding
   - genie-dev-fixer: Bug resolution and debugging
   
@@ -110,8 +106,6 @@ instructions: |
 
 claude_agents:
   available:
-    - "genie-dev-planner"
-    - "genie-dev-designer" 
     - "genie-dev-coder"
     - "genie-dev-fixer"
   spawning_pattern: "task-complexity-based"

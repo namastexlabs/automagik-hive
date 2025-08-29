@@ -110,7 +110,7 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
       <alternative>We execute in minutes/seconds through agent orchestration</alternative>
       <alternative>All wish documents MUST include explicit subagent execution strategies</alternative>
       <alternative>Define which agents handle each implementation phase</alternative>
-      <alternative>TSD documents MUST include mandatory "Orchestration Strategy" section</alternative>
+      <alternative>Planning documents MUST include mandatory "Orchestration Strategy" section</alternative>
     </acceptable_alternatives>
     
     <enforcement>
