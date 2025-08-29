@@ -286,12 +286,19 @@ class TestRealSystemHealth:
         """Verify required configuration files exist."""
         required_files = [
             Path(".env"),
-            Path("pyproject.toml"),
-            Path("docker-compose.yml")
+            Path("pyproject.toml")
+            # docker-compose.yml is optional for non-Docker deployments
         ]
         
         for file_path in required_files:
             assert file_path.exists(), f"Required file missing: {file_path}"
             assert file_path.is_file(), f"Path exists but is not file: {file_path}"
+        
+        # Check if docker-compose.yml exists (optional)
+        docker_compose = Path("docker-compose.yml")
+        if docker_compose.exists():
+            print("✅ Docker compose file present (optional)")
+        else:
+            print("ℹ️ Docker compose file not present (optional)")
         
         print("✅ All required config files present")

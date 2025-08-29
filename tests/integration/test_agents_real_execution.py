@@ -34,7 +34,7 @@ class TestRealAgentsExecution:
         assert len(available_agents) > 0
         
         # Verify we have the expected agents
-        expected_agents = ["template-agent", "master-genie"]
+        expected_agents = ["template-agent", "genie-debug"]
         for expected in expected_agents:
             assert expected in available_agents, f"Expected agent '{expected}' not found"
         
@@ -53,9 +53,8 @@ class TestRealAgentsExecution:
         if not available_agents:
             pytest.skip("No agents discovered - test environment issue")
         
-        # Test with first available agent
-        first_agent_info = available_agents[0]
-        agent_id = first_agent_info["agent_id"]
+        # Test with first available agent (available_agents is a list of strings, not dicts)
+        agent_id = available_agents[0]
         
         print(f"🔍 Testing agent instantiation: {agent_id}")
         
@@ -218,31 +217,31 @@ class TestRealAgentsExecution:
         if not available_agents:
             pytest.skip("No agents available for tool integration test")
         
-        # Find an agent with tool configuration
+        # Find an agent with tool configuration (available_agents is a list of strings)
         agent_with_tools = None
-        for agent_info in available_agents:
-            agent_config_path = Path("ai/agents") / agent_info["agent_id"] / "config.yaml"
+        for agent_id in available_agents:
+            agent_config_path = Path("ai/agents") / agent_id / "config.yaml"
             if agent_config_path.exists():
                 with open(agent_config_path) as f:
                     config = yaml.safe_load(f)
                     if config.get("tools") or config.get("mcp_servers"):
-                        agent_with_tools = agent_info
+                        agent_with_tools = agent_id
                         break
         
         if not agent_with_tools:
             pytest.skip("No agents with tool configuration found")
             
-        print(f"🔍 Testing tool integration with agent: {agent_with_tools['agent_id']}")
+        print(f"🔍 Testing tool integration with agent: {agent_with_tools}")
         
         try:
             # Create agent with tool configuration
             agent = await registry.create_agent(
-                agent_id=agent_with_tools["agent_id"],
+                agent_id=agent_with_tools,
                 session_id="tool-integration-test"
             )
             
             assert agent is not None
-            print(f"✅ Agent with tools created: {agent_with_tools['agent_id']}")
+            print(f"✅ Agent with tools created: {agent_with_tools}")
             
             # Check if agent has tools configured
             if hasattr(agent, 'tools') and agent.tools:
