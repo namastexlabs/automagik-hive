@@ -78,14 +78,16 @@ async def send_whatsapp_response(number: str, message: str):
     import aiohttp
     import os
     
-    # Get Evolution API config from environment variables
+    # Get Evolution API config from environment variables with defaults
     # TODO: Replace with ominihub environment variables
-    base_url = os.getenv("EVOLUTION_API_BASE_URL",)
-    api_key = os.getenv("EVOLUTION_API_KEY",)
-    instance = os.getenv("EVOLUTION_API_INSTANCE",)
+    base_url = os.getenv("EVOLUTION_API_BASE_URL", "http://localhost:8080")
+    api_key = os.getenv("EVOLUTION_API_KEY", "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF")
+    instance = os.getenv("EVOLUTION_API_INSTANCE", "jack")
     
     # TODO: Replace with ominihub endpoint format
-    url = f"{base_url}/message/sendText/{instance}"
+    # Remove trailing slash from base_url to avoid double slashes
+    clean_base_url = base_url.rstrip('/') if base_url else ''
+    url = f"{clean_base_url}/message/sendText/{instance}"
     # TODO: Replace with ominihub authentication
     headers = {
         "Content-Type": "application/json",
@@ -105,7 +107,9 @@ async def send_whatsapp_response(number: str, message: str):
                 logger.info(f"📤 WhatsApp message sent successfully to {number}")
             else:
                 error_text = await response.text()
-                logger.error(f"❌ Failed to send WhatsApp message: {response.status} - {error_text}")
+                # Escape braces in error_text to prevent logging format errors
+                safe_error_text = error_text.replace("{", "{{").replace("}", "}}")
+                logger.error(f"❌ Failed to send WhatsApp message: {response.status} - {safe_error_text}")
 
 
 @router.post("/whatsapp/jack")
