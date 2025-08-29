@@ -28,7 +28,7 @@ For complete routing details, see AGENTS.md#agent-routing-matrix
 | Testing | hive-testing-fixer, hive-testing-maker, hive-qa-tester | Test management |
 | Development | hive-dev-coder, hive-dev-fixer | Development pipeline |
 | Quality | hive-quality-ruff, hive-quality-mypy | Code quality |
-| Management | hive-agent-creator, hive-agent-enhancer, hive-claudemd | System management |
+| Management | hive-agent-creator, hive-claudemd | System management |
 | Coordination | hive-clone, hive-self-learn | Complex orchestration |
 
 ## 📊 Output Format

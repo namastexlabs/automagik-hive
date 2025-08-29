@@ -394,7 +394,7 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 - **Debug Error**: hive-dev-fixer (production code only)
 - **System-Wide**: hive-clone (multi-task coordination)
 - **Create Agent**: hive-agent-creator
-- **Enhance Agent**: hive-agent-enhancer
+- **Enhance Agent**: hive-self-learn
 
 <!-- Validation Rule -->
 - **System Validation**: Use DIRECT TOOLS (Bash/Python)
@@ -458,7 +458,7 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 
 <agent id="hive-dev-coder">
 <triggers>Implement X / Code this feature</triggers>
-<capabilities>Code implementation based on design documents</capabilities>
+<capabilities>Code implementation for features using TDD</capabilities>
 <restrictions>Requires proper planning before implementation</restrictions>
 </agent>
 </development_team>
@@ -469,10 +469,6 @@ fixed, improved, updated, better, new, v2, _fix, _v, enhanced, comprehensive
 <capabilities>Create new specialized agents from scratch</capabilities>
 </agent>
 
-<agent id="hive-agent-enhancer">
-<triggers>Enhance agent X / Improve agent capabilities</triggers>
-<capabilities>Enhance and improve existing agents</capabilities>
-</agent>
 </management_team>
 
 <documentation_team>
@@ -1003,7 +999,7 @@ Task(subagent_type="genie-dev-fixer", prompt="T2.0: Integration per @document#T2
 | **"Fix type errors"** / **"Type checking"** | **hive-quality-mypy** | Code quality - not design-dependent | **N/A** |
 | **"Debug this error"** / **"Bug in X"** | **hive-dev-fixer** | Bug fixing - maintenance task | **N/A** |
 | **"Update documentation"** / **"Fix CLAUDE.md"** | **hive-claudemd** | Documentation maintenance | **N/A** |
-| **"Enhance agent X"** / **"Improve agent capabilities"** | **hive-agent-enhancer** | Agent maintenance | **N/A** |
+| **"Enhance agent X"** / **"Improve agent capabilities"** | **hive-self-learn** | Agent behavioral enhancement | **N/A** |
 | **"Create new agent"** / **"Need custom agent"** | **hive-agent-creator** | Agent creation - uses own pipeline | **N/A** |
 | **"Multiple complex tasks"** / **"Orchestrate parallel work"** | **hive-clone** | Coordination - manages pipelines | **Orchestration** |
 

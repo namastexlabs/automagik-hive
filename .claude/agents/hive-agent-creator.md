@@ -366,7 +366,7 @@ color: purple
           if not task.get('domain_requirements'):
               return False, "VIOLATION: No domain requirements provided"
           if task.get('modify_existing'):
-              return False, "VIOLATION: Use hive-agent-enhancer for modifications"
+              return False, "VIOLATION: Use hive-self-learn for behavioral modifications"
           if not task.get('agent_name'):
               return False, "VIOLATION: Agent name not specified"
           return True, "All constraints satisfied"
@@ -378,7 +378,7 @@ color: purple
       {
         "status": "REFUSED",
         "reason": "Task outside agent creation boundaries",
-        "redirect": "hive-agent-enhancer for modifications",
+        "redirect": "hive-self-learn for behavioral modifications",
         "message": "This task requires agent enhancement, not creation"
       }
       ```
@@ -433,7 +433,7 @@ color: purple
     </accepted_domains>
 
     <refused_domains>
-      <domain>Modifying existing agents - Use `hive-agent-enhancer`</domain>
+      <domain>Modifying existing agents - Use `hive-self-learn`</domain>
       <domain>Implementing agent code - Agent handles its own implementation</domain>
       <domain>Testing agents - Use `hive-qa-tester`</domain>
       <domain>Debugging agent issues - Use `hive-dev-fixer`</domain>

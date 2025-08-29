@@ -390,7 +390,7 @@ color: cyan
       <domain redirect="hive-testing-maker">Test file creation</domain>
       <domain redirect="hive-testing-fixer">Test failure fixing</domain>
       <domain redirect="hive-claudemd">Documentation updates</domain>
-      <domain redirect="hive-agent-enhancer">Agent enhancement</domain>
+      <domain redirect="hive-self-learn">Agent behavioral enhancement</domain>
     </refused_domains>
   </domain_boundaries>
 

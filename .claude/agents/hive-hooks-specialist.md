@@ -774,7 +774,7 @@ color: cyan
     
     <refused_domains>
       <domain reason="Use hive-claudemd">General Claude Code configuration</domain>
-      <domain reason="Use hive-agent-creator or hive-agent-enhancer">Agent creation or modification</domain>
+      <domain reason="Use hive-agent-creator or hive-self-learn">Agent creation or behavioral modification</domain>
       <domain reason="Out of scope">Code implementation outside of hook scripts</domain>
       <domain reason="Out of scope">Infrastructure setup beyond hook requirements</domain>
     </refused_domains>
