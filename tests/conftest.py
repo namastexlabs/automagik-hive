@@ -808,3 +808,62 @@ def mock_external_dependencies():
             except Exception:
                 # Ignore cleanup errors to prevent test failures
                 pass
+
+
+# ============================================================================
+# Additional fixtures for agent registry testing
+# ============================================================================
+
+
+@pytest.fixture
+def mock_file_system_ops():
+    """Mock filesystem operations for agent discovery testing."""
+    mock_ops = {
+        "exists": Mock(return_value=True),
+        "iterdir": Mock(return_value=[]),
+        "is_dir": Mock(return_value=True),
+    }
+    
+    with patch("pathlib.Path.exists", mock_ops["exists"]):
+        with patch("pathlib.Path.iterdir", mock_ops["iterdir"]):
+            with patch("pathlib.Path.is_dir", mock_ops["is_dir"]):
+                yield mock_ops
+
+
+@pytest.fixture
+def sample_agent_config():
+    """Sample agent configuration for testing."""
+    return {
+        "agent": {
+            "agent_id": "test-agent",
+            "name": "Test Agent",
+            "version": "1.0.0",
+            "description": "Test agent for testing purposes",
+        }
+    }
+
+
+@pytest.fixture
+def mock_logger():
+    """Mock logger for testing warning/error logging."""
+    with patch("ai.agents.registry.logger") as mock_log:
+        yield mock_log
+
+
+@pytest.fixture
+def mock_database_layer():
+    """Mock database and agent creation layer."""
+    mock_agent = Mock()
+    mock_agent.run = AsyncMock(return_value="Test response")
+    mock_agent.metadata = {"test": True}
+    mock_agent.agent_id = "test-agent"
+    
+    # Create a callable that returns the agent
+    def create_agent(*args, **kwargs):
+        if kwargs.get("agent_id") == "non-existent":
+            raise KeyError("Agent not found")
+        return mock_agent
+    
+    with patch("lib.utils.version_factory.create_agent", new=AsyncMock(side_effect=create_agent)):
+        with patch("lib.services.database_service.get_db_service", return_value=AsyncMock()):
+            yield {"agent": mock_agent}
