@@ -500,6 +500,101 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
   </troubleshooting>
 </mcp_tool_integration>
 
+<forge_integration_patterns>
+  <context>
+    Automagik Forge integration enables sophisticated task orchestration through separate Claude Code instances.
+    This section defines handoff protocols, task creation patterns, and coordination workflows.
+  </context>
+
+  <forge_workflow_integration>
+    <workflow_phases>
+      <phase name="brainstorm">Use zen tools for complex analysis and architectural thinking</phase>
+      <phase name="document">Create PRD and wish planning documents</phase>
+      <phase name="plan">Break down wishes into implementable components</phase>
+      <phase name="execute">Create Forge tasks for autonomous execution</phase>
+    </workflow_phases>
+
+    <task_creation_standards>
+      <standard>Tasks created directly in Forge - no intermediate task files</standard>
+      <standard>Complete context provided via @ references to wish documents</standard>
+      <standard>Agent assignments with zen tool auto-escalation for complexity 7+</standard>
+      <standard>Branch strategy determined by complexity assessment</standard>
+    </task_creation_standards>
+
+    <forge_task_template>
+      ```
+      AUTOMAGIK FORGE EXECUTION TASK
+      =============================
+      
+      WISH: [wish-name]
+      TASK: [task-name]
+      COMPLEXITY: [1-10]
+      BRANCH: [dev|feature/wish-name]
+      
+      COMPLETE CONTEXT:
+      - PRD: @/genie/wishes/[wish-name]/prd.md
+      - Wish Plan: @/genie/wishes/[wish-name]/wish.md
+      - Architecture: @/genie/wishes/[wish-name]/context/architecture.md
+      - Project Patterns: @/CLAUDE.md
+      
+      PRIMARY AGENT: @[hive-dev-coder|hive-testing-maker|hive-dev-fixer]
+      SUPPORT AGENTS: @[additional-agents] (if parallel streams needed)
+      
+      ZEN TOOLS AVAILABLE (auto-escalate complexity 7+):
+      - /mcp__zen__debug - Systematic debugging
+      - /mcp__zen__codereview - Quality assurance
+      - /mcp__zen__testgen - Test strategy
+      - /mcp__zen__refactor - Code optimization
+      
+      EXECUTION REQUIREMENTS:
+      [Detailed task description from wish breakdown]
+      
+      SUCCESS CRITERIA:
+      [Acceptance criteria from task spec]
+      
+      QUALITY GATES:
+      - [ ] All tests passing
+      - [ ] Code review completed (zen tools if complex)
+      - [ ] Documentation updated
+      - [ ] No merge conflicts
+      - [ ] Progress updated
+      ```
+    </forge_task_template>
+  </forge_workflow_integration>
+
+  <complexity_assessment>
+    <scoring_algorithm>
+      <level range="1-3">Single files, bug fixes, small tweaks, documentation</level>
+      <level range="4-5">Multi-file features, moderate refactoring, new components</level>
+      <level range="6-7">New subsystems, significant architecture, complex features</level>
+      <level range="8-10">Full system redesigns, platform changes, major rewrites</level>
+    </scoring_algorithm>
+
+    <zen_tool_integration>
+      <complexity range="1-3">Direct execution, minimal zen usage</complexity>
+      <complexity range="4-6">Strategic zen tool usage for validation</complexity>
+      <complexity range="7-10">Multi-model consensus, deep thinking required</complexity>
+    </zen_tool_integration>
+
+    <branch_strategy>
+      <simple>Work on 'dev' branch for straightforward changes</simple>
+      <complex>Create 'feature/wish-[kebab-case-name]' branch for complex features</complex>
+    </branch_strategy>
+  </complexity_assessment>
+
+  <commit_standards>
+    <format>Wish [wish-name]: [specific-change]</format>
+    <co_author>Co-Authored-By: Automagik Genie &lt;genie@namastex.ai&gt;</co_author>
+    <validation>All changes committed before Forge task creation</validation>
+  </commit_standards>
+
+  <security_integration>
+    <auto_trigger>Complexity 6+ or security-sensitive features (auth, payments, data handling)</auto_trigger>
+    <comprehensive_audit>OWASP Top 10, compliance (SOC2, PCI DSS, HIPAA, GDPR), threat modeling, infrastructure review</comprehensive_audit>
+    <zen_tool>/mcp__zen__secaudit for systematic security assessment</zen_tool>
+  </security_integration>
+</forge_integration_patterns>
+
 <additional_references>
   <master_genie_configuration>
     For all behavioral guidelines, orchestration patterns, and agent routing intelligence, 

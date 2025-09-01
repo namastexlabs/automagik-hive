@@ -57,6 +57,7 @@ logs/
 
 # Database
 data/
+!lib/knowledge/data/
 *.db
 *.sqlite
 *.sqlite3
