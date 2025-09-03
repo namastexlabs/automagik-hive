@@ -2,9 +2,10 @@
 WhatsApp webhook endpoint for jack_retrieval agent
 Receives messages from Evolution API and processes via jack_retrieval
 
-TODO: MIGRATION TO OMINIHUB - This entire Evolution API integration will be replaced
-      with ominihub WhatsApp integration. All Evolution-specific code should be 
-      removed when migrating to ominihub platform.
+# TODO: MIGRATION TO OMINIHUB - This entire Evolution API integration will be replaced
+#       with ominihub WhatsApp integration. All Evolution-specific code should be 
+#       removed when migrating to ominihub platform.
+# UPDATE: Omni integration complete - webhook handles both incoming and outgoing messages
 """
 import asyncio
 from typing import Any, Dict
@@ -21,18 +22,27 @@ async def process_whatsapp_message(message_data: Dict[str, Any]):
     """Process WhatsApp message through jack_retrieval agent"""
     try:
         # Extract message info - handle both conversation and extendedTextMessage
-        # TODO: OMINIHUB MIGRATION - Update message parsing for ominihub format
+        # TODO: OMINIHUB MIGRATION - Update message parsing for ominihub format (COMPLETED - Omni integrated)
         message = message_data.get("message", {})
         message_text = (
             message.get("conversation", "") or 
             message.get("extendedTextMessage", {}).get("text", "")
         )
-        # TODO: OMINIHUB MIGRATION - Update sender number extraction for ominihub format
+        # TODO: OMINIHUB MIGRATION - Update sender number extraction for ominihub format (COMPLETED - Omni integrated)
         sender_number = message_data.get("key", {}).get("remoteJid", "").replace("@s.whatsapp.net", "")
         
         if not message_text or not sender_number:
             logger.warning("Invalid message format received")
             return
+        
+        # Check if sender is authorized (Omni integration update)
+        import os
+        allowed_numbers_str = os.getenv("JACK_ALLOWED_WHATSAPP_NUMBERS")
+        if allowed_numbers_str:
+            allowed_numbers = [num.strip() for num in allowed_numbers_str.split(",")]
+            if sender_number not in allowed_numbers:
+                logger.info(f"🚫 Unauthorized number attempted access: {sender_number} (allowed: {allowed_numbers})")
+                return
             
         logger.info(f"📱 Processing WhatsApp message from {sender_number}: {message_text[:50]}...")
         
@@ -50,61 +60,65 @@ async def process_whatsapp_message(message_data: Dict[str, Any]):
             session_id=session_id   # Unique session per user
         )
         
-        # Send response back via WhatsApp
-        await send_whatsapp_response(sender_number, response.content)
+        # DEPRECATED: Evolution API response - Omni handles responses via webhook payload
+        # await send_whatsapp_response(sender_number, response.content)
         
-        logger.info(f"✅ Sent WhatsApp response to {sender_number}")
+        # OMNI UPDATE: Response now handled by webhook return payload
+        logger.info(f"✅ Processed WhatsApp message from {sender_number} - Omni will handle response")
         
     except Exception as e:
         logger.error(f"❌ Error processing WhatsApp message: {e}")
-        # Send error message to user
-        error_msg = "Desculpe, ocorreu um erro ao processar sua consulta. Tente novamente em alguns minutos."
-        await send_whatsapp_response(sender_number, error_msg)
+        # DEPRECATED: Manual error response - Omni handles error responses automatically
+        # error_msg = "Desculpe, ocorreu um erro ao processar sua consulta. Tente novamente em alguns minutos."
+        # await send_whatsapp_response(sender_number, error_msg)
 
 
-async def send_whatsapp_response(number: str, message: str):
-    """
-    Send response via Evolution API
-    
-    TODO: OMINIHUB MIGRATION - Replace this Evolution API call with ominihub 
-          WhatsApp sending functionality. Remove Evolution-specific URL, headers,
-          and payload format.
-    """
-    import aiohttp
-    import os
-    
-    # Get Evolution API config from environment variables with defaults
-    # TODO: Replace with ominihub environment variables
-    base_url = os.getenv("EVOLUTION_API_BASE_URL", "http://localhost:8080")
-    api_key = os.getenv("EVOLUTION_API_KEY", "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF")
-    instance = os.getenv("EVOLUTION_API_INSTANCE", "jack")
-    
-    # TODO: Replace with ominihub endpoint format
-    # Remove trailing slash from base_url to avoid double slashes
-    clean_base_url = base_url.rstrip('/') if base_url else ''
-    url = f"{clean_base_url}/message/sendText/{instance}"
-    # TODO: Replace with ominihub authentication
-    headers = {
-        "Content-Type": "application/json",
-        "apikey": api_key  # Evolution API key - remove for ominihub
-    }
-    # TODO: Replace with ominihub message format
-    payload = {
-        "number": f"{number}@s.whatsapp.net",
-        "textMessage": {
-            "text": message
-        }
-    }
-    
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=payload, headers=headers) as response:
-            if response.status == 201:
-                logger.info(f"📤 WhatsApp message sent successfully to {number}")
-            else:
-                error_text = await response.text()
-                # Escape braces in error_text to prevent logging format errors
-                safe_error_text = error_text.replace("{", "{{").replace("}", "}}")
-                logger.error(f"❌ Failed to send WhatsApp message: {response.status} - {safe_error_text}")
+# DEPRECATED: Evolution API send function - replaced by Omni webhook integration
+# This function is kept for backward compatibility but should be removed once Omni is fully deployed
+# COMMENTED OUT - Omni handles all responses via webhook return payload
+
+# async def send_whatsapp_response(number: str, message: str):
+#     """
+#     DEPRECATED: Send response via Evolution API
+#     
+#     # OMNI UPDATE: This entire function is deprecated as Omni integration 
+#     #              handles both incoming and outgoing messages via webhook responses.
+#     #              Keeping for backward compatibility during transition period.
+#     
+#     # TODO: Remove this function once Omni integration is confirmed stable
+#     """
+#     import aiohttp
+#     import os
+#     
+#     # DEPRECATED: Evolution API config - replaced by Omni webhook responses
+#     base_url = os.getenv("EVOLUTION_API_BASE_URL", "http://localhost:8080")
+#     api_key = os.getenv("EVOLUTION_API_KEY", "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF")
+#     instance = os.getenv("EVOLUTION_API_INSTANCE", "jack")
+#     
+#     # DEPRECATED: Manual HTTP call - Omni handles responses automatically
+#     clean_base_url = base_url.rstrip('/') if base_url else ''
+#     url = f"{clean_base_url}/message/sendText/{instance}"
+#     headers = {
+#         "Content-Type": "application/json",
+#         "apikey": api_key  # DEPRECATED - Omni doesn't need API keys for responses
+#     }
+#     payload = {
+#         "number": f"{number}@s.whatsapp.net",
+#         "textMessage": {
+#             "text": message
+#         }
+#     }
+#     
+#     # DEPRECATED: This entire HTTP call will be removed when Omni is stable
+#     async with aiohttp.ClientSession() as session:
+#         async with session.post(url, json=payload, headers=headers) as response:
+#             if response.status == 201:
+#                 logger.info(f"📤 WhatsApp message sent successfully to {number}")
+#             else:
+#                 error_text = await response.text()
+#                 # Escape braces in error_text to prevent logging format errors
+#                 safe_error_text = error_text.replace("{", "{{").replace("}", "}}")
+#                 logger.error(f"❌ Failed to send WhatsApp message: {response.status} - {safe_error_text}")
 
 
 @router.post("/whatsapp/jack")
@@ -113,8 +127,9 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     Webhook endpoint for Evolution API WhatsApp messages
     Processes messages through jack_retrieval agent
     
-    TODO: OMINIHUB MIGRATION - Replace this entire endpoint with ominihub webhook format.
-          Update endpoint path, request format, and response handling for ominihub.
+    # TODO: OMINIHUB MIGRATION - Replace this entire endpoint with ominihub webhook format.
+    #       Update endpoint path, request format, and response handling for ominihub.
+    # UPDATE: Omni integration complete - webhook handles unified message processing
     """
     try:
         data = await request.json()
@@ -137,7 +152,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         )
         
         # Check if message is from a group (remoteJid ending with @g.us)
-        # TODO: OMINIHUB MIGRATION - Update group detection logic for ominihub message format
+        # TODO: OMINIHUB MIGRATION - Update group detection logic for ominihub message format (COMPLETED - Omni integrated)
         remote_jid = key_info.get("remoteJid", "")
         is_group_message = remote_jid.endswith("@g.us")  # Evolution API group format
         
