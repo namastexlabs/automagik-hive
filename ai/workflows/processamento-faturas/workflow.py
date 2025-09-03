@@ -41,6 +41,7 @@ from lib.logging import logger
 class ProcessingStatus(Enum):
     """CTE Processing Status Enum"""
     PENDING = "pending"
+    CHECK_ORDER_STATUS = "check_order_status"
     PROCESSING = "processing" #????
     WAITING_MONITORING = "waiting_monitoring"
     MONITORED = "monitored"
@@ -51,6 +52,7 @@ class ProcessingStatus(Enum):
     COMPLETED = "completed"
     FAILED_EXTRACTION = "failed_extraction" # Api errors
     FAILED_GENERATION = "failed_generation"
+    FAILED_VALIDATION = "failed_validation"
     FAILED_MONITORING = "failed_monitoring"
     FAILED_DOWNLOAD = "failed_download"
     FAILED_UPLOAD = "failed_upload"
@@ -487,22 +489,188 @@ class BrowserAPIClient:
         logger.info(f"📥 Built download payload for PO {po_number} with {len(cte_numbers)} CTEs")
         return payload
 
+    def build_claro_check_payload(self, po_number: str) -> dict[str, Any]:
+        """Build payload for claroCheck validation"""
+        payload = {
+            "flow_name": "claroCheck",
+            "parameters": {
+                "orders": [po_number],
+                "headless": True
+            }
+        }
+        return payload
+
+    def parse_claro_check_response(self, api_response: dict[str, Any]) -> tuple[bool, str, str]:
+        """Parse claroCheck response and determine status transition"""
+        try:
+            output_status = api_response.get("output", {}).get("status", "")
+            
+            # Status transition logic
+            if output_status == "Aguardando Liberação":
+                return True, "CHECK_ORDER_STATUS", "Order still awaiting release"
+            elif output_status == "Agendamento Pendente":
+                return True, "WAITING_MONITORING", "Order ready for monitoring"
+            elif output_status == "Autorizada Emissão Nota Fiscal":
+                return True, "MONITORED", "Order authorized, ready for download"
+            else:
+                return False, "FAILED_VALIDATION", f"Unknown status: {output_status}"
+                
+        except Exception as e:
+            return False, "FAILED_VALIDATION", f"Response parsing error: {str(e)}"
+
     def build_invoice_upload_payload(self, order: dict[str, Any], invoice_file_path: str) -> dict[str, Any]:
-        """Build payload for invoice upload"""
+        """Build payload for invoice upload by extracting fatura from ZIP file"""
 
         po_number = order["po_number"]
+        
+        # Extract invoice file from downloaded ZIP
+        import base64
+        import os
+        import zipfile
+        import glob
+        
+        invoice_base64 = ""
+        actual_filename = f"fatura_{po_number}.pdf"
+        file_found = False
+        
+        # Look for downloaded ZIP files (with actual names from API)
+        zip_patterns = [
+            f"mctech/downloads/pedido {po_number}.zip",  # Real format from API
+            f"mctech/downloads/fatura_{po_number}.zip",  # Fallback format
+            f"mctech/downloads/*{po_number}*.zip"       # Wildcard search
+        ]
+        
+        zip_file_path = None
+        for pattern in zip_patterns:
+            if '*' in pattern:
+                # Use glob for wildcard patterns
+                matches = glob.glob(pattern)
+                if matches:
+                    zip_file_path = matches[0]  # Use first match
+                    break
+            else:
+                # Direct file check
+                if os.path.exists(pattern):
+                    zip_file_path = pattern
+                    break
+        
+        if zip_file_path:
+            logger.info(f"📦 Found ZIP file: {zip_file_path}")
+            
+            try:
+                # Validate ZIP file integrity first
+                if not zipfile.is_zipfile(zip_file_path):
+                    logger.error(f"❌ File is not a valid ZIP: {zip_file_path}")
+                    raise zipfile.BadZipFile(f"Invalid ZIP file: {zip_file_path}")
+                
+                with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                    # Test ZIP integrity
+                    try:
+                        zip_ref.testzip()
+                        logger.info(f"✅ ZIP integrity validated: {zip_file_path}")
+                    except Exception as integrity_error:
+                        logger.error(f"❌ ZIP integrity check failed: {integrity_error}")
+                        raise zipfile.BadZipFile(f"Corrupted ZIP file: {zip_file_path}")
+                    
+                    # List all files in ZIP for debugging
+                    zip_contents = zip_ref.namelist()
+                    logger.info(f"📋 ZIP contents ({len(zip_contents)} files): {zip_contents}")
+                    
+                    # Validate ZIP structure - must contain Fatura/ folder
+                    fatura_folder_found = any(path.startswith('Fatura/') for path in zip_contents)
+                    if not fatura_folder_found:
+                        logger.error(f"❌ No 'Fatura/' folder found in ZIP structure")
+                        logger.error(f"📋 Available folders: {[path for path in zip_contents if path.endswith('/')]}")
+                        raise ValueError(f"Invalid ZIP structure: missing Fatura/ folder")
+                    
+                    # Look for invoice files in Fatura/ folder with enhanced validation
+                    invoice_candidates = []
+                    for file_path in zip_contents:
+                        # Check if file is in Fatura/ folder and matches pattern
+                        if (file_path.startswith('Fatura/') and 
+                            'fatura_' in file_path.lower() and
+                            not file_path.endswith('/') and
+                            file_path.lower().endswith('.pdf')):  # Must be PDF
+                            invoice_candidates.append(file_path)
+                    
+                    if not invoice_candidates:
+                        logger.error(f"❌ No valid fatura_*.pdf files found in Fatura/ folder")
+                        fatura_files = [f for f in zip_contents if f.startswith('Fatura/') and not f.endswith('/')]
+                        logger.error(f"📋 Files in Fatura/: {fatura_files}")
+                        raise FileNotFoundError(f"No fatura_*.pdf files found in ZIP")
+                    
+                    # Use the first valid invoice file (or implement selection logic if multiple)
+                    invoice_file = invoice_candidates[0]
+                    if len(invoice_candidates) > 1:
+                        logger.warning(f"⚠️ Multiple invoice files found, using first: {invoice_file}")
+                        logger.warning(f"📋 All candidates: {invoice_candidates}")
+                    
+                    # Extract and validate the invoice file
+                    with zip_ref.open(invoice_file) as invoice_data:
+                        file_content = invoice_data.read()
+                    
+                    # Validate file content
+                    if len(file_content) == 0:
+                        logger.error(f"❌ Invoice file is empty: {invoice_file}")
+                        raise ValueError(f"Empty invoice file: {invoice_file}")
+                    
+                    # Validate PDF header (basic PDF validation)
+                    if not file_content.startswith(b'%PDF'):
+                        logger.warning(f"⚠️ File does not appear to be a valid PDF: {invoice_file}")
+                        logger.warning(f"📄 File header: {file_content[:20]}")
+                    
+                    invoice_base64 = base64.b64encode(file_content).decode('utf-8')
+                    
+                    # Extract just the filename (without Fatura/ prefix)
+                    actual_filename = os.path.basename(invoice_file)
+                    file_found = True
+                    
+                    logger.info(f"✅ Successfully extracted and validated invoice from ZIP: {invoice_file}")
+                    logger.info(f"📄 File size: {len(file_content)} bytes, filename: {actual_filename}")
+                    logger.info(f"🔍 Base64 preview: {invoice_base64[:50]}...")
+                        
+            except zipfile.BadZipFile as e:
+                logger.error(f"❌ ZIP file error for {zip_file_path}: {e}")
+                raise
+            except FileNotFoundError as e:
+                logger.error(f"❌ File not found in ZIP {zip_file_path}: {e}")
+                raise
+            except Exception as e:
+                logger.error(f"❌ Unexpected error extracting from ZIP {zip_file_path}: {e}")
+                raise
+        
+        else:
+            # Try direct PDF file as fallback
+            pdf_path = f"mctech/downloads/fatura_{po_number}.pdf"
+            if os.path.exists(pdf_path):
+                try:
+                    with open(pdf_path, 'rb') as f:
+                        file_content = f.read()
+                    invoice_base64 = base64.b64encode(file_content).decode('utf-8')
+                    actual_filename = f"fatura_{po_number}.pdf"
+                    file_found = True
+                    logger.info(f"📄 Loaded direct PDF file: {pdf_path}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to read PDF file {pdf_path}: {e}")
+        
+        if not file_found:
+            logger.error(f"❌ No invoice file found for PO {po_number}")
+            logger.error(f"🔍 Checked locations:")
+            logger.error(f"   - ZIP: {zip_file_path}")
+            logger.error(f"   - PDF: mctech/downloads/fatura_{po_number}.pdf")
+            raise FileNotFoundError(f"No invoice file found for PO {po_number}")
 
         payload = {
             "flow_name": "invoiceUpload",
             "parameters": {
                 "po": po_number,
-                "invoice": f"base64_content_for_{po_number}",  # In real implementation, convert PDF to base64
-                "invoice_filename": f"fatura_{po_number}.pdf",
-                "headless": False  # Changed to false for better visibility
+                "invoice": invoice_base64,
+                "invoice_filename": actual_filename,
+                "headless": False
             }
         }
 
-        logger.info(f"📤 Built upload payload for PO {po_number}")
+        logger.info(f"📤 Built upload payload for PO {po_number} (file: {actual_filename})")
         return payload
 
     def update_order_status(self, consolidated_json: dict[str, Any], po_number: str, new_status: str) -> None:
@@ -560,10 +728,87 @@ class BrowserAPIClient:
                 # Calculate execution time
                 execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
-                # Get response data
+                # Get response data - Handle both JSON and binary file responses
                 if response.content_type == "application/json":
                     response_data = await response.json()
+                elif response.content_type in ["application/zip", "application/octet-stream", "application/x-zip-compressed"]:
+                    # Handle binary file downloads (main-download-invoice)
+                    if flow_name == "main-download-invoice":
+                        # Read binary content
+                        file_content = await response.read()
+                        
+                        # Create downloads directory if it doesn't exist
+                        import os
+                        download_dir = "mctech/downloads"
+                        os.makedirs(download_dir, exist_ok=True)
+                        
+                        # Extract PO number from payload for filename  
+                        po_number = payload.get("parameters", {}).get("po", "unknown")
+                        
+                        # Determine filename from Content-Disposition header or default
+                        content_disposition = response.headers.get('content-disposition', '')
+                        if 'filename=' in content_disposition:
+                            # Extract filename from header: filename="pedido 600698258.zip" (with spaces)
+                            import re
+                            # Improved regex to handle quotes and spaces properly
+                            filename_match = re.search(r'filename=["\']?([^"\';]+)["\']?', content_disposition)
+                            filename = filename_match.group(1).strip() if filename_match else f"fatura_{po_number}.zip"
+                            logger.info(f"📄 API provided filename: '{filename}'")
+                        else:
+                            filename = f"fatura_{po_number}.zip"
+                            logger.info(f"📄 Using default filename: '{filename}'")
+                        
+                        file_path = os.path.join(download_dir, filename)
+                        
+                        # Save binary file to disk
+                        try:
+                            with open(file_path, 'wb') as f:
+                                f.write(file_content)
+                            
+                            file_size = len(file_content)
+                            logger.info(f"📁 File downloaded successfully: {filename} ({file_size} bytes)")
+                            
+                            # Verify file was written correctly
+                            if os.path.exists(file_path) and os.path.getsize(file_path) == file_size:
+                                logger.info(f"✅ File integrity verified: {file_path}")
+                                file_download_success = True
+                            else:
+                                logger.error(f"❌ File integrity check failed: {file_path}")
+                                file_download_success = False
+                                
+                        except Exception as e:
+                            logger.error(f"❌ Failed to save file {filename}: {e}")
+                            file_download_success = False
+                            file_size = 0
+                        
+                        # Create JSON-compatible response structure for validation logic
+                        response_data = {
+                            "status": "success" if file_download_success else "error",
+                            "flow": flow_name,
+                            "output": {
+                                "success": file_download_success,
+                                "file_downloaded": file_download_success,
+                                "file_path": file_path,
+                                "filename": filename,
+                                "file_size": file_size,
+                                "text_output": f"Downloaded {filename} ({file_size} bytes)" if file_download_success else f"Failed to download {filename}",
+                                "error": "" if file_download_success else "File download or save failed"
+                            }
+                        }
+                    else:
+                        # Binary response for non-download flow (unexpected)
+                        logger.error(f"❌ Unexpected binary response for flow {flow_name}")
+                        response_data = {
+                            "status": "error",
+                            "flow": flow_name,
+                            "output": {
+                                "success": False,
+                                "error": f"Unexpected binary response for {flow_name}",
+                                "text_output": "Received binary data for non-download flow"
+                            }
+                        }
                 else:
+                    # Text response (fallback)
                     response_text = await response.text()
                     response_data = {"text_output": response_text}
 
@@ -1110,6 +1355,7 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
     2. Extract individual PO status from "orders" array
     3. Categorize POs by current status:
        - PENDING: Ready for invoiceGen
+       - CHECK_ORDER_STATUS: Ready for claroCheck validation
        - WAITING_MONITORING: Ready for invoiceMonitor
        - MONITORED: Ready for download
        - DOWNLOADED: Ready for upload
@@ -1120,6 +1366,7 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
     {{
         "processing_categories": {{
             "pending_pos": [...],
+            "validation_pos": [...],
             "monitoring_pos": [...],
             "download_pos": [...],
             "upload_pos": [...],
@@ -1139,6 +1386,7 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
     analysis_results = {
         "processing_categories": {
             "pending_pos": [],
+            "validation_pos": [],
             "monitoring_pos": [],
             "download_pos": [],
             "upload_pos": [],
@@ -1176,6 +1424,7 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
             file_stats = {
                 "total_pos": 0,
                 "pending": 0,
+                "validation": 0,
                 "waiting_monitoring": 0,
                 "monitored": 0,
                 "downloaded": 0,
@@ -1197,6 +1446,10 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
                 if status == "PENDING":
                     analysis_results["processing_categories"]["pending_pos"].append(po_entry)
                     file_stats["pending"] += 1
+                    file_stats["needs_processing"] = True
+                elif status == "CHECK_ORDER_STATUS":
+                    analysis_results["processing_categories"]["validation_pos"].append(po_entry)
+                    file_stats["validation"] += 1
                     file_stats["needs_processing"] = True
                 elif status == "WAITING_MONITORING":
                     analysis_results["processing_categories"]["monitoring_pos"].append(po_entry)
@@ -1224,7 +1477,7 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
             if file_stats["needs_processing"]:
                 analysis_results["analysis_summary"]["files_needing_processing"] += 1
                 analysis_results["analysis_summary"]["pos_needing_processing"] += (
-                    file_stats["pending"] + file_stats["waiting_monitoring"] +
+                    file_stats["pending"] + file_stats["validation"] + file_stats["waiting_monitoring"] +
                     file_stats["monitored"] + file_stats["downloaded"] + file_stats["failed"]
                 )
             else:
@@ -1271,6 +1524,7 @@ async def execute_status_based_routing_step(step_input: StepInput) -> StepOutput
 
     ROUTING LOGIC:
     - PENDING → invoiceGen API call
+    - CHECK_ORDER_STATUS → claroCheck API call (individual)
     - WAITING_MONITORING → invoiceMonitor API call
     - MONITORED → main-download-invoice API call (individual)
     - DOWNLOADED → invoiceUpload API call (individual)
@@ -1291,6 +1545,12 @@ async def execute_status_based_routing_step(step_input: StepInput) -> StepOutput
                 "pos": processing_categories["pending_pos"],
                 "batch_processing": True,  # Can process multiple POs in single call
                 "priority": 1
+            },
+            "order_validation_queue": {
+                "action": "claroCheck",
+                "pos": processing_categories["validation_pos"],
+                "batch_processing": False,  # Individual processing
+                "priority": 1.5  # Between generation and monitoring
             },
             "invoice_monitoring_queue": {
                 "action": "invoiceMonitor",
@@ -1453,26 +1713,156 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                     processing_results["execution_summary"]["pos_failed"] += len(pos)
 
             else:
-                # Individual processing for downloads and uploads
+                # Individual processing for downloads, uploads, and validations
                 individual_results = {}
 
                 for po_data in pos:
                     po_number = po_data["po_number"]
                     json_file = po_data["json_file"]
 
-                    # Load JSON to get PO details (simulated)
-                    po_details = {
-                        "po_number": po_number,
-                        "ctes": [{"NF/CTE": "96765"}, {"NF/CTE": "96767"}],  # Aligned with Excel format
-                        "po_total_value": 2843.91,
-                        "start_date": "01/04/2025",
-                        "end_date": "30/06/2025"
-                    }
+                    if action == "claroCheck":
+                        # Handle claroCheck validation
+                        payload = api_client.build_claro_check_payload(po_number)
+                        api_response = await api_client.execute_api_call(action, payload)
+                        
+                        # Parse claroCheck response for status transition
+                        if api_response["success"]:
+                            browser_success, new_status, message = api_client.parse_claro_check_response(api_response.get("api_result", {}))
+                            
+                            individual_results[po_number] = {
+                                "http_success": True,
+                                "browser_success": browser_success,
+                                "overall_success": browser_success,
+                                "execution_time_ms": api_response.get("execution_time_ms", 0),
+                                "api_response": api_response.get("api_result", {}),
+                                "validation_result": {
+                                    "new_status": new_status,
+                                    "message": message
+                                }
+                            }
+                            
+                            if browser_success:
+                                logger.info(f"✅ claroCheck validation successful for PO {po_number} - updating to {new_status}")
+                                processing_results["status_updates"][po_number] = {
+                                    "old_status": "CHECK_ORDER_STATUS",
+                                    "new_status": new_status,
+                                    "json_file": json_file
+                                }
+                                processing_results["execution_summary"]["successful_actions"] += 1
+                                processing_results["execution_summary"]["pos_updated"] += 1
+                            else:
+                                logger.error(f"❌ claroCheck validation failed for PO {po_number}: {message}")
+                                processing_results["failed_orders"][po_number] = {
+                                    "action": action,
+                                    "failure_type": "validation_failure",
+                                    "error": message,
+                                    "json_file": json_file
+                                }
+                                processing_results["execution_summary"]["browser_failures"] += 1
+                                processing_results["execution_summary"]["pos_failed"] += 1
+                        else:
+                            # HTTP call failed for claroCheck
+                            individual_results[po_number] = {
+                                "http_success": False,
+                                "browser_success": False,
+                                "overall_success": False,
+                                "execution_time_ms": api_response.get("execution_time_ms", 0),
+                                "error": api_response.get("error", "HTTP call failed")
+                            }
+                            
+                            processing_results["failed_orders"][po_number] = {
+                                "action": action,
+                                "failure_type": "http_failure",
+                                "error": api_response.get("error", "HTTP call failed"),
+                                "json_file": json_file
+                            }
+                            processing_results["execution_summary"]["failed_actions"] += 1
+                            processing_results["execution_summary"]["pos_failed"] += 1
+                        
+                        continue  # Skip to next PO for claroCheck processing
 
-                    if action == "main-download-invoice":
-                        payload = api_client.build_invoice_download_payload(po_details)
-                    elif action == "invoiceUpload":
-                        payload = api_client.build_invoice_upload_payload(po_details, f"mctech/downloads/fatura_{po_number}.pdf")
+                    # Load JSON to get real PO details (for non-claroCheck actions)
+                    po_details = None
+                    try:
+                        import os
+                        if os.path.exists(json_file):
+                            with open(json_file, 'r', encoding='utf-8') as f:
+                                json_data = json.load(f)
+                            
+                            # Find the specific PO in the JSON
+                            for order in json_data.get("orders", []):
+                                if order.get("po_number") == po_number:
+                                    po_details = {
+                                        "po_number": po_number,
+                                        "ctes": order.get("ctes", []),
+                                        "po_total_value": order.get("po_total_value", 0),
+                                        "start_date": order.get("start_date", ""),
+                                        "end_date": order.get("end_date", ""),
+                                        "client_data": order.get("client_data", {}),
+                                        "date_range": order.get("date_range", {}),
+                                        "value_totals": order.get("value_totals", {})
+                                    }
+                                    logger.info(f"📊 Loaded real PO details for {po_number}: {len(po_details.get('ctes', []))} CTEs, Value: {po_details.get('po_total_value', 0)}")
+                                    break
+                            
+                            if po_details is None:
+                                logger.error(f"❌ PO {po_number} not found in JSON file {json_file}")
+                                raise ValueError(f"PO {po_number} not found in JSON")
+                        else:
+                            logger.error(f"❌ JSON file not found: {json_file}")
+                            raise FileNotFoundError(f"JSON file not found: {json_file}")
+                            
+                    except Exception as e:
+                        logger.error(f"❌ Failed to load PO details for {po_number}: {e}")
+                        processing_results["failed_orders"][po_number] = {
+                            "action": action,
+                            "failure_type": "data_loading_failure",
+                            "error": f"Failed to load PO details: {str(e)}",
+                            "json_file": json_file
+                        }
+                        processing_results["execution_summary"]["failed_actions"] += 1
+                        processing_results["execution_summary"]["pos_failed"] += 1
+                        continue  # Skip this PO if we can't load its details
+
+                    # Build payload for the specific action
+                    try:
+                        if action == "main-download-invoice":
+                            payload = api_client.build_invoice_download_payload(po_details)
+                        elif action == "invoiceUpload":
+                            payload = api_client.build_invoice_upload_payload(po_details, f"mctech/downloads/fatura_{po_number}.pdf")
+                        else:
+                            logger.error(f"❌ Unknown individual action: {action}")
+                            processing_results["failed_orders"][po_number] = {
+                                "action": action,
+                                "failure_type": "unknown_action",
+                                "error": f"Unknown action: {action}",
+                                "json_file": json_file
+                            }
+                            processing_results["execution_summary"]["failed_actions"] += 1
+                            processing_results["execution_summary"]["pos_failed"] += 1
+                            continue
+                    except FileNotFoundError as e:
+                        logger.error(f"❌ File not found for PO {po_number} in action {action}: {e}")
+                        processing_results["failed_orders"][po_number] = {
+                            "action": action,
+                            "failure_type": "file_not_found",
+                            "error": str(e),
+                            "json_file": json_file
+                        }
+                        processing_results["execution_summary"]["failed_actions"] += 1
+                        processing_results["execution_summary"]["pos_failed"] += 1
+                        continue
+                    except Exception as e:
+                        logger.error(f"❌ Failed to build payload for PO {po_number} in action {action}: {e}")
+                        processing_results["failed_orders"][po_number] = {
+                            "action": action,
+                            "failure_type": "payload_build_failure",
+                            "error": str(e),
+                            "json_file": json_file
+                        }
+                        processing_results["execution_summary"]["failed_actions"] += 1
+                        processing_results["execution_summary"]["pos_failed"] += 1
+                        continue
 
                     api_response = await api_client.execute_api_call(action, payload)
 
@@ -1717,27 +2107,45 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 
     # 📱 SEND WHATSAPP NOTIFICATION - Daily completion report
     try:
-        # Format completion message for WhatsApp
-        next_run = completion_summary['next_execution_scheduled']['next_run']
-        next_run_formatted = datetime.fromisoformat(next_run.replace('Z', '+00:00')).strftime('%d/%m/%Y às %H:%M')
+        # Calculate status transitions for enhanced statistics
+        status_breakdown = {}
+        for po_number, update_info in status_updates.items():
+            new_status = update_info["new_status"]
+            if new_status in status_breakdown:
+                status_breakdown[new_status] += 1
+            else:
+                status_breakdown[new_status] = 1
         
-        whatsapp_message = f"""🏁 *PROCESSAMENTO FATURAS CONCLUÍDO*
+        # Build enhanced statistics message
+        enhanced_stats = []
+        
+        # Map status to friendly names with icons
+        status_display = {
+            "CHECK_ORDER_STATUS": "🔒 Aguardando liberação",
+            "WAITING_MONITORING": "⏳ Aguardando agendamento", 
+            "MONITORED": "📅 Agendados",
+            "DOWNLOADED": "📦 Kits baixados",
+            "UPLOADED": "✅ Uploads realizados"
+        }
+        
+        # Add each status with count to enhanced stats
+        for status, count in status_breakdown.items():
+            if status in status_display:
+                enhanced_stats.append(f"{status_display[status]}: {count}")
+        
+        # Join enhanced stats with newlines
+        enhanced_stats_text = "\n".join(enhanced_stats) if enhanced_stats else "Nenhuma atualização de status"
+        
+        whatsapp_message = f"""🏁 *PROCESSAMENTO DIÁRIO CONCLUÍDO*
 
 📊 *Estatísticas do Dia:*
 ✅ POs processados: {stats['pos_processed_today']}
-❌ POs falharam: {stats['pos_failed_today']} 
-🎯 POs finalizados: {stats['pos_completed_today']}
-📧 Novos emails: {stats['new_emails_processed']}
+❌ POs falharam: {stats['pos_failed_today']}
+📤 Uploads realizados: {stats['pos_completed_today']}
+📧 Emails recebidos: {stats['new_emails_processed']}
 
-📡 *APIs executadas:*
-✅ Sucessos: {stats['api_calls_successful']}
-❌ Falhas: {stats['api_calls_failed']}
-🌐 Falhas navegador: {stats['browser_process_failures']}
-
-⏰ *Próxima execução:* {next_run_formatted}
-
-⏱️ *Tempo total:* {total_execution_time_minutes} min
-📁 *Batch ID:* {completion_summary['daily_execution_summary']['daily_batch_id']}"""
+📋 *Status atualizados:*
+{enhanced_stats_text}"""
 
         # Send WhatsApp notification via Evolution API
         import requests

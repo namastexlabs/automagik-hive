@@ -94,6 +94,13 @@ workflow_config:
         response_type: "zip_file"
         process_individually: true
         
+      claroCheck:
+        description: "Validate order status with Claro system"
+        trigger_conditions: ["PENDING"]
+        response_type: "json"
+        process_individually: true
+        validation_field: "output.status"
+        
       invoiceUpload:
         description: "Upload completed invoices"
         trigger_conditions: ["DOWNLOADED"]
@@ -102,6 +109,7 @@ workflow_config:
   # State Management
   cte_status_flow:
     - "PENDING"              # Awaiting invoice generation
+    - "CHECK_ORDER_STATUS"   # Awaiting order status validation
     - "WAITING_MONITORING"   # Awaiting monitoring
     - "MONITORED"           # Monitored and ready for download
     - "WAITING_DOWNLOAD"    # Awaiting download
