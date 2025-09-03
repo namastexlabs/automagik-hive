@@ -35,14 +35,15 @@ async def process_whatsapp_message(message_data: Dict[str, Any]):
             logger.warning("Invalid message format received")
             return
         
+        # TODO: Number restriction moved to Omni platform - filter directly in Omni webhook config
         # Check if sender is authorized (Omni integration update)
-        import os
-        allowed_numbers_str = os.getenv("JACK_ALLOWED_WHATSAPP_NUMBERS")
-        if allowed_numbers_str:
-            allowed_numbers = [num.strip() for num in allowed_numbers_str.split(",")]
-            if sender_number not in allowed_numbers:
-                logger.info(f"🚫 Unauthorized number attempted access: {sender_number} (allowed: {allowed_numbers})")
-                return
+        # import os
+        # allowed_numbers_str = os.getenv("JACK_ALLOWED_WHATSAPP_NUMBERS")
+        # if allowed_numbers_str:
+        #     allowed_numbers = [num.strip() for num in allowed_numbers_str.split(",")]
+        #     if sender_number not in allowed_numbers:
+        #         logger.info(f"🚫 Unauthorized number attempted access: {sender_number} (allowed: {allowed_numbers})")
+        #         return
             
         logger.info(f"📱 Processing WhatsApp message from {sender_number}: {message_text[:50]}...")
         
