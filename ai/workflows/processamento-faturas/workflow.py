@@ -423,7 +423,7 @@ class BrowserAPIClient:
     """Enhanced Browser API client with payload construction and retry logic"""
 
     def __init__(self, base_url: str | None = None, timeout: int | None = None, max_retries: int | None = None):
-        self.base_url = base_url or os.getenv("BROWSER_API_BASE_URL", "http://localhost:8088")
+        self.base_url = base_url or os.getenv("BROWSER_API_BASE_URL")
         self.timeout = timeout or int(os.getenv("BROWSER_API_TIMEOUT", "900"))
         self.max_retries = max_retries or int(os.getenv("BROWSER_API_MAX_RETRIES", "3"))
         self.session = None
@@ -2161,6 +2161,12 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
     logger.info(f"⏰ Next execution scheduled: {completion_summary['next_execution_scheduled']['next_run']}")
 
     # 📱 SEND WHATSAPP NOTIFICATION - Daily completion report
+    # Load Omni API settings from environment (explicit import to avoid scope issues)
+    import os as env_os
+    omni_api_url = env_os.getenv("OMNI_API_URL")
+    omni_api_key = env_os.getenv("OMNI_API_KEY")
+    omni_phone_number = env_os.getenv("OMNI_PHONE_NUMBER")
+    
     try:
         # Calculate status transitions for enhanced statistics
         status_breakdown = {}
@@ -2211,40 +2217,38 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
                     validation_error_text += f"❌ {file_name}: {error_type}\n"
         
         whatsapp_message = f"""🏁 *PROCESSAMENTO DIÁRIO CONCLUÍDO*
-
 📊 *Estatísticas do Dia:*
 ✅ POs processados: {stats['pos_processed_today']}
 ❌ POs falharam: {stats['pos_failed_today']}
 📤 Uploads realizados: {stats['pos_completed_today']}
 📧 Emails recebidos: {stats['new_emails_processed']}
-
 📋 *Status atualizados:*
-{enhanced_stats_text}{validation_error_text}"""
+{enhanced_stats_text}{validation_error_text}""".strip()
 
-        # Send WhatsApp notification via Evolution API
+        # Send WhatsApp notification via Omni API
         import requests
         
-        # Use Evolution API directly
-        url = "http://localhost:8080/message/sendText/jack"
+        logger.info(f"📱 Using Omni API: {omni_api_url} -> {omni_phone_number} (key: ...{omni_api_key[-6:]})")
+        
+        url = omni_api_url
         headers = {
-            "Content-Type": "application/json",
-            "apikey": "BEE0266C2040-4D83-8FAA-A9A3EF89DDEF"
+            "accept": "application/json",
+            "Authorization": f"Bearer {omni_api_key}",
+            "Content-Type": "application/json"
         }
         payload = {
-            "number": "5527981813600",
-            "textMessage": {
-                "text": whatsapp_message
-            }
+            "phone_number": omni_phone_number,
+            "text": whatsapp_message
         }
         
         response = requests.post(url, json=payload, headers=headers, timeout=30)
         
-        if response.status_code == 201:
+        if response.status_code in [200, 201]:
             result = response.json()
         else:
             raise Exception(f"HTTP {response.status_code}: {response.text}")
         
-        logger.info("📱 Daily completion notification sent via WhatsApp successfully")
+        logger.info("📱 Daily completion notification sent via Omni WhatsApp API successfully")
         completion_summary["whatsapp_notification"] = {
             "sent": True,
             "timestamp": datetime.now(UTC).isoformat(),
