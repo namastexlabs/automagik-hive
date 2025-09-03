@@ -1054,10 +1054,10 @@ def process_order_dates(competencia_value: Any) -> tuple[str, str, int]:
     
     return past_month_string, next_month_string, data_original
 
-async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) -> bool:
+async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) -> tuple[bool, dict | None]:
     """
     Process Excel file and create structured JSON with CTE data
-    Returns True if JSON was created successfully, False otherwise
+    Returns (success: bool, validation_error: dict | None)
     """
     try:
         import pandas as pd
@@ -1074,32 +1074,71 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
             df = pd.read_excel(excel_path, engine='pyxlsb')
         except Exception as e:
             logger.error(f"❌ Failed to read Excel file {excel_path}: {e!s}")
-            return False
+            return False, None
         
         if df.empty:
             logger.warning(f"⚠️ Excel file is empty: {excel_path}")
-            return False
+            return False, None
             
         logger.info(f"📋 Excel loaded: {len(df)} rows, columns: {list(df.columns)}")
         
+        # Required columns as defined in config.yaml
+        required_columns = [
+            "Empresa Origem", 
+            "Valor", 
+            "CNPJ Claro", 
+            "TIPO", 
+            "NF/CTE", 
+            "PO", 
+            "Competência"
+        ]
+        
+        # Validate ALL required columns are present BEFORE any processing
+        logger.info(f"🔍 Validating required columns: {required_columns}")
+        available_columns = list(df.columns)
+        missing_columns = [col for col in required_columns if col not in available_columns]
+        
+        if missing_columns:
+            error_msg = f"Excel validation failed - Missing required columns: {missing_columns}"
+            logger.error(f"❌ {error_msg}")
+            logger.error(f"📋 Available columns: {available_columns}")
+            logger.error(f"📄 File: {excel_path}")
+            
+            # Return validation error for reporting
+            validation_error = {
+                "file": excel_path,
+                "error_type": "missing_columns",
+                "missing_columns": missing_columns,
+                "available_columns": available_columns,
+                "timestamp": datetime.now(UTC).isoformat()
+            }
+            
+            return False, validation_error
+            
+        logger.info(f"✅ All required columns validated successfully")
+        
         # Filter only CTE records (exclude MINUTAS)
         if 'TIPO' not in df.columns:
-            logger.error(f"❌ Required column 'TIPO' not found in Excel. Available columns: {list(df.columns)}")
-            return False
+            logger.error(f"❌ Critical error: 'TIPO' column missing after validation")
+            return False, None
             
         cte_df = df[df['TIPO'] == 'CTE'].copy()
         logger.info(f"🔍 Filtered CTEs: {len(cte_df)} records (excluded {len(df) - len(cte_df)} MINUTA records)")
         
         if cte_df.empty:
-            logger.warning(f"⚠️ No CTE records found in Excel file: {excel_path}")
-            return False
-        
-        # Validate required columns
-        required_columns = ['NF/CTE', 'PO', 'Valor', 'Empresa Origem', 'CNPJ Fornecedor', 'Competência']
-        missing_columns = [col for col in required_columns if col not in cte_df.columns]
-        if missing_columns:
-            logger.error(f"❌ Missing required columns: {missing_columns}")
-            return False
+            error_msg = f"No CTE records found in Excel file (only MINUTAS or empty data)"
+            logger.warning(f"⚠️ {error_msg}")
+            
+            # Return validation error for reporting
+            validation_error = {
+                "file": excel_path,
+                "error_type": "no_cte_records",
+                "total_records": len(df),
+                "cte_records": len(cte_df),
+                "timestamp": datetime.now(UTC).isoformat()
+            }
+            
+            return False, validation_error
         
         # Group CTEs by PO and create structured JSON
         consolidated_data = {
@@ -1182,13 +1221,13 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
         logger.info(f"✅ JSON created successfully: {json_path}")
         logger.info(f"📊 Summary: {consolidated_data['summary']['total_orders']} POs, {consolidated_data['summary']['total_ctes']} CTEs, Total: R$ {consolidated_data['summary']['total_value']:,.2f}")
         
-        return True
+        return True, None
         
     except Exception as e:
         logger.error(f"❌ Error processing Excel to JSON: {e!s}")
         import traceback
         logger.error(f"💥 Traceback: {traceback.format_exc()}")
-        return False
+        return False, None
 
 
 # New Daily Workflow Step Executors
@@ -1262,7 +1301,14 @@ async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput
             
             try:
                 # REAL EXCEL PROCESSING - Convert Excel to structured JSON
-                json_created_successfully = await process_excel_to_json(excel_path, json_path, daily_batch_id)
+                json_created_successfully, validation_error = await process_excel_to_json(excel_path, json_path, daily_batch_id)
+                
+                # Store validation error if present
+                if validation_error:
+                    session_state = get_session_state(step_input)
+                    if "validation_errors" not in session_state:
+                        session_state["validation_errors"] = []
+                    session_state["validation_errors"].append(validation_error)
                 
                 new_emails_processed.append({
                     "filename": file_info["filename"],
@@ -2035,7 +2081,16 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 
     # Get all session state for final summary
     session_state = get_session_state(step_input)
-    init_results = session_state.get("initialization_results", {})
+    
+    # Ensure init_results is from the step output, not session state
+    previous_init_output = step_input.get_step_output("daily_initialization")
+    if previous_init_output:
+        init_results = json.loads(previous_init_output.content)
+    else:
+        # Fallback to session state if step output not available
+        init_results = session_state.get("initialization_results", {})
+        logger.warning("⚠️ Using session state for init_results - step output not found")
+    
     analysis_results = session_state.get("analysis_results", {})
     
     # Calculate actual execution time
@@ -2136,6 +2191,25 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
         # Join enhanced stats with newlines
         enhanced_stats_text = "\n".join(enhanced_stats) if enhanced_stats else "Nenhuma atualização de status"
         
+        # Check for validation errors from session state
+        validation_errors = session_state.get("validation_errors", [])
+        validation_error_text = ""
+        
+        if validation_errors:
+            validation_error_text = "\n\n⚠️ *Erros de Validação:*\n"
+            for error in validation_errors:
+                file_name = error.get("file", "arquivo desconhecido").split('/')[-1]  # Just filename
+                error_type = error.get("error_type", "erro desconhecido")
+                
+                if error_type == "missing_columns":
+                    missing_cols = error.get("missing_columns", [])
+                    validation_error_text += f"❌ {file_name}: Colunas ausentes: {', '.join(missing_cols)}\n"
+                elif error_type == "no_cte_records":
+                    total_records = error.get("total_records", 0)
+                    validation_error_text += f"❌ {file_name}: Nenhum CTE encontrado ({total_records} registros analisados)\n"
+                else:
+                    validation_error_text += f"❌ {file_name}: {error_type}\n"
+        
         whatsapp_message = f"""🏁 *PROCESSAMENTO DIÁRIO CONCLUÍDO*
 
 📊 *Estatísticas do Dia:*
@@ -2145,7 +2219,7 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 📧 Emails recebidos: {stats['new_emails_processed']}
 
 📋 *Status atualizados:*
-{enhanced_stats_text}"""
+{enhanced_stats_text}{validation_error_text}"""
 
         # Send WhatsApp notification via Evolution API
         import requests
