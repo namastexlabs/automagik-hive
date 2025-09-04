@@ -382,8 +382,14 @@ class AgnoAgentProxy:
         from lib.config.provider_registry import get_provider_registry
         
         # Debug: Log the incoming model config to trace the issue
-        logger.info(f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {model_config}")
-        print(f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {model_config}")
+        # Escape curly braces to prevent Loguru formatting from interpreting dict braces
+        _safe_model_cfg = str(model_config).replace("{", "{{").replace("}", "}}")
+        _prov = model_config.get("provider")
+        _log = logger.bind(provider=_prov) if _prov is not None else logger
+        _log.info(
+            f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {_safe_model_cfg}"
+        )
+        print(f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {_safe_model_cfg}")
         
         model_id = model_config.get("id")
         provider = model_config.get("provider")
