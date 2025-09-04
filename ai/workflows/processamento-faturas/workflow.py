@@ -2165,7 +2165,10 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
     import os as env_os
     omni_api_url = env_os.getenv("OMNI_API_URL")
     omni_api_key = env_os.getenv("OMNI_API_KEY")
-    omni_phone_number = env_os.getenv("OMNI_PHONE_NUMBER")
+    omni_phone_numbers_str = env_os.getenv("OMNI_PHONE_NUMBERS")
+    
+    # Parse comma-separated phone numbers
+    omni_phone_numbers = [phone.strip() for phone in omni_phone_numbers_str.split(',') if phone.strip()]
     
     try:
         # Calculate status transitions for enhanced statistics
@@ -2228,7 +2231,7 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
         # Send WhatsApp notification via Omni API
         import requests
         
-        logger.info(f"📱 Using Omni API: {omni_api_url} -> {omni_phone_number} (key: ...{omni_api_key[-6:]})")
+        logger.info(f"📱 Using Omni API: {omni_api_url} -> {len(omni_phone_numbers)} recipients (key: ...{omni_api_key[-6:]})")
         
         url = omni_api_url
         headers = {
@@ -2236,24 +2239,44 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
             "Authorization": f"Bearer {omni_api_key}",
             "Content-Type": "application/json"
         }
-        payload = {
-            "phone_number": omni_phone_number,
-            "text": whatsapp_message
-        }
         
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        # Send message to all phone numbers
+        sent_count = 0
+        failed_numbers = []
         
-        if response.status_code in [200, 201]:
-            result = response.json()
-        else:
-            raise Exception(f"HTTP {response.status_code}: {response.text}")
+        for phone_number in omni_phone_numbers:
+            try:
+                payload = {
+                    "phone_number": phone_number,
+                    "text": whatsapp_message
+                }
+                
+                response = requests.post(url, json=payload, headers=headers, timeout=30)
+                
+                if response.status_code in [200, 201]:
+                    result = response.json()
+                    logger.info(f"📱 Message sent successfully to {phone_number}")
+                    sent_count += 1
+                else:
+                    logger.error(f"❌ Failed to send to {phone_number}: HTTP {response.status_code}")
+                    failed_numbers.append(phone_number)
+                    
+            except Exception as e:
+                logger.error(f"❌ Error sending to {phone_number}: {e}")
+                failed_numbers.append(phone_number)
         
-        logger.info("📱 Daily completion notification sent via Omni WhatsApp API successfully")
+        if sent_count == 0:
+            raise Exception(f"Failed to send to all {len(omni_phone_numbers)} numbers")
+        
+        logger.info(f"📱 Daily completion notification sent via Omni WhatsApp API successfully to {sent_count}/{len(omni_phone_numbers)} recipients")
         completion_summary["whatsapp_notification"] = {
             "sent": True,
             "timestamp": datetime.now(UTC).isoformat(),
-            "message_preview": whatsapp_message[:100] + "...",
-            "response": result
+            "recipients_total": len(omni_phone_numbers),
+            "recipients_success": sent_count,
+            "recipients_failed": len(failed_numbers),
+            "failed_numbers": failed_numbers,
+            "message_preview": whatsapp_message[:100] + "..."
         }
         
     except Exception as e:
