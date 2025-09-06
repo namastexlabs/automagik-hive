@@ -386,11 +386,11 @@ class TestWorkflowFactoryAndAgents:
         # Verify all required steps are present
         step_names = [step.name for step in workflow.steps]
         expected_steps = [
-            "email_monitoring",
-            "data_extraction", 
-            "json_generation",
-            "api_orchestration",
-            "workflow_completion"
+            "daily_initialization",
+            "json_analysis",
+            "individual_po_processing", 
+            "daily_completion",
+            "database_sync"
         ]
         
         for expected_step in expected_steps:
@@ -421,7 +421,7 @@ class TestWorkflowFactoryAndAgents:
         
         # Verify step order and dependencies
         steps = workflow.steps
-        assert len(steps) == 5
+        assert len(steps) == 6  # Updated to include database_sync step
         
         # Each step should have appropriate retry configuration
         for step in steps:
