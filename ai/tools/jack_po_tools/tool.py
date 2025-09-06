@@ -4,9 +4,13 @@
 
 import os
 import psycopg2
+from dotenv import load_dotenv
 
 from agno.tools import tool
 from lib.logging import logger
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 def validate_po_number(po_number: str) -> bool:
@@ -30,8 +34,9 @@ def format_date(date_obj) -> str:
 
 def get_db_connection_string() -> str:
     """Get database connection string from environment"""
-    db_url = os.getenv("HIVE_DATABASE_URL", 
-                      "postgresql://lPQhODtC10a6kXht:0K8PPXP4SItd8VD4@localhost:5532/hive")
+    db_url = os.getenv("HIVE_DATABASE_URL")
+    if not db_url:
+        raise ValueError("HIVE_DATABASE_URL environment variable not set")
     # Convert SQLAlchemy format to psycopg2 format  
     return db_url.replace("postgresql+psycopg://", "postgresql://")
 
