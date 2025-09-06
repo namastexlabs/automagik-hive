@@ -199,7 +199,7 @@ def list_failed_orders(limit: int = 10) -> str:
         conn = psycopg2.connect(get_db_connection_string())
         cur = conn.cursor()
         
-        cur.execute("SELECT po_number FROM hive.cte_data WHERE status LIKE 'FAILED_%' LIMIT %s", (limit,))
+        cur.execute("SELECT po_number FROM hive.cte_data WHERE status LIKE %s LIMIT %s", ('FAILED_%', limit))
         results = cur.fetchall()
         
         if not results:
