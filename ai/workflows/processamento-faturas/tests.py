@@ -441,12 +441,12 @@ class TestProcessamentoFaturasWorkflow:
         workflow = get_processamento_faturas_workflow()
         
         assert workflow.name == "processamento_faturas"
-        assert len(workflow.steps) == 5  # 5 steps in total
+        assert len(workflow.steps) == 6  # 6 steps in total (including database_sync)
         
         step_names = [step.name for step in workflow.steps]
         expected_steps = [
-            "email_monitoring", "data_extraction", "json_generation", 
-            "api_orchestration", "workflow_completion"
+            "daily_initialization", "json_analysis", "individual_po_processing", 
+            "daily_completion", "database_sync"
         ]
         
         for expected_step in expected_steps:
