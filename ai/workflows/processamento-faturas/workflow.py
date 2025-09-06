@@ -37,6 +37,9 @@ from lib.gmail.auth import GmailAuthenticator
 from lib.gmail.downloader import GmailDownloader
 from lib.logging import logger
 
+# Import CTEProcessor for database synchronization
+from ai.agents.jack_retrieval.processor import CTEProcessor
+
 
 class ProcessingStatus(Enum):
     """CTE Processing Status Enum"""
@@ -2297,6 +2300,73 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 
 
 
+async def execute_database_sync_step(step_input: StepInput) -> StepOutput:
+    """
+    🗄️ FINAL STEP: Synchronize all generated JSON files to PostgreSQL database
+    
+    This step MUST ALWAYS BE THE FINAL STEP in the workflow to ensure:
+    - Jack retrieval agent has access to latest data
+    - Real-time data queries reflect current status
+    - Database state matches JSON file contents
+    
+    ⚠️ CRITICAL: DO NOT ADD STEPS AFTER THIS ONE - New steps must be added BEFORE this step
+    """
+    sync_start_time = datetime.now(UTC)
+    logger.info("🗄️ Starting database synchronization - FINAL STEP")
+    
+    try:
+        # Get database URL from environment
+        database_url = os.getenv('HIVE_DATABASE_URL')
+        if not database_url:
+            raise ValueError("HIVE_DATABASE_URL environment variable not set")
+        
+        # Initialize CTE processor
+        processor = CTEProcessor(database_url)
+        
+        # Process all JSON files in mctech/ctes directory
+        cte_directory = "mctech/ctes"
+        await processor.process_directory(cte_directory)
+        
+        # Get final count of orders in database
+        total_orders = await processor.get_order_count()
+        
+        sync_end_time = datetime.now(UTC)
+        execution_time = (sync_end_time - sync_start_time).total_seconds()
+        
+        result = {
+            "status": "SUCCESS",
+            "database_sync_completed": True,
+            "cte_directory": cte_directory,
+            "total_orders_in_database": total_orders,
+            "sync_execution_time_seconds": execution_time,
+            "sync_timestamp": sync_end_time.isoformat(),
+            "message": f"✅ Database synchronized successfully. {total_orders} orders now available for jack_retrieval agent queries."
+        }
+        
+        logger.info(f"✅ Database sync completed: {total_orders} orders processed in {execution_time:.2f}s")
+        
+        return StepOutput(content=json.dumps(result, indent=2))
+        
+    except Exception as e:
+        sync_end_time = datetime.now(UTC)
+        execution_time = (sync_end_time - sync_start_time).total_seconds()
+        
+        error_result = {
+            "status": "FAILED",
+            "database_sync_completed": False,
+            "error": str(e),
+            "sync_execution_time_seconds": execution_time,
+            "sync_timestamp": sync_end_time.isoformat(),
+            "message": f"❌ Database synchronization failed: {e}"
+        }
+        
+        logger.error(f"❌ Database sync failed: {e}")
+        
+        # Don't raise the exception - return the error info instead
+        # This allows the workflow to complete and report the sync failure
+        return StepOutput(content=json.dumps(error_result, indent=2))
+
+
 # Factory function to create ProcessamentoFaturas workflow
 def get_processamento_faturas_workflow(**kwargs) -> Workflow:
     """Factory function to create ProcessamentoFaturas daily scheduled workflow with status-based processing"""
@@ -2335,6 +2405,12 @@ def get_processamento_faturas_workflow(**kwargs) -> Workflow:
                 description="Update JSON files with new statuses and schedule next execution",
                 executor=execute_daily_completion_step,
                 max_retries=1,
+            ),
+            Step(
+                name="database_sync",
+                description="🗄️ FINAL STEP: Synchronize all JSON data to PostgreSQL database for jack_retrieval agent queries. ⚠️ MUST ALWAYS BE THE FINAL STEP - DO NOT ADD STEPS AFTER THIS ONE",
+                executor=execute_database_sync_step,
+                max_retries=2,
             ),
         ],
         **kwargs,
