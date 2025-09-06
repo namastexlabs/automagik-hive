@@ -161,3 +161,51 @@ def check_po_exists(po_number: str) -> str:
     finally:
         if 'conn' in locals():
             conn.close()
+
+
+@tool
+def list_orders_by_status(status: str, limit: int = 10) -> str:
+    """Lista pedidos por status específico"""
+    try:
+        conn = psycopg2.connect(get_db_connection_string())
+        cur = conn.cursor()
+        
+        cur.execute("SELECT po_number FROM hive.cte_data WHERE status = %s LIMIT %s", (status, limit))
+        results = cur.fetchall()
+        
+        if not results:
+            return f"📋 Nenhum pedido encontrado com status {status}."
+            
+        pos = [row[0] for row in results]
+        return f"📋 Pedidos {status}: " + ", ".join(pos)
+        
+    except Exception as e:
+        logger.error(f"Error listing orders by status: {e}")
+        return "Erro temporário no sistema. Tente novamente em alguns minutos."
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
+@tool  
+def list_failed_orders(limit: int = 10) -> str:
+    """Lista pedidos com falhas"""
+    try:
+        conn = psycopg2.connect(get_db_connection_string())
+        cur = conn.cursor()
+        
+        cur.execute("SELECT po_number FROM hive.cte_data WHERE status LIKE 'FAILED_%' LIMIT %s", (limit,))
+        results = cur.fetchall()
+        
+        if not results:
+            return "🚨 Nenhum pedido encontrado com falhas."
+            
+        pos = [row[0] for row in results]
+        return "🚨 Pedidos com falhas: " + ", ".join(pos)
+        
+    except Exception as e:
+        logger.error(f"Error listing failed orders: {e}")
+        return "Erro temporário no sistema. Tente novamente em alguns minutos."
+    finally:
+        if 'conn' in locals():
+            conn.close()
