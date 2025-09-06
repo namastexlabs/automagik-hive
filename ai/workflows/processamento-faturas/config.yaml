@@ -1,7 +1,7 @@
 workflow:
   name: "ProcessamentoFaturas - CTE Invoice Processing Pipeline"
   workflow_id: "processamento-faturas"
-  version: 2
+  version: 3
   description: "Automated CTE invoice processing workflow that monitors emails, extracts Excel data, and orchestrates browser API flows"
 
 model:
@@ -155,10 +155,10 @@ instructions: |
   ## 🎯 WORKFLOW IDENTITY
 
   **Mission**: Automate end-to-end CTE invoice processing with zero manual intervention
-  **Architecture**: 4-stage sequential pipeline with conditional branching and state management
-  **Integration**: Seamless compatibility with existing Python system and Browser APIs
+  **Architecture**: 5-stage sequential pipeline with conditional branching, state management, and database synchronization
+  **Integration**: Seamless compatibility with existing Python system, Browser APIs, and PostgreSQL database for real-time queries
 
-  ## 🔄 4-STAGE PROCESSING PIPELINE
+  ## 🔄 5-STAGE PROCESSING PIPELINE
 
   ### Stage 1: Email Monitoring & Extraction
   - Monitor Gmail inbox for unprocessed emails with 'mc-tech-não-processado' label
@@ -184,6 +184,12 @@ instructions: |
   - **invoiceMonitor**: Monitor status for WAITING_MONITORING CTEs  
   - **main-download-invoice**: Download invoices for MONITORED/WAITING_DOWNLOAD CTEs
   - **invoiceUpload**: Upload completed invoices for DOWNLOADED CTEs
+
+  ### Stage 5: Database Synchronization 🗄️ **FINAL STEP**
+  - Synchronize all JSON data to PostgreSQL database for real-time queries
+  - Enable jack_retrieval agent to access up-to-date CTE information
+  - Use UPSERT operations to overwrite existing data with latest status
+  - **⚠️ CRITICAL: MUST ALWAYS BE THE FINAL STEP - New steps must be added BEFORE this stage**
 
   ## 🧠 STATE MANAGEMENT PROTOCOL
 
@@ -243,13 +249,15 @@ expected_output: |
   3. **Status Management Report**: Current status of all CTEs in the processing pipeline  
   4. **API Execution Log**: Browser flow execution results with payloads and responses
   5. **File Organization**: Properly organized Excel files, JSONs, and downloaded invoices
-  6. **Error Report**: Any failures encountered with recovery actions taken
-  7. **Performance Metrics**: Processing times, success rates, and system health indicators
+  6. **Database Synchronization**: All JSON data synchronized to PostgreSQL for real-time queries
+  7. **Error Report**: Any failures encountered with recovery actions taken
+  8. **Performance Metrics**: Processing times, success rates, and system health indicators
 
 success_criteria: |
   SUCCESS = Complete CTE pipeline automation ✓ Zero manual intervention required ✓ 
   All CTEs processed through appropriate status flows ✓ Browser APIs coordinated seamlessly ✓ 
-  Robust error handling and recovery ✓ Perfect integration with existing Python system ✓
+  Database synchronized for real-time jack_retrieval queries ✓ Robust error handling and recovery ✓ 
+  Perfect integration with existing Python system ✓
 
 workflow_metadata:
   complexity: "high"
