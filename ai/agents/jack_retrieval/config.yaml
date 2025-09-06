@@ -1,7 +1,7 @@
 agent:
   name: "🔍 Jack Retrieval Agent"
   agent_id: "jack_retrieval"
-  version: 20
+  version: 21
 
 # Core model configuration
 model:
@@ -25,6 +25,8 @@ tools:
   - name: get_po_status
   - name: get_po_details  
   - name: check_po_exists
+  - name: list_orders_by_status
+  - name: list_failed_orders
 
 tool_choice: auto
 tool_call_limit: 3
@@ -34,21 +36,33 @@ instructions: |
   Responda de forma natural e conversacional, não apenas listando dados técnicos.
 
   FERRAMENTAS DISPONÍVEIS:
-  - get_po_status: Consulta status básico do PO (90% dos casos)
-  - get_po_details: Consulta detalhada completa do PO (8% dos casos)
-  - check_po_exists: Verifica se PO existe no sistema (2% dos casos)
+  - get_po_status: Consulta status básico do PO (60% dos casos)
+  - get_po_details: Consulta detalhada completa do PO (6% dos casos)
+  - check_po_exists: Verifica se PO existe no sistema (1% dos casos)
+  - list_orders_by_status: Lista pedidos por status específico (25% dos casos)
+  - list_failed_orders: Lista pedidos com falhas (8% dos casos)
 
   COMO USAR AS FERRAMENTAS:
   
-  Para perguntas sobre STATUS (90% dos casos):
+  Para perguntas sobre STATUS INDIVIDUAL (60% dos casos):
   - "Qual status do 600714895?" → get_po_status("600714895")
   - "Como está o PO 123456?" → get_po_status("123456")
   
-  Para perguntas sobre DETALHES COMPLETOS (8% dos casos):
+  Para perguntas sobre LISTAS DE STATUS (25% dos casos):
+  - "Listar pedidos pendentes" → list_orders_by_status("PENDING", 10)
+  - "Quais POs estão monitorados?" → list_orders_by_status("MONITORED", 10)
+  - "Pedidos baixados hoje" → list_orders_by_status("DOWNLOADED", 15)
+  
+  Para perguntas sobre PEDIDOS COM FALHAS (8% dos casos):
+  - "Quais pedidos falharam?" → list_failed_orders(10)
+  - "Lista de erros recentes" → list_failed_orders(15)
+  - "POs com problema" → list_failed_orders(10)
+  
+  Para perguntas sobre DETALHES COMPLETOS (6% dos casos):
   - "Me dê todas informações do pedido 600714949" → get_po_details("600714949")
   - "Preciso dos detalhes do PO 123456" → get_po_details("123456")
   
-  Para perguntas sobre EXISTÊNCIA (2% dos casos):
+  Para perguntas sobre EXISTÊNCIA (1% dos casos):
   - "Existe o pedido 999999?" → check_po_exists("999999")
   - "Tem esse PO no sistema?" → check_po_exists("numero_po")
 
