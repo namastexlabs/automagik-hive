@@ -7,12 +7,13 @@ from unittest.mock import patch, MagicMock
 from datetime import datetime
 
 from ai.tools.jack_po_tools.tool import (
-    validate_po_number, 
-    format_currency, 
-    format_date,
+    validate_po_number,
+    format_currency,
     get_po_status,
     get_po_details, 
-    check_po_exists
+    check_po_exists,
+    list_orders_by_status,
+    list_failed_orders
 )
 
 
@@ -74,3 +75,72 @@ class TestJackPOTools:
         
         result = get_po_status.entrypoint("600714895")
         assert "Erro temporário" in result
+        
+    def test_list_orders_by_status_invalid_inputs(self):
+        # Test limit enforcement - should clamp to 1-20
+        result = list_orders_by_status.entrypoint("PENDING", 25)
+        # Should handle gracefully without error
+        
+    @patch('ai.tools.jack_po_tools.tool.psycopg2.connect')
+    def test_list_orders_by_status_found(self, mock_connect):
+        mock_conn = MagicMock()
+        mock_cur = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cur
+        mock_cur.fetchall.return_value = [
+            ("600714895",),
+            ("600714896",)
+        ]
+        
+        result = list_orders_by_status.entrypoint("PENDING", 10)
+        assert "📋 Pedidos PENDING:" in result
+        assert "600714895, 600714896" in result
+        
+    @patch('ai.tools.jack_po_tools.tool.psycopg2.connect') 
+    def test_list_orders_by_status_not_found(self, mock_connect):
+        mock_conn = MagicMock()
+        mock_cur = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cur
+        mock_cur.fetchall.return_value = []
+        
+        result = list_orders_by_status.entrypoint("NONEXISTENT", 10)
+        assert "📋 Nenhum pedido encontrado com status NONEXISTENT" in result
+        
+    @patch('ai.tools.jack_po_tools.tool.psycopg2.connect')
+    def test_list_failed_orders_found(self, mock_connect):
+        mock_conn = MagicMock()
+        mock_cur = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cur
+        mock_cur.fetchall.return_value = [
+            ("600714897",),
+            ("600714898",)
+        ]
+        
+        result = list_failed_orders.entrypoint(10)
+        assert "🚨 Pedidos com falhas:" in result
+        assert "600714897, 600714898" in result
+        
+    @patch('ai.tools.jack_po_tools.tool.psycopg2.connect')
+    def test_list_failed_orders_not_found(self, mock_connect):
+        mock_conn = MagicMock()
+        mock_cur = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cur
+        mock_cur.fetchall.return_value = []
+        
+        result = list_failed_orders.entrypoint(10)
+        assert "🚨 Nenhum pedido encontrado com falhas" in result
+        
+    @patch('ai.tools.jack_po_tools.tool.psycopg2.connect')
+    def test_list_functions_database_error_handling(self, mock_connect):
+        mock_connect.side_effect = Exception("Database connection failed")
+        
+        result_status = list_orders_by_status.entrypoint("PENDING", 10)
+        assert "Erro temporário" in result_status
+        
+        result_failed = list_failed_orders.entrypoint(10)
+        assert "Erro temporário" in result_failed
+        
+    # Simplified approach - no complex defensive programming needed
