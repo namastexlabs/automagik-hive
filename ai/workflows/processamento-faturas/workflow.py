@@ -2014,7 +2014,18 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
         raise ValueError("Individual PO processing step output not found")
 
     processing_results = json.loads(previous_output.content)
-    status_updates = processing_results["status_updates"]
+    
+    # Handle case where API was unavailable - no status updates to apply
+    status_updates = processing_results.get("status_updates", {})
+    if not status_updates:
+        logger.warning("⚠️ No status updates available - API may be unavailable, completing without file updates")
+        return StepOutput(content=json.dumps({
+            "status": "SUCCESS", 
+            "message": "Daily completion successful - no status updates to apply",
+            "api_available": False,
+            "files_updated": 0,
+            "completion_timestamp": datetime.now(UTC).isoformat()
+        }))
 
     file_manager = create_file_manager_agent()
 
