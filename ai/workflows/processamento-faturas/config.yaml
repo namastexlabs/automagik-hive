@@ -1,7 +1,7 @@
 workflow:
   name: "ProcessamentoFaturas - CTE Invoice Processing Pipeline"
   workflow_id: "processamento-faturas"
-  version: 3
+  version: 4
   description: "Automated CTE invoice processing workflow that monitors emails, extracts Excel data, and orchestrates browser API flows"
 
 model:
@@ -65,7 +65,7 @@ workflow_config:
     ignore_minutas: true
     required_columns:
       - "Empresa Origem"
-      - "Valor"
+      - "Valor" # Note: Also supports 'valor CHAVE' as alternative
       - "CNPJ Claro" 
       - "TIPO"
       - "NF/CTE"
@@ -169,7 +169,7 @@ instructions: |
   ### Stage 2: Excel Data Processing (CTEs Only)
   - Extract data from Excel spreadsheets focusing exclusively on CTEs
   - Filter out MINUTAS records (ignore non-CTE entries)
-  - Validate required columns: Empresa Origem, Valor, CNPJ Claro, TIPO, NF/CTE, PO, Competência
+  - Validate required columns: Empresa Origem, Valor (or valor CHAVE), CNPJ Claro, TIPO, NF/CTE, PO, Competência
   - Apply data validation and consistency checks
 
   ### Stage 3: JSON Structure Generation

@@ -161,7 +161,7 @@ def create_data_extractor_agent() -> Agent:
             "",
             "**📊 DATA EXTRACTION PROTOCOL**",
             "1. **File Loading**: Open Excel files using pandas with error handling",
-            "2. **Schema Detection**: Expected columns: 'TIPO', 'NF/CTE', 'PO', 'Valor', 'Empresa Origem', 'CNPJ Fornecedor', 'Competência'",
+            "2. **Schema Detection**: Expected columns: 'TIPO', 'NF/CTE', 'PO', 'Valor' (or 'valor CHAVE'), 'Empresa Origem', 'CNPJ Fornecedor', 'Competência'",
             "3. **Row Classification**: Use column 'TIPO' to distinguish CTE from MINUTA records",
             "4. **CTE Filtering**: df[df['TIPO'] == 'CTE'] to extract only CTE records, log MINUTA count",
             "5. **Data Validation**: Validate all required fields and formats",
@@ -176,7 +176,7 @@ def create_data_extractor_agent() -> Agent:
             # "- Validation Logic: Ensure classification accuracy >99.5%",
             "",
             "**📋 DATA VALIDATION REQUIREMENTS**", 
-            "- Required Fields: All CTE records must have 'NF/CTE', 'Valor', 'Competência' (stored as data_original), 'CNPJ Fornecedor'",
+            "- Required Fields: All CTE records must have 'NF/CTE', 'Valor' (or 'valor CHAVE'), 'Competência' (stored as data_original), 'CNPJ Fornecedor'",
             "- CTE Filter: Use TIPO == 'CTE' to exclude MINUTA records", 
             "- Format Validation: CNPJ format, date ranges, numeric values",
             "- Business Rules: Value limits, date ranges, customer validations",
@@ -1085,10 +1085,13 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
             
         logger.info(f"📋 Excel loaded: {len(df)} rows, columns: {list(df.columns)}")
         
+        available_columns = list(df.columns)
+        valor_column = 'valor CHAVE' if 'valor CHAVE' in available_columns else 'Valor'
+        
         # Required columns as defined in config.yaml
         required_columns = [
             "Empresa Origem", 
-            "Valor", 
+            valor_column,
             "CNPJ Claro", 
             "TIPO", 
             "NF/CTE", 
@@ -1098,7 +1101,6 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
         
         # Validate ALL required columns are present BEFORE any processing
         logger.info(f"🔍 Validating required columns: {required_columns}")
-        available_columns = list(df.columns)
         missing_columns = [col for col in required_columns if col not in available_columns]
         
         if missing_columns:
@@ -1172,7 +1174,7 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
                 
                 cte_data = {
                     "NF/CTE": str(row.get('NF/CTE', '')),
-                    "valor_chave": str(row.get('Valor', '')),
+                    "valor_chave": str(row.get(valor_column, '')),
                     "empresa_origem": str(row.get('Empresa Origem', '')),
                     "cnpj_fornecedor": str(row.get('CNPJ Fornecedor', '')),
                     "data_original": data_original  # Changed from 'competencia' to 'data_original'
@@ -1181,7 +1183,7 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
                 
                 # Extract value for PO total (if numeric)
                 try:
-                    value = float(str(row.get('Valor', '0')).replace(',', '.'))
+                    value = float(str(row.get(valor_column, '0')).replace(',', '.'))
                     po_total_value += value
                 except (ValueError, TypeError):
                     pass
