@@ -43,47 +43,80 @@ class CSVDataSource:
             return []
     
     def process_single_row(self, row_data: Dict[str, Any], kb, update_row_hash_func: Callable) -> bool:
-        """Process a single new row and add it to the vector database - EXTRACTED and IMPROVED from SmartIncrementalLoader._process_single_row
-        
-        IMPROVEMENT: Uses managed temporary files with proper cleanup to avoid file system clutter.
+        """Process a single new row and add it to the vector database.
+
+        Builds a Document with a stable ID based on the original CSV index,
+        ensuring upserts match the main load semantics.
         """
-        import tempfile
-        
         try:
-            # Create a temporary CSV file with just this row
-            temp_csv_path = (
-                self.csv_path.parent / f"temp_single_row_{row_data['hash']}.csv" if self.csv_path
-                else Path(tempfile.gettempdir()) / f"temp_single_row_{row_data['hash']}.csv"
+            # Extract needed fields
+            idx = int(row_data.get("index", 0))
+            data = row_data.get("data", {})
+
+            question = str(data.get("question", "")).strip()
+            problem = str(data.get("problem", "")).strip()
+            answer = str(data.get("answer", "")).strip()
+            solution = str(data.get("solution", "")).strip()
+            category = str(data.get("category", "")).strip()
+            tags = str(data.get("tags", "")).strip()
+            business_unit = str(data.get("business_unit", "")).strip()
+            typification = str(data.get("typification", "")).strip()
+
+            main_content = answer or solution
+            context = question or problem
+            if not main_content and not context:
+                return False
+
+            content_parts = []
+            if context:
+                content_parts.append(f"**Q:** {question}" if question else f"**Problem:** {problem}")
+            if answer:
+                content_parts.append(f"**A:** {answer}")
+            elif solution:
+                content_parts.append(f"**Solution:** {solution}")
+            if typification:
+                content_parts.append(f"**Typification:** {typification}")
+            if business_unit:
+                content_parts.append(f"**Business Unit:** {business_unit}")
+            content = "\n\n".join(content_parts)
+
+            # Build metadata mirroring RowBasedCSVKnowledgeBase
+            meta_data = {
+                "row_index": idx + 1,
+                "source": "knowledge_rag_csv",
+                "category": category,
+                "tags": tags,
+                "has_question": bool(context),
+                "has_answer": bool(main_content),
+                "schema_type": "question_answer" if question else "problem_solution",
+                "business_unit": business_unit,
+                "typification": typification,
+                "has_business_unit": bool(business_unit),
+                "has_typification": bool(typification),
+                "has_problem": bool(context),
+                "has_solution": bool(main_content),
+            }
+
+            # Construct Document and upsert via vector DB
+            from agno.document.base import Document
+
+            doc = Document(
+                id=f"knowledge_row_{idx + 1}",
+                content=content,
+                meta_data=meta_data,
             )
 
-            # Create DataFrame with just this row
-            df = pd.DataFrame([row_data["data"]])
-            df.to_csv(temp_csv_path, index=False)
+            if kb.vector_db.upsert_available():
+                kb.vector_db.upsert(documents=[doc], filters=None, batch_size=1)
+            else:
+                kb.vector_db.insert(documents=[doc], filters=None, batch_size=1)
 
-            try:
-                # Create a new knowledge base instance for just this row
-                from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
-                
-                temp_kb = RowBasedCSVKnowledgeBase(
-                    csv_path=str(temp_csv_path),
-                    vector_db=kb.vector_db  # Reuse the same vector DB connection
-                )
-                
-                # Load just this single row (upsert mode - no recreate)
-                temp_kb.load(recreate=False, upsert=True)
+            # Add the content hash to the database record with row index for precise match
+            update_row_hash_func(data, row_data["hash"], idx)
 
-                # Add the content hash to the database record
-                update_row_hash_func(row_data["data"], row_data["hash"])
-
-                return True
-
-            finally:
-                # Clean up temporary file
-                if temp_csv_path.exists():
-                    temp_csv_path.unlink()
+            return True
 
         except Exception as e:
             from lib.logging import logger
-
             logger.error("Error processing single row", error=str(e))
             return False

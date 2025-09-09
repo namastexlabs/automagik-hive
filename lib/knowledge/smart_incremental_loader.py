@@ -1,315 +1,249 @@
 #!/usr/bin/env python3
 """
-Smart Incremental Knowledge Loader - ORCHESTRATOR using extracted components
-Reduced from 713 lines to ~200 lines by delegating to specialized services.
+Smart Incremental Loader
+
+Purpose: Avoid full re-embedding on every server start by computing stable
+per-row hashes and only processing added/changed/deleted rows. Designed to be
+minimally invasive and to integrate with existing repository and datasource
+utilities.
+
+Behavior:
+- Initial load: if DB has no hashes, load all rows once, then populate hashes.
+- No changes: if CSV hashes match DB hashes, do nothing.
+- Incremental update: process only new/changed rows; remove deleted rows.
+
+Notes:
+- Uses HIVE_DATABASE_URL for DB access.
+- Relies on lib/knowledge/repositories/knowledge_repository.py for DB ops.
+- Uses lib/knowledge/datasources/csv_datasource.py to process single rows.
 """
 
+from __future__ import annotations
+
+import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Set
 
 import yaml
-from sqlalchemy import create_engine, text
 
-from lib.knowledge.factories.knowledge_factory import get_knowledge_base
-from lib.knowledge.repositories.knowledge_repository import KnowledgeRepository
-from lib.knowledge.services.hash_manager import HashManager
-from lib.knowledge.datasources.csv_datasource import CSVDataSource
-from lib.knowledge.services.change_analyzer import ChangeAnalyzer
+from lib.logging import logger
+
+
+def _load_config() -> dict[str, Any]:
+    """Load knowledge configuration with a resilient fallback.
+
+    Tries centralized loader first; falls back to reading the YAML directly.
+    """
+    try:
+        from lib.utils.version_factory import load_global_knowledge_config
+
+        return load_global_knowledge_config()
+    except Exception as e:
+        logger.debug("Falling back to local config load", error=str(e))
+        cfg_path = Path(__file__).parent / "config.yaml"
+        try:
+            with cfg_path.open("r", encoding="utf-8") as f:
+                return yaml.safe_load(f) or {}
+        except Exception as e2:
+            logger.warning("Failed to load knowledge config", error=str(e2))
+            return {}
+
+
+class _HashManager:
+    """Computes stable content hashes for CSV rows based on configured columns."""
+
+    def __init__(self, config: dict[str, Any]):
+        kcfg = config.get("knowledge", {})
+        inc = kcfg.get("incremental_loading", {})
+        self.hash_columns: List[str] = inc.get(
+            "hash_columns",
+            [
+                "question",
+                "answer",
+                "category",
+                "tags",
+            ],
+        )
+
+    def hash_row(self, row: Any) -> str:
+        parts: List[str] = []
+        for col in self.hash_columns:
+            try:
+                # pandas Series or dict compatible access
+                val = row[col] if hasattr(row, "__getitem__") else None
+                if val is None and isinstance(row, dict):
+                    val = row.get(col)
+            except Exception:
+                val = None
+            parts.append(str(val or "").strip())
+        data = "\u241F".join(parts)  # unit separator to reduce collision risk
+        return hashlib.md5(data.encode("utf-8")).hexdigest()
 
 
 class SmartIncrementalLoader:
-    """
-    Smart loader with true incremental updates - NOW AN ORCHESTRATOR
-    
-    Delegates to specialized components:
-    - HashManager: Row hashing and comparison logic
-    - CSVDataSource: CSV reading and single row processing 
-    - ChangeAnalyzer: Change detection and orphan analysis
-    - KnowledgeRepository: Database operations
-    """
+    """Incremental CSV → PgVector loader with per-row hashing."""
 
-    def __init__(self, csv_path: str | None = None, kb=None):
-        # Load configuration first
-        self.config = self._load_config()
+    def __init__(self, csv_path: str, kb: Any):
+        self.csv_path = str(csv_path)
+        self.kb = kb
+        self.config = _load_config()
 
-        # Use csv_path from parameter or config
-        if csv_path is None:
-            csv_filename = self.config.get("knowledge", {}).get(
-                "csv_file_path", "data/knowledge_rag.csv"
-            )
-            csv_path = Path(__file__).parent / csv_filename
-
-        self.csv_path = Path(csv_path)
-        self.kb = kb  # Accept knowledge base as parameter
+        # DB URL from environment (same convention used in knowledge_factory)
         self.db_url = os.getenv("HIVE_DATABASE_URL")
+        if not self.db_url:
+            # Return error at call time rather than raise here to keep control flow simple
+            logger.error(
+                "HIVE_DATABASE_URL not set; cannot perform smart load"
+            )
 
-        # Get table name from configuration
-        self.table_name = (
-            self.config.get("knowledge", {})
-            .get("vector_db", {})
-            .get("table_name", "knowledge_base")
+        # Lazy-import repository and datasource to prevent circulars in tests
+        from lib.knowledge.repositories.knowledge_repository import (
+            KnowledgeRepository,
         )
+        from lib.knowledge.datasources.csv_datasource import CSVDataSource
+
+        self.repository = KnowledgeRepository(db_url=self.db_url)
+        self.hash_manager = _HashManager(self.config)
+        self.csv_datasource = CSVDataSource(Path(self.csv_path), self.hash_manager)
+
+    def smart_load(self) -> Dict[str, Any]:
+        """Execute smart loading strategy and return evidence summary."""
+        start = datetime.now()
 
         if not self.db_url:
-            raise RuntimeError("HIVE_DATABASE_URL required for vector database checks")
+            return {"error": "Missing HIVE_DATABASE_URL"}
 
-        # Initialize extracted components
-        self.hash_manager = HashManager(self.config)
-        self.csv_datasource = CSVDataSource(self.csv_path, self.hash_manager)
-        self.repository = KnowledgeRepository(self.db_url, self.table_name)
-        self.change_analyzer = ChangeAnalyzer(self.config, self.repository)
+        # Gather current state
+        csv_rows = self.csv_datasource.get_csv_rows_with_hashes()
+        csv_hashes: Set[str] = {r["hash"] for r in csv_rows}
+        existing_hashes: Set[str] = self.repository.get_existing_row_hashes()
 
-    def _load_config(self) -> dict[str, Any]:
-        """Load knowledge configuration from YAML file"""
-        try:
-            config_path = Path(__file__).parent / "config.yaml"
-            with open(config_path, encoding="utf-8") as file:
-                return yaml.safe_load(file)
-        except Exception as e:
-            from lib.logging import logger
+        # Initial load: no hashes present in DB
+        if len(existing_hashes) == 0 and len(csv_rows) > 0:
+            return self._initial_load_with_hashes(csv_rows, start)
 
-            logger.warning("Could not load config", error=str(e))
-            return {}
+        # Compute deltas
+        new_or_changed_rows = [r for r in csv_rows if r["hash"] not in existing_hashes]
+        removed_hashes = list(existing_hashes - csv_hashes)
 
-    # REMOVED: All database methods moved to KnowledgeRepository
-
-    def analyze_changes(self) -> dict[str, Any]:
-        """Analyze what needs to be loaded by checking specific content vs PostgreSQL - DELEGATED"""
-        if not self.csv_path.exists():
-            return {"error": "CSV file not found"}
-
-        try:
-            # Get CSV rows with hashes
-            csv_rows = self.csv_datasource.get_csv_rows_with_hashes()
-            
-            # Use database connection for analysis
-            engine = create_engine(self.db_url)
-            with engine.connect() as conn:
-                return self.change_analyzer.analyze_changes(csv_rows, conn)
-
-        except Exception as e:
-            return {"error": str(e)}
-
-    def smart_load(self, force_recreate: bool = False) -> dict[str, Any]:
-        """
-        Smart loading strategy with true incremental updates
-
-        Returns detailed report of what was processed
-        """
-
-        if force_recreate:
-            from lib.logging import logger
-
-            logger.debug("Force recreate requested - will rebuild everything")
-            return self._full_reload()
-
-        # Analyze changes at row level
-        analysis = self.analyze_changes()
-        if "error" in analysis:
-            return analysis
-
-        if not analysis["needs_processing"]:
-            return {
-                "strategy": "no_changes",
-                "embedding_tokens_saved": "All tokens saved!",
-                **analysis,
-            }
-
-        # Process incremental changes
-        db_row_count = self.repository.get_row_count()
-        
-        if db_row_count == 0:
-            # Database is empty - do initial load
-            return self._initial_load_with_hashes()
-        else:
-            # Database has data - do incremental update
-            return self._incremental_update(analysis)
-
-    def _initial_load_with_hashes(self) -> dict[str, Any]:
-        """Initial load of fresh database with hash tracking"""
-        try:
-            from lib.logging import logger
-
-            logger.debug("Initial load: creating knowledge base with hash tracking")
-            start_time = datetime.now()
-
-            # Check if database already has data
-            existing_count = self.repository.get_row_count()
-                
-            if existing_count == 0:
-                # Fresh database, do initial load
-                logger.debug("Empty database detected, performing initial load")
-                self.kb.load(recreate=True)
-            else:
-                logger.debug("Database already has documents, skipping redundant load", existing_count=existing_count)
-
-            # Add hash column and populate hashes for existing rows
-            self.repository.add_hash_column_to_table()
-            self._populate_existing_hashes()
-
-            load_time = (datetime.now() - start_time).total_seconds()
-
-            # Get document count from database directly
-            total_entries = self.repository.get_row_count()
-
+        if len(new_or_changed_rows) == 0 and len(removed_hashes) == 0:
+            duration = (datetime.now() - start).total_seconds()
             result = {
-                "strategy": "initial_load_with_hashes",
-                "entries_processed": total_entries,
-                "load_time_seconds": load_time,
-                "embedding_tokens_used": "All entries (full cost - initial load)",
+                "strategy": "no_changes",
+                "new_rows": 0,
+                "changed_rows": 0,
+                "removed_rows": 0,
+                "load_time_seconds": duration,
             }
-
-            from lib.logging import logger
-
-            logger.debug(
-                "Initial load with hash tracking completed",
-                load_time_seconds=round(load_time, 2),
-            )
+            logger.info("SmartIncrementalLoader", strategy="no_changes")
             return result
 
+        return self._incremental_update(new_or_changed_rows, removed_hashes, start)
+
+    # --- Internal helpers -------------------------------------------------
+
+    def _initial_load_with_hashes(self, csv_rows: List[Dict[str, Any]], start: datetime) -> Dict[str, Any]:
+        """Perform initial load then populate content hashes for each row."""
+        try:
+            logger.debug("Initial smart load starting: embedding all rows once")
+
+            # Ensure hash column exists
+            self.repository.add_hash_column_to_table()
+
+            # One-time full embed using existing KB logic (no table drop)
+            self.kb.load(recreate=False, upsert=True)
+
+            # Now backfill hashes for each CSV row so future loads are incremental
+            updated = 0
+            for row in csv_rows:
+                ok = self.repository.update_row_hash(row["data"], row["hash"], self.config, row.get("index"))
+                if ok:
+                    updated += 1
+
+            duration = (datetime.now() - start).total_seconds()
+            result = {
+                "strategy": "initial_load_with_hashes",
+                "entries_processed": len(csv_rows),
+                "hashes_backfilled": updated,
+                "load_time_seconds": duration,
+            }
+            logger.info(
+                "SmartIncrementalLoader",
+                strategy="initial_load_with_hashes",
+                entries_processed=len(csv_rows),
+                hashes_backfilled=updated,
+            )
+            return result
         except Exception as e:
             return {"error": f"Initial load failed: {e}"}
 
-    def _full_reload(self) -> dict[str, Any]:
-        """Full reload with fresh embeddings (fallback method)"""
+    def _incremental_update(
+        self,
+        new_or_changed_rows: List[Dict[str, Any]],
+        removed_hashes: List[str],
+        start: datetime,
+    ) -> Dict[str, Any]:
+        """Process only new/changed rows and remove deleted ones."""
         try:
-            from lib.logging import logger
+            from lib.knowledge.datasources.csv_datasource import CSVDataSource  # noqa: F401
 
-            logger.debug("Full reload: recreating knowledge base")
-            start_time = datetime.now()
-
-            # Load with recreate=True - this will show per-row upserts
-            self.kb.load(recreate=True)
-
-            # Add hash tracking to the new table
-            self.repository.add_hash_column_to_table()
-            self._populate_existing_hashes()
-
-            load_time = (datetime.now() - start_time).total_seconds()
-            stats = self.kb.get_knowledge_statistics()
-
-            result = {
-                "strategy": "full_reload",
-                "entries_processed": stats.get("total_entries", "unknown"),
-                "load_time_seconds": load_time,
-                "embedding_tokens_used": "All entries (full cost)",
-            }
-
-            from lib.logging import logger
-
-            logger.debug("Full reload completed", load_time_seconds=round(load_time, 2))
-            return result
-
-        except Exception as e:
-            return {"error": f"Full reload failed: {e}"}
-
-    def _incremental_update(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Perform incremental update using extracted components - DELEGATED"""
-        try:
-            start_time = datetime.now()
-
-            new_rows = analysis["new_rows"]
-            changed_rows = analysis.get("changed_rows", [])
-            processed_count = 0
-            updated_count = 0
-
-            # Add hash column if needed
-            if len(new_rows) > 0 or len(changed_rows) > 0:
+            # Ensure hash column exists in case we're upgrading an old table
+            if new_or_changed_rows or removed_hashes:
                 self.repository.add_hash_column_to_table()
 
-            # Process new rows using CSVDataSource
-            for row_data in new_rows:
-                success = self.csv_datasource.process_single_row(row_data, self.kb, 
-                    lambda data, hash: self.repository.update_row_hash(data, hash, self.config))
-                if success:
-                    processed_count += 1
+            processed = 0
+            changed = 0
+
+            # Determine question column to allow safe replacement for changed rows
+            qcol = (
+                self.config.get("knowledge", {})
+                .get("csv_reader", {})
+                .get("metadata_columns", ["question"])[0]
+            )
+
+            for row in new_or_changed_rows:
+                # First attempt to set hash without re-embedding when content matches
+                if self.repository.update_row_hash(row["data"], row["hash"], self.config, row.get("index")):
+                    # Hash updated; no embed needed
+                    changed += 1
+                    continue
+
+                # Otherwise, treat as true change: remove and upsert
+                question_text = str(row["data"].get(qcol, ""))[:100]
+                if question_text:
+                    self.repository.remove_row_by_question(question_text)
+
+                ok = self.csv_datasource.process_single_row(
+                    row,
+                    self.kb,
+                    lambda data, h, idx: self.repository.update_row_hash(data, h, self.config, idx),
+                )
+                if ok:
+                    processed += 1
                 else:
-                    from lib.logging import logger
-                    logger.warning("Failed to process new row", row_index=row_data["index"])
+                    logger.warning("Failed to process row during incremental update", question=question_text)
 
-            # Process changed rows
-            if len(changed_rows) > 0:
-                from lib.logging import logger
-                logger.debug("Processing changed rows", count=len(changed_rows))
-                
-                for row_data in changed_rows:
-                    # First remove the old version
-                    question_col = self.config.get("knowledge", {}).get("csv_reader", {}).get("metadata_columns", ["question"])[0]
-                    question_text = row_data["data"].get(question_col, "")[:100]
-                    
-                    success = self.repository.remove_row_by_question(question_text)
-                    if success:
-                        success = self.csv_datasource.process_single_row(row_data, self.kb, 
-                    lambda data, hash: self.repository.update_row_hash(data, hash, self.config))
-                        if success:
-                            updated_count += 1
-                        else:
-                            logger.warning("Failed to process changed row", row_index=row_data["index"])
-
-            # Handle removed rows
             removed_count = 0
-            removed_hashes = analysis.get("removed_hashes", [])
             if removed_hashes:
-                from lib.logging import logger
-                logger.debug("Removing orphaned database entries", removed_count=len(removed_hashes))
                 removed_count = self.repository.remove_rows_by_hash(removed_hashes)
 
-            load_time = (datetime.now() - start_time).total_seconds()
-
-            return {
+            duration = (datetime.now() - start).total_seconds()
+            result = {
                 "strategy": "incremental_update",
-                "new_rows_processed": processed_count,
-                "changed_rows_processed": updated_count,
+                # Aliases for compatibility with existing logging
+                "new_or_changed_processed": processed + changed,
+                "new_rows_processed": processed,
                 "rows_removed": removed_count,
-                "load_time_seconds": load_time,
-                "embedding_tokens_used": f"Only {processed_count + updated_count} entries (cost savings!)",
+                "load_time_seconds": duration,
             }
-
+            logger.info(
+                "SmartIncrementalLoader",
+                strategy="incremental_update",
+                new_or_changed_processed=processed,
+                rows_removed=removed_count,
+            )
+            return result
         except Exception as e:
             return {"error": f"Incremental update failed: {e}"}
-
-    # REMOVED: All extracted methods moved to specialized components
-
-    def _populate_existing_hashes(self) -> bool:
-        """Populate content_hash for existing rows that don't have it"""
-        try:
-            from lib.logging import logger
-            logger.debug("Populating content hashes for existing rows")
-
-            csv_rows = self.csv_datasource.get_csv_rows_with_hashes()
-            for row_data in csv_rows:
-                self.repository.update_row_hash(row_data["data"], row_data["hash"], self.config)
-
-            logger.debug("Populated hashes for rows", rows_count=len(csv_rows))
-            return True
-
-        except Exception as e:
-            from lib.logging import logger
-            logger.warning("Could not populate existing hashes", error=str(e))
-            return False
-
-    # REMOVED: All database operations moved to KnowledgeRepository
-
-    def get_database_stats(self) -> dict[str, Any]:
-        """Get statistics about the vector database with hash tracking"""
-        try:
-            analysis = self.analyze_changes()
-
-            if "error" in analysis:
-                return analysis
-
-            return {
-                "csv_file": str(self.csv_path),
-                "csv_exists": self.csv_path.exists(),
-                "csv_total_rows": analysis["csv_total_rows"],
-                "existing_vector_rows": analysis["existing_vector_rows"],
-                "new_rows_pending": analysis["new_rows_count"],
-                "removed_rows_pending": analysis["removed_rows_count"],
-                "database_url": self.db_url[:50] + "..." if self.db_url else None,
-                "sync_status": analysis["status"],
-                "hash_tracking_enabled": True,
-            }
-        except Exception as e:
-            return {"error": str(e)}

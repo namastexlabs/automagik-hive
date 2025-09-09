@@ -67,16 +67,27 @@ class ApiSettings(BaseSettings):
     def set_cors_origin_list(
         cls, _cors_origin_list: Any, info: FieldValidationInfo
     ) -> list[str]:
-        """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
+        """Simplified CORS: dev='*' or HIVE_CORS_ORIGINS if set, prod=HIVE_CORS_ORIGINS"""
         environment = info.data.get(
             "environment", os.getenv("HIVE_ENVIRONMENT", "development")
         )
 
-        if environment == "development":
-            # Development: Allow all origins for convenience
-            return ["*"]
-        # Production: Use environment variable
+        # Check if HIVE_CORS_ORIGINS is set
         origins_str = os.getenv("HIVE_CORS_ORIGINS", "")
+        
+        if environment == "development":
+            # Development: Use HIVE_CORS_ORIGINS if set, otherwise allow all
+            if origins_str:
+                # Parse and clean origins
+                origins = [
+                    origin.strip() for origin in origins_str.split(",") if origin.strip()
+                ]
+                if origins:
+                    return origins
+            # Default to allowing all origins in dev
+            return ["*"]
+        
+        # Production: HIVE_CORS_ORIGINS is required
         if not origins_str:
             raise ValueError(
                 "HIVE_CORS_ORIGINS must be set in production environment. "

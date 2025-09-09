@@ -9,6 +9,7 @@ Updated to use the new simplified Agno-based hot reload system.
 
 import os
 from pathlib import Path
+from threading import Timer
 
 from dotenv import load_dotenv
 
@@ -39,6 +40,15 @@ class CSVHotReloadManager:
                 # Make path relative to knowledge directory (same as knowledge_factory.py)
                 csv_path = str(Path(__file__).parent.parent / csv_filename)
                 logger.debug("Using CSV path from centralized config", csv_path=csv_path)
+                # Optional debounce delay for hot reload
+                try:
+                    self._debounce_delay = float(
+                        global_config.get("knowledge", {})
+                        .get("hot_reload", {})
+                        .get("debounce_delay", 1.0)
+                    )
+                except Exception:
+                    self._debounce_delay = 1.0
             except Exception as e:
                 logger.warning(
                     "Could not load centralized config, using fallback", error=str(e)
@@ -49,6 +59,8 @@ class CSVHotReloadManager:
         self.is_running = False
         self.observer = None
         self.knowledge_base = None
+        self._debounce_timer = None
+        self._debounce_delay = getattr(self, "_debounce_delay", 1.0)
 
         # Log initialization at DEBUG level
         logger.debug(
@@ -99,13 +111,13 @@ class CSVHotReloadManager:
                     if not event.is_directory and event.src_path.endswith(
                         self.manager.csv_path.name
                     ):
-                        self.manager._reload_knowledge_base()
+                        self.manager._schedule_reload()
 
                 def on_moved(self, event):
                     if hasattr(event, "dest_path") and event.dest_path.endswith(
                         self.manager.csv_path.name
                     ):
-                        self.manager._reload_knowledge_base()
+                        self.manager._schedule_reload()
 
             self.observer = Observer()
             handler = SimpleHandler(self)
@@ -129,6 +141,12 @@ class CSVHotReloadManager:
             self.observer = None
 
         self.is_running = False
+        # Cancel any pending debounce reload
+        if self._debounce_timer:
+            try:
+                self._debounce_timer.cancel()
+            finally:
+                self._debounce_timer = None
 
         logger.debug("File watching stopped", path=str(self.csv_path))
 
@@ -153,14 +171,26 @@ class CSVHotReloadManager:
                 changes = {
                     "new": result.get("new_rows_processed", 0),
                     "strategy": strategy,
-                    "total": result.get("entries_processed", 0)
+                    "total": result.get("entries_processed", 0),
                 }
-                logger.debug("Smart reload completed", strategy=strategy, **changes)
+                # Avoid duplicate kwargs (strategy) when logging structured details
+                logger.debug("Smart reload completed", **changes)
 
         except Exception as e:
             logger.error(
                 "Knowledge base reload failed", error=str(e), component="csv_hot_reload"
             )
+
+    def _schedule_reload(self):
+        """Debounce rapid file events to avoid duplicate reloads."""
+        try:
+            if self._debounce_timer:
+                self._debounce_timer.cancel()
+        except Exception:
+            pass
+        self._debounce_timer = Timer(self._debounce_delay, self._reload_knowledge_base)
+        self._debounce_timer.daemon = True
+        self._debounce_timer.start()
 
     def get_status(self):
         """Get current status of the manager."""
@@ -175,5 +205,3 @@ class CSVHotReloadManager:
         """Manually force a reload."""
         logger.debug("Force reloading knowledge base", component="csv_hot_reload")
         self._reload_knowledge_base()
-
-

@@ -4,7 +4,7 @@ Database Repository - All database operations extracted from SmartIncrementalLoa
 Contains all SQL operations and database interactions for knowledge management.
 """
 
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Tuple
 from sqlalchemy import create_engine, text
 
 
@@ -83,23 +83,83 @@ class KnowledgeRepository:
             logger.warning("Could not add hash column", error=str(e))
             return False
 
-    def update_row_hash(self, row_data: dict[str, Any], content_hash: str, config: dict[str, Any]) -> bool:
-        """Update the content_hash for a specific row in the database - EXTRACTED"""
+    def update_row_hash(self, row_data: dict[str, Any], content_hash: str, config: dict[str, Any], row_index: int | None = None) -> bool:
+        """Safely update content_hash only when DB content matches the CSV row content.
+
+        This prevents incorrectly marking changed rows as unchanged. We:
+        1) Build expected content exactly as RowBasedCSVKnowledgeBase does.
+        2) Attempt to locate the row by id, or by content prefixes.
+        3) If DB content == expected content, update content_hash; otherwise return False.
+        """
         try:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
-                question_col = config.get("knowledge", {}).get("csv_reader", {}).get("metadata_columns", ["question"])[0]
-                question_text = row_data.get(question_col, "")
+                csv_cfg = config.get("knowledge", {}).get("csv_reader", {})
+                question_col = csv_cfg.get("metadata_columns", ["question"])[0]
+                content_col = csv_cfg.get("content_column", "answer")
 
-                update_query = """
-                    UPDATE agno.knowledge_base
-                    SET content_hash = :hash
-                    WHERE content LIKE :problem_pattern
-                """
-                conn.execute(text(update_query), {
-                    "hash": content_hash,
-                    "problem_pattern": f"%{question_text[:50]}%",
-                })
+                question_text = (row_data.get(question_col) or "").strip()
+                answer_text = (row_data.get(content_col) or "").strip()
+                problem_text = (row_data.get("problem") or "").strip()
+                solution_text = (row_data.get("solution") or "").strip()
+                business_unit = (row_data.get("business_unit") or "").strip()
+                typification = (row_data.get("typification") or "").strip()
+
+                # Build expected content exactly as RowBasedCSVKnowledgeBase
+                parts: List[str] = []
+                context = question_text or problem_text
+                if context:
+                    parts.append(f"**Q:** {question_text}" if question_text else f"**Problem:** {problem_text}")
+                if answer_text:
+                    parts.append(f"**A:** {answer_text}")
+                elif solution_text:
+                    parts.append(f"**Solution:** {solution_text}")
+                if typification:
+                    parts.append(f"**Typification:** {typification}")
+                if business_unit:
+                    parts.append(f"**Business Unit:** {business_unit}")
+                expected_content = "\n\n".join(parts)
+
+                # Attempt to locate the DB row
+                doc_id = f"knowledge_row_{int(row_index) + 1}" if row_index is not None else None
+                select_query = ["SELECT id, content FROM agno.knowledge_base WHERE 1=1"]
+                params: Dict[str, Any] = {}
+                clauses: List[str] = []
+                if doc_id:
+                    clauses.append("id = :doc_id")
+                    params["doc_id"] = doc_id
+                if question_text:
+                    clauses.append("content LIKE :qprefix")
+                    params["qprefix"] = f"**Q:** {question_text}%"
+                if answer_text:
+                    clauses.append("content LIKE :aptn")
+                    params["aptn"] = f"%**A:** {answer_text}%"
+                if not clauses:
+                    # No way to match
+                    return False
+                select_sql = " OR ".join(clauses)
+                select_stmt = text(" ".join(select_query) + f" AND ({select_sql}) LIMIT 1")
+
+                row = conn.execute(select_stmt, params).fetchone()
+                if not row:
+                    return False
+
+                db_id, db_content = row[0], row[1]
+                if db_content != expected_content:
+                    # Content changed; do not update hash here
+                    return False
+
+                # Safe to update hash on the matched row
+                conn.execute(
+                    text(
+                        """
+                        UPDATE agno.knowledge_base
+                        SET content_hash = :hash
+                        WHERE id = :dbid
+                        """
+                    ),
+                    {"hash": content_hash, "dbid": db_id},
+                )
                 conn.commit()
                 return True
 
@@ -115,11 +175,12 @@ class KnowledgeRepository:
             with engine.connect() as conn:
                 delete_query = """
                     DELETE FROM agno.knowledge_base
-                    WHERE content LIKE :question_pattern
+                    WHERE content LIKE :question_prefix
                 """
-                result = conn.execute(text(delete_query), {
-                    "question_pattern": f"%{question_text}%"
-                })
+                result = conn.execute(
+                    text(delete_query),
+                    {"question_prefix": f"**Q:** {question_text}%"},
+                )
                 conn.commit()
                 return result.rowcount > 0
                 
@@ -128,25 +189,25 @@ class KnowledgeRepository:
             logger.error("Error removing row by question", error=str(e))
             return False
 
-    def remove_rows_by_hash(self, removed_ids: list[str]) -> int:
-        """Remove rows from database by their IDs - EXTRACTED"""
+    def remove_rows_by_hash(self, removed_hashes: list[str]) -> int:
+        """Remove rows from database by their content hashes."""
         try:
-            if not removed_ids:
+            if not removed_hashes:
                 return 0
 
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
-                delete_query = "DELETE FROM agno.knowledge_base WHERE id = :id"
-                
+                delete_query = "DELETE FROM agno.knowledge_base WHERE content_hash = :hash"
+
                 actual_removed = 0
-                for id_to_remove in removed_ids:
-                    result = conn.execute(text(delete_query), {"id": id_to_remove})
+                for h in removed_hashes:
+                    result = conn.execute(text(delete_query), {"hash": h})
                     actual_removed += result.rowcount
 
                 conn.commit()
                 from lib.logging import logger
                 logger.debug("Removed orphaned database rows", 
-                          requested_count=len(removed_ids),
+                          requested_count=len(removed_hashes),
                           actual_removed=actual_removed)
                 return actual_removed
 

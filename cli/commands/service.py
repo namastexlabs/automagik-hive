@@ -25,6 +25,10 @@ class ServiceManager:
         ARCHITECTURAL RULE: Host and port come from environment variables via .env files.
         """
         try:
+            import platform
+            import signal
+            import subprocess
+            
             # Read from environment variables - use defaults for development
             actual_host = host or os.getenv("HIVE_API_HOST", "0.0.0.0")
             actual_port = port or int(os.getenv("HIVE_API_PORT", "8886"))
@@ -46,12 +50,54 @@ class ServiceManager:
             ]
             if reload:
                 cmd.append("--reload")
-            
-            subprocess.run(cmd, check=False)
-            return True
-        except KeyboardInterrupt:
-            # Don't print here - let the shutdown progress handle the message
-            return True  # Graceful shutdown
+
+            # Graceful shutdown path for dev server (prevents abrupt SIGINT cleanup in child)
+            # Opt-in via environment to preserve existing test expectations that patch subprocess.run
+            use_graceful = os.getenv("HIVE_DEV_GRACEFUL", "1").lower() not in ("0", "false", "no")
+
+            if not use_graceful:
+                # Backward-compatible path used by tests
+                subprocess.run(cmd, check=False)
+                return True
+
+            system = platform.system()
+            proc: subprocess.Popen
+            if system == "Windows":
+                # Create separate process group on Windows
+                creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+                proc = subprocess.Popen(cmd, creationflags=creationflags)
+            else:
+                # POSIX: start child in its own process group/session
+                proc = subprocess.Popen(cmd, preexec_fn=os.setsid)
+
+            try:
+                returncode = proc.wait()
+                return returncode == 0
+            except KeyboardInterrupt:
+                # On Ctrl+C, avoid sending SIGINT to child. Send SIGTERM for graceful cleanup
+                if system == "Windows":
+                    try:
+                        # Try CTRL_BREAK (graceful), then terminate
+                        proc.send_signal(getattr(signal, "CTRL_BREAK_EVENT", signal.SIGTERM))
+                    except Exception:
+                        proc.terminate()
+                    try:
+                        proc.wait(timeout=10)
+                    except Exception:
+                        proc.kill()
+                else:
+                    try:
+                        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
+                    try:
+                        proc.wait(timeout=10)
+                    except Exception:
+                        try:
+                            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                        except Exception:
+                            pass
+                return True  # Graceful shutdown
         except OSError as e:
             print(f"❌ Failed to start local server: {e}")
             return False

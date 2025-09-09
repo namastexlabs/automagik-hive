@@ -9,6 +9,13 @@ import argparse
 import sys
 from pathlib import Path
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # Continue without dotenv if not available
+
 
 # Import command classes for test compatibility
 from .commands.init import InitCommands
@@ -90,7 +97,7 @@ Use --help for detailed options or see documentation.
     # Utility flags
     parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind server to")
-    parser.add_argument("--port", type=int, default=8886, help="Port to bind server to")
+    parser.add_argument("--port", type=int, help="Port to bind server to")
     
     # Create subparsers for commands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
