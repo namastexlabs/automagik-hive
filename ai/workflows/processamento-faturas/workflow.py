@@ -1072,9 +1072,9 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
         
         logger.info(f"📊 Processing Excel file: {excel_path}")
         
-        # Read Excel file (.xlsb format)
+        # Read Excel file (auto-detect format: .xlsx, .xlsb, .xls, .ods)
         try:
-            df = pd.read_excel(excel_path, engine='pyxlsb')
+            df = pd.read_excel(excel_path)  # Let pandas auto-detect the format
         except Exception as e:
             logger.error(f"❌ Failed to read Excel file {excel_path}: {e!s}")
             return False, None

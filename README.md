@@ -571,7 +571,7 @@ for file_info in downloaded_files:
 ```
 
 **Função Principal: `process_excel_to_json(excel_path, json_path, batch_id)`**
-- **Leitura Excel**: `df = pd.read_excel(excel_path, engine='pyxlsb')`
+- **Leitura Excel**: `df = pd.read_excel(excel_path)`  # Auto-detects format (.xlsx, .xlsb, .xls, .ods)
 - **Filtragem CTE**: `cte_df = df[df['TIPO'] == 'CTE'].copy()`
 - **Agrupamento PO**: `for po_number, po_group in cte_df.groupby('PO')`
 - **Estrutura JSON**: Cria estrutura consolidada com rastreamento individual de status de PO
