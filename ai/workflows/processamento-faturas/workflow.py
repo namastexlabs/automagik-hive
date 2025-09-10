@@ -1086,13 +1086,24 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
         logger.info(f"📋 Excel loaded: {len(df)} rows, columns: {list(df.columns)}")
         
         available_columns = list(df.columns)
+        
+        # KISS Column Mapping - Handle variations in column names
         valor_column = 'valor CHAVE' if 'valor CHAVE' in available_columns else 'Valor'
         
-        # Required columns as defined in config.yaml
+        # Check if CNPJ Claro exists - it's optional since we use CNPJ Fornecedor for actual processing
+        # For CNPJ Claro, check for legitimate CNPJ column name variations (CNPJ is REQUIRED)
+        cnpj_column = None
+        for possible_name in ['CNPJ Claro', 'CNPJ_CLARO', 'cnpj_claro', 'CNPJ_Claro', 'cnpj claro']:
+            if possible_name in available_columns:
+                cnpj_column = possible_name
+                logger.info(f"✅ Using '{possible_name}' column for CNPJ")
+                break
+        
+        # Build required columns list with actual column names (CNPJ is REQUIRED)
         required_columns = [
             "Empresa Origem", 
             valor_column,
-            "CNPJ Claro", 
+            cnpj_column if cnpj_column else "CNPJ Claro",  # Use mapped name or expected name
             "TIPO", 
             "NF/CTE", 
             "PO", 
@@ -1177,6 +1188,7 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
                     "valor_chave": str(row.get(valor_column, '')),
                     "empresa_origem": str(row.get('Empresa Origem', '')),
                     "cnpj_fornecedor": str(row.get('CNPJ Fornecedor', '')),
+                    "cnpj_claro": str(row.get(cnpj_column, '')) if cnpj_column else '',  # Use mapped CNPJ column
                     "data_original": data_original  # Changed from 'competencia' to 'data_original'
                 }
                 ctes.append(cte_data)

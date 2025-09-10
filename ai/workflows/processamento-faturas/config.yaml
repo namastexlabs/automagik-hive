@@ -66,7 +66,7 @@ workflow_config:
     required_columns:
       - "Empresa Origem"
       - "Valor" # Note: Also supports 'valor CHAVE' as alternative
-      - "CNPJ Claro" 
+      - "CNPJ Claro" # Note: Also supports 'CNPJ_CLARO', 'cnpj_claro', 'CNPJ_Claro', 'cnpj claro' as alternatives
       - "TIPO"
       - "NF/CTE"
       - "PO"
