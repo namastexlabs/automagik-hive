@@ -1093,7 +1093,7 @@ async def process_excel_to_json(excel_path: str, json_path: str, batch_id: str) 
         # Check if CNPJ Claro exists - it's optional since we use CNPJ Fornecedor for actual processing
         # For CNPJ Claro, check for legitimate CNPJ column name variations (CNPJ is REQUIRED)
         cnpj_column = None
-        for possible_name in ['CNPJ Claro', 'CNPJ_CLARO', 'cnpj_claro', 'CNPJ_Claro', 'cnpj claro']:
+        for possible_name in ['CNPJ CLARO', 'CNPJ Claro', 'CNPJ_CLARO', 'cnpj_claro', 'CNPJ_Claro', 'cnpj claro']:
             if possible_name in available_columns:
                 cnpj_column = possible_name
                 logger.info(f"✅ Using '{possible_name}' column for CNPJ")
