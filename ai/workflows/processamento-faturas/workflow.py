@@ -885,8 +885,10 @@ class BrowserAPIClient:
                     # Log detailed error information
                     logger.error(f"❌ HTTP {response.status} {response.reason} for {flow_name}")
                     logger.error(f"🔗 URL: {url}")
-                    logger.error(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
-                    logger.error(f"📄 Response content: {json.dumps(response_data, indent=2) if response_data else 'No content'}")
+                    request_payload_str = json.dumps(request_payload, indent=2)
+                    logger.error(f"📋 Request payload: {request_payload_str}")
+                    response_content_str = json.dumps(response_data, indent=2) if response_data else 'No content'
+                    logger.error(f"📄 Response content: {response_content_str}")
                     
                     error_message = response_data.get('error', response_data.get('detail', f'HTTP {response.status}'))
                     raise aiohttp.ClientResponseError(
@@ -904,7 +906,8 @@ class BrowserAPIClient:
             
             logger.error(f"❌ Connection error: {error_type} - {e!s}")
             logger.error(f"🔗 Failed URL: {url}")
-            logger.error(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
+            request_payload_str = json.dumps(request_payload, indent=2)
+            logger.error(f"📋 Request payload: {request_payload_str}")
             logger.error(f"💥 Traceback: {traceback_str}")
             
             # Re-raise the exception to be handled by the retry logic
@@ -929,7 +932,8 @@ class BrowserAPIClient:
         for attempt in range(self.max_retries):
             try:
                 logger.info(f"🔗 Executing Browser API call: {flow_name} (attempt {attempt + 1})")
-                logger.info(f"📋 Payload: {json.dumps(payload)}")
+                payload_str = json.dumps(payload)
+                logger.info(f"📋 Payload: {payload_str}")
 
                 # Try real HTTP call first
                 result = await self._execute_real_api_call(flow_name, payload)
@@ -944,7 +948,8 @@ class BrowserAPIClient:
                 error_type = type(e).__name__
                 logger.warning(f"⚠️ HTTP client error on attempt {attempt + 1}: {error_type} - {e!s}")
                 logger.warning(f"🔗 Failed URL: {url}")
-                logger.warning(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
+                request_payload_str = json.dumps(request_payload, indent=2)
+                logger.warning(f"📋 Request payload: {request_payload_str}")
 
                 if attempt < self.max_retries - 1:
                     wait_time = 2 ** attempt
@@ -968,7 +973,8 @@ class BrowserAPIClient:
                 
                 logger.error(f"❌ Unexpected error on attempt {attempt + 1}: {error_type} - {e!s}")
                 logger.error(f"🔗 Failed URL: {url}")
-                logger.error(f"📋 Request payload: {json.dumps(request_payload, indent=2)}")
+                request_payload_str = json.dumps(request_payload, indent=2)
+                logger.error(f"📋 Request payload: {request_payload_str}")
                 logger.error(f"💥 Traceback: {traceback_str}")
 
                 if attempt < self.max_retries - 1:
@@ -1588,8 +1594,11 @@ async def execute_status_based_routing_step(step_input: StepInput) -> StepOutput
     {json.dumps(processing_categories, indent=2)}
 
     ROUTING LOGIC:
-    - PENDING → invoiceGen API call
-    - CHECK_ORDER_STATUS → claroCheck API call (individual)
+    - PENDING → invoiceGen API call → CHECK_ORDER_STATUS
+    - CHECK_ORDER_STATUS → claroCheck API call (individual) → [based on output.status]:
+        • "Aguardando Liberação" → keeps CHECK_ORDER_STATUS (for next day)
+        • "Agendamento Pendente" → WAITING_MONITORING
+        • "Autorizada Emissão Nota Fiscal" → MONITORED
     - WAITING_MONITORING → invoiceMonitor API call
     - MONITORED → main-download-invoice API call (individual)
     - DOWNLOADED → invoiceUpload API call (individual)
@@ -1730,7 +1739,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                 # Update status ONLY if both HTTP and browser process succeeded
                 if api_response["success"] and browser_success:
                     new_status = {
-                        "invoiceGen": "WAITING_MONITORING",
+                        "invoiceGen": "CHECK_ORDER_STATUS",  # Now goes to Claro validation
                         "invoiceMonitor": "MONITORED"
                     }.get(action, "UNKNOWN")
 
@@ -2465,7 +2474,7 @@ if __name__ == "__main__":
         - Initialize daily cycle by scanning for new emails AND existing JSON files
         - Analyze individual PO statuses from all consolidated JSON files
         - Route each PO to appropriate API processing step based on current status
-        - Execute status-based processing: PENDING → WAITING_MONITORING → MONITORED → DOWNLOADED → UPLOADED
+        - Execute status-based processing: PENDING → CHECK_ORDER_STATUS → WAITING_MONITORING → MONITORED → DOWNLOADED → UPLOADED
         - Update JSON files with new statuses and schedule next daily execution
 
         EXPECTED DAILY OUTCOMES:

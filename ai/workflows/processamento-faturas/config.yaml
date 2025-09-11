@@ -82,29 +82,20 @@ workflow_config:
     flows:
       invoiceGen:
         description: "Generate invoices in ESL system"
-        trigger_conditions: ["PENDING", "FAILED_GENERATION"]
         
       invoiceMonitor:
         description: "Monitor invoice status"
-        trigger_conditions: ["WAITING_MONITORING"]
         
       main_download_invoice:
         description: "Download processed invoices"
-        trigger_conditions: ["MONITORED", "WAITING_DOWNLOAD"]
-        response_type: "zip_file"
         process_individually: true
         
       claroCheck:
         description: "Validate order status with Claro system"
-        trigger_conditions: ["PENDING"]
-        response_type: "json"
         process_individually: true
-        validation_field: "output.status"
         
       invoiceUpload:
         description: "Upload completed invoices"
-        trigger_conditions: ["DOWNLOADED"]
-        requires_pdf: true
 
   # State Management
   cte_status_flow:
@@ -195,8 +186,12 @@ instructions: |
 
   **CTE Status Tracking**:
   ```
-  PENDING → invoiceGen → WAITING_MONITORING → invoiceMonitor → MONITORED → 
-  main-download-invoice → WAITING_DOWNLOAD → DOWNLOADED → invoiceUpload → UPLOADED
+  PENDING → invoiceGen → CHECK_ORDER_STATUS → claroCheck → [based on output.status]:
+    ├─ "Aguardando Liberação" → CHECK_ORDER_STATUS (keeps status for next day)
+    ├─ "Agendamento Pendente" → WAITING_MONITORING → invoiceMonitor → MONITORED
+    └─ "Autorizada Emissão Nota Fiscal" → MONITORED (skip monitoring)
+  
+  MONITORED → main-download-invoice → DOWNLOADED → invoiceUpload → UPLOADED
   ```
 
   **Conditional Flow Logic**:
