@@ -1314,7 +1314,9 @@ async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput
         for file_info in downloaded_files:
             # Process each Excel file and create corresponding JSON
             excel_path = file_info["path"]
-            json_path = f"mctech/ctes/consolidated_ctes_{daily_batch_id}_{file_info['email_id'][:8]}.json"
+            # Use email sent time for clear naming: ctes_11-09-2025_14h30.json
+            email_datetime = file_info.get('email_date', datetime.now(UTC).strftime('%d-%m-%Y_%Hh%M'))
+            json_path = f"mctech/ctes/ctes_{email_datetime}.json"
             
             try:
                 # REAL EXCEL PROCESSING - Convert Excel to structured JSON
@@ -1366,7 +1368,7 @@ async def execute_daily_initialization_step(step_input: StepInput) -> StepOutput
 
     # REAL DIRECTORY SCANNING - Find all existing JSON files
     import glob
-    json_pattern = "mctech/ctes/consolidated_ctes_*.json"
+    json_pattern = "mctech/ctes/ctes_*.json"
     existing_json_files = glob.glob(json_pattern)
     
     if not existing_json_files:

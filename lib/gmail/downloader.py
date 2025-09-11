@@ -298,6 +298,38 @@ class GmailDownloader:
                         format='full'
                     ).execute()
                     
+                    # Check if this is part of a thread and get the most recent message
+                    thread_id = message.get('threadId')
+                    if thread_id:
+                        logger.info(f"🧵 Email is part of thread {thread_id}, checking for most recent message...")
+                        
+                        # Get all messages in the thread
+                        thread = self.gmail_service.users().threads().get(
+                            userId='me',
+                            id=thread_id
+                        ).execute()
+                        
+                        thread_messages = thread.get('messages', [])
+                        if len(thread_messages) > 1:
+                            # Thread has multiple messages, use the most recent one (last in array)
+                            # Get dates in Brazilian format (DD-MM-YYYY HH:MM)
+                            from pytz import timezone
+                            br_tz = timezone('America/Sao_Paulo')
+                            
+                            first_date_utc = datetime.fromtimestamp(int(thread_messages[0].get('internalDate', 0)) / 1000, tz=UTC)
+                            last_date_utc = datetime.fromtimestamp(int(thread_messages[-1].get('internalDate', 0)) / 1000, tz=UTC)
+                            
+                            first_date_br = first_date_utc.astimezone(br_tz).strftime('%d-%m-%Y %H:%M')
+                            last_date_br = last_date_utc.astimezone(br_tz).strftime('%d-%m-%Y %H:%M')
+                            
+                            logger.info(f"🧵 Thread has {len(thread_messages)} messages (first: {first_date_br}, last: {last_date_br})")
+                            message = thread_messages[-1]  # Get the last (most recent) message
+                            message_id = message['id']
+                            logger.info(f"📧 Using most recent message: {message_id}")
+                        else:
+                            # Thread has only one message
+                            logger.info(f"🧵 Thread has only 1 message (no replies found)")
+                    
                     # Extract attachments from message payload
                     payload = message.get('payload', {})
                     parts = payload.get('parts', [])
@@ -332,6 +364,15 @@ class GmailDownloader:
                             # Calculate checksum
                             checksum = self._calculate_file_checksum(file_data)
                             
+                            # Get email date for JSON naming in Brazilian format
+                            email_date_ms = message.get('internalDate', 0)
+                            email_date_utc = datetime.fromtimestamp(int(email_date_ms) / 1000, tz=UTC)
+                            
+                            # Convert to Brazilian timezone
+                            from pytz import timezone
+                            br_tz = timezone('America/Sao_Paulo')
+                            email_date_br = email_date_utc.astimezone(br_tz)
+                            
                             # Add to results
                             file_info = {
                                 "filename": filename,
@@ -339,6 +380,7 @@ class GmailDownloader:
                                 "size_bytes": len(file_data),
                                 "checksum": checksum,
                                 "email_id": message_id,
+                                "email_date": email_date_br.strftime('%d-%m-%Y_%Hh%M'),  # Format: 11-09-2025_14h30
                                 "downloaded_at": datetime.now(UTC).isoformat()
                             }
                             downloaded_files.append(file_info)
