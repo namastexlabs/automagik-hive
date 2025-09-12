@@ -506,20 +506,23 @@ class BrowserAPIClient:
     def parse_claro_check_response(self, api_response: dict[str, Any]) -> tuple[bool, str, str]:
         """Parse claroCheck response and determine status transition"""
         try:
-            output_status = api_response.get("output", {}).get("status", "")
+            # Browser agent business status is at raw_response.output.status
+            output_status = api_response.get("raw_response", {}).get("output", {}).get("status", "")
             
-            # Status transition logic
-            if output_status == "Aguardando Liberação":
+            # Status transition logic - handle empty/None status
+            if not output_status.strip():
+                return False, "FAILED_VALIDATION", "Empty or missing status from browser agent"
+            elif output_status == "Aguardando Liberação":
                 return True, "CHECK_ORDER_STATUS", "Order still awaiting release"
             elif output_status == "Agendamento Pendente":
                 return True, "WAITING_MONITORING", "Order ready for monitoring"
             elif output_status == "Autorizada Emissão Nota Fiscal":
                 return True, "MONITORED", "Order authorized, ready for download"
             else:
-                return False, "FAILED_VALIDATION", f"Unknown status: {output_status}"
+                return False, "FAILED_VALIDATION", "Unknown status received"
                 
         except Exception as e:
-            return False, "FAILED_VALIDATION", f"Response parsing error: {str(e)}"
+            return False, "FAILED_VALIDATION", "Response parsing error"
 
     def build_invoice_upload_payload(self, order: dict[str, Any], invoice_file_path: str) -> dict[str, Any]:
         """Build payload for invoice upload by extracting fatura from ZIP file"""
