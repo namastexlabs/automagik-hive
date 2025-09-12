@@ -710,6 +710,9 @@ class BrowserAPIClient:
     async def _execute_real_api_call(self, flow_name: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Execute real HTTP API call to Browser API"""
         start_time = datetime.now(UTC)
+        
+        # Build URL for execute-flow endpoint (early definition for exception handling)
+        url = f"{self.base_url}/execute-flow"
 
         # Create aiohttp session if not exists OR recreate with proper timeout
         if self.session is None or self.session.timeout.total != self.timeout:
@@ -717,9 +720,6 @@ class BrowserAPIClient:
                 await self.session.close()
             timeout = aiohttp.ClientTimeout(total=self.timeout)
             self.session = aiohttp.ClientSession(timeout=timeout)
-
-        # Build URL for execute-flow endpoint
-        url = f"{self.base_url}/execute-flow"
 
         # Prepare request payload
         request_payload = {
@@ -829,7 +829,7 @@ class BrowserAPIClient:
                     
                     # Extract Browser API response pattern
                     api_status = response_data.get("status")
-                    output_data = response_data.get("output", {})
+                    output_data = response_data.get("output") or {}
                     browser_success = output_data.get("success", False)
                     text_output = output_data.get("text_output", "No output")
                     error_output = output_data.get("error", "")
