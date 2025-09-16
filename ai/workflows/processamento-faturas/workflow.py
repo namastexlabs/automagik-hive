@@ -35,6 +35,7 @@ from agno.workflow.v2.types import StepInput, StepOutput
 from lib.config.models import get_default_model_id, resolve_model
 from lib.gmail.auth import GmailAuthenticator
 from lib.gmail.downloader import GmailDownloader
+from lib.gmail.sender import GmailSender
 from lib.logging import logger
 
 # Import CTEProcessor for database synchronization
@@ -59,6 +60,7 @@ class ProcessingStatus(Enum):
     FAILED_MONITORING = "failed_monitoring"
     FAILED_DOWNLOAD = "failed_download"
     FAILED_UPLOAD = "failed_upload"
+    FAILED_EMAIL = "failed_email"  # Email sending failures
 
 
 class ProcessamentoFaturasError(Exception):
@@ -508,7 +510,7 @@ class BrowserAPIClient:
         try:
             # Browser agent business status is at raw_response.output.status
             output_status = api_response.get("raw_response", {}).get("output", {}).get("status", "")
-            
+
             # Status transition logic - handle empty/None status
             if not output_status.strip():
                 return False, "FAILED_VALIDATION", "Empty or missing status from browser agent"
@@ -520,9 +522,93 @@ class BrowserAPIClient:
                 return True, "MONITORED", "Order authorized, ready for download"
             else:
                 return False, "FAILED_VALIDATION", "Unknown status received"
-                
+
         except Exception as e:
             return False, "FAILED_VALIDATION", "Response parsing error"
+
+    def parse_invoice_upload_response(self, api_response: dict[str, Any]) -> tuple[bool, str, str]:
+        """Extract protocol from invoiceUpload response"""
+        try:
+            raw_response = api_response.get("raw_response", {})
+            browser_output = raw_response.get("output", {})
+            protocol = browser_output.get("protocol", "")
+
+            if protocol:
+                logger.info(f"📋 Protocol extracted: {protocol}")
+                return True, protocol, "Upload successful with protocol"
+
+            logger.warning("⚠️ No protocol found in upload response")
+            return False, "", "Upload failed - no protocol"
+        except Exception as e:
+            logger.error(f"❌ Error parsing upload response: {e}")
+            return False, "", f"Response parsing error: {str(e)}"
+
+    def process_invoice_zips(self, po_number: str, protocol: str) -> dict:
+        """Extract and rename ZIP files with protocol"""
+        import os
+        import zipfile
+        import glob
+        import shutil
+
+        # Find downloaded ZIP
+        original_zip = f"mctech/downloads/pedido {po_number}.zip"
+
+        if not os.path.exists(original_zip):
+            logger.error(f"❌ ZIP file not found: {original_zip}")
+            return {"attachments": [], "error": "ZIP file not found"}
+
+        # Extract to temp directory
+        temp_dir = f"mctech/temp/{po_number}"
+        os.makedirs(temp_dir, exist_ok=True)
+
+        try:
+            with zipfile.ZipFile(original_zip, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+
+            # Create 3 new ZIPs with protocol naming
+            attachments = []
+
+            # 1. Fatura ZIP (preserve original filename + add protocol)
+            fatura_files = glob.glob(f"{temp_dir}/Fatura/*")
+            if fatura_files:
+                # Get original fatura filename (without extension)
+                original_fatura = os.path.basename(fatura_files[0])
+                fatura_name = os.path.splitext(original_fatura)[0]
+                fatura_zip = f"mctech/downloads/{fatura_name}_{protocol}.zip"
+                self._create_zip(fatura_files, fatura_zip)
+                attachments.append(fatura_zip)
+
+            # 2. PDF ZIP
+            pdf_files = glob.glob(f"{temp_dir}/PDF/*")
+            if pdf_files:
+                pdf_zip = f"mctech/downloads/PDF_protocolo_{protocol}.zip"
+                self._create_zip(pdf_files, pdf_zip)
+                attachments.append(pdf_zip)
+
+            # 3. XML ZIP
+            xml_files = glob.glob(f"{temp_dir}/XML/*")
+            if xml_files:
+                xml_zip = f"mctech/downloads/XML_protocolo_{protocol}.zip"
+                self._create_zip(xml_files, xml_zip)
+                attachments.append(xml_zip)
+
+            logger.info(f"✅ Created {len(attachments)} ZIP files with protocol {protocol}")
+            return {"attachments": attachments}
+
+        except Exception as e:
+            logger.error(f"❌ Error processing ZIPs: {e}")
+            return {"attachments": [], "error": str(e)}
+        finally:
+            # Cleanup temp directory
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+
+    def _create_zip(self, files: list, output_path: str) -> None:
+        """Helper to create ZIP from file list"""
+        import zipfile
+        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in files:
+                zipf.write(file_path, os.path.basename(file_path))
 
     def build_invoice_upload_payload(self, order: dict[str, Any], invoice_file_path: str) -> dict[str, Any]:
         """Build payload for invoice upload by extracting fatura from ZIP file"""
@@ -1540,6 +1626,11 @@ async def execute_json_analysis_step(step_input: StepInput) -> StepOutput:
                 elif status == "UPLOADED":
                     analysis_results["processing_categories"]["completed_pos"].append(po_entry)
                     file_stats["uploaded"] += 1
+                    file_stats["needs_processing"] = True  # Need to send email
+                elif status == "COMPLETED":
+                    # Don't add to any processing category - truly done
+                    file_stats["completed"] = file_stats.get("completed", 0) + 1
+                    # Note: Don't set needs_processing = True for COMPLETED
                 elif status.startswith("FAILED_"):
                     analysis_results["processing_categories"]["failed_pos"].append(po_entry)
                     file_stats["failed"] += 1
@@ -1646,6 +1737,12 @@ async def execute_status_based_routing_step(step_input: StepInput) -> StepOutput
                 "pos": processing_categories["upload_pos"],
                 "batch_processing": False,  # Must process individually
                 "priority": 4
+            },
+            "email_queue": {
+                "action": "sendEmail",
+                "pos": processing_categories["completed_pos"],  # UPLOADED status POs
+                "batch_processing": False,
+                "priority": 5
             }
         },
         "execution_plan": {
@@ -1801,11 +1898,11 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                         # Handle claroCheck validation
                         payload = api_client.build_claro_check_payload(po_number)
                         api_response = await api_client.execute_api_call(action, payload)
-                        
+
                         # Parse claroCheck response for status transition
                         if api_response["success"]:
                             browser_success, new_status, message = api_client.parse_claro_check_response(api_response.get("api_result", {}))
-                            
+
                             individual_results[po_number] = {
                                 "http_success": True,
                                 "browser_success": browser_success,
@@ -1817,7 +1914,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                                     "message": message
                                 }
                             }
-                            
+
                             if browser_success:
                                 logger.info(f"✅ claroCheck validation successful for PO {po_number} - updating to {new_status}")
                                 processing_results["status_updates"][po_number] = {
@@ -1846,7 +1943,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                                 "execution_time_ms": api_response.get("execution_time_ms", 0),
                                 "error": api_response.get("error", "HTTP call failed")
                             }
-                            
+
                             processing_results["failed_orders"][po_number] = {
                                 "action": action,
                                 "failure_type": "http_failure",
@@ -1855,8 +1952,106 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                             }
                             processing_results["execution_summary"]["failed_actions"] += 1
                             processing_results["execution_summary"]["pos_failed"] += 1
-                        
+
                         continue  # Skip to next PO for claroCheck processing
+
+                    elif action == "sendEmail":
+                        # Handle email sending for completed uploads
+                        # Load JSON to get full PO details including protocol
+                        try:
+                            with open(json_file, 'r') as f:
+                                po_details = json.load(f)
+                        except (FileNotFoundError, json.JSONDecodeError) as e:
+                            logger.error(f"❌ Failed to load JSON for PO {po_number}: {e}")
+                            processing_results["failed_orders"][po_number] = {
+                                "action": action,
+                                "failure_type": "json_error",
+                                "error": str(e),
+                                "json_file": json_file
+                            }
+                            processing_results["execution_summary"]["failed_actions"] += 1
+                            processing_results["execution_summary"]["pos_failed"] += 1
+                            continue
+
+                        # Get protocol from JSON
+                        protocol = po_details.get("protocol_number")
+
+                        if not protocol:
+                            logger.error(f"❌ No protocol found for PO {po_number}")
+                            processing_results["failed_orders"][po_number] = {
+                                "action": action,
+                                "failure_type": "missing_protocol",
+                                "error": "No protocol number in JSON",
+                                "json_file": json_file
+                            }
+                            processing_results["execution_summary"]["failed_actions"] += 1
+                            processing_results["execution_summary"]["pos_failed"] += 1
+                            continue
+
+                        cliente = po_details["ctes"][0]["empresa_origem"]
+
+                        # Process ZIPs
+                        zip_result = api_client.process_invoice_zips(po_number, protocol)
+
+                        if zip_result.get("error"):
+                            logger.error(f"❌ ZIP processing failed for PO {po_number}: {zip_result['error']}")
+                            processing_results["failed_orders"][po_number] = {
+                                "action": action,
+                                "failure_type": "zip_processing_failure",
+                                "error": zip_result["error"],
+                                "json_file": json_file
+                            }
+                            processing_results["execution_summary"]["failed_actions"] += 1
+                            processing_results["execution_summary"]["pos_failed"] += 1
+                            continue
+
+                        # Send email
+                        sender = GmailSender()
+                        email_recipient = os.getenv("INVOICE_EMAIL_RECIPIENT")
+                        email_result = sender.send_invoice_email(
+                            to_email=email_recipient,
+                            po_number=po_number,
+                            protocol=protocol,
+                            cliente=cliente,
+                            attachments=zip_result["attachments"]
+                        )
+
+                        individual_results[po_number] = {
+                            "email_sent": email_result.success,
+                            "message_id": email_result.message_id,
+                            "error": email_result.error,
+                            "attachments_count": len(zip_result["attachments"])
+                        }
+
+                        # Update status based on email result
+                        if email_result.success:
+                            logger.info(f"✅ Email sent successfully for PO {po_number}")
+                            new_status = "COMPLETED"
+                            processing_results["status_updates"][po_number] = {
+                                "old_status": "UPLOADED",
+                                "new_status": new_status,
+                                "json_file": json_file
+                            }
+                            processing_results["execution_summary"]["successful_actions"] += 1
+                            processing_results["execution_summary"]["pos_updated"] += 1
+                        else:
+                            logger.error(f"❌ Email failed for PO {po_number}: {email_result.error}")
+                            # Update status to FAILED_EMAIL for retry capability
+                            processing_results["status_updates"][po_number] = {
+                                "old_status": "UPLOADED",
+                                "new_status": "FAILED_EMAIL",
+                                "json_file": json_file
+                            }
+                            processing_results["failed_orders"][po_number] = {
+                                "action": action,
+                                "failure_type": "email_failure",
+                                "error": email_result.error,
+                                "json_file": json_file
+                            }
+                            processing_results["execution_summary"]["failed_actions"] += 1
+                            processing_results["execution_summary"]["pos_failed"] += 1
+
+                        continue  # Skip to next PO for sendEmail processing
 
                     # Load JSON to get real PO details (for non-claroCheck actions)
                     po_details = None
@@ -1959,6 +2154,29 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
 
                     # Update individual PO status ONLY if both HTTP and browser process succeeded
                     if api_response["success"] and browser_success:
+                        # Handle special case for invoiceUpload with protocol extraction
+                        if action == "invoiceUpload":
+                            # Extract protocol from upload response
+                            success, protocol, message = api_client.parse_invoice_upload_response(api_response)
+
+                            if success and protocol:
+                                # Store protocol in JSON for email processing
+                                try:
+                                    with open(json_file, 'r') as f:
+                                        json_data = json.load(f)
+
+                                    json_data["protocol_number"] = protocol
+                                    json_data["last_updated"] = datetime.now(UTC).isoformat()
+
+                                    with open(json_file, 'w') as f:
+                                        json.dump(json_data, f, indent=2, ensure_ascii=False)
+
+                                    logger.info(f"📝 Protocol {protocol} saved to JSON for PO {po_number}")
+                                except Exception as e:
+                                    logger.error(f"❌ Failed to save protocol to JSON: {e}")
+                            else:
+                                logger.warning(f"⚠️ No protocol extracted for PO {po_number}: {message}")
+
                         new_status = {
                             "main-download-invoice": "DOWNLOADED",
                             "invoiceUpload": "UPLOADED"
@@ -2161,7 +2379,8 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
             "total_pos_found": analysis_results.get("analysis_summary", {}).get("total_pos_found", 0),
             "pos_processed_today": processing_results["execution_summary"]["pos_updated"],
             "pos_failed_today": processing_results["execution_summary"]["pos_failed"],
-            "pos_completed_today": len([po for po, update in status_updates.items() if update["new_status"] == "UPLOADED"]),
+            "pos_completed_today": len([po for po, update in status_updates.items() if update["new_status"] == "COMPLETED"]),
+            "pos_uploaded_today": len([po for po, update in status_updates.items() if update["new_status"] == "UPLOADED"]),
             "api_calls_successful": processing_results["execution_summary"]["successful_actions"],
             "api_calls_failed": processing_results["execution_summary"]["failed_actions"],
             "browser_process_failures": processing_results["execution_summary"]["browser_failures"]
@@ -2184,7 +2403,8 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
     stats = completion_summary['processing_statistics']
     logger.info(f"✅ Successfully processed: {stats['pos_processed_today']} POs")
     logger.info(f"❌ Failed to process: {stats['pos_failed_today']} POs")
-    logger.info(f"🎯 Reached UPLOADED status: {stats['pos_completed_today']} POs")
+    logger.info(f"📤 Reached UPLOADED status: {stats['pos_uploaded_today']} POs")
+    logger.info(f"✉️ Emails sent (COMPLETED): {stats['pos_completed_today']} POs")
     
     # Log failure details if any
     failed_orders = processing_results.get("failed_orders", {})
@@ -2265,7 +2485,8 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 📊 *Estatísticas do Dia:*
 ✅ POs processados: {stats['pos_processed_today']}
 ❌ POs falharam: {stats['pos_failed_today']}
-📤 Uploads realizados: {stats['pos_completed_today']}
+📤 Uploads realizados: {stats['pos_uploaded_today']}
+✉️ Emails enviados: {stats['pos_completed_today']}
 📧 Emails recebidos: {stats['new_emails_processed']}
 📋 *Status atualizados:*
 {enhanced_stats_text}{validation_error_text}""".strip()
