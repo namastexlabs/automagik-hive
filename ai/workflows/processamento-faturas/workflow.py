@@ -42,6 +42,11 @@ from lib.logging import logger
 from ai.agents.jack_retrieval.processor import CTEProcessor
 
 
+def get_headless_setting() -> bool:
+    """Get headless setting from environment variable (defaults to True if not set)"""
+    return os.getenv("HEADLESS", "true").lower() == "true"
+
+
 class ProcessingStatus(Enum):
     """CTE Processing Status Enum"""
     PENDING = "pending"
@@ -446,7 +451,7 @@ class BrowserAPIClient:
             "flow_name": "invoiceGen",
             "parameters": {
                 "orders": pending_orders,
-                "headless": False  # Changed to false for better visibility
+                "headless": get_headless_setting()
             }
         }
 
@@ -466,7 +471,7 @@ class BrowserAPIClient:
             "flow_name": "invoiceMonitor",
             "parameters": {
                 "orders": monitoring_orders,
-                "headless": False  # Changed to false for better visibility
+                "headless": get_headless_setting()
             }
         }
 
@@ -487,7 +492,7 @@ class BrowserAPIClient:
                 "total_value": order["po_total_value"],
                 "startDate": order["start_date"],
                 "endDate": order["end_date"],
-                "headless": False  # Changed to false for better visibility
+                "headless": get_headless_setting()
             }
         }
 
@@ -500,7 +505,7 @@ class BrowserAPIClient:
             "flow_name": "claroCheck",
             "parameters": {
                 "orders": [po_number],
-                "headless": True
+                "headless": get_headless_setting()
             }
         }
         return payload
@@ -758,7 +763,7 @@ class BrowserAPIClient:
                 "po": po_number,
                 "invoice": invoice_base64,
                 "invoice_filename": actual_filename,
-                "headless": False
+                "headless": get_headless_setting()
             }
         }
 
@@ -811,7 +816,7 @@ class BrowserAPIClient:
         request_payload = {
             "flow_name": flow_name,
             "parameters": payload.get("parameters", {}),
-            "headless": payload.get("headless", True)
+            "headless": payload.get("headless", get_headless_setting())
         }
 
         # Execute HTTP POST request
@@ -1812,7 +1817,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                     "flow_name": action,
                     "parameters": {
                         "orders": po_numbers,
-                        "headless": False  # Changed to false for better visibility
+                        "headless": get_headless_setting()
                     }
                 }
 
