@@ -518,7 +518,7 @@ class BrowserAPIClient:
                 return True, "CHECK_ORDER_STATUS", "Order still awaiting release"
             elif output_status == "Agendamento Pendente":
                 return True, "WAITING_MONITORING", "Order ready for monitoring"
-            elif output_status == "Autorizada Emissão Nota Fiscal":
+            elif output_status == "Autorizado Emissão de NF" or output_status == "Autorizada Emissão Nota Fiscal":
                 return True, "MONITORED", "Order authorized, ready for download"
             else:
                 return False, "FAILED_VALIDATION", "Unknown status received"
