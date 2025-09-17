@@ -480,9 +480,8 @@ class BrowserAPIClient:
 
     def build_invoice_download_payload(self, order: dict[str, Any]) -> dict[str, Any]:
         """Build payload for individual invoice download"""
-
         po_number = order["po_number"]
-        cte_numbers = [str(cte["NF/CTE"]) for cte in order["ctes"]] # Estava NF_CTE
+        cte_numbers = [str(cte["NF/CTE"]) for cte in order["ctes"]]
 
         payload = {
             "flow_name": "main-download-invoice",
@@ -1127,10 +1126,10 @@ def xldate_to_datetime(xldatetime: int) -> datetime:
 def process_order_dates(competencia_value: Any) -> tuple[str, str, int]:
     """
     Process competencia value and return start_date, end_date, and original data
-    
+
     Args:
         competencia_value: Raw value from Excel (can be int, float, or string)
-        
+
     Returns:
         tuple: (start_date_str, end_date_str, data_original)
     """
@@ -1141,15 +1140,18 @@ def process_order_dates(competencia_value: Any) -> tuple[str, str, int]:
     elif isinstance(competencia_value, str) and competencia_value.isdigit():
         order_date = xldate_to_datetime(int(competencia_value))
         data_original = int(competencia_value)
+    elif isinstance(competencia_value, str):
+        # Handle date strings, remove time noise if present
+        date_part = competencia_value.split(' ')[0]  # "2025-06-18 00:00:00" → "2025-06-18"
+        order_date = datetime.strptime(date_part, '%Y-%m-%d')
+        data_original = competencia_value
     else:
-        # Fallback for non-numeric dates
-        data_original = str(competencia_value)
-        order_date = datetime.now()
-    
+        raise ValueError(f"Unsupported competencia_value type: {type(competencia_value)}. Expected int, float, or string.")
+
     # Calculate previous month (first day)
     past_month = order_date + relativedelta.relativedelta(months=-1, day=1)
     past_month_string = past_month.strftime('%d/%m/%Y')
-    
+
     # Calculate next month (last day)
     next_month = order_date + relativedelta.relativedelta(months=1, day=1)
     next_month = next_month.replace(day=calendar.monthrange(next_month.year, next_month.month)[1])
