@@ -28,9 +28,9 @@ class TestMCPYAMLParsing:
 
         # Check specific servers
         server_names = [t.server_name for t in config.mcp_tools]
-        assert "postgres" in server_names, "postgres should be in MCP servers"
         assert "ask-repo-agent" in server_names, "ask-repo-agent should be in MCP servers"
         assert "search-repo-docs" in server_names, "search-repo-docs should be in MCP servers"
+        assert "mcp-server-chart" in server_names, "mcp-server-chart should be in MCP servers"
 
     def test_mcp_server_patterns(self):
         """Test parsing of MCP server patterns like 'server:tool'."""
