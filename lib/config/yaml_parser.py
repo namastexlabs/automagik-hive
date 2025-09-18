@@ -68,8 +68,17 @@ class YAMLConfigParser:
         if not isinstance(tools_list, list):
             raise ValueError(f"'tools' must be a list in {config_path}")
 
+        # Extract MCP servers list (additional format support)
+        mcp_servers_list = raw_config.get("mcp_servers", [])
+        if not isinstance(mcp_servers_list, list):
+            raise ValueError(f"'mcp_servers' must be a list in {config_path}")
+
         # Parse and separate tools
         regular_tools, mcp_tools = self._parse_tools(tools_list)
+
+        # Parse MCP servers and add to MCP tools list
+        _, additional_mcp_tools = self._parse_tools([f"mcp.{server}" for server in mcp_servers_list])
+        mcp_tools.extend(additional_mcp_tools)
 
         # Validate MCP tools
         validated_mcp_tools = self._validate_mcp_tools(mcp_tools)
