@@ -71,6 +71,17 @@ class YAMLConfigParser:
         # Parse and separate tools
         regular_tools, mcp_tools = self._parse_tools(tools_list)
 
+        # Also check for mcp_servers field (new format)
+        mcp_servers = raw_config.get("mcp_servers", [])
+        if isinstance(mcp_servers, list):
+            # Parse server patterns (e.g., "postgres:query", "search-repo-docs:*")
+            for server_pattern in mcp_servers:
+                if isinstance(server_pattern, str):
+                    # Extract server name from pattern like "server:tool" or just "server"
+                    server_name = server_pattern.split(":")[0] if ":" in server_pattern else server_pattern
+                    if server_name and server_name not in mcp_tools:
+                        mcp_tools.append(server_name)
+
         # Validate MCP tools
         validated_mcp_tools = self._validate_mcp_tools(mcp_tools)
 
