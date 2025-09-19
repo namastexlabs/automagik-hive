@@ -509,6 +509,17 @@ class BrowserAPIClient:
         }
         return payload
 
+    def build_invoice_monitor_payload(self, po_number: str) -> dict[str, Any]:
+        """Build payload for individual invoiceMonitor"""
+        payload = {
+            "flow_name": "invoiceMonitor",
+            "parameters": {
+                "orders": [po_number],
+                "headless": get_headless_setting()
+            }
+        }
+        return payload
+
     def parse_claro_check_response(self, api_response: dict[str, Any]) -> tuple[bool, str, str]:
         """Parse claroCheck response and determine status transition"""
         try:
@@ -1730,7 +1741,7 @@ async def execute_status_based_routing_step(step_input: StepInput) -> StepOutput
             "invoice_monitoring_queue": {
                 "action": "invoiceMonitor",
                 "pos": processing_categories["monitoring_pos"],
-                "batch_processing": True,  # Can process multiple POs in single call
+                "batch_processing": False,  # Process each PO individually
                 "priority": 2
             },
             "invoice_download_queue": {
@@ -1853,7 +1864,6 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                     logger.info(f"✅ Batch {action} successful - updating {len(pos)} POs to {new_status}")
                     for po_data in pos:
                         processing_results["status_updates"][po_data["po_number"]] = {
-                            "old_status": action.replace("invoice", "").upper(),
                             "new_status": new_status,
                             "json_file": po_data["json_file"]
                         }
@@ -1925,7 +1935,6 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                             if browser_success:
                                 logger.info(f"✅ claroCheck validation successful for PO {po_number} - updating to {new_status}")
                                 processing_results["status_updates"][po_number] = {
-                                    "old_status": "CHECK_ORDER_STATUS",
                                     "new_status": new_status,
                                     "json_file": json_file
                                 }
@@ -2035,7 +2044,6 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                             logger.info(f"✅ Email sent successfully for PO {po_number}")
                             new_status = "COMPLETED"
                             processing_results["status_updates"][po_number] = {
-                                "old_status": "UPLOADED",
                                 "new_status": new_status,
                                 "json_file": json_file
                             }
@@ -2045,7 +2053,6 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                             logger.error(f"❌ Email failed for PO {po_number}: {email_result.error}")
                             # Update status to FAILED_EMAIL for retry capability
                             processing_results["status_updates"][po_number] = {
-                                "old_status": "UPLOADED",
                                 "new_status": "FAILED_EMAIL",
                                 "json_file": json_file
                             }
@@ -2109,6 +2116,8 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                             payload = api_client.build_invoice_download_payload(po_details)
                         elif action == "invoiceUpload":
                             payload = api_client.build_invoice_upload_payload(po_details, f"mctech/downloads/fatura_{po_number}.pdf")
+                        elif action == "invoiceMonitor":
+                            payload = api_client.build_invoice_monitor_payload(po_number)
                         else:
                             logger.error(f"❌ Unknown individual action: {action}")
                             processing_results["failed_orders"][po_number] = {
@@ -2184,14 +2193,16 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                             else:
                                 logger.warning(f"⚠️ No protocol extracted for PO {po_number}: {message}")
 
+                        # Map action to resulting status
                         new_status = {
+                            "invoiceMonitor": "MONITORED",
                             "main-download-invoice": "DOWNLOADED",
                             "invoiceUpload": "UPLOADED"
                         }.get(action, "UNKNOWN")
 
                         logger.info(f"✅ Individual {action} successful for PO {po_number} - updating to {new_status}")
+
                         processing_results["status_updates"][po_number] = {
-                            "old_status": "MONITORED" if action == "main-download-invoice" else "DOWNLOADED",
                             "new_status": new_status,
                             "json_file": json_file
                         }
@@ -2313,10 +2324,7 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
                 "update_count": 0
             }
 
-        files_updated[json_file]["pos_updated"].append({
-            "po_number": po_number,
-            "status_change": f"{update_info['old_status']} → {new_status}"
-        })
+        files_updated[json_file]["pos_updated"].append(f"{po_number} → {new_status}")
         files_updated[json_file]["update_count"] += 1
 
         # REAL FILE UPDATE: Update the actual JSON file
