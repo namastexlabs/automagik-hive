@@ -565,12 +565,32 @@ class BrowserAPIClient:
         import glob
         import shutil
 
-        # Find downloaded ZIP
-        original_zip = f"mctech/downloads/pedido {po_number}.zip"
+        # Find downloaded ZIP using multiple patterns
+        zip_patterns = [
+            f"mctech/downloads/pedido {po_number}.zip",  # Real format from API
+            f"mctech/downloads/fatura_{po_number}.zip",  # Fallback format
+            f"mctech/downloads/*{po_number}*.zip"       # Wildcard search
+        ]
 
-        if not os.path.exists(original_zip):
-            logger.error(f"❌ ZIP file not found: {original_zip}")
+        original_zip = None
+        for pattern in zip_patterns:
+            if '*' in pattern:
+                # Use glob for wildcard patterns
+                matches = glob.glob(pattern)
+                if matches:
+                    original_zip = matches[0]  # Use first match
+                    break
+            else:
+                # Direct file check
+                if os.path.exists(pattern):
+                    original_zip = pattern
+                    break
+
+        if not original_zip:
+            logger.error(f"❌ ZIP file not found for PO {po_number}. Searched patterns: {zip_patterns}")
             return {"attachments": [], "error": "ZIP file not found"}
+
+        logger.info(f"📦 Found ZIP file for PO {po_number}: {original_zip}")
 
         # Extract to temp directory
         temp_dir = f"mctech/temp/{po_number}"
@@ -845,7 +865,6 @@ class BrowserAPIClient:
                         file_content = await response.read()
                         
                         # Create downloads directory if it doesn't exist
-                        import os
                         download_dir = "mctech/downloads"
                         os.makedirs(download_dir, exist_ok=True)
                         
@@ -1976,8 +1995,19 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                         # Load JSON to get full PO details including protocol
                         try:
                             with open(json_file, 'r') as f:
-                                po_details = json.load(f)
-                        except (FileNotFoundError, json.JSONDecodeError) as e:
+                                json_data = json.load(f)
+
+                            # Find the specific PO in the JSON orders array
+                            po_details = None
+                            for order in json_data.get("orders", []):
+                                if order.get("po_number") == po_number:
+                                    po_details = order
+                                    break
+
+                            if po_details is None:
+                                raise ValueError(f"PO {po_number} not found in JSON orders")
+
+                        except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
                             logger.error(f"❌ Failed to load JSON for PO {po_number}: {e}")
                             processing_results["failed_orders"][po_number] = {
                                 "action": action,
@@ -1991,6 +2021,8 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
 
                         # Get protocol from JSON
                         protocol = po_details.get("protocol_number")
+                        logger.info(f"🔍 DEBUG: PO {po_number} protocol_number extraction: {protocol}")
+                        logger.info(f"🔍 DEBUG: po_details keys: {list(po_details.keys()) if po_details else 'None'}")
 
                         if not protocol:
                             logger.error(f"❌ No protocol found for PO {po_number}")
@@ -2070,7 +2102,6 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                     # Load JSON to get real PO details (for non-claroCheck actions)
                     po_details = None
                     try:
-                        import os
                         if os.path.exists(json_file):
                             with open(json_file, 'r', encoding='utf-8') as f:
                                 json_data = json.load(f)
@@ -2080,6 +2111,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                                 if order.get("po_number") == po_number:
                                     po_details = {
                                         "po_number": po_number,
+                                        "protocol_number": order.get("protocol_number"),
                                         "ctes": order.get("ctes", []),
                                         "po_total_value": order.get("po_total_value", 0),
                                         "start_date": order.get("start_date", ""),
@@ -2089,6 +2121,7 @@ async def execute_individual_po_processing_step(step_input: StepInput) -> StepOu
                                         "value_totals": order.get("value_totals", {})
                                     }
                                     logger.info(f"📊 Loaded real PO details for {po_number}: {len(po_details.get('ctes', []))} CTEs, Value: {po_details.get('po_total_value', 0)}")
+                                    logger.info(f"🔍 DEBUG: Extracted po_details for {po_number}: protocol_number={po_details.get('protocol_number')}")
                                     break
                             
                             if po_details is None:
