@@ -101,9 +101,9 @@ def _load_team_config(config_file: Path) -> dict[str, Any] | None:
         return None
 
 
-def _discover_teams() -> dict[str, Callable[..., Team]]:
+def _discover_teams(ai_root_path: Path) -> dict[str, Callable[..., Team]]:
     """Dynamically discover teams from filesystem"""
-    teams_dir = Path("ai/teams")
+    teams_dir = ai_root_path / "teams"
     registry: dict[str, Callable[..., Team]] = {}
 
     if not teams_dir.exists():
@@ -173,12 +173,18 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
 _TEAM_REGISTRY: dict[str, Callable[..., Team]] | None = None
 
 
-def get_team_registry() -> dict[str, Callable[..., Team]]:
+def get_team_registry(ai_root_path: Path | None = None) -> dict[str, Callable[..., Team]]:
     """Get team registry with lazy initialization"""
     global _TEAM_REGISTRY
     if _TEAM_REGISTRY is None:
         logger.debug("Initializing team registry (lazy)")
-        _TEAM_REGISTRY = _discover_teams()
+        if ai_root_path is None:
+            # Import here to avoid circular import
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root_path = resolve_ai_root(None, settings)
+        _TEAM_REGISTRY = _discover_teams(ai_root_path)
         logger.debug(
             "Team registry initialized",
             team_count=len(_TEAM_REGISTRY),

@@ -469,11 +469,16 @@ class VersionFactory:
         """
         from pathlib import Path
 
-        # Determine config file path based on component type
+        # Determine config file path based on component type using resolved AI root
+        from lib.utils.ai_root import resolve_ai_root
+        from lib.config.settings import get_settings
+        settings = get_settings()
+        ai_root_path = resolve_ai_root(None, settings)
+        
         config_paths = {
-            "agent": f"ai/agents/{component_id}/config.yaml",
-            "team": f"ai/teams/{component_id}/config.yaml",
-            "workflow": f"ai/workflows/{component_id}/config.yaml",
+            "agent": ai_root_path / "agents" / component_id / "config.yaml",
+            "team": ai_root_path / "teams" / component_id / "config.yaml",
+            "workflow": ai_root_path / "workflows" / component_id / "config.yaml",
         }
 
         config_file = config_paths.get(component_type)
@@ -548,11 +553,16 @@ class VersionFactory:
         """
         from pathlib import Path
 
-        # Determine config file path based on component type
+        # Determine config file path based on component type using resolved AI root
+        from lib.utils.ai_root import resolve_ai_root
+        from lib.config.settings import get_settings
+        settings = get_settings()
+        ai_root_path = resolve_ai_root(None, settings)
+        
         config_paths = {
-            "agent": f"ai/agents/{component_id}/config.yaml",
-            "team": f"ai/teams/{component_id}/config.yaml",
-            "workflow": f"ai/workflows/{component_id}/config.yaml",
+            "agent": ai_root_path / "agents" / component_id / "config.yaml",
+            "team": ai_root_path / "teams" / component_id / "config.yaml",
+            "workflow": ai_root_path / "workflows" / component_id / "config.yaml",
         }
 
         config_file = config_paths.get(component_type)

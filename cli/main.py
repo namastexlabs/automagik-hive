@@ -6,6 +6,7 @@ No over-engineering. No abstract patterns. Just working CLI.
 """
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -18,13 +19,10 @@ except ImportError:
 
 
 # Import command classes for test compatibility
-from .commands.init import InitCommands
 from .commands.postgres import PostgreSQLCommands
 from .commands.service import ServiceManager
 from .commands.uninstall import UninstallCommands
-from .commands.workspace import WorkspaceCommands
 from .docker_manager import DockerManager
-from .workspace import WorkspaceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -37,6 +35,7 @@ CORE COMMANDS (Quick Start):
   --init [NAME]               Initialize new workspace 
   --serve [WORKSPACE]         Start production server (Docker)
   --dev [WORKSPACE]           Start development server (local)
+  --ai-root [AI_ROOT]         Set AI root directory path
   --version                   Show version information
 
 
@@ -66,9 +65,11 @@ Use --help for detailed options or see documentation.
     )
 
     # Core commands
-    parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
     parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start production server (Docker)")
     parser.add_argument("--dev", nargs="?", const=".", metavar="WORKSPACE", help="Start development server (local)")
+    
+    # AI root argument
+    parser.add_argument("--ai-root", nargs="?", const=None, metavar="AI_ROOT", help="AI root directory path (optional)")
     # Get actual version for the version argument
     try:
         from lib.utils.version_reader import get_project_version
@@ -118,8 +119,7 @@ Use --help for detailed options or see documentation.
     dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
-    # Workspace path - primary positional argument
-    parser.add_argument("workspace", nargs="?", help="Start workspace server")
+
 
     return parser
 
@@ -129,14 +129,19 @@ def main() -> int:
     parser = create_parser()
     args = parser.parse_args()
     
+    # Set HIVE_AI_ROOT environment variable if ai_root is provided
+    if args.ai_root:
+        os.environ["HIVE_AI_ROOT"] = args.ai_root
+        print(f"🔧 Using AI root: {args.ai_root}")
+
     # Count commands
     commands = [
-        args.init, args.serve, args.dev,
+        args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
         args.stop, args.restart, args.status, args.logs,
-        args.workspace
+        getattr(args, 'workspace', None)
     ]
     command_count = sum(1 for cmd in commands if cmd)
     
@@ -149,12 +154,6 @@ def main() -> int:
         return 0
 
     try:
-        # Init workspace
-        if args.init:
-            init_cmd = InitCommands()
-            workspace_name = None if args.init == "__DEFAULT__" else args.init
-            return 0 if init_cmd.init_workspace(workspace_name) else 1
-        
         # Production server (Docker)
         if args.serve:
             service_manager = ServiceManager()
@@ -191,13 +190,7 @@ def main() -> int:
             workspace = getattr(args, 'workspace', '.') or '.'
             return 0 if service_manager.uninstall_environment(workspace) else 1
         
-        # Start workspace server (positional argument)
-        if args.workspace:
-            if not Path(args.workspace).is_dir():
-                print(f"❌ Directory not found: {args.workspace}")
-                return 1
-            workspace_cmd = WorkspaceCommands()
-            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
+
         
         # PostgreSQL commands
         postgres_cmd = PostgreSQLCommands()

@@ -68,16 +68,22 @@ async def batch_component_discovery() -> ComponentRegistries:
     from ai.agents.registry import AgentRegistry
     from ai.teams.registry import get_team_registry
     from ai.workflows.registry import get_workflow_registry
+    from lib.utils.ai_root import resolve_ai_root
+    from lib.config.settings import get_settings
+
+    # Get AI root path
+    settings = get_settings()
+    ai_root_path = resolve_ai_root(None, settings)
 
     # Batch discovery - single filesystem scan per type
     try:
         # Initialize registries in parallel where possible
-        workflow_registry = get_workflow_registry()
-        team_registry = get_team_registry()
+        workflow_registry = get_workflow_registry(ai_root_path)
+        team_registry = get_team_registry(ai_root_path)
 
         # Agent registry requires async initialization
         agent_registry_instance = AgentRegistry()
-        agents = await agent_registry_instance.get_all_agents()
+        agents = await agent_registry_instance.get_all_agents(ai_root_path)
 
         discovery_time = (datetime.now() - start_time).total_seconds()
 

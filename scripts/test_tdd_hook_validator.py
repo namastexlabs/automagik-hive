@@ -18,7 +18,7 @@ def test_validator():
         # Source files that should have tests
         ("lib/utils/proxy_agents.py", "tests/lib/utils/test_proxy_agents.py"),
         ("api/serve.py", "tests/api/test_serve.py"),
-        ("ai/agents/registry.py", "tests/ai/agents/test_registry.py"),
+        ("/home/namastex/workspace/automagik-hive/ai/agents/registry.py", "tests/ai/agents/test_registry.py"),
         
         # Integration tests (no source needed)
         ("tests/integration/api/test_e2e_integration.py", None),

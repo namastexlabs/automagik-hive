@@ -24,23 +24,23 @@
 # =========================================================================
 
 resource_types:
-  # Core infrastructure directories
-  directories:
-    "lib/": "🔧"              # Utilities and core infrastructure
-    "api/": "🌐"              # API endpoints and web services
-    "ai/agents/": "🤖"        # AI agent definitions
-    "ai/teams/": "👥"         # AI team configurations
-    "ai/workflows/": "⚡"     # AI workflow definitions
-    "tests/": "🧪"            # Test suites and validation
-    "docs/": "📚"             # Documentation files
-    "config/": "⚙️"           # Configuration files
-    "data/": "💾"             # Data storage and assets
-    "scripts/": "📜"          # Automation and build scripts
-    "common/": "🔗"           # Shared utilities and components
-    "genie/": "🧞"            # Genie-specific implementations
-    "migrations/": "🔄"       # Database migrations
-    "knowledge/": "🧠"        # Knowledge base and RAG systems
-    "static/": "🎨"           # Static assets and resources
+   # Core infrastructure directories
+   directories:
+     "lib/": "🔧"              # Utilities and core infrastructure
+     "api/": "🌐"              # API endpoints and web services
+     "agents/": "🤖"           # AI agent definitions (supports external AI folders)
+     "teams/": "👥"            # AI team configurations (supports external AI folders)
+     "workflows/": "⚡"        # AI workflow definitions (supports external AI folders)
+     "tests/": "🧪"            # Test suites and validation
+     "docs/": "📚"             # Documentation files
+     "config/": "⚙️"           # Configuration files
+     "data/": "💾"             # Data storage and assets
+     "scripts/": "📜"          # Automation and build scripts
+     "common/": "🔗"           # Shared utilities and components
+     "genie/": "🧞"            # Genie-specific implementations
+     "migrations/": "🔄"       # Database migrations
+     "knowledge/": "🧠"        # Knowledge base and RAG systems
+     "static/": "🎨"           # Static assets and resources
     
   # Development activities and processes
   activities:
@@ -155,22 +155,22 @@ resource_types:
 
 # Pattern matching rules for intelligent emoji detection
 detection_patterns:
-  # Directory-based detection (highest priority)
-  directory_patterns:
-    - pattern: "^lib/"
-      emoji: "🔧"
-    - pattern: "^api/"
-      emoji: "🌐"
-    - pattern: "^ai/agents/"
-      emoji: "🤖"
-    - pattern: "^ai/teams/"
-      emoji: "👥"
-    - pattern: "^ai/workflows/"
-      emoji: "⚡"
-    - pattern: "^tests/"
-      emoji: "🧪"
-    - pattern: "^docs/"
-      emoji: "📚"
+   # Directory-based detection (highest priority)
+   directory_patterns:
+     - pattern: "^lib/"
+       emoji: "🔧"
+     - pattern: "^api/"
+       emoji: "🌐"
+     - pattern: "^agents/"
+       emoji: "🤖"
+     - pattern: "^teams/"
+       emoji: "👥"
+     - pattern: "^workflows/"
+       emoji: "⚡"
+     - pattern: "^tests/"
+       emoji: "🧪"
+     - pattern: "^docs/"
+       emoji: "📚"
       
   # Content-based keyword detection (medium priority)
   keyword_patterns:

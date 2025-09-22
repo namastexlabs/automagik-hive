@@ -144,21 +144,28 @@ class YAMLCacheManager:
                 return None
 
     def discover_components(
-        self, pattern: str, force_reload: bool = False
+        self, pattern: str, ai_root_path: Path | None = None, force_reload: bool = False
     ) -> list[str]:
         """
         Discover component files using cached glob patterns.
 
         Args:
-            pattern: Glob pattern (e.g., "ai/agents/*/config.yaml")
+            pattern: Glob pattern (e.g., "agents/*/config.yaml")
+            ai_root_path: AI root path to prepend to pattern
             force_reload: Force reload ignoring cache
 
         Returns:
             List of matching file paths
         """
         with self._lock:
+            # Prepend AI root path to pattern if provided
+            if ai_root_path:
+                full_pattern = str(ai_root_path / pattern)
+            else:
+                full_pattern = pattern
+
             # Determine directory to watch for changes
-            pattern_dir = os.path.dirname(pattern.replace("*", "dummy"))
+            pattern_dir = os.path.dirname(full_pattern.replace("*", "dummy"))
             if os.path.exists(pattern_dir):
                 current_dir_mtime = max(
                     os.path.getmtime(pattern_dir),
@@ -175,36 +182,36 @@ class YAMLCacheManager:
                 current_dir_mtime = 0
 
             # Check cache hit and validity
-            if not force_reload and pattern in self._glob_cache:
-                cached = self._glob_cache[pattern]
+            if not force_reload and full_pattern in self._glob_cache:
+                cached = self._glob_cache[full_pattern]
 
                 # Cache hit - check if directory structure changed
                 if cached.dir_mtime >= current_dir_mtime:
                     logger.debug(
-                        f"🔍 Glob cache hit: {pattern} ({len(cached.file_paths)} files)"
+                        f"🔍 Glob cache hit: {full_pattern} ({len(cached.file_paths)} files)"
                     )
                     return cached.file_paths.copy()
                 logger.debug(
-                    f"🔍 Glob cache invalidated (directory modified): {pattern}"
+                    f"🔍 Glob cache invalidated (directory modified): {full_pattern}"
                 )
 
             # Cache miss or invalidated - scan filesystem
             try:
-                logger.debug(f"🔍 Scanning filesystem: {pattern}")
-                file_paths = sorted(glob.glob(pattern))
+                logger.debug(f"🔍 Scanning filesystem: {full_pattern}")
+                file_paths = sorted(glob.glob(full_pattern))
 
                 # Cache the result
-                self._glob_cache[pattern] = CachedGlob(
-                    file_paths=file_paths, dir_mtime=current_dir_mtime, pattern=pattern
+                self._glob_cache[full_pattern] = CachedGlob(
+                    file_paths=file_paths, dir_mtime=current_dir_mtime, pattern=full_pattern
                 )
 
                 logger.debug(
-                    f"🔍 Glob cached successfully: {pattern} ({len(file_paths)} files)"
+                    f"🔍 Glob cached successfully: {full_pattern} ({len(file_paths)} files)"
                 )
                 return file_paths.copy()
 
             except Exception as e:
-                logger.error(f"🔍 Failed to scan pattern {pattern}: {e}")
+                logger.error(f"🔍 Failed to scan pattern {full_pattern}: {e}")
                 return []
 
     def get_agent_team_mapping(
@@ -226,13 +233,13 @@ class YAMLCacheManager:
 
             return self._inheritance_cache.get(agent_id)
 
-    def _rebuild_inheritance_cache(self):
+    def _rebuild_inheritance_cache(self, ai_root_path: Path | None = None):
         """Rebuild the agent -> team inheritance mapping cache."""
         logger.debug("🔗 Rebuilding inheritance cache...")
         self._inheritance_cache.clear()
 
         # Discover all team configs
-        team_configs = self.discover_components("ai/teams/*/config.yaml")
+        team_configs = self.discover_components("teams/*/config.yaml", ai_root_path)
 
         for team_config_path in team_configs:
             team_config = self.get_yaml(team_config_path)

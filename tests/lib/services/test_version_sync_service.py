@@ -25,9 +25,9 @@ def mock_settings():
     """Mock settings with test configuration."""
     mock = MagicMock()
     mock.AI_CONFIG_DIR = "/test/ai"
-    mock.AI_AGENTS_DIR = "/test/ai/agents"
-    mock.AI_TEAMS_DIR = "/test/ai/teams"
-    mock.AI_WORKFLOWS_DIR = "/test/ai/workflows"
+    mock.AI_AGENTS_DIR = "/test//home/namastex/workspace/automagik-hive/ai/agents"
+    mock.AI_TEAMS_DIR = "/test//home/namastex/workspace/automagik-hive/ai/teams"
+    mock.AI_WORKFLOWS_DIR = "/test//home/namastex/workspace/automagik-hive/ai/workflows"
     return mock
 
 

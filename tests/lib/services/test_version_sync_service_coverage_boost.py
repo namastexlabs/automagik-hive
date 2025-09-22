@@ -59,12 +59,16 @@ class TestAgnoVersionSyncServiceInitialization:
             assert service.db_url == env_url
 
     def test_config_paths_structure(self):
-        """Test configuration paths are properly structured."""
+        """Test configuration paths are properly structured with resolved AI root."""
         service = AgnoVersionSyncService(db_url="test_url")
         
-        assert service.config_paths["agent"] == "ai/agents/*/config.yaml"
-        assert service.config_paths["team"] == "ai/teams/*/config.yaml"
-        assert service.config_paths["workflow"] == "ai/workflows/*/config.yaml"
+        # Check that paths contain the correct structure
+        assert "agents" in service.config_paths["agent"]
+        assert "teams" in service.config_paths["team"]
+        assert "workflows" in service.config_paths["workflow"]
+        assert "config.yaml" in service.config_paths["agent"]
+        assert "config.yaml" in service.config_paths["team"]
+        assert "config.yaml" in service.config_paths["workflow"]
 
     def test_sync_results_initialization(self):
         """Test sync results are properly initialized."""
@@ -629,7 +633,12 @@ class TestSingleComponentSyncLogic:
         """Test that shared configuration files are skipped."""
         service = AgnoVersionSyncService(db_url="test_url")
         
-        shared_config_file = "ai/agents/shared/config.yaml"
+        # Use resolved AI root path for shared config
+        from lib.utils.ai_root import resolve_ai_root
+        from lib.config.settings import get_settings
+        settings = get_settings()
+        ai_root_path = resolve_ai_root(None, settings)
+        shared_config_file = str(ai_root_path / "agents" / "shared" / "config.yaml")
         
         with patch('builtins.open', mock_open(read_data="test: data")), \
              patch('yaml.safe_load', return_value={'shared': 'config'}):

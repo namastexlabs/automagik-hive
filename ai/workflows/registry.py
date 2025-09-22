@@ -10,9 +10,9 @@ from agno.workflow import Workflow
 from lib.logging import logger
 
 
-def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
+def _discover_workflows(ai_root_path: Path) -> dict[str, Callable[..., Workflow]]:
     """Dynamically discover workflows from filesystem"""
-    workflows_dir = Path("ai/workflows")
+    workflows_dir = ai_root_path / "workflows"
     registry: dict[str, Callable[..., Workflow]] = {}
 
     if not workflows_dir.exists():
@@ -60,12 +60,18 @@ def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
 _WORKFLOW_REGISTRY: dict[str, Callable[..., Workflow]] | None = None
 
 
-def get_workflow_registry() -> dict[str, Callable[..., Workflow]]:
+def get_workflow_registry(ai_root_path: Path | None = None) -> dict[str, Callable[..., Workflow]]:
     """Get workflow registry with lazy initialization"""
     global _WORKFLOW_REGISTRY
     if _WORKFLOW_REGISTRY is None:
         logger.debug("Initializing workflow registry (lazy)")
-        _WORKFLOW_REGISTRY = _discover_workflows()
+        if ai_root_path is None:
+            # Import here to avoid circular import
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root_path = resolve_ai_root(None, settings)
+        _WORKFLOW_REGISTRY = _discover_workflows(ai_root_path)
         logger.debug(
             "Workflow registry initialized", workflow_count=len(_WORKFLOW_REGISTRY)
         )

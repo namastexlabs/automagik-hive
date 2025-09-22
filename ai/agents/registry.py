@@ -11,11 +11,11 @@ from lib.mcp.catalog import MCPCatalog
 from lib.utils.version_factory import create_agent
 
 
-def _discover_agents() -> list[str]:
+def _discover_agents(ai_root_path: Path) -> list[str]:
     """Dynamically discover available agents from filesystem"""
     import yaml
 
-    agents_dir = Path("ai/agents")
+    agents_dir = ai_root_path / "agents"
     if not agents_dir.exists():
         return []
 
@@ -57,9 +57,15 @@ class AgentRegistry:
         return cls._mcp_catalog
 
     @classmethod
-    def _get_available_agents(cls) -> list[str]:
+    def _get_available_agents(cls, ai_root_path: Path | None = None) -> list[str]:
         """Get all available agent IDs"""
-        return _discover_agents()
+        if ai_root_path is None:
+            # Import here to avoid circular import
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root_path = resolve_ai_root(None, settings)
+        return _discover_agents(ai_root_path)
 
     @classmethod
     async def get_agent(
@@ -119,6 +125,7 @@ class AgentRegistry:
         debug_mode: bool = False,
         db_url: str | None = None,
         memory: Any | None = None,
+        ai_root_path: Path | None = None,
     ) -> dict[str, Agent]:
         """
         Get all available agents.
@@ -127,7 +134,7 @@ class AgentRegistry:
             Dictionary mapping agent_id to Agent instance
         """
         agents = {}
-        available_agents = cls._get_available_agents()
+        available_agents = cls._get_available_agents(ai_root_path)
 
         for agent_id in available_agents:
             try:

@@ -17,6 +17,8 @@ from agno.playground import Playground
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from lib.config.settings import get_settings
+
 # Load environment variables FIRST before any other imports
 # This ensures AGNO_LOG_LEVEL is available when logging system initializes
 try:
@@ -507,7 +509,11 @@ async def _async_create_automagik_api():
                 raise RuntimeError(f"AGUI: Failed to load any agents for AGUI interface: {e}")
         else:
             logger.error("AGUI: No agents found")
-            raise RuntimeError("AGUI: No agents available - check ai/agents/ directory")
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root = resolve_ai_root(None, settings)
+            raise RuntimeError(f"AGUI: No agents available - check {ai_root}/agents/ directory")
         
         # Mount AGUI app
         agui_fastapi_app = agui_app.get_app()

@@ -220,7 +220,11 @@ class TestRealAgentsExecution:
         # Find an agent with tool configuration
         agent_with_tools = None
         for agent_id in available_agents:
-            agent_config_path = Path("ai/agents") / agent_id / "config.yaml"
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root_path = resolve_ai_root(None, settings)
+            agent_config_path = ai_root_path / "agents" / agent_id / "config.yaml"
             if agent_config_path.exists():
                 with open(agent_config_path) as f:
                     config = yaml.safe_load(f)
@@ -256,7 +260,11 @@ class TestRealAgentsExecution:
 
     def test_agent_configuration_validation_real_files(self):
         """Test validation of actual agent configuration files."""
-        agents_dir = Path("ai/agents")
+        from lib.utils.ai_root import resolve_ai_root
+        from lib.config.settings import get_settings
+        settings = get_settings()
+        ai_root_path = resolve_ai_root(None, settings)
+        agents_dir = ai_root_path / "agents"
         if not agents_dir.exists():
             pytest.skip("Agents directory not found")
         
@@ -503,7 +511,11 @@ class TestAgentRegistryRealDiscovery:
             assert len(agent_id) > 0
             
             # Check if agent has corresponding directory
-            agent_dir = Path("ai/agents") / agent_id
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root = resolve_ai_root(None, settings)
+            agent_dir = ai_root / "agents" / agent_id
             if agent_dir.exists():
                 config_file = agent_dir / "config.yaml"
                 assert config_file.exists(), f"Config file missing for {agent_id}"
@@ -547,7 +559,11 @@ class TestAgentRegistryRealDiscovery:
 
     def test_yaml_configuration_loading_real_files(self):
         """Test loading and validation of real YAML configuration files."""
-        agents_dir = Path("ai/agents")
+        from lib.utils.ai_root import resolve_ai_root
+        from lib.config.settings import get_settings
+        settings = get_settings()
+        ai_root = resolve_ai_root(None, settings)
+        agents_dir = ai_root / "agents"
         if not agents_dir.exists():
             pytest.skip("Agents directory not found")
         

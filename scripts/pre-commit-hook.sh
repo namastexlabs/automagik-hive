@@ -101,12 +101,14 @@ find_test_file() {
             possible_tests+=("${TEST_DIR}/api/test_${api_path//\//_}.py")
             possible_tests+=("${TEST_DIR}/api/${api_path}/test_$(basename "$api_path").py")
             ;;
-        "ai/agents/"*)
-            # Agent files
-            local agent_path="${module_name#ai/agents/}"
-            possible_tests+=("${TEST_DIR}/ai/agents/test_${agent_path//\//_}.py")
-            possible_tests+=("${TEST_DIR}/integration/agents/test_${agent_path//\//_}.py")
-            ;;
+         "agents/"*)
+             # Agent files (supports external AI folders)
+             local agent_path="${module_name#agents/}"
+             # Use resolved AI root for test paths
+             local ai_root="${HIVE_AI_ROOT:-ai}"
+             possible_tests+=("${TEST_DIR}/${ai_root}/agents/test_${agent_path//\//_}.py")
+             possible_tests+=("${TEST_DIR}/integration/agents/test_${agent_path//\//_}.py")
+             ;;
         "lib/"*)
             # Library modules
             local lib_path="${module_name#lib/}"

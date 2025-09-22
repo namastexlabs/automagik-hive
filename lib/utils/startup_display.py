@@ -28,13 +28,13 @@ class StartupDisplay:
     """Manages concise startup output display."""
 
     def __init__(self) -> None:
-        self.agents: dict[str, dict[str, str]] = {}
-        self.teams: dict[str, dict[str, str]] = {}
-        self.workflows: dict[str, dict[str, str]] = {}
-        self.errors: list[str] = []
+        self.agents: dict[str, dict[str, str | int]] = {}
+        self.teams: dict[str, dict[str, str | int]] = {}
+        self.workflows: dict[str, dict[str, str | int]] = {}
+        self.errors: list[dict[str, str]] = []
         self.version_sync_logs: list[str] = []
         self.sync_results: dict[str, Any] | None = None
-        self.migration_status: str | None = None
+        self.migration_status: dict[str, Any] | None = None
 
     def add_agent(
         self,
@@ -125,7 +125,11 @@ class StartupDisplay:
         """
         if EMOJI_AVAILABLE:
             loader = get_emoji_loader()
-            emoji = loader.get_emoji(f"ai/{component_type}s/")
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root = resolve_ai_root(None, settings)
+            emoji = loader.get_emoji(f"{ai_root}/{component_type}s/")
         else:
             emoji = "📄"
 
@@ -286,10 +290,14 @@ class StartupDisplay:
         import yaml
 
         # Map component types to directory patterns
+        from lib.utils.ai_root import resolve_ai_root
+        from lib.config.settings import get_settings
+        settings = get_settings()
+        ai_root = resolve_ai_root(None, settings)
         patterns = {
-            "agent": "ai/agents/*/config.yaml",
-            "team": "ai/teams/*/config.yaml",
-            "workflow": "ai/workflows/*/config.yaml",
+            "agent": str(ai_root / "agents" / "*" / "config.yaml"),
+            "team": str(ai_root / "teams" / "*" / "config.yaml"),
+            "workflow": str(ai_root / "workflows" / "*" / "config.yaml"),
         }
 
         pattern = patterns.get(component_type)
@@ -356,9 +364,9 @@ def display_simple_status(
     # Load emojis from YAML configuration
     if EMOJI_AVAILABLE:
         loader = get_emoji_loader()
-        team_emoji = loader.get_emoji("ai/teams/")
-        agent_emoji = loader.get_emoji("ai/agents/")
-        workflow_emoji = loader.get_emoji("ai/workflows/")
+        team_emoji = loader.get_emoji("/home/namastex/workspace/automagik-hive/ai/teams/")
+        agent_emoji = loader.get_emoji("/home/namastex/workspace/automagik-hive/ai/agents/")
+        workflow_emoji = loader.get_emoji("/home/namastex/workspace/automagik-hive/ai/workflows/")
         api_emoji = loader.get_emoji("api/")
     else:
         team_emoji = agent_emoji = workflow_emoji = api_emoji = "📄"

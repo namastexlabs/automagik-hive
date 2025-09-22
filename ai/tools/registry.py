@@ -5,13 +5,21 @@ from pathlib import Path
 from typing import Any
 
 from lib.logging import logger
+from lib.utils.ai_root import resolve_ai_root
+from lib.config.settings import get_settings
 
 
-def _discover_tools() -> list[str]:
+def _discover_tools(ai_root_path: Path | None) -> list[str]:
     """Dynamically discover available tools from filesystem"""
     import yaml
 
-    tools_dir = Path("ai/tools")
+    if ai_root_path is None:
+        from lib.utils.ai_root import resolve_ai_root
+        from lib.config.settings import get_settings
+        settings = get_settings()
+        ai_root_path = resolve_ai_root(None, settings)
+
+    tools_dir = ai_root_path / "tools"
     if not tools_dir.exists():
         return []
 
@@ -43,18 +51,25 @@ class ToolRegistry:
     """
 
     @classmethod
-    def _get_available_tools(cls) -> list[str]:
+    def _get_available_tools(cls, ai_root_path: Path | None = None) -> list[str]:
         """Get all available tool IDs"""
-        return _discover_tools()
+        if ai_root_path is None:
+            # Import here to avoid circular import
+            from lib.utils.ai_root import resolve_ai_root
+            from lib.config.settings import get_settings
+            settings = get_settings()
+            ai_root_path = resolve_ai_root(None, settings)
+        return _discover_tools(ai_root_path)
 
     @classmethod
-    def get_tool(cls, tool_id: str, version: int | None = None, **kwargs) -> Any:
+    def get_tool(cls, tool_id: str, version: int | None = None, ai_root_path: Path | None = None, **kwargs) -> Any:
         """
         Get tool instance by ID.
 
         Args:
             tool_id: Tool identifier (e.g., 'code-analyzer', 'deployment-manager')
             version: Specific version to load (future enhancement)
+            ai_root_path: AI root path to use for tool discovery
             **kwargs: Tool-specific initialization parameters
 
         Returns:
@@ -64,13 +79,15 @@ class ToolRegistry:
             KeyError: If tool_id not found
             ImportError: If tool module cannot be loaded
         """
-        available_tools = cls._get_available_tools()
+        available_tools = cls._get_available_tools(ai_root_path)
 
         if tool_id not in available_tools:
             raise KeyError(f"Tool '{tool_id}' not found. Available: {available_tools}")
 
-        # Load tool from filesystem
-        tool_path = Path(f"ai/tools/{tool_id}")
+        # Load tool from filesystem using resolved AI root
+        if ai_root_path is None:
+            ai_root_path = resolve_ai_root(None, get_settings())
+        tool_path = ai_root_path / "tools" / tool_id
         config_file = tool_path / "config.yaml"
         tool_file = tool_path / "tool.py"
 
@@ -141,19 +158,23 @@ class ToolRegistry:
         return cls._get_available_tools()
 
     @classmethod
-    def get_tool_info(cls, tool_id: str) -> dict[str, Any]:
+    def get_tool_info(cls, tool_id: str, ai_root_path: Path | None = None) -> dict[str, Any]:
         """
         Get tool information without instantiating the tool.
 
         Args:
             tool_id: Tool identifier
+            ai_root_path: AI root path to use for tool discovery
 
         Returns:
             Dictionary with tool metadata
         """
         import yaml
 
-        tool_path = Path(f"ai/tools/{tool_id}")
+        # Load tool from filesystem using resolved AI root
+        if ai_root_path is None:
+            ai_root_path = resolve_ai_root(None, get_settings())
+        tool_path = ai_root_path / "tools" / tool_id
         config_file = tool_path / "config.yaml"
 
         if not config_file.exists():
@@ -189,19 +210,20 @@ class ToolRegistry:
 
 
 # Generic factory function - main entry point
-def get_tool(tool_id: str, version: int | None = None, **kwargs) -> Any:
+def get_tool(tool_id: str, version: int | None = None, ai_root_path: Path | None = None, **kwargs) -> Any:
     """
     Generic tool factory - main entry point for any tool system.
 
     Args:
         tool_id: Tool identifier (e.g., 'code-analyzer', 'deployment-manager')
         version: Specific version to load
+        ai_root_path: AI root path to use for tool discovery
         **kwargs: Tool-specific initialization parameters
 
     Returns:
         Configured Tool instance
     """
-    return ToolRegistry.get_tool(tool_id=tool_id, version=version, **kwargs)
+    return ToolRegistry.get_tool(tool_id=tool_id, version=version, ai_root_path=ai_root_path, **kwargs)
 
 
 def get_all_tools(**kwargs) -> dict[str, Any]:

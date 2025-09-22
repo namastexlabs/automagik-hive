@@ -53,7 +53,7 @@ class TestFileSyncTracker:
 
     def test_get_yaml_path_finds_agent_config(self, tracker):
         """Test _get_yaml_path finds agent configuration file."""
-        agent_path = Path("/test/base/ai/agents/test-agent/config.yaml")
+        agent_path = Path("/test/base//home/namastex/workspace/automagik-hive/ai/agents/test-agent/config.yaml")
         
         with patch.object(Path, "exists") as mock_exists:
             mock_exists.side_effect = lambda: str(agent_path) in str(Path.cwd())
@@ -68,7 +68,7 @@ class TestFileSyncTracker:
 
     def test_get_yaml_path_finds_workflow_config(self, tracker):
         """Test _get_yaml_path finds workflow configuration file."""
-        workflow_path = Path("/test/base/ai/workflows/test-workflow/config.yaml")
+        workflow_path = Path("/test/base//home/namastex/workspace/automagik-hive/ai/workflows/test-workflow/config.yaml")
         
         def path_exists_side_effect(self):
             return str(self) == str(workflow_path)
@@ -79,7 +79,7 @@ class TestFileSyncTracker:
 
     def test_get_yaml_path_finds_team_config(self, tracker):
         """Test _get_yaml_path finds team configuration file."""
-        team_path = Path("/test/base/ai/teams/test-team/config.yaml")
+        team_path = Path("/test/base//home/namastex/workspace/automagik-hive/ai/teams/test-team/config.yaml")
         
         def path_exists_side_effect(self):
             return str(self) == str(team_path)
@@ -90,8 +90,8 @@ class TestFileSyncTracker:
 
     def test_get_yaml_path_prioritizes_agent_over_workflow(self, tracker):
         """Test _get_yaml_path prioritizes agent path when multiple exist."""
-        agent_path = Path("/test/base/ai/agents/test-component/config.yaml")
-        workflow_path = Path("/test/base/ai/workflows/test-component/config.yaml")
+        agent_path = Path("/test/base//home/namastex/workspace/automagik-hive/ai/agents/test-component/config.yaml")
+        workflow_path = Path("/test/base//home/namastex/workspace/automagik-hive/ai/workflows/test-component/config.yaml")
         
         def path_exists_side_effect(self):
             return str(self) in [str(agent_path), str(workflow_path)]
@@ -322,7 +322,7 @@ class TestFileSyncTrackerEdgeCases:
         ]
         
         for component_id in special_ids:
-            agent_path = Path(f"/test/base/ai/agents/{component_id}/config.yaml")
+            agent_path = Path(f"/test/base//home/namastex/workspace/automagik-hive/ai/agents/{component_id}/config.yaml")
             
             def path_exists_side_effect(self):
                 return str(self) == str(agent_path)
@@ -360,9 +360,9 @@ class TestFileSyncTrackerEdgeCases:
     def test_get_yaml_path_checks_all_locations_before_failing(self, tracker):
         """Test _get_yaml_path checks all possible locations before raising error."""
         expected_paths = [
-            Path("/test/base/ai/agents/missing-component/config.yaml"),
-            Path("/test/base/ai/workflows/missing-component/config.yaml"),
-            Path("/test/base/ai/teams/missing-component/config.yaml"),
+            Path("/test/base//home/namastex/workspace/automagik-hive/ai/agents/missing-component/config.yaml"),
+            Path("/test/base//home/namastex/workspace/automagik-hive/ai/workflows/missing-component/config.yaml"),
+            Path("/test/base//home/namastex/workspace/automagik-hive/ai/teams/missing-component/config.yaml"),
         ]
         
         # Track which paths were checked

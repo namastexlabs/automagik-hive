@@ -373,13 +373,13 @@ class TestStructureAnalyzer:
     def _is_agent_test(self, test_path: Path) -> bool:
         """Check if this is an agent test following the agent.py convention."""
         path_str = str(test_path)
-        return ('ai/agents/' in path_str and 
+        return ('/home/namastex/workspace/automagik-hive/ai/agents/' in path_str and 
                 test_path.name.endswith('_agent.py'))
     
     def _find_agent_file(self, test_relative_path: Path) -> Optional[Path]:
         """Find agent.py file in corresponding agent directory."""
-        # For tests/ai/agents/genie-quality/test_genie_quality_agent.py
-        # Look for ai/agents/genie-quality/agent.py
+        # For tests//home/namastex/workspace/automagik-hive/ai/agents/genie-quality/test_genie_quality_agent.py
+        # Look for /home/namastex/workspace/automagik-hive/ai/agents/genie-quality/agent.py
         if len(test_relative_path.parts) >= 3 and test_relative_path.parts[:2] == ('ai', 'agents'):
             agent_name = test_relative_path.parts[2]
             agent_file = self.project_root / 'ai' / 'agents' / agent_name / 'agent.py'

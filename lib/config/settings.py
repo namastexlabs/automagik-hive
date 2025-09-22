@@ -77,8 +77,13 @@ class HiveSettings(BaseSettings):
     hive_dev_mode: bool = Field(True, description="Development mode enabled")
     hive_enable_metrics: bool = Field(True, description="Metrics collection enabled")
     hive_agno_monitor: bool = Field(False, description="Agno monitoring enabled")
-    hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path")
+    hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path (relative to AI root)")
     hive_enable_agui: bool = Field(False, description="Enable AGUI mode for UI interface")
+
+    # =========================================================================
+    # AI ROOT CONFIGURATION
+    # =========================================================================
+    hive_ai_root: str = Field("ai", description="AI root directory path")
     
     # Optional settings with defaults
     hive_log_dir: Optional[str] = Field(None, description="Log directory path")
@@ -168,6 +173,15 @@ class HiveSettings(BaseSettings):
     def enable_metrics(self) -> bool:
         """Metrics enable alias for legacy compatibility."""
         return self.hive_enable_metrics
+
+    @property
+    def ai_root_path(self) -> Path:
+        """Get the AI root directory path using the centralized resolver."""
+        # Import here to avoid circular import
+        import importlib
+        ai_root_module = importlib.import_module('lib.utils.ai_root')
+        resolve_ai_root = ai_root_module.resolve_ai_root
+        return resolve_ai_root(None, self)
     
     @property
     def metrics_batch_size(self) -> int:
@@ -389,7 +403,7 @@ def load_settings(env_file: Optional[Path] = None) -> HiveSettings:
     """
     try:
         if env_file:
-            settings = HiveSettings(_env_file=str(env_file))
+            settings = HiveSettings(env_file=str(env_file))
         else:
             settings = HiveSettings()
             

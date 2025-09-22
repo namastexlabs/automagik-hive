@@ -78,9 +78,9 @@ class TestStartCommand:
     """Test start command help text."""
     
     def test_cli_start_command(self):
-        """Test that workspace argument help text is 'Start workspace server'."""
+        """Test that workspace argument help text is 'Start development server (local)'."""
         parser = create_parser()
         
         # Get help text for the workspace argument
         help_text = parser.format_help()
-        assert "Start workspace server" in help_text
+        assert "Start development server (local)" in help_text

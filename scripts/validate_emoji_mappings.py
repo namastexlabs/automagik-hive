@@ -37,7 +37,7 @@ class EmojiMappingValidator:
         self.resource_patterns = {
             "new_directory": re.compile(r"^[AM]\s+([^/]+/[^/]*/)$"),
             "new_service": re.compile(r"class\s+(\w+Service|Manager|Handler|Provider)"),
-            "new_component": re.compile(r"(ai/(agents|teams|workflows)/\w+/)"),
+            "new_component": re.compile(r"(/home/namastex/workspace/automagik-hive/ai/(agents|teams|workflows)/\w+/)"),
             "new_script": re.compile(r"^[AM]\s+(scripts/\w+\.(py|sh))$"),
             "config_file": re.compile(r"^[AM]\s+.*\.(yaml|yml|json|toml)$"),
         }

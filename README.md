@@ -40,13 +40,10 @@ automagik-hive genie
 *Currently available in Claude Code. Support for Cursor, Codex, and other AI assistants coming soon.*
 
 ### Option 2: YAML Configuration (Available Now for All)
-```bash
-# Create agents with simple YAML - no AI assistant required
-automagik-hive --init my-workspace
-
-# Edit ai/agents/*/config.yaml
-automagik-hive --dev
-```
+ ```bash
+ # Create agents with simple YAML - no AI assistant required
+ automagik-hive --dev
+ ```
 
 **Ready to build your second agent? →** [View Examples](#what-people-are-building)
 
@@ -306,16 +303,13 @@ Even without GENIE, you can:
 ## Installation
 
 ### Quick Install (Recommended)
-```bash
-# One-line installation
-curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
-
-# Initialize your workspace
-automagik-hive --init my-ai-workspace
-
-# Start building
-automagik-hive --dev
-```
+ ```bash
+ # One-line installation
+ curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
+ 
+ # Start building
+ automagik-hive --dev
+ ```
 
 ### Manual Installation
 ```bash
@@ -351,22 +345,18 @@ automagik-hive --serve
 ## Project Structure
 
 ```
-my-ai-workspace/
-├── ai/
-│   ├── agents/           # Your AI agents
-│   │   └── my-agent/
-│   │       ├── config.yaml    # Agent definition
-│   │       └── agent.py       # Optional Python extensions
-│   ├── teams/            # Multi-agent teams
-│   │   └── my-team/
-│   │       └── config.yaml    # Team routing logic
-│   └── workflows/        # Business workflows
-│       └── my-workflow/
-│           └── config.yaml    # Step definitions
-├── knowledge/            # RAG knowledge base
-│   └── data.csv         # Your knowledge data
-└── .env                 # Configuration
-```
+ ai/
+ ├── agents/           # Your AI agents
+ │   └── my-agent/
+ │       ├── config.yaml    # Agent definition
+ │       └── agent.py       # Optional Python extensions
+ ├── teams/            # Multi-agent teams
+ │   └── my-team/
+ │       └── config.yaml    # Team routing logic
+ └── workflows/        # Business workflows
+     └── my-workflow/
+         └── config.yaml    # Step definitions
+ ```
 
 ## API Endpoints
 
