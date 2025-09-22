@@ -42,7 +42,7 @@ automagik-hive genie
 ### Option 2: YAML Configuration (Available Now for All)
 ```bash
 # Create agents with simple YAML - no AI assistant required
-automagik-hive --init my-workspace
+automagik-hive --dev
 
 # Edit ai/agents/*/config.yaml
 automagik-hive --dev
@@ -311,7 +311,7 @@ Even without GENIE, you can:
 curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
 
 # Initialize your workspace
-automagik-hive --init my-ai-workspace
+cd automagik-hive
 
 # Start building
 automagik-hive --dev

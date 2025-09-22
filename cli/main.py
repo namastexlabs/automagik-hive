@@ -6,6 +6,7 @@ No over-engineering. No abstract patterns. Just working CLI.
 """
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -18,13 +19,10 @@ except ImportError:
 
 
 # Import command classes for test compatibility
-from .commands.init import InitCommands
 from .commands.postgres import PostgreSQLCommands
 from .commands.service import ServiceManager
 from .commands.uninstall import UninstallCommands
-from .commands.workspace import WorkspaceCommands
 from .docker_manager import DockerManager
-from .workspace import WorkspaceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -34,11 +32,9 @@ def create_parser() -> argparse.ArgumentParser:
         description="""Automagik Hive - Multi-Agent AI Framework CLI
 
 CORE COMMANDS (Quick Start):
-  --init [NAME]               Initialize new workspace 
-  --serve [WORKSPACE]         Start production server (Docker)
-  --dev [WORKSPACE]           Start development server (local)
+  --serve                     Start production server (Docker)
+  --dev                       Start development server (local)
   --version                   Show version information
-
 
 POSTGRESQL DATABASE:
   --postgres-status           Check PostgreSQL status
@@ -66,9 +62,8 @@ Use --help for detailed options or see documentation.
     )
 
     # Core commands
-    parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
-    parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start production server (Docker)")
-    parser.add_argument("--dev", nargs="?", const=".", metavar="WORKSPACE", help="Start development server (local)")
+    parser.add_argument("--serve", action="store_true", help="Start production server (Docker)")
+    parser.add_argument("--dev", action="store_true", help="Start development server (local)")
     # Get actual version for the version argument
     try:
         from lib.utils.version_reader import get_project_version
@@ -79,20 +74,19 @@ Use --help for detailed options or see documentation.
     parser.add_argument("--version", action="version", version=version_string, help="Show version")
     
     # PostgreSQL commands
-    parser.add_argument("--postgres-status", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL status")
-    parser.add_argument("--postgres-start", nargs="?", const=".", metavar="WORKSPACE", help="Start PostgreSQL")
-    parser.add_argument("--postgres-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop PostgreSQL")
-    parser.add_argument("--postgres-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart PostgreSQL")
-    parser.add_argument("--postgres-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show PostgreSQL logs")
-    parser.add_argument("--postgres-health", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL health")
-    
+    parser.add_argument("--postgres-status", action="store_true", help="Check PostgreSQL status")
+    parser.add_argument("--postgres-start", action="store_true", help="Start PostgreSQL")
+    parser.add_argument("--postgres-stop", action="store_true", help="Stop PostgreSQL")
+    parser.add_argument("--postgres-restart", action="store_true", help="Restart PostgreSQL")
+    parser.add_argument("--postgres-logs", action="store_true", help="Show PostgreSQL logs")
+    parser.add_argument("--postgres-health", action="store_true", help="Check PostgreSQL health")
     
     
     # Production environment commands
-    parser.add_argument("--stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop production environment")
-    parser.add_argument("--restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart production environment")
-    parser.add_argument("--status", nargs="?", const=".", metavar="WORKSPACE", help="Check production environment status")
-    parser.add_argument("--logs", nargs="?", const=".", metavar="WORKSPACE", help="Show production environment logs")
+    parser.add_argument("--stop", action="store_true", help="Stop production environment")
+    parser.add_argument("--restart", action="store_true", help="Restart production environment")
+    parser.add_argument("--status", action="store_true", help="Check production environment status")
+    parser.add_argument("--logs", action="store_true", help="Show production environment logs")
     
     # Utility flags
     parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
@@ -102,13 +96,14 @@ Use --help for detailed options or see documentation.
     # Create subparsers for commands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
+    # AI root positional argument
+    parser.add_argument("ai_root", nargs="?", default=None, help="AI root directory path (optional)")
+    
     # Install subcommand
     install_parser = subparsers.add_parser("install", help="Complete environment setup with .env generation and PostgreSQL")
-    install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
-    uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Genie subcommand
     genie_parser = subparsers.add_parser("genie", help="Launch claude with AGENTS.md as system prompt")
@@ -116,10 +111,9 @@ Use --help for detailed options or see documentation.
     
     # Dev subcommand
     dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
-    dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
-    
-    # Workspace path - primary positional argument
-    parser.add_argument("workspace", nargs="?", help="Start workspace server")
+    dev_parser.add_argument("ai_root", nargs="?", default=None, help="AI root directory path (optional)")
+    dev_parser.add_argument("--host", default="0.0.0.0", help="Host to bind server to")
+    dev_parser.add_argument("--port", type=int, help="Port to bind server to")
 
     return parser
 
@@ -131,12 +125,11 @@ def main() -> int:
     
     # Count commands
     commands = [
-        args.init, args.serve, args.dev,
+        args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
         args.stop, args.restart, args.status, args.logs,
-        args.workspace
     ]
     command_count = sum(1 for cmd in commands if cmd)
     
@@ -149,22 +142,24 @@ def main() -> int:
         return 0
 
     try:
-        # Init workspace
-        if args.init:
-            init_cmd = InitCommands()
-            workspace_name = None if args.init == "__DEFAULT__" else args.init
-            return 0 if init_cmd.init_workspace(workspace_name) else 1
-        
         # Production server (Docker)
         if args.serve:
-            service_manager = ServiceManager()
-            result = service_manager.serve_docker(args.serve)
+            ai_root = args.ai_root
+            if ai_root:
+                os.environ["HIVE_AI_ROOT"] = str(Path(ai_root).resolve())
+            service_manager = ServiceManager(Path(ai_root) if ai_root else None)
+            result = service_manager.serve_docker(str(Path(ai_root) if ai_root else "."))
             return 0 if result else 1
         
         # Development server (local)
         if args.dev:
-            service_manager = ServiceManager()
-            result = service_manager.serve_local(args.host, args.port, reload=True)
+            ai_root = args.ai_root
+            if ai_root:
+                os.environ["HIVE_AI_ROOT"] = str(Path(ai_root).resolve())
+            service_manager = ServiceManager(Path(ai_root) if ai_root else None)
+            host = args.host
+            port = args.port or 8886
+            result = service_manager.serve_local(host, port, reload=True)
             return 0 if result else 1
         
         # Launch claude with AGENTS.md
@@ -175,62 +170,60 @@ def main() -> int:
         
         # Development server (subcommand)
         if args.command == "dev":
-            service_manager = ServiceManager()
-            result = service_manager.serve_local(args.host, args.port, reload=True)
+            ai_root = args.ai_root
+            if ai_root:
+                os.environ["HIVE_AI_ROOT"] = str(Path(ai_root).resolve())
+            service_manager = ServiceManager(Path(ai_root) if ai_root else None)
+            host = args.host
+            port = args.port or 8886
+            result = service_manager.serve_local(host, port, reload=True)
             return 0 if result else 1
         
         # Install subcommand
         if args.command == "install":
-            service_manager = ServiceManager()
-            workspace = getattr(args, 'workspace', '.') or '.'
-            return 0 if service_manager.install_full_environment(workspace) else 1
+            ai_root = args.ai_root
+            if ai_root:
+                os.environ["HIVE_AI_ROOT"] = str(Path(ai_root).resolve())
+            service_manager = ServiceManager(Path(ai_root) if ai_root else None)
+            return 0 if service_manager.install_full_environment(str(Path(ai_root) if ai_root else ".")) else 1
         
         # Uninstall subcommand
         if args.command == "uninstall":
-            service_manager = ServiceManager()
-            workspace = getattr(args, 'workspace', '.') or '.'
-            return 0 if service_manager.uninstall_environment(workspace) else 1
-        
-        # Start workspace server (positional argument)
-        if args.workspace:
-            if not Path(args.workspace).is_dir():
-                print(f"❌ Directory not found: {args.workspace}")
-                return 1
-            workspace_cmd = WorkspaceCommands()
-            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
+            ai_root = args.ai_root
+            if ai_root:
+                os.environ["HIVE_AI_ROOT"] = str(Path(ai_root).resolve())
+            service_manager = ServiceManager(Path(ai_root) if ai_root else None)
+            return 0 if service_manager.uninstall_environment(str(Path(ai_root) if ai_root else ".")) else 1
         
         # PostgreSQL commands
         postgres_cmd = PostgreSQLCommands()
         if args.postgres_status:
-            return 0 if postgres_cmd.postgres_status(args.postgres_status) else 1
+            return 0 if postgres_cmd.postgres_status(".") else 1
         if args.postgres_start:
-            return 0 if postgres_cmd.postgres_start(args.postgres_start) else 1
+            return 0 if postgres_cmd.postgres_start(".") else 1
         if args.postgres_stop:
-            return 0 if postgres_cmd.postgres_stop(args.postgres_stop) else 1
+            return 0 if postgres_cmd.postgres_stop(".") else 1
         if args.postgres_restart:
-            return 0 if postgres_cmd.postgres_restart(args.postgres_restart) else 1
+            return 0 if postgres_cmd.postgres_restart(".") else 1
         if args.postgres_logs:
-            return 0 if postgres_cmd.postgres_logs(args.postgres_logs, args.tail) else 1
+            return 0 if postgres_cmd.postgres_logs(".", args.tail) else 1
         if args.postgres_health:
-            return 0 if postgres_cmd.postgres_health(args.postgres_health) else 1
-        
+            return 0 if postgres_cmd.postgres_health(".") else 1
         
         # Production environment commands
         service_manager = ServiceManager()
         if args.stop:
-            return 0 if service_manager.stop_docker(args.stop) else 1
+            return 0 if service_manager.stop_docker(".") else 1
         if args.restart:
-            return 0 if service_manager.restart_docker(args.restart) else 1
+            return 0 if service_manager.restart_docker(".") else 1
         if args.status:
-            status = service_manager.docker_status(args.status)
-            print(f"🔍 Production environment status in: {args.status}")
+            status = service_manager.docker_status(".")
+            print(f"🔍 Production environment status in: .")
             for service, service_status in status.items():
                 print(f"  {service}: {service_status}")
             return 0
         if args.logs:
-            return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
-        
-        # No direct uninstall commands - use 'uninstall' subcommand instead
+            return 0 if service_manager.docker_logs(".", args.tail) else 1
         
         return 0
     

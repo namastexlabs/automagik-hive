@@ -77,6 +77,7 @@ class HiveSettings(BaseSettings):
     hive_dev_mode: bool = Field(True, description="Development mode enabled")
     hive_enable_metrics: bool = Field(True, description="Metrics collection enabled")
     hive_agno_monitor: bool = Field(False, description="Agno monitoring enabled")
+    hive_ai_root: str = Field(default="ai", description="AI root directory")
     hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path")
     hive_enable_agui: bool = Field(False, description="Enable AGUI mode for UI interface")
     
@@ -112,6 +113,12 @@ class HiveSettings(BaseSettings):
     # =========================================================================
     # LEGACY COMPATIBILITY PROPERTIES
     # =========================================================================
+    @property
+    def ai_root_path(self) -> Path:
+        """Get resolved AI root path using the resolver helper."""
+        from lib.utils.ai_root import resolve_ai_root
+        return resolve_ai_root(None, self)
+    
     @property
     def project_root(self) -> Path:
         """Get project root directory for legacy compatibility."""
@@ -389,7 +396,7 @@ def load_settings(env_file: Optional[Path] = None) -> HiveSettings:
     """
     try:
         if env_file:
-            settings = HiveSettings(_env_file=str(env_file))
+            settings = HiveSettings(env_file=str(env_file))
         else:
             settings = HiveSettings()
             
@@ -471,6 +478,7 @@ def validate_ai_provider_keys(settings: HiveSettings) -> dict:
 # =========================================================================
 _settings: Optional[HiveSettings] = None
 
+
 def get_settings(reload: bool = False, env_file: Optional[Path] = None) -> HiveSettings:
     """
     Get application settings singleton.
@@ -502,12 +510,14 @@ def settings() -> HiveSettings:
 # Global settings instance for backward compatibility
 settings_instance: HiveSettings = None
 
+
 def get_legacy_settings():
     """Get settings instance for legacy compatibility."""
     global settings_instance
     if settings_instance is None:
         settings_instance = get_settings()
     return settings_instance
+
 
 # Legacy exports
 try:
