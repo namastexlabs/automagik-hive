@@ -4,14 +4,19 @@
 from pathlib import Path
 from typing import Any
 
+from lib.config.settings import get_settings
 from lib.logging import logger
+from lib.utils.ai_root import resolve_ai_root
 
 
 def _discover_tools() -> list[str]:
     """Dynamically discover available tools from filesystem"""
     import yaml
 
-    tools_dir = Path("ai/tools")
+    # Use dynamic AI root resolution
+    ai_root = resolve_ai_root(settings=get_settings())
+    tools_dir = ai_root / "tools"
+
     if not tools_dir.exists():
         return []
 
@@ -69,8 +74,9 @@ class ToolRegistry:
         if tool_id not in available_tools:
             raise KeyError(f"Tool '{tool_id}' not found. Available: {available_tools}")
 
-        # Load tool from filesystem
-        tool_path = Path(f"ai/tools/{tool_id}")
+        # Load tool from filesystem using dynamic AI root
+        ai_root = resolve_ai_root(settings=get_settings())
+        tool_path = ai_root / "tools" / tool_id
         config_file = tool_path / "config.yaml"
         tool_file = tool_path / "tool.py"
 
@@ -153,7 +159,9 @@ class ToolRegistry:
         """
         import yaml
 
-        tool_path = Path(f"ai/tools/{tool_id}")
+        # Use dynamic AI root resolution
+        ai_root = resolve_ai_root(settings=get_settings())
+        tool_path = ai_root / "tools" / tool_id
         config_file = tool_path / "config.yaml"
 
         if not config_file.exists():
