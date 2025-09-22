@@ -2,20 +2,21 @@
 # Database-driven agent loading via version factory
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from agno.agent import Agent
 
 from lib.logging import logger
 from lib.mcp.catalog import MCPCatalog
+from lib.utils.ai_root import get_agents_path
 from lib.utils.version_factory import create_agent
 
 
-def _discover_agents() -> list[str]:
+def _discover_agents(external_ai_path: Optional[str] = None) -> list[str]:
     """Dynamically discover available agents from filesystem"""
     import yaml
 
-    agents_dir = Path("ai/agents")
+    agents_dir = get_agents_path(external_ai_path)
     if not agents_dir.exists():
         return []
 

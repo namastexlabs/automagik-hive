@@ -3,16 +3,17 @@
 import importlib.util
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from agno.workflow import Workflow
 
 from lib.logging import logger
+from lib.utils.ai_root import get_workflows_path
 
 
-def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
+def _discover_workflows(external_ai_path: Optional[str] = None) -> dict[str, Callable[..., Workflow]]:
     """Dynamically discover workflows from filesystem"""
-    workflows_dir = Path("ai/workflows")
+    workflows_dir = get_workflows_path(external_ai_path)
     registry: dict[str, Callable[..., Workflow]] = {}
 
     if not workflows_dir.exists():

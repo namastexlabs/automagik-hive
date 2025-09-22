@@ -3,12 +3,13 @@
 import importlib.util
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 from agno.team import Team
 
 from lib.logging import logger
+from lib.utils.ai_root import get_teams_path
 
 
 def _get_factory_function_patterns(

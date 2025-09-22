@@ -2,16 +2,17 @@
 # Filesystem-driven tool loading via version factory pattern
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from lib.logging import logger
+from lib.utils.ai_root import get_tools_path
 
 
-def _discover_tools() -> list[str]:
+def _discover_tools(external_ai_path: Optional[str] = None) -> list[str]:
     """Dynamically discover available tools from filesystem"""
     import yaml
 
-    tools_dir = Path("ai/tools")
+    tools_dir = get_tools_path(external_ai_path)
     if not tools_dir.exists():
         return []
 

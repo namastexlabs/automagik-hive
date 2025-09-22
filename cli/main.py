@@ -18,13 +18,10 @@ except ImportError:
 
 
 # Import command classes for test compatibility
-from .commands.init import InitCommands
 from .commands.postgres import PostgreSQLCommands
 from .commands.service import ServiceManager
 from .commands.uninstall import UninstallCommands
-from .commands.workspace import WorkspaceCommands
 from .docker_manager import DockerManager
-from .workspace import WorkspaceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -34,10 +31,9 @@ def create_parser() -> argparse.ArgumentParser:
         description="""Automagik Hive - Multi-Agent AI Framework CLI
 
 CORE COMMANDS (Quick Start):
-  --init [NAME]               Initialize new workspace 
-  --serve [WORKSPACE]         Start production server (Docker)
-  --dev [WORKSPACE]           Start development server (local)
-  --version                   Show version information
+   --serve [PATH]              Start production server (Docker)
+   --dev [PATH]                Start development server (local)
+   --version                   Show version information
 
 
 POSTGRESQL DATABASE:
@@ -66,7 +62,6 @@ Use --help for detailed options or see documentation.
     )
 
     # Core commands
-    parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
     parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start production server (Docker)")
     parser.add_argument("--dev", nargs="?", const=".", metavar="WORKSPACE", help="Start development server (local)")
     # Get actual version for the version argument
@@ -98,28 +93,28 @@ Use --help for detailed options or see documentation.
     parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind server to")
     parser.add_argument("--port", type=int, help="Port to bind server to")
-    
+
+    # AI folder path - for direct server start (before subparsers)
+    parser.add_argument("ai_folder", nargs="?", help="Path to external AI folder (for direct server start)")
+
     # Create subparsers for commands
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    
+    # subparsers = parser.add_subparsers(dest="command", help="Available commands", required=False)
+
     # Install subcommand
-    install_parser = subparsers.add_parser("install", help="Complete environment setup with .env generation and PostgreSQL")
-    install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
-    
+    # install_parser = subparsers.add_parser("install", help="Complete environment setup with .env generation and PostgreSQL")
+    # install_parser.add_argument("path", nargs="?", default=".", help="Directory path")
+
     # Uninstall subcommand
-    uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
-    uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
-    
+    # uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
+    # uninstall_parser.add_argument("path", nargs="?", default=".", help="Directory path")
+
     # Genie subcommand
-    genie_parser = subparsers.add_parser("genie", help="Launch claude with AGENTS.md as system prompt")
-    genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
-    
+    # genie_parser = subparsers.add_parser("genie", help="Launch claude with AGENTS.md as system prompt")
+    # genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
+
     # Dev subcommand
-    dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
-    dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
-    
-    # Workspace path - primary positional argument
-    parser.add_argument("workspace", nargs="?", help="Start workspace server")
+    # dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
+    # dev_parser.add_argument("path", nargs="?", default=".", help="Directory path")
 
     return parser
 
@@ -131,73 +126,72 @@ def main() -> int:
     
     # Count commands
     commands = [
-        args.init, args.serve, args.dev,
+        args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
-        args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
-        args.stop, args.restart, args.status, args.logs,
-        args.workspace
+        args.stop, args.restart, args.status, args.logs
     ]
+    command_count = sum(1 for cmd in commands if cmd)
+
+    # Handle positional ai_folder argument
+    has_ai_folder_command = bool(args.ai_folder and command_count == 0)
     command_count = sum(1 for cmd in commands if cmd)
     
     if command_count > 1:
         print("❌ Only one command allowed at a time", file=sys.stderr)
         return 1
-    
-    if command_count == 0:
+
+    if command_count == 0 and not args.ai_folder:
         parser.print_help()
         return 0
 
     try:
-        # Init workspace
-        if args.init:
-            init_cmd = InitCommands()
-            workspace_name = None if args.init == "__DEFAULT__" else args.init
-            return 0 if init_cmd.init_workspace(workspace_name) else 1
-        
         # Production server (Docker)
         if args.serve:
             service_manager = ServiceManager()
             result = service_manager.serve_docker(args.serve)
             return 0 if result else 1
-        
+
         # Development server (local)
         if args.dev:
             service_manager = ServiceManager()
-            result = service_manager.serve_local(args.host, args.port, reload=True)
+            result = service_manager.serve_local(args.host, args.port, reload=True, ai_root=getattr(args, 'ai_folder', None))
             return 0 if result else 1
-        
+
+        # For now, subcommands are disabled - TODO: re-enable with proper argument parsing
         # Launch claude with AGENTS.md
-        if args.command == "genie":
-            from .commands.genie import GenieCommands
-            genie_cmd = GenieCommands()
-            return 0 if genie_cmd.launch_claude(args.args) else 1
-        
+        # if args.command == "genie":
+        #     from .commands.genie import GenieCommands
+        #     genie_cmd = GenieCommands()
+        #     return 0 if genie_cmd.launch_claude(args.args) else 1
+
         # Development server (subcommand)
-        if args.command == "dev":
-            service_manager = ServiceManager()
-            result = service_manager.serve_local(args.host, args.port, reload=True)
-            return 0 if result else 1
-        
+        # if args.command == "dev":
+        #     service_manager = ServiceManager()
+        #     result = service_manager.serve_local(args.host, args.port, reload=True)
+        #     return 0 if result else 1
+
         # Install subcommand
-        if args.command == "install":
-            service_manager = ServiceManager()
-            workspace = getattr(args, 'workspace', '.') or '.'
-            return 0 if service_manager.install_full_environment(workspace) else 1
-        
+        # if args.command == "install":
+        #     service_manager = ServiceManager()
+        #     path = getattr(args, 'path', '.') or '.'
+        #     return 0 if service_manager.install_full_environment(path) else 1
+
         # Uninstall subcommand
-        if args.command == "uninstall":
-            service_manager = ServiceManager()
-            workspace = getattr(args, 'workspace', '.') or '.'
-            return 0 if service_manager.uninstall_environment(workspace) else 1
-        
-        # Start workspace server (positional argument)
-        if args.workspace:
-            if not Path(args.workspace).is_dir():
-                print(f"❌ Directory not found: {args.workspace}")
+        # if args.command == "uninstall":
+        #     service_manager = ServiceManager()
+        #     path = getattr(args, 'path', '.') or '.'
+        #     return 0 if service_manager.uninstall_environment(path) else 1
+
+        # Start server with external AI folder (positional argument)
+        if has_ai_folder_command:
+            if not Path(args.ai_folder).is_dir():
+                print(f"❌ Directory not found: {args.ai_folder}")
                 return 1
-            workspace_cmd = WorkspaceCommands()
-            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
+            print(f"🚀 Starting server with external AI folder: {args.ai_folder}")
+            service_manager = ServiceManager()
+            result = service_manager.serve_local(args.host, args.port, reload=True, ai_root=args.ai_folder)
+            return 0 if result else 1
         
         # PostgreSQL commands
         postgres_cmd = PostgreSQLCommands()

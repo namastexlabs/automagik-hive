@@ -19,10 +19,16 @@ class ServiceManager:
         self.workspace_path = workspace_path or Path()
         self.main_service = MainService(self.workspace_path)
     
-    def serve_local(self, host: str | None = None, port: int | None = None, reload: bool = True) -> bool:
+    def serve_local(self, host: str | None = None, port: int | None = None, reload: bool = True, ai_root: str | None = None) -> bool:
         """Start local development server with uvicorn.
-        
+
         ARCHITECTURAL RULE: Host and port come from environment variables via .env files.
+
+        Args:
+            host: Host to bind server to
+            port: Port to bind server to
+            reload: Enable auto-reload for development
+            ai_root: Path to external AI folder
         """
         try:
             import platform
@@ -35,7 +41,12 @@ class ServiceManager:
             
             print(f"🚀 Starting local development server on {actual_host}:{actual_port}")
             print("💡 Ensure PostgreSQL is running: uv run automagik-hive --serve")
-            
+
+            # Set AI root environment variable if provided
+            if ai_root:
+                os.environ["HIVE_AI_ROOT"] = ai_root
+                print(f"🤖 Using external AI folder: {ai_root}")
+
             # Check and auto-start PostgreSQL dependency if needed
             if not self._ensure_postgres_dependency():
                 print("⚠️ PostgreSQL dependency check failed - server may not start properly")
