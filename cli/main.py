@@ -6,6 +6,7 @@ No over-engineering. No abstract patterns. Just working CLI.
 """
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -16,12 +17,41 @@ try:
 except ImportError:
     pass  # Continue without dotenv if not available
 
+from lib.utils.ai_root import resolve_ai_root, AIRootError
+
 
 # Import command classes for test compatibility
 from .commands.postgres import PostgreSQLCommands
 from .commands.service import ServiceManager
 from .commands.uninstall import UninstallCommands
 from .docker_manager import DockerManager
+
+
+def setup_ai_root(ai_root_arg: str) -> Path:
+    """
+    Setup AI root for the current CLI invocation.
+
+    Args:
+        ai_root_arg: AI root argument from CLI
+
+    Returns:
+        Resolved AI root path
+
+    Raises:
+        SystemExit: If AI root is invalid
+    """
+    try:
+        # Resolve the AI root using the centralized resolver
+        ai_root = resolve_ai_root(explicit_path=ai_root_arg)
+
+        # Set HIVE_AI_ROOT environment variable for this session
+        # This ensures all downstream services use the same AI root
+        os.environ["HIVE_AI_ROOT"] = str(ai_root)
+
+        return ai_root
+    except AIRootError as e:
+        print(f"❌ Invalid AI root: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -146,12 +176,16 @@ def main() -> int:
     try:
         # Production server (Docker)
         if args.serve:
+            ai_root = setup_ai_root(args.serve)
+            print(f"🎯 Using AI root: {ai_root}")
             service_manager = ServiceManager()
             result = service_manager.serve_docker(args.serve)
             return 0 if result else 1
-        
+
         # Development server (local)
         if args.dev:
+            ai_root = setup_ai_root(args.dev)
+            print(f"🎯 Using AI root: {ai_root}")
             service_manager = ServiceManager()
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
@@ -164,27 +198,30 @@ def main() -> int:
         
         # Development server (subcommand)
         if args.command == "dev":
+            ai_root = setup_ai_root(getattr(args, 'ai_root', '.') or '.')
+            print(f"🎯 Using AI root: {ai_root}")
             service_manager = ServiceManager()
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
-        
+
         # Install subcommand
         if args.command == "install":
+            ai_root = setup_ai_root(getattr(args, 'ai_root', '.') or '.')
+            print(f"🎯 Installing for AI root: {ai_root}")
             service_manager = ServiceManager()
-            ai_root = getattr(args, 'ai_root', '.') or '.'
-            return 0 if service_manager.install_full_environment(ai_root) else 1
+            return 0 if service_manager.install_full_environment(str(ai_root)) else 1
 
         # Uninstall subcommand
         if args.command == "uninstall":
+            ai_root = setup_ai_root(getattr(args, 'ai_root', '.') or '.')
+            print(f"🎯 Uninstalling for AI root: {ai_root}")
             service_manager = ServiceManager()
-            ai_root = getattr(args, 'ai_root', '.') or '.'
-            return 0 if service_manager.uninstall_environment(ai_root) else 1
+            return 0 if service_manager.uninstall_environment(str(ai_root)) else 1
 
         # Start server for AI root (positional argument)
         if args.ai_root:
-            if not Path(args.ai_root).is_dir():
-                print(f"❌ Directory not found: {args.ai_root}")
-                return 1
+            ai_root = setup_ai_root(args.ai_root)
+            print(f"🎯 Using AI root: {ai_root}")
             service_manager = ServiceManager()
             return 0 if service_manager.serve_local(args.host, args.port, reload=True) else 1
         
