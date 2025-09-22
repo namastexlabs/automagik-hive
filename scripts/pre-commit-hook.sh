@@ -20,7 +20,8 @@ NC='\033[0m' # No Color
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
 COVERAGE_THRESHOLD=50
 PYTEST_TIMEOUT=300 # 5 minutes
-SOURCE_DIRS=("ai" "api" "lib" "cli")
+AI_ROOT=$(python3 -c "from lib.config.settings import settings; print(settings().hive_ai_root, end='')" 2>/dev/null || echo "ai")
+SOURCE_DIRS=("$AI_ROOT" "api" "lib" "cli")
 TEST_DIR="tests"
 
 # Helper functions

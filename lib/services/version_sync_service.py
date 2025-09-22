@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from lib.config.settings import settings
 from lib.logging import logger
 from lib.versioning import AgnoVersionService
 
@@ -38,10 +39,11 @@ class AgnoVersionSyncService:
         self.version_service = AgnoVersionService(self.db_url) if self.db_url else None
 
         # Component type mappings
+        self.ai_root = settings().ai_root_path
         self.config_paths = {
-            "agent": "ai/agents/*/config.yaml",
-            "team": "ai/teams/*/config.yaml",
-            "workflow": "ai/workflows/*/config.yaml",
+            "agent": f"{self.ai_root}/agents/*/config.yaml",
+            "team": f"{self.ai_root}/teams/*/config.yaml",
+            "workflow": f"{self.ai_root}/workflows/*/config.yaml",
         }
 
         self.sync_results = {"agents": [], "teams": [], "workflows": []}

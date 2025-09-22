@@ -4,6 +4,7 @@
 from pathlib import Path
 from typing import Any
 
+from lib.config.settings import settings
 from lib.logging import logger
 
 
@@ -11,7 +12,7 @@ def _discover_tools() -> list[str]:
     """Dynamically discover available tools from filesystem"""
     import yaml
 
-    tools_dir = Path("ai/tools")
+    tools_dir = settings().ai_root_path / "tools"
     if not tools_dir.exists():
         return []
 

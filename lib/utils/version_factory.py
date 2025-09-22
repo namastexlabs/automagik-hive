@@ -15,6 +15,7 @@ from agno.team import Team
 from agno.workflow import Workflow
 from dotenv import load_dotenv
 
+from lib.config.settings import settings
 from lib.logging import logger
 
 # Load environment variables
@@ -470,10 +471,11 @@ class VersionFactory:
         from pathlib import Path
 
         # Determine config file path based on component type
+        ai_root_str = str(settings().ai_root_path)
         config_paths = {
-            "agent": f"ai/agents/{component_id}/config.yaml",
-            "team": f"ai/teams/{component_id}/config.yaml",
-            "workflow": f"ai/workflows/{component_id}/config.yaml",
+            "agent": f"{ai_root_str}/agents/{component_id}/config.yaml",
+            "team": f"{ai_root_str}/teams/{component_id}/config.yaml",
+            "workflow": f"{ai_root_str}/workflows/{component_id}/config.yaml",
         }
 
         config_file = config_paths.get(component_type)
@@ -549,10 +551,11 @@ class VersionFactory:
         from pathlib import Path
 
         # Determine config file path based on component type
+        ai_root_str = str(settings().ai_root_path)
         config_paths = {
-            "agent": f"ai/agents/{component_id}/config.yaml",
-            "team": f"ai/teams/{component_id}/config.yaml",
-            "workflow": f"ai/workflows/{component_id}/config.yaml",
+            "agent": f"{ai_root_str}/agents/{component_id}/config.yaml",
+            "team": f"{ai_root_str}/teams/{component_id}/config.yaml",
+            "workflow": f"{ai_root_str}/workflows/{component_id}/config.yaml",
         }
 
         config_file = config_paths.get(component_type)

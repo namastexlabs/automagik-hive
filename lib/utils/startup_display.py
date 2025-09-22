@@ -286,10 +286,11 @@ class StartupDisplay:
         import yaml
 
         # Map component types to directory patterns
+        ai_root_str = str(settings().ai_root_path)
         patterns = {
-            "agent": "ai/agents/*/config.yaml",
-            "team": "ai/teams/*/config.yaml",
-            "workflow": "ai/workflows/*/config.yaml",
+            "agent": f"{ai_root_str}/agents/*/config.yaml",
+            "team": f"{ai_root_str}/teams/*/config.yaml",
+            "workflow": f"{ai_root_str}/workflows/*/config.yaml",
         }
 
         pattern = patterns.get(component_type)

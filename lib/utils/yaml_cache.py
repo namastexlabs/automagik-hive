@@ -21,6 +21,7 @@ from typing import Any
 
 import yaml
 
+from lib.config.settings import settings
 from lib.logging import logger
 
 
@@ -232,7 +233,8 @@ class YAMLCacheManager:
         self._inheritance_cache.clear()
 
         # Discover all team configs
-        team_configs = self.discover_components("ai/teams/*/config.yaml")
+        ai_root_str = str(settings().ai_root_path)
+        team_configs = self.discover_components(f"{ai_root_str}/teams/*/config.yaml")
 
         for team_config_path in team_configs:
             team_config = self.get_yaml(team_config_path)

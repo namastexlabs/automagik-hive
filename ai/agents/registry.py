@@ -6,6 +6,7 @@ from typing import Any
 
 from agno.agent import Agent
 
+from lib.config.settings import settings
 from lib.logging import logger
 from lib.mcp.catalog import MCPCatalog
 from lib.utils.version_factory import create_agent
@@ -15,7 +16,7 @@ def _discover_agents() -> list[str]:
     """Dynamically discover available agents from filesystem"""
     import yaml
 
-    agents_dir = Path("ai/agents")
+    agents_dir = settings().ai_root_path / "agents"
     if not agents_dir.exists():
         return []
 

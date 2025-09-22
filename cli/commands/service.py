@@ -5,6 +5,7 @@ Supports both local development (uvicorn) and production Docker modes.
 """
 
 import os
+from pathlib import Path
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -15,8 +16,10 @@ from cli.core.main_service import MainService
 class ServiceManager:
     """Enhanced service management with Docker orchestration support."""
     
-    def __init__(self, workspace_path: Path | None = None):
+    def __init__(self, workspace_path: Path | None = None, ai_root: Path | None = None):
         self.workspace_path = workspace_path or Path()
+        if ai_root:
+            os.environ["HIVE_AI_ROOT"] = str(ai_root.resolve())
         self.main_service = MainService(self.workspace_path)
     
     def serve_local(self, host: str | None = None, port: int | None = None, reload: bool = True) -> bool:

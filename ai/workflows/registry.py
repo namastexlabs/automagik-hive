@@ -7,12 +7,13 @@ from typing import Any
 
 from agno.workflow import Workflow
 
+from lib.config.settings import settings
 from lib.logging import logger
 
 
 def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
     """Dynamically discover workflows from filesystem"""
-    workflows_dir = Path("ai/workflows")
+    workflows_dir = settings().ai_root_path / "workflows"
     registry: dict[str, Callable[..., Workflow]] = {}
 
     if not workflows_dir.exists():
@@ -31,7 +32,7 @@ def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
             try:
                 # Load the workflow module dynamically
                 spec = importlib.util.spec_from_file_location(
-                    f"ai.workflows.{workflow_name}.workflow", workflow_file
+                    f"workflows.{workflow_name}.workflow", workflow_file
                 )
                 if spec is None or spec.loader is None:
                     logger.warning(

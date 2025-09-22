@@ -28,9 +28,9 @@ resource_types:
   directories:
     "lib/": "🔧"              # Utilities and core infrastructure
     "api/": "🌐"              # API endpoints and web services
-    "ai/agents/": "🤖"        # AI agent definitions
-    "ai/teams/": "👥"         # AI team configurations
-    "ai/workflows/": "⚡"     # AI workflow definitions
+    "agents/": "🤖"        # AI agent definitions
+    "teams/": "👥"         # AI team configurations
+    "workflows/": "⚡"     # AI workflow definitions
     "tests/": "🧪"            # Test suites and validation
     "docs/": "📚"             # Documentation files
     "config/": "⚙️"           # Configuration files

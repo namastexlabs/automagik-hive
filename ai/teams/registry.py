@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 from agno.team import Team
 
+from lib.config.settings import settings
 from lib.logging import logger
 
 
@@ -103,7 +104,7 @@ def _load_team_config(config_file: Path) -> dict[str, Any] | None:
 
 def _discover_teams() -> dict[str, Callable[..., Team]]:
     """Dynamically discover teams from filesystem"""
-    teams_dir = Path("ai/teams")
+    teams_dir = settings().ai_root_path / "teams"
     registry: dict[str, Callable[..., Team]] = {}
 
     if not teams_dir.exists():
@@ -125,7 +126,7 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
 
                 # Load the team module dynamically
                 spec = importlib.util.spec_from_file_location(
-                    f"ai.teams.{team_name}.team", team_file
+                    f"teams.{team_name}.team", team_file
                 )
                 if spec is None or spec.loader is None:
                     logger.warning("Failed to create module spec", team_name=team_name)

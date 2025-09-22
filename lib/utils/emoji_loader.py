@@ -45,6 +45,11 @@ class EmojiLoader:
 
     @lru_cache(maxsize=500)
     def get_emoji(self, file_path: str = "", message: str = "") -> str:
+        ai_root_str = str(settings().ai_root_path)
+        if file_path and ai_root_str in file_path:
+            normalized_path = file_path.replace(ai_root_str, "").lstrip("/")
+        else:
+            normalized_path = file_path
         """
         Get emoji for file path or message content.
 

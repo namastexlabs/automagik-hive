@@ -78,7 +78,10 @@ class HiveSettings(BaseSettings):
     hive_enable_metrics: bool = Field(True, description="Metrics collection enabled")
     hive_agno_monitor: bool = Field(False, description="Agno monitoring enabled")
     hive_ai_root: str = Field(default="ai", description="AI root directory")
-    hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path")
+    @property
+    def hive_mcp_config_path(self) -> Path:
+        \"\"\"MCP config file path relative to AI root.\"\"\"
+        return self.ai_root_path / ".mcp.json"
     hive_enable_agui: bool = Field(False, description="Enable AGUI mode for UI interface")
     
     # Optional settings with defaults
