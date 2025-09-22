@@ -41,10 +41,12 @@ automagik-hive genie
 
 ### Option 2: YAML Configuration (Available Now for All)
 ```bash
-# Create agents with simple YAML - no AI assistant required
-automagik-hive --init my-workspace
+# Use existing AI folder with simple YAML - no AI assistant required
+automagik-hive --dev /path/to/your/ai
 
-# Edit ai/agents/*/config.yaml
+# Or clone this repo and use bundled examples
+git clone https://github.com/namastexlabs/automagik-hive
+cd automagik-hive
 automagik-hive --dev
 ```
 
@@ -310,10 +312,10 @@ Even without GENIE, you can:
 # One-line installation
 curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
 
-# Initialize your workspace
-automagik-hive --init my-ai-workspace
+# Start with your AI folder
+automagik-hive --dev /path/to/your/ai
 
-# Start building
+# Or use bundled examples
 automagik-hive --dev
 ```
 
@@ -351,21 +353,22 @@ automagik-hive --serve
 ## Project Structure
 
 ```
-my-ai-workspace/
-├── ai/
-│   ├── agents/           # Your AI agents
-│   │   └── my-agent/
-│   │       ├── config.yaml    # Agent definition
-│   │       └── agent.py       # Optional Python extensions
-│   ├── teams/            # Multi-agent teams
-│   │   └── my-team/
-│   │       └── config.yaml    # Team routing logic
-│   └── workflows/        # Business workflows
-│       └── my-workflow/
-│           └── config.yaml    # Step definitions
-├── knowledge/            # RAG knowledge base
+your-ai-folder/
+├── agents/               # Your AI agents
+│   └── my-agent/
+│       ├── config.yaml        # Agent definition
+│       └── agent.py           # Optional Python extensions
+├── teams/                # Multi-agent teams
+│   └── my-team/
+│       └── config.yaml        # Team routing logic
+└── workflows/            # Business workflows
+    └── my-workflow/
+        └── config.yaml        # Step definitions
+
+# Plus optional support files:
+├── knowledge/            # RAG knowledge base (optional)
 │   └── data.csv         # Your knowledge data
-└── .env                 # Configuration
+└── .env                 # Configuration (optional)
 ```
 
 ## API Endpoints
