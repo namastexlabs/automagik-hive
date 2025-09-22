@@ -561,7 +561,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         
         # 1. Main Hive installation
         print("\n🏠 Automagik Hive Core (Main Application)")
-        print("This includes the workspace server and web interface")
+        print("This includes the Hive runtime services and web interface")
         while True:
             hive_choice = input("Would you like to install Hive Core? (Y/n): ").strip().lower()
             if hive_choice in ["y", "yes", "n", "no", ""]:

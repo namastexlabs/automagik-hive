@@ -266,9 +266,8 @@ help: ## 🐝 Show this help message
 	@echo ""
 	@echo -e "$(FONT_CYAN)🚀 Getting Started:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install environment with optional PostgreSQL setup"
-	@echo -e "  $(FONT_PURPLE)init$(FONT_RESET)            Initialize workspace (mirrors --init)"
 	@echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Start local development server (with hot-reload)"
-	@echo -e "  $(FONT_PURPLE)serve$(FONT_RESET)           Start workspace server (mirrors --serve)"
+	@echo -e "  $(FONT_PURPLE)serve$(FONT_RESET)           Start Hive runtime services (mirrors --serve)"
 	@echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Start production stack via Docker"
 	@echo -e "  $(FONT_PURPLE)version$(FONT_RESET)         Show version (mirrors --version)"
 	@echo ""
@@ -300,7 +299,6 @@ help: ## 🐝 Show this help message
 	@echo -e "  $(FONT_PURPLE)test$(FONT_RESET)            Run Python test suite"
 	@echo -e "  $(FONT_PURPLE)clean$(FONT_RESET)           Clean temporary files (__pycache__, etc.)"
 	@echo -e "  $(FONT_PURPLE)uninstall$(FONT_RESET)       Complete uninstall - removes everything"
-	@echo -e "  $(FONT_PURPLE)uninstall-workspace$(FONT_RESET) Uninstall current workspace (mirrors uninstall)"
 	@echo -e "  $(FONT_PURPLE)uninstall-global$(FONT_RESET) Uninstall global installation (mirrors --uninstall-global)"
 	@echo ""
 	@echo -e "$(FONT_YELLOW)💡 For detailed commands, inspect the Makefile.$(FONT_RESET)"
@@ -391,15 +389,6 @@ postgres-health: ## 💊 Check PostgreSQL health - mirrors CLI --postgres-health
 # ===========================================
 # 🚀 Core Development Commands (UV Integration)
 # ===========================================
-.PHONY: init
-init: ## 🛠️ Initialize workspace - mirrors CLI --init
-	@$(call print_status,Initializing workspace...)
-	@$(call check_prerequisites)
-	@$(call setup_python_env)
-	@uv run automagik-hive --init
-	@$(call print_success,Workspace initialized!)
-
-
 .PHONY: version
 version: ## 📄 Show version - mirrors CLI --version
 	@uv run automagik-hive --version
@@ -508,12 +497,6 @@ test: ## 🧪 Run test suite
 # ===========================================
 # 🔄 Uninstall Commands (UV Integration)
 # ===========================================
-.PHONY: uninstall-workspace
-uninstall-workspace: ## 🗑️ Uninstall current workspace (mirrors --uninstall)
-	@$(call print_status,Uninstalling current workspace...)
-	@uv run automagik-hive --uninstall
-	@$(call print_success,Workspace uninstalled!)
-
 .PHONY: uninstall-global
 uninstall-global: ## 🗑️ Uninstall global installation (mirrors --uninstall-global)
 	@$(call print_status,Uninstalling global installation...)
@@ -612,7 +595,7 @@ publish: ## 📦 Build and publish beta release to PyPI
 # ===========================================
 # 🧹 Phony Targets  
 # ===========================================
-.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-global bump publish
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================

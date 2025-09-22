@@ -7,7 +7,6 @@ No over-engineering. No abstract patterns. Just working CLI.
 
 import argparse
 import sys
-from pathlib import Path
 
 # Load environment variables from .env file
 try:
@@ -18,13 +17,8 @@ except ImportError:
 
 
 # Import command classes for test compatibility
-from .commands.init import InitCommands
 from .commands.postgres import PostgreSQLCommands
 from .commands.service import ServiceManager
-from .commands.uninstall import UninstallCommands
-from .commands.workspace import WorkspaceCommands
-from .docker_manager import DockerManager
-from .workspace import WorkspaceManager
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -34,7 +28,6 @@ def create_parser() -> argparse.ArgumentParser:
         description="""Automagik Hive - Multi-Agent AI Framework CLI
 
 CORE COMMANDS (Quick Start):
-  --init [NAME]               Initialize new workspace 
   --serve [WORKSPACE]         Start production server (Docker)
   --dev [WORKSPACE]           Start development server (local)
   --version                   Show version information
@@ -66,9 +59,8 @@ Use --help for detailed options or see documentation.
     )
 
     # Core commands
-    parser.add_argument("--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace")
-    parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start production server (Docker)")
-    parser.add_argument("--dev", nargs="?", const=".", metavar="WORKSPACE", help="Start development server (local)")
+    parser.add_argument("--serve", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Start production server (Docker)")
+    parser.add_argument("--dev", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Start development server (local)")
     # Get actual version for the version argument
     try:
         from lib.utils.version_reader import get_project_version
@@ -79,20 +71,20 @@ Use --help for detailed options or see documentation.
     parser.add_argument("--version", action="version", version=version_string, help="Show version")
     
     # PostgreSQL commands
-    parser.add_argument("--postgres-status", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL status")
-    parser.add_argument("--postgres-start", nargs="?", const=".", metavar="WORKSPACE", help="Start PostgreSQL")
-    parser.add_argument("--postgres-stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop PostgreSQL")
-    parser.add_argument("--postgres-restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart PostgreSQL")
-    parser.add_argument("--postgres-logs", nargs="?", const=".", metavar="WORKSPACE", help="Show PostgreSQL logs")
-    parser.add_argument("--postgres-health", nargs="?", const=".", metavar="WORKSPACE", help="Check PostgreSQL health")
+    parser.add_argument("--postgres-status", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Check PostgreSQL status")
+    parser.add_argument("--postgres-start", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Start PostgreSQL")
+    parser.add_argument("--postgres-stop", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Stop PostgreSQL")
+    parser.add_argument("--postgres-restart", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Restart PostgreSQL")
+    parser.add_argument("--postgres-logs", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Show PostgreSQL logs")
+    parser.add_argument("--postgres-health", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Check PostgreSQL health")
     
     
     
     # Production environment commands
-    parser.add_argument("--stop", nargs="?", const=".", metavar="WORKSPACE", help="Stop production environment")
-    parser.add_argument("--restart", nargs="?", const=".", metavar="WORKSPACE", help="Restart production environment")
-    parser.add_argument("--status", nargs="?", const=".", metavar="WORKSPACE", help="Check production environment status")
-    parser.add_argument("--logs", nargs="?", const=".", metavar="WORKSPACE", help="Show production environment logs")
+    parser.add_argument("--stop", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Stop production environment")
+    parser.add_argument("--restart", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Restart production environment")
+    parser.add_argument("--status", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Check production environment status")
+    parser.add_argument("--logs", nargs="?", const=".", default=False, metavar="WORKSPACE", help="Show production environment logs")
     
     # Utility flags
     parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
@@ -117,9 +109,6 @@ Use --help for detailed options or see documentation.
     # Dev subcommand
     dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
-    
-    # Workspace path - primary positional argument
-    parser.add_argument("workspace", nargs="?", help="Start workspace server")
 
     return parser
 
@@ -131,12 +120,11 @@ def main() -> int:
     
     # Count commands
     commands = [
-        args.init, args.serve, args.dev,
+        args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
-        args.stop, args.restart, args.status, args.logs,
-        args.workspace
+        args.stop, args.restart, args.status, args.logs
     ]
     command_count = sum(1 for cmd in commands if cmd)
     
@@ -150,20 +138,17 @@ def main() -> int:
 
     try:
         # Init workspace
-        if args.init:
-            init_cmd = InitCommands()
-            workspace_name = None if args.init == "__DEFAULT__" else args.init
-            return 0 if init_cmd.init_workspace(workspace_name) else 1
-        
         # Production server (Docker)
         if args.serve:
             service_manager = ServiceManager()
-            result = service_manager.serve_docker(args.serve)
+            workspace = args.serve if isinstance(args.serve, str) else "."
+            result = service_manager.serve_docker(workspace)
             return 0 if result else 1
-        
+
         # Development server (local)
         if args.dev:
             service_manager = ServiceManager()
+            workspace = args.dev if isinstance(args.dev, str) else "."
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
         
@@ -182,53 +167,54 @@ def main() -> int:
         # Install subcommand
         if args.command == "install":
             service_manager = ServiceManager()
-            workspace = getattr(args, 'workspace', '.') or '.'
+            workspace = getattr(args, "workspace", ".") or "."
             return 0 if service_manager.install_full_environment(workspace) else 1
         
         # Uninstall subcommand
         if args.command == "uninstall":
             service_manager = ServiceManager()
-            workspace = getattr(args, 'workspace', '.') or '.'
+            workspace = getattr(args, "workspace", ".") or "."
             return 0 if service_manager.uninstall_environment(workspace) else 1
-        
-        # Start workspace server (positional argument)
-        if args.workspace:
-            if not Path(args.workspace).is_dir():
-                print(f"❌ Directory not found: {args.workspace}")
-                return 1
-            workspace_cmd = WorkspaceCommands()
-            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
-        
         # PostgreSQL commands
         postgres_cmd = PostgreSQLCommands()
         if args.postgres_status:
-            return 0 if postgres_cmd.postgres_status(args.postgres_status) else 1
+            workspace = args.postgres_status if isinstance(args.postgres_status, str) else "."
+            return 0 if postgres_cmd.postgres_status(workspace) else 1
         if args.postgres_start:
-            return 0 if postgres_cmd.postgres_start(args.postgres_start) else 1
+            workspace = args.postgres_start if isinstance(args.postgres_start, str) else "."
+            return 0 if postgres_cmd.postgres_start(workspace) else 1
         if args.postgres_stop:
-            return 0 if postgres_cmd.postgres_stop(args.postgres_stop) else 1
+            workspace = args.postgres_stop if isinstance(args.postgres_stop, str) else "."
+            return 0 if postgres_cmd.postgres_stop(workspace) else 1
         if args.postgres_restart:
-            return 0 if postgres_cmd.postgres_restart(args.postgres_restart) else 1
+            workspace = args.postgres_restart if isinstance(args.postgres_restart, str) else "."
+            return 0 if postgres_cmd.postgres_restart(workspace) else 1
         if args.postgres_logs:
-            return 0 if postgres_cmd.postgres_logs(args.postgres_logs, args.tail) else 1
+            workspace = args.postgres_logs if isinstance(args.postgres_logs, str) else "."
+            return 0 if postgres_cmd.postgres_logs(workspace, args.tail) else 1
         if args.postgres_health:
-            return 0 if postgres_cmd.postgres_health(args.postgres_health) else 1
+            workspace = args.postgres_health if isinstance(args.postgres_health, str) else "."
+            return 0 if postgres_cmd.postgres_health(workspace) else 1
         
         
         # Production environment commands
         service_manager = ServiceManager()
         if args.stop:
-            return 0 if service_manager.stop_docker(args.stop) else 1
+            workspace = args.stop if isinstance(args.stop, str) else "."
+            return 0 if service_manager.stop_docker(workspace) else 1
         if args.restart:
-            return 0 if service_manager.restart_docker(args.restart) else 1
+            workspace = args.restart if isinstance(args.restart, str) else "."
+            return 0 if service_manager.restart_docker(workspace) else 1
         if args.status:
-            status = service_manager.docker_status(args.status)
-            print(f"🔍 Production environment status in: {args.status}")
+            workspace = args.status if isinstance(args.status, str) else "."
+            status = service_manager.docker_status(workspace)
+            print(f"🔍 Production environment status in: {workspace}")
             for service, service_status in status.items():
                 print(f"  {service}: {service_status}")
             return 0
         if args.logs:
-            return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
+            workspace = args.logs if isinstance(args.logs, str) else "."
+            return 0 if service_manager.docker_logs(workspace, args.tail) else 1
         
         # No direct uninstall commands - use 'uninstall' subcommand instead
         

@@ -41,11 +41,11 @@ automagik-hive genie
 
 ### Option 2: YAML Configuration (Available Now for All)
 ```bash
-# Create agents with simple YAML - no AI assistant required
-automagik-hive --init my-workspace
+# Use bundled ai/ directory definitions or provide your own folder
+uvx automagik-hive --dev
 
-# Edit ai/agents/*/config.yaml
-automagik-hive --dev
+# Customize YAML definitions under ai/agents, ai/teams, ai/workflows
+# (External folder support coming in this release cycle)
 ```
 
 **Ready to build your second agent? →** [View Examples](#what-people-are-building)
@@ -310,11 +310,8 @@ Even without GENIE, you can:
 # One-line installation
 curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
 
-# Initialize your workspace
-automagik-hive --init my-ai-workspace
-
-# Start building
-automagik-hive --dev
+# Start the local runtime with bundled AI definitions
+uvx automagik-hive --dev
 ```
 
 ### Manual Installation
@@ -351,7 +348,7 @@ automagik-hive --serve
 ## Project Structure
 
 ```
-my-ai-workspace/
+automagik-hive/
 ├── ai/
 │   ├── agents/           # Your AI agents
 │   │   └── my-agent/

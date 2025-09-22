@@ -42,7 +42,6 @@
 - ✅ `--install` - Complete environment setup with API key generation
 - ✅ `--uninstall` - Uninstalls while preserving data
 - ✅ `--uninstall-global` - Global uninstall works
-- ✅ `--init` - Executes without error (but see issues below)
 - ✅ `--dev` - Starts dev server (but see database issues below)
 
 ### CATEGORY 6: PostgreSQL Commands (6/6 Success - minimal functionality)
@@ -61,25 +60,19 @@
 - **Problem**: All PostgreSQL commands produce minimal placeholder output without actual functionality
 - **Impact**: Users cannot effectively manage PostgreSQL through CLI
 
-### Issue 2: --init Command Missing Implementation
-- **Forge Task ID**: 43d3d53b-a0c8-417f-976f-b70328d8faa6
-- **Priority**: High
-- **Problem**: `--init` command claims success but doesn't create workspace directory or files
-- **Impact**: Core workspace initialization functionality not working
-
-### Issue 3: --dev Command Database Dependency
+### Issue 2: --dev Command Database Dependency
 - **Forge Task ID**: 32772324-dd13-4b0a-aa48-dcb9dc72abd4
 - **Priority**: High
 - **Problem**: Dev server fails with database connection errors when PostgreSQL not running
 - **Impact**: Development workflow requires manual database setup
 
-### Issue 4: Genie Services PostgreSQL Configuration Warnings
+### Issue 3: Genie Services PostgreSQL Configuration Warnings
 - **Forge Task ID**: 677620f7-ad3c-46c8-9562-209d63297b00
 - **Priority**: Medium
 - **Problem**: Genie containers show PostgreSQL environment variable warnings and role errors
 - **Impact**: Potential configuration issues that may affect functionality
 
-### Issue 5: MCP Connection Manager Initialization Warnings
+### Issue 4: MCP Connection Manager Initialization Warnings
 - **Forge Task ID**: e2aa0310-14a2-49a4-af55-667cbf19f89d
 - **Priority**: Medium
 - **Problem**: Multiple services show MCP Connection Manager initialization failures
@@ -105,7 +98,6 @@ The `--install` command demonstrates excellent functionality:
 ### Missing or Incomplete Implementations
 Several commands need enhancement:
 - PostgreSQL-specific commands lack actual implementation
-- Workspace initialization (`--init`) missing core functionality
 - Development server requires manual database setup
 
 ### Warning Patterns
@@ -117,9 +109,8 @@ Consistent warning patterns suggest configuration improvements needed:
 ## 🚀 Recommendations
 
 ### Priority 1: High Impact Fixes
-1. **Implement --init functionality** - Core workspace creation should work
-2. **Fix --dev database dependency** - Dev server should be self-contained or provide clear setup
-3. **Enhance PostgreSQL commands** - Make them functional rather than placeholder
+1. **Fix --dev database dependency** - Dev server should be self-contained or provide clear setup
+2. **Enhance PostgreSQL commands** - Make them functional rather than placeholder
 
 ### Priority 2: Configuration Improvements
 1. **Resolve MCP Connection Manager warnings** - Fix or provide clearer error messages

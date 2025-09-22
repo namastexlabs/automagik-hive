@@ -74,13 +74,13 @@ class TestParser:
             args = parser.parse_args(["--version"])
 
 
-class TestStartCommand:
-    """Test start command help text."""
-    
-    def test_cli_start_command(self):
-        """Test that workspace argument help text is 'Start workspace server'."""
+class TestCliHelp:
+    """Test CLI help content reflects streamlined runtime workflow."""
+
+    def test_help_excludes_workspace_scaffolding(self):
+        """Ensure legacy workspace scaffolding references are removed from help output."""
         parser = create_parser()
-        
-        # Get help text for the workspace argument
         help_text = parser.format_help()
-        assert "Start workspace server" in help_text
+
+        assert "--init" not in help_text
+        assert "workspace server" not in help_text
