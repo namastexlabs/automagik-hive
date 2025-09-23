@@ -16,7 +16,7 @@ Goal: Understand the request thoroughly with minimal tool calls
 Method:
 - Parse user input for core intent and technical domains
 - Run parallel searches for existing patterns
-- Identify fork-specific considerations immediately
+- Identify repository-specific constraints immediately
 - Stop gathering once you can articulate the solution
 
 Early stop criteria:
@@ -31,7 +31,6 @@ Early stop criteria:
 - What: Core functionality requested
 - Where: Backend/Frontend/Both
 - Why: Problem being solved
-- Fork consideration: Upstream merge compatibility needed?
 ```
 
 **1.2 Codebase Research** (Parallel tool calls)
@@ -68,10 +67,10 @@ Create `/genie/wishes/{feature-name}-wish.md` with this structure:
 **Gap identified:** {What's missing}
 **Solution approach:** {How we'll build it}
 
-## Fork Compatibility Strategy
+## Change Isolation Strategy
 - **Isolation principle:** {How changes stay separate}
 - **Extension pattern:** {How we extend vs modify}
-- **Merge safety:** {Why upstream merges won't conflict}
+- **Stability assurance:** {How existing behavior stays stable}
 
 ## Success Criteria
 ✅ {Specific measurable outcome}
@@ -293,7 +292,7 @@ pnpm run lint
 - [ ] Existing files keep original names
 - [ ] Comments explain "why" not "what"
 - [ ] Each task output contract fulfilled
-- [ ] Fork compatibility maintained
+- [ ] Change isolation preserved
 - [ ] Feature can be completely disabled
 ```
 
@@ -374,7 +373,7 @@ This workflow incorporates:
 - **Success/Failure Boundaries**: ✅/❌ visual markers
 - **Concrete Examples**: Actual code patterns
 - **Parallel Execution**: Task group optimization
-- **Fork Safety**: Isolation patterns
+- **Change Isolation**: Isolation patterns
 
 ## 📖 REAL WISH EXAMPLES
 
@@ -398,17 +397,17 @@ Implement automagik-omni notification system for task completion alerts as a new
 **Gap identified:** No external messaging integration (WhatsApp/Telegram)
 **Solution approach:** Add Omni as isolated integration following GitHub pattern
 
-#### Fork Compatibility Strategy
+#### Change Isolation Strategy
 - **Isolation:** All Omni code in `/omni/` subdirectories
 - **Extension:** v7_omni config extends v6 without modifying it
-- **Merge safety:** Zero modifications to core files
+- **Stability assurance:** Zero modifications to core files
 
 #### Success Criteria
 ✅ Omni card appears in settings after GitHub integration
 ✅ Modal configures host, API key, instance, recipient
 ✅ Notifications sent on task completion via Omni API
 ✅ Feature completely disableable via config
-✅ Upstream merges cause zero conflicts
+✅ No regressions introduced in existing integrations
 
 #### Never Do
 ❌ Modify notification.rs core logic directly
@@ -497,38 +496,6 @@ pub fn router() -> Router<DeploymentImpl> {
         .route("/instances", get(list_instances))
         .route("/validate", post(validate_config))
         .route("/config", put(update_config))
-}
-```
-
-**Group C: Frontend Components (After A, Parallel to B)**
-
-**C1-card**: OmniIntegrationCard
-```tsx
-// Creates: frontend/src/components/omni/OmniCard.tsx
-export function OmniCard() {
-  const { config, updateConfig } = useUserSystem();
-  const [showModal, setShowModal] = useState(false);
-  
-  const isConfigured = !!(config?.omni?.host && config?.omni?.apiKey);
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Omni Integration</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isConfigured ? (
-          <div className="flex items-center justify-between">
-            <span>Connected to {config.omni.instance}</span>
-            <Button onClick={() => setShowModal(true)}>Manage</Button>
-          </div>
-        ) : (
-          <Button onClick={() => setShowModal(true)}>Configure</Button>
-        )}
-      </CardContent>
-      {showModal && <OmniModal onClose={() => setShowModal(false)} />}
-    </Card>
-  );
 }
 ```
 
