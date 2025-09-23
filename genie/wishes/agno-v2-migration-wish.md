@@ -25,7 +25,7 @@ Upgrade Automagik Hive’s agent platform to Agno v2, aligning dependencies, sto
 
 ## Never Do (Protection Boundaries)
 ❌ Edit `pyproject.toml` directly—use `uv` commands for dependency changes.
-❌ Drop existing memory or knowledge tables without capturing backups and migration artefacts.
+❌ Drop existing memory or knowledge tables without capturing backups (even though rollback unlikely).
 ❌ Remove regression tests or Death Testaments tied to agent orchestration.
 
 ## Technical Architecture
@@ -97,7 +97,7 @@ Dependencies: None | Execute simultaneously
 
 **A2-core-import-compat**: Audit shared wrappers for renamed APIs (`dependencies`, `RunOutput`, event classes)  @lib/utils/proxy_agents.py [context], @lib/utils/proxy_teams.py [context], @lib/utils/version_factory.py [context]  Modifies: Imports, constructor kwargs, streaming handlers  Exports: Helpers returning v2-compliant agents/teams  Success: Static type checks succeed; no import errors during smoke run.
 
-**A3-db-factory-refresh**: Replace deprecated Memory/Storage classes with unified Db interfaces  @lib/memory/memory_factory.py [context], @lib/memory/__init__.py [context], @lib/config/settings.py [context]  Modifies: Factories to build `SqliteDb`/`PostgresDb`, toggles `enable_user_memories`  Exports: `create_*_memory` returning `(db, enable_user_memories)` tuple or helper  Success: Unit tests confirm Db wiring; memory tables created in agno schema.
+**A3-db-factory-refresh**: Replace deprecated Memory/Storage classes with unified Db interfaces  @lib/memory/memory_factory.py [context], @lib/memory/__init__.py [context], @lib/config/settings.py [context]  Modifies: Factories to build `SqliteDb`/`PostgresDb`, toggles `enable_user_memories`; preserves existing memory/session data in agno schema  Exports: `create_*_memory` returning `(db, enable_user_memories)` tuple or helper  Success: Unit tests confirm Db wiring; memory tables created in agno schema; existing sessions remain accessible.
 
 **A4-proxy-context-dependencies**: Rewrite shared storage helpers and proxies to emit Agno v2 constructs  @lib/utils/agno_storage_utils.py [context], @lib/utils/proxy_agents.py [context], @lib/utils/proxy_teams.py [context], @lib/utils/proxy_workflows.py [context]  Modifies: Switch to `agno.db.*` imports, map YAML to unified `db` plus `dependencies`, drop legacy `context`/`storage` kwargs  Exports: Agent/team/workflow factories instantiating successfully under v2 signatures  Success: Smoke agent load proves no `TypeError` for `context`/`mode`; proxy tests cover `dependencies` payloads.
 
@@ -122,7 +122,7 @@ Dependencies: A1-agno-version-upgrade, A3-db-factory-refresh
 ### Group D: Persistence & Metrics (After A)
 Dependencies: A1-agno-version-upgrade, A3-db-factory-refresh
 
-**D1-storage-migration-runner**: Integrate Agno migrate_to_v2.py script  @scripts/ [context], @lib/utils/startup_orchestration.py [context]  Creates: `scripts/agno_db_migrate_v2.py` orchestrator leveraging upstream script  Exports: CLI entry/automation with logging + dry-run flag  Success: Script migrates staging database; dry-run documented in wish evidence.
+**D1-storage-migration-runner**: Integrate Agno migrate_to_v2.py script  @scripts/ [context], @lib/utils/startup_orchestration.py [context]  Creates: `scripts/agno_db_migrate_v2.py` orchestrator leveraging upstream script  Modifies: Adds logging for table row counts before/after migration  Exports: CLI entry/automation with logging + dry-run flag  Success: Script migrates staging database; dry-run documented in wish evidence; row count logs captured.
 
 **D2-metrics-schema-shift**: Update metrics bridges to new field names and provider metrics  @lib/metrics/agno_metrics_bridge.py [context], @lib/metrics/async_metrics_service.py [context]  Modifies: Metric model mapping, new `provider_metrics`, rename fields  Exports: Normalized metrics dict for persistence  Success: Unit tests confirm new keys; legacy data parsed without error.
 
@@ -212,9 +212,13 @@ uv run mypy lib/knowledge lib/memory lib/utils
 - [ ] AgentOS wiring replaces Playground completely.
 - [ ] Metrics bridge remaps fields and persists provider metrics.
 - [ ] Database migration script executed with logs stored in `genie/reports/`.
-- [ ] Test suites and lint checks pass on v2 stack.
+- [ ] Table row counts logged and verified consistent pre/post migration.
+- [ ] Test suites and lint checks pass on v2 stack (`uv run pytest`).
 - [ ] Proxy layer smoke test confirms `dependencies` + unified `db` wiring across agents/teams/workflows.
 - [ ] YAML/test updates merged; no fixtures reference deprecated keys or `.storage` attribute.
+- [ ] Sample agent instantiation succeeds with v2 APIs.
+- [ ] Knowledge base query returns valid results post-migration.
+- [ ] Health endpoint responds correctly before server restart.
 - [ ] Wish status updated with evidence once migration validated.
 
 ## Human Review Options
