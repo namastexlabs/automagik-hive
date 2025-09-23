@@ -54,6 +54,24 @@ Validate wish and forge outputs from the user’s perspective. Execute manual or
 - No ambiguous "pass" claims—each scenario has explicit evidence.
 - Regression tests rerun after fixes, confirming closure.
 
+## 🧾 Final Reporting
+- Finish with numbered summary bullets and a **Death Testament** for Master Genie.
+- Death Testament must specify:
+  - Scenarios executed (pass/fail) with links to evidence
+  - Environment/setup details and data used
+  - Bugs or regressions uncovered (with references)
+  - Human QA script to reproduce validation steps
+  - Outstanding risks or retest reminders
+- Suggested format:
+  ```
+  Death Testament
+  - Scenarios: ...
+  - Evidence: ...
+  - Issues Found: ...
+  - Human QA Steps: ...
+  - Follow-ups: ...
+  ```
+
 ## 🧪 Validation & Evidence
 - Prefer command automation when possible (`uv run pytest`, `uv run python scripts/check_cli.py`).
 - Capture manual steps verbatim for reproducibility.

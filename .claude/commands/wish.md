@@ -86,206 +86,195 @@ Create `/genie/wishes/{feature-name}-wish.md` with this structure:
 ## Technical Architecture
 
 ### Component Structure
-Backend:
-├── crates/services/src/services/{feature}/
-│   ├── mod.rs          # Service implementation
-│   ├── types.rs        # Feature-specific types
-│   └── client.rs       # External API client
-├── crates/server/src/routes/{feature}.rs
-└── crates/services/src/services/config/versions/v{N}_{feature}.rs
+CLI:
+├── cli/main.py              # Argument parsing entrypoint and flag wiring
+├── cli/commands/            # Command implementations (service, postgres, genie, etc.)
+├── cli/core/main_service.py # Docker/local orchestration for servers
+└── cli/utils.py             # Shared CLI helpers and prompts
 
-Frontend:  
-├── frontend/src/components/{feature}/
-│   ├── {Feature}Card.tsx       # Main component
-│   ├── {Feature}Modal.tsx      # Configuration UI
-│   ├── hooks.ts                # React hooks
-│   └── api.ts                  # API client
-└── frontend/src/pages/settings/{Feature}Settings.tsx
+API:
+├── api/main.py              # FastAPI application factory & lifespan
+├── api/routes/              # Versioned routers (health, MCP, version, feature routers)
+├── api/dependencies/        # Dependency injection helpers
+└── api/settings.py          # Pydantic configuration for API runtime
+
+Runtime Libraries:
+├── lib/config/              # Settings models, environment management, credential helpers
+├── lib/services/            # Domain services (database, metrics, version sync, etc.)
+├── lib/mcp/                 # Model Context Protocol catalog and clients
+├── lib/memory/              # Memory providers and persistence adapters
+├── lib/utils/               # Shared utilities (version factory, yaml cache, path helpers)
+└── lib/tools/               # Built-in tools exposed to agents
+
+Agent Definitions:
+├── ai/agents/{feature_slug}/config.yaml   # Agent or integration definition
+├── ai/agents/{feature_slug}/agent.py      # Optional Python augmentations
+├── ai/teams/                              # Route/parallel team definitions
+└── ai/workflows/                          # Deterministic workflow orchestration
+
+Data & Operations:
+├── alembic/                               # Database migrations & env.py
+├── docker/                                # Docker Compose and runtime assets
+└── scripts/                               # Operational scripts and maintenance tasks
+
+Testing:
+├── tests/cli/                             # CLI behaviour and regression tests
+├── tests/api/                             # FastAPI endpoint coverage
+├── tests/lib/                             # Service and utility unit tests
+└── tests/integration/                     # End-to-end validation suites
 
 ### Naming Conventions
-- **Services:** {Feature}Service (e.g., OmniService)
-- **Components:** {Feature}{Type} (e.g., OmniCard, OmniModal)
-- **Routes:** /api/{feature}/{action}
-- **Config:** v{N}_{feature} (e.g., v7_omni)
-- **Types:** {Feature}Config, {Feature}Request, {Feature}Response
+- CLI commands: `{Feature}Commands` classes in `cli/commands/{feature}.py`.
+- Service classes: `{Feature}Service` or `{Feature}Manager` in `lib/services/{feature}_service.py`.
+- API routers: `{feature}_router` modules exposing a FastAPI `router`.
+- Settings models: `{Feature}Settings` Pydantic models in `lib/config`.
+- Agent directories: lower-kebab-case slugs inside `ai/agents/`, with optional `agent.py`.
+- Tests: `tests/{domain}/test_{feature}_*.py` following pytest naming rules.
+- Alembic revisions: timestamped files under `alembic/versions/` describing the schema change.
 
 ## Task Decomposition
 
 ### Dependency Graph
 ```
-A[Foundation] ──► B[Core Logic]
-     │              │
-     └──► C[UI] ────┴──► D[Integration] ──► E[Testing]
+A[Foundation] ---> B[Runtime Surfaces]
+A ---> C[Agent Assets]
+B & C ---> D[Integration]
+D ---> E[Testing & Docs]
 ```
 
 ### Group A: Foundation (Parallel Tasks)
-Dependencies: None | Can execute simultaneously
+Dependencies: None | Execute simultaneously
 
-**A1-types**: Create type definitions
-@crates/services/src/services/config/versions/v6.rs [context]
-Creates: `crates/services/src/services/{feature}/types.rs`
-Exports: {Feature}Config, {Feature}Request DTOs
-Success: Types compile, available for import
+**A1-domain-models**: Define feature data contracts  @lib/models/__init__.py [context]  Creates: `lib/models/{feature}.py` with Pydantic DTOs  Exports: `{Feature}Request`, `{Feature}Response` models  Success: Schema validated via pytest.
 
-**A2-config**: Extend configuration system  
-@crates/services/src/services/config/mod.rs [context]
-Creates: `crates/services/src/services/config/versions/v{N}_{feature}.rs`
-Exports: Extended config with {feature} fields
-Success: Config migrates from v{N-1}, backwards compatible
+**A2-service-layer**: Implement core service  @lib/services/__init__.py [context]  Creates: `lib/services/{feature}_service.py`  Exports: `{Feature}Service` methods consumed by CLI/API  Success: Unit tests cover happy path + failure modes.
 
-**A3-frontend-types**: Create frontend type definitions
-@frontend/src/lib/api.ts [context]
-Creates: `frontend/src/components/{feature}/types.ts`
-Exports: TypeScript interfaces for {feature}
-Success: Types match Rust definitions
+**A3-settings**: Extend configuration surface  @lib/config/settings.py [context]  Modifies: Adds `{feature}` settings (env vars, defaults)  Success: Settings load without affecting existing defaults.
 
-### Group B: Core Logic (After A)
-Dependencies: A1.types, A2.config | B tasks parallel to each other
+### Group B: Runtime Surfaces (After A)
+Dependencies: A1-domain-models, A2-service-layer
 
-**B1-service**: Implement {feature} service
-@A1:`types.rs` [required input]
-@crates/services/src/services/notification.rs [pattern reference]
-Creates: `crates/services/src/services/{feature}/mod.rs`
-Exports: {Feature}Service with methods
-Success: Service methods callable, unit tests pass
+**B1-cli-entry**: Wire CLI flag/subcommand  @cli/main.py [context]  Modifies: Parser + dispatch to new command  Success: CLI invocation executes service action.
 
-**B2-routes**: Create API endpoints
-@A1:`types.rs` [required input]
-@B1:`mod.rs` [required service]
-@crates/server/src/routes/config.rs [pattern reference]
-Creates: `crates/server/src/routes/{feature}.rs`
-Exports: GET/POST/PUT endpoints
-Success: curl tests pass
+**B2-cli-command**: Implement command module  @cli/commands/service.py [pattern reference]  Creates: `cli/commands/{feature}.py`  Exports: `{Feature}Commands` entrypoint used by CLI  Success: CLI tests assert exit code + output.
 
-**B3-hook**: Integrate with existing system
-@B1:`mod.rs` [required service]
-@crates/services/src/services/notification.rs [integration point]
-Modifies: Adds feature flag check and service call
-Success: Feature triggers on expected events
+**B3-api-router**: Expose FastAPI endpoints  @api/routes/__init__.py [context]  Creates: `api/routes/{feature}_router.py` attached under `/api/v1/{feature}`  Success: FastAPI test client returns expected payloads.
 
-### Group C: Frontend (After A, Parallel to B)
-Dependencies: A3.frontend-types | C tasks parallel to each other
+### Group C: Agent Assets (After A)
+Dependencies: A1-domain-models
 
-**C1-card**: Create main UI component
-@A3:`types.ts` [required types]
-@frontend/src/pages/settings/GeneralSettings.tsx [integration point]
-Creates: `frontend/src/components/{feature}/{Feature}Card.tsx`
-Exports: <{Feature}Card /> component
-Success: Component renders without errors
+**C1-agent-config**: Deliver agent YAML  @ai/agents/template-agent/config.yaml [pattern reference]  Creates: `ai/agents/{feature}/config.yaml`  Exports: Agent definition consumed by runtime workflows  Success: Registry lists new agent ID.
 
-**C2-modal**: Build configuration modal
-@A3:`types.ts` [required types]
-@frontend/src/components/GitHubLoginDialog.tsx [pattern reference]  
-Creates: `frontend/src/components/{feature}/{Feature}Modal.tsx`
-Exports: <{Feature}Modal /> component
-Success: Modal opens, form validates, saves
+**C2-agent-python**: Optional Python augmentation  @ai/agents/template-agent/agent.py [context]  Creates: `ai/agents/{feature}/agent.py` with custom tools/hooks  Success: Agent factory loads without errors.
 
-**C3-api-client**: Implement frontend API client
-@A3:`types.ts` [required types]
-@B2:`{feature}.rs` [endpoint definitions]
-Creates: `frontend/src/components/{feature}/api.ts`
-Exports: API functions matching backend routes
-Success: API calls return expected data
+**C3-workflow/team**: Integrate into orchestration  @ai/workflows [context]  Modifies or creates workflow/team referencing new agent  Success: Workflow smoke test passes.
 
 ### Group D: Integration (After B & C)
-Dependencies: All B and C tasks
+Dependencies: All tasks in B and relevant C
 
-**D1-settings**: Add to settings page
-@C1:`{Feature}Card.tsx` [required component]
-@frontend/src/pages/settings/GeneralSettings.tsx
-Modifies: Imports and renders {Feature}Card
-Success: Card appears in settings
+**D1-service-manager**: Register service in dependency container  @cli/core/main_service.py [context]  Modifies: Inject `{Feature}Service` into runtime wiring  Success: End-to-end CLI run uses new service instance.
 
-**D2-state**: Wire up state management
-@C2:`{Feature}Modal.tsx` [required modal]
-@D1:modified GeneralSettings.tsx [integration point]
-Modifies: Adds modal state, handlers
-Success: Modal opens from card, saves config
+**D2-api-deps**: Provide FastAPI dependencies  @api/dependencies/__init__.py [context]  Creates: resolver returning `{Feature}Service` for router  Success: Router import path stays lightweight; dependency injection works.
 
-**D3-types-gen**: Generate TypeScript types
-Runs: `pnpm run generate-types`
-Validates: All {feature} types in shared/types.ts
-Success: Frontend uses generated types
+**D3-scripts**: Add operational automation  @scripts/ [context]  Creates: `scripts/{feature}_job.py` or shell wrapper  Success: Script documented and referenced by tests.
 
 ### Group E: Testing & Polish (After D)
 Dependencies: Complete integration
 
-**E1-e2e**: End-to-end testing
-@all previous outputs
-Creates: `tests/{feature}.test.ts`
-Success: Feature works completely
+**E1-unit-tests**: Cover service + models  @tests/lib/ [context]  Creates: `tests/lib/test_{feature}_service.py`  Success: `uv run pytest tests/lib/test_{feature}_service.py`.
 
-**E2-docs**: Update documentation  
-Creates: `docs/{feature}.md`
-Success: Feature documented
+**E2-cli-tests**: Assert CLI behaviour  @tests/cli/ [context]  Creates: `tests/cli/test_{feature}_command.py`  Success: CLI regression test passes.
+
+**E3-api-tests**: Validate HTTP contract  @tests/api/ [context]  Creates: `tests/api/test_{feature}_router.py`  Success: FastAPI client returns expected schema.
+
+**E4-docs**: Update documentation + release notes  @README.md [context]  Modifies: usage section + changelog  Success: Docs lint passes; guidance available for users.
 
 ## Implementation Examples
 
-### Service Pattern
-```rust
-// crates/services/src/services/{feature}/mod.rs
-pub struct {Feature}Service {
-    config: {Feature}Config,
-}
+### Utility Pattern
+```python
+# lib/utils/ai_root.py
+from pathlib import Path
+from typing import Optional
 
-impl {Feature}Service {
-    pub async fn validate_config(config: &{Feature}Config) -> Result<()> {
-        // Validation logic
-    }
-    
-    pub async fn execute_action(request: {Feature}Request) -> Result<{Feature}Response> {
-        // Core functionality
-    }
-}
+from lib.config.settings import Settings
+
+REQUIRED_SUBDIRS = ("agents", "teams", "workflows")
+
+
+def resolve_ai_root(explicit: Optional[str], settings: Settings) -> Path:
+    candidate = Path(explicit or settings.hive_ai_root).expanduser().resolve()
+    if not candidate.exists():
+        raise FileNotFoundError(f"AI root not found: {candidate}")
+    for subdir in REQUIRED_SUBDIRS:
+        if not (candidate / subdir).is_dir():
+            raise ValueError(f"Missing '{subdir}/' under AI root {candidate}")
+    return candidate
 ```
 
-### Component Pattern  
-```tsx
-// frontend/src/components/{feature}/{Feature}Card.tsx
-export function {Feature}Card() {
-  const [isConfigured, setIsConfigured] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{Feature} Integration</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isConfigured ? <Connected /> : <Configure />}
-      </CardContent>
-    </Card>
-  );
-}
+### CLI Integration Pattern
+```python
+# cli/main.py
+import os
+
+from cli.commands.service import ServiceManager
+from lib.config.settings import Settings
+from lib.utils.ai_root import resolve_ai_root
+
+parser.add_argument("ai_root", nargs="?", help="Optional external ai/ directory")
+args = parser.parse_args()
+settings = Settings()
+resolved_ai_root = resolve_ai_root(args.ai_root, settings)
+
+os.environ["HIVE_AI_ROOT"] = str(resolved_ai_root)
+return 0 if ServiceManager().serve_local(args.host, args.port, reload=True) else 1
 ```
 
-### API Route Pattern
-```rust
-// crates/server/src/routes/{feature}.rs
-pub fn router() -> Router<DeploymentImpl> {
-    Router::new()
-        .route("/config", get(get_config).put(update_config))
-        .route("/validate", post(validate))
-        .route("/action", post(execute_action))
-}
+### Registry Pattern
+```python
+# ai/agents/registry.py
+import yaml
+
+from lib.config.settings import Settings
+from lib.utils.ai_root import resolve_ai_root
+
+class AgentRegistry:
+    @classmethod
+    def _discover_agents(cls, explicit_ai_root: str | None = None) -> list[str]:
+        settings = Settings()
+        ai_root = resolve_ai_root(explicit_ai_root, settings)
+        agent_ids: list[str] = []
+        for config_path in (ai_root / "agents").glob("*/config.yaml"):
+            with config_path.open() as handle:
+                config = yaml.safe_load(handle)
+            agent_ids.append(config["agent"]["agent_id"])
+        return sorted(agent_ids)
 ```
 
+### Test Pattern
+```python
+# tests/cli/test_ai_root_resolution.py
+def test_resolve_ai_root_supports_external_folder(tmp_path, cli_runner):
+    custom_ai = tmp_path / "custom-ai"
+    for sub in ("agents", "teams", "workflows"):
+        (custom_ai / sub).mkdir(parents=True)
+    result = cli_runner([str(custom_ai)])
+    assert result.exit_code == 0
+```
 ## Testing Protocol
 ```bash
-# Backend tests
-cargo test -p services {feature}
-curl -X POST localhost:8887/api/{feature}/validate
+# Resolver + CLI behaviour
+tests_to_run=(tests/cli/test_external_ai_root.py tests/lib/test_ai_root_resolver.py)  # created in Group E
+uv run pytest "${tests_to_run[@]}" -q
 
-# Frontend tests  
-pnpm run type-check
-pnpm run lint
+# Registry and service integration
+tests_to_run=(tests/ai/test_registry_external_ai.py tests/integration/cli/test_external_ai_cli.py)  # created in Group E
+uv run pytest "${tests_to_run[@]}"
 
-# Integration test
-1. Configure {feature} in settings
-2. Trigger expected action
-3. Verify {feature} behavior
+# Static analysis
+uv run ruff check cli/main.py lib/utils/ai_root.py ai/agents/registry.py
+uv run mypy lib/utils/ai_root.py cli/main.py
 ```
-
 ## Validation Checklist
 - [ ] All files follow naming conventions
 - [ ] No "enhanced" or "improved" prefixes
@@ -377,166 +366,84 @@ This workflow incorporates:
 
 ## 📖 REAL WISH EXAMPLES
 
-### Example 1: Omni Notification Integration
+### Example 1: External AI Folder Support
 
 **User Input (Vague):**
 ```
-"I want to create an automagik-omni based notification system for complete tasks. 
-It should be in settings like github integration, with a modal for configs 
-(host, api key, instance dropdown, phone number). When task completes, 
-send notification with task output + url."
+"I want Automagik Hive to run against my own ai/ folder without cloning this repo."
 ```
 
 **Transformed into Structured Wish:**
 
 #### Executive Summary
-Implement automagik-omni notification system for task completion alerts as a new settings integration, sending WhatsApp/Telegram notifications via the Omni API.
+Let operators point Automagik Hive at any external AI definition folder while keeping bundled defaults working.
 
 #### Current State Analysis
-**What exists:** NotificationService with sound/push notifications
-**Gap identified:** No external messaging integration (WhatsApp/Telegram)
-**Solution approach:** Add Omni as isolated integration following GitHub pattern
+**What exists:** `cli/workspace.py` scaffolds entire projects and `cli/main.py` expects repo-relative paths.  
+**Gap identified:** Hardcoded `ai/` path prevents external usage and drags along obsolete workspace scaffolding.  
+**Solution approach:** Remove workspace code, add an AI root resolver, and thread it through CLI + registry paths.
 
 #### Change Isolation Strategy
-- **Isolation:** All Omni code in `/omni/` subdirectories
-- **Extension:** v7_omni config extends v6 without modifying it
-- **Stability assurance:** Zero modifications to core files
+- **Isolation:** New resolver lives in `lib/utils/ai_root.py`, referenced from CLI/registry only.  
+- **Extension:** Existing services consume the resolved path via settings/env overrides, not broad rewrites.  
+- **Stability assurance:** Default invocation (no path provided) still uses the repo `ai/` directory.
 
 #### Success Criteria
-✅ Omni card appears in settings after GitHub integration
-✅ Modal configures host, API key, instance, recipient
-✅ Notifications sent on task completion via Omni API
-✅ Feature completely disableable via config
-✅ No regressions introduced in existing integrations
+✅ `uv run automagik-hive /tmp/demo-ai` boots using external definitions.  
+✅ `HIVE_AI_ROOT=/tmp/demo-ai uv run automagik-hive --dev` respects the environment override.  
+✅ Default `uv run automagik-hive --dev` behaviour unchanged.  
+✅ No workspace scaffolding files or docs remain.  
+✅ Registries load agents/teams/workflows via the resolver.
 
 #### Never Do
-❌ Modify notification.rs core logic directly
-❌ Change v6 config structure
-❌ Break existing GitHub integration
-❌ Hard-code API endpoints or credentials
-❌ Create tight coupling with NotificationService
+❌ Reintroduce workspace scaffolding or hidden project copies.  
+❌ Launch servers with `python -m api.main`.  
+❌ Hardcode `ai/` in registries or services after the refactor.  
+❌ Skip documentation updates describing the new CLI usage.
 
 #### Task Decomposition Example
+**Group A: Cleanup Gate (parallel)**  
+- **A1-remove-workspace**: `@cli/workspace.py` — delete legacy scaffolding helpers.  
+- **A2-cli-flags**: `@cli/main.py` — drop `--init` help text and positional workspace handling.  
+- **A3-tests**: `@tests/cli/test_workspace.py` — retire workspace fixtures/tests.
 
-**Group A: Foundation (3 parallel tasks)**
+**Group B: Resolver Foundation (after A)**  
+- **B1-helper**: `@lib/utils/` — add `ai_root.py` helper with validation.  
+- **B2-settings**: `@lib/config/settings.py` — expose `hive_ai_root` + property returning a validated path.
 
-**A1-config**: Extend configuration system
-```rust
-// Creates: crates/services/src/services/config/versions/v7_omni.rs
-pub struct OmniConfig {
-    pub enabled: bool,
-    pub host: Option<String>,
-    pub api_key: Option<String>,
-    pub instance: Option<String>,
-    pub recipient: Option<String>,
-}
+**Group C: CLI Wiring (after B)**  
+- **C1-args**: `@cli/main.py` — accept optional `ai_root` positional argument.  
+- **C2-service-manager**: `@cli/commands/service.py` & `@cli/core/main_service.py` — thread resolved path into runtime start-up.
 
-impl From<v6::Config> for Config {
-    // Migration logic preserving v6 compatibility
-}
-```
+**Group D: Runtime Consumers (after C)**  
+- **D1-registries**: `@ai/agents/registry.py`, `@ai/teams/registry.py`, `@ai/workflows/registry.py` — swap hardcoded paths for resolver output.  
+- **D2-utilities**: `@lib/utils/version_factory.py`, `@lib/utils/yaml_cache.py`, etc. — ensure all helpers derive from the new path.  
+- **D3-hooks**: `@scripts/pre-commit-hook.sh` and docs — drop baked-in repo assumptions.
 
-**A2-types**: Create Omni types
-```rust
-// Creates: crates/services/src/services/omni/types.rs
-#[derive(Serialize, Deserialize, TS)]
-pub struct OmniInstance {
-    pub name: String,
-    pub instance_type: String,
-}
+**Group E: Validation & Docs (after D)**  
+- **E1-tests**: `@tests/cli/` + `@tests/integration/cli/` — add regression suites for positional argument/env overrides.  
+- **E2-docs**: `@README.md` — document new usage patterns and remove workspace references.  
+- **E3-wish-update**: `@genie/wishes/external-ai-folder-wish.md` — mark status + include evidence in death testament.
 
-#[derive(Serialize, Deserialize)]
-pub struct SendTextRequest {
-    pub recipient: String,
-    pub message: String,
-}
-```
-
-**A3-frontend-types**: Frontend TypeScript types
-```typescript
-// Creates: frontend/src/components/omni/types.ts
-export interface OmniConfig {
-  enabled: boolean;
-  host?: string;
-  apiKey?: string;
-  instance?: string;
-  recipient?: string;
-}
-```
-
-**Group B: Core Logic (After A)**
-
-**B1-service**: OmniService implementation
-```rust
-// Creates: crates/services/src/services/omni/mod.rs
-pub struct OmniService {
-    config: OmniConfig,
-    client: reqwest::Client,
-}
-
-impl OmniService {
-    pub async fn list_instances(&self) -> Result<Vec<OmniInstance>> {
-        let url = format!("{}/api/v1/instances/", self.config.host);
-        // API call implementation
-    }
-    
-    pub async fn send_notification(&self, task: &Task, output: &str) -> Result<()> {
-        let message = format!("Task '{}' completed\nOutput: {}\nURL: {}", 
-            task.title, output, task.url);
-        // Send via Omni API
-    }
-}
-```
-
-**B2-routes**: API endpoints
-```rust
-// Creates: crates/server/src/routes/omni.rs
-pub fn router() -> Router<DeploymentImpl> {
-    Router::new()
-        .route("/instances", get(list_instances))
-        .route("/validate", post(validate_config))
-        .route("/config", put(update_config))
-}
-```
-
-### Example 2: Testing Validation
-
-**curl Tests for Verification:**
+### Example 2: Validation Workflow
 ```bash
-# Test Omni API directly
-curl -X GET 'http://localhost:28882/api/v1/instances/'
+# Unit + CLI coverage (created during Group E)
+uv run pytest tests/lib/test_ai_root_resolver.py tests/cli/test_external_ai_root.py -q
 
-# Test our integration endpoints
-curl -X GET 'http://localhost:8887/api/omni/instances' \
-  -H 'Authorization: Bearer TOKEN'
+# Integration check
+uv run pytest tests/integration/cli/test_external_ai_folder.py
 
-# Test notification sending
-curl -X POST 'http://localhost:8887/api/omni/test' \
-  -H 'Content-Type: application/json' \
-  -d '{"message": "Test notification from Automagik Forge"}'
+# Manual smoke
+mkdir -p /tmp/custom-ai/{agents,teams,workflows}
+uv run automagik-hive /tmp/custom-ai --check-config
 ```
 
-### Example 3: Migration Strategy
-
-**Config Migration (v6 → v7_omni):**
-```rust
-// Backward compatible migration
-impl From<String> for Config {
-    fn from(raw: String) -> Self {
-        // Try v7_omni first
-        if let Ok(v7) = serde_json::from_str::<v7_omni::Config>(&raw) {
-            return v7;
-        }
-        // Fall back to v6
-        if let Ok(v6) = serde_json::from_str::<v6::Config>(&raw) {
-            return v7_omni::Config::from(v6);
-        }
-        // Default config
-        Default::default()
-    }
-}
+### Example 3: Regression Guardrails
+```markdown
+- README usage section updated with external ai/ instructions
+- Makefile targets referencing workspace removed
+- genie/wishes/external-ai-folder-wish.md status -> COMPLETED with validation evidence
 ```
-
 ## 🚀 Execution Command
 
 After wish approval, provide:
@@ -557,33 +464,34 @@ After wish approval, provide:
 
 ## 🔍 Common Patterns to Follow
 
-### Integration Pattern (like GitHub)
-1. Settings Card component
-2. Configuration Modal
-3. Service module with API client
-4. Config extension (new version)
-5. Hook into existing services
+### Runtime Integration Pattern
+1. Define domain models in `lib/models/{feature}.py`.
+2. Implement `{Feature}Service` under `lib/services/`.
+3. Add CLI command wiring in `cli/main.py` + `cli/commands/{feature}.py`.
+4. Expose FastAPI router in `api/routes/{feature}_router.py` with `require_api_key`.
+5. Register agents/workflows in `ai/agents/` or `ai/workflows/` if the feature needs automation.
 
 ### Naming Pattern
-- **Never use:** EnhancedX, ImprovedY, NewZ
-- **Always use:** Clear descriptive names
-- **Config versions:** v{N}_{feature}
-- **Services:** {Feature}Service
-- **Components:** {Feature}Card, {Feature}Modal
+- **Never use:** EnhancedX, ImprovedY, NewZ.
+- **Always use:** Clear descriptive names tied to feature purpose.
+- **CLI Flags:** `--{feature}-*` kebab-case; commands named `{Feature}Commands`.
+- **Services:** `{Feature}Service` or `{Feature}Manager` depending on function.
+- **Settings:** `{Feature}Settings` or config fields like `feature_enabled`.
+- **Tests:** `test_{feature}_*.py` grouped under domain directories.
 
 ### Comment Pattern
-```rust
-// WHY: Task completion needs external notifications for remote monitoring
-pub async fn send_notification() { ... }
+```python
+# WHY: External folder support needs validated ai/ roots
+ai_root = resolve_ai_root(explicit_path, settings)
 
-// NOT: This function sends a notification
+# NOT: os.path.join(explicit_path, "ai") without validation
 ```
 
 ### Testing Pattern
-1. Unit tests for service logic
-2. Integration tests for API endpoints
-3. E2E tests for full flow
-4. Manual curl tests for external APIs
+1. Unit tests for models/services (`uv run pytest tests/lib/test_{feature}_*.py`).
+2. CLI tests using temporary directories (`uv run pytest tests/cli/test_{feature}_command.py`).
+3. API contract tests via FastAPI TestClient (`uv run pytest tests/api/test_{feature}_router.py`).
+4. Manual smoke tests: run CLI flag + authenticated curl request when behaviour is user-facing.
 
 ---
 

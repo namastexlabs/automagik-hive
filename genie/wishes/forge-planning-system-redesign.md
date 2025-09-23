@@ -31,7 +31,7 @@ Our planning guidance still reflects the retired TSD/DDD pipeline and multi-docu
 - Add cross-links or pointers in `.claude/commands/wish.md` to `forge.md` so authors know how approval handoff works.
 - Ensure `genie/wishes/*` guidance consistently references the single-document structure (no `/templates` directories or PRDs).
 
-### Phase 2 – Forge Workflow Harmonization (`hive-claudemd` + `hive-dev-coder` if CLI hooks required)
+### Phase 2 – Forge Workflow Harmonization (`hive-claudemd` + `hive-coder` if CLI hooks required)
 - Revise `forge.md` to reflect the approved wish phases (Phase 0 context gathering → Phase 1 skeleton → Phase 2 decomposition) and ensure approval gating mirrors the new template language.
 - Refresh `forge-master.md` so task creation instructions pull context from the single wish file plus `forge.md` checkpoints instead of `prd.md` references.
 - Document the alignment between the approved breakdown format and Forge task fields (titles, branches, context `@` markers).
@@ -41,7 +41,7 @@ Our planning guidance still reflects the retired TSD/DDD pipeline and multi-docu
 - `@CLAUDE.md` (if necessary): Update high-level onboarding text to reflect the streamlined pipeline.
 - Archive or rewrite any other docs referencing the retired workflow (e.g., `wish.md` in repo root, legacy reports).
 
-### Phase 4 – Validation & Rollout (`hive-testing-maker` for doc lint checks)
+### Phase 4 – Validation & Rollout (`hive-tests` for doc lint checks)
 - Run `rg "PRD"` and `rg "TSD"` to confirm terminology removal.
 - Execute documentation lint/format checks if available (e.g., `uv run python scripts/check_docs.py` when applicable).
 - Dry-run `/wish` → `/forge` on a sample wish (no execution) to ensure instructions line up end-to-end.
@@ -49,8 +49,8 @@ Our planning guidance still reflects the retired TSD/DDD pipeline and multi-docu
 
 ## Orchestration & Agent Routing
 - Documentation updates → `hive-claudemd`.
-- Any automation or CLI tweaks tied to Forge interaction → `hive-dev-coder` (after docs stabilized).
-- Test authoring or doc validation scripts → `hive-testing-maker`.
+- Any automation or CLI tweaks tied to Forge interaction → `hive-coder` (after docs stabilized).
+- Test authoring or doc validation scripts → `hive-tests`.
 - Formatting lint (ruff/mypy) → `hive-quality-ruff`, `hive-quality-mypy` if code changes surface.
 
 ## Acceptance Criteria

@@ -46,23 +46,23 @@ Create concise plan with:
 **1.3 Present for Approval**
 Show user:
 
-Feature: [name]
+Feature: External AI Folder Support
 Strategy: One agent per logical group
 
-Group A (Foundation): Agent handles A1+A2 together
-  - Transform OmniModal to NiceModal pattern
-  - Update OmniCard state management
+Group A (Cleanup Foundation): Agent handles A1+A2 together
+  - Remove workspace scaffolding modules
+  - Delete obsolete tests referencing workspace init
 
-Group B (Integration): Agent handles B1+B2 together  
-  - Register modal in main.tsx
-  - Export from dialogs index
+Group B (Resolver & CLI Integration): Agent handles B1+B2 together
+  - Add ai_root resolver utility and settings plumbing
+  - Thread resolved path through CLI and service manager
 
-Group C (Validation): Agent handles all testing
-  - Add typed helper
-  - Run linting/typecheck validation
+Group C (Validation & Docs): Agent handles all verification
+  - Update registries/tests for external ai/ paths
+  - Refresh README usage guidance
 
 Dependencies: A → B → C
-Estimated: 3 agents, ~45min total
+Estimated: 3 agents
 
 ❓ Approve this breakdown? (y/n)
 
@@ -157,6 +157,6 @@ Example:
 
 Format: {type}/{feature}-{group}
 Examples: 
-  - refactor/omni-modal-foundation
-  - feat/omni-modal-integration  
-  - test/omni-modal-validation
+  - cleanup/external-ai-foundation
+  - feat/external-ai-resolver  
+  - test/external-ai-validation

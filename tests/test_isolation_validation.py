@@ -5,7 +5,7 @@ This test suite validates that the test isolation infrastructure works correctly
 to prevent project directory pollution during test runs. It tests both the
 isolated_workspace fixture and global enforcement mechanisms.
 
-Created by: hive-testing-maker
+Created by: hive-tests
 Purpose: Validate zero project pollution during test execution
 Coverage: Isolation fixtures, global enforcement, cleanup mechanisms
 """

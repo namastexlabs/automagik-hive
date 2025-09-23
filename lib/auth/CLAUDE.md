@@ -1,12 +1,50 @@
 # CLAUDE.md - Auth
 
-🗺️ **Authentication & Security Domain**
+## Context & Scope
 
-## 🧭 Navigation
+[CONTEXT]
+- Defines API key security, user context handling, and validation utilities.
+- Authentication defaults to developer-friendly mode but enforces production overrides.
+- Coordinate with `/CLAUDE.md`, `api/CLAUDE.md`, and `lib/config/CLAUDE.md` before auth changes.
 
-**🔙 Main Hub**: [/CLAUDE.md](../../CLAUDE.md)  
-**🔗 Core**: [AI System](../../ai/CLAUDE.md) | [API](../../api/CLAUDE.md) | [Config](../config/CLAUDE.md)  
-**🔗 Support**: [Knowledge](../knowledge/CLAUDE.md) | [Logging](../logging/CLAUDE.md) | [Testing](../../tests/CLAUDE.md)
+[CONTEXT MAP]
+@lib/auth/
+@lib/auth/service.py
+@lib/auth/dependencies.py
+@lib/utils/user_context_helper.py
+@lib/utils/message_validation.py
+
+[SUCCESS CRITERIA]
+✅ API key generation and validation succeed across environments.
+✅ Production always enforces authentication regardless of flags.
+✅ Message validation covers size/content constraints.
+✅ Tests cover happy paths and security failure modes.
+
+[NEVER DO]
+❌ Disable authentication in production or leak secrets via logs.
+❌ Skip message validation for user inputs.
+❌ Store API keys outside `.env`.
+❌ Modify authentication without updating dependencies/tests.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Assess security impact
+   - Inspect services, dependencies, and helper utilities.
+   - Review API endpoints relying on authentication.
+   - Audit tests under `tests/api/` and `tests/integration/` for coverage.
+
+2. [Implementation] Apply secure changes
+   - Update key generation, dependencies, or context helpers.
+   - Maintain cryptographic functions (`secrets.token_urlsafe`, `compare_digest`).
+   - Document new environment flags and adjust this guide.
+
+3. [Verification] Validate security posture
+   - Run relevant pytest modules (auth, api).
+   - Smoke-test protected endpoints using `curl` with/without keys.
+   - Log evidence in the active wish/Forge record.
+</task_breakdown>
+```
 
 ## Purpose
 
@@ -162,4 +200,3 @@ print(f"Production Override: {status['production_override_active']}")
 - **Storage**: Session persistence in PostgreSQL/SQLite
 
 Navigate to [AI System](../../ai/CLAUDE.md) for multi-agent security or [API](../../api/CLAUDE.md) for endpoint protection.
-

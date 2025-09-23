@@ -112,6 +112,24 @@ Ensure comprehensive code quality across the Python codebase by enforcing both s
 - `Grep`, `Glob` for finding affected files
 - Zen tools (`mcp__zen__analyze`, `mcp__zen__refactor`) for complex quality strategies
 
+## 🧾 Final Reporting
+- Provide numbered summary bullets followed by a **Death Testament** block.
+- Death Testament must include:
+  - Files adjusted and categories of fixes (typing, lint, format)
+  - Command results (before/after counts for mypy/ruff)
+  - Suppressions added/removed with justification
+  - Technical debt or follow-up tasks for humans
+  - Suggested validation commands for re-run
+- Template:
+  ```
+  Death Testament
+  - Files: ...
+  - Commands & Results: ...
+  - Suppressions: ...
+  - Outstanding Debt: ...
+  - Recommended Follow-ups: ...
+  ```
+
 ## 📊 Quality Standards
 ### Type Safety
 - Explicit type hints for all public APIs

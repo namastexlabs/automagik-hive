@@ -1,12 +1,48 @@
 # CLAUDE.md - Logging
 
-🗺️ **Logging & Observability Domain**
+## Context & Scope
 
-## 🧭 Navigation
+[CONTEXT]
+- Describes the Loguru-based logging stack with YAML-driven emoji enrichment.
+- Highlights structured logging, batch summaries, and environment-aware output.
+- Coordinate with `/CLAUDE.md`, `lib/config/CLAUDE.md`, and `lib/mcp/CLAUDE.md` when modifying logging behavior.
 
-**🔙 Main Hub**: [/CLAUDE.md](../../CLAUDE.md)  
-**🔗 Core**: [AI System](../../ai/CLAUDE.md) | [API](../../api/CLAUDE.md) | [Config](../config/CLAUDE.md)  
-**🔗 Support**: [Auth](../auth/CLAUDE.md) | [Knowledge](../knowledge/CLAUDE.md) | [MCP](../mcp/CLAUDE.md) | [Testing](../../tests/CLAUDE.md)
+[CONTEXT MAP]
+@lib/logging/__init__.py
+@lib/logging/batch_logger.py
+@lib/config/emoji_mappings.yaml
+
+[SUCCESS CRITERIA]
+✅ Logs emit structured key/value fields with automatic emoji mapping.
+✅ Batch logging optimizes startup without data loss.
+✅ Environment flags (level, verbosity) behave per configuration.
+✅ Tests cover logging utilities and emoji resolver.
+
+[NEVER DO]
+❌ Hardcode emojis directly in log messages.
+❌ Use f-strings for log content (breaks structure).
+❌ Disable logging safeguards in production.
+❌ Forget to update emoji mappings when new domains appear.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Review logging impact
+   - Identify affected modules (batch logger, emoji loader, config).
+   - Check consumers (agents, API, workflows) relying on structured logs.
+   - Review existing tests or add coverage for new behavior.
+
+2. [Implementation] Adjust logging stack
+   - Modify YAML mappings or helper utilities.
+   - Maintain structured logging patterns and batch semantics.
+   - Document new flags or usage guidance here.
+
+3. [Verification] Confirm observability
+   - Run pytest modules hitting logging code.
+   - Start dev server to inspect log output (emoji + structure).
+   - Record validation artifacts in the active wish/Forge entry.
+</task_breakdown>
+```
 
 ## Purpose
 

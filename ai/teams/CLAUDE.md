@@ -1,11 +1,48 @@
 # CLAUDE.md - Teams
 
-🗺️ **Team Coordination & Routing Domain**
+## Context & Scope
 
-## 🧭 Navigation
+[CONTEXT]
+- Covers Agno team coordination and routing for Automagik Hive.
+- Read with `/ai/CLAUDE.md` to understand how teams fit into orchestration.
+- Focus on YAML-driven routing logic and registry-backed factory functions.
 
-**🔙 AI Hub**: [/ai/CLAUDE.md](../CLAUDE.md) | **🔙 Main**: [/CLAUDE.md](../../CLAUDE.md)  
-**🔗 Related**: [Agents](../agents/CLAUDE.md) | [Workflows](../workflows/CLAUDE.md) | [API](../../api/CLAUDE.md)
+[CONTEXT MAP]
+@ai/teams/
+@ai/teams/registry.py
+@ai/teams/template-team/
+
+[SUCCESS CRITERIA]
+✅ Team factories return fully configured `Team` instances with correct mode and members.
+✅ Routing logic lives in YAML instructions, not Python conditionals.
+✅ Version bump + pytest coverage accompany every change.
+✅ `make dev` loads teams without registry errors.
+
+[NEVER DO]
+❌ Hardcode routing inside Python when YAML instructions suffice.
+❌ Forget to update member agent references after renames.
+❌ Skip testing `mode="route"` decision paths with representative inputs.
+❌ Create ad-hoc documentation outside this file.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Analyze routing scope
+   - Inspect `config.yaml` and the corresponding factory function.
+   - Verify member agent IDs exist in `ai/agents/registry.py`.
+   - Review tests in `tests/ai/teams/` or integration suites.
+
+2. [Implementation] Update team design
+   - Edit YAML instructions, members, and metadata together.
+   - Adjust factory function to mirror config changes and bump version.
+   - Preserve routing vs coordination semantics across modes.
+
+3. [Verification] Validate routing behavior
+   - `uv run pytest tests/ai/teams/` (or relevant integration tests).
+   - Exercise routing via Playground or API (`make dev`).
+   - Capture outcomes within the active wish/Forge log.
+</task_breakdown>
+```
 
 ## Purpose
 

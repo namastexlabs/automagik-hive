@@ -1,11 +1,48 @@
 # CLAUDE.md - Workflows
 
-🗺️ **Workflow Orchestration Domain**
+## Context & Scope
 
-## 🧭 Navigation
+[CONTEXT]
+- Governs Agno workflow construction (sequential, parallel, conditional, looping).
+- Use with `/ai/CLAUDE.md` to keep orchestration consistent with agents/teams.
+- Focus on session state, retry logic, and performance expectations.
 
-**🔙 AI Hub**: [/ai/CLAUDE.md](../CLAUDE.md) | **🔙 Main**: [/CLAUDE.md](../../CLAUDE.md)  
-**🔗 Related**: [Agents](../agents/CLAUDE.md) | [Teams](../teams/CLAUDE.md) | [API](../../api/CLAUDE.md)
+[CONTEXT MAP]
+@ai/workflows/
+@ai/workflows/registry.py
+@ai/workflows/template-workflow/
+
+[SUCCESS CRITERIA]
+✅ Workflow factories return fully wired `Workflow` instances with storage + steps.
+✅ Session state flows across steps without mutation bugs.
+✅ Tests cover sequential, parallel, and error paths.
+✅ Startup logs confirm workflow registry load.
+
+[NEVER DO]
+❌ Embed long-running blocking code inside workflow steps.
+❌ Skip version bumps or YAML updates when altering steps.
+❌ Forget to cap loop iterations or provide exit conditions.
+❌ Leave workflows without retry/error handling.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Inspect workflow scope
+   - Review `config.yaml`, factory function, and step implementations.
+   - Identify dependencies (agents, teams, tools) used in steps.
+   - Audit existing tests in `tests/ai/workflows/` or integration suites.
+
+2. [Implementation] Adjust workflow design
+   - Update steps, branching logic, and storage configuration.
+   - Preserve single-responsibility steps with clear inputs/outputs.
+   - Bump version metadata and refresh documentation snippets.
+
+3. [Verification] Validate orchestration
+   - Run `uv run pytest tests/ai/workflows/` and relevant integration tests.
+   - Exercise workflows through Playground or API streaming.
+   - Capture verification evidence in the active wish/Forge record.
+</task_breakdown>
+```
 
 ## Purpose
 

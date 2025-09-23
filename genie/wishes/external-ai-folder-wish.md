@@ -34,19 +34,19 @@ The previous attempt to retrofit external support stalled. We need a clean slate
 
 🚫 **Do not proceed to Phase 1 until the cleanup diff is merged-ready and validated.**
 
-### Phase 1 – Centralize AI Root Resolution (hive-dev-coder)
+### Phase 1 – Centralize AI Root Resolution (hive-coder)
 1. Create `lib/utils/ai_root.py` with a single `resolve_ai_root(explicit_path: str | Path | None, settings: Settings) -> Path` helper.
    - Precedence: explicit CLI argument → `HIVE_AI_ROOT` env → `settings.hive_ai_root` (defaulting to `ai`).
    - Validate that the resolved path exists and contains `agents/`, `teams/`, and `workflows/` directories; raise a descriptive error otherwise.
 2. Extend `lib/config/settings.py` with `hive_ai_root: str = Field(default="ai", ...)` and an `ai_root_path` property using the helper.
 
-### Phase 2 – Refresh CLI Entry Point (hive-dev-coder)
+### Phase 2 – Refresh CLI Entry Point (hive-coder)
 1. Update `cli/main.py` to accept an optional positional `ai_root` argument (`uvx automagik-hive /path/to/ai`).
 2. When provided, set/override `HIVE_AI_ROOT` for the current invocation and pass the resolved path into downstream services (propagate via `Settings` or explicit parameter when instantiating `ServiceManager`).
 3. Replace the ad-hoc server start logic with `ServiceManager.serve_local(...)`, ensuring it receives the resolved AI root (environment injection or constructor argument).
 4. Ensure `--dev` and other existing flags still work; document how they interact with external paths.
 
-### Phase 3 – Registry & Service Integration (hive-dev-coder)
+### Phase 3 – Registry & Service Integration (hive-coder)
 1. Update `ai/agents/registry.py`, `ai/teams/registry.py`, and `ai/workflows/registry.py` to derive their base directories from the new resolver instead of hardcoded `Path("ai/...")` constants.
 2. Update **every** component that currently hardcodes `ai/...` paths, including but not limited to:
    - `ai/tools/registry.py`
@@ -62,7 +62,7 @@ The previous attempt to retrofit external support stalled. We need a clean slate
 4. Maintain backwards compatibility: when no external folder is provided, everything should behave exactly as today.
 
 ### Phase 4 – Testing & Documentation (TDD compliance)
-1. **Red:** Use `hive-testing-maker` to add regression tests covering:  
+1. **Red:** Use `hive-tests` to add regression tests covering:  
    - Default behavior (no argument, uses repo `ai/`).  
    - `uvx automagik-hive /tmp/custom-ai` path resolution.  
    - `HIVE_AI_ROOT` environment override.  
@@ -73,8 +73,8 @@ The previous attempt to retrofit external support stalled. We need a clean slate
 5. Trim `Makefile` targets tied to workspace generation.
 
 ### Orchestration & Agent Routing
-- Development tasks stay with **hive-dev-coder** (code implementation).  
-- Test authoring relies on **hive-testing-maker** (follows TDD).  
+- Development tasks stay with **hive-coder** (code implementation).  
+- Test authoring relies on **hive-tests** (follows TDD).  
 - Formatting or lint adjustments, if needed, go to **hive-quality-ruff/mypy**.  
 - No other agents required unless debugging emerges.
 

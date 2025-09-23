@@ -1,11 +1,48 @@
 # CLAUDE.md - Agents
 
-🗺️ **Individual Agent Development Domain**
+## Context & Scope
 
-## 🧭 Navigation
+[CONTEXT]
+- Defines the domain orchestrator agents that coordinate `.claude/agents` execution.
+- Use with `/ai/CLAUDE.md` and AGENTS.md to maintain orchestration-first behavior.
+- Ensure factory functions, `config.yaml`, and registry entries stay aligned.
 
-**🔙 AI Hub**: [/ai/CLAUDE.md](../CLAUDE.md) | **🔙 Main**: [/CLAUDE.md](../../CLAUDE.md)  
-**🔗 Related**: [Teams](../teams/CLAUDE.md) | [Workflows](../workflows/CLAUDE.md) | [Config](../../lib/config/CLAUDE.md) | [Knowledge](../../lib/knowledge/CLAUDE.md)
+[CONTEXT MAP]
+@ai/agents/
+@ai/agents/registry.py
+@ai/agents/template-agent/
+
+[SUCCESS CRITERIA]
+✅ Domain orchestrators delegate all work to `.claude/agents` via claude-mcp.
+✅ Every new agent includes a version bump and pytest coverage.
+✅ `config.yaml` instructions mirror factory arguments and runtime behavior.
+✅ Registries reload cleanly when `uv run pytest tests/agents/` executes.
+
+[NEVER DO]
+❌ Implement heavy execution logic inside orchestrator agents.
+❌ Hardcode secrets, paths, or model IDs in Python files.
+❌ Skip claude-mcp tool integration or auto-context loading.
+❌ Diverge from the template layout when adding agents.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Understand coordination impact
+   - Read existing agent folder (agent.py + config.yaml).
+   - Review registry factories calling the agent.
+   - Inspect relevant tests under `tests/ai/agents/` or `tests/integration/`.
+
+2. [Implementation] Update orchestrator safely
+   - Modify config + factory in lockstep, bump version metadata.
+   - Keep instructions focused on delegation, not execution.
+   - Wire claude-mcp tool usage for spawning `.claude/agents`.
+
+3. [Verification] Prove orchestration works
+   - Run `uv run pytest tests/ai/agents/`.
+   - Start dev server (`make dev`) and confirm agent loading logs.
+   - Document outcomes in the active wish or Forge task.
+</task_breakdown>
+```
 
 ## Purpose
 

@@ -1,12 +1,51 @@
 # CLAUDE.md - MCP
 
-🗺️ **Model Context Protocol Integration Domain**
+## Context & Scope
 
-## 🧭 Navigation
+[CONTEXT]
+- Explains Model Context Protocol integrations for external services (WhatsApp, Postgres, etc.).
+- Covers `.mcp.json` configuration, async lifecycle management, and fallbacks.
+- Coordinate with `/CLAUDE.md`, `api/CLAUDE.md`, and `lib/config/CLAUDE.md` before altering MCP wiring.
 
-**🔙 Main Hub**: [/CLAUDE.md](../../CLAUDE.md)  
-**🔗 Core**: [AI System](../../ai/CLAUDE.md) | [Config](../config/CLAUDE.md) | [Auth](../auth/CLAUDE.md)  
-**🔗 Support**: [API](../../api/CLAUDE.md) | [Logging](../logging/CLAUDE.md) | [Testing](../../tests/CLAUDE.md)
+[CONTEXT MAP]
+@lib/mcp/
+@lib/mcp/__init__.py
+@lib/mcp/connection_manager.py
+@lib/mcp/catalog.py
+@lib/mcp/exceptions.py
+.mcp.json
+
+[SUCCESS CRITERIA]
+✅ MCP servers connect, execute, and cleanly close via async context managers.
+✅ `.mcp.json` stays in sync with actual integrations.
+✅ Agents/teams/workflows specify `mcp_servers` accurately.
+✅ Tests cover primary + fallback paths.
+
+[NEVER DO]
+❌ Hardcode MCP server details in Python; always update `.mcp.json`.
+❌ Ignore connection cleanup or exception handling.
+❌ Expose credentials in logs or documentation.
+❌ Skip tests for new MCP integrations.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Audit MCP usage
+   - Inspect `.mcp.json` and associated helper utilities.
+   - Identify agents/workflows relying on the server(s).
+   - Review tests around MCP tooling.
+
+2. [Implementation] Update integration
+   - Adjust configuration, connection helpers, or exceptions.
+   - Provide fallback strategies and retry logic.
+   - Document new tools/servers in this guide.
+
+3. [Verification] Validate connectivity
+   - Run pytest suites touching MCP code.
+   - Execute manual smoke tests (send message, DB query) via MCP.
+   - Capture evidence in the active wish/Forge record.
+</task_breakdown>
+```
 
 ## Purpose
 

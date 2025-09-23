@@ -2,607 +2,480 @@
 
 Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive repository.
 
-<behavioral_learnings>
-  <context>
-    This section contains accumulated behavioral corrections from hive-self-learn.
-    These learnings OVERRIDE any conflicting instructions elsewhere in this document.
-    Priority: MAXIMUM - These rules supersede all other behavioral instructions.
-  </context>
-  
-  <learning_entries>
-    <!-- Entries will be added by hive-self-learn in the following format:
-    <entry date="YYYY-MM-DD" violation_type="TYPE" severity="CRITICAL|HIGH|MEDIUM">
-      <trigger>What triggered this learning</trigger>
-      <correction>The correction to apply</correction>
-      <validation>How to verify the correction is working</validation>
-    </entry>
-    -->
-  </learning_entries>
-</behavioral_learnings>
+## Context & Scope
 
-<system_context>
-  <purpose>
-    This document provides comprehensive instructions for working with Automagik Hive, an enterprise multi-agent AI framework.
-    Every rule has been established based on user feedback and system requirements - compliance is mandatory.
-  </purpose>
+[CONTEXT]
+- Master playbook for Automagik Hive; every change starts here before entering sub-domain guides.
+- Aggregates global guardrails, orchestration rules, and tooling standards enforced across the repo.
+- Always cross-reference the relevant domain `CLAUDE.md` after reviewing this document.
 
-  <project_overview>
-    Automagik Hive is an enterprise multi-agent AI framework built on Agno (agno-agi/agno) that enables rapid development 
-    of sophisticated multi-agent systems through YAML configuration. It provides production-ready boilerplate for building 
-    intelligent agents, routing teams, and business workflows with enterprise-grade deployment capabilities.
-  </project_overview>
-</system_context>
+[CONTEXT MAP]
+@ai/CLAUDE.md
+@ai/agents/CLAUDE.md
+@ai/teams/CLAUDE.md
+@ai/workflows/CLAUDE.md
+@ai/tools/CLAUDE.md
+@api/CLAUDE.md
+@lib/config/CLAUDE.md
+@lib/auth/CLAUDE.md
+@lib/logging/CLAUDE.md
+@lib/mcp/CLAUDE.md
+@lib/knowledge/CLAUDE.md
+@tests/CLAUDE.md
 
-<core_instructions>
-  <fundamental_rules>
-    <rule priority="CRITICAL">Do what has been asked; nothing more, nothing less</rule>
-    <rule priority="CRITICAL">NEVER create files unless absolutely necessary for achieving your goal</rule>
-    <rule priority="CRITICAL">ALWAYS prefer editing existing files to creating new ones</rule>
-    <rule priority="CRITICAL">NEVER proactively create documentation files (*.md) or README files unless explicitly requested</rule>
-  </fundamental_rules>
+[SUCCESS CRITERIA]
+✅ Behavioral learnings applied before executing tasks.
+✅ Domain guides kept in sync; no drift between root instructions and sub-docs.
+✅ Every change follows TDD, uv tooling, claude-mcp orchestration, and version bump policies.
+✅ Evidence (tests, logs, command output) captured in wish/Forge artifacts.
 
-  <code_quality_standards>
-    <standard>Simplify over-engineered components, eliminate redundant layers (KISS principle)</standard>
-    <standard>Never mock, use placeholders, hardcode, or omit code</standard>
-    <standard>Always provide full, working code implementations</standard>
-  </code_quality_standards>
+[NEVER DO]
+❌ Skip this document or sub-guides when planning work.
+❌ Re-introduce deprecated workflows (workspace scaffolding, manual orchestration).
+❌ Use non-uv tooling, bypass approvals, or edit files outside writable roots.
+❌ Declare success without documented verification.
 
-  <file_organization_principles>
-    <principle>Default to multiple small files (<350 lines) rather than monolithic ones</principle>
-    <principle>Each file should have one clear purpose (single responsibility)</principle>
-    <principle>Separate utilities, constants, types, components, and business logic</principle>
-    <principle>Follow existing project structure, create new directories when appropriate</principle>
-    <principle>Design for reusability and maintainability with proper imports/exports</principle>
-    <principle>Use inheritance only for true 'is-a' relationships (composition over inheritance)</principle>
-  </file_organization_principles>
-</core_instructions>
+## Task Decomposition
 
-<workspace_structure>
-  <genie_workspace>
-    <context>
-      The /genie/ directory is the autonomous thinking space with streamlined WISHES-CENTRIC architecture.
-      This structure ensures organized planning and prevents document proliferation.
-    </context>
-    
-    <strict_rules>
-      <rule>wishes/ = CENTRAL HUB for all active planning, agent coordination, and implementation workflows</rule>
-      <rule>ONE wish = ONE document in /genie/wishes/, refine in place with DEATH TESTAMENT completion</rule>
-      <rule>reports/ folder ELIMINATED - replaced by DEATH TESTAMENT structured final reports embedded in wishes/</rule>
-      <rule>Move any misplaced folders to proper /genie/ structure with wishes/ as primary focus</rule>
-    </strict_rules>
-    
-    <directory_structure>
-      <dir name="wishes">PRIMARY - all active planning & execution with /wish command integration</dir>
-      <dir name="ideas">brainstorms and concepts</dir>
-      <dir name="experiments">prototypes and tests</dir>
-      <dir name="knowledge">wisdom and learnings</dir>
-    </directory_structure>
-  </genie_workspace>
-</workspace_structure>
+```
+<task_breakdown>
+1. [Discovery] Understand the request
+   - Read the active wish or Forge task plus relevant CLAUDE.md sub-guides.
+   - Inspect existing code, configs, and tests tied to the change.
+   - Confirm sandbox, approval, and tooling constraints.
 
-<critical_behavioral_rules>
-  <enforcement_context>
-    These rules prevent critical system violations based on user feedback.
-    Violations trigger immediate cross-agent behavioral updates and are maintained in personal violation memory.
-    All agents must validate against these rules before file operations.
-  </enforcement_context>
+2. [Implementation] Apply compliant changes
+   - Update code + YAML together, bump versions, and document decisions.
+   - Use `apply_patch`, `uv` tooling, and claude-mcp orchestration per domain rules.
+   - Coordinate specialists (hive-coder, hive-tests, etc.) through Genie.
 
-  <time_estimation_prohibition severity="CRITICAL">
-    <context>
-      USER FEEDBACK VIOLATION: Master Genie and agents creating 6-week plans, Week 1 timelines, etc.
-      We are execution engines working in minutes/seconds, NOT project managers.
-    </context>
-    
-    <absolute_rules>
-      <rule>ALL agents MUST NEVER estimate human implementation time</rule>
-      <rule>NO agent will estimate weeks, days, hours, or any human temporal predictions</rule>
-    </absolute_rules>
-    
-    <forbidden_patterns>
-      <pattern>"Week 1", "6-week plan", "over 2 weeks" estimations</pattern>
-      <pattern>"3 days", "within a week", "daily" timeline predictions</pattern>
-      <pattern>"8 hours", "full day", temporal work estimates</pattern>
-      <pattern>Any timeline or schedule creation for human implementation</pattern>
-    </forbidden_patterns>
-    
-    <acceptable_alternatives>
-      <alternative>Use "Phase 1", "Phase 2", "Initial Implementation", "Core Development"</alternative>
-      <alternative>We execute in minutes/seconds through agent orchestration</alternative>
-      <alternative>All wish documents MUST include explicit subagent execution strategies</alternative>
-      <alternative>Define which agents handle each implementation phase</alternative>
-      <alternative>Planning documents MUST include mandatory "Orchestration Strategy" section</alternative>
-    </acceptable_alternatives>
-    
-    <enforcement>
-      <action>Any time estimation triggers automatic hive-self-learn deployment</action>
-      <action>Time estimation = CRITICAL VIOLATION requiring immediate behavioral update</action>
-      <action>Time estimation prohibition must propagate to ALL hive agents</action>
-    </enforcement>
-  </time_estimation_prohibition>
+3. [Verification] Prove the outcome
+   - Run targeted `uv run pytest ...` suites and any required commands.
+   - Capture evidence (logs, outputs) and attach to the wish/Forge entry.
+   - Summarize results in DEATH TESTAMENT before closing the wish.
+</task_breakdown>
+```
 
-  <uv_compliance_requirement severity="CRITICAL">
-    <context>
-      USER FEEDBACK VIOLATION: "violation, the testing maker isnt uving uv run"
-      UV is the mandated package manager for ALL Python operations.
-    </context>
-    
-    <absolute_rules>
-      <rule>ALL testing agents MUST use `uv run` for Python commands</rule>
-      <rule>NEVER use python directly - Always use `uv run` for ALL Python commands</rule>
-      <rule>NO testing agent will use direct `pytest`, `python`, or `coverage` commands</rule>
-    </absolute_rules>
-    
-    <required_usage>
-      <command>Testing agents MUST use `uv run pytest` for ALL test execution</command>
-      <command>Testing agents MUST use `uv run coverage` for ALL coverage reporting</command>
-      <command>Testing agents MUST use `uv run python` for ALL Python execution</command>
-    </required_usage>
-    
-    <enforcement>
-      <action>Update ALL testing agents with UV compliance requirements</action>
-      <action>Any direct command usage = CRITICAL VIOLATION requiring immediate behavioral update</action>
-      <action>UV compliance requirements must propagate to ALL new testing agents</action>
-    </enforcement>
-  </uv_compliance_requirement>
+## Behavioral Learnings
 
-  <pyproject_protection severity="CRITICAL">
-    <context>
-      USER FEEDBACK VIOLATION: "hive-testing-fixer bypassed protection hooks and destroyed project dependencies"
-      pyproject.toml is SACRED - Only UV commands can modify dependencies.
-    </context>
-    
-    <absolute_rules>
-      <rule>ALL agents MUST NEVER modify pyproject.toml file</rule>
-      <rule>NO agent will directly edit, write, or modify pyproject.toml under ANY circumstances</rule>
-      <rule>pyproject.toml file is READ-ONLY for all agents</rule>
-    </absolute_rules>
-    
-    <forbidden_actions>
-      <action>Direct editing of pyproject.toml file</action>
-      <action>Replacing dependencies with "automagik-hive>=0.1.0"</action>
-      <action>Any attempt to circumvent pyproject.toml protection</action>
-      <action>Removing or replacing legitimate project dependencies</action>
-    </forbidden_actions>
-    
-    <proper_approach>
-      <approach>ALL agents MUST use UV commands ONLY for dependency changes</approach>
-      <approach>ALL agents MUST respect protection mechanisms without exception</approach>
-      <approach>Configuration files are PROTECTED from direct agent modification</approach>
-    </proper_approach>
-    
-    <enforcement>
-      <action>Any pyproject.toml modification triggers CRITICAL hive-self-learn deployment</action>
-      <action>pyproject.toml modification = SYSTEM INTEGRITY VIOLATION requiring immediate termination</action>
-      <action>pyproject.toml protection must propagate to ALL hive agents with EMERGENCY protocols</action>
-    </enforcement>
-  </pyproject_protection>
-</critical_behavioral_rules>
+[CONTEXT]
+- hive-self-learn maintains corrective entries that override any conflicting rule.
+- Read current entries before touching code; highest-priority source of truth.
 
-<configuration_management>
-  <install_command_design>
-    <context>
-      The --install command manages .env files intelligently to handle deployment automation.
-    </context>
-    
-    <workflow>
-      <step>If .env exists with credentials: use existing credentials</step>
-      <step>If .env exists but missing/placeholder credentials: generate and update .env</step>
-      <step>If .env doesn't exist: generate from .env.example as base with real credentials</step>
-    </workflow>
-    
-    <principles>
-      <principle>Environment file management is part of installation/setup process</principle>
-      <principle>Runtime application code reads environment variables, installation code manages them</principle>
-      <principle>Installation commands handle environment setup for deployment automation</principle>
-      <principle>Clear separation between setup-time and runtime configuration management</principle>
-    </principles>
-  </install_command_design>
+[SUCCESS CRITERIA]
+✅ Latest entry acknowledged and applied.
+✅ Violations trigger immediate hive-self-learn escalation.
+✅ Corrections validated through observable behavior (tests, logs, approvals).
 
-  <configuration_architecture>
-    <context>
-      STRICT separation between application-level (.env) and infrastructure-level (docker-compose.yml) configuration.
-    </context>
-    
-    <env_file_rules>
-      <rule>Application runtime configuration ONLY - database URLs, API keys, app settings</rule>
-      <rule>NEVER include in .env/.env.example files: POSTGRES_UID, POSTGRES_GID, port mappings for Docker</rule>
-    </env_file_rules>
-    
-    <docker_compose_rules>
-      <rule>Container orchestration configuration ONLY - user permissions, port mappings, volume mounts</rule>
-      <rule>Infrastructure variables belong ONLY in docker-compose.yml with ${VAR:-default} pattern</rule>
-      <rule>Use shell environment or docker-compose.override.yml for infrastructure overrides</rule>
-    </docker_compose_rules>
-  </configuration_architecture>
-</configuration_management>
+[ENTRY FIELDS]
+- `date` — `YYYY-MM-DD` format.
+- `violation_type` — exact category name.
+- `severity` — `CRITICAL`, `HIGH`, or `MEDIUM`.
+- `trigger` — behavior that caused the violation.
+- `correction` — required adjustment.
+- `validation` — evidence confirming compliance.
 
-<project_architecture>
-  <exploration_command>
-    ```bash
-    # Use this tree command to explore the entire codebase structure
-    tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_modules|.github|genie|scripts|common|docs|alembic' -P '*.py|*.yaml|*.yml|*.toml|*.md|Makefile|Dockerfile|*.ini|*.sh|*.csv|*.json' --prune -L 4
-    ```
-  </exploration_command>
+## Global Guardrails
 
-  <architecture_map>
-    ```
-    🧭 NAVIGATION ESSENTIALS
-    ├── pyproject.toml              # Project dependencies (managed via UV)
-    
-    🤖 MULTI-AGENT CORE (Start Here for Agent Development)
-    ├── ai/
-    │   ├── agents/registry.py      # 🏭 Agent factory - loads all agents
-    │   │   └── template-agent/     # 📋 Copy this to create new agents
-    │   ├── teams/registry.py       # 🏭 Team factory - routing logic
-    │   │   └── template-team/      # 📋 Copy this to create new teams  
-    │   └── workflows/registry.py   # 🏭 Workflow factory - orchestration
-    │       └── template-workflow/  # 📋 Copy this to create new workflows
-    
-    🌐 API LAYER (Where HTTP Meets Agents)
-    ├── api/
-    │   ├── serve.py                # 🚀 Production server (Agno FastAPIApp)
-    │   ├── main.py                 # 🛝 Dev playground (Agno Playground)
-    │   └── routes/v1_router.py     # 🛣️ Main API endpoints
-    
-    📚 SHARED SERVICES (The Foundation)
-    ├── lib/
-    │   ├── config/settings.py      # 🎛️ Global configuration hub
-    │   ├── knowledge/              # 🧠 CSV-based RAG system
-    │   │   ├── knowledge_rag.csv   # 📊 Data goes here
-    │   │   └── csv_hot_reload.py   # 🔄 Hot reload magic
-    │   ├── auth/service.py         # 🔐 API authentication
-    │   ├── utils/agno_proxy.py     # 🔌 Agno framework integration
-    │   └── versioning/             # 📦 Component version management
-    
-    🧪 TESTING (TODO: Not implemented yet - create tests/scenarios/ for new features)
-    ```
-  </architecture_map>
+### Fundamental Rules *(CRITICAL)*
+- Do precisely what is requested—nothing more, nothing less.
+- Prefer editing existing files; create new files only when indispensable.
+- Never author documentation (`*.md`, README) unless explicitly asked.
+- Treat `.claude/commands/prompt.md` as the canonical prompting framework.
 
-  <component_guides>
-    For detailed implementation guidance, see component-specific CLAUDE.md files:
-    - ai/CLAUDE.md - Multi-agent system orchestration
-    - api/CLAUDE.md - FastAPI integration patterns  
-    - lib/config/CLAUDE.md - Configuration management
-    - lib/knowledge/CLAUDE.md - Knowledge base management
-    - tests/CLAUDE.md - Testing patterns
-  </component_guides>
-</project_architecture>
+### Code Quality Standards
+- Remove unnecessary complexity; prefer clear, minimal solutions (KISS/YAGNI/DRY).
+- Deliver complete implementations—no placeholders, pseudocode, or stubs.
+- Use industry-standard libraries before writing custom alternatives.
+- Compose over inherit; only use inheritance for true "is-a" relationships.
 
-<development_methodology>
-  <test_driven_development>
-    <context>
-      Follow the red-green-refactor cycle for all feature development to ensure quality and test coverage.
-    </context>
-    
-    <workflow>
-      <step order="1" phase="RED">Spawn testing-maker for failing tests</step>
-      <step order="2" phase="GREEN">Spawn dev-coder to implement minimal code to make tests pass</step>
-      <step order="3" phase="REFACTOR">Coordinate quality improvements while keeping tests green</step>
-    </workflow>
-    
-    <commands>
-      ```bash
-      # 1. RED: Create failing tests first
-      Task(subagent_type="hive-testing-maker", prompt="Create failing test suite for [feature]")
-      
-      # 2. GREEN: Implement minimal code to pass tests
-      Task(subagent_type="hive-dev-coder", prompt="Implement [feature] to make tests pass")
-      
-      # 3. REFACTOR: Improve code quality while maintaining green tests
-      ```
-    </commands>
-    
-    <strict_rule>Never spawn dev-coder without prior failing tests from testing-maker</strict_rule>
-  </test_driven_development>
-</development_methodology>
+### File Organization Principles
+- Break work into small, purpose-specific files (target <350 LOC).
+- Separate utilities, constants, types, UI, and business logic cleanly.
+- Follow existing directory structure and naming conventions.
+- Design with reuse and maintainability in mind (well-defined imports/exports).
 
-<development_workflow>
-  <context>
-    Claude Code's background CLI capabilities enable real-time development and testing.
-    Follow this workflow for efficient development cycles.
-  </context>
+## Critical Behavioral Overrides
 
-  <server_management>
-    <startup_commands>
-      ```bash
-      # Start development server in background
-      # Use Bash tool with run_in_background=True parameter:
-      Bash(command="make dev", run_in_background=True)
-      ```
-    </startup_commands>
-    
-    <monitoring_commands>
-      ```bash
-      # Monitor server activity
-      tail -f logs/server.log          # Watch server logs in real-time
-      curl http://localhost:8886/api/v1/health  # Health check
-      ```
-    </monitoring_commands>
-    
-    <testing_endpoints>
-      ```bash
-      # Live API testing and exploration
-      curl http://localhost:8886/docs                    # Swagger UI documentation  
-      curl http://localhost:8886/playground/status       # Playground availability
-      curl http://localhost:8886/playground/agents       # Available agents
-      curl http://localhost:8886/playground/teams        # Available teams
-      curl http://localhost:8886/playground/workflows    # Available workflows
-      
-      # Test agent functionality
-      curl -X POST http://localhost:8886/playground/teams/genie/runs \
-        -H "Content-Type: application/json" \
-        -d '{"task_description": "Test system functionality"}'
-      ```
-    </testing_endpoints>
-    
-    <shutdown_commands>
-      ```bash
-      # Stop development server
-      make stop                        # Graceful shutdown
-      pkill -f "uvicorn"              # Force stop if needed
-      ```
-    </shutdown_commands>
-  </server_management>
+### Time Estimation Prohibition *(CRITICAL)*
+- We operate in agent time (seconds/minutes), not human weeks/days.
+- Forbidden expressions: "Week 1", "6-week plan", "3 days", "8 hours", any timeline estimates.
+- Acceptable alternatives: "Phase 1", "Phase 2", "Core Implementation", "Polish".
+- Any time estimate triggers hive-self-learn and counts as a CRITICAL violation.
 
-  <uv_package_management>
-    <context>
-      UV is the mandated package manager for ALL Python operations.
-      NEVER use pip install - always use UV commands.
-    </context>
-    
-    <dependency_commands>
-      ```bash
-      uv sync                          # Install/sync all dependencies from pyproject.toml
-      uv add <package>                 # Add new dependency (NEVER use pip install)
-      uv add --dev <package>           # Add development dependency
-      ```
-    </dependency_commands>
-    
-    <quality_commands>
-      ```bash
-      uv run ruff check --fix          # Lint and auto-fix code issues
-      uv run mypy .                    # Type checking for quality assurance
-      ```
-    </quality_commands>
-    
-    <testing_commands>
-      ```bash
-      uv run pytest                    # Run all tests
-      uv run pytest tests/agents/      # Test agent functionality
-      uv run pytest tests/workflows/   # Test workflow orchestration  
-      uv run pytest tests/api/         # Test API endpoints
-      uv run pytest --cov=ai --cov=api --cov=lib  # With coverage report
-      ```
-    </testing_commands>
-  </uv_package_management>
-</development_workflow>
+### UV Compliance Requirement *(CRITICAL)*
+- ALL Python commands run through `uv`:
+  - `uv run pytest ...`, `uv run python ...`, `uv run coverage ...`.
+  - Never call `python`, `pytest`, or `coverage` directly.
+- Testing agents must honor uv usage; violations escalate immediately.
 
-<development_standards>
-  <core_principles>
-    <principle>Write simple, focused code that solves current needs without unnecessary complexity (KISS/YAGNI/DRY)</principle>
-    <principle>Apply SOLID principles where relevant, favor composition over inheritance</principle>
-    <principle>Use industry standard libraries over custom implementations</principle>
-    <principle>Always break compatibility for clean, modern implementations</principle>
-    <principle>Remove backward compatibility code immediately - clean implementations only</principle>
-    <principle>Make side effects explicit and minimal</principle>
-    <principle>Be brutally honest about whether ideas are good or bad</principle>
-  </core_principles>
+### pyproject.toml Protection *(CRITICAL)*
+- `pyproject.toml` is read-only: no manual edits, rewrites, or dependency swaps.
+- Use `uv add`, `uv add --dev`, `uv lock`, etc. for dependency updates.
+- Any direct edit counts as a system integrity breach requiring termination.
 
-  <quality_requirements>
-    <requirement>Every new agent must have corresponding unit and integration tests</requirement>
-    <requirement>Use CSV-based RAG system with hot reload for context-aware responses</requirement>
-    <requirement>Never hardcode values - always use .env files and YAML configs</requirement>
-  </quality_requirements>
-</development_standards>
+## Workspace & Wish System
 
-<mcp_tool_integration>
-  <context>
-    You operate within a live, instrumented Automagik Hive system with direct control via Model Context Protocol (MCP) tools.
-    These tools enable autonomous operations on the agent instance while requiring responsible usage.
-  </context>
+[CONTEXT]
+- `/genie/` is the autonomous planning space, centered on wishes.
+- One wish equals one evolving document; DEATH TESTAMENT closes the lifecycle.
 
-  <available_tools>
-    <tool name="postgres" status="Working">
-      <purpose>Direct SQL queries on main system DB (port 5532)</purpose>
-      <example>SELECT * FROM hive.component_versions</example>
-    </tool>
-    
-    <tool name="automagik-hive" status="Auth Required">
-      <purpose>API interactions (agents/teams/workflows)</purpose>
-      <note>Check .env for HIVE_API_KEY</note>
-    </tool>
-    
-    <tool name="automagik-forge" status="Working">
-      <purpose>Project & task management</purpose>
-      <usage>List projects, create/update tasks</usage>
-    </tool>
-    
-    <tool name="search-repo-docs" status="Working">
-      <purpose>External library docs</purpose>
-      <usage>Agno (/context7/agno), other dependencies</usage>
-    </tool>
-    
-    <tool name="ask-repo-agent" status="Requires Indexing">
-      <purpose>GitHub repo Q&A</purpose>
-      <usage>Agno (agno-agi/agno), external repos</usage>
-    </tool>
-    
-    <tool name="wait" status="Working">
-      <purpose>Workflow delays</purpose>
-      <usage>wait_minutes(0.1) for async ops</usage>
-    </tool>
-    
-    <tool name="send_whatsapp_message" status="Working">
-      <purpose>External notifications</purpose>
-      <usage>Use responsibly for alerts</usage>
-    </tool>
-  </available_tools>
+[SUCCESS CRITERIA]
+✅ Active work lives under `genie/wishes/` with orchestration strategy + final report.
+✅ `/wish` command drives planning; updates happen in-place (no v2/v3 files).
+✅ DEATH TESTAMENT entries capture evidence, outcomes, and remaining risks.
 
-  <database_schema>
-    ```sql
-    -- Main system database (postgresql://localhost:5532/automagik_hive)
-    
-    -- agno schema
-    agno.knowledge_base         -- Vector embeddings for RAG system
-      ├── id, name, content    -- Core fields
-      ├── embedding (vector)   -- pgvector embeddings  
-      └── meta_data, filters   -- JSONB for filtering
-    
-    -- hive schema  
-    hive.component_versions     -- Agent/team/workflow versioning
-      ├── component_type       -- 'agent', 'team', 'workflow'
-      ├── name, version        -- Component identification
-      └── modified_at         -- Version tracking
-    
-    -- Example queries:
-    SELECT * FROM hive.component_versions WHERE component_type = 'agent';
-    SELECT * FROM agno.knowledge_base WHERE meta_data->>'domain' = 'development';
-    ```
-  </database_schema>
+[NEVER DO]
+❌ Recreate the old `reports/` folder or duplicate wish documents.
+❌ Start implementation without an orchestration strategy and assigned agents.
+❌ Skip DEATH TESTAMENT when declaring a wish complete.
 
-  <usage_workflow>
-    <step order="1">Query current state using postgres for system analysis</step>
-    <step order="2">Document strategy in automagik-forge tasks before execution</step>
-    <step order="3">Take actions only with explicit user approval</step>
-    <step order="4">Ensure development server is running (use Bash tool with run_in_background=True)</step>
-    <step order="5">Bump version in YAML files when configs are modified</step>
-  </usage_workflow>
+### Directory Layout
+- `wishes/` — active planning, orchestration strategy, DEATH TESTAMENT.
+- `ideas/` — exploratory thoughts and sketches.
+- `experiments/` — throwaway prototypes and spikes.
+- `knowledge/` — durable learnings, patterns, and references.
 
-  <best_practices>
-    <practice>Query current state first before modifying</practice>
-    <practice>Get user approval for planned work and features</practice>
-    <practice>Automatically report critical issues, bugs, and blockers found during analysis</practice>
-    <practice>Use BEGIN; ... COMMIT/ROLLBACK; for DB changes</practice>
-    <practice>Store important actions in automagik-forge tasks for audit trail</practice>
-    <practice>Add wait between bulk operations to respect rate limits</practice>
-    <practice>Have fallback strategies (API → DB → memory)</practice>
-  </best_practices>
+## Strategic Orchestration
 
-  <safety_rules>
-    <rule tool="postgres">Readonly direct queries only</rule>
-    <rule tool="automagik_forge">Track decisions and progress in task management</rule>
-    <rule tool="send_whatsapp_message">Confirm recipient/content before sending</rule>
-    <rule general="version_bumping">ANY config change via tools requires YAML version update</rule>
-  </safety_rules>
+### Genie → Domain → Execution
+- Master Genie coordinates specialized agents; never performs implementation directly.
+- Domain orchestrators (e.g., `genie-dev`, `genie-testing`) spawn `.claude/agents` via claude-mcp.
+- Execution layer (`.claude/agents/`) inherits CLAUDE context automatically and follows TDD.
 
-  <troubleshooting>
-    <auth_issues>
-      ```bash
-      cat .env | grep HIVE_API_KEY  # Verify API key exists
-      # If missing, check with user or use postgres as fallback
-      ```
-    </auth_issues>
-    
-    <connection_issues>
-      <solution>Use `make stop` then Bash("make dev", run_in_background=True) for graceful restart</solution>
-      <note>Main API runs on http://localhost:8886</note>
-    </connection_issues>
-  </troubleshooting>
-</mcp_tool_integration>
+### TDD Pipeline *(Always)*
+1. RED – `hive-tests` writes failing tests.
+2. GREEN – `hive-coder` implements minimal code to pass.
+3. REFACTOR – Improve quality with tests green.
 
-<forge_integration_patterns>
-  <context>
-    Automagik Forge integration enables sophisticated task orchestration through separate Claude Code instances.
-    This section defines handoff protocols, task creation patterns, and coordination workflows.
-  </context>
+### Forge Workflow *(Delegated Execution)*
+- Break wishes into Forge tasks with complete context (`@` references) and agent assignments.
+- Escalate zen tools based on complexity (>=7 requires consensus/deep analysis).
+- Commit format: `Wish [wish-name]: [specific-change]` with `Co-Authored-By: Automagik Genie <genie@namastex.ai>`.
 
-  <forge_workflow_integration>
-    <workflow_phases>
-      <phase name="brainstorm">Use zen tools for complex analysis and architectural thinking</phase>
-      <phase name="document">Create PRD and wish planning documents</phase>
-      <phase name="plan">Break down wishes into implementable components</phase>
-      <phase name="execute">Create Forge tasks for autonomous execution</phase>
-    </workflow_phases>
+## Configuration Management
 
-    <task_creation_standards>
-      <standard>Tasks created directly in Forge - no intermediate task files</standard>
-      <standard>Complete context provided via @ references to wish documents</standard>
-      <standard>Agent assignments with zen tool auto-escalation for complexity 7+</standard>
-      <standard>Branch strategy determined by complexity assessment</standard>
-    </task_creation_standards>
+[CONTEXT]
+- `--install` command orchestrates `.env` lifecycle; runtime code only reads env vars.
+- Maintain strict separation between application configuration and infrastructure overrides.
 
-    <forge_task_template>
-      ```
-      AUTOMAGIK FORGE EXECUTION TASK
-      =============================
-      
-      WISH: [wish-name]
-      TASK: [task-name]
-      COMPLEXITY: [1-10]
-      BRANCH: [dev|feature/wish-name]
-      
-      COMPLETE CONTEXT:
-      - PRD: @/genie/wishes/[wish-name]/prd.md
-      - Wish Plan: @/genie/wishes/[wish-name]/wish.md
-      - Architecture: @/genie/wishes/[wish-name]/context/architecture.md
-      - Project Patterns: @/CLAUDE.md
-      
-      PRIMARY AGENT: @[hive-dev-coder|hive-testing-maker|hive-dev-fixer]
-      SUPPORT AGENTS: @[additional-agents] (if parallel streams needed)
-      
-      ZEN TOOLS AVAILABLE (auto-escalate complexity 7+):
-      - /mcp__zen__debug - Systematic debugging
-      - /mcp__zen__codereview - Quality assurance
-      - /mcp__zen__testgen - Test strategy
-      - /mcp__zen__refactor - Code optimization
-      
-      EXECUTION REQUIREMENTS:
-      [Detailed task description from wish breakdown]
-      
-      SUCCESS CRITERIA:
-      [Acceptance criteria from task spec]
-      
-      QUALITY GATES:
-      - [ ] All tests passing
-      - [ ] Code review completed (zen tools if complex)
-      - [ ] Documentation updated
-      - [ ] No merge conflicts
-      - [ ] Progress updated
-      ```
-    </forge_task_template>
-  </forge_workflow_integration>
+[SUCCESS CRITERIA]
+✅ Install flow reuses valid credentials, regenerates placeholders, and seeds new `.env` files when needed.
+✅ `.env` contains runtime settings only; infrastructure values live in compose files.
+✅ Documentation and code stay aligned when configuration behavior changes.
 
-  <complexity_assessment>
-    <scoring_algorithm>
-      <level range="1-3">Single files, bug fixes, small tweaks, documentation</level>
-      <level range="4-5">Multi-file features, moderate refactoring, new components</level>
-      <level range="6-7">New subsystems, significant architecture, complex features</level>
-      <level range="8-10">Full system redesigns, platform changes, major rewrites</level>
-    </scoring_algorithm>
+[NEVER DO]
+❌ Hardcode secrets or environment-specific paths in code/YAML.
+❌ Store Docker UID/GID or port mappings inside `.env`.
+❌ Diverge from YAML-first approach for static configuration.
 
-    <zen_tool_integration>
-      <complexity range="1-3">Direct execution, minimal zen usage</complexity>
-      <complexity range="4-6">Strategic zen tool usage for validation</complexity>
-      <complexity range="7-10">Multi-model consensus, deep thinking required</complexity>
-    </zen_tool_integration>
+### Install Command Design
+- If `.env` already has credentials → reuse them.
+- If `.env` exists with placeholders → generate and update in place.
+- If `.env` is missing → seed from `.env.example` with real credentials.
+- Installation commands own environment setup; runtime code consumes the result.
 
-    <branch_strategy>
-      <simple>Work on 'dev' branch for straightforward changes</simple>
-      <complex>Create 'feature/wish-[kebab-case-name]' branch for complex features</complex>
-    </branch_strategy>
-  </complexity_assessment>
+### Configuration Architecture
+- `.env` → runtime settings: database URLs, API keys, application configuration.
+- `docker-compose.yml` → infrastructure settings: permissions, port mappings, volume mounts.
+- Use `${VAR:-default}` in compose; apply overrides via shell or `docker-compose.override.yml`.
 
-  <commit_standards>
-    <format>Wish [wish-name]: [specific-change]</format>
-    <co_author>Co-Authored-By: Automagik Genie &lt;genie@namastex.ai&gt;</co_author>
-    <validation>All changes committed before Forge task creation</validation>
-  </commit_standards>
+## Project Architecture
 
-  <security_integration>
-    <auto_trigger>Complexity 6+ or security-sensitive features (auth, payments, data handling)</auto_trigger>
-    <comprehensive_audit>OWASP Top 10, compliance (SOC2, PCI DSS, HIPAA, GDPR), threat modeling, infrastructure review</comprehensive_audit>
-    <zen_tool>/mcp__zen__secaudit for systematic security assessment</zen_tool>
-  </security_integration>
-</forge_integration_patterns>
+[CONTEXT]
+- Provides navigation and orientation for the repository structure.
+- Use before large changes to confirm component locations and dependencies.
 
-<additional_references>
-  <master_genie_configuration>
-    For all behavioral guidelines, orchestration patterns, and agent routing intelligence, 
-    see AGENTS.md which contains the complete Master Genie configuration.
-  </master_genie_configuration>
-  
-  <system_summary>
-    This framework provides a production-ready foundation for building sophisticated 
-    multi-agent AI systems with enterprise-grade deployment capabilities.
-  </system_summary>
-</additional_references>
+[SUCCESS CRITERIA]
+✅ Navigational commands (`tree`, etc.) reflect current project layout.
+✅ Architecture map stays synchronized with actual directories/files.
+✅ New components documented via the relevant domain guide.
+
+[NEVER DO]
+❌ Introduce undocumented top-level directories.
+❌ Leave architecture map outdated after structural changes.
+
+### Exploration Command
+```bash
+# Explore codebase without noise
+tree -I '__pycache__|.git|*.pyc|.venv|data|logs|.pytest_cache|*.egg-info|node_modules|.github|genie|scripts|common|docs|alembic'      -P '*.py|*.yaml|*.yml|*.toml|*.md|Makefile|Dockerfile|*.ini|*.sh|*.csv|*.json' --prune -L 4
+```
+
+### Architecture Map
+```
+🧭 NAVIGATION ESSENTIALS
+├── pyproject.toml              # Project dependencies (managed via UV)
+
+🤖 MULTI-AGENT CORE (Start Here for Agent Development)
+├── ai/
+│   ├── agents/registry.py      # 🏭 Agent factory - loads all agents
+│   │   └── template-agent/     # 📋 Copy this to create new agents
+│   ├── teams/registry.py       # 🏭 Team factory - routing logic
+│   │   └── template-team/      # 📋 Copy this to create new teams
+│   └── workflows/registry.py   # 🏭 Workflow factory - orchestration
+│       └── template-workflow/  # 📋 Copy this to create new workflows
+
+🌐 API LAYER (Where HTTP Meets Agents)
+├── api/
+│   ├── serve.py                # 🚀 Production server (Agno FastAPIApp)
+│   ├── main.py                 # 🛝 Dev playground (Agno Playground)
+│   └── routes/v1_router.py     # 🛣️ Main API endpoints
+
+📚 SHARED SERVICES (The Foundation)
+├── lib/
+│   ├── config/settings.py      # 🎛️ Global configuration hub
+│   ├── knowledge/              # 🧠 CSV-based RAG system
+│   │   ├── knowledge_rag.csv   # 📊 Data goes here
+│   │   └── csv_hot_reload.py   # 🔄 Hot reload magic
+│   ├── auth/service.py         # 🔐 API authentication
+│   ├── utils/agno_proxy.py     # 🔌 Agno framework integration
+│   └── versioning/             # 📦 Component version management
+
+🧪 TESTING (tests/ directory – expand scenarios alongside every new feature)
+```
+
+## Development Methodology
+
+[CONTEXT]
+- Red-green-refactor is mandatory for all feature work.
+- Testing precedes implementation; refactors happen with green tests.
+
+[SUCCESS CRITERIA]
+✅ Each cycle starts with failing tests from `hive-tests`.
+✅ Implementation limited to satisfy tests before refactoring.
+✅ Refactor stage retains green status and updates documentation.
+
+[NEVER DO]
+❌ Spawn `hive-coder` before failing tests exist.
+❌ Skip refactor stage when design smells persist.
+❌ Leave orchestration strategy undocumented in the wish.
+
+### TDD Cycle
+1. **RED** – `Task(subagent_type="hive-tests", prompt="Create failing test suite for [feature]")`
+2. **GREEN** – `Task(subagent_type="hive-coder", prompt="Implement [feature] to make tests pass")`
+3. **REFACTOR** – Improve structure while tests stay green.
+
+**Strict Rule** — never dispatch `hive-coder` without prior failing tests from `hive-tests`.
+
+## Development Workflow & Tooling
+
+[CONTEXT]
+- All development/testing occurs through `apply_patch`, uv tooling, and controlled shell access.
+
+### Server Management
+- `Bash(command="make dev", run_in_background=True)` — start dev server.
+- `tail -f logs/server.log` / `curl http://localhost:8886/api/v1/health` — monitor.
+- `make stop` → graceful shutdown; `pkill -f "uvicorn"` if forced.
+
+### UV Commands
+```bash
+uv sync                     # Install/sync dependencies
+uv add <package>            # Add runtime dependency (never pip install)
+uv add --dev <package>      # Add dev dependency
+uv run ruff check --fix     # Lint & auto-fix
+uv run mypy .               # Type checking
+uv run pytest               # Full suite entry point
+uv run pytest tests/ai/agents/      # Agent coverage
+uv run pytest tests/ai/workflows/   # Workflow coverage
+uv run pytest tests/api/            # API coverage
+uv run pytest --cov=ai --cov=api --cov=lib  # Coverage report
+```
+
+### Evidence Requirements
+- Attach command output or summaries in wish/Forge records.
+- Ensure git status clean aside from intentional changes.
+- Never claim success without recorded verification steps.
+
+## Development Standards
+
+### Core Principles
+- Write simple, focused code that solves current needs (KISS/YAGNI/DRY).
+- Apply SOLID principles where relevant; favor composition over inheritance.
+- Use industry-standard libraries before inventing custom ones.
+- Break backward compatibility when cleaner modern implementations exist.
+- Remove legacy shims immediately; keep implementations clean.
+- Make side effects explicit and minimal.
+- Evaluate ideas honestly; discard weak approaches quickly.
+
+### Quality Requirements
+- Every new agent ships with unit and integration tests.
+- Use the CSV-based RAG system with hot reload for context-aware responses.
+- Never hardcode values—pull configuration from `.env` files and YAML configs.
+
+## Domain Playbooks
+
+Use these guides alongside the root playbook:
+- `ai/CLAUDE.md` — Multi-agent orchestration overview.
+- `ai/agents/CLAUDE.md` — Domain orchestrator agents.
+- `ai/teams/CLAUDE.md` — Routing and coordination teams.
+- `ai/workflows/CLAUDE.md` — Step-based workflows.
+- `ai/tools/CLAUDE.md` — Reusable tool architecture.
+- `api/CLAUDE.md` — FastAPI exposure and deployment.
+- `lib/config/CLAUDE.md` — Global configuration hierarchy.
+- `lib/auth/CLAUDE.md` — Authentication and message validation.
+- `lib/logging/CLAUDE.md` — Structured logging and emoji system.
+- `lib/mcp/CLAUDE.md` — Model Context Protocol integrations.
+- `lib/knowledge/CLAUDE.md` — CSV-based RAG system.
+- `tests/CLAUDE.md` — Testing strategy and coverage expectations.
+
+## MCP Tooling
+
+[CONTEXT]
+- Model Context Protocol connects external services (WhatsApp, Postgres, etc.) to Automagik Hive.
+- `.mcp.json` is the single source of truth for server definitions.
+
+### Available Tools
+- **postgres** *(Working)* — Direct SQL queries on the main DB (port 5532). Example: `SELECT * FROM hive.component_versions`.
+- **automagik-hive** *(Auth Required)* — API interactions for agents, teams, workflows (`HIVE_API_KEY`).
+- **automagik-forge** *(Working)* — Project/task management; list or update Forge tasks.
+- **search-repo-docs** *(Working)* — External docs such as Agno (`/context7/agno`).
+- **ask-repo-agent** *(Requires Indexing)* — GitHub repo Q&A for Agno/external sources.
+- **wait** *(Working)* — Workflow delays (e.g., `wait_minutes(0.1)`).
+- **send_whatsapp_message** *(Working)* — External notifications; double-check recipients/content.
+
+### Database Schema Reference
+```sql
+-- Main system database (postgresql://localhost:5532/automagik_hive)
+
+-- agno schema
+agno.knowledge_base         -- Vector embeddings for RAG system
+  ├── id, name, content    -- Core fields
+  ├── embedding (vector)   -- pgvector embeddings
+  └── meta_data, filters   -- JSONB for filtering
+
+-- hive schema
+hive.component_versions     -- Agent/team/workflow versioning
+  ├── component_type       -- 'agent', 'team', 'workflow'
+  ├── name, version        -- Component identification
+  └── modified_at          -- Version tracking
+
+-- Example queries:
+SELECT * FROM hive.component_versions WHERE component_type = 'agent';
+SELECT * FROM agno.knowledge_base WHERE meta_data->>'domain' = 'development';
+```
+
+### Usage Workflow
+1. Query current state via `postgres` before making changes.
+2. Document strategy in Automagik Forge tasks prior to execution.
+3. Take actions only with explicit user approval.
+4. Ensure the development server is running (`Bash(.., run_in_background=True)`).
+5. Bump YAML version numbers whenever configuration changes occur.
+
+### Best Practices
+- Inspect current state first; never modify blind.
+- Secure user approval for planned work and features.
+- Report critical issues, bugs, and blockers automatically.
+- Wrap DB changes in `BEGIN; ... COMMIT/ROLLBACK;` transactions.
+- Record significant actions in Automagik Forge for auditing.
+- Pace bulk operations with waits to respect rate limits.
+- Maintain fallback strategies (API → DB → in-memory).
+
+### Safety Rules
+- `postgres`: Read-only queries unless explicitly authorized.
+- `automagik_forge`: Track decisions and progress inside tasks.
+- `send_whatsapp_message`: Confirm recipients and message content before sending.
+- Version bumps are mandatory for any config change performed via tools.
+
+### Troubleshooting
+- **Auth issues**
+  ```bash
+  cat .env | grep HIVE_API_KEY  # Verify API key exists
+  # If missing, check with user or use postgres as fallback
+  ```
+- **Connection issues**
+  - Run `make stop`, then restart with `Bash("make dev", run_in_background=True)`.
+  - Main API served at `http://localhost:8886`.
+
+## Forge Integration Patterns
+
+[CONTEXT]
+- Forge coordinates cross-instance execution; use it for handoffs, task creation, and orchestration workflows.
+
+### Workflow Integration
+- **Phases**
+  1. **Brainstorm:** Apply zen tools for complex analysis and architecture.
+  2. **Document:** Produce PRDs and wish planning documents.
+  3. **Plan:** Break wishes into implementable components.
+  4. **Execute:** Create Forge tasks for autonomous work.
+- **Task Creation Standards**
+  - Create tasks directly in Forge—skip intermediate task files.
+  - Provide complete context using `@` references to wish documents.
+  - Assign agents and enable zen auto-escalation for complexity ≥7.
+  - Choose branch strategy based on complexity assessment.
+- **Forge Task Template**
+  ```
+  AUTOMAGIK FORGE EXECUTION TASK
+  =============================
+
+  WISH: [wish-name]
+  TASK: [task-name]
+  COMPLEXITY: [1-10]
+  BRANCH: [dev|feature/wish-name]
+
+  COMPLETE CONTEXT:
+  - PRD: @/genie/wishes/[wish-name]/prd.md
+  - Wish Plan: @/genie/wishes/[wish-name]/wish.md
+  - Architecture: @/genie/wishes/[wish-name]/context/architecture.md
+  - Project Patterns: @/CLAUDE.md
+
+  PRIMARY AGENT: @[hive-coder|hive-tests|hive-dev-fixer]
+  SUPPORT AGENTS: @[additional-agents] (if parallel streams needed)
+
+  ZEN TOOLS AVAILABLE (auto-escalate complexity 7+):
+  - /mcp__zen__debug - Systematic debugging
+  - /mcp__zen__codereview - Quality assurance
+  - /mcp__zen__testgen - Test strategy
+  - /mcp__zen__refactor - Code optimization
+
+  EXECUTION REQUIREMENTS:
+  [Detailed task description from wish breakdown]
+
+  SUCCESS CRITERIA:
+  [Acceptance criteria from task spec]
+
+  QUALITY GATES:
+  - [ ] All tests passing
+  - [ ] Code review completed (zen tools if complex)
+  - [ ] Documentation updated
+  - [ ] No merge conflicts
+  - [ ] Progress updated
+  ```
+
+### Complexity Assessment
+- **Scoring Algorithm**
+  - *1–3:* Single-file changes, bug fixes, documentation tweaks.
+  - *4–5:* Multi-file features, moderate refactoring, new components.
+  - *6–7:* New subsystems, significant architecture, complex features.
+  - *8–10:* Full system redesigns, platform changes, major rewrites.
+- **Zen Tool Integration**
+  - Complexity 1–3: execute directly with minimal zen usage.
+  - Complexity 4–6: leverage zen tools strategically for validation.
+  - Complexity 7–10: require multi-model consensus and deep analysis.
+- **Branch Strategy**
+  - Simple work → stay on `dev`.
+  - Complex work → create `feature/wish-[kebab-case-name]`.
+
+### Commit Standards
+- Format commits as `Wish [wish-name]: [specific-change]`.
+- Always add `Co-Authored-By: Automagik Genie <genie@namastex.ai>`.
+- Ensure changes are committed before creating the Forge task.
+
+### Security Integration
+- Auto-trigger security review for complexity ≥6 or sensitive areas (auth, payments, data handling).
+- Run comprehensive audits: OWASP Top 10, relevant compliance (SOC2, PCI DSS, HIPAA, GDPR), threat modeling, infrastructure review.
+- Use `/mcp__zen__secaudit` for systematic security assessments.
+
+## Verification & Reporting
+
+[SUCCESS CRITERIA]
+✅ Every change linked to a wish/Forge task with documented plan and validation.
+✅ Tests + commands executed through uv tooling and recorded in DEATH TESTAMENT.
+✅ Behavioral learnings incorporated; no out-of-date instructions linger.
+✅ Domain guides remain synchronized—update sub-doc when root policy changes.
+
+[NEVER DO]
+❌ Merge or hand off work without recorded evidence.
+❌ Modify domain guides without updating root references.
+❌ Ignore failure output or flaky tests; resolve before completion.
+
+Stay aligned with this playbook and the domain-specific CLAUDE guides to keep Automagik Hive predictable, test-driven, and safely orchestrated.
