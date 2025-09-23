@@ -1,4 +1,4 @@
-# 🧞 Agno v2 Migration WISH
+# 🧞 Agno v2 Migration WISH (Pinned to 2.0.8)
 
 **Status:** APPROVED
 
@@ -16,7 +16,7 @@ Upgrade Automagik Hive’s agent platform to Agno v2, aligning dependencies, sto
 - **Stability assurance:** Maintain feature flags and smoke tests to certify agents and knowledge retrieval stay deterministic across the migration phase.
 
 ## Success Criteria
-✅ `uv run automagik-hive --serve` boots using AgentOS interfaces with no Playground import traces.
+✅ Core libraries (agents/teams/workflows) instantiate with v2 APIs; no Playground/AgentOS changes (deferred to separate wish).
 ✅ Agents/teams/workflows instantiate with `dependencies=` and Agno v2 Db objects while passing smoke + unit tests.
 ✅ Knowledge base loaders leverage the new `Knowledge` API with vector tables populated via incremental loader checks.
 ✅ Metrics ingestion accepts v2 field names and legacy data migrates via `migrate_to_v2.py` without data loss.
@@ -68,7 +68,7 @@ Testing:
 ├── tests/lib/                             # Service and utility unit tests
 └── tests/integration/                     # End-to-end validation suites
 
-Key impact zones: `api/serve.py`, `lib/memory/memory_factory.py`, `lib/knowledge/*`, `lib/utils/proxy_*`, `lib/metrics/*`, `ai/teams/registry.py`, `ai/workflows/`.
+Key impact zones: `lib/memory/memory_factory.py`, `lib/knowledge/*`, `lib/utils/proxy_*`, `lib/metrics/*`, `lib/versioning/agno_version_service.py`, `ai/teams/registry.py`, `ai/workflows/`, `tests/lib/*` (no API/CLI runtime changes).
 
 ### Naming Conventions
 - CLI commands: `{Feature}Commands` classes in `cli/commands/{feature}.py`.
@@ -93,7 +93,7 @@ E ---> F[Testing & Docs]
 ### Group A: Foundation (Parallel Tasks)
 Dependencies: None | Execute simultaneously
 
-**A1-agno-version-upgrade**: Move project dependency graph to Agno v2  @uv.lock [context]  Modifies: Lockfile via `uv lock --upgrade-package agno` & `uv run pip show agno` verification  Exports: `agno==2.x` available for downstream imports  Success: `uv lock` records v2, `uv run python -c "import agno, sys; assert agno.__version__.startswith('2.')"` passes.
+**A1-agno-version-upgrade**: Pin project to Agno 2.0.8 via `uv add agno==2.0.8` then `uv lock`. Verify with `uv run pip show agno` and `uv run python -c "import agno; print(agno.__version__)"`. Exports: `agno==2.0.8` locked for imports. Success: Version asserts exactly '2.0.8'; no transitive v1 pulls.
 
 **A2-core-import-compat**: Audit shared wrappers for renamed APIs (`dependencies`, `RunOutput`, event classes)  @lib/utils/proxy_agents.py [context], @lib/utils/proxy_teams.py [context], @lib/utils/version_factory.py [context]  Modifies: Imports, constructor kwargs, streaming handlers  Exports: Helpers returning v2-compliant agents/teams  Success: Static type checks succeed; no import errors during smoke run.
 
@@ -102,18 +102,18 @@ Dependencies: None | Execute simultaneously
 **A4-proxy-context-dependencies**: Rewrite shared storage helpers and proxies to emit Agno v2 constructs  @lib/utils/agno_storage_utils.py [context], @lib/utils/proxy_agents.py [context], @lib/utils/proxy_teams.py [context], @lib/utils/proxy_workflows.py [context]  Modifies: Switch to `agno.db.*` imports, map YAML to unified `db` plus `dependencies`, drop legacy `context`/`storage` kwargs  Exports: Agent/team/workflow factories instantiating successfully under v2 signatures  Success: Smoke agent load proves no `TypeError` for `context`/`mode`; proxy tests cover `dependencies` payloads.
 
 ### Group B: Runtime Surfaces (After A)
-Dependencies: A1-agno-version-upgrade, A2-core-import-compat
+Dependencies: A1-agno-version-upgrade, A2-core-import-compat (focus on v2 APIs, defer AgentOS)
 
-**B1-agentos-api-transition**: Swap FastAPI runtime from Playground to AgentOS interfaces  @api/serve.py [context]  Modifies: Imports, app factory, serving logic (`AgentOS`, `AGUI`)  Exports: AgentOS instance with configured interfaces for CLI/API  Success: `uv run automagik-hive --serve` boots without Playground references.
 
-**B2-startup-pipeline-sync**: Align startup orchestration with new team/agent lifecycles  @lib/utils/startup_orchestration.py [context], @lib/utils/startup_display.py [context]  Modifies: Discovery flows to consume v2 registries, use `dependencies`  Exports: Startup summaries reflecting new lifecycle  Success: Startup logs show migrated lifecycle; orchestrated startup completes.
 
-**B3-cli-runtime-bridge**: Ensure CLI services delegate to AgentOS-compatible builders  @cli/core/main_service.py [context], @cli/commands/service.py [context]  Modifies: Service bootstrap to inject v2 Db + AgentOS  Exports: CLI subcommands returning zero exit with v2 stack  Success: CLI smoke tests cover start/stop operations with v2 objects.
+**B2-startup-pipeline-sync**: Align startup orchestration with v2 agent/team lifecycles (no AgentOS). @lib/utils/startup_orchestration.py [context], @lib/utils/startup_display.py [context] Modifies: Discovery to use v2 registries/`dependencies`. Exports: Summaries for v2. Success: Logs confirm v2 without runtime errors.
+
+**B3-cli-runtime-bridge**: Ensure CLI services use v2 builders (no AgentOS). @cli/core/main_service.py [context], @cli/commands/service.py [context] Modifies: Bootstrap for v2 Db/agents. Exports: Zero-exit CLI with v2. Success: Smoke tests pass v2 injections.
 
 ### Group C: Knowledge System (After A)
 Dependencies: A1-agno-version-upgrade, A3-db-factory-refresh
 
-**C1-knowledge-core-rewrite**: Port row-based CSV knowledge to new `Knowledge` interface  @lib/knowledge/row_based_csv_knowledge.py [context]  Modifies: Base class usage, metadata handling, vector operations  Exports: Custom `Knowledge` subclass with row granularity  Success: Factory tests load knowledge without `DocumentKnowledgeBase` import errors.
+**C1-knowledge-core-rewrite**: Port to `Knowledge` (auto-reader, `add_content`/`remove_content_by_id`, `contents_db` for deletions; add `content_hash`/`content_id` cols via migration). @lib/knowledge/row_based_csv_knowledge.py [context] Modifies: Replace `DocumentKnowledgeBase` with `Knowledge`; re-index existing CSV via `add_content`. Exports: Subclass with row support. Success: Tests load/query/delete without v1 errors; vectors migrated.
 
 **C2-knowledge-factory-adapt**: Refresh knowledge factory to construct `Knowledge` with `contents_db`  @lib/knowledge/factories/knowledge_factory.py [context]  Modifies: Embedder/VectorDb wiring, table names, incremental loader hooks  Exports: Factory returning ready-to-use knowledge instance  Success: Integration test indexes CSV and serves queries under v2.
 
@@ -122,22 +122,22 @@ Dependencies: A1-agno-version-upgrade, A3-db-factory-refresh
 ### Group D: Persistence & Metrics (After A)
 Dependencies: A1-agno-version-upgrade, A3-db-factory-refresh
 
-**D1-storage-migration-runner**: Integrate Agno migrate_to_v2.py script  @scripts/ [context], @lib/utils/startup_orchestration.py [context]  Creates: `scripts/agno_db_migrate_v2.py` orchestrator leveraging upstream script  Modifies: Adds logging for table row counts before/after migration  Exports: CLI entry/automation with logging + dry-run flag  Success: Script migrates staging database; dry-run documented in wish evidence; row count logs captured.
+**D1-storage-migration-runner**: Download/integrate Agno's `migrate_to_v2.py` (from https://github.com/agno-agi/agno/blob/main/libs/agno/scripts/migrate_to_v2.py). @scripts/ [context], @lib/utils/startup_orchestration.py [context] Creates: `scripts/agno_db_migrate_v2.py` wrapper with DB creds, logging (pre/post row counts for sessions/memories/metrics/knowledge/evals), idempotent dry-run/full modes. Exports: CLI tool (`uv run python scripts/agno_db_migrate_v2.py --dry-run`). Success: Run on staging; logs show no data loss (e.g., sessions preserved, metrics converted); old tables intact for rollback.
 
-**D2-metrics-schema-shift**: Update metrics bridges to new field names and provider metrics  @lib/metrics/agno_metrics_bridge.py [context], @lib/metrics/async_metrics_service.py [context]  Modifies: Metric model mapping, new `provider_metrics`, rename fields  Exports: Normalized metrics dict for persistence  Success: Unit tests confirm new keys; legacy data parsed without error.
+**D2-metrics-schema-shift**: Update bridges for v2 fields (`time`→`duration`, `prompt_tokens`→`input_tokens`, etc.), nest providers in `provider_metrics`, add `additional_metrics` for customs; handle v1→v2 parsing (post-script). @lib/metrics/agno_metrics_bridge.py [context], @lib/metrics/async_metrics_service.py [context] Modifies: Mappings, add compat layer for legacy sessions. Exports: Dict with v2 schema. Success: Tests parse/migrate sample v1 data; no key errors.
 
 **D3-migration-script-adapter**: Validate upstream `migrate_to_v2.py` against Automagik schemas  @scripts/agno_db_migrate_v2.py [context], @lib/services/version_sync_service.py [context]  Modifies: Adds idempotent runner, captures before/after table snapshots, ensures metrics field rename coverage  Exports: Repeatable CLI tool with logging evidence  Success: Dry-run diff included in wish evidence; production run appended to Death Testament.
 
 **D3-settings-surface**: Extend settings for configurable table names & feature toggles  @lib/config/settings.py [context], @lib/config/server_config.py [context]  Modifies: Settings models to expose new Db table parameters  Exports: `Settings` with defaults aligning to migration script  Success: Settings load with no regression; env overrides documented.
 
 ### Group E: Agent Assets (After B, C, D)
-Dependencies: B1-agentos-api-transition, C1-knowledge-core-rewrite, D2-metrics-schema-shift
+Dependencies: C1-knowledge-core-rewrite, D2-metrics-schema-shift
 
 **E1-agent-definition-refresh**: Update all agent modules to use `dependencies` and `enable_user_memories`  @ai/agents/*/agent.py [context], @lib/utils/proxy_agents.py [context]  Modifies: Agent constructors, streaming consumption  Exports: Agents compatible with v2 runtime  Success: Sample agent runs return `RunOutput`; coverage tests pass.
 
 **E2-team-behaviour-flags**: Configure teams with new coordination attributes  @ai/teams/registry.py [context], @ai/teams/*/team.py [context]  Modifies: Remove `mode`, add `respond_directly` etc.  Exports: Teams orchestrating with new semantics  Success: Team integration tests confirm delegation behaviour.
 
-**E3-workflow-upgrade**: Refactor workflows to use v2 orchestration primitives  @ai/workflows/registry.py [context], @ai/workflows/template-workflow/workflow.py [context]  Modifies: Imports, step definitions, dependency injection  Exports: Workflow objects leveraging new API  Success: Workflow smoke test executes Step graph without warnings.
+**E3-workflow-upgrade**: Full refactor per workflows v2 guide (stateless, `agno.workflows` imports, `input_schema`, no `monitoring`; add `store_events`/`events_to_skip` if needed). @ai/workflows/registry.py [context], @ai/workflows/template-workflow/workflow.py [context] Modifies: Primitives, add websocket if applicable (defer runtime). Exports: v2 objects. Success: Tests run end-to-end; no v1 deprecations.
 
 **E4-config-schema-alignment**: Revise agent/team YAML + fixture expectations to remove v1 keys  @ai/agents/*/config.yaml [context], @tests/ai/agents/template-agent/test_template_agent.py [context], @tests/lib/utils/test_proxy_agents.py [context]  Modifies: Replace `storage`/`context` with `db`/`dependencies`, adjust tests to assert unified Db usage  Exports: Configs aligned with v2 loader semantics, regression suite green  Success: Updated tests confirm `db` + `dependencies`; no assertions reference `.storage`.
 
@@ -167,15 +167,8 @@ agent = Agent(
 )
 ```
 
-### AgentOS Interface Wiring
-```python
-from agno.os import AgentOS
-from agno.os.interfaces.agui import AGUI
 
-agent_os = AgentOS(agents=[agent], interfaces=[AGUI(agent=agent)])
-app = agent_os.get_app()
-agent_os.serve(port=settings.api_port)
-```
+
 
 ### Knowledge Content Management
 ```python
@@ -189,39 +182,21 @@ knowledge.add_content(
 ```
 
 ## Testing Protocol
-```bash
-# Dependency + import sanity
-uv run python -c "import agno, sys; assert agno.__version__.startswith('2.')"
-
-# Core libraries
-uv run pytest tests/lib/test_proxy_agents.py tests/lib/test_proxy_teams.py -q
-uv run pytest tests/lib/memory/test_memory_factory.py tests/lib/knowledge/test_row_based_csv_knowledge.py
-
-# Runtime + API
-uv run pytest tests/api -q
-uv run pytest tests/integration/knowledge -q
-
-# Static analysis
-uv run ruff check lib/ api/ ai/
-uv run mypy lib/knowledge lib/memory lib/utils
-```
+```bash\n# Dependency + import sanity (pinned to 2.0.8)\nuv run python -c "import agno, sys; assert agno.__version__ == '2.0.8'"\n\n# DB migration evidence\nuv run python scripts/agno_db_migrate_v2.py --dry-run  # Log pre/post counts\n\n# Core libraries\nuv run pytest tests/lib/test_proxy_agents.py tests/lib/test_proxy_teams.py -q\nuv run pytest tests/lib/memory/test_memory_factory.py tests/lib/knowledge/test_row_based_csv_knowledge.py\n\n# Runtime + API\nuv run pytest tests/api -q\nuv run pytest tests/integration/knowledge -q\n\n# Agents/teams/workflows (added for v2 coverage)\nuv run pytest tests/ai/ -q\nuv run pytest tests/integration/ -q  # Broad integration incl. workflows\n\n# Static analysis\nuv run ruff check lib/ api/ ai/\nuv run mypy lib/knowledge lib/memory lib/utils\n\n# Additional v2 static (metrics/versioning)\nuv run ruff check lib/metrics lib/versioning\nuv run mypy lib/metrics lib/versioning\n\n# Smoke (no serve)\nuv run python -c "from lib.utils.agno_proxy import create_sample_agent; agent = create_sample_agent(); assert 'dependencies' in agent.__init__.__code__.co_varnames"\n```
 
 ## Validation Checklist
 - [ ] Agno v2 dependency recorded via `uv` tooling (no manual pyproject edits).
 - [ ] Memory + knowledge factories instantiate v2 Db/Knowledge classes without legacy imports.
-- [ ] AgentOS wiring replaces Playground completely.
+
 - [ ] Metrics bridge remaps fields and persists provider metrics.
 - [ ] Database migration script executed with logs stored in `genie/reports/`.
 - [ ] Table row counts logged and verified consistent pre/post migration.
 - [ ] Test suites and lint checks pass on v2 stack (`uv run pytest`).
 - [ ] Proxy layer smoke test confirms `dependencies` + unified `db` wiring across agents/teams/workflows.
 - [ ] YAML/test updates merged; no fixtures reference deprecated keys or `.storage` attribute.
-- [ ] Sample agent instantiation succeeds with v2 APIs.
+- [ ] Sample agent/team/workflow instantiate with v2 (dependencies/db, no context/storage).
 - [ ] Knowledge base query returns valid results post-migration.
 - [ ] Health endpoint responds correctly before server restart.
 - [ ] Wish status updated with evidence once migration validated.
 
-## Human Review Options
-1. APPROVE – Wish spec looks ready for forge planning.
-2. REVISE – Provide adjustments or missing constraints before execution.
-3. DISCUSS – Ask questions or explore alternatives prior to approval.
+## Agno v2 Migration Guide Reference\nSee attached `genie/wishes/agno-v2-migration-guide.md` (full copy from https://docs.agno.com/how-to/v2-migration) for detailed before/after examples.\n\n## Human Review Options\n1. APPROVE – Bulletproof for v2 core migration; delegate to forge/hive-coder.\n2. REVISE – Add evals handling if needed (codebase scan shows none).\n3. EXECUTE PHASE 1 – Run DB script + dep pin now.
