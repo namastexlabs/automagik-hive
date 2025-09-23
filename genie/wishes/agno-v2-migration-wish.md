@@ -7,7 +7,7 @@ Upgrade Automagik Hive’s agent platform to Agno v2, aligning dependencies, sto
 
 ## Current State Analysis
 **What exists:** Agents, teams, and workflows rely on Agno v1 APIs (`context`, `Memory`, `Playground`, legacy storage classes) with bespoke factories in `lib/` and runtime wiring in CLI/API layers.
-**Gap identified:** Agno v2 renames core concepts (`dependencies`, `RunOutput`, unified Db/Knowledge/AgentOS), deprecates Memory wrappers, and introduces new metrics schemas that our integration does not yet support.
+**Gap identified:** Agno v2 renames core concepts (`dependencies`, `RunOutput`, unified Db/Knowledge/AgentOS), deprecates Memory wrappers, and introduces new metrics schemas that our integration does not yet support. Our shared storage helpers (`lib/utils/agno_storage_utils.py`) still construct v1 `agno.storage.*` classes and push the deprecated `mode`/`table_name` arguments; the proxy layer (`lib/utils/proxy_agents.py`, `lib/utils/proxy_teams.py`) continues to flatten `context` and wire `storage` instead of the required `dependencies` + unified `db`; template configs/tests enforce v1 keys (e.g., `.storage` assertions in `tests/ai/agents/template-agent/test_template_agent.py`); metrics bridges reference removed fields such as `prompt_tokens`/`completion_tokens` and lack a plan for `provider_metrics` uptake.
 **Solution approach:** Stepwise migration: upgrade the dependency graph, refactor factories and runtime surfaces to new imports, adopt AgentOS interfaces, modernize knowledge/memory persistence, and refresh metrics + tests under TDD until the full suite passes with v2 semantics.
 
 ## Change Isolation Strategy
@@ -20,6 +20,8 @@ Upgrade Automagik Hive’s agent platform to Agno v2, aligning dependencies, sto
 ✅ Agents/teams/workflows instantiate with `dependencies=` and Agno v2 Db objects while passing smoke + unit tests.
 ✅ Knowledge base loaders leverage the new `Knowledge` API with vector tables populated via incremental loader checks.
 ✅ Metrics ingestion accepts v2 field names and legacy data migrates via `migrate_to_v2.py` without data loss.
+✅ Shared proxy + helper layer constructs v2 `Db` objects, exposes `dependencies=...` in all agent/team factories, and drops `context`/`storage` kwargs before instantiation.
+✅ Agent YAML/test assets reflect v2 schema (no `context`/`storage` keys, positive checks for `dependencies` + unified `db`).
 
 ## Never Do (Protection Boundaries)
 ❌ Edit `pyproject.toml` directly—use `uv` commands for dependency changes.
@@ -97,6 +99,8 @@ Dependencies: None | Execute simultaneously
 
 **A3-db-factory-refresh**: Replace deprecated Memory/Storage classes with unified Db interfaces  @lib/memory/memory_factory.py [context], @lib/memory/__init__.py [context], @lib/config/settings.py [context]  Modifies: Factories to build `SqliteDb`/`PostgresDb`, toggles `enable_user_memories`  Exports: `create_*_memory` returning `(db, enable_user_memories)` tuple or helper  Success: Unit tests confirm Db wiring; memory tables created in agno schema.
 
+**A4-proxy-context-dependencies**: Rewrite shared storage helpers and proxies to emit Agno v2 constructs  @lib/utils/agno_storage_utils.py [context], @lib/utils/proxy_agents.py [context], @lib/utils/proxy_teams.py [context], @lib/utils/proxy_workflows.py [context]  Modifies: Switch to `agno.db.*` imports, map YAML to unified `db` plus `dependencies`, drop legacy `context`/`storage` kwargs  Exports: Agent/team/workflow factories instantiating successfully under v2 signatures  Success: Smoke agent load proves no `TypeError` for `context`/`mode`; proxy tests cover `dependencies` payloads.
+
 ### Group B: Runtime Surfaces (After A)
 Dependencies: A1-agno-version-upgrade, A2-core-import-compat
 
@@ -122,6 +126,8 @@ Dependencies: A1-agno-version-upgrade, A3-db-factory-refresh
 
 **D2-metrics-schema-shift**: Update metrics bridges to new field names and provider metrics  @lib/metrics/agno_metrics_bridge.py [context], @lib/metrics/async_metrics_service.py [context]  Modifies: Metric model mapping, new `provider_metrics`, rename fields  Exports: Normalized metrics dict for persistence  Success: Unit tests confirm new keys; legacy data parsed without error.
 
+**D3-migration-script-adapter**: Validate upstream `migrate_to_v2.py` against Automagik schemas  @scripts/agno_db_migrate_v2.py [context], @lib/services/version_sync_service.py [context]  Modifies: Adds idempotent runner, captures before/after table snapshots, ensures metrics field rename coverage  Exports: Repeatable CLI tool with logging evidence  Success: Dry-run diff included in wish evidence; production run appended to Death Testament.
+
 **D3-settings-surface**: Extend settings for configurable table names & feature toggles  @lib/config/settings.py [context], @lib/config/server_config.py [context]  Modifies: Settings models to expose new Db table parameters  Exports: `Settings` with defaults aligning to migration script  Success: Settings load with no regression; env overrides documented.
 
 ### Group E: Agent Assets (After B, C, D)
@@ -132,6 +138,8 @@ Dependencies: B1-agentos-api-transition, C1-knowledge-core-rewrite, D2-metrics-s
 **E2-team-behaviour-flags**: Configure teams with new coordination attributes  @ai/teams/registry.py [context], @ai/teams/*/team.py [context]  Modifies: Remove `mode`, add `respond_directly` etc.  Exports: Teams orchestrating with new semantics  Success: Team integration tests confirm delegation behaviour.
 
 **E3-workflow-upgrade**: Refactor workflows to use v2 orchestration primitives  @ai/workflows/registry.py [context], @ai/workflows/template-workflow/workflow.py [context]  Modifies: Imports, step definitions, dependency injection  Exports: Workflow objects leveraging new API  Success: Workflow smoke test executes Step graph without warnings.
+
+**E4-config-schema-alignment**: Revise agent/team YAML + fixture expectations to remove v1 keys  @ai/agents/*/config.yaml [context], @tests/ai/agents/template-agent/test_template_agent.py [context], @tests/lib/utils/test_proxy_agents.py [context]  Modifies: Replace `storage`/`context` with `db`/`dependencies`, adjust tests to assert unified Db usage  Exports: Configs aligned with v2 loader semantics, regression suite green  Success: Updated tests confirm `db` + `dependencies`; no assertions reference `.storage`.
 
 ### Group F: Testing & Docs (After E)
 Dependencies: All previous groups
@@ -205,6 +213,8 @@ uv run mypy lib/knowledge lib/memory lib/utils
 - [ ] Metrics bridge remaps fields and persists provider metrics.
 - [ ] Database migration script executed with logs stored in `genie/reports/`.
 - [ ] Test suites and lint checks pass on v2 stack.
+- [ ] Proxy layer smoke test confirms `dependencies` + unified `db` wiring across agents/teams/workflows.
+- [ ] YAML/test updates merged; no fixtures reference deprecated keys or `.storage` attribute.
 - [ ] Wish status updated with evidence once migration validated.
 
 ## Human Review Options
