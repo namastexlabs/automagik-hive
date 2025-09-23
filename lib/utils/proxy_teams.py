@@ -138,8 +138,9 @@ class AgnoTeamProxy:
             "add_history_to_messages",
             "num_of_interactions_from_history",
             "num_history_runs",
-            # Storage
-            "storage",
+            # Database
+            "db",
+            "dependencies",
             "extra_data",
             # Reasoning
             "reasoning",
@@ -171,7 +172,7 @@ class AgnoTeamProxy:
         return {
             # Model configuration with thinking support
             "model": self._handle_model_config,
-            # Storage configuration (now uses shared utilities)
+            # Database configuration (now uses shared utilities)
             "storage": self._handle_storage_config,
             # Memory configuration
             "memory": self._handle_memory_config,
@@ -278,12 +279,31 @@ class AgnoTeamProxy:
                 if key == "members":
                     # Special handling for async members handler
                     handler_result = await self._custom_params[key](
-                        value, config, component_id, db_url, **kwargs
+                        value,
+                        config,
+                        component_id,
+                        db_url,
+                        processed=processed,
+                        **kwargs,
                     )
                 else:
-                    handler_result = self._custom_params[key](
-                        value, config, component_id, db_url, **kwargs
-                    )
+                    handler = self._custom_params[key]
+                    try:
+                        handler_result = handler(
+                            value,
+                            config,
+                            component_id,
+                            db_url,
+                            processed=processed,
+                            **kwargs,
+                        )
+                    except TypeError as exc:
+                        if "processed" in str(exc):
+                            handler_result = handler(
+                                value, config, component_id, db_url, **kwargs
+                            )
+                        else:
+                            raise
                 if isinstance(handler_result, dict):
                     processed.update(handler_result)
                 else:
@@ -351,12 +371,15 @@ class AgnoTeamProxy:
         **kwargs,
     ):
         """Handle storage configuration using shared utilities."""
-        return create_dynamic_storage(
+        resources = create_dynamic_storage(
             storage_config=storage_config,
             component_id=component_id,
             component_mode="team",
             db_url=db_url,
         )
+
+        config.setdefault("_computed", {})["db"] = resources["db"]
+        return resources
 
     def _handle_memory_config(
         self,
@@ -367,14 +390,37 @@ class AgnoTeamProxy:
         **kwargs,
     ) -> object | None:
         """Handle memory configuration."""
-        if memory_config is not None and memory_config.get(
-            "enable_user_memories", False
-        ):
+        if not isinstance(memory_config, dict):
+            logger.warning(
+                "🤖 Invalid memory config for team %s: expected dict, got %s",
+                component_id,
+                type(memory_config),
+            )
+            return {}
+
+        enable_memories = memory_config.get("enable_user_memories") or memory_config.get(
+            "enable_agentic_memory"
+        )
+
+        result: dict[str, Any] = {}
+        if enable_memories:
             from lib.memory.memory_factory import create_team_memory
 
-            # Let MemoryFactoryError bubble up - no silent failures
-            return create_team_memory(component_id, db_url)
-        return None
+            processed = kwargs.get("processed", {}) if kwargs else {}
+            shared_db = processed.get("db")
+            memory_manager = create_team_memory(
+                component_id,
+                db_url,
+                db=shared_db,
+            )
+            result["memory_manager"] = memory_manager
+
+        if enable_memories:
+            for key, value in memory_config.items():
+                if key in self._supported_params:
+                    result[key] = value
+
+        return result
 
     def _handle_team_metadata(
         self,

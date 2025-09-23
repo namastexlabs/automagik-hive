@@ -108,12 +108,12 @@ def get_proxy_module_info() -> dict:
         },
         "features": [
             "Dynamic parameter discovery via introspection",
-            "Shared storage utilities (zero duplication)",
+            "Shared db utilities (zero duplication)",
             "Component-specific processing logic",
             "Lazy loading for performance",
             "Backward compatibility preserved",
         ],
-        "supported_storage_types": [
+        "supported_db_types": [
             "postgres",
             "sqlite",
             "mongodb",
@@ -156,5 +156,4 @@ async def create_team(*args, **kwargs):
 async def create_workflow(*args, **kwargs):
     """Legacy compatibility wrapper for workflow creation."""
     return await get_agno_workflow_proxy().create_workflow(*args, **kwargs)
-
 

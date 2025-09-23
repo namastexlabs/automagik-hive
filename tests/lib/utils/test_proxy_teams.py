@@ -113,7 +113,7 @@ class TestAgnoTeamProxyInitialization:
             assert param in fallback_params
 
         # Test categories are represented
-        assert "storage" in fallback_params  # Storage category
+        assert "db" in fallback_params  # Database category
         assert "memory" in fallback_params  # Memory category
         assert "tools" in fallback_params  # Tools category
 
@@ -327,8 +327,11 @@ class TestAgnoTeamProxyConfigurationProcessing:
             patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter,
         ):
             # Mock storage creation to avoid database connection
-            mock_storage_instance = MagicMock()
-            mock_create_storage.return_value = mock_storage_instance
+            mock_db_instance = MagicMock()
+            mock_create_storage.return_value = {
+                "db": mock_db_instance,
+                "dependencies": {"db": mock_db_instance},
+            }
             
             # Mock provider registry for model handling
             mock_provider_registry = MagicMock()
@@ -358,16 +361,19 @@ class TestAgnoTeamProxyConfigurationProcessing:
             mock_provider_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
             mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
             mock_filter.assert_called_once_with(mock_model_class, {"id": "claude-3-sonnet"})
+
+            assert result["db"] is mock_db_instance
+            assert result["dependencies"]["db"] is mock_db_instance
             # Note: model_class is NOT called due to lazy instantiation (returns config dict instead)
             
             # Verify result contains expected processed config 
-            assert "storage" in result
+            assert "db" in result
+            assert "dependencies" in result
             # Model config gets spread into top-level (lazy instantiation)
             assert "id" in result  # model id should be in top-level
             assert result["id"] == "claude-3-sonnet"
             assert "name" in result  # team metadata gets spread
             assert result["name"] == "Custom Team"
-            assert result["storage"] == mock_storage_instance
 
     @pytest.mark.asyncio
     async def test_process_config_async_members_handler(self, proxy):
@@ -517,14 +523,17 @@ class TestAgnoTeamProxyParameterHandlers:
         storage_config = {"type": "postgres", "host": "localhost", "port": 5432}
 
         with patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create:
-            mock_storage = MagicMock()
-            mock_create.return_value = mock_storage
+            mock_db = MagicMock()
+            mock_create.return_value = {
+                "db": mock_db,
+                "dependencies": {"db": mock_db},
+            }
 
             result = proxy._handle_storage_config(
                 storage_config, {}, "test-team", "db_url"
             )
 
-            assert result == mock_storage
+            assert result == {"db": mock_db, "dependencies": {"db": mock_db}}
             mock_create.assert_called_once_with(
                 storage_config=storage_config,
                 component_id="test-team",
@@ -537,15 +546,19 @@ class TestAgnoTeamProxyParameterHandlers:
         memory_config = {"enable_user_memories": True}
 
         with patch("lib.memory.memory_factory.create_team_memory") as mock_create:
-            mock_memory = MagicMock()
-            mock_create.return_value = mock_memory
+            mock_memory_manager = MagicMock()
+            mock_create.return_value = mock_memory_manager
 
             result = proxy._handle_memory_config(
                 memory_config, {}, "test-team", "db_url"
             )
 
-            assert result == mock_memory
-            mock_create.assert_called_once_with("test-team", "db_url")
+            assert result["memory_manager"] is mock_memory_manager
+            mock_create.assert_called_once_with(
+                "test-team",
+                "db_url",
+                db=None,
+            )
 
     def test_handle_memory_config_disabled(self, proxy):
         """Test memory configuration when disabled."""
@@ -553,13 +566,13 @@ class TestAgnoTeamProxyParameterHandlers:
 
         result = proxy._handle_memory_config(memory_config, {}, "test-team", "db_url")
 
-        assert result is None
+        assert result == {}
 
     def test_handle_memory_config_none(self, proxy):
         """Test memory configuration when None."""
         result = proxy._handle_memory_config(None, {}, "test-team", "db_url")
 
-        assert result is None
+        assert result == {}
 
     def test_handle_memory_config_exception_bubbles(self, proxy):
         """Test memory configuration exception handling."""
@@ -1111,8 +1124,9 @@ class TestAgnoTeamProxyEdgeCases:
             "mode",
             "model",
             "name",  # Core team
-            "storage",
-            "memory",  # Persistence
+            "db",
+            "dependencies",
+            "memory_manager",  # Persistence
             "tools",
             "instructions",  # Functionality
             "session_id",

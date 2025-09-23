@@ -106,8 +106,9 @@ class AgnoAgentProxy:
             "add_references",
             "retriever",
             "references_format",
-            # Storage
-            "storage",
+            # Database
+            "db",
+            "dependencies",
             "extra_data",
             # Tools
             "tools",
@@ -193,7 +194,7 @@ class AgnoAgentProxy:
             "knowledge_filter": self._handle_knowledge_filter,
             # Model configuration with thinking support
             "model": self._handle_model_config,
-            # Storage configuration (now uses shared utilities)
+            # Database configuration (now uses shared utilities)
             "storage": self._handle_storage_config,
             # Memory configuration
             "memory": self._handle_memory_config,
@@ -308,9 +309,22 @@ class AgnoAgentProxy:
         for key, value in config.items():
             if key in self._custom_params:
                 # Use custom handler
-                handler_result = self._custom_params[key](
-                    value, config, component_id, db_url
-                )
+                handler = self._custom_params[key]
+                try:
+                    handler_result = handler(
+                        value,
+                        config,
+                        component_id,
+                        db_url,
+                        processed=processed,
+                    )
+                except TypeError as exc:
+                    if "processed" in str(exc):
+                        handler_result = handler(
+                            value, config, component_id, db_url
+                        )
+                    else:
+                        raise
                 if isinstance(handler_result, dict):
                     processed.update(handler_result)
                 # Special case: knowledge_filter handler returns knowledge base object
@@ -370,6 +384,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ):
         """Handle model configuration with dynamic parameter filtering.
         
@@ -440,14 +455,16 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ):
         """Handle storage configuration using shared utilities."""
-        return create_dynamic_storage(
+        resources = create_dynamic_storage(
             storage_config=storage_config,
             component_id=component_id,
             component_mode="agent",
             db_url=db_url,
         )
+        return resources
 
     def _handle_memory_config(
         self,
@@ -455,6 +472,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ) -> dict[str, Any]:
         """Handle memory configuration by creating Memory object and flattening memory parameters."""
         if not isinstance(memory_config, dict):
@@ -463,25 +481,39 @@ class AgnoAgentProxy:
             )
             return {}
 
-        result = {}
-        
-        # Create Memory object if user memories are enabled
-        if memory_config.get("enable_user_memories", False):
+        result: dict[str, Any] = {}
+
+        enable_memories = memory_config.get("enable_user_memories") or memory_config.get(
+            "enable_agentic_memory"
+        )
+        if enable_memories:
             try:
                 from lib.memory.memory_factory import create_agent_memory
-                memory_obj = create_agent_memory(component_id, db_url)
-                result["memory"] = memory_obj
-                logger.debug(f"🤖 Created Memory object for {component_id}")
-            except Exception as e:
-                logger.error(f"🤖 Failed to create Memory object for {component_id}: {e}")
-        
-        # Flatten memory parameters to agent level
-        for key, value in memory_config.items():
-            if key in self._supported_params:
-                result[key] = value
-            else:
-                logger.debug(f"🤖 Unknown memory parameter '{key}' for {component_id}")
-        
+
+                processed = kwargs.get("processed", {}) if kwargs else {}
+                shared_db = processed.get("db")
+                memory_manager = create_agent_memory(
+                    component_id,
+                    db_url,
+                    db=shared_db,
+                )
+                result["memory_manager"] = memory_manager
+                logger.debug(f"🤖 Created MemoryManager for {component_id}")
+            except Exception as exc:
+                logger.error(
+                    f"🤖 Failed to create MemoryManager for {component_id}: {exc}"
+                )
+
+        if enable_memories:
+            # Flatten memory parameters to agent level
+            for key, value in memory_config.items():
+                if key in self._supported_params:
+                    result[key] = value
+                else:
+                    logger.debug(
+                        f"🤖 Unknown memory parameter '{key}' for {component_id}"
+                    )
+
         logger.debug(f"🤖 Processed {len(result)} memory parameters for {component_id}")
         return result
 
@@ -491,6 +523,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ) -> dict[str, Any]:
         """Handle agent metadata section."""
         return {
@@ -505,6 +538,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ) -> object | None:
         """Handle custom knowledge filter system."""
         try:
@@ -546,7 +580,7 @@ class AgnoAgentProxy:
                 # Use shared knowledge base from factory to avoid duplicate CSV processing
                 try:
                     from lib.knowledge.knowledge_factory import get_knowledge_base
-
+                
                     knowledge_base = get_knowledge_base(
                         config=global_knowledge,
                         db_url=db_url,
@@ -571,6 +605,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ) -> None:
         """Handle custom parameters that should be stored in metadata only."""
         # These parameters are not passed to Agent constructor
@@ -583,6 +618,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ) -> dict[str, Any]:
         """Handle display section by flattening display parameters to root level."""
         if not isinstance(display_config, dict):
@@ -610,6 +646,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ) -> dict[str, Any]:
         """Handle context section by flattening context parameters to root level."""
         if not isinstance(context_config, dict):
@@ -637,6 +674,7 @@ class AgnoAgentProxy:
         config: dict[str, Any],
         component_id: str,
         db_url: str | None,
+        **kwargs,
     ) -> dict[str, Any]:
         """
         Handle MCP servers configuration with granular tool control.

@@ -74,7 +74,8 @@ class AgnoWorkflowProxy:
             "workflow_id",
             "name",
             "description",
-            "storage",
+            "db",
+            "dependencies",
             "steps",
             # Session Settings
             "session_id",
@@ -99,7 +100,7 @@ class AgnoWorkflowProxy:
             Dictionary mapping custom parameter names to handler functions
         """
         return {
-            # Storage configuration (now uses shared utilities)
+            # Database configuration (now uses shared utilities)
             "storage": self._handle_storage_config,
             # Workflow metadata
             "workflow": self._handle_workflow_metadata,
@@ -185,9 +186,23 @@ class AgnoWorkflowProxy:
         for key, value in config.items():
             if key in self._custom_params:
                 # Use custom handler
-                handler_result = self._custom_params[key](
-                    value, config, component_id, db_url, **kwargs
-                )
+                handler = self._custom_params[key]
+                try:
+                    handler_result = handler(
+                        value,
+                        config,
+                        component_id,
+                        db_url,
+                        processed=processed,
+                        **kwargs,
+                    )
+                except TypeError as exc:
+                    if "processed" in str(exc):
+                        handler_result = handler(
+                            value, config, component_id, db_url, **kwargs
+                        )
+                    else:
+                        raise
                 if isinstance(handler_result, dict):
                     processed.update(handler_result)
                 else:
@@ -212,12 +227,13 @@ class AgnoWorkflowProxy:
         **kwargs,
     ):
         """Handle storage configuration using shared utilities."""
-        return create_dynamic_storage(
+        resources = create_dynamic_storage(
             storage_config=storage_config,
             component_id=component_id,
             component_mode="workflow",
             db_url=db_url,
         )
+        return resources
 
     def _handle_workflow_metadata(
         self,

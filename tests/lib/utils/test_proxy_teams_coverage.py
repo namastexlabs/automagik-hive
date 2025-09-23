@@ -454,11 +454,11 @@ class TestAgnoTeamProxyParameterDiscoveryEdgeCases:
             # Instructions and context
             "description", "instructions", "context", "additional_context",
             # Knowledge and memory
-            "knowledge", "memory", "enable_agentic_memory", "enable_user_memories",
+            "knowledge", "memory_manager", "enable_agentic_memory", "enable_user_memories",
             # Tools and integrations
             "tools", "mcp_servers", "show_tool_calls",
             # Storage and persistence
-            "storage", "extra_data",
+            "db", "dependencies", "extra_data",
             # Streaming and events
             "stream", "stream_intermediate_steps", "store_events",
             # Debug and monitoring
@@ -558,7 +558,7 @@ class TestAgnoTeamProxyConfigurationValidation:
         # Mock specific supported and custom parameters for predictable testing
         proxy._supported_params = {
             "name", "mode", "description", "instructions", "members",
-            "session_id", "user_id", "model", "storage", "memory"
+            "session_id", "user_id", "model", "db", "dependencies", "memory_manager"
         }
         proxy._custom_params = {
             "model", "storage", "memory", "team", "members", 
@@ -591,17 +591,28 @@ class TestAgnoTeamProxyConfigurationValidation:
         
         # Should correctly categorize parameters
         expected_supported = {
-            "name", "mode", "description", "instructions", 
-            "session_id", "user_id", "model", "storage", "memory"
+            "name",
+            "mode",
+            "description",
+            "instructions",
+            "session_id",
+            "user_id",
+            "model",
         }
-        expected_custom = {"team", "suggested_actions", "escalation_triggers"}
+        expected_custom = {
+            "storage",
+            "memory",
+            "team",
+            "suggested_actions",
+            "escalation_triggers",
+        }
         expected_unknown = {"unknown_param1", "unknown_param2", "mystery_setting"}
         
         assert set(result["supported_agno_params"]) == expected_supported
         assert set(result["custom_params"]) == expected_custom
         assert set(result["unknown_params"]) == expected_unknown
-        assert result["total_agno_params_available"] == 10
-        assert result["coverage_percentage"] == 90.0  # 9 out of 10 supported params used
+        assert result["total_agno_params_available"] == 11
+        assert result["coverage_percentage"] == pytest.approx(63.64, rel=1e-2)
     
     def test_validate_config_edge_case_empty_handlers(self, proxy):
         """Test validation when custom handlers return empty results."""
@@ -653,7 +664,7 @@ class TestAgnoTeamProxyIntegrationScenarios:
         
         # Mock all external dependencies
         mock_agents = [MagicMock(), MagicMock()]
-        mock_storage = MagicMock()
+        mock_storage = {"db": MagicMock(name="db"), "dependencies": {}}
         mock_memory = MagicMock()
         mock_shell_tool = MagicMock()
         
@@ -687,16 +698,18 @@ class TestAgnoTeamProxyIntegrationScenarios:
             assert "name" in result  # team handler
             assert "id" in result  # model handler
             assert "members" in result  # members handler
-            assert "storage" in result  # storage handler  
-            assert "memory" in result  # memory handler
+            assert "db" in result  # storage handler  
+            assert "dependencies" in result
+            assert "memory_manager" in result  # memory handler
             assert "mcp_servers" in result  # mcp_servers handler
             assert "tools" in result  # tools handler
             
             # Verify specific handler results
             assert result["name"] == "Complex Team"
             assert result["members"] == mock_agents
-            assert result["storage"] == mock_storage
-            assert result["memory"] == mock_memory
+            assert result["db"] == mock_storage["db"]
+            assert result["dependencies"] == mock_storage["dependencies"]
+            assert result["memory_manager"] == mock_memory
             assert result["mcp_servers"] == ["automagik-forge", "postgres"]
             assert len(result["tools"]) == 2  # ShellTools + custom_tool_object (UnknownTool filtered)
             
