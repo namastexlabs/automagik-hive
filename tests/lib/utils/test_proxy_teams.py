@@ -543,7 +543,12 @@ class TestAgnoTeamProxyParameterHandlers:
 
     def test_handle_memory_config_enabled(self, proxy):
         """Test memory configuration when enabled."""
-        memory_config = {"enable_user_memories": True}
+        memory_config = {
+            "enable_user_memories": True,
+            "add_history_to_messages": True,
+            "add_memory_references": True,
+            "add_session_summary_references": True,
+        }
 
         with patch("lib.memory.memory_factory.create_team_memory") as mock_create:
             mock_memory_manager = MagicMock()
@@ -559,6 +564,12 @@ class TestAgnoTeamProxyParameterHandlers:
                 "db_url",
                 db=None,
             )
+            assert result["add_history_to_context"] is True
+            assert result["add_memories_to_context"] is True
+            assert result["add_session_summary_to_context"] is True
+            assert "add_history_to_messages" not in result
+            assert "add_memory_references" not in result
+            assert "add_session_summary_references" not in result
 
     def test_handle_memory_config_disabled(self, proxy):
         """Test memory configuration when disabled."""
@@ -1204,9 +1215,7 @@ class TestAgnoTeamProxyIntegration:
             patch(
                 "lib.utils.agno_storage_utils.create_dynamic_storage"
             ) as mock_create_storage,
-            patch(
-                "agno.storage.postgres.PostgresStorage"
-            ) as mock_postgres_storage,
+            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch("lib.utils.proxy_teams.logger") as mock_logger,
@@ -1283,9 +1292,7 @@ class TestAgnoTeamProxyIntegration:
             patch(
                 "lib.utils.agno_storage_utils.create_dynamic_storage"
             ) as mock_create_storage,
-            patch(
-                "agno.storage.postgres.PostgresStorage"
-            ) as mock_postgres_storage,
+            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
         ):

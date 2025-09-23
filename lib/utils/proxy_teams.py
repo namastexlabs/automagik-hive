@@ -35,6 +35,12 @@ class AgnoTeamProxy:
             f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters"
         )
 
+    _LEGACY_MEMORY_KEY_MAP = {
+        "add_history_to_messages": "add_history_to_context",
+        "add_memory_references": "add_memories_to_context",
+        "add_session_summary_references": "add_session_summary_to_context",
+    }
+
     def _discover_team_parameters(self) -> set[str]:
         """
         Dynamically discover all parameters supported by the Agno Team constructor.
@@ -131,11 +137,15 @@ class AgnoTeamProxy:
             "memory",
             "enable_agentic_memory",
             "enable_user_memories",
+            "memory_manager",
             "add_memory_references",
+            "add_memories_to_context",
             "enable_session_summaries",
             "add_session_summary_references",
+            "add_session_summary_to_context",
             "enable_team_history",
             "add_history_to_messages",
+            "add_history_to_context",
             "num_of_interactions_from_history",
             "num_history_runs",
             # Database
@@ -273,7 +283,7 @@ class AgnoTeamProxy:
         processed = {}
 
         # Process each configuration section
-        for key, value in config.items():
+        for key, value in list(config.items()):
             if key in self._custom_params:
                 # Use custom handler
                 if key == "members":
@@ -417,8 +427,23 @@ class AgnoTeamProxy:
 
         if enable_memories:
             for key, value in memory_config.items():
-                if key in self._supported_params:
-                    result[key] = value
+                target_key = self._LEGACY_MEMORY_KEY_MAP.get(key, key)
+                if target_key in self._supported_params:
+                    result[target_key] = value
+                    if target_key != key:
+                        logger.debug(
+                            "🤖 Mapped legacy memory parameter '%s' -> '%s' for team %s",
+                            key,
+                            target_key,
+                            component_id,
+                        )
+                else:
+                    logger.debug(
+                        "🤖 Unknown memory parameter '%s' (mapped to '%s') for team %s",
+                        key,
+                        target_key,
+                        component_id,
+                    )
 
         return result
 

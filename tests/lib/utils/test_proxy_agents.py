@@ -497,7 +497,12 @@ class TestCustomParameterHandlers:
         mock_memory_manager = MagicMock(name="memory_manager")
         mock_create_memory.return_value = mock_memory_manager
 
-        memory_config = {"enable_user_memories": True}
+        memory_config = {
+            "enable_user_memories": True,
+            "add_history_to_messages": True,
+            "add_memory_references": True,
+            "add_session_summary_references": True,
+        }
 
         result = proxy._handle_memory_config(
             memory_config, {}, "test-agent", "test://db"
@@ -509,6 +514,12 @@ class TestCustomParameterHandlers:
             db=None,
         )
         assert result["memory_manager"] is mock_memory_manager
+        assert result["add_history_to_context"] is True
+        assert result["add_memories_to_context"] is True
+        assert result["add_session_summary_to_context"] is True
+        assert "add_history_to_messages" not in result
+        assert "add_memory_references" not in result
+        assert "add_session_summary_references" not in result
 
     def test_handle_memory_config_disabled(self, proxy):
         """Test memory configuration handler when disabled."""

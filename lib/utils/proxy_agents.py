@@ -35,6 +35,12 @@ class AgnoAgentProxy:
             f"AgnoAgentProxy initialized with {len(self._supported_params)} Agno parameters"
         )
 
+    _LEGACY_MEMORY_KEY_MAP = {
+        "add_history_to_messages": "add_history_to_context",
+        "add_memory_references": "add_memories_to_context",
+        "add_session_summary_references": "add_session_summary_to_context",
+    }
+
     def _discover_agent_parameters(self) -> set[str]:
         """
         Dynamically discover all parameters supported by the Agno Agent constructor.
@@ -93,10 +99,13 @@ class AgnoAgentProxy:
             "enable_agentic_memory",
             "enable_user_memories",
             "add_memory_references",
+            "add_memories_to_context",
             "enable_session_summaries",
             "add_session_summary_references",
+            "add_session_summary_to_context",
             # History
             "add_history_to_messages",
+            "add_history_to_context",
             "num_history_responses",
             "num_history_runs",
             # Knowledge
@@ -505,13 +514,24 @@ class AgnoAgentProxy:
                 )
 
         if enable_memories:
-            # Flatten memory parameters to agent level
+            # Flatten memory parameters to agent level, translating legacy keys first
             for key, value in memory_config.items():
-                if key in self._supported_params:
-                    result[key] = value
+                target_key = self._LEGACY_MEMORY_KEY_MAP.get(key, key)
+                if target_key in self._supported_params:
+                    result[target_key] = value
+                    if target_key != key:
+                        logger.debug(
+                            "🤖 Mapped legacy memory parameter '%s' -> '%s' for %s",
+                            key,
+                            target_key,
+                            component_id,
+                        )
                 else:
                     logger.debug(
-                        f"🤖 Unknown memory parameter '{key}' for {component_id}"
+                        "🤖 Unknown memory parameter '%s' (mapped to '%s') for %s",
+                        key,
+                        target_key,
+                        component_id,
                     )
 
         logger.debug(f"🤖 Processed {len(result)} memory parameters for {component_id}")
