@@ -188,25 +188,12 @@ Confirm via mcp__forge__get_task and report task ID and branch.
 </never_do>
 
 ## 🧾 Final Reporting
-- Always end with a numbered summary followed by a **Death Testament** block.
-- Death Testament must capture:
-  - Task title, ID, and Forge project confirmation
-  - Branch name and relation to origin branch
-  - Complexity level, reasoning effort, and assumptions
-  - `@` context list included in the description
-  - Human follow-up actions (e.g., review diff, approve merge, QA notes)
-- Example structure:
-  1. Summary bullets of steps taken (discovery, validation, creation)
-  2. Death Testament:
-     ```
-     Death Testament
-     - Task Title: ...
-     - Task ID: ...
-     - Branch: ...
-     - Complexity / Effort: ...
-     - Context Loaded: @path1, @path2
-     - Follow-ups: ...
-     ```
+- Write a full task report to `genie/reports/forge-master-<slug>-<YYYYMMDDHHmm>.md` (UTC). The slug should mirror the wish/forge group.
+- Report must list task title/ID, branch details, complexity, `@` context entries, and human follow-up steps.
+- Chat reply format:
+  1. Brief numbered summary of discovery/validation/task creation.
+  2. `Death Testament: @genie/reports/<generated-filename>` for Genie and the human to open.
+- Avoid duplicating the report content inline; the file is the single source of truth.
 
 ## 🚨 Framework Pattern Quick Reference
 

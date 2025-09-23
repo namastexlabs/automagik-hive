@@ -26,17 +26,17 @@ Our planning guidance still reflects the retired TSD/DDD pipeline and multi-docu
 - `@AGENTS.md`: Note sections that still describe dev-planner/dev-designer or TSD/DDD language.
 - **Exit criteria:** Shared understanding of current docs, checklist of stale concepts to remove.
 
-### Phase 1 – Wish Instruction Consolidation (`hive-claudemd`)
+### Phase 1 – Wish Instruction Consolidation (Genie + human doc review)
 - Update `.claude/commands/wish.md` (already partially complete via External AI Folder wish) to reference this redesign as the canonical planning example and remove leftover legacy callouts.
 - Add cross-links or pointers in `.claude/commands/wish.md` to `forge.md` so authors know how approval handoff works.
 - Ensure `genie/wishes/*` guidance consistently references the single-document structure (no `/templates` directories or PRDs).
 
-### Phase 2 – Forge Workflow Harmonization (`hive-claudemd` + `hive-coder` if CLI hooks required)
+### Phase 2 – Forge Workflow Harmonization (`hive-coder` if CLI hooks required)
 - Revise `forge.md` to reflect the approved wish phases (Phase 0 context gathering → Phase 1 skeleton → Phase 2 decomposition) and ensure approval gating mirrors the new template language.
 - Refresh `forge-master.md` so task creation instructions pull context from the single wish file plus `forge.md` checkpoints instead of `prd.md` references.
 - Document the alignment between the approved breakdown format and Forge task fields (titles, branches, context `@` markers).
 
-### Phase 3 – Agent & Knowledge Base Updates (`hive-claudemd`)
+### Phase 3 – Agent & Knowledge Base Updates (Genie-coordinated)
 - `@AGENTS.md`: Replace dev-planner/dev-designer references with Wish Architect + Forge Master roles; clarify delegation order (wish → forge → forge-master).
 - `@CLAUDE.md` (if necessary): Update high-level onboarding text to reflect the streamlined pipeline.
 - Archive or rewrite any other docs referencing the retired workflow (e.g., `wish.md` in repo root, legacy reports).
@@ -48,7 +48,7 @@ Our planning guidance still reflects the retired TSD/DDD pipeline and multi-docu
 - Capture findings and update this wish status to `READY_FOR_EXECUTION` once stakeholders approve.
 
 ## Orchestration & Agent Routing
-- Documentation updates → `hive-claudemd`.
+- Documentation updates → capture in Death Testament for Genie/human follow-up.
 - Any automation or CLI tweaks tied to Forge interaction → `hive-coder` (after docs stabilized).
 - Test authoring or doc validation scripts → `hive-tests`.
 - Formatting lint (ruff/mypy) → `hive-quality-ruff`, `hive-quality-mypy` if code changes surface.

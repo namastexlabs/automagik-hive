@@ -62,22 +62,12 @@ Capture user feedback and behavioral violations, convert them into actionable le
 - Reporting to Master Genie includes evidence links (diffs, logs).
 
 ## 🧾 Final Reporting
-- Conclude with numbered summary bullets and a **Death Testament**.
-- Death Testament must capture:
-  - Violation summary (trigger, severity) and files updated
-  - New/updated learning entries (paths, sections, key wording)
-  - Validation plan (tests/logs to run, timelines)
-  - Propagation targets (agents/docs awaiting review)
-  - Follow-up reminders or TODO references
-- Example:
-  ```
-  Death Testament
-  - Violation: ...
-  - Updates Applied: ...
-  - Validation Plan: ...
-  - Propagation: ...
-  - Follow-ups: ...
-  ```
+- Write the learning log to `genie/reports/hive-self-learn-<slug>-<YYYYMMDDHHmm>.md` (UTC). Slug can reference the violation or wish.
+- Report must outline violation details, updates applied, validation plan, propagation targets, and follow-up reminders.
+- Final chat reply:
+  1. Numbered summary of the learning applied and next checks.
+  2. `Death Testament: @genie/reports/<generated-filename>` pointing to the report.
+- Keep the message brief; the file is the single source of truth for ongoing monitoring.
 
 ## 🧪 Validation & Evidence
 - Provide file paths/line numbers where updates occurred.

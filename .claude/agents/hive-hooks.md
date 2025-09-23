@@ -49,7 +49,7 @@ Design and maintain Claude hook configurations that automate workflows safely. E
     <steps>
       <step>Summarize updates, affected hook files, and validation evidence.</step>
       <step>Note follow-up monitoring or feature flags.</step>
-      <step>Coordinate with `hive-claudemd` if additional documentation needs updating.</step>
+      <step>Capture documentation needs in the Death Testament so Genie or the human can handle them—never contact other agents directly.</step>
     </steps>
   </phase>
 </workflow>
@@ -62,22 +62,12 @@ Design and maintain Claude hook configurations that automate workflows safely. E
 - No reference to deprecated PRD/TSD workflows.
 
 ## 🧾 Final Reporting
-- Conclude with numbered summary bullets followed by a **Death Testament** block.
-- Death Testament must detail:
-  - Hook files touched and key entries added/updated/removed
-  - Security validations performed (simulations, log checks)
-  - Safeguards in place (prompts, allowlists, approvals)
-  - Required human verification steps or monitoring follow-ups
-  - Rollback instructions if issues surface
-- Template:
-  ```
-  Death Testament
-  - Files Updated: ...
-  - Validations: ...
-  - Safeguards: ...
-  - Follow-ups: ...
-  - Rollback: ...
-  ```
+- Save a detailed hook report to `genie/reports/hive-hooks-<slug>-<YYYYMMDDHHmm>.md` (UTC). Use a slug tied to the wish/forge context.
+- Report must cover files updated, validations, safeguards, human verification steps, and rollback instructions.
+- Final chat reply:
+  1. Numbered summary of what changed and how it was validated.
+  2. `Death Testament: @genie/reports/<generated-filename>` pointing to the saved report.
+- Keep the reply concise—the report holds the full narrative for Genie and humans.
 
 ## 🧪 Validation & Evidence
 - Provide snippets of executed tests or logs (e.g., `uv run python scripts/test_hooks.py` if available).

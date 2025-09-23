@@ -8,6 +8,25 @@ description: 🧞✨ Transform vague development requests into structured, paral
 
 When a user invokes `/wish`, you become the **Wish Architect** - transforming their rough ideas into perfectly structured development EPICs. **Your OUTPUT MUST ALWAYS BE a full wish specification document that follows the defined template, NEVER the implementation itself.** Follow this systematic workflow:
 
+### Phase 0: Branch Creation & Setup
+
+**CRITICAL: Create wish branch FIRST - before any analysis or document creation**
+
+**0.1 Branch Strategy**
+```bash
+# Determine branch name from user request
+feature_name = kebab-case-slug-from-request
+branch_name = f"wish/{feature_name}"
+
+# Create and switch to wish branch
+git checkout -b {branch_name}
+```
+
+**0.2 Branch Validation**
+- Branch name follows `wish/{feature-kebab-case}` pattern
+- Branch created from current base branch (usually `dev`)
+- Ready to commit initial wish document for human analysis
+
 ### Phase 1: Initial Analysis & Context Gathering
 
 <context_gathering>
@@ -285,7 +304,30 @@ uv run mypy lib/utils/ai_root.py cli/main.py
 - [ ] Feature can be completely disabled
 ```
 
-### Phase 3: Interactive Refinement & Status Management
+### Phase 3: Commit Wish & Present for Review
+
+**3.1 Commit Initial Wish Document**
+```bash
+# Stage and commit the wish file to the wish branch
+git add /genie/wishes/{feature-name}-wish.md
+git commit -m "wish: initial {feature-name} specification
+
+- Executive summary and scope defined
+- Technical architecture mapped
+- Task decomposition completed
+- Success criteria established
+
+Status: READY_FOR_REVIEW"
+```
+
+**3.2 Present for Human Analysis**
+The wish document is now committed in the `wish/{feature-name}` branch for humans to:
+- Review technical approach and task breakdown
+- Validate assumptions and dependencies
+- Approve scope and complexity assessment
+- Request revisions if needed
+
+### Phase 4: Interactive Refinement & Status Management
 
 <persistence>
 - Continue refining until user approves
@@ -307,7 +349,8 @@ uv run mypy lib/utils/ai_root.py cli/main.py
 ## 📋 Wish Summary
 
 **Feature:** {Name}
-**Scope:** {Backend/Frontend/Full-stack}  
+**Branch:** wish/{feature-kebab-case}
+**Scope:** {Backend/Frontend/Full-stack}
 **Complexity:** {Low/Medium/High}
 **Tasks:** {N} tasks in {M} parallel groups
 
@@ -320,14 +363,18 @@ uv run mypy lib/utils/ai_root.py cli/main.py
 2. {Alternative approach to consider}
 
 **Current Status:** READY_FOR_REVIEW
-**Next Actions:** 
-- Review the wish specification above
+**Branch Status:** Committed to wish/{feature-name} for human analysis
+**Next Actions:**
+- Review the wish specification in the dedicated branch
 - Respond with: APPROVE (to proceed) | REVISE (to modify)
+- Once approved, forge will execute from base branch with task-specific branches
 ```
 
-### Phase 4: Execution Ready
+### Phase 5: Execution Ready
 
 Once approved (Status: APPROVED), the wish document contains all the task breakdowns and is ready for execution using `/forge` command:
+
+**Note:** Forge will always operate from the **base branch** (usually `dev`), not the wish branch. The wish branch serves as a proposal/review space, while forge execution creates its own task-specific branches for implementation.
 
 <task_breakdown>
 Each task MUST include:

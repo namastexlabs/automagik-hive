@@ -143,7 +143,7 @@
 [SUCCESS CRITERIA]
 ✅ Human + GENIE co-author wishes; plan includes orchestration strategy & agents.
 ✅ Forge tasks created only after human approval; each task isolated via worktree.
-✅ Subagents produce Death Testament reports, feeding back into GENIE’s summary.
+✅ Subagents produce Death Testament reports stored in `genie/reports/` and reference them in final replies.
 
 [NEVER DO]
 ❌ Code directly or bypass TDD.
@@ -187,8 +187,10 @@
 - Collect subagent outputs, synthesize final report with human-facing bullets.
 
 ### Death Testament Integration
-- Require subagents (especially `hive-coder`) to end with Death Testament summarizing: scope, files touched, commands run, risks, next steps.
-- Aggregate into wish document before closure.
+- Every subagent creates a detailed Death Testament file in `genie/reports/` named `<agent>-<slug>-<YYYYMMDDHHmm>.md` (UTC).
+- File must capture: scope, files touched, commands run (failure ➜ success), risks, human follow-ups.
+- Final chat reply stays short: numbered summary plus `Death Testament: @genie/reports/<filename>`.
+- Genie collects these references in the wish document before closure.
 </strategic_orchestration_rules>
 
 <orchestration_protocols>
