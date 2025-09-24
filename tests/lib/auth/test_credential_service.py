@@ -145,30 +145,21 @@ class TestCredentialGeneration:
         # Should be URL-safe base64 encoded
         assert len(token) >= 20  # URL-safe base64 can be shorter
         
-    def test_generate_agent_credentials_with_main_credentials(self, tmp_path):
-        """Test agent credential generation when main credentials exist."""
-        env_file = tmp_path / ".env"
-        env_file.write_text("HIVE_DATABASE_URL=postgresql+psycopg://user123:pass456@localhost:5532/hive\n")
-        
-        service = CredentialService(project_root=tmp_path)
-        
-        agent_creds = service.generate_agent_credentials()
-        
-        assert agent_creds["user"] == "user123"
-        assert agent_creds["password"] == "pass456"
-        assert agent_creds["database"] == "hive"
-        assert agent_creds["port"] == "5532"
-        
-    def test_generate_agent_credentials_without_main_credentials(self, tmp_path):
-        """Test agent credential generation when main credentials don't exist."""
-        service = CredentialService(project_root=tmp_path)
-        
-        agent_creds = service.generate_agent_credentials()
-        
-        # Should generate new credentials
-        assert len(agent_creds["user"]) >= 12
-        assert len(agent_creds["password"]) >= 12
-        assert agent_creds["database"] == "hive"
+    def test_normalize_master_credentials_payload_accepts_legacy_keys(self):
+        """Legacy installer payloads should normalize into master credential schema."""
+        service = CredentialService()
+
+        legacy_payload = {
+            "HIVE_POSTGRES_USER": "legacy_user",
+            "HIVE_POSTGRES_PASSWORD": "legacy_pass",
+            "HIVE_API_KEY": "hive_workspace_normalizedtoken",
+        }
+
+        normalized = service._normalize_master_credentials_payload(legacy_payload)
+
+        assert normalized["postgres_user"] == "legacy_user"
+        assert normalized["postgres_password"] == "legacy_pass"
+        assert normalized["api_key_base"] == "workspace_normalizedtoken"
 
 
 class TestCredentialExtraction:
@@ -544,69 +535,50 @@ HIVE_API_PORT=8888
         assert base_ports["db"] == 5532  # Default
         assert base_ports["api"] == 8886  # Default
         
-    def test_calculate_ports_workspace_mode(self):
-        """Test port calculation for workspace mode (no prefix)."""
-        service = CredentialService()
-        base_ports = {"db": 5532, "api": 8886}
-        
-        calculated = service.calculate_ports("workspace", base_ports)
-        
-        assert calculated["db"] == 5532  # No change
-        assert calculated["api"] == 8886  # No change
-        
-    def test_calculate_ports_agent_mode(self):
-        """Test port calculation for agent mode (prefix 3)."""
-        service = CredentialService()
-        base_ports = {"db": 5532, "api": 8886}
-        
-        calculated = service.calculate_ports("agent", base_ports)
-        
-        assert calculated["db"] == 35532  # Prefixed with 3
-        assert calculated["api"] == 38886  # Prefixed with 3
-        
-    def test_calculate_ports_genie_mode(self):
-        """Test port calculation for genie mode (prefix 4)."""
-        service = CredentialService()
-        base_ports = {"db": 5532, "api": 8886}
-        
-        calculated = service.calculate_ports("genie", base_ports)
-        
-        assert calculated["db"] == 45532  # Prefixed with 4: "4" + "5532"
-        assert calculated["api"] == 48886  # Prefixed with 4: "4" + "8886"
-        
-    def test_calculate_ports_invalid_mode(self):
-        """Test port calculation with invalid mode raises error."""
-        service = CredentialService()
-        base_ports = {"db": 5532, "api": 8886}
-        
-        with pytest.raises(ValueError, match="Unknown mode: invalid"):
-            service.calculate_ports("invalid", base_ports)
-            
-    def test_get_deployment_ports_all_modes(self):
-        """Test getting deployment ports for all modes."""
-        service = CredentialService()
-        
-        deployment_ports = service.get_deployment_ports()
-        
-        assert "workspace" in deployment_ports
-        assert "agent" in deployment_ports
-        assert "genie" in deployment_ports
-        
-        # Check workspace (no prefix)
-        assert deployment_ports["workspace"]["db"] == 5532
-        assert deployment_ports["workspace"]["api"] == 8886
-        
-        # Check agent (prefix 3)
-        assert deployment_ports["agent"]["db"] == 35532
-        assert deployment_ports["agent"]["api"] == 38886
-        
-        # Check genie (prefix 4)
-        assert deployment_ports["genie"]["db"] == 45532
-        assert deployment_ports["genie"]["api"] == 48886
+    def test_master_env_alias_created_during_save(self, tmp_path):
+        """Master env alias should mirror the primary .env file after save."""
+        service = CredentialService(project_root=tmp_path)
+
+        payload = {
+            "postgres_user": "testaliasuser",
+            "postgres_password": "testaliaspass",
+            "api_key_base": "aliasbase",
+        }
+
+        service._save_master_credentials(payload)
+
+        primary_env = tmp_path / ".env"
+        alias_env = tmp_path / ".env.master"
+
+        assert primary_env.exists()
+        assert alias_env.exists(), "Expected .env.master alias to exist after save"
+        assert alias_env.read_text() == primary_env.read_text()
+
+    def test_base_port_fallback_prefers_alias_over_primary_env(self, tmp_path):
+        """Alias takes precedence; fallback should ignore stale primary env overrides."""
+        master_alias = tmp_path / ".env.master"
+        # Alias present but with missing port values -> should trigger defaults
+        master_alias.write_text("""
+HIVE_DATABASE_URL=postgresql+psycopg://alias_user:alias_pass@localhost/hive
+""".strip())
+
+        primary_env = tmp_path / ".env"
+        primary_env.write_text("""
+HIVE_DATABASE_URL=postgresql+psycopg://legacy_user:legacy_pass@localhost:6123/hive
+HIVE_API_PORT=9777
+""".strip())
+
+        service = CredentialService(project_root=tmp_path)
+
+        base_ports = service.extract_base_ports_from_env()
+
+        assert service.master_env_file == master_alias
+        assert base_ports["db"] == CredentialService.DEFAULT_BASE_PORTS["db"]
+        assert base_ports["api"] == CredentialService.DEFAULT_BASE_PORTS["api"]
 
 
-class TestMasterCredentialsAndMultiMode:
-    """Test master credential generation and multi-mode installation."""
+class TestMasterCredentialFlow:
+    """Test master credential generation and simplified installation."""
     
     def test_generate_master_credentials(self):
         """Test generation of master credentials."""
@@ -640,23 +612,18 @@ class TestMasterCredentialsAndMultiMode:
         assert mode_creds["schema"] == "public"
         assert "options=-csearch_path" not in mode_creds["database_url"]  # No schema override
         
-    def test_derive_mode_credentials_agent(self):
-        """Test deriving agent mode credentials."""
+    def test_derive_mode_credentials_agent_raises(self):
+        """Non-workspace modes should raise until multi-mode support returns."""
         service = CredentialService()
-        
+
         master_creds = {
             "postgres_user": "testuser123",
-            "postgres_password": "testpass456", 
-            "api_key_base": "testapikey789"
+            "postgres_password": "testpass456",
+            "api_key_base": "testapikey789",
         }
-        
-        mode_creds = service.derive_mode_credentials(master_creds, "agent")
-        
-        assert mode_creds["postgres_user"] == "testuser123"
-        assert mode_creds["postgres_password"] == "testpass456"
-        assert mode_creds["api_key"] == "hive_agent_testapikey789"
-        assert mode_creds["schema"] == "agent"
-        assert "options=-csearch_path=agent" in mode_creds["database_url"]  # Schema override
+
+        with pytest.raises(ValueError, match="Unknown mode: agent"):
+            service.derive_mode_credentials(master_creds, "agent")
         
     def test_derive_mode_credentials_invalid_mode(self):
         """Test deriving credentials for invalid mode."""
@@ -666,34 +633,18 @@ class TestMasterCredentialsAndMultiMode:
         with pytest.raises(ValueError, match="Unknown mode: invalid"):
             service.derive_mode_credentials(master_creds, "invalid")
             
-    def test_install_all_modes_default(self, tmp_path):
-        """Test installing credentials for all modes by default."""
+    def test_install_all_modes_returns_workspace_only(self, tmp_path):
+        """Installation should return a workspace entry for backward compatibility."""
         service = CredentialService(project_root=tmp_path)
-        
+
         result = service.install_all_modes()
-        
-        assert "workspace" in result
-        assert "agent" in result 
-        assert "genie" in result
-        
-        # Check that different API keys are generated for each mode
-        workspace_key = result["workspace"]["api_key"]
-        agent_key = result["agent"]["api_key"]
-        genie_key = result["genie"]["api_key"]
-        
-        assert workspace_key.startswith("hive_workspace_")
-        assert agent_key.startswith("hive_agent_")
-        assert genie_key.startswith("hive_genie_")
-        
-    def test_install_all_modes_specific_modes(self, tmp_path):
-        """Test installing credentials for specific modes only."""
-        service = CredentialService(project_root=tmp_path)
-        
-        result = service.install_all_modes(modes=["agent", "workspace"])
-        
-        assert "workspace" in result
-        assert "agent" in result
-        assert "genie" not in result
+
+        assert set(result.keys()) == {"workspace"}
+
+        workspace_creds = result["workspace"]
+        assert workspace_creds["postgres_user"]
+        assert workspace_creds["postgres_password"]
+        assert workspace_creds["api_key"].startswith("hive_")
 
 
 class TestErrorHandlingAndEdgeCases:
