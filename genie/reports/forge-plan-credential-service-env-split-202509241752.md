@@ -48,3 +48,4 @@
 - 2025-09-24T17:55Z – Created forge task for env-manager-implementation (agent: hive-coder) → Task `c3a72043-c24a-42cf-ade8-0a29dfc68ab4`, branch `forge/credential-service-env-split/env-manager-implementation`
 - 2025-09-24T17:55Z – Created forge task for env-manager-tests (agent: hive-tests) → Task `10027d2f-63dc-4204-9412-2ec356522fe0`, branch `forge/credential-service-env-split/env-manager-tests`
 - 2025-09-24T17:55Z – Created forge task for env-manager-docs (agent: hive-coder) → Task `46ef53f1-7318-44d9-9765-984e6eeab53c`, branch `forge/credential-service-env-split/env-manager-docs`
+ - 2025-09-24T19:11Z – Env manager tests completed. Death Testament: @genie/reports/hive-tests-env-manager-tests-202509241911.md
