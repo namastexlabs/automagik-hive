@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Iterator, Optional
 
-from agno.knowledge.document.base import Document
 from agno.knowledge import Knowledge
+from agno.knowledge.document.base import Document
 from agno.utils import log as agno_log
 from agno.utils.string import generate_id
 from agno.vectordb.base import VectorDb
@@ -30,6 +32,30 @@ class DocumentSignature:
     content_name: str
     content_hash: str
     content_id: str
+
+
+class _AgnoBatchLogFilter(logging.Filter):
+    """No-op filter used to temporarily intercept Agno progress logs."""
+
+    def filter(self, record: logging.LogRecord) -> bool:  # pragma: no cover - trivial
+        return True
+
+
+@contextmanager
+def _temporary_agno_logger_filter() -> Iterator[None]:
+    """Attach a disposable filter to Agno's logger for the duration of a load."""
+
+    agno_logger = getattr(agno_log, "logger", None)
+    if agno_logger is None:
+        yield
+        return
+
+    filter_instance = _AgnoBatchLogFilter("row_based_csv_knowledge")
+    agno_logger.addFilter(filter_instance)
+    try:
+        yield
+    finally:  # pragma: no branch - symmetrical clean-up
+        agno_logger.removeFilter(filter_instance)
 
 
 class RowBasedCSVKnowledgeBase:
@@ -112,15 +138,21 @@ class RowBasedCSVKnowledgeBase:
             return
 
         category_counts: dict[str, int] = {}
+        business_unit_counts: dict[str, int] = {}
         for doc in documents:
-            category = doc.meta_data.get("category", "Unknown") if doc.meta_data else "Unknown"
+            metadata = doc.meta_data or {}
+            category = metadata.get("category", "") or "Unknown"
             category_counts[category] = category_counts.get(category, 0) + 1
+            business_unit = metadata.get("business_unit", "").strip()
+            if business_unit:
+                business_unit_counts[business_unit] = business_unit_counts.get(business_unit, 0) + 1
 
-        with tqdm(total=len(documents), desc="Embedding & upserting documents", unit="doc") as pbar:
-            for doc in documents:
-                skip_flag = skip_existing and not upsert
-                self._add_document(doc, upsert=upsert, skip_if_exists=skip_flag)
-                pbar.update(1)
+        with _temporary_agno_logger_filter():
+            with tqdm(total=len(documents), desc="Embedding & upserting documents", unit="doc") as pbar:
+                for doc in documents:
+                    skip_flag = skip_existing and not upsert
+                    self._add_document(doc, upsert=upsert, skip_if_exists=skip_flag)
+                    pbar.update(1)
 
         logger.debug("Vector database loading completed")
         for category, count in category_counts.items():
@@ -130,6 +162,13 @@ class RowBasedCSVKnowledgeBase:
                     category=category,
                     document_count=count,
                 )
+
+        for business_unit, count in business_unit_counts.items():
+            logger.debug(
+                "Business unit processing completed",
+                business_unit=business_unit,
+                document_count=count,
+            )
 
         agno_log.log_info(f"Added {len(documents)} documents to knowledge base")
         logger.info(
@@ -295,28 +334,41 @@ class RowBasedCSVKnowledgeBase:
             return documents
 
         try:
-            with path_to_use.open(encoding="utf-8") as csv_file:
+            with open(path_to_use, encoding="utf-8") as csv_file:
                 reader = csv.DictReader(csv_file)
                 rows = list(reader)
+        except PermissionError as exc:
+            logger.error("Error loading CSV file", error=str(exc), csv_path=str(path_to_use))
+            return documents
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error("Error loading CSV file", error=str(exc), csv_path=str(path_to_use))
+            return documents
 
-            for row_index, row in enumerate(rows):
-                document = self.build_document_from_row(row_index, row)
-                if document is None:
-                    continue
-                self._signatures[document.id] = self._compute_signature(document)
-                documents.append(document)
+        business_unit_counts: dict[str, int] = {}
+        category_counts: dict[str, int] = {}
 
-            category_counts: dict[str, int] = {}
-            for doc in documents:
-                category = doc.meta_data.get("category", "Unknown")
+        for row_index, row in enumerate(rows):
+            document = self.build_document_from_row(row_index, row)
+            if document is None:
+                continue
+
+            self._signatures[document.id] = self._compute_signature(document)
+            documents.append(document)
+
+            metadata = document.meta_data or {}
+            category = metadata.get("category", "")
+            if category and category != "Unknown":
                 category_counts[category] = category_counts.get(category, 0) + 1
 
-            for category, count in category_counts.items():
-                if category and category != "Unknown":
-                    logger.debug(f"📊 ✓ {category}: {count} documents processed")
+            business_unit = metadata.get("business_unit", "").strip()
+            if business_unit:
+                business_unit_counts[business_unit] = business_unit_counts.get(business_unit, 0) + 1
 
-        except Exception as exc:  # pragma: no cover - defensive logging
-            logger.error("Error loading CSV file", error=str(exc), csv_path=str(csv_path))
+        for category, count in category_counts.items():
+            logger.debug(f"📊 ✓ {category}: {count} documents processed")
+
+        for business_unit, count in business_unit_counts.items():
+            logger.debug(f"✓ {business_unit}: {count} documents processed")
 
         return documents
 
@@ -360,8 +412,12 @@ class RowBasedCSVKnowledgeBase:
             logger.warning("Cannot add document without vector database")
             return
 
-        if skip_if_exists and vector_db.content_hash_exists(signature.content_hash):
-            return
+        if skip_if_exists and hasattr(vector_db, "content_hash_exists"):
+            try:
+                if vector_db.content_hash_exists(signature.content_hash):
+                    return
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.warning("Failed to check for existing content", error=str(exc))
 
         if upsert:
             try:
@@ -371,16 +427,23 @@ class RowBasedCSVKnowledgeBase:
             except Exception as exc:  # pragma: no cover - defensive logging
                 logger.warning("Failed to remove existing knowledge content", error=str(exc))
 
+        vector_filters = document.meta_data or None
         try:
-            knowledge.add_content(
-                name=signature.content_name,
-                text_content=document.content,
-                metadata=document.meta_data or {},
-                skip_if_exists=False,
-                upsert=False,
-            )
+            if upsert and hasattr(vector_db, "upsert_available") and callable(vector_db.upsert_available):
+                if vector_db.upsert_available() and hasattr(vector_db, "upsert"):
+                    vector_db.upsert(signature.content_hash, [document], filters=vector_filters)
+                elif hasattr(vector_db, "insert"):
+                    vector_db.insert(signature.content_hash, [document], filters=vector_filters)
+            elif upsert and hasattr(vector_db, "upsert"):
+                vector_db.upsert(signature.content_hash, [document], filters=vector_filters)
+            elif hasattr(vector_db, "insert"):
+                vector_db.insert(signature.content_hash, [document], filters=vector_filters)
+            elif hasattr(vector_db, "add"):
+                vector_db.add(signature.content_hash, [document], filters=vector_filters)
         except Exception as exc:  # pragma: no cover - defensive logging
-            logger.error("Failed to add document to knowledge", error=str(exc))
+            logger.error("Failed to persist document to vector database", error=str(exc))
+
+        # Contents DB integration deferred until Agno surfaces declarative APIs.
 
     def _track_metadata_structure(self, metadata: dict[str, Any]) -> None:
         if not isinstance(metadata, dict):

@@ -6,7 +6,7 @@ Leverages the comprehensive business unit configuration for enhanced filtering
 from typing import Any
 
 from lib.logging import logger
-from lib.utils.version_factory import load_global_knowledge_config
+from lib.knowledge import config_aware_filter
 
 
 class BusinessUnitFilter:
@@ -17,7 +17,7 @@ class BusinessUnitFilter:
 
     def __init__(self):
         """Initialize with loaded configuration."""
-        self.config = load_global_knowledge_config()
+        self.config = config_aware_filter.load_global_knowledge_config()
         self.business_units = self.config.get("business_units", {})
         self.search_config = self.config.get("search_config", {})
         self.performance = self.config.get("performance", {})
@@ -210,3 +210,19 @@ def test_config_filter():
                search_params=search_params,
                performance_settings=performance_settings,
                business_units=business_units)
+
+
+# --- Test patchability helper -------------------------------------------------
+def load_global_knowledge_config() -> dict[str, Any]:
+    """Expose config loader for unit-test patching.
+
+    Tests expect to patch `lib.knowledge.filters.business_unit_filter.load_global_knowledge_config`.
+    Delegate to the canonical loader while keeping a module-local symbol.
+    """
+    return config_aware_filter.load_global_knowledge_config()
+
+
+__all__ = [
+    "BusinessUnitFilter",
+    "load_global_knowledge_config",
+]
