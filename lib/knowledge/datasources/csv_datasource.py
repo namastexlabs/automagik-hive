@@ -29,7 +29,9 @@ class CSVDataSource:
             rows_with_hashes = []
 
             for idx, row in df.iterrows():
-                row_hash = self.hash_manager.hash_row(row)
+                row_hash = self.hash_manager.hash_row(idx, row)
+                if not row_hash:
+                    continue
                 rows_with_hashes.append(
                     {"index": idx, "hash": row_hash, "data": row.to_dict()}
                 )
@@ -49,69 +51,15 @@ class CSVDataSource:
         ensuring upserts match the main load semantics.
         """
         try:
-            # Extract needed fields
             idx = int(row_data.get("index", 0))
             data = row_data.get("data", {})
 
-            question = str(data.get("question", "")).strip()
-            problem = str(data.get("problem", "")).strip()
-            answer = str(data.get("answer", "")).strip()
-            solution = str(data.get("solution", "")).strip()
-            category = str(data.get("category", "")).strip()
-            tags = str(data.get("tags", "")).strip()
-            business_unit = str(data.get("business_unit", "")).strip()
-            typification = str(data.get("typification", "")).strip()
-
-            main_content = answer or solution
-            context = question or problem
-            if not main_content and not context:
+            document = kb.build_document_from_row(idx, data)
+            if document is None:
                 return False
 
-            content_parts = []
-            if context:
-                content_parts.append(f"**Q:** {question}" if question else f"**Problem:** {problem}")
-            if answer:
-                content_parts.append(f"**A:** {answer}")
-            elif solution:
-                content_parts.append(f"**Solution:** {solution}")
-            if typification:
-                content_parts.append(f"**Typification:** {typification}")
-            if business_unit:
-                content_parts.append(f"**Business Unit:** {business_unit}")
-            content = "\n\n".join(content_parts)
+            kb.add_document(document, upsert=True, skip_if_exists=False)
 
-            # Build metadata mirroring RowBasedCSVKnowledgeBase
-            meta_data = {
-                "row_index": idx + 1,
-                "source": "knowledge_rag_csv",
-                "category": category,
-                "tags": tags,
-                "has_question": bool(context),
-                "has_answer": bool(main_content),
-                "schema_type": "question_answer" if question else "problem_solution",
-                "business_unit": business_unit,
-                "typification": typification,
-                "has_business_unit": bool(business_unit),
-                "has_typification": bool(typification),
-                "has_problem": bool(context),
-                "has_solution": bool(main_content),
-            }
-
-            # Construct Document and upsert via vector DB
-            from agno.document.base import Document
-
-            doc = Document(
-                id=f"knowledge_row_{idx + 1}",
-                content=content,
-                meta_data=meta_data,
-            )
-
-            if kb.vector_db.upsert_available():
-                kb.vector_db.upsert(documents=[doc], filters=None, batch_size=1)
-            else:
-                kb.vector_db.insert(documents=[doc], filters=None, batch_size=1)
-
-            # Add the content hash to the database record with row index for precise match
             update_row_hash_func(data, row_data["hash"], idx)
 
             return True

@@ -54,7 +54,7 @@ def _load_config() -> dict[str, Any]:
 class _HashManager:
     """Computes stable content hashes for CSV rows based on configured columns."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config: dict[str, Any], knowledge_base: Any | None = None):
         kcfg = config.get("knowledge", {})
         inc = kcfg.get("incremental_loading", {})
         self.hash_columns: List[str] = inc.get(
@@ -66,20 +66,30 @@ class _HashManager:
                 "tags",
             ],
         )
+        self.knowledge_base = knowledge_base
 
-    def hash_row(self, row: Any) -> str:
+    def hash_row(self, row_index: int, row: Any) -> str:
+        """Return deterministic hash for a CSV row."""
+
+        if self.knowledge_base is not None:
+            row_dict = row.to_dict() if hasattr(row, "to_dict") else dict(row)
+            document = self.knowledge_base.build_document_from_row(row_index, row_dict)
+            if document is None:
+                return ""
+            signature = self.knowledge_base.get_signature(document)
+            return signature.content_hash
+
         parts: List[str] = []
         for col in self.hash_columns:
             try:
-                # pandas Series or dict compatible access
                 val = row[col] if hasattr(row, "__getitem__") else None
                 if val is None and isinstance(row, dict):
                     val = row.get(col)
             except Exception:
                 val = None
             parts.append(str(val or "").strip())
-        data = "\u241F".join(parts)  # unit separator to reduce collision risk
-        return hashlib.md5(data.encode("utf-8")).hexdigest()
+        data = "\u241F".join(parts)
+        return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
 class SmartIncrementalLoader:
@@ -104,9 +114,16 @@ class SmartIncrementalLoader:
         )
         from lib.knowledge.datasources.csv_datasource import CSVDataSource
 
-        self.repository = KnowledgeRepository(db_url=self.db_url)
-        self.hash_manager = _HashManager(self.config)
-        self.csv_datasource = CSVDataSource(Path(self.csv_path), self.hash_manager)
+        knowledge_instance = getattr(self.kb, "knowledge", None)
+        self.repository = KnowledgeRepository(
+            db_url=self.db_url,
+            knowledge=knowledge_instance,
+        )
+        self.hash_manager = _HashManager(self.config, knowledge_base=self.kb)
+        self.csv_datasource = CSVDataSource(
+            Path(self.csv_path),
+            self.hash_manager,
+        )
 
     def smart_load(self) -> Dict[str, Any]:
         """Execute smart loading strategy and return evidence summary."""

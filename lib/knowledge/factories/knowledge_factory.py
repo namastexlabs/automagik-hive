@@ -9,11 +9,12 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from agno.embedder.openai import OpenAIEmbedder
+from agno.db.postgres import PostgresDb
+from agno.knowledge.embedder.openai import OpenAIEmbedder
 from agno.vectordb.pgvector import HNSW, PgVector, SearchType
-from agno.knowledge.document import DocumentKnowledgeBase
 
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
+from lib.logging import logger
 from lib.logging import logger
 
 _shared_kb = None
@@ -58,6 +59,7 @@ def create_knowledge_base(
     db_url: str | None = None,
     num_documents: int = 10,
     csv_path: str | None = None,
+    db_schema: str | None = None,
 ) -> RowBasedCSVKnowledgeBase:
     """
     Create configurable shared knowledge base
@@ -71,6 +73,7 @@ def create_knowledge_base(
         db_url: Database URL override
         num_documents: Number of documents to return in search
         csv_path: Path to CSV file (from configuration)
+        db_schema: Optional override for the Postgres schema used by contents db
     """
     global _shared_kb
 
@@ -131,6 +134,23 @@ def create_knowledge_base(
         distance=vector_config.get("distance", "cosine"),
     )
 
+    knowledge_schema = vector_config.get("schema", "agno")
+    resolved_schema = db_schema or knowledge_schema
+    knowledge_table = vector_config.get("knowledge_table", "agno_knowledge")
+
+    contents_db = None
+    try:
+        contents_db = PostgresDb(
+            db_url=db_url,
+            db_schema=resolved_schema,
+            knowledge_table=knowledge_table,
+        )
+    except Exception as exc:  # pragma: no cover - defensive for tests without DB
+        logger.warning(
+            "Could not initialize Postgres contents db for knowledge",
+            error=str(exc),
+        )
+
     # Thread-safe creation and assignment of shared knowledge base
     with _kb_lock:
         # Double-check pattern - another thread might have created it while we waited
@@ -144,7 +164,9 @@ def create_knowledge_base(
         # Create shared knowledge base with row-based processing (one document per CSV row)
         # Note: This will load documents from CSV, but smart loader will handle incremental updates
         _shared_kb = RowBasedCSVKnowledgeBase(
-            csv_path=str(csv_path), vector_db=vector_db
+            csv_path=str(csv_path),
+            vector_db=vector_db,
+            contents_db=contents_db,
         )
         # Set num_documents for backward compatibility
         _shared_kb.num_documents = num_documents

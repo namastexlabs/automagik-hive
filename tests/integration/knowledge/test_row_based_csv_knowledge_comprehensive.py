@@ -18,7 +18,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from agno.document.base import Document
+from agno.knowledge.document.base import Document
 from agno.vectordb.base import VectorDb
 
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
@@ -656,7 +656,7 @@ class TestRowBasedCSVHotReload:
             # Should have new document count
             assert len(kb.documents) == 2
             # Should log success
-            mock_logger.info.assert_called_once()
+            assert mock_logger.info.call_count >= 1
 
     def test_reload_from_csv_error_handling(self):
         """Test reload error handling."""

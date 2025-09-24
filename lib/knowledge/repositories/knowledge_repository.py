@@ -4,16 +4,24 @@ Database Repository - All database operations extracted from SmartIncrementalLoa
 Contains all SQL operations and database interactions for knowledge management.
 """
 
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, Iterable, List, Set, Tuple
 from sqlalchemy import create_engine, text
+
+from agno.utils.string import generate_id
 
 
 class KnowledgeRepository:
     """Repository class for all database operations related to knowledge management."""
     
-    def __init__(self, db_url: str, table_name: str = "knowledge_base"):
+    def __init__(
+        self,
+        db_url: str,
+        table_name: str = "knowledge_base",
+        knowledge: Any | None = None,
+    ):
         self.db_url = db_url
         self.table_name = table_name
+        self.knowledge = knowledge
 
     def get_existing_row_hashes(self, knowledge_component: str = None) -> Set[str]:
         """Get set of row hashes that already exist in PostgreSQL - EXTRACTED from SmartIncrementalLoader._get_existing_row_hashes"""
@@ -176,13 +184,17 @@ class KnowledgeRepository:
                 delete_query = """
                     DELETE FROM agno.knowledge_base
                     WHERE content LIKE :question_prefix
+                    RETURNING content_hash
                 """
                 result = conn.execute(
                     text(delete_query),
                     {"question_prefix": f"**Q:** {question_text}%"},
                 )
+                removed_hashes = [row[0] for row in result.fetchall() if row[0]]
                 conn.commit()
-                return result.rowcount > 0
+
+                self._remove_from_knowledge(removed_hashes)
+                return len(removed_hashes) > 0
                 
         except Exception as e:
             from lib.logging import logger
@@ -209,12 +221,32 @@ class KnowledgeRepository:
                 logger.debug("Removed orphaned database rows", 
                           requested_count=len(removed_hashes),
                           actual_removed=actual_removed)
+
+                self._remove_from_knowledge(removed_hashes)
                 return actual_removed
 
         except Exception as e:
             from lib.logging import logger
             logger.warning("Could not remove rows", error=str(e))
             return 0
+
+    def _remove_from_knowledge(self, hashes: Iterable[str]) -> None:
+        if not self.knowledge:
+            return
+
+        from lib.logging import logger
+
+        for content_hash in hashes:
+            if not content_hash:
+                continue
+            try:
+                content_id = generate_id(content_hash)
+                self.knowledge.remove_content_by_id(content_id)
+            except ValueError:
+                logger.debug("Knowledge removal skipped; contents DB unavailable")
+                return
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.warning("Failed to remove knowledge content", error=str(exc))
 
     def get_row_count(self, table_name: str = None) -> int:
         """Get total row count from database - EXTRACTED"""
