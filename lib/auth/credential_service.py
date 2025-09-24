@@ -40,6 +40,12 @@ class CredentialService:
     # Temporary compatibility - to be removed
     PORT_PREFIXES = {"workspace": ""}
     DATABASES = {"workspace": "hive"}
+    CONTAINERS = {
+        "workspace": {
+            "postgres": "automagik-hive-postgres",
+            "api": "automagik-hive-api",
+        }
+    }
 
     def __init__(self, project_root: Path = None, env_file: Path = None) -> None:
         """
@@ -52,18 +58,34 @@ class CredentialService:
         # Handle backward compatibility
         if env_file is not None and project_root is None:
             # Legacy usage: CredentialService(env_file=Path(".env"))
-            self.project_root = env_file.parent if env_file.parent != Path(".") else Path.cwd()
+            env_file = env_file if env_file.is_absolute() else (Path.cwd() / env_file).resolve()
+            project_root = env_file.parent if env_file.parent != Path(".") else Path.cwd()
+            self.project_root = project_root
             self.env_file = env_file
         else:
             # New usage: CredentialService(project_root=Path("/path"))
-            self.project_root = project_root or Path.cwd()
-            self.env_file = self.project_root / ".env"
+            self.project_root = (project_root or Path.cwd()).resolve()
+            self.env_file = (self.project_root / ".env").resolve()
+
+        self.master_env_alias = self.env_file.parent / f"{self.env_file.name}.master"
         self.master_env_file = self.env_file
+        self._refresh_master_env_pointer()
         self.postgres_user_var = "POSTGRES_USER"
         self.postgres_password_var = "POSTGRES_PASSWORD"
         self.postgres_db_var = "POSTGRES_DB"
         self.database_url_var = "HIVE_DATABASE_URL"
         self.api_key_var = "HIVE_API_KEY"
+
+    def _refresh_master_env_pointer(self) -> None:
+        """Point master_env_file at alias when present for backward compatibility."""
+        if self.master_env_alias.exists():
+            self.master_env_file = self.master_env_alias
+        else:
+            self.master_env_file = self.env_file
+
+    def _active_env_source(self) -> Path:
+        """Return the most authoritative env file, preferring the master alias."""
+        return self.master_env_alias if self.master_env_alias.exists() else self.env_file
 
     def generate_postgres_credentials(
         self, host: str = "localhost", port: int = 5532, database: str = "hive"
@@ -196,12 +218,13 @@ class CredentialService:
             "url": None,
         }
 
-        if not self.env_file.exists():
-            logger.warning("Environment file not found", env_file=str(self.env_file))
+        env_source = self._active_env_source()
+        if not env_source.exists():
+            logger.warning("Environment file not found", env_file=str(env_source))
             return credentials
 
         try:
-            env_content = self.env_file.read_text()
+            env_content = env_source.read_text()
 
             # Look for HIVE_DATABASE_URL
             for line in env_content.splitlines():
@@ -243,12 +266,13 @@ class CredentialService:
         Returns:
             API key if found, None otherwise
         """
-        if not self.env_file.exists():
-            logger.warning("Environment file not found", env_file=str(self.env_file))
+        env_source = self._active_env_source()
+        if not env_source.exists():
+            logger.warning("Environment file not found", env_file=str(env_source))
             return None
 
         try:
-            env_content = self.env_file.read_text()
+            env_content = env_source.read_text()
 
             for line in env_content.splitlines():
                 line = line.strip()
@@ -550,13 +574,16 @@ class CredentialService:
             Dict containing base ports for db and api
         """
         base_ports = self.DEFAULT_BASE_PORTS.copy()
-        
-        if not self.master_env_file.exists():
+
+        self._refresh_master_env_pointer()
+        env_source = self._active_env_source()
+
+        if not env_source.exists():
             logger.debug("No .env file found, using default base ports", defaults=base_ports)
             return base_ports
         
         try:
-            env_content = self.master_env_file.read_text()
+            env_content = env_source.read_text()
             
             for line in env_content.splitlines():
                 line = line.strip()
@@ -778,6 +805,8 @@ class CredentialService:
         """
         logger.info("Installing credentials for Automagik Hive")
         
+        self._refresh_master_env_pointer()
+
         # Check if credentials exist and should be reused
         existing_creds = self.extract_postgres_credentials_from_env()
         existing_api_key = self.extract_hive_api_key_from_env()
@@ -828,11 +857,14 @@ class CredentialService:
         
     def _extract_existing_master_credentials(self) -> Optional[Dict[str, str]]:
         """Extract existing master credentials from main .env file."""
-        if not self.master_env_file.exists():
+        self._refresh_master_env_pointer()
+        env_source = self._active_env_source()
+
+        if not env_source.exists():
             return None
             
         try:
-            env_content = self.master_env_file.read_text()
+            env_content = env_source.read_text()
             
             # Extract database URL
             postgres_user = None
@@ -930,19 +962,29 @@ class CredentialService:
         """Save master credentials to main .env file."""
         logger.info("Saving master credentials to main .env file")
         master_credentials = self._normalize_master_credentials_payload(master_credentials)
-        
-        # Create main .env from .env.example if it doesn't exist
-        if not self.master_env_file.exists():
-            env_example = self.project_root / ".env.example"
-            if env_example.exists():
-                logger.info("Creating .env from .env.example template with comprehensive configuration")
-                self.master_env_file.write_text(env_example.read_text())
-            else:
-                logger.warning(".env.example not found, creating minimal .env file")
-                self.master_env_file.write_text(self._get_base_env_template())
-        
+
+        self._refresh_master_env_pointer()
+        canonical_env = self.env_file
+        alias_env = self.master_env_alias
+
+        env_example = self.project_root / ".env.example"
+
+        if canonical_env.exists():
+            env_content = canonical_env.read_text()
+        elif alias_env.exists():
+            logger.info("Rehydrating primary .env from existing master alias before update")
+            env_content = alias_env.read_text()
+            canonical_env.write_text(env_content)
+        elif env_example.exists():
+            logger.info("Creating .env from .env.example template with comprehensive configuration")
+            env_content = env_example.read_text()
+            canonical_env.write_text(env_content)
+        else:
+            logger.warning(".env.example not found, creating minimal .env file")
+            env_content = self._get_base_env_template()
+            canonical_env.write_text(env_content)
+
         # Update credentials in .env file
-        env_content = self.master_env_file.read_text()
         lines = env_content.splitlines()
         
         # Generate main workspace credentials for main .env
@@ -972,9 +1014,18 @@ class CredentialService:
             modified_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
         if not api_key_found:
             modified_lines.append(f"HIVE_API_KEY={main_api_key}")
-            
-        self.master_env_file.write_text("\n".join(modified_lines) + "\n")
-        logger.info("Master credentials saved to .env with all comprehensive configurations from template")
+
+        canonical_env.write_text("\n".join(modified_lines) + "\n")
+
+        # Keep alias in sync for legacy tooling expecting .env.master
+        alias_env.write_text(canonical_env.read_text())
+        self._refresh_master_env_pointer()
+
+        logger.info(
+            "Master credentials saved and synchronized",
+            primary_env=str(canonical_env),
+            master_alias=str(alias_env),
+        )
         
     def _get_base_env_template(self) -> str:
         """Get base environment template for new installations."""
