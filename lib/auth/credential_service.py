@@ -32,6 +32,10 @@ class CredentialService:
         "postgres": 5532,
         "api": 8886
     }
+    DEFAULT_BASE_PORTS = {
+        "db": DEFAULT_PORTS["postgres"],
+        "api": DEFAULT_PORTS["api"],
+    }
     
     # Temporary compatibility - to be removed
     PORT_PREFIXES = {"workspace": ""}
@@ -54,6 +58,7 @@ class CredentialService:
             # New usage: CredentialService(project_root=Path("/path"))
             self.project_root = project_root or Path.cwd()
             self.env_file = self.project_root / ".env"
+        self.master_env_file = self.env_file
         self.postgres_user_var = "POSTGRES_USER"
         self.postgres_password_var = "POSTGRES_PASSWORD"
         self.postgres_db_var = "POSTGRES_DB"
@@ -793,13 +798,15 @@ class CredentialService:
             # Generate new simplified credentials
             new_creds = self.generate_credentials()
             
+            normalized_master_creds = self._normalize_master_credentials_payload(new_creds)
+
             # Save credentials to .env file
-            self._save_master_credentials(new_creds)
+            self._save_master_credentials(normalized_master_creds)
             
             # Format for backward compatibility
             credentials = {
-                "postgres_user": new_creds["HIVE_POSTGRES_USER"],
-                "postgres_password": new_creds["HIVE_POSTGRES_PASSWORD"],
+                "postgres_user": normalized_master_creds["postgres_user"],
+                "postgres_password": normalized_master_creds["postgres_password"],
                 "postgres_database": "hive",
                 "postgres_host": "localhost",
                 "postgres_port": new_creds["HIVE_POSTGRES_PORT"],
@@ -879,12 +886,50 @@ class CredentialService:
                 
         except Exception as e:
             logger.error("Failed to extract existing master credentials", error=str(e))
-            
+        
         return None
         
+    def _normalize_master_credentials_payload(
+        self, master_credentials: Dict[str, str] | None
+    ) -> Dict[str, str]:
+        """Normalize incoming payloads to the master credential schema."""
+        if not master_credentials:
+            raise ValueError("Master credentials payload cannot be empty")
+
+        postgres_user = master_credentials.get("postgres_user") or master_credentials.get(
+            "HIVE_POSTGRES_USER"
+        )
+        postgres_password = master_credentials.get("postgres_password") or master_credentials.get(
+            "HIVE_POSTGRES_PASSWORD"
+        )
+
+        api_key_base = master_credentials.get("api_key_base")
+        if not api_key_base:
+            raw_api_key = master_credentials.get("HIVE_API_KEY") or master_credentials.get("api_key")
+            if raw_api_key and raw_api_key.startswith("hive_"):
+                api_key_base = raw_api_key[len("hive_"):]
+            else:
+                api_key_base = raw_api_key
+
+        normalized = {
+            "postgres_user": postgres_user,
+            "postgres_password": postgres_password,
+            "api_key_base": api_key_base,
+        }
+
+        missing = [key for key, value in normalized.items() if not value]
+        if missing:
+            raise ValueError(
+                "Missing required master credential fields after normalization: "
+                + ", ".join(missing)
+            )
+
+        return normalized
+
     def _save_master_credentials(self, master_credentials: Dict[str, str]) -> None:
         """Save master credentials to main .env file."""
         logger.info("Saving master credentials to main .env file")
+        master_credentials = self._normalize_master_credentials_payload(master_credentials)
         
         # Create main .env from .env.example if it doesn't exist
         if not self.master_env_file.exists():
