@@ -42,12 +42,16 @@ class StartupDisplay:
         name: str,
         version: int | None = None,
         status: str = "✅",
+        db_label: str | None = None,
+        dependencies: list[str] | None = None,
     ):
         """Add agent to display table."""
         self.agents[agent_id] = {
             "name": name,
             "version": version or "latest",
             "status": status,
+            "db": db_label or "—",
+            "dependency_keys": sorted(dependencies or []),
         }
 
     def add_team(
@@ -57,6 +61,7 @@ class StartupDisplay:
         agent_count: int,
         version: int | None = None,
         status: str = "✅",
+        db_label: str | None = None,
     ):
         """Add team to display table."""
         self.teams[team_id] = {
@@ -64,6 +69,7 @@ class StartupDisplay:
             "agents": agent_count,
             "version": version or "latest",
             "status": status,
+            "db": db_label or "—",
         }
 
     def add_workflow(
@@ -72,12 +78,14 @@ class StartupDisplay:
         name: str,
         version: int | None = None,
         status: str = "✅",
+        db_label: str | None = None,
     ):
         """Add workflow to display table."""
         self.workflows[workflow_id] = {
             "name": name,
             "version": version or "latest",
             "status": status,
+            "db": db_label or "—",
         }
 
     def add_error(self, component: str, message: str) -> None:
@@ -190,6 +198,7 @@ class StartupDisplay:
         table.add_column("ID", style="yellow", width=30)
         table.add_column("Name", style="green", width=45)
         table.add_column("Version", style="blue", width=12)
+        table.add_column("Db", style="magenta", width=18)
 
         # Add teams
         for team_id, info in self.teams.items():
@@ -199,6 +208,7 @@ class StartupDisplay:
                 team_id,
                 info["name"],
                 version_info or "N/A",
+                info.get("db", "—"),
             )
 
         # Add agents
@@ -209,6 +219,7 @@ class StartupDisplay:
                 agent_id,
                 info["name"],
                 version_info or "N/A",
+                info.get("db", "—"),
             )
 
         # Add workflows
@@ -219,6 +230,7 @@ class StartupDisplay:
                 workflow_id,
                 info["name"],
                 version_info or "N/A",
+                info.get("db", "—"),
             )
 
         console.print(table)
@@ -243,6 +255,12 @@ class StartupDisplay:
         summary_text = f"[green]✅ {total_components} components loaded[/green]"
         if self.errors:
             summary_text += f" | [red]⚠️ {len(self.errors)} issues[/red]"
+
+        dependency_total = sum(
+            len(info.get("dependency_keys", [])) for info in self.agents.values()
+        )
+        if dependency_total:
+            summary_text += f" | [cyan]🔗 {dependency_total} agent dependencies mapped[/cyan]"
 
         console.print(f"\n{summary_text}")
 

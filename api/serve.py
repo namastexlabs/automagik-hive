@@ -249,9 +249,21 @@ def _create_simple_sync_api() -> FastAPI:
 
     # Add some basic components to show the table works
     startup_display.add_team(
-        "template-team", "Template Team", 0, version=1, status="✅"
+        "template-team",
+        "Template Team",
+        0,
+        version=1,
+        status="✅",
+        db_label="—",
     )
-    startup_display.add_agent("test", "Test Agent", version=1, status="⚠️")
+    startup_display.add_agent(
+        "test",
+        "Test Agent",
+        version=1,
+        status="⚠️",
+        db_label="—",
+        dependencies=[],
+    )
     startup_display.add_error(
         "System", "Running in simplified mode due to async conflicts"
     )

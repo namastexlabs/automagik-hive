@@ -1,7 +1,7 @@
 """Comprehensive tests for CLI service commands."""
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from cli.commands.service import ServiceManager
 
@@ -42,13 +42,38 @@ class TestServiceManagerInitialization:
     
     def test_status(self):
         """Test status method."""
-        with patch.object(ServiceManager, 'docker_status', return_value={"test": "running"}):
+        with patch.object(ServiceManager, 'docker_status', return_value={"test": "running"}), \
+             patch.object(ServiceManager, '_runtime_snapshot', return_value={"status": "unavailable"}):
             manager = ServiceManager()
             status = manager.status()
             assert isinstance(status, dict)
             assert "status" in status
             assert "healthy" in status
             assert "docker_services" in status
+            assert status["runtime"]["status"] == "unavailable"
+
+    @patch("cli.commands.service._gather_runtime_snapshot", new_callable=AsyncMock)
+    def test_runtime_snapshot_success(self, mock_gather):
+        """_runtime_snapshot should return ready status when snapshot succeeds."""
+        mock_gather.return_value = {"total_components": 1}
+        manager = ServiceManager()
+
+        result = manager._runtime_snapshot()
+
+        assert result["status"] == "ready"
+        assert result["summary"] == {"total_components": 1}
+        mock_gather.assert_awaited_once()
+
+    @patch("cli.commands.service._gather_runtime_snapshot", new_callable=AsyncMock)
+    def test_runtime_snapshot_failure(self, mock_gather):
+        """_runtime_snapshot should surface error details when snapshot fails."""
+        mock_gather.side_effect = RuntimeError("boom")
+        manager = ServiceManager()
+
+        result = manager._runtime_snapshot()
+
+        assert result["status"] == "unavailable"
+        assert "boom" in result["error"]
 
     def test_manage_service_exception_handling(self):
         """Test manage_service handles exceptions gracefully."""

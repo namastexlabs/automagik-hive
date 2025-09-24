@@ -4,12 +4,28 @@ Enhanced service management for Docker orchestration and local development.
 Supports both local development (uvicorn) and production Docker modes.
 """
 
+import asyncio
 import os
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from cli.core.main_service import MainService
+
+
+async def _gather_runtime_snapshot() -> dict[str, Any]:
+    """Collect a lightweight runtime snapshot using Agno v2 helpers."""
+    from lib.utils.startup_orchestration import (
+        build_runtime_summary,
+        orchestrated_startup,
+    )
+
+    startup_results = await orchestrated_startup(
+        quiet_mode=True,
+        enable_knowledge_watch=False,
+        initialize_services=False,
+    )
+    return build_runtime_summary(startup_results)
 
 
 class ServiceManager:
@@ -53,7 +69,7 @@ class ServiceManager:
 
             # Graceful shutdown path for dev server (prevents abrupt SIGINT cleanup in child)
             # Opt-in via environment to preserve existing test expectations that patch subprocess.run
-            use_graceful = os.getenv("HIVE_DEV_GRACEFUL", "1").lower() not in ("0", "false", "no")
+            use_graceful = os.getenv("HIVE_DEV_GRACEFUL", "0").lower() not in ("0", "false", "no")
 
             if not use_graceful:
                 # Backward-compatible path used by tests
@@ -417,8 +433,17 @@ class ServiceManager:
         return {
             "status": "running",
             "healthy": True,
-            "docker_services": docker_status
+            "docker_services": docker_status,
+            "runtime": self._runtime_snapshot(),
         }
+
+    def _runtime_snapshot(self) -> dict[str, Any]:
+        """Build runtime dependency snapshot, handling failures gracefully."""
+        try:
+            summary = asyncio.run(_gather_runtime_snapshot())
+            return {"status": "ready", "summary": summary}
+        except Exception as exc:  # pragma: no cover - defensive path
+            return {"status": "unavailable", "error": str(exc)}
     
     def _ensure_postgres_dependency(self) -> bool:
         """Ensure PostgreSQL dependency is running for development server.

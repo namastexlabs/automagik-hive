@@ -16,6 +16,7 @@ import os
 import pytest
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from typing import Any
 
@@ -30,6 +31,7 @@ from lib.utils.startup_orchestration import (
     run_version_synchronization,
     orchestrated_startup,
     get_startup_display_with_results,
+    build_runtime_summary,
 )
 
 
@@ -572,16 +574,23 @@ class TestGetStartupDisplayWithResults:
         mock_registries.workflows = {"workflow-alpha": Mock(), "workflow-beta": Mock()}
         
         # Mock agents with different metadata structures
+        class FakeDb:  # Simple helper to give predictable class name
+            pass
+
         mock_agent1 = Mock()
         mock_agent1.name = "Agent One"
         mock_agent1.version = "1.0"
         mock_agent1.metadata = {"version": "1.1"}
-        
+        mock_agent1.db = FakeDb()
+        mock_agent1.dependencies = {"db": mock_agent1.db, "cache": object()}
+
         mock_agent2 = Mock()
         mock_agent2.name = "Agent Two"
         mock_agent2.version = "2.0"
         mock_agent2.metadata = None
-        
+        mock_agent2.dependencies = {}
+        mock_agent2.db = None
+
         mock_registries.agents = {"agent-one": mock_agent1, "agent-two": mock_agent2}
         
         mock_services = Mock()
@@ -602,21 +611,82 @@ class TestGetStartupDisplayWithResults:
             
             # Verify teams were added
             assert mock_display.add_team.call_count == 2
-            mock_display.add_team.assert_any_call("team-one", "Team One", 0, version=1, status="✅")
-            mock_display.add_team.assert_any_call("team-two", "Team Two", 0, version=1, status="✅")
+            mock_display.add_team.assert_any_call(
+                "team-one", "Team One", 0, version=1, status="✅", db_label="—"
+            )
+            mock_display.add_team.assert_any_call(
+                "team-two", "Team Two", 0, version=1, status="✅", db_label="—"
+            )
             
             # Verify agents were added with correct version handling
             assert mock_display.add_agent.call_count == 2
-            mock_display.add_agent.assert_any_call("agent-one", "Agent One", version="1.1", status="✅")
-            mock_display.add_agent.assert_any_call("agent-two", "Agent Two", version="2.0", status="✅")
+            mock_display.add_agent.assert_any_call(
+                "agent-one",
+                "Agent One",
+                version="1.1",
+                status="✅",
+                db_label="FakeDb",
+                dependencies=["cache", "db"],
+            )
+            mock_display.add_agent.assert_any_call(
+                "agent-two",
+                "Agent Two",
+                version="2.0",
+                status="✅",
+                db_label="—",
+                dependencies=[],
+            )
             
             # Verify workflows were added
             assert mock_display.add_workflow.call_count == 2
-            mock_display.add_workflow.assert_any_call("workflow-alpha", "Workflow Alpha", version=1, status="✅")
-            mock_display.add_workflow.assert_any_call("workflow-beta", "Workflow Beta", version=1, status="✅")
+            mock_display.add_workflow.assert_any_call(
+                "workflow-alpha", "Workflow Alpha", version=1, status="✅", db_label="—"
+            )
+            mock_display.add_workflow.assert_any_call(
+                "workflow-beta", "Workflow Beta", version=1, status="✅", db_label="—"
+            )
             
             # Verify sync results were set
             mock_display.set_sync_results.assert_called_once_with(mock_sync_results)
+
+
+class TestRuntimeSummary:
+    """Test building runtime dependency summaries."""
+
+    def test_build_runtime_summary_includes_dependencies(self):
+        """Runtime summary should surface db labels and dependency keys."""
+
+        class DummyDb:
+            pass
+
+        dummy_db = DummyDb()
+        agent = SimpleNamespace(
+            name="Agent One",
+            version=1,
+            metadata={"version": 2},
+            dependencies={"db": dummy_db, "cache": object()},
+            db=dummy_db,
+        )
+
+        registries = ComponentRegistries(
+            workflows={"wf": Mock()},
+            teams={"team": Mock()},
+            agents={"agent-one": agent},
+            summary="1 workflow, 1 teams, 1 agents",
+        )
+
+        startup_results = StartupResults(
+            registries=registries,
+            services=StartupServices(auth_service=None),
+            sync_results=None,
+        )
+
+        summary = build_runtime_summary(startup_results)
+
+        agent_summary = summary["components"]["agents"]["agent-one"]
+        assert agent_summary["db"] == "DummyDb"
+        assert agent_summary["dependencies"] == ["cache", "db"]
+        assert summary["services"]["auth_service"] is None
 
 
 class TestIntegrationScenarios:
