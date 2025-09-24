@@ -210,3 +210,19 @@ def test_config_filter():
                search_params=search_params,
                performance_settings=performance_settings,
                business_units=business_units)
+
+
+# --- Test patchability helper -------------------------------------------------
+def load_global_knowledge_config() -> dict[str, Any]:
+    """Expose config loader for unit-test patching.
+
+    Tests expect to patch `lib.knowledge.filters.business_unit_filter.load_global_knowledge_config`.
+    Delegate to the canonical loader while keeping a module-local symbol.
+    """
+    return config_aware_filter.load_global_knowledge_config()
+
+
+__all__ = [
+    "BusinessUnitFilter",
+    "load_global_knowledge_config",
+]

@@ -123,9 +123,11 @@ class CSVHotReloadManager:
             contents_db = self._build_contents_db(db_url)
             self._contents_db = contents_db
 
+            # Pass contents_db to enable remove_content_by_id during reloads
             self.knowledge_base = RowBasedCSVKnowledgeBase(
                 csv_path=str(self.csv_path),
                 vector_db=vector_db,
+                contents_db=contents_db,
             )
 
             if self.csv_path.exists():
