@@ -6,8 +6,10 @@ from typing import Any
 
 from agno.agent import Agent
 
+from lib.config.settings import get_settings
 from lib.logging import logger
 from lib.mcp.catalog import MCPCatalog
+from lib.utils.ai_root import resolve_ai_root
 from lib.utils.version_factory import create_agent
 
 
@@ -15,18 +17,31 @@ def _discover_agents() -> list[str]:
     """Dynamically discover available agents from filesystem"""
     import yaml
 
-    agents_dir = Path("ai/agents")
+    # Use dynamic AI root resolution
+    ai_root = resolve_ai_root(settings=get_settings())
+    agents_dir = ai_root / "agents"
+
+    # DEBUG: Log discovery details
+    logger.debug(f"DEBUG AGENT DISCOVERY: ai_root resolved to: {ai_root}")
+    logger.debug(f"DEBUG AGENT DISCOVERY: agents_dir: {agents_dir}")
+    logger.debug(f"DEBUG AGENT DISCOVERY: agents_dir exists: {agents_dir.exists()}")
+
     if not agents_dir.exists():
+        logger.warning(f"DEBUG AGENT DISCOVERY: agents_dir does not exist: {agents_dir}")
         return []
 
     agent_ids = []
     for agent_path in agents_dir.iterdir():
         config_file = agent_path / "config.yaml"
+        logger.debug(f"DEBUG AGENT DISCOVERY: checking path: {agent_path}")
+        logger.debug(f"DEBUG AGENT DISCOVERY: is_dir: {agent_path.is_dir()}, config exists: {config_file.exists()}")
+
         if agent_path.is_dir() and config_file.exists():
             try:
                 with open(config_file) as f:
                     config = yaml.safe_load(f)
                     agent_id = config.get("agent", {}).get("agent_id")
+                    logger.debug(f"DEBUG AGENT DISCOVERY: config loaded for {agent_path.name}, agent_id: {agent_id}")
                     if agent_id:
                         agent_ids.append(agent_id)
             except Exception as e:
@@ -37,6 +52,7 @@ def _discover_agents() -> list[str]:
                 )
                 continue
 
+    logger.debug(f"DEBUG AGENT DISCOVERY: final agent_ids: {agent_ids}")
     return sorted(agent_ids)
 
 

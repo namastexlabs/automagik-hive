@@ -77,6 +77,7 @@ class HiveSettings(BaseSettings):
     hive_dev_mode: bool = Field(True, description="Development mode enabled")
     hive_enable_metrics: bool = Field(True, description="Metrics collection enabled")
     hive_agno_monitor: bool = Field(False, description="Agno monitoring enabled")
+    hive_ai_root: str = Field("ai", description="AI root directory path")
     hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path")
     hive_enable_agui: bool = Field(False, description="Enable AGUI mode for UI interface")
     
@@ -362,7 +363,13 @@ class HiveSettings(BaseSettings):
         validations["valid_timeout"] = self.hive_session_timeout > 0
         
         return validations
-    
+
+    @property
+    def ai_root_path(self) -> Path:
+        """Get resolved AI root path using the centralized resolver."""
+        from lib.utils.ai_root import resolve_ai_root
+        return resolve_ai_root(settings=self)
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
