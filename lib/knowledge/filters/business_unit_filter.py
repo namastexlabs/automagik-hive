@@ -6,7 +6,7 @@ Leverages the comprehensive business unit configuration for enhanced filtering
 from typing import Any
 
 from lib.logging import logger
-from lib.utils.version_factory import load_global_knowledge_config
+from lib.knowledge import config_aware_filter
 
 
 class BusinessUnitFilter:
@@ -17,7 +17,7 @@ class BusinessUnitFilter:
 
     def __init__(self):
         """Initialize with loaded configuration."""
-        self.config = load_global_knowledge_config()
+        self.config = config_aware_filter.load_global_knowledge_config()
         self.business_units = self.config.get("business_units", {})
         self.search_config = self.config.get("search_config", {})
         self.performance = self.config.get("performance", {})
