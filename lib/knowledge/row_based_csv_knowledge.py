@@ -428,9 +428,98 @@ class RowBasedCSVKnowledgeBase:
                 logger.warning("Failed to remove existing knowledge content", error=str(exc))
 
         vector_filters = document.meta_data or None
-        try:
-            # Prefer async insertions when available to align with tests that patch AsyncMock
+        # Method selection respects upsert preference when requested, with
+        # graceful fallbacks if a preferred method isn't actually awaitable.
+        if upsert:
+            # Prefer sync upsert if the backend advertises it (matches integration contract)
+            has_upsert_available = hasattr(vector_db, "upsert_available")
+            prefers_sync_upsert = False
+            if has_upsert_available:
+                try:
+                    prefers_sync_upsert = bool(vector_db.upsert_available())
+                except Exception:  # pragma: no cover - assume False
+                    prefers_sync_upsert = False
+            if prefers_sync_upsert and hasattr(vector_db, "upsert"):
+                try:
+                    vector_db.upsert(
+                        signature.content_hash, [document], filters=vector_filters
+                    )
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug("upsert failed; trying async_upsert", error=str(exc))
+
+            # Otherwise try async_upsert first (if truly coroutine), then sync upsert
+            async_upsert_attr = getattr(vector_db, "async_upsert", None)
+            try_async_upsert = False
+            if async_upsert_attr is not None:
+                try:
+                    import inspect as _inspect
+                    try_async_upsert = _inspect.iscoroutinefunction(async_upsert_attr)
+                except Exception:  # pragma: no cover - conservative fallback
+                    try_async_upsert = False
+            if try_async_upsert:
+                try:
+                    import asyncio
+
+                    asyncio.run(
+                        async_upsert_attr(
+                            signature.content_hash, [document], filters=vector_filters
+                        )
+                    )
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug(
+                        "async_upsert not available or failed; falling back",
+                        error=str(exc),
+                    )
+            if hasattr(vector_db, "upsert"):
+                try:
+                    vector_db.upsert(
+                        signature.content_hash, [document], filters=vector_filters
+                    )
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug(
+                        "upsert failed; falling back to insert methods", error=str(exc)
+                    )
+            # Fall back to insert flavors
             if hasattr(vector_db, "async_insert"):
+                try:
+                    import asyncio
+
+                    asyncio.run(
+                        vector_db.async_insert(
+                            signature.content_hash, [document], filters=vector_filters
+                        )
+                    )
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug(
+                        "async_insert not available or failed; trying insert",
+                        error=str(exc),
+                    )
+            if hasattr(vector_db, "insert"):
+                try:
+                    vector_db.insert(
+                        signature.content_hash, [document], filters=vector_filters
+                    )
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug("insert failed; trying add", error=str(exc))
+            if hasattr(vector_db, "add"):
+                try:
+                    vector_db.add(
+                        signature.content_hash, [document], filters=vector_filters
+                    )
+                    return
+                except Exception as exc:  # pragma: no cover - last resort
+                    logger.error(
+                        "add failed while persisting document", error=str(exc)
+                    )
+            return
+        # Keep insert-first order when upsert is False
+        if hasattr(vector_db, "async_insert"):
+            try:
                 import asyncio
 
                 asyncio.run(
@@ -438,29 +527,30 @@ class RowBasedCSVKnowledgeBase:
                         signature.content_hash, [document], filters=vector_filters
                     )
                 )
-            elif hasattr(vector_db, "async_upsert"):
-                # Fallback to async_upsert only if async_insert is unavailable
-                import asyncio
-
-                asyncio.run(
-                    vector_db.async_upsert(
-                        signature.content_hash, [document], filters=vector_filters
-                    )
+                return
+            except Exception as exc:  # pragma: no cover - continue to fallback
+                logger.debug(
+                    "async_insert not available or failed; trying insert",
+                    error=str(exc),
                 )
-            elif upsert and hasattr(vector_db, "upsert"):
-                vector_db.upsert(
-                    signature.content_hash, [document], filters=vector_filters
-                )
-            elif hasattr(vector_db, "insert"):
+        if hasattr(vector_db, "insert"):
+            try:
                 vector_db.insert(
                     signature.content_hash, [document], filters=vector_filters
                 )
-            elif hasattr(vector_db, "add"):
-                vector_db.add(signature.content_hash, [document], filters=vector_filters)
-        except Exception as exc:  # pragma: no cover - defensive logging
-            logger.error(
-                "Failed to persist document to vector database", error=str(exc)
-            )
+                return
+            except Exception as exc:  # pragma: no cover - continue to fallback
+                logger.debug("insert failed; trying add", error=str(exc))
+        if hasattr(vector_db, "add"):
+            try:
+                vector_db.add(
+                    signature.content_hash, [document], filters=vector_filters
+                )
+                return
+            except Exception as exc:  # pragma: no cover - last resort
+                logger.error(
+                    "add failed while persisting document", error=str(exc)
+                )
 
         # Contents DB integration deferred until Agno surfaces declarative APIs.
 
