@@ -55,6 +55,13 @@ class PostgreSQLManager:
         self.config = PostgreSQLConfig()
         self._compose_cmd = None  # Cached compose command
 
+    def _get_credential_service(self, workspace_path: str | Path) -> CredentialService:
+        """Return a credential service aligned with the given workspace."""
+        workspace_root = Path(workspace_path)
+        if getattr(self.credential_service, "project_root", None) == workspace_root:
+            return self.credential_service
+        return CredentialService(project_root=workspace_root)
+
     def setup_postgres_container(
         self, interactive: bool = True, workspace_path: str = "."
     ) -> bool:
@@ -267,22 +274,8 @@ class PostgreSQLManager:
 
         # Try to connect to database
         try:
-            # Extract credentials from environment
-            env_file = Path(workspace_path) / ".env"
-            if not env_file.exists():
-                return False
-
-            # Temporarily change to workspace directory to use existing credential service
-            import os
-
-            original_cwd = os.getcwd()
-            try:
-                os.chdir(workspace_path)
-                credentials = (
-                    self.credential_service.extract_postgres_credentials_from_env()
-                )
-            finally:
-                os.chdir(original_cwd)
+            service = self._get_credential_service(workspace_path)
+            credentials = service.extract_postgres_credentials_from_env()
             if not credentials.get("user") or not credentials.get("password"):
                 return False
 
@@ -356,29 +349,13 @@ class PostgreSQLManager:
             True if credentials setup successful, False otherwise
         """
         try:
-            env_file = Path(workspace_path) / ".env"
-
-            # Generate PostgreSQL credentials
-
-            # Temporarily change to workspace directory to use existing credential service
-            import os
-
-            original_cwd = os.getcwd()
-            try:
-                os.chdir(workspace_path)
-                credentials = self.credential_service.generate_postgres_credentials(
-                    host="localhost",
-                    port=self.config.external_port,  # 5532
-                    database=self.config.database,
-                )
-
-                # Save credentials to .env file
-                self.credential_service.save_credentials_to_env(
-                    credentials, str(env_file)
-                )
-            finally:
-                os.chdir(original_cwd)
-
+            service = self._get_credential_service(workspace_path)
+            credentials = service.generate_postgres_credentials(
+                host="localhost",
+                port=self.config.external_port,
+                database=self.config.database,
+            )
+            service.save_credentials_to_env(credentials)
             return True
 
         except Exception:
@@ -498,24 +475,17 @@ class PostgreSQLManager:
             env["POSTGRES_UID"] = str(uid)
             env["POSTGRES_GID"] = str(gid)
 
-            # Extract credentials from .env file
-            env_file = Path(workspace_path) / ".env"
-            if env_file.exists():
-                # Temporarily change to workspace directory to use existing credential service
-                original_cwd = os.getcwd()
-                try:
-                    os.chdir(workspace_path)
-                    credentials = (
-                        self.credential_service.extract_postgres_credentials_from_env()
-                    )
-                    if credentials.get("user") and credentials.get("password"):
-                        env["POSTGRES_USER"] = credentials["user"]
-                        env["POSTGRES_PASSWORD"] = credentials["password"]
-                        env["POSTGRES_DB"] = credentials.get(
-                            "database", self.config.database
-                        )
-                finally:
-                    os.chdir(original_cwd)
+            # Extract credentials from env file if available
+            credentials = (
+                self._get_credential_service(workspace_path)
+                .extract_postgres_credentials_from_env()
+            )
+            if credentials.get("user") and credentials.get("password"):
+                env["POSTGRES_USER"] = credentials["user"]
+                env["POSTGRES_PASSWORD"] = credentials["password"]
+                env["POSTGRES_DB"] = credentials.get(
+                    "database", self.config.database
+                )
 
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
