@@ -24,11 +24,13 @@ import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 import yaml
+from sqlalchemy import create_engine
 
 from lib.logging import logger
+from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 
 
 def _load_config() -> dict[str, Any]:
@@ -95,10 +97,10 @@ class _HashManager:
 class SmartIncrementalLoader:
     """Incremental CSV → PgVector loader with per-row hashing."""
 
-    def __init__(self, csv_path: str, kb: Any):
-        self.csv_path = str(csv_path)
-        self.kb = kb
+    def __init__(self, csv_path: str | Path, kb: Any | None = None):
+        self.csv_path = Path(csv_path)
         self.config = _load_config()
+        self.kb = kb or self._create_default_kb()
 
         # DB URL from environment (same convention used in knowledge_factory)
         self.db_url = os.getenv("HIVE_DATABASE_URL")
@@ -121,9 +123,22 @@ class SmartIncrementalLoader:
         )
         self.hash_manager = _HashManager(self.config, knowledge_base=self.kb)
         self.csv_datasource = CSVDataSource(
-            Path(self.csv_path),
+            self.csv_path,
             self.hash_manager,
         )
+
+    def _create_default_kb(self) -> Optional[RowBasedCSVKnowledgeBase]:
+        try:
+            return RowBasedCSVKnowledgeBase(
+                csv_path=str(self.csv_path),
+                vector_db=None,
+            )
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.warning(
+                "Failed to create default knowledge base for smart loader",
+                error=str(exc),
+            )
+            return None
 
     def smart_load(self) -> Dict[str, Any]:
         """Execute smart loading strategy and return evidence summary."""
@@ -163,6 +178,8 @@ class SmartIncrementalLoader:
 
     def _initial_load_with_hashes(self, csv_rows: List[Dict[str, Any]], start: datetime) -> Dict[str, Any]:
         """Perform initial load then populate content hashes for each row."""
+        if self.kb is None:
+            return {"error": "Knowledge base not available for initial load"}
         try:
             logger.debug("Initial smart load starting: embedding all rows once")
 
@@ -203,6 +220,8 @@ class SmartIncrementalLoader:
         start: datetime,
     ) -> Dict[str, Any]:
         """Process only new/changed rows and remove deleted ones."""
+        if self.kb is None:
+            return {"error": "Knowledge base not available for incremental update"}
         try:
             from lib.knowledge.datasources.csv_datasource import CSVDataSource  # noqa: F401
 
@@ -264,3 +283,33 @@ class SmartIncrementalLoader:
             return result
         except Exception as e:
             return {"error": f"Incremental update failed: {e}"}
+
+    def analyze_changes(self) -> Dict[str, Any]:
+        """Provide a quick summary of potential inserts/updates/deletes."""
+
+        if not self.db_url:
+            return {"error": "Missing HIVE_DATABASE_URL"}
+
+        try:
+            csv_rows = self.csv_datasource.get_csv_rows_with_hashes()
+            csv_hashes: Set[str] = {row["hash"] for row in csv_rows}
+            existing_hashes: Set[str] = self.repository.get_existing_row_hashes()
+
+            new_rows = csv_hashes - existing_hashes
+            removed_rows = existing_hashes - csv_hashes
+
+            summary = {
+                "csv_rows": len(csv_rows),
+                "existing_hashes": len(existing_hashes),
+                "new_rows": len(new_rows),
+                "potential_removals": len(removed_rows),
+            }
+            logger.info(
+                "SmartIncrementalLoader",
+                action="analyze_changes",
+                **summary,
+            )
+            return summary
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error("Smart loader change analysis failed", error=str(exc))
+            return {"error": str(exc)}
