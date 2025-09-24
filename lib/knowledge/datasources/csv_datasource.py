@@ -29,7 +29,8 @@ class CSVDataSource:
             rows_with_hashes = []
 
             for idx, row in df.iterrows():
-                row_hash = self.hash_manager.hash_row(idx, row)
+                # Hash manager contract: accept the row Series only
+                row_hash = self.hash_manager.hash_row(row)
                 if not row_hash:
                     continue
                 rows_with_hashes.append(
@@ -54,13 +55,19 @@ class CSVDataSource:
             idx = int(row_data.get("index", 0))
             data = row_data.get("data", {})
 
-            document = kb.build_document_from_row(idx, data)
-            if document is None:
-                return False
+            # Use a temporary knowledge base view pointing at the same vector DB
+            from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 
-            kb.add_document(document, upsert=True, skip_if_exists=False)
+            temp_kb = RowBasedCSVKnowledgeBase(
+                csv_path=str(self.csv_path) if self.csv_path else "",
+                vector_db=getattr(kb, "vector_db", None),
+            )
 
-            update_row_hash_func(data, row_data["hash"], idx)
+            # Delegate upsert to standard loader so signatures/filters remain consistent
+            temp_kb.load(recreate=False, upsert=True)
+
+            # After successful load, persist the hash using provided callback
+            update_row_hash_func(data, row_data["hash"])
 
             return True
 
