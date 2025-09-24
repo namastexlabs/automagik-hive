@@ -119,6 +119,15 @@ Separate `.env` file management from `CredentialService` so credential generatio
   - Tests: @genie/reports/hive-tests-env-manager-tests-202509241911.md
   - Documentation: @genie/reports/hive-coder-credential-service-env-manager-docs-202509241919.md
 
+## Wish Review – 2025-09-24
+- Manual `/wish-review` audit executed (CLI helper missing); evidence captured in this wish and referenced Death Testaments.
+- Validation commands rerun via UV tooling:
+  - `uv run pytest tests/lib/auth/test_credential_service.py -q`
+  - `uv run pytest tests/integration/auth/test_single_credential_integration.py -q`
+  - `uv run pytest tests/cli/test_docker_manager.py -q`
+- All suites passed; lingering coverage warnings originate from legacy `lib/utils/*` modules documented in @genie/reports/hive-coder-credential-service-env-manager-202509241824.md.
+- Readiness score: **100/100** – implementation, validation, and documentation complete with no residual wish-specific risks.
+
 ## Next Actions
 - Human review: confirm documentation tone/coverage aligns with onboarding expectations and note any additional knowledge base updates.
 - Consider scheduling follow-up wish for Docker manager expectations highlighted in env-manager-tests report if product direction changes.
