@@ -1,6 +1,6 @@
 # 🧞 CREDENTIAL SERVICE ENV SPLIT WISH
 
-**Status:** DESIGN APPROVED – PREP FOR FORGE
+**Status:** PHASE 3 – DOCS COMPLETE (awaiting human review)
 
 ## Executive Summary
 Separate `.env` file management from `CredentialService` so credential generation stays focused on secrets while file orchestration moves into a dedicated collaborator. This reduces side effects, makes alias syncing reusable, and clarifies ownership for installers and future services.
@@ -111,6 +111,14 @@ Separate `.env` file management from `CredentialService` so credential generatio
   - `uv run pytest tests/cli/test_docker_manager.py -q`
   - Smoke: `uv run automagik-hive install --help`
 
+## Phase 3 Documentation Summary – 2025-09-24
+- `lib/auth/CREDENTIAL_INTEGRATION.md` now documents `EnvFileManager` responsibilities, constructor injection patterns, and migration guidance for collaborators relying on credential flows.
+- `README.md` onboarding instructions point new contributors to the CLI credential workflows backed by `CredentialService` + `EnvFileManager`.
+- Death Testaments on record:
+  - Implementation: @genie/reports/hive-coder-credential-service-env-manager-202509241824.md
+  - Tests: @genie/reports/hive-tests-env-manager-tests-202509241911.md
+  - Documentation: @genie/reports/hive-coder-credential-service-env-manager-docs-202509241919.md
+
 ## Next Actions
-- Await human approval to proceed with Phase 1 discovery execution (populate detailed notes + risk log in this wish).
-- If approved, prepare forge prompts referencing this wish and the master env alignment plan to guide agents through the split.
+- Human review: confirm documentation tone/coverage aligns with onboarding expectations and note any additional knowledge base updates.
+- Consider scheduling follow-up wish for Docker manager expectations highlighted in env-manager-tests report if product direction changes.

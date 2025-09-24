@@ -6,20 +6,42 @@ The Credential Management Integration (T1.2) successfully integrates the existin
 
 ## Key Components
 
-### 1. CredentialService (`lib/auth/credential_service.py`)
+### 1. EnvFileManager (`lib/auth/env_file_manager.py`)
 
-Comprehensive credential management service that replicates all Makefile patterns:
+Dedicated environment file orchestrator introduced with the Env split.
+
+**Responsibilities:**
+- Resolve workspace-aware paths for `.env` and the `.env.master` alias.
+- Hydrate missing env files from `.env.example` (or the baked-in fallback template).
+- Keep primary and alias files synchronized via `sync_alias()`.
+- Apply atomic environment updates with `update_values()` while preserving comments.
+- Provide read-only helpers (`read_master_lines()`) and structured extractors for PostgreSQL credentials, API keys, and base port overrides.
+- Surface deterministic logging around all IO operations so higher layers can reason about failures.
+
+**Injection Pattern:**
+- Consumers instantiate `EnvFileManager(project_root=..., env_file=...)` or pass a fixture-temporary Path; collaborators accept it through constructor injection.
+- `CredentialService` composes a manager by default but accepts an injected instance for tests and alternate storage.
+- Direct filesystem access outside the manager is now considered a regression.
+
+**Migration Notes:**
+- Legacy helpers previously hosted on `CredentialService` (alias resolution, template hydration, env parsing) now live in the manager. External callers should remove bespoke `.env` mutations and call the manager instead.
+
+### 2. CredentialService (`lib/auth/credential_service.py`)
+
+Credential orchestration service that now delegates all environment-file responsibilities to `EnvFileManager` while maintaining Makefile parity.
 
 **Core Functions:**
-- `generate_postgres_credentials()` - Secure PostgreSQL credentials (16-char base64)
-- `generate_hive_api_key()` - API keys with `hive_` prefix (32-char secure token)
-- `generate_agent_credentials()` - Unified agent credentials reusing main credentials
-- `extract_postgres_credentials_from_env()` - Parse existing credentials from .env
-- `extract_hive_api_key_from_env()` - Extract API keys from .env
-- `save_credentials_to_env()` - Save credentials to environment files
-- `sync_mcp_config_with_credentials()` - Update MCP configuration
-- `validate_credentials()` - Security and format validation
-- `setup_complete_credentials()` - Complete workspace credential setup
+- `generate_postgres_credentials()` – Secure PostgreSQL credentials (16-char base64) for workspace installs.
+- `generate_hive_api_key()` – API keys with `hive_` prefix (32-char secure token).
+- `generate_agent_credentials()` – Unified agent credentials reusing main credentials.
+- `extract_postgres_credentials_from_env()` / `extract_hive_api_key_from_env()` – Delegate to the injected manager to reuse persisted values.
+- `save_credentials_to_env()` – Persists generated secrets through the manager with alias sync.
+- `sync_mcp_config_with_credentials()` – Updates `.mcp.json` using manager-provided extracts.
+- `validate_credentials()` and `setup_complete_credentials()` – Drive installer flows without direct filesystem access.
+
+**Constructor Injection:**
+- Signature now accepts `env_manager: EnvFileManager | None`; when omitted the service constructs a default manager using `project_root` / `env_file` hints, preserving existing call sites.
+- Tests can swap in stub managers to isolate IO without monkeypatching Paths.
 
 **Security Patterns (Matching Makefile):**
 - PostgreSQL User: Random base64 string (16 chars, no special characters)
@@ -28,7 +50,7 @@ Comprehensive credential management service that replicates all Makefile pattern
 - Database URL: `postgresql+psycopg://user:pass@localhost:5532/hive`
 - Cryptographically secure random generation using `secrets` module
 
-### 2. Enhanced CLI (`lib/auth/cli.py`)
+### 3. Enhanced CLI (`lib/auth/cli.py`)
 
 Extended CLI with comprehensive credential management commands:
 
@@ -54,7 +76,7 @@ uv run python -m lib.auth.cli credentials status
 uv run python -m lib.auth.cli credentials sync-mcp
 ```
 
-### 3. Module Integration (`lib/auth/__init__.py`)
+### 4. Module Integration (`lib/auth/__init__.py`)
 
 Updated module exports to include the new CredentialService:
 
@@ -71,6 +93,13 @@ __all__ = [
 ```
 
 ## Integration Patterns
+
+### Environment File Delegation
+
+- `CredentialService` no longer reads or writes filesystem paths directly; all interactions flow through the injected `EnvFileManager`.
+- Manager resolution prefers `.env.master` when present, preserving legacy alias-first reuse while still hydrating `.env` on demand for local workflows.
+- Template hydration and alias synchronization happen inside the manager, so credential logic focuses on secret generation and validation.
+- Tests or alternate runtimes can supply a temporary manager (e.g., pointed at a tmp path) without modifying `CredentialService` internals.
 
 ### Makefile Compatibility
 
@@ -97,6 +126,7 @@ token = secrets.token_urlsafe(length + 8).replace('-', '').replace('_', '')[:len
 - Create CLI-compatible credential management service  
 - Maintain compatibility with existing make commands
 - Support both Docker and external PostgreSQL setups
+- Delegate filesystem orchestration to `EnvFileManager` so CLI commands remain pure business logic.
 
 **Backward Compatibility:**
 - `regenerate_key()` function still works for Makefile integration
@@ -108,32 +138,39 @@ token = secrets.token_urlsafe(length + 8).replace('-', '').replace('_', '')[:len
 ### Workspace Initialization
 
 ```python
-from lib.auth.credential_service import CredentialService
 from pathlib import Path
 
-# Complete workspace setup
-service = CredentialService(Path("./my-workspace/.env"))
+from lib.auth.credential_service import CredentialService
+
+# Complete workspace setup (project root inferred)
+service = CredentialService(project_root=Path("./my-workspace"))
 credentials = service.setup_complete_credentials(
     postgres_host="localhost",
-    postgres_port=5532, 
-    postgres_database="hive"
+    postgres_port=5532,
+    postgres_database="hive",
 )
 
-# Credentials saved to .env file automatically
+# Credentials saved to .env / .env.master automatically
 # MCP configuration updated automatically
 ```
 
-### Agent Development Environment
+### Injecting a Custom EnvFileManager
 
 ```python
-# Generate agent credentials using unified approach
-service = CredentialService(Path("./agent-dev/.env"))
+from pathlib import Path
+
+from lib.auth.credential_service import CredentialService
+from lib.auth.env_file_manager import EnvFileManager
+
+env_manager = EnvFileManager(project_root=Path("./agent-dev"))
+service = CredentialService(env_manager=env_manager)
+
 agent_creds = service.generate_agent_credentials(
     port=35532,
-    database="hive_agent"
+    database="hive_agent",
 )
 
-# Reuses main workspace credentials with different port/database
+# Manager keeps .env and .env.master in sync when saving credentials
 ```
 
 ### CLI Integration
@@ -158,6 +195,7 @@ credentials = generate_complete_workspace_credentials(
 - **No Hardcoded Values**: All credentials generated dynamically
 - **Proper File Permissions**: Environment files created with appropriate permissions
 - **Format Validation**: Comprehensive validation of credential formats and security
+- **Consistent Alias Sync**: `EnvFileManager.sync_alias()` mirrors `.env` and `.env.master` so downstream tools always read the authoritative view
 
 ### Credential Validation
 
@@ -182,6 +220,7 @@ Comprehensive test coverage validates:
 - ✅ Security pattern compliance
 - ✅ Backward compatibility with Makefile
 - ✅ MCP configuration synchronization
+- ✅ Dedicated `EnvFileManager` unit tests exercising alias sync, template hydration, and failure handling
 
 ### Security Validation
 
@@ -198,10 +237,12 @@ The credential service is designed for seamless integration with the UVX CLI sys
 
 ```python
 # Future UVX integration
+from pathlib import Path
+
 from lib.auth.credential_service import CredentialService
 
-def uvx_init_workspace(workspace_path):
-    service = CredentialService(workspace_path / ".env")
+def uvx_init_workspace(workspace_path: Path):
+    service = CredentialService(project_root=workspace_path)
     return service.setup_complete_credentials()
 ```
 
@@ -230,6 +271,7 @@ agent_creds = service.generate_agent_credentials(
 - ✅ **Docker Support**: Ready for both Docker and external PostgreSQL setups
 - ✅ **Unified Agent Approach**: Agent credentials reuse main credentials as specified
 - ✅ **MCP Synchronization**: Automatic MCP configuration updates
+- ✅ **Env File Delegation**: `EnvFileManager` owns `.env`/`.env.master` lifecycles with test coverage
 - ✅ **Comprehensive Testing**: All functionality validated and working
 
 The credential management integration successfully transforms existing Makefile excellence into CLI-compatible Python services, ready for UVX Phase 1 Foundation implementation.

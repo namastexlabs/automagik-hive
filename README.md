@@ -335,6 +335,8 @@ pip install -e .
 cp .env.example .env
 # Edit .env with your configuration
 
+> Credential onboarding flows are now powered by `CredentialService` + `EnvFileManager`, which keep `.env` and `.env.master` synchronized. Prefer `uv run python -m lib.auth.cli credentials workspace <path>` (documented in `lib/auth/CREDENTIAL_INTEGRATION.md`) over manual edits when possible.
+
 # Start development server
 uv run automagik-hive --dev
 ```
