@@ -15,7 +15,6 @@ from agno.vectordb.pgvector import HNSW, PgVector, SearchType
 
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.logging import logger
-from lib.logging import logger
 
 _shared_kb = None
 _kb_lock = threading.Lock()
@@ -99,11 +98,15 @@ def create_knowledge_base(
                 "HIVE_DATABASE_URL environment variable required for vector database"
             )
 
-    # Get CSV path from configuration or use default
+    # Get CSV path from configuration or use default, supporting legacy top-level key
     if csv_path is None:
-        # Use path from config relative to knowledge folder
-        csv_path = config.get("knowledge", {}).get("csv_file_path", "data/knowledge_rag.csv")
-        csv_path = Path(__file__).parent / csv_path
+        knowledge_cfg = config.get("knowledge", {}) if isinstance(config, dict) else {}
+        configured_csv = (
+            knowledge_cfg.get("csv_file_path")
+            or config.get("csv_file_path")
+            or "data/knowledge_rag.csv"
+        )
+        csv_path = Path(__file__).parent / configured_csv
         logger.debug("Using CSV path from configuration", csv_path=str(csv_path))
     else:
         # Convert to Path and resolve if relative
@@ -118,8 +121,21 @@ def create_knowledge_base(
                 csv_path = Path(__file__).parent / csv_path
         logger.debug("Using provided CSV path", csv_path=str(csv_path))
 
-    # Get vector database configuration
-    vector_config = config.get("knowledge", {}).get("vector_db", {})
+    # Get vector database configuration with parity (support top-level and nested keys)
+    def _merge_vector_config(cfg: dict[str, Any]) -> dict[str, Any]:
+        merged: dict[str, Any] = {}
+        if isinstance(cfg, dict):
+            top_level = cfg.get("vector_db")
+            if isinstance(top_level, dict):
+                merged.update(top_level)
+            knowledge_cfg = cfg.get("knowledge", {})
+            if isinstance(knowledge_cfg, dict):
+                nested = knowledge_cfg.get("vector_db")
+                if isinstance(nested, dict):
+                    merged.update(nested)
+        return merged
+
+    vector_config = _merge_vector_config(config)
 
     # Single PgVector database
     vector_db = PgVector(
@@ -191,30 +207,30 @@ def create_knowledge_base(
         result = smart_loader.smart_load()
 
         if "error" in result:
-            logger.warning("Smart loading failed", error=result["error"])
+            logger.warning("Smart loading failed", error=result["error"]) 
             # Fallback to basic loading
-            logger.debug("Falling back to basic knowledge base loading")
+            logger.info("Falling back to basic knowledge base loading")
             _shared_kb.load(recreate=False, upsert=True)
         else:
             # Smart loading succeeded - just connect to the populated database
             strategy = result.get("strategy", "unknown")
             if strategy == "no_changes":
-                logger.debug(
-                    "Smart loading: No changes needed (all documents already exist)"
+                logger.info(
+                    "No changes needed (all documents already exist)"
                 )
             elif strategy == "incremental_update":
                 new_docs = result.get("new_rows_processed", 0)
-                logger.debug(
-                    "Smart loading: Added new documents (incremental)",
+                logger.info(
+                    "Added new documents (incremental)",
                     new_docs=new_docs,
                 )
             elif strategy == "initial_load_with_hashes":
                 total_docs = result.get("entries_processed", "unknown")
-                logger.debug(
-                    "Smart loading: Initial load completed", total_docs=total_docs
+                logger.info(
+                    "Initial load completed", total_docs=total_docs
                 )
             else:
-                logger.debug("Smart loading: Completed", strategy=strategy)
+                logger.info("Completed", strategy=strategy)
 
     except Exception as e:
         logger.warning("Smart incremental loader failed", error=str(e))
@@ -227,7 +243,9 @@ def create_knowledge_base(
         from sqlalchemy import create_engine, text
         engine = create_engine(db_url)
         with engine.connect() as conn:
-            result = conn.execute(text("SELECT COUNT(*) FROM agno.knowledge_base"))
+            table_name = vector_config.get("table_name", "knowledge_base")
+            schema_name = vector_config.get("schema", "agno")
+            result = conn.execute(text(f"SELECT COUNT(*) FROM {schema_name}.{table_name}"))
             doc_count = result.fetchone()[0]
             logger.info("Knowledge base ready", documents=doc_count)
     except Exception:

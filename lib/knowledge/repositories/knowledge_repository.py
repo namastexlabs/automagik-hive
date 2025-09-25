@@ -191,7 +191,14 @@ class KnowledgeRepository:
                     {"question_prefix": f"**Q:** {question_text}%"},
                 )
                 removed_hashes = [row[0] for row in result.fetchall() if row[0]]
-                conn.commit()
+                try:
+                    conn.commit()
+                except Exception:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    raise
 
                 self._remove_from_knowledge(removed_hashes)
                 return len(removed_hashes) > 0
@@ -212,11 +219,17 @@ class KnowledgeRepository:
                 delete_query = "DELETE FROM agno.knowledge_base WHERE content_hash = :hash"
 
                 actual_removed = 0
-                for h in removed_hashes:
-                    result = conn.execute(text(delete_query), {"hash": h})
-                    actual_removed += result.rowcount
-
-                conn.commit()
+                try:
+                    for h in removed_hashes:
+                        result = conn.execute(text(delete_query), {"hash": h})
+                        actual_removed += result.rowcount
+                    conn.commit()
+                except Exception:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    raise
                 from lib.logging import logger
                 logger.debug("Removed orphaned database rows", 
                           requested_count=len(removed_hashes),

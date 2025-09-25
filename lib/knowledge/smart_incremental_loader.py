@@ -409,14 +409,23 @@ class SmartIncrementalLoader:
         try:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
+                # Transactional safety: perform all deletes then commit once
                 removed = 0
-                for h in removed_hashes:
-                    res = conn.execute(
-                        text("DELETE FROM agno.knowledge_base WHERE content_hash = :hash"),
-                        {"hash": h},
-                    )
-                    removed += int(getattr(res, "rowcount", 1))
-                conn.commit()
+                try:
+                    for h in removed_hashes:
+                        res = conn.execute(
+                            text("DELETE FROM agno.knowledge_base WHERE content_hash = :hash"),
+                            {"hash": h},
+                        )
+                        removed += int(getattr(res, "rowcount", 1))
+                    conn.commit()
+                except Exception:
+                    # Rollback on any failure to avoid partial removals
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    raise
                 app_log.logger.info("Removed obsolete rows", removed_count=removed)
                 return removed
         except Exception as exc:
