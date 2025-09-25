@@ -66,6 +66,12 @@ async def get_mcp_tools(server_name: str) -> AsyncContextManager[MCPTools]:
                 transport="stdio",
                 env=server_config.env or {},
             )
+        elif server_config.is_http_server:
+            tools = MCPTools(
+                url=server_config.url,
+                transport="streamable-http",
+                env=server_config.env or {},
+            )
         else:
             raise MCPConnectionError(f"Unknown server type for {server_name}")
 
@@ -115,6 +121,12 @@ def create_mcp_tools_sync(server_name: str) -> MCPTools | None:
             return MCPTools(
                 command=" ".join(command_parts),
                 transport="stdio",
+                env=server_config.env or {},
+            )
+        if server_config.is_http_server:
+            return MCPTools(
+                url=server_config.url,
+                transport="streamable-http",
                 env=server_config.env or {},
             )
         logger.warning(f"🌐 Unknown server type for {server_name} - tool will be unavailable")
