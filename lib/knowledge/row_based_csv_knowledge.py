@@ -5,10 +5,11 @@ from __future__ import annotations
 import csv
 import hashlib
 import logging
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Optional
+from typing import Any
 
 from agno.knowledge import Knowledge
 from agno.knowledge.document.base import Document
@@ -64,10 +65,10 @@ class RowBasedCSVKnowledgeBase:
     def __init__(
         self,
         csv_path: str,
-        vector_db: Optional[VectorDb],
-        contents_db: Optional[BaseDb] | None = None,
+        vector_db: VectorDb | None,
+        contents_db: BaseDb | None | None = None,
         *,
-        knowledge: Optional[Knowledge] = None,
+        knowledge: Knowledge | None = None,
     ) -> None:
         self._csv_path = Path(csv_path)
         self.vector_db = vector_db
@@ -222,8 +223,8 @@ class RowBasedCSVKnowledgeBase:
         self,
         query: str,
         *,
-        max_results: Optional[int] = None,
-        filters: Optional[dict[str, Any]] = None,
+        max_results: int | None = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[Document]:
         """Search the knowledge base using Agno v2 search APIs."""
         knowledge = self.knowledge

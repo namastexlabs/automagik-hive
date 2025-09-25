@@ -1,16 +1,13 @@
 """Compatibility shim re-exporting the CSV hot reload manager and CLI."""
 
-from lib.knowledge.csv_hot_reload import (  # noqa: F401
-    CSVHotReloadManager,
-    load_global_knowledge_config,
-    OpenAIEmbedder,
-    PgVector,
-    PostgresDb,
+from lib.knowledge.csv_hot_reload import (
+    CSVHotReloadManager,  # noqa: F401
+    OpenAIEmbedder,  # noqa: F401
+    PgVector,  # noqa: F401
+    PostgresDb,  # noqa: F401
+    load_global_knowledge_config,  # noqa: F401
+    main,  # noqa: F401
 )
-
-# Explicitly expose main for tests that import it
-from lib.knowledge.csv_hot_reload import main  # noqa: F401
-
 
 __all__ = [
     "CSVHotReloadManager",

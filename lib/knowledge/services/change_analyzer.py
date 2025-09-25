@@ -5,21 +5,22 @@ Extracted from SmartIncrementalLoader for better separation of concerns.
 Keeps orphan detection exactly as-is from the original implementation.
 """
 
-from typing import Any, Dict, List
+from typing import Any
+
 from sqlalchemy import text
 
 
 class ChangeAnalyzer:
     """Service for analyzing changes between CSV data and database state."""
     
-    def __init__(self, config: Dict[str, Any], repository):
+    def __init__(self, config: dict[str, Any], repository):
         self.config = config
         self.repository = repository
     
-    def analyze_changes(self, csv_rows: List[Dict[str, Any]], db_connection) -> Dict[str, Any]:
+    def analyze_changes(self, csv_rows: list[dict[str, Any]], db_connection) -> dict[str, Any]:
         """Analyze what needs to be loaded by checking specific content vs PostgreSQL - EXTRACTED from SmartIncrementalLoader.analyze_changes"""
         try:
-            csv_hashes = {row["hash"] for row in csv_rows}
+            _csv_hashes = {row["hash"] for row in csv_rows}
 
             # Check which CSV rows are new or changed
             new_rows = []
@@ -128,7 +129,7 @@ class ChangeAnalyzer:
 
             # Build structured status payload with Agno v2 metadata
             csv_config = self.config.get("knowledge", {}).get("csv_reader", {})
-            status_payload: Dict[str, Any] = {
+            status_payload: dict[str, Any] = {
                 "component": "change_analyzer",
                 "mode": "agno_native_incremental",
                 "config": {

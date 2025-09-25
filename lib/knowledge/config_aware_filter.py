@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from lib.logging import logger
 from lib.utils.version_factory import load_global_knowledge_config as _load_config
@@ -36,13 +36,13 @@ class ConfigAwareFilter:
     def detect_business_unit(self, text: str) -> str | None:
         return self._delegate.detect_business_unit_from_text(text)
 
-    def get_search_params(self) -> Dict[str, Any]:
+    def get_search_params(self) -> dict[str, Any]:
         return self._delegate.get_search_params()
 
-    def get_performance_settings(self) -> Dict[str, Any]:
+    def get_performance_settings(self) -> dict[str, Any]:
         return self._delegate.get_performance_settings()
 
-    def list_business_units(self) -> Dict[str, str]:
+    def list_business_units(self) -> dict[str, str]:
         return self._delegate.list_business_units()
 
 

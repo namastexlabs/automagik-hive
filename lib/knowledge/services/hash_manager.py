@@ -5,7 +5,7 @@ Extracted from SmartIncrementalLoader for better separation of concerns.
 """
 
 import hashlib
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 
@@ -13,7 +13,7 @@ import pandas as pd
 class HashManager:
     """Service for managing content hashes and hash-based comparisons."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         
     def hash_row(self, row: pd.Series) -> str:

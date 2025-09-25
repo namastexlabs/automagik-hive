@@ -4,10 +4,11 @@ Database Repository - All database operations extracted from SmartIncrementalLoa
 Contains all SQL operations and database interactions for knowledge management.
 """
 
-from typing import Any, Dict, Iterable, List, Set, Tuple
-from sqlalchemy import create_engine, text
+from collections.abc import Iterable
+from typing import Any
 
 from agno.utils.string import generate_id
+from sqlalchemy import create_engine, text
 
 
 class KnowledgeRepository:
@@ -23,7 +24,7 @@ class KnowledgeRepository:
         self.table_name = table_name
         self.knowledge = knowledge
 
-    def get_existing_row_hashes(self, knowledge_component: str = None) -> Set[str]:
+    def get_existing_row_hashes(self, knowledge_component: str | None = None) -> set[str]:
         """Get set of row hashes that already exist in PostgreSQL - EXTRACTED from SmartIncrementalLoader._get_existing_row_hashes"""
         try:
             engine = create_engine(self.db_url)
@@ -114,7 +115,7 @@ class KnowledgeRepository:
                 typification = (row_data.get("typification") or "").strip()
 
                 # Build expected content exactly as RowBasedCSVKnowledgeBase
-                parts: List[str] = []
+                parts: list[str] = []
                 context = question_text or problem_text
                 if context:
                     parts.append(f"**Q:** {question_text}" if question_text else f"**Problem:** {problem_text}")
@@ -131,8 +132,8 @@ class KnowledgeRepository:
                 # Attempt to locate the DB row
                 doc_id = f"knowledge_row_{int(row_index) + 1}" if row_index is not None else None
                 select_query = ["SELECT id, content FROM agno.knowledge_base WHERE 1=1"]
-                params: Dict[str, Any] = {}
-                clauses: List[str] = []
+                params: dict[str, Any] = {}
+                clauses: list[str] = []
                 if doc_id:
                     clauses.append("id = :doc_id")
                     params["doc_id"] = doc_id
@@ -196,8 +197,9 @@ class KnowledgeRepository:
                 except Exception:
                     try:
                         conn.rollback()
-                    except Exception:
-                        pass
+                    except Exception as exc2:
+                        from lib.logging import logger
+                        logger.debug("Rollback failed", error=str(exc2))
                     raise
 
                 self._remove_from_knowledge(removed_hashes)
@@ -227,8 +229,9 @@ class KnowledgeRepository:
                 except Exception:
                     try:
                         conn.rollback()
-                    except Exception:
-                        pass
+                    except Exception as exc2:
+                        from lib.logging import logger
+                        logger.debug("Rollback failed", error=str(exc2))
                     raise
                 from lib.logging import logger
                 logger.debug("Removed orphaned database rows", 

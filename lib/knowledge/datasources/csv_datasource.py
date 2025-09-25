@@ -5,9 +5,9 @@ Extracted from SmartIncrementalLoader for better separation of concerns.
 Fixes temp file issue by using StringIO for single row processing.
 """
 
-from io import StringIO
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, List, Callable
+from typing import Any
 
 import pandas as pd
 
@@ -19,7 +19,7 @@ class CSVDataSource:
         self.csv_path = Path(csv_path) if csv_path else None
         self.hash_manager = hash_manager
     
-    def get_csv_rows_with_hashes(self) -> List[Dict[str, Any]]:
+    def get_csv_rows_with_hashes(self) -> list[dict[str, Any]]:
         """Read CSV and return rows with their hashes - EXTRACTED from SmartIncrementalLoader._get_csv_rows_with_hashes"""
         try:
             if not self.csv_path or not self.csv_path.exists():
@@ -45,14 +45,14 @@ class CSVDataSource:
             logger.warning("Could not read CSV with hashes", error=str(e))
             return []
     
-    def process_single_row(self, row_data: Dict[str, Any], kb, update_row_hash_func: Callable) -> bool:
+    def process_single_row(self, row_data: dict[str, Any], kb, update_row_hash_func: Callable) -> bool:
         """Process a single new row and add it to the vector database.
 
         Builds a Document with a stable ID based on the original CSV index,
         ensuring upserts match the main load semantics.
         """
         try:
-            idx = int(row_data.get("index", 0))
+            _idx = int(row_data.get("index", 0))
             data = row_data.get("data", {})
 
             # Use a temporary knowledge base view pointing at the same vector DB

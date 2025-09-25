@@ -19,7 +19,7 @@ import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import pandas as pd
 import yaml
@@ -37,7 +37,7 @@ def _load_config() -> dict[str, Any]:
     """
     cfg_path = Path(__file__).parent / "config.yaml"
     try:
-        with open(cfg_path, "r", encoding="utf-8") as f:
+        with open(cfg_path, encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
     except Exception as exc:  # pragma: no cover - exercised by tests
         app_log.logger.warning("Failed to load knowledge config", error=str(exc))
@@ -97,12 +97,12 @@ class SmartIncrementalLoader:
             raise RuntimeError("HIVE_DATABASE_URL required")
 
         # Knowledge base (may be provided by factory). Avoid eager creation to reduce noise in tests.
-        self.kb: Optional[RowBasedCSVKnowledgeBase] = kb
+        self.kb: RowBasedCSVKnowledgeBase | None = kb
 
         # Auxiliary manager consistent with legacy semantics
         self._hash_manager = _HashManager(knowledge_base=self.kb)
 
-    def _create_default_kb(self) -> Optional[RowBasedCSVKnowledgeBase]:
+    def _create_default_kb(self) -> RowBasedCSVKnowledgeBase | None:
         try:
             return RowBasedCSVKnowledgeBase(
                 csv_path=str(self.csv_path),
@@ -115,7 +115,7 @@ class SmartIncrementalLoader:
             )
             return None
 
-    def smart_load(self, force_recreate: bool = False) -> Dict[str, Any]:
+    def smart_load(self, force_recreate: bool = False) -> dict[str, Any]:
         """High-level strategy executor used by the factory.
 
         - If force_recreate is True → perform a full reload
@@ -147,7 +147,7 @@ class SmartIncrementalLoader:
 
     # --- Internal helpers -------------------------------------------------
 
-    def _initial_load_with_hashes(self) -> Dict[str, Any]:
+    def _initial_load_with_hashes(self) -> dict[str, Any]:
         """Create KB table, run full embed once, then populate content hashes."""
         if self.kb is None:
             return {"error": "Knowledge base not available for initial load"}
@@ -184,7 +184,7 @@ class SmartIncrementalLoader:
         except Exception as exc:
             return {"error": f"Initial load failed: {exc}"}
 
-    def _incremental_update(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _incremental_update(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Process new rows and remove obsolete ones based on analysis dict.
 
         Note: Allows execution even if `kb` is None to support tests that
@@ -194,8 +194,8 @@ class SmartIncrementalLoader:
         try:
             self._add_hash_column_to_table()
 
-            new_rows: List[Dict[str, Any]] = analysis.get("new_rows", [])
-            removed_hashes: List[str] = analysis.get("removed_hashes", [])
+            new_rows: list[dict[str, Any]] = analysis.get("new_rows", [])
+            removed_hashes: list[str] = analysis.get("removed_hashes", [])
 
             processed = 0
             for row in new_rows:
@@ -218,7 +218,7 @@ class SmartIncrementalLoader:
         except Exception as exc:
             return {"error": f"Incremental update failed: {exc}"}
 
-    def analyze_changes(self) -> Dict[str, Any]:
+    def analyze_changes(self) -> dict[str, Any]:
         """Analyze CSV vs DB and report whether processing is needed.
 
         To match tests, we:
@@ -279,12 +279,12 @@ class SmartIncrementalLoader:
         ]
         return hashlib.md5("".join(parts).encode("utf-8")).hexdigest()
 
-    def _get_csv_rows_with_hashes(self) -> List[Dict[str, Any]]:
+    def _get_csv_rows_with_hashes(self) -> list[dict[str, Any]]:
         try:
             if not Path(self.csv_path).exists():
                 return []
             df = pd.read_csv(self.csv_path)
-            rows: List[Dict[str, Any]] = []
+            rows: list[dict[str, Any]] = []
             for idx, row in df.iterrows():
                 h = self._hash_row(row)
                 rows.append({"index": idx, "hash": h, "data": row.to_dict()})
@@ -293,7 +293,7 @@ class SmartIncrementalLoader:
             app_log.logger.warning("Could not read CSV with hashes", error=str(exc))
             return []
 
-    def _get_existing_row_hashes(self) -> Set[str]:
+    def _get_existing_row_hashes(self) -> set[str]:
         try:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
@@ -356,7 +356,7 @@ class SmartIncrementalLoader:
             app_log.logger.warning("Could not add hash column", error=str(exc))
             return False
 
-    def _process_single_row(self, row_data: Dict[str, Any]) -> bool:
+    def _process_single_row(self, row_data: dict[str, Any]) -> bool:
         try:
             # Write a minimal temporary CSV with the single row
             temp_path = Path(self.csv_path).with_suffix(".tmp.csv")
@@ -380,7 +380,7 @@ class SmartIncrementalLoader:
             app_log.logger.error("Error processing single row", error=str(exc))
             return False
 
-    def _update_row_hash(self, row_data: Dict[str, Any], content_hash: str) -> bool:
+    def _update_row_hash(self, row_data: dict[str, Any], content_hash: str) -> bool:
         try:
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
@@ -403,7 +403,7 @@ class SmartIncrementalLoader:
             app_log.logger.warning("Could not update row hash", error=str(exc))
             return False
 
-    def _remove_rows_by_hash(self, removed_hashes: List[str]) -> int:
+    def _remove_rows_by_hash(self, removed_hashes: list[str]) -> int:
         if not removed_hashes:
             return 0
         try:
@@ -446,7 +446,7 @@ class SmartIncrementalLoader:
             app_log.logger.warning("Could not populate existing hashes", error=str(exc))
             return False
 
-    def _full_reload(self) -> Dict[str, Any]:
+    def _full_reload(self) -> dict[str, Any]:
         if self.kb is None:
             return {"error": "Knowledge base not available for full reload"}
         start = datetime.now()
@@ -479,7 +479,7 @@ class SmartIncrementalLoader:
 
     # ----------------- Reporting helpers ----------------------------------
 
-    def get_database_stats(self) -> Dict[str, Any]:
+    def get_database_stats(self) -> dict[str, Any]:
         try:
             analysis = self.analyze_changes()
             if "error" in analysis:

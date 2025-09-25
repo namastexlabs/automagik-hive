@@ -5,8 +5,8 @@ Leverages the comprehensive business unit configuration for enhanced filtering
 
 from typing import Any
 
-from lib.logging import logger
 from lib.knowledge import config_aware_filter
+from lib.logging import logger
 
 
 class BusinessUnitFilter:

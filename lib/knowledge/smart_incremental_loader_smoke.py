@@ -26,15 +26,15 @@ def run_smoke(csv_path: str | None, force: bool) -> int:
     db_url = os.getenv("HIVE_DATABASE_URL")
     if not db_url:
         logger.error("HIVE_DATABASE_URL is required for smoke run")
-        print(json.dumps({"error": "HIVE_DATABASE_URL not set"}))
+        logger.info(json.dumps({"error": "HIVE_DATABASE_URL not set"}))
         return 2
 
     try:
-        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
         from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
     except Exception as exc:  # pragma: no cover - CLI-only
         logger.error("Failed to import knowledge modules", error=str(exc))
-        print(json.dumps({"error": str(exc)}))
+        logger.info(json.dumps({"error": str(exc)}))
         return 3
 
     # Resolve CSV path
@@ -50,11 +50,11 @@ def run_smoke(csv_path: str | None, force: bool) -> int:
             loader.kb = RowBasedCSVKnowledgeBase(csv_path=str(loader.csv_path), vector_db=None)
 
         result = loader.smart_load(force_recreate=force)
-        print(json.dumps(result, indent=2))
+        logger.info(json.dumps(result, indent=2))
         return 0 if "error" not in result else 1
     except Exception as exc:  # pragma: no cover - CLI-only
         logger.error("Smoke run failed", error=str(exc))
-        print(json.dumps({"error": str(exc)}))
+        logger.info(json.dumps({"error": str(exc)}))
         return 4
 
 
