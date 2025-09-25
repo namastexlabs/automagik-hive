@@ -55,11 +55,14 @@ class ServiceManager:
 
             # Graceful shutdown path for dev server (prevents abrupt SIGINT cleanup in child)
             # Opt-in via environment to preserve existing test expectations that patch subprocess.run
-            use_graceful = os.getenv("HIVE_DEV_GRACEFUL", "1").lower() not in ("0", "false", "no")
+            use_graceful = os.getenv("HIVE_DEV_GRACEFUL", "0").lower() not in ("0", "false", "no")
 
             if not use_graceful:
                 # Backward-compatible path used by tests
-                subprocess.run(cmd, check=False)
+                try:
+                    subprocess.run(cmd, check=False)
+                except KeyboardInterrupt:
+                    return True
                 return True
 
             system = platform.system()

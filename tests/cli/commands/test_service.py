@@ -68,16 +68,18 @@ class TestServiceManagerLocalServe:
     
     def test_serve_local_success(self):
         """Test successful local server startup."""
-        with patch('subprocess.run') as mock_run:
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch('subprocess.run') as mock_run:
             mock_run.return_value = None
-            
+
             manager = ServiceManager()
             result = manager.serve_local(host="127.0.0.1", port=8080, reload=False)
-            
+
             assert result is True
-            # Should be called multiple times: postgres dependency checks + uvicorn startup
+            # Should be called at least once for uvicorn startup
             assert mock_run.call_count >= 1
-            
+
             # Check that the final call is the uvicorn command
             final_call_args = mock_run.call_args[0][0]
             assert "uv" in final_call_args
@@ -87,32 +89,42 @@ class TestServiceManagerLocalServe:
             assert "127.0.0.1" in final_call_args
             assert "--port" in final_call_args
             assert "8080" in final_call_args
+            mock_stop.assert_not_called()
 
     def test_serve_local_with_reload(self):
         """Test local server with reload enabled."""
-        with patch('subprocess.run') as mock_run:
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch('subprocess.run') as mock_run:
             manager = ServiceManager()
             result = manager.serve_local(reload=True)
-            
+
             assert result is True
             call_args = mock_run.call_args[0][0]
             assert "--reload" in call_args
+            mock_stop.assert_not_called()
 
     def test_serve_local_keyboard_interrupt(self):
         """Test handling of KeyboardInterrupt during local serve."""
-        with patch('subprocess.run', side_effect=KeyboardInterrupt()):
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch('subprocess.run', side_effect=KeyboardInterrupt()):
             manager = ServiceManager()
             result = manager.serve_local()
-            
+
             assert result is True  # Should handle gracefully
+            mock_stop.assert_not_called()
 
     def test_serve_local_os_error(self):
         """Test handling of OSError during local serve."""
-        with patch('subprocess.run', side_effect=OSError("Port in use")):
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch('subprocess.run', side_effect=OSError("Port in use")):
             manager = ServiceManager()
             result = manager.serve_local()
-            
+
             assert result is False
+            mock_stop.assert_not_called()
 
 
 class TestServiceManagerDockerOperations:
