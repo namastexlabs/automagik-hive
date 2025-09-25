@@ -13,7 +13,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from agno.playground import Playground
+try:
+    from agno.playground import Playground
+except ImportError:  # pragma: no cover - optional dependency in Agno v2
+    Playground = None  # type: ignore[assignment]
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -467,17 +470,33 @@ async def _async_create_automagik_api():
     except Exception as e:
         logger.debug("🔧 Workflow registry check completed", error=str(e))
 
-    # Create playground
-    playground = Playground(
-        agents=agents_list,
-        teams=teams_list,
-        workflows=workflows_list,
-        name="Automagik Hive Multi-Agent System",
-        app_id="automagik_hive",
-    )
+    unified_router = None
+    if Playground is None:
+        logger.warning(
+            "Agno Playground not available in current Agno distribution; "
+            "starting API without playground routes."
+        )
+        startup_display.add_version_sync_log(
+            "⚠️ Agno Playground not installed — running API without playground UI"
+        )
+    else:
+        try:
+            playground = Playground(
+                agents=agents_list,
+                teams=teams_list,
+                workflows=workflows_list,
+                name="Automagik Hive Multi-Agent System",
+                app_id="automagik_hive",
+            )
 
-    # Get the unified router - this provides all endpoints including workflows
-    unified_router = playground.get_async_router()
+            # Get the unified router - this provides all endpoints including workflows
+            unified_router = playground.get_async_router()
+        except Exception as exc:
+            logger.error(f"Failed to initialize Agno Playground: {exc}")
+            startup_display.add_error(
+                "Agno Playground",
+                f"Playground could not start: {exc}",
+            )
     
     # Add AGUI support if enabled
     if settings().hive_enable_agui:
@@ -527,20 +546,23 @@ async def _async_create_automagik_api():
 
     # Add authentication protection to playground routes if auth is enabled
     auth_service = startup_results.services.auth_service
-    if auth_service.is_auth_enabled():
-        from fastapi import APIRouter, Depends
+    if unified_router is not None:
+        if auth_service.is_auth_enabled():
+            from fastapi import APIRouter, Depends
 
-        from lib.auth.dependencies import require_api_key
+            from lib.auth.dependencies import require_api_key
 
-        # Create protected wrapper for playground routes
-        protected_router = APIRouter(dependencies=[Depends(require_api_key)])
-        protected_router.include_router(unified_router)
-        app.include_router(protected_router)
+            # Create protected wrapper for playground routes
+            protected_router = APIRouter(dependencies=[Depends(require_api_key)])
+            protected_router.include_router(unified_router)
+            app.include_router(protected_router)
+        else:
+            # Development mode - no auth protection
+            app.include_router(unified_router)
+
+        logger.debug("Unified API endpoints registered successfully")
     else:
-        # Development mode - no auth protection
-        app.include_router(unified_router)
-
-    logger.debug("Unified API endpoints registered successfully")
+        logger.debug("Skipping Playground router registration (not available)")
 
     # Configure docs based on settings and environment
     if is_development or api_settings.docs_enabled:
