@@ -156,10 +156,10 @@ uv run pytest tests/lib/logging/test_level_enforcement.py -q
 uv run pytest tests/cli/commands/test_service.py -k "logging_level_guard"
 
 # Manual verification: ensure dev server emits INFO only
-HIVE_LOG_LEVEL=INFO uv run automagik-hive --dev --host 127.0.0.1 --port 9999 --check-config
+HIVE_LOG_LEVEL=INFO uv run automagik-hive dev --host 127.0.0.1 --port 9999 --check-config
 
 # DEBUG opt-in confirmation
-HIVE_LOG_LEVEL=DEBUG uv run automagik-hive --dev --host 127.0.0.1 --port 9999 --check-config
+HIVE_LOG_LEVEL=DEBUG uv run automagik-hive dev --host 127.0.0.1 --port 9999 --check-config
 ```
 
 ## Validation Checklist

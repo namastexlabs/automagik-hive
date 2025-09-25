@@ -42,12 +42,12 @@ automagik-hive genie
 ### Option 2: YAML Configuration (Available Now for All)
 ```bash
 # Use existing AI folder with simple YAML - no AI assistant required
-automagik-hive --dev /path/to/your/ai
+automagik-hive dev /path/to/your/ai
 
 # Or clone this repo and use bundled examples
 git clone https://github.com/namastexlabs/automagik-hive
 cd automagik-hive
-automagik-hive --dev
+automagik-hive dev
 ```
 
 **Ready to build your second agent? →** [View Examples](#what-people-are-building)
@@ -313,10 +313,10 @@ Even without GENIE, you can:
 curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
 
 # Start with your AI folder
-automagik-hive --dev /path/to/your/ai
+automagik-hive dev /path/to/your/ai
 
 # Or use bundled examples
-automagik-hive --dev
+automagik-hive dev
 ```
 
 ### Manual Installation
@@ -338,7 +338,7 @@ cp .env.example .env
 > Credential onboarding flows are now powered by `CredentialService` + `EnvFileManager`, which keep `.env` and `.env.master` synchronized. Prefer `uv run python -m lib.auth.cli credentials workspace <path>` (documented in `lib/auth/CREDENTIAL_INTEGRATION.md`) over manual edits when possible.
 
 # Start development server
-uv run automagik-hive --dev
+uv run automagik-hive dev
 ```
 
 ### Docker Deployment

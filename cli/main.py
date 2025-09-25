@@ -21,6 +21,38 @@ except ImportError:
 from lib.logging import initialize_logging
 from lib.utils.ai_root import resolve_ai_root, AIRootError
 
+SUBCOMMAND_NAMES: set[str] = {"install", "uninstall", "genie", "dev"}
+
+
+class HiveArgumentParser(argparse.ArgumentParser):
+    """ArgumentParser with fallback support for positional AI root."""
+
+    def parse_args(self, args: list[str] | None = None, namespace: argparse.Namespace | None = None):
+        processed_args, fallback_ai_root = self._extract_positional_ai_root(args)
+        namespace = super().parse_args(processed_args, namespace)
+
+        if fallback_ai_root is not None:
+            if getattr(namespace, "command", None) is None and getattr(namespace, "serve", None) is None:
+                if not getattr(namespace, "positional_ai_root", None):
+                    setattr(namespace, "positional_ai_root", fallback_ai_root)
+
+        return namespace
+
+    def _extract_positional_ai_root(self, args: list[str] | None) -> tuple[list[str], str | None]:
+        if args is None:
+            args_list = sys.argv[1:]
+        else:
+            args_list = list(args)
+
+        fallback_ai_root: str | None = None
+        if args_list:
+            first = args_list[0]
+            if not first.startswith("-") and first not in SUBCOMMAND_NAMES:
+                fallback_ai_root = first
+                args_list = args_list[1:]
+
+        return args_list, fallback_ai_root
+
 
 # Configure unified logging before command modules execute side effects
 initialize_logging(surface="cli.main")
@@ -64,13 +96,13 @@ def setup_ai_root(ai_root_arg: str | None) -> Path:
 
 def create_parser() -> argparse.ArgumentParser:
     """Create comprehensive argument parser with organized help."""
-    parser = argparse.ArgumentParser(
+    parser = HiveArgumentParser(
         prog="automagik-hive",
         description="""Automagik Hive - Multi-Agent AI Framework CLI
 
 CORE COMMANDS:
   --serve [AI_ROOT]           Start production server (Docker)
-  --dev [AI_ROOT]             Start development server (local)
+  dev [AI_ROOT]               Start development server (local)
   --version                   Show version information
   [AI_ROOT]                   Start server for external AI folder
 
@@ -101,7 +133,6 @@ Use --help for detailed options or see documentation.
 
     # Core commands - use empty string as sentinel for "flag provided with no argument"
     parser.add_argument("--serve", nargs="?", const="", metavar="AI_ROOT", help="Start production server (Docker)")
-    parser.add_argument("--dev", nargs="?", const="", metavar="AI_ROOT", help="Start development server (local)")
     # Get actual version for the version argument
     try:
         from lib.utils.version_reader import get_project_version
@@ -152,7 +183,7 @@ Use --help for detailed options or see documentation.
     dev_parser.add_argument("ai_root", nargs="?", default=None, help="AI root directory path")
 
     # Add positional argument when no subcommand is used
-    parser.add_argument("ai_root", nargs="?", help="Start server for external AI folder")
+    parser.add_argument("positional_ai_root", nargs="?", help="Start server for external AI folder")
 
     return parser
 
@@ -165,12 +196,12 @@ def main() -> int:
 
         # Count commands - check if arguments were actually provided (empty string means flag was provided)
         commands = [
-            args.serve is not None, args.dev is not None,
+            args.serve is not None,
             args.postgres_status is not None, args.postgres_start is not None, args.postgres_stop is not None,
             args.postgres_restart is not None, args.postgres_logs is not None, args.postgres_health is not None,
             args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
             args.stop is not None, args.restart is not None, args.status is not None, args.logs is not None,
-            args.ai_root is not None
+            getattr(args, "positional_ai_root", None) is not None
         ]
         command_count = sum(1 for cmd in commands if cmd)
 
@@ -182,7 +213,7 @@ def main() -> int:
             parser.print_help()
             return 0
         # Production server (Docker)
-        if args.serve:
+        if args.serve is not None:
             ai_root = setup_ai_root(args.serve)
             print(f"🎯 Using AI root: {ai_root}")
             service_manager = ServiceManager()
@@ -190,13 +221,6 @@ def main() -> int:
             return 0 if result else 1
 
         # Development server (local)
-        if args.dev:
-            ai_root = setup_ai_root(args.dev)
-            print(f"🎯 Using AI root: {ai_root}")
-            service_manager = ServiceManager()
-            result = service_manager.serve_local(args.host, args.port, reload=True)
-            return 0 if result else 1
-        
         # Launch claude with AGENTS.md
         if args.command == "genie":
             from .commands.genie import GenieCommands
@@ -226,8 +250,9 @@ def main() -> int:
             return 0 if service_manager.uninstall_environment(str(ai_root)) else 1
 
         # Start server for AI root (positional argument)
-        if args.ai_root:
-            ai_root = setup_ai_root(args.ai_root)
+        positional_ai_root = getattr(args, "positional_ai_root", None)
+        if positional_ai_root:
+            ai_root = setup_ai_root(positional_ai_root)
             print(f"🎯 Using AI root: {ai_root}")
             service_manager = ServiceManager()
             return 0 if service_manager.serve_local(args.host, args.port, reload=True) else 1

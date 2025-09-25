@@ -306,22 +306,28 @@ async def _async_create_automagik_api():
     if is_reloader_context and is_development:
         logger.debug("Reloader worker process - reducing log verbosity")
 
-    # DEBUG: Log reloader context information
-    logger.info(f"DEBUG: RUN_MAIN env var: {repr(os.getenv('RUN_MAIN'))}")
-    logger.info(f"DEBUG: is_reloader_context: {is_reloader_context}")
-    logger.info(f"DEBUG: Current process ID: {os.getpid()}")
-    logger.info(f"DEBUG: Current working directory: {os.getcwd()}")
+    logger.debug(
+        "Reloader environment snapshot",
+        run_main=os.getenv("RUN_MAIN"),
+        is_reloader_context=is_reloader_context,
+        process_id=os.getpid(),
+        working_directory=os.getcwd(),
+    )
 
     # PERFORMANCE-OPTIMIZED SEQUENTIAL STARTUP
     # Replace scattered initialization with orchestrated startup sequence
     startup_results = await orchestrated_startup(quiet_mode=is_reloader_context)
 
-    # DEBUG: Log orchestrated startup results
-    logger.info(f"DEBUG: startup_results received, type: {type(startup_results).__name__}")
-    logger.info(f"DEBUG: startup_results.registries type: {type(startup_results.registries).__name__}")
-    logger.info(f"DEBUG: startup_results.registries.agents immediate check: {startup_results.registries.agents}")
-    logger.info(f"DEBUG: startup_results.registries.agents keys: {list(startup_results.registries.agents.keys()) if startup_results.registries.agents else []}")
-    logger.info(f"DEBUG: startup_results.registries.agents bool: {bool(startup_results.registries.agents)}")
+    logger.debug(
+        "Startup orchestration snapshot",
+        result_type=type(startup_results).__name__,
+        registries_type=type(startup_results.registries).__name__,
+        agents_registry=startup_results.registries.agents,
+        agent_keys=list(startup_results.registries.agents.keys())
+        if startup_results.registries.agents
+        else [],
+        has_agents=bool(startup_results.registries.agents),
+    )
 
     # Show environment info in development mode
     if is_development:
@@ -345,18 +351,20 @@ async def _async_create_automagik_api():
     workflow_registry = startup_results.registries.workflows
     team_registry = startup_results.registries.teams
 
-    # DEBUG: Log detailed information about available_agents IMMEDIATELY after assignment
     try:
-        logger.info(f"DEBUG: startup_results type: {type(startup_results).__name__}")
-        logger.info(f"DEBUG: registries type: {type(startup_results.registries).__name__}")
-        logger.info(f"DEBUG: agents attr exists: {hasattr(startup_results.registries, 'agents')}")
-        logger.info(f"DEBUG: available_agents type: {type(available_agents).__name__}")
-        logger.info(f"DEBUG: available_agents bool: {bool(available_agents)}")
-        logger.info(f"DEBUG: available_agents length: {len(available_agents) if available_agents else 0}")
-        logger.info(f"DEBUG: available_agents keys: {list(available_agents.keys()) if available_agents else []}")
-        logger.info(f"DEBUG: available_agents content: {available_agents}")
-    except Exception as e:
-        logger.error(f"DEBUG: Exception during agent registry debug: {e}", exc_info=True)
+        logger.debug(
+            "Agent registry snapshot",
+            startup_type=type(startup_results).__name__,
+            registries_type=type(startup_results.registries).__name__,
+            has_agents_registry=hasattr(startup_results.registries, "agents"),
+            available_agents_type=type(available_agents).__name__,
+            has_available_agents=bool(available_agents),
+            available_agents_count=len(available_agents) if available_agents else 0,
+            available_agent_keys=list(available_agents.keys()) if available_agents else [],
+            available_agents=available_agents,
+        )
+    except Exception:
+        logger.exception("Agent registry introspection failed during startup")
 
     # Load team instances from registry
     loaded_teams = []

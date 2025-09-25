@@ -26,23 +26,23 @@ class ServiceManager:
         
         ARCHITECTURAL RULE: Host and port come from environment variables via .env files.
         """
+        postgres_started = False
         try:
             import platform
             import signal
             import subprocess
-            
+
             # Read from environment variables - use defaults for development
             actual_host = host or os.getenv("HIVE_API_HOST", "0.0.0.0")
             actual_port = port or int(os.getenv("HIVE_API_PORT", "8886"))
-            
+
             print(f"🚀 Starting local development server on {actual_host}:{actual_port}")
-            print("💡 Ensure PostgreSQL is running: uv run automagik-hive --serve")
-            
+
             # Check and auto-start PostgreSQL dependency if needed
-            if not self._ensure_postgres_dependency():
+            postgres_running, postgres_started = self._ensure_postgres_dependency()
+            if not postgres_running:
                 print("⚠️ PostgreSQL dependency check failed - server may not start properly")
-                print("💡 Run 'uv run automagik-hive --serve' to start PostgreSQL first")
-            
+
             # Build uvicorn command
             cmd = [
                 "uv", "run", "uvicorn", "api.serve:app",
@@ -103,6 +103,9 @@ class ServiceManager:
         except OSError as e:
             print(f"❌ Failed to start local server: {e}")
             return False
+        finally:
+            if postgres_started:
+                self._stop_postgres_dependency()
     
     def serve_docker(self, workspace: str = ".") -> bool:
         """Start production Docker containers."""
@@ -464,15 +467,27 @@ class ServiceManager:
             "healthy": True,
             "docker_services": docker_status
         }
-    
-    def _ensure_postgres_dependency(self) -> bool:
+
+    def _resolve_compose_file(self) -> Path | None:
+        """Locate docker-compose file for dependency management."""
+        try:
+            workspace = self.workspace_path.resolve()
+        except (FileNotFoundError, RuntimeError):
+            workspace = self.workspace_path
+
+        docker_compose_main = workspace / "docker" / "main" / "docker-compose.yml"
+        docker_compose_root = workspace / "docker-compose.yml"
+
+        if docker_compose_main.exists():
+            return docker_compose_main
+        if docker_compose_root.exists():
+            return docker_compose_root
+        return None
+
+    def _ensure_postgres_dependency(self) -> tuple[bool, bool]:
         """Ensure PostgreSQL dependency is running for development server.
-        
-        Checks if main PostgreSQL container is running and starts it if needed.
-        This prevents --dev command from failing due to database connection refused.
-        
-        Returns:
-            bool: True if PostgreSQL is running or successfully started, False otherwise
+
+        Returns a tuple of (is_running, started_by_manager).
         """
         try:
             # Check current PostgreSQL status
@@ -481,32 +496,23 @@ class ServiceManager:
             
             if "✅ Running" in postgres_status:
                 print("✅ PostgreSQL dependency is already running")
-                return True
-            
-            print("🔍 PostgreSQL dependency not running, starting...")
-            
+                return True, False
+
+            compose_file = self._resolve_compose_file()
+            if compose_file is None:
+                print("❌ Docker compose file not found. Run --install to set up the environment.")
+                return False, False
+
             # Check if .env file exists for environment validation
             env_file = self.workspace_path / ".env"
             if not env_file.exists():
                 print("❌ .env file not found. Run --install to set up the environment first.")
-                return False
-            
+                return False, False
+
+            print("🔍 PostgreSQL dependency not running, starting automatically...")
+
             # Start only PostgreSQL container using Docker Compose
             try:
-                # Use same Docker Compose file location logic as main_service
-                docker_compose_main = self.workspace_path / "docker" / "main" / "docker-compose.yml"
-                docker_compose_root = self.workspace_path / "docker-compose.yml"
-                
-                if docker_compose_main.exists():
-                    compose_file = docker_compose_main
-                elif docker_compose_root.exists():
-                    compose_file = docker_compose_root
-                else:
-                    print("❌ Docker compose file not found. Run --install to set up the environment.")
-                    return False
-                
-                # Start only the postgres service
-                print("🐳 Starting PostgreSQL container...")
                 result = subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "up", "-d", "hive-postgres"],
                     check=False,
@@ -517,18 +523,41 @@ class ServiceManager:
                 
                 if result.returncode != 0:
                     print(f"❌ Failed to start PostgreSQL: {result.stderr}")
-                    return False
-                
+                    return False, False
+
                 print("✅ PostgreSQL dependency started successfully")
-                return True
-                
+                return True, True
+
             except subprocess.TimeoutExpired:
                 print("❌ Timeout starting PostgreSQL container")
-                return False
+                return False, False
             except FileNotFoundError:
                 print("❌ Docker not found. Please install Docker and try again.")
-                return False
-                
+                return False, False
+
         except Exception as e:
             print(f"❌ Error ensuring PostgreSQL dependency: {e}")
-            return False
+            return False, False
+
+    def _stop_postgres_dependency(self) -> None:
+        """Stop PostgreSQL container started for the current dev session."""
+        compose_file = self._resolve_compose_file()
+        if compose_file is None:
+            return
+
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "stop", "hive-postgres"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                print("🛑 PostgreSQL dependency stopped")
+            else:
+                print(f"⚠️ PostgreSQL stop reported an issue: {result.stderr}")
+        except subprocess.TimeoutExpired:
+            print("⚠️ Timeout stopping PostgreSQL container")
+        except FileNotFoundError:
+            print("⚠️ Docker not found while stopping PostgreSQL container")
