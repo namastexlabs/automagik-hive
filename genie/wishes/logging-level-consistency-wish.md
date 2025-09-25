@@ -208,3 +208,16 @@ $ rg "lib.logging.setup_logging" -n tests
 tests/conftest.py:768:        ("lib.logging.setup_logging", None),
 tests/api/test_serve.py:83:        with patch("lib.logging.setup_logging") as mock_setup:
 ```
+
+## Evidence – Group 3 Validation Suite (2025-09-25)
+
+- Regression tests added in `tests/lib/logging/test_level_enforcement.py` confirm INFO default suppresses DEBUG output while DEBUG opt-in surfaces the `Logging bootstrap complete` breadcrumb. Each case writes captured streams to `tmp_path` artifacts for audit.
+- CLI smoke coverage in `tests/cli/commands/test_service.py::TestServiceManagerLoggingLevels` asserts `ServiceManager` initialization respects the same INFO/DEBUG contract and persists sampled logs.
+- Offline pytest runs demonstrating the guardrails:
+
+```bash
+UV_CACHE_DIR=.uv-cache UV_NO_SYNC=1 uv run --offline pytest tests/lib/logging/test_level_enforcement.py -q
+UV_CACHE_DIR=.uv-cache UV_NO_SYNC=1 uv run --offline pytest tests/cli/commands/test_service.py -k "LoggingLevels" -q
+```
+
+- Death Testament: `@genie/reports/hive-tests-logging-validation-suite-202509250157.md` (commands, outcomes, residual risks).

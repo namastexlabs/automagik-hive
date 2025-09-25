@@ -1,8 +1,10 @@
 """Comprehensive tests for CLI service commands."""
 
+import logging
 from pathlib import Path
 from unittest.mock import patch
 
+import lib.logging.config as logging_config
 from cli.commands.service import ServiceManager
 
 
@@ -200,6 +202,72 @@ class TestServiceManagerDockerOperations:
             
             assert result == expected_status
             mock_main.get_main_status.assert_called_once_with("./test")
+
+
+class TestServiceManagerLoggingLevels:
+    """Ensure ServiceManager bootstraps logging with correct levels."""
+
+    @staticmethod
+    def _restore_real_initializer(monkeypatch):
+        monkeypatch.setattr("lib.logging.initialize_logging", logging_config.initialize_logging)
+        monkeypatch.setattr(
+            "cli.commands.service.initialize_logging",
+            logging_config.initialize_logging,
+        )
+
+    def test_initialization_respects_info_default(self, monkeypatch, capsys, tmp_path):
+        """INFO default should suppress the bootstrap debug breadcrumb."""
+        self._restore_real_initializer(monkeypatch)
+
+        original_initialized = logging_config._logging_initialized
+        original_level = logging.getLogger().getEffectiveLevel()
+
+        try:
+            monkeypatch.delenv("HIVE_LOG_LEVEL", raising=False)
+            monkeypatch.setenv("AGNO_LOG_LEVEL", "WARNING")
+
+            logging_config._logging_initialized = False
+            capsys.readouterr()  # Clear captured buffers before instantiation
+
+            ServiceManager()
+
+            captured = capsys.readouterr()
+            assert "Logging bootstrap complete" not in captured.err
+            assert logging.getLogger().getEffectiveLevel() == logging.INFO
+
+            sample_path = tmp_path / "cli_info_bootstrap.log"
+            sample_path.write_text(captured.err)
+            assert "Logging bootstrap complete" not in sample_path.read_text()
+        finally:
+            logging_config._logging_initialized = original_initialized
+            logging.getLogger().setLevel(original_level)
+
+    def test_initialization_emits_debug_when_opt_in(self, monkeypatch, capsys, tmp_path):
+        """DEBUG opt-in should emit the bootstrap breadcrumb."""
+        self._restore_real_initializer(monkeypatch)
+
+        original_initialized = logging_config._logging_initialized
+        original_level = logging.getLogger().getEffectiveLevel()
+
+        try:
+            monkeypatch.setenv("HIVE_LOG_LEVEL", "DEBUG")
+            monkeypatch.setenv("AGNO_LOG_LEVEL", "WARNING")
+
+            logging_config._logging_initialized = False
+            capsys.readouterr()
+
+            ServiceManager()
+
+            captured = capsys.readouterr()
+            assert "Logging bootstrap complete" in captured.err
+            assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
+
+            sample_path = tmp_path / "cli_debug_bootstrap.log"
+            sample_path.write_text(captured.err)
+            assert "Logging bootstrap complete" in sample_path.read_text()
+        finally:
+            logging_config._logging_initialized = original_initialized
+            logging.getLogger().setLevel(original_level)
 
     def test_docker_status_exception(self):
         """Test Docker status with exception."""
