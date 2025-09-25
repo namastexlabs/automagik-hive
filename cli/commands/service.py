@@ -107,8 +107,12 @@ class ServiceManager:
             print(f"❌ Failed to start local server: {e}")
             return False
         finally:
-            if postgres_started:
-                self._stop_postgres_dependency()
+            keep_postgres = os.getenv("HIVE_DEV_KEEP_POSTGRES", "0").lower() in ("1", "true", "yes")
+            if keep_postgres:
+                print("🛑 Postgres cleanup skipped (HIVE_DEV_KEEP_POSTGRES enabled)")
+            else:
+                if postgres_started or self._is_postgres_dependency_active():
+                    self._stop_postgres_dependency()
     
     def serve_docker(self, workspace: str = ".") -> bool:
         """Start production Docker containers."""
@@ -543,24 +547,105 @@ class ServiceManager:
             return False, False
 
     def _stop_postgres_dependency(self) -> None:
-        """Stop PostgreSQL container started for the current dev session."""
+        """Stop PostgreSQL container and ensure it is removed."""
         compose_file = self._resolve_compose_file()
-        if compose_file is None:
-            return
+        compose_args = None if compose_file is None else ["docker", "compose", "-f", str(compose_file)]
 
+        stopped = False
+
+        if compose_args is not None:
+            try:
+                stop_result = subprocess.run(
+                    [*compose_args, "stop", "hive-postgres"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                if stop_result.returncode == 0:
+                    stopped = True
+                    print("🛑 PostgreSQL dependency stopped")
+                else:
+                    print(f"⚠️ PostgreSQL stop reported an issue: {stop_result.stderr.strip()}")
+            except subprocess.TimeoutExpired:
+                print("⚠️ Timeout stopping PostgreSQL container")
+            except FileNotFoundError:
+                print("⚠️ Docker not found while stopping PostgreSQL container")
+
+        if not stopped:
+            stopped = self._stop_postgres_by_container()
+
+        if compose_args is not None:
+            try:
+                rm_result = subprocess.run(
+                    [*compose_args, "rm", "-f", "hive-postgres"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                if rm_result.returncode == 0:
+                    print("🧹 Removed managed PostgreSQL container")
+                else:
+                    print(f"⚠️ PostgreSQL container removal reported an issue: {rm_result.stderr.strip()}")
+            except subprocess.TimeoutExpired:
+                print("⚠️ Timeout removing PostgreSQL container")
+            except FileNotFoundError:
+                print("⚠️ Docker not found while removing PostgreSQL container")
+        elif stopped:
+            self._remove_postgres_by_container()
+
+    def _stop_postgres_by_container(self) -> bool:
+        """Fallback: stop container directly by name."""
         try:
             result = subprocess.run(
-                ["docker", "compose", "-f", str(compose_file), "stop", "hive-postgres"],
+                ["docker", "stop", "hive-postgres"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired:
+            print("⚠️ Timeout stopping PostgreSQL container via docker stop")
+            return False
+        except FileNotFoundError:
+            print("⚠️ Docker not found while stopping PostgreSQL container via docker stop")
+            return False
+
+        if result.returncode == 0:
+            print("🛑 PostgreSQL dependency stopped (direct docker stop)")
+            return True
+
+        stderr = result.stderr.strip()
+        if stderr:
+            print(f"⚠️ docker stop hive-postgres reported an issue: {stderr}")
+        return False
+
+    def _remove_postgres_by_container(self) -> None:
+        """Fallback: remove container directly by name."""
+        try:
+            result = subprocess.run(
+                ["docker", "rm", "-f", "hive-postgres"],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
             if result.returncode == 0:
-                print("🛑 PostgreSQL dependency stopped")
+                print("🧹 Removed managed PostgreSQL container (direct docker rm)")
             else:
-                print(f"⚠️ PostgreSQL stop reported an issue: {result.stderr}")
+                stderr = result.stderr.strip()
+                if stderr:
+                    print(f"⚠️ docker rm hive-postgres reported an issue: {stderr}")
         except subprocess.TimeoutExpired:
-            print("⚠️ Timeout stopping PostgreSQL container")
+            print("⚠️ Timeout removing PostgreSQL container via docker rm")
         except FileNotFoundError:
-            print("⚠️ Docker not found while stopping PostgreSQL container")
+            print("⚠️ Docker not found while removing PostgreSQL container via docker rm")
+
+    def _is_postgres_dependency_active(self) -> bool:
+        """Check whether the managed PostgreSQL container is currently running."""
+        try:
+            status = self.main_service.get_main_status(str(self.workspace_path))
+            return "✅" in status.get("hive-postgres", "")
+        except Exception:
+            return False
