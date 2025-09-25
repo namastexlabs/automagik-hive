@@ -227,6 +227,15 @@ async def initialize_other_services(
         settings = get_settings()
 
         if settings.enable_metrics:
+            if getattr(settings, "hive_agno_v2_migration_enabled", False):
+                logger.info(
+                    "Agno v2 migration readiness enabled",
+                    dry_run_command="uv run python scripts/agno_db_migrate_v2.py --dry-run",
+                    v1_schema=settings.hive_agno_v1_schema,
+                    v2_sessions=settings.hive_agno_v2_sessions_table,
+                    v2_memories=settings.hive_agno_v2_memories_table,
+                )
+
             from lib.metrics import (
                 AgnoMetricsBridge,
                 initialize_dual_path_metrics,

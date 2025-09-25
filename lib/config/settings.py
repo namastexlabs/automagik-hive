@@ -108,7 +108,53 @@ class HiveSettings(BaseSettings):
     hive_metrics_batch_size: int = Field(5, description="Metrics batch size - small batches for responsiveness")
     hive_metrics_flush_interval: float = Field(1.0, description="Metrics flush interval - faster flush for immediate persistence")
     hive_metrics_queue_size: int = Field(1000, description="Metrics queue size")
-    
+
+    # =========================================================================
+    # AGNO MIGRATION & STORAGE SETTINGS
+    # =========================================================================
+    hive_agno_v2_migration_enabled: bool = Field(
+        False, description="Enable Agno v2 migration readiness checks"
+    )
+    hive_agno_v1_schema: str = Field(
+        "agno", description="Schema containing legacy Agno v1 tables"
+    )
+    hive_agno_v1_agent_sessions_table: str = Field(
+        "agent_sessions", description="Legacy agent session table name"
+    )
+    hive_agno_v1_team_sessions_table: str = Field(
+        "team_sessions", description="Legacy team session table name"
+    )
+    hive_agno_v1_workflow_sessions_table: str = Field(
+        "workflow_sessions", description="Legacy workflow session table name"
+    )
+    hive_agno_v1_memories_table: str = Field(
+        "memories", description="Legacy user memories table name"
+    )
+    hive_agno_v1_metrics_table: str | None = Field(
+        None, description="Legacy metrics table name (optional)"
+    )
+    hive_agno_v1_knowledge_table: str | None = Field(
+        None, description="Legacy knowledge table name (optional)"
+    )
+    hive_agno_v1_evals_table: str | None = Field(
+        None, description="Legacy eval table name (optional)"
+    )
+    hive_agno_v2_sessions_table: str = Field(
+        "hive_sessions", description="Target Agno v2 unified sessions table"
+    )
+    hive_agno_v2_memories_table: str = Field(
+        "hive_memories", description="Target Agno v2 memories table"
+    )
+    hive_agno_v2_metrics_table: str = Field(
+        "hive_metrics", description="Target Agno v2 metrics table"
+    )
+    hive_agno_v2_knowledge_table: str = Field(
+        "hive_knowledge", description="Target Agno v2 knowledge table"
+    )
+    hive_agno_v2_evals_table: str = Field(
+        "hive_evals", description="Target Agno v2 eval runs table"
+    )
+
     # =========================================================================
     # LEGACY COMPATIBILITY PROPERTIES
     # =========================================================================
@@ -183,6 +229,33 @@ class HiveSettings(BaseSettings):
     def metrics_queue_size(self) -> int:
         """Metrics queue size alias for legacy compatibility."""
         return self.hive_metrics_queue_size
+
+    @property
+    def agno_v1_tables(self) -> dict[str, str | None]:
+        """Expose Agno v1 table metadata for migration tooling."""
+
+        return {
+            "schema": self.hive_agno_v1_schema,
+            "agent_sessions": self.hive_agno_v1_agent_sessions_table,
+            "team_sessions": self.hive_agno_v1_team_sessions_table,
+            "workflow_sessions": self.hive_agno_v1_workflow_sessions_table,
+            "memories": self.hive_agno_v1_memories_table,
+            "metrics": self.hive_agno_v1_metrics_table,
+            "knowledge": self.hive_agno_v1_knowledge_table,
+            "evals": self.hive_agno_v1_evals_table,
+        }
+
+    @property
+    def agno_v2_tables(self) -> dict[str, str]:
+        """Expose Agno v2 table metadata for migration tooling."""
+
+        return {
+            "sessions": self.hive_agno_v2_sessions_table,
+            "memories": self.hive_agno_v2_memories_table,
+            "metrics": self.hive_agno_v2_metrics_table,
+            "knowledge": self.hive_agno_v2_knowledge_table,
+            "evals": self.hive_agno_v2_evals_table,
+        }
     
     @property
     def langwatch_config(self) -> dict:

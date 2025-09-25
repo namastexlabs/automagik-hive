@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from lib.config.settings import get_settings
 from lib.logging import logger
 from lib.versioning import AgnoVersionService
 
@@ -36,6 +37,17 @@ class AgnoVersionSyncService:
 
         self._db_service = db_service  # For testing injection
         self.version_service = AgnoVersionService(self.db_url) if self.db_url else None
+
+        try:
+            settings = get_settings()
+            if getattr(settings, "hive_agno_v2_migration_enabled", False):
+                logger.debug(
+                    "Agno v2 migration flag detected in version sync",
+                    dry_run_command="uv run python scripts/agno_db_migrate_v2.py --dry-run",
+                    v2_sessions=settings.hive_agno_v2_sessions_table,
+                )
+        except Exception:  # pragma: no cover - settings loader should not break the service
+            pass
 
         # Component type mappings
         self.config_paths = {
