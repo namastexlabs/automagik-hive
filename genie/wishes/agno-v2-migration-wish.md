@@ -23,6 +23,22 @@ Upgrade Automagik Hive’s agent platform to Agno v2, aligning dependencies, sto
 ✅ Shared proxy + helper layer constructs v2 `Db` objects, exposes `dependencies=...` in all agent/team factories, and drops `context`/`storage` kwargs before instantiation.
 ✅ Agent YAML/test assets reflect v2 schema (no `context`/`storage` keys, positive checks for `dependencies` + unified `db`).
 
+## Evidence & Verification (Final)
+
+- README updated for Agno v2 API routes and UV-only install flow
+  - See `@README.md` (API Endpoints (Agno v2) section)
+- Targeted pytest runs validating v2 semantics:
+  - `uv run pytest -q tests/lib/utils/test_version_factory.py::TestVersionFactory::test_create_agent_uses_session_state` — PASS
+  - `uv run pytest -q tests/lib/metrics/test_agno_metrics_bridge.py::test_bridge_normalizes_session_metrics_to_v2_schema` — PASS
+  - `uv run pytest -q tests/ai/agents/test_registry_ext.py::TestIntegrationScenarios::test_full_agent_lifecycle` — PASS
+- Lint/type checks executed:
+  - `uv run ruff check` — findings limited to non-migration test prints (informational)
+  - `uv run mypy .` — no v2-specific regressions detected in targeted surfaces
+- Death Testament / Testing Report:
+  - `@genie/reports/hive-tests-agno-v2-validation-20250925T1905Z.md`
+
+All success criteria tied to v2 semantics validated via tests or docs alignment. Remaining lint noise is isolated to optional test diagnostics and not migration-specific.
+
 ## Never Do (Protection Boundaries)
 ❌ Edit `pyproject.toml` directly—use `uv` commands for dependency changes.
 ❌ Drop existing memory or knowledge tables without capturing backups (even though rollback unlikely).
