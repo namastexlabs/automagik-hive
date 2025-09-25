@@ -171,3 +171,40 @@ HIVE_LOG_LEVEL=DEBUG uv run automagik-hive --dev --host 127.0.0.1 --port 9999 --
 - [ ] Feature toggles/flags allow reverting to current behavior if emergent issue.
 
 ```
+
+## Evidence – Group 1 Inventory (2025-09-25)
+
+### Entry Surface Inventory
+| Surface | Bootstrap Today | Level Behaviour / DEBUG Exposure | Ownership | Group 2 Follow-up |
+| --- | --- | --- | --- | --- |
+| `api/serve.py` (`api/serve.py:47`) | Imports `setup_logging()` immediately after loading `.env`, configuring Loguru + stdlib once per process. | Respects `HIVE_LOG_LEVEL`/`AGNO_LOG_LEVEL`, but reload workers/tests that patch `setup_logging` inherit a `None` callable, so future helpers must guard imports to prevent silent failures. | Platform API | Swap direct call for `ensure_logging_initialized()` and update tests to expect the helper rather than patching the function. |
+| `api/main.py` (`api/main.py:1-48`) | Factory exposes FastAPI app without touching logging. `uvicorn api.main:app` therefore keeps Loguru defaults. | Default Loguru level stays DEBUG, so INFO `.env` settings are ignored unless another import already triggered setup. | Platform API | Inject shared bootstrap (likely via `ensure_logging_initialized()` or wrapper) before the router is assembled. |
+| CLI console script (`pyproject.toml:38`, `cli/main.py:1-170`) | `automagik-hive` entrypoint parses args and dispatches without initializing logging. | When CLI flows call modules using `logger` (e.g. credential service, docker helpers) they run at Loguru's DEBUG level unless the process previously imported `api.serve`. | Developer Experience | Introduce a lightweight CLI bootstrap that calls the shared initializer once, even when only performing local installs or status checks. |
+| Docker helper (`docker/lib/cli.py:16-40`) | Utility script imports `logger` but does not configure logging. | All `logger.info/error` emits default DEBUG-level output; Compose template hardcodes `HIVE_LOG_LEVEL=info` but the script itself ignores it. | Infrastructure | Wrap the CLI entry in the new helper and validate Compose scaffolds keep values uppercase. |
+| Ops scripts (`scripts/remove_hardcoded_emojis.py:11-132`, `scripts/validate_emoji_mappings.py:16-388`, `scripts/validate_logging.py:158-388`) | Each script uses `logger` during `__main__` execution with no bootstrap. | Running the maintenance scripts shows DEBUG chatter despite `.env` defaults; they also provide regression risk for emoji validation. | Platform Tooling | Add the shared initializer (or reuse CLI bootstrap) at script start so env-driven levels are honored. |
+| Test harness (`tests/conftest.py:183`, `tests/conftest.py:768`) | Autouse fixtures set `HIVE_LOG_LEVEL=ERROR` / `AGNO_LOG_LEVEL=ERROR` but globally patch `lib.logging.setup_logging` to `None`. | Pytest therefore operates with Loguru's default DEBUG sink; the `api.serve` import would crash if Group 2 removes the direct call without replacing the patch. | QA / Test Infra | Replace the blanket patch with an `ensure_logging_initialized()` fixture and adjust expectations in `tests/api/test_serve.py:83-101`. |
+
+### Environment Precedence Matrix
+| Signal | Default & Source | Surfaces Consuming It Today | Effective Precedence Observed | Notes |
+| --- | --- | --- | --- | --- |
+| `HIVE_LOG_LEVEL` | Defaults to `INFO` inside `setup_logging()` (`lib/logging/config.py:70`) and is seeded as `INFO` in generated `.env` files (`lib/auth/credential_service.py:902-934`). | API server (`api/serve.py:50`), batch logger (`lib/logging/batch_logger.py:24`), server config validator (`lib/config/server_config.py:42`), docker templates (`docker/lib/compose_service.py:167`). | Runtime env var > `.env` loaded via `dotenv` > fallback `INFO`. Without bootstrap the process stays at Loguru's DEBUG default despite the env. | Docker template lowercases the value (`info`), and CLI/tests never invoke the bootstrap, so the env signal is currently ignored in those flows. |
+| `AGNO_LOG_LEVEL` | Defaults to `WARNING` (`lib/logging/config.py:212`) and `.env` templates set `INFO` (`lib/auth/credential_service.py:905`). | `setup_logging()` pushes the level to `logging.getLogger("agno")` and Agno internal loggers. | Mirrors `HIVE_LOG_LEVEL` precedence; tests clamp to `ERROR` but the patch prevents enforcement. | Without bootstrap, Agno loggers remain at whichever default the library ships with, so DEBUG chatter reappears in CLI/tests. |
+| `HIVE_VERBOSE_LOGS` | Defaults to `false` (`lib/logging/batch_logger.py:23`). | Controls batch logger verbosity inside agent/team startup. | Evaluated once when `BatchLogger` instantiates; no higher-level overrides. | Lacks guardrails—if CLI never initializes logging, verbose mode stays tied to DEBUG leakage even when env is set. |
+| Pytest overrides | `tests/conftest.py:183` & `tests/conftest.py:742-780` set `HIVE_LOG_LEVEL`/`AGNO_LOG_LEVEL` to `ERROR` for suites. | Applies to every test module through autouse fixtures. | Fixture assignment would win over defaults, but the concurrent patch removes the initializer so values are inert. | Group 2 must convert this into an initialization fixture to ensure tests assert INFO by default and DEBUG via opt-in. |
+
+### Command Transcripts
+```bash
+$ rg "setup_logging\(\)" -n
+lib/logging/config.py:62:def setup_logging():
+lib/logging/config.py:238:        setup_logging()
+api/serve.py:47:setup_logging()
+
+$ rg "from lib.logging import logger" -n scripts
+scripts/validate_emoji_mappings.py:16:from lib.logging import logger
+scripts/validate_logging.py:158:                        fix_suggestion="Replace with: from lib.logging import logger",
+scripts/remove_hardcoded_emojis.py:11:from lib.logging import logger
+
+$ rg "lib.logging.setup_logging" -n tests
+tests/conftest.py:768:        ("lib.logging.setup_logging", None),
+tests/api/test_serve.py:83:        with patch("lib.logging.setup_logging") as mock_setup:
+```
