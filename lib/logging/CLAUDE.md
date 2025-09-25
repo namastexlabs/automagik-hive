@@ -52,7 +52,9 @@ Performance-first logging system using Loguru with automatic YAML-driven emoji i
 
 **Basic usage**:
 ```python
-from lib.logging import logger
+from lib.logging import initialize_logging, logger
+
+initialize_logging(surface="api.serve")
 
 # Standard patterns - emojis added automatically based on context
 logger.info("Service initialized", service="api_server", port=8000) 
@@ -88,6 +90,20 @@ logger.info(enhanced_message)
 **Environment Aware**: Colors in dev, plain text in production  
 **Performance First**: Zero-impact logging with batch processing  
 **Loguru Foundation**: Modern async-safe logging with rich formatting
+
+## Bootstrap Contract
+
+Always initialize logging through the unified helper:
+
+```python
+from lib.logging import initialize_logging
+
+initialize_logging(surface="cli.main")
+```
+
+- `initialize_logging(surface=...)` wraps `ensure_logging_initialized()` to guarantee the stack configures exactly once per process.
+- Environment variables (`HIVE_LOG_LEVEL`, `AGNO_LOG_LEVEL`, `HIVE_VERBOSE_LOGS`) are respected on the first initialization. Repeated calls are no-ops unless `force=True` is provided.
+- Direct `setup_logging()` imports are prohibited outside `lib/logging/config.py`.
 
 ## Best Practices
 

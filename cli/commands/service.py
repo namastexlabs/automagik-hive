@@ -10,12 +10,14 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from cli.core.main_service import MainService
+from lib.logging import initialize_logging
 
 
 class ServiceManager:
     """Enhanced service management with Docker orchestration support."""
     
     def __init__(self, workspace_path: Path | None = None):
+        initialize_logging(surface="cli.commands.service")
         self.workspace_path = workspace_path or Path()
         self.main_service = MainService(self.workspace_path)
     

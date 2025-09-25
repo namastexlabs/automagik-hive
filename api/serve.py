@@ -36,22 +36,25 @@ from lib.config.settings import settings
 from lib.exceptions import ComponentLoadingError
 
 # Configure unified logging system AFTER environment variables are loaded
-from lib.logging import logger, setup_logging
+from lib.logging import initialize_logging, logger
 from lib.utils.startup_display import create_startup_display
 from lib.utils.version_reader import get_api_version
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
 
-# Setup logging immediately
-setup_logging()
+# Setup logging immediately via unified bootstrap helper
+initialized_now = initialize_logging(surface="api.serve")
 
 # Log startup message at INFO level (replaces old demo mode print)
-log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
-agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
-logger.info(
-    "Automagik Hive logging initialized", log_level=log_level, agno_level=agno_log_level
-)
+if initialized_now:
+    log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
+    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
+    logger.info(
+        "Automagik Hive logging initialized",
+        log_level=log_level,
+        agno_level=agno_log_level,
+    )
 
 # CRITICAL: Run database migrations FIRST before any imports that trigger component loading
 # This ensures the database schema is ready before agents/teams are registered

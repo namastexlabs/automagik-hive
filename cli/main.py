@@ -13,12 +13,17 @@ from pathlib import Path
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass  # Continue without dotenv if not available
 
+from lib.logging import initialize_logging
 from lib.utils.ai_root import resolve_ai_root, AIRootError
 
+
+# Configure unified logging before command modules execute side effects
+initialize_logging(surface="cli.main")
 
 # Import command classes for test compatibility
 from .commands.postgres import PostgreSQLCommands
