@@ -17,10 +17,20 @@ class BusinessUnitFilter:
 
     def __init__(self):
         """Initialize with loaded configuration."""
-        self.config = config_aware_filter.load_global_knowledge_config()
-        self.business_units = self.config.get("business_units", {})
-        self.search_config = self.config.get("search_config", {})
-        self.performance = self.config.get("performance", {})
+        # IMPORTANT: use the module-local loader symbol so tests can patch
+        # 'lib.knowledge.filters.business_unit_filter.load_global_knowledge_config'
+        # directly, as expected by the test suite.
+        self.config = load_global_knowledge_config()
+
+        # Defensive normalization in case the loaded config has unexpected shapes
+        business_units_cfg = self.config.get("business_units", {}) if isinstance(self.config, dict) else {}
+        self.business_units = business_units_cfg if isinstance(business_units_cfg, dict) else {}
+
+        search_cfg = self.config.get("search_config", {}) if isinstance(self.config, dict) else {}
+        self.search_config = search_cfg if isinstance(search_cfg, dict) else {}
+
+        perf_cfg = self.config.get("performance", {}) if isinstance(self.config, dict) else {}
+        self.performance = perf_cfg if isinstance(perf_cfg, dict) else {}
 
         # Build keyword lookup maps for faster filtering
         self._build_keyword_maps()
@@ -38,15 +48,23 @@ class BusinessUnitFilter:
         self.keyword_to_business_unit = {}
         self.business_unit_keywords = {}
 
+        # Guard against malformed business units configuration
+        if not isinstance(self.business_units, dict):
+            return
+
         for unit_id, unit_config in self.business_units.items():
+            if not isinstance(unit_config, dict):
+                # Skip malformed entries gracefully
+                continue
+
             unit_name = unit_config.get("name", unit_id)
-            keywords = unit_config.get("keywords", [])
+            keywords = unit_config.get("keywords", []) or []
 
             self.business_unit_keywords[unit_id] = {
                 "name": unit_name,
                 "keywords": keywords,
-                "expertise": unit_config.get("expertise", []),
-                "common_issues": unit_config.get("common_issues", []),
+                "expertise": unit_config.get("expertise", []) or [],
+                "common_issues": unit_config.get("common_issues", []) or [],
             }
 
             # Build reverse lookup
