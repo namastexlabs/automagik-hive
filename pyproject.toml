@@ -11,6 +11,7 @@ dependencies = [
     "anthropic>=0.64.0",
     "docker>=7.1.0",
     "fastapi>=0.116.1",
+    "greenlet>=3.2.4",
     "httpx>=0.28.1",
     "langwatch>=0.2.11",
     "loguru>=0.7.3",
