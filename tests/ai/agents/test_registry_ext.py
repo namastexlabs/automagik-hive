@@ -530,7 +530,12 @@ class TestIntegrationScenarios:
         mock_config = {
             'agent': {'agent_id': 'integration-test-agent'},
             'model': {'provider': 'test', 'id': 'test-model'},
-            'storage': {'table_name': 'test_agent_storage'}
+            # Align to Agno v2 schema: unified db + dependencies
+            'db': {
+                'type': 'postgres',
+                'table_name': 'test_agent_storage'
+            },
+            'dependencies': {}
         }
         
         mock_agent = Mock()
