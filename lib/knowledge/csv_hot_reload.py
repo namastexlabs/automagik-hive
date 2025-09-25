@@ -122,12 +122,12 @@ class CSVHotReloadManager:
             vector_db = self._build_vector_db(db_url, embedder)
             contents_db = self._build_contents_db(db_url)
 
-            # Preserve constructor expectations: instantiate first, then inject contents_db
+            # Create knowledge base without constructor drift; attach contents DB afterward
             self.knowledge_base = RowBasedCSVKnowledgeBase(
                 csv_path=str(self.csv_path),
                 vector_db=vector_db,
             )
-
+            
             # Inject contents_db post-instantiation to enable remove_content_by_id during reloads
             self._contents_db = contents_db
             if contents_db is not None and self.knowledge_base is not None:
@@ -138,7 +138,9 @@ class CSVHotReloadManager:
                     kb_knowledge = getattr(self.knowledge_base, "knowledge", None)
                     if kb_knowledge is not None:
                         setattr(kb_knowledge, "contents_db", contents_db)
+                        logger.debug("Activated contents DB", table=getattr(contents_db, "session_table", None))
                 except Exception:  # pragma: no cover - defensive safety
+                    # Non-fatal: continue without contents DB
                     pass
 
             if self.csv_path.exists():
@@ -303,7 +305,7 @@ class CSVHotReloadManager:
         }
 
     def force_reload(self) -> None:
-        logger.debug("Force reloading knowledge base", component="csv_hot_reload")
+        logger.info("Force reloading knowledge base", component="csv_hot_reload")
         self._reload_knowledge_base()
 
 
