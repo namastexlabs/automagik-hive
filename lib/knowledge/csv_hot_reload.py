@@ -121,14 +121,25 @@ class CSVHotReloadManager:
             embedder = self._build_embedder()
             vector_db = self._build_vector_db(db_url, embedder)
             contents_db = self._build_contents_db(db_url)
-            self._contents_db = contents_db
 
-            # Pass contents_db to enable remove_content_by_id during reloads
+            # Preserve constructor expectations: instantiate first, then inject contents_db
             self.knowledge_base = RowBasedCSVKnowledgeBase(
                 csv_path=str(self.csv_path),
                 vector_db=vector_db,
-                contents_db=contents_db,
             )
+
+            # Inject contents_db post-instantiation to enable remove_content_by_id during reloads
+            self._contents_db = contents_db
+            if contents_db is not None and self.knowledge_base is not None:
+                try:
+                    # Attach to KB instance
+                    setattr(self.knowledge_base, "contents_db", contents_db)
+                    # And to the underlying Knowledge instance if available
+                    kb_knowledge = getattr(self.knowledge_base, "knowledge", None)
+                    if kb_knowledge is not None:
+                        setattr(kb_knowledge, "contents_db", contents_db)
+                except Exception:  # pragma: no cover - defensive safety
+                    pass
 
             if self.csv_path.exists():
                 self.knowledge_base.load(recreate=False, skip_existing=True)
