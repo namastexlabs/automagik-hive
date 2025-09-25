@@ -75,7 +75,7 @@ class TestExecuteAllYAMLParsingMethods:
                 "domains": ["testing", "yaml"],
                 "exclude_patterns": ["*.tmp"]
             },
-            "storage": {
+            "db": {
                 "type": "memory",
                 "max_size": "100MB"
             },
@@ -133,7 +133,7 @@ class TestExecuteAllYAMLParsingMethods:
                 "Execute consensus decisions",
                 "Test all team workflows"
             ],
-            "storage": {
+            "db": {
                 "type": "persistent",
                 "location": "/data/team"
             },
@@ -510,7 +510,7 @@ class TestExecuteRealWorldYAMLScenarios:
                 "exclude_patterns": ["*.internal", "*.private"],
                 "include_patterns": ["customer-facing/*", "public-docs/*"]
             },
-            "storage": {
+            "db": {
                 "type": "persistent",
                 "location": "/data/customer-service",
                 "max_size": "500MB",

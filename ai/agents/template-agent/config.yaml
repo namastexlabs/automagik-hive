@@ -13,10 +13,12 @@ model:
   temperature: 0.3
   max_tokens: 4000
 
-storage:
+db:
   type: postgres
   table_name: template_agent
   auto_upgrade_schema: true
+
+dependencies: {}
 
 memory:
   num_history_runs: 30
@@ -33,9 +35,6 @@ display:
   show_tool_calls: true
   add_datetime_to_instructions: true
 
-context:
-  add_state_in_messages: true
-  enable_agentic_context: true
 
 events:
   store_events: true

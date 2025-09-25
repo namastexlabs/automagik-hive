@@ -10,7 +10,7 @@ import inspect
 from collections.abc import Callable
 from typing import Any
 
-from agno.workflow.v2.workflow import Workflow
+from agno.workflow import Workflow
 
 from lib.logging import logger
 
@@ -19,7 +19,7 @@ from .agno_storage_utils import create_dynamic_storage
 
 class AgnoWorkflowProxy:
     """
-    Dynamic proxy that automatically maps config parameters to Agno Workflow (v2) constructor.
+    Dynamic proxy that automatically maps config parameters to Agno Workflow constructor.
 
     This proxy introspects the current Agno Workflow class to discover all supported
     parameters and automatically maps config values, ensuring future compatibility
@@ -71,7 +71,7 @@ class AgnoWorkflowProxy:
         """
         return {
             # Core Workflow Settings
-            "workflow_id",
+            "id",
             "name",
             "description",
             "db",
@@ -100,7 +100,9 @@ class AgnoWorkflowProxy:
             Dictionary mapping custom parameter names to handler functions
         """
         return {
-            # Database configuration (now uses shared utilities)
+            # Database configuration (uses shared db utilities)
+            "db": self._handle_db_config,
+            # Legacy storage support (deprecated path)
             "storage": self._handle_storage_config,
             # Workflow metadata
             "workflow": self._handle_workflow_metadata,
@@ -146,7 +148,7 @@ class AgnoWorkflowProxy:
         # Add runtime parameters
         workflow_params.update(
             {
-                "workflow_id": component_id,
+                "id": component_id,
                 "session_id": session_id,
                 "debug_mode": debug_mode,
                 "user_id": user_id,
@@ -209,7 +211,15 @@ class AgnoWorkflowProxy:
                     processed[key] = handler_result
             elif key in self._supported_params:
                 # Direct mapping for supported parameters
-                processed[key] = value
+                if (
+                    key == "dependencies"
+                    and isinstance(value, dict)
+                    and isinstance(processed.get("dependencies"), dict)
+                ):
+                    merged_dependencies = {**processed["dependencies"], **value}
+                    processed["dependencies"] = merged_dependencies
+                else:
+                    processed[key] = value
             else:
                 # Log unknown parameters for debugging
                 logger.debug(
@@ -217,6 +227,37 @@ class AgnoWorkflowProxy:
                 )
 
         return processed
+
+    def _handle_db_config(
+        self,
+        db_config: dict[str, Any] | None,
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+        **kwargs,
+    ):
+        """Handle db configuration using shared utilities."""
+        if db_config is None:
+            logger.debug(
+                "🤖 No db configuration provided for workflow '%s'", component_id
+            )
+            return {}
+
+        if not isinstance(db_config, dict):
+            logger.warning(
+                "🤖 Invalid db config for workflow %s: expected dict, got %s",
+                component_id,
+                type(db_config),
+            )
+            return {}
+
+        resources = create_dynamic_storage(
+            storage_config=db_config,
+            component_id=component_id,
+            component_mode="workflow",
+            db_url=db_url,
+        )
+        return resources
 
     def _handle_storage_config(
         self,
@@ -226,14 +267,18 @@ class AgnoWorkflowProxy:
         db_url: str | None,
         **kwargs,
     ):
-        """Handle storage configuration using shared utilities."""
-        resources = create_dynamic_storage(
-            storage_config=storage_config,
-            component_id=component_id,
-            component_mode="workflow",
-            db_url=db_url,
+        """Backwards-compatible storage handler delegating to db handler."""
+        logger.warning(
+            "🤖 'storage' configuration detected for workflow '%s'. Please migrate to 'db'.",
+            component_id,
         )
-        return resources
+        return self._handle_db_config(
+            storage_config,
+            config,
+            component_id,
+            db_url,
+            **kwargs,
+        )
 
     def _handle_workflow_metadata(
         self,

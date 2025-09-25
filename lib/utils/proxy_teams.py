@@ -183,6 +183,8 @@ class AgnoTeamProxy:
             # Model configuration with thinking support
             "model": self._handle_model_config,
             # Database configuration (now uses shared utilities)
+            "db": self._handle_db_config,
+            # Legacy storage support (deprecated)
             "storage": self._handle_storage_config,
             # Memory configuration
             "memory": self._handle_memory_config,
@@ -320,7 +322,15 @@ class AgnoTeamProxy:
                     processed[key] = handler_result
             elif key in self._supported_params:
                 # Direct mapping for supported parameters
-                processed[key] = value
+                if (
+                    key == "dependencies"
+                    and isinstance(value, dict)
+                    and isinstance(processed.get("dependencies"), dict)
+                ):
+                    merged_dependencies = {**processed["dependencies"], **value}
+                    processed["dependencies"] = merged_dependencies
+                else:
+                    processed[key] = value
             else:
                 # Log unknown parameters for debugging
                 logger.debug(
@@ -372,6 +382,39 @@ class AgnoTeamProxy:
         # Return configuration for lazy instantiation by Agno Team instead of creating instances
         return {"id": model_id, **filtered_config}
 
+    def _handle_db_config(
+        self,
+        db_config: dict[str, Any] | None,
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+        **kwargs,
+    ):
+        """Handle db configuration using shared utilities."""
+        if db_config is None:
+            logger.debug(
+                "🤖 No db configuration provided for team '%s'", component_id
+            )
+            return {}
+
+        if not isinstance(db_config, dict):
+            logger.warning(
+                "🤖 Invalid db config for team %s: expected dict, got %s",
+                component_id,
+                type(db_config),
+            )
+            return {}
+
+        resources = create_dynamic_storage(
+            storage_config=db_config,
+            component_id=component_id,
+            component_mode="team",
+            db_url=db_url,
+        )
+
+        config.setdefault("_computed", {})["db"] = resources["db"]
+        return resources
+
     def _handle_storage_config(
         self,
         storage_config: dict[str, Any],
@@ -380,16 +423,18 @@ class AgnoTeamProxy:
         db_url: str | None,
         **kwargs,
     ):
-        """Handle storage configuration using shared utilities."""
-        resources = create_dynamic_storage(
-            storage_config=storage_config,
-            component_id=component_id,
-            component_mode="team",
-            db_url=db_url,
+        """Backwards-compatible storage handler delegating to db handler."""
+        logger.warning(
+            "🤖 'storage' configuration detected for team '%s'. Please migrate to 'db'.",
+            component_id,
         )
-
-        config.setdefault("_computed", {})["db"] = resources["db"]
-        return resources
+        return self._handle_db_config(
+            storage_config,
+            config,
+            component_id,
+            db_url,
+            **kwargs,
+        )
 
     def _handle_memory_config(
         self,

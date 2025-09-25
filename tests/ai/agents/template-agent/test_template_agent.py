@@ -266,7 +266,7 @@ class TestTemplateAgentIntegration:
             mock_agent_instance.run = Mock()
             mock_agent_instance.chat = Mock()
             mock_agent_instance.memory = Mock()
-            mock_agent_instance.storage = Mock()
+            mock_agent_instance.db = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
             
             result = get_template_agent()
@@ -275,7 +275,7 @@ class TestTemplateAgentIntegration:
             assert hasattr(result, 'run'), "Should provide run method interface"
             assert hasattr(result, 'chat'), "Should provide chat method interface"
             assert hasattr(result, 'memory'), "Should provide memory interface"
-            assert hasattr(result, 'storage'), "Should provide storage interface"
+            assert hasattr(result, 'db'), "Should provide db interface"
 
     def test_template_agent_config_loading_should_use_agent_from_yaml_correctly(self):
         """
@@ -316,5 +316,5 @@ class TestTemplateAgentIntegration:
 # 4. Propagate any errors from Agent.from_yaml
 # 5. Serve as foundational pattern for specialized agent development
 # 6. Export get_template_agent in module __all__
-# 7. Provide standard agent interface (run, chat, memory, storage)
+# 7. Provide standard agent interface (run, chat, memory, db)
 # 8. Handle various file path formats correctly

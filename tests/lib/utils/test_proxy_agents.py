@@ -152,7 +152,7 @@ class TestAgnoAgentProxyInitialization:
         expected_handlers = {
             "knowledge_filter",
             "model",
-            "storage",
+            "db",
             "memory",
             "agent",
             "suggested_actions",
@@ -330,7 +330,7 @@ class TestConfigurationProcessing:
                 "name": MagicMock(name="name"),
                 "instructions": MagicMock(name="instructions"),
                 "knowledge": MagicMock(name="knowledge"),
-                "storage": MagicMock(name="storage"),
+                "db": MagicMock(name="db"),
                 "memory": MagicMock(name="memory"),
             }
             mock_sig.return_value.parameters.items.return_value = mock_params.items()
@@ -355,7 +355,7 @@ class TestConfigurationProcessing:
         config = {
             "model": {"id": "claude-sonnet-4-20250514", "temperature": 0.7},
             "agent": {"name": "Test Agent", "version": 1},
-            "storage": {"type": "sqlite"},
+            "db": {"type": "sqlite"},
         }
 
         # Test that _process_config handles all config sections
@@ -376,7 +376,7 @@ class TestConfigurationProcessing:
         assert "name" in result
         assert result["name"] == "Test Agent"
         
-        # Storage handler now injects db + dependencies
+        # Db handler now injects db + dependencies
         assert "db" in result
         assert "dependencies" in result
 
@@ -469,22 +469,22 @@ class TestCustomParameterHandlers:
         assert result == mock_model_instance
 
     @patch("lib.utils.proxy_agents.create_dynamic_storage")
-    def test_handle_storage_config(self, mock_create_storage, proxy):
-        """Test storage configuration handler."""
+    def test_handle_db_config(self, mock_create_db, proxy):
+        """Test db configuration handler."""
         mock_db = MagicMock(name="db")
-        mock_create_storage.return_value = {
+        mock_create_db.return_value = {
             "db": mock_db,
             "dependencies": {"db": mock_db},
         }
 
-        storage_config = {"type": "postgres", "url": "test://url"}
+        db_config = {"type": "postgres", "url": "test://url"}
 
-        result = proxy._handle_storage_config(
-            storage_config, {}, "test-agent", "test://db"
+        result = proxy._handle_db_config(
+            db_config, {}, "test-agent", "test://db"
         )
 
-        mock_create_storage.assert_called_once_with(
-            storage_config=storage_config,
+        mock_create_db.assert_called_once_with(
+            storage_config=db_config,
             component_id="test-agent",
             component_mode="agent",
             db_url="test://db",
@@ -1172,13 +1172,13 @@ class TestComprehensiveIntegration:
     @patch("lib.utils.proxy_agents.create_dynamic_storage")
     @patch("lib.memory.memory_factory.create_agent_memory")
     async def test_comprehensive_agent_creation(
-        self, mock_memory, mock_storage, mock_model, mock_agent_class, proxy
+        self, mock_memory, mock_db, mock_model, mock_agent_class, proxy
     ):
         """Test comprehensive agent creation with all features."""
         # Setup mocks
         mock_model.return_value = "mock_model"
         mock_db_instance = MagicMock(name="db_instance")
-        mock_storage.return_value = {
+        mock_db.return_value = {
             "db": mock_db_instance,
             "dependencies": {"db": mock_db_instance},
         }
@@ -1202,8 +1202,8 @@ class TestComprehensiveIntegration:
                 "max_tokens": 4000,
                 "custom_model_param": "value",
             },
-            "storage": {
-                "type": "postgres",  # Use correct storage type name
+            "db": {
+                "type": "postgres",  # Use correct db type name
                 "connection_string": "test://connection",
             },
             "memory": {
@@ -1232,9 +1232,9 @@ class TestComprehensiveIntegration:
             db_url="sqlite:///:memory:",  # Use valid SQLAlchemy URL for in-memory SQLite
         )
 
-        # Verify storage and memory handlers were called
+        # Verify db and memory handlers were called
         # Note: resolve_model is NOT called when model_id is present (uses lazy instantiation)
-        mock_storage.assert_called_once()
+        mock_db.assert_called_once()
         mock_memory.assert_called_once()
         _, memory_kwargs = mock_memory.call_args
         assert memory_kwargs["db"] is mock_db_instance

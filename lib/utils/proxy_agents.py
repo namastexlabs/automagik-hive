@@ -203,7 +203,9 @@ class AgnoAgentProxy:
             "knowledge_filter": self._handle_knowledge_filter,
             # Model configuration with thinking support
             "model": self._handle_model_config,
-            # Database configuration (now uses shared utilities)
+            # Database configuration (uses shared db utilities)
+            "db": self._handle_db_config,
+            # Legacy storage support (deprecated path)
             "storage": self._handle_storage_config,
             # Memory configuration
             "memory": self._handle_memory_config,
@@ -344,7 +346,15 @@ class AgnoAgentProxy:
                     processed[key] = handler_result
             elif key in self._supported_params:
                 # Direct mapping for supported parameters
-                processed[key] = value
+                if (
+                    key == "dependencies"
+                    and isinstance(value, dict)
+                    and isinstance(processed.get("dependencies"), dict)
+                ):
+                    merged_dependencies = {**processed["dependencies"], **value}
+                    processed["dependencies"] = merged_dependencies
+                else:
+                    processed[key] = value
             else:
                 # Log unknown parameters for debugging
                 logger.debug(
@@ -458,6 +468,37 @@ class AgnoAgentProxy:
             logger.warning(f"⚠️ No model ID specified for {component_id}, using default resolution")
             return resolve_model(model_id=None, **filtered_model_config)
 
+    def _handle_db_config(
+        self,
+        db_config: dict[str, Any] | None,
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+        **kwargs,
+    ):
+        """Handle db configuration using shared utilities."""
+        if db_config is None:
+            logger.debug(
+                "🤖 No db configuration provided for agent '%s'", component_id
+            )
+            return {}
+
+        if not isinstance(db_config, dict):
+            logger.warning(
+                "🤖 Invalid db config for %s: expected dict, got %s",
+                component_id,
+                type(db_config),
+            )
+            return {}
+
+        resources = create_dynamic_storage(
+            storage_config=db_config,
+            component_id=component_id,
+            component_mode="agent",
+            db_url=db_url,
+        )
+        return resources
+
     def _handle_storage_config(
         self,
         storage_config: dict[str, Any],
@@ -466,14 +507,18 @@ class AgnoAgentProxy:
         db_url: str | None,
         **kwargs,
     ):
-        """Handle storage configuration using shared utilities."""
-        resources = create_dynamic_storage(
-            storage_config=storage_config,
-            component_id=component_id,
-            component_mode="agent",
-            db_url=db_url,
+        """Backwards-compatible storage handler delegating to db handler."""
+        logger.warning(
+            "🤖 'storage' configuration detected for agent '%s'. Please migrate to 'db'.",
+            component_id,
         )
-        return resources
+        return self._handle_db_config(
+            storage_config,
+            config,
+            component_id,
+            db_url,
+            **kwargs,
+        )
 
     def _handle_memory_config(
         self,

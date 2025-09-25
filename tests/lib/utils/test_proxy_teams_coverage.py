@@ -372,14 +372,14 @@ class TestAgnoTeamProxyErrorHandling:
         return AgnoTeamProxy()
     
     @pytest.mark.asyncio
-    async def test_process_config_storage_handler_exception(self, proxy):
-        """Test exception handling in storage configuration."""
-        config = {"storage": {"type": "invalid"}}
+    async def test_process_config_db_handler_exception(self, proxy):
+        """Test exception handling in db configuration."""
+        config = {"db": {"type": "invalid"}}
         
         with patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create:
-            mock_create.side_effect = ValueError("Invalid storage type")
+            mock_create.side_effect = ValueError("Invalid db type")
             
-            with pytest.raises(ValueError, match="Invalid storage type"):
+            with pytest.raises(ValueError, match="Invalid db type"):
                 await proxy._process_config(config, "test-team", None)
     
     @pytest.mark.asyncio
@@ -561,7 +561,7 @@ class TestAgnoTeamProxyConfigurationValidation:
             "session_id", "user_id", "model", "db", "dependencies", "memory_manager"
         }
         proxy._custom_params = {
-            "model", "storage", "memory", "team", "members", 
+            "model", "db", "memory", "team", "members", 
             "suggested_actions", "escalation_triggers"
         }
         
@@ -575,7 +575,7 @@ class TestAgnoTeamProxyConfigurationValidation:
             "user_id": "user-456",
             # Custom parameters (also supported)
             "model": {"id": "claude-3-sonnet"},
-            "storage": {"type": "postgres"},
+            "db": {"type": "postgres"},
             "memory": {"enable_user_memories": True},
             # Custom parameters (handled by handlers)
             "team": {"version": 2},
@@ -598,9 +598,9 @@ class TestAgnoTeamProxyConfigurationValidation:
             "session_id",
             "user_id",
             "model",
+            "db",
         }
         expected_custom = {
-            "storage",
             "memory",
             "team",
             "suggested_actions",
@@ -612,7 +612,7 @@ class TestAgnoTeamProxyConfigurationValidation:
         assert set(result["custom_params"]) == expected_custom
         assert set(result["unknown_params"]) == expected_unknown
         assert result["total_agno_params_available"] == 11
-        assert result["coverage_percentage"] == pytest.approx(63.64, rel=1e-2)
+        assert result["coverage_percentage"] == pytest.approx(72.73, rel=1e-2)
     
     def test_validate_config_edge_case_empty_handlers(self, proxy):
         """Test validation when custom handlers return empty results."""
@@ -650,7 +650,7 @@ class TestAgnoTeamProxyIntegrationScenarios:
             "team": {"name": "Complex Team", "mode": "hybrid", "version": 3},
             "model": {"id": "claude-3-opus", "temperature": 0.6},
             "members": ["agent-alpha", "agent-beta"],
-            "storage": {"type": "postgres", "pool_size": 10},
+            "db": {"type": "postgres", "pool_size": 10},
             "memory": {"enable_user_memories": True},
             "mcp_servers": ["automagik-forge", "postgres"],
             "tools": [
@@ -664,7 +664,7 @@ class TestAgnoTeamProxyIntegrationScenarios:
         
         # Mock all external dependencies
         mock_agents = [MagicMock(), MagicMock()]
-        mock_storage = {"db": MagicMock(name="db"), "dependencies": {}}
+        mock_db = {"db": MagicMock(name="db"), "dependencies": {}}
         mock_memory = MagicMock()
         mock_shell_tool = MagicMock()
         
@@ -686,7 +686,7 @@ class TestAgnoTeamProxyIntegrationScenarios:
             mock_provider_registry.resolve_model_class.return_value = MagicMock()
             mock_filter.return_value = {"id": "claude-3-opus", "temperature": 0.6}
             
-            mock_create_storage.return_value = mock_storage
+            mock_create_storage.return_value = mock_db
             mock_create_memory.return_value = mock_memory
             mock_load_tool.return_value = mock_shell_tool
             
@@ -698,7 +698,7 @@ class TestAgnoTeamProxyIntegrationScenarios:
             assert "name" in result  # team handler
             assert "id" in result  # model handler
             assert "members" in result  # members handler
-            assert "db" in result  # storage handler  
+            assert "db" in result  # db handler  
             assert "dependencies" in result
             assert "memory_manager" in result  # memory handler
             assert "mcp_servers" in result  # mcp_servers handler
@@ -707,8 +707,8 @@ class TestAgnoTeamProxyIntegrationScenarios:
             # Verify specific handler results
             assert result["name"] == "Complex Team"
             assert result["members"] == mock_agents
-            assert result["db"] == mock_storage["db"]
-            assert result["dependencies"] == mock_storage["dependencies"]
+            assert result["db"] == mock_db["db"]
+            assert result["dependencies"] == mock_db["dependencies"]
             assert result["memory_manager"] == mock_memory
             assert result["mcp_servers"] == ["automagik-forge", "postgres"]
             assert len(result["tools"]) == 2  # ShellTools + custom_tool_object (UnknownTool filtered)
